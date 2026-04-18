@@ -15,7 +15,7 @@ std::string MapController::mapIdToString(const CATCHCHALLENGER_TYPE_MAPID &mapId
 
 bool MapController::insert_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
 {
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_plants().find(plant_id)==CatchChallenger::CommonDatapack::commonDatapack.get_plants().cend())
+    if(!CatchChallenger::CommonDatapack::commonDatapack.has_plant(plant_id))
     {
         qDebug() << "plant_id don't exists";
         return false;
@@ -123,7 +123,7 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
         return false;
     }
     int seconds_to_mature=static_cast<uint32_t>(plantData.mature_at-currentTime);
-    const auto &plantDef=CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plantData.plant);
+    const auto &plantDef=CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantData.plant);
     int floweringDiff=plantDef.fruits_seconds-plantDef.flowering_seconds;
     int tallerDiff=plantDef.fruits_seconds-plantDef.taller_seconds;
     int sproutedDiff=plantDef.fruits_seconds-plantDef.sprouted_seconds;

@@ -61,23 +61,24 @@ static float multiplierToFloat(int8_t m)
 
 void generate()
 {
-    const auto &commonTypes=CatchChallenger::CommonDatapack::commonDatapack.get_types();
-    const auto &monsters=CatchChallenger::CommonDatapack::commonDatapack.get_monsters();
-    const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
+    const std::vector<CatchChallenger::Type> &commonTypes=CatchChallenger::CommonDatapack::commonDatapack.get_types();
 
     // Build type_to_monster: primary_type -> secondary_type -> monster_ids
     std::map<uint8_t, std::map<uint8_t, std::vector<uint16_t>>> type_to_monster;
-    for(const auto &mp : monsters)
+    for(CATCHCHALLENGER_TYPE_MONSTER mId=1;mId<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();mId++)
     {
-        const auto &mtypes=mp.second.type;
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(mId))
+            continue;
+        const CatchChallenger::Monster &monEntry=CatchChallenger::CommonDatapack::commonDatapack.get_monster(mId);
+        const std::vector<uint8_t> &mtypes=monEntry.type;
         if(mtypes.empty()) continue;
         uint8_t type1=mtypes[0];
         uint8_t type2=(mtypes.size()>1) ? mtypes[1] : type1;
         if(type2>=commonTypes.size())
             type2=type1;
-        type_to_monster[type1][type2].push_back(mp.first);
+        type_to_monster[type1][type2].push_back(mId);
         if(type1!=type2)
-            type_to_monster[type2][type1].push_back(mp.first);
+            type_to_monster[type2][type1].push_back(mId);
     }
 
     // --- Individual type pages ---
@@ -241,14 +242,16 @@ void generate()
 
                 for(uint16_t monsterId : monsterList)
                 {
-                    auto meit=monsterExtras.find(monsterId);
-                    if(meit==monsterExtras.cend()) continue;
+                    if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterId))
+                        continue;
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
+                        continue;
 
-                    auto mit=monsters.find(monsterId);
-                    if(mit==monsters.cend()) continue;
+                    const DatapackClientLoader::MonsterExtra &meit=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterId);
+                    const CatchChallenger::Monster &mit=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId);
 
                     typetomonster_count++;
-                    const std::string &mname=meit->second.name;
+                    const std::string &mname=meit.name;
                     std::string link=Helper::relUrl(GeneratorMonsters::relativePathForMonster(monsterId));
 
                     body << "<tr class=\"value\">\n\t\t\t\t\t\t<td>\n";
@@ -275,7 +278,7 @@ void generate()
                     // Type labels
                     body << "<td><div class=\"type_label_list\">";
                     bool firstType=true;
-                    for(uint8_t tId : mit->second.type)
+                    for(uint8_t tId : mit.type)
                     {
                         if(tId<commonTypes.size())
                         {

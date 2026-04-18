@@ -10,16 +10,19 @@
 
 using namespace CatchChallenger;
 
+#ifndef CATCHCHALLENGER_NOXML
+bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable, MapLoadBuffers *buffers)
+{
+#else
 bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable)
 {
-    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
-    if(tempNameToItemId.empty())
+#endif
+    if(CommonDatapack::commonDatapack.get_tempNameToItemId_size()==0)
     {
         std::cerr << "no item name loaded (abort)" << std::endl;
         abort();
     }
-    if(tempNameToMonsterId.empty())
+    if(CommonDatapack::commonDatapack.get_tempNameToMonsterId_size()==0)
     {
         std::cerr << "no monster name loaded (abort)" << std::endl;
         abort();
@@ -44,11 +47,11 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -369,7 +372,9 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                 }
                                 else
                                 {
-                                    if(!mapFinal.parseUnknownMoving(type,object_x,object_y,property_text))
+                                    if(buffers!=nullptr)
+                                        buffers->unknownMovingBuffer.push_back({type,object_x,object_y,property_text});
+                                    else
                                         std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
@@ -476,9 +481,9 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                             item_semi.point.second=static_cast<uint8_t>(object_y);
                                             map_to_send_temp.items.push_back(item_semi);
                                         }
-                                        else if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(property_text.at("item"))!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
+                                        else if(CommonDatapack::commonDatapack.has_tempNameToItemId(property_text.at("item")))
                                        {
-                                            item_semi.item=CommonDatapack::commonDatapack.get_tempNameToItemId().at(property_text.at("item"));
+                                            item_semi.item=CommonDatapack::commonDatapack.get_tempNameToItemId(property_text.at("item"));
                                             item_semi.point.first=static_cast<uint8_t>(object_x);
                                             item_semi.point.second=static_cast<uint8_t>(object_y);
                                             map_to_send_temp.items.push_back(item_semi);
@@ -492,7 +497,9 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                 {}
                                 else
                                 {
-                                    if(!mapFinal.parseUnknownObject(type,object_x,object_y,property_text))
+                                    if(buffers!=nullptr)
+                                        buffers->unknownObjectBuffer.push_back({type,object_x,object_y,property_text});
+                                    else
                                         std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
@@ -907,7 +914,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
 
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,".tmx",".xml");
-    loadExtraXml(mapFinal,xmlExtra,this->map_to_send.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,this->map_to_send.zoneName);
+    loadExtraXml(mapFinal,xmlExtra,this->map_to_send.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,this->map_to_send.zoneName,buffers);
 
     bool previousHaveMonsterWarn=false;
     {

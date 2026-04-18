@@ -81,7 +81,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
                 playerMonster.level=getOneSeed(monsterList.front().maxLevel-monsterList.front().minLevel+1)+monsterList.front().minLevel;
         }
     }
-    Monster monsterDef=CommonDatapack::commonDatapack.get_monsters().at(playerMonster.monster);
+    Monster monsterDef=CommonDatapack::commonDatapack.get_monster(playerMonster.monster);
     if(monsterDef.ratio_gender>0 && monsterDef.ratio_gender<100)
     {
         int8_t temp_ratio=getOneSeed(101);
@@ -267,7 +267,7 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap &map, const
 uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
 {
     doTurnIfChangeOfMonster=true;
-    if(internalTryCapture(CommonDatapack::commonDatapack.get_items().trap.at(item)))
+    if(internalTryCapture(CommonDatapack::commonDatapack.get_trap(item)))
     {
         #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         messageFightEngine("capture is successful");
@@ -333,7 +333,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         errorFightEngine("Not againts wild monster");
         return false;
     }
-    const Monster::Stat &wildMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(wildMonsters.front().monster),wildMonsters.front().level);
+    const Monster::Stat &wildMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(wildMonsters.front().monster),wildMonsters.front().level);
 
     float bonusStat=1.0;
     if(wildMonsters.front().buffs.size())
@@ -343,9 +343,9 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         while(index<wildMonsters.front().buffs.size())
         {
             const PlayerBuff &playerBuff=wildMonsters.front().buffs.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterBuff(playerBuff.buff))
             {
-                const Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().at(playerBuff.buff);
+                const Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuff(playerBuff.buff);
                 if(playerBuff.level>0 && playerBuff.level<=buff.level.size())
                     bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
                 else
@@ -366,7 +366,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
     const uint32_t maxTempRate=12;
     const uint32_t minTempRate=5;
     const uint32_t tryCapture=4;
-    const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(wildMonsters.front().monster).catch_rate;
+    const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.get_monster(wildMonsters.front().monster).catch_rate;
     uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-wildMonsters.front().hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
     if(tempRate>255)
         return true;

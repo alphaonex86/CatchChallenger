@@ -678,10 +678,10 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             player_informations.encyclopedia_monster=NULL;
             std::cerr << "CommonDatapack::commonDatapack.monstersMaxId=NULL;" << std::endl;
         }
-        if(CommonDatapack::commonDatapack.get_items().itemMaxId>1)
+        if(CommonDatapack::commonDatapack.get_itemMaxId()>1)
         {
-            player_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
-            memset(player_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+            player_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
+            memset(player_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
         }
         else
         {
@@ -759,10 +759,10 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     parseError("Protocol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(CommonDatapack::commonDatapack.get_items().itemMaxId>0)
+                if(CommonDatapack::commonDatapack.get_itemMaxId()>0)
                 {
-                    if(sub_size16>CommonDatapack::commonDatapack.get_items().itemMaxId/8+1)
-                        memcpy(player_informations.encyclopedia_item,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+                    if(sub_size16>CommonDatapack::commonDatapack.get_itemMaxId()/8+1)
+                        memcpy(player_informations.encyclopedia_item,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
                     else
                         memcpy(player_informations.encyclopedia_item,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }

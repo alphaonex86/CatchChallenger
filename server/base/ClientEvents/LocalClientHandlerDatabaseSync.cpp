@@ -144,7 +144,7 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_and_encyclopedia.asyncWrite({
         item,
         binarytoHexa(public_and_private_informations.encyclopedia_item,
-        static_cast<uint32_t>(CommonDatapack::commonDatapack.get_items().item.size())/8+1),
+        static_cast<uint32_t>(CommonDatapack::commonDatapack.get_items_size())/8+1),
         std::to_string(character_id_db)
         });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
@@ -159,7 +159,7 @@ void Client::updateMonsterInDatabaseEncyclopedia()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_encyclopedia.asyncWrite({
         binarytoHexa(public_and_private_informations.encyclopedia_monster,
-        static_cast<uint32_t>(CommonDatapack::commonDatapack.get_monsters().size())/8+1),
+        static_cast<uint32_t>(CommonDatapack::commonDatapack.get_monsters_size())/8+1),
         std::to_string(character_id_db)
         });
     #elif CATCHCHALLENGER_DB_BLACKHOLE

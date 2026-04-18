@@ -29,11 +29,11 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
         tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         else
         {
-            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif
@@ -169,9 +169,8 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
                                     if(drop->Attribute("item")!=NULL)
                                     {
                                         std::string itemLower=str_tolower(drop->Attribute("item"));
-                                        const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                                        if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
-                                            dropVar.item=tempNameToItemId.at(itemLower);
+                                        if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
+                                            dropVar.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
                                         else
                                         {
                                             dropVar.item=stringtouint16(drop->Attribute("item"),&ok);
@@ -229,5 +228,10 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
         file_index++;
     }
     return monsterDrops;
+}
+
+std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::loadMonsterDrop(const std::string &folder)
+{
+    return loadMonsterDrop(folder, CommonDatapack::commonDatapack.items, CommonDatapack::commonDatapack.monsters);
 }
 #endif

@@ -81,15 +81,14 @@ void BaseWindow::seed_planted(const bool &ok)
         //do the rewards
         {
             const uint16_t &itemId=seed_in_waiting.front().seedItemId;
-            if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemId)==
-                    QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
+            if(!QtDatapackClientLoader::datapackLoader->has_itemToPlant(itemId))
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 return;
             }
-            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemId);
-            appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant).rewards.reputation);
+            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->get_itemToPlant(itemId);
+            appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plant).rewards.reputation);
         }
     }
     else
@@ -97,9 +96,8 @@ void BaseWindow::seed_planted(const bool &ok)
         if(!seed_in_waiting.front().map.empty())
         {
             {
-                const auto &mapToId=QtDatapackClientLoader::datapackLoader->get_mapToId();
-                if(mapToId.find(seed_in_waiting.front().map)!=mapToId.cend())
-                    mapController->remove_plant_full(mapToId.at(seed_in_waiting.front().map),seed_in_waiting.front().x,seed_in_waiting.front().y);
+                if(QtDatapackClientLoader::datapackLoader->has_mapToId(seed_in_waiting.front().map))
+                    mapController->remove_plant_full(QtDatapackClientLoader::datapackLoader->get_mapToId(seed_in_waiting.front().map),seed_in_waiting.front().x,seed_in_waiting.front().y);
             }
             cancelAllPlantQuery(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);
         }
@@ -156,19 +154,17 @@ void BaseWindow::load_plant_inventory()
     auto i=playerInformations.items.begin();
     while(i!=playerInformations.items.cend())
     {
-        if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(i->first)!=
-                QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemToPlant(i->first))
         {
-            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(i->first);
+            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->get_itemToPlant(i->first);
             QListWidgetItem *item;
             item=new QListWidgetItem();
             plants_items_to_graphical[plantId]=item;
             plants_items_graphical[item]=plantId;
-            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(i->first)!=
-                    QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(i->first))
             {
                 item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(i->first).image);
-                item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(i->first).name)+
+                item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(i->first).name)+
                         "\n"+tr("Quantity: %1").arg(i->second));
             }
             else
@@ -176,7 +172,7 @@ void BaseWindow::load_plant_inventory()
                 item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
                 item->setText(QStringLiteral("item id: %1").arg(i->first)+"\n"+tr("Quantity: %1").arg(i->second));
             }
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plantId).requirements.reputation))
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
             {
                 item->setText(item->text()+"\n"+tr("You don't have the requirements"));
                 item->setFont(disableIntoListFont);
@@ -209,22 +205,20 @@ void BaseWindow::load_crafting_inventory()
         if(informations.recipes[recipe/8] & (1<<(7-recipe%8)))
         {
             //load the material item
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().find(recipe)
-                    !=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_craftingRecipe(recipe))
             {
                 QListWidgetItem *item=new QListWidgetItem();
-                if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(recipe).doItemId)!=
-                        QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+                if(QtDatapackClientLoader::datapackLoader->has_itemExtra(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipe).doItemId))
                 {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(recipe)
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipe)
                             .doItemId).image);
-                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(recipe)
+                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipe)
                             .doItemId).name));
                 }
                 else
                 {
                     item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
-                    item->setText(tr("Unknow item: %1").arg(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(recipe).doItemId));
+                    item->setText(tr("Unknow item: %1").arg(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipe).doItemId));
                 }
                 crafting_recipes_items_to_graphical[recipe]=item;
                 crafting_recipes_items_graphical[item]=recipe;
@@ -248,13 +242,12 @@ std::string BaseWindow::reputationRequirementsToText(const ReputationRequirement
         return tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId).toStdString();
     }
     const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationRequirements.reputationId);
-    if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(reputation.name)==
-            QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputation.name))
     {
         std::cerr << "!QtDatapackClientLoader::datapackLoader->reputationExtra.contains("+reputation.name+")" << std::endl;
         return tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name)).toStdString();
     }
-    const DatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputation.name);
+    const DatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputation.name);
     if(reputationRequirements.positif)
     {
         if(reputationRequirements.level>=reputationExtra.reputation_positive.size())
@@ -315,12 +308,11 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     }
     QListWidgetItem *item=items.first();
     const QtDatapackClientLoader::QtPlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader->getPlantExtra(plants_items_graphical.at(item));
-    const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plants_items_graphical.at(item));
+    const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.get_plant(plants_items_graphical.at(item));
 
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(plant.itemUsed)!=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(plant.itemUsed))
     {
-        const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(plant.itemUsed);
+        const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(plant.itemUsed);
         const QtDatapackClientLoader::QtItemExtra &ImageitemExtra=QtDatapackClientLoader::datapackLoader->getItemExtra(plant.itemUsed);
         ui->labelPlantImage->setPixmap(ImageitemExtra.image);
         ui->labelPlantName->setText(QString::fromStdString(itemExtra.name));
@@ -353,9 +345,8 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
                     if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.get_reputation().size())
                     {
                         const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationRewards.reputationId);
-                        if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(reputation.name)!=
-                                QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
-                            name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputation.name).name);
+                        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputation.name))
+                            name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputation.name).name);
                     }
                     if(reputationRewards.point<0)
                         rewards_less_reputation.push_back(name);
@@ -381,9 +372,9 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         {
             double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
             double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
-            if(CommonDatapack::commonDatapack.get_items().item.find(plant.itemUsed)!=CommonDatapack::commonDatapack.get_items().item.cend())
+            if(CommonDatapack::commonDatapack.has_item(plant.itemUsed))
                 ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0))+", "+tr("income by day: %1")
-                                             .arg(QString::number(quantityByDay*CommonDatapack::commonDatapack.get_items().item.at(plant.itemUsed).price,'f',0)));
+                                             .arg(QString::number(quantityByDay*CommonDatapack::commonDatapack.get_item(plant.itemUsed).price,'f',0)));
             else
                 ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
         }
@@ -455,7 +446,7 @@ void BaseWindow::on_listPlantList_itemActivated(QListWidgetItem *item)
         qDebug() << "BaseWindow::on_inventory_itemActivated(): not in selection, use is not done actually";
         return;
     }
-    objectSelection(true,CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plants_items_graphical.at(item)).itemUsed);
+    objectSelection(true,CatchChallenger::CommonDatapack::commonDatapack.get_plant(plants_items_graphical.at(item)).itemUsed);
 }
 
 void BaseWindow::on_pushButton_interface_crafting_clicked()
@@ -483,15 +474,14 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         return;
     }
     QListWidgetItem *itemMaterials=displayedItems.first();
-    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(crafting_recipes_items_graphical.at(itemMaterials));
+    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(crafting_recipes_items_graphical.at(itemMaterials));
 
     qDebug() << "on_listCraftingList_itemSelectionChanged() load the name";
     //load the name
     QString name;
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(content.doItemId)!=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(content.doItemId))
     {
-        name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(content.doItemId).name);
+        name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(content.doItemId).name);
         ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->getItemExtra(content.doItemId).image);
     }
     else
@@ -511,10 +501,9 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     {
         //load the material item
         item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(content.materials.at(index).item)!=
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(content.materials.at(index).item))
         {
-            nameMaterials=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(content.materials.at(index).item).name);
+            nameMaterials=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(content.materials.at(index).item).name);
             item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(content.materials.at(index).item).image);
         }
         else
@@ -553,7 +542,7 @@ void BaseWindow::on_craftingUse_clicked()
     if(displayedItems.size()!=1)
         return;
     QListWidgetItem *selectedItem=displayedItems.first();
-    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(crafting_recipes_items_graphical.at(selectedItem));
+    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(crafting_recipes_items_graphical.at(selectedItem));
 
     QStringList mIngredients;
     QString mRecipe;
@@ -570,7 +559,7 @@ void BaseWindow::on_craftingUse_clicked()
         while(sub_index<content.materials.at(index).quantity)
         {
             mIngredients.push_back(QUrl::fromLocalFile(
-                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(content.materials.at(index).item).imagePath)
+                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(content.materials.at(index).item).imagePath)
                                    ).toEncoded());
             sub_index++;
         }
@@ -594,16 +583,16 @@ void BaseWindow::on_craftingUse_clicked()
     pair.second=content.quantity;
     productOfRecipeInUsing.push_back(pair);
     mProduct=QUrl::fromLocalFile(
-                QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(content.doItemId).imagePath)).toEncoded();
+                QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(content.doItemId).imagePath)).toEncoded();
     mRecipe=QUrl::fromLocalFile(
-                QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(content.itemToLearn).imagePath)).toEncoded();
+                QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(content.itemToLearn).imagePath)).toEncoded();
     //update the UI
     load_inventory();
     load_plant_inventory();
     on_listCraftingList_itemSelectionChanged();
     //send to the network
     client->useRecipe(crafting_recipes_items_graphical.at(selectedItem));
-    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(
+    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(
                                 crafting_recipes_items_graphical.at(selectedItem)).rewards.reputation);
     //create animation widget
     //show the animation

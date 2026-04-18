@@ -192,21 +192,21 @@ void FinishedQuests::setVar(ConnexionManager *connexionManager)
     {
         const uint16_t questId=i->first;
         const CatchChallenger::PlayerQuest &value=i->second;
-        if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId)!=QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
         {
             if(value.step==0 || value.finish_one_time)
             {
                 if(Ultimate::ultimate.isUltimate())
                 {
                     html+="<li>";
-                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId).repeatable)
+                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId).repeatable)
                         html+=imagesInterfaceRepeatableString;
                     if(value.step>0)
                         html+=imagesInterfaceInProgressString;
-                    html+=QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId).name+"</li>";
+                    html+=QtDatapackClientLoader::datapackLoader->get_questExtra(questId).name+"</li>";
                 }
                 else
-                    html+="<li>"+QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId).name+"</li>";
+                    html+="<li>"+QtDatapackClientLoader::datapackLoader->get_questExtra(questId).name+"</li>";
             }
         }
         ++i;

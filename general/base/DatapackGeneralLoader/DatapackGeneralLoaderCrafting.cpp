@@ -7,7 +7,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const std::unordered_map<uint16_t, Item> &items,uint16_t &crafingRecipesMaxId)
+std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> &items,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE &crafingRecipesMaxId)
 {
     std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
@@ -18,16 +18,16 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
             index++;
         }
     }
-    std::unordered_map<uint16_t,CraftingRecipe> crafingRecipes;
-    std::unordered_map<uint16_t,uint16_t> itemToCrafingRecipes;
+    std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe> crafingRecipes;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> itemToCrafingRecipes;
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -35,7 +35,7 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-            return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+            return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
     }
@@ -44,17 +44,17 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
     if(root==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
-        return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
     }
     if(root->Name()==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found 2 for reputation of the xml file" << std::endl;
-        return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
     }
     if(strcmp(root->Name(),"recipes")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found for reputation of the xml file" << std::endl;
-        return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
     }
 
     //load the content
@@ -97,10 +97,9 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
             uint16_t itemToLearn=0;
             {
                 std::string itemToLearnLower=str_tolower(recipeItem->Attribute("itemToLearn"));
-                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                if(tempNameToItemId.find(itemToLearnLower)!=tempNameToItemId.cend())
+                if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemToLearnLower))
                 {
-                    itemToLearn=tempNameToItemId.at(itemToLearnLower);
+                    itemToLearn=CommonDatapack::commonDatapack.get_tempNameToItemId(itemToLearnLower);
                     ok2=true;
                 }
                 else
@@ -109,10 +108,9 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
             uint16_t doItemId=0;
             {
                 std::string doItemIdLower=str_tolower(recipeItem->Attribute("doItemId"));
-                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                if(tempNameToItemId.find(doItemIdLower)!=tempNameToItemId.cend())
+                if(CommonDatapack::commonDatapack.has_tempNameToItemId(doItemIdLower))
                 {
-                    doItemId=tempNameToItemId.at(doItemIdLower);
+                    doItemId=CommonDatapack::commonDatapack.get_tempNameToItemId(doItemIdLower);
                     ok3=true;
                 }
                 else
@@ -194,10 +192,9 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
                             uint16_t itemId=0;
                             {
                                 std::string itemIdLower=str_tolower(material->Attribute("itemId"));
-                                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                                if(tempNameToItemId.find(itemIdLower)!=tempNameToItemId.cend())
+                                if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemIdLower))
                                 {
-                                    itemId=tempNameToItemId.at(itemIdLower);
+                                    itemId=CommonDatapack::commonDatapack.get_tempNameToItemId(itemIdLower);
                                     ok2=true;
                                 }
                                 else
@@ -328,6 +325,6 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
     #ifdef EPOLLCATCHCHALLENGERSERVER
     delete domDocument;
     #endif
-    return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+    return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
 }
 #endif

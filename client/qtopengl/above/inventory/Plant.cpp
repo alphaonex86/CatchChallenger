@@ -270,13 +270,13 @@ void Plant::updatePlant()
     while (i!=playerInformations.items.cend())
     {
         const uint16_t id=i->first;
-        if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(id)!=QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemToPlant(id))
         {
-            const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(id);
+            const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(id);
             const QtDatapackClientLoader::QtPlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader->getPlantExtra(id);
-            const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(id);
+            const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.get_plant(id);
             QTreeWidgetItem *item=new QTreeWidgetItem();
-            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(id)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(id)
                     && contentExtra.tileset!=nullptr)
             {
                 QPixmap p=QPixmap(QString::fromStdString(itemExtra.imagePath));
@@ -348,22 +348,20 @@ void Plant::on_inventory_itemSelectionChanged()
     }
     QTreeWidgetItem *item=items.first();
     lastItemSelected=item->data(0,99).toInt();
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item->data(0,99).toInt())==
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_itemExtra(item->data(0,99).toInt()))
     {
         inventory_description->setVisible(false);
         inventoryUse->setEnabled(false);
         inventory_description->setHtml(tr("Unknown description"));
         return;
     }
-    const QtDatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item->data(0,99).toInt());
+    const QtDatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->get_itemExtra(item->data(0,99).toInt());
     inventory_description->setHtml(QString::fromStdString(content.description));
     //std::cout << "description: " << content.description << std::endl;
 
     inventory_description->setVisible(!inSelection &&
                                          /* is a plant */
-                                         QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(item->data(0,99).toInt())!=
-                                         QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend()
+                                         QtDatapackClientLoader::datapackLoader->has_itemToPlant(item->data(0,99).toInt())
                                          );
     inventoryUse->setEnabled(true);
 }

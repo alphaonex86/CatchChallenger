@@ -570,7 +570,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         while(index<monsters.size())
         {
             const Profile::Monster &monster=monsterGroup.at(index);
-            const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monsters().at(monster.id);
+            const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monster(monster.id);
             PreparedStatementUnit &monsterQuery=monsters.at(index);
 
             GlobalServerData::serverPrivateVariables.maxMonsterId++;
@@ -679,14 +679,14 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
         //both database/common/characters/ and database/server/characters/ files are
         //populated below via saveCharacterFiles().
-        if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
+        if(CommonDatapack::commonDatapack.get_itemMaxId()<=0)
         {
-            std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_itemMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
             abort();
         }
         if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()<=0)
         {
-            std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_itemMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
             abort();
         }
         /*Player_private_and_public_informations playerForProfile;
@@ -698,7 +698,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         playerForProfile.cash=profile.cash;
         playerForProfile.clan=0;
         playerForProfile.clan_leader=false;
-        encyclopedia_itemS=std::string(playerForProfile.encyclopedia_item,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+        encyclopedia_itemS=std::string(playerForProfile.encyclopedia_item,CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
         for(unsigned int i = 0; i < profile.items.size(); i++)
         {
             const Profile::Item &item=profile.items.at(i);
@@ -764,7 +764,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             while(index<monsterGroup.size())
             {
                 const Profile::Monster &monster=monsterGroup.at(index);
-                const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monsters().at(monster.id);
+                const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monster(monster.id);
                 const Monster::Stat &stat=getStat(monsterDatapack,monster.level);
                 PlayerMonster m;
                 m.catched_with=monster.captured_with;

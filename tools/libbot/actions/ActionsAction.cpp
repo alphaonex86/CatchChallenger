@@ -697,7 +697,7 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
                     botFightMonstersTransformed.push_back(
                                 CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(
                                     monsters.at(index),CatchChallenger::CommonFightEngine::getStat(
-                                        CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monsters.at(index).id),
+                                        CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsters.at(index).id),
                                         monsters.at(index).level)
                                     )
                                 );
@@ -1190,7 +1190,7 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
         CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
         if(monster!=NULL)
         {
-            const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
+            const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster);
             unsigned int index=0;
             while(index<monsterInformations.evolutions.size())
             {

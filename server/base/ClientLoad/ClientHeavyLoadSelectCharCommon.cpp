@@ -390,10 +390,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             delete public_and_private_informations.encyclopedia_item;
             public_and_private_informations.encyclopedia_item=NULL;
         }
-        public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
-        memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
-        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1))
-            memcpy(public_and_private_informations.encyclopedia_item,data_raw,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+        public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
+        memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.get_itemMaxId()/8+1))
+            memcpy(public_and_private_informations.encyclopedia_item,data_raw,CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
         else
             memcpy(public_and_private_informations.encyclopedia_item,data_raw,data.size());
     }
@@ -422,7 +422,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 item-=65536;
             lastItemId=static_cast<uint16_t>(item);
             pos+=2;
-            if(CommonDatapack::commonDatapack.get_items().item.find(static_cast<uint16_t>(item))==CommonDatapack::commonDatapack.get_items().item.cend())
+            if(!CommonDatapack::commonDatapack.has_item(static_cast<uint16_t>(item)))
                 normalOutput("Take care load unknown item: "+std::to_string(item));
             else
             {

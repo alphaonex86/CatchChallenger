@@ -1,4 +1,4 @@
-CONFIG += c++20
+CONFIG += c++11
 mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
 
 QT       -= core

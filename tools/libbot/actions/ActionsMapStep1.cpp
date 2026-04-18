@@ -79,9 +79,10 @@ bool ActionsAction::preload_post_subdatapack()
     }
     minitemprice=0;
     maxitemprice=1;
-    const CatchChallenger::ItemFull &items=CatchChallenger::CommonDatapack::commonDatapack.get_items();
-    for( const auto& n : items.item ) {
-        const CatchChallenger::Item &item=n.second;
+    for(CATCHCHALLENGER_TYPE_ITEM id=1;id<=CatchChallenger::CommonDatapack::commonDatapack.get_itemMaxId();id++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_item(id))
+            continue;
+        const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.get_item(id);
         if(maxitemprice==0 || maxitemprice<item.price)
             if(item.price>0)
                 maxitemprice=item.price;

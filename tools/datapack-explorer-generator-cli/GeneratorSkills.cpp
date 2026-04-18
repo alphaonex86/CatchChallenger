@@ -16,11 +16,9 @@ namespace GeneratorSkills {
 
 std::string relativePathForSkill(uint16_t id)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra();
-    auto it=extras.find(id);
     std::string stem;
-    if(it!=extras.cend() && !it->second.name.empty())
-        stem=Helper::textForUrl(it->second.name);
+    if(QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(id) && !QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(id).name.empty())
+        stem=Helper::textForUrl(QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(id).name);
     if(stem.empty())
         stem=Helper::toStringUint(id);
     return "skills/"+stem+".html";
@@ -76,47 +74,49 @@ static void writeMonsterTableFooter(std::ostringstream &body, const std::string 
 
 void generate()
 {
-    const auto &skills=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills();
-    const auto &skillExtras=QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra();
-    const auto &monsters=CatchChallenger::CommonDatapack::commonDatapack.get_monsters();
-    const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
     const auto &commonTypes=CatchChallenger::CommonDatapack::commonDatapack.get_types();
-    const auto &buffExtras=QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra();
 
     // Build skill_to_monster: skill_id -> skill_level -> list of monster_ids
     std::map<uint16_t, std::map<uint8_t, std::vector<uint16_t>>> skill_to_monster;
-    for(const auto &mp : monsters)
-    {
-        for(const auto &atk : mp.second.learn)
-            skill_to_monster[atk.learnSkill][atk.learnSkillLevel].push_back(mp.first);
+    for(CATCHCHALLENGER_TYPE_MONSTER mpid=1;mpid<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();mpid++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(mpid))
+            continue;
+        const CatchChallenger::Monster &mpMonster=CatchChallenger::CommonDatapack::commonDatapack.get_monster(mpid);
+        for(const auto &atk : mpMonster.learn)
+            skill_to_monster[atk.learnSkill][atk.learnSkillLevel].push_back(mpid);
     }
 
     // Check if all skills have only 1 level (for index column display)
     bool only_one_level=true;
-    for(const auto &p : skills)
-    {
-        if(p.second.level.size()>1)
+    for(CATCHCHALLENGER_TYPE_SKILL skchk=1;skchk<=65535;skchk++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(skchk))
+        { if(skchk==65535) break; continue; }
+        if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(skchk).level.size()>1)
         {
             only_one_level=false;
             break;
         }
+        if(skchk==65535) break;
     }
 
     // Group skills by type for the index
     std::map<uint8_t, std::vector<uint16_t>> skill_type_to_id;
-    for(const auto &p : skills)
-        skill_type_to_id[p.second.type].push_back(p.first);
+    for(CATCHCHALLENGER_TYPE_SKILL skgrp=1;skgrp<=65535;skgrp++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(skgrp))
+        { if(skgrp==65535) break; continue; }
+        skill_type_to_id[CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(skgrp).type].push_back(skgrp);
+        if(skgrp==65535) break;
+    }
 
     // --- Individual skill pages ---
-    for(const auto &p : skills)
-    {
-        const uint16_t id=p.first;
-        const CatchChallenger::Skill &s=p.second;
+    for(CATCHCHALLENGER_TYPE_SKILL id=1;id<=65535;id++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(id))
+        { if(id==65535) break; continue; }
+        const CatchChallenger::Skill &s=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(id);
 
         std::string name;
-        auto ix=skillExtras.find(id);
-        if(ix!=skillExtras.cend())
-            name=ix->second.name;
+        if(QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(id))
+            name=QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(id).name;
         if(name.empty())
             name="Skill #"+Helper::toStringUint(id);
 
@@ -244,9 +244,8 @@ void generate()
 
                     // Buff name linked
                     std::string buffName;
-                    auto bex=buffExtras.find(buffId);
-                    if(bex!=buffExtras.cend())
-                        buffName=bex->second.name;
+                    if(QtDatapackClientLoader::datapackLoader->has_monsterBuffExtra(buffId))
+                        buffName=QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(buffId).name;
                     if(buffName.empty())
                         buffName="Buff #"+Helper::toStringUint(buffId);
 
@@ -292,12 +291,10 @@ void generate()
                     if(skill_monster_duplicate.count(monsterId))
                         continue;
 
-                    auto meit=monsterExtras.find(monsterId);
-                    if(meit==monsterExtras.cend())
+                    if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterId))
                         continue;
 
-                    auto mit=monsters.find(monsterId);
-                    if(mit==monsters.cend())
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
                         continue;
 
                     monster_count++;
@@ -309,7 +306,7 @@ void generate()
                     }
 
                     skill_monster_duplicate.insert(monsterId);
-                    const std::string &mname=meit->second.name;
+                    const std::string &mname=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterId).name;
                     std::string link=Helper::relUrl(GeneratorMonsters::relativePathForMonster(monsterId));
 
                     body << "<tr class=\"value\">\n\t\t\t\t\t\t<td>\n";
@@ -336,7 +333,7 @@ void generate()
                     // Type labels
                     body << "<td><div class=\"type_label_list\">";
                     bool firstType=true;
-                    for(uint8_t tId : mit->second.type)
+                    for(uint8_t tId : CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId).type)
                     {
                         if(tId<commonTypes.size())
                         {
@@ -357,6 +354,7 @@ void generate()
         }
 
         Helper::writeHtml(rel,name,body.str());
+        if(id==65535) break;
     }
 
     // --- Index page (skills.html) grouped by type ---
@@ -386,9 +384,8 @@ void generate()
 
         for(uint16_t skillId : id_list)
         {
-            auto sit=skills.find(skillId);
-            if(sit==skills.cend()) continue;
-            const auto &skill=sit->second;
+            if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(skillId)) continue;
+            const CatchChallenger::Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(skillId);
 
             if(skill.level.empty())
                 continue;
@@ -404,9 +401,8 @@ void generate()
             }
 
             std::string sname;
-            auto sx=skillExtras.find(skillId);
-            if(sx!=skillExtras.cend())
-                sname=sx->second.name;
+            if(QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(skillId))
+                sname=QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(skillId).name;
             if(sname.empty())
                 sname="Skill #"+Helper::toStringUint(skillId);
 

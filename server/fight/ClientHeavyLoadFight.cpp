@@ -111,14 +111,14 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
         playerMonster.monster=GlobalServerData::serverPrivateVariables.db_common->stringtouint16(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
         if(ok)
         {
-            if(CommonDatapack::commonDatapack.get_monsters().find(playerMonster.monster)==CommonDatapack::commonDatapack.get_monsters().cend())
+            if(!CommonDatapack::commonDatapack.has_monster(playerMonster.monster))
             {
                 ok=false;
                 std::cerr << "monster: " << std::to_string(playerMonster.monster) << " is not into monster list" << std::endl;
             }
             else
             {
-                monster=CommonDatapack::commonDatapack.get_monsters().at(playerMonster.monster);
+                monster=CommonDatapack::commonDatapack.get_monster(playerMonster.monster);
             }
         }
         else
@@ -162,7 +162,7 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
         playerMonster.catched_with=GlobalServerData::serverPrivateVariables.db_common->stringtouint16(GlobalServerData::serverPrivateVariables.db_common->value(7),&ok);
         if(ok)
         {
-            if(CommonDatapack::commonDatapack.get_items().item.find(playerMonster.catched_with)==CommonDatapack::commonDatapack.get_items().item.cend())
+            if(!CommonDatapack::commonDatapack.has_item(playerMonster.catched_with))
                 std::cerr << "captured_with: "+std::to_string(playerMonster.catched_with)+" is not is not into items list" << std::endl;
         }
         else
@@ -312,14 +312,14 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
                         [pos];
                 ++pos;
 
-                if(CommonDatapack::commonDatapack.get_monsterBuffs().find(buff.buff)==CommonDatapack::commonDatapack.get_monsterBuffs().cend())
+                if(!CommonDatapack::commonDatapack.has_monsterBuff(buff.buff))
                 {
                     std::cerr << "buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" is not found into buff list" << std::endl;
                     ok=false;//just ignore
                 }
                 if(ok)
                 {
-                    if(buff.level>CommonDatapack::commonDatapack.get_monsterBuffs().at(buff.buff).level.size())
+                    if(buff.level>CommonDatapack::commonDatapack.get_monsterBuff(buff.buff).level.size())
                     {
                         std::cerr << "buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" have not the level: "+std::to_string(buff.level) << std::endl;
                         ok=false;//just ignore
@@ -327,7 +327,7 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
                 }
                 if(ok)
                 {
-                    const Buff::GeneralEffect &generalEffect=CommonDatapack::commonDatapack.get_monsterBuffs().at(buff.buff).level.at(buff.level-1);
+                    const Buff::GeneralEffect &generalEffect=CommonDatapack::commonDatapack.get_monsterBuff(buff.buff).level.at(buff.level-1);
                     if(generalEffect.duration==Buff::Duration_ThisFight)
                     {
                         std::cerr << "buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" can't be loaded from the db if is not permanent (generalEffect.duration==Buff::Duration_ThisFight): " << std::to_string(generalEffect.duration) << std::endl;
@@ -389,14 +389,14 @@ bool Client::loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMon
                 ++pos;
                skill.endurance=0;
 
-               if(CommonDatapack::commonDatapack.get_monsterSkills().find(skill.skill)==CommonDatapack::commonDatapack.get_monsterSkills().cend())
+               if(!CommonDatapack::commonDatapack.has_monsterSkill(skill.skill))
                {
                    std::cerr << "skill "+std::to_string(skill.skill)+" for monsterId: "+std::to_string(playerMonster.id)+" is not found into skill list:"+binarytoHexa(skills) << std::endl;
                    return false;
                }
                if(ok)
                {
-                   if(skill.level>CommonDatapack::commonDatapack.get_monsterSkills().at(skill.skill).level.size())
+                   if(skill.level>CommonDatapack::commonDatapack.get_monsterSkill(skill.skill).level.size())
                    {
                        std::cerr << "skill "+std::to_string(skill.skill)+" for monsterId: "+std::to_string(playerMonster.id)+" have not the level: "+std::to_string(skill.level) << std::endl;
                        return false;
@@ -450,9 +450,9 @@ bool Client::loadSkillEnduranceBlock(const std::string &dataHexa,PlayerMonster &
 
                 if(ok)
                 {
-                    if(skill.endurance>CommonDatapack::commonDatapack.get_monsterSkills().at(skill.skill).level.at(skill.level-1).endurance)
+                    if(skill.endurance>CommonDatapack::commonDatapack.get_monsterSkill(skill.skill).level.at(skill.level-1).endurance)
                     {
-                        skill.endurance=CommonDatapack::commonDatapack.get_monsterSkills().at(skill.skill).level.at(skill.level-1).endurance;
+                        skill.endurance=CommonDatapack::commonDatapack.get_monsterSkill(skill.skill).level.at(skill.level-1).endurance;
                         std::cerr << "skill "+std::to_string(skill.skill)+" for monsterId: "+std::to_string(playerMonster.id)+" have not the endurance: "+std::to_string(skill.endurance)+": truncated" << std::endl;
                     }
                 }

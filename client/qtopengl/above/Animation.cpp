@@ -169,13 +169,12 @@ void Animation::startEvolution(const uint16_t monsterIdFrom, const uint16_t mons
     monsterImageFrom->setOpacity(1.0);
 
     // load monster images
-    if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monsterIdFrom)!=
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterIdFrom))
     {
-        const std::string &path=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monsterIdFrom).frontPath;
+        const std::string &path=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterIdFrom).frontPath;
         pixFrom=QPixmap(QString::fromStdString(path));
         evolutionText->setHtml(tr("Your %1 is evolving!")
-            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monsterIdFrom).name)));
+            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterIdFrom).name)));
     }
     else
     {
@@ -183,10 +182,9 @@ void Animation::startEvolution(const uint16_t monsterIdFrom, const uint16_t mons
         evolutionText->setHtml(tr("Your monster is evolving!"));
     }
 
-    if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monsterIdTo)!=
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterIdTo))
     {
-        const std::string &path=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monsterIdTo).frontPath;
+        const std::string &path=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterIdTo).frontPath;
         pixTo=QPixmap(QString::fromStdString(path));
     }
     else

@@ -124,8 +124,16 @@ public:
 
     Map_to_send map_to_send;
     std::string errorString();
+    #ifndef CATCHCHALLENGER_NOXML
+    bool tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable, MapLoadBuffers *buffers=nullptr);
+    #else
     bool tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable);
+    #endif
+    #ifndef CATCHCHALLENGER_NOXML
+    bool loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers=nullptr);
+    #else
     bool loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
+    #endif
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
     #ifndef CATCHCHALLENGER_NOXML
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);
@@ -134,7 +142,7 @@ public:
     #ifndef CATCHCHALLENGER_NOXML
     static std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,tinyxml2::XMLElement *> > teleportConditionsUnparsed;
 
-    static void loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep=nullptr);
+    static void loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep=nullptr,std::vector<MapLoadBuffers> *mapLoadBuffers=nullptr);
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<tinyxml2::XMLDocument*> xmlDocsToKeepInternal;

@@ -45,7 +45,7 @@ void MapMonsterPreview::regenCache()
     QPixmap front=monsterExtra.thumb.scaledToWidth(monsterExtra.thumb.width()*2,Qt::FastTransformation);
     painter.drawPixmap(cache.width()/2-front.width()/2,cache.height()/2-front.height()/2,front.width(),front.height(),front);
 
-    const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster);
+    const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster.monster);
     const CatchChallenger::Monster::Stat &stat=CatchChallenger::CommonFightEngine::getStat(monsterGeneralInfo,monster.level);
 
     if(monster.hp==0)

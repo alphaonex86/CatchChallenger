@@ -46,11 +46,12 @@ struct BotLocation
 
 static std::string itemImageUrl(uint16_t itemId)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    auto it=extras.find(itemId);
-    if(it==extras.cend() || it->second.imagePath.empty())
+    if(!QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
         return std::string();
-    std::string rel=Helper::relativeFromDatapack(it->second.imagePath);
+    const DatapackClientLoader::ItemExtra &ex=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId);
+    if(ex.imagePath.empty())
+        return std::string();
+    std::string rel=Helper::relativeFromDatapack(ex.imagePath);
     if(rel.empty() || !Helper::fileExists(Helper::datapackPath()+rel))
         return std::string();
     return Helper::relUrl(Helper::publishDatapackFile(rel));
@@ -58,9 +59,11 @@ static std::string itemImageUrl(uint16_t itemId)
 
 static void writeItemIconAndNameDiv(std::ostringstream &body, uint16_t itemId, const std::string &textAlign)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    auto it=extras.find(itemId);
-    std::string name=(it!=extras.cend())?it->second.name:"Unknown item";
+    std::string name;
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
+        name=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name;
+    else
+        name="Unknown item";
     std::string link=Helper::relUrl(GeneratorItems::relativePathForItem(itemId));
     std::string image=itemImageUrl(itemId);
 
@@ -386,17 +389,16 @@ void generate()
             body << "<div class=\"subblock\"><div class=\"valuetitle\">Resources</div><div class=\"value\">\n";
             for(const auto &res : ind.resources)
             {
-                const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-                auto it=extras.find(res.item);
-                if(it!=extras.cend())
+                if(QtDatapackClientLoader::datapackLoader->has_itemExtra(res.item))
                 {
-                    std::string name=it->second.name;
+                    const DatapackClientLoader::ItemExtra &resExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(res.item);
+                    std::string name=resExtra.name;
                     std::string link=Helper::relUrl(GeneratorItems::relativePathForItem(res.item));
                     std::string image=itemImageUrl(res.item);
 
                     body << "<a href=\"" << Helper::htmlEscape(link) << "\" title=\"" << Helper::htmlEscape(name) << "\">\n";
                     body << "<table><tr><td>\n";
-                    if(!image.empty() && Helper::fileExists(Helper::datapackPath()+Helper::relativeFromDatapack(it->second.imagePath)))
+                    if(!image.empty() && Helper::fileExists(Helper::datapackPath()+Helper::relativeFromDatapack(resExtra.imagePath)))
                         body << "<img src=\"" << image << "\" width=\"24\" height=\"24\" alt=\""
                              << Helper::htmlEscape(name) << "\" title=\"" << Helper::htmlEscape(name) << "\" />\n";
                     body << "</td><td>\n";
@@ -474,16 +476,15 @@ void generate()
             body << "<div class=\"subblock\"><div class=\"valuetitle\">Products</div><div class=\"value\">\n";
             for(const auto &prod : ind.products)
             {
-                const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-                auto it=extras.find(prod.item);
-                if(it!=extras.cend())
+                if(QtDatapackClientLoader::datapackLoader->has_itemExtra(prod.item))
                 {
-                    std::string name=it->second.name;
+                    const DatapackClientLoader::ItemExtra &prodExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(prod.item);
+                    std::string name=prodExtra.name;
                     std::string link=Helper::relUrl(GeneratorItems::relativePathForItem(prod.item));
                     std::string image=itemImageUrl(prod.item);
 
                     body << "<a href=\"" << Helper::htmlEscape(link) << "\" title=\"" << Helper::htmlEscape(name) << "\">\n";
-                    if(!image.empty() && Helper::fileExists(Helper::datapackPath()+Helper::relativeFromDatapack(it->second.imagePath)))
+                    if(!image.empty() && Helper::fileExists(Helper::datapackPath()+Helper::relativeFromDatapack(prodExtra.imagePath)))
                         body << "<img src=\"" << image << "\" width=\"24\" height=\"24\" alt=\""
                              << Helper::htmlEscape(name) << "\" title=\"" << Helper::htmlEscape(name) << "\" />\n";
                     body << "</td><td>\n";

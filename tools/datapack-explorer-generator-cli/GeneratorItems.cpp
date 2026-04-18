@@ -76,14 +76,13 @@ std::string relativePathForItem(uint16_t id)
     auto it=s_itemPath.find(id);
     if(it!=s_itemPath.end())
         return it->second;
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    auto ex=extras.find(id);
     std::string folder, stem;
-    if(ex!=extras.cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(id))
     {
-        splitImagePath(ex->second.imagePath,folder,stem);
-        if(!ex->second.name.empty())
-            stem=Helper::textForUrl(ex->second.name);
+        const DatapackClientLoader::ItemExtra &ex=QtDatapackClientLoader::datapackLoader->get_itemExtra(id);
+        splitImagePath(ex.imagePath,folder,stem);
+        if(!ex.name.empty())
+            stem=Helper::textForUrl(ex.name);
     }
     if(folder.empty())
         folder="other";
@@ -95,22 +94,23 @@ std::string relativePathForItem(uint16_t id)
 static void buildItemPaths()
 {
     s_itemPath.clear();
-    const auto &items=CatchChallenger::CommonDatapack::commonDatapack.get_items().item;
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
     std::set<std::string> used;
     std::vector<uint16_t> ids;
-    ids.reserve(items.size());
-    for(const auto &p : items) ids.push_back(p.first);
+    for(CATCHCHALLENGER_TYPE_ITEM id=1;id<=CatchChallenger::CommonDatapack::commonDatapack.get_itemMaxId();id++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_item(id))
+            continue;
+        ids.push_back(id);
+    }
     std::sort(ids.begin(),ids.end());
     for(uint16_t id : ids)
     {
         std::string folder, imgStem;
         std::string name;
-        auto ex=extras.find(id);
-        if(ex!=extras.cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(id))
         {
-            splitImagePath(ex->second.imagePath,folder,imgStem);
-            name=ex->second.name;
+            const DatapackClientLoader::ItemExtra &ex=QtDatapackClientLoader::datapackLoader->get_itemExtra(id);
+            splitImagePath(ex.imagePath,folder,imgStem);
+            name=ex.name;
         }
         if(folder.empty())
             folder="other";
@@ -227,11 +227,10 @@ static void buildReverseLookups()
         }
     }
 
-    const auto &recipes=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes();
-    for(const auto &p : recipes)
-    {
-        const uint16_t rid=p.first;
-        const CatchChallenger::CraftingRecipe &r=p.second;
+    for(uint16_t rid=1;rid<=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes_size()+1;rid++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_craftingRecipe(rid))
+            continue;
+        const CatchChallenger::CraftingRecipe &r=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(rid);
         s_itemProducedByCraft[r.doItemId].push_back(rid);
         for(const auto &mat : r.materials)
             s_itemAsCraftMaterial[mat.item].push_back(rid);
@@ -241,33 +240,46 @@ static void buildReverseLookups()
             s_materialToRecipeItems[mat.item].push_back(r.itemToLearn);
     }
 
-    const auto &evos=CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem;
-    for(const auto &e : evos)
-        for(const auto &mp : e.second)
-            s_itemEvolution[e.first][mp.first]=mp.second;
+    for(CATCHCHALLENGER_TYPE_ITEM evoItemId=1;evoItemId<=CatchChallenger::CommonDatapack::commonDatapack.get_itemMaxId();evoItemId++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_evolutionItem(evoItemId))
+            continue;
+        // iterate monster IDs that this item can evolve
+        for(CATCHCHALLENGER_TYPE_MONSTER evoMonsterId=1;evoMonsterId<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();evoMonsterId++) {
+            if(!CatchChallenger::CommonDatapack::commonDatapack.has_evolutionItemForMonster(evoItemId,evoMonsterId))
+                continue;
+            s_itemEvolution[evoItemId][evoMonsterId]=CatchChallenger::CommonDatapack::commonDatapack.get_evolutionItemForMonster(evoItemId,evoMonsterId);
+        }
+    }
 
-    const auto &monsters=CatchChallenger::CommonDatapack::commonDatapack.get_monsters();
-    for(const auto &mp : monsters)
-        for(const auto &lbi : mp.second.learnByItem)
-            s_itemToSkillOfMonster[lbi.first].push_back({mp.first,lbi.second.learnSkill,lbi.second.learnSkillLevel});
+    for(CATCHCHALLENGER_TYPE_MONSTER monsterId=1;monsterId<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();monsterId++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
+            continue;
+        const CatchChallenger::Monster &monsterEntry=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId);
+        for(const std::pair<const uint16_t,CatchChallenger::Monster::AttackToLearnByItem> &lbi : monsterEntry.learnByItem)
+            s_itemToSkillOfMonster[lbi.first].push_back({monsterId,lbi.second.learnSkill,lbi.second.learnSkillLevel});
+    }
 
-    const auto &monsterDrops=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_monsterDrops();
-    for(const auto &mdp : monsterDrops)
-        for(const auto &d : mdp.second)
-            s_itemToMonsterDrop[d.item].push_back({(uint16_t)mdp.first,d.quantity_min,d.quantity_max,d.luck});
+    for(CATCHCHALLENGER_TYPE_MONSTER dropMonsterId=1;dropMonsterId<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();dropMonsterId++) {
+        if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_monsterDrop(dropMonsterId))
+            continue;
+        const std::vector<CatchChallenger::MonsterDrops> &drops=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_monsterDrop(dropMonsterId);
+        for(const CatchChallenger::MonsterDrops &d : drops)
+            s_itemToMonsterDrop[d.item].push_back({dropMonsterId,d.quantity_min,d.quantity_max,d.luck});
+    }
 
-    const auto &quests=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests();
-    for(const auto &qp : quests)
-    {
-        for(const auto &ri : qp.second.rewards.items)
-            s_itemToQuestReward[ri.item].push_back({qp.second.id,ri.quantity});
-        for(const auto &step : qp.second.steps)
+    for(CATCHCHALLENGER_TYPE_QUEST questId=1;questId<=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests_size()+1;questId++) {
+        if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
+            continue;
+        const CatchChallenger::Quest &questEntry=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
+        for(const CatchChallenger::Quest::Item &ri : questEntry.rewards.items)
+            s_itemToQuestReward[ri.item].push_back({questEntry.id,ri.quantity});
+        for(const CatchChallenger::Quest::Step &step : questEntry.steps)
         {
-            for(const auto &si : step.requirements.items)
-                s_itemToQuestStep[si.item].push_back({qp.second.id,si.quantity,0,0,false});
-            for(const auto &im : step.itemsMonster)
+            for(const CatchChallenger::Quest::Item &si : step.requirements.items)
+                s_itemToQuestStep[si.item].push_back({questEntry.id,si.quantity,0,0,false});
+            for(const CatchChallenger::Quest::ItemMonster &im : step.itemsMonster)
                 for(uint16_t mId : im.monsters)
-                    s_itemToQuestStep[im.item].push_back({qp.second.id,1,mId,im.rate,true});
+                    s_itemToQuestStep[im.item].push_back({questEntry.id,1,mId,im.rate,true});
         }
     }
 }
@@ -317,10 +329,15 @@ static std::string plantSpriteUrl(const std::string &fromPage, uint8_t plantId)
 
 static void writeItemLinkTable(std::ostringstream &body, const std::string &fromPage, uint16_t itemId, uint32_t quantity=0)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    auto it=extras.find(itemId);
-    std::string iname=(it!=extras.cend())?it->second.name:("Item #"+Helper::toStringUint(itemId));
-    std::string iimgUrl=itemImageUrlFrom(fromPage,(it!=extras.cend())?it->second.imagePath:std::string());
+    std::string iname;
+    std::string iimgUrl;
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId)) {
+        const DatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId);
+        iname=extra.name;
+        iimgUrl=itemImageUrlFrom(fromPage,extra.imagePath);
+    } else {
+        iname="Item #"+Helper::toStringUint(itemId);
+    }
 
     body << "<a href=\"" << Helper::htmlEscape(Helper::relUrlFrom(fromPage,relativePathForItem(itemId)))
          << "\" title=\"" << Helper::htmlEscape(iname) << "\">\n";
@@ -337,9 +354,11 @@ static void writeItemLinkTable(std::ostringstream &body, const std::string &from
 
 static void writeMonsterCells(std::ostringstream &body, const std::string &fromPage, uint16_t monsterId)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
-    auto it=extras.find(monsterId);
-    std::string mname=(it!=extras.cend())?it->second.name:("Monster #"+Helper::toStringUint(monsterId));
+    std::string mname;
+    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterId))
+        mname=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterId).name;
+    else
+        mname="Monster #"+Helper::toStringUint(monsterId);
     std::string link=Helper::relUrlFrom(fromPage,GeneratorMonsters::relativePathForMonster(monsterId));
     std::string smallUrl=monsterSmallImageUrl(fromPage,monsterId);
 
@@ -355,19 +374,20 @@ static void writeMonsterCells(std::ostringstream &body, const std::string &fromP
 
 static void writeMonsterTypeLabels(std::ostringstream &body, const std::string &fromPage, uint16_t monsterId)
 {
-    const auto &monstersData=CatchChallenger::CommonDatapack::commonDatapack.get_monsters();
-    const auto &tExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra();
-    auto mit=monstersData.find(monsterId);
-    if(mit==monstersData.cend()) { body << "<td>&nbsp;</td>\n"; return; }
+    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId)) { body << "<td>&nbsp;</td>\n"; return; }
+    const CatchChallenger::Monster &monsterData=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId);
 
     body << "<td><div class=\"type_label_list\">";
     bool first=true;
-    for(uint8_t typeId : mit->second.type)
+    for(uint8_t typeId : monsterData.type)
     {
         if(!first) body << " ";
         first=false;
-        auto tit=tExtra.find(typeId);
-        std::string tname=(tit!=tExtra.cend())?ucfirst(tit->second.name):("Type "+Helper::toStringUint(typeId));
+        std::string tname;
+        if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeId))
+            tname=ucfirst(QtDatapackClientLoader::datapackLoader->get_typeExtra(typeId).name);
+        else
+            tname="Type "+Helper::toStringUint(typeId);
         body << "<span class=\"type_label type_label_" << (unsigned)typeId << "\"><a href=\""
              << Helper::htmlEscape(Helper::relUrlFrom(fromPage,GeneratorTypes::relativePathForType(typeId)))
              << "\">" << Helper::htmlEscape(tname) << "</a></span>\n";
@@ -385,19 +405,18 @@ static std::string reputationName(uint8_t repId)
 
 static std::string reputationLevelToText(uint8_t repId, uint8_t level, bool positif)
 {
-    const auto &reps=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
+    const std::vector<CatchChallenger::Reputation> &reps=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
     std::string name=reputationName(repId);
     std::string levelText;
     if(repId<reps.size())
     {
-        const auto &repExtra=QtDatapackClientLoader::datapackLoader->get_reputationExtra();
-        auto rit=repExtra.find(reps[repId].name);
-        if(rit!=repExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reps[repId].name))
         {
-            if(positif && level<rit->second.reputation_positive.size())
-                levelText=rit->second.reputation_positive[level];
-            else if(!positif && level<rit->second.reputation_negative.size())
-                levelText=rit->second.reputation_negative[level];
+            const DatapackClientLoader::ReputationExtra &repExtraEntry=QtDatapackClientLoader::datapackLoader->get_reputationExtra(reps[repId].name);
+            if(positif && level<repExtraEntry.reputation_positive.size())
+                levelText=repExtraEntry.reputation_positive[level];
+            else if(!positif && level<repExtraEntry.reputation_negative.size())
+                levelText=repExtraEntry.reputation_negative[level];
         }
     }
     if(levelText.empty())
@@ -446,21 +465,7 @@ static std::string mapDisplayName(size_t si, size_t mi)
 
 void generate()
 {
-    const auto &items=CatchChallenger::CommonDatapack::commonDatapack.get_items().item;
-    const auto &itemsExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    const auto &traps=CatchChallenger::CommonDatapack::commonDatapack.get_items().trap;
-    const auto &repels=CatchChallenger::CommonDatapack::commonDatapack.get_items().repel;
-    const auto &itemToPlants=QtDatapackClientLoader::datapackLoader->get_itemToPlants();
-    const auto &plants=CatchChallenger::CommonDatapack::commonDatapack.get_plants();
-    const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
-    const auto &monsterItemEffects=CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect;
-    const auto &skills=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills();
-    const auto &skillsExtra=QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra();
-    const auto &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra();
-    const auto &questsExtra=QtDatapackClientLoader::datapackLoader->get_questsExtra();
-    const auto &recipes=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes();
-    const auto &buffsExtra=QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra();
-    const auto &itemToLearn=CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn;
+    // Container references removed - using per-key accessors instead
 
     buildReverseLookups();
     buildItemPaths();
@@ -516,23 +521,27 @@ void generate()
     // Build craft recipe item lookup
     std::unordered_set<uint16_t> s_itemIsCraftRecipe;
     {
-        for(const auto &p : recipes)
-            if(p.second.itemToLearn>0)
-                s_itemIsCraftRecipe.insert(p.second.itemToLearn);
+        for(uint16_t recipeId=1;recipeId<=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes_size()+1;recipeId++) {
+            if(!CatchChallenger::CommonDatapack::commonDatapack.has_craftingRecipe(recipeId))
+                continue;
+            if(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipeId).itemToLearn>0)
+                s_itemIsCraftRecipe.insert(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipeId).itemToLearn);
+        }
     }
 
     // Determine group for each item (matching PHP)
-    auto getGroup=[&](uint16_t id) -> std::string {
-        if(itemToLearn.find(id)!=itemToLearn.cend())
+    /* lambda uses per-key accessors now */
+    std::function<std::string(uint16_t)> getGroup=[&](uint16_t id) -> std::string {
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_itemToLearn(id))
             return "Learn";
         if(s_itemIsCraftRecipe.find(id)!=s_itemIsCraftRecipe.cend())
             return "Crafting";
-        if(itemToPlants.find(id)!=itemToPlants.cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemToPlant(id))
             return "Plant";
-        if(monsterItemEffects.find(id)!=monsterItemEffects.cend() ||
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterItemEffect(id) ||
            s_itemHasRegeneration.find(id)!=s_itemHasRegeneration.cend())
             return "Regeneration";
-        if(traps.find(id)!=traps.cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_trap(id))
             return "Trap";
         if(s_itemEvolution.find(id)!=s_itemEvolution.cend())
             return "Evolution";
@@ -543,8 +552,11 @@ void generate()
     std::map<std::string,std::vector<uint16_t>> grouped;
     std::vector<std::string> groupOrder;
     std::vector<uint16_t> sortedIds;
-    sortedIds.reserve(items.size());
-    for(const auto &p : items) sortedIds.push_back(p.first);
+    for(CATCHCHALLENGER_TYPE_ITEM sortId=1;sortId<=CatchChallenger::CommonDatapack::commonDatapack.get_itemMaxId();sortId++) {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_item(sortId))
+            continue;
+        sortedIds.push_back(sortId);
+    }
     std::sort(sortedIds.begin(),sortedIds.end());
     for(uint16_t id : sortedIds)
     {
@@ -588,20 +600,21 @@ void generate()
     std::ostringstream indexBody;
 
     // ── Per-item pages ──
-    for(const auto &p : items)
+    for(CATCHCHALLENGER_TYPE_ITEM id=1;id<=CatchChallenger::CommonDatapack::commonDatapack.get_itemMaxId();id++)
     {
-        const uint16_t id=p.first;
-        const CatchChallenger::Item &item=p.second;
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_item(id))
+            continue;
+        const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.get_item(id);
 
         std::string name;
         std::string description;
         std::string imagePath;
-        auto itx=itemsExtra.find(id);
-        if(itx!=itemsExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(id))
         {
-            name=itx->second.name;
-            description=itx->second.description;
-            imagePath=itx->second.imagePath;
+            const DatapackClientLoader::ItemExtra &itxExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(id);
+            name=itxExtra.name;
+            description=itxExtra.description;
+            imagePath=itxExtra.imagePath;
         }
         if(name.empty())
             name="Item #"+Helper::toStringUint(id);
@@ -640,23 +653,21 @@ void generate()
 
         // ── 5. Trap ──
         {
-            auto trapIt=traps.find(id);
-            if(trapIt!=traps.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_trap(id))
                 body << "<div class=\"subblock\"><div class=\"valuetitle\">Trap</div><div class=\"value\">Bonus rate: "
-                     << trapIt->second.bonus_rate << "x</div></div>\n";
+                     << CatchChallenger::CommonDatapack::commonDatapack.get_trap(id).bonus_rate << "x</div></div>\n";
         }
 
         // ── 6. Repel ──
         {
-            auto repelIt=repels.find(id);
-            if(repelIt!=repels.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_repel(id))
                 body << "<div class=\"subblock\"><div class=\"valuetitle\">Repel</div><div class=\"value\">Repel the monsters during "
-                     << repelIt->second << " steps</div></div>\n";
+                     << CatchChallenger::CommonDatapack::commonDatapack.get_repel(id) << " steps</div></div>\n";
         }
 
         // ── 7. Skill (if sameuniqueskill) ──
         bool sameuniqueskill=true;
-        auto skillOfMonsterIt=s_itemToSkillOfMonster.find(id);
+        std::unordered_map<uint16_t, std::vector<SkillOfMonsterEntry>>::iterator skillOfMonsterIt=s_itemToSkillOfMonster.find(id);
         if(skillOfMonsterIt!=s_itemToSkillOfMonster.cend() && !skillOfMonsterIt->second.empty())
         {
             uint16_t lastskill=skillOfMonsterIt->second[0].skillId;
@@ -668,25 +679,22 @@ void generate()
             if(sameuniqueskill)
             {
                 const auto &e=skillOfMonsterIt->second[0];
-                auto skExIt=skillsExtra.find(e.skillId);
-                if(skExIt!=skillsExtra.cend())
+                if(QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(e.skillId))
                 {
                     body << "<div class=\"subblock\"><div class=\"valuetitle\">Skill</div><div class=\"value\">\n";
                     body << "<table><td><a href=\""
                          << Helper::htmlEscape(Helper::relUrl(GeneratorSkills::relativePathForSkill(e.skillId)))
-                         << "\">" << Helper::htmlEscape(skExIt->second.name);
+                         << "\">" << Helper::htmlEscape(QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(e.skillId).name);
                     if(e.skillLevel>1)
                         body << " at level " << (unsigned)e.skillLevel;
                     body << "</a></td>\n";
-                    auto skIt=skills.find(e.skillId);
-                    if(skIt!=skills.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(e.skillId))
                     {
-                        uint8_t typeId=skIt->second.type;
-                        auto tIt=typeExtra.find(typeId);
-                        if(tIt!=typeExtra.cend())
+                        uint8_t typeId=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(e.skillId).type;
+                        if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeId))
                             body << "<td><span class=\"type_label type_label_" << (unsigned)typeId
                                  << "\"><a href=\"" << Helper::htmlEscape(Helper::relUrl(GeneratorTypes::relativePathForType(typeId)))
-                                 << "\">" << Helper::htmlEscape(ucfirst(tIt->second.name)) << "</a></span></td>\n";
+                                 << "\">" << Helper::htmlEscape(ucfirst(QtDatapackClientLoader::datapackLoader->get_typeExtra(typeId).name)) << "</a></span></td>\n";
                         else
                             body << "<td>&nbsp;</td>\n";
                     }
@@ -700,21 +708,19 @@ void generate()
 
         // ── 8. Plant ──
         {
-            auto plantIt=itemToPlants.find(id);
-            if(plantIt!=itemToPlants.cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemToPlant(id))
             {
-                uint8_t plantId=plantIt->second;
-                auto pl=plants.find(plantId);
-                if(pl!=plants.cend())
+                uint8_t plantId=QtDatapackClientLoader::datapackLoader->get_itemToPlant(id);
+                if(CatchChallenger::CommonDatapack::commonDatapack.has_plant(plantId))
                 {
                     std::string sprUrl=plantSpriteUrl(rel,plantId);
                     if(!sprUrl.empty())
                     {
-                        uint32_t total=pl->second.sprouted_seconds+pl->second.taller_seconds
-                                       +pl->second.flowering_seconds+pl->second.fruits_seconds;
+                        uint32_t total=CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).sprouted_seconds+CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).taller_seconds
+                                       +CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).flowering_seconds+CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).fruits_seconds;
                         body << "<div class=\"subblock\"><div class=\"valuetitle\">Plant</div><div class=\"value\">\n";
                         body << "After <b>" << (total/60) << "</b> minutes you will have <b>"
-                             << pl->second.fix_quantity << "</b> fruits\n";
+                             << CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).fix_quantity << "</b> fruits\n";
                         body << "<table class=\"item_list item_list_type_normal\">\n"
                              << "\t\t\t\t<tr class=\"item_list_title item_list_title_type_normal\">\n"
                              << "\t\t\t\t\t<th>Seed</th>\n"
@@ -739,18 +745,18 @@ void generate()
                     }
 
                     // Plant requirements
-                    if(!pl->second.requirements.reputation.empty())
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation.empty())
                     {
                         body << "<div class=\"subblock\"><div class=\"valuetitle\">Requirements</div><div class=\"value\">\n";
-                        writeReputationRequirements(body,pl->second.requirements.reputation);
+                        writeReputationRequirements(body,CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation);
                         body << "</div></div>\n";
                     }
 
                     // Plant rewards
-                    if(!pl->second.rewards.reputation.empty())
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).rewards.reputation.empty())
                     {
                         body << "<div class=\"subblock\"><div class=\"valuetitle\">Rewards</div><div class=\"value\">\n";
-                        writeReputationRewards(body,pl->second.rewards.reputation);
+                        writeReputationRewards(body,CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).rewards.reputation);
                         body << "</div></div>\n";
                     }
                 }
@@ -762,10 +768,9 @@ void generate()
             bool hasRegen=false, hasBuff=false;
             uint32_t regenHp=0;
             uint8_t buffId=0;
-            auto effIt=monsterItemEffects.find(id);
-            if(effIt!=monsterItemEffects.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterItemEffect(id))
             {
-                for(const auto &eff : effIt->second)
+                for(const CatchChallenger::MonsterItemEffect &eff : CatchChallenger::CommonDatapack::commonDatapack.get_monsterItemEffect(id))
                 {
                     if(eff.type==CatchChallenger::MonsterItemEffectType_AddHp)
                     { hasRegen=true; regenHp=eff.data.hp; }
@@ -788,8 +793,7 @@ void generate()
                 }
                 if(hasBuff)
                 {
-                    auto buffExIt=buffsExtra.find((uint16_t)buffId);
-                    if(buffExIt!=buffsExtra.cend())
+                    if(QtDatapackClientLoader::datapackLoader->has_monsterBuffExtra((uint16_t)buffId))
                     {
                         body << "<li>Remove the buff:";
                         body << "<center><table><td>\n";
@@ -802,7 +806,7 @@ void generate()
                         body << "</td>\n";
                         body << "<td><a href=\""
                              << Helper::htmlEscape(Helper::relUrl(GeneratorBuffs::relativePathForBuff(buffId)))
-                             << "\">" << Helper::htmlEscape(buffExIt->second.name) << "</a></td>\n";
+                             << "\">" << Helper::htmlEscape(QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra((uint16_t)buffId).name) << "</a></td>\n";
                         body << "</table></center>\n";
                         body << "</li>\n";
                     }
@@ -818,10 +822,9 @@ void generate()
             auto recipeIt=s_itemIsRecipe.find(id);
             if(recipeIt!=s_itemIsRecipe.cend())
             {
-                auto rIt=recipes.find(recipeIt->second);
-                if(rIt!=recipes.cend())
+                if(CatchChallenger::CommonDatapack::commonDatapack.has_craftingRecipe(recipeIt->second))
                 {
-                    const auto &recipe=rIt->second;
+                    const CatchChallenger::CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipeIt->second);
 
                     // "Do the item"
                     body << "<div class=\"subblock\"><div class=\"valuetitle\">Do the item</div><div class=\"value\">\n";
@@ -884,18 +887,16 @@ void generate()
             {
                 unsigned count_evol=0;
                 for(const auto &mp : evoIt->second)
-                    if(monsterExtras.find(mp.first)!=monsterExtras.cend() && monsterExtras.find(mp.second)!=monsterExtras.cend())
+                    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(mp.first) && QtDatapackClientLoader::datapackLoader->has_monsterExtra(mp.second))
                         count_evol++;
 
                 for(const auto &mp : evoIt->second)
                 {
-                    auto fromExtra=monsterExtras.find(mp.first);
-                    auto toExtra=monsterExtras.find(mp.second);
-                    if(fromExtra==monsterExtras.cend() || toExtra==monsterExtras.cend())
+                    if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(mp.first) || !QtDatapackClientLoader::datapackLoader->has_monsterExtra(mp.second))
                         continue;
 
-                    std::string fromName=fromExtra->second.name;
-                    std::string toName=toExtra->second.name;
+                    std::string fromName=QtDatapackClientLoader::datapackLoader->get_monsterExtra(mp.first).name;
+                    std::string toName=QtDatapackClientLoader::datapackLoader->get_monsterExtra(mp.second).name;
                     std::string fromLink=Helper::relUrl(GeneratorMonsters::relativePathForMonster(mp.first));
                     std::string toLink=Helper::relUrl(GeneratorMonsters::relativePathForMonster(mp.second));
                     std::string fromFront=monsterFrontImageUrl(rel,mp.first);
@@ -1000,7 +1001,7 @@ void generate()
 
                 for(const auto &e : monsterDropIt->second)
                 {
-                    if(monsterExtras.find(e.monsterId)==monsterExtras.cend())
+                    if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(e.monsterId))
                         continue;
 
                     if(monster_count%10==0 && monster_count!=0)
@@ -1053,13 +1054,12 @@ void generate()
                      << "</tr>\n";
                 for(const auto &qr : questRewardIt->second)
                 {
-                    auto qeIt=questsExtra.find(qr.questId);
-                    if(qeIt==questsExtra.cend()) continue;
+                    if(!QtDatapackClientLoader::datapackLoader->has_questExtra(qr.questId)) continue;
                     body << "<tr class=\"value\">\n";
                     body << "<td><a href=\""
                          << Helper::htmlEscape(Helper::relUrl(GeneratorQuests::relativePathForQuest(qr.questId)))
-                         << "\" title=\"" << Helper::htmlEscape(qeIt->second.name) << "\">\n";
-                    body << Helper::htmlEscape(qeIt->second.name) << "\n";
+                         << "\" title=\"" << Helper::htmlEscape(QtDatapackClientLoader::datapackLoader->get_questExtra(qr.questId).name) << "\">\n";
+                    body << Helper::htmlEscape(QtDatapackClientLoader::datapackLoader->get_questExtra(qr.questId).name) << "\n";
                     body << "</a></td>\n";
                     body << "<td>" << qr.quantity << "</td>\n";
                     body << "</tr>\n";
@@ -1076,7 +1076,7 @@ void generate()
             {
                 bool full_details=false;
                 for(const auto &qs : questStepIt->second)
-                    if(qs.hasMonster && monsterExtras.find(qs.monsterId)!=monsterExtras.cend())
+                    if(qs.hasMonster && QtDatapackClientLoader::datapackLoader->has_monsterExtra(qs.monsterId))
                     { full_details=true; break; }
 
                 if(full_details)
@@ -1096,16 +1096,15 @@ void generate()
 
                 for(const auto &qs : questStepIt->second)
                 {
-                    auto qeIt=questsExtra.find(qs.questId);
-                    if(qeIt==questsExtra.cend()) continue;
+                    if(!QtDatapackClientLoader::datapackLoader->has_questExtra(qs.questId)) continue;
                     body << "<tr class=\"value\">\n";
                     body << "<td><a href=\""
                          << Helper::htmlEscape(Helper::relUrl(GeneratorQuests::relativePathForQuest(qs.questId)))
-                         << "\" title=\"" << Helper::htmlEscape(qeIt->second.name) << "\">\n";
-                    body << Helper::htmlEscape(qeIt->second.name) << "\n";
+                         << "\" title=\"" << Helper::htmlEscape(QtDatapackClientLoader::datapackLoader->get_questExtra(qs.questId).name) << "\">\n";
+                    body << Helper::htmlEscape(QtDatapackClientLoader::datapackLoader->get_questExtra(qs.questId).name) << "\n";
                     body << "</a></td>\n";
                     body << "<td>" << qs.quantity << "</td>\n";
-                    if(qs.hasMonster && monsterExtras.find(qs.monsterId)!=monsterExtras.cend())
+                    if(qs.hasMonster && QtDatapackClientLoader::datapackLoader->has_monsterExtra(qs.monsterId))
                     {
                         writeMonsterCells(body,rel,qs.monsterId);
                         body << "<td>" << (unsigned)qs.rate << "%</td>\n";
@@ -1190,7 +1189,7 @@ void generate()
 
             for(const auto &entry : skillOfMonsterIt->second)
             {
-                if(monsterExtras.find(entry.monsterId)==monsterExtras.cend())
+                if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(entry.monsterId))
                     continue;
 
                 if(itemskillmonster_count%10==0 && itemskillmonster_count!=0)
@@ -1208,25 +1207,22 @@ void generate()
 
                 if(!sameuniqueskill)
                 {
-                    auto skExIt=skillsExtra.find(entry.skillId);
-                    if(skExIt!=skillsExtra.cend())
+                    if(QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(entry.skillId))
                     {
                         body << "<td><a href=\""
                              << Helper::htmlEscape(Helper::relUrl(GeneratorSkills::relativePathForSkill(entry.skillId)))
-                             << "\">" << Helper::htmlEscape(skExIt->second.name);
+                             << "\">" << Helper::htmlEscape(QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(entry.skillId).name);
                         if(entry.skillLevel>1)
                             body << " at level " << (unsigned)entry.skillLevel;
                         body << "</a></td>\n";
-                        auto skIt=skills.find(entry.skillId);
-                        if(skIt!=skills.cend())
+                        if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(entry.skillId))
                         {
-                            uint8_t typeId=skIt->second.type;
-                            auto tIt=typeExtra.find(typeId);
-                            if(tIt!=typeExtra.cend())
+                            uint8_t typeId=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(entry.skillId).type;
+                            if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeId))
                                 body << "<td><span class=\"type_label type_label_" << (unsigned)typeId
                                      << "\"><a href=\""
                                      << Helper::htmlEscape(Helper::relUrl(GeneratorTypes::relativePathForType(typeId)))
-                                     << "\">" << Helper::htmlEscape(ucfirst(tIt->second.name))
+                                     << "\">" << Helper::htmlEscape(ucfirst(QtDatapackClientLoader::datapackLoader->get_typeExtra(typeId).name))
                                      << "</a></span></td>\n";
                             else
                                 body << "<td>&nbsp;</td>\n";
@@ -1298,8 +1294,8 @@ void generate()
                     {
                         for(const auto &bm : bfIt->second.monsters)
                         {
-                            auto mex=monsterExtras.find(bm.id);
-                            std::string mname=(mex!=monsterExtras.cend())?mex->second.name:("Monster #"+Helper::toStringUint(bm.id));
+                            bool mexFound=QtDatapackClientLoader::datapackLoader->has_monsterExtra(bm.id);
+                            std::string mname=(mexFound)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(bm.id).name:("Monster #"+Helper::toStringUint(bm.id));
                             std::string mlink=Helper::relUrl(GeneratorMonsters::relativePathForMonster(bm.id));
                             body << "<a href=\"" << Helper::htmlEscape(mlink) << "\">"
                                  << Helper::htmlEscape(mname) << "</a> Lv." << (unsigned)bm.level << " ";
@@ -1362,11 +1358,10 @@ void generate()
 
             std::string iname;
             std::string iimagePath;
-            auto iitx=itemsExtra.find(gid);
-            if(iitx!=itemsExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(gid))
             {
-                iname=iitx->second.name;
-                iimagePath=iitx->second.imagePath;
+                iname=QtDatapackClientLoader::datapackLoader->get_itemExtra(gid).name;
+                iimagePath=QtDatapackClientLoader::datapackLoader->get_itemExtra(gid).imagePath;
             }
             if(iname.empty())
                 iname="Item #"+Helper::toStringUint(gid);
@@ -1377,9 +1372,8 @@ void generate()
             std::string gradient=buildGradient(gid);
 
             uint32_t price=0;
-            auto itemIt=items.find(gid);
-            if(itemIt!=items.cend())
-                price=itemIt->second.price;
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_item(gid))
+                price=CatchChallenger::CommonDatapack::commonDatapack.get_item(gid).price;
 
             indexBody << "\t<tr class=\"value\"" << gradient << ">\n";
 

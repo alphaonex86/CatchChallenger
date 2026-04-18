@@ -57,18 +57,17 @@ NewProfile::~NewProfile()
 
 void NewProfile::loadProfileText()
 {
-    const std::unordered_map<uint32_t,DatapackClientLoader::ProfileText> &textList=QtDatapackClientLoader::datapackLoader->get_profileTextList();
     const std::vector<CatchChallenger::Profile> &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList();
     profileTextList.clear();
     unsigned int index=0;
     while(index<profile.size())
     {
-        const auto it=textList.find(index);
-        if(it!=textList.cend())
+        if(QtDatapackClientLoader::datapackLoader->has_profileText(index))
         {
+            const DatapackClientLoader::ProfileText &pt=QtDatapackClientLoader::datapackLoader->get_profileText(index);
             ProfileText profile;
-            profile.name=it->second.name;
-            profile.description=it->second.description;
+            profile.name=pt.name;
+            profile.description=pt.description;
             profileTextList.push_back(profile);
         }
         index++;

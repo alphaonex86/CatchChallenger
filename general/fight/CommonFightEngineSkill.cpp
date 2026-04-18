@@ -18,9 +18,9 @@ bool CommonFightEngine::learnSkill(PlayerMonster *monsterPlayer, const uint16_t 
         sub_index2++;
     }
     uint16_t sub_index=0;
-    while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monsterPlayer->monster).learn.size())
+    while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterPlayer->monster).learn.size())
     {
-        const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monsterPlayer->monster).learn.at(sub_index);
+        const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterPlayer->monster).learn.at(sub_index);
         if(learn.learnAtLevel<=monsterPlayer->level && learn.learnSkill==skill)
         {
             if(
@@ -31,14 +31,14 @@ bool CommonFightEngine::learnSkill(PlayerMonster *monsterPlayer, const uint16_t 
                     (sub_index2<monsterPlayer->skills.size() && (monsterPlayer->skills.at(sub_index2).level+1)==learn.learnSkillLevel)
                     )
             {
-                if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().find(learn.learnSkill)==CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
+                if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(learn.learnSkill))
                 {
                     errorFightEngine("Skill to learn not found into learnSkill()");
                     return false;
                 }
-                if(learn.learnSkillLevel>CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill).level.size())
+                if(learn.learnSkillLevel>CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(learn.learnSkill).level.size())
                 {
-                    errorFightEngine("Skill level to learn not found learnSkill() "+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill).level.size())+">"+std::to_string(learn.learnSkillLevel));
+                    errorFightEngine("Skill level to learn not found learnSkill() "+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(learn.learnSkill).level.size())+">"+std::to_string(learn.learnSkillLevel));
                     return false;
                 }
                 if(learn.learnSkillLevel==1)
@@ -46,7 +46,7 @@ bool CommonFightEngine::learnSkill(PlayerMonster *monsterPlayer, const uint16_t 
                     PlayerMonster::PlayerSkill temp;
                     temp.skill=skill;
                     temp.level=1;
-                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
+                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
                     addSkill(monsterPlayer,temp);
                 }
                 else
@@ -61,23 +61,23 @@ bool CommonFightEngine::learnSkill(PlayerMonster *monsterPlayer, const uint16_t 
 
 bool CommonFightEngine::learnSkillByItem(PlayerMonster *playerMonster, const uint16_t &itemId)
 {
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(playerMonster->monster)==CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(playerMonster->monster))
     {
         errorFightEngine("Monster id not found into learnSkillByItem()");
         return false;
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster).learnByItem.find(itemId)==CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster).learnByItem.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_monster(playerMonster->monster).learnByItem.find(itemId)==CatchChallenger::CommonDatapack::commonDatapack.get_monster(playerMonster->monster).learnByItem.cend())
     {
         errorFightEngine("Item id not found into learnSkillByItem()");
         return false;
     }
-    const Monster::AttackToLearnByItem &attackToLearnByItem=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster).learnByItem.at(itemId);
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().find(attackToLearnByItem.learnSkill)==CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
+    const Monster::AttackToLearnByItem &attackToLearnByItem=CatchChallenger::CommonDatapack::commonDatapack.get_monster(playerMonster->monster).learnByItem.at(itemId);
+    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(attackToLearnByItem.learnSkill))
     {
         errorFightEngine("Skill to learn not found into learnSkill()");
         return false;
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(attackToLearnByItem.learnSkill).level.size()>attackToLearnByItem.learnSkillLevel)
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(attackToLearnByItem.learnSkill).level.size()>attackToLearnByItem.learnSkillLevel)
     {
         errorFightEngine("Skill level to learn not found learnSkill()");
         return false;
@@ -101,7 +101,7 @@ bool CommonFightEngine::learnSkillByItem(PlayerMonster *playerMonster, const uin
     PlayerMonster::PlayerSkill temp;
     temp.skill=attackToLearnByItem.learnSkill;
     temp.level=attackToLearnByItem.learnSkillLevel;
-    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(attackToLearnByItem.learnSkill).level.at(attackToLearnByItem.learnSkillLevel-1).endurance;
+    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(attackToLearnByItem.learnSkill).level.at(attackToLearnByItem.learnSkillLevel-1).endurance;
     addSkill(playerMonster,temp);
     return true;
 }
@@ -163,7 +163,7 @@ bool CommonFightEngine::useSkill(const uint16_t &skill)
     PlayerMonster::PlayerSkill * currrentMonsterSkill=getTheSkill(skill);
     if(currrentMonsterSkill==NULL)
     {
-        if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.get_monsterSkills().find(skill)!=CommonDatapack::commonDatapack.get_monsterSkills().cend())
+        if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.has_monsterSkill(skill))
             skillLevel=1;//default attack
         else
         {
@@ -186,8 +186,8 @@ bool CommonFightEngine::useSkill(const uint16_t &skill)
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -211,8 +211,8 @@ bool CommonFightEngine::useSkill(const uint16_t &skill)
     doTheTurn(skill,skillLevel,currentMonsterAttackFirst(currentMonster,otherMonster));
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+

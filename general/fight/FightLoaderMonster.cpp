@@ -62,11 +62,11 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
         tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
-        if(CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+        if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         else
         {
-            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif
@@ -358,9 +358,8 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
                                         if(ok)
                                         {
                                             std::string to_lower_case=str_tolower(attack->Attribute("skill"));
-                                            const auto &tempNameToSkillId=CommonDatapack::commonDatapack.get_tempNameToSkillId();
-                                            if(tempNameToSkillId.find(to_lower_case)!=tempNameToSkillId.cend())
-                                                attackVar.learnSkill=tempNameToSkillId.at(to_lower_case);
+                                            if(CommonDatapack::commonDatapack.has_tempNameToSkillId(to_lower_case))
+                                                attackVar.learnSkill=CommonDatapack::commonDatapack.get_tempNameToSkillId(to_lower_case);
                                             else
                                             {
                                                 attackVar.learnSkill=stringtouint16(attack->Attribute("skill"),&ok);
@@ -451,9 +450,8 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
                                                 {
                                                     {
                                                         std::string byitemLower=str_tolower(attack->Attribute("byitem"));
-                                                        const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                                                        if(tempNameToItemId.find(byitemLower)!=tempNameToItemId.cend())
-                                                            itemId=tempNameToItemId.at(byitemLower);
+                                                        if(CommonDatapack::commonDatapack.has_tempNameToItemId(byitemLower))
+                                                            itemId=CommonDatapack::commonDatapack.get_tempNameToItemId(byitemLower);
                                                         else
                                                         {
                                                             itemId=stringtouint16(attack->Attribute("byitem"),&ok);
@@ -526,9 +524,8 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
                                             if(typeText=="item")
                                             {
                                                 std::string itemLower=str_tolower(evolutionItem->Attribute("item"));
-                                                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                                                if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
-                                                    evolutionVar.data.item=tempNameToItemId.at(itemLower);
+                                                if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
+                                                    evolutionVar.data.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
                                                 else
                                                     evolutionVar.data.item=stringtouint16(evolutionItem->Attribute("item"),&ok);
                                             }
@@ -733,11 +730,11 @@ void FightLoader::loadMonsterName(std::unordered_map<std::string,CATCHCHALLENGER
         tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
-        if(CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+        if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         else
         {
-            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif

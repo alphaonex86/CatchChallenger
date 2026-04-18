@@ -14,11 +14,9 @@ namespace GeneratorBuffs {
 
 std::string relativePathForBuff(uint8_t id)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra();
-    auto it=extras.find(id);
     std::string stem;
-    if(it!=extras.cend() && !it->second.name.empty())
-        stem=Helper::textForUrl(it->second.name);
+    if(QtDatapackClientLoader::datapackLoader->has_monsterBuffExtra(id) && !QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(id).name.empty())
+        stem=Helper::textForUrl(QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(id).name);
     if(stem.empty())
         stem=Helper::toStringUint(id);
     return "buffs/"+stem+".html";
@@ -34,34 +32,29 @@ static std::string formatEffectValue(int32_t quantity, CatchChallenger::Quantity
 
 void generate()
 {
-    const auto &buffs=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs();
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra();
-    const auto &monsters=CatchChallenger::CommonDatapack::commonDatapack.get_monsters();
-    const auto &skills=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills();
-    const auto &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
-    const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
+    const std::vector<CatchChallenger::Type> &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
 
     // Build buff_to_monster: buff_id -> buff_level -> list of monster_ids
     std::map<uint8_t, std::map<uint8_t, std::vector<uint16_t>>> buff_to_monster;
-    for(const auto &mp : monsters)
+    for(CATCHCHALLENGER_TYPE_MONSTER monsterId=1;monsterId<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();monsterId++)
     {
-        const uint16_t monsterId=mp.first;
-        const auto &monster=mp.second;
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
+            continue;
+        const CatchChallenger::Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId);
         for(const auto &atk : monster.learn)
         {
-            auto sit=skills.find(atk.learnSkill);
-            if(sit==skills.cend())
+            if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(atk.learnSkill))
                 continue;
-            const auto &skill=sit->second;
+            const CatchChallenger::Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(atk.learnSkill);
             for(size_t lvlIdx=0; lvlIdx<skill.level.size(); ++lvlIdx)
             {
                 for(const auto &be : skill.level[lvlIdx].buff)
                 {
                     uint8_t buffId=be.effect.buff;
                     uint8_t buffLevel=be.effect.level;
-                    if(buffs.find(buffId)!=buffs.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterBuff(buffId))
                     {
-                        auto &vec=buff_to_monster[buffId][buffLevel];
+                        std::vector<uint16_t> &vec=buff_to_monster[buffId][buffLevel];
                         bool found=false;
                         for(uint16_t mid : vec)
                             if(mid==monsterId) { found=true; break; }
@@ -74,15 +67,15 @@ void generate()
     }
 
     // --- Individual buff pages ---
-    for(const auto &p : buffs)
+    for(CATCHCHALLENGER_TYPE_BUFF id=1;id<=255;id++)
     {
-        const uint8_t id=p.first;
-        const CatchChallenger::Buff &b=p.second;
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterBuff(id))
+        {if(id==255)break;continue;}
+        const CatchChallenger::Buff &b=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuff(id);
 
         std::string name;
-        auto ix=extras.find(id);
-        if(ix!=extras.cend())
-            name=ix->second.name;
+        if(QtDatapackClientLoader::datapackLoader->has_monsterBuffExtra(id))
+            name=QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(id).name;
         if(name.empty())
             name="Buff #"+Helper::toStringUint(id);
 
@@ -207,15 +200,13 @@ void generate()
 
                 for(uint16_t monsterId : monsterList)
                 {
-                    auto meit=monsterExtras.find(monsterId);
-                    if(meit==monsterExtras.cend())
+                    if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterId))
                         continue;
 
-                    auto mit=monsters.find(monsterId);
-                    if(mit==monsters.cend())
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
                         continue;
 
-                    const std::string &mname=meit->second.name;
+                    const std::string &mname=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterId).name;
                     std::string link=Helper::relUrl(GeneratorMonsters::relativePathForMonster(monsterId));
 
                     body << "<tr class=\"value\">\n\t<td>\n";
@@ -243,7 +234,7 @@ void generate()
                     // Type labels
                     body << "<td><div class=\"type_label_list\">";
                     bool firstType=true;
-                    for(uint8_t tId : mit->second.type)
+                    for(uint8_t tId : CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId).type)
                     {
                         if(tId<types.size())
                         {
@@ -268,6 +259,7 @@ void generate()
         }
 
         Helper::writeHtml(rel,name,body.str());
+        if(id==255)break;
     }
 
     // --- Index page (buffs.html at root) ---
@@ -278,14 +270,14 @@ void generate()
               << "\t<th colspan=\"2\">Buff</th>\n"
               << "</tr>\n";
 
-    for(const auto &p : buffs)
+    for(CATCHCHALLENGER_TYPE_BUFF id=1;id<=255;id++)
     {
-        const uint8_t id=p.first;
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterBuff(id))
+        {if(id==255)break;continue;}
 
         std::string name;
-        auto ix=extras.find(id);
-        if(ix!=extras.cend())
-            name=ix->second.name;
+        if(QtDatapackClientLoader::datapackLoader->has_monsterBuffExtra(id))
+            name=QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(id).name;
         if(name.empty())
             name="Buff #"+Helper::toStringUint(id);
 
@@ -305,6 +297,7 @@ void generate()
         indexBody << "<td><a href=\"" << Helper::htmlEscape(Helper::relUrl(relativePathForBuff(id)))
                   << "\">" << Helper::htmlEscape(name) << "</a></td>\n";
         indexBody << "</tr>\n";
+        if(id==255)break;
     }
 
     indexBody << "<tr>\n\t<td colspan=\"2\" class=\"item_list_endline item_list_title_type_normal\"></td>\n</tr>\n</table>\n";

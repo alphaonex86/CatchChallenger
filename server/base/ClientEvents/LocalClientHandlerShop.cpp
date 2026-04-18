@@ -203,7 +203,7 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
-    if(CommonDatapack::commonDatapack.get_items().item.find(objectId)==CommonDatapack::commonDatapack.get_items().item.cend())
+    if(!CommonDatapack::commonDatapack.has_item(objectId))
     {
         errorOutput("this item don't exists");
         return;
@@ -213,7 +213,7 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
         errorOutput("you have not this quantity to sell");
         return;
     }
-    if(CommonDatapack::commonDatapack.get_items().item.at(objectId).price==0)
+    if(CommonDatapack::commonDatapack.get_item(objectId).price==0)
     {
         errorOutput("Can't sold %1"+std::to_string(objectId));
         return;
@@ -226,7 +226,7 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
     else
         realPrice=CommonDatapack::commonDatapack.items.item.at(objectId).price/2;*/
 
-    const uint32_t &realPrice=CommonDatapack::commonDatapack.get_items().item.at(objectId).price/2;
+    const uint32_t &realPrice=CommonDatapack::commonDatapack.get_item(objectId).price/2;
 
     if(realPrice<price)
     {

@@ -22,14 +22,14 @@ public:
     //come from datapack
     std::vector<Industry> industries;
 
-    std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
+    catchchallenger_datapack_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> dirt;-> stored into ParsedLayer
 
     // in same map
     std::map<std::pair<uint8_t,uint8_t>,uint8_t> industries_pos;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;//6% of the map
-    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFightTrigger;//force 1 fight by x,y, never cross line of fight (this reduce lot of the memory allocation and presure, each std::vector is 1 pointer)
-    std::unordered_map<std::pair<uint8_t,uint8_t>,ItemOnMap,pairhash> items;//2% of the map
+    catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,Shop> shops;//6% of the map
+    catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/> botsFightTrigger;//force 1 fight by x,y, never cross line of fight (this reduce lot of the memory allocation and presure, each std::vector is 1 pointer)
+    catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,ItemOnMap> items;//2% of the map
     /* ONLY SERVER, see MapServer.hpp
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
     std::vector<std::pair<uint8_t,uint8_t>> rescue_points;*/

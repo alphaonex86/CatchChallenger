@@ -15,10 +15,7 @@ std::vector<std::string> DatapackGeneralLoader::loadSkins(const std::string &fol
 }
 
 std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > DatapackGeneralLoader::loadProfileList(const std::string &datapackPath, const std::string &file,
-                                                                                  #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                                                  const std::unordered_map<uint16_t, Item> &items,
-                                                                                  #endif // CATCHCHALLENGER_CLASS_MASTER
-                                                                                  const std::unordered_map<uint16_t,Monster> &monsters,const std::vector<Reputation> &reputations)
+                                                                                  const std::vector<Reputation> &reputations)
 {
     //DatapackClientLoader::DatapackClientLoader.skins=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
     CommonDatapack::commonDatapack.skins=DatapackGeneralLoader::loadSkins(datapackPath+DATAPACK_BASE_PATH_SKIN);
@@ -47,11 +44,11 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -175,7 +172,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
                         }
                         if(ok)
                         {
-                            if(monsters.find(monster.id)==monsters.cend())
+                            if(!CommonDatapack::commonDatapack.has_monster(monster.id))
                             {
                                 std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster " << monster.id << ": child->Name(): " << startItem->Name() << std::endl;
                                 ok=false;
@@ -184,7 +181,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
                         #ifndef CATCHCHALLENGER_CLASS_MASTER
                         if(ok)
                         {
-                            if(items.find(monster.captured_with)==items.cend())
+                            if(!CommonDatapack::commonDatapack.has_item(monster.captured_with))
                                 std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster capture item " << monster.id << ": child->Name(): " << startItem->Name() << std::endl;
                         }
                         #endif // CATCHCHALLENGER_CLASS_MASTER
@@ -307,7 +304,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
                             #ifndef CATCHCHALLENGER_CLASS_MASTER
                             if(ok)
                             {
-                                if(items.find(itemTemp.id)==items.cend())
+                                if(!CommonDatapack::commonDatapack.has_item(itemTemp.id))
                                 {
                                     std::cerr << "Unable to open the xml file: " << file << ", item not found as know item " << itemTemp.id << ": child->Name(): " << startItem->Name() << std::endl;
                                     ok=false;
@@ -400,11 +397,11 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif

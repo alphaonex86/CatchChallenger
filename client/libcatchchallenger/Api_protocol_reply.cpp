@@ -555,6 +555,11 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
         //get the character selection return
         case 0xAC:
         std::cout << "Api_protocol::selectCharacter() reply for 0xAC " << this << " " << __FILE__ << ":" << __LINE__ << std::endl;
+        #if defined(__cplusplus) && __cplusplus >= 201703L
+        [[fallthrough]];
+        #elif defined(__GNUC__) && __GNUC__ >= 7
+        [[fallthrough]];
+        #endif
         //get the character selection return on game server
         case 0x93:
         {
@@ -718,7 +723,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
             }
             uint8_t returnCode=data[pos];
             pos+=sizeof(uint8_t);
-            if(CommonDatapack::commonDatapack.get_items().trap.find(item)!=CommonDatapack::commonDatapack.get_items().trap.cend())
+            if(CommonDatapack::commonDatapack.has_trap(item))
                 monsterCatch(returnCode==0x01);
             else
             {

@@ -180,9 +180,7 @@ static void writeExclusiveMonsters(std::ostringstream &body,
 {
     if(monsters.empty()) return;
 
-    const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
-    const auto &monsterDefs=CatchChallenger::CommonDatapack::commonDatapack.get_monsters();
-    const auto &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
+    const std::vector<CatchChallenger::Type> &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
 
     body << "<div class=\"subblock\"><div class=\"valuetitle\">Exclusive monsters</div><div class=\"value\">\n";
     body << "<br style=\"clear:both\" />";
@@ -206,8 +204,11 @@ static void writeExclusiveMonsters(std::ostringstream &body,
             count=1;
         }
 
-        auto exIt=monsterExtras.find(id);
-        std::string name=(exIt!=monsterExtras.cend())?exIt->second.name:("Monster #"+std::to_string(id));
+        std::string name;
+        if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(id))
+            name=QtDatapackClientLoader::datapackLoader->get_monsterExtra(id).name;
+        else
+            name="Monster #"+std::to_string(id);
         std::string link=Helper::relUrl(GeneratorMonsters::relativePathForMonster(id));
 
         body << "<tr class=\"value\">\n<td>\n";
@@ -227,12 +228,12 @@ static void writeExclusiveMonsters(std::ostringstream &body,
 
         // Types
         body << "<td>\n";
-        auto mIt=monsterDefs.find(id);
-        if(mIt!=monsterDefs.cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(id))
         {
+            const CatchChallenger::Monster &monDef=CatchChallenger::CommonDatapack::commonDatapack.get_monster(id);
             body << "<div class=\"type_label_list\">";
             bool first=true;
-            for(uint8_t t : mIt->second.type)
+            for(uint8_t t : monDef.type)
             {
                 if(!first) body << " ";
                 first=false;

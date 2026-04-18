@@ -410,13 +410,13 @@ private:
     void sendLocalChatText(const std::string &text);
     //seed
     void seedValidated(const uint8_t &plant_id,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
-    void plantSeed(const uint8_t &plant_id);
+    void plantSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id);
     void collectPlant();
 
     void createMemoryClan();
     Direction lookToMove(const Direction &direction);
     //seed
-    void useSeed(const uint8_t &plant_id,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
+    void useSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
     //crafting
     void useRecipe(const uint8_t &query_id, const uint16_t &recipe_id);
     void takeAnObjectOnMap();

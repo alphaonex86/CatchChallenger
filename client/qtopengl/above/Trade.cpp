@@ -385,13 +385,12 @@ void Trade::tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster)
     tradeOtherMonsters.push_back(monster);
     // add to other player list display
     QListWidgetItem *listItem=new QListWidgetItem();
-    if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monster.monster)!=
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monster.monster))
     {
         listItem->setText(tr("%1 Lv.%2").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name)).arg(monster.level));
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).name)).arg(monster.level));
         listItem->setIcon(QPixmap(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).frontPath)));
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).frontPath)));
     }
     else
         listItem->setText(tr("Monster Lv.%1").arg(monster.level));
@@ -404,10 +403,9 @@ void Trade::updateCurrentItemsDisplay()
     for(const auto &obj : tradeCurrentObjects)
     {
         QListWidgetItem *item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(obj.first)!=
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(obj.first))
         {
-            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(obj.first);
+            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(obj.first);
             item->setText(tr("%1 x%2").arg(QString::fromStdString(extra.name)).arg(obj.second));
             item->setIcon(QPixmap(QString::fromStdString(extra.imagePath)));
         }
@@ -419,13 +417,12 @@ void Trade::updateCurrentItemsDisplay()
     for(const auto &m : tradeCurrentMonsters)
     {
         QListWidgetItem *item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(m.monster)!=
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(m.monster))
         {
             item->setText(tr("%1 Lv.%2").arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(m.monster).name)).arg(m.level));
+                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).name)).arg(m.level));
             item->setIcon(QPixmap(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(m.monster).frontPath)));
+                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).frontPath)));
         }
         else
             item->setText(tr("Monster Lv.%1").arg(m.level));
@@ -439,10 +436,9 @@ void Trade::updateOtherItemsDisplay()
     for(const auto &obj : tradeOtherObjects)
     {
         QListWidgetItem *item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(obj.first)!=
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(obj.first))
         {
-            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(obj.first);
+            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(obj.first);
             item->setText(tr("%1 x%2").arg(QString::fromStdString(extra.name)).arg(obj.second));
             item->setIcon(QPixmap(QString::fromStdString(extra.imagePath)));
         }
@@ -453,13 +449,12 @@ void Trade::updateOtherItemsDisplay()
     for(const auto &m : tradeOtherMonsters)
     {
         QListWidgetItem *item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(m.monster)!=
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(m.monster))
         {
             item->setText(tr("%1 Lv.%2").arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(m.monster).name)).arg(m.level));
+                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).name)).arg(m.level));
             item->setIcon(QPixmap(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(m.monster).frontPath)));
+                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).frontPath)));
         }
         else
             item->setText(tr("Monster Lv.%1").arg(m.level));

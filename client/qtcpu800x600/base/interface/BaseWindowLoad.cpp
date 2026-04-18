@@ -381,10 +381,10 @@ void BaseWindow::updatePlayerType()
     if(isAdmin)
     {
         ui->listAllItem->clear();
-        for (const auto &n : QtDatapackClientLoader::datapackLoader->get_itemsExtra())
-        {
-            const uint16_t &itemId=n.first;
-            const DatapackClientLoader::ItemExtra &itemsExtra=n.second;
+        for(CATCHCHALLENGER_TYPE_ITEM itemId=1;itemId<=CatchChallenger::CommonDatapack::commonDatapack.get_itemMaxId();itemId++) {
+            if(!QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
+                continue;
+            const DatapackClientLoader::ItemExtra &itemsExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId);
             QListWidgetItem *item=new QListWidgetItem();
             item->setText(QString::fromStdString(itemsExtra.name));
             item->setData(99,itemId);
@@ -528,13 +528,13 @@ void BaseWindow::load_inventory()
             {
                 case ObjectType_Seed:
                     //reputation requierement control is into load_plant_inventory() NOT: on_listPlantList_itemSelectionChanged()
-                    if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(i->first)!=QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
+                    if(QtDatapackClientLoader::datapackLoader->has_itemToPlant(i->first))
                         show=true;
                 break;
                 case ObjectType_UseInFight:
-                    if(client->isInFightWithWild() && CommonDatapack::commonDatapack.get_items().trap.find(i->first)!=CommonDatapack::commonDatapack.get_items().trap.cend())
+                    if(client->isInFightWithWild() && CommonDatapack::commonDatapack.has_trap(i->first))
                         show=true;
-                    else if(CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(i->first)!=CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend())
+                    else if(CommonDatapack::commonDatapack.has_monsterItemEffect(i->first))
                         show=true;
                     else
                         show=false;
@@ -549,12 +549,12 @@ void BaseWindow::load_inventory()
             QListWidgetItem *item=new QListWidgetItem();
             items_to_graphical[i->first]=item;
             items_graphical[item]=i->first;
-            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(i->first)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(i->first))
             {
                 item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(i->first).image);
                 if(i->second>1)
                     item->setText(QString::number(i->second));
-                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(i->first).name));
+                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(i->first).name));
             }
             else
             {
@@ -611,7 +611,7 @@ void BaseWindow::datapackParsedMainSub()
 
     //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
     mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
-    if(!client->setMapNumber(QtDatapackClientLoader::datapackLoader->get_mapToId().size()))
+    if(!client->setMapNumber(QtDatapackClientLoader::datapackLoader->get_mapToId_size()))
         emit newError(tr("Internal error").toStdString(),"No map loaded to call client->setMapNumber()");
 
     have_main_and_sub_datapack_loaded();
@@ -980,7 +980,7 @@ void BaseWindow::show_reputation()
         {
             if((i->second.level+1)==(int32_t)CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).reputation_positive.size())
                 html+=QStringLiteral("<li>100% %1</li>")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(
                              CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).name
                              ).reputation_positive.back())).toStdString();
             else
@@ -991,7 +991,7 @@ void BaseWindow::show_reputation()
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                std::string text=QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(
+                std::string text=QtDatapackClientLoader::datapackLoader->get_reputationExtra(
                             CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).name
                             ).reputation_positive.at(i->second.level);
                 html+=QStringLiteral("<li>%1% %2</li>").arg((i->second.point*100)/next_level_xp).arg(QString::fromStdString(text)).toStdString();
@@ -1001,7 +1001,7 @@ void BaseWindow::show_reputation()
         {
             if((-i->second.level)==(int32_t)CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).reputation_negative.size())
                 html+=QStringLiteral("<li>100% %1</li>")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(
                              CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).name
                              ).reputation_negative.back())).toStdString();
             else
@@ -1012,7 +1012,7 @@ void BaseWindow::show_reputation()
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                std::string text=QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(
+                std::string text=QtDatapackClientLoader::datapackLoader->get_reputationExtra(
                             CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).name
                             ).reputation_negative.at(-i->second.level-1);
                 html+=QStringLiteral("<li>%1% %2</li>")
@@ -1152,11 +1152,11 @@ void BaseWindow::updateDisplayedQuests()
     auto i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
-        if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(i->first)!=QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_questExtra(i->first))
         {
             if(i->second.step>0)
             {
-                QListWidgetItem * item=new QListWidgetItem(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questsExtra().at(i->first).name));
+                QListWidgetItem * item=new QListWidgetItem(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questExtra(i->first).name));
                 quests_to_id_graphical[item]=i->first;
                 ui->questsList->addItem(item);
             }
@@ -1165,14 +1165,14 @@ void BaseWindow::updateDisplayedQuests()
                 if(Ultimate::ultimate.isUltimate())
                 {
                     html+="<li>";
-                    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(i->first).repeatable)
+                    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(i->first).repeatable)
                         html+=imagesInterfaceRepeatableString;
                     if(i->second.step>0)
                         html+=imagesInterfaceInProgressString;
-                    html+=QtDatapackClientLoader::datapackLoader->get_questsExtra().at(i->first).name+"</li>";
+                    html+=QtDatapackClientLoader::datapackLoader->get_questExtra(i->first).name+"</li>";
                 }
                 else
-                    html+="<li>"+QtDatapackClientLoader::datapackLoader->get_questsExtra().at(i->first).name+"</li>";
+                    html+="<li>"+QtDatapackClientLoader::datapackLoader->get_questExtra(i->first).name+"</li>";
             }
         }
         ++i;
@@ -1206,7 +1206,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    const DatapackClientLoader::QuestExtra &questExtra=QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId);
+    const DatapackClientLoader::QuestExtra &questExtra=QtDatapackClientLoader::datapackLoader->get_questExtra(questId);
     if(playerInformations.quests.at(questId).step==0 ||
             playerInformations.quests.at(questId).step>questExtra.steps.size())
     {
@@ -1229,7 +1229,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     stepDescription+="<br />";
     std::string stepRequirements;
     {
-        std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId)
+        std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId)
                 .steps.at(playerInformations.quests.at(questId).step-1).requirements.items;
         std::vector<std::string> objects;
         unsigned int index=0;
@@ -1237,10 +1237,10 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         {
             QPixmap image;
             std::string name;
-            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(items.at(index).item)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(items.at(index).item))
             {
                 image=QtDatapackClientLoader::datapackLoader->getItemExtra(items.at(index).item).image;
-                name=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(items.at(index).item).name;
+                name=QtDatapackClientLoader::datapackLoader->get_itemExtra(items.at(index).item).name;
             }
             else
             {
@@ -1275,18 +1275,17 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     {
         finalRewards+=tr("Final rewards: ").toStdString();
         {
-            std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId).rewards.items;
+            std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId).rewards.items;
             std::vector<std::string> objects;
             unsigned int index=0;
             while(index<items.size())
             {
                 QPixmap image;
                 std::string name;
-                if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(items.at(index).item)!=
-                        QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+                if(QtDatapackClientLoader::datapackLoader->has_itemExtra(items.at(index).item))
                 {
                     image=QtDatapackClientLoader::datapackLoader->getItemExtra(items.at(index).item).image;
-                    name=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(items.at(index).item).name;
+                    name=QtDatapackClientLoader::datapackLoader->get_itemExtra(items.at(index).item).name;
                 }
                 else
                 {
@@ -1318,23 +1317,22 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=stringimplode(objects,", ")+"<br />";
         }
         {
-            std::vector<ReputationRewards> reputationRewards=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId).rewards.reputation;
+            std::vector<ReputationRewards> reputationRewards=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId).rewards.reputation;
             std::vector<std::string> reputations;
             unsigned int index=0;
             while(index<reputationRewards.size())
             {
-                if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
+                if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(
                             CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(
                                                        reputationRewards.at(index).reputationId).name
-                            )!=
-                        QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
+                            ))
                 {
                     const std::string &reputationName=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(
                                 reputationRewards.at(index).reputationId).name;
                     if(reputationRewards.at(index).point<0)
-                        reputations.push_back(tr("Less reputation for %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputationName).name)).toStdString());
+                        reputations.push_back(tr("Less reputation for %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationName).name)).toStdString());
                     if(reputationRewards.at(index).point>0)
-                        reputations.push_back(tr("More reputation for %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputationName).name)).toStdString());
+                        reputations.push_back(tr("More reputation for %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationName).name)).toStdString());
                 }
                 index++;
             }
@@ -1347,7 +1345,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=stringimplode(reputations,", ")+"<br />";
         }
         {
-            const auto &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+            const auto &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
             if(quest.rewards.allowCreateClan)
                 finalRewards+=tr("Add permission to create clan").toStdString()+"<br />";
         }
@@ -1360,13 +1358,12 @@ QListWidgetItem * BaseWindow::itemToGraphic(const uint16_t &itemid, const uint32
 {
     QListWidgetItem *item=new QListWidgetItem();
     item->setData(99,itemid);
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemid)!=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemid))
     {
         item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemid).image);
         if(quantity>1)
             item->setText(QString::number(quantity));
-        item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemid).name));
+        item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(itemid).name));
     }
     else
     {
@@ -1486,9 +1483,9 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
         return;
     }
 
-    const Monster &monsterCommon=CommonDatapack::commonDatapack.get_monsters().at(static_cast<uint16_t>(item->data(99).toUInt()));
+    const Monster &monsterCommon=CommonDatapack::commonDatapack.get_monster(static_cast<uint16_t>(item->data(99).toUInt()));
     const DatapackClientLoader::MonsterExtra &monsterExtra=
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(static_cast<uint16_t>(item->data(99).toUInt()));
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra(static_cast<uint16_t>(item->data(99).toUInt()));
     ui->labelEncyclopediaMonster->setText("");
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
@@ -1524,9 +1521,9 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
             while(sub_index<types.size())
             {
                 const auto &typeSub=types.at(sub_index);
-                if(QtDatapackClientLoader::datapackLoader->get_typeExtra().find(typeSub)!=QtDatapackClientLoader::datapackLoader->get_typeExtra().cend())
+                if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeSub))
                 {
-                    const DatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra().at(typeSub);
+                    const DatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra(typeSub);
                     if(!typeExtra.name.empty())
                     {
                         std::vector<char> data;
@@ -1554,9 +1551,9 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaItem_itemActivated(QL
         return;
     }
 
-    const Item &itemCommon=CommonDatapack::commonDatapack.get_items().item.at(static_cast<uint16_t>(item->data(99).toUInt()));
+    const Item &itemCommon=CommonDatapack::commonDatapack.get_item(static_cast<uint16_t>(item->data(99).toUInt()));
     const DatapackClientLoader::ItemExtra &itemExtra=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(static_cast<uint16_t>(item->data(99).toUInt()));
+            QtDatapackClientLoader::datapackLoader->get_itemExtra(static_cast<uint16_t>(item->data(99).toUInt()));
     ui->labelEncyclopediaItem->setText("");
     QByteArray byteArray;
     QBuffer buffer(&byteArray);

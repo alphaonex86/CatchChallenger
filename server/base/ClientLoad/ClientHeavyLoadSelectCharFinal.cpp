@@ -262,13 +262,13 @@ void Client::characterIsRightSendData()
         if(public_and_private_informations.encyclopedia_item!=NULL)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(CommonDatapack::commonDatapack.get_items().itemMaxId==0)
+            if(CommonDatapack::commonDatapack.get_itemMaxId()==0)
             {
                 errorOutput("CommonDatapack::commonDatapack.items.itemMaxId==0");
                 return;
             }
             #endif
-            const auto &binarySize=CommonDatapack::commonDatapack.get_items().itemMaxId/8+1;
+            const auto &binarySize=CommonDatapack::commonDatapack.get_itemMaxId()/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_item,binarySize);

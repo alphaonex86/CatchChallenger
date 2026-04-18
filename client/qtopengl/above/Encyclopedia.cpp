@@ -278,8 +278,11 @@ void Encyclopedia::populateMonsterList()
 
     // get all monster IDs and sort
     std::vector<uint16_t> monsterIds;
-    for(const auto &pair : QtDatapackClientLoader::datapackLoader->get_monsterExtra())
-        monsterIds.push_back(pair.first);
+    for(CATCHCHALLENGER_TYPE_MONSTER id=1;id<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();id++) {
+        if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(id))
+            continue;
+        monsterIds.push_back(id);
+    }
     std::sort(monsterIds.begin(),monsterIds.end());
 
     QFont unknownFont;
@@ -299,7 +302,7 @@ void Encyclopedia::populateMonsterList()
 
         if(known)
         {
-            const QtDatapackClientLoader::MonsterExtra &extra=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monsterId);
+            const QtDatapackClientLoader::MonsterExtra &extra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterId);
             item->setText(QString::fromStdString(extra.name));
             item->setIcon(QPixmap(QString::fromStdString(extra.frontPath)));
         }
@@ -324,8 +327,11 @@ void Encyclopedia::populateItemList()
 
     // get all item IDs and sort
     std::vector<uint16_t> itemIds;
-    for(const auto &pair : QtDatapackClientLoader::datapackLoader->get_itemsExtra())
-        itemIds.push_back(pair.first);
+    for(CATCHCHALLENGER_TYPE_ITEM id=1;id<=CatchChallenger::CommonDatapack::commonDatapack.get_itemMaxId();id++) {
+        if(!QtDatapackClientLoader::datapackLoader->has_itemExtra(id))
+            continue;
+        itemIds.push_back(id);
+    }
     std::sort(itemIds.begin(),itemIds.end());
 
     QFont unknownFont;
@@ -345,7 +351,7 @@ void Encyclopedia::populateItemList()
 
         if(known)
         {
-            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId);
+            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId);
             item->setText(QString::fromStdString(extra.name));
             item->setIcon(QPixmap(QString::fromStdString(extra.imagePath)));
         }
@@ -375,22 +381,20 @@ void Encyclopedia::on_monsterList_itemSelectionChanged()
         return;
     }
 
-    if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monsterId)==
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterId))
     {
         description->setHtml(tr("Monster data not found"));
         return;
     }
 
-    const QtDatapackClientLoader::MonsterExtra &extra=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monsterId);
+    const QtDatapackClientLoader::MonsterExtra &extra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterId);
     QString html;
     html+=QStringLiteral("<b>%1</b><br/>").arg(QString::fromStdString(extra.name));
     html+=QString::fromStdString(extra.description);
 
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monsterId)!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
     {
-        const CatchChallenger::Monster &monsterDef=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monsterId);
+        const CatchChallenger::Monster &monsterDef=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId);
         // show types
         if(!monsterDef.type.empty())
         {
@@ -400,9 +404,8 @@ void Encyclopedia::on_monsterList_itemSelectionChanged()
             {
                 if(tIndex>0)
                     html+=QStringLiteral(", ");
-                if(QtDatapackClientLoader::datapackLoader->get_typeExtra().find(monsterDef.type.at(tIndex))!=
-                        QtDatapackClientLoader::datapackLoader->get_typeExtra().cend())
-                    html+=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_typeExtra().at(monsterDef.type.at(tIndex)).name);
+                if(QtDatapackClientLoader::datapackLoader->has_typeExtra(monsterDef.type.at(tIndex)))
+                    html+=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_typeExtra(monsterDef.type.at(tIndex)).name);
                 else
                     html+=tr("Type %1").arg(monsterDef.type.at(tIndex));
                 tIndex++;
@@ -428,22 +431,20 @@ void Encyclopedia::on_itemList_itemSelectionChanged()
         return;
     }
 
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)==
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
     {
         description->setHtml(tr("Item data not found"));
         return;
     }
 
-    const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId);
+    const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId);
     QString html;
     html+=QStringLiteral("<b>%1</b><br/>").arg(QString::fromStdString(extra.name));
     html+=QString::fromStdString(extra.description);
 
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.find(itemId)!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_items().item.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_item(itemId))
     {
-        const CatchChallenger::Item &itemDef=CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(itemId);
+        const CatchChallenger::Item &itemDef=CatchChallenger::CommonDatapack::commonDatapack.get_item(itemId);
         if(itemDef.price>0)
             html+=QStringLiteral("<br/>%1: %2$").arg(tr("Price")).arg(itemDef.price);
         else

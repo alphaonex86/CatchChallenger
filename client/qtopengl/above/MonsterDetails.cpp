@@ -221,9 +221,9 @@ void MonsterDetails::setVar(const CatchChallenger::PlayerMonster &monster)
     }
     monsterDetailsName->setGradient(gradient2,gradient1);
 
-    const QtDatapackClientLoader::MonsterExtra &monsterExtraInfo=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster);
+    const QtDatapackClientLoader::MonsterExtra &monsterExtraInfo=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster);
     const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtraInfo=QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster);
-    const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster);
+    const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster.monster);
     const CatchChallenger::Monster::Stat &stat=CatchChallenger::CommonFightEngineBase::getStat(monsterGeneralInfo,monster.level);
 
     QString typeString;
@@ -234,9 +234,9 @@ void MonsterDetails::setVar(const CatchChallenger::PlayerMonster &monster)
         while(sub_index<monsterGeneralInfo.type.size())
         {
             const auto &typeSub=monsterGeneralInfo.type.at(sub_index);
-            if(QtDatapackClientLoader::datapackLoader->get_typeExtra().find(typeSub)!=QtDatapackClientLoader::datapackLoader->get_typeExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeSub))
             {
-                const QtDatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra().at(typeSub);
+                const QtDatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra(typeSub);
                 if(!typeExtra.name.empty())
                 {
                     /*if(typeExtra.color.isValid())
@@ -268,13 +268,11 @@ void MonsterDetails::setVar(const CatchChallenger::PlayerMonster &monster)
     }
     {
         QPixmap catchPixmap;
-        if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(monster.catched_with)!=
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(monster.catched_with))
         {
-            catchPixmap=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(monster.catched_with).imagePath));
+            catchPixmap=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(monster.catched_with).imagePath));
             monsterDetailsCatched->setToolTip(tr("catched with %1")
-                                                  .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra()
-                                                                              .at(monster.catched_with).name)));
+                                                  .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(monster.catched_with).name)));
         }
         else
         {
@@ -311,30 +309,27 @@ void MonsterDetails::setVar(const CatchChallenger::PlayerMonster &monster)
         {
             const CatchChallenger::PlayerMonster::PlayerSkill &monsterSkill=monster.skills.at(indexSkill);
             QListWidgetItem *item;
-            if(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().find(monsterSkill.skill)==
-                    QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().cend())
+            if(!QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(monsterSkill.skill))
                 item=new QListWidgetItem(tr("Unknown skill"));
             else
             {
                 if(monsterSkill.level>1)
                     item=new QListWidgetItem(tr("%1 at level %2").arg(
-                                                 QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
-                                                                        .at(monsterSkill.skill).name)).arg(monsterSkill.level));
+                                                 QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(monsterSkill.skill).name)).arg(monsterSkill.level));
                 else
-                    item=new QListWidgetItem(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(monsterSkill.skill).name));
-                const CatchChallenger::Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(monsterSkill.skill);
+                    item=new QListWidgetItem(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(monsterSkill.skill).name));
+                const CatchChallenger::Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(monsterSkill.skill);
                 item->setText(item->text()+QStringLiteral(" (%1/%2)")
                         .arg(monsterSkill.endurance)
                         .arg(skill.level.at(monsterSkill.level-1).endurance)
                         );
                 if(skill.type!=255)
-                    if(QtDatapackClientLoader::datapackLoader->get_typeExtra().find(skill.type)!=QtDatapackClientLoader::datapackLoader->get_typeExtra().cend())
-                        if(!QtDatapackClientLoader::datapackLoader->get_typeExtra().at(skill.type).name.empty())
-                            item->setText(item->text()+", "+tr("Type: %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_typeExtra()
-                                                                                                      .at(skill.type).name)));
+                    if(QtDatapackClientLoader::datapackLoader->has_typeExtra(skill.type))
+                        if(!QtDatapackClientLoader::datapackLoader->get_typeExtra(skill.type).name.empty())
+                            item->setText(item->text()+", "+tr("Type: %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_typeExtra(skill.type).name)));
                 item->setText(item->text()+"\n"+QString::fromStdString(
-                                  QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(monsterSkill.skill).description));
-                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(monsterSkill.skill).description));
+                                  QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(monsterSkill.skill).description));
+                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillExtra(monsterSkill.skill).description));
             }
             monsterDetailsSkills->addItem(item);
             indexSkill++;

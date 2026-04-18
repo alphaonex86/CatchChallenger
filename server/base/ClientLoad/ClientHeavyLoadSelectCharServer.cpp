@@ -280,15 +280,14 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                             [pos];
                     ++pos;
 
-                    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==
-                            CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+                    if(!CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
                     {
                         normalOutput("wrong value type for quest on map, skip: "+std::to_string(questId));
                         pos+=2;
                         continue;
                     }
 
-                    const Quest &datapackQuest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+                    const Quest &datapackQuest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
                     if(playerQuest.step>datapackQuest.steps.size())
                     {
                         normalOutput("step out of quest range "+std::to_string(playerQuest.step)+", fix for quest: "+std::to_string(questId));
@@ -568,7 +567,7 @@ void Client::loadCharacterByMap_return()
                             normalOutput("character_bymap: plant coords out of range on map: "+std::to_string(map_database_id));
                             continue;
                         }
-                        if(CommonDatapack::commonDatapack.get_plants().find(plant_id)==CommonDatapack::commonDatapack.get_plants().cend())
+                        if(!CommonDatapack::commonDatapack.has_plant(plant_id))
                         {
                             normalOutput("character_bymap: unknown plant_id: "+std::to_string(plant_id)+" on map: "+std::to_string(map_database_id));
                             continue;

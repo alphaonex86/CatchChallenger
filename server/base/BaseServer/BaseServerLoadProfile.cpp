@@ -214,7 +214,7 @@ void BaseServer::preload_18_sync_profile()
                 while(monsterIndex<monsters.size())
                 {
                     const auto &monster=monsters.at(monsterIndex);
-                    const auto &monsterDatapack=CommonDatapack::commonDatapack.get_monsters().at(monster.id);
+                    const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monster(monster.id);
                     std::vector<CatchChallenger::PlayerMonster::PlayerSkill> skills_list=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
                     if(skills_list.empty())
                     {

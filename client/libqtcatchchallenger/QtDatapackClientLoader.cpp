@@ -166,14 +166,6 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     serialBuffer >> monsterExtra;
                     serialBuffer >> monsterBuffsExtra;
                     serialBuffer >> reputationNameToId;//used by client->player_informations.reputation[reputationId]
-                    {
-                        std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId;
-                        std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId;
-                        serialBuffer >> tempNameToItemId;
-                        serialBuffer >> tempNameToMonsterId;
-                        CatchChallenger::CommonDatapack::commonDatapack.set_tempNameToItemId(tempNameToItemId);
-                        CatchChallenger::CommonDatapack::commonDatapack.set_tempNameToMonsterId(tempNameToMonsterId);
-                    }
                     auto end_time = std::chrono::high_resolution_clock::now();
                     auto time = end_time - start_time;
                     std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
@@ -211,7 +203,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         parseBuffExtra();
 
         #ifdef CATCHCHALLENGER_CACHE_HPS
-            if(!cachepath.empty() && !CatchChallenger::CommonDatapack::commonDatapack.get_monsters().empty())
+            if(!cachepath.empty() && CatchChallenger::CommonDatapack::commonDatapack.get_monsters_size()>0)
             {
                 std::ofstream out_file(cachepath+".tmp", std::ofstream::binary);
                 if(out_file.good() && out_file.is_open())
@@ -229,8 +221,6 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     hps::to_stream(monsterExtra, out_file);
                     hps::to_stream(monsterBuffsExtra, out_file);
                     hps::to_stream(reputationNameToId, out_file);//used by client->player_informations.reputation[reputationId]
-                    hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToItemId(), out_file);
-                    hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToMonsterId(), out_file);
                     hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp, out_file);
                     out_file.flush();
                     out_file.close();
@@ -601,13 +591,12 @@ void QtDatapackClientLoader::parseMonstersExtra()
         }
         tinyxml2::XMLDocument *domDocument=NULL;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
-                CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         else
         {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
+            const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
                 std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
@@ -642,8 +631,7 @@ void QtDatapackClientLoader::parseMonstersExtra()
                 else
                 {
                     const uint16_t id=static_cast<uint16_t>(tempid);
-                    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(id)
-                            ==CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(id))
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster list into monster extra: child->Name(): %2")
                                      .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
@@ -798,19 +786,19 @@ void QtDatapackClientLoader::parseMonstersExtra()
     }
 
     auto start_time2 = std::chrono::high_resolution_clock::now();
-    auto i=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().begin();
-    while(i!=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+    for(CATCHCHALLENGER_TYPE_MONSTER monsterId=1;monsterId<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();monsterId++)
     {
-        if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(i->first)==
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
+            continue;
+        if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(monsterId)==
                 QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
         {
-            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i->first));
+            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(monsterId));
             QtDatapackClientLoader::MonsterExtra monsterExtraEntry;
             monsterExtraEntry.name=tr("Unknown").toStdString();
             monsterExtraEntry.description=tr("Unknown").toStdString();
-            QtDatapackClientLoader::datapackLoader->monsterExtra[i->first]=monsterExtraEntry;
+            QtDatapackClientLoader::datapackLoader->monsterExtra[monsterId]=monsterExtraEntry;
         }
-        ++i;
     }
     auto end_time2 = std::chrono::high_resolution_clock::now();
     auto time2 = end_time2 - start_time2;
@@ -845,13 +833,12 @@ void QtDatapackClientLoader::parseBuffExtra()
         const std::string dotgif(".gif");
         tinyxml2::XMLDocument *domDocument;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
-                CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         else
         {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
+            const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
                 std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
@@ -887,8 +874,7 @@ void QtDatapackClientLoader::parseBuffExtra()
                 else
                 {
                     const uint8_t &id=static_cast<uint8_t>(tempid);
-                    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().find(id)==
-                            CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().cend())
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterBuff(id))
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster buff list into buff extra: child->Name(): %2")
                                      .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
@@ -968,22 +954,22 @@ void QtDatapackClientLoader::parseBuffExtra()
         file_index++;
     }
 
-    auto i=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().begin();
-    while(i!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().cend())
+    for(CATCHCHALLENGER_TYPE_BUFF buffId=1;buffId<=255;buffId++)
     {
-        if(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.find(i->first)==
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterBuff(buffId))
+            continue;
+        if(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.find(buffId)==
                 QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
         {
-            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i->first));
+            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(buffId));
             QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
             QtDatapackClientLoader::QtBuffExtra QtmonsterBuffExtraEntry;
             monsterBuffExtraEntry.name=tr("Unknown").toStdString();
             monsterBuffExtraEntry.description=tr("Unknown").toStdString();
             QtmonsterBuffExtraEntry.icon=QPixmap(":/CC/images/interface/buff.png");
-            QtDatapackClientLoader::datapackLoader->monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
-            QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[i->first]=QtmonsterBuffExtraEntry;
+            QtDatapackClientLoader::datapackLoader->monsterBuffsExtra[buffId]=monsterBuffExtraEntry;
+            QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[buffId]=QtmonsterBuffExtraEntry;
         }
-        ++i;
     }
 
     qDebug() << QStringLiteral("%1 buff(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.size());
@@ -995,23 +981,24 @@ void QtDatapackClientLoader::parsePlantsExtra()
     const std::string &text_dotpng=".png";
     const std::string &text_dotgif=".gif";
     const std::string &basePath=datapackPath+DATAPACK_BASE_PATH_PLANTS;
-    auto i = CatchChallenger::CommonDatapack::commonDatapack.get_plants().begin();
-    while (i != CatchChallenger::CommonDatapack::commonDatapack.get_plants().cend()) {
+    for(CATCHCHALLENGER_TYPE_PLANT plantId=1;plantId<=255;plantId++)
+    {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_plant(plantId))
+            continue;
         //todo load in parallel into QImage on only after pass to tileset into the main tile
         //try load the tileset
         QtDatapackClientLoader::QtPlantExtra plant;
         plant.tileset=Tiled::Tileset::create(QString::fromStdString(text_plant),16,32);
-        const std::string &path=basePath+std::to_string(i->first)+text_dotpng;
+        const std::string &path=basePath+std::to_string(plantId)+text_dotpng;
         if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path)),QString::fromStdString(path)))
         {
-            const std::string &path=basePath+std::to_string(i->first)+text_dotgif;
-            if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path)),QString::fromStdString(path)))
+            const std::string &path2=basePath+std::to_string(plantId)+text_dotgif;
+            if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path2)),QString::fromStdString(path2)))
                 if(!plant.tileset->loadFromImage(QImage(QStringLiteral(":/CC/images/plant/unknow_plant.png")),QStringLiteral(":/CC/images/plant/unknow_plant.png")))
                     qDebug() << "Unable the load the default plant tileset";
         }
-        QtDatapackClientLoader::datapackLoader->QtplantExtra[i->first]=plant;
-        itemToPlants[CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(i->first).itemUsed]=i->first;
-        ++i;
+        QtDatapackClientLoader::datapackLoader->QtplantExtra[plantId]=plant;
+        itemToPlants[CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).itemUsed]=plantId;
     }
 
     qDebug() << QStringLiteral("%1 plant(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->QtplantExtra.size());

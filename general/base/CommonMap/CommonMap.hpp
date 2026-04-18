@@ -2,7 +2,6 @@
 #define CATCHCHALLENGER_MAP_H
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <utility>
 
@@ -18,29 +17,34 @@
 
 namespace CatchChallenger {
 
+#ifndef CATCHCHALLENGER_NOXML
 struct UnknownMovingEntry {
     std::string type;
     uint32_t object_x;
     uint32_t object_y;
-    std::unordered_map<std::string,std::string> property_text;
+    catchchallenger_datapack_map<std::string,std::string> property_text;
 };
 struct UnknownObjectEntry {
     std::string type;
     uint32_t object_x;
     uint32_t object_y;
-    std::unordered_map<std::string,std::string> property_text;
+    catchchallenger_datapack_map<std::string,std::string> property_text;
 };
 struct UnknownBotStepEntry {
     uint32_t object_x;
     uint32_t object_y;
-    #ifndef CATCHCHALLENGER_NOXML
     const tinyxml2::XMLElement *step;
-    #else
-    const void *step;
-    #endif
 };
 
-//the only visible map is loaded on client, all map on server
+struct MapLoadBuffers {
+    std::vector<UnknownMovingEntry> unknownMovingBuffer;
+    std::vector<UnknownObjectEntry> unknownObjectBuffer;
+    std::vector<UnknownBotStepEntry> unknownBotStepBuffer;
+};
+#endif
+
+/* the map logic, this is CRITICAL PART, maintained in memory all the time, then NOT add more data without request
+ * not store buffer/temporary object because have big risk to be stored in cache, all the data here will be stored in cache */
 class DLL_PUBLIC CommonMap : public BaseMap
 {
 public:
@@ -70,20 +74,6 @@ public:
     std::vector<uint8_t> flat_simplified_map;
 
     std::vector<Teleporter> teleporters;
-
-    //buffer unknown entries for later processing by server
-    std::vector<UnknownMovingEntry> unknownMovingBuffer;
-    std::vector<UnknownObjectEntry> unknownObjectBuffer;
-    #ifndef CATCHCHALLENGER_NOXML
-    std::vector<UnknownBotStepEntry> unknownBotStepBuffer;
-    #endif
-
-    //extra parse function, buffer unknown data for later processing
-    bool parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);
-    bool parseUnknownObject(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);
-    #ifndef CATCHCHALLENGER_NOXML
-    bool parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step);
-    #endif
 
 };
 }

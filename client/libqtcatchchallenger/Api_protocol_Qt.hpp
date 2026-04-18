@@ -56,7 +56,7 @@ public:
     void message(const std::string &message) override;
     void lastReplyTime(const uint32_t &time) override;
 
-    void useSeed(const uint8_t &plant_id);
+    void useSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id);
     void collectMaturePlant();
     void destroyObject(const CATCHCHALLENGER_TYPE_ITEM &object,const uint32_t &quantity=1);
 

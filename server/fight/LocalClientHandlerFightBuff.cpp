@@ -41,7 +41,7 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
     const int &returnCode=CommonFightEngine::addCurrentBuffEffect(effect);
     if(returnCode==-2)
         return returnCode;
-    if(CommonDatapack::commonDatapack.get_monsterBuffs().at(effect.buff).level.at(effect.level-1).duration==Buff::Duration_Always)
+    if(CommonDatapack::commonDatapack.get_monsterBuff(effect.buff).level.at(effect.level-1).duration==Buff::Duration_Always)
     {
         //if(returnCode==-1)
             switch(effect.on)

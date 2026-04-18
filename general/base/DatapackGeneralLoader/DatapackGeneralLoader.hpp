@@ -23,15 +23,12 @@ public:
     static std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> loadQuests(const std::string &folder, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     static std::pair<bool,Quest> loadSingleQuest(const std::string &file,const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     static std::unordered_map<uint8_t,Plant> loadPlants(const std::string &file);
-    static std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> > loadCraftingRecipes(
-            const std::string &file, const std::unordered_map<uint16_t, Item> &items, uint16_t &crafingRecipesMaxId);
+    static std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> > loadCraftingRecipes(
+            const std::string &file, const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> &items, CATCHCHALLENGER_TYPE_CRAFTINGRECIPE &crafingRecipesMaxId);
     static ItemFull loadItems(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> &tempNameToItemId,const std::string &folder, const std::unordered_map<uint8_t, Buff> &monsterBuffs);
     #endif
     DLL_PUBLIC static std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > loadProfileList(const std::string &datapackPath, const std::string &file,
-                                                                      #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                                      const std::unordered_map<uint16_t, Item> &items,
-                                                                      #endif // CATCHCHALLENGER_CLASS_MASTER
-                                                                      const std::unordered_map<uint16_t,Monster> &monsters,const std::vector<Reputation> &reputations);
+                                                                      const std::vector<Reputation> &reputations);
     DLL_PUBLIC static std::vector<ServerSpecProfile> loadServerProfileList(
             const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file, const std::vector<Profile> &profileCommon,
             const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
@@ -41,6 +38,8 @@ public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     static std::unordered_map<uint16_t,std::vector<MonsterDrops> > loadMonsterDrop(
             const std::string &folder, const std::unordered_map<uint16_t, Item> &items,const std::unordered_map<uint16_t,Monster> &monsters);
+    static std::unordered_map<uint16_t,std::vector<MonsterDrops> > loadMonsterDrop(
+            const std::string &folder);
     static std::vector<MonstersCollisionTemp> loadMonstersCollision(
             const std::string &file, const std::unordered_map<uint16_t, Item> &items, const std::vector<Event> &events);
     static LayersOptions loadLayersOptions(const std::string &file);

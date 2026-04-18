@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <utility>
 
 #include "../../general/base/lib.h"
@@ -76,7 +75,7 @@ public:
     struct QuestExtra
     {
         std::string name;
-        std::unordered_map<uint32_t,QuestTextExtra> text;
+        catchchallenger_datapack_map<uint32_t,QuestTextExtra> text;
         std::vector<std::string> steps;
         bool showRewards;
         bool autostep;
@@ -86,7 +85,7 @@ public:
     {
         ZONE_TYPE id;
         std::string name;
-        std::unordered_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;
+        catchchallenger_datapack_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;
     };
     /*struct BotFightExtra
     {
@@ -219,61 +218,105 @@ public:
         uint8_t x,y;
     };
 public:
-    const std::unordered_map<uint8_t,TypeExtra> &get_typeExtra() const;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra> &get_monsterExtra() const;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff> &get_monsterBuffsExtra() const;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,MonsterExtra::Skill> &get_monsterSkillsExtra() const;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,ItemExtra> &get_itemsExtra() const;
-    const std::unordered_map<std::string,ReputationExtra> &get_reputationExtra() const;
-    const std::unordered_map<std::string,uint8_t> &get_reputationNameToId() const;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> &get_itemToPlants() const;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> &get_questsExtra() const;
-    const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_QUEST> &get_questsPathToId() const;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> &get_botToQuestStart() const;
-    //const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,BotFightExtra>> &get_botFightsExtra() const;-> load ondemand with map
-    const std::unordered_map<std::string,ZoneExtra> &get_zonesExtra() const;
-    const std::unordered_map<std::string,std::string> &get_audioAmbiance() const;
-    const std::unordered_map<uint32_t,ProfileText> &get_profileTextList() const;
-    const std::unordered_map<std::string,VisualCategory> &get_visualCategories() const;
+    //typeExtra
+    size_t get_typeExtra_size() const;
+    const TypeExtra &get_typeExtra(const uint8_t &key) const;
+    bool has_typeExtra(const uint8_t &key) const;
+    //monsterExtra
+    size_t get_monsterExtra_size() const;
+    const MonsterExtra &get_monsterExtra(const CATCHCHALLENGER_TYPE_MONSTER &key) const;
+    bool has_monsterExtra(const CATCHCHALLENGER_TYPE_MONSTER &key) const;
+    //monsterBuffsExtra
+    size_t get_monsterBuffsExtra_size() const;
+    const MonsterExtra::Buff &get_monsterBuffExtra(const CATCHCHALLENGER_TYPE_MONSTER &key) const;
+    bool has_monsterBuffExtra(const CATCHCHALLENGER_TYPE_MONSTER &key) const;
+    //monsterSkillsExtra
+    size_t get_monsterSkillsExtra_size() const;
+    const MonsterExtra::Skill &get_monsterSkillExtra(const CATCHCHALLENGER_TYPE_SKILL &key) const;
+    bool has_monsterSkillExtra(const CATCHCHALLENGER_TYPE_SKILL &key) const;
+    //itemsExtra
+    size_t get_itemsExtra_size() const;
+    const ItemExtra &get_itemExtra(const CATCHCHALLENGER_TYPE_ITEM &key) const;
+    bool has_itemExtra(const CATCHCHALLENGER_TYPE_ITEM &key) const;
+    //reputationExtra
+    size_t get_reputationExtra_size() const;
+    const ReputationExtra &get_reputationExtra(const std::string &key) const;
+    bool has_reputationExtra(const std::string &key) const;
+    //reputationNameToId
+    size_t get_reputationNameToId_size() const;
+    uint8_t get_reputationNameToId(const std::string &key) const;
+    bool has_reputationNameToId(const std::string &key) const;
+    //itemToPlants
+    size_t get_itemToPlants_size() const;
+    uint8_t get_itemToPlant(const CATCHCHALLENGER_TYPE_ITEM &key) const;
+    bool has_itemToPlant(const CATCHCHALLENGER_TYPE_ITEM &key) const;
+    //questsExtra
+    size_t get_questsExtra_size() const;
+    const QuestExtra &get_questExtra(const CATCHCHALLENGER_TYPE_QUEST &key) const;
+    bool has_questExtra(const CATCHCHALLENGER_TYPE_QUEST &key) const;
+    //questsPathToId
+    size_t get_questsPathToId_size() const;
+    CATCHCHALLENGER_TYPE_QUEST get_questPathToId(const std::string &key) const;
+    bool has_questPathToId(const std::string &key) const;
+    //botToQuestStart (nested: mapId -> botId -> quests)
+    size_t get_botToQuestStart_size() const;
+    bool has_botToQuestStart(const CATCHCHALLENGER_TYPE_MAPID &mapId) const;
+    bool has_botToQuestStartForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const;
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &get_botToQuestStartForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const;
+    //zonesExtra
+    size_t get_zonesExtra_size() const;
+    const ZoneExtra &get_zoneExtra(const std::string &key) const;
+    bool has_zoneExtra(const std::string &key) const;
+    //audioAmbiance
+    size_t get_audioAmbiance_size() const;
+    const std::string &get_audioAmbiance(const std::string &key) const;
+    bool has_audioAmbiance(const std::string &key) const;
+    //profileTextList
+    size_t get_profileTextList_size() const;
+    const ProfileText &get_profileText(const uint32_t &key) const;
+    bool has_profileText(const uint32_t &key) const;
+    //visualCategories
+    size_t get_visualCategories_size() const;
+    const VisualCategory &get_visualCategory(const std::string &key) const;
+    bool has_visualCategory(const std::string &key) const;
+    //other non-map
     const std::string &get_language() const;
     const CatchChallenger::Bot* getBot(CATCHCHALLENGER_TYPE_MAPID mapIndex, uint8_t x, uint8_t y) const;
     const std::vector<std::string> &get_maps() const;
     const std::vector<std::string> &get_skins() const;
-    ///todo drop the full path and .tmx
-    const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &get_mapToId() const;
-    //const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &get_fullMapPathToId() const;
-    /*const std::unordered_map<std::string,std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM> > &get_itemOnMap() const;
-    const std::unordered_map<std::string, std::unordered_map<std::pair<uint8_t, uint8_t>, uint16_t> > &get_plantOnMap() const;
-    const std::unordered_map<uint16_t,PlantIndexContent> &get_plantIndexOfOnMap() const;*/
+    //mapToId
+    size_t get_mapToId_size() const;
+    CATCHCHALLENGER_TYPE_MAPID get_mapToId(const std::string &key) const;
+    bool has_mapToId(const std::string &key) const;
 protected:
     std::vector<CatchChallenger::CommonMap> mapList;
-    std::unordered_map<uint8_t,TypeExtra> typeExtra;
-    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra> monsterExtra;
-    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff> monsterBuffsExtra;
-    std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,MonsterExtra::Skill> monsterSkillsExtra;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,ItemExtra> itemsExtra;
-    std::unordered_map<std::string,ReputationExtra> reputationExtra;
-    std::unordered_map<std::string,uint8_t> reputationNameToId;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> itemToPlants;
-    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> questsExtra;
-    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_QUEST> questsPathToId;
-    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> botToQuestStart;
-    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot,pairhash>> mapBots;
-    //std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,BotFightExtra>> botFightsExtra;-> load ondemand with map
-    std::unordered_map<std::string,ZoneExtra> zonesExtra;
-    std::unordered_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;
-    std::unordered_map<uint32_t,ProfileText> profileTextList;
-    std::unordered_map<std::string,VisualCategory> visualCategories;
+    catchchallenger_datapack_map<uint8_t,TypeExtra> typeExtra;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra> monsterExtra;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff> monsterBuffsExtra;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,MonsterExtra::Skill> monsterSkillsExtra;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,ItemExtra> itemsExtra;
+    catchchallenger_datapack_map<std::string,ReputationExtra> reputationExtra;
+    catchchallenger_datapack_map<std::string,uint8_t> reputationNameToId;//Player_private_and_public_informations, catchchallenger_datapack_map<uint8_t,PlayerReputation> reputation;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> itemToPlants;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> questsExtra;
+    catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_QUEST> questsPathToId;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> botToQuestStart;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot>> mapBots;
+    //catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BOTID,BotFightExtra>> botFightsExtra;-> load ondemand with map
+    catchchallenger_datapack_map<std::string,ZoneExtra> zonesExtra;
+    catchchallenger_datapack_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;
+    catchchallenger_datapack_map<uint32_t,ProfileText> profileTextList;
+    catchchallenger_datapack_map<std::string,VisualCategory> visualCategories;
     std::string language;
     std::vector<std::string> skins;
     std::vector<std::string> mapIdToPath;
-    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> mapPathToId;//used into parseQuestsExtra()
+    catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_MAPID> mapPathToId;//used into parseQuestsExtra()
     /*
     ///todo drop the full path and .tmx
-    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> fullMapPathToId;
-    std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > itemOnMap;
-    std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > plantOnMap;
-    std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;*/
+    catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_MAPID> fullMapPathToId;
+    catchchallenger_datapack_map<std::string,catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM> > itemOnMap;
+    catchchallenger_datapack_map<std::string,catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM> > plantOnMap;
+    catchchallenger_datapack_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;*/
 public:
     bool isParsingDatapack() const;
     std::string getDatapackPath() const;

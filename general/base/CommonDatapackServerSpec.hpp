@@ -1,7 +1,6 @@
 #ifndef COMMONDATAPACK_ServerSpec_H
 #define COMMONDATAPACK_ServerSpec_H
 
-#include <unordered_map>
 #include <string>
 
 #include "GeneralStructures.hpp"
@@ -15,25 +14,36 @@ public:
 public:
     void unload();
     #ifndef CATCHCHALLENGER_NOXML
-    void parseDatapackAfterZoneAndMap(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode,const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
+    void parseDatapackAfterZoneAndMap(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode,const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     #endif
     bool isParsedContent() const;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 
 public:
-    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> &get_quests() const;
+    //quests
+    size_t get_quests_size() const;
+    const Quest &get_quest(const CATCHCHALLENGER_TYPE_QUEST &key) const;
+    bool has_quest(const CATCHCHALLENGER_TYPE_QUEST &key) const;
+    //serverProfileList
     const std::vector<ServerSpecProfile> &get_serverProfileList() const;
     std::vector<ServerSpecProfile> &get_serverProfileList_rw();
-    const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<MonsterDrops> > &get_monsterDrops() const;
-    const std::unordered_map<std::string,ZONE_TYPE> &get_zoneToId() const;
-    std::unordered_map<std::string,ZONE_TYPE> &get_zoneToId_rw();//doing by server see BaseServerLoad.cpp
+    //monsterDrops
+    size_t get_monsterDrops_size() const;
+    const std::vector<MonsterDrops> &get_monsterDrop(const CATCHCHALLENGER_TYPE_MAPID &key) const;
+    bool has_monsterDrop(const CATCHCHALLENGER_TYPE_MAPID &key) const;
+    //zoneToId
+    size_t get_zoneToId_size() const;
+    ZONE_TYPE get_zoneToId(const std::string &zone) const;
+    bool has_zoneToId(const std::string &zone) const;
+    void set_zoneToId(const std::string &zone, const ZONE_TYPE &id);
+    //idToZone
     const std::vector<std::string> &get_idToZone() const;
     std::vector<std::string> &get_idToZone_rw();//doing by server see BaseServerLoad.cpp
 protected:
-    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> quests;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_QUEST,Quest> quests;
     std::vector<ServerSpecProfile> serverProfileList;
-    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
-    std::unordered_map<std::string,ZONE_TYPE> zoneToId;//temporary var to load zone
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
+    catchchallenger_datapack_map<std::string,ZONE_TYPE> zoneToId;//temporary var to load zone
     std::vector<std::string> idToZone;//to write to db: GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({clan->capturedCity});
 public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -60,8 +70,8 @@ private:
     std::string subDatapackCode;
 private:
     #ifndef CATCHCHALLENGER_NOXML
-    void parseQuests(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
-    void parseServerProfileList(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
+    void parseQuests(const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
+    void parseServerProfileList(const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     #ifdef CATCHCHALLENGER_CLIENT
     void applyMonstersRate();//xp,sp variable by server, only have this second pass on client, take care
     #endif

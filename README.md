@@ -20,7 +20,7 @@ Interface UI is from bought template (then under copyright)
 
 ## Compiling
 
-Use **C++20**, maybe considering C++23 for std::flat_map for datapack in memory data (it's RO data)
+Use **C++11** to **C++23**, C++23 is preferred to use std::flat_map on read only data of datapack where apply (lower RAM and improve speed)
 
 Dependency:
 * zlib (can be disabled but it's for tiled map editor). zstd

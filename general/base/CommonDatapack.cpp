@@ -18,7 +18,7 @@ CommonDatapack CommonDatapack::commonDatapack;
 CommonDatapack::CommonDatapack()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    items.itemMaxId=0;
+    itemMaxId=0;
     layersOptions.zoom=0;
     #endif
     isParsed=false;
@@ -91,9 +91,17 @@ void CommonDatapack::parseSkins()
 void CommonDatapack::parseItems()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    items=DatapackGeneralLoader::loadItems(tempNameToItemId,datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
-    std::cout << items.item.size() << " items(s) loaded" << std::endl;
-    std::cout << items.trap.size() << " trap(s) loaded" << std::endl;
+    ItemFull itemFull=DatapackGeneralLoader::loadItems(tempNameToItemId,datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
+    monsterItemEffect=std::move(itemFull.monsterItemEffect);
+    monsterItemEffectOutOfFight=std::move(itemFull.monsterItemEffectOutOfFight);
+    evolutionItem=std::move(itemFull.evolutionItem);
+    itemToLearn=std::move(itemFull.itemToLearn);
+    repel=std::move(itemFull.repel);
+    items=std::move(itemFull.item);
+    itemMaxId=itemFull.itemMaxId;
+    trap=std::move(itemFull.trap);
+    std::cout << items.size() << " items(s) loaded" << std::endl;
+    std::cout << trap.size() << " trap(s) loaded" << std::endl;
     #endif
 }
 
@@ -101,7 +109,7 @@ void CommonDatapack::parseCraftingRecipes()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     craftingRecipesMaxId=0;
-    std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items.item,craftingRecipesMaxId);
+    std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items,craftingRecipesMaxId);
     craftingRecipes=multipleVariables.first;
     itemToCraftingRecipes=multipleVariables.second;
     std::cout << craftingRecipes.size() << " crafting recipe(s) loaded" << std::endl;
@@ -165,7 +173,7 @@ void CommonDatapack::parseMonsters()
     #endif
     monsters=FightLoader::loadMonster(tempNameToMonsterId,datapackPath+DATAPACK_BASE_PATH_MONSTERS,monsterSkills
                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                      ,types,items.item
+                                      ,types,items
                                       ,monstersMaxId
                                       #endif
                                       );
@@ -175,7 +183,7 @@ void CommonDatapack::parseMonsters()
 void CommonDatapack::parseMonstersCollision()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    monstersCollisionTemp=DatapackGeneralLoader::loadMonstersCollision(datapackPath+DATAPACK_BASE_PATH_MAPBASE+"layers.xml",CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
+    monstersCollisionTemp=DatapackGeneralLoader::loadMonstersCollision(datapackPath+DATAPACK_BASE_PATH_MAPBASE+"layers.xml",CommonDatapack::commonDatapack.items,CommonDatapack::commonDatapack.events);
     for(const MonstersCollisionTemp &i : monstersCollisionTemp)
     {
         MonstersCollision value;
@@ -190,26 +198,23 @@ void CommonDatapack::parseMonstersCollision()
 void CommonDatapack::parseMonstersEvolutionItems()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-    items.evolutionItem=FightLoader::loadMonsterEvolutionItems(monsters);
-    std::cout << items.evolutionItem.size() << " monster evolution items(s) loaded" << std::endl;
+    evolutionItem=FightLoader::loadMonsterEvolutionItems(monsters);
+    std::cout << evolutionItem.size() << " monster evolution items(s) loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseMonstersItemToLearn()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-    items.itemToLearn=FightLoader::loadMonsterItemToEvolution(monsters,items.evolutionItem);
-    std::cout << items.itemToLearn.size() << " monster items(s) to learn loaded" << std::endl;
+    itemToLearn=FightLoader::loadMonsterItemToEvolution(monsters,evolutionItem);
+    std::cout << itemToLearn.size() << " monster items(s) to learn loaded" << std::endl;
     #endif
 }
 
 void CommonDatapack::parseProfileList()
 {
     profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml"
-                                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                       ,items.item
-                                                       #endif // CATCHCHALLENGER_CLASS_MASTER
-                                                       ,monsters,reputation).second;
+                                                       ,reputation).second;
     std::cout << profileList.size() << " profile(s) loaded" << std::endl;
 }
 
@@ -246,11 +251,14 @@ void CommonDatapack::unload()
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     monsterBuffs.clear();
     itemToCraftingRecipes.clear();
-    items.item.clear();
-    items.trap.clear();
-    items.monsterItemEffect.clear();
-    items.evolutionItem.clear();
-    items.repel.clear();
+    monsterItemEffect.clear();
+    monsterItemEffectOutOfFight.clear();
+    evolutionItem.clear();
+    itemToLearn.clear();
+    repel.clear();
+    items.clear();
+    itemMaxId=0;
+    trap.clear();
     #endif // CATCHCHALLENGER_CLASS_MASTER
     profileList.clear();
     #ifndef CATCHCHALLENGER_CLASS_MASTER
@@ -276,143 +284,120 @@ void CommonDatapack::unload()
 }
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-const std::unordered_map<uint8_t,Plant> &CommonDatapack::get_plants() const
+//plants
+size_t CommonDatapack::get_plants_size() const { return plants.size(); }
+const Plant &CommonDatapack::get_plant(const CATCHCHALLENGER_TYPE_PLANT &key) const { return plants.at(key); }
+bool CommonDatapack::has_plant(const CATCHCHALLENGER_TYPE_PLANT &key) const { return plants.find(key)!=plants.cend(); }
+//craftingRecipes
+size_t CommonDatapack::get_craftingRecipes_size() const { return craftingRecipes.size(); }
+const CraftingRecipe &CommonDatapack::get_craftingRecipe(const CATCHCHALLENGER_TYPE_CRAFTINGRECIPE &key) const { return craftingRecipes.at(key); }
+bool CommonDatapack::has_craftingRecipe(const CATCHCHALLENGER_TYPE_CRAFTINGRECIPE &key) const { return craftingRecipes.find(key)!=craftingRecipes.cend(); }
+//itemToCraftingRecipes
+size_t CommonDatapack::get_itemToCraftingRecipes_size() const { return itemToCraftingRecipes.size(); }
+const CATCHCHALLENGER_TYPE_CRAFTINGRECIPE &CommonDatapack::get_itemToCraftingRecipe(const CATCHCHALLENGER_TYPE_ITEM &key) const { return itemToCraftingRecipes.at(key); }
+bool CommonDatapack::has_itemToCraftingRecipe(const CATCHCHALLENGER_TYPE_ITEM &key) const { return itemToCraftingRecipes.find(key)!=itemToCraftingRecipes.cend(); }
+//craftingRecipesMaxId
+const CATCHCHALLENGER_TYPE_CRAFTINGRECIPE &CommonDatapack::get_craftingRecipesMaxId() const { return craftingRecipesMaxId; }
+//monsterBuffs
+size_t CommonDatapack::get_monsterBuffs_size() const { return monsterBuffs.size(); }
+const Buff &CommonDatapack::get_monsterBuff(const CATCHCHALLENGER_TYPE_BUFF &key) const { return monsterBuffs.at(key); }
+bool CommonDatapack::has_monsterBuff(const CATCHCHALLENGER_TYPE_BUFF &key) const { return monsterBuffs.find(key)!=monsterBuffs.cend(); }
+//monsterItemEffect
+size_t CommonDatapack::get_monsterItemEffect_size() const { return monsterItemEffect.size(); }
+const std::vector<MonsterItemEffect> &CommonDatapack::get_monsterItemEffect(const CATCHCHALLENGER_TYPE_ITEM &key) const { return monsterItemEffect.at(key); }
+bool CommonDatapack::has_monsterItemEffect(const CATCHCHALLENGER_TYPE_ITEM &key) const { return monsterItemEffect.find(key)!=monsterItemEffect.cend(); }
+//monsterItemEffectOutOfFight
+size_t CommonDatapack::get_monsterItemEffectOutOfFight_size() const { return monsterItemEffectOutOfFight.size(); }
+const std::vector<MonsterItemEffectOutOfFight> &CommonDatapack::get_monsterItemEffectOutOfFight(const CATCHCHALLENGER_TYPE_ITEM &key) const { return monsterItemEffectOutOfFight.at(key); }
+bool CommonDatapack::has_monsterItemEffectOutOfFight(const CATCHCHALLENGER_TYPE_ITEM &key) const { return monsterItemEffectOutOfFight.find(key)!=monsterItemEffectOutOfFight.cend(); }
+//evolutionItem
+size_t CommonDatapack::get_evolutionItem_size() const { return evolutionItem.size(); }
+bool CommonDatapack::has_evolutionItem(const CATCHCHALLENGER_TYPE_ITEM &key) const { return evolutionItem.find(key)!=evolutionItem.cend(); }
+bool CommonDatapack::has_evolutionItemForMonster(const CATCHCHALLENGER_TYPE_ITEM &itemKey, const CATCHCHALLENGER_TYPE_MONSTER &monsterKey) const
 {
-    return plants;
+    const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> >::const_iterator i=evolutionItem.find(itemKey);
+    if(i==evolutionItem.cend()) return false;
+    return i->second.find(monsterKey)!=i->second.cend();
 }
+CATCHCHALLENGER_TYPE_MONSTER CommonDatapack::get_evolutionItemForMonster(const CATCHCHALLENGER_TYPE_ITEM &itemKey, const CATCHCHALLENGER_TYPE_MONSTER &monsterKey) const { return evolutionItem.at(itemKey).at(monsterKey); }
+//itemToLearn
+size_t CommonDatapack::get_itemToLearn_size() const { return itemToLearn.size(); }
+bool CommonDatapack::has_itemToLearn(const CATCHCHALLENGER_TYPE_ITEM &key) const { return itemToLearn.find(key)!=itemToLearn.cend(); }
+bool CommonDatapack::has_itemToLearnForMonster(const CATCHCHALLENGER_TYPE_ITEM &itemKey, const CATCHCHALLENGER_TYPE_MONSTER &monsterKey) const
+{
+    const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_MONSTER> >::const_iterator i=itemToLearn.find(itemKey);
+    if(i==itemToLearn.cend()) return false;
+    return i->second.find(monsterKey)!=i->second.cend();
+}
+//repel
+size_t CommonDatapack::get_repel_size() const { return repel.size(); }
+uint32_t CommonDatapack::get_repel(const CATCHCHALLENGER_TYPE_ITEM &key) const { return repel.at(key); }
+bool CommonDatapack::has_repel(const CATCHCHALLENGER_TYPE_ITEM &key) const { return repel.find(key)!=repel.cend(); }
+//items
+size_t CommonDatapack::get_items_size() const { return items.size(); }
+const Item &CommonDatapack::get_item(const CATCHCHALLENGER_TYPE_ITEM &key) const { return items.at(key); }
+bool CommonDatapack::has_item(const CATCHCHALLENGER_TYPE_ITEM &key) const { return items.find(key)!=items.cend(); }
+//itemMaxId
+const CATCHCHALLENGER_TYPE_ITEM &CommonDatapack::get_itemMaxId() const { return itemMaxId; }
+//trap
+size_t CommonDatapack::get_trap_size() const { return trap.size(); }
+const Trap &CommonDatapack::get_trap(const CATCHCHALLENGER_TYPE_ITEM &key) const { return trap.at(key); }
+bool CommonDatapack::has_trap(const CATCHCHALLENGER_TYPE_ITEM &key) const { return trap.find(key)!=trap.cend(); }
+//layersOptions
+const LayersOptions &CommonDatapack::get_layersOptions() const { return layersOptions; }
+//events
+const std::vector<Event> &CommonDatapack::get_events() const { return events; }
+//tempNameToItemId
+size_t CommonDatapack::get_tempNameToItemId_size() const { return tempNameToItemId.size(); }
+CATCHCHALLENGER_TYPE_ITEM CommonDatapack::get_tempNameToItemId(const std::string &name) const { return tempNameToItemId.at(name); }
+bool CommonDatapack::has_tempNameToItemId(const std::string &name) const { return tempNameToItemId.find(name)!=tempNameToItemId.cend(); }
+void CommonDatapack::set_tempNameToItemId(const std::string &name, const CATCHCHALLENGER_TYPE_ITEM &id) { tempNameToItemId[name]=id; }
+//tempNameToBuffId
+size_t CommonDatapack::get_tempNameToBuffId_size() const { return tempNameToBuffId.size(); }
+CATCHCHALLENGER_TYPE_BUFF CommonDatapack::get_tempNameToBuffId(const std::string &name) const { return tempNameToBuffId.at(name); }
+bool CommonDatapack::has_tempNameToBuffId(const std::string &name) const { return tempNameToBuffId.find(name)!=tempNameToBuffId.cend(); }
+//tempNameToSkillId
+size_t CommonDatapack::get_tempNameToSkillId_size() const { return tempNameToSkillId.size(); }
+CATCHCHALLENGER_TYPE_SKILL CommonDatapack::get_tempNameToSkillId(const std::string &name) const { return tempNameToSkillId.at(name); }
+bool CommonDatapack::has_tempNameToSkillId(const std::string &name) const { return tempNameToSkillId.find(name)!=tempNameToSkillId.cend(); }
+//tempNameToMonsterId
+size_t CommonDatapack::get_tempNameToMonsterId_size() const { return tempNameToMonsterId.size(); }
+CATCHCHALLENGER_TYPE_MONSTER CommonDatapack::get_tempNameToMonsterId(const std::string &name) const { return tempNameToMonsterId.at(name); }
+bool CommonDatapack::has_tempNameToMonsterId(const std::string &name) const { return tempNameToMonsterId.find(name)!=tempNameToMonsterId.cend(); }
+void CommonDatapack::set_tempNameToMonsterId(const std::string &name, const CATCHCHALLENGER_TYPE_MONSTER &id) { tempNameToMonsterId[name]=id; }
 
-const std::unordered_map<uint16_t,CraftingRecipe> &CommonDatapack::get_craftingRecipes() const
-{
-    return craftingRecipes;
-}
-
-const std::unordered_map<uint16_t,uint16_t> &CommonDatapack::get_itemToCraftingRecipes() const
-{
-    return itemToCraftingRecipes;
-}
-
-const uint16_t &CommonDatapack::get_craftingRecipesMaxId() const
-{
-    return craftingRecipesMaxId;
-}
-
-const std::unordered_map<uint8_t,Buff> &CommonDatapack::get_monsterBuffs() const
-{
-    return monsterBuffs;
-}
-
-const ItemFull &CommonDatapack::get_items() const
-{
-    return items;
-}
-
-const LayersOptions &CommonDatapack::get_layersOptions() const
-{
-    return layersOptions;
-}
-
-const std::vector<Event> &CommonDatapack::get_events() const
-{
-    return events;
-}
-
-const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> CommonDatapack::get_tempNameToItemId() const
-{
-    return tempNameToItemId;
-}
-
-const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> CommonDatapack::get_tempNameToBuffId() const
-{
-    return tempNameToBuffId;
-}
-
-const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> CommonDatapack::get_tempNameToSkillId() const
-{
-    return tempNameToSkillId;
-}
-
-const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> CommonDatapack::get_tempNameToMonsterId() const
-{
-    return tempNameToMonsterId;
-}
-
-void CommonDatapack::set_tempNameToItemId(const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> &v)
-{
-    tempNameToItemId=v;
-}
-
-void CommonDatapack::set_tempNameToMonsterId(const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> &v)
-{
-    tempNameToMonsterId=v;
-}
-
-const bool &CommonDatapack::get_monsterRateApplied() const
-{
-    return monsterRateApplied;
-}
-
-void CommonDatapack::set_monsterRateApplied(const bool &v)
-{
-    monsterRateApplied=v;
-}
+const bool &CommonDatapack::get_monsterRateApplied() const { return monsterRateApplied; }
+void CommonDatapack::set_monsterRateApplied(const bool &v) { monsterRateApplied=v; }
 
 //temp
-const std::vector<MonstersCollision> &CommonDatapack::get_monstersCollision() const
-{
-    return monstersCollision;
-}
-//never more than 255
-const std::vector<MonstersCollisionTemp> &CommonDatapack::get_monstersCollisionTemp() const
-{
-    return monstersCollisionTemp;
-}
-//never more than 255
-const std::vector<Type> &CommonDatapack::get_types() const
-{
-    return types;
-}
+const std::vector<MonstersCollision> &CommonDatapack::get_monstersCollision() const { return monstersCollision; }
+const std::vector<MonstersCollisionTemp> &CommonDatapack::get_monstersCollisionTemp() const { return monstersCollisionTemp; }
+const std::vector<Type> &CommonDatapack::get_types() const { return types; }
 
 #endif
-const std::vector<Reputation> &CommonDatapack::get_reputation() const
-{
-    return reputation;
-}
+const std::vector<Reputation> &CommonDatapack::get_reputation() const { return reputation; }
+std::vector<Reputation> &CommonDatapack::get_reputation_rw() { return reputation; }
 
-std::vector<Reputation> &CommonDatapack::get_reputation_rw()
-{
-    return reputation;
-}
-
-const std::unordered_map<uint16_t,Monster> &CommonDatapack::get_monsters() const
-{
-    return monsters;
-}
-
-const uint16_t &CommonDatapack::get_monstersMaxId() const
-{
-    return monstersMaxId;
-}
-
-const std::unordered_map<uint16_t,Skill> &CommonDatapack::get_monsterSkills() const
-{
-    return monsterSkills;
-}
-
-const std::vector<Profile> &CommonDatapack::get_profileList() const
-{
-    return profileList;
-}
+//monsters
+size_t CommonDatapack::get_monsters_size() const { return monsters.size(); }
+const Monster &CommonDatapack::get_monster(const CATCHCHALLENGER_TYPE_MONSTER &key) const { return monsters.at(key); }
+bool CommonDatapack::has_monster(const CATCHCHALLENGER_TYPE_MONSTER &key) const { return monsters.find(key)!=monsters.cend(); }
+//monstersMaxId
+const CATCHCHALLENGER_TYPE_MONSTER &CommonDatapack::get_monstersMaxId() const { return monstersMaxId; }
+//monsterSkills
+size_t CommonDatapack::get_monsterSkills_size() const { return monsterSkills.size(); }
+const Skill &CommonDatapack::get_monsterSkill(const CATCHCHALLENGER_TYPE_SKILL &key) const { return monsterSkills.at(key); }
+bool CommonDatapack::has_monsterSkill(const CATCHCHALLENGER_TYPE_SKILL &key) const { return monsterSkills.find(key)!=monsterSkills.cend(); }
+//profileList
+const std::vector<Profile> &CommonDatapack::get_profileList() const { return profileList; }
 
 #ifndef CATCHCHALLENGER_NOXML
-const std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &CommonDatapack::get_xmlLoadedFile() const
-{
-    return xmlLoadedFile;
-}
-
-std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &CommonDatapack::get_xmlLoadedFile_rw()
-{
-    return xmlLoadedFile;
-}
+//xmlLoadedFile
+size_t CommonDatapack::get_xmlLoadedFile_size() const { return xmlLoadedFile.size(); }
+const tinyxml2::XMLDocument &CommonDatapack::get_xmlLoadedFile(const std::string &file) const { return xmlLoadedFile.at(file); }
+bool CommonDatapack::has_xmlLoadedFile(const std::string &file) const { return xmlLoadedFile.find(file)!=xmlLoadedFile.cend(); }
+tinyxml2::XMLDocument &CommonDatapack::get_xmlLoadedFile_rw(const std::string &file) { return xmlLoadedFile[file]; }
+void CommonDatapack::clear_xmlLoadedFile() { xmlLoadedFile.clear(); }
 #endif
 
 const std::vector<std::string > &CommonDatapack::get_skins() const

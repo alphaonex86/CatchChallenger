@@ -480,12 +480,11 @@ bool MapVisualiserThread::loadOtherMapClientPart(QMap_client *parsedMap)
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
     const std::string &fileName=std::string();
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(fileName)!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(fileName);
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(fileName))
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(fileName);
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[fileName];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(fileName);
         const auto loadOkay = domDocument->LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
@@ -730,12 +729,11 @@ bool MapVisualiserThread::loadOtherMapMetaData(QMap_client *parsedMap)
     //open and quick check the file
     std::string fileName;
     stringreplaceAll(fileName,".tmx",".xml");
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(fileName)!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(fileName);
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(fileName))
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(fileName);
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[fileName];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(fileName);
         const auto loadOkay = domDocument->LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
@@ -804,11 +802,11 @@ void MapVisualiserThread::loadBotFile()
     botFiles[file];//create the entry
 
     tinyxml2::XMLDocument *domDocument;
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         const auto loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {

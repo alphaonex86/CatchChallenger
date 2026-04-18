@@ -751,10 +751,9 @@ void OverMapLogic::currentMapLoaded()
         CatchChallenger::QMap_client *mapFull=ccmap->mapController.currentMapFull();
         std::string visualName;
         if(!mapFull->zone.empty())
-            if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(mapFull->zone)!=
-                    QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(mapFull->zone))
             {
-                const QtDatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(mapFull->zone);
+                const QtDatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zoneExtra(mapFull->zone);
                 visualName=zoneExtra.name;
             }
         if(visualName.empty())
@@ -779,9 +778,9 @@ void OverMapLogic::currentMapLoaded()
         //zone sound
         CatchChallenger::QMap_client *mapFull=ccmap->mapController.currentMapFull();
         if(!mapFull->zone.empty())
-            if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(mapFull->zone)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(mapFull->zone))
             {
-                const QtDatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(mapFull->zone);
+                const QtDatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zoneExtra(mapFull->zone);
                 if(zoneExtra.audioAmbiance.find(type)!=zoneExtra.audioAmbiance.cend())
                 {
                     const std::string &backgroundsound=zoneExtra.audioAmbiance.at(type);
@@ -790,9 +789,9 @@ void OverMapLogic::currentMapLoaded()
                 }
             }
         //general sound
-        if(QtDatapackClientLoader::datapackLoader->get_audioAmbiance().find(type)!=QtDatapackClientLoader::datapackLoader->get_audioAmbiance().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_audioAmbiance(type))
         {
-            const std::string &backgroundsound=QtDatapackClientLoader::datapackLoader->get_audioAmbiance().at(type);
+            const std::string &backgroundsound=QtDatapackClientLoader::datapackLoader->get_audioAmbiance(type);
             if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
                 soundList.push_back(backgroundsound);
         }
@@ -828,11 +827,10 @@ void OverMapLogic::currentMapLoaded()
         if(visualCategory!=type)
         {
             visualCategory=type;
-            if(QtDatapackClientLoader::datapackLoader->get_visualCategories().find(type)!=
-                    QtDatapackClientLoader::datapackLoader->get_visualCategories().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_visualCategory(type))
             {
                 const std::vector<QtDatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=
-                        QtDatapackClientLoader::datapackLoader->get_visualCategories().at(type).conditions;
+                        QtDatapackClientLoader::datapackLoader->get_visualCategory(type).conditions;
                 unsigned int index=0;
                 while(index<conditions.size())
                 {
@@ -852,7 +850,7 @@ void OverMapLogic::currentMapLoaded()
                 }
                 if(index==conditions.size())
                 {
-                    QtDatapackClientLoader::CCColor defaultColor=QtDatapackClientLoader::datapackLoader->get_visualCategories().at(type).defaultColor;
+                    QtDatapackClientLoader::CCColor defaultColor=QtDatapackClientLoader::datapackLoader->get_visualCategory(type).defaultColor;
                     ccmap->mapController.setColor(QColor(defaultColor.r,defaultColor.g,defaultColor.b,defaultColor.a),15000);
                 }
             }
@@ -1180,9 +1178,9 @@ void OverMapLogic::captureCityYourLeaderHaveStartInOtherCity(const std::string &
     updater_page_zonecatch.stop();
     //ui->stackedWidget->setCurrentWidget(ui->page_map);
     /// \todo close dialog into updatePageZoneCatch()
-    if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zone)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(zone))
         showTip(tr("Your clan leader have start a capture for another city").toStdString()+": <b>"+
-                QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zone).name+
+                QtDatapackClientLoader::datapackLoader->get_zoneExtra(zone).name+
                 "</b>");
     else
         showTip(tr("Your clan leader have start a capture for another city").toStdString());
@@ -1276,9 +1274,9 @@ void OverMapLogic::load_inventory()
                         show=true;
                 break;
                 case ObjectType_UseInFight:
-                    if(fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.find(i->first)!=CommonDatapack::commonDatapack.items.trap.cend())
+                    if(fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.trap.find(i->first)!=CommonDatapack::commonDatapack.trap.cend())
                         show=true;
-                    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(i->first)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
+                    else if(CommonDatapack::commonDatapack.monsterItemEffect.find(i->first)!=CommonDatapack::commonDatapack.monsterItemEffect.cend())
                         show=true;
                     else
                         show=false;
@@ -1367,10 +1365,10 @@ void OverMapLogic::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> 
 
             QPixmap image;
             std::string name;
-            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(item))
             {
-                image=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item).imagePath));
-                name=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item).name;
+                image=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).imagePath));
+                name=QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name;
             }
             else
             {
@@ -1674,15 +1672,14 @@ void OverMapLogic::seed_planted(const bool &ok)
         //do the rewards
         {
             const uint16_t &itemId=seed_in_waiting.front().seedItemId;
-            if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemId)==
-                    QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
+            if(!QtDatapackClientLoader::datapackLoader->has_itemToPlant(itemId))
             {
                 qDebug() << "Item is not a plant";
                 emit error(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return;
             }
-            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemId);
-            appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant).rewards.reputation);
+            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->get_itemToPlant(itemId);
+            appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plant).rewards.reputation);
         }
     }
     else
@@ -2008,12 +2005,12 @@ void OverMapLogic::appendReputationPoint(const std::string &type,const int32_t &
 {
     if(point==0)
         return;
-    if(QtDatapackClientLoader::datapackLoader->get_reputationNameToId().find(type)==QtDatapackClientLoader::datapackLoader->get_reputationNameToId().cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_reputationNameToId(type))
     {
         emit error("Unknow reputation: "+type);
         return;
     }
-    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->get_reputationNameToId().at(type);
+    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->get_reputationNameToId(type);
     CatchChallenger::PlayerReputation playerReputation;
     if(connexionManager->client->player_informations.reputation.find(reputationId)!=connexionManager->client->player_informations.reputation.cend())
         playerReputation=connexionManager->client->player_informations.reputation.at(reputationId);
@@ -2034,20 +2031,18 @@ void OverMapLogic::appendReputationPoint(const std::string &type,const int32_t &
     const std::string &reputationCodeName=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationId).name;
     if(old_level<playerReputation.level)
     {
-        if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(reputationCodeName)!=
-                QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputationCodeName))
             showTip(tr("You have better reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputationCodeName).name)).toStdString());
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationCodeName).name)).toStdString());
         else
             showTip(tr("You have better reputation into %1")
                     .arg("???").toStdString());
     }
     else if(old_level>playerReputation.level)
     {
-        if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(reputationCodeName)!=
-                QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputationCodeName))
             showTip(tr("You have worse reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputationCodeName).name)).toStdString());
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationCodeName).name)).toStdString());
         else
             showTip(tr("You have worse reputation into %1")
                     .arg("???").toStdString());
@@ -2077,28 +2072,28 @@ void OverMapLogic::objectSelection(const bool &/*ok*/, const uint16_t &/*itemId*
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_inventory);
                 ui->inventoryUse->setText(tr("Select"));
-                if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                if(CatchChallenger::CommonDatapack::commonDatapack.items.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items[item].consumeAtUse)
                         add_to_inventory(item,1,false);
                 break;
             }
             const CatchChallenger::PlayerMonster * const monster=connexionManager->client->monsterByPosition(monsterPosition);
             if(monster==NULL)
             {
-                if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                if(CatchChallenger::CommonDatapack::commonDatapack.items.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items[item].consumeAtUse)
                         add_to_inventory(item,1,false);
                 break;
             }
             const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
             const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster->monster);
-            if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.evolutionItem.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.evolutionItem.cend())
             {
                 uint8_t monsterEvolutionPostion=0;
-                const CatchChallenger::Monster &monsterInformationsEvolution=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster->monster));
+                const CatchChallenger::Monster &monsterInformationsEvolution=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(CatchChallenger::CommonDatapack::commonDatapack.evolutionItem.at(item).at(monster->monster));
                 const QtDatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=
                         QtDatapackClientLoader::datapackLoader->monsterExtra.at(
-                            CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster->monster)
+                            CatchChallenger::CommonDatapack::commonDatapack.evolutionItem.at(item).at(monster->monster)
                             );
                 abort();
                 //create animation widget
@@ -2170,9 +2165,9 @@ void OverMapLogic::objectSelection(const bool &/*ok*/, const uint16_t &/*itemId*
                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name))
                             .arg(QString::fromStdString(monsterInformationsExtra.name))
                             .toStdString());
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=
-                            CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
-                        if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.find(item)!=
+                            CatchChallenger::CommonDatapack::commonDatapack.items.cend())
+                        if(CatchChallenger::CommonDatapack::commonDatapack.items[item].consumeAtUse)
                             add_to_inventory(item,1,false);
                 }
             }*/
@@ -2199,7 +2194,7 @@ void OverMapLogic::objectSelection(const bool &/*ok*/, const uint16_t &/*itemId*
             ItemToSellOrBuy tempItem;
             tempItem.object=itemId;
             tempItem.quantity=quantity;
-            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemId).price/2;
+            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items.at(itemId).price/2;
             itemsToSell.push_back(tempItem);
             client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
@@ -2417,7 +2412,7 @@ void OverMapLogic::objectSelection(const bool &/*ok*/, const uint16_t &/*itemId*
                 break;
             }
             //it's trap
-            if(CommonDatapack::commonDatapack.items.trap.find(itemId)!=CommonDatapack::commonDatapack.items.trap.cend() && fightEngine.isInFightWithWild())
+            if(CommonDatapack::commonDatapack.trap.find(itemId)!=CommonDatapack::commonDatapack.trap.cend() && fightEngine.isInFightWithWild())
             {
                 remove_to_inventory(itemId);
                 useTrap(itemId);
@@ -2428,7 +2423,7 @@ void OverMapLogic::objectSelection(const bool &/*ok*/, const uint16_t &/*itemId*
                 if(fightEngine.useObjectOnMonsterByPosition(itemId,monsterPosition))
                 {
                     remove_to_inventory(itemId);
-                    if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(itemId)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
+                    if(CommonDatapack::commonDatapack.monsterItemEffect.find(itemId)!=CommonDatapack::commonDatapack.monsterItemEffect.cend())
                     {
                         client->useObjectOnMonsterByPosition(itemId,monsterPosition);
                         updateAttackList();
@@ -2472,18 +2467,16 @@ void OverMapLogic::objectUsed(const CatchChallenger::ObjectUsage &objectUsage)
         {
             const uint16_t item=objectInUsing.front();
             //is crafting recipe
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().find(item)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_itemToCraftingRecipe(item))
             {
-                connexionManager->client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().at(item));
+                connexionManager->client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipe(item));
                 //load_crafting_inventory();
                 abort();
             }
-            else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.cend())
+            else if(CatchChallenger::CommonDatapack::commonDatapack.has_trap(item))
             {
             }
-            else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.find(item)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.cend())
+            else if(CatchChallenger::CommonDatapack::commonDatapack.has_repel(item))
             {
             }
             else

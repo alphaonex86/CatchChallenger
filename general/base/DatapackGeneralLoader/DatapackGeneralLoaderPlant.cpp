@@ -23,11 +23,11 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -68,10 +68,9 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
             uint16_t itemUsed=0;
             {
                 std::string itemUsedLower=str_tolower(plantItem->Attribute("itemUsed"));
-                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                if(tempNameToItemId.find(itemUsedLower)!=tempNameToItemId.cend())
+                if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemUsedLower))
                 {
-                    itemUsed=tempNameToItemId.at(itemUsedLower);
+                    itemUsed=CommonDatapack::commonDatapack.get_tempNameToItemId(itemUsedLower);
                     ok2=true;
                 }
                 else
