@@ -196,10 +196,10 @@ void OverMapLogic::stopped_in_front_of(const CATCHCHALLENGER_TYPE_MAPID &mapInde
     {
         const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
         const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
-        auto mapIt=playerInformations.mapData.find(mapIndex);
+        std::map<uint16_t, CatchChallenger::Player_private_and_public_informations_Map>::const_iterator mapIt=playerInformations.mapData.find(mapIndex);
         if(mapIt!=playerInformations.mapData.cend())
         {
-            auto plantIt=mapIt->second.plants.find(pos);
+            std::map<std::pair<uint8_t,uint8_t>, CatchChallenger::PlayerPlant>::const_iterator plantIt=mapIt->second.plants.find(pos);
             if(plantIt!=mapIt->second.plants.cend())
             {
                 uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
@@ -353,11 +353,11 @@ void OverMapLogic::actionOn(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const CO
     {
         const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
         const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
-        auto mapIt=playerInformations.mapData.find(mapIndex);
+        std::map<uint16_t, CatchChallenger::Player_private_and_public_informations_Map>::const_iterator mapIt=playerInformations.mapData.find(mapIndex);
         bool hasPlant=false;
         if(mapIt!=playerInformations.mapData.cend())
         {
-            auto plantIt=mapIt->second.plants.find(pos);
+            std::map<std::pair<uint8_t,uint8_t>, CatchChallenger::PlayerPlant>::const_iterator plantIt=mapIt->second.plants.find(pos);
             if(plantIt!=mapIt->second.plants.cend())
             {
                 hasPlant=true;
@@ -408,7 +408,7 @@ int32_t OverMapLogic::havePlant(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, cons
 {
     //isDirt() already checked by caller, check if plant exists at this position in mapData
     const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
-    auto mapIt=playerInformations.mapData.find(mapIndex);
+    std::map<uint16_t, CatchChallenger::Player_private_and_public_informations_Map>::const_iterator mapIt=playerInformations.mapData.find(mapIndex);
     if(mapIt!=playerInformations.mapData.cend())
     {
         const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
@@ -996,7 +996,7 @@ void OverMapLogic::detectSlowDown()
     std::vector<std::string> middleQueryList;
     const std::map<uint8_t,uint64_t> &values=connexionManager->client->getQuerySendTimeList();
     queryCount+=values.size();
-    for(const auto n : values) {
+    for(const std::pair<const uint8_t, uint64_t> n : values) {
         middleQueryList.push_back(std::to_string(n.first));
         std::time_t result = std::time(nullptr);
         if((uint64_t)result>=n.second)
@@ -1260,7 +1260,7 @@ void OverMapLogic::load_inventory()
     ui->inventory->clear();
     items_graphical.clear();
     items_to_graphical.clear();
-    auto i=playerInformations.items.begin();
+    std::map<uint16_t, uint32_t>::const_iterator i=playerInformations.items.begin();
     while (i!=playerInformations.items.cend())
     {
         bool show=!inSelection;
@@ -1350,7 +1350,7 @@ void OverMapLogic::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> 
     {
         std::vector<std::string> objects;
 
-        for( const auto& n : items ) {
+        for( const std::pair<const uint16_t, uint32_t>& n : items ) {
             const uint16_t &item=n.first;
             const uint32_t &quantity=n.second;
             if(playerInformations.encyclopedia_item!=NULL)
@@ -1398,7 +1398,7 @@ void OverMapLogic::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> 
     else
     {
         //add without show
-        for( const auto& n : items ) {
+        for( const std::pair<const uint16_t, uint32_t>& n : items ) {
             const uint16_t &item=n.first;
             const uint32_t &quantity=n.second;
             if(playerInformations.encyclopedia_item!=NULL)
@@ -1438,7 +1438,7 @@ void OverMapLogic::remove_to_inventory_slot(const std::unordered_map<uint16_t,ui
 void OverMapLogic::remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items)
 {
     CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
-    for( const auto& n : items ) {
+    for( const std::pair<const uint16_t, uint32_t>& n : items ) {
         const uint16_t &item=n.first;
         const uint32_t &quantity=n.second;
         //add really to the list
@@ -1465,7 +1465,7 @@ void OverMapLogic::remove_to_inventory(const std::unordered_map<uint16_t,uint32_
     ui->listPlantList->clear();
     plants_items_graphical.clear();
     plants_items_to_graphical.clear();
-    auto i=playerInformations.items.begin();
+    std::map<uint16_t, uint32_t>::const_iterator i=playerInformations.items.begin();
     while(i!=playerInformations.items.cend())
     {
         if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(i->first)!=
@@ -1627,7 +1627,7 @@ void OverMapLogic::remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const ui
     }
     CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
     const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
-    auto mapIt=playerInformations.mapData.find(mapId);
+    std::map<uint16_t, CatchChallenger::Player_private_and_public_informations_Map>::iterator mapIt=playerInformations.mapData.find(mapId);
     if(mapIt!=playerInformations.mapData.cend())
         mapIt->second.plants.erase(pos);
     cancelAllPlantQuery(mapId,x,y);

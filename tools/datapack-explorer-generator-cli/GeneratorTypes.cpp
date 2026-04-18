@@ -13,7 +13,7 @@ namespace GeneratorTypes {
 
 static std::string typeNameStr(uint8_t id)
 {
-    const auto &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
+    const std::vector<CatchChallenger::Type> &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
     if(id<types.size())
         return types[id].name;
     return Helper::toStringUint(id);
@@ -104,8 +104,8 @@ void generate()
         std::map<std::string, std::vector<uint8_t>> def_effectiveness;
         for(uint16_t a=0; a<commonTypes.size(); ++a)
         {
-            const auto &mp=commonTypes[a].multiplicator;
-            auto mit=mp.find((uint8_t)id);
+            const std::unordered_map<uint8_t, int8_t> &mp=commonTypes[a].multiplicator;
+            std::unordered_map<uint8_t, int8_t>::const_iterator mit=mp.find((uint8_t)id);
             if(mit!=mp.cend())
             {
                 float eff=multiplierToFloat(mit->second);
@@ -154,7 +154,7 @@ void generate()
 
         // OFFENSIVE: this type's own multiplicators
         std::map<std::string, std::vector<uint8_t>> off_effectiveness;
-        for(const auto &mp : t.multiplicator)
+        for(const std::pair<const uint8_t, int8_t> &mp : t.multiplicator)
             off_effectiveness[multiplierToString(mp.second)].push_back(mp.first);
 
         // Effective against (2x, 4x)
@@ -198,10 +198,10 @@ void generate()
         body << "</div>\n";
 
         // Monster list table grouped by secondary type
-        auto ttmIt=type_to_monster.find((uint8_t)id);
+        std::map<uint8_t, std::map<uint8_t, std::vector<uint16_t>>>::const_iterator ttmIt=type_to_monster.find((uint8_t)id);
         if(ttmIt!=type_to_monster.end() && !ttmIt->second.empty())
         {
-            auto writeMonsterTableHeader=[&]() {
+            std::function<void()> writeMonsterTableHeader=[&]() {
                 body << "<table class=\"monster_list item_list item_list_type_" << tc << "\">\n"
                      << "<tr class=\"item_list_title item_list_title_type_" << tc << "\">\n"
                      << "\t<th colspan=\"2\">Monster</th>\n"
@@ -213,10 +213,10 @@ void generate()
             std::string second_type_displayed;
             unsigned typetomonster_count=0;
 
-            for(const auto &stPair : ttmIt->second)
+            for(const std::pair<const uint8_t, std::vector<uint16_t>> &stPair : ttmIt->second)
             {
                 uint8_t secondType=stPair.first;
-                const auto &monsterList=stPair.second;
+                const std::vector<uint16_t> &monsterList=stPair.second;
                 std::string stName=typeNameLower(secondType);
 
                 if(second_type_displayed!=stName)
@@ -338,9 +338,9 @@ void generate()
 
         // Count monsters of this type
         unsigned count=0;
-        auto ttmIt=type_to_monster.find((uint8_t)id);
+        std::map<uint8_t, std::map<uint8_t, std::vector<uint16_t>>>::const_iterator ttmIt=type_to_monster.find((uint8_t)id);
         if(ttmIt!=type_to_monster.end())
-            for(const auto &stPair : ttmIt->second)
+            for(const std::pair<const uint8_t, std::vector<uint16_t>> &stPair : ttmIt->second)
                 count+=stPair.second.size();
 
         indexBody << "<td>" << count << "</td>\n";
@@ -362,10 +362,10 @@ void generate()
         indexBody << "<tr class=\"value\"><td class=\"item_list_title_left item_list_title_type_normal\"><div class=\"type_label_list\">"
                   << typeLabelHtml((uint8_t)a) << "</div></td>\n";
 
-        const auto &mp=commonTypes[a].multiplicator;
+        const std::unordered_map<uint8_t, int8_t> &mp=commonTypes[a].multiplicator;
         for(uint16_t d=0; d<commonTypes.size(); ++d)
         {
-            auto mit=mp.find((uint8_t)d);
+            std::unordered_map<uint8_t, int8_t>::const_iterator mit=mp.find((uint8_t)d);
             int8_t m=1;
             if(mit!=mp.cend())
                 m=mit->second;

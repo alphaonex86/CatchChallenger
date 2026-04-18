@@ -26,7 +26,7 @@ std::string relativePathForSkill(uint16_t id)
 
 static std::string typeName(uint8_t typeId)
 {
-    const auto &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
+    const std::vector<CatchChallenger::Type> &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
     if(typeId<types.size())
         return types[typeId].name;
     return Helper::toStringUint(typeId);
@@ -74,7 +74,7 @@ static void writeMonsterTableFooter(std::ostringstream &body, const std::string 
 
 void generate()
 {
-    const auto &commonTypes=CatchChallenger::CommonDatapack::commonDatapack.get_types();
+    const std::vector<CatchChallenger::Type> &commonTypes=CatchChallenger::CommonDatapack::commonDatapack.get_types();
 
     // Build skill_to_monster: skill_id -> skill_level -> list of monster_ids
     std::map<uint16_t, std::map<uint8_t, std::vector<uint16_t>>> skill_to_monster;
@@ -82,7 +82,7 @@ void generate()
         if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(mpid))
             continue;
         const CatchChallenger::Monster &mpMonster=CatchChallenger::CommonDatapack::commonDatapack.get_monster(mpid);
-        for(const auto &atk : mpMonster.learn)
+        for(const CatchChallenger::Monster::AttackToLearn &atk : mpMonster.learn)
             skill_to_monster[atk.learnSkill][atk.learnSkillLevel].push_back(mpid);
     }
 
@@ -128,7 +128,7 @@ void generate()
         std::map<int8_t, std::vector<uint8_t>> effectiveness_list;
         if(s.type<commonTypes.size())
         {
-            for(const auto &mp : commonTypes[s.type].multiplicator)
+            for(const std::pair<const uint8_t, int8_t> &mp : commonTypes[s.type].multiplicator)
                 effectiveness_list[mp.second].push_back(mp.first);
         }
 
@@ -201,7 +201,7 @@ void generate()
 
         // Levels
         unsigned level=1;
-        for(const auto &lvl : s.level)
+        for(const CatchChallenger::Skill::SkillList &lvl : s.level)
         {
             body << "<div class=\"subblock\">\n";
             if(s.level.size()>1)
@@ -211,7 +211,7 @@ void generate()
             body << "Endurance: " << (unsigned)lvl.endurance << "<br />\n";
 
             // Life quantity
-            for(const auto &li : lvl.life)
+            for(const CatchChallenger::Skill::Life &li : lvl.life)
             {
                 std::string lq=formatLifeQuantity(li.effect.quantity, li.effect.type);
                 body << "Life quantity: " << lq << "<br />\n";
@@ -227,7 +227,7 @@ void generate()
                      << "\t<th>Success</th>\n"
                      << "</tr>\n";
 
-                for(const auto &bf : lvl.buff)
+                for(const CatchChallenger::Skill::Buff &bf : lvl.buff)
                 {
                     uint8_t buffId=bf.effect.buff;
                     body << "<tr class=\"value\"><td>\n";
@@ -265,7 +265,7 @@ void generate()
         body << "</div>\n";
 
         // Monster list table (skill_to_monster)
-        auto stmIt=skill_to_monster.find(id);
+        std::map<uint16_t, std::map<uint8_t, std::vector<uint16_t>>>::const_iterator stmIt=skill_to_monster.find(id);
         if(stmIt!=skill_to_monster.end() && !stmIt->second.empty())
         {
             bool multiLevel=(stmIt->second.size()>1);
@@ -275,10 +275,10 @@ void generate()
             writeMonsterTableHeader(body,typeClass,multiLevel);
 
             uint8_t skill_level_displayed=0;
-            for(const auto &lvlPair : stmIt->second)
+            for(const std::pair<const uint8_t, std::vector<uint16_t>> &lvlPair : stmIt->second)
             {
                 uint8_t skillLevel=lvlPair.first;
-                const auto &monsterList=lvlPair.second;
+                const std::vector<uint16_t> &monsterList=lvlPair.second;
 
                 if(skill_level_displayed!=skillLevel && multiLevel)
                 {
@@ -361,15 +361,15 @@ void generate()
     Helper::setCurrentPage("skills.html");
     std::ostringstream indexBody;
 
-    for(const auto &typeGroup : skill_type_to_id)
+    for(const std::pair<const uint8_t, std::vector<uint16_t>> &typeGroup : skill_type_to_id)
     {
         uint8_t type=typeGroup.first;
-        const auto &id_list=typeGroup.second;
+        const std::vector<uint16_t> &id_list=typeGroup.second;
         std::string tc=typeNameLower(type);
         unsigned colCount=only_one_level ? 3 : 4;
         unsigned skill_count=0;
 
-        auto writeIndexTableHeader=[&](std::ostringstream &out) {
+        std::function<void(std::ostringstream &)> writeIndexTableHeader=[&](std::ostringstream &out) {
             out << "<div class=\"divfixedwithlist\"><table class=\"item_list item_list_type_" << tc << " skill_list\">\n"
                 << "<tr class=\"item_list_title item_list_title_type_" << tc << "\">\n"
                 << "\t<th>Skill</th>\n"

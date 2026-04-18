@@ -79,7 +79,7 @@ static std::string typeName(uint8_t typeId)
 {
     if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeId) && !QtDatapackClientLoader::datapackLoader->get_typeExtra(typeId).name.empty())
         return QtDatapackClientLoader::datapackLoader->get_typeExtra(typeId).name;
-    const auto &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
+    const std::vector<CatchChallenger::Type> &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
     if(typeId<types.size() && !types[typeId].name.empty())
         return types[typeId].name;
     return "#"+Helper::toStringUint(typeId);
@@ -119,7 +119,7 @@ static std::string typeLabelHtml(uint8_t typeId, const std::string &prefix="")
 static std::map<uint8_t,double> computeMonsterEffectiveness(const std::vector<uint8_t> &defenderTypes)
 {
     std::map<uint8_t,double> result;
-    const auto &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
+    const std::vector<CatchChallenger::Type> &types=CatchChallenger::CommonDatapack::commonDatapack.get_types();
     if(types.empty())
         return result;
     for(uint8_t atk=0; atk<(uint8_t)types.size(); ++atk)
@@ -129,8 +129,8 @@ static std::map<uint8_t,double> computeMonsterEffectiveness(const std::vector<ui
         {
             if(defType>=types.size())
                 continue;
-            const auto &mp=types[atk].multiplicator;
-            auto mit=mp.find(defType);
+            const std::unordered_map<uint8_t, int8_t> &mp=types[atk].multiplicator;
+            std::unordered_map<uint8_t, int8_t>::const_iterator mit=mp.find(defType);
             if(mit==mp.cend())
                 continue;
             int8_t m=mit->second;
@@ -198,12 +198,12 @@ static void buildReverseLookups()
             nameToId[mex.name]=mid;
     }
 
-    auto resolveMonster=[&](const char *idStr) -> uint16_t {
+    std::function<uint16_t(const char *)> resolveMonster=[&](const char *idStr) -> uint16_t {
         if(!idStr) return 0;
         int n=std::atoi(idStr);
         if(n>0 && CatchChallenger::CommonDatapack::commonDatapack.has_monster((uint16_t)n))
             return (uint16_t)n;
-        auto it=nameToId.find(idStr);
+        std::unordered_map<std::string, uint16_t>::const_iterator it=nameToId.find(idStr);
         if(it!=nameToId.end())
             return it->second;
         return 0;
@@ -215,10 +215,10 @@ static void buildReverseLookups()
     };
     std::unordered_map<uint16_t,uint32_t> monsterLuck;
 
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     for(size_t si=0;si<sets.size();++si)
     {
-        const auto &set=sets[si];
+        const MapStore::MainCodeSet &set=sets[si];
         for(size_t mi=0;mi<set.mapPaths.size();++mi)
         {
             const MapKey key{si,mi};
@@ -323,16 +323,16 @@ static void buildReverseLookups()
     s_monsterRarityPosition.clear();
     s_monsterRarityCount=0;
     std::vector<std::pair<uint32_t,uint16_t>> rarityList;
-    for(const auto &p : monsterLuck)
+    for(const std::pair<const uint16_t, uint32_t> &p : monsterLuck)
         if(p.second>0)
             rarityList.push_back({p.second,p.first});
     std::sort(rarityList.begin(),rarityList.end());
 
     uint32_t pos=1;
-    for(const auto &entry : rarityList)
+    for(const std::pair<uint32_t, uint16_t> &entry : rarityList)
     {
         uint16_t id=entry.second;
-        auto it=s_monsterToMaps.find(id);
+        std::unordered_map<uint16_t, std::set<MapKey>>::const_iterator it=s_monsterToMaps.find(id);
         if(it!=s_monsterToMaps.end() && it->second.size()>=2)
             s_monsterRarityPosition[id]=pos;
         pos++;
@@ -345,7 +345,7 @@ static void buildReverseLookups()
         if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(mrid))
             continue;
         const CatchChallenger::Monster &mrMonster=CatchChallenger::CommonDatapack::commonDatapack.get_monster(mrid);
-        for(const auto &ev : mrMonster.evolutions)
+        for(const CatchChallenger::Monster::Evolution &ev : mrMonster.evolutions)
         {
             ReverseEvolutionEntry re;
             re.evolveFrom=mrid;
@@ -371,10 +371,10 @@ static bool isEvolvedFromWild(uint16_t id)
             if(visited.count(scanId))
                 continue;
             visited.insert(scanId);
-            auto it=s_reverseEvolution.find(scanId);
+            std::unordered_map<uint16_t, std::vector<ReverseEvolutionEntry>>::const_iterator it=s_reverseEvolution.find(scanId);
             if(it==s_reverseEvolution.end())
                 continue;
-            for(const auto &re : it->second)
+            for(const ReverseEvolutionEntry &re : it->second)
             {
                 if(s_monsterToMaps.find(re.evolveFrom)!=s_monsterToMaps.end())
                     return true;
@@ -396,12 +396,12 @@ static std::map<std::pair<size_t,size_t>,MapMetaCache> s_mapMetaCache;
 
 static void ensureMapMeta(size_t si, size_t mi)
 {
-    auto key=std::make_pair(si,mi);
+    std::pair<size_t, size_t> key=std::make_pair(si,mi);
     if(s_mapMetaCache.find(key)!=s_mapMetaCache.end())
         return;
     MapMetaCache mc;
     mc.parsed=false;
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     if(si<sets.size() && mi<sets[si].mapPaths.size())
     {
         std::string mapPath=sets[si].mapPaths[mi];
@@ -426,7 +426,7 @@ static void ensureMapMeta(size_t si, size_t mi)
         if(mc.name.empty())
         {
             // fallback: last component of map path
-            auto slash=mapPath.rfind('/');
+            size_t slash=mapPath.rfind('/');
             mc.name=(slash!=std::string::npos)?mapPath.substr(slash+1):mapPath;
         }
     }
@@ -436,7 +436,7 @@ static void ensureMapMeta(size_t si, size_t mi)
 static std::string mapDisplayName(size_t si, size_t mi)
 {
     ensureMapMeta(si,mi);
-    auto it=s_mapMetaCache.find(std::make_pair(si,mi));
+    std::map<std::pair<size_t,size_t>, MapMetaCache>::const_iterator it=s_mapMetaCache.find(std::make_pair(si,mi));
     if(it!=s_mapMetaCache.end() && !it->second.name.empty())
         return it->second.name;
     return "Unknown map";
@@ -448,8 +448,8 @@ static std::map<std::pair<std::string,std::string>,std::string> s_zoneNameCache;
 static std::string getZoneName(const std::string &mainCode, const std::string &zoneCode)
 {
     if(zoneCode.empty()) return std::string();
-    auto key=std::make_pair(mainCode,zoneCode);
-    auto it=s_zoneNameCache.find(key);
+    std::pair<std::string, std::string> key=std::make_pair(mainCode,zoneCode);
+    std::map<std::pair<std::string,std::string>, std::string>::const_iterator it=s_zoneNameCache.find(key);
     if(it!=s_zoneNameCache.end()) return it->second;
 
     std::string result=zoneCode;
@@ -472,10 +472,10 @@ static std::string getZoneName(const std::string &mainCode, const std::string &z
 static std::string mapZoneName(size_t si, size_t mi)
 {
     ensureMapMeta(si,mi);
-    auto it=s_mapMetaCache.find(std::make_pair(si,mi));
+    std::map<std::pair<size_t,size_t>, MapMetaCache>::const_iterator it=s_mapMetaCache.find(std::make_pair(si,mi));
     if(it!=s_mapMetaCache.end() && !it->second.zoneCode.empty())
     {
-        const auto &sets=MapStore::sets();
+        const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
         if(si<sets.size())
             return getZoneName(sets[si].mainCode,it->second.zoneCode);
     }
@@ -521,8 +521,8 @@ void generate()
         // Compute effectiveness
         std::map<std::string,std::vector<uint8_t>> effectiveness_list;
         {
-            auto eff=computeMonsterEffectiveness(m.type);
-            for(const auto &e : eff)
+            std::map<uint8_t, double> eff=computeMonsterEffectiveness(m.type);
+            for(const std::pair<const uint8_t, double> &e : eff)
             {
                 if(e.second!=1.0)
                 {
@@ -610,7 +610,7 @@ void generate()
                 body << "Not found on any map";
             else
             {
-                auto rit=s_monsterRarityPosition.find(id);
+                std::unordered_map<uint16_t, uint32_t>::const_iterator rit=s_monsterRarityPosition.find(id);
                 if(rit==s_monsterRarityPosition.end())
                     body << "Very rare";
                 else if(s_monsterRarityCount>0)
@@ -689,7 +689,7 @@ void generate()
 
         // ── 15. Immune to ──
         {
-            auto immIt=effectiveness_list.find("0");
+            std::map<std::string, std::vector<uint8_t>>::const_iterator immIt=effectiveness_list.find("0");
             if(immIt!=effectiveness_list.end())
             {
                 body << "<div class=\"subblock\"><div class=\"valuetitle\">Immune to</div><div class=\"value\">\n";
@@ -717,7 +717,7 @@ void generate()
                      << "\t\t\t<th colspan=\"2\">Item</th>\n"
                      << "\t\t\t<th>Location</th>\n"
                      << "\t\t</tr>\n";
-                for(const auto &drop : dropsList)
+                for(const CatchChallenger::MonsterDrops &drop : dropsList)
                 {
                     std::string link,iname,image;
                     if(QtDatapackClientLoader::datapackLoader->has_itemExtra(drop.item))
@@ -771,7 +771,7 @@ void generate()
                  << "\t\t\t<th>Type</th>\n"
                  << "\t\t\t<th>Endurance</th>\n"
                  << "\t\t</tr>\n";
-            for(const auto &l : m.learn)
+            for(const CatchChallenger::Monster::AttackToLearn &l : m.learn)
             {
                 bool skItFound=CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(l.learnSkill);
                 bool skxFound=QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(l.learnSkill);
@@ -807,7 +807,7 @@ void generate()
         if(!m.learnByItem.empty())
         {
             int attack_list_count=0;
-            auto writeByItemHeader=[&](){
+            std::function<void()> writeByItemHeader=[&](){
                 body << "<table class=\"skilltm_list item_list item_list_type_" << resolved_type << "\">\n"
                      << "\t\t<tr class=\"item_list_title item_list_title_type_" << resolved_type << "\">\n"
                      << "\t\t\t<th colspan=\"2\">Item</th>\n"
@@ -818,10 +818,10 @@ void generate()
             };
             writeByItemHeader();
 
-            for(const auto &lp : m.learnByItem)
+            for(const std::pair<const uint16_t, CatchChallenger::Monster::AttackToLearnByItem> &lp : m.learnByItem)
             {
                 uint16_t itemId=lp.first;
-                const auto &entry=lp.second;
+                const CatchChallenger::Monster::AttackToLearnByItem &entry=lp.second;
 
                 bool skIt2Found=CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(entry.learnSkill);
                 bool skx2Found=QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(entry.learnSkill);
@@ -890,7 +890,7 @@ void generate()
 
         // ── 20. Evolution table ──
         {
-            auto revIt=s_reverseEvolution.find(id);
+            std::unordered_map<uint16_t, std::vector<ReverseEvolutionEntry>>::const_iterator revIt=s_reverseEvolution.find(id);
             bool hasRevEvo=revIt!=s_reverseEvolution.end() && !revIt->second.empty();
             bool hasFwdEvo=!m.evolutions.empty();
 
@@ -908,7 +908,7 @@ void generate()
                 {
                     body << "<tr class=\"value\">\n<td>\n";
                     body << "<table class=\"monsterforevolution\">\n";
-                    for(const auto &re : revIt->second)
+                    for(const ReverseEvolutionEntry &re : revIt->second)
                     {
                         std::string preName=QtDatapackClientLoader::datapackLoader->has_monsterExtra(re.evolveFrom)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(re.evolveFrom).name:("Monster #"+Helper::toStringUint(re.evolveFrom));
                         std::string preImg=frontImageUrlFrom(rel,re.evolveFrom);
@@ -955,7 +955,7 @@ void generate()
                 {
                     body << "<tr class=\"value\">\n<td>\n";
                     body << "<table class=\"monsterforevolution\">\n";
-                    for(const auto &ev : m.evolutions)
+                    for(const CatchChallenger::Monster::Evolution &ev : m.evolutions)
                     {
                         std::string evoName=QtDatapackClientLoader::datapackLoader->has_monsterExtra(ev.evolveTo)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(ev.evolveTo).name:"???";
                         std::string evoImg=frontImageUrlFrom(rel,ev.evolveTo);
@@ -1002,7 +1002,7 @@ void generate()
 
         // ── 21. Map locations table ──
         {
-            auto wildIt=s_monsterToMapEntries.find(id);
+            std::unordered_map<uint16_t, std::vector<WildMonsterMapEntry>>::const_iterator wildIt=s_monsterToMapEntries.find(id);
             if(wildIt!=s_monsterToMapEntries.end() && !wildIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_" << resolved_type << "\">\n"
@@ -1015,11 +1015,11 @@ void generate()
 
                 // Group by layer type
                 std::map<std::string,std::vector<const WildMonsterMapEntry*>> byLayer;
-                for(const auto &e : wildIt->second)
+                for(const WildMonsterMapEntry &e : wildIt->second)
                     byLayer[e.layerType].push_back(&e);
 
-                const auto &allSets=MapStore::sets();
-                for(const auto &layerPair : byLayer)
+                const std::vector<MapStore::MainCodeSet> &allSets=MapStore::sets();
+                for(const std::pair<const std::string, std::vector<const WildMonsterMapEntry *>> &layerPair : byLayer)
                 {
                     const std::string &layerName=layerPair.first;
                     body << "<tr class=\"item_list_title_type_" << resolved_type << "\">\n"
@@ -1027,7 +1027,7 @@ void generate()
                          << layerName << "\n"
                          << "</th>\n                </tr>\n";
 
-                    for(const auto *e : layerPair.second)
+                    for(const WildMonsterMapEntry *e : layerPair.second)
                     {
                         body << "<tr class=\"value\">\n";
                         if(e->setIdx<allSets.size() && e->mapIdx<allSets[e->setIdx].mapPaths.size())
@@ -1064,7 +1064,7 @@ void generate()
 
         // ── 22. Bot fights table ──
         {
-            auto fightIt=s_monsterToFight.find(id);
+            std::unordered_map<uint16_t, std::vector<BotFightRef>>::const_iterator fightIt=s_monsterToFight.find(id);
             if(fightIt!=s_monsterToFight.end() && !fightIt->second.empty())
             {
                 body << "<center><table class=\"item_list item_list_type_" << resolved_type << "\">\n"
@@ -1074,7 +1074,7 @@ void generate()
                      << "\t\t\t<th>Content</th>\n"
                      << "\t\t</tr>\n";
 
-                for(const auto &bf : fightIt->second)
+                for(const BotFightRef &bf : fightIt->second)
                 {
                     body << "<tr class=\"value\">\n";
 
@@ -1174,7 +1174,7 @@ void generate()
             bool isWild=s_monsterToMaps.find(id)!=s_monsterToMaps.end();
             if(isWild)
             {
-                auto rit=s_monsterRarityPosition.find(id);
+                std::unordered_map<uint16_t, uint32_t>::const_iterator rit=s_monsterRarityPosition.find(id);
                 if(rit==s_monsterRarityPosition.end())
                     bgColor="#ffe5e5";
                 else if(s_monsterRarityCount>0)
@@ -1217,7 +1217,7 @@ void generate()
             if(!flags.empty())
             {
                 indexBody << "<td class=\"monsterlistflag\">\n";
-                for(const auto &f : flags)
+                for(const std::string &f : flags)
                     indexBody << f;
                 indexBody << "</td>\n";
             }

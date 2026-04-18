@@ -367,11 +367,11 @@ void Api_client_real::resetAll()
 
 void Api_client_real::closeDownload()
 {
-    for( auto& n : urlInWaitingListBase )
+    for( std::pair<QNetworkReply * const,UrlInWaiting>& n : urlInWaitingListBase )
         n.first->abort();
-    for( auto& n : urlInWaitingListMain )
+    for( std::pair<QNetworkReply * const,UrlInWaiting>& n : urlInWaitingListMain )
         n.first->abort();
-    for( auto& n : urlInWaitingListSub )
+    for( std::pair<QNetworkReply * const,UrlInWaiting>& n : urlInWaitingListSub )
         n.first->abort();
 }
 
@@ -406,7 +406,7 @@ void Api_client_real::tryDisconnect()
     {
         std::cerr << "Api_client_real::tryDisconnect(): flushing pending move"
                   << " last_direction=" << CatchChallenger::MoveOnTheMap::directionToString(last_direction)
-                  << " last_step=" << (int)last_step << std::endl;
+                  << " last_step=" << std::to_string(last_step) << std::endl;
         stopMove();
     }
     if(socket!=NULL)

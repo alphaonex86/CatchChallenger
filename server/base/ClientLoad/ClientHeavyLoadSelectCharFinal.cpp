@@ -192,7 +192,7 @@ void Client::characterIsRightSendData()
         unsigned int index=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.reputation.size());
         posOutput+=1;
-        auto i=public_and_private_informations.reputation.begin();
+        std::map<uint8_t,PlayerReputation>::iterator i=public_and_private_informations.reputation.begin();
         while(index<=255 && i!=public_and_private_informations.reputation.cend())
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->first;
@@ -224,7 +224,7 @@ void Client::characterIsRightSendData()
                 return;
             }
             #endif
-            const auto &binarySize=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;
+            const int &binarySize=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.recipes,binarySize);
@@ -246,7 +246,7 @@ void Client::characterIsRightSendData()
                 return;
             }
             #endif
-            const auto &binarySize=CommonDatapack::commonDatapack.get_monstersMaxId()/8+1;
+            const int &binarySize=CommonDatapack::commonDatapack.get_monstersMaxId()/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_monster,binarySize);
@@ -268,7 +268,7 @@ void Client::characterIsRightSendData()
                 return;
             }
             #endif
-            const auto &binarySize=CommonDatapack::commonDatapack.get_itemMaxId()/8+1;
+            const int &binarySize=CommonDatapack::commonDatapack.get_itemMaxId()/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_item,binarySize);
@@ -313,7 +313,7 @@ void Client::characterIsRightSendData()
         unsigned int index=0;
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.quests.size());
         posOutput+=2;
-        auto j=public_and_private_informations.quests.begin();
+        std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest>::iterator j=public_and_private_informations.quests.begin();
         while(index<=255 && j!=public_and_private_informations.quests.cend())
         {
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(j->first);
@@ -331,7 +331,7 @@ void Client::characterIsRightSendData()
         const uint16_t &mapDataSize=public_and_private_informations.mapData.size();
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(mapDataSize);
         posOutput+=2;
-        for(const auto& pair : public_and_private_informations.mapData)
+        for(const std::pair<const CATCHCHALLENGER_TYPE_MAPID, Player_private_and_public_informations_Map>& pair : public_and_private_informations.mapData)
         {
             const uint16_t &mapId=pair.first;
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(mapId);
@@ -352,7 +352,7 @@ void Client::characterIsRightSendData()
             size8=mapData.plants.size();
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size8;
             posOutput+=1;
-            for(const auto& planKey : mapData.plants)
+            for(const std::pair<const std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant>& planKey : mapData.plants)
             {
                 const std::pair<COORD_TYPE,COORD_TYPE> &pos=planKey.first;
                 const PlayerPlant &plant=planKey.second;
@@ -386,7 +386,7 @@ void Client::characterIsRightSendData()
                 const uint8_t resCount=ind.resources.size();
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=resCount;
                 posOutput+=1;
-                for(const auto &res : ind.resources)
+                for(const std::pair<const CATCHCHALLENGER_TYPE_ITEM,uint32_t> &res : ind.resources)
                 {
                     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(res.first);
                     posOutput+=2;
@@ -396,7 +396,7 @@ void Client::characterIsRightSendData()
                 const uint8_t prodCount=ind.products.size();
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=prodCount;
                 posOutput+=1;
-                for(const auto &prod : ind.products)
+                for(const std::pair<const CATCHCHALLENGER_TYPE_ITEM,uint32_t> &prod : ind.products)
                 {
                     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(prod.first);
                     posOutput+=2;

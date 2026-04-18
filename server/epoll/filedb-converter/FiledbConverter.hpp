@@ -13,7 +13,7 @@ enum class FileKind {
     DictionaryReputation, // database/common/dictionary_reputation
     DictionarySkin,       // database/common/dictionary_skin
     DictionaryStarter,    // database/common/dictionary_starter
-    Login,                // database/login/{SHA224_HEX}
+    Login,                // database/login/{HASH_HEX}
     Account,              // database/common/accounts/{ACCOUNT_ID}
     CharacterCommon,      // database/common/characters/{PSEUDO_HEX}
     CharacterServer,      // database/server/characters/{PSEUDO_HEX}

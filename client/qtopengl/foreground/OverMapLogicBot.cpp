@@ -35,7 +35,7 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
     unsigned int index=0;
     while(index<botQuests.size())
     {
-        const uint16_t &questId=botQuests.at(index);
+        const CATCHCHALLENGER_TYPE_QUEST &questId=botQuests.at(index);
         const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
         if(playerInformations.quests.find(botQuests.at(index))==playerInformations.quests.cend())
         {
@@ -81,7 +81,7 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
         index++;
     }
     //do the started quest here
-    auto i=playerInformations.quests.begin();
+    std::map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest>::const_iterator i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
         if(!vectorcontainsAtLeastOne(botQuests,i->first) && i->second.step>0)
@@ -116,7 +116,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
         #else
         const std::string language("en");
         #endif
-        auto text = stepXml->FirstChildElement("text");
+        const tinyxml2::XMLElement *text = stepXml->FirstChildElement("text");
         if(!language.empty() && language!="en")
             while(text!=NULL)
             {
@@ -255,7 +255,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
             unsigned int index=0;
             while(index<quests.size())
             {
-                const std::pair<uint32_t,std::string> &quest=quests.at(index);
+                const std::pair<uint16_t,std::string> &quest=quests.at(index);
                 textToShow+=QString("<li><a href=\"quest_%1\">%2</a></li>")
                         .arg(quest.first)
                         .arg(QString::fromStdString(quest.second))
@@ -604,10 +604,10 @@ bool OverMapLogic::haveNextStepQuestRequirements(const CatchChallenger::Quest &q
         index++;
     }
     //fights is now map<mapId, set<botId>>
-    for(const auto &fightEntry : requirements.fights)
+    for(const std::pair<const uint16_t, std::unordered_set<uint8_t>> &fightEntry : requirements.fights)
     {
         const CATCHCHALLENGER_TYPE_MAPID &fightMapId=fightEntry.first;
-        for(const auto &botFightId : fightEntry.second)
+        for(const uint8_t &botFightId : fightEntry.second)
         {
             if(!connexionManager->client->haveBeatBot(fightMapId,botFightId))
                 return false;
@@ -799,7 +799,7 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
     unsigned int index=0;
     while(index<botQuests.size())
     {
-        const uint16_t &questId=botQuests.at(index);
+        const CATCHCHALLENGER_TYPE_QUEST &questId=botQuests.at(index);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at OverMapLogic::getQuestList()";
@@ -880,7 +880,7 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
         index++;
     }
     //do the started quest here
-    auto i=playerInformations.quests.begin();
+    std::map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest>::const_iterator i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
         if(!vectorcontainsAtLeastOne(botQuests,i->first) &&
@@ -979,7 +979,7 @@ void OverMapLogic::updateDisplayedQuests()
     std::string html("<ul>");
     ui->questsList->clear();
     quests_to_id_graphical.clear();
-    auto i=playerInformations.quests.begin();
+    std::map<uint16_t, CatchChallenger::PlayerQuest>::const_iterator i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
         if(QtDatapackClientLoader::datapackLoader->questsExtra.find(i->first)!=QtDatapackClientLoader::datapackLoader->questsExtra.cend())

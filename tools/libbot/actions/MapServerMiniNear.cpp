@@ -55,7 +55,7 @@ std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessi
             const BlockObject * const currentBlock=blockToParse.at(indexBlockToParse);
             accessibleBlock.insert(currentBlock);
 
-            for(const auto& n:currentBlock->links) {
+            for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObject::LinkInformation>& n:currentBlock->links) {
                 const BlockObject * const nextBlock=n.first;
                 const std::vector<BlockObject::LinkCondition> &linkConditions=n.second.linkConditions;
                 bool searchNext=true;
@@ -150,7 +150,7 @@ void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
     const unsigned int &currentBlockWeight=resolvedBlock.at(blockToExplore).weight;
 
     std::vector<const BlockObject *> nextBlockList;
-    for(const auto& n:blockToExplore->links) {
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObject::LinkInformation>& n:blockToExplore->links) {
         const BlockObject * const nextBlock=n.first;
         if(accessibleBlock.find(nextBlock)!=accessibleBlock.cend())
         {

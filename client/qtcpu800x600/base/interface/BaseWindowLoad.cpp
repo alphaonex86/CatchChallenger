@@ -518,7 +518,7 @@ void BaseWindow::load_inventory()
     ui->inventory->clear();
     items_graphical.clear();
     items_to_graphical.clear();
-    auto i=playerInformations.items.begin();
+    std::map<uint16_t, uint32_t>::const_iterator i=playerInformations.items.begin();
     while (i!=playerInformations.items.cend())
     {
         bool show=!inSelection;
@@ -898,7 +898,7 @@ bool BaseWindow::check_senddata()
     if(!check_monsters())
         return false;
     //check the reputation here
-    auto i=client->player_informations.reputation.begin();
+    std::map<uint8_t, CatchChallenger::PlayerReputation>::const_iterator i=client->player_informations.reputation.begin();
     while(i!=client->player_informations.reputation.cend())
     {
         if(i->second.level<-100 || i->second.level>100)
@@ -973,7 +973,7 @@ bool BaseWindow::check_senddata()
 void BaseWindow::show_reputation()
 {
     std::string html="<ul>";
-    auto i=client->player_informations.reputation.begin();
+    std::map<uint8_t, CatchChallenger::PlayerReputation>::const_iterator i=client->player_informations.reputation.begin();
     while(i!=client->player_informations.reputation.cend())
     {
         if(i->second.level>=0)
@@ -1149,7 +1149,7 @@ void BaseWindow::updateDisplayedQuests()
     std::string html("<ul>");
     ui->questsList->clear();
     quests_to_id_graphical.clear();
-    auto i=playerInformations.quests.begin();
+    std::map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest>::const_iterator i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
         if(QtDatapackClientLoader::datapackLoader->has_questExtra(i->first))
@@ -1345,7 +1345,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=stringimplode(reputations,", ")+"<br />";
         }
         {
-            const auto &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
+            const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
             if(quest.rewards.allowCreateClan)
                 finalRewards+=tr("Add permission to create clan").toStdString()+"<br />";
         }
@@ -1520,7 +1520,7 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
             unsigned int sub_index=0;
             while(sub_index<types.size())
             {
-                const auto &typeSub=types.at(sub_index);
+                const uint8_t &typeSub=types.at(sub_index);
                 if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeSub))
                 {
                     const DatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra(typeSub);

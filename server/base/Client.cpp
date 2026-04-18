@@ -6,7 +6,7 @@
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
 #else
-#include "../../general/sha224/sha224.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 #endif
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
@@ -695,12 +695,11 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
                 memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 if(secretTokenBinary.size()!=(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
                 {
-                    std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
+                    std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
                     abort();
                 }
                 #endif
-                SHA224 ctx = SHA224();
-                ctx.init();
+                CatchChallenger::Hash ctx;
                 ctx.update(Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                 ctx.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
 
@@ -735,7 +734,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
             return;
         }
     }
-    if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,rawdata,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+    if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,rawdata,CATCHCHALLENGER_HASH_SIZE)!=0)
     {
         removeFromQueryReceived(query_id);//all list dropped at client destruction
         ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
@@ -749,13 +748,13 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
                      binarytoHexa(tempAddedToken)+
                      " = "+
                      " hashedToken: "+
-                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)+
+                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_HASH_SIZE)+
                      "sended pass + token: "+
-                     binarytoHexa(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE)
+                     binarytoHexa(rawdata,CATCHCHALLENGER_HASH_SIZE)
                      );
         #else
         errorParsingLayer("Password wrong: "+
-                     binarytoHexa(rawdata,CATCHCHALLENGER_SHA224HASH_SIZE)
+                     binarytoHexa(rawdata,CATCHCHALLENGER_HASH_SIZE)
                      );
         #endif
         return;
@@ -890,7 +889,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
 void Client::parse(hps::StreamInputBuffer& buf) {
     /// \warning use dictionary
 
-    auto temp_character_id=character_id_db;
+    uint32_t temp_character_id=character_id_db;
     buf >> temp_character_id;
     std::string recipesS;
     std::string encyclopedia_monsterS;
@@ -1016,10 +1015,10 @@ void Client::parse(hps::StreamInputBuffer& buf) {
 void Client::serializeServerPart(hps::StreamOutputBuffer& buf) const {
     //Per-map data (Player_private_and_public_informations_Map) and quests.
     //Keys of mapData are internal mapIndex at runtime; convert to db_id on disk.
-    const auto &mapData=public_and_private_informations.mapData;
+    const std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> &mapData=public_and_private_informations.mapData;
     size_t mapDataCount=mapData.size();
     buf << mapDataCount;
-    for(const auto &entry : mapData)
+    for(const std::pair<const CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> &entry : mapData)
     {
         const CATCHCHALLENGER_TYPE_MAPID internalId=entry.first;
         if(internalId>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
@@ -1034,7 +1033,7 @@ void Client::serializeServerPart(hps::StreamOutputBuffer& buf) const {
 }
 
 void Client::parseServerPart(hps::StreamInputBuffer& buf) {
-    auto &mapData=public_and_private_informations.mapData;
+    std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> &mapData=public_and_private_informations.mapData;
     mapData.clear();
     size_t mapDataCount=0;
     buf >> mapDataCount;

@@ -193,7 +193,7 @@ void Client::leaveTheCityCapture()
 
 void Client::startTheCityCapture()
 {
-    auto i=captureCity.begin();
+    std::unordered_map<ZONE_TYPE,std::vector<PLAYER_INDEX_FOR_CONNECTED>>::iterator i=captureCity.begin();
     while(i!=captureCity.cend())
     {
         //the city is not free to capture

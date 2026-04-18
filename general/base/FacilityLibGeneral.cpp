@@ -288,7 +288,7 @@ uint32_t FacilityLibGeneral::fileSize(FILE * file)
 
 std::string FacilityLibGeneral::getSuffix(const std::string& fileName)
 {
-    const auto &pos=fileName.find_last_of('.');
+    const std::string::size_type &pos=fileName.find_last_of('.');
     if(pos==std::string::npos)
         return std::string();
     else
@@ -339,7 +339,7 @@ std::string FacilityLibGeneral::getSuffixAndValidatePathFromFS(const std::string
 
 std::string FacilityLibGeneral::getFolderFromFile(const std::string& fileName)
 {
-    const auto &pos=fileName.find_last_of('/');
+    const std::string::size_type &pos=fileName.find_last_of('/');
     if(pos==std::string::npos)
         return std::string();
     else

@@ -782,14 +782,14 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
             }
 
-            //sha224 sum
-            if((size-cursor)<28)
+            //hash sum
+            if((size-cursor)<CATCHCHALLENGER_HASH_SIZE)
             {
-                std::cerr << "C211 sha224 sum item list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                std::cerr << "C211 hash sum item list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
-            memcpy(EpollClientLoginSlave::baseDatapackSum,rawData+cursor,28);
-            cursor+=28;
+            memcpy(EpollClientLoginSlave::baseDatapackSum,rawData+cursor,CATCHCHALLENGER_HASH_SIZE);
+            cursor+=CATCHCHALLENGER_HASH_SIZE;
 
             if((size-cursor)!=0)
             {

@@ -111,7 +111,7 @@ void Encyclopedia::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=description->font();
+    QFont font=description->font();
     int tabH=61;
     int tabW=148;
     if(widget->width()<800 || widget->height()<600)

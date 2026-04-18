@@ -64,7 +64,7 @@ bool MapController::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QM
                 if(plantOnMap==NULL)
                     abort();
                 const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plantCoor=QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(fileName);
-                for (const auto &n : plantCoor) {
+                for (const std::pair<const std::pair<uint8_t,uint8_t>,uint16_t> &n : plantCoor) {
                     const uint16_t indexOfMap=n.second;
                     if(plantOnMap->size()>1000000)
                         abort();
@@ -113,7 +113,7 @@ void MapController::updateBot()
     if(currentMap==NULL)
         return;
 
-    for (const auto &n : currentMap->botsDisplay) {
+    for (const std::pair<const std::pair<uint8_t,uint8_t>,CatchChallenger::BotDisplay> &n : currentMap->botsDisplay) {
         CatchChallenger::BotDisplay &botDisplay=currentMap->botsDisplay[n.first];
         if(botDisplay.mapObject==getPlayerMapObject())
             continue;

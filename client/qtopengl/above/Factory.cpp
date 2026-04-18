@@ -115,7 +115,7 @@ void Factory::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=factoryDescription->font();
+    QFont font=factoryDescription->font();
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);
@@ -147,7 +147,7 @@ void Factory::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
     if(listH<50) listH=50;
 
     // resources title + list (left)
-    auto titleFont=resourcesTitle->font();
+    QFont titleFont=resourcesTitle->font();
     titleFont.setPixelSize(font.pixelSize());
     resourcesTitle->setFont(titleFont);
     resourcesTitle->setPos(x+wdialog->currentBorderSize()+space,contentY-font.pixelSize()-2);
@@ -166,7 +166,7 @@ void Factory::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
     buyButton->setPos(x+idealW-wdialog->currentBorderSize()-space-buyButton->width(),contentY+listH+space/2);
 
     // status text
-    auto statusFont=factoryStatus->font();
+    QFont statusFont=factoryStatus->font();
     statusFont.setPixelSize(font.pixelSize());
     factoryStatus->setFont(statusFont);
     factoryStatus->setPos(x+idealW/2-factoryStatus->boundingRect().width()/2,contentY+listH+space/2);

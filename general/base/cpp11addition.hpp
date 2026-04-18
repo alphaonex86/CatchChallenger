@@ -97,7 +97,7 @@ DLL_PUBLIC std::string sanitizeUtf8String(const std::string &data);
 template <class T>
 int vectorindexOf(const std::vector<T> &list,const T &item)
 {
-    const auto &r=std::find(list.cbegin(),list.cend(),item);
+    const typename std::vector<T>::const_iterator &r=std::find(list.cbegin(),list.cend(),item);
     if(r==list.cend())
         return -1;
     else
@@ -107,7 +107,7 @@ int vectorindexOf(const std::vector<T> &list,const T &item)
 template <class T>
 bool vectorremoveOne(std::vector<T> &list,const T &item)
 {
-    const auto &r=std::find(list.cbegin(),list.cend(),item);
+    const typename std::vector<T>::const_iterator &r=std::find(list.cbegin(),list.cend(),item);
     if(r==list.cend())
     {
         return false;
@@ -122,7 +122,7 @@ bool vectorremoveOne(std::vector<T> &list,const T &item)
 template <class T>
 bool vectorcontainsAtLeastOne(const std::vector<T> &list,const T &item)
 {
-    const auto &r=std::find(list.cbegin(),list.cend(),item);
+    const typename std::vector<T>::const_iterator &r=std::find(list.cbegin(),list.cend(),item);
     if(r==list.cend())
         return false;
     else
@@ -140,7 +140,7 @@ std::vector<T> unordered_map_keys_vector(const std::unordered_map<T,U> &unordere
 {
     std::vector<T> keyList;
     keyList.reserve(unordered_map_var.size());
-    for ( auto it = unordered_map_var.cbegin(); it != unordered_map_var.cend(); ++it )
+    for ( typename std::unordered_map<T,U>::const_iterator it = unordered_map_var.cbegin(); it != unordered_map_var.cend(); ++it )
         keyList.push_back(it->first);
     return keyList;
 }
@@ -149,7 +149,7 @@ template <class T>
 unsigned int vectorRemoveEmpty(std::vector<T> &list)
 {
     unsigned int removedEntryNumber=0;
-    for(auto it = list.begin();it != list.cend();)
+    for(typename std::vector<T>::iterator it = list.begin();it != list.cend();)
         if((*it).empty())
         {
             list.erase(it);

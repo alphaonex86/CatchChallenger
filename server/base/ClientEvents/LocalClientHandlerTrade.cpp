@@ -104,7 +104,7 @@ void Client::tradeFinished()
         addCash(otherPlayerTrade.getTradeCash(),(tradeCash!=0));
 
         //object
-        auto i=tradeObjects.begin();
+        std::unordered_map<uint16_t,uint32_t>::iterator i=tradeObjects.begin();
         while(i!=tradeObjects.cend())
         {
             otherPlayerTrade.addObject(i->first,i->second);
@@ -112,7 +112,7 @@ void Client::tradeFinished()
             ++i;
         }
         const std::unordered_map<uint16_t,uint32_t> otherPlayerTradeGetTradeObjects=otherPlayerTrade.getTradeObjects();
-        auto j=otherPlayerTradeGetTradeObjects.begin();
+        std::unordered_map<uint16_t,uint32_t>::const_iterator j=otherPlayerTradeGetTradeObjects.begin();
         while (j!=otherPlayerTradeGetTradeObjects.cend())
         {
             addObject(j->first,j->second);
@@ -368,7 +368,7 @@ void Client::internalTradeCanceled(const bool &send)
     {
         public_and_private_informations.cash+=tradeCash;
         tradeCash=0;
-        auto i=tradeObjects.begin();
+        std::unordered_map<uint16_t,uint32_t>::iterator i=tradeObjects.begin();
         while(i!=tradeObjects.cend())
         {
             if(public_and_private_informations.items.find(i->first)!=public_and_private_informations.items.cend())

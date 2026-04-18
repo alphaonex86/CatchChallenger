@@ -239,25 +239,25 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         else
             mDatapackSub=mDatapackMain+"sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
     }
-    if((size-pos)<28)
+    if((size-pos)<CATCHCHALLENGER_HASH_SIZE)
     {
         parseError("Protocol wrong or corrupted",std::string("wrong size to get the datapack checksum, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-    memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-    pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+    CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_HASH_SIZE);
+    memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
+    pos+=CATCHCHALLENGER_HASH_SIZE;
 
     if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
     {
-        if((size-pos)<28)
+        if((size-pos)<CATCHCHALLENGER_HASH_SIZE)
         {
             parseError("Protocol wrong or corrupted",std::string("wrong size to get the datapack checksum, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-        pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+        CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_HASH_SIZE);
+        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
+        pos+=CATCHCHALLENGER_HASH_SIZE;
     }
 
     {

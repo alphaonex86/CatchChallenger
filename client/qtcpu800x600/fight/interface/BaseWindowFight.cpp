@@ -44,7 +44,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
         unsigned int sub_index=0;
         while(sub_index<monsterGeneralInfo.type.size())
         {
-            const auto &typeSub=monsterGeneralInfo.type.at(sub_index);
+            const uint8_t &typeSub=monsterGeneralInfo.type.at(sub_index);
             if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeSub))
             {
                 const DatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra(typeSub);

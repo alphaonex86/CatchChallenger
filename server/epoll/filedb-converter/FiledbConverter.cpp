@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -32,12 +33,12 @@ static bool endsWith(const std::string &s, const std::string &suffix) {
 }
 
 static std::string baseName(const std::string &path) {
-    const auto p = path.find_last_of('/');
+    const std::string::size_type p = path.find_last_of('/');
     return p == std::string::npos ? path : path.substr(p + 1);
 }
 
 static std::string dirName(const std::string &path) {
-    const auto p = path.find_last_of('/');
+    const std::string::size_type p = path.find_last_of('/');
     return p == std::string::npos ? std::string(".") : path.substr(0, p);
 }
 
@@ -75,7 +76,7 @@ static bool hexToBytes(const char *hex, std::string &out) {
     const size_t n = std::strlen(hex);
     if (n % 2) return false;
     out.reserve(n / 2);
-    auto dv = [](char c, int &v) {
+    std::function<bool(char, int &)> dv = [](char c, int &v) {
         if (c >= '0' && c <= '9') { v = c - '0'; return true; }
         if (c >= 'a' && c <= 'f') { v = 10 + c - 'a'; return true; }
         if (c >= 'A' && c <= 'F') { v = 10 + c - 'A'; return true; }
@@ -228,7 +229,7 @@ static bool loadDictionary(const std::string &path, std::vector<std::string> &en
 static bool saveDictionary(const std::string &path, const std::vector<std::string> &entries) {
     std::ofstream out(path, std::ofstream::binary | std::ofstream::trunc);
     if (!out.good() || !out.is_open()) return false;
-    for (const auto &e : entries) {
+    for (const std::string &e : entries) {
         const uint8_t len = static_cast<uint8_t>(e.size());
         out.write(reinterpret_cast<const char *>(&len), 1);
         out.write(e.data(), len);
@@ -237,7 +238,7 @@ static bool saveDictionary(const std::string &path, const std::vector<std::strin
 }
 
 struct LoginRecord {
-    std::vector<char> secretTokenBinary; // SHA224, 28 bytes
+    std::vector<char> secretTokenBinary; // hash digest, 32 bytes
     uint32_t account_id_db = 0;
 };
 static bool loadLogin(const std::string &path, LoginRecord &r) {
@@ -440,7 +441,7 @@ static bool saveCharacterServer(const std::string &path, const CharacterServerRe
     hps::StreamOutputBuffer s(out);
     size_t mapDataCount = c.mapData.size();
     s << mapDataCount;
-    for (const auto &entry : c.mapData) {
+    for (const std::pair<const CATCHCHALLENGER_TYPE_MAPID, Player_private_and_public_informations_Map> &entry : c.mapData) {
         s << entry.first;
         s << entry.second;
     }
@@ -453,15 +454,15 @@ static bool saveCharacterServer(const std::string &path, const CharacterServerRe
 
 // --- Player monster pieces ---
 static void xmlWriteBuffs(XMLElement *parent, const std::vector<PlayerBuff> &buffs) {
-    for (const auto &b : buffs) {
-        auto *e = addChild(parent, "buff");
+    for (const PlayerBuff &b : buffs) {
+        XMLElement *e = addChild(parent, "buff");
         sU32(e, "buff", b.buff);
         sU32(e, "level", b.level);
         sU32(e, "remainingNumberOfTurn", b.remainingNumberOfTurn);
     }
 }
 static void xmlReadBuffs(const XMLElement *parent, std::vector<PlayerBuff> &buffs) {
-    for (const auto *e = parent->FirstChildElement("buff"); e; e = e->NextSiblingElement("buff")) {
+    for (const XMLElement *e = parent->FirstChildElement("buff"); e; e = e->NextSiblingElement("buff")) {
         PlayerBuff b;
         b.buff = static_cast<uint8_t>(aU32(e, "buff"));
         b.level = static_cast<uint8_t>(aU32(e, "level"));
@@ -471,15 +472,15 @@ static void xmlReadBuffs(const XMLElement *parent, std::vector<PlayerBuff> &buff
 }
 
 static void xmlWriteSkills(XMLElement *parent, const std::vector<PlayerMonster::PlayerSkill> &skills) {
-    for (const auto &sk : skills) {
-        auto *e = addChild(parent, "skill");
+    for (const PlayerMonster::PlayerSkill &sk : skills) {
+        XMLElement *e = addChild(parent, "skill");
         sU32(e, "skill", sk.skill);
         sU32(e, "level", sk.level);
         sU32(e, "endurance", sk.endurance);
     }
 }
 static void xmlReadSkills(const XMLElement *parent, std::vector<PlayerMonster::PlayerSkill> &skills) {
-    for (const auto *e = parent->FirstChildElement("skill"); e; e = e->NextSiblingElement("skill")) {
+    for (const XMLElement *e = parent->FirstChildElement("skill"); e; e = e->NextSiblingElement("skill")) {
         PlayerMonster::PlayerSkill sk;
         sk.skill = static_cast<uint16_t>(aU32(e, "skill"));
         sk.level = static_cast<uint8_t>(aU32(e, "level"));
@@ -489,9 +490,9 @@ static void xmlReadSkills(const XMLElement *parent, std::vector<PlayerMonster::P
 }
 
 static void xmlWriteMonsters(XMLElement *parent, const std::vector<PlayerMonster> &monsters, const char *tag) {
-    auto *wrap = addChild(parent, tag);
-    for (const auto &m : monsters) {
-        auto *e = addChild(wrap, "monster");
+    XMLElement *wrap = addChild(parent, tag);
+    for (const PlayerMonster &m : monsters) {
+        XMLElement *e = addChild(wrap, "monster");
         sU32(e, "monster", m.monster);
         sU32(e, "level", m.level);
         sU32(e, "hp", m.hp);
@@ -505,9 +506,9 @@ static void xmlWriteMonsters(XMLElement *parent, const std::vector<PlayerMonster
     }
 }
 static void xmlReadMonsters(const XMLElement *parent, std::vector<PlayerMonster> &monsters, const char *tag) {
-    const auto *wrap = parent->FirstChildElement(tag);
+    const XMLElement *wrap = parent->FirstChildElement(tag);
     if (!wrap) return;
-    for (const auto *e = wrap->FirstChildElement("monster"); e; e = e->NextSiblingElement("monster")) {
+    for (const XMLElement *e = wrap->FirstChildElement("monster"); e; e = e->NextSiblingElement("monster")) {
         PlayerMonster m;
         m.monster = static_cast<uint16_t>(aU32(e, "monster"));
         m.level = static_cast<uint8_t>(aU32(e, "level"));
@@ -517,8 +518,8 @@ static void xmlReadMonsters(const XMLElement *parent, std::vector<PlayerMonster>
         m.remaining_xp = aU32(e, "remaining_xp");
         m.egg_step = aU32(e, "egg_step");
         m.character_origin = aU32(e, "character_origin");
-        if (const auto *buffs = e->FirstChildElement("buffs")) xmlReadBuffs(buffs, m.buffs);
-        if (const auto *skills = e->FirstChildElement("skills")) xmlReadSkills(skills, m.skills);
+        if (const XMLElement *buffs = e->FirstChildElement("buffs")) xmlReadBuffs(buffs, m.buffs);
+        if (const XMLElement *skills = e->FirstChildElement("skills")) xmlReadSkills(skills, m.skills);
         monsters.push_back(std::move(m));
     }
 }
@@ -526,42 +527,42 @@ static void xmlReadMonsters(const XMLElement *parent, std::vector<PlayerMonster>
 // --- Player_private_and_public_informations_Map ---
 static void xmlWriteMapData(XMLElement *parent,
                             const std::vector<std::pair<uint32_t, Player_private_and_public_informations_Map>> &entries) {
-    for (const auto &kv : entries) {
-        auto *mp = addChild(parent, "map");
+    for (const std::pair<const CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> &kv : entries) {
+        XMLElement *mp = addChild(parent, "map");
         sU32(mp, "db_id", kv.first);
-        const auto &v = kv.second;
-        auto *items = addChild(mp, "items");
-        for (const auto &p : v.items) {
-            auto *it = addChild(items, "item");
+        const Player_private_and_public_informations_Map &v = kv.second;
+        XMLElement *items = addChild(mp, "items");
+        for (const std::pair<COORD_TYPE,COORD_TYPE> &p : v.items) {
+            XMLElement *it = addChild(items, "item");
             sU32(it, "x", p.first);
             sU32(it, "y", p.second);
         }
-        auto *plants = addChild(mp, "plants");
-        for (const auto &p : v.plants) {
-            auto *pl = addChild(plants, "plant");
+        XMLElement *plants = addChild(mp, "plants");
+        for (const std::pair<const std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> &p : v.plants) {
+            XMLElement *pl = addChild(plants, "plant");
             sU32(pl, "x", p.first.first);
             sU32(pl, "y", p.first.second);
             sU32(pl, "plant", p.second.plant);
             sU64(pl, "mature_at", p.second.mature_at);
         }
-        auto *bots = addChild(mp, "bots_beaten");
-        for (const auto &id : v.bots_beaten) {
-            auto *b = addChild(bots, "bot");
+        XMLElement *bots = addChild(mp, "bots_beaten");
+        for (const CATCHCHALLENGER_TYPE_BOTID &id : v.bots_beaten) {
+            XMLElement *b = addChild(bots, "bot");
             sU32(b, "id", id);
         }
-        auto *industries = addChild(mp, "industriesStatus");
-        for (const auto &ind : v.industriesStatus) {
-            auto *i = addChild(industries, "industry");
+        XMLElement *industries = addChild(mp, "industriesStatus");
+        for (const IndustryStatus &ind : v.industriesStatus) {
+            XMLElement *i = addChild(industries, "industry");
             sU64(i, "last_update", ind.last_update);
-            auto *res = addChild(i, "resources");
-            for (const auto &rq : ind.resources) {
-                auto *r = addChild(res, "r");
+            XMLElement *res = addChild(i, "resources");
+            for (const std::pair<const CATCHCHALLENGER_TYPE_ITEM,uint32_t> &rq : ind.resources) {
+                XMLElement *r = addChild(res, "r");
                 sU32(r, "item", rq.first);
                 sU32(r, "quantity", rq.second);
             }
-            auto *prd = addChild(i, "products");
-            for (const auto &pq : ind.products) {
-                auto *p = addChild(prd, "p");
+            XMLElement *prd = addChild(i, "products");
+            for (const std::pair<const CATCHCHALLENGER_TYPE_ITEM,uint32_t> &pq : ind.products) {
+                XMLElement *p = addChild(prd, "p");
                 sU32(p, "item", pq.first);
                 sU32(p, "quantity", pq.second);
             }
@@ -571,32 +572,32 @@ static void xmlWriteMapData(XMLElement *parent,
 
 static void xmlReadMapData(const XMLElement *parent,
                            std::vector<std::pair<uint32_t, Player_private_and_public_informations_Map>> &entries) {
-    for (const auto *mp = parent->FirstChildElement("map"); mp; mp = mp->NextSiblingElement("map")) {
+    for (const XMLElement *mp = parent->FirstChildElement("map"); mp; mp = mp->NextSiblingElement("map")) {
         Player_private_and_public_informations_Map v;
         const uint32_t db_id = aU32(mp, "db_id");
-        if (const auto *items = mp->FirstChildElement("items"))
-            for (const auto *it = items->FirstChildElement("item"); it; it = it->NextSiblingElement("item"))
+        if (const XMLElement *items = mp->FirstChildElement("items"))
+            for (const XMLElement *it = items->FirstChildElement("item"); it; it = it->NextSiblingElement("item"))
                 v.items.insert({static_cast<uint8_t>(aU32(it, "x")), static_cast<uint8_t>(aU32(it, "y"))});
-        if (const auto *plants = mp->FirstChildElement("plants"))
-            for (const auto *pl = plants->FirstChildElement("plant"); pl; pl = pl->NextSiblingElement("plant")) {
+        if (const XMLElement *plants = mp->FirstChildElement("plants"))
+            for (const XMLElement *pl = plants->FirstChildElement("plant"); pl; pl = pl->NextSiblingElement("plant")) {
                 PlayerPlant p;
                 p.plant = static_cast<uint8_t>(aU32(pl, "plant"));
                 p.mature_at = aU64(pl, "mature_at");
                 v.plants[{static_cast<uint8_t>(aU32(pl, "x")),
                           static_cast<uint8_t>(aU32(pl, "y"))}] = p;
             }
-        if (const auto *bots = mp->FirstChildElement("bots_beaten"))
-            for (const auto *b = bots->FirstChildElement("bot"); b; b = b->NextSiblingElement("bot"))
+        if (const XMLElement *bots = mp->FirstChildElement("bots_beaten"))
+            for (const XMLElement *b = bots->FirstChildElement("bot"); b; b = b->NextSiblingElement("bot"))
                 v.bots_beaten.insert(static_cast<uint8_t>(aU32(b, "id")));
-        if (const auto *industries = mp->FirstChildElement("industriesStatus"))
-            for (const auto *i = industries->FirstChildElement("industry"); i; i = i->NextSiblingElement("industry")) {
+        if (const XMLElement *industries = mp->FirstChildElement("industriesStatus"))
+            for (const XMLElement *i = industries->FirstChildElement("industry"); i; i = i->NextSiblingElement("industry")) {
                 IndustryStatus ind;
                 ind.last_update = aU64(i, "last_update");
-                if (const auto *res = i->FirstChildElement("resources"))
-                    for (const auto *r = res->FirstChildElement("r"); r; r = r->NextSiblingElement("r"))
+                if (const XMLElement *res = i->FirstChildElement("resources"))
+                    for (const XMLElement *r = res->FirstChildElement("r"); r; r = r->NextSiblingElement("r"))
                         ind.resources[static_cast<uint16_t>(aU32(r, "item"))] = aU32(r, "quantity");
-                if (const auto *prd = i->FirstChildElement("products"))
-                    for (const auto *p = prd->FirstChildElement("p"); p; p = p->NextSiblingElement("p"))
+                if (const XMLElement *prd = i->FirstChildElement("products"))
+                    for (const XMLElement *p = prd->FirstChildElement("p"); p; p = p->NextSiblingElement("p"))
                         ind.products[static_cast<uint16_t>(aU32(p, "item"))] = aU32(p, "quantity");
                 v.industriesStatus.push_back(std::move(ind));
             }
@@ -608,14 +609,14 @@ static void xmlReadMapData(const XMLElement *parent,
 
 // ServerCounters
 static void toXml(const ServerCounters &c, XMLDocument &doc) {
-    auto *e = doc.NewElement("server"); doc.InsertEndChild(e);
+    XMLElement *e = doc.NewElement("server"); doc.InsertEndChild(e);
     sU32(e, "maxClanId", c.maxClanId);
     sU32(e, "maxAccountId", c.maxAccountId);
     sU32(e, "maxCharacterId", c.maxCharacterId);
     sU32(e, "maxCity", c.maxCity);
 }
 static bool fromXml(const XMLDocument &doc, ServerCounters &c) {
-    const auto *e = doc.RootElement(); if (!e) return false;
+    const XMLElement *e = doc.RootElement(); if (!e) return false;
     c.maxClanId = aU32(e, "maxClanId");
     c.maxAccountId = aU32(e, "maxAccountId");
     c.maxCharacterId = aU32(e, "maxCharacterId");
@@ -625,43 +626,43 @@ static bool fromXml(const XMLDocument &doc, ServerCounters &c) {
 
 // Dictionary (with root tag)
 static void toXmlDict(const std::vector<std::string> &entries, XMLDocument &doc, const char *rootTag) {
-    auto *r = doc.NewElement(rootTag); doc.InsertEndChild(r);
+    XMLElement *r = doc.NewElement(rootTag); doc.InsertEndChild(r);
     for (size_t i = 0; i < entries.size(); i++) {
-        auto *e = addChild(r, "entry");
+        XMLElement *e = addChild(r, "entry");
         sU32(e, "id", static_cast<uint32_t>(i));
         sStr(e, "name", entries[i]);
     }
 }
 static bool fromXmlDict(const XMLDocument &doc, std::vector<std::string> &entries) {
-    const auto *r = doc.RootElement(); if (!r) return false;
+    const XMLElement *r = doc.RootElement(); if (!r) return false;
     entries.clear();
-    for (const auto *e = r->FirstChildElement("entry"); e; e = e->NextSiblingElement("entry"))
+    for (const XMLElement *e = r->FirstChildElement("entry"); e; e = e->NextSiblingElement("entry"))
         entries.push_back(aStr(e, "name"));
     return true;
 }
 
 // Login
 static void toXml(const LoginRecord &r, XMLDocument &doc) {
-    auto *e = doc.NewElement("login"); doc.InsertEndChild(e);
-    auto *t = addChild(e, "secretTokenHex");
+    XMLElement *e = doc.NewElement("login"); doc.InsertEndChild(e);
+    XMLElement *t = addChild(e, "secretTokenHex");
     t->SetText(bytesToHex(r.secretTokenBinary).c_str());
-    auto *a = addChild(e, "accountId");
+    XMLElement *a = addChild(e, "accountId");
     a->SetText(r.account_id_db);
 }
 static bool fromXml(const XMLDocument &doc, LoginRecord &r) {
-    const auto *e = doc.RootElement(); if (!e) return false;
-    if (const auto *t = e->FirstChildElement("secretTokenHex"))
+    const XMLElement *e = doc.RootElement(); if (!e) return false;
+    if (const XMLElement *t = e->FirstChildElement("secretTokenHex"))
         hexToBytes(t->GetText(), r.secretTokenBinary);
-    if (const auto *a = e->FirstChildElement("accountId"))
+    if (const XMLElement *a = e->FirstChildElement("accountId"))
         r.account_id_db = textU32(a);
     return true;
 }
 
 // Account (vector<CharacterEntry>)
 static void toXml(const std::vector<CharacterEntry> &list, XMLDocument &doc) {
-    auto *r = doc.NewElement("account"); doc.InsertEndChild(r);
-    for (const auto &c : list) {
-        auto *e = addChild(r, "character");
+    XMLElement *r = doc.NewElement("account"); doc.InsertEndChild(r);
+    for (const CharacterEntry &c : list) {
+        XMLElement *e = addChild(r, "character");
         sU32(e, "id", c.character_id);
         sStr(e, "pseudo", c.pseudo);
         sU32(e, "groupIndex", c.charactersGroupIndex);
@@ -672,9 +673,9 @@ static void toXml(const std::vector<CharacterEntry> &list, XMLDocument &doc) {
     }
 }
 static bool fromXml(const XMLDocument &doc, std::vector<CharacterEntry> &list) {
-    const auto *r = doc.RootElement(); if (!r) return false;
+    const XMLElement *r = doc.RootElement(); if (!r) return false;
     list.clear();
-    for (const auto *e = r->FirstChildElement("character"); e; e = e->NextSiblingElement("character")) {
+    for (const XMLElement *e = r->FirstChildElement("character"); e; e = e->NextSiblingElement("character")) {
         CharacterEntry c;
         c.character_id = aU32(e, "id");
         c.pseudo = aStr(e, "pseudo");
@@ -690,90 +691,90 @@ static bool fromXml(const XMLDocument &doc, std::vector<CharacterEntry> &list) {
 
 // Clan
 static void toXml(const ClanRecord &c, XMLDocument &doc) {
-    auto *e = doc.NewElement("clan"); doc.InsertEndChild(e);
-    auto *n = addChild(e, "name");
+    XMLElement *e = doc.NewElement("clan"); doc.InsertEndChild(e);
+    XMLElement *n = addChild(e, "name");
     n->SetText(c.name.c_str());
-    auto *cash = addChild(e, "cash");
+    XMLElement *cash = addChild(e, "cash");
     cash->SetText(std::to_string(c.cash).c_str());
 }
 static bool fromXml(const XMLDocument &doc, ClanRecord &c) {
-    const auto *e = doc.RootElement(); if (!e) return false;
-    if (const auto *n = e->FirstChildElement("name")) c.name = textStr(n);
-    if (const auto *cash = e->FirstChildElement("cash")) c.cash = textU64(cash);
+    const XMLElement *e = doc.RootElement(); if (!e) return false;
+    if (const XMLElement *n = e->FirstChildElement("name")) c.name = textStr(n);
+    if (const XMLElement *cash = e->FirstChildElement("cash")) c.cash = textU64(cash);
     return true;
 }
 
 // Zone
 static void toXmlZone(uint32_t clanId, XMLDocument &doc) {
-    auto *e = doc.NewElement("zone"); doc.InsertEndChild(e);
+    XMLElement *e = doc.NewElement("zone"); doc.InsertEndChild(e);
     sU32(e, "clanId", clanId);
 }
 static bool fromXmlZone(const XMLDocument &doc, uint32_t &clanId) {
-    const auto *e = doc.RootElement(); if (!e) return false;
+    const XMLElement *e = doc.RootElement(); if (!e) return false;
     clanId = aU32(e, "clanId");
     return true;
 }
 
 // CharacterCommon
 static void toXml(const CharacterCommonRecord &c, XMLDocument &doc) {
-    auto *r = doc.NewElement("character"); doc.InsertEndChild(r);
+    XMLElement *r = doc.NewElement("character"); doc.InsertEndChild(r);
     sU32(r, "id", c.character_id_db);
-    auto *pub = addChild(r, "public");
+    XMLElement *pub = addChild(r, "public");
     sStr(pub, "pseudo", c.public_info.pseudo);
     sU32(pub, "type", static_cast<uint8_t>(c.public_info.type));
     sU32(pub, "skinId", c.public_info.skinId);
     sU32(pub, "monsterId", c.public_info.monsterId);
-    auto *cash = addChild(r, "cash");
+    XMLElement *cash = addChild(r, "cash");
     cash->SetText(std::to_string(c.cash).c_str());
-    auto *recipes = addChild(r, "recipes");
+    XMLElement *recipes = addChild(r, "recipes");
     recipes->SetText(bytesToHex(c.recipes).c_str());
     xmlWriteMonsters(r, c.monsters, "monsters");
     xmlWriteMonsters(r, c.warehouse_monsters, "warehouse_monsters");
-    auto *em = addChild(r, "encyclopedia_monster");
+    XMLElement *em = addChild(r, "encyclopedia_monster");
     em->SetText(bytesToHex(c.encyclopedia_monster).c_str());
-    auto *ei = addChild(r, "encyclopedia_item");
+    XMLElement *ei = addChild(r, "encyclopedia_item");
     ei->SetText(bytesToHex(c.encyclopedia_item).c_str());
-    auto *rs = addChild(r, "repel_step"); rs->SetText(c.repel_step);
-    auto *cl = addChild(r, "clan_leader"); cl->SetText(c.clan_leader);
-    auto *clid = addChild(r, "clan"); clid->SetText(c.clan);
-    auto *rep = addChild(r, "reputation");
-    for (const auto &kv : c.reputation) {
-        auto *e = addChild(rep, "entry");
+    XMLElement *rs = addChild(r, "repel_step"); rs->SetText(c.repel_step);
+    XMLElement *cl = addChild(r, "clan_leader"); cl->SetText(c.clan_leader);
+    XMLElement *clid = addChild(r, "clan"); clid->SetText(c.clan);
+    XMLElement *rep = addChild(r, "reputation");
+    for (const std::pair<const uint8_t,PlayerReputation> &kv : c.reputation) {
+        XMLElement *e = addChild(rep, "entry");
         sU32(e, "key", kv.first);
         sI32(e, "level", kv.second.level);
         sI32(e, "point", kv.second.point);
     }
-    auto *items = addChild(r, "items");
-    for (const auto &kv : c.items) {
-        auto *e = addChild(items, "item");
+    XMLElement *items = addChild(r, "items");
+    for (const std::pair<const CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &kv : c.items) {
+        XMLElement *e = addChild(items, "item");
         sU32(e, "id", kv.first);
         sU32(e, "quantity", kv.second);
     }
-    auto *acc = addChild(r, "allowCreateClan"); acc->SetText(c.allowCreateClan);
-    auto *atf = addChild(r, "ableToFight"); atf->SetText(c.ableToFight);
+    XMLElement *acc = addChild(r, "allowCreateClan"); acc->SetText(c.allowCreateClan);
+    XMLElement *atf = addChild(r, "ableToFight"); atf->SetText(c.ableToFight);
     xmlWriteMonsters(r, c.wildMonsters, "wildMonsters");
     xmlWriteMonsters(r, c.botFightMonsters, "botFightMonsters");
-    auto *ri = addChild(r, "randomIndex"); ri->SetText(c.randomIndex);
-    auto *rsz = addChild(r, "randomSize"); rsz->SetText(c.randomSize);
-    auto *nc = addChild(r, "number_of_character"); nc->SetText(c.number_of_character);
-    auto *qd = addChild(r, "questsDrop");
-    for (const auto &kv : c.questsDrop) {
-        auto *q = addChild(qd, "questDrops");
+    XMLElement *ri = addChild(r, "randomIndex"); ri->SetText(c.randomIndex);
+    XMLElement *rsz = addChild(r, "randomSize"); rsz->SetText(c.randomSize);
+    XMLElement *nc = addChild(r, "number_of_character"); nc->SetText(c.number_of_character);
+    XMLElement *qd = addChild(r, "questsDrop");
+    for (const std::pair<const uint8_t, std::vector<MonsterDrops>> &kv : c.questsDrop) {
+        XMLElement *q = addChild(qd, "questDrops");
         sU32(q, "questId", kv.first);
-        for (const auto &d : kv.second) {
-            auto *dr = addChild(q, "drop");
+        for (const MonsterDrops &d : kv.second) {
+            XMLElement *dr = addChild(q, "drop");
             sU32(dr, "item", d.item);
             sU32(dr, "quantity_min", d.quantity_min);
             sU32(dr, "quantity_max", d.quantity_max);
             sU32(dr, "luck", d.luck);
         }
     }
-    auto *cs = addChild(r, "connectedSince");
+    XMLElement *cs = addChild(r, "connectedSince");
     cs->SetText(std::to_string(c.connectedSince).c_str());
-    auto *pi = addChild(r, "profileIndex"); pi->SetText(c.profileIndex);
-    auto *pos = addChild(r, "position");
-    auto writePos = [&](const CharacterPosition &p, const char *tag) {
-        auto *e = addChild(pos, tag);
+    XMLElement *pi = addChild(r, "profileIndex"); pi->SetText(c.profileIndex);
+    XMLElement *pos = addChild(r, "position");
+    std::function<void(const CharacterPosition &, const char *)> writePos = [&](const CharacterPosition &p, const char *tag) {
+        XMLElement *e = addChild(pos, tag);
         sU32(e, "db_id", p.map_db_id);
         sU32(e, "x", p.x);
         sU32(e, "y", p.y);
@@ -782,7 +783,7 @@ static void toXml(const CharacterCommonRecord &c, XMLDocument &doc) {
     writePos(c.map_entry, "map_entry");
     writePos(c.rescue, "rescue");
     writePos(c.unvalidated_rescue, "unvalidated_rescue");
-    auto *cur = addChild(pos, "current");
+    XMLElement *cur = addChild(pos, "current");
     sU32(cur, "db_id", c.current.map_db_id);
     sU32(cur, "x", c.current.x);
     sU32(cur, "y", c.current.y);
@@ -790,45 +791,45 @@ static void toXml(const CharacterCommonRecord &c, XMLDocument &doc) {
 }
 
 static bool fromXml(const XMLDocument &doc, CharacterCommonRecord &c) {
-    const auto *r = doc.RootElement(); if (!r) return false;
+    const XMLElement *r = doc.RootElement(); if (!r) return false;
     c.character_id_db = aU32(r, "id");
-    if (const auto *pub = r->FirstChildElement("public")) {
+    if (const XMLElement *pub = r->FirstChildElement("public")) {
         c.public_info.pseudo = aStr(pub, "pseudo");
         c.public_info.type = static_cast<Player_type>(aU32(pub, "type"));
         c.public_info.skinId = static_cast<uint8_t>(aU32(pub, "skinId"));
         c.public_info.monsterId = static_cast<uint16_t>(aU32(pub, "monsterId"));
     }
-    if (const auto *e = r->FirstChildElement("cash")) c.cash = textU64(e);
-    if (const auto *e = r->FirstChildElement("recipes")) hexToBytes(e->GetText(), c.recipes);
+    if (const XMLElement *e = r->FirstChildElement("cash")) c.cash = textU64(e);
+    if (const XMLElement *e = r->FirstChildElement("recipes")) hexToBytes(e->GetText(), c.recipes);
     xmlReadMonsters(r, c.monsters, "monsters");
     xmlReadMonsters(r, c.warehouse_monsters, "warehouse_monsters");
-    if (const auto *e = r->FirstChildElement("encyclopedia_monster")) hexToBytes(e->GetText(), c.encyclopedia_monster);
-    if (const auto *e = r->FirstChildElement("encyclopedia_item")) hexToBytes(e->GetText(), c.encyclopedia_item);
-    if (const auto *e = r->FirstChildElement("repel_step")) c.repel_step = textU32(e);
-    if (const auto *e = r->FirstChildElement("clan_leader")) c.clan_leader = textBool(e);
-    if (const auto *e = r->FirstChildElement("clan")) c.clan = textU32(e);
-    if (const auto *rep = r->FirstChildElement("reputation"))
-        for (const auto *e = rep->FirstChildElement("entry"); e; e = e->NextSiblingElement("entry")) {
+    if (const XMLElement *e = r->FirstChildElement("encyclopedia_monster")) hexToBytes(e->GetText(), c.encyclopedia_monster);
+    if (const XMLElement *e = r->FirstChildElement("encyclopedia_item")) hexToBytes(e->GetText(), c.encyclopedia_item);
+    if (const XMLElement *e = r->FirstChildElement("repel_step")) c.repel_step = textU32(e);
+    if (const XMLElement *e = r->FirstChildElement("clan_leader")) c.clan_leader = textBool(e);
+    if (const XMLElement *e = r->FirstChildElement("clan")) c.clan = textU32(e);
+    if (const XMLElement *rep = r->FirstChildElement("reputation"))
+        for (const XMLElement *e = rep->FirstChildElement("entry"); e; e = e->NextSiblingElement("entry")) {
             PlayerReputation pr;
             pr.level = static_cast<int8_t>(aI32(e, "level"));
             pr.point = aI32(e, "point");
             c.reputation[static_cast<uint8_t>(aU32(e, "key"))] = pr;
         }
-    if (const auto *items = r->FirstChildElement("items"))
-        for (const auto *e = items->FirstChildElement("item"); e; e = e->NextSiblingElement("item"))
+    if (const XMLElement *items = r->FirstChildElement("items"))
+        for (const XMLElement *e = items->FirstChildElement("item"); e; e = e->NextSiblingElement("item"))
             c.items[static_cast<uint16_t>(aU32(e, "id"))] = aU32(e, "quantity");
-    if (const auto *e = r->FirstChildElement("allowCreateClan")) c.allowCreateClan = textBool(e);
-    if (const auto *e = r->FirstChildElement("ableToFight")) c.ableToFight = textBool(e);
+    if (const XMLElement *e = r->FirstChildElement("allowCreateClan")) c.allowCreateClan = textBool(e);
+    if (const XMLElement *e = r->FirstChildElement("ableToFight")) c.ableToFight = textBool(e);
     xmlReadMonsters(r, c.wildMonsters, "wildMonsters");
     xmlReadMonsters(r, c.botFightMonsters, "botFightMonsters");
-    if (const auto *e = r->FirstChildElement("randomIndex")) c.randomIndex = static_cast<uint16_t>(textU32(e));
-    if (const auto *e = r->FirstChildElement("randomSize")) c.randomSize = static_cast<uint16_t>(textU32(e));
-    if (const auto *e = r->FirstChildElement("number_of_character")) c.number_of_character = static_cast<uint8_t>(textU32(e));
-    if (const auto *qd = r->FirstChildElement("questsDrop"))
-        for (const auto *q = qd->FirstChildElement("questDrops"); q; q = q->NextSiblingElement("questDrops")) {
+    if (const XMLElement *e = r->FirstChildElement("randomIndex")) c.randomIndex = static_cast<uint16_t>(textU32(e));
+    if (const XMLElement *e = r->FirstChildElement("randomSize")) c.randomSize = static_cast<uint16_t>(textU32(e));
+    if (const XMLElement *e = r->FirstChildElement("number_of_character")) c.number_of_character = static_cast<uint8_t>(textU32(e));
+    if (const XMLElement *qd = r->FirstChildElement("questsDrop"))
+        for (const XMLElement *q = qd->FirstChildElement("questDrops"); q; q = q->NextSiblingElement("questDrops")) {
             const uint8_t qid = static_cast<uint8_t>(aU32(q, "questId"));
-            auto &vec = c.questsDrop[qid];
-            for (const auto *dr = q->FirstChildElement("drop"); dr; dr = dr->NextSiblingElement("drop")) {
+            std::vector<MonsterDrops> &vec = c.questsDrop[qid];
+            for (const XMLElement *dr = q->FirstChildElement("drop"); dr; dr = dr->NextSiblingElement("drop")) {
                 MonsterDrops d;
                 d.item = static_cast<uint16_t>(aU32(dr, "item"));
                 d.quantity_min = aU32(dr, "quantity_min");
@@ -837,19 +838,19 @@ static bool fromXml(const XMLDocument &doc, CharacterCommonRecord &c) {
                 vec.push_back(d);
             }
         }
-    if (const auto *e = r->FirstChildElement("connectedSince")) c.connectedSince = textU64(e);
-    if (const auto *e = r->FirstChildElement("profileIndex")) c.profileIndex = static_cast<uint8_t>(textU32(e));
-    if (const auto *pos = r->FirstChildElement("position")) {
-        auto readPos = [&](const XMLElement *e, CharacterPosition &p) {
+    if (const XMLElement *e = r->FirstChildElement("connectedSince")) c.connectedSince = textU64(e);
+    if (const XMLElement *e = r->FirstChildElement("profileIndex")) c.profileIndex = static_cast<uint8_t>(textU32(e));
+    if (const XMLElement *pos = r->FirstChildElement("position")) {
+        std::function<void(const XMLElement *, CharacterPosition &)> readPos = [&](const XMLElement *e, CharacterPosition &p) {
             p.map_db_id = aU32(e, "db_id");
             p.x = static_cast<uint8_t>(aU32(e, "x"));
             p.y = static_cast<uint8_t>(aU32(e, "y"));
             p.orientation = static_cast<uint8_t>(aU32(e, "orientation"));
         };
-        if (const auto *e = pos->FirstChildElement("map_entry")) readPos(e, c.map_entry);
-        if (const auto *e = pos->FirstChildElement("rescue")) readPos(e, c.rescue);
-        if (const auto *e = pos->FirstChildElement("unvalidated_rescue")) readPos(e, c.unvalidated_rescue);
-        if (const auto *e = pos->FirstChildElement("current")) {
+        if (const XMLElement *e = pos->FirstChildElement("map_entry")) readPos(e, c.map_entry);
+        if (const XMLElement *e = pos->FirstChildElement("rescue")) readPos(e, c.rescue);
+        if (const XMLElement *e = pos->FirstChildElement("unvalidated_rescue")) readPos(e, c.unvalidated_rescue);
+        if (const XMLElement *e = pos->FirstChildElement("current")) {
             c.current.map_db_id = aU32(e, "db_id");
             c.current.x = static_cast<uint8_t>(aU32(e, "x"));
             c.current.y = static_cast<uint8_t>(aU32(e, "y"));
@@ -861,22 +862,22 @@ static bool fromXml(const XMLDocument &doc, CharacterCommonRecord &c) {
 
 // CharacterServer
 static void toXml(const CharacterServerRecord &c, XMLDocument &doc) {
-    auto *r = doc.NewElement("character_server"); doc.InsertEndChild(r);
-    auto *md = addChild(r, "mapData");
+    XMLElement *r = doc.NewElement("character_server"); doc.InsertEndChild(r);
+    XMLElement *md = addChild(r, "mapData");
     xmlWriteMapData(md, c.mapData);
-    auto *qs = addChild(r, "quests");
-    for (const auto &kv : c.quests) {
-        auto *q = addChild(qs, "quest");
+    XMLElement *qs = addChild(r, "quests");
+    for (const std::pair<const CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> &kv : c.quests) {
+        XMLElement *q = addChild(qs, "quest");
         sU32(q, "id", kv.first);
         sU32(q, "step", kv.second.step);
         sBool(q, "finish_one_time", kv.second.finish_one_time);
     }
 }
 static bool fromXml(const XMLDocument &doc, CharacterServerRecord &c) {
-    const auto *r = doc.RootElement(); if (!r) return false;
-    if (const auto *md = r->FirstChildElement("mapData")) xmlReadMapData(md, c.mapData);
-    if (const auto *qs = r->FirstChildElement("quests"))
-        for (const auto *q = qs->FirstChildElement("quest"); q; q = q->NextSiblingElement("quest")) {
+    const XMLElement *r = doc.RootElement(); if (!r) return false;
+    if (const XMLElement *md = r->FirstChildElement("mapData")) xmlReadMapData(md, c.mapData);
+    if (const XMLElement *qs = r->FirstChildElement("quests"))
+        for (const XMLElement *q = qs->FirstChildElement("quest"); q; q = q->NextSiblingElement("quest")) {
             PlayerQuest pq;
             pq.step = static_cast<uint8_t>(aU32(q, "step"));
             pq.finish_one_time = aBool(q, "finish_one_time");
@@ -914,7 +915,7 @@ int convertFile(const std::string &inputPath, Direction dir) {
               << (b2x ? binPath : xmlPath) << " -> "
               << (b2x ? xmlPath : binPath) << std::endl;
 
-    auto fail = [&](const char *what) {
+    std::function<int(const char *)> fail = [&](const char *what) {
         std::cerr << "  " << what << " failed" << std::endl;
         return 1;
     };
@@ -1027,7 +1028,7 @@ int convertFile(const std::string &inputPath, Direction dir) {
 static void walk(const std::string &dir, std::vector<std::string> &out) {
     DIR *d = ::opendir(dir.c_str());
     if (!d) return;
-    while (auto *ent = ::readdir(d)) {
+    while (struct dirent *ent = ::readdir(d)) {
         const std::string n = ent->d_name;
         if (n == "." || n == "..") continue;
         const std::string full = dir + "/" + n;
@@ -1041,7 +1042,7 @@ int convertDirectory(const std::string &dir, Direction d) {
     if (!isDir(dir)) { std::cerr << "not a directory: " << dir << std::endl; return 1; }
     std::vector<std::string> files; walk(dir, files);
     int failures = 0;
-    for (const auto &f : files) {
+    for (const std::string &f : files) {
         const bool isXml = endsWith(f, ".xml");
         if (d == Direction::BinToXml) {
             if (isXml) continue;

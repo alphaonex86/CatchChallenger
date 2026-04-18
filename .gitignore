@@ -32,6 +32,7 @@
 *.out
 *.app
 /server/catchchallenger-server-cli-epoll
+/server/epoll/catchchallenger-server-cli-epoll
 /client/catchchallenger
 
 # generated output

@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
     s.showMaximized();
 #endif
     QtDatapackClientLoader::datapackLoader=nullptr;
-    const auto returnCode=a.exec();
+    const int returnCode=a.exec();
     if(QtDatapackClientLoader::datapackLoader!=nullptr)
     {
         delete QtDatapackClientLoader::datapackLoader;

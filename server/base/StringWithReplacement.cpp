@@ -43,7 +43,7 @@ void StringWithReplacement::set(const std::string &query)
     uint8_t numberOfReplace=15;
     while(1)
     {
-        const auto &found = query.find("%"+std::to_string(numberOfReplace));
+        const std::string::size_type &found = query.find("%"+std::to_string(numberOfReplace));
         if(found!=std::string::npos)
         {
             /* [0]: occurrence to replace
@@ -60,7 +60,7 @@ void StringWithReplacement::set(const std::string &query)
             do
             {
                 const std::string testToFind("%"+std::to_string(index));
-                const auto &foundinternal = query.find(testToFind);
+                const std::string::size_type &foundinternal = query.find(testToFind);
                 if(foundinternal!=std::string::npos)
                 {
                     if(foundinternal<previousStringPos)

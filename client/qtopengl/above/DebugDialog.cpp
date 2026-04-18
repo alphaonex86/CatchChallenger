@@ -61,7 +61,7 @@ void DebugDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=debugText->font();
+    QFont font=debugText->font();
     if(widget->width()<600 || widget->height()<480)
     {
         label.setScale(0.5);

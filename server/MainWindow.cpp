@@ -1850,7 +1850,7 @@ void CatchChallenger::MainWindow::on_programmedEventType_currentIndexChanged(int
     if(programmedEventList.find(selectedEvent)!=programmedEventList.cend())
     {
         const std::unordered_map<std::string,GameServerSettings::ProgrammedEvent> &list=programmedEventList.at(selectedEvent);
-        auto i=list.begin();
+        std::unordered_map<std::string,GameServerSettings::ProgrammedEvent>::const_iterator i=list.begin();
         while(i!=list.cend())
         {
             QListWidgetItem *listWidgetItem=new QListWidgetItem(

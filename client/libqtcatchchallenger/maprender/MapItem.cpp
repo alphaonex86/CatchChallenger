@@ -159,7 +159,7 @@ void MapItem::removeMap(Tiled::Map *map)
     if(displayed_layer.find(map)==displayed_layer.cend())
             return;
     const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
-    for( const auto& value : values ) {
+    for( QGraphicsItem * const& value : values ) {
         std::cerr << "values.at(index): " << value << std::endl;
         delete value;
     }
@@ -175,7 +175,7 @@ void MapItem::setMapPosition(Tiled::Map *map, int16_t global_x/*pixel, need be 1
         return;
     }
     const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
-    for( const auto& value : values ) {
+    for( QGraphicsItem * const& value : values ) {
         value->setPos(static_cast<qreal>(static_cast<double>(global_x)),static_cast<qreal>(static_cast<double>(global_y)));
     }
 }

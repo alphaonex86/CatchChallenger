@@ -115,7 +115,7 @@ void BotTargetList::updatePlayerInformation()
                         const MapServerMini::MapParsedForBot::Layer * const nextLlayer=static_cast<const MapServerMini::MapParsedForBot::Layer *>(nextBlock->layer);
                         ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+QString::fromStdString(stepToDo));
                         //search the next position
-                        for(const auto& n:layer.blockObject->links) {
+                        for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObject::LinkInformation>& n:layer.blockObject->links) {
                             const MapServerMini::BlockObject * const tempNextBlock=n.first;
                             //const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                             if(tempNextBlock==nextBlock)
@@ -141,7 +141,7 @@ void BotTargetList::updatePlayerInformation()
     ui->label_player_cash->setText(QString("Cash: %1$").arg(player_private_and_public_informations.cash));
     {
         ui->inventory->clear();
-        for(const auto& n:player_private_and_public_informations.items) {
+        for(const std::pair<const uint16_t, uint32_t>& n:player_private_and_public_informations.items) {
             const uint32_t &itemId=n.first;
             const uint32_t &quantity=n.second;
             QListWidgetItem *item=new QListWidgetItem();

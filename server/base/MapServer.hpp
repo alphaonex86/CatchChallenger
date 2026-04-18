@@ -85,21 +85,21 @@ public:
 
         //std::unordered_map<std::pair<uint8_t,uint8_t> and std::unordered_set<std::pair<uint8_t,uint8_t> not supported by HPS
         buf << (uint8_t)shops.size();
-        for(const auto& n : shops)
+        for(const std::pair<const std::pair<uint8_t,uint8_t>,Shop>& n : shops)
         {
             buf << n.first.first;
             buf << n.first.second;
             buf << n.second;
         }
         buf << (uint8_t)botsFightTrigger.size();
-        for(const auto& n : botsFightTrigger)
+        for(const std::pair<const std::pair<uint8_t,uint8_t>,uint8_t>& n : botsFightTrigger)
         {
             buf << n.first.first;
             buf << n.first.second;
             buf << n.second;
         }
         buf << (uint8_t)items.size();
-        for(const auto& n : items)
+        for(const std::pair<const std::pair<uint8_t,uint8_t>,ItemOnMap>& n : items)
         {
             buf << n.first.first;
             buf << n.first.second;
@@ -107,20 +107,20 @@ public:
         }
 
         buf << (uint8_t)rescue.size();
-        for(const auto& n : rescue)
+        for(const std::pair<const std::pair<uint8_t,uint8_t>,Orientation>& n : rescue)
         {
             buf << n.first.first;
             buf << n.first.second;
             buf << (uint8_t)n.second;
         }
         buf << (uint8_t)heal.size();
-        for(const auto& n : heal)
+        for(const std::pair<uint8_t,uint8_t>& n : heal)
         {
             buf << n.first;
             buf << n.second;
         }
         buf << (uint8_t)zoneCapture.size();
-        for(const auto& n : zoneCapture)
+        for(const std::pair<uint8_t,uint8_t>& n : zoneCapture)
         {
             buf << n.first;
             buf << n.second;

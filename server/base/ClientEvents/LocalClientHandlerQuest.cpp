@@ -148,8 +148,8 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
         }
         index++;
     }
-    for (const auto& pairMap : requirements.fights) {
-        for (const auto& pairBot : pairMap.second) {
+    for (const std::pair<const CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>>& pairMap : requirements.fights) {
+        for (const CATCHCHALLENGER_TYPE_BOTID& pairBot : pairMap.second) {
             if(!haveBeatBot(pairMap.first,pairBot))
             {
                 normalOutput("quest requirement, have not beat the bot: "+std::to_string(pairMap.first)+" "+std::to_string(pairBot));
@@ -208,7 +208,7 @@ void Client::syncDatabaseQuest()
         uint16_t lastQuestId=0;
         uint32_t pos=0;
         char quest_raw[(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)*public_and_private_informations.quests.size()];
-        auto i=public_and_private_informations.quests.begin();
+        std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest>::iterator i=public_and_private_informations.quests.begin();
         while(i!=public_and_private_informations.quests.cend())
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
@@ -256,7 +256,7 @@ void Client::syncDatabaseQuest()
     {
         uint16_t lastQuestId=0;
         uint32_t pos=0;
-        auto i=public_and_private_informations.quests.begin();
+        std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest>::iterator i=public_and_private_informations.quests.begin();
         while(i!=public_and_private_informations.quests.cend())
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE

@@ -99,7 +99,7 @@ void Shop::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget)
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=shopDescription->font();
+    QFont font=shopDescription->font();
     int sellerSize=80;
     if(widget->width()<800 || widget->height()<600)
     {
@@ -127,7 +127,7 @@ void Shop::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget)
     int contentY=y+label.pixmap().height()/2*label.scale()+space;
     sellerImage->setPos(x+wdialog->currentBorderSize()+space,contentY);
     sellerNameText->setPos(x+wdialog->currentBorderSize()+space,contentY+sellerSize+2);
-    auto nameFont=sellerNameText->font();
+    QFont nameFont=sellerNameText->font();
     nameFont.setPixelSize(font.pixelSize());
     sellerNameText->setFont(nameFont);
 

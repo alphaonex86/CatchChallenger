@@ -8,6 +8,7 @@
 #include <iostream>
 #include <chrono>
 #include <cstring>
+#include <functional>
 
 /// \todo, check number validity by http://en.cppreference.com/w/c/string/byte/strtol
 /* to check: bool my_strtol(const std::string &str, long &v) {
@@ -328,7 +329,7 @@ std::string binarytoHexa(const char * const data, const uint32_t &size, bool *ok
 
 uint8_t hexToDecUnit(const std::string& data, bool *ok)
 {
-     auto fromHex = [](char c, bool *ok)
+     std::function<int(char, bool*)> fromHex = [](char c, bool *ok)
      {
          if(ok!=NULL)
              *ok=true;

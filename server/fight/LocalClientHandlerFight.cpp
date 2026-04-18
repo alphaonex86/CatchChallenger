@@ -373,7 +373,7 @@ bool Client::giveXP(int xp)
 /*    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-        auto currentMonster=getCurrentMonster();
+        PlayerMonster *currentMonster=getCurrentMonster();
         if(haveChangeOfLevel)
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
                         std::to_string(currentMonster->hp),
@@ -730,7 +730,7 @@ Skill::AttackReturn Client::doTheCurrentMonsterAttack(const uint16_t &skill, con
 
 std::vector<uint8_t> Client::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
-    const auto &returnVar=CommonFightEngine::addPlayerMonster(playerMonster);
+    const std::vector<uint8_t> &returnVar=CommonFightEngine::addPlayerMonster(playerMonster);
     bool haveChange=false;
     uint32_t index=0;
     while(index<playerMonster.size())
@@ -749,7 +749,7 @@ std::vector<uint8_t> Client::addPlayerMonster(const std::vector<PlayerMonster> &
 
 std::vector<uint8_t> Client::addPlayerMonster(const PlayerMonster &playerMonster)
 {
-    const auto &returnVar=CommonFightEngine::addPlayerMonster(playerMonster);
+    const std::vector<uint8_t> &returnVar=CommonFightEngine::addPlayerMonster(playerMonster);
     if(addPlayerMonsterWithChange(playerMonster))
         updateMonsterInDatabaseEncyclopedia();
             /*if(haveChange)updateMonsterInDatabase();

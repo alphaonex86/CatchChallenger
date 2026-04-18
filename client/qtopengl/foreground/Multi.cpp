@@ -521,7 +521,7 @@ std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArray &xml
 {
     std::vector<ConnexionInfo> returnedVar;
     tinyxml2::XMLDocument domDocument;
-    const auto loadOkay = domDocument.Parse(xmlContent.data(),xmlContent.size());
+    const tinyxml2::XMLError loadOkay = domDocument.Parse(xmlContent.data(),xmlContent.size());
     if(loadOkay!=0)
     {
         std::cerr << "Multi::loadXmlConnexionInfoList, " << domDocument.ErrorName() << std::endl;
@@ -876,7 +876,7 @@ void Multi::server_select_clicked()
     int index=0;
     while((unsigned int)index<(unsigned int)mergedConnexionInfoList.size())
     {
-        auto e=mergedConnexionInfoList.at(index);
+        ConnexionInfo e=mergedConnexionInfoList.at(index);
         if(e.isCustom==selectedServer.isCustom && e.unique_code==selectedServer.unique_code)
         {
             login->setLinks(e.site_page,e.register_page);

@@ -681,9 +681,9 @@ void MapVisualiserPlayer::moveStepSlot()
                               << std::endl;
                     return;
                 }
-                std::cerr << "moveStepSlot(): final step dir=" << (int)direction
-                          << " from map=" << (int)pre_map << "(" << (int)pre_x << "," << (int)pre_y << ")"
-                          << " -> map=" << (int)current_map << "(" << (int)x << "," << (int)y << ")"
+                std::cerr << "moveStepSlot(): final step dir=" << std::to_string(direction)
+                          << " from map=" << std::to_string(pre_map) << "(" << std::to_string(pre_x) << "," << std::to_string(pre_y) << ")"
+                          << " -> map=" << std::to_string(current_map) << "(" << std::to_string(x) << "," << std::to_string(y) << ")"
                           << std::endl;
                 direction=CatchChallenger::MoveOnTheMap::directionToDirectionLook(direction);
             }
@@ -770,19 +770,19 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
         int index=0;
         const int size=logicalMap.teleporters.size();
         std::cerr << "finalPlayerStepTeleported(): checking " << size << " teleporter(s) on map="
-                  << (int)current_map << " pos=(" << (int)x << "," << (int)y << ")" << std::endl;
+                  << std::to_string(current_map) << " pos=(" << std::to_string(x) << "," << std::to_string(y) << ")" << std::endl;
         while(index<size)
         {
             const CatchChallenger::Teleporter &current_teleport=logicalMap.teleporters.at(index);
-            std::cerr << "  tp[" << index << "] src=(" << (int)current_teleport.source_x << "," << (int)current_teleport.source_y
-                      << ") -> map=" << (int)current_teleport.mapIndex
-                      << "(" << (int)current_teleport.destination_x << "," << (int)current_teleport.destination_y << ")"
+            std::cerr << "  tp[" << index << "] src=(" << std::to_string(current_teleport.source_x) << "," << std::to_string(current_teleport.source_y)
+                      << ") -> map=" << std::to_string(current_teleport.mapIndex)
+                      << "(" << std::to_string(current_teleport.destination_x) << "," << std::to_string(current_teleport.destination_y) << ")"
                       << std::endl;
             //if need be teleported
             if(current_teleport.source_x==x && current_teleport.source_y==y)
             {
-                std::cerr << "  -> MATCH: teleporting to map=" << (int)current_teleport.mapIndex
-                          << "(" << (int)current_teleport.destination_x << "," << (int)current_teleport.destination_y << ")"
+                std::cerr << "  -> MATCH: teleporting to map=" << std::to_string(current_teleport.mapIndex)
+                          << "(" << std::to_string(current_teleport.destination_x) << "," << std::to_string(current_teleport.destination_y) << ")"
                           << std::endl;
                 isTeleported=true;
                 unloadPlayerFromCurrentMap();
@@ -1501,7 +1501,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
         }
         /// \todo do a player cache here
         //the player skin
-        std::cerr << "set playerTileset here from: " << (int)player.skinId << std::endl;
+        std::cerr << "set playerTileset here from: " << std::to_string(player.skinId) << std::endl;
         if(player.skinId<skinFolderList.size())
         {
             playerSkinPath=datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId);
@@ -1548,7 +1548,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             std::cerr << "set playerTileset nullptr into cell.tile (abort)" << std::endl;
             abort();
         }
-        std::cout << "MapVisualiserPlayer::insert_player_internal() direction: " << (int)direction << " lastTileset: " << lastTileset << std::endl;
+        std::cout << "MapVisualiserPlayer::insert_player_internal() direction: " << std::to_string(direction) << " lastTileset: " << lastTileset << std::endl;
         switch(direction)
         {
             case CatchChallenger::Direction_look_at_top:
@@ -1666,8 +1666,8 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, c
     {
         if(!CatchChallenger::MoveOnTheMap::canGoTo(mapList,direction,logicalMap,lx,ly,checkCollision && !clip))
         {
-            std::cerr << "MapVisualiserPlayer::canGoTo() MoveOnTheMap::canGoTo returned false dir=" << (int)direction
-                      << " map=" << (int)mapIndex << " pos=(" << (int)lx << "," << (int)ly << ") checkCollision="
+            std::cerr << "MapVisualiserPlayer::canGoTo() MoveOnTheMap::canGoTo returned false dir=" << std::to_string(direction)
+                      << " map=" << std::to_string(mapIndex) << " pos=(" << std::to_string(lx) << "," << std::to_string(ly) << ") checkCollision="
                       << (checkCollision && !clip) << std::endl;
             return false;
         }
@@ -1675,8 +1675,8 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, c
             return false;
         if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)==CatchChallenger::QMap_client::all_map.cend())
         {
-            std::cerr << "MapVisualiserPlayer::canGoTo() destination map " << (int)tempMapIndex
-                      << " not in all_map (pos=" << (int)lx << "," << (int)ly << "), blocking move" << std::endl;
+            std::cerr << "MapVisualiserPlayer::canGoTo() destination map " << std::to_string(tempMapIndex)
+                      << " not in all_map (pos=" << std::to_string(lx) << "," << std::to_string(ly) << "), blocking move" << std::endl;
             return false;
         }
         const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
@@ -1716,7 +1716,7 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, c
 //call after enter on new map
 void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
-    std::cerr << "MapVisualiserPlayer::loadPlayerFromCurrentMap() current_map=" << current_map << " x=" << (int)x << " y=" << (int)y << " centerOnPlayer=" << centerOnPlayer << std::endl;
+    std::cerr << "MapVisualiserPlayer::loadPlayerFromCurrentMap() current_map=" << current_map << " x=" << std::to_string(x) << " y=" << std::to_string(y) << " centerOnPlayer=" << centerOnPlayer << std::endl;
     std::cerr << "[CENTER DEBUG] centerOnPlayer=" << (centerOnPlayer ? "TRUE" : "FALSE") << std::endl;
     if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
     {

@@ -81,7 +81,7 @@ void MapControllerMP::resetAll()
     delayedActions.clear();
     skinFolderList.clear();
 
-    for(const auto &n : otherPlayerList) {
+    for(const std::pair<const SIMPLIFIED_PLAYER_ID_FOR_MAP,OtherPlayer> &n : otherPlayerList) {
         unloadOtherPlayerFromMap(n.second);
 //        delete n.second.playerTileset;mem leak to prevent crash for now
     }
@@ -367,7 +367,7 @@ void MapControllerMP::unloadOtherPlayerFromMap(const OtherPlayer &otherPlayer)
             qDebug() << QStringLiteral("simplifiedId: %1 not found into otherPlayerList").arg(simplifiedId);
     }*/
 
-    for (const auto &n : otherPlayer.mapUsed) {
+    for (const CATCHCHALLENGER_TYPE_MAPID &n : otherPlayer.mapUsed) {
         CATCHCHALLENGER_TYPE_MAPID mapIndex = n;
         if(mapUsedByOtherPlayer.find(mapIndex)!=mapUsedByOtherPlayer.cend())
         {
@@ -398,7 +398,7 @@ void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::Ot
 
 void MapControllerMP::loadCurrentPlayer(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
-    std::cerr << "MapControllerMP::loadCurrentPlayer() mapId=" << mapId << " x=" << (int)x << " y=" << (int)y
+    std::cerr << "MapControllerMP::loadCurrentPlayer() mapId=" << mapId << " x=" << std::to_string(x) << " y=" << std::to_string(y)
               << " mHaveTheDatapack=" << mHaveTheDatapack << " player_informations_is_set=" << player_informations_is_set << std::endl;
     initialPlayerPosition.mapId=mapId;
     initialPlayerPosition.x=x;
@@ -411,7 +411,7 @@ void MapControllerMP::loadCurrentPlayer(const CATCHCHALLENGER_TYPE_MAPID &mapId,
 
 bool MapControllerMP::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
-    std::cerr << "MapControllerMP::teleportTo() mapIndex=" << mapIndex << " x=" << (int)x << " y=" << (int)y << " mHaveTheDatapack=" << mHaveTheDatapack << " player_informations_is_set=" << player_informations_is_set << std::endl;
+    std::cerr << "MapControllerMP::teleportTo() mapIndex=" << mapIndex << " x=" << std::to_string(x) << " y=" << std::to_string(y) << " mHaveTheDatapack=" << mHaveTheDatapack << " player_informations_is_set=" << player_informations_is_set << std::endl;
     #if defined (ONLYMAPRENDER)
     (void)mapIndex;
     (void)x;
@@ -536,8 +536,8 @@ void MapControllerMP::reinject_signals()
             pendingInitialPlayerLoad=false;
             const std::vector<std::string> &maps=QtDatapackClientLoader::datapackLoader->get_maps();
             std::cerr << "MapControllerMP::reinject_signals() loading current player on mapId="
-                      << initialPlayerPosition.mapId << " x=" << (int)initialPlayerPosition.x
-                      << " y=" << (int)initialPlayerPosition.y
+                      << initialPlayerPosition.mapId << " x=" << std::to_string(initialPlayerPosition.x)
+                      << " y=" << std::to_string(initialPlayerPosition.y)
                       << " maps.size()=" << maps.size() << std::endl;
             if(initialPlayerPosition.mapId>=(CATCHCHALLENGER_TYPE_MAPID)maps.size())
             {
@@ -892,7 +892,7 @@ void MapControllerMP::destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     //remove the other player
     std::unordered_map<SIMPLIFIED_PLAYER_ID_FOR_MAP,OtherPlayer> otherPlayerList2=otherPlayerList;
-    for (const auto &n : otherPlayerList2) {
+    for (const std::pair<const SIMPLIFIED_PLAYER_ID_FOR_MAP,OtherPlayer> &n : otherPlayerList2) {
         if(n.second.presumed_map==mapIndex)
             remove_player_final(n.first,true);
     }

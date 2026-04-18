@@ -96,7 +96,7 @@ bool ActionsAction::preload_post_subdatapack()
 void ActionsAction::loadFinishedReemitTheDelayedFunction()
 {
     allMapIsLoaded=true;
-    for(const auto& n:delayedMessage) {
+    for(const std::pair<CatchChallenger::Api_protocol_Qt * const, std::vector<DelayedMapPlayerChange>>& n:delayedMessage) {
         CatchChallenger::Api_protocol_Qt  *api=n.first;
         const std::vector<DelayedMapPlayerChange> &delayedMapPlayerChangeList=n.second;
 

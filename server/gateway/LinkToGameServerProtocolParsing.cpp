@@ -664,7 +664,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     /* intercept part here */
     if(mainCodeType==0xA8)//Get first data and send the login
     {
-        if(size>(40+CATCHCHALLENGER_SHA224HASH_SIZE) && data[0x00]==0x01)//all is good, change the reply
+        if(size>(40+CATCHCHALLENGER_HASH_SIZE) && data[0x00]==0x01)//all is good, change the reply
         {
             unsigned int pos=sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint8_t)+sizeof(uint16_t);
             if(replySelectListInWait!=NULL)
@@ -677,10 +677,10 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     DatapackDownloaderBase::datapackDownloaderBase=new DatapackDownloaderBase(LinkToGameServer::mDatapackBase);
             }
             {
-                DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                memcpy(DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase.resize(CATCHCHALLENGER_HASH_SIZE);
+                memcpy(DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
             }
-            pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+            pos+=CATCHCHALLENGER_HASH_SIZE;
             if((size-pos)<1)
             {
                 parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
@@ -997,27 +997,27 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
                     downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).at(sub);
                 }
-                if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+                if((size-pos)<CATCHCHALLENGER_HASH_SIZE)
                 {
                     parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
-                downloader->sendedHashMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                memcpy(downloader->sendedHashMain.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-                pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                downloader->sendedHashMain.resize(CATCHCHALLENGER_HASH_SIZE);
+                memcpy(downloader->sendedHashMain.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
+                pos+=CATCHCHALLENGER_HASH_SIZE;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 messageParsingLayer("sendedHashMain: "+binarytoHexa(downloader->sendedHashMain));
                 #endif
                 if(!sub.empty())
                 {
-                    if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+                    if((size-pos)<CATCHCHALLENGER_HASH_SIZE)
                     {
                         parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                         return false;
                     }
-                    downloader->sendedHashSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                    memcpy(downloader->sendedHashSub.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-                    pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                    downloader->sendedHashSub.resize(CATCHCHALLENGER_HASH_SIZE);
+                    memcpy(downloader->sendedHashSub.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
+                    pos+=CATCHCHALLENGER_HASH_SIZE;
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     messageParsingLayer("sendedHashSub: "+binarytoHexa(downloader->sendedHashSub));
                     #endif

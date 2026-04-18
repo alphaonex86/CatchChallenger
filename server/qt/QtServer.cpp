@@ -126,7 +126,7 @@ QtServer::QtServer()
 
 QtServer::~QtServer()
 {
-    auto i=client_list.begin();
+    std::unordered_set<CatchChallenger::Client *>::const_iterator i=client_list.begin();
     while(i!=client_list.cend())
     {
         CatchChallenger::Client *client=(*i);
@@ -417,7 +417,7 @@ void QtServer::stop_internal_server()
 void QtServer::stop_internal_server_slot()
 {
     std::cerr << "QtServer::stop_internal_server_slot() client_list.size()=" << client_list.size() << std::endl;
-    auto i=client_list.begin();
+    std::unordered_set<CatchChallenger::Client *>::const_iterator i=client_list.begin();
     while(i!=client_list.cend())
     {
         QtClientWithMap *c=static_cast<QtClientWithMap *>(*i);

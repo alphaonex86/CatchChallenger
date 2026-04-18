@@ -4,7 +4,7 @@
 #include "EpollClientLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../../general/sha224/sha224.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 #include "VariableLoginServer.hpp"
 #include "LinkToGameServer.hpp"
 
@@ -64,14 +64,13 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 stat=Stat::ProtocolGood;
                 //send the query 0x08
                 {
-                    unsigned char tempHashResult[CATCHCHALLENGER_SHA224HASH_SIZE];
-                    SHA224 hash = SHA224();
-                    hash.init();
+                    unsigned char tempHashResult[CATCHCHALLENGER_HASH_SIZE];
+                    CatchChallenger::Hash hash;
                     hash.update(reinterpret_cast<const unsigned char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH);
                     hash.update(reinterpret_cast<const unsigned char *>(data)+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                     hash.final(tempHashResult);
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    std::cout << "SHA224(" << binarytoHexa(reinterpret_cast<const char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH)
+                    std::cout << "Hash(" << binarytoHexa(reinterpret_cast<const char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH)
                               << " " << binarytoHexa(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) << ") to auth on master" << std::endl;
                     #endif
 
@@ -82,9 +81,9 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xBD;
                     ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
 
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,tempHashResult,CATCHCHALLENGER_SHA224HASH_SIZE);
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,tempHashResult,CATCHCHALLENGER_HASH_SIZE);
 
-                    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+CATCHCHALLENGER_SHA224HASH_SIZE);
+                    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+CATCHCHALLENGER_HASH_SIZE);
 
                     queryNumberList.pop_back();
                 }

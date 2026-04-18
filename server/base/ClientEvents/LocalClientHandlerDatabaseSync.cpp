@@ -28,7 +28,7 @@ void Client::updateObjectInDatabase()
         uint16_t lastItemId=0;
         uint32_t pos=0;
         char item_raw[(2+4)*public_and_private_informations.items.size()];
-        auto i=public_and_private_informations.items.begin();
+        std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>::iterator i=public_and_private_informations.items.begin();
         while(i!=public_and_private_informations.items.cend())
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
@@ -110,7 +110,7 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
         uint16_t lastItemId=0;
         uint32_t pos=0;
         char item_raw[(2+4)*public_and_private_informations.items.size()];
-        auto i=public_and_private_informations.items.begin();
+        std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>::iterator i=public_and_private_informations.items.begin();
         while(i!=public_and_private_informations.items.cend())
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
@@ -200,7 +200,7 @@ void Client::syncDatabaseReputation()
 
     uint8_t lastReputationId=0;
     uint32_t posOutput=0;
-    auto i=public_and_private_informations.reputation.begin();
+    std::map<uint8_t,PlayerReputation>::iterator i=public_and_private_informations.reputation.begin();
     while(i!=public_and_private_informations.reputation.cend())
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -297,7 +297,7 @@ void Client::syncIndustries(const CATCHCHALLENGER_TYPE_MAPID &mapId)
         posOutput+=8;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(ind.resources.size());
         posOutput+=1;
-        for(const auto &res : ind.resources)
+        for(const std::pair<const CATCHCHALLENGER_TYPE_ITEM,uint32_t> &res : ind.resources)
         {
             const uint16_t item_id_le=htole16(res.first);
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&item_id_le,sizeof(uint16_t));
@@ -308,7 +308,7 @@ void Client::syncIndustries(const CATCHCHALLENGER_TYPE_MAPID &mapId)
         }
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(ind.products.size());
         posOutput+=1;
-        for(const auto &prod : ind.products)
+        for(const std::pair<const CATCHCHALLENGER_TYPE_ITEM,uint32_t> &prod : ind.products)
         {
             const uint16_t item_id_le=htole16(prod.first);
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&item_id_le,sizeof(uint16_t));
@@ -348,8 +348,8 @@ void Client::savePosition()
     #endif
     std::cerr << "[savePosition] character=" << character_id_db
               << " mapIndex=" << getMapId()
-              << " x=" << (int)x << " y=" << (int)y
-              << " last_direction=" << (int)getLastDirection() << std::endl;
+              << " x=" << std::to_string(x) << " y=" << std::to_string(y)
+              << " last_direction=" << std::to_string(getLastDirection()) << std::endl;
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */

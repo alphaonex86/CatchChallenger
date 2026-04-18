@@ -899,7 +899,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
     }
     //drop the local variable
     {
-        for ( auto &n : simplifiedMapList ) {
+        for ( std::pair<const CATCHCHALLENGER_TYPE_MAPID,SimplifiedMapForPathFinding> &n : simplifiedMapList ) {
             SimplifiedMapForPathFinding simplifiedMapForPathFinding=n.second;
             if(simplifiedMapForPathFinding.simplifiedMap!=NULL)
             {

@@ -233,14 +233,14 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                 }
                 CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                 pos+=sizeof(uint16_t);
-                if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+                if((size-pos)<CATCHCHALLENGER_HASH_SIZE)
                 {
                     parseError("Protocol wrong or corrupted","wrong size to get the datapack checksum, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-                pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_HASH_SIZE);
+                memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
+                pos+=CATCHCHALLENGER_HASH_SIZE;
                 {
                     //the mirror
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
@@ -500,12 +500,12 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
             }
             else
             {
-                char outputData[loginHash.size()+CATCHCHALLENGER_SHA224HASH_SIZE];
+                char outputData[loginHash.size()+CATCHCHALLENGER_HASH_SIZE];
                 char tempdata[passHash.size()+token.size()];
                 memcpy(outputData,loginHash.data(),loginHash.size());
                 memcpy(tempdata,passHash.data(),passHash.size());
                 memcpy(tempdata+passHash.size(),token.data(),token.size());
-                hashSha224(tempdata,sizeof(tempdata),outputData+loginHash.size());
+                hashDigest(tempdata,sizeof(tempdata),outputData+loginHash.size());
                 const uint8_t &query_number=Api_protocol::queryNumber();
                 packOutcommingQuery(0xA8,query_number,outputData,sizeof(outputData));
             }

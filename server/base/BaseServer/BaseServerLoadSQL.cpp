@@ -228,7 +228,7 @@ void BaseServer::preload_dictionary_map_return()
         if(dict_out.good() && dict_out.is_open())
         {
             unsigned int newCount=0;
-            for(const auto &mapName : map_list_flat)
+            for(const std::string &mapName : map_list_flat)
             {
                 if(foundMap.find(mapName)==foundMap.end())
                 {
@@ -278,7 +278,7 @@ void BaseServer::preload_dictionary_map_return()
             return;
         if(!preload_zone())
             return;
-        const auto now = msFrom1970();
+        const uint64_t now = msFrom1970();
         std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
         timeDatapack=now;
 

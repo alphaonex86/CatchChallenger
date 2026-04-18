@@ -8,7 +8,7 @@
 #include "../SqlFunction.hpp"
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
-#include "../../general/sha224/sha224.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 #include <cstring>
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <sys/stat.h>
@@ -43,15 +43,14 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     #error Define what do here
     #endif
     AskLoginParam *askLoginParam=new AskLoginParam;
-    SHA224 ctx = SHA224();
-    ctx.init();
-    ctx.update(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE);
+    CatchChallenger::Hash ctx;
+    ctx.update(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_HASH_SIZE);
     ctx.final(reinterpret_cast<unsigned char *>(askLoginParam->login));
     askLoginParam->query_id=query_id;
-    memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_HASH_SIZE,CATCHCHALLENGER_HASH_SIZE);
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    CatchChallenger::DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
+    CatchChallenger::DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)});
     if(callback==NULL)
     {
         loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+PreparedDBQueryLogin::db_query_login.queryText()+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
@@ -138,7 +137,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-//    std::cerr << "askLogin_return for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
+//    std::cerr << "askLogin_return for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << std::endl;
     #else
     #error Define what do here
     #endif
@@ -148,7 +147,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         struct stat sb;
-        if(::stat(("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)).c_str(),&sb)!=0)
+        if(::stat(("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)).c_str(),&sb)!=0)
         #else
         #error Define what do here
         #endif
@@ -173,7 +172,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
-                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)+", pass: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
+                loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)+", pass: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE));
                 delete askLoginParam;
                 return;
             }
@@ -182,10 +181,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         else
         {
             #ifdef CATCHCHALLENGER_DB_FILE
-            std::ifstream in_file("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ifstream::binary);
+            std::ifstream in_file("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE), std::ifstream::binary);
             if(!in_file.good() || !in_file.is_open())
             {
-                std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " (abort)" << std::endl;
                 abort();
                 return;
             }
@@ -209,9 +208,9 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         #ifdef CATCHCHALLENGER_DB_FILE
                         std::vector<char> secretTokenBinary;
                         s >> secretTokenBinary;
-                        if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                        if(secretTokenBinary.size()!=CATCHCHALLENGER_HASH_SIZE)
                         {
-                            std::cerr << "convertion to binary for pass failed for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_SHA224HASH_SIZE << std::endl;
+                            std::cerr << "convertion to binary for pass failed for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_HASH_SIZE << std::endl;
                             abort();
                         }
                         #else
@@ -220,27 +219,26 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         std::vector<char> secretTokenBinary;
                         #endif
                         secretTokenBinary=hexatoBinary(secretToken);
-                        if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                        if(secretTokenBinary.size()!=CATCHCHALLENGER_HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << GlobalServerData::serverPrivateVariables.db_login->value(1) << std::endl;
                             abort();
                         }
                         #endif
                         secretTokenBinary.resize(secretTokenBinary.size()+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        memcpy(secretTokenBinary.data()+CATCHCHALLENGER_SHA224HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(secretTokenBinary.data()+CATCHCHALLENGER_HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         //append the token
                         tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        if(secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                        if(secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
                         {
-                            std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_SHA224HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
+                            std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
                             abort();
                         }
                         #endif
-                        SHA224 ctx = SHA224();
-                        ctx.init();
+                        CatchChallenger::Hash ctx;
                         ctx.update(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size());
                         ctx.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                         BaseServerLogin::tokenForAuthSize--;
@@ -269,7 +267,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     return;
                 }
             }
-            if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+            if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE)!=0)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
@@ -278,17 +276,17 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                              binarytoHexa(tempAddedToken)+
                              " = "+
                              " hashedToken: "+
-                             binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)+
+                             binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_HASH_SIZE)+
                              " for the login: "+
-                             binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)+
+                             binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)+
                              "sended pass + token: "+
-                             binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)
+                             binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE)
                              );
                 #else
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
-                             binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE)+
+                             binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE)+
                              " for the login: "+
-                             binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
+                             binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)
                              );
                 #endif
                 delete askLoginParam;
@@ -440,16 +438,16 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     #else
     #error Define what do here
     #endif
-    /// \note No SHA224 because already double hashed before
+    /// \note No hash because already double hashed before
     AskLoginParam *askLoginParam=new AskLoginParam;
     askLoginParam->characterOutputData=nullptr;
     askLoginParam->characterOutputDataSize=0;
-    memcpy(askLoginParam->login,rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
-    memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(askLoginParam->login,rawdata,CATCHCHALLENGER_HASH_SIZE);
+    memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_HASH_SIZE,CATCHCHALLENGER_HASH_SIZE);
     askLoginParam->query_id=query_id;
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    CatchChallenger::DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
+    CatchChallenger::DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)});
     if(callback==NULL)
     {
         stat=ClientStat::ProtocolGood;
@@ -557,8 +555,8 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         PreparedDBQueryLogin::db_query_insert_login.asyncWrite({
                     std::to_string(account_id_db),
-                    binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE),
-                    binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE),
+                    binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE),
+                    binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE),
                     std::to_string(sFrom1970())
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
@@ -574,20 +572,20 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         }
         {
             {
-                std::ofstream out_file("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ofstream::binary);
+                std::ofstream out_file("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
-                    std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                    std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " (abort)" << std::endl;
                     abort();
                     return;
                 }
 
                 std::vector<char> secretTokenBinary;
-                secretTokenBinary.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                memcpy(secretTokenBinary.data(),askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE);
-                if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                secretTokenBinary.resize(CATCHCHALLENGER_HASH_SIZE);
+                memcpy(secretTokenBinary.data(),askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE);
+                if(secretTokenBinary.size()!=CATCHCHALLENGER_HASH_SIZE)
                 {
-                    std::cerr << "convertion to binary for pass failed for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_SHA224HASH_SIZE << std::endl;
+                    std::cerr << "convertion to binary for pass failed for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_HASH_SIZE << std::endl;
                     abort();
                 }
                 hps::to_stream(secretTokenBinary, out_file);
@@ -628,7 +626,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     else
-        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
+        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE));
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     #else
@@ -747,7 +745,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         std::vector<CharacterEntry> characterEntryList;
-        const auto &current_time=sFrom1970();
+        const uint64_t &current_time=sFrom1970();
         bool ok;
         while(GlobalServerData::serverPrivateVariables.db_common->next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
         {

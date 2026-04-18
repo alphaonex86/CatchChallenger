@@ -44,7 +44,7 @@ LanguagesSelect::LanguagesSelect()
         tinyxml2::XMLDocument domDocument;
         //open and quick check the file
         const std::string &fileName=languageToParse.at(index).toStdString()+"informations.xml";
-        const auto loadOkay = domDocument.LoadFile(fileName.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument.LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
             std::cerr << fileName+", "+domDocument.ErrorName() << std::endl;

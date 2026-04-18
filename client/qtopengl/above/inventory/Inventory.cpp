@@ -110,7 +110,7 @@ void Inventory::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wi
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=inventory_description->font();
+    QFont font=inventory_description->font();
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);
@@ -242,7 +242,7 @@ void Inventory::updateInventory(uint8_t targetSize)
     inventory->clear();
     inventory->setIconSize(QSize(targetSize,targetSize));
     itemCount=playerInformations.items.size();
-    auto i=playerInformations.items.begin();
+    std::map<uint16_t, uint32_t>::const_iterator i=playerInformations.items.begin();
     while (i!=playerInformations.items.cend())
     {
         const uint16_t id=i->first;

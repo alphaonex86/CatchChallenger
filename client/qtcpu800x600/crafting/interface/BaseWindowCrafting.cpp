@@ -151,7 +151,7 @@ void BaseWindow::load_plant_inventory()
     ui->listPlantList->clear();
     plants_items_graphical.clear();
     plants_items_to_graphical.clear();
-    auto i=playerInformations.items.begin();
+    std::map<uint16_t, uint32_t>::const_iterator i=playerInformations.items.begin();
     while(i!=playerInformations.items.cend())
     {
         if(QtDatapackClientLoader::datapackLoader->has_itemToPlant(i->first))

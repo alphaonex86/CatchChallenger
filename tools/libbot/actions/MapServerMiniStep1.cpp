@@ -7,7 +7,7 @@ bool MapServerMini::preload_step1()
     if(this->width==0 || this->height==0)
         return false;
     if(this->flat_simplified_map.size()!=(size_t)this->width*this->height)
-        std::cerr << "WARNING: map " << this->map_file << " flat_simplified_map.size()=" << this->flat_simplified_map.size() << " != width*height=" << (size_t)this->width*this->height << " (w=" << (int)this->width << " h=" << (int)this->height << ")" << std::endl;
+        std::cerr << "WARNING: map " << this->map_file << " flat_simplified_map.size()=" << this->flat_simplified_map.size() << " != width*height=" << (size_t)this->width*this->height << " (w=" << std::to_string(this->width) << " h=" << std::to_string(this->height) << ")" << std::endl;
     QHash<QString,int> zoneHash;
     QList<QString> layerList;
     zoneHash.clear();

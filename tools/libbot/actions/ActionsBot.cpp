@@ -100,7 +100,7 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
             const CatchChallenger::Map_to_send::Bot_Semi &bot_Semi=semi_loaded_map.at(index).old_map.bots.at(sub_index);
 
                 {
-                    const auto &step_list=bot_Semi.steps;
+                    const std::unordered_map<uint8_t, const tinyxml2::XMLElement *> &step_list=bot_Semi.steps;
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
                     std::cout << "Bot "
                               << bot_Semi.id
@@ -115,7 +115,7 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                               << ")"
                               << std::endl;
                     #endif
-                    auto i=step_list.begin();
+                    std::unordered_map<uint8_t, const tinyxml2::XMLElement *>::const_iterator i=step_list.begin();
                     while (i!=step_list.end())
                     {
                         const tinyxml2::XMLElement * step = i->second;
@@ -567,7 +567,7 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;

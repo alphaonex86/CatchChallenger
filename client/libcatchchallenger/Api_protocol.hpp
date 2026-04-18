@@ -44,7 +44,7 @@ public:
     virtual bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const = 0;
 
     //protocol command
-    void hashSha224(const char * const data,const int size,char *buffer);
+    void hashDigest(const char * const data,const int size,char *buffer);
     bool tryLogin(const std::string &login,const std::string &pass);
     bool tryCreateAccount();
     bool sendProtocol();

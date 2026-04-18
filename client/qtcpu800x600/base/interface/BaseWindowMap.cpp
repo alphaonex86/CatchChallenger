@@ -16,7 +16,7 @@ using namespace CatchChallenger;
 
 void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y)
 {
-    std::cerr << "BaseWindow::stopped_in_front_of() mapIndex=" << mapIndex << " x=" << (int)x << " y=" << (int)y << std::endl;
+    std::cerr << "BaseWindow::stopped_in_front_of() mapIndex=" << mapIndex << " x=" << std::to_string(x) << " y=" << std::to_string(y) << std::endl;
     if(stopped_in_front_of_check_bot(mapIndex,x,y))
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
@@ -61,14 +61,14 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, const CAT
 
 bool BaseWindow::stopped_in_front_of_check_bot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y)
 {
-    std::cerr << "BaseWindow::stopped_in_front_of_check_bot() mapIndex=" << mapIndex << " x=" << (int)x << " y=" << (int)y << std::endl;
+    std::cerr << "BaseWindow::stopped_in_front_of_check_bot() mapIndex=" << mapIndex << " x=" << std::to_string(x) << " y=" << std::to_string(y) << std::endl;
     const CatchChallenger::Bot *bot=QtDatapackClientLoader::datapackLoader->getBot(mapIndex,x,y);
     if(bot==nullptr)
     {
         std::cerr << "  getBot returned nullptr" << std::endl;
         return false;
     }
-    std::cerr << "  bot found! botId=" << (int)bot->botId << " name=" << bot->name << " steps=" << bot->step.size() << std::endl;
+    std::cerr << "  bot found! botId=" << std::to_string(bot->botId) << " name=" << bot->name << " steps=" << bot->step.size() << std::endl;
     showTip(tr("To interact with the bot press <i><b>Enter</b></i>").toStdString());
     return true;
 }

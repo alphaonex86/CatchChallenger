@@ -278,7 +278,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
             }
             index++;
         }
-        auto i=filesListForSize.begin();
+        std::unordered_map<std::string,DatapackCacheFile>::const_iterator i=filesListForSize.begin();
         while(i!=filesListForSize.cend())
         {
             struct stat myStat;

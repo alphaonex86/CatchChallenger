@@ -103,7 +103,7 @@ void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=description->font();
+    QFont font=description->font();
     if(widget->width()<600 || widget->height()<480)
     {
         label.setScale(0.5);

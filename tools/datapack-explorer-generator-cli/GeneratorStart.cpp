@@ -161,7 +161,7 @@ void generate()
         if(!monsterGroups.empty())
         {
             body << "Monster: <ul style=\"margin:0px;list-style-type:none;\">";
-            for(const auto &group : monsterGroups)
+            for(const std::vector<MonsterEntry> &group : monsterGroups)
             {
                 body << "<li>";
                 for(const MonsterEntry &m : group)

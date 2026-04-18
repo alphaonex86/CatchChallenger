@@ -48,7 +48,7 @@ void ClientList::insert_characterSelected(const Client &c)
     }
     #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    for (const auto& n : playerByPseudo)
+    for (const std::pair<const std::string,PLAYER_INDEX_FOR_CONNECTED>& n : playerByPseudo)
     {
         if(n.second==c.getIndexConnect())
         {

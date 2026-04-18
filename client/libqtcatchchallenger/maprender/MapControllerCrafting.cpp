@@ -36,7 +36,7 @@ bool MapController::insert_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex
         return false;
     QMap_client * map_full=CatchChallenger::QMap_client::all_map[mapIndex];
     {
-        auto oldIt=map_full->Qplants.find(position);
+        std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CatchChallenger::ClientPlantWithTimer *,pairhash>::iterator oldIt=map_full->Qplants.find(position);
         if(oldIt!=map_full->Qplants.end())
         {
             delete oldIt->second;
@@ -88,9 +88,9 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
     CATCHCHALLENGER_TYPE_MAPID foundMapIndex=0;
     std::pair<COORD_TYPE,COORD_TYPE> foundPos;
     bool found=false;
-    for(const auto &mapEntry : CatchChallenger::QMap_client::all_map)
+    for(const std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *> &mapEntry : CatchChallenger::QMap_client::all_map)
     {
-        for(auto &plantEntry : mapEntry.second->Qplants)
+        for(std::pair<const std::pair<COORD_TYPE,COORD_TYPE>,CatchChallenger::ClientPlantWithTimer *> &plantEntry : mapEntry.second->Qplants)
         {
             if(plantEntry.second==plant)
             {
@@ -109,7 +109,7 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
     CatchChallenger::Player_private_and_public_informations &playerInfo=client->get_player_informations();
     if(playerInfo.mapData.find(foundMapIndex)==playerInfo.mapData.cend())
         return false;
-    const auto &plantsMap=playerInfo.mapData.at(foundMapIndex).plants;
+    const std::map<std::pair<COORD_TYPE,COORD_TYPE>,CatchChallenger::PlayerPlant> &plantsMap=playerInfo.mapData.at(foundMapIndex).plants;
     if(plantsMap.find(foundPos)==plantsMap.cend())
         return false;
     const CatchChallenger::PlayerPlant &plantData=plantsMap.at(foundPos);
@@ -123,7 +123,7 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
         return false;
     }
     int seconds_to_mature=static_cast<uint32_t>(plantData.mature_at-currentTime);
-    const auto &plantDef=CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantData.plant);
+    const CatchChallenger::Plant &plantDef=CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantData.plant);
     int floweringDiff=plantDef.fruits_seconds-plantDef.flowering_seconds;
     int tallerDiff=plantDef.fruits_seconds-plantDef.taller_seconds;
     int sproutedDiff=plantDef.fruits_seconds-plantDef.sprouted_seconds;
@@ -174,7 +174,7 @@ bool MapController::remove_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex
         mapData.plants.erase(position);
     }
     QMap_client * map_full=CatchChallenger::QMap_client::all_map[mapIndex];
-    auto plantIt=map_full->Qplants.find(position);
+    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CatchChallenger::ClientPlantWithTimer *,pairhash>::iterator plantIt=map_full->Qplants.find(position);
     if(plantIt!=map_full->Qplants.end())
     {
         CatchChallenger::ClientPlantWithTimer *qplant=plantIt->second;

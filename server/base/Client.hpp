@@ -200,8 +200,8 @@ protected:
     struct AskLoginParam
     {
         uint8_t query_id;
-        char login[CATCHCHALLENGER_SHA224HASH_SIZE];
-        char pass[CATCHCHALLENGER_SHA224HASH_SIZE];
+        char login[CATCHCHALLENGER_HASH_SIZE];
+        char pass[CATCHCHALLENGER_HASH_SIZE];
         //to store the reply to the char, and do another query
         char * characterOutputData;
         uint32_t characterOutputDataSize;

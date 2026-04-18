@@ -410,7 +410,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     {
         // Check for duplicate clan name in memory and on disk
         bool duplicateFound=false;
-        for(const auto &clanPair : GlobalServerData::serverPrivateVariables.clanList)
+        for(const std::pair<const uint32_t,Clan> &clanPair : GlobalServerData::serverPrivateVariables.clanList)
         {
             if(clanPair.second.name==text)
             {

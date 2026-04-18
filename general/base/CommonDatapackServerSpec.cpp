@@ -96,7 +96,7 @@ void CommonDatapackServerSpec::applyMonstersRate()
         std::cerr << "CommonSettingsServer::commonSettingsServer.rates_xp can't be null, are you connected to game server to have the rates?" << std::endl;
         abort();
     }
-    for(const auto& n : CommonDatapack::commonDatapack.monsters) {
+    for(const std::pair<const CATCHCHALLENGER_TYPE_MONSTER, Monster>& n : CommonDatapack::commonDatapack.monsters) {
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
 
         /*prevent double call, double call on client, not solved for now:
@@ -164,7 +164,7 @@ void CommonDatapackServerSpec::unload()
     serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();
 
-    for(const auto& n : CommonDatapack::commonDatapack.monsters) {
+    for(const std::pair<const CATCHCHALLENGER_TYPE_MONSTER, Monster>& n : CommonDatapack::commonDatapack.monsters) {
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
         monster.level_to_xp.clear();
     }

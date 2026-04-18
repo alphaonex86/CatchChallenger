@@ -18,6 +18,8 @@ DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 DEFINES += CATCHCHALLENGER_CLASS_GATEWAY CATCHCHALLENGER_DB_BLACKHOLE
 DEFINES += DEBUG_PROTOCOLPARSING_RAW_NETWORK PROTOCOLPARSINGINPUTOUTPUTDEBUG
 
+DEFINES += BLAKE3_NO_SSE2 BLAKE3_NO_SSE41 BLAKE3_NO_AVX2 BLAKE3_NO_AVX512
+
 LIBS += -lcurl
 
 CONFIG += c++20
@@ -27,7 +29,10 @@ CONFIG   += console
 
 SOURCES += \
     ../../general/base/CompressionProtocol.cpp \
-    ../../general/sha224/sha224.cpp \
+    ../../general/base/CatchChallenger_Hash.cpp \
+    ../../general/blake3/blake3.c \
+    ../../general/blake3/blake3_dispatch.c \
+    ../../general/blake3/blake3_portable.c \
     EpollClientLoginSlave.cpp \
     EpollServerLoginSlave.cpp \
     EpollClientLoginSlaveStaticVar.cpp \
@@ -69,7 +74,7 @@ SOURCES += \
 
 HEADERS += \
     ../../general/base/CompressionProtocol.hpp \
-    ../../general/sha224/sha224.hpp \
+    ../../general/base/CatchChallenger_Hash.hpp \
     EpollClientLoginSlave.hpp \
     EpollServerLoginSlave.hpp \
     LinkToGameServer.hpp \

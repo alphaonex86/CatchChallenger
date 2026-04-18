@@ -117,7 +117,7 @@ void Trade::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget
     int btnH=61;
     int btnW=148;
     int skinSize=48;
-    auto font=playerPseudo->font();
+    QFont font=playerPseudo->font();
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);
@@ -312,7 +312,7 @@ void Trade::onCancelClicked()
 {
     // return items/cash/monsters to player
     emit addCash(playerCash->value());
-    for(const auto &obj : tradeCurrentObjects)
+    for(const std::pair<const uint16_t, uint32_t> &obj : tradeCurrentObjects)
         emit add_to_inventory(obj.first,obj.second,false);
 
     tradeCurrentObjects.clear();
@@ -328,7 +328,7 @@ void Trade::onCancelClicked()
 void Trade::tradeCanceledByOther()
 {
     emit addCash(playerCash->value());
-    for(const auto &obj : tradeCurrentObjects)
+    for(const std::pair<const uint16_t, uint32_t> &obj : tradeCurrentObjects)
         emit add_to_inventory(obj.first,obj.second,false);
 
     tradeCurrentObjects.clear();
@@ -353,7 +353,7 @@ void Trade::tradeFinishedByOther()
 void Trade::tradeValidatedByTheServer()
 {
     // receive other player's items
-    for(const auto &obj : tradeOtherObjects)
+    for(const std::pair<const uint16_t, uint32_t> &obj : tradeOtherObjects)
         emit add_to_inventory(obj.first,obj.second,true);
 
     tradeCurrentObjects.clear();
@@ -400,7 +400,7 @@ void Trade::tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster)
 void Trade::updateCurrentItemsDisplay()
 {
     playerItemsList->clear();
-    for(const auto &obj : tradeCurrentObjects)
+    for(const std::pair<const uint16_t, uint32_t> &obj : tradeCurrentObjects)
     {
         QListWidgetItem *item=new QListWidgetItem();
         if(QtDatapackClientLoader::datapackLoader->has_itemExtra(obj.first))
@@ -414,7 +414,7 @@ void Trade::updateCurrentItemsDisplay()
         playerItemsList->addItem(item);
     }
     // add monsters
-    for(const auto &m : tradeCurrentMonsters)
+    for(const CatchChallenger::PlayerMonster &m : tradeCurrentMonsters)
     {
         QListWidgetItem *item=new QListWidgetItem();
         if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(m.monster))
@@ -433,7 +433,7 @@ void Trade::updateCurrentItemsDisplay()
 void Trade::updateOtherItemsDisplay()
 {
     otherItemsList->clear();
-    for(const auto &obj : tradeOtherObjects)
+    for(const std::pair<const uint16_t, uint32_t> &obj : tradeOtherObjects)
     {
         QListWidgetItem *item=new QListWidgetItem();
         if(QtDatapackClientLoader::datapackLoader->has_itemExtra(obj.first))
@@ -446,7 +446,7 @@ void Trade::updateOtherItemsDisplay()
             item->setText(tr("Item %1 x%2").arg(obj.first).arg(obj.second));
         otherItemsList->addItem(item);
     }
-    for(const auto &m : tradeOtherMonsters)
+    for(const CatchChallenger::PlayerMonster &m : tradeOtherMonsters)
     {
         QListWidgetItem *item=new QListWidgetItem();
         if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(m.monster))

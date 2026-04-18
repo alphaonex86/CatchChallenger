@@ -100,7 +100,7 @@ void Quests::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widge
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=questsList->font();
+    QFont font=questsList->font();
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);
@@ -179,10 +179,10 @@ void Quests::setVar(ConnexionManager *connexionManager)
     this->connexionManager=connexionManager;
     const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
     questsList->clear();
-    auto i=playerInformations.quests.begin();
+    std::map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest>::const_iterator i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
-        const uint16_t questId=i->first;
+        const CATCHCHALLENGER_TYPE_QUEST questId=i->first;
         if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
         {
             if(i->second.step>0)

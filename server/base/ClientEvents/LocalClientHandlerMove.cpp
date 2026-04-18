@@ -84,7 +84,7 @@ bool Client::singleMove(const Direction &direction)
         return false;
     }
     #endif
-    const auto &now = sFrom1970();
+    const uint64_t &now = sFrom1970();
     if(oldEvents.oldEventList.size()>0 && (now-oldEvents.time)>30/*30s*/)
     {
         errorOutput("Try move but lost of event sync");

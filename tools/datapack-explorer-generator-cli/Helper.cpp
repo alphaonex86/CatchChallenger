@@ -376,7 +376,7 @@ std::string relUrlFrom(const std::string &fromPage, const std::string &targetRel
         return target;
     // Split both into path components; last component of "from" is a file
     // name and not a directory level to walk up from.
-    auto split=[](const std::string &s, std::vector<std::string> &out){
+    std::function<void(const std::string &, std::vector<std::string> &)> split=[](const std::string &s, std::vector<std::string> &out){
         out.clear();
         size_t start=0;
         while(start<=s.size())

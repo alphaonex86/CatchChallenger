@@ -743,7 +743,7 @@ void ActionsAction::doMove()
 {
     if(mStop)
         return;
-    for (const auto &n:clientList) {
+    for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:clientList) {
         CatchChallenger::Api_protocol_Qt  *api=n.first;
         Player &player=clientList[api];
         if(id_map_to_map.find(player.mapId)==id_map_to_map.cend())
@@ -779,7 +779,7 @@ void ActionsAction::doMove()
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             {
                                 std::unordered_set<uint32_t> known_indexOfItemOnMap;
-                                for ( const auto &item : playerMap->pointOnMap_Item )
+                                for ( const std::pair<const std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap> &item : playerMap->pointOnMap_Item )
                                 {
                                     const MapServerMini::ItemOnMap &itemOnMap=item.second;
                                     if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
@@ -890,7 +890,7 @@ void ActionsAction::doText()
 
     QList<CatchChallenger::Api_protocol_Qt  *> clientListApi;
 
-    for (const auto &n:clientList) {
+    for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:clientList) {
         clientListApi << n.first;
     }
     CatchChallenger::Api_protocol_Qt  *api=clientListApi.at(rand()%clientListApi.size());
@@ -999,7 +999,7 @@ void ActionsAction::have_inventory(CatchChallenger::Api_protocol_Qt  *api,const 
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
 
     player.items.clear();
-    for(const auto &p : items)
+    for(const std::pair<const uint16_t, uint32_t> &p : items)
         player.items[p.first]=p.second;
 }
 
@@ -1037,7 +1037,7 @@ void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol_Qt  *api,cons
     if(items.empty())
         return;
 
-    for( const auto& n : items ) {
+    for( const std::pair<const uint16_t, uint32_t>& n : items ) {
         const uint16_t &item=n.first;
         if(player.encyclopedia_item!=NULL)
             player.encyclopedia_item[item/8]|=(1<<(7-item%8));
@@ -1070,7 +1070,7 @@ void ActionsAction::remove_to_inventory(CatchChallenger::Api_protocol_Qt  *api,c
         return;
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
 
-    for( const auto& n : items ) {
+    for( const std::pair<const uint16_t, uint32_t>& n : items ) {
         //add really to the list
         if(player.items.find(n.first)!=player.items.cend())
         {

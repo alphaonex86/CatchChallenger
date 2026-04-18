@@ -42,7 +42,7 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
@@ -150,7 +150,7 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
                         {
                             if(eventStringToId.find(eventItem->Attribute("id"))!=eventStringToId.cend())
                             {
-                                const auto & list=eventListingToId.at(eventItem->Attribute("id"));
+                                const std::unordered_map<std::string,uint8_t> & list=eventListingToId.at(eventItem->Attribute("id"));
                                 if(list.find(eventItem->Attribute("value"))!=list.cend())
                                 {
                                     MonstersCollisionTemp::MonstersCollisionEvent event;
@@ -242,7 +242,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
@@ -308,7 +308,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;

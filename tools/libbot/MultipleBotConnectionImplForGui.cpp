@@ -85,7 +85,7 @@ void MultipleBotConnectionImplForGui::detectSlowDown()
         i.next();
         const std::map<uint8_t,uint64_t> &values=i.key()->getQuerySendTimeList();
         queryCount+=values.size();
-        for ( const auto &n : values )
+        for ( const std::pair<const uint8_t, uint64_t> &n : values )
         {
             std::time_t result = std::time(nullptr);
             if(result>=(std::time_t)n.second)

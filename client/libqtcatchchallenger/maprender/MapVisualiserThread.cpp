@@ -485,7 +485,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(QMap_client *parsedMap)
     else
     {
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(fileName);
-        const auto loadOkay = domDocument->LoadFile(fileName.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
             std::cerr << fileName+", "+tinyxml2errordoc(domDocument) << std::endl;
@@ -585,10 +585,10 @@ bool MapVisualiserThread::loadOtherMapClientPart(QMap_client *parsedMap)
                                                     bot.properties=property_parsed;
                                                     bot.botId=botId;
 
-                                                    auto i=bot.step.begin();
+                                                    std::unordered_map<uint8_t,const tinyxml2::XMLElement *>::iterator i=bot.step.begin();
                                                     while(i!=bot.step.cend())
                                                     {
-                                                        auto step = i->second;
+                                                        const tinyxml2::XMLElement *step = i->second;
                                                         if(step->Attribute("type")==NULL)
                                                         {}
                                                         else if(strcmp(step->Attribute("type"),"shop")==0)
@@ -658,7 +658,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(QMap_client *parsedMap)
                                                     /// \warn show something to continue to block the path
                                                     if(botFiles.find(botFile)!=botFiles.cend())
                                                     {
-                                                        const auto &botList=botFiles.at(botFile);
+                                                        const std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,CatchChallenger::Bot> &botList=botFiles.at(botFile);
                                                         if(botList.find(botId)!=botList.cend())
                                                         {
                                                             qDebug() << (
@@ -734,7 +734,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(QMap_client *parsedMap)
     else
     {
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(fileName);
-        const auto loadOkay = domDocument->LoadFile(fileName.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
             std::cerr << fileName+", "+tinyxml2errordoc(domDocument) << std::endl;
@@ -807,7 +807,7 @@ void MapVisualiserThread::loadBotFile()
     else
     {
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;

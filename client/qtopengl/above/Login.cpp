@@ -175,7 +175,7 @@ void Login::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=loginText->font();
+    QFont font=loginText->font();
     if(widget->width()<600 || widget->height()<640)
     {
         label.setScale(0.5);

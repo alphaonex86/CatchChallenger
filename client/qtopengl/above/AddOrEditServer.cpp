@@ -132,7 +132,7 @@ void AddOrEditServer::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidg
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=serverText->font();
+    QFont font=serverText->font();
     if(widget->width()<600 || widget->height()<480)
     {
         label.setScale(0.5);

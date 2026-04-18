@@ -113,7 +113,7 @@ void Client::seedValidated(const uint8_t &plant_id,const CATCHCHALLENGER_TYPE_MA
     #endif
     //post the reply
 
-    const auto &current_time=sFrom1970();
+    const uint64_t &current_time=sFrom1970();
     const std::pair<uint8_t,uint8_t> pos(x,y);
     Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[mapIndex];
     PlayerPlant plantOnMapPlayer;
@@ -143,7 +143,7 @@ void Client::collectPlant()
         return;
     }
     //check if is free
-    const auto &current_time=sFrom1970();
+    const uint64_t &current_time=sFrom1970();
     Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[new_map_index];
     if(mapData.plants.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plants.cend())
     {

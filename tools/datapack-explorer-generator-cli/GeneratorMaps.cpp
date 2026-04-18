@@ -43,13 +43,13 @@ static std::string htmlPathFor(const std::string &mainCode, const std::string &s
 
 std::string relativePathForMapRef(size_t setIdx, size_t mapId)
 {
-    auto it=s_mapRefPath.find({setIdx,mapId});
+    std::map<std::pair<size_t,size_t>, std::string>::const_iterator it=s_mapRefPath.find({setIdx,mapId});
     if(it!=s_mapRefPath.end())
         return it->second;
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     if(setIdx>=sets.size())
         return std::string();
-    const auto &set=sets[setIdx];
+    const MapStore::MainCodeSet &set=sets[setIdx];
     if(mapId>=set.mapPaths.size())
         return std::string();
     return htmlPathFor(set.mainCode,stripTmx(set.mapPaths[mapId]));
@@ -69,10 +69,10 @@ static std::string itemDisplayName(uint16_t id)
 static void buildPaths()
 {
     s_mapRefPath.clear();
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     for(size_t si=0;si<sets.size();++si)
     {
-        const auto &set=sets[si];
+        const MapStore::MainCodeSet &set=sets[si];
         for(size_t mi=0;mi<set.mapPaths.size();++mi)
             s_mapRefPath[{si,mi}]=htmlPathFor(set.mainCode,stripTmx(set.mapPaths[mi]));
     }
@@ -139,7 +139,7 @@ static int generateMapPreviews()
     Helper::mkpath(mapsDir);
 
     // Create subdirectories for all maps
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     for(size_t si=0;si<sets.size();++si)
     {
         for(size_t mi=0;mi<sets[si].mapPaths.size();++mi)
@@ -162,9 +162,9 @@ static int generateMapPreviews()
     {
         const std::string &mc=sets[si].mainCode;
         std::string startPath=Helper::datapackPath()+"map/main/"+mc+"/start.xml";
-        auto startMaps=parseStartMaps(startPath);
+        std::vector<std::string> startMaps=parseStartMaps(startPath);
 
-        for(const auto &map : startMaps)
+        for(const std::string &map : startMaps)
         {
             // Check map exists in the loaded maps
             bool found=false;
@@ -333,8 +333,8 @@ static std::string parseLocalizedText(const tinyxml2::XMLElement *parent, const 
 static std::string getZoneName(const std::string &mainCode, const std::string &zoneCode)
 {
     if(zoneCode.empty()) return "Unknown zone";
-    auto key=std::make_pair(mainCode,zoneCode);
-    auto it=s_zoneNames.find(key);
+    std::pair<std::string, std::string> key=std::make_pair(mainCode,zoneCode);
+    std::map<std::pair<std::string,std::string>, std::string>::const_iterator it=s_zoneNames.find(key);
     if(it!=s_zoneNames.end()) return it->second;
 
     std::string result=zoneCode;
@@ -566,7 +566,7 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
                     sd.industryId=stepEl->Attribute("industry");
 
                 // Helper: resolve item name or numeric id
-                auto resolveItemId=[](const char *attr) -> uint16_t {
+                std::function<uint16_t(const char *)> resolveItemId=[](const char *attr) -> uint16_t {
                     if(!attr) return 0;
                     // Try numeric first
                     char *end=nullptr;
@@ -585,7 +585,7 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
                     return 0;
                 };
                 // Helper: resolve monster name or numeric id
-                auto resolveMonsterId=[](const char *attr) -> uint16_t {
+                std::function<uint16_t(const char *)> resolveMonsterId=[](const char *attr) -> uint16_t {
                     if(!attr) return 0;
                     char *end=nullptr;
                     long v=std::strtol(attr,&end,10);
@@ -758,7 +758,7 @@ static const FlagDef s_flagDefs[]={
 
 static void writeFlagDivs(std::ostringstream &out, const std::set<std::string> &flags)
 {
-    for(const auto &fd : s_flagDefs)
+    for(const GeneratorMaps::FlagDef &fd : s_flagDefs)
         if(flags.count(fd.key))
             out << "<div style=\"float:left;background-position:" << fd.bgPos
                 << ";\" class=\"flags flags16\" title=\"" << fd.title << "\"></div>\n";
@@ -871,7 +871,7 @@ static void monsterAndLevelToDisplay(std::ostringstream &body, uint16_t monsterI
         body << "<tr><td>";
         body << "<div class=\"type_label_list\">";
         bool firstTypeLabel=true;
-        for(const auto &t : monsterDef.type)
+        for(const uint8_t &t : monsterDef.type)
         {
             if(QtDatapackClientLoader::datapackLoader->has_typeExtra(t))
             {
@@ -1002,11 +1002,11 @@ static std::vector<BotPage> generateBotPages(
     std::vector<BotPage> out;
     const std::string botsFolder="map/"+mainCode+"/"+mapStem+"/bots/";
     std::set<std::string> used;
-    for(const auto &bd : bots)
+    for(const BotData &bd : bots)
     {
         // Generate pages for bots with non-text steps or with a skin
         bool hasNonText=false;
-        for(const auto &step : bd.steps)
+        for(const BotStepData &step : bd.steps)
             if(step.type!="text") { hasNonText=true; break; }
         std::string skinUrl=findBotSkin(bd.skinName);
         if(!hasNonText && skinUrl.empty())
@@ -1071,7 +1071,7 @@ static std::vector<BotPage> generateBotPages(
                  << Helper::htmlEscape(mapDisplayName) << "</a>&nbsp;\n";
             if(!mapZoneCode.empty())
             {
-                auto zit=s_zoneNames.find({mainCode,mapZoneCode});
+                std::map<std::pair<std::string,std::string>, std::string>::const_iterator zit=s_zoneNames.find({mainCode,mapZoneCode});
                 if(zit!=s_zoneNames.end())
                 {
                     body << "(Zone: <a href=\"" << Helper::htmlEscape(Helper::relUrl("zones/"+mainCode+"/"+Helper::textForUrl(zit->second)+".html"))
@@ -1084,7 +1084,7 @@ static std::vector<BotPage> generateBotPages(
 
         // Step details
         int stepIdx=0;
-        for(const auto &step : bd.steps)
+        for(const BotStepData &step : bd.steps)
         {
             stepIdx++;
             if(step.type=="text")
@@ -1104,7 +1104,7 @@ static std::vector<BotPage> generateBotPages(
                          << "\t<th colspan=\"2\">Item</th>\n"
                          << "\t<th>Price</th>\n"
                          << "</tr>\n";
-                    for(const auto &sp : step.shopProducts)
+                    for(const std::pair<const uint16_t, uint32_t> &sp : step.shopProducts)
                     {
                         body << "<tr class=\"value\">\n";
                         writeItemIconAndName(body,sp.first);
@@ -1131,7 +1131,7 @@ static std::vector<BotPage> generateBotPages(
                          << "<tr class=\"item_list_title item_list_title_type_normal\">\n"
                          << "\t<th colspan=\"2\">Item</th>\n"
                          << "</tr>\n";
-                    for(const auto &ri : step.fightItems)
+                    for(const FightItemEntry &ri : step.fightItems)
                     {
                         std::string qText;
                         if(ri.quantity>1)
@@ -1145,7 +1145,7 @@ static std::vector<BotPage> generateBotPages(
                 }
 
                 // Monster cards
-                for(const auto &bm : step.fightMonsters)
+                for(const FightMonsterEntry &bm : step.fightMonsters)
                     monsterAndLevelToDisplay(body,bm.id,bm.level,true);
                 body << "<br style=\"clear:both;\" />\n";
 
@@ -1186,21 +1186,21 @@ static std::vector<BotPage> generateBotPages(
                     int idx=std::atoi(step.industryId.c_str());
                     if(idx>=0 && (size_t)idx<m.industries.size())
                     {
-                        const auto &ind=m.industries[idx];
+                        const CatchChallenger::Industry &ind=m.industries[idx];
                         body << "<center><table class=\"item_list item_list_type_normal\">\n"
                              << "<tr class=\"item_list_title item_list_title_type_normal\">\n"
                              << "\t<th>Industry</th>\n\t<th>Resources</th>\n\t<th>Products</th>\n"
                              << "</tr>\n<tr class=\"value\">\n<td>\n"
                              << "<a href=\"" << Helper::htmlEscape(Helper::relUrl("industries/"+step.industryId+".html"))
                              << "\">#" << step.industryId << "</a>\n</td>\n<td>\n";
-                        for(const auto &res : ind.resources)
+                        for(const CatchChallenger::Industry::Resource &res : ind.resources)
                         {
                             body << "<div style=\"float:left;text-align:center;\">\n";
                             writeItemIconAndName(body,res.item);
                             body << "</div>\n";
                         }
                         body << "</td>\n<td>\n";
-                        for(const auto &prod : ind.products)
+                        for(const CatchChallenger::Industry::Product &prod : ind.products)
                         {
                             body << "<div style=\"float:left;text-align:middle;\">\n";
                             writeItemIconAndName(body,prod.item);
@@ -1232,7 +1232,7 @@ void generate()
     // Generate map preview PNGs (map_preview.php logic)
     int overviewCount=generateMapPreviews();
 
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
 
     // ── Pass 1: compute metadata for every map, track global level extremes ──
     int globalMinWild=0, globalMaxWild=0;
@@ -1240,7 +1240,7 @@ void generate()
 
     for(size_t si=0;si<sets.size();++si)
     {
-        const auto &set=sets[si];
+        const MapStore::MainCodeSet &set=sets[si];
         for(size_t mi=0;mi<set.mapPaths.size();++mi)
         {
             const std::string mapStem=stripTmx(set.mapPaths[mi]);
@@ -1276,7 +1276,7 @@ void generate()
 
     for(size_t si=0;si<sets.size();++si)
     {
-        const auto &set=sets[si];
+        const MapStore::MainCodeSet &set=sets[si];
         const std::string &mainCode=set.mainCode;
 
         for(size_t mi=0;mi<set.mapPaths.size();++mi)
@@ -1288,7 +1288,7 @@ void generate()
             const MapMeta &meta=s_mapMeta[{si,mi}];
             Helper::setCurrentPage(rel);
 
-            auto botPages=generateBotPages(meta.bots,m,mainCode,mapStem,meta.name,meta.zoneCode);
+            std::vector<BotPage> botPages=generateBotPages(meta.bots,m,mainCode,mapStem,meta.name,meta.zoneCode);
             Helper::setCurrentPage(rel);
 
             // Best-effort map preview
@@ -1350,7 +1350,7 @@ void generate()
 
             // Linked locations (borders + teleporters, deduplicated)
             {
-                auto hasBorder=[&](uint16_t idx){ return idx!=65535 && idx<set.mapPaths.size(); };
+                std::function<bool(uint16_t)> hasBorder=[&](uint16_t idx){ return idx!=65535 && idx<set.mapPaths.size(); };
                 bool hasLinked=hasBorder(m.border.top.mapIndex) || hasBorder(m.border.bottom.mapIndex) ||
                                hasBorder(m.border.left.mapIndex) || hasBorder(m.border.right.mapIndex) ||
                                !m.teleporters.empty();
@@ -1358,10 +1358,10 @@ void generate()
                 {
                     body << "<div class=\"subblock\"><div class=\"valuetitle\">Linked locations</div><div class=\"value\"><ul>\n";
                     std::set<uint16_t> seen;
-                    auto renderBorder=[&](const char *dir, uint16_t nid){
+                    std::function<void(const char *, uint16_t)> renderBorder=[&](const char *dir, uint16_t nid){
                         if(nid==65535 || nid>=set.mapPaths.size()) return;
                         if(!seen.insert(nid).second) return;
-                        auto nit=s_mapMeta.find({si,(size_t)nid});
+                        std::map<std::pair<size_t,size_t>, MapMeta>::const_iterator nit=s_mapMeta.find({si,(size_t)nid});
                         std::string nn=(nit!=s_mapMeta.end())?nit->second.name:set.mapPaths[nid];
                         body << "<li>Border " << dir << ": <a href=\""
                              << Helper::htmlEscape(Helper::relUrl(relativePathForMapRef(si,nid)))
@@ -1372,11 +1372,11 @@ void generate()
                     renderBorder("left",   m.border.left.mapIndex);
                     renderBorder("right",  m.border.right.mapIndex);
 
-                    for(const auto &tp : m.teleporters)
+                    for(const CatchChallenger::Teleporter &tp : m.teleporters)
                     {
                         if(tp.mapIndex>=set.mapPaths.size()) continue;
                         if(!seen.insert(tp.mapIndex).second) continue;
-                        auto nit=s_mapMeta.find({si,(size_t)tp.mapIndex});
+                        std::map<std::pair<size_t,size_t>, MapMeta>::const_iterator nit=s_mapMeta.find({si,(size_t)tp.mapIndex});
                         std::string dn=(nit!=s_mapMeta.end())?nit->second.name:set.mapPaths[tp.mapIndex];
                         // Distinguish Door (from TMX type="door") vs Teleporter
                         bool isDoor=meta.doorPositions.count({tp.source_x,tp.source_y})>0;
@@ -1399,20 +1399,20 @@ void generate()
 
                 // Gather all wild monster IDs on this map
                 std::set<uint16_t> wildMonsterIds;
-                for(const auto &layer : meta.wildLayers)
-                    for(const auto &wm : layer.monsters)
+                for(const WildMonsterLayerData &layer : meta.wildLayers)
+                    for(const WildMonsterXmlEntry &wm : layer.monsters)
                         wildMonsterIds.insert(wm.id);
 
                 // Build droplist: item → { monster → drop }
                 struct DropInfo { uint16_t item; uint32_t quantity_min; uint32_t quantity_max; uint8_t luck; };
                 std::map<uint16_t/*item*/, std::map<uint16_t/*monster*/, DropInfo>> droplist;
-                for(const auto mId : wildMonsterIds)
+                for(const uint16_t mId : wildMonsterIds)
                 {
                     if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_monsterDrop(mId)) continue;
                     const std::vector<CatchChallenger::MonsterDrops> &mDrops=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_monsterDrop(mId);
-                    for(const auto &drop : mDrops)
+                    for(const CatchChallenger::MonsterDrops &drop : mDrops)
                     {
-                        auto &entry=droplist[drop.item][mId];
+                        DropInfo &entry=droplist[drop.item][mId];
                         entry.item=drop.item;
                         entry.quantity_min=drop.quantity_min;
                         entry.quantity_max=drop.quantity_max;
@@ -1433,14 +1433,14 @@ void generate()
                          << "</tr>\n";
 
                     // Drops rows first (grouped by item, then by luck desc)
-                    for(const auto &dlp : droplist)
+                    for(const std::pair<const uint16_t, std::map<uint16_t, DropInfo>> &dlp : droplist)
                     {
                         uint16_t itemId=dlp.first;
-                        const auto &monsterMap=dlp.second;
+                        const std::map<uint16_t, DropInfo> &monsterMap=dlp.second;
 
                         // Use the first monster's drop for quantity text
                         std::string quantityText;
-                        const auto &firstDrop=monsterMap.begin()->second;
+                        const DropInfo &firstDrop=monsterMap.begin()->second;
                         if(firstDrop.quantity_min!=firstDrop.quantity_max)
                             quantityText=Helper::toStringUint(firstDrop.quantity_min)+" to "+Helper::toStringUint(firstDrop.quantity_max)+" ";
                         else if(firstDrop.quantity_min>1)
@@ -1453,16 +1453,16 @@ void generate()
                         body << "<td>Drop on ";
                         // Group monsters by luck (desc)
                         std::map<uint8_t, std::vector<uint16_t>, std::greater<uint8_t>> luckToMonster;
-                        for(const auto &mp : monsterMap)
+                        for(const std::pair<const uint16_t, DropInfo> &mp : monsterMap)
                             luckToMonster[mp.second.luck].push_back(mp.first);
 
                         bool firstLuckGroup=true;
-                        for(const auto &lg : luckToMonster)
+                        for(const std::pair<const uint8_t, std::vector<uint16_t>> &lg : luckToMonster)
                         {
                             if(!firstLuckGroup) body << ", ";
                             firstLuckGroup=false;
                             bool firstMon=true;
-                            for(const auto mid : lg.second)
+                            for(const uint16_t mid : lg.second)
                             {
                                 if(!firstMon) body << ", ";
                                 firstMon=false;
@@ -1478,7 +1478,7 @@ void generate()
                     }
 
                     // Map items rows
-                    for(const auto &ip : m.items)
+                    for(const std::pair<const std::pair<uint8_t,uint8_t>, CatchChallenger::ItemOnMap> &ip : m.items)
                     {
                         const CatchChallenger::ItemOnMap &io=ip.second;
                         body << "<tr class=\"value\">\n";
@@ -1507,7 +1507,7 @@ void generate()
                      << "\t<th colspan=\"3\">Rate</th>\n"
                      << "</tr>\n";
 
-                for(const auto &layer : meta.wildLayers)
+                for(const WildMonsterLayerData &layer : meta.wildLayers)
                 {
                     // Layer type sub-header
                     body << "<tr class=\"item_list_title_type_" << Helper::htmlEscape(tc) << "\">\n"
@@ -1521,7 +1521,7 @@ void generate()
                         return a.luck>b.luck;
                     });
 
-                    for(const auto &wm : sorted)
+                    for(const WildMonsterXmlEntry &wm : sorted)
                     {
                         std::string mname=QtDatapackClientLoader::datapackLoader->has_monsterExtra(wm.id)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(wm.id).name:("Monster #"+Helper::toStringUint(wm.id));
                         std::string link=Helper::relUrl(GeneratorMonsters::relativePathForMonster(wm.id));
@@ -1582,7 +1582,7 @@ void generate()
             {
                 std::string tc=meta.type.empty()?"normal":meta.type;
                 bool hasBotSteps=false;
-                for(const auto &bd : meta.bots)
+                for(const BotData &bd : meta.bots)
                     if(!bd.onlyText || !bd.steps.empty())
                         hasBotSteps=true;
 
@@ -1595,11 +1595,11 @@ void generate()
                          << "\t<th>Content</th>\n"
                          << "</tr>\n";
 
-                    for(const auto &bd : meta.bots)
+                    for(const BotData &bd : meta.bots)
                     {
                         // Bot name link (links to separate bot page if it exists)
                         std::string botLink;
-                        for(const auto &bp : botPages)
+                        for(const BotPage &bp : botPages)
                             if(bp.botId==bd.localId) { botLink=Helper::relUrl(bp.rel); break; }
 
                         // Bot skin sprite
@@ -1628,7 +1628,7 @@ void generate()
                         }
                         else
                         {
-                            for(const auto &step : bd.steps)
+                            for(const BotStepData &step : bd.steps)
                             {
                                 if(step.type=="text")
                                     continue;
@@ -1661,7 +1661,7 @@ void generate()
                                              << "\t<th colspan=\"2\">Item</th>\n"
                                              << "\t<th>Price</th>\n"
                                              << "</tr>\n";
-                                        for(const auto &sp : step.shopProducts)
+                                        for(const std::pair<const uint16_t, uint32_t> &sp : step.shopProducts)
                                         {
                                             body << "<tr class=\"value\">\n";
                                             writeItemIconAndName(body,sp.first);
@@ -1709,7 +1709,7 @@ void generate()
                                              << "<tr class=\"item_list_title item_list_title_type_" << Helper::htmlEscape(tc) << "\">\n"
                                              << "\t<th colspan=\"2\">Item</th>\n"
                                              << "</tr>\n";
-                                        for(const auto &ri : step.fightItems)
+                                        for(const FightItemEntry &ri : step.fightItems)
                                         {
                                             std::string qText;
                                             if(ri.quantity>1)
@@ -1723,7 +1723,7 @@ void generate()
                                     }
 
                                     // Monster cards (monsterAndLevelToDisplay)
-                                    for(const auto &bm : step.fightMonsters)
+                                    for(const FightMonsterEntry &bm : step.fightMonsters)
                                         monsterAndLevelToDisplay(body,bm.id,bm.level,step.isLeader);
                                     body << "<br style=\"clear:both;\" />\n";
 
@@ -1756,7 +1756,7 @@ void generate()
                                         int idx=std::atoi(step.industryId.c_str());
                                         if(idx>=0 && (size_t)idx<m.industries.size())
                                         {
-                                            const auto &ind=m.industries[idx];
+                                            const CatchChallenger::Industry &ind=m.industries[idx];
                                             body << "<center><table class=\"item_list item_list_type_" << Helper::htmlEscape(tc) << "\">\n"
                                                  << "<tr class=\"item_list_title item_list_title_type_" << Helper::htmlEscape(tc) << "\">\n"
                                                  << "\t<th>Industry</th>\n"
@@ -1767,7 +1767,7 @@ void generate()
                                             body << "<td>\n#" << step.industryId << "\n</td>\n";
                                             // Resources
                                             body << "<td>\n";
-                                            for(const auto &res : ind.resources)
+                                            for(const CatchChallenger::Industry::Resource &res : ind.resources)
                                             {
                                                 body << "<div style=\"float:left;text-align:center;\">\n";
                                                 std::string rimg=itemImageUrl(res.item);
@@ -1788,7 +1788,7 @@ void generate()
                                             body << "</td>\n";
                                             // Products
                                             body << "<td>\n";
-                                            for(const auto &prod : ind.products)
+                                            for(const CatchChallenger::Industry::Product &prod : ind.products)
                                             {
                                                 body << "<div style=\"float:left;text-align:middle;\">\n";
                                                 std::string pimg=itemImageUrl(prod.item);
@@ -1840,7 +1840,7 @@ void generate()
             ie.mapIdx=mi;
             zoneToMap[mainCode][meta.zoneCode].push_back(ie);
 
-            for(const auto &f : meta.flags)
+            for(const std::string &f : meta.flags)
                 zoneFlags[mainCode][meta.zoneCode].insert(f);
         }
     }
@@ -1849,8 +1849,8 @@ void generate()
     Helper::setCurrentPage("map/index.html");
     std::ostringstream indexBody;
 
-    auto wildRanges=computeLevelRanges(globalMinWild,globalMaxWild);
-    auto fightRanges=computeLevelRanges(globalMinFight,globalMaxFight);
+    std::vector<LevelRange> wildRanges=computeLevelRanges(globalMinWild,globalMaxWild);
+    std::vector<LevelRange> fightRanges=computeLevelRanges(globalMinFight,globalMaxFight);
 
     // Wild legend (float:left, low→high)
     for(size_t i=0;i<wildRanges.size();i++)
@@ -1925,30 +1925,30 @@ void generate()
     }
 
     // Zone-grouped tables
-    for(auto &mcPair : zoneToMap)
+    for(std::pair<const std::string, std::map<std::string, std::vector<IndexEntry>>> &mcPair : zoneToMap)
     {
         const std::string &mainCode=mcPair.first;
-        for(auto &zonePair : mcPair.second)
+        for(std::pair<const std::string, std::vector<IndexEntry>> &zonePair : mcPair.second)
         {
             const std::string &zoneCode=zonePair.first;
-            auto &entries=zonePair.second;
+            std::vector<IndexEntry> &entries=zonePair.second;
 
             std::string zoneName=getZoneName(mainCode,zoneCode);
             std::string zoneLink="zones/"+mainCode+"/"+Helper::textForUrl(zoneName)+".html";
 
             // Sort entries alphabetically by display name
             std::sort(entries.begin(),entries.end(),[](const IndexEntry &a, const IndexEntry &b){
-                const auto &ma=s_mapMeta[{a.setIdx,a.mapIdx}];
-                const auto &mb=s_mapMeta[{b.setIdx,b.mapIdx}];
+                const GeneratorMaps::MapMeta &ma=s_mapMeta[{a.setIdx,a.mapIdx}];
+                const GeneratorMaps::MapMeta &mb=s_mapMeta[{b.setIdx,b.mapIdx}];
                 return ma.name<mb.name;
             });
 
             // Determine if zone has any flags
-            const auto &zf=zoneFlags[mainCode][zoneCode];
+            const std::set<std::string> &zf=zoneFlags[mainCode][zoneCode];
             bool hasFlags=!zf.empty();
 
             // Lambda to emit a table header (reused on 21-row split)
-            auto writeTableHeader=[&](){
+            std::function<void()> writeTableHeader=[&](){
                 indexBody << "<div class=\"divfixedwithlist\"><table class=\"item_list item_list_type_outdoor map_list\">"
                           << "<tr class=\"item_list_title item_list_title_type_outdoor\">\n";
                 indexBody << "<th><a href=\"" << Helper::htmlEscape(Helper::relUrl(zoneLink))
@@ -1966,7 +1966,7 @@ void generate()
             writeTableHeader();
             int mapCount=0;
 
-            for(const auto &ie : entries)
+            for(const IndexEntry &ie : entries)
             {
                 mapCount++;
                 if(mapCount>21)
@@ -2025,12 +2025,12 @@ void generate()
         // zoneName → list of bots
         std::map<std::string,std::vector<BotEntry>> botsByZone;
 
-        for(const auto &kv : s_mapMeta)
+        for(const std::pair<const std::pair<size_t,size_t>, GeneratorMaps::MapMeta> &kv : s_mapMeta)
         {
-            const auto &meta=kv.second;
+            const GeneratorMaps::MapMeta &meta=kv.second;
             size_t si=kv.first.first;
             size_t mi=kv.first.second;
-            const auto &set=sets[si];
+            const MapStore::MainCodeSet &set=sets[si];
             const std::string mc=set.mainCode;
             const std::string stem=stripTmx(set.mapPaths[mi]);
 
@@ -2048,7 +2048,7 @@ void generate()
             }
             if(zoneName.empty()) zoneName=meta.name; // fallback to map name
 
-            for(const auto &bd : meta.bots)
+            for(const BotData &bd : meta.bots)
             {
                 // Check skin existence
                 bool hasSkin=false;
@@ -2080,22 +2080,22 @@ void generate()
 
         Helper::setCurrentPage("bots.html");
         std::ostringstream botsBody;
-        for(const auto &zp : botsByZone)
+        for(const std::pair<const std::string, std::vector<BotEntry>> &zp : botsByZone)
         {
             const std::string &zone=zp.first;
-            const auto &botList=zp.second;
+            const std::vector<BotEntry> &botList=zp.second;
             if(botList.empty()) continue;
 
             // Count duplicate bot names within this zone (for disambiguation)
             std::map<std::string,std::map<std::string,bool>> nameCountForZone;
-            for(const auto &be : botList)
+            for(const BotEntry &be : botList)
             {
                 if(!be.botName.empty())
                     nameCountForZone[be.botName][be.mapName]=true;
             }
 
             int botCount=0;
-            auto writeZoneHeader=[&](){
+            std::function<void()> writeZoneHeader=[&](){
                 botsBody << "<div class=\"divfixedwithlist\"><table class=\"item_list item_list_type_normal map_list\">\n"
                          << "<tr class=\"item_list_title item_list_title_type_normal\">\n"
                          << "\t<th colspan=\"2\">\n"
@@ -2104,7 +2104,7 @@ void generate()
             };
             writeZoneHeader();
 
-            for(const auto &be : botList)
+            for(const BotEntry &be : botList)
             {
                 botCount++;
                 if(botCount>15)
@@ -2180,12 +2180,12 @@ void generate()
     // zone key: (mainCode, zoneCode) → entries
     std::map<std::pair<std::string,std::string>, std::vector<ZoneMapEntry>> zoneToMaps;
 
-    for(const auto &kv : s_mapMeta)
+    for(const std::pair<const std::pair<size_t,size_t>, GeneratorMaps::MapMeta> &kv : s_mapMeta)
     {
-        const auto &meta=kv.second;
+        const GeneratorMaps::MapMeta &meta=kv.second;
         size_t si=kv.first.first;
         size_t mi=kv.first.second;
-        const auto &set=sets[si];
+        const MapStore::MainCodeSet &set=sets[si];
         const std::string mainCode=set.mainCode;
         const std::string mapStem=stripTmx(set.mapPaths[mi]);
 
@@ -2197,11 +2197,11 @@ void generate()
         ze.mi=mi;
 
         // Count bot functions on this map
-        for(const auto &bd : meta.bots)
+        for(const BotData &bd : meta.bots)
         {
             if(bd.onlyText)
                 continue;
-            for(const auto &step : bd.steps)
+            for(const BotStepData &step : bd.steps)
             {
                 if(step.type!="text")
                     ze.funcCounts[step.type]++;
@@ -2213,15 +2213,15 @@ void generate()
     }
 
     // Generate a page for each zone
-    for(const auto &zkv : zoneToMaps)
+    for(const std::pair<const std::pair<std::string,std::string>, std::vector<ZoneMapEntry>> &zkv : zoneToMaps)
     {
         const std::string &mainCode=zkv.first.first;
         const std::string &zoneCode=zkv.first.second;
-        const auto &maps=zkv.second;
+        const std::vector<ZoneMapEntry> &maps=zkv.second;
 
         // Zone name
         std::string zoneName;
-        auto zit=s_zoneNames.find({mainCode,zoneCode});
+        std::map<std::pair<std::string,std::string>, std::string>::const_iterator zit=s_zoneNames.find({mainCode,zoneCode});
         if(zit!=s_zoneNames.end())
             zoneName=zit->second;
         else if(zoneCode.empty())
@@ -2231,7 +2231,7 @@ void generate()
 
         // First map type for the wrapper div class
         std::string firstMapType="outdoor";
-        for(const auto &ze : maps)
+        for(const ZoneMapEntry &ze : maps)
             if(!ze.mapType.empty()) { firstMapType=ze.mapType; break; }
 
         std::string rel="zones/"+mainCode+"/"+Helper::textForUrl(zoneName)+".html";
@@ -2244,21 +2244,21 @@ void generate()
         // Bot population count
         int totalBots=0;
         std::map<std::string,int> zoneFuncCounts;
-        for(const auto &ze : maps)
-            for(const auto &fc : ze.funcCounts)
+        for(const ZoneMapEntry &ze : maps)
+            for(const std::pair<const std::string, int> &fc : ze.funcCounts)
             {
                 zoneFuncCounts[fc.first]+=fc.second;
                 totalBots+=fc.second;
             }
 
         // Count text-only bots too
-        for(const auto &kv2 : s_mapMeta)
+        for(const std::pair<const std::pair<size_t,size_t>, GeneratorMaps::MapMeta> &kv2 : s_mapMeta)
         {
             size_t si2=kv2.first.first;
-            const auto &meta2=kv2.second;
-            const auto &set2=sets[si2];
+            const GeneratorMaps::MapMeta &meta2=kv2.second;
+            const MapStore::MainCodeSet &set2=sets[si2];
             if(set2.mainCode!=mainCode || meta2.zoneCode!=zoneCode) continue;
-            for(const auto &bd : meta2.bots)
+            for(const BotData &bd : meta2.bots)
                 if(bd.onlyText) totalBots++;
         }
 
@@ -2272,8 +2272,8 @@ void generate()
                  << totalBots << " bots<br />\n";
 
             body << "<center><table class=\"item_list item_list_type_outdoor\"><tr class=\"item_list_title item_list_title_type_outdoor\"><th>Bots list</th></tr>\n";
-            auto writeFuncRow=[&](const char *type, const char *pos, const char *label){
-                auto it=zoneFuncCounts.find(type);
+            std::function<void(const char *, const char *, const char *)> writeFuncRow=[&](const char *type, const char *pos, const char *label){
+                std::map<std::string, int>::const_iterator it=zoneFuncCounts.find(type);
                 if(it!=zoneFuncCounts.end())
                     body << "<tr class=\"value\"><td><div style=\"float:left;background-position:" << pos
                          << ";\" class=\"flags flags16\" title=\"" << type << "\"></div>"
@@ -2301,7 +2301,7 @@ void generate()
              << Helper::htmlEscape(zoneName)
              << "</th><th>\n";
         // Zone-level flag icons in header
-        auto writeHeaderFlag=[&](const char *type, const char *pos){
+        std::function<void(const char *, const char *)> writeHeaderFlag=[&](const char *type, const char *pos){
             if(zoneFuncCounts.count(type))
                 body << "<div style=\"float:left;background-position:" << pos << ";\" class=\"flags flags16\" title=\"" << type << "\"></div>\n";
         };
@@ -2320,10 +2320,10 @@ void generate()
 
         // Map rows (sorted by name)
         std::vector<const ZoneMapEntry*> sorted;
-        for(const auto &ze : maps) sorted.push_back(&ze);
+        for(const ZoneMapEntry &ze : maps) sorted.push_back(&ze);
         std::sort(sorted.begin(),sorted.end(),[](const ZoneMapEntry *a, const ZoneMapEntry *b){ return a->mapName<b->mapName; });
 
-        for(const auto *ze : sorted)
+        for(const ZoneMapEntry *ze : sorted)
         {
             std::string mapRel=relativePathForMapRef(ze->si,ze->mi);
             body << "<tr class=\"value\"><td><a href=\"" << Helper::htmlEscape(Helper::relUrl(mapRel))
@@ -2333,8 +2333,8 @@ void generate()
                  << "\" title=\"" << Helper::htmlEscape(ze->mapName) << "\">\n";
 
             // Per-map function flags (repeat icon for each occurrence)
-            auto writeMapFlags=[&](const char *type, const char *pos){
-                auto it=ze->funcCounts.find(type);
+            std::function<void(const char *, const char *)> writeMapFlags=[&](const char *type, const char *pos){
+                std::map<std::string, int>::const_iterator it=ze->funcCounts.find(type);
                 if(it!=ze->funcCounts.end())
                     for(int i=0;i<it->second;i++)
                         body << "<div style=\"float:left;background-position:" << pos

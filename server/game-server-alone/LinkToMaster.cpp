@@ -1,7 +1,7 @@
 #include "LinkToMaster.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../../general/sha224/sha224.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/Client.hpp"
 #include "../base/ClientList.hpp"
@@ -133,9 +133,9 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
             {
                 std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 2" << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
-                auto start = std::chrono::high_resolution_clock::now();
+                std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
                 connStatusType=::connect(sfd, rp->ai_addr, rp->ai_addrlen);
-                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double, std::milli> elapsed = end-start;
                 index++;
                 if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
@@ -447,13 +447,12 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     posOutput+=1+4;
 
     {
-        SHA224 hashToken = SHA224();
-        hashToken.init();
+        CatchChallenger::Hash hashToken;
 
         hashToken.update(reinterpret_cast<const unsigned char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
         hashToken.update(reinterpret_cast<const unsigned char *>(dynamicToken),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
         hashToken.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput));
-        posOutput+=CATCHCHALLENGER_SHA224HASH_SIZE;
+        posOutput+=CATCHCHALLENGER_HASH_SIZE;
         //memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));->to reconnect after be disconnected
     }
 
@@ -654,9 +653,9 @@ void LinkToMaster::tryReconnect()
         {
             stat=Stat::Connecting;
             //start to connect
-            auto start = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
             connectInternal();
-            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             if(elapsed.count()<(uint32_t)tryInterval*1000 && stat!=Stat::Connected)
             {
