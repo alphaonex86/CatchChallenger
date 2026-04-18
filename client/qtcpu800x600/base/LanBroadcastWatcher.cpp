@@ -3,7 +3,7 @@
 #include <QNetworkDatagram>
 #include <QByteArray>
 #include <QDataStream>
-#include <QCryptographicHash>
+#include "../../../general/base/CatchChallenger_Hash.hpp"
 
 LanBroadcastWatcher *LanBroadcastWatcher::lanBroadcastWatcher=nullptr;
 
@@ -38,7 +38,14 @@ void LanBroadcastWatcher::processPendingDatagrams()
         /* can't contain incorrect char for path!
          * example: toto's server
          * on windows ' is not supported */
-        e.uniqueKey=QString(QCryptographicHash::hash(e.name.toUtf8(), QCryptographicHash::Sha224).toHex());
+        {
+            CatchChallenger::Hash h;
+            const QByteArray utf8=e.name.toUtf8();
+            h.update(reinterpret_cast<const unsigned char *>(utf8.constData()),utf8.size());
+            unsigned char digest[CATCHCHALLENGER_HASH_SIZE];
+            h.final(digest);
+            e.uniqueKey=QString(QByteArray(reinterpret_cast<const char *>(digest),CATCHCHALLENGER_HASH_SIZE).toHex());
+        }
 
         int index=0;
         while(index<list.size())

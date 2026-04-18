@@ -263,7 +263,7 @@ void Client::removeCash(const uint64_t &cash)
 void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
 {
     const uint8_t &event_value=GlobalServerData::serverPrivateVariables.events.at(event);
-    const auto &now = sFrom1970();
+    const uint64_t &now = sFrom1970();
 
     //send the network reply
     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xE2;
@@ -304,7 +304,7 @@ void Client::removeFirstEventInQueue()
     oldEvents.oldEventList.erase(oldEvents.oldEventList.begin());
     if(oldEvents.oldEventList.size()>0)
     {
-        const auto &now = sFrom1970();
+        const uint64_t &now = sFrom1970();
         oldEvents.time=now;
     }
 }

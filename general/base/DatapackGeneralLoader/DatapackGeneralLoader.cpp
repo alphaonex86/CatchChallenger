@@ -52,7 +52,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
@@ -405,7 +405,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
@@ -458,7 +458,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
             {
                 std::string mapKey=mapStr;
                 stringreplaceOne(mapKey,std::string(".tmx"),std::string(""));
-                const auto it=mapPathToId.find(mapKey);
+                const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID>::const_iterator it=mapPathToId.find(mapKey);
                 if(it!=mapPathToId.cend())
                     serverProfile.mapIndex=it->second;
             }

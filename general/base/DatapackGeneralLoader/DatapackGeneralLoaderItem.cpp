@@ -41,7 +41,7 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
                 std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;

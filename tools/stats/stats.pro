@@ -8,10 +8,15 @@ CONFIG   -= app_bundle
 DEFINES += EPOLLCATCHCHALLENGERSERVER EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION SERVERNOBUFFER
 DEFINES += CATCHCHALLENGER_CLASS_STATS NOWEBSOCKET
 
+DEFINES += BLAKE3_NO_SSE2 BLAKE3_NO_SSE41 BLAKE3_NO_AVX2 BLAKE3_NO_AVX512
+
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    ../../general/sha224/sha224.cpp \
+    ../../general/base/CatchChallenger_Hash.cpp \
+    ../../general/blake3/blake3.c \
+    ../../general/blake3/blake3_dispatch.c \
+    ../../general/blake3/blake3_portable.c \
     LinkToLogin.cpp \
     LinkToLoginProtocolParsing.cpp \
     LinkToLoginStaticVar.cpp \
@@ -31,7 +36,7 @@ SOURCES += main.cpp \
     EpollServerStats.cpp
 
 HEADERS += \
-    ../../general/sha224/sha224.hpp \
+    ../../general/base/CatchChallenger_Hash.hpp \
     LinkToLogin.h \
     ../../server/epoll/Epoll.h \
     ../../server/epoll/EpollSocket.h \

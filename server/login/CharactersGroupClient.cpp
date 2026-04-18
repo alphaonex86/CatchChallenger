@@ -43,7 +43,7 @@ void CharactersGroupForLogin::character_list_object()
     //memset(tempRawData,0x00,sizeof(4*1024));//performance
     int tempRawDataSize=0x01;
 
-    const auto &current_time=sFrom1970();
+    const uint64_t &current_time=sFrom1970();
     bool ok;
     uint8_t validCharaterCount=0;
     while(databaseBaseCommon->next() && validCharaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -194,7 +194,7 @@ void CharactersGroupForLogin::server_list_object()
     //memset(tempRawData,0x00,sizeof(4*1024));
     int tempRawDataSize=0x00;
 
-    const auto &current_time=sFrom1970();
+    const uint64_t &current_time=sFrom1970();
     bool ok;
     uint8_t validServerCount=0;
     while(databaseBaseCommon->next() && validServerCount<CommonSettingsCommon::commonSettingsCommon.max_character)

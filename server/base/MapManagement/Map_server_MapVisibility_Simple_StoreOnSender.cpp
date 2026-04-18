@@ -207,7 +207,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU(const CATCHCHALLENGE
                         std::cerr << "min_CPU() slot=" << index_client << " player=" << client.getPseudo() << " +ping" << std::endl;
                     }
                     else
-                        std::cerr << "min_CPU() slot=" << index_client << " player=" << client.getPseudo() << " skip_ping pingInProgress=" << (int)client.pingCountInProgress() << std::endl;
+                        std::cerr << "min_CPU() slot=" << index_client << " player=" << client.getPseudo() << " skip_ping pingInProgress=" << std::to_string(client.pingCountInProgress()) << std::endl;
                     std::cerr << "min_CPU() slot=" << index_client << " player=" << client.getPseudo() << " SEND bytes=" << (posOutput-baseOutput) << std::endl;
                     client.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput+baseOutput,posOutput-baseOutput);
                 }
@@ -281,7 +281,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                             std::cerr << "min_network() PATH1 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " +ping" << std::endl;
                         }
                         else
-                            std::cerr << "min_network() PATH1 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " skip_ping pingInProgress=" << (int)clientWithMap.pingCountInProgress() << std::endl;
+                            std::cerr << "min_network() PATH1 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " skip_ping pingInProgress=" << std::to_string(clientWithMap.pingCountInProgress()) << std::endl;
                         std::cerr << "min_network() PATH1 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " SEND bytes=" << posOutput << std::endl;
                         clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                         //populate sendedStatus with current state of all visible players
@@ -340,8 +340,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                                         else
                                         {
                                             std::cerr << "min_network() PATH2 slot=" << index_client << " scan other_slot=" << index << " other=" << other_client.getPseudo()
-                                                      << " CHANGE old_x=" << (int)c_stat.x << " old_y=" << (int)c_stat.y << " old_dir=" << (int)c_stat.direction
-                                                      << " new_x=" << (int)other_client.getX() << " new_y=" << (int)other_client.getY() << " new_dir=" << (int)other_client.getLastDirection() << std::endl;
+                                                      << " CHANGE old_x=" << std::to_string(c_stat.x) << " old_y=" << std::to_string(c_stat.y) << " old_dir=" << std::to_string(c_stat.direction)
+                                                      << " new_x=" << std::to_string(other_client.getX()) << " new_y=" << std::to_string(other_client.getY()) << " new_dir=" << std::to_string(other_client.getLastDirection()) << std::endl;
                                             //position or direction changed -> send 0x66 change entry
                                             {
                                                 //only send partial changes: slot + x + y + direction (4 bytes per entry)
@@ -411,7 +411,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                         if(changesCount>0 || removeCount>0 || insertCount>0)
                         {
                             std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo()
-                                      << " SENDING inserts=" << (int)insertCount << " removes=" << (int)removeCount << " changes=" << (int)changesCount << std::endl;
+                                      << " SENDING inserts=" << std::to_string(insertCount) << " removes=" << std::to_string(removeCount) << " changes=" << std::to_string(changesCount) << std::endl;
                             if(insertCount>0)
                             {
                                 std::cerr << "min_network() PATH2 slot=" << index_client << " +0x6B insert_bytes=" << posOutput << std::endl;
@@ -434,7 +434,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                             //append 0x69 remove packet (if any) after the insert data (or at position 0 if no inserts)
                             if(removeCount>0)
                             {
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " +0x69 remove count=" << (int)removeCount << " at_pos=" << posOutput << std::endl;
+                                std::cerr << "min_network() PATH2 slot=" << index_client << " +0x69 remove count=" << std::to_string(removeCount) << " at_pos=" << posOutput << std::endl;
                                 Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove[1+4]=static_cast<uint8_t>(removeCount);//player count
                                 *reinterpret_cast<uint32_t *>(Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove+1)=htole32(1+removeCount);//dynamic size = count_byte + indices
                                 //copy the pre-built remove buffer [0x69][size4][count1][indices...] into main output
@@ -444,7 +444,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                             //append 0x66 changes packet (if any) after removes
                             if(changesCount>0)
                             {
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " +0x66 changes count=" << (int)changesCount << " at_pos=" << posOutput << std::endl;
+                                std::cerr << "min_network() PATH2 slot=" << index_client << " +0x66 changes count=" << std::to_string(changesCount) << " at_pos=" << posOutput << std::endl;
                                 Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[1+4]=static_cast<uint8_t>(changesCount);//player count
                                 *reinterpret_cast<uint32_t *>(Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges+1)=htole32(1+changesCount*(1+1+1+1));//dynamic size = count_byte + count * 4 bytes per entry
                                 //copy the pre-built changes buffer [0x66][size4][count1][entries...] into main output
@@ -458,9 +458,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                                 std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " +ping" << std::endl;
                             }
                             else
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " skip_ping pingInProgress=" << (int)clientWithMap.pingCountInProgress() << std::endl;
+                                std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " skip_ping pingInProgress=" << std::to_string(clientWithMap.pingCountInProgress()) << std::endl;
                             std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " SEND total_bytes=" << posOutput
-                                      << " first_byte=0x" << std::hex << (int)(uint8_t)ProtocolParsingBase::tempBigBufferForOutput[0] << std::dec << std::endl;
+                                      << " first_byte=0x" << std::hex << std::to_string((uint8_t)ProtocolParsingBase::tempBigBufferForOutput[0]) << std::dec << std::endl;
                             clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                             //update sendedStatus with current state after send so next tick can detect differences
                             clientWithMap.sendedStatus.resize(std::min(map_clients_id.size(),static_cast<size_t>(255)));
@@ -482,7 +482,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                         else
                         {
                             if(clientWithMap.pingCountInProgress()>0)
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " NO_DIFF but pingCountInProgress=" << (int)clientWithMap.pingCountInProgress() << std::endl;
+                                std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " NO_DIFF but pingCountInProgress=" << std::to_string(clientWithMap.pingCountInProgress()) << std::endl;
                         }
                     }
                 }

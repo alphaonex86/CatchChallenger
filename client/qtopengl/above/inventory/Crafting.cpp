@@ -110,7 +110,7 @@ void Crafting::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wid
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=inventory_description->font();
+    QFont font=inventory_description->font();
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);

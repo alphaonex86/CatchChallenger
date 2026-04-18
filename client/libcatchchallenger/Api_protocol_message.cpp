@@ -1294,7 +1294,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     items[id]=quantity;
                 index++;
             }
-            for (auto itr = items.cbegin(); itr != items.cend(); ++itr)
+            for (std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t>::const_iterator itr = items.cbegin(); itr != items.cend(); ++itr)
                 player_informations.items[itr->first]=itr->second;
             have_inventory(items);
         }

@@ -19,11 +19,11 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
     modified(false)
 {
     this->file=file;
-    const auto loadOkay = document.LoadFile(file.c_str());
+    const tinyxml2::XMLError loadOkay = document.LoadFile(file.c_str());
     if(loadOkay!=0)
     {
         modified=true;
-        const auto &errorId=document.ErrorID();
+        const tinyxml2::XMLError &errorId=document.ErrorID();
         if(errorId==tinyxml2::XML_ERROR_FILE_NOT_FOUND)
         {
             tinyxml2::XMLNode * pRoot = document.NewElement("configuration");
@@ -136,7 +136,7 @@ void TinyXMLSettings::sync()
 {
     if(!modified)
         return;
-    const auto &returnVar=document.SaveFile(file.c_str());
+    const tinyxml2::XMLError &returnVar=document.SaveFile(file.c_str());
     if(returnVar!=tinyxml2::XML_SUCCESS)
     {
         std::cerr << "Unable to save the file: " << file << ", returnVar: " << std::to_string(returnVar) << std::endl;

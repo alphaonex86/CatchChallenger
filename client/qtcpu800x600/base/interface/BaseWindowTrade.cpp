@@ -102,7 +102,7 @@ void BaseWindow::tradeAddTradeObject(const uint16_t &item,const uint32_t &quanti
     else
         tradeOtherObjects[item]=quantity;
     ui->tradeOtherItems->clear();
-    for(const auto &n : tradeOtherObjects) {
+    for(const std::pair<const uint16_t, uint32_t> &n : tradeOtherObjects) {
         ui->tradeOtherItems->addItem(itemToGraphic(n.first,n.second));
     }
 }
@@ -110,7 +110,7 @@ void BaseWindow::tradeAddTradeObject(const uint16_t &item,const uint32_t &quanti
 void BaseWindow::tradeUpdateCurrentObject()
 {
     ui->tradePlayerItems->clear();
-    for(const auto &n : tradeCurrentObjects) {
+    for(const std::pair<const uint16_t, uint32_t> &n : tradeCurrentObjects) {
         ui->tradePlayerItems->addItem(itemToGraphic(n.first,n.second));
     }
 }

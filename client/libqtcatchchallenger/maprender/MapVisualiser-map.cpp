@@ -50,7 +50,7 @@ void MapVisualiser::destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
     //remove from the list
-    for( const auto/*& crash with ref*/ n : map->doors ) {
+    for( const std::pair<const std::pair<COORD_TYPE,COORD_TYPE>,MapDoor*>/*& crash with ref*/ n : map->doors ) {
         n.second->deleteLater();
     }
     map->doors.clear();
@@ -77,9 +77,9 @@ void MapVisualiser::resetAll()
 {
     ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
     std::vector<CATCHCHALLENGER_TYPE_MAPID> mapListToDelete;
-    for(auto /*& crash with ref*/n : CatchChallenger::QMap_client::old_all_map)
+    for(std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *> /*& crash with ref*/n : CatchChallenger::QMap_client::old_all_map)
         mapListToDelete.push_back(n.first);
-    for(auto /*& crash with ref*/n : CatchChallenger::QMap_client::all_map)
+    for(std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *> /*& crash with ref*/n : CatchChallenger::QMap_client::all_map)
         mapListToDelete.push_back(n.first);
     unsigned int index=0;
     while(index<mapListToDelete.size())
@@ -217,7 +217,7 @@ bool MapVisualiser::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, Q
     {
         tempMapObject->displayed=false;
         CatchChallenger::QMap_client::all_map[mapIndex]=tempMapObject;
-        for( auto& n : tempMapObject->animatedObject ) {
+        for( std::pair<const uint16_t,std::unordered_map<int,MapVisualiserOrder::Map_animation>>& n : tempMapObject->animatedObject ) {
             const uint16_t &interval=static_cast<uint16_t>(n.first);
             if(animationTimer.find(interval)==animationTimer.cend())
             {
@@ -357,13 +357,13 @@ void MapVisualiser::applyTheAnimationTimer()
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
     const uint16_t &interval=static_cast<uint16_t>(timer->interval());
     bool isUsed=false;
-    for( const auto& n : CatchChallenger::QMap_client::all_map ) {
+    for( const std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *>& n : CatchChallenger::QMap_client::all_map ) {
         CatchChallenger::QMap_client * tempMap=n.second;
         if(tempMap->displayed)
         {
             if(tempMap->animatedObject.find(interval)!=tempMap->animatedObject.cend())
             {
-                for(auto& n:tempMap->animatedObject[interval])
+                for(std::pair<const int,MapVisualiserOrder::Map_animation>& n:tempMap->animatedObject[interval])
                 {
                     MapVisualiserOrder::Map_animation &map_animation=n.second;
                     isUsed=true;
@@ -414,30 +414,30 @@ void MapVisualiser::removeUnusedMap()
 {
     //undisplay the unused map
     std::vector<CATCHCHALLENGER_TYPE_MAPID> toDelete;
-    for( const auto& n : CatchChallenger::QMap_client::old_all_map ) {
+    for( const std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *>& n : CatchChallenger::QMap_client::old_all_map ) {
         if(CatchChallenger::QMap_client::old_all_map_time_count.find(n.first)==CatchChallenger::QMap_client::old_all_map_time_count.cend() ||
                 CatchChallenger::QMap_client::old_all_map_time_count.at(n.first)>CATCHCHALLENGER_CLIENT_MAP_CACHE_TIMEOUT ||
                 CatchChallenger::QMap_client::old_all_map.size()>CATCHCHALLENGER_CLIENT_MAP_CACHE_SIZE)
             toDelete.push_back(n.first);
     }
-    for(const auto &id : toDelete)
+    for(const CATCHCHALLENGER_TYPE_MAPID &id : toDelete)
         destroyMap(id);
 }
 
 void MapVisualiser::hideNotloadedMap()
 {
     //undisplay the map not in direct contact with the current_map
-    for( const auto& n : CatchChallenger::QMap_client::all_map )
+    for( const std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *>& n : CatchChallenger::QMap_client::all_map )
         if(n.first!=current_map)
             if(!n.second->displayed)
                 mapItem->removeMap(n.second->tiledMap.get());
-    for( const auto& n : CatchChallenger::QMap_client::old_all_map )
+    for( const std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *>& n : CatchChallenger::QMap_client::old_all_map )
         mapItem->removeMap(n.second->tiledMap.get());
 }
 
 void MapVisualiser::passMapIntoOld()
 {
-    for( const auto& n : CatchChallenger::QMap_client::all_map ) {
+    for( const std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *>& n : CatchChallenger::QMap_client::all_map ) {
         CatchChallenger::QMap_client::old_all_map[n.first]=n.second;
         CatchChallenger::QMap_client::old_all_map_time_count[n.first]=0;
     }

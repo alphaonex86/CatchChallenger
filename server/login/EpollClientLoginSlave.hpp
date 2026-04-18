@@ -71,8 +71,8 @@ public:
     struct AskLoginParam
     {
         uint8_t query_id;
-        char login[CATCHCHALLENGER_SHA224HASH_SIZE];
-        char pass[CATCHCHALLENGER_SHA224HASH_SIZE];
+        char login[CATCHCHALLENGER_HASH_SIZE];
+        char pass[CATCHCHALLENGER_HASH_SIZE];
     };
     struct SelectCharacterParam
     {
@@ -144,7 +144,7 @@ public:
     static bool maxAccountIdRequested;
     static char replyToRegisterLoginServerCharactersGroup[1024];
     static unsigned int replyToRegisterLoginServerCharactersGroupSize;
-    static char baseDatapackSum[28];
+    static char baseDatapackSum[CATCHCHALLENGER_HASH_SIZE];
     static char loginGood[256*1024];
     static unsigned int loginGoodSize;
     static std::vector<EpollClientLoginSlave *> stat_client_list;

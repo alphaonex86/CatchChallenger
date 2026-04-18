@@ -618,17 +618,17 @@ void EpollServerLoginSlave::preload_profile()
         if(!profile.items.empty())
         {
             uint32_t lastItemId=0;
-            auto item_list=profile.items;
+            std::vector<LoginProfile::Item> item_list=profile.items;
             std::sort(item_list.begin(),item_list.end(),[](const LoginProfile::Item &a, const LoginProfile::Item &b) {
                 return a.id<b.id;
             });
-            auto max=item_list.at(item_list.size()-1).id;
+            CATCHCHALLENGER_TYPE_ITEM max=item_list.at(item_list.size()-1).id;
             uint32_t pos=0;
             char item_raw[(2+4)*item_list.size()];
             unsigned int index=0;
             while(index<item_list.size())
             {
-                const auto &item=item_list.at(index);
+                const LoginProfile::Item &item=item_list.at(index);
                 *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id-lastItemId);
                 pos+=2;
                 lastItemId=item.id;
@@ -644,7 +644,7 @@ void EpollServerLoginSlave::preload_profile()
             index=0;
             while(index<item_list.size())
             {
-                const auto &item=item_list.at(index);
+                const LoginProfile::Item &item=item_list.at(index);
                 uint16_t bittoUp=item.id;
                 bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
                 index++;
@@ -655,7 +655,7 @@ void EpollServerLoginSlave::preload_profile()
         if(!profile.reputations.empty())
         {
             uint32_t lastReputationId=0;
-            auto reputations_list=profile.reputations;
+            std::vector<LoginProfile::Reputation> reputations_list=profile.reputations;
             std::sort(reputations_list.begin(),reputations_list.end(),[](const LoginProfile::Reputation &a, const LoginProfile::Reputation &b) {
                 return a.reputationDatabaseId<b.reputationDatabaseId;
             });
@@ -664,7 +664,7 @@ void EpollServerLoginSlave::preload_profile()
             unsigned int index=0;
             while(index<reputations_list.size())
             {
-                const auto &reputation=reputations_list.at(index);
+                const LoginProfile::Reputation &reputation=reputations_list.at(index);
                 *reinterpret_cast<uint32_t *>(reputation_raw+pos)=htole32(reputation.point);
                 pos+=4;
                 reputation_raw[pos]=reputation.reputationDatabaseId-lastReputationId;
@@ -692,7 +692,7 @@ void EpollServerLoginSlave::preload_profile()
                 //profile.monster_insert.resize(profile.monstergroup.size());
                 while(monsterGroupIndex<profile.monstergroup.size())
                 {
-                    const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
+                    const std::vector<LoginProfile::Monster> &monsters=profile.monstergroup.at(monsterGroupIndex);
                     if(preparedStatementForCreationType.monsterGroup.size()<=monsterGroupIndex)
                         preparedStatementForCreationType.monsterGroup.resize(monsterGroupIndex+1);
                     LoginProfile::PreparedStatementForCreationMonsterGroup &preparedStatementForCreationMonsterGroup=preparedStatementForCreationType.monsterGroup[monsterGroupIndex];
@@ -700,7 +700,7 @@ void EpollServerLoginSlave::preload_profile()
                     unsigned int monsterIndex=0;
                     while(monsterIndex<monsters.size())
                     {
-                        const auto &monster=monsters.at(monsterIndex);
+                        const LoginProfile::Monster &monster=monsters.at(monsterIndex);
                         if(monster.skills.empty())
                         {
                             std::cerr << "monster.skills.empty() for some profile" << std::endl;
@@ -710,7 +710,7 @@ void EpollServerLoginSlave::preload_profile()
                             abort();
                         }
                         uint32_t lastSkillId=0;
-                        auto skills_list=monster.skills;
+                        std::vector<LoginProfile::Monster::Skill> skills_list=monster.skills;
                         std::sort(skills_list.begin(),skills_list.end(),[](const LoginProfile::Monster::Skill &a, const LoginProfile::Monster::Skill &b) {
                             return a.id<b.id;
                         });
@@ -720,7 +720,7 @@ void EpollServerLoginSlave::preload_profile()
                         unsigned int sub_index=0;
                         while(sub_index<skills_list.size())
                         {
-                            const auto &skill=skills_list.at(sub_index);
+                            const LoginProfile::Monster::Skill &skill=skills_list.at(sub_index);
                             *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id-lastSkillId);
                             lastSkillId=skill.id;
                             raw_skill[sub_index*(2+1)+2]=skill.level;
@@ -771,7 +771,7 @@ void EpollServerLoginSlave::preload_profile()
                         monsterIndex++;
                     }
                     //do the encyclopedia monster
-                    const auto &result=std::max_element(monsterForEncyclopedia.begin(),monsterForEncyclopedia.end());
+                    const std::vector<uint16_t>::iterator result=std::max_element(monsterForEncyclopedia.begin(),monsterForEncyclopedia.end());
                     const size_t size=*result/8+1;
                     char bitlist[size];
                     memset(bitlist,0,size);

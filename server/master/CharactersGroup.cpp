@@ -219,7 +219,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
         abort();
     }
     //std::cout << "set game server added: " << std::to_string((uint64_t)client) << ", unique key: " << std::to_string(uniqueKey) << ", to: " << host << ":" << std::to_string(port) << ", logicalGroupIndex: " << std::to_string(logicalGroupIndex) << std::endl;
-    const auto &now=sFrom1970();
+    const uint64_t &now=sFrom1970();
     //old locked account
     if(lockedAccountByDisconnectedServer.find(uniqueKey)!=lockedAccountByDisconnectedServer.cend())
     {
@@ -228,7 +228,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
             std::cerr << "lockedAccountByDisconnectedServer for this server have account locked: " << lockedAccountByDisconnectedServer.at(uniqueKey).size() << std::endl;
         #endif
         //new key found on master server
-        auto i = lockedAccountByDisconnectedServer.at(uniqueKey).begin();
+        std::unordered_set<uint32_t>::const_iterator i = lockedAccountByDisconnectedServer.at(uniqueKey).begin();
         while (i != lockedAccountByDisconnectedServer.at(uniqueKey).cend())
         {
             if(lockedAccount.find(*i)==lockedAccount.cend())
@@ -260,10 +260,10 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
 
     //new key found on game server, mostly when the master server is restarted
     {
-        auto i = lockedAccount.begin();
+        std::unordered_set<uint32_t>::const_iterator i = lockedAccount.begin();
         while (i != lockedAccount.end())
         {
-            const auto thislockAccountIter=this->lockedAccount.find(*i);
+            const std::unordered_map<uint32_t,uint64_t>::iterator thislockAccountIter=this->lockedAccount.find(*i);
             if(thislockAccountIter!=this->lockedAccount.cend())
             {
                 const uint64_t &timeLock=this->lockedAccount.at(*i);
@@ -279,7 +279,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
                     //find the other game server and disconnect character on it
                     if(timeLock==0)
                     {
-                        auto j=gameServers.begin();
+                        std::unordered_map<uint32_t,InternalGameServer>::iterator j=gameServers.begin();
                         while(j!=gameServers.cend())
                         {
                             if(j->second.lockedAccountByGameserver.find(*i)!=j->second.lockedAccountByGameserver.cend())
@@ -347,7 +347,7 @@ std::string CharactersGroup::gameServerUniqueKeyHumanReadableList() const
     else
     {
         std::string returnList;
-        auto i=gameServers.begin();
+        std::unordered_map<uint32_t,InternalGameServer>::const_iterator i=gameServers.begin();
         while(i!=gameServers.cend())
         {
             if(!returnList.empty())
@@ -367,7 +367,7 @@ CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t
         if(timeStamps==0)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            auto i=gameServers.begin();
+            std::unordered_map<uint32_t,InternalGameServer>::iterator i=gameServers.begin();
             while(i!=gameServers.cend())
             {
                 const InternalGameServer &internalGameServer=i->second;
@@ -383,7 +383,7 @@ CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t
             #endif
             return CharactersGroup::CharacterLock::Locked;
         }
-        const auto &varsFrom1970=sFrom1970();
+        const uint64_t &varsFrom1970=sFrom1970();
         if(timeStamps<varsFrom1970)
         {
             lockedAccount.erase(characterId);
@@ -420,7 +420,7 @@ void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
             return;
         }
     }
-    auto j=gameServers.begin();
+    std::unordered_map<uint32_t,InternalGameServer>::iterator j=gameServers.begin();
     while(j!=gameServers.cend())
     {
         if(j->second.lockedAccountByGameserver.find(characterId)!=j->second.lockedAccountByGameserver.cend())

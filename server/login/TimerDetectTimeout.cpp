@@ -120,7 +120,7 @@ void TimerDetectTimeout::exec()
         {
             if((client->get_lastActivity()+10*60*1000)<timeCurrent)
             {
-                std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
+                std::cerr << client << " (" << std::to_string(client->stat) << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                 client->disconnectClient();
             }
         }
@@ -128,7 +128,7 @@ void TimerDetectTimeout::exec()
         {
             if((client->get_lastActivity()+1*60*1000)<timeCurrent)
             {
-                std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
+                std::cerr << client << " (" << std::to_string(client->stat) << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                 client->disconnectClient();
             }
         }
@@ -138,7 +138,7 @@ void TimerDetectTimeout::exec()
             {
                 if((client->linkToGameServer->get_lastActivity()+10*60*1000)<timeCurrent)
                 {
-                    std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
+                    std::cerr << client << " (" << std::to_string(client->stat) << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                     client->linkToGameServer->disconnectClient();
                 }
             }
@@ -146,7 +146,7 @@ void TimerDetectTimeout::exec()
             {
                 if((client->linkToGameServer->get_lastActivity()+1*60*1000)<timeCurrent)
                 {
-                    std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
+                    std::cerr << client << " (" << std::to_string(client->stat) << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                     client->linkToGameServer->disconnectClient();
                 }
             }
@@ -262,7 +262,7 @@ void TimerDetectTimeout::exec()
         {
             if((client->get_lastActivity()+10*60*1000)<timeCurrent)
             {
-                std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
+                std::cerr << client << " (" << std::to_string(client->stat) << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                 client->disconnectClient();
             }
         }
@@ -270,7 +270,7 @@ void TimerDetectTimeout::exec()
         {
 /*            if((client->get_lastActivity()+1*60*1000)<timeCurrent)
             {
-                std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
+                std::cerr << client << " (" << std::to_string(client->stat) << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                 client->disconnectClient();
             }*/
         }
@@ -280,7 +280,7 @@ void TimerDetectTimeout::exec()
             {
                 if((client->linkToGameServer->get_lastActivity()+10*60*1000)<timeCurrent)
                 {
-                    std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
+                    std::cerr << client << " (" << std::to_string(client->stat) << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                     client->linkToGameServer->disconnectClient();
                 }
             }
@@ -288,7 +288,7 @@ void TimerDetectTimeout::exec()
             {
                 if((client->linkToGameServer->get_lastActivity()+1*60*1000)<timeCurrent)
                 {
-                    std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
+                    std::cerr << client << " (" << std::to_string(client->stat) << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                     client->linkToGameServer->disconnectClient();
                 }
             }

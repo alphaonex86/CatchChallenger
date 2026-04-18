@@ -135,8 +135,8 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             }
             sfd_list.push_back(sfd);
 
-            const auto p1 = std::chrono::system_clock::now();
-            const auto bootMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+            const std::chrono::system_clock::time_point p1 = std::chrono::system_clock::now();
+            const long long bootMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now()-EpollGenericServer::processStart).count();
             std::cout << "[" << std::chrono::duration_cast<std::chrono::seconds>(
                    p1.time_since_epoch()).count() << "] "

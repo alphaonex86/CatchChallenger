@@ -121,7 +121,7 @@ void Animation::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wi
     monsterImageTo->setPos(x+idealW/2+space/2,monsterY);
 
     // evolution text
-    auto font=evolutionText->font();
+    QFont font=evolutionText->font();
     if(widget->width()<800 || widget->height()<600)
         font.setPixelSize(10);
     else

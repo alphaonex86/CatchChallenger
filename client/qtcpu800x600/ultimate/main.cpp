@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     if(w.toQuit)
         return 523;
     w.show();
-    const auto returnCode=a.exec();
+    const int returnCode=a.exec();
     if(w.toQuit)
         return 523;
     else

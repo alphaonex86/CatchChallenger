@@ -162,7 +162,7 @@ void BaseWindow::displaySellList()
     itemsIntoTheShop.clear();
     shop_items_graphical.clear();
     shop_items_to_graphical.clear();
-    auto i=playerInformations.items.begin();
+    std::map<uint16_t, uint32_t>::const_iterator i=playerInformations.items.begin();
     while(i!=playerInformations.items.cend())
     {
         if(QtDatapackClientLoader::datapackLoader->has_itemExtra(i->first) &&

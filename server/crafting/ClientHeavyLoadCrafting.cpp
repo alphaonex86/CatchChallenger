@@ -19,7 +19,7 @@ bool Client::sendInventory()
     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.items.size());
     posOutput+=2;
     {
-        auto i=public_and_private_informations.items.begin();
+        std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>::iterator i=public_and_private_informations.items.begin();
         while(i!=public_and_private_informations.items.cend())
         {
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(i->first);

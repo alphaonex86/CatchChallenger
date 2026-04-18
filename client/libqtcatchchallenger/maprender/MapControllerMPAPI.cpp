@@ -150,7 +150,7 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
         if(CatchChallenger::QMap_client::all_map.find(mapId)==CatchChallenger::QMap_client::all_map.cend())
         {
             qDebug() << "MapControllerMP::insert_player(): current map " << QString::number(mapId) << " not loaded, delayed: ";
-            for (const auto &n : CatchChallenger::QMap_client::all_map)
+            for (const std::pair<const CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *> &n : CatchChallenger::QMap_client::all_map)
                 std::cout << n.first << std::endl;
             qDebug() << "List end";
             if(!inReplayMode)
@@ -1309,7 +1309,7 @@ bool MapControllerMP::dropAllPlayerOnTheMap_final(bool inReplayMode)
     qDebug() << QStringLiteral("dropAllPlayerOnTheMap()");
     #endif
     std::vector<uint16_t> temIdList;
-    for (const auto &n : otherPlayerList)
+    for (const std::pair<const SIMPLIFIED_PLAYER_ID_FOR_MAP,OtherPlayer> &n : otherPlayerList)
         temIdList.push_back(n.first);
     unsigned int index=0;
     while(index<temIdList.size())

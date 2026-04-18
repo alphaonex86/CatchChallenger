@@ -707,7 +707,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     //apply the effect of current buff
     if(!genericMonsterIsKO(currentMonster))
     {
-        auto removeOldBuffVar=removeOldBuff(currentMonster);
+        std::vector<Skill::BuffEffect> removeOldBuffVar=removeOldBuff(currentMonster);
         attackReturn.removeBuffEffectMonster.insert(attackReturn.removeBuffEffectMonster.cend(),removeOldBuffVar.cbegin(),removeOldBuffVar.cend());
         const std::vector<Skill::LifeEffectReturn> &lifeEffectMonster=applyBuffLifeEffect(currentMonster);
         attackReturn.lifeEffectMonster.insert(attackReturn.lifeEffectMonster.cend(),lifeEffectMonster.cbegin(),lifeEffectMonster.cend());

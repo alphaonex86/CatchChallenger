@@ -123,9 +123,9 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
             {
                 std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 2" << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
-                auto start = std::chrono::high_resolution_clock::now();
+                std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
                 connStatusType=::connect(sfd, rp->ai_addr, rp->ai_addrlen);
-                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double, std::milli> elapsed = end-start;
                 if(considerDownAfterNumberOfTry>0)
                     index++;
@@ -293,7 +293,7 @@ bool LinkToMaster::disconnectClient()
         index++;
     }
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> copyOf_selectCharacterClients=selectCharacterClients;
-    for( const auto& n : copyOf_selectCharacterClients ) {
+    for( const std::pair<const uint8_t,DataForSelectedCharacterReturn>& n : copyOf_selectCharacterClients ) {
         const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=n.second;
         EpollClientLoginSlave * client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
         if(client!=nullptr)
@@ -402,9 +402,9 @@ void LinkToMaster::tryReconnect()
         {
             stat=Stat::Connecting;
             //start to connect
-            auto start = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
             connectInternal();
-            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             if(elapsed.count()<5000 && stat!=Stat::Connected)
             {
@@ -508,7 +508,7 @@ void LinkToMaster::closeSocket()
 void LinkToMaster::detectTimeout()
 {
     uint64_t timetemp=time(NULL);
-    for( const auto& n : selectCharacterClients ) {
+    for( const std::pair<const uint8_t,DataForSelectedCharacterReturn>& n : selectCharacterClients ) {
         const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=n.second;
         if(dataForSelectedCharacterReturn.client==nullptr)
         {

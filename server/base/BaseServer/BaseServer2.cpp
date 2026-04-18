@@ -295,7 +295,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     }
     #endif
 
-    const auto &now = msFrom1970();
+    const uint64_t &now = msFrom1970();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_30_sync_other();
     #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)

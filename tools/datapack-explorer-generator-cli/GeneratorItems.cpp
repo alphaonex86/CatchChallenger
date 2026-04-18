@@ -73,7 +73,7 @@ static std::unordered_map<uint16_t,std::string> s_itemPath;
 
 std::string relativePathForItem(uint16_t id)
 {
-    auto it=s_itemPath.find(id);
+    std::unordered_map<uint16_t, std::string>::const_iterator it=s_itemPath.find(id);
     if(it!=s_itemPath.end())
         return it->second;
     std::string folder, stem;
@@ -199,29 +199,29 @@ static void buildReverseLookups()
     s_itemConsumedByIndustry.clear();
     s_itemProducedByIndustryMap.clear();
 
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     for(size_t si=0; si<sets.size(); ++si)
     {
-        const auto &set=sets[si];
+        const MapStore::MainCodeSet &set=sets[si];
         for(size_t mi=0; mi<set.mapList.size(); ++mi)
         {
             const CatchChallenger::CommonMap &m=set.mapList[mi];
-            for(const auto &sp : m.shops)
-                for(const auto &ip : sp.second.items)
+            for(const std::pair<const std::pair<uint8_t,uint8_t>, CatchChallenger::Shop> &sp : m.shops)
+                for(const std::pair<const uint16_t, uint32_t> &ip : sp.second.items)
                     s_itemInShops[ip.first].push_back({si,mi,ip.second});
-            for(const auto &ip : m.items)
+            for(const std::pair<const std::pair<uint8_t,uint8_t>, CatchChallenger::ItemOnMap> &ip : m.items)
                 s_itemOnMap[ip.second.item].push_back({si,mi});
-            for(const auto &d : m.monsterDrops)
+            for(const CatchChallenger::MonsterDrops &d : m.monsterDrops)
                 s_itemAsDrop[d.item].push_back({si,mi,d.quantity_min,d.quantity_max,d.luck});
-            for(const auto &bp : m.botFights)
-                for(const auto &reward : bp.second.items)
+            for(const std::pair<const uint8_t, CatchChallenger::BotFight> &bp : m.botFights)
+                for(const CatchChallenger::BotFight::Item &reward : bp.second.items)
                     s_itemAsFightReward[reward.id].push_back({si,mi,bp.first,reward.quantity});
             for(size_t ii=0; ii<m.industries.size(); ++ii)
             {
-                const auto &ind=m.industries[ii];
-                for(const auto &res : ind.resources)
+                const CatchChallenger::Industry &ind=m.industries[ii];
+                for(const CatchChallenger::Industry::Resource &res : ind.resources)
                     s_itemConsumedByIndustry[res.item].push_back({si,mi,ii,res.quantity});
-                for(const auto &prod : ind.products)
+                for(const CatchChallenger::Industry::Product &prod : ind.products)
                     s_itemProducedByIndustryMap[prod.item].push_back({si,mi,ii,prod.quantity});
             }
         }
@@ -232,11 +232,11 @@ static void buildReverseLookups()
             continue;
         const CatchChallenger::CraftingRecipe &r=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(rid);
         s_itemProducedByCraft[r.doItemId].push_back(rid);
-        for(const auto &mat : r.materials)
+        for(const CatchChallenger::CraftingRecipe::Material &mat : r.materials)
             s_itemAsCraftMaterial[mat.item].push_back(rid);
         s_itemIsRecipe[r.itemToLearn]=rid;
         s_doItemToRecipeItems[r.doItemId].push_back(r.itemToLearn);
-        for(const auto &mat : r.materials)
+        for(const CatchChallenger::CraftingRecipe::Material &mat : r.materials)
             s_materialToRecipeItems[mat.item].push_back(r.itemToLearn);
     }
 
@@ -397,7 +397,7 @@ static void writeMonsterTypeLabels(std::ostringstream &body, const std::string &
 
 static std::string reputationName(uint8_t repId)
 {
-    const auto &reps=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
+    const std::vector<CatchChallenger::Reputation> &reps=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
     if(repId<reps.size())
         return reps[repId].name;
     return "Reputation #"+Helper::toStringUint(repId);
@@ -426,13 +426,13 @@ static std::string reputationLevelToText(uint8_t repId, uint8_t level, bool posi
 
 static void writeReputationRequirements(std::ostringstream &body, const std::vector<CatchChallenger::ReputationRequirements> &reqs)
 {
-    for(const auto &req : reqs)
+    for(const CatchChallenger::ReputationRequirements &req : reqs)
         body << reputationLevelToText(req.reputationId,req.level,req.positif) << "<br />\n";
 }
 
 static void writeReputationRewards(std::ostringstream &body, const std::vector<CatchChallenger::ReputationRewards> &rews)
 {
-    for(const auto &rew : rews)
+    for(const CatchChallenger::ReputationRewards &rew : rews)
     {
         if(rew.point<0)
             body << "Less reputation in: " << reputationName(rew.reputationId);
@@ -444,7 +444,7 @@ static void writeReputationRewards(std::ostringstream &body, const std::vector<C
 static const std::string &mapPathOf(size_t si, size_t mi)
 {
     static const std::string empty;
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     if(si>=sets.size()) return empty;
     if(mi>=sets[si].mapPaths.size()) return empty;
     return sets[si].mapPaths[mi];
@@ -510,11 +510,11 @@ void generate()
     // Build industry product lookup (for index gradient)
     std::unordered_map<uint16_t,bool> s_itemProducedByIndustry;
     {
-        const auto &sets=MapStore::sets();
+        const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
         for(size_t si=0;si<sets.size();++si)
             for(size_t mi=0;mi<sets[si].mapList.size();++mi)
-                for(const auto &ind : sets[si].mapList[mi].industries)
-                    for(const auto &prod : ind.products)
+                for(const CatchChallenger::Industry &ind : sets[si].mapList[mi].industries)
+                    for(const CatchChallenger::Industry::Product &prod : ind.products)
                         s_itemProducedByIndustry[prod.item]=true;
     }
 
@@ -567,7 +567,7 @@ void generate()
     }
 
     // Build gradient for index
-    auto buildGradient=[&](uint16_t id) -> std::string {
+    std::function<std::string(uint16_t)> buildGradient=[&](uint16_t id) -> std::string {
         std::vector<std::string> colors;
         if(s_itemInShops.find(id)!=s_itemInShops.cend())
             colors.push_back("#e5eaff");
@@ -678,7 +678,7 @@ void generate()
             }
             if(sameuniqueskill)
             {
-                const auto &e=skillOfMonsterIt->second[0];
+                const GeneratorItems::SkillOfMonsterEntry &e=skillOfMonsterIt->second[0];
                 if(QtDatapackClientLoader::datapackLoader->has_monsterSkillExtra(e.skillId))
                 {
                     body << "<div class=\"subblock\"><div class=\"valuetitle\">Skill</div><div class=\"value\">\n";
@@ -819,7 +819,7 @@ void generate()
 
         // ── 10. Crafting (this item IS a recipe) ──
         {
-            auto recipeIt=s_itemIsRecipe.find(id);
+            std::unordered_map<uint16_t, uint16_t>::const_iterator recipeIt=s_itemIsRecipe.find(id);
             if(recipeIt!=s_itemIsRecipe.cend())
             {
                 if(CatchChallenger::CommonDatapack::commonDatapack.has_craftingRecipe(recipeIt->second))
@@ -833,7 +833,7 @@ void generate()
 
                     // "Material"
                     body << "<div class=\"subblock\"><div class=\"valuetitle\">Material</div><div class=\"value\">\n";
-                    for(const auto &mat : recipe.materials)
+                    for(const CatchChallenger::CraftingRecipe::Material &mat : recipe.materials)
                         writeItemLinkTable(body,rel,mat.item,mat.quantity);
                     body << "</div></div>\n";
 
@@ -858,7 +858,7 @@ void generate()
 
         // ── 11. Product by crafting ──
         {
-            auto productByIt=s_doItemToRecipeItems.find(id);
+            std::unordered_map<uint16_t, std::vector<uint16_t>>::const_iterator productByIt=s_doItemToRecipeItems.find(id);
             if(productByIt!=s_doItemToRecipeItems.cend() && !productByIt->second.empty())
             {
                 body << "<div class=\"subblock\"><div class=\"valuetitle\">Product by crafting</div><div class=\"value\">\n";
@@ -870,7 +870,7 @@ void generate()
 
         // ── 12. Used into crafting ──
         {
-            auto usedInIt=s_materialToRecipeItems.find(id);
+            std::unordered_map<uint16_t, std::vector<uint16_t>>::const_iterator usedInIt=s_materialToRecipeItems.find(id);
             if(usedInIt!=s_materialToRecipeItems.cend() && !usedInIt->second.empty())
             {
                 body << "<div class=\"subblock\"><div class=\"valuetitle\">Used into crafting</div><div class=\"value\">\n";
@@ -882,15 +882,15 @@ void generate()
 
         // ── 13. Evolution ──
         {
-            auto evoIt=s_itemEvolution.find(id);
+            std::unordered_map<uint16_t, std::unordered_map<uint16_t, uint16_t>>::const_iterator evoIt=s_itemEvolution.find(id);
             if(evoIt!=s_itemEvolution.cend() && !evoIt->second.empty())
             {
                 unsigned count_evol=0;
-                for(const auto &mp : evoIt->second)
+                for(const std::pair<const uint16_t, uint16_t> &mp : evoIt->second)
                     if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(mp.first) && QtDatapackClientLoader::datapackLoader->has_monsterExtra(mp.second))
                         count_evol++;
 
-                for(const auto &mp : evoIt->second)
+                for(const std::pair<const uint16_t, uint16_t> &mp : evoIt->second)
                 {
                     if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(mp.first) || !QtDatapackClientLoader::datapackLoader->has_monsterExtra(mp.second))
                         continue;
@@ -949,7 +949,7 @@ void generate()
 
         // ── 15. Shop ──
         {
-            auto shopsIt=s_itemInShops.find(id);
+            std::unordered_map<uint16_t, std::vector<ShopOnMap>>::const_iterator shopsIt=s_itemInShops.find(id);
             if(shopsIt!=s_itemInShops.cend() && !shopsIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_normal\">\n"
@@ -957,7 +957,7 @@ void generate()
                      << "\t<th colspan=\"4\">Shop</th>\n"
                      << "</tr>\n";
                 std::set<std::pair<size_t,size_t>> seen;
-                for(const auto &e : shopsIt->second)
+                for(const ShopOnMap &e : shopsIt->second)
                 {
                     if(!seen.insert({e.setIdx,e.mapId}).second) continue;
                     const std::string &mp=mapPathOf(e.setIdx,e.mapId);
@@ -977,17 +977,17 @@ void generate()
 
         // ── 16. Monster drops ──
         {
-            auto monsterDropIt=s_itemToMonsterDrop.find(id);
+            std::unordered_map<uint16_t, std::vector<GeneratorItems::MonsterDropEntry>>::const_iterator monsterDropIt=s_itemToMonsterDrop.find(id);
             if(monsterDropIt!=s_itemToMonsterDrop.cend() && !monsterDropIt->second.empty())
             {
                 bool only_one=true;
-                for(const auto &e : monsterDropIt->second)
+                for(const GeneratorItems::MonsterDropEntry &e : monsterDropIt->second)
                     if(e.qmin!=1 || e.qmax!=1)
                     { only_one=false; break; }
 
                 int monster_count=0;
 
-                auto writeMonsterDropHeader=[&](){
+                std::function<void()> writeMonsterDropHeader=[&](){
                     body << "<table class=\"itemmonster_list item_list item_list_type_normal\">\n"
                          << "<tr class=\"item_list_title item_list_title_type_normal\">\n"
                          << "\t<th colspan=\"2\">Monster</th>\n";
@@ -999,7 +999,7 @@ void generate()
 
                 writeMonsterDropHeader();
 
-                for(const auto &e : monsterDropIt->second)
+                for(const GeneratorItems::MonsterDropEntry &e : monsterDropIt->second)
                 {
                     if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(e.monsterId))
                         continue;
@@ -1044,7 +1044,7 @@ void generate()
 
         // ── 18. Quest rewards ──
         {
-            auto questRewardIt=s_itemToQuestReward.find(id);
+            std::unordered_map<uint16_t, std::vector<GeneratorItems::QuestRewardEntry>>::const_iterator questRewardIt=s_itemToQuestReward.find(id);
             if(questRewardIt!=s_itemToQuestReward.cend() && !questRewardIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_normal\">\n"
@@ -1052,7 +1052,7 @@ void generate()
                      << "\t<th>Quests</th>\n"
                      << "\t<th>Quantity rewarded</th>\n"
                      << "</tr>\n";
-                for(const auto &qr : questRewardIt->second)
+                for(const GeneratorItems::QuestRewardEntry &qr : questRewardIt->second)
                 {
                     if(!QtDatapackClientLoader::datapackLoader->has_questExtra(qr.questId)) continue;
                     body << "<tr class=\"value\">\n";
@@ -1071,11 +1071,11 @@ void generate()
 
         // ── 19. Quest step items ──
         {
-            auto questStepIt=s_itemToQuestStep.find(id);
+            std::unordered_map<uint16_t, std::vector<GeneratorItems::QuestStepEntry>>::const_iterator questStepIt=s_itemToQuestStep.find(id);
             if(questStepIt!=s_itemToQuestStep.cend() && !questStepIt->second.empty())
             {
                 bool full_details=false;
-                for(const auto &qs : questStepIt->second)
+                for(const GeneratorItems::QuestStepEntry &qs : questStepIt->second)
                     if(qs.hasMonster && QtDatapackClientLoader::datapackLoader->has_monsterExtra(qs.monsterId))
                     { full_details=true; break; }
 
@@ -1094,7 +1094,7 @@ void generate()
                          << "\t<th>Quantity needed</th>\n"
                          << "</tr>\n";
 
-                for(const auto &qs : questStepIt->second)
+                for(const GeneratorItems::QuestStepEntry &qs : questStepIt->second)
                 {
                     if(!QtDatapackClientLoader::datapackLoader->has_questExtra(qs.questId)) continue;
                     body << "<tr class=\"value\">\n";
@@ -1125,7 +1125,7 @@ void generate()
 
         // ── 20. Industry resource ──
         {
-            auto indResIt=s_itemConsumedByIndustry.find(id);
+            std::unordered_map<uint16_t, std::vector<IndustryRef>>::const_iterator indResIt=s_itemConsumedByIndustry.find(id);
             if(indResIt!=s_itemConsumedByIndustry.cend() && !indResIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_normal\">\n"
@@ -1133,7 +1133,7 @@ void generate()
                      << "\t<th>Resource of the industry</th>\n"
                      << "\t<th>Quantity</th>\n"
                      << "</tr>\n";
-                for(const auto &ir : indResIt->second)
+                for(const IndustryRef &ir : indResIt->second)
                 {
                     std::string mname=mapDisplayName(ir.setIdx,ir.mapIdx);
                     body << "<tr class=\"value\">\n";
@@ -1148,7 +1148,7 @@ void generate()
 
         // ── 21. Industry product ──
         {
-            auto indProdIt=s_itemProducedByIndustryMap.find(id);
+            std::unordered_map<uint16_t, std::vector<IndustryRef>>::const_iterator indProdIt=s_itemProducedByIndustryMap.find(id);
             if(indProdIt!=s_itemProducedByIndustryMap.cend() && !indProdIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_normal\">\n"
@@ -1156,7 +1156,7 @@ void generate()
                      << "\t<th>Product of the industry</th>\n"
                      << "\t<th>Quantity</th>\n"
                      << "</tr>\n";
-                for(const auto &ip : indProdIt->second)
+                for(const IndustryRef &ip : indProdIt->second)
                 {
                     std::string mname=mapDisplayName(ip.setIdx,ip.mapIdx);
                     body << "<tr class=\"value\">\n";
@@ -1175,7 +1175,7 @@ void generate()
             int colCount2=sameuniqueskill?3:5;
             int itemskillmonster_count=0;
 
-            auto writeLearnHeader=[&](){
+            std::function<void()> writeLearnHeader=[&](){
                 body << "<table class=\"itemskillmonster item_list item_list_type_normal\">\n"
                      << "<tr class=\"item_list_title item_list_title_type_normal\">\n"
                      << "\t<th colspan=\"3\">Monster able to learn</th>\n";
@@ -1187,7 +1187,7 @@ void generate()
 
             writeLearnHeader();
 
-            for(const auto &entry : skillOfMonsterIt->second)
+            for(const GeneratorItems::SkillOfMonsterEntry &entry : skillOfMonsterIt->second)
             {
                 if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(entry.monsterId))
                     continue;
@@ -1242,7 +1242,7 @@ void generate()
 
         // ── 23. On the map ──
         {
-            auto pickIt=s_itemOnMap.find(id);
+            std::unordered_map<uint16_t, std::vector<PickOnMap>>::const_iterator pickIt=s_itemOnMap.find(id);
             if(pickIt!=s_itemOnMap.cend() && !pickIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_normal\">\n"
@@ -1250,9 +1250,9 @@ void generate()
                      << "\t<th colspan=\"2\">On the map</th>\n"
                      << "</tr>\n";
                 std::set<std::pair<size_t,size_t>> dedup;
-                for(const auto &e : pickIt->second)
+                for(const PickOnMap &e : pickIt->second)
                     dedup.insert({e.setIdx,e.mapId});
-                for(const auto &k : dedup)
+                for(const std::pair<size_t,size_t> &k : dedup)
                 {
                     const std::string &mp=mapPathOf(k.first,k.second);
                     if(mp.empty()) continue;
@@ -1270,7 +1270,7 @@ void generate()
 
         // ── 24. Fight ──
         {
-            auto frIt=s_itemAsFightReward.find(id);
+            std::unordered_map<uint16_t, std::vector<FightReward>>::const_iterator frIt=s_itemAsFightReward.find(id);
             if(frIt!=s_itemAsFightReward.cend() && !frIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_normal\">\n"
@@ -1278,21 +1278,21 @@ void generate()
                      << "\t<th colspan=\"2\">Fight</th>\n"
                      << "\t<th>Monster</th>\n"
                      << "</tr>\n";
-                for(const auto &fr : frIt->second)
+                for(const FightReward &fr : frIt->second)
                 {
                     const std::string &mp=mapPathOf(fr.setIdx,fr.mapId);
                     if(mp.empty()) continue;
 
-                    const auto &sets=MapStore::sets();
+                    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
                     const CatchChallenger::CommonMap &m=sets[fr.setIdx].mapList[fr.mapId];
-                    auto bfIt=m.botFights.find(fr.botId);
+                    catchchallenger_datapack_map<uint8_t, CatchChallenger::BotFight>::const_iterator bfIt=m.botFights.find(fr.botId);
 
                     body << "<tr class=\"value\">\n";
                     body << "<td colspan=\"2\">Bot #" << (unsigned)fr.botId << "</td>\n";
                     body << "<td>\n";
                     if(bfIt!=m.botFights.cend())
                     {
-                        for(const auto &bm : bfIt->second.monsters)
+                        for(const CatchChallenger::BotFight::BotFightMonster &bm : bfIt->second.monsters)
                         {
                             bool mexFound=QtDatapackClientLoader::datapackLoader->has_monsterExtra(bm.id);
                             std::string mname=(mexFound)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(bm.id).name:("Monster #"+Helper::toStringUint(bm.id));
@@ -1324,14 +1324,14 @@ void generate()
 
     for(const std::string &groupName : groupOrder)
     {
-        auto git=grouped.find(groupName);
+        std::map<std::string, std::vector<uint16_t>>::const_iterator git=grouped.find(groupName);
         if(git==grouped.end() || git->second.empty())
             continue;
 
-        const auto &gids=git->second;
+        const std::vector<uint16_t> &gids=git->second;
         const int maxPerTable=15;
 
-        auto writeTableHeader=[&](){
+        std::function<void()> writeTableHeader=[&](){
             indexBody << "<div class=\"divfixedwithlist\"><table class=\"item_list item_list_type_normal map_list\">\n"
                       << "\t<tr class=\"item_list_title item_list_title_type_normal\">\n"
                       << "\t\t<th colspan=\"3\">" << Helper::htmlEscape(groupName) << "</th>\n"

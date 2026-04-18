@@ -879,7 +879,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
             while(index<content.size())
             {
                 const std::string &line=content.at(index);
-                const auto &found=line.find(' ');
+                const std::string::size_type found=line.find(' ');
                 if(found!=std::string::npos)
                 {
                     correctContent++;

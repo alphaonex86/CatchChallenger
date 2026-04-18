@@ -33,7 +33,7 @@ void BaseServer::preload_5_sync_the_events()
     }
     {
         const uint64_t &time=sFrom1970();
-        auto i = GlobalServerData::serverSettings.programmedEventList.begin();
+        std::unordered_map<std::string,std::unordered_map<std::string,CatchChallenger::GameServerSettings::ProgrammedEvent>>::iterator i = GlobalServerData::serverSettings.programmedEventList.begin();
         while(i!=GlobalServerData::serverSettings.programmedEventList.end())
         {
             unsigned int index=0;
@@ -46,12 +46,12 @@ void BaseServer::preload_5_sync_the_events()
                     std::map<uint64_t,uint32_t> pastEventStart;
                     #endif
                     const std::unordered_map<std::string/*groupName, example: day/night*/,CatchChallenger::GameServerSettings::ProgrammedEvent> &programmedEvent=i->second;
-                    auto j = programmedEvent.begin();
+                    std::unordered_map<std::string,CatchChallenger::GameServerSettings::ProgrammedEvent>::const_iterator j = programmedEvent.begin();
                     while (j!=programmedEvent.cend())
                     {
                         // event.values is std::vector<std::string >
                         const CatchChallenger::GameServerSettings::ProgrammedEvent &programmedEvent=j->second;
-                        const auto &iter = std::find(event.values.begin(), event.values.end(), programmedEvent.value);
+                        const std::vector<std::string>::const_iterator &iter = std::find(event.values.begin(), event.values.end(), programmedEvent.value);
                         const size_t &sub_index = std::distance(event.values.begin(), iter);
                         if(sub_index<event.values.size())
                         {
@@ -129,7 +129,7 @@ bool BaseServer::preload_zone_init()
         const std::string &file=entryListZone.at(index).absoluteFilePath;
         tinyxml2::XMLDocument *domDocument;
         domDocument=new tinyxml2::XMLDocument();
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;

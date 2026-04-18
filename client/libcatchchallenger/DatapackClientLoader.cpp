@@ -110,14 +110,14 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const s
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=std::string(DATAPACK_BASE_PATH_MAPSUB1)+"na/"+std::string(DATAPACK_BASE_PATH_MAPSUB2)+"nabis/";
     #ifndef BOTTESTCONNECT
-    auto start_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto time = end_time - start_time;
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::duration time = end_time - start_time;
     std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
 
-    auto start_time2 = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point start_time2 = std::chrono::high_resolution_clock::now();
     this->language=language;
     parseVisualCategory();
     parseTypesExtra();
@@ -127,8 +127,8 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const s
     parseAudioAmbiance();
     parseReputationExtra();
     parseProfileText();
-    auto end_time2 = std::chrono::high_resolution_clock::now();
-    auto time2 = end_time2 - start_time2;
+    std::chrono::high_resolution_clock::time_point end_time2 = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::duration time2 = end_time2 - start_time2;
     std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() other took " << time2/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
     #endif
     /*do into child class
@@ -278,7 +278,7 @@ void DatapackClientLoader::parseVisualCategory()
     tinyxml2::XMLDocument domDocument;
     //open and quick check the file
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_MAPBASE+"visualcategory.xml";
-    const auto loadOkay = domDocument.LoadFile(file.c_str());
+    const tinyxml2::XMLError loadOkay = domDocument.LoadFile(file.c_str());
     if(loadOkay!=0)
     {
         std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
@@ -426,7 +426,7 @@ void DatapackClientLoader::parseReputationExtra()
     tinyxml2::XMLDocument domDocument;
     //open and quick check the file
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"reputation.xml";
-    const auto loadOkay = domDocument.LoadFile(file.c_str());
+    const tinyxml2::XMLError loadOkay = domDocument.LoadFile(file.c_str());
     if(loadOkay!=0)
     {
         std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
@@ -690,7 +690,7 @@ void DatapackClientLoader::parseItemsExtra()
             continue;
         }
         //open and quick check the file
-        const auto loadOkay = domDocument.LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
@@ -925,7 +925,7 @@ void DatapackClientLoader::parseMaps()
                         }
                     }
                     mapBots[mapIdx][botSemi.point]=bot;
-                    std::cerr << "  mapBots: mapIdx=" << mapIdx << " pos=(" << (int)botSemi.point.first << "," << (int)botSemi.point.second << ") botId=" << (int)botSemi.id << " name=" << bot.name << " steps=" << bot.step.size() << std::endl;
+                    std::cerr << "  mapBots: mapIdx=" << mapIdx << " pos=(" << std::to_string(botSemi.point.first) << "," << std::to_string(botSemi.point.second) << ") botId=" << std::to_string(botSemi.id) << " name=" << bot.name << " steps=" << bot.step.size() << std::endl;
                 }
                 botIdx++;
             }
@@ -1010,7 +1010,7 @@ void DatapackClientLoader::parseQuestsExtra()
 
         tinyxml2::XMLDocument domDocument;
         const std::string &file=folder_path+"definition.xml";
-        const auto loadOkay = domDocument.LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
@@ -1202,7 +1202,7 @@ void DatapackClientLoader::parseQuestsText()
         const std::string &file=folder_path+"text.xml";
 
         tinyxml2::XMLDocument domDocument;
-        const auto loadOkay = domDocument.LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
@@ -1311,7 +1311,7 @@ void DatapackClientLoader::parseAudioAmbiance()
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_MAPBASE+"music.xml";
     tinyxml2::XMLDocument domDocument;
     //open and quick check the file
-    const auto loadOkay = domDocument.LoadFile(file.c_str());
+    const tinyxml2::XMLError loadOkay = domDocument.LoadFile(file.c_str());
     if(loadOkay!=0)
     {
         std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
@@ -1485,7 +1485,7 @@ void DatapackClientLoader::parseZoneExtra()
             zoneCodeName.resize(zoneCodeName.size()-4);
 
         tinyxml2::XMLDocument domDocument;
-        const auto loadOkay = domDocument.LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file << ", " << tinyxml2errordoc(&domDocument) << std::endl;
@@ -1598,7 +1598,7 @@ void DatapackClientLoader::parseSkillsExtra()
         else
         {
             domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
                 std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
@@ -1744,7 +1744,7 @@ void DatapackClientLoader::parseTypesExtra()
     else
     {
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
@@ -1856,7 +1856,7 @@ void DatapackClientLoader::parseTypesExtra()
             else
             {
                 domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
-                const auto loadOkay = domDocument->LoadFile(file.c_str());
+                const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
                 if(loadOkay!=0)
                 {
                     std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
@@ -1967,7 +1967,7 @@ void DatapackClientLoader::parseTypesExtra()
         file_index++;
     }
 
-    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().begin();
+    catchchallenger_datapack_map<uint8_t,BotFight>::const_iterator i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().begin();
     while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
     {
         if(botFightsExtra.find(i->first)==botFightsExtra.cend())
@@ -2074,7 +2074,7 @@ const CatchChallenger::Bot* DatapackClientLoader::getBot(CATCHCHALLENGER_TYPE_MA
     const catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot>::const_iterator botIt=mapIt->second.find(std::pair<uint8_t,uint8_t>(x,y));
     if(botIt==mapIt->second.cend())
     {
-        std::cerr << "  getBot() mapIndex=" << mapIndex << " found, but no bot at (" << (int)x << "," << (int)y << ")." << std::endl;
+        std::cerr << "  getBot() mapIndex=" << mapIndex << " found, but no bot at (" << std::to_string(x) << "," << std::to_string(y) << ")." << std::endl;
         return nullptr;
     }
     return &botIt->second;

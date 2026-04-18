@@ -707,10 +707,10 @@ public:
     void serialize(B& buf) const {
         buf << itemUsed << fruits_seconds << fix_quantity << random_quantity << sprouted_seconds << taller_seconds << flowering_seconds;
         buf << (uint8_t)requirements.reputation.size();
-        for(auto const& v: requirements.reputation)
+        for(const ReputationRequirements& v: requirements.reputation)
             buf << v;
         buf << (uint8_t)rewards.reputation.size();
-        for(auto const& v: rewards.reputation)
+        for(const ReputationRewards& v: rewards.reputation)
             buf << v;
     }
     template <class B>

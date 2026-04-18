@@ -34,7 +34,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             std::cerr << file+", "+domDocument->ErrorName() << std::endl;
@@ -152,7 +152,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
 std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> > FightLoader::loadMonsterEvolutionItems(const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters)
 {
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_map<uint16_t,uint16_t> > evolutionItem;
-    auto i=monsters.begin();
+    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster>::const_iterator i=monsters.begin();
     while(i!=monsters.cend())
     {
         unsigned int index=0;
@@ -172,10 +172,10 @@ std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_map<CATCHCHALLENGER
 std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_set<CATCHCHALLENGER_TYPE_MONSTER> > FightLoader::loadMonsterItemToEvolution(const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> > &evolutionItem)
 {
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_set<CATCHCHALLENGER_TYPE_MONSTER> > learnItem;
-    auto i=monsters.cbegin();
+    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster>::const_iterator i=monsters.cbegin();
     while(i!=monsters.cend())
     {
-        auto j=i->second.learnByItem.cbegin();
+        std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,Monster::AttackToLearnByItem>::const_iterator j=i->second.learnByItem.cbegin();
         while(j!=i->second.learnByItem.cend())
         {
             if(evolutionItem.find(j->first)==evolutionItem.cend())

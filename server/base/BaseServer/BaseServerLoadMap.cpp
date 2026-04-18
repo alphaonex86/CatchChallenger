@@ -79,7 +79,7 @@ bool BaseServer::preload_9_sync_the_map()
     }
     // build reverse map: id -> path for error messages
     std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, std::string> mapIdToPath;
-    for(const auto &pair : mapPathToId)
+    for(const std::pair<const std::string, CATCHCHALLENGER_TYPE_MAPID> &pair : mapPathToId)
         mapIdToPath[pair.second]=pair.first;
     // process buffered unknown entries on each MapServer
     {
@@ -278,7 +278,7 @@ bool BaseServer::preload_9_sync_the_map()
                 {
                     hps::StreamOutputBuffer buf(f);
                     buf << (uint8_t)map_server.shops.size();
-                    for(const auto& n : map_server.shops)
+                    for(const std::pair<const std::pair<uint8_t,uint8_t>,Shop>& n : map_server.shops)
                     {
                         buf << n.first.first;
                         buf << n.first.second;
@@ -297,7 +297,7 @@ bool BaseServer::preload_9_sync_the_map()
                 {
                     hps::StreamOutputBuffer buf(f);
                     buf << (uint8_t)map_server.botsFightTrigger.size();
-                    for(const auto& n : map_server.botsFightTrigger)
+                    for(const std::pair<const std::pair<uint8_t,uint8_t>,uint8_t>& n : map_server.botsFightTrigger)
                     {
                         buf << n.first.first;
                         buf << n.first.second;
@@ -316,7 +316,7 @@ bool BaseServer::preload_9_sync_the_map()
                 {
                     hps::StreamOutputBuffer buf(f);
                     buf << (uint8_t)map_server.items.size();
-                    for(const auto& n : map_server.items)
+                    for(const std::pair<const std::pair<uint8_t,uint8_t>,ItemOnMap>& n : map_server.items)
                     {
                         buf << n.first.first;
                         buf << n.first.second;
@@ -335,7 +335,7 @@ bool BaseServer::preload_9_sync_the_map()
                 {
                     hps::StreamOutputBuffer buf(f);
                     buf << (uint8_t)map_server.rescue.size();
-                    for(const auto& n : map_server.rescue)
+                    for(const std::pair<const std::pair<uint8_t,uint8_t>,Orientation>& n : map_server.rescue)
                     {
                         buf << n.first.first;
                         buf << n.first.second;
@@ -354,7 +354,7 @@ bool BaseServer::preload_9_sync_the_map()
                 {
                     hps::StreamOutputBuffer buf(f);
                     buf << (uint8_t)map_server.heal.size();
-                    for(const auto& n : map_server.heal)
+                    for(const std::pair<uint8_t,uint8_t>& n : map_server.heal)
                     {
                         buf << n.first;
                         buf << n.second;
@@ -372,7 +372,7 @@ bool BaseServer::preload_9_sync_the_map()
                 {
                     hps::StreamOutputBuffer buf(f);
                     buf << (uint8_t)map_server.zoneCapture.size();
-                    for(const auto& n : map_server.zoneCapture)
+                    for(const std::pair<uint8_t,uint8_t>& n : map_server.zoneCapture)
                     {
                         buf << n.first;
                         buf << n.second;

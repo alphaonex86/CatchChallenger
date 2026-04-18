@@ -117,8 +117,8 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     quest(12),date(13)*/
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
-    const auto &characterIdString=std::to_string(characterId);
-    const auto &sFrom1970String=std::to_string(sFrom1970());
+    const std::string &characterIdString=std::to_string(characterId);
+    const std::string &sFrom1970String=std::to_string(sFrom1970());
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE

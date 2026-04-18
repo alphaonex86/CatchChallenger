@@ -76,7 +76,7 @@ SocialChat::SocialChat() :
 void SocialChat::showEvent(QShowEvent * event)
 {
     bool first=true;
-    for (const auto &n:ActionsBotInterface::clientList) {
+    for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:ActionsBotInterface::clientList) {
         CatchChallenger::Api_protocol_Qt * const api=n.first;
         ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(n.second);
         if(client.api->getCaracterSelected())
@@ -121,7 +121,7 @@ void SocialChat::showEvent(QShowEvent * event)
             }
             ui->groupBoxBot->setVisible(false);
         }
-        std::cout << "QShowEvent: QEvent::Type: " << (int)event->type() << std::endl;
+        std::cout << "QShowEvent: QEvent::Type: " << std::to_string(event->type()) << std::endl;
     }
     QWidget::showEvent(event);
 }
@@ -410,7 +410,7 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
     newEntry.chat_type=chat_type;
     newEntry.text=text.toStdString();
 
-    for (const auto &n:ActionsBotInterface::clientList) {
+    for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:ActionsBotInterface::clientList) {
         const ActionsBotInterface::Player &client=n.second;
         bool found=false;
         if(chat_type!=CatchChallenger::Chat_type::Chat_type_pm)
@@ -864,7 +864,7 @@ void SocialChat::updateVisiblePlayers(CatchChallenger::Api_protocol_Qt *api)
     if(api->getPseudo()==pseudo.toStdString())
     {
         QString newHtml;
-        for (const auto &n:ActionsBotInterface::clientList[api].visiblePlayers) {
+        for (const std::pair<const uint16_t, CatchChallenger::Player_public_informations> &n:ActionsBotInterface::clientList[api].visiblePlayers) {
             const CatchChallenger::Player_public_informations &playerInformations=n.second;
             if(!newHtml.isEmpty())
                 newHtml+=", ";
@@ -928,7 +928,7 @@ void SocialChat::globalChatText_updateCompleter()
     CatchChallenger::Api_protocol_Qt * const api=pseudoToBot.value(pseudo);
 
     QSet<QString> viewedPlayers;
-    for(const auto &n:ActionsBotInterface::clientList[api].viewedPlayers)
+    for(const QString &n:ActionsBotInterface::clientList[api].viewedPlayers)
         viewedPlayers.insert(n);
     QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+viewedPlayers).values();
     if(completer!=NULL)
@@ -1340,7 +1340,7 @@ void SocialChat::requestOllamaResponse(const QString &botPseudo, const QString &
             {
                 botInfo+=". Nearby players: ";
                 bool first=true;
-                for (const auto &p:client.visiblePlayers) {
+                for (const std::pair<const uint16_t, CatchChallenger::Player_public_informations> &p:client.visiblePlayers) {
                     if(!first) botInfo+=", ";
                     botInfo+=QString::fromStdString(p.second.pseudo);
                     first=false;

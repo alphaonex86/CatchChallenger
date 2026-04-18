@@ -110,7 +110,7 @@ void Warehouse::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wi
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=npcNameText->font();
+    QFont font=npcNameText->font();
     int btnH=61;
     int btnW=148;
     if(widget->width()<800 || widget->height()<600)

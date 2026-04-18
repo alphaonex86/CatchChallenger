@@ -1,5 +1,6 @@
 CONFIG += c++11
 mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
+DEFINES += BLAKE3_NO_SSE2 BLAKE3_NO_SSE41 BLAKE3_NO_AVX2 BLAKE3_NO_AVX512
 
 QT       -= core
 
@@ -45,7 +46,10 @@ SOURCES += $$PWD/base/GeneralStructures.cpp \
     $$PWD/fight/CommonFightEngineWild.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/Version.cpp \
-    $$PWD/sha224/sha224.cpp
+    $$PWD/base/CatchChallenger_Hash.cpp \
+    $$PWD/blake3/blake3.c \
+    $$PWD/blake3/blake3_dispatch.c \
+    $$PWD/blake3/blake3_portable.c
 
 HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/base/ClientBase.hpp \
@@ -73,7 +77,7 @@ HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/fight/FightLoader.hpp \
     $$PWD/fight/CommonFightEngine.hpp \
     $$PWD/fight/CommonFightEngineBase.hpp \
-    $$PWD/sha224/sha224.hpp
+    $$PWD/base/CatchChallenger_Hash.hpp
 
 !contains(DEFINES, CATCHCHALLENGER_NOXML) {
 SOURCES += \

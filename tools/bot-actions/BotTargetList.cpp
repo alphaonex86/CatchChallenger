@@ -151,7 +151,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     destinationIndexSelected=0;
     std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnVar;
     bool haveThePathSelected=false;
-    for(const auto& n:pathToEachDestinations)
+    for(const std::pair<const unsigned int, std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>>>& n:pathToEachDestinations)
     {
         const unsigned int &key=n.first;
         const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &value=n.second;
@@ -235,7 +235,7 @@ void BotTargetList::loadAllBotsInformation2()
     SocialChat::socialChat->show();
     //waitScreen.hide();
 
-    for (const auto &n:ActionsBotInterface::clientList) {
+    for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:ActionsBotInterface::clientList) {
         CatchChallenger::Api_protocol_Qt * const api=n.first;
         //ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(i.value());
         if(api->getCaracterSelected())
@@ -365,7 +365,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol_Qt *api)
 
     ActionsBotInterface::Player &player=actionsAction->clientList[api];
 
-    /*for (const auto &n:actionsAction->clientList) {
+    /*for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:actionsAction->clientList) {
         CatchChallenger::Api_protocol_Qt *api=n.first;
         ActionsAction::Player &player=actionsAction->clientList[api];
         if(player.api->getCaracterSelected())
@@ -941,7 +941,7 @@ void BotTargetList::on_browseMap_clicked()
     if(!ui->browseMap->isEnabled())
         return;
     std::vector<std::string> mapList;
-    for(const auto& n:actionsAction->map_list)
+    for(const std::pair<const std::string, CatchChallenger::CommonMap *>& n:actionsAction->map_list)
         mapList.push_back(n.first);
     MapBrowse mapBrowse(mapList,this);
     mapBrowse.exec();
@@ -1116,7 +1116,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
 
     //give a look to pathFindingWithCache()
 
-    auto start = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 
     //resolv the path
     std::vector<std::pair<uint8_t,uint8_t> > mapPointToParseList;
@@ -1446,7 +1446,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             {
                                 if(returnedVar.at(returnedVar.size()-2).second<1)
                                 {
-                                    /*auto end = std::chrono::high_resolution_clock::now();
+                                    /*std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                                     std::chrono::duration<double, std::milli> elapsed = end-start;
                                     std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                                     std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)source_orientation) << " due for last step (1)" << std::endl;
@@ -1465,7 +1465,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             }
                             else
                             {
-                                /*auto end = std::chrono::high_resolution_clock::now();
+                                /*std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                                 std::chrono::duration<double, std::milli> elapsed = end-start;
                                 std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                                 std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)source_orientation) << " due for last step (2)" << std::endl;
@@ -1501,7 +1501,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                         if(pathToEachDestinations.size()>=destinations.size())
                         {
                             const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &finalVar=selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
-                            /*auto end = std::chrono::high_resolution_clock::now();
+                            /*std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double, std::milli> elapsed = end-start;
                             //std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;*/
 
@@ -1518,7 +1518,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                         if(pathToEachDestinations.size()>=destinations.size())
                         {
                             const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &finalVar=selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
-                            /*auto end = std::chrono::high_resolution_clock::now();
+                            /*std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double, std::milli> elapsed = end-start;
                             //std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;*/
 
@@ -1594,7 +1594,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         }
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end-start;
     std::cout << "Path not found into " << (uint32_t)elapsed.count() << "ms" << std::endl;
     std::cout << "From " << source_blockObject->map->map_file << " Block " << std::to_string(source_blockObject->id+1) << " " << std::to_string(source_x) << "," << std::to_string(source_y) << std::endl;
@@ -1660,7 +1660,7 @@ void BotTargetList::autoStartAction()
         apiSelectedClient=currentSelectedclient->api;
     }
 
-    for (const auto &n:actionsAction->clientList) {
+    for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:actionsAction->clientList) {
         CatchChallenger::Api_protocol_Qt *api=n.first;
         ActionsAction::Player &player=actionsAction->clientList[api];
         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())

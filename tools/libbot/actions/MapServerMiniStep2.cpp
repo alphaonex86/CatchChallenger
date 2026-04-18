@@ -562,7 +562,7 @@ bool MapServerMini::preload_step2c()
                     }
                     //item on map
                     {
-                        for (auto it = this->pointOnMap_Item.begin(); it != this->pointOnMap_Item.cend(); ++it) {
+                        for (std::map<std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap>::const_iterator it = this->pointOnMap_Item.begin(); it != this->pointOnMap_Item.cend(); ++it) {
                             const std::pair<uint8_t,uint8_t> &point=it->first;
                             const MapServerMini::ItemOnMap &itemEntry=it->second;
                             const uint16_t &codeZone=currentStep.map[point.first+point.second*this->width];
@@ -581,7 +581,7 @@ bool MapServerMini::preload_step2c()
                     }
                     //fight
                     {
-                        for(const auto& n : this->botsFight) {
+                        for(const std::pair<const std::pair<uint8_t,uint8_t>, std::vector<uint16_t>>& n : this->botsFight) {
                             const std::pair<uint8_t,uint8_t> &point=n.first;
                             const uint8_t x=n.first.first,y=n.first.second;
                             const uint16_t &codeZone=currentStep.map[x+y*this->width];
@@ -602,7 +602,7 @@ bool MapServerMini::preload_step2c()
                     }
                     //shop
                     {
-                        for(const auto& n : this->shopIdList) {
+                        for(const std::pair<const std::pair<uint8_t,uint8_t>, std::vector<uint16_t>>& n : this->shopIdList) {
                             const std::pair<uint8_t,uint8_t> &point=n.first;
                             const uint8_t x=n.first.first,y=n.first.second;
                             const uint16_t &codeZone=currentStep.map[x+y*this->width];
@@ -623,7 +623,7 @@ bool MapServerMini::preload_step2c()
                     }
                     //heal
                     {
-                        for(const auto& n : this->heal) {
+                        for(const std::pair<uint8_t,uint8_t>& n : this->heal) {
                             const std::pair<uint8_t,uint8_t> point(n.first,n.second);
                             const uint8_t x=n.first,y=n.second;
                             const uint16_t &codeZone=currentStep.map[x+y*this->width];

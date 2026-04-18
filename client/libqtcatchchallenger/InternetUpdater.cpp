@@ -370,7 +370,7 @@ std::string InternetUpdater::GetOSDisplayString()
 std::string InternetUpdater::GetOSDisplayString()
 {
     tinyxml2::XMLDocument *domDocument=new tinyxml2::XMLDocument();
-    const auto loadOkay = domDocument->LoadFile("/System/Library/CoreServices/SystemVersion.plist");
+    const tinyxml2::XMLError loadOkay = domDocument->LoadFile("/System/Library/CoreServices/SystemVersion.plist");
     if(loadOkay!=0)
     {
         delete domDocument;

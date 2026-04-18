@@ -41,14 +41,14 @@ void generate()
         if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
             continue;
         const CatchChallenger::Monster &monster=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId);
-        for(const auto &atk : monster.learn)
+        for(const CatchChallenger::Monster::AttackToLearn &atk : monster.learn)
         {
             if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(atk.learnSkill))
                 continue;
             const CatchChallenger::Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(atk.learnSkill);
             for(size_t lvlIdx=0; lvlIdx<skill.level.size(); ++lvlIdx)
             {
-                for(const auto &be : skill.level[lvlIdx].buff)
+                for(const CatchChallenger::Skill::Buff &be : skill.level[lvlIdx].buff)
                 {
                     uint8_t buffId=be.effect.buff;
                     uint8_t buffLevel=be.effect.level;
@@ -87,7 +87,7 @@ void generate()
         body << "<div class=\"subblock\"><h1>" << Helper::htmlEscape(name) << "</h1></div>\n";
 
         unsigned level=1;
-        for(const auto &lvl : b.level)
+        for(const CatchChallenger::Buff::GeneralEffect &lvl : b.level)
         {
             body << "<div class=\"subblock\"><div class=\"valuetitle\">\n";
 
@@ -123,7 +123,7 @@ void generate()
             if(!lvl.fight.empty())
             {
                 body << "<div class=\"subblock\"><div class=\"valuetitle\">In fight</div><div class=\"value\">\n";
-                for(const auto &eff : lvl.fight)
+                for(const CatchChallenger::Buff::Effect &eff : lvl.fight)
                 {
                     std::string val=formatEffectValue(eff.quantity, eff.type);
                     switch(eff.on)
@@ -146,7 +146,7 @@ void generate()
             if(!lvl.walk.empty())
             {
                 body << "<div class=\"subblock\"><div class=\"valuetitle\">In walk</div><div class=\"value\">\n";
-                for(const auto &w : lvl.walk)
+                for(const CatchChallenger::Buff::EffectInWalk &w : lvl.walk)
                 {
                     std::string val=formatEffectValue(w.effect.quantity, w.effect.type);
                     std::string steps=Helper::toStringUint(w.steps);
@@ -172,7 +172,7 @@ void generate()
         body << "</div>\n";
 
         // Monster table (buff_to_monster)
-        auto btmIt=buff_to_monster.find(id);
+        std::map<uint8_t, std::map<uint8_t, std::vector<uint16_t>>>::const_iterator btmIt=buff_to_monster.find(id);
         if(btmIt!=buff_to_monster.end() && !btmIt->second.empty())
         {
             bool multiLevel=(btmIt->second.size()>1);
@@ -185,10 +185,10 @@ void generate()
             body << "</tr>\n";
 
             uint8_t buff_level_displayed=0;
-            for(const auto &lvlPair : btmIt->second)
+            for(const std::pair<const uint8_t, std::vector<uint16_t>> &lvlPair : btmIt->second)
             {
                 uint8_t buffLevel=lvlPair.first;
-                const auto &monsterList=lvlPair.second;
+                const std::vector<uint16_t> &monsterList=lvlPair.second;
 
                 if(buff_level_displayed!=buffLevel && multiLevel)
                 {

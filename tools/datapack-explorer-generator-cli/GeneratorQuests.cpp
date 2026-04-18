@@ -23,7 +23,7 @@ std::string relativePathForQuest(uint16_t id)
 // Get reputation name by id (from CommonDatapack reputation vector)
 static std::string reputationName(uint8_t reputationId)
 {
-    const auto &repList=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
+    const std::vector<CatchChallenger::Reputation> &repList=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
     if(reputationId<repList.size())
     {
         if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(repList[reputationId].name))
@@ -41,7 +41,7 @@ static std::string reputationName(uint8_t reputationId)
 // reputationLevelToText equivalent
 static std::string reputationLevelToText(uint8_t reputationId, uint8_t level, bool positif)
 {
-    const auto &repList=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
+    const std::vector<CatchChallenger::Reputation> &repList=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
     std::string repName=reputationName(reputationId);
 
     if(reputationId<repList.size())
@@ -120,7 +120,7 @@ static void writeItemCells(std::ostringstream &body, CATCHCHALLENGER_TYPE_ITEM i
 // Get map path from mapId using MapStore
 static std::string mapPathForId(CATCHCHALLENGER_TYPE_MAPID mapId)
 {
-    const auto &allSets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &allSets=MapStore::sets();
     for(size_t s=0;s<allSets.size();s++)
     {
         if(mapId<allSets[s].mapPaths.size())
@@ -132,7 +132,7 @@ static std::string mapPathForId(CATCHCHALLENGER_TYPE_MAPID mapId)
 // Get mainCode for a mapId
 static std::string mainCodeForMapId(CATCHCHALLENGER_TYPE_MAPID mapId)
 {
-    const auto &allSets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &allSets=MapStore::sets();
     for(size_t s=0;s<allSets.size();s++)
     {
         if(mapId<allSets[s].mapPaths.size())
@@ -249,7 +249,7 @@ void generate()
         {
             body << "<div class=\"subblock\"><div class=\"valuetitle\">Requirements</div><div class=\"value\">\n";
 
-            for(const auto &qr : quest->requirements.quests)
+            for(const CatchChallenger::QuestRequirements &qr : quest->requirements.quests)
             {
                 std::string reqName;
                 if(QtDatapackClientLoader::datapackLoader->has_questExtra(qr.quest) && !QtDatapackClientLoader::datapackLoader->get_questExtra(qr.quest).name.empty())
@@ -264,7 +264,7 @@ void generate()
                 body << "</a><br />\n";
             }
 
-            for(const auto &rr : quest->requirements.reputation)
+            for(const CatchChallenger::ReputationRequirements &rr : quest->requirements.reputation)
                 body << reputationLevelToText(rr.reputationId,rr.level,rr.positif) << "<br />\n";
 
             body << "</div></div>\n";
@@ -308,16 +308,16 @@ void generate()
                 };
                 std::vector<StepItem> stepItems;
 
-                for(const auto &it : step.requirements.items)
+                for(const CatchChallenger::Quest::Item &it : step.requirements.items)
                     stepItems.push_back({it.item,it.quantity,false,0,0});
-                for(const auto &im : step.itemsMonster)
+                for(const CatchChallenger::Quest::ItemMonster &im : step.itemsMonster)
                     stepItems.push_back({im.item,1,!im.monsters.empty(),
                         im.monsters.empty()?static_cast<CATCHCHALLENGER_TYPE_MONSTER>(0):im.monsters[0],im.rate});
 
                 if(!stepItems.empty())
                 {
                     bool show_full=false;
-                    for(const auto &si : stepItems)
+                    for(const StepItem &si : stepItems)
                     {
                         if(si.hasMonster && QtDatapackClientLoader::datapackLoader->has_monsterExtra(si.monster))
                             show_full=true;
@@ -329,7 +329,7 @@ void generate()
                     else
                         body << "<th colspan=\"2\">Item</th></tr>\n";
 
-                    for(const auto &si : stepItems)
+                    for(const StepItem &si : stepItems)
                     {
                         writeItemCells(body,si.item,si.quantity);
 
@@ -406,7 +406,7 @@ void generate()
                 body << "<table class=\"item_list item_list_type_outdoor\"><tr class=\"item_list_title item_list_title_type_outdoor\">\n"
                      << "<th colspan=\"2\">Item</th></tr>\n";
 
-                for(const auto &ri : quest->rewards.items)
+                for(const CatchChallenger::Quest::Item &ri : quest->rewards.items)
                 {
                     writeItemCells(body,ri.item,ri.quantity);
                     body << "</tr>\n";
@@ -415,7 +415,7 @@ void generate()
                 body << "<tr>\n<td colspan=\"2\" class=\"item_list_endline item_list_title_type_outdoor\"></td>\n</tr></table>\n";
             }
 
-            for(const auto &rr : quest->rewards.reputation)
+            for(const CatchChallenger::ReputationRewards &rr : quest->rewards.reputation)
             {
                 if(rr.point<0)
                     body << "Less reputation in: " << reputationName(rr.reputationId);
@@ -517,7 +517,7 @@ void generate()
             if(!quest->rewards.items.empty())
             {
                 indexBody << "<table>\n";
-                for(const auto &ri : quest->rewards.items)
+                for(const CatchChallenger::Quest::Item &ri : quest->rewards.items)
                 {
                     ItemInfo info=getItemInfo(ri.item);
                     indexBody << "<tr class=\"value\"><td>\n";
@@ -547,7 +547,7 @@ void generate()
                 indexBody << "</table>\n";
             }
 
-            for(const auto &rr : quest->rewards.reputation)
+            for(const CatchChallenger::ReputationRewards &rr : quest->rewards.reputation)
             {
                 if(rr.point<0)
                     indexBody << "Less reputation in: " << reputationName(rr.reputationId);

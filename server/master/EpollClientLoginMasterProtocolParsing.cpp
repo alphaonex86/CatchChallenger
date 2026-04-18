@@ -2,7 +2,7 @@
 #include "EpollServerLoginMaster.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../../general/sha224/sha224.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 
 #include <iostream>
 
@@ -326,7 +326,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
 
             //token auth
             {
-                if((size-pos)<(int)CATCHCHALLENGER_SHA224HASH_SIZE)
+                if((size-pos)<(int)CATCHCHALLENGER_HASH_SIZE)
                 {
                     parseNetworkReadError("wrong size for master auth hash");
                     return false;
@@ -336,15 +336,14 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     parseNetworkReadError("tokenForAuth.isEmpty()");
                     return false;
                 }
-                SHA224 hash = SHA224();
-                hash.init();
+                CatchChallenger::Hash hash;
                 hash.update(reinterpret_cast<const unsigned char *>(EpollClientLoginMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
                 hash.update(reinterpret_cast<const unsigned char *>(tokenForAuth.data()),tokenForAuth.size());
                 hash.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
-                if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+                if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data+pos,CATCHCHALLENGER_HASH_SIZE)!=0)
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    std::cout << "SHA224(" << binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH)
+                    std::cout << "Hash(" << binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH)
                               << " " << binarytoHexa(tokenForAuth) << ") to auth on master failed: " << __FILE__ << ":" << __LINE__ << std::endl;
                     #endif
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;
@@ -352,7 +351,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     errorParsingLayer("Wrong protocol token");
                     return false;
                 }
-                pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                pos+=CATCHCHALLENGER_HASH_SIZE;
             }
             //flags|=0x08;
             EpollClientLoginMaster::havePlayerCountChange=true;
@@ -610,7 +609,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
         {
             //token auth
             {
-                if(size<(int)CATCHCHALLENGER_SHA224HASH_SIZE)
+                if(size<(int)CATCHCHALLENGER_HASH_SIZE)
                 {
                     parseNetworkReadError("wrong size for master auth hash");
                     return false;
@@ -620,15 +619,14 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     parseNetworkReadError("tokenForAuth.isEmpty()");
                     return false;
                 }
-                SHA224 hash = SHA224();
-                hash.init();
+                CatchChallenger::Hash hash;
                 hash.update(reinterpret_cast<const unsigned char *>(EpollClientLoginMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
                 hash.update(reinterpret_cast<const unsigned char *>(tokenForAuth.data()),tokenForAuth.size());
                 hash.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
-                if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+                if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data,CATCHCHALLENGER_HASH_SIZE)!=0)
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    std::cout << "SHA224(" << binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH)
+                    std::cout << "Hash(" << binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH)
                               << " " << binarytoHexa(tokenForAuth) << ") to auth on master failed: " << __FILE__ << ":" << __LINE__ << std::endl;
                     #endif
                     *(EpollClientLoginMaster::protocolReplyWrongAuth+1)=queryNumber;

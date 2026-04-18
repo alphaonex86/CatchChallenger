@@ -432,7 +432,7 @@ void MainWindow::display_numberOfStartCreatedCharacter(quint16 numberOfStartCrea
 void MainWindow::updateClientListStatus()
 {
 /*    ui->listClients->clear();
-    for (auto i = multipleBotConnexion.apiToCatchChallengerClient.cbegin(), end = multipleBotConnexion.apiToCatchChallengerClient.cend(); i != end; ++i)
+    for (QHash<CatchChallenger::Api_client_real *, CatchChallengerClient *>::const_iterator i = multipleBotConnexion.apiToCatchChallengerClient.cbegin(), end = multipleBotConnexion.apiToCatchChallengerClient.cend(); i != end; ++i)
     {
         const CatchChallenger::Api_client_real * const key=i.key();
         (void)key;
@@ -584,7 +584,7 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
     {
         //to order the group
         std::vector<std::string> keys;
-        for( const auto& n : logicialGroup.logicialGroupList )
+        for( const std::pair<const std::string, CatchChallenger::LogicialGroup *>& n : logicialGroup.logicialGroupList )
             keys.push_back(n.first);
         std::sort(keys.begin(), keys.end());
         //list the group

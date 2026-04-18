@@ -221,7 +221,7 @@ void SubServer::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, Q
     {
         //to order the group
         std::vector<std::string> keys;
-        for(const auto &n : logicialGroup.logicialGroupList)
+        for(const std::pair<const std::string, CatchChallenger::LogicialGroup *> &n : logicialGroup.logicialGroupList)
             keys.push_back(n.first);
         std::sort(keys.begin(),keys.end());
         //list the group

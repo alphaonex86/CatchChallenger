@@ -139,7 +139,7 @@ void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &/*ca
         mapToScan.insert(currentLogicalMap.border.bottom.mapIndex);
 
     //locate the right map
-    for( const auto& n : CatchChallenger::QMap_client::all_map ) {
+    for( const std::pair<const uint16_t, CatchChallenger::QMap_client *>& n : CatchChallenger::QMap_client::all_map ) {
         CATCHCHALLENGER_TYPE_MAPID mapId=n.first;
         CatchChallenger::QMap_client *map=n.second;
         if(mapToScan.find(mapId)!=mapToScan.cend())

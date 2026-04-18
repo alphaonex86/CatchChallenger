@@ -17,7 +17,7 @@
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../../general/sha224/sha224.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 
 using namespace CatchChallenger;
 
@@ -31,8 +31,7 @@ DatapackChecksum::~DatapackChecksum()
 
 std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPath)
 {
-    SHA224 hash = SHA224();
-    hash.init();
+    CatchChallenger::Hash hash;
     {
         std::regex excludePath("^map[/\\\\]main[/\\\\]");
 
@@ -72,7 +71,7 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
     }
     std::vector<char> hashResult;
     {
-        hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        hashResult.resize(CATCHCHALLENGER_HASH_SIZE);
         hash.final(reinterpret_cast<unsigned char *>(hashResult.data()));
     }
     return hashResult;
@@ -116,8 +115,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 
 std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPath)
 {
-    SHA224 hash = SHA224();
-    hash.init();
+    CatchChallenger::Hash hash;
     {
         std::regex excludePath("^sub[/\\\\]");
 
@@ -157,7 +155,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
     }
     std::vector<char> hashResult;
     {
-        hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        hashResult.resize(CATCHCHALLENGER_HASH_SIZE);
         hash.final(reinterpret_cast<unsigned char *>(hashResult.data()));
     }
     return hashResult;
@@ -197,8 +195,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 
 std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPath)
 {
-    SHA224 hash = SHA224();
-    hash.init();
+    CatchChallenger::Hash hash;
     {
         const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
         const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
@@ -236,7 +233,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
     }
     std::vector<char> hashResult;
     {
-        hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        hashResult.resize(CATCHCHALLENGER_HASH_SIZE);
         hash.final(reinterpret_cast<unsigned char *>(hashResult.data()));
     }
     return hashResult;

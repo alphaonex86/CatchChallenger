@@ -170,7 +170,7 @@ static std::map<std::string/*industryId*/,std::vector<BotLocation>>
 buildIndustryToBotMap(const std::string &mainCode, size_t setIdx)
 {
     std::map<std::string,std::vector<BotLocation>> result;
-    const auto &set=MapStore::sets()[setIdx];
+    const MapStore::MainCodeSet &set=MapStore::sets()[setIdx];
 
     for(size_t mi=0; mi<set.mapPaths.size(); ++mi)
     {
@@ -337,7 +337,7 @@ static std::string formatTime(uint64_t seconds)
 
 void generate()
 {
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
 
     // Collect all industries per mainCode
     // industryMap[mainCode][id] = IndustryData
@@ -348,7 +348,7 @@ void generate()
     for(size_t si=0; si<sets.size(); ++si)
     {
         const std::string &mc=sets[si].mainCode;
-        auto recipes=parseIndustrialRecipe(mc);
+        std::map<std::string, IndustryData> recipes=parseIndustrialRecipe(mc);
         if(!recipes.empty())
         {
             allIndustries[mc]=std::move(recipes);
@@ -361,12 +361,12 @@ void generate()
 
     // ── Individual industry pages ────────────────────────────────────
 
-    for(const auto &mcPair : allIndustries)
+    for(const std::pair<const std::string, std::map<std::string, IndustryData>> &mcPair : allIndustries)
     {
         const std::string &mc=mcPair.first;
         Helper::mkpath(Helper::localPath()+"industries/"+mc+"/");
 
-        for(const auto &idPair : mcPair.second)
+        for(const std::pair<const std::string, IndustryData> &idPair : mcPair.second)
         {
             const std::string &id=idPair.first;
             const IndustryData &ind=idPair.second;
@@ -387,7 +387,7 @@ void generate()
 
             // Resources
             body << "<div class=\"subblock\"><div class=\"valuetitle\">Resources</div><div class=\"value\">\n";
-            for(const auto &res : ind.resources)
+            for(const IndustryResource &res : ind.resources)
             {
                 if(QtDatapackClientLoader::datapackLoader->has_itemExtra(res.item))
                 {
@@ -415,7 +415,7 @@ void generate()
             // Location (bot links)
             if(allBots.count(mc) && allBots[mc].count(id))
             {
-                const auto &bots=allBots[mc][id];
+                const std::vector<BotLocation> &bots=allBots[mc][id];
                 body << "<div class=\"subblock\"><div class=\"valuetitle\">Location</div><div class=\"value\">\n";
                 body << "<table class=\"item_list item_list_type_normal map_list\">\n"
                      << "\t\t\t\t<tr class=\"item_list_title item_list_title_type_normal\">\n"
@@ -423,7 +423,7 @@ void generate()
                      << "\t\t\t\t\t<th colspan=\"2\">Map</th>\n"
                      << "\t\t\t\t\t</tr>\n";
 
-                for(const auto &loc : bots)
+                for(const BotLocation &loc : bots)
                 {
                     body << "<tr class=\"value\">\n";
                     std::string finalName=loc.botName.empty()?("Bot #"+std::to_string(loc.botLocalId)):loc.botName;
@@ -474,7 +474,7 @@ void generate()
 
             // Products
             body << "<div class=\"subblock\"><div class=\"valuetitle\">Products</div><div class=\"value\">\n";
-            for(const auto &prod : ind.products)
+            for(const IndustryProduct &prod : ind.products)
             {
                 if(QtDatapackClientLoader::datapackLoader->has_itemExtra(prod.item))
                 {
@@ -516,10 +516,10 @@ void generate()
 
     Helper::setCurrentPage("industries.html");
 
-    for(const auto &mcPair : allIndustries)
+    for(const std::pair<const std::string, std::map<std::string, IndustryData>> &mcPair : allIndustries)
     {
         const std::string &mc=mcPair.first;
-        for(const auto &idPair : mcPair.second)
+        for(const std::pair<const std::string, IndustryData> &idPair : mcPair.second)
         {
             const std::string &id=idPair.first;
             const IndustryData &ind=idPair.second;
@@ -531,22 +531,22 @@ void generate()
 
             // Resources
             idx << "<td><center>\n";
-            for(const auto &res : ind.resources)
+            for(const IndustryResource &res : ind.resources)
                 writeItemIconAndNameDiv(idx,res.item,"middle");
             idx << "</center></td>\n";
 
             // Products
             idx << "<td><center>\n";
-            for(const auto &prod : ind.products)
+            for(const IndustryProduct &prod : ind.products)
                 writeItemIconAndNameDiv(idx,prod.item,"middle");
             idx << "</center></td><td>\n";
 
             // Location
             if(allBots.count(mc) && allBots[mc].count(id))
             {
-                const auto &bots=allBots[mc][id];
+                const std::vector<BotLocation> &bots=allBots[mc][id];
                 idx << "<table class=\"item_list item_list_type_normal map_list\">\n";
-                for(const auto &loc : bots)
+                for(const BotLocation &loc : bots)
                 {
                     idx << "<tr class=\"value\">\n";
                     std::string finalName=loc.botName.empty()?("Bot #"+std::to_string(loc.botLocalId)):loc.botName;

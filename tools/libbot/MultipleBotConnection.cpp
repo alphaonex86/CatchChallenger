@@ -509,7 +509,7 @@ void MultipleBotConnection::ifMultipleConnexionStartCreation()
 
 void MultipleBotConnection::connectTimerSlot()
 {
-    const auto connexionCountVar=connexionCountTarget();
+    const int connexionCountVar=connexionCountTarget();
     if(apiToCatchChallengerClient.size()<connexionCountVar && numberOfBotConnected<connexionCountVar)
     {
         if(numberOfBotConnected<numberOfSelectedCharacter)

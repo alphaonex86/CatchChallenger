@@ -16,7 +16,7 @@
 void BotTargetList::checkDuplicatePointOnMap_Item(const std::map<std::pair<uint8_t, uint8_t>, MapServerMini::ItemOnMap> &pointOnMap_Item)
 {
     std::unordered_set<uint32_t> known_indexOfItemOnMap;
-    for ( const auto &item : pointOnMap_Item )
+    for ( const std::pair<const std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap> &item : pointOnMap_Item )
     {
         const MapServerMini::ItemOnMap &itemOnMap=item.second;
         if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
@@ -53,7 +53,7 @@ void BotTargetList::updatePlayerStep()
         }
     }
 
-    for (const auto &n:actionsAction->clientList) {
+    for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:actionsAction->clientList) {
         CatchChallenger::Api_protocol_Qt *api=n.first;
         ActionsAction::Player &player=actionsAction->clientList[api];
         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
@@ -516,7 +516,7 @@ void BotTargetList::updatePlayerStep()
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             {
                                 std::unordered_set<uint32_t> known_indexOfItemOnMap;
-                                for ( const auto &item : mapServer->pointOnMap_Item )
+                                for ( const std::pair<const std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap> &item : mapServer->pointOnMap_Item )
                                 {
                                     const MapServerMini::ItemOnMap &itemOnMap=item.second;
                                     if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
@@ -527,7 +527,7 @@ void BotTargetList::updatePlayerStep()
                             #endif
                             bool found=false;
                             bool alreadyTake=false;
-                            for(auto&entry:mapServer->pointOnMap_Item)
+                            for(const std::pair<const std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap>&entry:mapServer->pointOnMap_Item)
                             {
                                 const MapServerMini::ItemOnMap &itemOnMap=entry.second;
                                 if(itemOnMap.indexOfItemOnMap==player.target.extra)
@@ -738,7 +738,7 @@ void BotTargetList::updatePlayerStep()
                                         bonusStat/=othermonster->buffs.size();
                                     }
 
-                                    for(const auto& n:playerInformations.items) {
+                                    for(const std::pair<const uint16_t, uint32_t>& n:playerInformations.items) {
                                         const CATCHCHALLENGER_TYPE_ITEM &item=n.first;
                                         const uint32_t &quantity=n.second;
                                         if(CatchChallenger::CommonDatapack::commonDatapack.has_trap(item))

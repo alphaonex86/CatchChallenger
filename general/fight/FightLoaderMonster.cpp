@@ -70,7 +70,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
                 std::cerr << file+", "+domDocument->ErrorName() << std::endl;
@@ -654,7 +654,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
 
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     //check the evolveTo
-    auto i = monsters.begin();
+    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster>::iterator i = monsters.begin();
     while(i!=monsters.cend())
     {
         unsigned int index=0;
@@ -738,7 +738,7 @@ void FightLoader::loadMonsterName(std::unordered_map<std::string,CATCHCHALLENGER
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
                 std::cerr << file+", "+domDocument->ErrorName() << std::endl;

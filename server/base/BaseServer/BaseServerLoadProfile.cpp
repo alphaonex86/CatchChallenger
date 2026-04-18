@@ -85,17 +85,17 @@ void BaseServer::preload_18_sync_profile()
         if(!profile.items.empty())
         {
             uint32_t lastItemId=0;
-            auto item_list=profile.items;
+            std::vector<Profile::Item> item_list=profile.items;
             std::sort(item_list.begin(),item_list.end(),[](const Profile::Item &a, const Profile::Item &b) {
                 return a.id<b.id;
             });
-            auto max=item_list.at(item_list.size()-1).id;
+            CATCHCHALLENGER_TYPE_ITEM max=item_list.at(item_list.size()-1).id;
             uint32_t pos=0;
             char item_raw[static_cast<uint8_t>(2+4)*item_list.size()];
             unsigned int index=0;
             while(index<item_list.size())
             {
-                const auto &item=item_list.at(index);
+                const Profile::Item &item=item_list.at(index);
                 *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id-lastItemId);
                 pos+=2;
                 lastItemId=item.id;
@@ -111,7 +111,7 @@ void BaseServer::preload_18_sync_profile()
             index=0;
             while(index<item_list.size())
             {
-                const auto &item=profile.items.at(index);
+                const Profile::Item &item=profile.items.at(index);
                 uint16_t bittoUp=item.id;
                 bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
                 index++;
@@ -153,7 +153,7 @@ void BaseServer::preload_18_sync_profile()
                 }
             }
             uint32_t lastReputationId=0;
-            auto reputations_list=reputationList;
+            std::vector<ReputationTemp> reputations_list=reputationList;
             std::sort(reputations_list.begin(),reputations_list.end(),[](const ReputationTemp &a, const ReputationTemp &b) {
                 return a.reputationDatabaseId<b.reputationDatabaseId;
             });
@@ -162,7 +162,7 @@ void BaseServer::preload_18_sync_profile()
             unsigned int index=0;
             while(index<reputations_list.size())
             {
-                const auto &reputation=reputations_list.at(index);
+                const ReputationTemp &reputation=reputations_list.at(index);
                 *reinterpret_cast<uint32_t *>(reputation_raw+pos)=htole32(reputation.point);
                 pos+=4;
                 reputation_raw[pos]=static_cast<uint8_t>(reputation.reputationDatabaseId-lastReputationId);
@@ -197,7 +197,7 @@ void BaseServer::preload_18_sync_profile()
             unsigned int monsterGroupIndex=0;
             while(monsterGroupIndex<profile.monstergroup.size())
             {
-                const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
+                const std::vector<Profile::Monster> &monsters=profile.monstergroup.at(monsterGroupIndex);
 
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 ServerProfileInternal::PreparedStatementForCreationMonsterGroup &preparedStatementForCreationMonsterGroup=preparedStatementForCreationType.monsterGroup[monsterGroupIndex];
@@ -213,7 +213,7 @@ void BaseServer::preload_18_sync_profile()
                 unsigned int monsterIndex=0;
                 while(monsterIndex<monsters.size())
                 {
-                    const auto &monster=monsters.at(monsterIndex);
+                    const Profile::Monster &monster=monsters.at(monsterIndex);
                     const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monster(monster.id);
                     std::vector<CatchChallenger::PlayerMonster::PlayerSkill> skills_list=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
                     if(skills_list.empty())
@@ -233,7 +233,7 @@ void BaseServer::preload_18_sync_profile()
                     unsigned int sub_index=0;
                     while(sub_index<skills_list.size())
                     {
-                        const auto &skill=skills_list.at(sub_index);
+                        const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills_list.at(sub_index);
                         *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.skill-lastSkillId);
                         lastSkillId=skill.skill;
                         raw_skill[sub_index*(2+1)+2]=skill.level;
@@ -303,7 +303,7 @@ void BaseServer::preload_18_sync_profile()
                     monsterIndex++;
                 }
                 //do the encyclopedia monster
-                const auto &result=std::max_element(monsterForEncyclopedia.begin(),monsterForEncyclopedia.end());
+                const std::vector<uint16_t>::iterator &result=std::max_element(monsterForEncyclopedia.begin(),monsterForEncyclopedia.end());
                 const size_t size=*result/8+1;
                 char bitlist[size];
                 memset(bitlist,0,size);

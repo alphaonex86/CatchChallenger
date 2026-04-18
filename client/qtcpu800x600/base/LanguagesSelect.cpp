@@ -44,7 +44,7 @@ LanguagesSelect::LanguagesSelect() :
         tinyxml2::XMLDocument domDocument;
         //open and quick check the file
         const std::string &fileName=languageToParse.at(index).toStdString()+"informations.xml";
-        const auto loadOkay = domDocument.LoadFile(fileName.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument.LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
             std::cerr << fileName+", "+domDocument.ErrorName() << std::endl;
@@ -133,7 +133,7 @@ void LanguagesSelect::updateContent()
     const std::string &language=Options::options.getLanguage();
     ui->automatic->setChecked(language.empty() || languagesByMainCode.find(language)==languagesByMainCode.cend());
     on_automatic_clicked();
-    for ( const auto &n : languagesByMainCode ) {
+    for ( const std::pair<const std::string, Language> &n : languagesByMainCode ) {
         QListWidgetItem *item=new QListWidgetItem(QIcon(
                                                       QString::fromStdString(n.second.path)+"flag.png"),
                                                   QString::fromStdString(n.second.fullName)

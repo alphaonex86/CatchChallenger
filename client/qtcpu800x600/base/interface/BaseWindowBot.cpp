@@ -84,7 +84,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
         index++;
     }
     //do the started quest here
-    auto i=playerInformations.quests.begin();
+    std::map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest>::const_iterator i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
         if(!vectorcontainsAtLeastOne(botQuests,i->first) && i->second.step>0)

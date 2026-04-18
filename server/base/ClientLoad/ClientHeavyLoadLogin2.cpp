@@ -118,7 +118,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
 
     uint8_t validServerCount=0;
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    const auto &current_time=sFrom1970();
+    const uint64_t &current_time=sFrom1970();
     bool ok;
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {

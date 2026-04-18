@@ -95,7 +95,7 @@ void Player::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widge
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=name_value->font();
+    QFont font=name_value->font();
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);

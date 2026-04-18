@@ -33,7 +33,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_BUFF,Buff> FightLoader::loadMonsterBuff(
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
                 std::cerr << file+", "+domDocument->ErrorName() << std::endl;

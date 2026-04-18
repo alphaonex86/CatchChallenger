@@ -90,7 +90,7 @@ void Reputations::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=labelReputation->font();
+    QFont font=labelReputation->font();
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);
@@ -171,7 +171,7 @@ void Reputations::setVar(ConnexionManager *connexionManager)
         return;
     }
     std::string html="<ul>";
-    auto i=playerInformations.reputation.begin();
+    std::map<uint8_t, CatchChallenger::PlayerReputation>::const_iterator i=playerInformations.reputation.begin();
     while(i!=playerInformations.reputation.cend())
     {
         if(i->second.level>=0)

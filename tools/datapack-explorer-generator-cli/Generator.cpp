@@ -25,16 +25,16 @@ namespace Generator {
 static void timedGenerate(const char *label, void(*fn)())
 {
     std::cout << "Generating " << label << "..." << std::flush;
-    auto t0=std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point t0=std::chrono::steady_clock::now();
     fn();
-    auto t1=std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point t1=std::chrono::steady_clock::now();
     long long ms=std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count();
     std::cout << " " << ms << "ms" << std::endl;
 }
 
 void generateAll()
 {
-    auto totalStart=std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point totalStart=std::chrono::steady_clock::now();
     timedGenerate("items", GeneratorItems::generate);
     timedGenerate("monsters", GeneratorMonsters::generate);
     timedGenerate("plants", GeneratorPlants::generate);
@@ -51,14 +51,14 @@ void generateAll()
     // Generate contentstat.json (matches jsonstat.php)
     {
         int mapCount=0;
-        for(const auto &set : MapStore::sets())
+        for(const MapStore::MainCodeSet &set : MapStore::sets())
             mapCount+=(int)set.mapPaths.size();
         int monsterCount=(int)CatchChallenger::CommonDatapack::commonDatapack.get_monsters_size();
         int itemCount=(int)CatchChallenger::CommonDatapack::commonDatapack.get_items_size();
         // Bot count: count all non-empty bots across all maps (approximation)
         int botCount=0;
-        for(const auto &set : MapStore::sets())
-            for(const auto &m : set.mapList)
+        for(const MapStore::MainCodeSet &set : MapStore::sets())
+            for(const CatchChallenger::CommonMap &m : set.mapList)
                 botCount+=(int)m.botFights.size();
 
         std::string jsonPath=Helper::localPath()+"contentstat.json";
@@ -72,7 +72,7 @@ void generateAll()
         }
     }
 
-    auto totalEnd=std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point totalEnd=std::chrono::steady_clock::now();
     long long totalMs=std::chrono::duration_cast<std::chrono::milliseconds>(totalEnd-totalStart).count();
     std::cout << "Done. Total generation: " << totalMs << "ms" << std::endl;
 }

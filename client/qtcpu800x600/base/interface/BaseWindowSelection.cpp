@@ -342,7 +342,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                                 {
                                     std::cerr << "duplicate: " << mapId << std::endl;
                                     std::cerr << "need match id QMap_client::all_map: " << std::endl;
-                                    for (auto& it: QMap_client::all_map)
+                                    for (std::pair<const uint16_t, CatchChallenger::QMap_client *>& it: QMap_client::all_map)
                                     {
                                         const QMap_client * m2=it.second;
                                         std::cout << it.first << ": " << m2 << std::endl;
@@ -362,7 +362,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                                 {
                                     std::cerr << "index!=mapId with: " << mapPath << ", " << index << ", " << mapId << std::endl;
                                     std::cerr << "need match id QMap_client::all_map: " << std::endl;
-                                    for (auto& it: QMap_client::all_map)
+                                    for (std::pair<const uint16_t, CatchChallenger::QMap_client *>& it: QMap_client::all_map)
                                     {
                                         const QMap_client * m2=it.second;
                                         std::cout << it.first << ": " << m2 << std::endl;
@@ -390,7 +390,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 {
                     //check duplicate
                     std::unordered_set<int> detectDuplicate;
-                    for (auto& it: QMap_client::all_map)
+                    for (std::pair<const uint16_t, CatchChallenger::QMap_client *>& it: QMap_client::all_map)
                     {
                         const CATCHCHALLENGER_TYPE_MAPID mapId=it.first;
                         if(detectDuplicate.find(mapId)!=detectDuplicate.cend())

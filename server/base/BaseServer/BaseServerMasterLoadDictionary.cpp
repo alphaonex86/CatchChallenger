@@ -345,7 +345,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     #else
     #error Define what do here
     #endif
-    auto i=BaseServerMasterSendDatapack::skinList.begin();
+    std::unordered_map<std::string,uint8_t>::iterator i=BaseServerMasterSendDatapack::skinList.begin();
     while(i!=BaseServerMasterSendDatapack::skinList.end())
     {
         const std::string &skin=i->first;
@@ -411,7 +411,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
         if(dict_out.good() && dict_out.is_open())
         {
             unsigned int newCount=0;
-            for(const auto &entry : BaseServerMasterSendDatapack::skinList)
+            for(const std::pair<const std::string,uint8_t> &entry : BaseServerMasterSendDatapack::skinList)
             {
                 if(foundSkin.find(entry.first)==foundSkin.end())
                 {

@@ -180,7 +180,7 @@ bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol_Qt *api,con
                 }
                 else
                 {
-                    const auto &step=currentQuest.steps.at(quests.at(questId).step-1);
+                    const CatchChallenger::Quest::Step &step=currentQuest.steps.at(quests.at(questId).step-1);
                     if(step.botToTalkBotId==static_cast<CATCHCHALLENGER_TYPE_BOTID>(botId))
                         return true;//in progress
                     else
@@ -331,9 +331,9 @@ bool ActionsAction::haveNextStepQuestRequirements(const CatchChallenger::Api_pro
         }
         index++;
     }
-    for(const auto &fightEntry : requirements.fights)
+    for(const std::pair<const uint16_t, std::unordered_set<uint8_t>> &fightEntry : requirements.fights)
     {
-        for(const auto &fightBotId : fightEntry.second)
+        for(const uint8_t &fightBotId : fightEntry.second)
         {
             if(!haveBeatBot(api,fightBotId))
             {

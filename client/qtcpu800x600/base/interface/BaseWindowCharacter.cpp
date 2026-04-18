@@ -341,7 +341,7 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
     {
         //to order the group
         std::vector<std::string> keys;
-        for(const auto &n : logicialGroup.logicialGroupList)
+        for(const std::pair<const std::string, LogicialGroup *> &n : logicialGroup.logicialGroupList)
             keys.push_back(n.first);
         std::sort(keys.begin(),keys.end());
         //list the group

@@ -25,6 +25,8 @@ LIBS    += -lpq
 
 DEFINES += CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 
+DEFINES += BLAKE3_NO_SSE2 BLAKE3_NO_SSE41 BLAKE3_NO_AVX2 BLAKE3_NO_AVX512
+
 CONFIG += c++17
 
 TARGET = catchchallenger-server-master
@@ -33,7 +35,10 @@ CONFIG   += console
 TEMPLATE = app
 
 SOURCES += \
-    ../../general/sha224/sha224.cpp \
+    ../../general/base/CatchChallenger_Hash.cpp \
+    ../../general/blake3/blake3.c \
+    ../../general/blake3/blake3_dispatch.c \
+    ../../general/blake3/blake3_portable.c \
     main-epoll-login-master.cpp \
     EpollClientLoginMaster.cpp \
     EpollServerLoginMaster.cpp \
@@ -85,7 +90,7 @@ SOURCES += \
     ../../general/base/Version.cpp
 
 HEADERS += \
-    ../../general/sha224/sha224.hpp \
+    ../../general/base/CatchChallenger_Hash.hpp \
     EpollClientLoginMaster.h \
     EpollServerLoginMaster.h \
     CharactersGroup.h \

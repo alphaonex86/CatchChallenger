@@ -90,7 +90,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
     }
     else
     {
-        const auto &currentTime=sFrom1970();
+        const uint64_t &currentTime=sFrom1970();
         if(Client::datapack_list_cache_timestamp_main<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_main=currentTime;
@@ -134,7 +134,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
     }
     else
     {
-        const auto &currentTime=sFrom1970();
+        const uint64_t &currentTime=sFrom1970();
         if(Client::datapack_list_cache_timestamp_sub<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_sub=currentTime;
@@ -264,7 +264,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             }
             index++;
         }
-        auto i=filesListForSize.begin();
+        std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::iterator i=filesListForSize.begin();
         while(i!=filesListForSize.cend())
         {
             std::string fullPathFileToOpen=datapackPath+i->first;

@@ -18,7 +18,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
         overall_graphvizText+="node [shape=record]\n";
 
         std::unordered_set<const MapServerMini::BlockObject *> destinationMaps;
-        for(const auto& n : ActionsAction::actionsAction->map_list) {
+        for(const std::pair<const std::string, CatchChallenger::CommonMap *>& n : ActionsAction::actionsAction->map_list) {
             const MapServerMini * const mapServer=static_cast<MapServerMini *>(n.second);
             if(mapServer->step.size()>=2)
             {
@@ -30,7 +30,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                     {
                         const MapServerMini::MapParsedForBot::Layer &layer=step2.layers.at(indexLayer);
                         const MapServerMini::BlockObject &block=*layer.blockObject;
-                        for(const auto& n:block.links) {
+                        for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObject::LinkInformation>& n:block.links) {
                             const MapServerMini::BlockObject * const nextBlock=n.first;
                             if(validMaps.find(mapServer)!=validMaps.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
                                 destinationMaps.insert(nextBlock);
@@ -42,7 +42,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
         }
 
         std::string stringLinks;
-        for(const auto& n : ActionsAction::actionsAction->map_list) {
+        for(const std::pair<const std::string, CatchChallenger::CommonMap *>& n : ActionsAction::actionsAction->map_list) {
             const MapServerMini * const mapServer=static_cast<MapServerMini *>(n.second);
             if(mapServer->step.size()>=2 && validMaps.find(mapServer)!=validMaps.cend())
             {
@@ -74,7 +74,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                         (void)contentEmpty;*/
 
                         bool haveValidDestination=false;
-                        for(const auto& n:block.links) {
+                        for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObject::LinkInformation>& n:block.links) {
                             const MapServerMini::BlockObject * const nextBlock=n.first;
                             if(destinationMaps.find(nextBlock)!=destinationMaps.cend())
                             {
@@ -143,7 +143,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                             }
                         }
 
-                        for(const auto& n:block.links) {
+                        for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObject::LinkInformation>& n:block.links) {
                             const MapServerMini::BlockObject * const nextBlock=n.first;
                             const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                             std::vector<CatchChallenger::MapCondition> uniqueCondition;
@@ -335,7 +335,7 @@ std::string BotTargetList::graphLocalMap()
             {
                 MapServerMini::BlockObject &block=*step2.layers[blockIndex].blockObject;
 
-                for(const auto& n:block.links) {
+                for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObject::LinkInformation>& n:block.links) {
                     const MapServerMini::BlockObject * const nextBlock=n.first;
                     const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                     std::vector<CatchChallenger::MapCondition> uniqueCondition;
@@ -484,7 +484,7 @@ BotTargetList::ZoneAccessible BotTargetList::nextZoneIsAccessible(const CatchCha
         }
     }
 
-    for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
+    for(std::unordered_map<std::pair<uint8_t,uint8_t>, std::vector<uint16_t>, pairhash>::const_iterator it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
     {
         const std::vector<uint16_t> &botsFightList=it->second;
         unsigned int index=0;

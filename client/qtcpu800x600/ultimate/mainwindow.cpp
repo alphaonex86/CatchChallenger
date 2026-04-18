@@ -511,7 +511,7 @@ std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoListFromData(const QB
 {
     std::vector<ConnexionInfo> returnedVar;
     tinyxml2::XMLDocument domDocument;
-    const auto loadOkay = domDocument.Parse(xmlContent.data(),xmlContent.size());
+    const tinyxml2::XMLError loadOkay = domDocument.Parse(xmlContent.data(),xmlContent.size());
     if(loadOkay!=0)
     {
         std::cerr << "MainWindow::loadXmlConnexionInfoList, " << domDocument.ErrorName() << std::endl;
@@ -1753,7 +1753,7 @@ std::pair<std::string,std::string> MainWindow::getDatapackInformations(const std
     returnVar.second=tr("Unknown").toStdString();
     //open and quick check the file
     tinyxml2::XMLDocument domDocument;
-    const auto loadOkay = domDocument.LoadFile(filePath.c_str());
+    const tinyxml2::XMLError loadOkay = domDocument.LoadFile(filePath.c_str());
     if(loadOkay!=0)
     {
         std::cerr << filePath+", "+domDocument.ErrorName() << std::endl;

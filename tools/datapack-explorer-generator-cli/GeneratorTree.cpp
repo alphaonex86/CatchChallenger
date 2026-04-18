@@ -121,7 +121,7 @@ computeExclusiveMonsters()
     // monsterToMainCodes[monsterId] = set of mainCodes where it appears wild
     std::map<uint16_t,std::set<std::string>> monsterToMainCodes;
 
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     for(size_t si=0; si<sets.size(); ++si)
     {
         const std::string &mc=sets[si].mainCode;
@@ -162,13 +162,13 @@ computeExclusiveMonsters()
 
     // Collect monsters exclusive to a single mainCode
     std::map<std::string,std::vector<uint16_t>> result;
-    for(const auto &p : monsterToMainCodes)
+    for(const std::pair<const uint16_t, std::set<std::string>> &p : monsterToMainCodes)
     {
         if(p.second.size()==1)
             result[*p.second.begin()].push_back(p.first);
     }
     // Sort monster IDs
-    for(auto &p : result)
+    for(std::pair<const std::string, std::vector<uint16_t>> &p : result)
         std::sort(p.second.begin(),p.second.end());
     return result;
 }
@@ -270,7 +270,7 @@ static void writeStartMaps(std::ostringstream &body,
          << "\t<th colspan=\"1\">Start map</th>\n"
          << "</tr>\n";
 
-    for(const auto &mapFile : startMaps)
+    for(const std::string &mapFile : startMaps)
     {
         std::string stem=mapFile;
         if(stem.size()>=4 && stem.compare(stem.size()-4,4,".tmx")==0)
@@ -317,7 +317,7 @@ void generate()
     InfoData rootInfo=parseInformations(Helper::datapackPath()+"informations.xml");
 
     // Compute exclusive monsters
-    auto exclusiveMonsters=computeExclusiveMonsters();
+    std::map<std::string, std::vector<uint16_t>> exclusiveMonsters=computeExclusiveMonsters();
 
     std::ostringstream body;
     body << "<div class=\"map map_type_city\">\n";
@@ -335,7 +335,7 @@ void generate()
         body << "<div class=\"type_label_list\">" << Helper::htmlEscape(Helper::firstLetterUpper(rootInfo.description)) << "</div>\n";
 
     // For each mainDatapackCode
-    const auto &sets=MapStore::sets();
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
     for(size_t si=0; si<sets.size(); ++si)
     {
         const std::string &mc=sets[si].mainCode;
@@ -365,7 +365,7 @@ void generate()
 
         // Start maps
         std::string startPath=Helper::datapackPath()+"map/main/"+mc+"/start.xml";
-        auto startMaps=parseStartMaps(startPath);
+        std::vector<std::string> startMaps=parseStartMaps(startPath);
         writeStartMaps(body,mc,startMaps);
 
         // Exclusive monsters

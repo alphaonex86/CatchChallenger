@@ -771,7 +771,7 @@ void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &i
     {
         std::vector<std::string> objects;
 
-        for( const auto& n : items ) {
+        for( const std::pair<const uint16_t, uint32_t>& n : items ) {
             const uint16_t &item=n.first;
             const uint32_t &quantity=n.second;
             if(playerInformations.encyclopedia_item!=NULL)
@@ -815,7 +815,7 @@ void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &i
     else
     {
         //add without show
-        for( const auto& n : items ) {
+        for( const std::pair<const uint16_t, uint32_t>& n : items ) {
             const uint16_t &item=n.first;
             const uint32_t &quantity=n.second;
             if(playerInformations.encyclopedia_item!=NULL)
@@ -850,7 +850,7 @@ void BaseWindow::remove_to_inventory_slot(const std::unordered_map<uint16_t,uint
 void BaseWindow::remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items)
 {
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
-    for( const auto& n : items ) {
+    for( const std::pair<const uint16_t, uint32_t>& n : items ) {
         const uint16_t &item=n.first;
         const uint32_t &quantity=n.second;
         //add really to the list
@@ -1763,7 +1763,7 @@ void BaseWindow::detectSlowDown()
     std::vector<std::string> middleQueryList;
     const std::map<uint8_t,uint64_t> &values=client->getQuerySendTimeList();
     queryCount+=values.size();
-    for(const auto n : values) {
+    for(const std::pair<const uint8_t, uint64_t> n : values) {
         middleQueryList.push_back(std::to_string(n.first));
         std::time_t result = std::time(nullptr);
         if((uint64_t)result>=n.second)
@@ -1965,7 +1965,7 @@ void CatchChallenger::BaseWindow::on_toolButtonAdmin_clicked()
     {
         const std::unordered_map<uint8_t,MapControllerMP::OtherPlayer> &playerList=mapController->getOtherPlayerList();
 
-        for( const auto& n : playerList ) {
+        for( const std::pair<const uint8_t, MapControllerMP::OtherPlayer>& n : playerList ) {
                 const MapControllerMP::OtherPlayer &player = n.second;
 
                 QListWidgetItem *item=new QListWidgetItem();

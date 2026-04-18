@@ -55,7 +55,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        const tinyxml2::XMLError loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
             error=file+", "+tinyxml2errordoc(domDocument);
@@ -311,7 +311,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                 {
                                     if(property_text.find("map")==property_text.cend())
                                     {
-                                        const auto &pos=file.find_last_of('/');
+                                        const std::string::size_type &pos=file.find_last_of('/');
                                         if(pos==std::string::npos)
                                             property_text["map"]=file;
                                         else
@@ -781,7 +781,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
         if(rawSize==(uint32_t)LedgesTop.size())
             LedgesTopBin=LedgesTop.data();
 
-        auto i=mapLayerContentForMonsterCollision.begin();
+        std::map<std::string,std::vector<char>>::iterator i=mapLayerContentForMonsterCollision.begin();
         while(i!=mapLayerContentForMonsterCollision.cend())
         {
             MonsterCollisionBin.push_back(i->second);
@@ -920,7 +920,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
     {
         //link to monster zone id
         {
-            auto i=mapLayerContentForMonsterCollision.begin();
+            std::map<std::string,std::vector<char>>::iterator i=mapLayerContentForMonsterCollision.begin();
             while(i!=mapLayerContentForMonsterCollision.cend())
             {
                 const std::string &zoneName=i->first;

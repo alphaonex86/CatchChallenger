@@ -72,7 +72,7 @@ void MonsterDetails::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidge
     if(yBottom>0)
         p->drawPixmap(widget->height()-yBottom,0,yBottom,widget->width(),QPixmap(":/CC/images/interface/backm.png"),0,0,1,1);
 
-    auto font=details->font();
+    QFont font=details->font();
     unsigned int bigSpace=50;
     unsigned int space=30;
     qreal lineSize=2.0;
@@ -233,7 +233,7 @@ void MonsterDetails::setVar(const CatchChallenger::PlayerMonster &monster)
         unsigned int sub_index=0;
         while(sub_index<monsterGeneralInfo.type.size())
         {
-            const auto &typeSub=monsterGeneralInfo.type.at(sub_index);
+            const uint8_t &typeSub=monsterGeneralInfo.type.at(sub_index);
             if(QtDatapackClientLoader::datapackLoader->has_typeExtra(typeSub))
             {
                 const QtDatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra(typeSub);

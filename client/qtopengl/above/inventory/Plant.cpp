@@ -118,7 +118,7 @@ void Plant::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=inventory_description->font();
+    QFont font=inventory_description->font();
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);
@@ -266,7 +266,7 @@ void Plant::updatePlant()
     next->setVisible(!inSelection);
     plantList->clear();
     //plantList->setIconSize(QSize(targetSize,targetSize));
-    auto i=playerInformations.items.begin();
+    std::map<uint16_t, uint32_t>::const_iterator i=playerInformations.items.begin();
     while (i!=playerInformations.items.cend())
     {
         const uint16_t id=i->first;

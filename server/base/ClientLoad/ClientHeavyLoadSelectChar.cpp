@@ -36,7 +36,7 @@ void Client::characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &re
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::selectCharacter(const uint8_t &query_id, const char * const token)
 {
-    const auto &time=sFrom1970();
+    const uint64_t &time=sFrom1970();
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {
@@ -66,7 +66,7 @@ void Client::selectCharacter(const uint8_t &query_id, const char * const token)
 
 void Client::purgeTokenAuthList()
 {
-    const auto &time=sFrom1970();
+    const uint64_t &time=sFrom1970();
     unsigned int index=0;
     while(index<tokenAuthList.size())
     {

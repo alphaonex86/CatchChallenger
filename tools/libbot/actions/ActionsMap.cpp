@@ -200,7 +200,7 @@ bool ActionsAction::preload_the_map()
         map_semi.map->teleporters.clear();
         while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
-            const auto &teleport=map_semi.old_map.teleport.at(sub_index);
+            const CatchChallenger::Map_semi_teleport &teleport=map_semi.old_map.teleport.at(sub_index);
             std::string teleportString=teleport.map;
             stringreplaceOne(teleportString,".tmx","");
             if(name_to_index.find(teleportString)!=name_to_index.end())

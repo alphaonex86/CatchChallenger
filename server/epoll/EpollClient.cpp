@@ -72,7 +72,7 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
     //std::cerr << "EpollClient::read infd: " << infd << std::endl;
     if(infd==-1)
         return -1;
-    const auto &bytesAvailableVar=bytesAvailable();
+    const int64_t bytesAvailableVar=bytesAvailable();
     //need more performance? change the API for 0 copy API
     if(bytesAvailableVar<=0)//non blocking for read
     {

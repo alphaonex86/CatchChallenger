@@ -2,7 +2,7 @@
 #include "../../general/base/ProtocolVersion.hpp"
 #include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
-#include "../../general/sha224/sha224.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -274,10 +274,9 @@ bool Api_protocol::protocolWrong() const
     return have_send_protocol && !have_receive_protocol;
 }
 
-void Api_protocol::hashSha224(const char * const data,const int size,char *buffer)
+void Api_protocol::hashDigest(const char * const data,const int size,char *buffer)
 {
-    SHA224 ctx = SHA224();
-    ctx.init();
+    CatchChallenger::Hash ctx;
     const unsigned char * const tData=reinterpret_cast<const unsigned char * const>(data);
     ctx.update(tData,size);
     unsigned char * tBuffer=reinterpret_cast<unsigned char *>(buffer);
@@ -303,20 +302,20 @@ bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
         newError(std::string("Internal problem"),std::string("Token is empty"));
         return false;
     }
-    char outputData[CATCHCHALLENGER_SHA224HASH_SIZE*2];
+    char outputData[CATCHCHALLENGER_HASH_SIZE*2];
     {
         std::string loginAndSalt=login+/*salt*/"RtR3bm9Z1DFMfAC3";
-        hashSha224(loginAndSalt.data(),loginAndSalt.size(),outputData);
-        loginHash=std::string(outputData,CATCHCHALLENGER_SHA224HASH_SIZE);
+        hashDigest(loginAndSalt.data(),loginAndSalt.size(),outputData);
+        loginHash=std::string(outputData,CATCHCHALLENGER_HASH_SIZE);
     }
     {
-        char passHash[CATCHCHALLENGER_SHA224HASH_SIZE];
+        char passHash[CATCHCHALLENGER_HASH_SIZE];
         std::string passAndSaltAndLogin=pass+/*salt*/"AwjDvPIzfJPTTgHs"+login;
-        hashSha224(passAndSaltAndLogin.data(),passAndSaltAndLogin.size(),passHash);
-        this->passHash=std::string(passHash,CATCHCHALLENGER_SHA224HASH_SIZE);
+        hashDigest(passAndSaltAndLogin.data(),passAndSaltAndLogin.size(),passHash);
+        this->passHash=std::string(passHash,CATCHCHALLENGER_HASH_SIZE);
 
-        std::string hashAndTokenString=std::string(passHash,CATCHCHALLENGER_SHA224HASH_SIZE)+token;
-        hashSha224(hashAndTokenString.data(),hashAndTokenString.size(),outputData+CATCHCHALLENGER_SHA224HASH_SIZE);
+        std::string hashAndTokenString=std::string(passHash,CATCHCHALLENGER_HASH_SIZE)+token;
+        hashDigest(hashAndTokenString.data(),hashAndTokenString.size(),outputData+CATCHCHALLENGER_HASH_SIZE);
     }
 
     packOutcommingQuery(0xA8,queryNumber(),outputData,sizeof(outputData));
@@ -340,10 +339,10 @@ bool Api_protocol::tryCreateAccount()
     /*double hashing on client part
      * '''Prevent login leak in case of MiM attack re-ask the password''' (Trafic modification, replace the server return code OK by ACCOUNT CREATION)
      * Do some DDOS protection because it offload the hashing */
-    char outputData[CATCHCHALLENGER_SHA224HASH_SIZE+passHash.size()];
-    hashSha224(loginHash.data(),loginHash.size(),outputData);
+    char outputData[CATCHCHALLENGER_HASH_SIZE+passHash.size()];
+    hashDigest(loginHash.data(),loginHash.size(),outputData);
     //pass
-    memcpy(outputData+CATCHCHALLENGER_SHA224HASH_SIZE,passHash.data(),passHash.size());
+    memcpy(outputData+CATCHCHALLENGER_HASH_SIZE,passHash.data(),passHash.size());
 
     packOutcommingQuery(0xA9,queryNumber(),outputData,sizeof(outputData));
     std::cout << "Try create account: login: " << binarytoHexa(loginHash.data(),loginHash.size())
@@ -1862,7 +1861,7 @@ LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std:
     std::string nameString;
 
     tinyxml2::XMLDocument domDocument;
-    const auto loadOkay = domDocument.Parse(("<root>"+xml+"</root>").c_str());
+    const tinyxml2::XMLError loadOkay = domDocument.Parse(("<root>"+xml+"</root>").c_str());
     if(loadOkay!=0)
     {
         std::cerr << "Api_protocol::addLogicalGroup(): "+tinyxml2errordoc(&domDocument) << std::endl;
@@ -1928,7 +1927,7 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
     std::string descriptionString;
 
     tinyxml2::XMLDocument domDocument;
-    const auto loadOkay = domDocument.Parse(("<root>"+server.xml+"</root>").c_str());
+    const tinyxml2::XMLError loadOkay = domDocument.Parse(("<root>"+server.xml+"</root>").c_str());
     if(loadOkay!=0)
     {
         std::cerr << "Api_protocol::addLogicalServer(): "+tinyxml2errordoc(&domDocument) << std::endl;
@@ -2524,7 +2523,7 @@ bool Api_protocol::haveNextStepQuestRequirements(const CatchChallenger::Quest &q
     {
         const CATCHCHALLENGER_TYPE_MAPID &mapId=n.first;
         std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> listBots=n.second;
-        for (const auto& botFightId : listBots)
+        for (const CATCHCHALLENGER_TYPE_BOTID& botFightId : listBots)
         {
             if(!haveBeatBot(mapId,botFightId))
             {

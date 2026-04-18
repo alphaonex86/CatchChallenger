@@ -42,7 +42,7 @@ void BaseServer::preload_1_the_data()
     {
         size_t lastSize=serialBuffer->tellg();
         {
-            const auto &now = msFrom1970();
+            const uint64_t &now = msFrom1970();
             *serialBuffer >> CommonDatapack::commonDatapack;
             if(CommonDatapack::commonDatapack.get_monstersCollision().empty())
             {
@@ -52,11 +52,11 @@ void BaseServer::preload_1_the_data()
             std::cout << "commonDatapack size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
             *serialBuffer >> CommonDatapackServerSpec::commonDatapackServerSpec;
             std::cout << "commonDatapackServerSpec size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
-            const auto &after = msFrom1970();
+            const uint64_t &after = msFrom1970();
             std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
         }
         timeDatapack = msFrom1970();
-        const auto &now = msFrom1970();
+        const uint64_t &now = msFrom1970();
 
         *serialBuffer >> GlobalServerData::serverPrivateVariables.randomData;
         std::cout << "randomData size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
@@ -83,7 +83,7 @@ void BaseServer::preload_1_the_data()
 
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
-        const auto &after = msFrom1970();
+        const uint64_t &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
 
         //baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
@@ -114,13 +114,13 @@ void BaseServer::preload_1_the_data()
     {
         #ifndef CATCHCHALLENGER_NOXML
         {
-            const auto &now = msFrom1970();
+            const uint64_t &now = msFrom1970();
             CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
-            const auto &after = msFrom1970();
+            const uint64_t &after = msFrom1970();
             std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
         }
         timeDatapack = msFrom1970();
-        const auto &now = msFrom1970();
+        const uint64_t &now = msFrom1970();
         preload_5_sync_the_events();
         preload_6_sync_the_datapack();
         preload_7_sync_the_skin();
@@ -128,7 +128,7 @@ void BaseServer::preload_1_the_data()
         preload_zone();
         preload_9_sync_the_map();
         //mapPathToId is cleared later at step 15 (preload_15_async_map_semi_after_db_id), after step 12 uses it
-        const auto &after = msFrom1970();
+        const uint64_t &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);//skinList
         #else

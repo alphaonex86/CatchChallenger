@@ -25,6 +25,8 @@ LIBS    += -lpq
 
 DEFINES += CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 
+DEFINES += BLAKE3_NO_SSE2 BLAKE3_NO_SSE41 BLAKE3_NO_AVX2 BLAKE3_NO_AVX512
+
 CONFIG += c++20
 
 TARGET = catchchallenger-server-login
@@ -34,7 +36,10 @@ TEMPLATE = app
 
 SOURCES += \
     ../../general/base/CompressionProtocol.cpp \
-    ../../general/sha224/sha224.cpp \
+    ../../general/base/CatchChallenger_Hash.cpp \
+    ../../general/blake3/blake3.c \
+    ../../general/blake3/blake3_dispatch.c \
+    ../../general/blake3/blake3_portable.c \
     main-epoll-login-slave.cpp \
     EpollClientLoginSlave.cpp \
     EpollServerLoginSlave.cpp \
@@ -89,7 +94,7 @@ SOURCES += \
 
 HEADERS += \
     ../../general/base/CompressionProtocol.hpp \
-    ../../general/sha224/sha224.hpp \
+    ../../general/base/CatchChallenger_Hash.hpp \
     EpollClientLoginSlave.hpp \
     EpollServerLoginSlave.hpp \
     LinkToMaster.hpp \

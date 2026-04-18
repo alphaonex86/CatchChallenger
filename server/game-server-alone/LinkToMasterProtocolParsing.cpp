@@ -359,24 +359,24 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         }
                     }
 
-                    //sha224 sum
-                    if((size-pos)<28)
+                    //hash sum
+                    if((size-pos)<CATCHCHALLENGER_HASH_SIZE)
                     {
-                        std::cerr << "C211 sha224 sum item list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        std::cerr << "C211 hash sum item list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
                     }
-                    if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()==CATCHCHALLENGER_SHA224HASH_SIZE)
+                    if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()==CATCHCHALLENGER_HASH_SIZE)
                     {
                         #ifdef CATCHCHALLENGER_CACHE_HPS
                         if(!static_cast<BaseServer *>(baseServer)->binaryOutputCacheIsOpen())
                         #endif
                         {
-                            if(memcmp(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
+                            if(memcmp(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_HASH_SIZE)!=0)
                             {
-                                std::cerr << "datapackHashBase sha224 sum not match local "
+                                std::cerr << "datapackHashBase hash sum not match local "
                                           << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
                                           << " != master "
-                                          << binarytoHexa(data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)
+                                          << binarytoHexa(data+pos,CATCHCHALLENGER_HASH_SIZE)
                                           << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 abort();
                             }
@@ -384,10 +384,10 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     }
                     else
                     {
-                        CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                        memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+                        CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_HASH_SIZE);
+                        memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
                     }
-                    pos+=28;
+                    pos+=CATCHCHALLENGER_HASH_SIZE;
 
                     if((size-pos)!=0)
                     {

@@ -83,7 +83,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         qDebug() << QStringLiteral("already in progress");
         return;
     }
-    auto start_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
 
     std::string hash;
     if(Settings::settings->contains("DatapackHashBase-"+QString::fromStdString(datapackPath)))
@@ -141,7 +141,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
             std::ifstream in_file(cachepath, std::ifstream::binary);
             if(in_file.good() && in_file.is_open())
             {
-                auto start_time = std::chrono::high_resolution_clock::now();
+                std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
                 hps::StreamInputBuffer serialBuffer(in_file);
                 #ifdef __EXCEPTIONS
                 try
@@ -166,8 +166,8 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     serialBuffer >> monsterExtra;
                     serialBuffer >> monsterBuffsExtra;
                     serialBuffer >> reputationNameToId;//used by client->player_informations.reputation[reputationId]
-                    auto end_time = std::chrono::high_resolution_clock::now();
-                    auto time = end_time - start_time;
+                    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+                    std::chrono::high_resolution_clock::duration time = end_time - start_time;
                     std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
                     loaded=true;
                     //save the cache hash key if not yet present (migration)
@@ -237,8 +237,8 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     }
                 }
             }
-            auto end_time = std::chrono::high_resolution_clock::now();
-            auto time = end_time - start_time;
+            std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::duration time = end_time - start_time;
             std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
         }
 
@@ -246,7 +246,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
 
     parsePlantsExtra();
 
-    for( const auto& n : QtDatapackClientLoader::datapackLoader->monsterBuffsExtra )
+    for( const std::pair<const CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff>& n : QtDatapackClientLoader::datapackLoader->monsterBuffsExtra )
     {
         const uint8_t &id=n.first;
         QtBuffExtra QtmonsterBuffExtraEntry;
@@ -262,12 +262,12 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[id]=QtmonsterBuffExtraEntry;
     }
 
-    for( const auto& n : itemsExtra )
+    for( const std::pair<const CATCHCHALLENGER_TYPE_ITEM,ItemExtra>& n : itemsExtra )
         ImageitemsToLoad.push_back(n.first);
-    for( const auto& n : monsterExtra )
+    for( const std::pair<const CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra>& n : monsterExtra )
         ImagemonsterToLoad.push_back(n.first);
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto time = end_time - start_time;
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::duration time = end_time - start_time;
     std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack end took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
     startThread();
     inProgress=false;
@@ -341,7 +341,7 @@ void QtDatapackClientLoader::loadMonsterImage(uint16_t id,void *v)
 
 void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
 {
-    auto start_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     std::string hashMain;
 
     std::string datapackPathMain=datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode;
@@ -384,8 +384,8 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
         mapIdToPath[id]=path;
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto time = end_time - start_time;
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::duration time = end_time - start_time;
     std::cout << "parseDatapackMainSub took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath <<
                  "(" << mainDatapackCode << "," << subDatapackCode << ")" << std::endl;
     parseTileset();
@@ -417,7 +417,7 @@ void QtDatapackClientLoader::parseTopLib()
 
 void QtDatapackClientLoader::resetAll()
 {
-    for(auto t:this->threads)
+    for(QtDatapackClientLoaderThread *t:this->threads)
     {
         t->stop();
         #ifndef NOTHREADS
@@ -494,7 +494,7 @@ void QtDatapackClientLoader::parseTileset()
 void QtDatapackClientLoader::parseItemsExtra()
 {
     DatapackClientLoader::parseItemsExtra();
-    for( const auto& n : itemsExtra ) {
+    for( const std::pair<const CATCHCHALLENGER_TYPE_ITEM,ItemExtra>& n : itemsExtra ) {
         QString path=QString::fromStdString(n.second.imagePath);
         QPixmap pix(path);
         if(pix.isNull())
@@ -572,7 +572,7 @@ std::string QtDatapackClientLoader::getFrontSkinPath(const uint32_t &skinId) con
 void QtDatapackClientLoader::parseMonstersExtra()
 {
     uint64_t imagens=0;
-    auto start_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     QDir dir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_MONSTERS);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
@@ -766,12 +766,12 @@ void QtDatapackClientLoader::parseMonstersExtra()
                             monsterExtraEntry.name=tr("Unknown").toStdString();
                         if(monsterExtraEntry.description.empty())
                             monsterExtraEntry.description=tr("Unknown").toStdString();
-                        auto start_time2 = std::chrono::high_resolution_clock::now();
+                        std::chrono::high_resolution_clock::time_point start_time2 = std::chrono::high_resolution_clock::now();
                         monsterExtraEntry.frontPath=basepath+"/front.png";
 
                         QtDatapackClientLoader::datapackLoader->monsterExtra[id]=monsterExtraEntry;
-                        auto end_time2 = std::chrono::high_resolution_clock::now();
-                        auto time2 = end_time2 - start_time2;
+                        std::chrono::high_resolution_clock::time_point end_time2 = std::chrono::high_resolution_clock::now();
+                        std::chrono::high_resolution_clock::duration time2 = end_time2 - start_time2;
                         imagens+=time2/std::chrono::nanoseconds(1);
                     }
                 }
@@ -785,7 +785,7 @@ void QtDatapackClientLoader::parseMonstersExtra()
         file_index++;
     }
 
-    auto start_time2 = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point start_time2 = std::chrono::high_resolution_clock::now();
     for(CATCHCHALLENGER_TYPE_MONSTER monsterId=1;monsterId<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();monsterId++)
     {
         if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
@@ -800,11 +800,11 @@ void QtDatapackClientLoader::parseMonstersExtra()
             QtDatapackClientLoader::datapackLoader->monsterExtra[monsterId]=monsterExtraEntry;
         }
     }
-    auto end_time2 = std::chrono::high_resolution_clock::now();
-    auto time2 = end_time2 - start_time2;
+    std::chrono::high_resolution_clock::time_point end_time2 = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::duration time2 = end_time2 - start_time2;
     imagens+=time2/std::chrono::nanoseconds(1);
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto time = end_time - start_time;
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::duration time = end_time - start_time;
 
     qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->monsterExtra.size()) << "into" << time/std::chrono::milliseconds(1)-imagens/1000000
              << "ms/" << imagens/1000000 << "ms";

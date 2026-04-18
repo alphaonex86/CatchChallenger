@@ -171,11 +171,11 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
         unsigned int index=0;
         while(index<considerDownAfterNumberOfTry && connStatusType==CONNECTION_BAD)
         {
-            auto start = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
             PQfinish(conn);
             conn=PQconnectdb(strCoPG);
             connStatusType=PQstatus(conn);
-            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             if(elapsed.count()<(uint32_t)tryInterval*1000 && connStatusType==CONNECTION_BAD)
             {
@@ -430,7 +430,7 @@ bool EpollPostgresql::queryPrepare(const char *stmtName,
     }
     //std::cout << "Prepare the name: " << stmtName << ", query: " << query << ", database: " << this << std::endl;
     PGresult *resprep = PQprepare(conn,stmtName,query,nParams,/*,paramTypes*/NULL);
-    const auto &ret=PQresultStatus(resprep);
+    const ExecStatusType ret=PQresultStatus(resprep);
     if (ret != PGRES_COMMAND_OK)
     { //if failed quit
         #ifdef DEBUG_MESSAGE_CLIENT_SQL
@@ -641,7 +641,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
             }
             else
             {
-                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double, std::milli> elapsed = end-start;
                 const uint32_t &ms=elapsed.count();
                 if(ms>5000)
@@ -777,7 +777,7 @@ const std::string EpollPostgresql::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0)
         return emptyString;
-    const auto &content=PQgetvalue(result,tuleIndex,value);
+    const char *content=PQgetvalue(result,tuleIndex,value);
     if(content==NULL)
         return emptyString;
     return content;

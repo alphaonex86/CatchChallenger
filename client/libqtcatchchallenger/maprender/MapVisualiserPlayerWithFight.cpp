@@ -185,8 +185,8 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         return false;
     const CatchChallenger::CommonMap &map_client=QtDatapackClientLoader::datapackLoader->getMap(newMapIndex);
     const QMap_client *map_full=CatchChallenger::QMap_client::all_map.at(newMapIndex);
-    const auto &playerItems=client->get_player_informations().items;
-    const auto &playerQuests=client->get_player_informations().quests;
+    const std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &playerItems=client->get_player_informations().items;
+    const std::map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> &playerQuests=client->get_player_informations().quests;
 
     if(!CatchChallenger::Api_protocol::dropOutputAfterOnMap)
     {

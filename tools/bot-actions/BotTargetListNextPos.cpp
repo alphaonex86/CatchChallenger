@@ -21,7 +21,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
         switch(target.type)
         {
             case ActionsBotInterface::GlobalTarget::ItemOnMap:
-            for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
+            for(std::map<std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap>::const_iterator it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
                 if(itemOnMap.indexOfItemOnMap==target.extra)
@@ -31,7 +31,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
             abort();
             break;
             case ActionsBotInterface::GlobalTarget::Fight:
-                for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
+                for(std::unordered_map<std::pair<uint8_t,uint8_t>, std::vector<uint16_t>, pairhash>::const_iterator it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
                 {
                     const std::vector<uint16_t> &botsFightList=it->second;
                     if(vectorcontainsAtLeastOne(botsFightList,(uint16_t)target.extra))
@@ -41,7 +41,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                 abort();
             break;
             case ActionsBotInterface::GlobalTarget::Shop:
-                for(auto it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
+                for(std::unordered_map<std::pair<uint8_t,uint8_t>, std::vector<uint16_t>, pairhash>::const_iterator it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
                 {
                     const std::vector<uint16_t> &shops=it->second;
                     if(vectorcontainsAtLeastOne(shops,(uint16_t)target.extra))
@@ -51,7 +51,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                 abort();
             break;
             case ActionsBotInterface::GlobalTarget::Heal:
-                for(auto it = blockObject->heal.begin();it!=blockObject->heal.cend();++it)
+                for(std::unordered_set<std::pair<uint8_t,uint8_t>, pairhash>::const_iterator it = blockObject->heal.begin();it!=blockObject->heal.cend();++it)
                     return *it;
                 std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::Heal" << std::endl;
                 abort();
@@ -125,7 +125,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
         CatchChallenger::Orientation::Orientation_right
     };
     std::shuffle(dlist.begin(), dlist.end(), g);
-    for (const auto &n:dlist) {
+    for (const CatchChallenger::Orientation &n:dlist) {
         uint8_t x=player.x;
         uint8_t y=player.y;
         /* not use if(ActionsAction::canGoTo(api,newDirectionToMove,*playerMap,x,y,true,true))

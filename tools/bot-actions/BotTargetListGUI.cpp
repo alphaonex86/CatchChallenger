@@ -37,7 +37,7 @@ uint16_t BotTargetList::mapPointDistanceNormalised(uint8_t x1,uint8_t y1,uint8_t
 uint32_t BotTargetList::getSeedToPlant(const CatchChallenger::Api_protocol_Qt * api,bool *haveSeedToPlant)
 {
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
-    auto i=player_private_and_public_informations.items.begin();
+    std::map<uint16_t, uint32_t>::const_iterator i=player_private_and_public_informations.items.begin();
     bool haveQuantity=false;
     uint32_t quantitySelected=0;
     uint32_t itemSelected=0;
@@ -126,7 +126,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     }
 
     std::map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> resolvedBlockListOrdered;
-    for(const auto& n:resolvedBlockList)
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObjectPathFinding>& n:resolvedBlockList)
         resolvedBlockListOrdered[n.first]=n.second;
 
     ActionsBotInterface::Player &player=actionsAction->clientList[apiReal];
@@ -153,11 +153,11 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     };
     std::vector<BufferMonstersCollisionEntry> bufferMonstersCollision;
 
-    for(const auto& n:resolvedBlockListOrdered) {
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObjectPathFinding>& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         if(listGUI==ui->localTargets)
         {
-            for(const auto& n:blockObject->links) {
+            for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObject::LinkInformation>& n:blockObject->links) {
                 const MapServerMini::BlockObject * const nextBlock=n.first;
                 const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                 if(nextBlock->map!=blockObject->map)
@@ -241,7 +241,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         //insdustry -> skip, no position control on server side
     //wild monster (and their object, day cycle)
 
-    for(const auto& n:resolvedBlockListOrdered) {
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObjectPathFinding>& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         const MapServerMini * const map=blockObject->map;
@@ -254,7 +254,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             if(haveSeedToPlant)
             {
                 {
-                    const auto &playerMapData=player_private_and_public_informations.mapData;
+                    const std::map<uint16_t, CatchChallenger::Player_private_and_public_informations_Map> &playerMapData=player_private_and_public_informations.mapData;
                     unsigned int dirtCount=0;
                     unsigned int index=0;
                     while(index<blockObject->block.size())
@@ -441,7 +441,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 }
             }
         }
-    for(const auto& n:resolvedBlockListOrdered) {
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObjectPathFinding>& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //item on map
@@ -458,7 +458,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             {
                 std::unordered_set<uint32_t> known_indexOfItemOnMap;
-                for ( const auto &item : blockObject->pointOnMap_Item )
+                for ( const std::pair<const std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap> &item : blockObject->pointOnMap_Item )
                 {
                     const MapServerMini::ItemOnMap &itemOnMap=item.second;
                     if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
@@ -467,13 +467,13 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 }
             }
             #endif
-            for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
+            for(std::map<std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap>::const_iterator it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
                 const std::pair<uint8_t,uint8_t> &point=it->first;
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
 
-                const auto mapIdForItem=static_cast<CATCHCHALLENGER_TYPE_MAPID>(blockObject->map->id);
-                const auto mapDataIt=player_private_and_public_informations.mapData.find(mapIdForItem);
+                const CATCHCHALLENGER_TYPE_MAPID mapIdForItem=static_cast<CATCHCHALLENGER_TYPE_MAPID>(blockObject->map->id);
+                const std::map<uint16_t, CatchChallenger::Player_private_and_public_informations_Map>::const_iterator mapDataIt=player_private_and_public_informations.mapData.find(mapIdForItem);
                 if(mapDataIt==player_private_and_public_informations.mapData.cend() || mapDataIt->second.items.find(point)==mapDataIt->second.items.cend())
                 {
                     const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.get_item(itemOnMap.item);
@@ -568,13 +568,13 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             }
         }
     }
-    for(const auto& n:resolvedBlockListOrdered) {
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObjectPathFinding>& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //fight
         if(fight)
         {
-            for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
+            for(std::unordered_map<std::pair<uint8_t,uint8_t>, std::vector<uint16_t>, pairhash>::const_iterator it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
             {
                 const std::pair<uint8_t,uint8_t> &point=it->first;
                 const std::vector<uint16_t> &botsFightList=it->second;
@@ -758,18 +758,18 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             }
         }
     }
-    for(const auto& n:resolvedBlockListOrdered) {
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObjectPathFinding>& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //shop
         if(shop)
         {
             //shops are now per-map with items as unordered_map<ITEM, price>
-            for(auto it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
+            for(std::unordered_map<std::pair<uint8_t,uint8_t>, std::vector<uint16_t>, pairhash>::const_iterator it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
             {
                 const std::pair<uint8_t,uint8_t> &shopPos=it->first;
                 //look up Shop from the map's BaseMap shops by position
-                const auto shopIt=blockObject->map->shops.find(shopPos);
+                const catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>, CatchChallenger::Shop>::const_iterator shopIt=blockObject->map->shops.find(shopPos);
                 if(shopIt==blockObject->map->shops.cend())
                     continue;
                 const CatchChallenger::Shop &shop=shopIt->second;
@@ -780,7 +780,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
                 globalTarget.points=0*catchChallengerClient->preferences.shop/100;
 
-                for(const auto &shopEntry : shop.items)
+                for(const std::pair<const uint16_t, uint32_t> &shopEntry : shop.items)
                 {
                     const CATCHCHALLENGER_TYPE_ITEM &item=shopEntry.first;
                     const uint32_t &price=shopEntry.second;
@@ -826,7 +826,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             }
         }
     }
-    for(const auto& n:resolvedBlockListOrdered) {
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObjectPathFinding>& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //heal
@@ -859,7 +859,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 delete newItem;
         }
     }
-    for(const auto& n:resolvedBlockListOrdered) {
+    for(const std::pair<const MapServerMini::BlockObject * const, MapServerMini::BlockObjectPathFinding>& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         /*if(blockObject->map->map_file=="road" && (blockObject->id+1)==6)

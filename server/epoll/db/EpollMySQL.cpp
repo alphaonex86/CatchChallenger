@@ -97,10 +97,10 @@ bool EpollMySQL::syncConnectInternal(bool infinityTry)
         unsigned int index=0;
         while(index<considerDownAfterNumberOfTry && connectionisbad)
         {
-            auto start = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
             mysql_close(conn);
             connectionisbad=mysql_real_connect(conn,strCohost,strCouser,strCopass,strCodatabase,3306,NULL,0);
-            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             if(elapsed.count()<(uint32_t)tryInterval*1000 && connectionisbad)
             {
@@ -299,7 +299,7 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
             tuleIndex=-1;
             ntuples=0;
             nfields=0;
-            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             const uint32_t &ms=elapsed.count();
             if(ms>5000)
@@ -400,7 +400,7 @@ const std::string EpollMySQL::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0 || value>=nfields)
         return emptyString;
-    const auto &content=row[value];
+    const char *content=row[value];
     if(content==NULL)
         return emptyString;
     return content;

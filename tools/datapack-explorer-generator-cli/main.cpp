@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
     std::sort(mainCodes.begin(),mainCodes.end());
 
     // Helper to list sub-datapack codes under map/main/{code}/sub/
-    auto discoverSubCodes=[&](const std::string &mainCode) -> std::vector<std::string> {
+    std::function<std::vector<std::string>(const std::string &)> discoverSubCodes=[&](const std::string &mainCode) -> std::vector<std::string> {
         std::vector<std::string> subs;
         subs.push_back(std::string()); // empty = base (no sub)
         const std::string subRoot=datapackPath+"map/main/"+mainCode+"/sub/";
