@@ -12,6 +12,7 @@
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <fstream>
 #include <dirent.h>
+#include <unistd.h>
 #include "../../../general/hps/hps.h"
 #endif
 

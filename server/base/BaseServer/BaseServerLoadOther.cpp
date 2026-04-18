@@ -3,6 +3,7 @@
 
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 #include "../Client.hpp"
 
 using namespace CatchChallenger;
@@ -131,13 +132,13 @@ void BaseServer::preload_30_sync_other()
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
         posOutput+=2;
 
-        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=CATCHCHALLENGER_HASH_SIZE)
         {
-            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28 into BaseServer::preload_other()" << std::endl;
+            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=CATCHCHALLENGER_HASH_SIZE into BaseServer::preload_other()" << std::endl;
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             abort();
             #elif CATCHCHALLENGER_DB_BLACKHOLE
-            CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(28);
+            CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_HASH_SIZE);
             #elif CATCHCHALLENGER_DB_FILE
             abort();
             #else
@@ -253,45 +254,45 @@ void BaseServer::preload_30_sync_other()
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
         }
-        if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28)
+        if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=CATCHCHALLENGER_HASH_SIZE)
         {
-            std::cerr << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28" << std::endl;
+            std::cerr << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=CATCHCHALLENGER_HASH_SIZE" << std::endl;
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             abort();
             #elif CATCHCHALLENGER_DB_BLACKHOLE
-            CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(28);
+            CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_HASH_SIZE);
             #elif CATCHCHALLENGER_DB_FILE
             abort();
             #else
             #error Define what do here
             #endif
         }
-        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=CATCHCHALLENGER_HASH_SIZE)
         {
-            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28 into BaseServer::preload_other()" << std::endl;
+            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=CATCHCHALLENGER_HASH_SIZE into BaseServer::preload_other()" << std::endl;
             abort();
         }
         //main hash
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),28);
-        posOutput+=28;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),CATCHCHALLENGER_HASH_SIZE);
+        posOutput+=CATCHCHALLENGER_HASH_SIZE;
         //sub hash
         if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
         {
-            if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28)
+            if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=CATCHCHALLENGER_HASH_SIZE)
             {
-                std::cerr << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28" << std::endl;
+                std::cerr << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=CATCHCHALLENGER_HASH_SIZE" << std::endl;
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 abort();
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
-                CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(28);
+                CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_HASH_SIZE);
                 #elif CATCHCHALLENGER_DB_FILE
                 abort();
                 #else
                 #error Define what do here
                 #endif
             }
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),28);
-            posOutput+=28;
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),CATCHCHALLENGER_HASH_SIZE);
+            posOutput+=CATCHCHALLENGER_HASH_SIZE;
         }
         //mirror
         {

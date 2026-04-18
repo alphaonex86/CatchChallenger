@@ -1,6 +1,10 @@
 QT       -= gui core
 CONFIG += c++20
 
+QMAKE_CXXFLAGS += -Os -flto -fno-exceptions
+QMAKE_CFLAGS += -Os -flto -fno-exceptions
+QMAKE_LFLAGS += -Os -flto -s
+
 TARGET = stats
 CONFIG   += console
 CONFIG   -= app_bundle

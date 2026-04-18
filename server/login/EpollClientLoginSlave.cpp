@@ -187,7 +187,7 @@ bool EpollClientLoginSlave::disconnectClient()
         //selected char
         /// \todo check by crash with ASSERT failure in std::unordered_map: "Iterating beyond end()"
         {
-            std::unordered_map<uint8_t,DataForSelectedCharacterReturn>::iterator j=LinkToMaster::linkToMaster->selectCharacterClients.begin();
+            std::unordered_map<uint8_t,LinkToMaster::DataForSelectedCharacterReturn>::iterator j=LinkToMaster::linkToMaster->selectCharacterClients.begin();
             while(j!=LinkToMaster::linkToMaster->selectCharacterClients.cend())
             {
                 if(j->second.client==this)
