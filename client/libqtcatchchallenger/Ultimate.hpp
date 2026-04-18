@@ -10,7 +10,7 @@ public:
     Ultimate();
     bool setKey(const std::string &key);
     bool isUltimate() const;
-    static std::string buy();
+    static std::string buyUrl();
 
     static Ultimate ultimate;
 private:

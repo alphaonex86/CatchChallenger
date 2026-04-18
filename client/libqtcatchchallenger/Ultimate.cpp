@@ -29,7 +29,7 @@ bool Ultimate::isUltimate() const
     return m_ultimate;
 }
 
-std::string Ultimate::buy()
+std::string Ultimate::buyUrl()
 {
     return QObject::tr("https://catchchallenger.herman-brule.com/#buy").toStdString();
 }
