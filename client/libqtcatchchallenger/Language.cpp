@@ -1,6 +1,7 @@
 #include "Language.hpp"
 #include <QTranslator>
 #include <QCoreApplication>
+#include <iostream>
 
 Language Language::language;
 
@@ -15,7 +16,8 @@ void Language::setLanguage(const QString &l)
         return;
     m_lang=l;
     QTranslator *translator=new QTranslator();
-    translator->load(":/CC/languages/"+m_lang+"/translation.qm");
+    if(!translator->load(":/CC/languages/"+m_lang+"/translation.qm"))
+        std::cerr << "unable to load :/CC/languages/" << m_lang.toStdString() << "/translation.qm" << std::endl;
     QCoreApplication::installTranslator(translator);
     emit newLanguage(m_lang);
 }

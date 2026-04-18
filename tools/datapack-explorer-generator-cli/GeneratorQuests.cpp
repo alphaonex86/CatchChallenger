@@ -14,11 +14,9 @@ namespace GeneratorQuests {
 
 std::string relativePathForQuest(uint16_t id)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_questsExtra();
-    auto it=extras.find(id);
     std::string name;
-    if(it!=extras.cend() && !it->second.name.empty())
-        name=it->second.name;
+    if(QtDatapackClientLoader::datapackLoader->has_questExtra(id) && !QtDatapackClientLoader::datapackLoader->get_questExtra(id).name.empty())
+        name=QtDatapackClientLoader::datapackLoader->get_questExtra(id).name;
     return "quests/"+Helper::toStringUint(id)+"-"+Helper::textForUrl(name)+".html";
 }
 
@@ -28,10 +26,12 @@ static std::string reputationName(uint8_t reputationId)
     const auto &repList=CatchChallenger::CommonDatapack::commonDatapack.get_reputation();
     if(reputationId<repList.size())
     {
-        const auto &repExtra=QtDatapackClientLoader::datapackLoader->get_reputationExtra();
-        auto it=repExtra.find(repList[reputationId].name);
-        if(it!=repExtra.cend() && !it->second.name.empty())
-            return it->second.name;
+        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(repList[reputationId].name))
+        {
+            const DatapackClientLoader::ReputationExtra &repExEntry=QtDatapackClientLoader::datapackLoader->get_reputationExtra(repList[reputationId].name);
+            if(!repExEntry.name.empty())
+                return repExEntry.name;
+        }
         if(!repList[reputationId].name.empty())
             return repList[reputationId].name;
     }
@@ -46,11 +46,9 @@ static std::string reputationLevelToText(uint8_t reputationId, uint8_t level, bo
 
     if(reputationId<repList.size())
     {
-        const auto &repExtra=QtDatapackClientLoader::datapackLoader->get_reputationExtra();
-        auto it=repExtra.find(repList[reputationId].name);
-        if(it!=repExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(repList[reputationId].name))
         {
-            const auto &re=it->second;
+            const DatapackClientLoader::ReputationExtra &re=QtDatapackClientLoader::datapackLoader->get_reputationExtra(repList[reputationId].name);
             if(positif && level<re.reputation_positive.size())
                 return "Level "+Helper::toStringUint(level)+" in "+repName+" ("+re.reputation_positive[level]+")";
             else if(!positif && level<re.reputation_negative.size())
@@ -70,15 +68,14 @@ struct ItemInfo {
 static ItemInfo getItemInfo(CATCHCHALLENGER_TYPE_ITEM itemId)
 {
     ItemInfo info;
-    const auto &itemsExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    auto it=itemsExtra.find(itemId);
-    if(it!=itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
     {
-        info.name=it->second.name;
+        const DatapackClientLoader::ItemExtra &ie=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId);
+        info.name=ie.name;
         info.link=Helper::relUrl(GeneratorItems::relativePathForItem(itemId));
-        if(!it->second.imagePath.empty())
+        if(!ie.imagePath.empty())
         {
-            std::string rel=Helper::relativeFromDatapack(it->second.imagePath);
+            std::string rel=Helper::relativeFromDatapack(ie.imagePath);
             if(!rel.empty() && Helper::fileExists(Helper::datapackPath()+rel))
                 info.image=Helper::relUrl(Helper::publishDatapackFile(rel));
         }
@@ -189,19 +186,16 @@ static void writeBotMapColumns(std::ostringstream &body, CATCHCHALLENGER_TYPE_MA
 
 void generate()
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_questsExtra();
-    const auto &quests=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests();
-    const auto &monsterExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
-
     // ── Individual quest pages ──────────────────────────────────────────
-    // Iterate over questsExtra (always populated) and optionally enrich
+    // Iterate over quest IDs and optionally enrich
     // with Quest data from CommonDatapackServerSpec (may be empty if
     // quest definitions use old format without map= attribute).
 
-    for(const auto &ep : extras)
+    for(CATCHCHALLENGER_TYPE_QUEST id=0;id<=255;id++)
     {
-        const uint16_t id=ep.first;
-        const auto &qe=ep.second;
+        if(!QtDatapackClientLoader::datapackLoader->has_questExtra(id))
+            continue;
+        const DatapackClientLoader::QuestExtra &qe=QtDatapackClientLoader::datapackLoader->get_questExtra(id);
 
         std::string name=qe.name.empty()
             ? ("Quest #"+Helper::toStringUint(id))
@@ -209,9 +203,8 @@ void generate()
 
         // Try to get full quest data (may not exist)
         const CatchChallenger::Quest *quest=nullptr;
-        auto qIt=quests.find(id);
-        if(qIt!=quests.cend())
-            quest=&qIt->second;
+        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(id))
+            quest=&CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(id);
 
         std::string rel=relativePathForQuest(id);
         Helper::setCurrentPage(rel);
@@ -259,9 +252,8 @@ void generate()
             for(const auto &qr : quest->requirements.quests)
             {
                 std::string reqName;
-                auto reqIt=extras.find(qr.quest);
-                if(reqIt!=extras.cend() && !reqIt->second.name.empty())
-                    reqName=reqIt->second.name;
+                if(QtDatapackClientLoader::datapackLoader->has_questExtra(qr.quest) && !QtDatapackClientLoader::datapackLoader->get_questExtra(qr.quest).name.empty())
+                    reqName=QtDatapackClientLoader::datapackLoader->get_questExtra(qr.quest).name;
                 else
                     reqName="Quest #"+Helper::toStringUint(qr.quest);
 
@@ -327,7 +319,7 @@ void generate()
                     bool show_full=false;
                     for(const auto &si : stepItems)
                     {
-                        if(si.hasMonster && monsterExtra.find(si.monster)!=monsterExtra.cend())
+                        if(si.hasMonster && QtDatapackClientLoader::datapackLoader->has_monsterExtra(si.monster))
                             show_full=true;
                     }
 
@@ -343,10 +335,9 @@ void generate()
 
                         if(si.hasMonster)
                         {
-                            auto mIt=monsterExtra.find(si.monster);
-                            if(mIt!=monsterExtra.cend())
+                            if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(si.monster))
                             {
-                                const auto &me=mIt->second;
+                                const DatapackClientLoader::MonsterExtra &me=QtDatapackClientLoader::datapackLoader->get_monsterExtra(si.monster);
                                 std::string monLink=Helper::relUrl(GeneratorMonsters::relativePathForMonster(si.monster));
 
                                 body << "<td>\n";
@@ -455,19 +446,19 @@ void generate()
               << "\t<th>Rewards</th>\n"
               << "</tr>\n";
 
-    for(const auto &ep : extras)
+    for(CATCHCHALLENGER_TYPE_QUEST id=0;id<=255;id++)
     {
-        const uint16_t id=ep.first;
-        const auto &qe=ep.second;
+        if(!QtDatapackClientLoader::datapackLoader->has_questExtra(id))
+            continue;
+        const DatapackClientLoader::QuestExtra &qe=QtDatapackClientLoader::datapackLoader->get_questExtra(id);
 
         std::string name=qe.name.empty()
             ? ("Quest #"+Helper::toStringUint(id))
             : qe.name;
 
         const CatchChallenger::Quest *quest=nullptr;
-        auto qIt=quests.find(id);
-        if(qIt!=quests.cend())
-            quest=&qIt->second;
+        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(id))
+            quest=&CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(id);
 
         std::string questLink=Helper::relUrl(relativePathForQuest(id));
 

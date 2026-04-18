@@ -26,6 +26,21 @@ public:
   std::size_t operator()(const std::pair<uint16_t, uint16_t> &x) const;
 };
 
+namespace std {
+template<>
+struct hash<std::pair<uint8_t, uint8_t>> {
+    std::size_t operator()(const std::pair<uint8_t, uint8_t> &x) const {
+        return (static_cast<std::size_t>(x.first) << 8) + x.second;
+    }
+};
+template<>
+struct hash<std::pair<uint16_t, uint16_t>> {
+    std::size_t operator()(const std::pair<uint16_t, uint16_t> &x) const {
+        return (static_cast<std::size_t>(x.first) << 16) + x.second;
+    }
+};
+}
+
 DLL_PUBLIC std::string str_tolower(std::string s);
 DLL_PUBLIC bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to);
 DLL_PUBLIC uint8_t stringreplaceAll(std::string& str, const std::string& from, const std::string& to);

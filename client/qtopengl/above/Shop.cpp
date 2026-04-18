@@ -249,10 +249,9 @@ void Shop::haveShopList(const std::vector<CatchChallenger::ItemToSellOrBuy> &ite
         shop_items_graphical[item]=objectId;
         itemsIntoTheShop[objectId]=items.at(index);
 
-        if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(objectId)!=
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(objectId))
         {
-            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(objectId);
+            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(objectId);
             item->setIcon(QPixmap(QString::fromStdString(extra.imagePath)));
             item->setText(tr("%1\nPrice: %2$").arg(QString::fromStdString(extra.name)).arg(items.at(index).price));
         }
@@ -290,10 +289,9 @@ void Shop::on_shopItemList_itemSelectionChanged()
         return;
     }
     uint16_t objectId=shop_items_graphical.at(item);
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(objectId)!=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(objectId))
     {
-        const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(objectId);
+        const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(objectId);
         shopDescription->setHtml(QString::fromStdString(extra.description));
     }
     else

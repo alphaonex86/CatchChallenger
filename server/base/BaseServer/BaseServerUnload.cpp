@@ -147,7 +147,7 @@ void BaseServer::unload_other()
     }
 
     #ifndef CATCHCHALLENGER_NOXML
-    CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().clear();
+    CommonDatapack::commonDatapack.clear_xmlLoadedFile();
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
 }

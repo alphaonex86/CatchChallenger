@@ -304,12 +304,11 @@ void Factory::factoryToResourceItem(QListWidgetItem *item)
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
 
     const uint16_t itemId=static_cast<uint16_t>(item->data(99).toUInt());
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
     {
-        item->setIcon(QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).imagePath)));
+        item->setIcon(QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).imagePath)));
         item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)).arg(item->data(98).toUInt()));
+            QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name)).arg(item->data(98).toUInt()));
     }
     else
     {
@@ -336,12 +335,11 @@ void Factory::factoryToProductItem(QListWidgetItem *item)
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
 
     const uint16_t itemId=static_cast<uint16_t>(item->data(99).toUInt());
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
     {
-        item->setIcon(QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).imagePath)));
+        item->setIcon(QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).imagePath)));
         item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)).arg(item->data(98).toUInt()));
+            QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name)).arg(item->data(98).toUInt()));
     }
     else
     {
@@ -366,10 +364,9 @@ void Factory::on_factoryResources_itemSelectionChanged()
         return;
     }
     uint16_t itemId=static_cast<uint16_t>(items.first()->data(99).toUInt());
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
         factoryDescription->setHtml(tr("%1 - Price: %2$").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)).arg(items.first()->data(98).toUInt()));
+            QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name)).arg(items.first()->data(98).toUInt()));
     else
         factoryDescription->setHtml(tr("Price: %1$").arg(items.first()->data(98).toUInt()));
     sellButton->setEnabled(true);
@@ -385,10 +382,9 @@ void Factory::on_factoryProducts_itemSelectionChanged()
         return;
     }
     uint16_t itemId=static_cast<uint16_t>(items.first()->data(99).toUInt());
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
         factoryDescription->setHtml(tr("%1 - Price: %2$").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)).arg(items.first()->data(98).toUInt()));
+            QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name)).arg(items.first()->data(98).toUInt()));
     else
         factoryDescription->setHtml(tr("Price: %1$").arg(items.first()->data(98).toUInt()));
     buyButton->setEnabled(true);

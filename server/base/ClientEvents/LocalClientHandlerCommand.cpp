@@ -33,7 +33,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
             return;
         }
-        if(CommonDatapack::commonDatapack.get_items().item.find(objectId)==CommonDatapack::commonDatapack.get_items().item.cend())
+        if(!CommonDatapack::commonDatapack.has_item(objectId))
         {
             receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
             return;
@@ -145,7 +145,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(CommonDatapack::commonDatapack.get_items().item.find(objectId)==CommonDatapack::commonDatapack.get_items().item.cend())
+        if(!CommonDatapack::commonDatapack.has_item(objectId))
         {
             receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
             return;

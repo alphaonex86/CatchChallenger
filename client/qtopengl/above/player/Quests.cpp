@@ -183,11 +183,11 @@ void Quests::setVar(ConnexionManager *connexionManager)
     while(i!=playerInformations.quests.cend())
     {
         const uint16_t questId=i->first;
-        if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId)!=QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
         {
             if(i->second.step>0)
             {
-                QListWidgetItem * item=new QListWidgetItem(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId).name));
+                QListWidgetItem * item=new QListWidgetItem(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questExtra(questId).name));
                 questsList->addItem(item);
                 item->setData(99,questId);
             }
@@ -222,7 +222,7 @@ void Quests::on_questsList_itemSelectionChanged()
         questDetails->setHtml(tr("Select a quest"));
         return;
     }
-    const QtDatapackClientLoader::QuestExtra &questExtra=QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId);
+    const QtDatapackClientLoader::QuestExtra &questExtra=QtDatapackClientLoader::datapackLoader->get_questExtra(questId);
     if(playerInformations.quests.at(questId).step==0 ||
             playerInformations.quests.at(questId).step>questExtra.steps.size())
     {
@@ -245,7 +245,7 @@ void Quests::on_questsList_itemSelectionChanged()
     stepDescription+="<br />";
     std::string stepRequirements;
     {
-        std::vector<CatchChallenger::Quest::Item> items=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId)
+        std::vector<CatchChallenger::Quest::Item> items=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId)
                 .steps.at(playerInformations.quests.at(questId).step-1).requirements.items;
         std::vector<std::string> objects;
         unsigned int index=0;
@@ -253,10 +253,10 @@ void Quests::on_questsList_itemSelectionChanged()
         {
             QPixmap image;
             std::string name;
-            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(items.at(index).item)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(items.at(index).item))
             {
-                image=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(items.at(index).item).imagePath));
-                name=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(items.at(index).item).name;
+                image=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(items.at(index).item).imagePath));
+                name=QtDatapackClientLoader::datapackLoader->get_itemExtra(items.at(index).item).name;
             }
             else
             {
@@ -291,18 +291,17 @@ void Quests::on_questsList_itemSelectionChanged()
     {
         finalRewards+=tr("Final rewards: ").toStdString();
         {
-            std::vector<CatchChallenger::Quest::Item> items=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId).rewards.items;
+            std::vector<CatchChallenger::Quest::Item> items=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId).rewards.items;
             std::vector<std::string> objects;
             unsigned int index=0;
             while(index<items.size())
             {
                 QPixmap image;
                 std::string name;
-                if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(items.at(index).item)!=
-                        QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+                if(QtDatapackClientLoader::datapackLoader->has_itemExtra(items.at(index).item))
                 {
-                    image=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(items.at(index).item).imagePath));
-                    name=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(items.at(index).item).name;
+                    image=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(items.at(index).item).imagePath));
+                    name=QtDatapackClientLoader::datapackLoader->get_itemExtra(items.at(index).item).name;
                 }
                 else
                 {
@@ -334,23 +333,22 @@ void Quests::on_questsList_itemSelectionChanged()
             finalRewards+=stringimplode(objects,", ")+"<br />";
         }
         {
-            std::vector<CatchChallenger::ReputationRewards> reputationRewards=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId).rewards.reputation;
+            std::vector<CatchChallenger::ReputationRewards> reputationRewards=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId).rewards.reputation;
             std::vector<std::string> reputations;
             unsigned int index=0;
             while(index<reputationRewards.size())
             {
-                if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
+                if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(
                             CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(
                                                        reputationRewards.at(index).reputationId).name
-                            )!=
-                        QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
+                            ))
                 {
                     const std::string &reputationName=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(
                                 reputationRewards.at(index).reputationId).name;
                     if(reputationRewards.at(index).point<0)
-                        reputations.push_back(tr("Less reputation for %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputationName).name)).toStdString());
+                        reputations.push_back(tr("Less reputation for %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationName).name)).toStdString());
                     if(reputationRewards.at(index).point>0)
-                        reputations.push_back(tr("More reputation for %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputationName).name)).toStdString());
+                        reputations.push_back(tr("More reputation for %1").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationName).name)).toStdString());
                 }
                 index++;
             }

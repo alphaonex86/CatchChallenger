@@ -59,10 +59,8 @@ std::string relativePathForMapRef(size_t setIdx, size_t mapId)
 
 static std::string itemDisplayName(uint16_t id)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    auto it=extras.find(id);
-    if(it!=extras.cend() && !it->second.name.empty())
-        return it->second.name;
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(id) && !QtDatapackClientLoader::datapackLoader->get_itemExtra(id).name.empty())
+        return QtDatapackClientLoader::datapackLoader->get_itemExtra(id).name;
     return "Item #"+Helper::toStringUint(id);
 }
 
@@ -576,16 +574,14 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
                     if(end!=attr && *end=='\0' && v>0)
                     {
                         uint16_t id=(uint16_t)v;
-                        if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.find(id)!=
-                           CatchChallenger::CommonDatapack::commonDatapack.get_items().item.cend())
+                        if(CatchChallenger::CommonDatapack::commonDatapack.has_item(id))
                             return id;
                     }
                     // Try name lookup (lowercase, like engine)
                     std::string lower=attr;
-                    for(auto &c : lower) c=(char)std::tolower((unsigned char)c);
-                    const auto &nameMap=CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToItemId();
-                    auto it=nameMap.find(lower);
-                    if(it!=nameMap.cend()) return it->second;
+                    for(size_t ci=0;ci<lower.size();ci++) lower[ci]=(char)std::tolower((unsigned char)lower[ci]);
+                    if(CatchChallenger::CommonDatapack::commonDatapack.has_tempNameToItemId(lower))
+                        return CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToItemId(lower);
                     return 0;
                 };
                 // Helper: resolve monster name or numeric id
@@ -596,15 +592,13 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
                     if(end!=attr && *end=='\0' && v>0)
                     {
                         uint16_t id=(uint16_t)v;
-                        if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(id)!=
-                           CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+                        if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(id))
                             return id;
                     }
                     std::string lower=attr;
-                    for(auto &c : lower) c=(char)std::tolower((unsigned char)c);
-                    const auto &nameMap=CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToMonsterId();
-                    auto it=nameMap.find(lower);
-                    if(it!=nameMap.cend()) return it->second;
+                    for(size_t ci=0;ci<lower.size();ci++) lower[ci]=(char)std::tolower((unsigned char)lower[ci]);
+                    if(CatchChallenger::CommonDatapack::commonDatapack.has_tempNameToMonsterId(lower))
+                        return CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToMonsterId(lower);
                     return 0;
                 };
 
@@ -617,8 +611,7 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
                         uint16_t itemId=resolveItemId(product->Attribute("item"));
                         if(itemId>0)
                         {
-                            const auto &items=CatchChallenger::CommonDatapack::commonDatapack.get_items().item;
-                            uint32_t price=items.at(itemId).price;
+                            uint32_t price=CatchChallenger::CommonDatapack::commonDatapack.get_item(itemId).price;
                             if(product->Attribute("overridePrice"))
                                 price=(uint32_t)std::atoi(product->Attribute("overridePrice"));
                             sd.shopProducts[itemId]=price;
@@ -775,11 +768,12 @@ static void writeFlagDivs(std::ostringstream &out, const std::set<std::string> &
 
 static std::string itemImageUrl(uint16_t itemId)
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    auto it=extras.find(itemId);
-    if(it==extras.cend() || it->second.imagePath.empty())
+    if(!QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
         return std::string();
-    std::string rel=Helper::relativeFromDatapack(it->second.imagePath);
+    const DatapackClientLoader::ItemExtra &itemEx=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId);
+    if(itemEx.imagePath.empty())
+        return std::string();
+    std::string rel=Helper::relativeFromDatapack(itemEx.imagePath);
     if(rel.empty() || !Helper::fileExists(Helper::datapackPath()+rel))
         return std::string();
     return Helper::relUrl(Helper::publishDatapackFile(rel));
@@ -788,9 +782,11 @@ static std::string itemImageUrl(uint16_t itemId)
 // Write standard item icon + name table cells (used in items/drops/shops)
 static void writeItemIconAndName(std::ostringstream &body, uint16_t itemId, const std::string &prefix=std::string())
 {
-    const auto &extras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    auto it=extras.find(itemId);
-    std::string name=(it!=extras.cend())?it->second.name:"Unknown item";
+    std::string name;
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
+        name=QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name;
+    else
+        name="Unknown item";
     std::string link=Helper::relUrl(GeneratorItems::relativePathForItem(itemId));
     std::string image=itemImageUrl(itemId);
 
@@ -817,24 +813,18 @@ static void writeItemIconAndName(std::ostringstream &body, uint16_t itemId, cons
 
 static void monsterAndLevelToDisplay(std::ostringstream &body, uint16_t monsterId, uint8_t level, bool full)
 {
-    const auto &monsters=CatchChallenger::CommonDatapack::commonDatapack.get_monsters();
-    auto mit=monsters.find(monsterId);
-    if(mit==monsters.cend())
+    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monsterId))
         return;
-    const auto &monsterDef=mit->second;
-    const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
-    auto meit=monsterExtras.find(monsterId);
-    std::string mname=(meit!=monsterExtras.cend())?meit->second.name:("Monster #"+Helper::toStringUint(monsterId));
+    const CatchChallenger::Monster &monsterDef=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monsterId);
+    std::string mname=QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterId)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterId).name:("Monster #"+Helper::toStringUint(monsterId));
     std::string monLink=Helper::relUrl(GeneratorMonsters::relativePathForMonster(monsterId));
 
     // Determine the first type for CSS class
     std::string firstType="normal";
     if(!monsterDef.type.empty())
     {
-        const auto &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra();
-        auto tit=typeExtra.find(monsterDef.type[0]);
-        if(tit!=typeExtra.cend() && !tit->second.name.empty())
-            firstType=tit->second.name;
+        if(QtDatapackClientLoader::datapackLoader->has_typeExtra(monsterDef.type[0]) && !QtDatapackClientLoader::datapackLoader->get_typeExtra(monsterDef.type[0]).name.empty())
+            firstType=QtDatapackClientLoader::datapackLoader->get_typeExtra(monsterDef.type[0]).name;
         else
             firstType=Helper::toStringUint(monsterDef.type[0]);
     }
@@ -879,17 +869,15 @@ static void monsterAndLevelToDisplay(std::ostringstream &body, uint16_t monsterI
 
         // Type badges
         body << "<tr><td>";
-        const auto &typeExtra=QtDatapackClientLoader::datapackLoader->get_typeExtra();
         body << "<div class=\"type_label_list\">";
         bool firstTypeLabel=true;
         for(const auto &t : monsterDef.type)
         {
-            auto tit=typeExtra.find(t);
-            if(tit!=typeExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader->has_typeExtra(t))
             {
                 if(!firstTypeLabel) body << " ";
                 firstTypeLabel=false;
-                std::string tname=tit->second.name;
+                std::string tname=QtDatapackClientLoader::datapackLoader->get_typeExtra(t).name;
                 // Capitalize first letter
                 if(!tname.empty()) tname[0]=(char)std::toupper((unsigned char)tname[0]);
                 body << "<span class=\"type_label type_label_" << Helper::toStringUint(t)
@@ -1407,8 +1395,7 @@ void generate()
             {
                 // Collect drops from wild monsters on this map using per-monster drop data
                 // (PHP: iterate monsters_list, look up monster_meta[m]['drops'], group by item)
-                const auto &globalMonsterDrops=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_monsterDrops();
-                const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
+                // Using per-key accessors for monster drops and extras
 
                 // Gather all wild monster IDs on this map
                 std::set<uint16_t> wildMonsterIds;
@@ -1421,9 +1408,9 @@ void generate()
                 std::map<uint16_t/*item*/, std::map<uint16_t/*monster*/, DropInfo>> droplist;
                 for(const auto mId : wildMonsterIds)
                 {
-                    auto dit=globalMonsterDrops.find(mId);
-                    if(dit==globalMonsterDrops.cend()) continue;
-                    for(const auto &drop : dit->second)
+                    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_monsterDrop(mId)) continue;
+                    const std::vector<CatchChallenger::MonsterDrops> &mDrops=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_monsterDrop(mId);
+                    for(const auto &drop : mDrops)
                     {
                         auto &entry=droplist[drop.item][mId];
                         entry.item=drop.item;
@@ -1479,8 +1466,7 @@ void generate()
                             {
                                 if(!firstMon) body << ", ";
                                 firstMon=false;
-                                auto meit=monsterExtras.find(mid);
-                                std::string mname=(meit!=monsterExtras.cend())?meit->second.name:("Monster #"+Helper::toStringUint(mid));
+                                std::string mname=QtDatapackClientLoader::datapackLoader->has_monsterExtra(mid)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(mid).name:("Monster #"+Helper::toStringUint(mid));
                                 std::string monLink=Helper::relUrl(GeneratorMonsters::relativePathForMonster(mid));
                                 body << "<a href=\"" << Helper::htmlEscape(monLink)
                                      << "\" title=\"" << Helper::htmlEscape(mname) << "\">"
@@ -1513,8 +1499,6 @@ void generate()
             if(!meta.wildLayers.empty())
             {
                 std::string tc=meta.type.empty()?"normal":meta.type;
-                const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
-
                 body << "<table class=\"item_list item_list_type_" << Helper::htmlEscape(tc) << "\">\n"
                      << "<tr class=\"item_list_title item_list_title_type_" << Helper::htmlEscape(tc) << "\">\n"
                      << "\t<th colspan=\"2\">Monster</th>\n"
@@ -1539,8 +1523,7 @@ void generate()
 
                     for(const auto &wm : sorted)
                     {
-                        auto meit=monsterExtras.find(wm.id);
-                        std::string mname=(meit!=monsterExtras.cend())?meit->second.name:("Monster #"+Helper::toStringUint(wm.id));
+                        std::string mname=QtDatapackClientLoader::datapackLoader->has_monsterExtra(wm.id)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(wm.id).name:("Monster #"+Helper::toStringUint(wm.id));
                         std::string link=Helper::relUrl(GeneratorMonsters::relativePathForMonster(wm.id));
 
                         body << "<tr class=\"value\">\n\t<td>\n";

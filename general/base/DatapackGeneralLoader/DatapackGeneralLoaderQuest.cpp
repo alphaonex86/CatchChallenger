@@ -60,11 +60,11 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     quest.rewards.allowCreateClan=false;
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -274,10 +274,9 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     CatchChallenger::Quest::Item item;
                     {
                         std::string itemLower=str_tolower(rewardsItem->Attribute("id"));
-                        const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                        if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
+                        if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
                         {
-                            item.item=tempNameToItemId.at(itemLower);
+                            item.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
                             ok=true;
                         }
                         else
@@ -286,7 +285,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     item.quantity=1;
                     if(ok)
                     {
-                        if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
+                        if(!CommonDatapack::commonDatapack.has_item(item.item))
                         {
                             std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: "
                                       << rewardsItem->Attribute("id") << ": child->Name(): " << rewardsItem->Name() << std::endl;
@@ -380,10 +379,9 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         CatchChallenger::Quest::Item item;
                         {
                             std::string itemLower=str_tolower(stepItem->Attribute("id"));
-                            const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                            if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
+                            if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
                             {
-                                item.item=tempNameToItemId.at(itemLower);
+                                item.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
                                 ok=true;
                             }
                             else
@@ -392,7 +390,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         item.quantity=1;
                         if(ok)
                         {
-                            if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
+                            if(!CommonDatapack::commonDatapack.has_item(item.item))
                             {
                                 std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: "
                                           << stepItem->Attribute("id") << ": child->Name(): " << stepItem->Name() << std::endl;
@@ -415,9 +413,8 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                 while(index<tempStringList.size())
                                 {
                                     std::string monsterLower=str_tolower(tempStringList.at(index));
-                                    const auto &tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
-                                    if(tempNameToMonsterId.find(monsterLower)!=tempNameToMonsterId.cend())
-                                        itemMonster.monsters.push_back(tempNameToMonsterId.at(monsterLower));
+                                    if(CommonDatapack::commonDatapack.has_tempNameToMonsterId(monsterLower))
+                                        itemMonster.monsters.push_back(CommonDatapack::commonDatapack.get_tempNameToMonsterId(monsterLower));
                                     else
                                     {
                                         const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);

@@ -220,8 +220,6 @@ void AddCharacter::loadProfileText()
     const std::string &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
     std::vector<const tinyxml2::XMLElement *> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
                 datapackPath,xmlFile,
-                CatchChallenger::CommonDatapack::commonDatapack.get_items().item,
-                CatchChallenger::CommonDatapack::commonDatapack.get_monsters(),
                 CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                 ).first;
     profileTextList.clear();

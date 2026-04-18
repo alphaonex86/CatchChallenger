@@ -308,7 +308,7 @@ void Api_protocol_Qt::saveCert(const std::string &file)
 }
 #endif
 
-void Api_protocol_Qt::useSeed(const uint8_t &plant_id)
+void Api_protocol_Qt::useSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id)
 {
     Api_protocol::useSeed(plant_id);
 }
@@ -1169,7 +1169,7 @@ bool Api_protocol_Qt::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn
     emit message("applyCurrentLifeEffectReturn on: "+QString::number(effectReturn.on));
     #endif
     int32_t quantity;
-    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster),playerMonster->level);
+    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(playerMonster->monster),playerMonster->level);
     switch(effectReturn.on)
     {
         case ApplyOn_AloneEnemy:
@@ -1456,7 +1456,7 @@ void Api_protocol_Qt::levelUp(const uint8_t &level, const uint8_t &monsterIndex)
 {
     CommonFightEngine::levelUp(level,monsterIndex);
     const PlayerMonster &monster=player_informations.monsters.at(monsterIndex);
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(monster.monster);
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(monster.monster);
     unsigned int index=0;
     while(index<monsterInformations.evolutions.size())
     {
@@ -1505,7 +1505,7 @@ void Api_protocol_Qt::confirmEvolutionByPosition(const uint8_t &monterPosition)
 {
     Api_protocol::confirmEvolutionByPosition(monterPosition);
     CatchChallenger::PlayerMonster &playerMonster=player_informations.monsters[monterPosition];
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(playerMonster.monster);
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(playerMonster.monster);
     unsigned int sub_index=0;
     while(sub_index<monsterInformations.evolutions.size())
     {
@@ -1571,15 +1571,15 @@ bool Api_protocol_Qt::useObjectOnMonsterByPosition(const uint16_t &object, const
         std::cerr << "Unable to locate the monster to use the item: " << std::to_string(monsterPosition) << std::endl;
         return false;
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.find(object)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_evolutionItem(object))
     {
     }
     //duplicate to have a return
-    else if(CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(object)!=CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend()
+    else if(CommonDatapack::commonDatapack.has_monsterItemEffect(object)
             ||
-            CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.find(object)!=CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.cend())
+            CommonDatapack::commonDatapack.has_monsterItemEffectOutOfFight(object))
     {
-        if(CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(object)!=CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend())
+        if(CommonDatapack::commonDatapack.has_monsterItemEffect(object))
         {
             //duplicate to have a return
             Skill::AttackReturn attackReturn;
@@ -1594,8 +1594,8 @@ bool Api_protocol_Qt::useObjectOnMonsterByPosition(const uint16_t &object, const
             attackReturn.on_current_monster=true;
             attackReturn.item=object;
 
-            const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster),playerMonster->level);
-            const std::vector<MonsterItemEffect> monsterItemEffect = CommonDatapack::commonDatapack.get_items().monsterItemEffect.at(object);
+            const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(playerMonster->monster),playerMonster->level);
+            const std::vector<MonsterItemEffect> &monsterItemEffect = CommonDatapack::commonDatapack.get_monsterItemEffect(object);
             unsigned int index=0;
             //duplicate to have a return
             while(index<monsterItemEffect.size())
@@ -1675,11 +1675,11 @@ bool Api_protocol_Qt::useObjectOnMonsterByPosition(const uint16_t &object, const
             }
             return true;
         }
-        else if(CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.find(object)!=CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.cend())
+        else if(CommonDatapack::commonDatapack.has_monsterItemEffectOutOfFight(object))
         {
         }
     }
-    else if(CommonDatapack::commonDatapack.get_items().itemToLearn.find(object)!=CommonDatapack::commonDatapack.get_items().itemToLearn.cend())
+    else if(CommonDatapack::commonDatapack.has_itemToLearn(object))
     {
     }
     else

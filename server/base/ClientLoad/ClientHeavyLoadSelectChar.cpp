@@ -102,7 +102,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    if(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id)==NULL)
+    if(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id)==65535)
     {
         normalOutput("rescue_map_database_id have not reverse (fixed by current map)");
         characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
@@ -177,7 +177,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    if(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id)==NULL)
+    if(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id)==65535)
     {
         normalOutput("unvalidated_rescue_map_database_id have not reverse (fixed by current map)");
         characterIsRight(query_id,characterId,mapIndex,x,y,orientation);

@@ -26,7 +26,7 @@ CommonDatapackServerSpec::CommonDatapackServerSpec()
 }
 
 #ifndef CATCHCHALLENGER_NOXML
-void CommonDatapackServerSpec::parseDatapackAfterZoneAndMap(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+void CommonDatapackServerSpec::parseDatapackAfterZoneAndMap(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode, const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     if(!CommonDatapack::commonDatapack.isParsedContent())
     {
@@ -69,13 +69,13 @@ bool CommonDatapackServerSpec::isParsedContent() const
 }
 
 #ifndef CATCHCHALLENGER_NOXML
-void CommonDatapackServerSpec::parseQuests(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+void CommonDatapackServerSpec::parseQuests(const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     quests=DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS1+mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2,mapPathToId);
     std::cout << quests.size() << " quest(s) loaded" << std::endl;
 }
 
-void CommonDatapackServerSpec::parseServerProfileList(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+void CommonDatapackServerSpec::parseServerProfileList(const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     std::string startFile=datapackPath+DATAPACK_BASE_PATH_PLAYERSPEC+"/"+mainDatapackCode+"/sub/"+subDatapackCode+"/start.xml";
     if(!CatchChallenger::FacilityLibGeneral::isFile(startFile))
@@ -96,7 +96,7 @@ void CommonDatapackServerSpec::applyMonstersRate()
         std::cerr << "CommonSettingsServer::commonSettingsServer.rates_xp can't be null, are you connected to game server to have the rates?" << std::endl;
         abort();
     }
-    for(const auto& n : CommonDatapack::commonDatapack.get_monsters()) {
+    for(const auto& n : CommonDatapack::commonDatapack.monsters) {
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
 
         /*prevent double call, double call on client, not solved for now:
@@ -138,8 +138,8 @@ void CommonDatapackServerSpec::applyMonstersRate()
 void CommonDatapackServerSpec::parseMonstersDrop()
 {
     monsterDrops=DatapackGeneralLoader::loadMonsterDrop(datapackPath+DATAPACK_BASE_PATH_MONSTERS,
-                                                       CommonDatapack::commonDatapack.get_items().item,
-                                                       CommonDatapack::commonDatapack.get_monsters());
+                                                       CommonDatapack::commonDatapack.items,
+                                                       CommonDatapack::commonDatapack.monsters);
     std::cout << monsterDrops.size() << " monters drop(s) loaded" << std::endl;
 }
 #endif
@@ -164,7 +164,7 @@ void CommonDatapackServerSpec::unload()
     serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();
 
-    for(const auto& n : CommonDatapack::commonDatapack.get_monsters()) {
+    for(const auto& n : CommonDatapack::commonDatapack.monsters) {
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
         monster.level_to_xp.clear();
     }
@@ -173,43 +173,23 @@ void CommonDatapackServerSpec::unload()
     isParsedSpec=false;
 }
 
-const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> &CommonDatapackServerSpec::get_quests() const
-{
-    return quests;
-}
-
-const std::vector<ServerSpecProfile> &CommonDatapackServerSpec::get_serverProfileList() const
-{
-    return serverProfileList;
-}
-
-std::vector<ServerSpecProfile> &CommonDatapackServerSpec::get_serverProfileList_rw()
-{
-    return serverProfileList;
-}
-
-const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<MonsterDrops> > &CommonDatapackServerSpec::get_monsterDrops() const
-{
-    return monsterDrops;
-}
-
-const std::unordered_map<std::string,ZONE_TYPE> &CommonDatapackServerSpec::get_zoneToId() const
-{
-    return zoneToId;
-}
-
-std::unordered_map<std::string,ZONE_TYPE> &CommonDatapackServerSpec::get_zoneToId_rw()
-{
-    return zoneToId;
-}
-
-const std::vector<std::string> &CommonDatapackServerSpec::get_idToZone() const
-{
-    return idToZone;
-}
-
-std::vector<std::string> &CommonDatapackServerSpec::get_idToZone_rw()
-{
-    return idToZone;
-}
+//quests
+size_t CommonDatapackServerSpec::get_quests_size() const { return quests.size(); }
+const Quest &CommonDatapackServerSpec::get_quest(const CATCHCHALLENGER_TYPE_QUEST &key) const { return quests.at(key); }
+bool CommonDatapackServerSpec::has_quest(const CATCHCHALLENGER_TYPE_QUEST &key) const { return quests.find(key)!=quests.cend(); }
+//serverProfileList
+const std::vector<ServerSpecProfile> &CommonDatapackServerSpec::get_serverProfileList() const { return serverProfileList; }
+std::vector<ServerSpecProfile> &CommonDatapackServerSpec::get_serverProfileList_rw() { return serverProfileList; }
+//monsterDrops
+size_t CommonDatapackServerSpec::get_monsterDrops_size() const { return monsterDrops.size(); }
+const std::vector<MonsterDrops> &CommonDatapackServerSpec::get_monsterDrop(const CATCHCHALLENGER_TYPE_MAPID &key) const { return monsterDrops.at(key); }
+bool CommonDatapackServerSpec::has_monsterDrop(const CATCHCHALLENGER_TYPE_MAPID &key) const { return monsterDrops.find(key)!=monsterDrops.cend(); }
+//zoneToId
+size_t CommonDatapackServerSpec::get_zoneToId_size() const { return zoneToId.size(); }
+ZONE_TYPE CommonDatapackServerSpec::get_zoneToId(const std::string &zone) const { return zoneToId.at(zone); }
+bool CommonDatapackServerSpec::has_zoneToId(const std::string &zone) const { return zoneToId.find(zone)!=zoneToId.cend(); }
+void CommonDatapackServerSpec::set_zoneToId(const std::string &zone, const ZONE_TYPE &id) { zoneToId[zone]=id; }
+//idToZone
+const std::vector<std::string> &CommonDatapackServerSpec::get_idToZone() const { return idToZone; }
+std::vector<std::string> &CommonDatapackServerSpec::get_idToZone_rw() { return idToZone; }
 

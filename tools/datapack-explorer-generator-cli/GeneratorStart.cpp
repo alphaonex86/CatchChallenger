@@ -26,9 +26,7 @@ void generate()
     if(root==nullptr)
         return;
 
-    const auto &monsterExtras=QtDatapackClientLoader::datapackLoader->get_monsterExtra();
-    const auto &itemExtras=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    const auto &repExtras=QtDatapackClientLoader::datapackLoader->get_reputationExtra();
+    // Using per-key has/get API instead of whole-container access
 
     std::ostringstream body;
     int profileIndex=0;
@@ -171,11 +169,12 @@ void generate()
                     // Monster name and description
                     std::string mname;
                     std::string mdesc;
-                    auto mIt=monsterExtras.find(m.id);
-                    if(mIt!=monsterExtras.cend())
+                    bool hasMonsterEx=QtDatapackClientLoader::datapackLoader->has_monsterExtra(m.id);
+                    if(hasMonsterEx)
                     {
-                        mname=mIt->second.name;
-                        mdesc=mIt->second.description;
+                        const DatapackClientLoader::MonsterExtra &mEx=QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.id);
+                        mname=mEx.name;
+                        mdesc=mEx.description;
                     }
                     if(mname.empty())
                         mname=Helper::toStringUint(m.id);
@@ -184,8 +183,8 @@ void generate()
                     std::string frontUrl;
                     {
                         std::string absPath;
-                        if(mIt!=monsterExtras.cend() && !mIt->second.frontPath.empty())
-                            absPath=mIt->second.frontPath;
+                        if(hasMonsterEx && !QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.id).frontPath.empty())
+                            absPath=QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.id).frontPath;
                         else
                         {
                             std::string base=Helper::datapackPath()+"monsters/"+Helper::toStringUint(m.id)+"/";
@@ -229,13 +228,13 @@ void generate()
             for(const RepEntry &r : reputations)
             {
                 std::string repText;
-                auto rIt=repExtras.find(r.type);
-                if(rIt!=repExtras.end())
+                if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(r.type))
                 {
-                    if(r.level>=0 && (size_t)r.level<rIt->second.reputation_positive.size())
-                        repText=rIt->second.reputation_positive[r.level];
-                    else if(r.level<0 && (size_t)(-r.level)<rIt->second.reputation_negative.size())
-                        repText=rIt->second.reputation_negative[-r.level];
+                    const DatapackClientLoader::ReputationExtra &rEx=QtDatapackClientLoader::datapackLoader->get_reputationExtra(r.type);
+                    if(r.level>=0 && (size_t)r.level<rEx.reputation_positive.size())
+                        repText=rEx.reputation_positive[r.level];
+                    else if(r.level<0 && (size_t)(-r.level)<rEx.reputation_negative.size())
+                        repText=rEx.reputation_negative[-r.level];
                 }
                 if(repText.empty())
                     repText=r.type+" level "+Helper::toStringInt(r.level);
@@ -250,7 +249,7 @@ void generate()
             std::vector<ItemEntry> validItems;
             for(const ItemEntry &item : items)
             {
-                if(itemExtras.find(item.id)!=itemExtras.cend())
+                if(QtDatapackClientLoader::datapackLoader->has_itemExtra(item.id))
                     validItems.push_back(item);
             }
             if(!validItems.empty())
@@ -258,10 +257,10 @@ void generate()
                 body << "Items: <ul style=\"margin:0px;\">";
                 for(const ItemEntry &item : validItems)
                 {
-                    auto iIt=itemExtras.find(item.id);
-                    const std::string &iname=iIt->second.name;
-                    const std::string &idesc=iIt->second.description;
-                    const std::string &iimage=iIt->second.imagePath;
+                    const DatapackClientLoader::ItemExtra &iEx=QtDatapackClientLoader::datapackLoader->get_itemExtra(item.id);
+                    const std::string &iname=iEx.name;
+                    const std::string &idesc=iEx.description;
+                    const std::string &iimage=iEx.imagePath;
 
                     std::string itemPage=Helper::relUrlFrom(page,
                         GeneratorItems::relativePathForItem(item.id));

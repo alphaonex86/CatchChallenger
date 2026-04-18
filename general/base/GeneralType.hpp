@@ -3,6 +3,22 @@
 
 #include <stdint.h>
 
+#if __cplusplus >= 202302L && __has_include(<flat_map>)
+#include <flat_map>
+#include <flat_set>
+template<typename K, typename V>
+using catchchallenger_datapack_map = std::flat_map<K, V>;
+template<typename K>
+using catchchallenger_datapack_set = std::flat_set<K>;
+#else
+#include <unordered_map>
+#include <unordered_set>
+template<typename K, typename V>
+using catchchallenger_datapack_map = std::unordered_map<K, V>;
+template<typename K>
+using catchchallenger_datapack_set = std::unordered_set<K>;
+#endif
+
 #define CATCHCHALLENGER_TYPE_ITEM uint16_t
 #define CATCHCHALLENGER_TYPE_ITEM_QUANTITY uint32_t
 #define CATCHCHALLENGER_TYPE_MONSTER_LIST_SIZE uint8_t
@@ -14,7 +30,9 @@
 #define CATCHCHALLENGER_TYPE_MAPID uint16_t
 #define CATCHCHALLENGER_TYPE_TELEPORTERID uint16_t
 #define CATCHCHALLENGER_TYPE_BOTID uint8_t
-#define CATCHCHALLENGER_TYPE_PLAN uint8_t
+#define CATCHCHALLENGER_TYPE_PLANT uint8_t
+#define CATCHCHALLENGER_TYPE_REPUTATION uint8_t
+#define CATCHCHALLENGER_TYPE_CRAFTINGRECIPE uint8_t
 #define COORD_TYPE uint8_t
 #define SIMPLIFIED_PLAYER_ID_FOR_MAP uint8_t
 #define CLAN_ID_TYPE uint32_t

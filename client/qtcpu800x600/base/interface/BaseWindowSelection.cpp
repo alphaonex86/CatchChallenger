@@ -77,28 +77,28 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_inventory);
                 ui->inventoryUse->setText(tr("Select"));
-                if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().item.cend())
-                    if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(item).consumeAtUse)
+                if(CatchChallenger::CommonDatapack::commonDatapack.has_item(item))
+                    if(CatchChallenger::CommonDatapack::commonDatapack.get_item(item).consumeAtUse)
                         add_to_inventory(item,1,false);
                 break;
             }
             const PlayerMonster * const monster=client->monsterByPosition(monsterPosition);
             if(monster==NULL)
             {
-                if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().item.cend())
-                    if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(item).consumeAtUse)
+                if(CatchChallenger::CommonDatapack::commonDatapack.has_item(item))
+                    if(CatchChallenger::CommonDatapack::commonDatapack.get_item(item).consumeAtUse)
                         add_to_inventory(item,1,false);
                 break;
             }
-            const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
-            const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster->monster);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.cend())
+            const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(monster->monster);
+            const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster->monster);
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_evolutionItem(item))
             {
                 monsterEvolutionPostion=0;
-                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.get_monsters().at(CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.at(item).at(monster->monster));
+                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.get_monster(CatchChallenger::CommonDatapack::commonDatapack.get_evolutionItemForMonster(item,monster->monster));
                 const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=
-                        QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(
-                            CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.at(item).at(monster->monster)
+                        QtDatapackClientLoader::datapackLoader->get_monsterExtra(
+                            CatchChallenger::CommonDatapack::commonDatapack.get_evolutionItemForMonster(item,monster->monster)
                             );
                 //create animation widget
                 //show the animation
@@ -122,7 +122,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 if(client->useObjectOnMonsterByPosition(item,monsterPosition))
                 {
                     showTip(tr("Using <b>%1</b> on <b>%2</b>")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item).name))
+                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name))
                             .arg(QString::fromStdString(monsterInformationsExtra.name))
                             .toStdString());
                     client->useObjectOnMonsterByPosition(item,monsterPosition);
@@ -132,12 +132,11 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 else
                 {
                     showTip(tr("Failed to use <b>%1</b> on <b>%2</b>")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item).name))
+                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name))
                             .arg(QString::fromStdString(monsterInformationsExtra.name))
                             .toStdString());
-                    if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.find(item)!=
-                            CatchChallenger::CommonDatapack::commonDatapack.get_items().item.cend())
-                        if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(item).consumeAtUse)
+                    if(CatchChallenger::CommonDatapack::commonDatapack.has_item(item))
+                        if(CatchChallenger::CommonDatapack::commonDatapack.get_item(item).consumeAtUse)
                             add_to_inventory(item,1,false);
                 }
             }
@@ -163,7 +162,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ItemToSellOrBuy tempItem;
             tempItem.object=itemId;
             tempItem.quantity=quantity;
-            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(itemId).price/2;
+            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.get_item(itemId).price/2;
             itemsToSell.push_back(tempItem);
             client->sellObject(tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
@@ -221,11 +220,10 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             PlayerMonster * playerMonster=client->getCurrentMonster();
             init_current_monster_display(&copiedMonster);
             ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-            if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(playerMonster->monster)!=
-                    QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(playerMonster->monster))
             {
                 ui->labelFightEnter->setText(tr("Go %1")
-                                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(playerMonster->monster).name)));
+                                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(playerMonster->monster).name)));
                 ui->labelFightMonsterBottom->setPixmap(QtDatapackClientLoader::datapackLoader->getMonsterExtra(playerMonster->monster).back.scaled(160,160));
             }
             else
@@ -265,7 +263,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             client->removeMonsterByPosition(monsterPosition);
             client->addMonsterByPosition(monsterPosition);
             QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(tradeCurrentMonsters.back().monster).name));
+            item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(tradeCurrentMonsters.back().monster).name));
             item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.back().level));
             item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(tradeCurrentMonsters.back().monster).front);
             ui->tradePlayerMonsters->addItem(item);
@@ -281,16 +279,15 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 seed_in_waiting.pop_back();
                 break;
             }
-            if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemId)==
-                    QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
+            if(!QtDatapackClientLoader::datapackLoader->has_itemToPlant(itemId))
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 seed_in_waiting.pop_back();
                 return;
             }
-            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemId);
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plantId).requirements.reputation))
+            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->get_itemToPlant(itemId);
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
             {
                 qDebug() << "You don't have the requirements to plant the seed";
                 QMessageBox::critical(this,tr("Error"),tr("You don't have the requirements to plant the seed"));
@@ -314,9 +311,9 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
 
             const SeedInWaiting seedInWaiting=seed_in_waiting.back();
             seed_in_waiting.back().seedItemId=itemId;
-            insert_plant(QtDatapackClientLoader::datapackLoader->get_mapToId().at(seedInWaiting.map),
+            insert_plant(QtDatapackClientLoader::datapackLoader->get_mapToId(seedInWaiting.map),
                          seedInWaiting.x,seedInWaiting.y,plantId,
-                         static_cast<uint16_t>(CommonDatapack::commonDatapack.get_plants().at(plantId).fruits_seconds)
+                         static_cast<uint16_t>(CommonDatapack::commonDatapack.get_plant(plantId).fruits_seconds)
                          );
             addQuery(QueryType_Seed);
             load_plant_inventory();
@@ -329,17 +326,16 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 {
                     std::unordered_set<int> detectDuplicate;
-                    const CATCHCHALLENGER_TYPE_MAPID seedMapId=QtDatapackClientLoader::datapackLoader->get_mapToId().at(seedInWaiting.map);
+                    const CATCHCHALLENGER_TYPE_MAPID seedMapId=QtDatapackClientLoader::datapackLoader->get_mapToId(seedInWaiting.map);
                     std::cerr << "debug: seedInWaiting.map: " << seedInWaiting.map << " mapId: " << seedMapId << std::endl;
                     std::cerr << "debug: map list: " << std::endl;
                     unsigned int index=0;
                     while(index<QtDatapackClientLoader::datapackLoader->get_maps().size())
                     {
                         const std::string mapPath=QtDatapackClientLoader::datapackLoader->getDatapackPath()+QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+QtDatapackClientLoader::datapackLoader->get_maps().at(index);
-                        const auto &mapToId=QtDatapackClientLoader::datapackLoader->get_mapToId();
-                        if(mapToId.find(mapPath)!=mapToId.cend())
+                        if(QtDatapackClientLoader::datapackLoader->has_mapToId(mapPath))
                         {
-                            const CATCHCHALLENGER_TYPE_MAPID mapId=mapToId.at(mapPath);
+                            const CATCHCHALLENGER_TYPE_MAPID mapId=QtDatapackClientLoader::datapackLoader->get_mapToId(mapPath);
                             if(QMap_client::all_map.find(mapId)!=QMap_client::all_map.cend())
                             {
                                 if(detectDuplicate.find(mapId)!=detectDuplicate.cend())
@@ -390,7 +386,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                         index++;
                     }
                 }
-                if(QtDatapackClientLoader::datapackLoader->get_mapToId().find(seedInWaiting.map)==QtDatapackClientLoader::datapackLoader->get_mapToId().cend())
+                if(!QtDatapackClientLoader::datapackLoader->has_mapToId(seedInWaiting.map))
                 {
                     //check duplicate
                     std::unordered_set<int> detectDuplicate;
@@ -433,7 +429,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             //it's trap
-            if(CommonDatapack::commonDatapack.get_items().trap.find(itemId)!=CommonDatapack::commonDatapack.get_items().trap.cend() && client->isInFightWithWild())
+            if(CommonDatapack::commonDatapack.has_trap(itemId) && client->isInFightWithWild())
             {
                 remove_to_inventory(itemId);
                 useTrap(itemId);
@@ -444,7 +440,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 if(client->useObjectOnMonsterByPosition(itemId,monsterPosition))
                 {
                     remove_to_inventory(itemId);
-                    if(CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(itemId)!=CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend())
+                    if(CommonDatapack::commonDatapack.has_monsterItemEffect(itemId))
                     {
                         client->useObjectOnMonsterByPosition(itemId,monsterPosition);
                         updateAttackList();
@@ -522,14 +518,13 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     }
 
     //is crafting recipe
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().find(itemId)!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_itemToCraftingRecipe(itemId))
     {
         Player_private_and_public_informations informations=client->get_player_informations();
-        const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().at(itemId);
+        const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipe(itemId);
 
         //check if have the requirements
-        const CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(recipeId);
+        const CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipeId);
         if(!haveReputationRequirements(recipe.requirements.reputation))
         {
             std::string string;
@@ -549,46 +544,46 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             return;
         }
         objectInUsing.push_back(itemId);
-        if(CommonDatapack::commonDatapack.get_items().item.at(objectInUsing.back()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.get_item(objectInUsing.back()).consumeAtUse)
             remove_to_inventory(objectInUsing.back());
         client->useObject(objectInUsing.back());
     }
     //it's repel
-    else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.cend())
+    else if(CatchChallenger::CommonDatapack::commonDatapack.has_repel(itemId))
     {
-        mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.at(itemId));
+        mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.get_repel(itemId));
         objectInUsing.push_back(itemId);
-        if(CommonDatapack::commonDatapack.get_items().item.at(objectInUsing.back()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.get_item(objectInUsing.back()).consumeAtUse)
             remove_to_inventory(objectInUsing.back());
         client->useObject(objectInUsing.back());
     }
     //it's object with monster effect
-    else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend())
+    else if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterItemEffect(itemId))
     {
         objectInUsing.push_back(itemId);
-        if(CommonDatapack::commonDatapack.get_items().item.at(objectInUsing.back()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.get_item(objectInUsing.back()).consumeAtUse)
             remove_to_inventory(objectInUsing.back());
         selectObject(ObjectType_ItemOnMonster);
     }
     //it's object with monster effect but offline
-    else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.cend())
+    else if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterItemEffectOutOfFight(itemId))
     {
         objectInUsing.push_back(itemId);
-        if(CommonDatapack::commonDatapack.get_items().item.at(objectInUsing.back()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.get_item(objectInUsing.back()).consumeAtUse)
             remove_to_inventory(objectInUsing.back());
         selectObject(ObjectType_ItemOnMonster);
     }
-    else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.cend())
+    else if(CatchChallenger::CommonDatapack::commonDatapack.has_evolutionItem(itemId))
     {
         objectInUsing.push_back(itemId);
-        if(CommonDatapack::commonDatapack.get_items().item.at(objectInUsing.back()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.get_item(objectInUsing.back()).consumeAtUse)
             remove_to_inventory(objectInUsing.back());
         selectObject(ObjectType_ItemEvolutionOnMonster);
     }
-    else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn.cend())
+    else if(CatchChallenger::CommonDatapack::commonDatapack.has_itemToLearn(itemId))
     {
         objectInUsing.push_back(itemId);
-        if(CommonDatapack::commonDatapack.get_items().item.at(objectInUsing.back()).consumeAtUse)
+        if(CommonDatapack::commonDatapack.get_item(objectInUsing.back()).consumeAtUse)
             remove_to_inventory(objectInUsing.back());
         selectObject(ObjectType_ItemLearnOnMonster);
     }

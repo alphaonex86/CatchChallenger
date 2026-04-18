@@ -472,7 +472,7 @@ void BaseServer::preload_6_sync_the_datapack()
 
 void BaseServer::preload_10_sync_the_gift()
 {
-    if(CommonDatapack::commonDatapack.get_items().item.empty())
+    if(CommonDatapack::commonDatapack.get_items_size() == 0)
     {
         std::cerr << "BaseServer::preload_the_gift(): CommonDatapack::commonDatapack.items.item.emtpy(), skipped" << std::endl;
         return;
@@ -492,7 +492,7 @@ void BaseServer::preload_10_sync_the_gift()
             const uint16_t &item=stringtouint16(entryList.at(0),&ok);
             if(ok)
             {
-                if(CommonDatapack::commonDatapack.get_items().item.find(item)!=CommonDatapack::commonDatapack.get_items().item.cend())
+                if(CommonDatapack::commonDatapack.has_item(item))
                 {
                     const uint8_t &value=stringtouint8(entryList.at(1),&ok);
                     if(ok)
@@ -515,7 +515,7 @@ void BaseServer::preload_10_sync_the_gift()
             giftEntry.item=stringtouint16(entryList.at(0),&ok);
             if(ok)
             {
-                if(CommonDatapack::commonDatapack.get_items().item.find(giftEntry.item)!=CommonDatapack::commonDatapack.get_items().item.cend())
+                if(CommonDatapack::commonDatapack.has_item(giftEntry.item))
                 {
                     const double &proportional=stringtodouble(entryList.at(1),&ok)/total*RAND_MAX;
                     if(ok)

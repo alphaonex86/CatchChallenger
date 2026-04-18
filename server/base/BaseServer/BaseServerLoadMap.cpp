@@ -23,9 +23,9 @@ bool BaseServer::preload_9_sync_the_map()
 #ifndef CATCHCHALLENGER_NOXML
     std::vector<Map_semi> semi_loaded_map;
 
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().empty())
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId_size() == 0)
     {
-        std::cerr << "CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().empty()" << std::endl;
+        std::cerr << "CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId_size() == 0" << std::endl;
         abort();
     }
 
@@ -41,12 +41,13 @@ bool BaseServer::preload_9_sync_the_map()
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<tinyxml2::XMLDocument*> xmlDocsToKeep;
     #endif
+    std::vector<MapLoadBuffers> mapLoadBuffers;
     {
         std::vector<CommonMap> flat_map_list_temp;
         #ifdef EPOLLCATCHCHALLENGERSERVER
-        Map_loader::loadAllMapsAndLink(flat_map_list_temp,GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId,&xmlDocsToKeep);
+        Map_loader::loadAllMapsAndLink(flat_map_list_temp,GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId,&xmlDocsToKeep,&mapLoadBuffers);
         #else
-        Map_loader::loadAllMapsAndLink(flat_map_list_temp,GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId);
+        Map_loader::loadAllMapsAndLink(flat_map_list_temp,GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId,nullptr,&mapLoadBuffers);
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(flat_map_list_temp.size()!=semi_loaded_map.size())
@@ -63,7 +64,6 @@ bool BaseServer::preload_9_sync_the_map()
             Map_server_MapVisibility_Simple_StoreOnSender &map_server=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[i];
             const Map_semi &map_semi=semi_loaded_map.at(i);
             // copy CommonMap data to MapServer (border, id, flat_simplified_map, teleporters, width, height, zones, industries, botFights, shops, botsFightTrigger, items, monsterDrops)
-            // also moves the unknownMovingBuffer, unknownObjectBuffer, unknownBotStepBuffer
             static_cast<CommonMap &>(map_server)=std::move(flat_map_list_temp[i]);
             // initialize MapServer-specific attributes
             memset(map_server.localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
@@ -72,8 +72,8 @@ bool BaseServer::preload_9_sync_the_map()
             map_server.id_db=0;
             map_server.zone=255;// no zone by default
             // complete data specific to MapServer: zone
-            if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(map_semi.old_map.zoneName)!=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
-                map_server.zone=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().at(map_semi.old_map.zoneName);
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.has_zoneToId(map_semi.old_map.zoneName))
+                map_server.zone=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId(map_semi.old_map.zoneName);
             i++;
         }
     }
@@ -88,36 +88,38 @@ bool BaseServer::preload_9_sync_the_map()
         {
             Map_server_MapVisibility_Simple_StoreOnSender &map_server=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[i];
             const std::string &mapFile=mapIdToPath.find(i)!=mapIdToPath.cend() ? mapIdToPath.at(i) : std::string("unknown");
-            for(const UnknownMovingEntry &entry : map_server.unknownMovingBuffer)
+            if(i<mapLoadBuffers.size())
             {
-                if(!map_server.parseUnknownMoving(entry.type,entry.object_x,entry.object_y,entry.property_text))
-                    std::cerr << "BaseServer::preload_9_sync_the_map() unknown moving type: " << entry.type
-                              << ", object_x: " << entry.object_x
-                              << ", object_y: " << entry.object_y
-                              << ", map index: " << i << ", file: " << mapFile << std::endl;
+                const MapLoadBuffers &buffers=mapLoadBuffers[i];
+                for(const UnknownMovingEntry &entry : buffers.unknownMovingBuffer)
+                {
+                    if(!map_server.parseUnknownMoving(entry.type,entry.object_x,entry.object_y,entry.property_text))
+                        std::cerr << "BaseServer::preload_9_sync_the_map() unknown moving type: " << entry.type
+                                  << ", object_x: " << entry.object_x
+                                  << ", object_y: " << entry.object_y
+                                  << ", map index: " << i << ", file: " << mapFile << std::endl;
+                }
+                for(const UnknownObjectEntry &entry : buffers.unknownObjectBuffer)
+                {
+                    if(!map_server.parseUnknownObject(entry.type,entry.object_x,entry.object_y,entry.property_text))
+                        std::cerr << "BaseServer::preload_9_sync_the_map() unknown object type: " << entry.type
+                                  << ", object_x: " << entry.object_x
+                                  << ", object_y: " << entry.object_y
+                                  << ", map index: " << i << ", file: " << mapFile << std::endl;
+                }
+                for(const UnknownBotStepEntry &entry : buffers.unknownBotStepBuffer)
+                {
+                    if(!map_server.parseUnknownBotStep(entry.object_x,entry.object_y,entry.step))
+                        std::cerr << "BaseServer::preload_9_sync_the_map() unknown bot step type: " << (entry.step->Attribute("type")!=nullptr?entry.step->Attribute("type"):"(null)")
+                                  << ", object_x: " << entry.object_x
+                                  << ", object_y: " << entry.object_y
+                                  << ", map index: " << i << ", file: " << mapFile << std::endl;
+                }
             }
-            for(const UnknownObjectEntry &entry : map_server.unknownObjectBuffer)
-            {
-                if(!map_server.parseUnknownObject(entry.type,entry.object_x,entry.object_y,entry.property_text))
-                    std::cerr << "BaseServer::preload_9_sync_the_map() unknown object type: " << entry.type
-                              << ", object_x: " << entry.object_x
-                              << ", object_y: " << entry.object_y
-                              << ", map index: " << i << ", file: " << mapFile << std::endl;
-            }
-            for(const UnknownBotStepEntry &entry : map_server.unknownBotStepBuffer)
-            {
-                if(!map_server.parseUnknownBotStep(entry.object_x,entry.object_y,entry.step))
-                    std::cerr << "BaseServer::preload_9_sync_the_map() unknown bot step type: " << (entry.step->Attribute("type")!=nullptr?entry.step->Attribute("type"):"(null)")
-                              << ", object_x: " << entry.object_x
-                              << ", object_y: " << entry.object_y
-                              << ", map index: " << i << ", file: " << mapFile << std::endl;
-            }
-            map_server.unknownMovingBuffer.clear();
-            map_server.unknownObjectBuffer.clear();
-            map_server.unknownBotStepBuffer.clear();
             i++;
         }
     }
+    mapLoadBuffers.clear();
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     {

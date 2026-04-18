@@ -288,7 +288,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
         std::cerr << "CommonDatapack::commonDatapack.monstersMaxId==0" << std::endl;
         abort();
     }
-    if(CommonDatapack::commonDatapack.get_items().itemMaxId==0)
+    if(CommonDatapack::commonDatapack.get_itemMaxId()==0)
     {
         std::cerr << "CommonDatapack::commonDatapack.items.itemMaxId==0" << std::endl;
         abort();
@@ -301,7 +301,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
     #ifndef CATCHCHALLENGER_NOXML
     //delete content of Map_loader::getXmlCondition()
-    CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().clear();
+    CommonDatapack::commonDatapack.clear_xmlLoadedFile();
 
     Map_loader::teleportConditionsUnparsed.clear();
     #endif

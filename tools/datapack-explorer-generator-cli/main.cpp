@@ -246,12 +246,12 @@ int main(int argc, char *argv[])
     }
 
     // Verify base data was loaded
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().empty())
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters_size()==0)
     {
         std::cerr << "ERROR: monsters list is empty after parseDatapack" << std::endl;
         stopLoaderThreads(); exit(113);
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.empty())
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_items_size()==0)
     {
         std::cerr << "ERROR: items list is empty after parseDatapack" << std::endl;
         stopLoaderThreads(); exit(113);

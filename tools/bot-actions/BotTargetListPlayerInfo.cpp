@@ -145,13 +145,13 @@ void BotTargetList::updatePlayerInformation()
             const uint32_t &itemId=n.first;
             const uint32_t &quantity=n.second;
             QListWidgetItem *item=new QListWidgetItem();
-            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
             {
                 item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image);
                 if(quantity>1)
                     item->setText(QString::number(quantity));
-                item->setText(item->text()+" "+QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name));
-                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name));
+                item->setText(item->text()+" "+QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name));
+                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name));
             }
             else
             {
@@ -192,12 +192,12 @@ void BotTargetList::updateFightStats()
         while(index<playerMonsters.size())
         {
             const CatchChallenger::PlayerMonster &monster=playerMonsters.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
             {
-                CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster),monster.level);
+                CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster.monster),monster.level);
 
                 QListWidgetItem *item=new QListWidgetItem();
-                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).description));
+                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).description));
                 if(!QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).thumb.isNull())
                     item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).thumb);
                 else
@@ -206,9 +206,9 @@ void BotTargetList::updateFightStats()
                 QString lastSkill;
                 QHash<uint32_t,uint8_t> skillToDisplay;
                 unsigned int sub_index=0;
-                while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.size())
+                while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster.monster).learn.size())
                 {
-                    CatchChallenger::Monster::AttackToLearn learn=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.at(sub_index);
+                    CatchChallenger::Monster::AttackToLearn learn=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster.monster).learn.at(sub_index);
                     if(learn.learnAtLevel<=monster.level)
                     {
                         unsigned int sub_index2=0;
@@ -244,7 +244,7 @@ void BotTargetList::updateFightStats()
                         lastSkill=tr("%n skill(s) to learn","",skillToDisplay.size());
 
                 }
-                const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster);
+                const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster.monster);
                 if(monster.level>=monsterGeneralInfo.level_to_xp.size())
                 {
                     std::cerr << "monster.level>=monsterGeneralInfo.level_to_xp.size()" << std::endl;
@@ -252,7 +252,7 @@ void BotTargetList::updateFightStats()
                 }
                 const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
                 item->setText(tr("%1, level: %2\nHP: %3/%4, XP: %5/%6\n%7")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).name))
                         .arg(monster.level)
                         .arg(monster.hp)
                         .arg(stat.hp)
@@ -283,11 +283,11 @@ void BotTargetList::updateFightStats()
         else
         {
             ui->groupBoxFight->setVisible(true);
-            const CatchChallenger::Monster::Stat &wildMonsterStat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(othermonster->monster),othermonster->level);
+            const CatchChallenger::Monster::Stat &wildMonsterStat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(othermonster->monster),othermonster->level);
             ui->fightOtherHp->setMaximum(wildMonsterStat.hp);
             ui->fightOtherHp->setValue(othermonster->hp);
             ui->fightOtherHp->setFormat(QString("%1/%2").arg(othermonster->hp).arg(wildMonsterStat.hp));
-            const DatapackClientLoader::MonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(othermonster->monster);
+            const DatapackClientLoader::MonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(othermonster->monster);
             const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader->getMonsterExtra(othermonster->monster);
             ui->monsterFightName->setText(QString("%1 level %2").arg(QString::fromStdString(monsterExtra.name)).arg(othermonster->level));
             ui->monsterFightImage->setPixmap(QtmonsterExtra.front);

@@ -716,7 +716,7 @@ bool Api_protocol::character_select_is_send()
     return character_select_send;
 }
 
-void Api_protocol::useSeed(const uint8_t &plant_id)
+void Api_protocol::useSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id)
 {
     if(!is_logged)
     {

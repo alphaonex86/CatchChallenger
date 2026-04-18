@@ -178,7 +178,7 @@ void Reputations::setVar(ConnexionManager *connexionManager)
         {
             if((i->second.level+1)==(int32_t)CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).reputation_positive.size())
                 html+=QStringLiteral("<li>100% %1</li>")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(
                              CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).name
                              ).reputation_positive.back())).toStdString();
             else
@@ -191,7 +191,7 @@ void Reputations::setVar(ConnexionManager *connexionManager)
                 }
                 else
                 {
-                    std::string text=QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(
+                    std::string text=QtDatapackClientLoader::datapackLoader->get_reputationExtra(
                             CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).name
                             ).reputation_positive.at(i->second.level);
                     html+=QStringLiteral("<li>%1% %2</li>").arg((i->second.point*100)/next_level_xp).arg(QString::fromStdString(text)).toStdString();
@@ -202,7 +202,7 @@ void Reputations::setVar(ConnexionManager *connexionManager)
         {
             if((-i->second.level)==(int32_t)CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).reputation_negative.size())
                 html+=QStringLiteral("<li>100% %1</li>")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(
                              CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).name
                              ).reputation_negative.back())).toStdString();
             else
@@ -215,7 +215,7 @@ void Reputations::setVar(ConnexionManager *connexionManager)
                 }
                 else
                 {
-                    std::string text=QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(
+                    std::string text=QtDatapackClientLoader::datapackLoader->get_reputationExtra(
                             CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(i->first).name
                             ).reputation_negative.at(-i->second.level-1);
                     html+=QStringLiteral("<li>%1% %2</li>")

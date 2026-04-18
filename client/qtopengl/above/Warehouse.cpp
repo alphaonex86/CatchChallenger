@@ -251,14 +251,12 @@ void Warehouse::updateContent()
     while(index<playerMon.size())
     {
         const CatchChallenger::PlayerMonster &monster=playerMon.at(index);
-        if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=
-                CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
         {
             QListWidgetItem *item=new QListWidgetItem();
-            if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monster.monster)!=
-                    QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monster.monster))
             {
-                const QtDatapackClientLoader::MonsterExtra &extra=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster);
+                const QtDatapackClientLoader::MonsterExtra &extra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster);
                 item->setText(tr("%1, level: %2").arg(QString::fromStdString(extra.name)).arg(monster.level));
                 item->setIcon(QPixmap(QString::fromStdString(extra.frontPath)));
             }
@@ -276,14 +274,12 @@ void Warehouse::updateContent()
     while(index<playerInformations.warehouse_monsters.size())
     {
         const CatchChallenger::PlayerMonster &monster=playerInformations.warehouse_monsters.at(index);
-        if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=
-                CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
         {
             QListWidgetItem *item=new QListWidgetItem();
-            if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monster.monster)!=
-                    QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monster.monster))
             {
-                const QtDatapackClientLoader::MonsterExtra &extra=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster);
+                const QtDatapackClientLoader::MonsterExtra &extra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster);
                 item->setText(tr("%1, level: %2").arg(QString::fromStdString(extra.name)).arg(monster.level));
                 item->setIcon(QPixmap(QString::fromStdString(extra.frontPath)));
             }

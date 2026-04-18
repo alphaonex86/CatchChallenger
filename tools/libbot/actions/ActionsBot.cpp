@@ -348,7 +348,9 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                                   << std::to_string(i->first)
                                                   << std::endl;
                                     #endif
-                                    mapServer->zonecapture[pairpoint]=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(step->Attribute("zone")).id;
+                                    const std::string zoneAttr(step->Attribute("zone"));
+                                    if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(zoneAttr))
+                                        mapServer->zonecapture[pairpoint]=QtDatapackClientLoader::datapackLoader->get_zoneExtra(zoneAttr).id;
                                     zonecapturepoint_number++;
                                 }
                             }
@@ -557,11 +559,11 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
     botFiles[file];//create the entry
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif

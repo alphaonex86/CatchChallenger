@@ -192,7 +192,7 @@ void Client::setToDefault()
     socketStringSize=0;
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    otherCityPlayerBattle=NULL;
+    otherCityPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
     #endif
 }
 
@@ -855,7 +855,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
         encyclopedia_monsterS=std::string(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
     std::string encyclopedia_itemS;
     if(public_and_private_informations.encyclopedia_item!=nullptr)
-        encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
+        encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items_size()/8+1);
 
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << recipesS
         << public_and_private_informations.monsters << public_and_private_informations.warehouse_monsters << encyclopedia_monsterS << encyclopedia_itemS
@@ -913,9 +913,9 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     if(min>encyclopedia_monsterS.size())
         min=encyclopedia_monsterS.size();
     memcpy(public_and_private_informations.encyclopedia_monster,encyclopedia_monsterS.data(),min);
-    public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items().item.size()/8+1);
-    memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
-    min=CommonDatapack::commonDatapack.get_items().item.size()/8+1;
+    public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items_size()/8+1);
+    memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_items_size()/8+1);
+    min=CommonDatapack::commonDatapack.get_items_size()/8+1;
     if(min>encyclopedia_itemS.size())
         min=encyclopedia_itemS.size();
     memcpy(public_and_private_informations.encyclopedia_item,encyclopedia_itemS.data(),min);

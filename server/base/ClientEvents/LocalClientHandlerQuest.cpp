@@ -10,12 +10,12 @@ using namespace CatchChallenger;
 //quest
 void Client::newQuestAction(const QuestAction &action,const CATCHCHALLENGER_TYPE_QUEST &questId)
 {
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+    if(!CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
     {
         errorOutput("unknown questId: "+std::to_string(questId));
         return;
     }
-    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
     switch(action)
     {
         case QuestAction_Start:
@@ -49,12 +49,12 @@ void Client::addQuestStepDrop(const CATCHCHALLENGER_TYPE_QUEST &questId,const ui
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("addQuestStepDrop for quest: "+std::to_string(questId)+", step: "+std::to_string(questStep));
     #endif
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+    if(!CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
     {
         errorOutput("Quest not found for drops");
         return;
     }
-    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
     if(questStep<=0 || questStep>quest.steps.size())
     {
         errorOutput("Quest step out of range for drops");
@@ -82,12 +82,12 @@ void Client::removeQuestStepDrop(const CATCHCHALLENGER_TYPE_QUEST &questId,const
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("removeQuestStepDrop for quest: "+std::to_string(questId)+", step: "+std::to_string(questStep));
     #endif
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+    if(!CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
     {
         errorOutput("Quest not found for drops");
         return;
     }
-    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
     if(questStep<=0 || questStep>quest.steps.size())
     {
         errorOutput("Quest step out of range for drops");

@@ -40,9 +40,9 @@ void BaseServer::preload_zone_return()
         const uint32_t &clanId=stringtouint32(tempString,&ok);
         if(ok)
         {
-            if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)!=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.has_zoneToId(zoneCodeName))
             {
-                const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().at(zoneCodeName);
+                const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId(zoneCodeName);
                 GlobalServerData::serverPrivateVariables.cityStatusList[zoneId].clan=clanId;
                 GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneId;
             }
@@ -70,9 +70,9 @@ void BaseServer::preload_zone_return()
                     uint32_t clanId=0;
                     if(fread(&clanId,sizeof(clanId),1,fp)==1)
                     {
-                        if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)!=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
+                        if(CommonDatapackServerSpec::commonDatapackServerSpec.has_zoneToId(zoneCodeName))
                         {
-                            const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().at(zoneCodeName);
+                            const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId(zoneCodeName);
                             GlobalServerData::serverPrivateVariables.cityStatusList[zoneId].clan=clanId;
                             GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneId;
                         }
@@ -121,10 +121,9 @@ void BaseServer::preload_16_async_zone_sql()
         {
             std::string zoneCodeName=entryListZone.at(entryListIndex).name;
             stringreplaceOne(zoneCodeName,".xml","");
-            if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
+            if(!CommonDatapackServerSpec::commonDatapackServerSpec.has_zoneToId(zoneCodeName))
             {
-                std::unordered_map<std::string,ZONE_TYPE> &zoneToId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId_rw();
-                zoneToId[zoneCodeName]=indexZone;
+                CommonDatapackServerSpec::commonDatapackServerSpec.set_zoneToId(zoneCodeName, indexZone);
                 std::vector<std::string> &idToZone=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone_rw();
                 while(idToZone.size()<=indexZone)
                     idToZone.push_back(std::string());
@@ -208,10 +207,9 @@ void BaseServer::preload_16_async_zone_sql()
             {
                 std::string zoneCodeName=entryListZone.at(entryListIndex).name;
                 stringreplaceOne(zoneCodeName,".xml","");
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
+                if(!CommonDatapackServerSpec::commonDatapackServerSpec.has_zoneToId(zoneCodeName))
                 {
-                    std::unordered_map<std::string,ZONE_TYPE> &zoneToId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId_rw();
-                    zoneToId[zoneCodeName]=indexZone;
+                    CommonDatapackServerSpec::commonDatapackServerSpec.set_zoneToId(zoneCodeName, indexZone);
                     std::vector<std::string> &idToZone=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone_rw();
                     while(idToZone.size()<=indexZone)
                         idToZone.push_back(std::string());

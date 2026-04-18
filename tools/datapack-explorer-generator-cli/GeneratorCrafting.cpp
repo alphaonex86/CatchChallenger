@@ -25,10 +25,6 @@ static std::string itemImageUrl(const std::string &imagePath)
 
 void generate()
 {
-    const auto &recipes=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes();
-    const auto &itemsExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-    const auto &itemsFull=CatchChallenger::CommonDatapack::commonDatapack.get_items();
-
     Helper::setCurrentPage("crafting.html");
 
     std::ostringstream body;
@@ -40,14 +36,15 @@ void generate()
          << "\t<th>Price</th>\n"
          << "</tr>\n";
 
-    for(const auto &p : recipes)
+    for(uint16_t recipeId=1;recipeId<=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes_size()+1;recipeId++)
     {
-        const CatchChallenger::CraftingRecipe &r=p.second;
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_craftingRecipe(recipeId))
+            continue;
+        const CatchChallenger::CraftingRecipe &r=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipeId);
 
-        auto itLearn=itemsExtra.find(r.itemToLearn);
-        if(itLearn!=itemsExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(r.itemToLearn))
         {
-            const auto &learnExtra=itLearn->second;
+            const DatapackClientLoader::ItemExtra &learnExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(r.itemToLearn);
             std::string name=learnExtra.name;
             std::string link=Helper::relUrl(GeneratorItems::relativePathForItem(r.itemToLearn));
             std::string image=itemImageUrl(learnExtra.imagePath);
@@ -80,12 +77,11 @@ void generate()
 
             // Materials column
             body << "<td>\n";
-            for(const auto &mat : r.materials)
+            for(const CatchChallenger::CraftingRecipe::Material &mat : r.materials)
             {
-                auto matIt=itemsExtra.find(mat.item);
-                if(matIt==itemsExtra.cend())
+                if(!QtDatapackClientLoader::datapackLoader->has_itemExtra(mat.item))
                     continue;
-                const auto &matExtra=matIt->second;
+                const DatapackClientLoader::ItemExtra &matExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(mat.item);
                 std::string matLink=Helper::relUrl(GeneratorItems::relativePathForItem(mat.item));
                 std::string matImage=itemImageUrl(matExtra.imagePath);
 
@@ -105,10 +101,9 @@ void generate()
 
             // Product column
             body << "<td>\n";
-            auto prodIt=itemsExtra.find(r.doItemId);
-            if(prodIt!=itemsExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(r.doItemId))
             {
-                const auto &prodExtra=prodIt->second;
+                const DatapackClientLoader::ItemExtra &prodExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(r.doItemId);
                 std::string prodLink=Helper::relUrl(GeneratorItems::relativePathForItem(r.doItemId));
                 std::string prodImage=itemImageUrl(prodExtra.imagePath);
 
@@ -125,9 +120,8 @@ void generate()
 
             // Price column
             uint32_t price=0;
-            auto itemIt=itemsFull.item.find(r.itemToLearn);
-            if(itemIt!=itemsFull.item.cend())
-                price=itemIt->second.price;
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_item(r.itemToLearn))
+                price=CatchChallenger::CommonDatapack::commonDatapack.get_item(r.itemToLearn).price;
             body << "<td>" << price << "$</td>\n";
 
             body << "</tr>\n";

@@ -20,19 +20,17 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
-    if(QtDatapackClientLoader::datapackLoader->get_botToQuestStart().find(mapId)==
-            QtDatapackClientLoader::datapackLoader->get_botToQuestStart().cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_botToQuestStart(mapId))
     {
         std::cerr << "BaseWindow::botHaveQuest(), mapId not found: " << std::to_string(mapId) << std::endl;
         return false;
     }
-    if(QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(mapId).find(botId)==
-            QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(mapId).cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_botToQuestStartForBot(mapId,botId))
     {
         std::cerr << "BaseWindow::botHaveQuest(), botId not found: " << std::to_string(botId) << std::endl;
         return false;
     }
-    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(mapId).at(botId);
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=QtDatapackClientLoader::datapackLoader->get_botToQuestStartForBot(mapId,botId);
     unsigned int index=0;
     while(index<botQuests.size())
     {
@@ -41,7 +39,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
-        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
         if(playerInformations.quests.find(botQuests.at(index))==playerInformations.quests.cend())
         {
             //quest not started
@@ -52,8 +50,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
         }
         else
         {
-            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(botQuests.at(index))==
-                    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(botQuests.at(index)))
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
@@ -92,7 +89,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     {
         if(!vectorcontainsAtLeastOne(botQuests,i->first) && i->second.step>0)
         {
-            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(i->first);
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(i->first);
             if(currentQuest.steps.at(i->second.step-1).botToTalkBotId==botId)
                 return true;//in progress, but not the starting bot
             else
@@ -118,7 +115,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     if(strcmp(stepXml->Attribute("type"),"text")==0)
     {
         const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        auto text = stepXml->FirstChildElement("text");
+        const tinyxml2::XMLElement *text = stepXml->FirstChildElement("text");
         if(!language.empty() && language!=BaseWindow::text_en)
             while(text!=NULL)
             {
@@ -256,7 +253,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             if(quests.size()==1)
             {
                 const std::pair<uint16_t,std::string> &quest=quests.at(0);
-                if(QtDatapackClientLoader::datapackLoader->get_questsExtra().at(quest.first).autostep)
+                if(QtDatapackClientLoader::datapackLoader->get_questExtra(quest.first).autostep)
                 {
                     IG_dialog_text_linkActivated("quest_"+std::to_string(quest.first));
                     return;
@@ -394,9 +391,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             return;
         }
         const std::string zone=stepXml->Attribute("zone");
-        if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zone)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(zone))
         {
-            zonecatchName=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zone).name;
+            zonecatchName=QtDatapackClientLoader::datapackLoader->get_zoneExtra(zone).name;
             ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QString("<b>%1</b>").arg(QString::fromStdString(zonecatchName))));
         }
         else
@@ -447,15 +444,14 @@ void BaseWindow::goToBotStep(const uint8_t &step)
 
 bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &botId, bool silent)
 {
-    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==
-            CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
     {
         if(!silent)
             showTip(tr("Quest not found").toStdString());
         return
                 false;
     }
-    const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+    const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
 
     if(playerInformations.quests.find(questId)==playerInformations.quests.cend())
@@ -505,7 +501,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
     {
         if(!silent)
             showTip(tr("You have finish the quest <b>%1</b>")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId).name))
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questExtra(questId).name))
                     .toStdString()
                     );
         client->finishQuest(questId);
@@ -527,14 +523,13 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
 
 void BaseWindow::showQuestText(const uint32_t &textId)
 {
-    if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId)==
-            QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
     {
         qDebug() << QStringLiteral("No quest text for this quest: %1").arg(questId);
         showTip(tr("No quest text for this quest").toStdString());
         return;
     }
-    const DatapackClientLoader::QuestExtra &questExtra=QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId);
+    const DatapackClientLoader::QuestExtra &questExtra=QtDatapackClientLoader::datapackLoader->get_questExtra(questId);
     if(questExtra.text.find(textId)==questExtra.text.cend())
     {
         qDebug() << "No quest text entry point";
@@ -564,7 +559,7 @@ void BaseWindow::showQuestText(const uint32_t &textId)
             break;
             case DatapackClientLoader::QuestCondition_haverequirements:
             {
-                const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+                const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
                 if(!haveNextStepQuestRequirements(quest))
                     indexCond=e.conditions.size()+999;//not validated condition
             }
@@ -622,12 +617,12 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
         index++;
     }
     {
-        auto fightIt=requirements.fights.begin();
+        std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>>::const_iterator fightIt=requirements.fights.begin();
         while(fightIt!=requirements.fights.end())
         {
             const CATCHCHALLENGER_TYPE_MAPID &fightMapId=fightIt->first;
             const std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> &botIds=fightIt->second;
-            auto botIt=botIds.begin();
+            std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>::const_iterator botIt=botIds.begin();
             while(botIt!=botIds.end())
             {
                 if(!mapController->haveBeatBot(fightMapId,*botIt))
@@ -737,8 +732,7 @@ void BaseWindow::IG_dialog_text_linkActivated(const std::string &rawlink)
                 index++;
                 continue;
             }
-            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==
-                    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
             {
                 showTip(tr("Quest not found").toStdString());
                 index++;
@@ -746,10 +740,9 @@ void BaseWindow::IG_dialog_text_linkActivated(const std::string &rawlink)
             }
             isInQuest=true;
             this->questId=questId;
-            if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId)!=
-                    QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
             {
-                if(QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId).autostep)
+                if(QtDatapackClientLoader::datapackLoader->get_questExtra(questId).autostep)
                 {
                     int index=0;
                     bool ok;
@@ -838,14 +831,19 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
     std::vector<std::pair<uint16_t,std::string> > entryList;
     std::pair<uint16_t,std::string> oneEntry;
     //do the not started quest here
-    const CATCHCHALLENGER_TYPE_MAPID mapId=mapController->currentMap();
-    if(QtDatapackClientLoader::datapackLoader->get_botToQuestStart().find(mapId)==
-            QtDatapackClientLoader::datapackLoader->get_botToQuestStart().cend())
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> *botQuestsPtr=nullptr;
+    {
+        const std::vector<std::string> &maps=QtDatapackClientLoader::datapackLoader->get_maps();
+        for(CATCHCHALLENGER_TYPE_MAPID mapId=0;mapId<static_cast<CATCHCHALLENGER_TYPE_MAPID>(maps.size());mapId++) {
+            if(QtDatapackClientLoader::datapackLoader->has_botToQuestStartForBot(mapId,static_cast<CATCHCHALLENGER_TYPE_BOTID>(botId))) {
+                botQuestsPtr=&QtDatapackClientLoader::datapackLoader->get_botToQuestStartForBot(mapId,static_cast<CATCHCHALLENGER_TYPE_BOTID>(botId));
+                break;
+            }
+        }
+    }
+    if(botQuestsPtr==nullptr)
         return entryList;
-    if(QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(mapId).find(botId)==
-            QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(mapId).cend())
-        return entryList;
-    std::vector<CATCHCHALLENGER_TYPE_QUEST> botQuests=QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(mapId).at(botId);
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=*botQuestsPtr;
     unsigned int index=0;
     while(index<botQuests.size())
     {
@@ -854,16 +852,15 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
-        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
         if(playerInformations.quests.find(botQuests.at(index))==playerInformations.quests.cend())
         {
             //quest not started
             if(haveStartQuestRequirement(currentQuest))
             {
                 oneEntry.first=questId;
-                if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId)!=
-                        QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
-                    oneEntry.second=QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId).name;
+                if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
+                    oneEntry.second=QtDatapackClientLoader::datapackLoader->get_questExtra(questId).name;
                 else
                 {
                     qDebug() << "internal bug: quest extra not found";
@@ -876,8 +873,7 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
         }
         else
         {
-            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(botQuests.at(index))==
-                    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(botQuests.at(index)))
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
@@ -891,9 +887,8 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
                             if(haveStartQuestRequirement(currentQuest))
                             {
                                 oneEntry.first=questId;
-                                if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId)!=
-                                        QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
-                                    oneEntry.second=QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId).name;
+                                if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
+                                    oneEntry.second=QtDatapackClientLoader::datapackLoader->get_questExtra(questId).name;
                                 else
                                 {
                                     qDebug() << "internal bug: quest extra not found";
@@ -915,10 +910,9 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
                     if(currentQuest.steps.at(playerInformations.quests.at(questId).step-1).botToTalkBotId==botId)
                     {
                         oneEntry.first=questId;
-                        if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId)!=
-                                QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+                        if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
                             oneEntry.second=tr("%1 (in progress)")
-                                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId).name)).toStdString();
+                                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questExtra(questId).name)).toStdString();
                         else
                         {
                             qDebug() << "internal bug: quest extra not found";
@@ -934,19 +928,19 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
         index++;
     }
     //do the started quest here
-    auto i=playerInformations.quests.begin();
+    std::map<CATCHCHALLENGER_TYPE_QUEST,PlayerQuest>::const_iterator i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
         if(!vectorcontainsAtLeastOne(botQuests,i->first) &&
                 i->second.step>0)
         {
-            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(i->first);
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(i->first);
             if(currentQuest.steps.at(i->second.step-1).botToTalkBotId==botId)
             {
                 //in progress, but not the starting bot
                 oneEntry.first=i->first;
                 oneEntry.second=tr("%1 (in progress)")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questsExtra().at(i->first).name))
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_questExtra(i->first).name))
                         .toStdString();
                 entryList.push_back(oneEntry);
             }

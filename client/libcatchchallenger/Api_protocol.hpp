@@ -379,7 +379,7 @@ public:
     LogicialGroup getLogicialGroup() const;
 
     //plant, can do action only if the previous is finish
-    void useSeed(const CATCHCHALLENGER_TYPE_PLAN &plant_id);
+    void useSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id);
     void collectMaturePlant();
     //crafting
     void useRecipe(const CATCHCHALLENGER_TYPE_ITEM &recipeId);

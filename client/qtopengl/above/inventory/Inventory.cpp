@@ -253,15 +253,14 @@ void Inventory::updateInventory(uint8_t targetSize)
             {
                 case ObjectType_Seed:
                     //reputation requierement control is into load_plant_inventory() NOT: on_listPlantList_itemSelectionChanged()
-                    if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(id)!=
-                            QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
+                    if(QtDatapackClientLoader::datapackLoader->has_itemToPlant(id))
                         show=true;
                 break;
                 case ObjectType_UseInFight:
                     if(connexionManager->client->isInFightWithWild() &&
-                            CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.find(id)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.cend())
+                            CatchChallenger::CommonDatapack::commonDatapack.has_trap(id))
                         show=true;
-                    else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(id)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend())
+                    else if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterItemEffect(id))
                         show=true;
                     else
                         show=false;
@@ -273,11 +272,11 @@ void Inventory::updateInventory(uint8_t targetSize)
         }
         if(show)
         {
-            const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(id);
+            const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemExtra(id);
             QListWidgetItem *item=new QListWidgetItem();
-            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(id)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_itemExtra(id))
             {
-                QPixmap p=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(id).imagePath));
+                QPixmap p=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(id).imagePath));
                 p=p.scaledToHeight(targetSize);
                 item->setIcon(p);
                 if(i->second>1)
@@ -331,8 +330,7 @@ void Inventory::on_inventory_itemSelectionChanged()
     }
     QListWidgetItem *item=items.first();
     lastItemSelected=item->data(99).toInt();
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item->data(99).toInt())==
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(!QtDatapackClientLoader::datapackLoader->has_itemExtra(item->data(99).toInt()))
     {
         inventory_description->setVisible(false);
         inventoryUse->setEnabled(false);
@@ -340,20 +338,18 @@ void Inventory::on_inventory_itemSelectionChanged()
         inventory_description->setHtml(tr("Unknown description"));
         return;
     }
-    const QtDatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item->data(99).toInt());
+    const QtDatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->get_itemExtra(item->data(99).toInt());
     inventoryDestroy->setEnabled(!inSelection);
     inventory_description->setHtml(QString::fromStdString(content.description));
 
     bool isRecipe=false;
     {
         /* is a recipe */
-        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes()
-                .find(item->data(99).toInt())!=
-                CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().cend();
+        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.has_itemToCraftingRecipe(item->data(99).toInt());
         if(isRecipe)
         {
-            const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().at(item->data(99).toInt());
-            const CatchChallenger::CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(recipeId);
+            const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipe(item->data(99).toInt());
+            const CatchChallenger::CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipeId);
             if(!connexionManager->client->haveReputationRequirements(recipe.requirements.reputation))
             {
                 std::string string;
@@ -375,23 +371,18 @@ void Inventory::on_inventory_itemSelectionChanged()
                                  isRecipe
                                  ||
                                  /* is a repel */
-                                 CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.find(item->data(99).toInt())!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.cend()
+                                 CatchChallenger::CommonDatapack::commonDatapack.has_repel(item->data(99).toInt())
                                  ||
                                  /* is a item with monster effect */
-                                 CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(item->data(99).toInt())!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend()
+                                 CatchChallenger::CommonDatapack::commonDatapack.has_monsterItemEffect(item->data(99).toInt())
                                  ||
                                  /* is a item with monster effect out of fight */
-                                 (CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.find(item->data(99).toInt())!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.cend() && !connexionManager->client->isInFight())
+                                 (CatchChallenger::CommonDatapack::commonDatapack.has_monsterItemEffectOutOfFight(item->data(99).toInt()) && !connexionManager->client->isInFight())
                                  ||
                                  /* is a evolution item */
-                                 CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.find(item->data(99).toInt())!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.cend()
+                                 CatchChallenger::CommonDatapack::commonDatapack.has_evolutionItem(item->data(99).toInt())
                                  ||
                                  /* is a evolution item */
-                                 (CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn.find(item->data(99).toInt())!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn.cend() && !connexionManager->client->isInFight())
+                                 (CatchChallenger::CommonDatapack::commonDatapack.has_itemToLearn(item->data(99).toInt()) && !connexionManager->client->isInFight())
                                          );
 }

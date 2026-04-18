@@ -53,8 +53,8 @@ void generateAll()
         int mapCount=0;
         for(const auto &set : MapStore::sets())
             mapCount+=(int)set.mapPaths.size();
-        int monsterCount=(int)CatchChallenger::CommonDatapack::commonDatapack.get_monsters().size();
-        int itemCount=(int)CatchChallenger::CommonDatapack::commonDatapack.get_items().item.size();
+        int monsterCount=(int)CatchChallenger::CommonDatapack::commonDatapack.get_monsters_size();
+        int itemCount=(int)CatchChallenger::CommonDatapack::commonDatapack.get_items_size();
         // Bot count: count all non-empty bots across all maps (approximation)
         int botCount=0;
         for(const auto &set : MapStore::sets())

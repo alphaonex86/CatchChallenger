@@ -73,8 +73,7 @@ std::vector<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
         while(index<playerMonster.size())
         {
             const PlayerMonster &monster=playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
                 warehouseMonsterOnPlayerList.push_back(monster);
             index++;
         }
@@ -84,8 +83,7 @@ std::vector<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
         while(index<playerInformations.warehouse_monsters.size())
         {
             const PlayerMonster &monster=playerInformations.warehouse_monsters.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
                 warehouseMonsterOnPlayerList.push_back(monster);
             index++;
         }
@@ -199,14 +197,14 @@ void BaseWindow::updateTheWareHouseContent()
         while(index<playerMonster.size())
         {
             const PlayerMonster &monster=playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
             {
                 QListWidgetItem *item=new QListWidgetItem();
                 item->setText(tr("%1, level: %2")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).name))
                         .arg(monster.level)
                         );
-                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).description));
+                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).description));
                 item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front);
                 item->setData(98,0);
                 item->setData(99,index);
@@ -222,14 +220,14 @@ void BaseWindow::updateTheWareHouseContent()
         while(index<playerInformations.warehouse_monsters.size())
         {
             const PlayerMonster &monster=playerInformations.warehouse_monsters.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
             {
                 QListWidgetItem *item=new QListWidgetItem();
                 item->setText(tr("%1, level: %2")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).name))
                         .arg(monster.level)
                         );
-                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).description));
+                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).description));
                 item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front);
                 item->setData(98,1);
                 item->setData(99,index);

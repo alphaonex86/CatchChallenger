@@ -64,9 +64,9 @@ void BaseWindow::captureCityYourLeaderHaveStartInOtherCity(const std::string &zo
 {
     updater_page_zonecatch.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
-    if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zone)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(zone))
         showTip(tr("Your clan leader have start a capture for another city").toStdString()+": <b>"+
-                QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zone).name+
+                QtDatapackClientLoader::datapackLoader->get_zoneExtra(zone).name+
                 "</b>");
     else
         showTip(tr("Your clan leader have start a capture for another city").toStdString());

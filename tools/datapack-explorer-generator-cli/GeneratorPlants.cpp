@@ -26,19 +26,17 @@ static void writeTableHeader(std::ostringstream &body)
 
 void generate()
 {
-    const auto &plants=CatchChallenger::CommonDatapack::commonDatapack.get_plants();
-    const auto &itemsExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra();
-
     Helper::setCurrentPage("plants.html");
 
     std::ostringstream body;
     writeTableHeader(body);
 
     unsigned plant_count=0;
-    for(const auto &p : plants)
+    for(uint16_t id=1;id<=255;id++)
     {
-        const uint8_t id=p.first;
-        const CatchChallenger::Plant &plant=p.second;
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_plant(id))
+            continue;
+        const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.get_plant(id);
 
         plant_count++;
         if(plant_count>15)
@@ -52,14 +50,14 @@ void generate()
         std::string link;
         std::string image;
 
-        auto ix=itemsExtra.find(plant.itemUsed);
-        if(ix!=itemsExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(plant.itemUsed))
         {
-            name=ix->second.name;
+            const DatapackClientLoader::ItemExtra &ix=QtDatapackClientLoader::datapackLoader->get_itemExtra(plant.itemUsed);
+            name=ix.name;
             link=Helper::relUrl(GeneratorItems::relativePathForItem(plant.itemUsed));
-            if(!ix->second.imagePath.empty())
+            if(!ix.imagePath.empty())
             {
-                std::string rel=Helper::relativeFromDatapack(ix->second.imagePath);
+                std::string rel=Helper::relativeFromDatapack(ix.imagePath);
                 if(Helper::fileExists(Helper::datapackPath()+rel))
                     image=Helper::relUrl(Helper::publishDatapackFile(rel));
             }

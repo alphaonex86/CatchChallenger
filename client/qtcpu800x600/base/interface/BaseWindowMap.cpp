@@ -228,10 +228,9 @@ void BaseWindow::currentMapLoaded()
         QMap_client *mapFull=mapController->currentMapFull();
         std::string visualName;
         if(!mapFull->zone.empty())
-            if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(mapFull->zone)!=
-                    QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(mapFull->zone))
             {
-                const DatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(mapFull->zone);
+                const DatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zoneExtra(mapFull->zone);
                 visualName=zoneExtra.name;
             }
         if(visualName.empty())
@@ -256,9 +255,9 @@ void BaseWindow::currentMapLoaded()
         //zone sound
         QMap_client *mapFull=mapController->currentMapFull();
         if(!mapFull->zone.empty())
-            if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(mapFull->zone)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(mapFull->zone))
             {
-                const DatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(mapFull->zone);
+                const DatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zoneExtra(mapFull->zone);
                 if(zoneExtra.audioAmbiance.find(type)!=zoneExtra.audioAmbiance.cend())
                 {
                     const std::string &backgroundsound=zoneExtra.audioAmbiance.at(type);
@@ -267,9 +266,9 @@ void BaseWindow::currentMapLoaded()
                 }
             }
         //general sound
-        if(QtDatapackClientLoader::datapackLoader->get_audioAmbiance().find(type)!=QtDatapackClientLoader::datapackLoader->get_audioAmbiance().cend())
+        if(QtDatapackClientLoader::datapackLoader->has_audioAmbiance(type))
         {
-            const std::string &backgroundsound=QtDatapackClientLoader::datapackLoader->get_audioAmbiance().at(type);
+            const std::string &backgroundsound=QtDatapackClientLoader::datapackLoader->get_audioAmbiance(type);
             if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
                 soundList.push_back(backgroundsound);
         }
@@ -346,11 +345,10 @@ void BaseWindow::currentMapLoaded()
         if(visualCategory!=type)
         {
             visualCategory=type;
-            if(QtDatapackClientLoader::datapackLoader->get_visualCategories().find(type)!=
-                    QtDatapackClientLoader::datapackLoader->get_visualCategories().cend())
+            if(QtDatapackClientLoader::datapackLoader->has_visualCategory(type))
             {
                 const std::vector<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=
-                        QtDatapackClientLoader::datapackLoader->get_visualCategories().at(type).conditions;
+                        QtDatapackClientLoader::datapackLoader->get_visualCategory(type).conditions;
                 unsigned int index=0;
                 while(index<conditions.size())
                 {
@@ -369,7 +367,7 @@ void BaseWindow::currentMapLoaded()
                 }
                 if(index==conditions.size())
                 {
-                    const DatapackClientLoader::CCColor &c=QtDatapackClientLoader::datapackLoader->get_visualCategories().at(type).defaultColor;
+                    const DatapackClientLoader::CCColor &c=QtDatapackClientLoader::datapackLoader->get_visualCategory(type).defaultColor;
                     mapController->setColor(QColor(c.r,c.g,c.b,c.a));
                 }
             }

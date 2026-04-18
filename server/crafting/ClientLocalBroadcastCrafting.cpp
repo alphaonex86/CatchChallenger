@@ -10,12 +10,12 @@
 
 using namespace CatchChallenger;
 
-void Client::plantSeed(const uint8_t &plant_id)
+void Client::plantSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("plantSeed("+std::to_string(plant_id)+")");
     #endif
-    if(CommonDatapack::commonDatapack.get_plants().find(plant_id)==CommonDatapack::commonDatapack.get_plants().cend())
+    if(!CommonDatapack::commonDatapack.has_plant(plant_id))
     {
         errorOutput("plant_id not found: "+std::to_string(plant_id));
         return;
@@ -118,7 +118,7 @@ void Client::seedValidated(const uint8_t &plant_id,const CATCHCHALLENGER_TYPE_MA
     Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[mapIndex];
     PlayerPlant plantOnMapPlayer;
     plantOnMapPlayer.plant=plant_id;
-    plantOnMapPlayer.mature_at=current_time+CommonDatapack::commonDatapack.get_plants().at(plantOnMapPlayer.plant).fruits_seconds;
+    plantOnMapPlayer.mature_at=current_time+CommonDatapack::commonDatapack.get_plant(plantOnMapPlayer.plant).fruits_seconds;
     mapData.plants[pos]=plantOnMapPlayer;
     syncDatabasePlant();
 }
@@ -148,7 +148,7 @@ void Client::collectPlant()
     if(mapData.plants.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plants.cend())
     {
         const PlayerPlant /*can't reference because deleted later*/playerPlant=mapData.plants.at(std::pair<uint8_t,uint8_t>(x,y));
-        if(CommonDatapack::commonDatapack.get_plants().find(playerPlant.plant)==CommonDatapack::commonDatapack.get_plants().cend())
+        if(!CommonDatapack::commonDatapack.has_plant(playerPlant.plant))
         {
             errorOutput("plant not found to collect: "+std::to_string(playerPlant.plant));
             return;
@@ -164,12 +164,12 @@ void Client::collectPlant()
         syncDatabasePlant();
 
         //add into the inventory
-        float quantity=CommonDatapack::commonDatapack.get_plants().at(playerPlant.plant).fix_quantity;
-        if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.get_plants().at(playerPlant.plant).random_quantity)
+        float quantity=CommonDatapack::commonDatapack.get_plant(playerPlant.plant).fix_quantity;
+        if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.get_plant(playerPlant.plant).random_quantity)
             quantity++;
 
         //send the object collected to the current character
-        addObjectAndSend(CommonDatapack::commonDatapack.get_plants().at(playerPlant.plant).itemUsed,quantity);
+        addObjectAndSend(CommonDatapack::commonDatapack.get_plant(playerPlant.plant).itemUsed,quantity);
         return;
     }
     else

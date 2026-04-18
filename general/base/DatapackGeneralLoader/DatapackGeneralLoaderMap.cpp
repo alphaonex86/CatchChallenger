@@ -34,11 +34,11 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -108,9 +108,8 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
                     if(monstersCollisionItem->Attribute("item")!=NULL)
                     {
                         std::string itemLower=str_tolower(monstersCollisionItem->Attribute("item"));
-                        const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-                        if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
-                            monstersCollision.item=tempNameToItemId.at(itemLower);
+                        if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
+                            monstersCollision.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
                         else
                         {
                             monstersCollision.item=stringtouint16(monstersCollisionItem->Attribute("item"),&ok);
@@ -235,11 +234,11 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -301,11 +300,11 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif

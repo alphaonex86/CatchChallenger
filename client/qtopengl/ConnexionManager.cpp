@@ -697,7 +697,7 @@ void ConnexionManager::datapackParsedMainSub()
     emit datapackParsedMainSubMap();
 
     updateConnectingStatus();*/
-    if(!client->setMapNumber(QtDatapackClientLoader::datapackLoader->get_mapToId().size()))
+    if(!client->setMapNumber(QtDatapackClientLoader::datapackLoader->get_mapToId_size()))
         emit newError(tr("Internal error").toStdString(),"No map loaded to call client->setMapNumber()");
     client->have_main_and_sub_datapack_loaded();
 }

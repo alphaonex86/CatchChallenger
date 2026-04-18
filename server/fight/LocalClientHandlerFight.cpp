@@ -64,14 +64,14 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)==CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
+        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
         {
             errorOutput("saveMonsterStat() The monster "+std::to_string(monster.monster)+
-                        " is not into the monster list ("+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().size())+")");
+                        " is not into the monster list ("+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.get_monsters_size())+")");
             abort();
             return;
         }
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster),monster.level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster.monster),monster.level);
         if(monster.hp>currentMonsterStat.hp)
         {
             errorOutput("saveMonsterStat() The hp "+std::to_string(monster.hp)+
@@ -175,7 +175,7 @@ void Client::healAllMonsters()
     {
         if(public_and_private_informations.monsters.at(index).egg_step==0)
         {
-            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(public_and_private_informations.monsters.at(index).monster),public_and_private_informations.monsters.at(index).level);
+            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(public_and_private_informations.monsters.at(index).monster),public_and_private_informations.monsters.at(index).level);
             if(public_and_private_informations.monsters.at(index).hp!=stat.hp)
             {
                 public_and_private_informations.monsters[index].hp=stat.hp;
@@ -205,7 +205,7 @@ void Client::healAllMonsters()
             sub_index=0;
             while(sub_index<public_and_private_informations.monsters.at(index).skills.size())
             {
-                uint8_t endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(
+                uint8_t endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkill(
                         public_and_private_informations.monsters.at(index).skills.at(sub_index).skill
                         )
                         .level.at(public_and_private_informations.monsters.at(index).skills.at(sub_index).level-1).endurance;
@@ -291,7 +291,7 @@ bool Client::botFightStart(const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,u
     while(index<botFightContent.monsters.size())
     {
         const BotFight::BotFightMonster &monster=botFightContent.monsters.at(index);
-        const Monster::Stat &stat=getStat(CommonDatapack::commonDatapack.get_monsters().at(monster.id),monster.level);
+        const Monster::Stat &stat=getStat(CommonDatapack::commonDatapack.get_monster(monster.id),monster.level);
         botFightMonsters.push_back(FacilityLib::botFightMonsterToPlayerMonster(monster,stat));
         index++;
     }
@@ -353,8 +353,8 @@ bool Client::currentMonsterAttackFirst(const PlayerMonster * currentMonster,cons
 {
     if(isInBattle())
     {
-        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
-        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
+        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
+        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster),otherMonster->level);
         bool currentMonsterStatIsFirstToAttack=false;
         if(currentMonsterStat.speed>otherMonsterStat.speed)
             currentMonsterStatIsFirstToAttack=true;
@@ -696,7 +696,7 @@ Skill::AttackReturn Client::generateOtherAttack()
     uint8_t skillLevel=c.getSkillLevel(skill);
     if(skillLevel==0)
     {
-        if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.get_monsterSkills().find(skill)!=CommonDatapack::commonDatapack.get_monsterSkills().cend())
+        if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.has_monsterSkill(skill))
             skillLevel=1;
         else
         {
@@ -779,7 +779,7 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster, const uint16_t &m
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     PlayerMonster * currentMonster=getCurrentMonster();
-    const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+    const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
     /// \note NO OTHER MONSTER because it's evolution on current monster
     if(currentMonster!=NULL)
         if(currentMonster->hp>currentMonsterStat.hp)
@@ -832,7 +832,7 @@ void Client::confirmEvolution(const uint8_t &monsterPosition)
         return;
     }
     unsigned int index=monsterPosition;
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(public_and_private_informations.monsters.at(index).monster);
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(public_and_private_informations.monsters.at(index).monster);
     unsigned int sub_index=0;
     while(sub_index<monsterInformations.evolutions.size())
     {
@@ -861,7 +861,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
         PublicPlayerMonster * otherMonster=getOtherMonster();
         if(currentMonster!=NULL)
         {
-            const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+            const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorOutput("hpChange() The hp "+std::to_string(currentMonster->monster)+
@@ -873,7 +873,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
         }
         if(otherMonster!=NULL)
         {
-            const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
+            const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster),otherMonster->level);
             if(otherMonster->hp>otherMonsterStat.hp)
             {
                 errorOutput("hpChange() The hp "+std::to_string(otherMonster->monster)+
@@ -892,7 +892,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
         PublicPlayerMonster * otherMonster=getOtherMonster();
         if(currentMonster!=NULL)
         {
-            const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+            const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorOutput("hpChange() after The hp "+std::to_string(currentMonster->monster)+
@@ -904,7 +904,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
         }
         if(otherMonster!=NULL)
         {
-            const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
+            const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster),otherMonster->level);
             if(otherMonster->hp>otherMonsterStat.hp)
             {
                 errorOutput("hpChange() after The hp "+std::to_string(otherMonster->monster)+

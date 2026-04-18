@@ -150,7 +150,7 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 }
 #endif
 
-bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
+bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers)
 {
     /* in same map when:
      * x,y validated if around have at least 1 walkable tile and have not same type at tile
@@ -164,11 +164,11 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().cend())
-        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+    if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -374,16 +374,16 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    CATCHCHALLENGER_TYPE_ITEM itemId=0;
                                    std::string item(product->Attribute("item"));
                                    item=str_tolower(item);
-                                   if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(item)!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
+                                   if(CommonDatapack::commonDatapack.has_tempNameToItemId(item))
                                    {
-                                       itemId=CommonDatapack::commonDatapack.get_tempNameToItemId().at(item);
+                                       itemId=CommonDatapack::commonDatapack.get_tempNameToItemId(item);
                                        found=true;
                                    }
                                    else
                                    {
                                        bool ok=false;
                                        const uint16_t temp=stringtouint16(product->Attribute("item"),&ok);
-                                       if(ok && CommonDatapack::commonDatapack.get_items().item.find(temp)!=CommonDatapack::commonDatapack.get_items().item.cend())
+                                       if(ok && CommonDatapack::commonDatapack.has_item(temp))
                                        {
                                            itemId=temp;
                                            found=true;
@@ -391,7 +391,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    }
                                    if(found)
                                    {
-                                       const Item &i=CommonDatapack::commonDatapack.get_items().item.at(itemId);
+                                       const Item &i=CommonDatapack::commonDatapack.get_item(itemId);
                                        uint32_t price=i.price;
                                        if(product->Attribute("overridePrice")!=NULL)
                                        {
@@ -428,16 +428,16 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    i.quantity=1;
                                    bool ok=false;
                                    const std::string itemIdStr=str_tolower(gain->Attribute("item"));
-                                   if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(itemIdStr)!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
+                                   if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemIdStr))
                                    {
-                                       i.id=CommonDatapack::commonDatapack.get_tempNameToItemId().at(itemIdStr);
+                                       i.id=CommonDatapack::commonDatapack.get_tempNameToItemId(itemIdStr);
                                        i.quantity=1;
                                        t.items.push_back(i);
                                    }
                                    else
                                    {
                                        const CATCHCHALLENGER_TYPE_ITEM itemId=stringtouint16(gain->Attribute("item"),&ok);
-                                       if(ok && CommonDatapack::commonDatapack.get_items().item.find(itemId)!=CommonDatapack::commonDatapack.get_items().item.cend())
+                                       if(ok && CommonDatapack::commonDatapack.has_item(itemId))
                                        {
                                            i.id=itemId;
                                            i.quantity=1;
@@ -464,12 +464,12 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    i.level=1;
                                    bool ok=false;
                                    const std::string monsterIdStr=str_tolower(monster->Attribute("id"));
-                                   if(CommonDatapack::commonDatapack.get_tempNameToMonsterId().find(monsterIdStr)!=CommonDatapack::commonDatapack.get_tempNameToMonsterId().cend())
-                                       i.id=CommonDatapack::commonDatapack.get_tempNameToMonsterId().at(monsterIdStr);
+                                   if(CommonDatapack::commonDatapack.has_tempNameToMonsterId(monsterIdStr))
+                                       i.id=CommonDatapack::commonDatapack.get_tempNameToMonsterId(monsterIdStr);
                                    else
                                    {
                                        i.id=stringtouint16(monster->Attribute("id"),&ok);
-                                       if(ok && CommonDatapack::commonDatapack.get_monsters().find(i.id)!=CommonDatapack::commonDatapack.get_monsters().cend())
+                                       if(ok && CommonDatapack::commonDatapack.has_monster(i.id))
                                        {}
                                        else
                                        {
@@ -600,7 +600,9 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                         }
                        else
                        {
-                           if(!mapFinal.parseUnknownBotStep(botOnMap.point.first,botOnMap.point.second,step))
+                           if(buffers!=nullptr)
+                               buffers->unknownBotStepBuffer.push_back({botOnMap.point.first,botOnMap.point.second,step});
+                           else
                                std::cerr << file << " bot id " << searchID << " bot step not found: " << step->Attribute("type") << std::endl;//the map is loaded before the bot?
                        }
                     }
@@ -638,10 +640,9 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                 MapMonster mapMonster;
                 {
                     const std::string monsterIdStr=str_tolower(monsters->Attribute("id"));
-                    const auto &tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
-                    if(tempNameToMonsterId.find(monsterIdStr)!=tempNameToMonsterId.cend())
+                    if(CommonDatapack::commonDatapack.has_tempNameToMonsterId(monsterIdStr))
                     {
-                        mapMonster.id=tempNameToMonsterId.at(monsterIdStr);
+                        mapMonster.id=CommonDatapack::commonDatapack.get_tempNameToMonsterId(monsterIdStr);
                         ok=true;
                     }
                     else
@@ -652,7 +653,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                     }
                 }
                 if(ok)
-                    if(CommonDatapack::commonDatapack.get_monsters().find(mapMonster.id)==CommonDatapack::commonDatapack.get_monsters().cend())
+                    if(!CommonDatapack::commonDatapack.has_monster(mapMonster.id))
                     {
                         std::cerr << "monster " << mapMonster.id << " not found into the monster list: " << monsters->Name() << ", file: " << fileName << std::endl;
                         ok=false;
@@ -758,7 +759,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
     return monsterTypeList;
 }
 
-void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep)
+void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep,std::vector<MapLoadBuffers> *mapLoadBuffers)
 {
     Map_loader map_temp;
     std::vector<std::string> map_name;
@@ -826,7 +827,13 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
             //mapPathToId[sortFileName]=map_name_to_do_id.size(); need be sorted before
             flat_map_list.push_back(CommonMap());
             CommonMap &mapFinal=flat_map_list.back();
-            if(map_temp.tryLoadMap(datapack_mapPath+fileName,mapFinal,true))
+            MapLoadBuffers *currentBuffer=nullptr;
+            if(mapLoadBuffers!=nullptr)
+            {
+                mapLoadBuffers->push_back(MapLoadBuffers());
+                currentBuffer=&mapLoadBuffers->back();
+            }
+            if(map_temp.tryLoadMap(datapack_mapPath+fileName,mapFinal,true,currentBuffer))
             {
                 //GlobalServerData::serverPrivateVariables.map_list[fileNameWihtoutTmx]=mapServer;
 

@@ -39,7 +39,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     {
         bool ok;
         quantityToBuy = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:")
-                                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(id).name)),
+                                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(id).name)),
                                              0, 0, static_cast<int>(quantity), 1, &ok);
         if(!ok || quantityToBuy<=0)
             return;
@@ -106,7 +106,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
             quantityToSell=playerInformations.items.at(itemid);
         bool ok;
         i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:")
-                                 .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemid).name)),
+                                 .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(itemid).name)),
                                  0, 0, quantityToSell, 1, &ok);
         if(!ok || i<=0)
             return;
@@ -380,15 +380,15 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
     else
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
     const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
     {
         item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image);
         if(item->data(97).toUInt()==0)
             item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)).arg(item->data(98).toUInt()));
+                QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name)).arg(item->data(98).toUInt()));
         else
             item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+                QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name)).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     else
     {
@@ -415,15 +415,15 @@ void BaseWindow::factoryToProductItem(QListWidgetItem *item)
     else
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
     const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
-    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+    if(QtDatapackClientLoader::datapackLoader->has_itemExtra(itemId))
     {
         item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image);
         if(item->data(97).toUInt()==0)
             item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)).arg(item->data(98).toUInt()));
+                QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name)).arg(item->data(98).toUInt()));
         else
             item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+                QtDatapackClientLoader::datapackLoader->get_itemExtra(itemId).name)).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     else
     {

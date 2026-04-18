@@ -1081,7 +1081,7 @@ void DatapackClientLoader::parseQuestsExtra()
                     autostep=true;
         }
 
-        std::unordered_map<uint32_t,std::string> steps;
+        catchchallenger_datapack_map<uint32_t,std::string> steps;
         {
             //load step
             const tinyxml2::XMLElement *step = root->FirstChildElement("step");
@@ -1350,8 +1350,6 @@ void DatapackClientLoader::parseProfileText()
     const std::vector<const tinyxml2::XMLElement *> xmlList=
             CatchChallenger::DatapackGeneralLoader::loadProfileList(
                 datapackPath,file,
-                CatchChallenger::CommonDatapack::commonDatapack.get_items().item,
-                CatchChallenger::CommonDatapack::commonDatapack.get_monsters(),
                 CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                 ).first;
     uint32_t profileIndex=0;
@@ -1428,18 +1426,18 @@ void DatapackClientLoader::parseProfileText()
 void DatapackClientLoader::parseQuestsLink()
 {
     CATCHCHALLENGER_TYPE_QUEST questCount=0;
-    for (const std::pair<CATCHCHALLENGER_TYPE_QUEST,CatchChallenger::Quest> n : CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests())
-    {
-        const CATCHCHALLENGER_TYPE_QUEST &questId=n.first;
-        const CatchChallenger::Quest &quest=n.second;
+    for(CATCHCHALLENGER_TYPE_QUEST questId=0;questId<=255;questId++) {
+        if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
+            continue;
+        const CatchChallenger::Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
         if(!quest.steps.empty())
         {
             const CatchChallenger::Quest::Step &step=quest.steps.front();
             const CatchChallenger::Quest::StepRequirements &stepRequirements=step.requirements;
-            for (const std::pair<CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>> m : stepRequirements.fights)
+            for (const std::pair<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>> m : stepRequirements.fights)
             {
                 const CATCHCHALLENGER_TYPE_MAPID &mapId=m.first;
-                const std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> &botIdList=m.second;
+                const catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID> &botIdList=m.second;
                 for (const CATCHCHALLENGER_TYPE_BOTID& elem : botIdList)
                 {
                     botToQuestStart[mapId][elem].push_back(questId);
@@ -1595,12 +1593,11 @@ void DatapackClientLoader::parseSkillsExtra()
         }
         //open and quick check the file
         tinyxml2::XMLDocument *domDocument;
-        if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
-                CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         else
         {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
             const auto loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
@@ -1638,7 +1635,7 @@ void DatapackClientLoader::parseSkillsExtra()
                 else
                 {
                     const uint16_t &id=static_cast<uint16_t>(tempid);
-                    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().find(id)==CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(id))
                     {}
                     else
                     {
@@ -1716,18 +1713,22 @@ void DatapackClientLoader::parseSkillsExtra()
         file_index++;
     }
 
-    auto i=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cbegin();
-    while(i!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
     {
-        if(monsterSkillsExtra.find(i->first)==monsterSkillsExtra.cend())
+        for(CATCHCHALLENGER_TYPE_SKILL skillId=1;skillId<=65535;skillId++)
         {
-            std::cerr << "Strange, have entry into monster list, but not into monster skill extra for id: " << i->first << std::endl;
-            DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
-            monsterSkillExtraEntry.name="Unknown";
-            monsterSkillExtraEntry.description="Unknown";
-            monsterSkillsExtra[i->first]=monsterSkillExtraEntry;
+            if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(skillId))
+                continue;
+            if(monsterSkillsExtra.find(skillId)==monsterSkillsExtra.cend())
+            {
+                std::cerr << "Strange, have entry into monster list, but not into monster skill extra for id: " << skillId << std::endl;
+                DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
+                monsterSkillExtraEntry.name="Unknown";
+                monsterSkillExtraEntry.description="Unknown";
+                monsterSkillsExtra[skillId]=monsterSkillExtraEntry;
+            }
+            if(skillId==65535)
+                break;
         }
-        ++i;
     }
 
     std::cerr << std::to_string(monsterSkillsExtra.size()) << " skill(s) extra loaded" << std::endl;
@@ -1738,12 +1739,11 @@ void DatapackClientLoader::parseTypesExtra()
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml";
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
-            CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         const auto loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
@@ -1761,7 +1761,7 @@ void DatapackClientLoader::parseTypesExtra()
     //load the content
     {
         const std::string &language=getLanguage();
-        std::unordered_set<std::string> duplicate;
+        catchchallenger_datapack_set<std::string> duplicate;
         const tinyxml2::XMLElement *typeItem = root->FirstChildElement("type");
         while(typeItem!=NULL)
         {
@@ -2012,141 +2012,115 @@ const std::vector<CatchChallenger::CommonMap> &DatapackClientLoader::get_mapList
     return mapList;
 }
 
-const std::unordered_map<uint8_t,DatapackClientLoader::TypeExtra> &DatapackClientLoader::get_typeExtra() const
+//typeExtra
+size_t DatapackClientLoader::get_typeExtra_size() const { return typeExtra.size(); }
+const DatapackClientLoader::TypeExtra &DatapackClientLoader::get_typeExtra(const uint8_t &key) const { return typeExtra.at(key); }
+bool DatapackClientLoader::has_typeExtra(const uint8_t &key) const { return typeExtra.find(key)!=typeExtra.cend(); }
+//monsterExtra
+size_t DatapackClientLoader::get_monsterExtra_size() const { return monsterExtra.size(); }
+const DatapackClientLoader::MonsterExtra &DatapackClientLoader::get_monsterExtra(const CATCHCHALLENGER_TYPE_MONSTER &key) const { return monsterExtra.at(key); }
+bool DatapackClientLoader::has_monsterExtra(const CATCHCHALLENGER_TYPE_MONSTER &key) const { return monsterExtra.find(key)!=monsterExtra.cend(); }
+//monsterBuffsExtra
+size_t DatapackClientLoader::get_monsterBuffsExtra_size() const { return monsterBuffsExtra.size(); }
+const DatapackClientLoader::MonsterExtra::Buff &DatapackClientLoader::get_monsterBuffExtra(const CATCHCHALLENGER_TYPE_MONSTER &key) const { return monsterBuffsExtra.at(key); }
+bool DatapackClientLoader::has_monsterBuffExtra(const CATCHCHALLENGER_TYPE_MONSTER &key) const { return monsterBuffsExtra.find(key)!=monsterBuffsExtra.cend(); }
+//monsterSkillsExtra
+size_t DatapackClientLoader::get_monsterSkillsExtra_size() const { return monsterSkillsExtra.size(); }
+const DatapackClientLoader::MonsterExtra::Skill &DatapackClientLoader::get_monsterSkillExtra(const CATCHCHALLENGER_TYPE_SKILL &key) const { return monsterSkillsExtra.at(key); }
+bool DatapackClientLoader::has_monsterSkillExtra(const CATCHCHALLENGER_TYPE_SKILL &key) const { return monsterSkillsExtra.find(key)!=monsterSkillsExtra.cend(); }
+//itemsExtra
+size_t DatapackClientLoader::get_itemsExtra_size() const { return itemsExtra.size(); }
+const DatapackClientLoader::ItemExtra &DatapackClientLoader::get_itemExtra(const CATCHCHALLENGER_TYPE_ITEM &key) const { return itemsExtra.at(key); }
+bool DatapackClientLoader::has_itemExtra(const CATCHCHALLENGER_TYPE_ITEM &key) const { return itemsExtra.find(key)!=itemsExtra.cend(); }
+//reputationExtra
+size_t DatapackClientLoader::get_reputationExtra_size() const { return reputationExtra.size(); }
+const DatapackClientLoader::ReputationExtra &DatapackClientLoader::get_reputationExtra(const std::string &key) const { return reputationExtra.at(key); }
+bool DatapackClientLoader::has_reputationExtra(const std::string &key) const { return reputationExtra.find(key)!=reputationExtra.cend(); }
+//reputationNameToId
+size_t DatapackClientLoader::get_reputationNameToId_size() const { return reputationNameToId.size(); }
+uint8_t DatapackClientLoader::get_reputationNameToId(const std::string &key) const { return reputationNameToId.at(key); }
+bool DatapackClientLoader::has_reputationNameToId(const std::string &key) const { return reputationNameToId.find(key)!=reputationNameToId.cend(); }
+//itemToPlants
+size_t DatapackClientLoader::get_itemToPlants_size() const { return itemToPlants.size(); }
+uint8_t DatapackClientLoader::get_itemToPlant(const CATCHCHALLENGER_TYPE_ITEM &key) const { return itemToPlants.at(key); }
+bool DatapackClientLoader::has_itemToPlant(const CATCHCHALLENGER_TYPE_ITEM &key) const { return itemToPlants.find(key)!=itemToPlants.cend(); }
+//questsExtra
+size_t DatapackClientLoader::get_questsExtra_size() const { return questsExtra.size(); }
+const DatapackClientLoader::QuestExtra &DatapackClientLoader::get_questExtra(const CATCHCHALLENGER_TYPE_QUEST &key) const { return questsExtra.at(key); }
+bool DatapackClientLoader::has_questExtra(const CATCHCHALLENGER_TYPE_QUEST &key) const { return questsExtra.find(key)!=questsExtra.cend(); }
+//questsPathToId
+size_t DatapackClientLoader::get_questsPathToId_size() const { return questsPathToId.size(); }
+CATCHCHALLENGER_TYPE_QUEST DatapackClientLoader::get_questPathToId(const std::string &key) const { return questsPathToId.at(key); }
+bool DatapackClientLoader::has_questPathToId(const std::string &key) const { return questsPathToId.find(key)!=questsPathToId.cend(); }
+//botToQuestStart
+size_t DatapackClientLoader::get_botToQuestStart_size() const { return botToQuestStart.size(); }
+bool DatapackClientLoader::has_botToQuestStart(const CATCHCHALLENGER_TYPE_MAPID &mapId) const { return botToQuestStart.find(mapId)!=botToQuestStart.cend(); }
+bool DatapackClientLoader::has_botToQuestStartForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const
 {
-    return typeExtra;
+    const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>>::const_iterator i=botToQuestStart.find(mapId);
+    if(i==botToQuestStart.cend()) return false;
+    return i->second.find(botId)!=i->second.cend();
 }
-
-const std::unordered_map<uint16_t,DatapackClientLoader::MonsterExtra> &DatapackClientLoader::get_monsterExtra() const
-{
-    return monsterExtra;
-}
-
-const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,DatapackClientLoader::MonsterExtra::Buff> &DatapackClientLoader::get_monsterBuffsExtra() const
-{
-    return monsterBuffsExtra;
-}
-
-const std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,DatapackClientLoader::MonsterExtra::Skill> &DatapackClientLoader::get_monsterSkillsExtra() const
-{
-    return monsterSkillsExtra;
-}
-
-const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,DatapackClientLoader::ItemExtra> &DatapackClientLoader::get_itemsExtra() const
-{
-    return itemsExtra;
-}
-
-const std::unordered_map<std::string,DatapackClientLoader::ReputationExtra> &DatapackClientLoader::get_reputationExtra() const
-{
-    return reputationExtra;
-}
-
-const std::unordered_map<std::string,uint8_t> &DatapackClientLoader::get_reputationNameToId() const
-{
-    return reputationNameToId;
-}
-
-const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> &DatapackClientLoader::get_itemToPlants() const
-{
-    return itemToPlants;
-}
-
-const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,DatapackClientLoader::QuestExtra> &DatapackClientLoader::get_questsExtra() const
-{
-    return questsExtra;
-}
-
-const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_QUEST> &DatapackClientLoader::get_questsPathToId() const
-{
-    return questsPathToId;
-}
-
-const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> &DatapackClientLoader::get_botToQuestStart() const
-{
-    return botToQuestStart;
-}
+const std::vector<CATCHCHALLENGER_TYPE_QUEST> &DatapackClientLoader::get_botToQuestStartForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const { return botToQuestStart.at(mapId).at(botId); }
 
 const CatchChallenger::Bot* DatapackClientLoader::getBot(CATCHCHALLENGER_TYPE_MAPID mapIndex, uint8_t x, uint8_t y) const
 {
-    auto mapIt=mapBots.find(mapIndex);
+    const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot>>::const_iterator mapIt=mapBots.find(mapIndex);
     if(mapIt==mapBots.cend())
     {
         std::cerr << "  getBot() mapIndex=" << mapIndex << " not found in mapBots (mapBots.size()=" << mapBots.size() << ")" << std::endl;
         return nullptr;
     }
-    auto botIt=mapIt->second.find(std::pair<uint8_t,uint8_t>(x,y));
+    const catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot>::const_iterator botIt=mapIt->second.find(std::pair<uint8_t,uint8_t>(x,y));
     if(botIt==mapIt->second.cend())
     {
-        std::cerr << "  getBot() mapIndex=" << mapIndex << " found, but no bot at (" << (int)x << "," << (int)y << "). Bots on this map:" << std::endl;
-        for(const auto &entry : mapIt->second)
-            std::cerr << "    bot at (" << (int)entry.first.first << "," << (int)entry.first.second << ") id=" << (int)entry.second.botId << std::endl;
+        std::cerr << "  getBot() mapIndex=" << mapIndex << " found, but no bot at (" << (int)x << "," << (int)y << ")." << std::endl;
         return nullptr;
     }
     return &botIt->second;
 }
 
-/*const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,DatapackClientLoader::BotFightExtra>> &DatapackClientLoader::get_botFightsExtra() const
-{
-    return botFightsExtra;
-}*/
+//zonesExtra
+size_t DatapackClientLoader::get_zonesExtra_size() const { return zonesExtra.size(); }
+const DatapackClientLoader::ZoneExtra &DatapackClientLoader::get_zoneExtra(const std::string &key) const { return zonesExtra.at(key); }
+bool DatapackClientLoader::has_zoneExtra(const std::string &key) const { return zonesExtra.find(key)!=zonesExtra.cend(); }
+//audioAmbiance
+size_t DatapackClientLoader::get_audioAmbiance_size() const { return audioAmbiance.size(); }
+const std::string &DatapackClientLoader::get_audioAmbiance(const std::string &key) const { return audioAmbiance.at(key); }
+bool DatapackClientLoader::has_audioAmbiance(const std::string &key) const { return audioAmbiance.find(key)!=audioAmbiance.cend(); }
+//profileTextList
+size_t DatapackClientLoader::get_profileTextList_size() const { return profileTextList.size(); }
+const DatapackClientLoader::ProfileText &DatapackClientLoader::get_profileText(const uint32_t &key) const { return profileTextList.at(key); }
+bool DatapackClientLoader::has_profileText(const uint32_t &key) const { return profileTextList.find(key)!=profileTextList.cend(); }
+//visualCategories
+size_t DatapackClientLoader::get_visualCategories_size() const { return visualCategories.size(); }
+const DatapackClientLoader::VisualCategory &DatapackClientLoader::get_visualCategory(const std::string &key) const { return visualCategories.at(key); }
+bool DatapackClientLoader::has_visualCategory(const std::string &key) const { return visualCategories.find(key)!=visualCategories.cend(); }
+//other non-map
+const std::string &DatapackClientLoader::get_language() const { return language; }
+const std::vector<std::string> &DatapackClientLoader::get_maps() const { return mapIdToPath; }
+const std::vector<std::string> &DatapackClientLoader::get_skins() const { return skins; }
+//mapToId
+size_t DatapackClientLoader::get_mapToId_size() const { return mapPathToId.size(); }
+CATCHCHALLENGER_TYPE_MAPID DatapackClientLoader::get_mapToId(const std::string &key) const { return mapPathToId.at(key); }
+bool DatapackClientLoader::has_mapToId(const std::string &key) const { return mapPathToId.find(key)!=mapPathToId.cend(); }
 
-const std::unordered_map<std::string,DatapackClientLoader::ZoneExtra> &DatapackClientLoader::get_zonesExtra() const
-{
-    return zonesExtra;
-}
-
-const std::unordered_map<std::string,std::string> &DatapackClientLoader::get_audioAmbiance() const
-{
-    return audioAmbiance;
-}
-
-const std::unordered_map<uint32_t,DatapackClientLoader::ProfileText> &DatapackClientLoader::get_profileTextList() const
-{
-    return profileTextList;
-}
-
-const std::unordered_map<std::string,DatapackClientLoader::VisualCategory> &DatapackClientLoader::get_visualCategories() const
-{
-    return visualCategories;
-}
-
-const std::string &DatapackClientLoader::get_language() const
-{
-    return language;
-}
-
-const std::vector<std::string> &DatapackClientLoader::get_maps() const
-{
-    return mapIdToPath;
-}
-
-const std::vector<std::string> &DatapackClientLoader::get_skins() const
-{
-    return skins;
-}
-
-const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &DatapackClientLoader::get_mapToId() const
-{
-    return mapPathToId;
-}
-
-/*const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &DatapackClientLoader::get_fullMapPathToId() const
+/*const catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &DatapackClientLoader::get_fullMapPathToId() const
 {
     return fullMapPathToId;
 }*/
 
-/*const std::unordered_map<std::string,std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM> > &DatapackClientLoader::get_itemOnMap() const
+/*const catchchallenger_datapack_map<std::string,catchchallenger_datapack_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM> > &DatapackClientLoader::get_itemOnMap() const
 {
     return itemOnMap;
 }
 
-const std::unordered_map<std::string,std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM> > &DatapackClientLoader::get_plantOnMap() const
+const catchchallenger_datapack_map<std::string,catchchallenger_datapack_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM> > &DatapackClientLoader::get_plantOnMap() const
 {
     return plantOnMap;
 }
 
-const std::unordered_map<uint16_t,DatapackClientLoader::PlantIndexContent> &DatapackClientLoader::get_plantIndexOfOnMap() const
+const catchchallenger_datapack_map<uint16_t,DatapackClientLoader::PlantIndexContent> &DatapackClientLoader::get_plantIndexOfOnMap() const
 {
     return plantIndexOfOnMap;
 }*/
