@@ -9,10 +9,10 @@ linux:LIBS += -fuse-ld=mold
 #QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations  -fno-rtti"
 #QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations  -fno-rtti"
 
-linux:QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti -fno-exceptions"
-linux:QMAKE_CXXFLAGS+="-fstack-protector-all -g -fno-rtti -fno-exceptions"
-linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
-linux:QMAKE_CFLAGS+="-Wno-missing-braces -Wall -Wextra"
+linux: {
+QMAKE_CFLAGS+="-fstack-protector-all -fno-rtti -fno-exceptions -Wno-missing-braces -Wall -Wextra"
+QMAKE_CXXFLAGS+="-fstack-protector-all -fno-rtti -fno-exceptions -Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
+}
 
 CONFIG   += console
 

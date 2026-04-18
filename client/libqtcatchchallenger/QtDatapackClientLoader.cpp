@@ -40,7 +40,7 @@ QtDatapackClientLoader::QtDatapackClientLoader()
 
 QtDatapackClientLoader::~QtDatapackClientLoader()
 {
-    if(mDefaultInventoryImage==NULL)
+    if(mDefaultInventoryImage!=NULL)
         delete mDefaultInventoryImage;
     #ifndef NOTHREADS
     quit();
@@ -424,6 +424,14 @@ void QtDatapackClientLoader::resetAll()
         t->wait();
         #endif
     }
+    #ifndef NOTHREADS
+    /* Stop the loader thread's event loop and wait for any in-flight
+       parseDatapack()/parseSkillsExtra() to finish before we clear
+       CommonDatapack — otherwise the loader thread crashes on
+       use-after-free when accessing the cleared hash tables. */
+    quit();
+    wait();
+    #endif
     CatchChallenger::CommonDatapack::commonDatapack.unload();
     if(mDefaultInventoryImage==NULL)
     {
@@ -454,6 +462,11 @@ void QtDatapackClientLoader::resetAll()
     QtmonsterBuffsExtra.clear();
     QtplantExtra.clear();
     DatapackClientLoader::resetAll();
+    #ifndef NOTHREADS
+    /* Restart the thread so future parseDatapack() signals are processed
+       (resetAll is also called on reconnect, not just shutdown). */
+    start();
+    #endif
 }
 
 void QtDatapackClientLoader::parseTileset()
@@ -954,22 +967,26 @@ void QtDatapackClientLoader::parseBuffExtra()
         file_index++;
     }
 
-    for(CATCHCHALLENGER_TYPE_BUFF buffId=1;buffId<=255;buffId++)
     {
-        if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterBuff(buffId))
-            continue;
-        if(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.find(buffId)==
-                QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
+        CATCHCHALLENGER_TYPE_BUFF buffId=1;
+        do
         {
-            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(buffId));
-            QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
-            QtDatapackClientLoader::QtBuffExtra QtmonsterBuffExtraEntry;
-            monsterBuffExtraEntry.name=tr("Unknown").toStdString();
-            monsterBuffExtraEntry.description=tr("Unknown").toStdString();
-            QtmonsterBuffExtraEntry.icon=QPixmap(":/CC/images/interface/buff.png");
-            QtDatapackClientLoader::datapackLoader->monsterBuffsExtra[buffId]=monsterBuffExtraEntry;
-            QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[buffId]=QtmonsterBuffExtraEntry;
-        }
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterBuff(buffId))
+            {
+                if(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.find(buffId)==
+                        QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
+                {
+                    qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(buffId));
+                    QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
+                    QtDatapackClientLoader::QtBuffExtra QtmonsterBuffExtraEntry;
+                    monsterBuffExtraEntry.name=tr("Unknown").toStdString();
+                    monsterBuffExtraEntry.description=tr("Unknown").toStdString();
+                    QtmonsterBuffExtraEntry.icon=QPixmap(":/CC/images/interface/buff.png");
+                    QtDatapackClientLoader::datapackLoader->monsterBuffsExtra[buffId]=monsterBuffExtraEntry;
+                    QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[buffId]=QtmonsterBuffExtraEntry;
+                }
+            }
+        } while(buffId++<255);
     }
 
     qDebug() << QStringLiteral("%1 buff(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.size());
@@ -981,24 +998,28 @@ void QtDatapackClientLoader::parsePlantsExtra()
     const std::string &text_dotpng=".png";
     const std::string &text_dotgif=".gif";
     const std::string &basePath=datapackPath+DATAPACK_BASE_PATH_PLANTS;
-    for(CATCHCHALLENGER_TYPE_PLANT plantId=1;plantId<=255;plantId++)
     {
-        if(!CatchChallenger::CommonDatapack::commonDatapack.has_plant(plantId))
-            continue;
-        //todo load in parallel into QImage on only after pass to tileset into the main tile
-        //try load the tileset
-        QtDatapackClientLoader::QtPlantExtra plant;
-        plant.tileset=Tiled::Tileset::create(QString::fromStdString(text_plant),16,32);
-        const std::string &path=basePath+std::to_string(plantId)+text_dotpng;
-        if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path)),QString::fromStdString(path)))
+        CATCHCHALLENGER_TYPE_PLANT plantId=1;
+        do
         {
-            const std::string &path2=basePath+std::to_string(plantId)+text_dotgif;
-            if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path2)),QString::fromStdString(path2)))
-                if(!plant.tileset->loadFromImage(QImage(QStringLiteral(":/CC/images/plant/unknow_plant.png")),QStringLiteral(":/CC/images/plant/unknow_plant.png")))
-                    qDebug() << "Unable the load the default plant tileset";
-        }
-        QtDatapackClientLoader::datapackLoader->QtplantExtra[plantId]=plant;
-        itemToPlants[CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).itemUsed]=plantId;
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_plant(plantId))
+            {
+                //todo load in parallel into QImage on only after pass to tileset into the main tile
+                //try load the tileset
+                QtDatapackClientLoader::QtPlantExtra plant;
+                plant.tileset=Tiled::Tileset::create(QString::fromStdString(text_plant),16,32);
+                const std::string &path=basePath+std::to_string(plantId)+text_dotpng;
+                if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path)),QString::fromStdString(path)))
+                {
+                    const std::string &path2=basePath+std::to_string(plantId)+text_dotgif;
+                    if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path2)),QString::fromStdString(path2)))
+                        if(!plant.tileset->loadFromImage(QImage(QStringLiteral(":/CC/images/plant/unknow_plant.png")),QStringLiteral(":/CC/images/plant/unknow_plant.png")))
+                            qDebug() << "Unable the load the default plant tileset";
+                }
+                QtDatapackClientLoader::datapackLoader->QtplantExtra[plantId]=plant;
+                itemToPlants[CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).itemUsed]=plantId;
+            }
+        } while(plantId++<255);
     }
 
     qDebug() << QStringLiteral("%1 plant(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->QtplantExtra.size());

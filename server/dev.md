@@ -5,21 +5,10 @@
 * client side predicion and compute (like path finding) to scale better on server
 * prefer not use template, hard to debug
 * prefer not use auto, poorly detected into qt creator
-* prefer while over for
 
 # Server
 * load datapack from disk or use cache, be able to external use cache generator to embed server with only load from cache (and drop heavy load from datapack)
 * the map other player move have ACK, to drop send other update if not yet received (act as UDP)
-
-# Client
-* All all ressources to drop load time and don't have hugly loading like hole or widget position changes during loading
-
-## Client arguments, mostly to debug
-* --server name: on screen selection, auto select the server with this name
-* --autologin: on login/pass page, automaticlly try login
-* --character name: on character selection page, automaticly select character with this name
-* --closewhenonmap: close 1s after the character is spawn on map
-* --dropsenddataafteronmap: dropany output comunicacion from client to server after the player spawn on map, used to explore datapack map, ignore zone monster colision (to not open fight with wild monster) and any fight
 
 # Naming Conventions
 * Classes: PascalCase (e.g., EpollClientLoginMaster)
@@ -55,5 +44,4 @@ release with
 QMAKE_CXXFLAGS += -Os -flto -fno-exceptions
 QMAKE_CFLAGS += -Os -flto -fno-exceptions
 QMAKE_LFLAGS += -Os -flto -s
-* 253K stats release llvm std::cout
-* 345K  stats release llvm std::print
+* 253K stats

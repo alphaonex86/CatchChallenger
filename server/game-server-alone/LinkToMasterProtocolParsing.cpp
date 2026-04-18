@@ -260,7 +260,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         pos+=4;
                         index++;
                     }
-                    if((size-pos)<(1+2+1+2))
+                    if((size-pos)<(1+2))
                     {
                         std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         abort();
@@ -268,10 +268,6 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=data[pos];
                     pos+=1;
                     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
-                    pos+=2;
-                    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=data[pos];
-                    pos+=1;
-                    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                     pos+=2;
 
                     //reputation

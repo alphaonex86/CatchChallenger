@@ -1426,25 +1426,29 @@ void DatapackClientLoader::parseProfileText()
 void DatapackClientLoader::parseQuestsLink()
 {
     CATCHCHALLENGER_TYPE_QUEST questCount=0;
-    for(CATCHCHALLENGER_TYPE_QUEST questId=0;questId<=255;questId++) {
-        if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
-            continue;
-        const CatchChallenger::Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
-        if(!quest.steps.empty())
-        {
-            const CatchChallenger::Quest::Step &step=quest.steps.front();
-            const CatchChallenger::Quest::StepRequirements &stepRequirements=step.requirements;
-            for (const std::pair<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>> m : stepRequirements.fights)
+    {
+        CATCHCHALLENGER_TYPE_QUEST questId=0;
+        do {
+            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
             {
-                const CATCHCHALLENGER_TYPE_MAPID &mapId=m.first;
-                const catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID> &botIdList=m.second;
-                for (const CATCHCHALLENGER_TYPE_BOTID& elem : botIdList)
+                const CatchChallenger::Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
+                if(!quest.steps.empty())
                 {
-                    botToQuestStart[mapId][elem].push_back(questId);
-                    questCount++;
+                    const CatchChallenger::Quest::Step &step=quest.steps.front();
+                    const CatchChallenger::Quest::StepRequirements &stepRequirements=step.requirements;
+                    for (const std::pair<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>> m : stepRequirements.fights)
+                    {
+                        const CATCHCHALLENGER_TYPE_MAPID &mapId=m.first;
+                        const catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID> &botIdList=m.second;
+                        for (const CATCHCHALLENGER_TYPE_BOTID& elem : botIdList)
+                        {
+                            botToQuestStart[mapId][elem].push_back(questId);
+                            questCount++;
+                        }
+                    }
                 }
             }
-        }
+        } while(questId++<255);
     }
     std::cout << std::to_string(questCount) << " bot linked with quest(s) loaded" << std::endl;
 }
@@ -1714,21 +1718,21 @@ void DatapackClientLoader::parseSkillsExtra()
     }
 
     {
-        for(CATCHCHALLENGER_TYPE_SKILL skillId=1;skillId<=65535;skillId++)
+        CATCHCHALLENGER_TYPE_SKILL skillId=1;
+        do
         {
-            if(!CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(skillId))
-                continue;
-            if(monsterSkillsExtra.find(skillId)==monsterSkillsExtra.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.has_monsterSkill(skillId))
             {
-                std::cerr << "Strange, have entry into monster list, but not into monster skill extra for id: " << skillId << std::endl;
-                DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
-                monsterSkillExtraEntry.name="Unknown";
-                monsterSkillExtraEntry.description="Unknown";
-                monsterSkillsExtra[skillId]=monsterSkillExtraEntry;
+                if(monsterSkillsExtra.find(skillId)==monsterSkillsExtra.cend())
+                {
+                    std::cerr << "Strange, have entry into monster list, but not into monster skill extra for id: " << skillId << std::endl;
+                    DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
+                    monsterSkillExtraEntry.name="Unknown";
+                    monsterSkillExtraEntry.description="Unknown";
+                    monsterSkillsExtra[skillId]=monsterSkillExtraEntry;
+                }
             }
-            if(skillId==65535)
-                break;
-        }
+        } while(skillId++<65535);
     }
 
     std::cerr << std::to_string(monsterSkillsExtra.size()) << " skill(s) extra loaded" << std::endl;

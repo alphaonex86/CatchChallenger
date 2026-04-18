@@ -50,8 +50,6 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     CommonSettingsCommon::commonSettingsCommon.max_pseudo_size              = 20;
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters            = 8;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
     {
         //empty buffer
         memset(EpollClientLoginMaster::serverServerList,0x00,sizeof(EpollClientLoginMaster::serverServerList));
@@ -259,10 +257,6 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         settings.setValue("maxPlayerMonsters",8);
     if(!settings.contains("maxWarehousePlayerMonsters"))
         settings.setValue("maxWarehousePlayerMonsters",30);
-    if(!settings.contains("maxPlayerItems"))
-        settings.setValue("maxPlayerItems",30);
-    if(!settings.contains("maxWarehousePlayerItems"))
-        settings.setValue("maxWarehousePlayerItems",150);
     settings.sync();
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=stringtouint8(settings.value("maxPlayerMonsters"),&ok);
     if(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters==0 || !ok)
@@ -274,18 +268,6 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
     if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters==0 || !ok)
     {
         std::cerr << "maxWarehousePlayerMonsters==0 (abort)" << std::endl;
-        abort();
-    }
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=stringtouint8(settings.value("maxPlayerItems"),&ok);
-    if(CommonSettingsCommon::commonSettingsCommon.maxPlayerItems==0 || !ok)
-    {
-        std::cerr << "maxPlayerItems==0 (abort)" << std::endl;
-        abort();
-    }
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=stringtouint16(settings.value("maxWarehousePlayerItems"),&ok);
-    if(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems==0 || !ok)
-    {
-        std::cerr << "maxWarehousePlayerItems==0 (abort)" << std::endl;
         abort();
     }
 
@@ -588,9 +570,7 @@ void EpollServerLoginMaster::charactersGroupListReply(std::vector<std::string> &
     rawServerListForC211[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
     rawServerListForC211[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
     *reinterpret_cast<uint16_t *>(rawServerListForC211+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
-    rawServerListForC211[0x0B]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-    *reinterpret_cast<uint16_t *>(rawServerListForC211+0x0C)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
-    rawServerListForC211Size=0x0E;
+    rawServerListForC211Size=0x0B;
     //do the Characters group
     rawServerListForC211[rawServerListForC211Size]=(unsigned char)charactersGroupList.size();
     rawServerListForC211Size+=sizeof(unsigned char);
@@ -1104,12 +1084,12 @@ void EpollServerLoginMaster::loadTheProfile()
                         *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
                         rawServerListForC211Size+=sizeof(uint16_t);
 
-                        if(CommonDatapack::commonDatapack.get_monsters().find(playerMonster.id)==CommonDatapack::commonDatapack.get_monsters().cend())
+                        if(!CommonDatapack::commonDatapack.has_monster(playerMonster.id))
                         {
                             std::cerr << "For profile the monster " << playerMonster.id << " is not found (abort)" << std::endl;
                             abort();
                         }
-                        const Monster &monster=CommonDatapack::commonDatapack.get_monsters().at(playerMonster.id);
+                        const Monster &monster=CommonDatapack::commonDatapack.get_monster(playerMonster.id);
                         const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
                         const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
 
@@ -1127,7 +1107,7 @@ void EpollServerLoginMaster::loadTheProfile()
                         while(skillListIndex<skills.size())
                         {
                             const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
-                            if(CommonDatapack::commonDatapack.get_monsterSkills().find(skill.skill)==CommonDatapack::commonDatapack.get_monsterSkills().cend())
+                            if(!CommonDatapack::commonDatapack.has_monsterSkill(skill.skill))
                             {
                                 std::cerr << "For profile the monster skill " << skill.skill << " is not found (abort)" << std::endl;
                                 abort();
@@ -1239,16 +1219,6 @@ void EpollServerLoginMaster::loadTheDictionary()
     //Max warehouse player monsters
     {
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
-        posOutput+=2;
-    }
-    //Max player items
-    {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-        posOutput+=1;
-    }
-    //Max warehouse player monsters
-    {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
         posOutput+=2;
     }
     //send reputation

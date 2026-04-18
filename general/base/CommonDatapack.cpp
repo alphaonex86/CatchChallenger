@@ -347,6 +347,15 @@ bool CommonDatapack::has_trap(const CATCHCHALLENGER_TYPE_ITEM &key) const { retu
 const LayersOptions &CommonDatapack::get_layersOptions() const { return layersOptions; }
 //events
 const std::vector<Event> &CommonDatapack::get_events() const { return events; }
+const bool &CommonDatapack::get_monsterRateApplied() const { return monsterRateApplied; }
+void CommonDatapack::set_monsterRateApplied(const bool &v) { monsterRateApplied=v; }
+
+//temp
+const std::vector<MonstersCollision> &CommonDatapack::get_monstersCollision() const { return monstersCollision; }
+const std::vector<MonstersCollisionTemp> &CommonDatapack::get_monstersCollisionTemp() const { return monstersCollisionTemp; }
+const std::vector<Type> &CommonDatapack::get_types() const { return types; }
+
+#endif
 //tempNameToItemId
 size_t CommonDatapack::get_tempNameToItemId_size() const { return tempNameToItemId.size(); }
 CATCHCHALLENGER_TYPE_ITEM CommonDatapack::get_tempNameToItemId(const std::string &name) const { return tempNameToItemId.at(name); }
@@ -365,16 +374,6 @@ size_t CommonDatapack::get_tempNameToMonsterId_size() const { return tempNameToM
 CATCHCHALLENGER_TYPE_MONSTER CommonDatapack::get_tempNameToMonsterId(const std::string &name) const { return tempNameToMonsterId.at(name); }
 bool CommonDatapack::has_tempNameToMonsterId(const std::string &name) const { return tempNameToMonsterId.find(name)!=tempNameToMonsterId.cend(); }
 void CommonDatapack::set_tempNameToMonsterId(const std::string &name, const CATCHCHALLENGER_TYPE_MONSTER &id) { tempNameToMonsterId[name]=id; }
-
-const bool &CommonDatapack::get_monsterRateApplied() const { return monsterRateApplied; }
-void CommonDatapack::set_monsterRateApplied(const bool &v) { monsterRateApplied=v; }
-
-//temp
-const std::vector<MonstersCollision> &CommonDatapack::get_monstersCollision() const { return monstersCollision; }
-const std::vector<MonstersCollisionTemp> &CommonDatapack::get_monstersCollisionTemp() const { return monstersCollisionTemp; }
-const std::vector<Type> &CommonDatapack::get_types() const { return types; }
-
-#endif
 const std::vector<Reputation> &CommonDatapack::get_reputation() const { return reputation; }
 std::vector<Reputation> &CommonDatapack::get_reputation_rw() { return reputation; }
 

@@ -119,6 +119,14 @@ public:
     const LayersOptions &get_layersOptions() const;
     //events
     const std::vector<Event> &get_events() const;
+    const bool &get_monsterRateApplied() const;
+    void set_monsterRateApplied(const bool &v);
+
+    //temp
+    const std::vector<MonstersCollision> &get_monstersCollision() const;//never more than 255
+    const std::vector<MonstersCollisionTemp> &get_monstersCollisionTemp() const;//never more than 255
+    const std::vector<Type> &get_types() const;
+    #endif
     //tempNameToItemId
     size_t get_tempNameToItemId_size() const;
     CATCHCHALLENGER_TYPE_ITEM get_tempNameToItemId(const std::string &name) const;
@@ -137,15 +145,6 @@ public:
     CATCHCHALLENGER_TYPE_MONSTER get_tempNameToMonsterId(const std::string &name) const;
     bool has_tempNameToMonsterId(const std::string &name) const;
     void set_tempNameToMonsterId(const std::string &name, const CATCHCHALLENGER_TYPE_MONSTER &id);
-
-    const bool &get_monsterRateApplied() const;
-    void set_monsterRateApplied(const bool &v);
-
-    //temp
-    const std::vector<MonstersCollision> &get_monstersCollision() const;//never more than 255
-    const std::vector<MonstersCollisionTemp> &get_monstersCollisionTemp() const;//never more than 255
-    const std::vector<Type> &get_types() const;
-    #endif
     const std::vector<Reputation> &get_reputation() const;//Player_private_and_public_informations, catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_REPUTATION,PlayerReputation> reputation;
     std::vector<Reputation> &get_reputation_rw();
     //monsters

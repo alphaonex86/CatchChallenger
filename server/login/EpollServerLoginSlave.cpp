@@ -36,8 +36,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     CommonSettingsCommon::commonSettingsCommon.max_pseudo_size              = 20;
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters            = 8;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
 
     TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/login.xml");
 
@@ -578,9 +576,7 @@ void EpollServerLoginSlave::compose04Reply()
     EpollClientLoginSlave::loginGood[0x0D]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
     EpollClientLoginSlave::loginGood[0x0E]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
     *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x0F)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
-    EpollClientLoginSlave::loginGood[0x11]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-    *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x12)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
-    EpollClientLoginSlave::loginGoodSize=0x14;
+    EpollClientLoginSlave::loginGoodSize=0x11;
 
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
     EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
@@ -833,7 +829,7 @@ void EpollServerLoginSlave::preload_profile()
                                                                                             ",%4,0,0,"+
                                     std::to_string(profile.cash)+",%5,0,FALSE,"
                                     "0,0,0,"+
-                                    std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,sizeof(bitlist))+"','\\x"+encyclopedia_item+"'");"),database);
+                                    std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,sizeof(bitlist))+"','\\x"+encyclopedia_item+"');"),database);
                         break;
                         #endif
                     default:

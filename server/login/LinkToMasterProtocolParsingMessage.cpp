@@ -471,8 +471,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=rawData[0x07];
             CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=rawData[0x08];
             CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+0x09)));
-            CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=rawData[0x0B];
-            CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+0x0C)));
             if(CommonSettingsCommon::commonSettingsCommon.min_character>CommonSettingsCommon::commonSettingsCommon.max_character)
             {
                 std::cerr << "C211 min_character>max_character (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
