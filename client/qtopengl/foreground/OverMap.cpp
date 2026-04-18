@@ -856,5 +856,5 @@ void OverMap::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
 
 void OverMap::buyClicked()
 {
-    QDesktopServices::openUrl(QUrl(QString::fromStdString(Ultimate::buy())));
+    QDesktopServices::openUrl(QUrl(QString::fromStdString(Ultimate::buyUrl())));
 }

@@ -266,7 +266,7 @@ void OptionsDialog::newLanguage()
 
 void OptionsDialog::openBuy()
 {
-    QDesktopServices::openUrl(QUrl(QString::fromStdString(Ultimate::buy())));
+    QDesktopServices::openUrl(QUrl(QString::fromStdString(Ultimate::buyUrl())));
 }
 
 void OptionsDialog::keyPressEvent(QKeyEvent * event)

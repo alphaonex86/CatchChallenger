@@ -181,7 +181,8 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol_Qt *client)
         abort();*/
     chat->setClient(client);
     chat->setMultiPlayer(multiplayer);
-    ui->label_ultimate->setText(QString::fromStdString(Ultimate::buy()));
+    ui->label_ultimate->setText(QStringLiteral("<a href=\"%1\"><span style=\"text-decoration: underline; color:#0057ae;\">%2</span></a>")
+                               .arg(QString::fromStdString(Ultimate::buyUrl()),tr("Buy Ultimate")));
     ui->openToLan->setEnabled(true);
     ui->openToLan->setVisible(!multiplayer);
     ui->toolButtonLan->setVisible(!multiplayer);
