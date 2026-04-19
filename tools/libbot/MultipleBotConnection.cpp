@@ -461,7 +461,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         int index=0;
         QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
         QRegularExpression mapExclude(QStringLiteral("[\"']"));
-        std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
+        catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
         while(index<size)
         {
             const QString &fileName=QString::fromStdString(returnList.at(index));

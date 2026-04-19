@@ -10,11 +10,11 @@ using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
 //global to drop useless communication as 100% item luck or to have more informations into client and knowleg on bot
-std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::loadMonsterDrop(const std::string &folder,
-                                                                                               const std::unordered_map<uint16_t, Item> &items,
-                                                                                               const std::unordered_map<uint16_t,Monster> &monsters)
+catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::loadMonsterDrop(const std::string &folder,
+                                                                                               const catchchallenger_datapack_map<uint16_t, Item> &items,
+                                                                                               const catchchallenger_datapack_map<uint16_t,Monster> &monsters)
 {
-    std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
+    catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
     while(file_index<(uint32_t)fileList.size())
@@ -230,7 +230,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
     return monsterDrops;
 }
 
-std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::loadMonsterDrop(const std::string &folder)
+catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::loadMonsterDrop(const std::string &folder)
 {
     return loadMonsterDrop(folder, CommonDatapack::commonDatapack.items, CommonDatapack::commonDatapack.monsters);
 }

@@ -12,9 +12,9 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonster(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> &tempNameToMonsterId,const std::string &folder, const std::unordered_map<CATCHCHALLENGER_TYPE_SKILL, Skill> &monsterSkills
+catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonster(catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> &tempNameToMonsterId,const std::string &folder, const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL, Skill> &monsterSkills
                                                 #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                , const std::vector<Type> &types, const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> &items,
+                                                , const std::vector<Type> &types, const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, Item> &items,
                                                 CATCHCHALLENGER_TYPE_MONSTER &monstersMaxId
                                                 #endif
                                                 )
@@ -36,7 +36,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
         abort();
     }
     #endif
-    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> monsters;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> monsters;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=
             CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
@@ -654,7 +654,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
 
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     //check the evolveTo
-    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster>::iterator i = monsters.begin();
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster>::iterator i = monsters.begin();
     while(i!=monsters.cend())
     {
         unsigned int index=0;
@@ -714,7 +714,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
 }
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-void FightLoader::loadMonsterName(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> &tempNameToMonsterId,const std::string &folder)
+void FightLoader::loadMonsterName(catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> &tempNameToMonsterId,const std::string &folder)
 {
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=
             CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);

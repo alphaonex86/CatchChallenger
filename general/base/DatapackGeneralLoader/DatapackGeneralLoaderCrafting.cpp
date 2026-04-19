@@ -7,7 +7,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> &items,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE &crafingRecipesMaxId)
+std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, Item> &items,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE &crafingRecipesMaxId)
 {
     std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
@@ -18,8 +18,8 @@ std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>
             index++;
         }
     }
-    std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe> crafingRecipes;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> itemToCrafingRecipes;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe> crafingRecipes;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> itemToCrafingRecipes;
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
@@ -35,7 +35,7 @@ std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-            return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
+            return std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
     }
@@ -44,17 +44,17 @@ std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>
     if(root==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
-        return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
     }
     if(root->Name()==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found 2 for reputation of the xml file" << std::endl;
-        return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
     }
     if(strcmp(root->Name(),"recipes")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found for reputation of the xml file" << std::endl;
-        return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
     }
 
     //load the content
@@ -325,6 +325,6 @@ std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>
     #ifdef EPOLLCATCHCHALLENGERSERVER
     delete domDocument;
     #endif
-    return std::pair<std::unordered_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
+    return std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
 }
 #endif

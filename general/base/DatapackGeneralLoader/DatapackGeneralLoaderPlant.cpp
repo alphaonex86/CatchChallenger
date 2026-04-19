@@ -8,7 +8,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::string &file)
+catchchallenger_datapack_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::string &file)
 {
     std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
@@ -19,7 +19,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
             index++;
         }
     }
-    std::unordered_map<uint8_t, Plant> plants;
+    catchchallenger_datapack_map<uint8_t, Plant> plants;
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER

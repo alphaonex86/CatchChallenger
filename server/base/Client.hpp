@@ -300,7 +300,7 @@ private:
     static uint8_t tempDatapackListReply;
     static unsigned int tempDatapackListReplyTestCount;
     //static std::unordered_map<std::string,uint32_t> datapack_file_list_cache_base,datapack_file_list_cache_main,datapack_file_list_cache_sub;//same than above
-    static std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> /*do into BaseServerMasterSendDatapack::datapack_file_hash_cache_base,*/datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
+    static catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> /*do into BaseServerMasterSendDatapack::datapack_file_hash_cache_base,*/datapack_file_hash_cache_main,datapack_file_hash_cache_sub;
     #endif
     static std::regex fileNameStartStringRegex;
 
@@ -352,13 +352,13 @@ private:
     void deleteCharacterNow_object();
     void deleteCharacterNow_return(const uint32_t &characterId);
     #endif
-    static std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> datapack_file_list(const std::string &path,const std::string &exclude,const bool withHash=true);//used into BaseServer to do the hash
+    static catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> datapack_file_list(const std::string &path,const std::string &exclude,const bool withHash=true);//used into BaseServer to do the hash
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const uint8_t &query_id, const std::vector<std::string > &files, const std::vector<uint32_t> &partialHashList);
-    std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> datapack_file_list_cached_base();
-    std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> datapack_file_list_cached_main();
-    std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> datapack_file_list_cached_sub();
+    catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> datapack_file_list_cached_base();
+    catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> datapack_file_list_cached_main();
+    catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> datapack_file_list_cached_sub();
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();

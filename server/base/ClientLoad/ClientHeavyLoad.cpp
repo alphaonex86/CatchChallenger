@@ -15,9 +15,9 @@ using namespace CatchChallenger;
     //loadPlayerAllow();
 }*/
 
-std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list(const std::string &path, const std::string &exclude, const bool withHash)
+catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list(const std::string &path, const std::string &exclude, const bool withHash)
 {
-    std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesList;
+    catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesList;
 
     std::vector<std::string> returnList;
     if(exclude.empty())
@@ -27,7 +27,7 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
 
     #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-    const std::unordered_set<std::string> &extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+    const catchchallenger_datapack_set<std::string> &extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(extensionAllowed.empty())
     {

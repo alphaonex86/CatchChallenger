@@ -475,7 +475,7 @@ struct ServerPrivateVariables
     std::regex datapack_rightFolderName;
 
     //fight
-    std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
+    catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::vector<uint32_t> maxMonsterId;
     std::vector<uint32_t> maxClanId;
@@ -544,7 +544,7 @@ struct ServerPrivateVariables
     };
 
     //datapack
-    std::unordered_map<std::string,uint8_t> skinList;
+    catchchallenger_datapack_map<std::string,uint8_t> skinList;
 };
 
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);

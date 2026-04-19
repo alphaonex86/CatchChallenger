@@ -2519,10 +2519,10 @@ bool Api_protocol::haveNextStepQuestRequirements(const CatchChallenger::Quest &q
         }
         index++;
     }
-    for (const std::pair<CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>>& n : requirements.fights)
+    for (const std::pair<const CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>>& n : requirements.fights)
     {
         const CATCHCHALLENGER_TYPE_MAPID &mapId=n.first;
-        std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> listBots=n.second;
+        catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID> listBots=n.second;
         for (const CATCHCHALLENGER_TYPE_BOTID& botFightId : listBots)
         {
             if(!haveBeatBot(mapId,botFightId))

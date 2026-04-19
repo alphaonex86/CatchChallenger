@@ -8,13 +8,18 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> &tempNameToItemId,const std::string &folder,const std::unordered_map<uint8_t,Buff> &monsterBuffs)
+void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_ITEM> &tempNameToItemId,const std::string &folder,const catchchallenger_datapack_map<uint8_t,Buff> &monsterBuffs,
+        catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, std::vector<MonsterItemEffect> > &monsterItemEffect,
+        catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, std::vector<MonsterItemEffectOutOfFight> > &monsterItemEffectOutOfFight,
+        catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, Item> &outItems,
+        CATCHCHALLENGER_TYPE_ITEM &itemMaxId,
+        catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, uint32_t> &repel,
+        catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, Trap> &trap)
 {
     #ifdef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
     (void)monsterBuffs;
     #endif
-    ItemFull items;
-    items.itemMaxId=0;
+    itemMaxId=0;
     const std::vector<std::string> &fileList=FacilityLibGeneral::listFolder(folder+'/');
     unsigned int file_index=0;
     while(file_index<fileList.size())
@@ -88,36 +93,36 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                         }
                         name = name->NextSiblingElement("name");
                     }
-                    if(items.item.find(id)==items.item.cend())
+                    if(outItems.find(id)==outItems.cend())
                     {
-                        if(items.itemMaxId<id)
-                            items.itemMaxId=id;
+                        if(itemMaxId<id)
+                            itemMaxId=id;
                         //load the price
                         {
                             if(item->Attribute("price")!=NULL)
                             {
                                 bool ok;
-                                items.item[id].price=stringtouint32(item->Attribute("price"),&ok);
+                                outItems[id].price=stringtouint32(item->Attribute("price"),&ok);
                                 if(!ok)
                                 {
                                     std::cerr << "price is not a number, file: " << file << ", child->Name(): " << item->Name() << std::endl;
-                                    items.item[id].price=0;
+                                    outItems[id].price=0;
                                 }
                             }
                             else
-                                items.item[id].price=0;
+                                outItems[id].price=0;
                         }
                         //load the consumeAtUse
                         {
                             if(item->Attribute("consumeAtUse")!=NULL)
                             {
                                 if(strcmp(item->Attribute("consumeAtUse"),"false")==0)
-                                    items.item[id].consumeAtUse=false;
+                                    outItems[id].consumeAtUse=false;
                                 else
-                                    items.item[id].consumeAtUse=true;
+                                    outItems[id].consumeAtUse=true;
                             }
                             else
-                                items.item[id].consumeAtUse=true;
+                                outItems[id].consumeAtUse=true;
                         }
                         bool haveAnEffect=false;
                         //load the trap
@@ -126,19 +131,19 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                             const tinyxml2::XMLElement * trapItem = item->FirstChildElement("trap");
                             if(trapItem!=NULL)
                             {
-                                Trap trap;
-                                trap.bonus_rate=1.0;
+                                Trap trapEntry;
+                                trapEntry.bonus_rate=1.0;
                                 if(trapItem->Attribute("bonus_rate")!=NULL)
                                 {
                                     float bonus_rate=stringtofloat(trapItem->Attribute("bonus_rate"),&ok);
                                     if(ok)
-                                        trap.bonus_rate=bonus_rate;
+                                        trapEntry.bonus_rate=bonus_rate;
                                     else
                                         std::cerr << "Unable to open the file: bonus_rate is not a number, file: " << file << ", child->Name(): " << trapItem->Name() << std::endl;
                                 }
                                 else
                                     std::cerr << "Unable to open the file: trap have not the attribute bonus_rate, file: " << file << ", child->Name(): " << trapItem->Name() << std::endl;
-                                items.trap[id]=trap;
+                                trap[id]=trapEntry;
                                 haveAnEffect=true;
                             }
                         }
@@ -155,7 +160,7 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                                     {
                                         if(step>0)
                                         {
-                                            items.repel[id]=step;
+                                            repel[id]=step;
                                             haveAnEffect=true;
                                         }
                                         else
@@ -179,10 +184,10 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                                     {
                                         if(strcmp(hpItem->Attribute("add"),"all")==0)
                                         {
-                                            MonsterItemEffect monsterItemEffect;
-                                            monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                            monsterItemEffect.data.hp=-1;
-                                            items.monsterItemEffect[id].push_back(monsterItemEffect);
+                                            MonsterItemEffect effectEntry;
+                                            effectEntry.type=MonsterItemEffectType_AddHp;
+                                            effectEntry.data.hp=-1;
+                                            monsterItemEffect[id].push_back(effectEntry);
                                         }
                                         else
                                         {
@@ -194,10 +199,10 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                                                 {
                                                     if(add>0)
                                                     {
-                                                        MonsterItemEffect monsterItemEffect;
-                                                        monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                                        monsterItemEffect.data.hp=add;
-                                                        items.monsterItemEffect[id].push_back(monsterItemEffect);
+                                                        MonsterItemEffect effectEntry;
+                                                        effectEntry.type=MonsterItemEffectType_AddHp;
+                                                        effectEntry.data.hp=add;
+                                                        monsterItemEffect[id].push_back(effectEntry);
                                                     }
                                                     else
                                                         std::cerr << "Unable to open the file, add is not greater than 0, file: " << file << ", child->Name(): " << hpItem->Name() << std::endl;
@@ -221,10 +226,10 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                                     {
                                         if(strcmp(buffItem->Attribute("remove"),"all")==0)
                                         {
-                                            MonsterItemEffect monsterItemEffect;
-                                            monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                            monsterItemEffect.data.buff=-1;
-                                            items.monsterItemEffect[id].push_back(monsterItemEffect);
+                                            MonsterItemEffect effectEntry;
+                                            effectEntry.type=MonsterItemEffectType_RemoveBuff;
+                                            effectEntry.data.buff=-1;
+                                            monsterItemEffect[id].push_back(effectEntry);
                                         }
                                         else
                                         {
@@ -235,10 +240,10 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                                                 {
                                                     if(monsterBuffs.find(removebuffid)!=monsterBuffs.cend())
                                                     {
-                                                        MonsterItemEffect monsterItemEffect;
-                                                        monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                                        monsterItemEffect.data.buff=removebuffid;
-                                                        items.monsterItemEffect[id].push_back(monsterItemEffect);
+                                                        MonsterItemEffect effectEntry;
+                                                        effectEntry.type=MonsterItemEffectType_RemoveBuff;
+                                                        effectEntry.data.buff=removebuffid;
+                                                        monsterItemEffect[id].push_back(effectEntry);
                                                     }
                                                     else
                                                         std::cerr << "Unable to open the file, buff item to remove is not found, file: " << file << ", child->Name(): " << buffItem->Name() << std::endl;
@@ -257,7 +262,7 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                                 }
                             }
                             #endif
-                            if(items.monsterItemEffect.find(id)!=items.monsterItemEffect.cend())
+                            if(monsterItemEffect.find(id)!=monsterItemEffect.cend())
                                 haveAnEffect=true;
                         }
                         //load the monster offline effect
@@ -275,10 +280,10 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                                         std::cerr << "Unable to open the file, level up is greater than 0, file: " << file << ", child->Name(): " << levelItem->Name() << std::endl;
                                     else
                                     {
-                                        MonsterItemEffectOutOfFight monsterItemEffectOutOfFight;
-                                        monsterItemEffectOutOfFight.type=MonsterItemEffectTypeOutOfFight_AddLevel;
-                                        monsterItemEffectOutOfFight.data.level=levelUp;
-                                        items.monsterItemEffectOutOfFight[id].push_back(monsterItemEffectOutOfFight);
+                                        MonsterItemEffectOutOfFight effectOutOfFightEntry;
+                                        effectOutOfFightEntry.type=MonsterItemEffectTypeOutOfFight_AddLevel;
+                                        effectOutOfFightEntry.data.level=levelUp;
+                                        monsterItemEffectOutOfFight[id].push_back(effectOutOfFightEntry);
                                     }
                                 }
                                 else
@@ -302,6 +307,5 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
         #endif
         file_index++;
     }
-    return items;
 }
 #endif

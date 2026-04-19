@@ -178,7 +178,7 @@ protected:
     #endif
     bool preload_industries_call;
 
-    std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
+    catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     std::ifstream *in_file;

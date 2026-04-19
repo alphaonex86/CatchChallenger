@@ -8,14 +8,14 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::loadMonsterSkill(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> &tempNameToSkillId,const std::string &folder
+catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::loadMonsterSkill(catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_SKILL> &tempNameToSkillId,const std::string &folder
                                                    #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                   , const std::unordered_map<CATCHCHALLENGER_TYPE_BUFF, Buff> &monsterBuffs
+                                                   , const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BUFF, Buff> &monsterBuffs
                                                    , const std::vector<Type> &types
                                                    #endif
                                                    )
 {
-    std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,Skill> monsterSkills;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,Skill> monsterSkills;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=
             CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;

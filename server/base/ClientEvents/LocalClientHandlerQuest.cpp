@@ -148,7 +148,7 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
         }
         index++;
     }
-    for (const std::pair<const CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>>& pairMap : requirements.fights) {
+    for (const std::pair<const CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>>& pairMap : requirements.fights) {
         for (const CATCHCHALLENGER_TYPE_BOTID& pairBot : pairMap.second) {
             if(!haveBeatBot(pairMap.first,pairBot))
             {

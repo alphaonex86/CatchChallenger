@@ -55,8 +55,8 @@ uint64_t Client::datapack_list_cache_timestamp_base;
 uint64_t Client::datapack_list_cache_timestamp_main;
 uint64_t Client::datapack_list_cache_timestamp_sub;
 //do into BaseServerMasterSendDatapack::datapack_file_hash_cache_base std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_hash_cache_base;
-std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_hash_cache_main;
-std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_hash_cache_sub;
+catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_hash_cache_main;
+catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_hash_cache_sub;
 #endif
 
 std::regex Client::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");

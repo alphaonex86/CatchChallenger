@@ -104,8 +104,8 @@ void generate()
         std::map<std::string, std::vector<uint8_t>> def_effectiveness;
         for(uint16_t a=0; a<commonTypes.size(); ++a)
         {
-            const std::unordered_map<uint8_t, int8_t> &mp=commonTypes[a].multiplicator;
-            std::unordered_map<uint8_t, int8_t>::const_iterator mit=mp.find((uint8_t)id);
+            const catchchallenger_datapack_map<uint8_t, int8_t> &mp=commonTypes[a].multiplicator;
+            catchchallenger_datapack_map<uint8_t, int8_t>::const_iterator mit=mp.find((uint8_t)id);
             if(mit!=mp.cend())
             {
                 float eff=multiplierToFloat(mit->second);
@@ -362,10 +362,10 @@ void generate()
         indexBody << "<tr class=\"value\"><td class=\"item_list_title_left item_list_title_type_normal\"><div class=\"type_label_list\">"
                   << typeLabelHtml((uint8_t)a) << "</div></td>\n";
 
-        const std::unordered_map<uint8_t, int8_t> &mp=commonTypes[a].multiplicator;
+        const catchchallenger_datapack_map<uint8_t, int8_t> &mp=commonTypes[a].multiplicator;
         for(uint16_t d=0; d<commonTypes.size(); ++d)
         {
-            std::unordered_map<uint8_t, int8_t>::const_iterator mit=mp.find((uint8_t)d);
+            catchchallenger_datapack_map<uint8_t, int8_t>::const_iterator mit=mp.find((uint8_t)d);
             int8_t m=1;
             if(mit!=mp.cend())
                 m=mit->second;

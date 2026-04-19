@@ -17,10 +17,10 @@ void BaseServer::preload_6_sync_the_datapack()
 {
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED)+";"+std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-    BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+    BaseServerMasterSendDatapack::extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-    BaseServerMasterSendDatapack::compressedExtension=std::unordered_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
+    BaseServerMasterSendDatapack::compressedExtension=catchchallenger_datapack_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
     #endif
     Client::datapack_list_cache_timestamp_base=0;
     Client::datapack_list_cache_timestamp_main=0;
@@ -87,9 +87,9 @@ void BaseServer::preload_6_sync_the_datapack()
     {
         CatchChallenger::Hash hashBase;
         #ifdef _WIN32
-        const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"",false);
+        const catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"",false);
         #else
-        const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/",false);
+        const catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/",false);
         #endif
         if(pair.size()==0)
         {
@@ -98,7 +98,7 @@ void BaseServer::preload_6_sync_the_datapack()
         }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
-            std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::const_iterator i=pair.begin();
+            catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::const_iterator i=pair.begin();
             while(i!=pair.cend())
             {
                 if(i->first.find("map/main/")!=std::string::npos
@@ -248,10 +248,10 @@ void BaseServer::preload_6_sync_the_datapack()
     //do the main
     {
         CatchChallenger::Hash hashMain;
-        const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/",false);
+        const catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/",false);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
-            std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::const_iterator i=pair.begin();
+            catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::const_iterator i=pair.begin();
             while(i!=pair.cend())
             {
                 if(i->first.find("sub/")!=std::string::npos)
@@ -358,7 +358,7 @@ void BaseServer::preload_6_sync_the_datapack()
     if(GlobalServerData::serverPrivateVariables.subDatapackFolder.size()>0)
     {
         CatchChallenger::Hash hashSub;
-        const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"",false);
+        const catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"",false);
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         unsigned int index=0;

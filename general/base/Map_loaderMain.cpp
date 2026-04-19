@@ -200,7 +200,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                 else
                                     type=std::string(SubChild->Attribute("class"));
 
-                                std::unordered_map<std::string,std::string> property_text;
+                                catchchallenger_datapack_map<std::string,std::string> property_text;
                                 const tinyxml2::XMLElement *prop=SubChild->FirstChildElement("properties");
                                 if(prop!=nullptr)
                                 {
@@ -416,7 +416,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                             {
                                 const std::string &type=SubChild->Attribute("type");
 
-                                std::unordered_map<std::string,std::string> property_text;
+                                catchchallenger_datapack_map<std::string,std::string> property_text;
                                 const tinyxml2::XMLElement * prop=SubChild->FirstChildElement("properties");
                                 if(prop!=nullptr)
                                 {

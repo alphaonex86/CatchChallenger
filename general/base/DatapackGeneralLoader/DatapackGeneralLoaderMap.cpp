@@ -10,7 +10,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(const std::string &file, const std::unordered_map<uint16_t, Item> &items,const std::vector<Event> &events)
+std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(const std::string &file, const catchchallenger_datapack_map<uint16_t, Item> &items,const std::vector<Event> &events)
 {
     std::unordered_map<std::string,uint8_t> eventStringToId;
     std::unordered_map<std::string,std::unordered_map<std::string,uint8_t> > eventListingToId;
