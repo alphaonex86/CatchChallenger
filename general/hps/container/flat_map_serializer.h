@@ -4,6 +4,8 @@
 #if __cplusplus >= 202302L || defined(__cpp_lib_flat_map)
 
 #include <flat_map>
+#include <iostream>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include "../serializer.h"
@@ -23,8 +25,17 @@ class Serializer<std::flat_map<K, V, Compare, KeyContainer, MappedContainer>, B>
     MappedContainer values;
     Serializer<KeyContainer, B>::parse(keys, ib);
     Serializer<MappedContainer, B>::parse(values, ib);
+    if (keys.size() != values.size()) {
+      #ifdef __EXCEPTIONS
+      throw std::runtime_error("hps flat_map parse: keys and values size mismatch");
+      #else
+      std::cerr << "hps flat_map parse: keys and values size mismatch" << std::endl;
+      container.clear();
+      return;
+      #endif
+    }
     container = std::flat_map<K, V, Compare, KeyContainer, MappedContainer>(
-        std::sorted_unique, std::move(keys), std::move(values));
+        std::move(keys), std::move(values));
   }
 };
 
