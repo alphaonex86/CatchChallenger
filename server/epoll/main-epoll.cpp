@@ -314,9 +314,13 @@ int main(int argc, char *argv[])
                     #endif
                     )
             {
+                #ifndef CATCHCHALLENGER_NOXML
                 settings->beginGroup("db-login");
                 std::cerr << "Database type not supported for now: " << settings->value("type") << std::endl;
                 settings->endGroup();
+                #else
+                std::cerr << "Database type not supported for now: db-login" << std::endl;
+                #endif
                 return EXIT_FAILURE;
             }
             if(
@@ -329,9 +333,13 @@ int main(int argc, char *argv[])
                     #endif
                     )
             {
+                #ifndef CATCHCHALLENGER_NOXML
                 settings->beginGroup("db-base");
                 std::cerr << "Database type not supported for now: " << settings->value("type") << std::endl;
                 settings->endGroup();
+                #else
+                std::cerr << "Database type not supported for now: db-base" << std::endl;
+                #endif
                 return EXIT_FAILURE;
             }
             #endif
@@ -345,9 +353,13 @@ int main(int argc, char *argv[])
                     #endif
                     )
             {
+                #ifndef CATCHCHALLENGER_NOXML
                 settings->beginGroup("db-common");
                 std::cerr << "Database type not supported for now: " << settings->value("type") << std::endl;
                 settings->endGroup();
+                #else
+                std::cerr << "Database type not supported for now: db-common" << std::endl;
+                #endif
                 return EXIT_FAILURE;
             }
             if(
@@ -360,9 +372,13 @@ int main(int argc, char *argv[])
                     #endif
                     )
             {
+                #ifndef CATCHCHALLENGER_NOXML
                 settings->beginGroup("db-server");
                 std::cerr << "Database type not supported for now: " << settings->value("type") << std::endl;
                 settings->endGroup();
+                #else
+                std::cerr << "Database type not supported for now: db-server" << std::endl;
+                #endif
                 return EXIT_FAILURE;
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE

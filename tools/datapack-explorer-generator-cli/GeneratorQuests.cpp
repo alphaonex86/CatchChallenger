@@ -397,7 +397,7 @@ void generate()
         }
 
         // Rewards (only if quest data available)
-        if(quest!=nullptr && (!quest->rewards.items.empty() || !quest->rewards.reputation.empty() || quest->rewards.allowCreateClan))
+        if(quest!=nullptr && (!quest->rewards.items.empty() || !quest->rewards.reputation.empty() || quest->rewards.allow_create_clan))
         {
             body << "<div class=\"subblock\"><div class=\"valuetitle\">Rewards</div><div class=\"value\">\n";
 
@@ -423,7 +423,7 @@ void generate()
                     body << "More reputation in: " << reputationName(rr.reputationId);
             }
 
-            if(quest->rewards.allowCreateClan)
+            if(quest->rewards.allow_create_clan)
                 body << "Able to create clan";
 
             body << "</div></div>\n";
@@ -510,7 +510,7 @@ void generate()
 
         // Rewards column
         indexBody << "<td>\n";
-        if(quest!=nullptr && (!quest->rewards.items.empty() || !quest->rewards.reputation.empty() || quest->rewards.allowCreateClan))
+        if(quest!=nullptr && (!quest->rewards.items.empty() || !quest->rewards.reputation.empty() || quest->rewards.allow_create_clan))
         {
             indexBody << "<div class=\"subblock\"><div class=\"value\">\n";
 
@@ -555,7 +555,7 @@ void generate()
                     indexBody << "More reputation in: " << reputationName(rr.reputationId);
             }
 
-            if(quest->rewards.allowCreateClan)
+            if(quest->rewards.allow_create_clan)
                 indexBody << "Able to create clan";
 
             indexBody << "</div></div>\n";

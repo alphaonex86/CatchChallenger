@@ -2,6 +2,7 @@
 #include "../ClientList.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryLogin.hpp"
+#include <cstring>
 #include "../../general/base/CommonDatapack.hpp"
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <sys/stat.h>
@@ -127,7 +128,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 
     /* account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
     warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9),
-    allowCreateClan(10),item(11),item_warehouse(12),recipes(13),reputations(14),
+    allow_create_clan(10),item(11),item_warehouse(12),recipes(13),reputations(14),
     encyclopedia_monster(15),encyclopedia_item(16),achievements(17),date(18),lastdaillygift(19)
     NB: the SELECT in PreparedDBQueryCommon::db_query_character_by_id dropped
     blob_version; date/lastdaillygift indices shifted by one vs the old layout. */
@@ -347,11 +348,11 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         return;
     }
 
-    //allowCreateClan
+    //allow_create_clan
     {
-        public_and_private_informations.allowCreateClan=(GlobalServerData::serverPrivateVariables.db_common->stringtobool(GlobalServerData::serverPrivateVariables.db_common->value(10),&ok)==1);
+        public_and_private_informations.allow_create_clan=(GlobalServerData::serverPrivateVariables.db_common->stringtobool(GlobalServerData::serverPrivateVariables.db_common->value(10),&ok)==1);
         if(!ok)
-            public_and_private_informations.allowCreateClan=false;
+            public_and_private_informations.allow_create_clan=false;
     }
     //encyclopedia_monster
     {
@@ -607,7 +608,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             public_and_private_informations.quests.clear();
             public_and_private_informations.reputation.clear();
             public_and_private_informations.items.clear();
-            public_and_private_informations.allowCreateClan=false;
+            public_and_private_informations.allow_create_clan=false;
         }
         selectCharacterQueryId.push_back(query_id);
     }

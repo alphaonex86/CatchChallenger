@@ -49,7 +49,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 errorOutput("text contain wrong data, not allowed");
                 return;
             }
-            if(!public_and_private_informations.allowCreateClan)
+            if(!public_and_private_informations.allow_create_clan)
             {
                 errorOutput("You have not the right to create clan");
                 return;

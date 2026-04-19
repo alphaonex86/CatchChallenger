@@ -374,13 +374,13 @@ public:
     * too few data, then unable to compress
     * loaded by map and near map, then not able to generate relative compression, and near map don't have similar data
     * 1 unique type, more simple */
-    std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
+    std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;//server specific
 
-    bool allowCreateClan;
+    bool allow_create_clan;//common database
     //here to send at character login
-    std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
-    std::map<uint8_t,PlayerReputation> reputation;
-    std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items;
+    std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;//server specific
+    std::map<uint8_t,PlayerReputation> reputation;//common database
+    std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items;//common database
 };
 
 class CharacterEntry
@@ -1550,17 +1550,17 @@ public:
     public:
         std::vector<Item> items;
         std::vector<ReputationRewards> reputation;
-        bool allowCreateClan;
+        bool allow_create_clan;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
             buf << items << reputation;
-            buf << allowCreateClan;
+            buf << allow_create_clan;
         }
         template <class B>
         void parse(B& buf) {
             buf >> items >> reputation;
-            buf >> allowCreateClan;
+            buf >> allow_create_clan;
         }
         #endif
     };

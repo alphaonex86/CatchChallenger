@@ -347,9 +347,9 @@ bool Client::nextStepQuest(const CatchChallenger::Quest &quest)
             appendReputationPoint(quest.rewards.reputation.at(index).reputationId,quest.rewards.reputation.at(index).point);
             index++;
         }
-        if(quest.rewards.allowCreateClan)
+        if(quest.rewards.allow_create_clan)
         {
-            public_and_private_informations.allowCreateClan=true;
+            public_and_private_informations.allow_create_clan=true;
             syncDatabaseAllow();
         }
         syncDatabaseQuest();

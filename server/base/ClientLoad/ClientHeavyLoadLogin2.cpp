@@ -1,6 +1,7 @@
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryLogin.hpp"
+#include <cstring>
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #endif
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT

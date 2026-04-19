@@ -1307,8 +1307,8 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
             index++;
         }
         show_reputation();
-        if(quest.rewards.allowCreateClan)
-            playerInformations.allowCreateClan=true;
+        if(quest.rewards.allow_create_clan)
+            playerInformations.allow_create_clan=true;
     }
     return true;
 }

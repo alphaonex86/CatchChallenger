@@ -274,7 +274,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
         std::string textToShow;
         if(playerInformations.clan==0)
         {
-            if(playerInformations.allowCreateClan)
+            if(playerInformations.allow_create_clan)
                 textToShow=QStringLiteral("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create")).toStdString();
             else
                 textToShow=QStringLiteral("<center>You can't create your clan</center>").toStdString();
@@ -967,8 +967,8 @@ bool OverMapLogic::nextStepQuest(const CatchChallenger::Quest &quest)
             index++;
         }
         //show_reputation();
-        if(quest.rewards.allowCreateClan)
-            playerInformations.allowCreateClan=true;
+        if(quest.rewards.allow_create_clan)
+            playerInformations.allow_create_clan=true;
     }
     return true;
 }
