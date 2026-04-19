@@ -23,7 +23,7 @@ void LocalClientHandlerWithoutSender::doAllAction()
         PLAYER_INDEX_FOR_CONNECTED index=0;
         while(index<ClientList::list->size())
         {
-            if(!ClientList::list->empty(index))
+            if(!ClientList::list->isNull(index))
             {
                 Client &c=ClientList::list->rw(index);
                 c.savePosition();
@@ -48,7 +48,7 @@ void LocalClientHandlerWithoutSender::doDDOSChat()
         PLAYER_INDEX_FOR_CONNECTED index=0;
         while(index<ClientList::list->size())
         {
-            if(!ClientList::list->empty(index))
+            if(!ClientList::list->isNull(index))
             {
                 Client &c=ClientList::list->rw(index);
                 c.doDDOSCompute();

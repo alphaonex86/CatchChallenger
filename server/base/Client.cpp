@@ -115,7 +115,7 @@ void Client::setToDefault()
             std::cerr << "ERROR ClientList::list is not initialized yet" << std::endl;
             abort();
         }
-        if(!ClientList::list->empty(this->otherPlayerTrade))
+        if(!ClientList::list->isNull(this->otherPlayerTrade))
         {
             Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
             otherPlayerTrade.battleCanceled();
@@ -642,7 +642,7 @@ void Client::disconnectClientById_db(const uint32_t &characterId_db)
     if(GlobalServerData::serverPrivateVariables.playerById_db.find(characterId_db)!=GlobalServerData::serverPrivateVariables.playerById_db.cend())
     {
         const PLAYER_INDEX_FOR_CONNECTED &index=GlobalServerData::serverPrivateVariables.playerById_db.at(characterId_db);
-        if(!ClientList::list->empty(index))
+        if(!ClientList::list->isNull(index))
             ClientList::list->rw(index).disconnectClient();
     }
 }

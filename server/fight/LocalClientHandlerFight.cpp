@@ -315,7 +315,7 @@ PublicPlayerMonster *Client::getOtherMonster()
 {
     if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
-        if(ClientList::list->empty(otherPlayerBattle))
+        if(ClientList::list->isNull(otherPlayerBattle))
             return NULL;
         Client &c=ClientList::list->rw(otherPlayerBattle);
         PlayerMonster * otherPlayerBattleCurrentMonster=c.getCurrentMonster();
@@ -342,7 +342,7 @@ uint8_t Client::getOtherSelectedMonsterNumber() const
         return 0;
     else
     {
-        if(ClientList::list->empty(otherPlayerBattle))
+        if(ClientList::list->isNull(otherPlayerBattle))
             return 0;
         const Client &c=ClientList::list->at(otherPlayerBattle);
         return c.getCurrentSelectedMonsterNumber();
@@ -484,7 +484,7 @@ bool Client::bothRealPlayerIsReady() const
 {
     if(!haveBattleAction())
         return false;
-    if(ClientList::list->empty(otherPlayerBattle))
+    if(ClientList::list->isNull(otherPlayerBattle))
         return false;
     const Client &c=ClientList::list->at(otherPlayerBattle);
     return c.getCurrentSelectedMonsterNumber();
@@ -503,7 +503,7 @@ bool Client::checkIfCanDoTheTurn()
         doTheOtherMonsterTurn();
     if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return false;
-    if(ClientList::list->empty(otherPlayerBattle))
+    if(ClientList::list->isNull(otherPlayerBattle))
         return false;
     Client &c=ClientList::list->rw(otherPlayerBattle);
     sendBattleReturn();
@@ -547,7 +547,7 @@ bool Client::dropKOOtherMonster()
     {
         if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
             return false;
-        if(ClientList::list->empty(otherPlayerBattle))
+        if(ClientList::list->isNull(otherPlayerBattle))
             return false;
         Client &c=ClientList::list->rw(otherPlayerBattle);
         battleReturn=c.dropKOCurrentMonster();
@@ -633,7 +633,7 @@ bool Client::changeOfMonsterInFight(const uint8_t &monsterPosition)
         {
             if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
                 return false;
-            if(ClientList::list->empty(otherPlayerBattle))
+            if(ClientList::list->isNull(otherPlayerBattle))
                 return false;
             Client &c=ClientList::list->rw(otherPlayerBattle);
             c.sendBattleMonsterChange();
@@ -652,7 +652,7 @@ bool Client::doTheOtherMonsterTurn()
         return false;
     if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return false;
-    if(ClientList::list->empty(otherPlayerBattle))
+    if(ClientList::list->isNull(otherPlayerBattle))
         return false;
     const Client &c=ClientList::list->at(otherPlayerBattle);
     if(!c.haveCurrentSkill())
@@ -684,7 +684,7 @@ Skill::AttackReturn Client::generateOtherAttack()
     }
     if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return attackReturnTemp;
-    if(ClientList::list->empty(otherPlayerBattle))
+    if(ClientList::list->isNull(otherPlayerBattle))
         return attackReturnTemp;
     Client &c=ClientList::list->rw(otherPlayerBattle);
     if(!c.haveCurrentSkill())
@@ -719,7 +719,7 @@ Skill::AttackReturn Client::doTheCurrentMonsterAttack(const uint16_t &skill, con
     attackReturnTemp.doByTheCurrentMonster=false;
     if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return attackReturnTemp;
-    if(ClientList::list->empty(otherPlayerBattle))
+    if(ClientList::list->isNull(otherPlayerBattle))
         return attackReturnTemp;
     Client &c=ClientList::list->rw(otherPlayerBattle);
     c.attackReturn.push_back(attackReturnTemp);

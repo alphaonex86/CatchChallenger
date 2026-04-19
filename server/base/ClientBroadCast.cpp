@@ -47,7 +47,7 @@ void Client::sendSystemMessage(const std::string &text, const bool &important, c
     {
         while(index<size)
         {
-            if(!ClientList::list->empty(index) && index!=index_connected_player)
+            if(!ClientList::list->isNull(index) && index!=index_connected_player)
                 ClientList::list->rw(index).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             index++;
         }
@@ -56,7 +56,7 @@ void Client::sendSystemMessage(const std::string &text, const bool &important, c
     {
         while(index<size)
         {
-            if(!ClientList::list->empty(index))
+            if(!ClientList::list->isNull(index))
                 ClientList::list->rw(index).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             index++;
         }
@@ -118,7 +118,7 @@ bool Client::sendPM(const std::string &text,const std::string &pseudo)
             normalOutput(this->public_and_private_informations.public_informations.pseudo+" have try send message to not connected user: "+pseudo);*/
         return false;
     }
-    if(ClientList::list->empty(index))
+    if(ClientList::list->isNull(index))
         return false;
     if(!GlobalServerData::serverSettings.anonymous)
         normalOutput("[chat PM]: "+this->public_and_private_informations.public_informations.pseudo+" -> "+pseudo+": "+text);
@@ -252,7 +252,7 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
                     const PLAYER_INDEX_FOR_CONNECTED &index_player=clan.connected_players.at(index);
                     if(index_player!=index_connected_player)
                     {
-                        if(!ClientList::list->empty(index_player))
+                        if(!ClientList::list->isNull(index_player))
                             ClientList::list->rw(index_player).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                     }
                     index++;
@@ -300,7 +300,7 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
         {
             if(index!=index_connected_player)
             {
-                if(!ClientList::list->empty(index))
+                if(!ClientList::list->isNull(index))
                     ClientList::list->rw(index).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             }
             index++;
@@ -369,7 +369,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
             receiveSystemText("unable to found the connected player: pseudo: \""+list.front()+"\"",false);
             return;
         }
-        if(ClientList::list->empty(index))
+        if(ClientList::list->isNull(index))
             return;
         if(list.back()=="normal")
             ClientList::list->rw(index).setRights(Player_type_normal);
@@ -405,7 +405,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
             PLAYER_INDEX_FOR_CONNECTED index=0;
             while(index<ClientList::list->size())
             {
-                if(!ClientList::list->empty(index))
+                if(!ClientList::list->isNull(index))
                 {
                     const std::string &pseudo=ClientList::list->at(index).public_and_private_informations.public_informations.pseudo;
                     textSize+=3/*text_startbold*/+pseudo.size()+4/*text_stopbold*/+2/*text_commaspace*/;
@@ -440,7 +440,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
         const PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(extraText);
         if(index==PLAYER_INDEX_FOR_CONNECTED_MAX)
             return;
-        if(ClientList::list->empty(index))
+        if(ClientList::list->isNull(index))
             return;
         ClientList::list->rw(index).kick();
         sendSystemMessage(extraText+" have been kicked by "+public_and_private_informations.public_informations.pseudo,false,true);

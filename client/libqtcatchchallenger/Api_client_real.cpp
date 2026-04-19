@@ -425,8 +425,23 @@ uint16_t Api_client_real::getPort()
 
 void Api_client_real::sendDatapackContentMainSub(const std::string &hashMain, const std::string &hashSub)
 {
+    // server hash all-zeros means no hash computed (e.g. solo internal server)
+    // → accept whatever the client has, skip update
+    auto isAllZeros=[](const std::vector<char> &h) -> bool {
+        for(const char c : h)
+            if(c!='\0')
+                return false;
+        return true;
+    };
+    const bool serverMainIsZero=CommonSettingsServer::commonSettingsServer.datapackHashServerMain.empty() ||
+                                isAllZeros(CommonSettingsServer::commonSettingsServer.datapackHashServerMain);
+    const bool serverSubIsZero=CommonSettingsServer::commonSettingsServer.datapackHashServerSub.empty() ||
+                               isAllZeros(CommonSettingsServer::commonSettingsServer.datapackHashServerSub);
+
     bool mainNeedUpdate=true;
-    if(!hashMain.empty())
+    if(serverMainIsZero)
+        mainNeedUpdate=false;
+    else if(!hashMain.empty())
         if((unsigned int)hashMain.size()==(unsigned int)CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size() &&
                 memcmp(hashMain.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),hashMain.size())==0)
         {
@@ -439,7 +454,9 @@ void Api_client_real::sendDatapackContentMainSub(const std::string &hashMain, co
              << " hashBase "
              << QString::fromStdString(binarytoHexa(hashMain.data(),hashMain.size()));
     bool subNeedUpdate=true;
-    if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.empty() && hashSub.empty())
+    if(serverSubIsZero && hashSub.empty())
+        subNeedUpdate=false;
+    else if(serverSubIsZero)
         subNeedUpdate=false;
     else if(!hashSub.empty())
         if((unsigned int)hashSub.size()==(unsigned int)CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size() &&

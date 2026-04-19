@@ -52,12 +52,12 @@ PLAYER_INDEX_FOR_CONNECTED QtClientList::size() const
     return maxIndex;
 }
 
-bool QtClientList::empty(const PLAYER_INDEX_FOR_CONNECTED &index) const
+bool QtClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=clients.size())
     {
-        std::cerr << "QtClientList::empty() out of range: " << index << "/" << clients.size() << std::endl;
+        std::cerr << "QtClientList::isNull() out of range: " << index << "/" << clients.size() << " then fix the caller, check before into the backtrace" << std::endl;
         abort();
     }
     #endif

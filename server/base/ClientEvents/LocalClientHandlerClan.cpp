@@ -169,7 +169,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 unsigned int index=0;
                 while(index<temp_connected_players.size())
                 {
-                    if(ClientList::list->empty(temp_connected_players.at(index)))
+                    if(ClientList::list->isNull(temp_connected_players.at(index)))
                         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(ClientList::list->at(index).getPlayerId())});
                     index++;
                 }
@@ -207,7 +207,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 unsigned int index=0;
                 while(index<temp_connected_players.size())
                 {
-                    if(ClientList::list->empty(temp_connected_players.at(index)))
+                    if(ClientList::list->isNull(temp_connected_players.at(index)))
                     {
                         if(temp_connected_players.at(index)==index_connected_player)
                         {
@@ -246,7 +246,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
             if(indexConnected!=PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
-                if(ClientList::list->empty(indexConnected))
+                if(ClientList::list->isNull(indexConnected))
                 {
                     Client &otherClient=ClientList::list->rw(indexConnected);
                     if(!otherClient.haveAClan())
@@ -300,7 +300,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
             if(indexConnected!=PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
-                if(ClientList::list->empty(indexConnected))
+                if(ClientList::list->isNull(indexConnected))
                 {
                     Client &otherClient=ClientList::list->rw(indexConnected);
                     if(otherClient.haveAClan() && otherClient.getMaxClanId()==public_and_private_informations.clan)

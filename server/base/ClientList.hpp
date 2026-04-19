@@ -25,7 +25,7 @@ public:
     virtual void remove(const Client &client);
     virtual PLAYER_INDEX_FOR_CONNECTED size() const = 0;
     virtual PLAYER_INDEX_FOR_CONNECTED connected_size() const = 0;
-    virtual bool empty(const PLAYER_INDEX_FOR_CONNECTED &index) const = 0;
+    virtual bool isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const = 0;
     virtual const Client &at(const PLAYER_INDEX_FOR_CONNECTED &index) const = 0;//abort if index is not valid
     virtual ClientWithMap &rwWithMap(const PLAYER_INDEX_FOR_CONNECTED &index) = 0;//abort if index is not valid
     virtual Client &rw(const PLAYER_INDEX_FOR_CONNECTED &index) = 0;//abort if index is not valid

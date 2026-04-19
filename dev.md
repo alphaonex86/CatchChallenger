@@ -16,10 +16,14 @@
 
 ## Client arguments, mostly to debug
 * --server name: on screen selection, auto select the server with this name
+* --autosolo: auto login into solo
 * --autologin: on login/pass page, automaticlly try login
 * --character name: on character selection page, automaticly select character with this name
 * --closewhenonmap: close 1s after the character is spawn on map
 * --dropsenddataafteronmap: dropany output comunicacion from client to server after the player spawn on map, used to explore datapack map, ignore zone monster colision (to not open fight with wild monster) and any fight
+### Alternative to server name
+* --host hostorip: host or ip to connect (need specify the port too)
+* --port number: port number to connect (need specify the host too)
 
 # Naming Conventions
 * Classes: PascalCase (e.g., EpollClientLoginMaster)

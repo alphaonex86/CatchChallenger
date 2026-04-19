@@ -2,11 +2,14 @@
 #define AUTOARGS_H
 
 #include <QString>
+#include <cstdint>
 
 class AutoArgs
 {
 public:
     static QString server;
+    static QString host;
+    static uint16_t port;
     static bool autologin;
     static QString character;
     static bool closeWhenOnMap;

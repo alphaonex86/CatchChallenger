@@ -38,7 +38,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
         #endif
         while(index<ClientList::list->size())
         {
-            if(!ClientList::list->empty(index))
+            if(!ClientList::list->isNull(index))
                 ClientList::list->rw(index).receive_instant_player_number(connected_players,reinterpret_cast<char *>(bufferSendPlayer),outputSize);
             index++;
         }
@@ -55,7 +55,7 @@ void BroadCastWithoutSender::timeRangeEventTrigger()
     unsigned int index=0;
     while(index<ClientList::list->size())
     {
-        if(!ClientList::list->empty(index))
+        if(!ClientList::list->isNull(index))
         {
             if(ClientList::list->rw(index).triggerDaillyGift(Client::timeRangeEventTimestamps))
             {
