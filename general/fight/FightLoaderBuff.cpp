@@ -9,9 +9,9 @@
 using namespace CatchChallenger;
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-std::unordered_map<CATCHCHALLENGER_TYPE_BUFF,Buff> FightLoader::loadMonsterBuff(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> &tempNameToBuffId,const std::string &folder)
+catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BUFF,Buff> FightLoader::loadMonsterBuff(catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_BUFF> &tempNameToBuffId,const std::string &folder)
 {
-    std::unordered_map<CATCHCHALLENGER_TYPE_BUFF,Buff> monsterBuffs;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BUFF,Buff> monsterBuffs;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
     while(file_index<fileList.size())

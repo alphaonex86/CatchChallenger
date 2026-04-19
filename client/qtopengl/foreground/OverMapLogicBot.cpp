@@ -604,7 +604,7 @@ bool OverMapLogic::haveNextStepQuestRequirements(const CatchChallenger::Quest &q
         index++;
     }
     //fights is now map<mapId, set<botId>>
-    for(const std::pair<const uint16_t, std::unordered_set<uint8_t>> &fightEntry : requirements.fights)
+    for(const std::pair<const uint16_t, catchchallenger_datapack_set<uint8_t>> &fightEntry : requirements.fights)
     {
         const CATCHCHALLENGER_TYPE_MAPID &fightMapId=fightEntry.first;
         for(const uint8_t &botFightId : fightEntry.second)

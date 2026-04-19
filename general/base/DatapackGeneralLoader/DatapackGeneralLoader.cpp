@@ -331,7 +331,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
 }
 
 std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file,const std::vector<Profile> &profileCommon,
-        const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+        const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     std::vector<ServerSpecProfile> serverProfile=loadServerProfileListInternal(datapackPath,mainDatapackCode,file,mapPathToId);
     //index of base profile
@@ -389,7 +389,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(cons
 }
 
 std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file,
-        const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+        const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     std::unordered_set<std::string> idDuplicate;
     std::vector<ServerSpecProfile> serverProfileList;
@@ -458,7 +458,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
             {
                 std::string mapKey=mapStr;
                 stringreplaceOne(mapKey,std::string(".tmx"),std::string(""));
-                const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID>::const_iterator it=mapPathToId.find(mapKey);
+                const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID>::const_iterator it=mapPathToId.find(mapKey);
                 if(it!=mapPathToId.cend())
                     serverProfile.mapIndex=it->second;
             }

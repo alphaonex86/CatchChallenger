@@ -331,7 +331,7 @@ bool ActionsAction::haveNextStepQuestRequirements(const CatchChallenger::Api_pro
         }
         index++;
     }
-    for(const std::pair<const uint16_t, std::unordered_set<uint8_t>> &fightEntry : requirements.fights)
+    for(const std::pair<const uint16_t, catchchallenger_datapack_set<uint8_t>> &fightEntry : requirements.fights)
     {
         for(const uint8_t &fightBotId : fightEntry.second)
         {

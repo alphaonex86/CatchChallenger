@@ -18,21 +18,21 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<std::string,uint8_t> BaseServerMasterSendDatapack::skinList;
+catchchallenger_datapack_map<std::string,uint8_t> BaseServerMasterSendDatapack::skinList;
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-std::unordered_set<std::string> BaseServerMasterSendDatapack::compressedExtension;
+catchchallenger_datapack_set<std::string> BaseServerMasterSendDatapack::compressedExtension;
 std::vector<char> BaseServerMasterSendDatapack::compressedFilesBuffer;
 uint8_t BaseServerMasterSendDatapack::compressedFilesBufferCount;
 #endif
-std::unordered_set<std::string> BaseServerMasterSendDatapack::extensionAllowed;
+catchchallenger_datapack_set<std::string> BaseServerMasterSendDatapack::extensionAllowed;
 
 std::vector<char> BaseServerMasterSendDatapack::rawFilesBuffer;
 uint8_t BaseServerMasterSendDatapack::rawFilesBufferCount;
 
-std::unordered_map<std::string,uint32_t> BaseServerMasterSendDatapack::datapack_file_list_cache;
-std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
+catchchallenger_datapack_map<std::string,uint32_t> BaseServerMasterSendDatapack::datapack_file_list_cache;
+catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
 #endif
 
 #ifndef CATCHCHALLENGER_NOXML
@@ -80,10 +80,10 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
         std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-        extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+        extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
         #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
         std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-        compressedExtension=std::unordered_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
+        compressedExtension=catchchallenger_datapack_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
         #endif
     #else
         std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');

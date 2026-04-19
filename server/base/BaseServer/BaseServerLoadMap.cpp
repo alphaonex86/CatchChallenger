@@ -93,7 +93,7 @@ bool BaseServer::preload_9_sync_the_map()
                 const MapLoadBuffers &buffers=mapLoadBuffers[i];
                 for(const UnknownMovingEntry &entry : buffers.unknownMovingBuffer)
                 {
-                    if(!map_server.parseUnknownMoving(entry.type,entry.object_x,entry.object_y,entry.property_text))
+                    if(!map_server.parseUnknownMoving(entry.type,entry.object_x,entry.object_y,std::unordered_map<std::string,std::string>(entry.property_text.begin(),entry.property_text.end())))
                         std::cerr << "BaseServer::preload_9_sync_the_map() unknown moving type: " << entry.type
                                   << ", object_x: " << entry.object_x
                                   << ", object_y: " << entry.object_y
@@ -101,7 +101,7 @@ bool BaseServer::preload_9_sync_the_map()
                 }
                 for(const UnknownObjectEntry &entry : buffers.unknownObjectBuffer)
                 {
-                    if(!map_server.parseUnknownObject(entry.type,entry.object_x,entry.object_y,entry.property_text))
+                    if(!map_server.parseUnknownObject(entry.type,entry.object_x,entry.object_y,std::unordered_map<std::string,std::string>(entry.property_text.begin(),entry.property_text.end())))
                         std::cerr << "BaseServer::preload_9_sync_the_map() unknown object type: " << entry.type
                                   << ", object_x: " << entry.object_x
                                   << ", object_y: " << entry.object_y

@@ -145,6 +145,16 @@ std::vector<T> unordered_map_keys_vector(const std::unordered_map<T,U> &unordere
     return keyList;
 }
 
+#if __cplusplus >= 202302L && __has_include(<flat_map>)
+#include <flat_map>
+template <class K, class V, class Compare, class KeyContainer, class MappedContainer>
+std::vector<K> unordered_map_keys_vector(const std::flat_map<K,V,Compare,KeyContainer,MappedContainer> &flat_map_var)
+{
+    const KeyContainer &keys = flat_map_var.keys();
+    return std::vector<K>(keys.begin(), keys.end());
+}
+#endif
+
 template <class T>
 unsigned int vectorRemoveEmpty(std::vector<T> &list)
 {

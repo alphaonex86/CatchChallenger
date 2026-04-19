@@ -129,8 +129,8 @@ static std::map<uint8_t,double> computeMonsterEffectiveness(const std::vector<ui
         {
             if(defType>=types.size())
                 continue;
-            const std::unordered_map<uint8_t, int8_t> &mp=types[atk].multiplicator;
-            std::unordered_map<uint8_t, int8_t>::const_iterator mit=mp.find(defType);
+            const catchchallenger_datapack_map<uint8_t, int8_t> &mp=types[atk].multiplicator;
+            catchchallenger_datapack_map<uint8_t, int8_t>::const_iterator mit=mp.find(defType);
             if(mit==mp.cend())
                 continue;
             int8_t m=mit->second;

@@ -759,7 +759,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
     return monsterTypeList;
 }
 
-void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep,std::vector<MapLoadBuffers> *mapLoadBuffers)
+void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep,std::vector<MapLoadBuffers> *mapLoadBuffers)
 {
     Map_loader map_temp;
     std::vector<std::string> map_name;

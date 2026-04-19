@@ -67,7 +67,7 @@ public:
     {
         std::pair<uint8_t,uint8_t> point;
         uint8_t id;
-        std::unordered_map<std::string,std::string> property_text;
+        catchchallenger_datapack_map<std::string,std::string> property_text;
         #ifndef CATCHCHALLENGER_NOXML
         std::unordered_map<uint8_t,const tinyxml2::XMLElement *> steps;
         #else
@@ -142,7 +142,7 @@ public:
     #ifndef CATCHCHALLENGER_NOXML
     static std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,tinyxml2::XMLElement *> > teleportConditionsUnparsed;
 
-    static void loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep=nullptr,std::vector<MapLoadBuffers> *mapLoadBuffers=nullptr);
+    static void loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep=nullptr,std::vector<MapLoadBuffers> *mapLoadBuffers=nullptr);
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<tinyxml2::XMLDocument*> xmlDocsToKeepInternal;

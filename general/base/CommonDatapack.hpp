@@ -2,6 +2,7 @@
 #define COMMONDATAPACK_H
 
 #include <string>
+#include <unordered_map>
 
 #include "GeneralStructures.hpp"
 #ifndef CATCHCHALLENGER_NOXML
@@ -61,7 +62,7 @@ protected:
     std::vector<Profile> profileList;
 
     #ifndef CATCHCHALLENGER_NOXML
-    catchchallenger_datapack_map<std::string/*file*/,tinyxml2::XMLDocument> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
+    std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
     #endif
     std::vector<std::string > skins;//I think it's clean after use, database have only number
 public:

@@ -617,12 +617,12 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
         index++;
     }
     {
-        std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>>::const_iterator fightIt=requirements.fights.begin();
+        catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>>::const_iterator fightIt=requirements.fights.begin();
         while(fightIt!=requirements.fights.end())
         {
             const CATCHCHALLENGER_TYPE_MAPID &fightMapId=fightIt->first;
-            const std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> &botIds=fightIt->second;
-            std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>::const_iterator botIt=botIds.begin();
+            const catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID> &botIds=fightIt->second;
+            catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>::const_iterator botIt=botIds.begin();
             while(botIt!=botIds.end())
             {
                 if(!mapController->haveBeatBot(fightMapId,*botIt))

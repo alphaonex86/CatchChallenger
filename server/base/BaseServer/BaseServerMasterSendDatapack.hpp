@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <string>
 #include <cstdint>
+#include "../../general/base/GeneralType.hpp"
 
 namespace CatchChallenger {
 class BaseServerMasterSendDatapack
@@ -20,7 +21,7 @@ public:
     #endif
     void unload();
 
-    static std::unordered_map<std::string,uint8_t> skinList;
+    static catchchallenger_datapack_map<std::string,uint8_t> skinList;
 
     class DatapackCacheFile
     {
@@ -40,15 +41,15 @@ public:
     };
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static std::unordered_set<std::string> compressedExtension;
+    static catchchallenger_datapack_set<std::string> compressedExtension;
     static std::vector<char> compressedFilesBuffer;
     static uint8_t compressedFilesBufferCount;
     #endif
-    static std::unordered_set<std::string> extensionAllowed;
+    static catchchallenger_datapack_set<std::string> extensionAllowed;
     static std::vector<char> rawFilesBuffer;
     static uint8_t rawFilesBufferCount;
-    static std::unordered_map<std::string,uint32_t> datapack_file_list_cache;
-    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base;
+    static catchchallenger_datapack_map<std::string,uint32_t> datapack_file_list_cache;
+    static catchchallenger_datapack_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base;
     #endif
     #ifndef CATCHCHALLENGER_NOXML
     static std::regex fileNameStartStringRegex;

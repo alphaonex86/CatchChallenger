@@ -345,7 +345,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     #else
     #error Define what do here
     #endif
-    std::unordered_map<std::string,uint8_t>::iterator i=BaseServerMasterSendDatapack::skinList.begin();
+    catchchallenger_datapack_map<std::string,uint8_t>::iterator i=BaseServerMasterSendDatapack::skinList.begin();
     while(i!=BaseServerMasterSendDatapack::skinList.end())
     {
         const std::string &skin=i->first;

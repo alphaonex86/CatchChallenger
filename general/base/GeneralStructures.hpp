@@ -566,8 +566,10 @@ public:
 class Type
 {
 public:
+    #ifndef CATCHCHALLENGER_NOXML
     std::string name;
-    std::unordered_map<uint8_t,int8_t> multiplicator;//negative = divide, not multiply
+    #endif
+    catchchallenger_datapack_map<uint8_t,int8_t> multiplicator;//negative = divide, not multiply
 #ifdef CATCHCHALLENGER_CACHE_HPS
 template <class B>
 void serialize(B& buf) const {
@@ -805,29 +807,6 @@ public:
         uint8_t value=0;
         buf >> value >> data.level;
         type=(MonsterItemEffectTypeOutOfFight)value;
-    }
-    #endif
-};
-
-class ItemFull
-{
-public:
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::vector<MonsterItemEffect> > monsterItemEffect;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::vector<MonsterItemEffectOutOfFight> > monsterItemEffectOutOfFight;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER/*monster*/,CATCHCHALLENGER_TYPE_MONSTER/*evolveTo*/> > evolutionItem;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_set<CATCHCHALLENGER_TYPE_MONSTER/*monster*/> > itemToLearn;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, uint32_t> repel;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> item;
-    CATCHCHALLENGER_TYPE_ITEM itemMaxId;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Trap> trap;
-    #ifdef CATCHCHALLENGER_CACHE_HPS
-    template <class B>
-    void serialize(B& buf) const {
-        buf << monsterItemEffect << monsterItemEffectOutOfFight << evolutionItem << itemToLearn << repel << item << itemMaxId << trap;
-    }
-    template <class B>
-    void parse(B& buf) {
-        buf >> monsterItemEffect >> monsterItemEffectOutOfFight >> evolutionItem >> itemToLearn >> repel >> item >> itemMaxId >> trap;
     }
     #endif
 };
@@ -1089,7 +1068,7 @@ public:
 class Shop
 {
 public:
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, uint32_t> items;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, uint32_t> items;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
@@ -1456,7 +1435,7 @@ public:
     uint32_t xp_for_max_level;///< xp to be level 100
     uint32_t give_xp;
     std::vector<uint32_t> level_to_xp;//first is xp to level 1
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
     std::vector<Evolution> evolutions;
     #ifdef CATCHCHALLENGER_CLIENT
     double powerVar;
@@ -1568,7 +1547,7 @@ public:
     {
     public:
         std::vector<Item> items;
-        std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>> fights;
+        catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>> fights;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {

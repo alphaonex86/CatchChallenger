@@ -3,6 +3,8 @@
 
 #include "array_serializer.h"
 #include "deque_serializer.h"
+#include "flat_map_serializer.h"
+#include "flat_set_serializer.h"
 #include "list_serializer.h"
 #include "map_serializer.h"
 #include "pair_serializer.h"

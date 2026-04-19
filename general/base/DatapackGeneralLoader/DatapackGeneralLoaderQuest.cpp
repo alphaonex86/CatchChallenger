@@ -8,10 +8,10 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralLoader::loadQuests(const std::string &folder, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralLoader::loadQuests(const std::string &folder, const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     bool ok;
-    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> quests;
+    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_QUEST, Quest> quests;
     //open and quick check the file
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
     unsigned int index=0;
@@ -43,7 +43,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralLoader::loa
     return quests;
 }
 
-std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &file, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &file, const catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     std::unordered_map<std::string,uint8_t> reputationNameToId;
     {

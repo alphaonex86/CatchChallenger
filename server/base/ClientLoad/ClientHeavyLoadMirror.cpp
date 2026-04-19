@@ -10,17 +10,17 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_base()
+catchchallenger_datapack_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_base()
 {
     if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
-        return std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>();
+        return catchchallenger_datapack_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>();
     if(GlobalServerData::serverSettings.datapackCache==-1)
     {
         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
         if(BaseServerMasterSendDatapack::extensionAllowed.empty())
         {
             const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-            BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+            BaseServerMasterSendDatapack::extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
         }
         #endif
         return datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
@@ -33,7 +33,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
             if(BaseServerMasterSendDatapack::extensionAllowed.empty())
             {
                 const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-                BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+                BaseServerMasterSendDatapack::extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
             }
             #endif
             Client::datapack_list_cache_timestamp_base=sFrom1970();
@@ -56,7 +56,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
     }
 }
 
-std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_main()
+catchchallenger_datapack_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_main()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
     {
@@ -64,7 +64,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
         if(BaseServerMasterSendDatapack::extensionAllowed.empty())
         {
             const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-            BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+            BaseServerMasterSendDatapack::extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
         }
         #endif
         return datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
@@ -77,7 +77,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
             if(BaseServerMasterSendDatapack::extensionAllowed.empty())
             {
                 const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-                BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+                BaseServerMasterSendDatapack::extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
             }
             #endif
             Client::datapack_list_cache_timestamp_main=sFrom1970();
@@ -100,7 +100,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
     }
 }
 
-std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_sub()
+catchchallenger_datapack_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_sub()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
     {
@@ -108,7 +108,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
         if(BaseServerMasterSendDatapack::extensionAllowed.empty())
         {
             const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-            BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+            BaseServerMasterSendDatapack::extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
         }
         #endif
         return datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
@@ -121,7 +121,7 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
             if(BaseServerMasterSendDatapack::extensionAllowed.empty())
             {
                 const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-                BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+                BaseServerMasterSendDatapack::extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
             }
             #endif
             Client::datapack_list_cache_timestamp_sub=sFrom1970();
@@ -159,7 +159,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
     std::string datapackPath;
-    std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesList;
+    catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesList;
     switch(datapackStatus)
     {
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -196,7 +196,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     //send the size to download on the client
     {
         //clone to drop the ask file and remain the missing client files
-        std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesListForSize(filesList);
+        catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesListForSize(filesList);
         unsigned int index=0;
         uint32_t datapckFileNumber=0;
         uint32_t datapckFileSize=0;
@@ -264,7 +264,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             }
             index++;
         }
-        std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::iterator i=filesListForSize.begin();
+        catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::iterator i=filesListForSize.begin();
         while(i!=filesListForSize.cend())
         {
             std::string fullPathFileToOpen=datapackPath+i->first;

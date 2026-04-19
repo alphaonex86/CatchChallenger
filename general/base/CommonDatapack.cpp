@@ -91,15 +91,8 @@ void CommonDatapack::parseSkins()
 void CommonDatapack::parseItems()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    ItemFull itemFull=DatapackGeneralLoader::loadItems(tempNameToItemId,datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
-    monsterItemEffect=std::move(itemFull.monsterItemEffect);
-    monsterItemEffectOutOfFight=std::move(itemFull.monsterItemEffectOutOfFight);
-    evolutionItem=std::move(itemFull.evolutionItem);
-    itemToLearn=std::move(itemFull.itemToLearn);
-    repel=std::move(itemFull.repel);
-    items=std::move(itemFull.item);
-    itemMaxId=itemFull.itemMaxId;
-    trap=std::move(itemFull.trap);
+    DatapackGeneralLoader::loadItems(tempNameToItemId,datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs,
+        monsterItemEffect,monsterItemEffectOutOfFight,items,itemMaxId,repel,trap);
     std::cout << items.size() << " items(s) loaded" << std::endl;
     std::cout << trap.size() << " trap(s) loaded" << std::endl;
     #endif
