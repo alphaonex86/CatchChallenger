@@ -5,6 +5,8 @@
 #include <iostream>
 
 QString AutoArgs::server;
+QString AutoArgs::host;
+uint16_t AutoArgs::port=0;
 bool AutoArgs::autologin=false;
 QString AutoArgs::character;
 bool AutoArgs::closeWhenOnMap=false;
@@ -21,6 +23,8 @@ void AutoArgs::printHelp(const char *progName)
         << "  --help                     Show this help and exit.\n"
         << "  --server=NAME              Select the server with the given name.\n"
         << "  --server NAME              Same as above.\n"
+        << "  --host HOST                Host or IP to connect (requires --port).\n"
+        << "  --port PORT                Port number to connect (requires --host).\n"
         << "  --autologin                Automatically press the login button.\n"
         << "  --character=NAME           Auto-select a character by pseudo.\n"
         << "  --character NAME           Same as above.\n"
@@ -93,13 +97,39 @@ void AutoArgs::parse(int &argc, char *argv[])
             i++;
             continue;
         }
+        if(std::strcmp(arg,"--host")==0 && (i+1)<argc)
+        {
+            host=QString::fromUtf8(argv[i+1]);
+            i+=2;
+            continue;
+        }
+        if(std::strncmp(arg,"--host=",7)==0)
+        {
+            host=QString::fromUtf8(arg+7);
+            i++;
+            continue;
+        }
+        if(std::strcmp(arg,"--port")==0 && (i+1)<argc)
+        {
+            port=static_cast<uint16_t>(std::atoi(argv[i+1]));
+            i+=2;
+            continue;
+        }
+        if(std::strncmp(arg,"--port=",7)==0)
+        {
+            port=static_cast<uint16_t>(std::atoi(arg+7));
+            i++;
+            continue;
+        }
         argv[writeIndex++]=argv[i];
         i++;
     }
     argc=writeIndex;
     argv[argc]=nullptr;
-    std::cerr << "AutoArgs: server=\"" << server.toStdString()
-              << "\" autologin=" << (autologin?"true":"false")
+    std::cerr << "AutoArgs: server=\"" << server.toStdString() << "\""
+              << " host=\"" << host.toStdString() << "\""
+              << " port=" << port
+              << " autologin=" << (autologin?"true":"false")
               << " character=\"" << character.toStdString() << "\""
               << " closeWhenOnMap=" << (closeWhenOnMap?"true":"false")
               << " dropSendDataAfterOnMap=" << (dropSendDataAfterOnMap?"true":"false")

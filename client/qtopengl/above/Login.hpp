@@ -36,6 +36,7 @@ public:
     bool isOk();
 
     void newLanguage();
+    void setCredentials(const QString &login, const QString &password);
     void validate();
 private:
     ImagesStrechMiddle *wdialog;

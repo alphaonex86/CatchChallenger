@@ -6,6 +6,7 @@
 
 # arguments, mostly to debug
 * --server name: on screen selection, auto select the server with this name
+* --autosolo: enter automatically to the solo game
 * --autologin: on login/pass page, automaticlly try login
 * --character name: on character selection page, automaticly select character with this name
 * --closewhenonmap: close 1s after the character is spawn on map

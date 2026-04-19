@@ -384,7 +384,33 @@ void CharacterList::updateCharacterList()
         }
     }
     if(charaterCount<CommonSettingsCommon::commonSettingsCommon.min_character && charaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
-        add_clicked();
+    {
+        // auto-create character when running automated (--autosolo or --character)
+        if(CliOptions::autosolo || !CliOptions::characterName.isEmpty())
+        {
+            const std::vector<CatchChallenger::Profile> &profiles=CatchChallenger::CommonDatapack::commonDatapack.get_profileList();
+            if(!profiles.empty())
+            {
+                const uint8_t profileIndex=0;
+                const CatchChallenger::Profile &profile=profiles.at(profileIndex);
+                const std::string pseudo=CliOptions::characterName.isEmpty() ? "Player" : CliOptions::characterName.toStdString();
+                const uint8_t monsterGroupId=0;
+                const uint8_t skinId=profile.forcedskin.empty() ? 0 : profile.forcedskin.front();
+                CatchChallenger::CharacterEntry ce;
+                ce.pseudo=pseudo;
+                ce.charactersGroupIndex=monsterGroupId;
+                ce.skinId=skinId;
+                ce.played_time=0;
+                const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList=connexionManager->client->getServerOrdenedList();
+                connexionManager->client->addCharacter(
+                    serverOrdenedList.at(serverSelected).charactersGroupIndex,
+                    profileIndex,pseudo,monsterGroupId,skinId);
+                characterEntryListInWaiting.push_back(ce);
+            }
+        }
+        else
+            add_clicked();
+    }
     else if(charaterCount==CommonSettingsCommon::commonSettingsCommon.min_character && charaterCount==CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         characterEntryList->itemAt(0,0)->setSelected(true);

@@ -539,7 +539,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         PLAYER_INDEX_FOR_CONNECTED index=0;
         while(index<ClientList::list->size())
         {
-            if(!ClientList::list->empty(index))
+            if(!ClientList::list->isNull(index))
             {
                 const uint32_t &character_id=ClientList::list->at(index).getPlayerId();
                 if(character_id!=0)

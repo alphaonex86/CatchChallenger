@@ -59,7 +59,7 @@ public:
     void remove(const CatchChallenger::Client &client);
 
     PLAYER_INDEX_FOR_CONNECTED size() const;
-    bool empty(const PLAYER_INDEX_FOR_CONNECTED &index) const;
+    bool isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const;
     const CatchChallenger::Client &at(const PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
     CatchChallenger::Client &rw(const PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
     PLAYER_INDEX_FOR_CONNECTED connected_size() const;

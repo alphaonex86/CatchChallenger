@@ -65,7 +65,7 @@ public:
     void remove(const Client &client);
     
     PLAYER_INDEX_FOR_CONNECTED size() const;
-    bool empty(const PLAYER_INDEX_FOR_CONNECTED &index) const;
+    bool isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const;
     const Client &at(const PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
     Client &rw(const PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
     PLAYER_INDEX_FOR_CONNECTED connected_size() const;

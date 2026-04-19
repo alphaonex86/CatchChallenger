@@ -273,7 +273,7 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
     unsigned int index=0;
     while(index<ClientList::list->size())
     {
-        if(ClientList::list->empty(index))
+        if(ClientList::list->isNull(index))
         {
             Client &c=ClientList::list->rw(index);
             c.sendNewEvent(ProtocolParsingBase::tempBigBufferForOutput,4);

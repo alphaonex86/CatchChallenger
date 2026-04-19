@@ -601,6 +601,38 @@ bool SoloWindow::playFirstSavegame()
         emit play(path);
         return true;
     }
+    // auto-create a new savegame when --autosolo and none exist
+    if(datapackPathExists)
+    {
+        std::cerr << "AutoArgs: --autosolo no savegame found, creating one" << std::endl;
+        int index=0;
+        while(QDir().exists(QString::fromStdString(savegamePath)+QString::number(index)))
+            index++;
+        QString newPath=QString::fromStdString(savegamePath)+QString::number(index)+"/";
+        if(QDir().mkpath(newPath))
+        {
+            QString initError;
+            if(SoloDatabaseInit::createSavegame(newPath+SoloWindow::text_catchchallenger_db_sqlite,&initError))
+            {
+                QString pass=QString::fromStdString(
+                    CatchChallenger::FacilityLibGeneral::randomPassword(
+                        "abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",32));
+                QSettings metaData(newPath+SoloWindow::text_metadatadotconf,QSettings::IniFormat);
+                if(metaData.isWritable() && metaData.status()==QSettings::NoError)
+                {
+                    metaData.setValue(SoloWindow::text_title,QStringLiteral("AutoSolo"));
+                    metaData.setValue(SoloWindow::text_location,QString());
+                    metaData.setValue(SoloWindow::text_time_played,0);
+                    metaData.setValue(SoloWindow::text_pass,pass);
+                    metaData.sync();
+                    updateSavegameList();
+                    return playFirstSavegame();
+                }
+            }
+            else
+                std::cerr << "AutoArgs: --autosolo failed to create db: " << initError.toStdString() << std::endl;
+        }
+    }
     std::cerr << "AutoArgs: --autosolo no playable savegame found (count=" << savegame.size()
               << " datapackExists=" << (datapackPathExists?"true":"false") << ")" << std::endl;
     return false;

@@ -231,7 +231,28 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     #endif
 
-    if(!AutoArgs::server.isEmpty())
+    // --host/--port or --server/--port: direct connect (no server list entry)
+    const QString directHost=AutoArgs::host.isEmpty() ? AutoArgs::server : AutoArgs::host;
+    if(!directHost.isEmpty() && AutoArgs::port!=0)
+    {
+        on_multiplayer_clicked();
+        // temporary entry: mapped so on_login_clicked() can find it,
+        // but NOT added to customServerConnexion or the UI.
+        // unique_code is set so saveConnexionInfoList() skips the custom-server path.
+        ConnexionInfo ci;
+        ci.host=directHost;
+        ci.port=AutoArgs::port;
+        ci.name=directHost+QStringLiteral(":")+QString::number(AutoArgs::port);
+        ci.unique_code=QStringLiteral("cli-host-port");
+        mergedConnexionInfoList.push_back(ci);
+
+        ListEntryEnvolued *newEntry=new ListEntryEnvolued();
+        serverConnexion[newEntry]=&mergedConnexionInfoList.back();
+
+        selectedServer=newEntry;
+        on_server_select_clicked();
+    }
+    else if(!AutoArgs::server.isEmpty())
     {
         on_multiplayer_clicked();
         ListEntryEnvolued *match=nullptr;
@@ -1057,14 +1078,11 @@ void MainWindow::on_server_select_clicked()
 
     if(AutoArgs::autologin)
     {
-        if(ui->lineEditLogin->text().isEmpty() || ui->lineEditPass->text().isEmpty())
-        {
-            std::cerr << "AutoArgs: --autologin set but login or password is empty, skipping" << std::endl;
-        }
-        else
-        {
-            on_pushButtonTryLogin_clicked();
-        }
+        if(ui->lineEditLogin->text().isEmpty())
+            ui->lineEditLogin->setText(QStringLiteral("test01"));
+        if(ui->lineEditPass->text().isEmpty())
+            ui->lineEditPass->setText(QStringLiteral("test01test01"));
+        on_pushButtonTryLogin_clicked();
     }
 }
 

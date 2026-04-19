@@ -51,7 +51,7 @@ void Client::battleCanceled()
 {
     if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
-        if(ClientList::list->empty(otherPlayerBattle))
+        if(ClientList::list->isNull(otherPlayerBattle))
             return;
         Client &c=ClientList::list->rw(otherPlayerBattle);
         c.internalBattleCanceled(true);
@@ -63,7 +63,7 @@ void Client::battleAccepted()
 {
     if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
-        if(ClientList::list->empty(otherPlayerBattle))
+        if(ClientList::list->isNull(otherPlayerBattle))
             return;
         Client &c=ClientList::list->rw(otherPlayerBattle);
         c.internalBattleAccepted(true);
@@ -77,7 +77,7 @@ void Client::battleFakeAccepted(Client &otherPlayer)
     otherPlayer.battleFakeAcceptedInternal(*this);
     if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
-        if(ClientList::list->empty(otherPlayerBattle))
+        if(ClientList::list->isNull(otherPlayerBattle))
             return;
         Client &c=ClientList::list->rw(otherPlayerBattle);
         c.internalBattleAccepted(true);
@@ -94,7 +94,7 @@ void Client::battleFinished()
 {
     if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
-    if(ClientList::list->empty(otherPlayerBattle))
+    if(ClientList::list->isNull(otherPlayerBattle))
         return;
     Client &c=ClientList::list->rw(otherPlayerBattle);
     if(!battleIsValidated)
@@ -162,7 +162,7 @@ void Client::internalBattleAccepted(const bool &send)
 {
     if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
-    if(ClientList::list->empty(otherPlayerBattle))
+    if(ClientList::list->isNull(otherPlayerBattle))
         return;
     Client &c=ClientList::list->rw(otherPlayerBattle);
     if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
@@ -330,7 +330,7 @@ void Client::sendBattleReturn()
     }
     if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
-        if(ClientList::list->empty(otherPlayerBattle))
+        if(ClientList::list->isNull(otherPlayerBattle))
             return;
         Client &c=ClientList::list->rw(otherPlayerBattle);
         if(c.haveMonsterChange())

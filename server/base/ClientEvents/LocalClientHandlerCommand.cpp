@@ -70,7 +70,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                      std::to_string(objectId)+
                      " in quantity: "+
                      std::to_string(quantity));
-        if(ClientList::list->empty(indexConnected))
+        if(ClientList::list->isNull(indexConnected))
         {
             Client &client=ClientList::list->rw(indexConnected);
             client.addObjectAndSend(objectId,quantity);
@@ -164,7 +164,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         }
         normalOutput(public_and_private_informations.public_informations.pseudo+" have take to "+arguments.at(1)+" the item with id: "+std::to_string(objectId)+" in quantity: "+std::to_string(quantity));
 
-        if(!ClientList::list->empty(indexConnected))
+        if(!ClientList::list->isNull(indexConnected))
         {
             receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
             return;
@@ -198,12 +198,12 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 return;
             }
 
-            if(!ClientList::list->empty(indexConnectedFront))
+            if(!ClientList::list->isNull(indexConnectedFront))
             {
                 receiveSystemText("player front is not connected or bug");
                 return;
             }
-            if(!ClientList::list->empty(indexConnectedBack))
+            if(!ClientList::list->isNull(indexConnectedBack))
             {
                 receiveSystemText("player back is not connected or bug");
                 return;
@@ -299,7 +299,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
 
-        if(!ClientList::list->empty(indexConnected))
+        if(!ClientList::list->isNull(indexConnected))
         {
             receiveSystemText("player is not connected/bug");
             return;
@@ -355,7 +355,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
 
-        if(!ClientList::list->empty(indexConnected))
+        if(!ClientList::list->isNull(indexConnected))
         {
             receiveSystemText("player is not connected/bug");
             return;

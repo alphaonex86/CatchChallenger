@@ -157,7 +157,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU(const CATCHCHALLENGE
         if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(!ClientList::list->empty(map_c_idP))
+            if(!ClientList::list->isNull(map_c_idP))
             #endif
             {
                 Client &client=ClientList::list->rw(map_c_idP);
@@ -256,7 +256,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
         if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(!ClientList::list->empty(map_c_idP))
+            if(!ClientList::list->isNull(map_c_idP))
             #endif
             {
                 ClientWithMap &clientWithMap=ClientList::list->rwWithMap(map_c_idP);

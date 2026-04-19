@@ -214,6 +214,28 @@ int main(int argc, char *argv[])
                 CliOptions::closeWhenOnMap=true;
             else if(arg==QStringLiteral("--dropsenddataafteronmap"))
                 CliOptions::dropSendDataAfterOnMap=true;
+            else if(arg==QStringLiteral("--autosolo"))
+                CliOptions::autosolo=true;
+            else if(arg==QStringLiteral("--host"))
+            {
+                if((index+1)<arguments.size())
+                {
+                    CliOptions::host=arguments.at(index+1);
+                    index++;
+                }
+                else
+                    std::cerr << "--host requires a host/ip argument" << std::endl;
+            }
+            else if(arg==QStringLiteral("--port"))
+            {
+                if((index+1)<arguments.size())
+                {
+                    CliOptions::port=static_cast<uint16_t>(arguments.at(index+1).toUShort());
+                    index++;
+                }
+                else
+                    std::cerr << "--port requires a number argument" << std::endl;
+            }
             index++;
         }
     }
@@ -227,19 +249,28 @@ int main(int argc, char *argv[])
     /*QScreen *screen = QApplication::screens().at(0);
     s.setMinimumSize(QSize(screen->availableSize().width(),
                            screen->availableSize().height()));*/
-    #ifndef  Q_OS_ANDROID
-    s.setMinimumSize(QSize(640,480));
-    #endif
-    s.move(0,0);
     QIcon icon;
     icon.addFile(":/CC/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
-#ifdef  Q_OS_ANDROID
-    s.showFullScreen();
-#else
-    //s.show();
-    s.showMaximized();
-#endif
+    if(!CliOptions::host.isEmpty() || !CliOptions::serverName.isEmpty() ||
+       CliOptions::closeWhenOnMap || CliOptions::dropSendDataAfterOnMap ||
+       CliOptions::autosolo)
+    {
+        //s.setWindowFlags(s.windowFlags() | Qt::WindowStaysOnBottomHint);
+        s.show();
+    }
+    else
+    {
+        #ifndef  Q_OS_ANDROID
+        s.setMinimumSize(QSize(640,480));
+        #endif
+        s.move(0,0);
+        #ifdef  Q_OS_ANDROID
+        s.showFullScreen();
+        #else
+        s.showMaximized();
+        #endif
+    }
     QtDatapackClientLoader::datapackLoader=nullptr;
     const int returnCode=a.exec();
     if(QtDatapackClientLoader::datapackLoader!=nullptr)

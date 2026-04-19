@@ -782,6 +782,27 @@ void BaseWindow::updateConnectingStatus()
                     characterListForSelection.at(charactersGroupIndex).empty()) &&
                         CommonSettingsCommon::commonSettingsCommon.max_character>0)
                 {
+                    // auto-create character when running automated (--autosolo or --character)
+                    if(AutoArgs::autosolo || !AutoArgs::character.isEmpty())
+                    {
+                        const std::vector<Profile> &profiles=CatchChallenger::CommonDatapack::commonDatapack.get_profileList();
+                        if(!profiles.empty())
+                        {
+                            const uint8_t profileIndex=0;
+                            const Profile &profile=profiles.at(profileIndex);
+                            const std::string pseudo=AutoArgs::character.isEmpty() ? "Player" : AutoArgs::character.toStdString();
+                            const uint8_t monsterGroupId=0;
+                            const uint8_t skinId=profile.forcedskin.empty() ? 0 : profile.forcedskin.front();
+                            CharacterEntry ce;
+                            ce.pseudo=pseudo;
+                            ce.charactersGroupIndex=monsterGroupId;
+                            ce.skinId=skinId;
+                            ce.played_time=0;
+                            client->addCharacter(charactersGroupIndex,profileIndex,pseudo,monsterGroupId,skinId);
+                            characterEntryListInWaiting.push_back(ce);
+                        }
+                        return;
+                    }
                     if(CommonSettingsCommon::commonSettingsCommon.min_character>0)
                     {
                         ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}");

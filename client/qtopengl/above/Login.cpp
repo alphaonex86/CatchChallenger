@@ -269,6 +269,12 @@ void Login::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &cal
     callParentClass=true;
 }
 
+void Login::setCredentials(const QString &l, const QString &p)
+{
+    login->setText(l);
+    password->setText(p);
+}
+
 void Login::validate()
 {
     if(password->text().size()<6)

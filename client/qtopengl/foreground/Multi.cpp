@@ -891,6 +891,9 @@ void Multi::server_select_clicked()
     if(!autoLoginTried && CliOptions::autologin)
     {
         autoLoginTried=true;
+        // fill default credentials if empty so validate() passes
+        if(login->getLogin().isEmpty() || login->getPass().isEmpty())
+            login->setCredentials(QStringLiteral("test01"),QStringLiteral("test01test01"));
         login->validate();
     }
 }

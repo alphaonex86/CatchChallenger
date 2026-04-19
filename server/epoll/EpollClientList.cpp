@@ -58,7 +58,7 @@ ClientWithMapEpoll &EpollClientList::getByReference()
 void EpollClientList::remove(const CatchChallenger::Client &client)
 {
     const PLAYER_INDEX_FOR_CONNECTED index_global=client.getIndexConnect();
-    if(empty(index_global))
+    if(isNull(index_global))
         return;
     clients_removed_index.push_back(index_global);
     CatchChallenger::ClientList::remove(client);
@@ -69,12 +69,12 @@ PLAYER_INDEX_FOR_CONNECTED EpollClientList::size() const
     return maxIndex;
 }
 
-bool EpollClientList::empty(const PLAYER_INDEX_FOR_CONNECTED &index) const
+bool EpollClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=clients.size())
     {
-        std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << std::endl;
+        std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << " then fix the caller, check before into the backtrace" << std::endl;
         abort();
     }
     #endif

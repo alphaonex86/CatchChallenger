@@ -409,7 +409,32 @@ void ScreenTransition::toMainScreen()
     }
     setForeground(m);
     setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));
-    //if --server CLI arg was set, auto open the Multi screen (only the first time)
+    //if --autosolo, auto open the Solo screen (only the first time)
+    static bool autoOpenSoloTried=false;
+    if(!autoOpenSoloTried && CliOptions::autosolo)
+    {
+        autoOpenSoloTried=true;
+        openSolo();
+        return;
+    }
+    //if --host/--port or --server/--port CLI args set, connect directly (no server list entry)
+    static bool autoDirectConnectTried=false;
+    if(!autoDirectConnectTried && CliOptions::port!=0 &&
+       (!CliOptions::host.isEmpty() || !CliOptions::serverName.isEmpty()))
+    {
+        autoDirectConnectTried=true;
+        multiplaySelected=true;
+        const QString &h=CliOptions::host.isEmpty() ? CliOptions::serverName : CliOptions::host;
+        ConnexionInfo ci;
+        ci.host=h;
+        ci.port=CliOptions::port;
+        ci.name=h+QStringLiteral(":")+QString::number(CliOptions::port);
+        const QString login=QStringLiteral("test01");
+        const QString pass=QStringLiteral("test01test01");
+        connectToServer(ci,login,pass);
+        return;
+    }
+    //if --server CLI arg was set (without --port), open the Multi screen to match by name
     static bool autoOpenMultiTried=false;
     if(!autoOpenMultiTried && !CliOptions::serverName.isEmpty())
     {

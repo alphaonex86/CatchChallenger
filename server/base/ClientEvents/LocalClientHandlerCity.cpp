@@ -179,7 +179,7 @@ void Client::leaveTheCityCapture()
             unsigned int index=0;
             while(index<playerListInCaptures.size())
             {
-                if(ClientList::list->empty(playerListInCaptures.at(index)) && ClientList::list->at(playerListInCaptures.at(index)).getClanId()==getClanId())
+                if(ClientList::list->isNull(playerListInCaptures.at(index)) && ClientList::list->at(playerListInCaptures.at(index)).getClanId()==getClanId())
                     break;
                 index++;
             }
@@ -203,7 +203,7 @@ void Client::startTheCityCapture()
             while(index<i->second.size())
             {
                 const PLAYER_INDEX_FOR_CONNECTED &clientIndex=i->second.at(index);
-                if(ClientList::list->empty(clientIndex))
+                if(ClientList::list->isNull(clientIndex))
                     ClientList::list->rw(clientIndex).previousCityCaptureNotFinished();
                 index++;
             }
@@ -281,7 +281,7 @@ void Client::startTheCityCapture()
                 {
                     sub_index=index+1;
                     const PLAYER_INDEX_FOR_CONNECTED &playersub_Index=tempCaptureCityValidated.players.at(sub_index);
-                    if(ClientList::list->empty(playersub_Index))
+                    if(ClientList::list->isNull(playersub_Index))
                     {
                         Client &sub_client=ClientList::list->rw(playersub_Index);
                         while(sub_index<tempCaptureCityValidated.players.size())
@@ -333,7 +333,7 @@ void Client::cityCaptureSendInWait(const CaptureCityValidated &captureCityValida
     while(index<captureCityValidated.players.size())
     {
         const PLAYER_INDEX_FOR_CONNECTED &playerIndex=captureCityValidated.players.at(index);
-        if(ClientList::list->empty(playerIndex))
+        if(ClientList::list->isNull(playerIndex))
         {
             Client &client=ClientList::list->rw(playerIndex);
             client.cityCaptureInWait(number_of_player,number_of_clan);
