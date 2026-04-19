@@ -8,8 +8,7 @@ include(../../client/libcatchchallenger/libheader.pri)
 include(../../client/libqtcatchchallenger/libqt.pri)
 include(../../client/libqtcatchchallenger/libqtheader.pri)
 
-QT       += core network sql websockets
-QT       -= gui widgets
+QT       += core network sql websockets gui widgets
 
 TARGET = datapack-downloader
 TEMPLATE = app

@@ -1368,7 +1368,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         }
         {
             const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
-            if(quest.rewards.allowCreateClan)
+            if(quest.rewards.allow_create_clan)
                 finalRewards+=tr("Add permission to create clan").toStdString()+"<br />";
         }
     }

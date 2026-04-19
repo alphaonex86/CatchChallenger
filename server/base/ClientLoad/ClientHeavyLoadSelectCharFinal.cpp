@@ -131,7 +131,7 @@ void Client::characterIsRightSendData()
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.skinId;
     posOutput+=1;
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.allowCreateClan);
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.allow_create_clan);
     posOutput+=1;
 
     //clan related

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "character" (
 	"played_time"	INTEGER,
 	"last_connect"	INTEGER,
 	"starter"	INTEGER,
-	"allowCreateClan"	INTEGER NOT NULL DEFAULT 0,
+	"allow_create_clan"	INTEGER NOT NULL DEFAULT 0,
 	"item"	BLOB,
 	"item_warehouse"	BLOB,
 	"recipes"	BLOB,

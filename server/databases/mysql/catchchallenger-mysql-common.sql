@@ -26,7 +26,7 @@ CREATE TABLE `character` (
   `played_time` int(11) UNSIGNED NOT NULL,
   `last_connect` int(11) UNSIGNED NOT NULL,
   `starter` tinyint(4) UNSIGNED NOT NULL,
-  `allowCreateClan` tinyint(1) NOT NULL DEFAULT 0,
+  `allow_create_clan` tinyint(1) NOT NULL DEFAULT 0,
   `item` blob NOT NULL,
   `item_warehouse` mediumblob NOT NULL,
   `recipes` blob NOT NULL,

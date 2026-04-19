@@ -172,15 +172,15 @@ void Client::updateMonsterInDatabaseEncyclopedia()
 void Client::syncDatabaseAllow()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    std::string allowCreateClanStr;
+    std::string allow_create_clanStr;
     #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
     if(GlobalServerData::serverPrivateVariables.db_common->databaseType()==DatabaseBase::DatabaseType::PostgreSQL)
-        allowCreateClanStr=public_and_private_informations.allowCreateClan?"true":"false";
+        allow_create_clanStr=public_and_private_informations.allow_create_clan?"true":"false";
     else
     #endif
-        allowCreateClanStr=public_and_private_informations.allowCreateClan?"1":"0";
+        allow_create_clanStr=public_and_private_informations.allow_create_clan?"1":"0";
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_allow.asyncWrite({
-                allowCreateClanStr,
+                allow_create_clanStr,
                 std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE

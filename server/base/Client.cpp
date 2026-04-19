@@ -89,7 +89,7 @@ void Client::setToDefault()
     public_and_private_informations.repel_step=0;
     public_and_private_informations.clan_leader=false;
     public_and_private_informations.mapData.clear();
-    public_and_private_informations.allowCreateClan=false;
+    public_and_private_informations.allow_create_clan=false;
     public_and_private_informations.quests.clear();
     public_and_private_informations.reputation.clear();
     public_and_private_informations.items.clear();
@@ -861,7 +861,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
         << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << public_and_private_informations.clan
         << public_and_private_informations.reputation
         << public_and_private_informations.items;
-    buf << public_and_private_informations.allowCreateClan;
+    buf << public_and_private_informations.allow_create_clan;
 
     //ableToFight/wildMonsters/botFightMonsters/stepFight/selectedMonster/
     //doTurnIfChangeOfMonster live in CommonFightEngine and are dynamic mid-fight
@@ -899,7 +899,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         >> encyclopedia_monsterS >> encyclopedia_itemS
         >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader >> public_and_private_informations.clan;
     buf >> public_and_private_informations.reputation >> public_and_private_informations.items;
-    buf >> public_and_private_informations.allowCreateClan;
+    buf >> public_and_private_informations.allow_create_clan;
     public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
     memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
     size_t min=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;

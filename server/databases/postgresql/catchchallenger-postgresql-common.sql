@@ -36,7 +36,7 @@ CREATE TABLE "character" (
     played_time integer,
     last_connect integer,
     starter smallint,
-    "allowCreateClan" boolean DEFAULT false NOT NULL,
+    allow_create_clan boolean DEFAULT false NOT NULL,
     item bytea,
     item_warehouse bytea,
     recipes bytea,

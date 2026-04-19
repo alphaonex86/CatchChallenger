@@ -50,7 +50,7 @@ bool ActionsAction::nextStepQuest(CatchChallenger::Api_protocol_Qt *api,const Ca
             index++;
         }
         //show_reputation();
-        if(quest.rewards.allowCreateClan)
+        if(quest.rewards.allow_create_clan)
         {
             //player can now create clan
         }

@@ -491,7 +491,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         newError("Protocol wrong or corrupted",std::string("wrong text with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    player_informations.allowCreateClan=data[pos];
+    player_informations.allow_create_clan=data[pos];
     pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint32_t))
     {

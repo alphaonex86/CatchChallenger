@@ -2,6 +2,7 @@
 #include "../base/PreparedDBQuery.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/DatabaseFunction.hpp"
+#include <cstring>
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/cpp11addition.hpp"

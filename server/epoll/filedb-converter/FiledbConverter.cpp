@@ -332,7 +332,7 @@ struct CharacterCommonRecord {
     uint32_t clan = 0;
     std::map<uint8_t, PlayerReputation> reputation;
     std::map<uint16_t, uint32_t> items;
-    bool allowCreateClan = false;
+    bool allow_create_clan = false;
     bool ableToFight = false;
     std::vector<PlayerMonster> wildMonsters;
     std::vector<PlayerMonster> botFightMonsters;
@@ -368,7 +368,7 @@ static bool loadCharacterCommon(const std::string &path, CharacterCommonRecord &
     s >> c.clan;
     s >> c.reputation;
     s >> c.items;
-    s >> c.allowCreateClan;
+    s >> c.allow_create_clan;
     //ableToFight/wildMonsters/botFightMonsters are dynamic CommonFightEngine
     //state, not serialised by Client; mirror that here.
     s >> c.randomIndex >> c.randomSize >> c.number_of_character;
@@ -397,7 +397,7 @@ static bool saveCharacterCommon(const std::string &path, const CharacterCommonRe
     s << c.clan;
     s << c.reputation;
     s << c.items;
-    s << c.allowCreateClan;
+    s << c.allow_create_clan;
     //ableToFight/wildMonsters/botFightMonsters are dynamic CommonFightEngine
     //state, not serialised by Client; mirror that here.
     s << c.randomIndex << c.randomSize << c.number_of_character;
@@ -750,7 +750,7 @@ static void toXml(const CharacterCommonRecord &c, XMLDocument &doc) {
         sU32(e, "id", kv.first);
         sU32(e, "quantity", kv.second);
     }
-    XMLElement *acc = addChild(r, "allowCreateClan"); acc->SetText(c.allowCreateClan);
+    XMLElement *acc = addChild(r, "allow_create_clan"); acc->SetText(c.allow_create_clan);
     XMLElement *atf = addChild(r, "ableToFight"); atf->SetText(c.ableToFight);
     xmlWriteMonsters(r, c.wildMonsters, "wildMonsters");
     xmlWriteMonsters(r, c.botFightMonsters, "botFightMonsters");
@@ -818,7 +818,7 @@ static bool fromXml(const XMLDocument &doc, CharacterCommonRecord &c) {
     if (const XMLElement *items = r->FirstChildElement("items"))
         for (const XMLElement *e = items->FirstChildElement("item"); e; e = e->NextSiblingElement("item"))
             c.items[static_cast<uint16_t>(aU32(e, "id"))] = aU32(e, "quantity");
-    if (const XMLElement *e = r->FirstChildElement("allowCreateClan")) c.allowCreateClan = textBool(e);
+    if (const XMLElement *e = r->FirstChildElement("allow_create_clan")) c.allow_create_clan = textBool(e);
     if (const XMLElement *e = r->FirstChildElement("ableToFight")) c.ableToFight = textBool(e);
     xmlReadMonsters(r, c.wildMonsters, "wildMonsters");
     xmlReadMonsters(r, c.botFightMonsters, "botFightMonsters");

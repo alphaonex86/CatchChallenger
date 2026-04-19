@@ -294,7 +294,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         std::string textToShow;
         if(playerInformations.clan==0)
         {
-            if(playerInformations.allowCreateClan)
+            if(playerInformations.allow_create_clan)
                 textToShow=QStringLiteral("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create")).toStdString();
             else
                 textToShow=QStringLiteral("<center>You can't create your clan</center>").toStdString();

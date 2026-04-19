@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
         std::cerr << mapFile.fileName().toStdString() << ", Parse error at line " << std::to_string(errorLine) << " column " << std::to_string(errorColumn) << ": " << errorStr.toStdString() << std::endl;
         return -1;
     }
-    const tinyxml2::XMLElement &root = domDocument.RootElement();
+    const QDomElement root = domDocument.documentElement();
     if(root.tagName().toStdString()!="map")
     {
         std::cerr << "\"map\" root balise not found for the xml file" << std::endl;
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     }
 
     // layer
-    tinyxml2::XMLElement child = root.FirstChildElement("layer");
+    QDomElement child = root.firstChildElement("layer");
     while(!child.isNull())
     {
         if(!child.isElement())
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
         else
         {
             std::cout << "Do the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << std::endl;
-            const tinyxml2::XMLElement &data=child.FirstChildElement("data");
+            const QDomElement data=child.firstChildElement("data");
             const std::string name=child.attribute("name").toStdString();
             if(data.isNull())
             {
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
                     free(cBuff);
                 }
 
-                tinyxml2::XMLElement newXmlElement=domDocument.createElement("data");
+                QDomElement newXmlElement=domDocument.createElement("data");
                 newXmlElement.setAttribute("encoding","base64");
                 newXmlElement.setAttribute("compression","zstd");
                 QDomText newTextElement=domDocument.createTextNode(QString(newCompressedData.toBase64()));
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
                 child.appendChild(newXmlElement);
             }
         }
-        child = child.NextSiblingElement("layer");
+        child = child.nextSiblingElement("layer");
     }
 
     if(oldCompressedSize>newCompressedSize)
