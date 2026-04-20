@@ -212,6 +212,12 @@ int main(int argc, char *argv[])
             }
             else if(arg==QStringLiteral("--closewhenonmap"))
                 CliOptions::closeWhenOnMap=true;
+            else if(arg.startsWith(QStringLiteral("--closewhenonmapafter=")))
+            {
+                CliOptions::closeWhenOnMapAfter=arg.mid(22).toInt();
+                if(CliOptions::closeWhenOnMapAfter<1)
+                    CliOptions::closeWhenOnMapAfter=1;
+            }
             else if(arg==QStringLiteral("--dropsenddataafteronmap"))
                 CliOptions::dropSendDataAfterOnMap=true;
             else if(arg==QStringLiteral("--autosolo"))

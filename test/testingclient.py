@@ -114,8 +114,8 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
 def build_project(pro_file, build_dir, label, clean_first=False):
     ensure_dir(build_dir)
     clean_build_artifacts(build_dir)
-    if clean_first:
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
+    log_info(f"make distclean {label}")
+    run_cmd(["make", "distclean"], build_dir, timeout=60)
     name = f"compile {label}"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
                   "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug"]
@@ -135,8 +135,16 @@ def build_project(pro_file, build_dir, label, clean_first=False):
     return True
 
 
-def setup_datapack_client(build_dir, datapack_src, label):
-    """Copy datapack to <build_dir>/datapack/internal/, keep only test in map/main/."""
+def detect_maincodes(datapack_src):
+    """Return sorted list of maincode subdirectories in map/main/."""
+    map_main = os.path.join(datapack_src, "map", "main")
+    if not os.path.isdir(map_main):
+        return []
+    return sorted([d for d in os.listdir(map_main)
+                   if os.path.isdir(os.path.join(map_main, d))])
+
+def setup_datapack_client(build_dir, datapack_src, maincode, label):
+    """Copy datapack to <build_dir>/datapack/internal/, keep only maincode in map/main/."""
     dst = os.path.join(build_dir, "datapack", "internal")
     if os.path.exists(dst):
         shutil.rmtree(dst)
@@ -145,16 +153,16 @@ def setup_datapack_client(build_dir, datapack_src, label):
         return False
     log_info(f"copying datapack to {dst}")
     shutil.copytree(datapack_src, dst, ignore=shutil.ignore_patterns(".git"))
-    # keep only test in map/main/
     map_main = os.path.join(dst, "map", "main")
     if os.path.isdir(map_main):
         for entry in os.listdir(map_main):
-            if entry == "test":
+            if entry == maincode:
                 continue
             full = os.path.join(map_main, entry)
             if os.path.isdir(full):
                 shutil.rmtree(full)
                 log_info(f"removed map/main/{entry}")
+    log_info(f"maincode: {maincode}")
     log_pass(f"datapack {label}")
     return True
 
@@ -291,40 +299,47 @@ def main():
     gl_ok  = build_project(CLIENT_GL_PRO, CLIENT_GL_BUILD, "qtopengl")
 
     # ═══════════════════════════════════════════════════════════════
-    # 2 + 3. DATAPACK SETUP + SOLO (iterate each datapack)
+    # 2 + 3. DATAPACK SETUP + SOLO (iterate each datapack + maincode)
     # ═══════════════════════════════════════════════════════════════
     for dp_path in DATAPACKS:
         dp_name = os.path.basename(dp_path)
-        print(f"\n{C_CYAN}--- Datapack + Solo: {dp_name} ---{C_RESET}\n")
+        maincodes = detect_maincodes(dp_path)
+        if not maincodes:
+            log_fail(f"datapack {dp_name}", "no maincodes in map/main/")
+            continue
+        log_info(f"{dp_name}: maincodes found: {', '.join(maincodes)}")
 
-        dp_cpu = False
-        dp_gl  = False
-        if cpu_ok:
-            dp_cpu = setup_datapack_client(CLIENT_CPU_BUILD, dp_path, f"qtcpu800x600 ({dp_name})")
-        if gl_ok:
-            dp_gl = setup_datapack_client(CLIENT_GL_BUILD, dp_path, f"qtopengl ({dp_name})")
+        for mc in maincodes:
+            print(f"\n{C_CYAN}--- Datapack + Solo: {dp_name} maincode={mc} ---{C_RESET}\n")
 
-        if cpu_ok and dp_cpu:
-            remove_savegames(SAVEGAME_CPU, "qtcpu800x600")
-            run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
-                       ["--autosolo", "--closewhenonmap"],
-                       f"qtcpu800x600 solo first run ({dp_name})")
-            run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
-                       ["--autosolo", "--closewhenonmap"],
-                       f"qtcpu800x600 solo come back ({dp_name})")
+            dp_cpu = False
+            dp_gl  = False
+            if cpu_ok:
+                dp_cpu = setup_datapack_client(CLIENT_CPU_BUILD, dp_path, mc,
+                                               f"qtcpu800x600 ({dp_name} {mc})")
+            if gl_ok:
+                dp_gl = setup_datapack_client(CLIENT_GL_BUILD, dp_path, mc,
+                                              f"qtopengl ({dp_name} {mc})")
 
-        if gl_ok and dp_gl:
-            remove_savegames(SAVEGAME_GL, "qtopengl")
-            run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
-                       ["--autosolo", "--closewhenonmap"],
-                       f"qtopengl solo first run ({dp_name})",
-                       use_offscreen=False,
-                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
-            run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
-                       ["--autosolo", "--closewhenonmap"],
-                       f"qtopengl solo come back ({dp_name})",
-                       use_offscreen=False,
-                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+            if cpu_ok and dp_cpu:
+                remove_savegames(SAVEGAME_CPU, "qtcpu800x600")
+                run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                           ["--autosolo", "--closewhenonmap"],
+                           f"qtcpu800x600 solo first run ({dp_name} {mc})")
+                run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                           ["--autosolo", "--closewhenonmap"],
+                           f"qtcpu800x600 solo come back ({dp_name} {mc})")
+
+            if gl_ok and dp_gl:
+                remove_savegames(SAVEGAME_GL, "qtopengl")
+                run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                           ["--autosolo", "--closewhenonmap"],
+                           f"qtopengl solo first run ({dp_name} {mc})",
+                           success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+                run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                           ["--autosolo", "--closewhenonmap"],
+                           f"qtopengl solo come back ({dp_name} {mc})",
+                           success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
 
     # ═══════════════════════════════════════════════════════════════
     # 4. MULTIPLAYER ON SERVER
@@ -350,19 +365,20 @@ def main():
     if cpu_ok:
         run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
                    ["--host", SERVER_HOST, "--port", SERVER_PORT,
-                    "--autologin", "--character", "Player",
+                    "--autologin", "--character", "PlayerCPU",
                     "--closewhenonmap"],
                    "qtcpu800x600 connect to server",
+                   timeout=30,
                    success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
 
     if gl_ok:
         run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
                    ["--host", SERVER_HOST, "--port", SERVER_PORT,
-                    "--autologin", "--character", "Player",
+                    "--autologin", "--character", "PlayerGL",
                     "--closewhenonmap"],
                    "qtopengl connect to server",
-                   success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
-                   use_offscreen=False)
+                   timeout=30,
+                   success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
 
     stop_server()
     summary()

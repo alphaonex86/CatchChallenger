@@ -336,7 +336,12 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
 QString ConnexionManager::serverToDatapachPath(ConnexionInfo connexionInfo) const
 {
     QDir datapack;
-    if(connexionInfo.isCustom)
+    if(connexionInfo.isArgument)
+        datapack=QDir(QStringLiteral("%1/datapack/argument-%2/")
+                      .arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation))
+                      .arg(connexionInfo.unique_code)
+                      );
+    else if(connexionInfo.isCustom)
         datapack=QDir(QStringLiteral("%1/datapack/Custom-%2/")
                       .arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation))
                       .arg(connexionInfo.unique_code)

@@ -262,6 +262,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                             return false;
                         }
                         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase=std::string(data+pos,mirrorSize);
+                        std::cout << "CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase is now: " << CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase << std::endl;
                         pos+=mirrorSize;
                         if(!regex_search(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase,std::regex("^https?://")))
                         {
@@ -270,7 +271,10 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                         }
                     }
                     else
+                    {
                         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.clear();
+                        std::cout << "CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase is now: " << CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase << std::endl;
+                    }
                 }
                 //characters
                 {

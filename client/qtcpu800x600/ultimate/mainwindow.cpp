@@ -243,7 +243,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ci.host=directHost;
         ci.port=AutoArgs::port;
         ci.name=directHost+QStringLiteral(":")+QString::number(AutoArgs::port);
-        ci.unique_code=QStringLiteral("cli-host-port");
+        ci.unique_code=directHost+QStringLiteral("-")+QString::number(AutoArgs::port);
         mergedConnexionInfoList.push_back(ci);
 
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
@@ -1079,9 +1079,14 @@ void MainWindow::on_server_select_clicked()
     if(AutoArgs::autologin)
     {
         if(ui->lineEditLogin->text().isEmpty())
-            ui->lineEditLogin->setText(QStringLiteral("test01"));
+        {
+            if(!AutoArgs::character.isEmpty())
+                ui->lineEditLogin->setText(AutoArgs::character);
+            else
+                ui->lineEditLogin->setText(QStringLiteral("test01"));
+        }
         if(ui->lineEditPass->text().isEmpty())
-            ui->lineEditPass->setText(QStringLiteral("test01test01"));
+            ui->lineEditPass->setText(ui->lineEditLogin->text()+ui->lineEditLogin->text());
         on_pushButtonTryLogin_clicked();
     }
 }
@@ -1533,7 +1538,7 @@ QString MainWindow::serverToDatapachPath(ListEntryEnvolued * selectedServer) con
              datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
     }
     else
-        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
+        datapack=QDir(QStringLiteral("%1/datapack/argument-%2").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
     return datapack.absolutePath();
 }
 

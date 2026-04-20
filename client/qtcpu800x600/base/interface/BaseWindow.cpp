@@ -54,7 +54,8 @@ QIcon BaseWindow::icon_server_list_bug;
 std::vector<QIcon> BaseWindow::icon_server_list_color;
 
 BaseWindow::BaseWindow() :
-    ui(new Ui::BaseWindowUI)
+    ui(new Ui::BaseWindowUI),
+    closeWhenOnMapAfterRemaining_(0)
 {
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");

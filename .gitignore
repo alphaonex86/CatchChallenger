@@ -110,3 +110,10 @@ tools/to-pack/data/windows-x*
 
 client/qtopengl/catchchallenger
 client/qtcpu800x600/catchchallenger
+
+/tools/__pycache__/
+*__pycache__/
+
+
+/tools/client/
+/tools/server/

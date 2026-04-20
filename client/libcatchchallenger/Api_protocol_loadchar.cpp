@@ -277,6 +277,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 return false;
             }
             CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=std::string(data+pos,mirrorSize);
+            std::cout << "CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer is now: " << CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer << std::endl;
             pos+=mirrorSize;;
             if(!regex_search(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer,std::regex("^https?://")))
             {
@@ -285,7 +286,10 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
             }
         }
         else
+        {
             CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
+            std::cout << "CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer is now: " << CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer << std::endl;
+        }
     }
     if((size-pos)<(int)sizeof(uint8_t))
     {

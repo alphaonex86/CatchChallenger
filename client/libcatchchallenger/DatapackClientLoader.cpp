@@ -1,5 +1,6 @@
 #include "DatapackClientLoader.hpp"
 #include "DatapackChecksum.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -63,7 +64,7 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const s
         if(!cacheHash.empty())
         {
             hash=std::vector<char>(cacheHash.begin(),cacheHash.end());
-            if(hash.size()!=28)
+            if(hash.size()!=CATCHCHALLENGER_HASH_SIZE)
                 hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath);
         }
         else
@@ -76,18 +77,18 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const s
             return;
         }
 
-        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=CATCHCHALLENGER_HASH_SIZE)
         {
-            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase size is not 28: "
+            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase size is not CATCHCHALLENGER_HASH_SIZE: "
                       << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase) << std::endl;
             emitdatapackChecksumError();
             inProgress=false;
             abort();
             return;
         }
-        if(hash.size()!=28)
+        if(hash.size()!=CATCHCHALLENGER_HASH_SIZE)
         {
-            std::cerr << "hash size is not 28: "
+            std::cerr << "hash size is not CATCHCHALLENGER_HASH_SIZE: "
                       << binarytoHexa(hash) << std::endl;
             emitdatapackChecksumError();
             inProgress=false;

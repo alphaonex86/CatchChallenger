@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QGraphicsView>
 #include <QElapsedTimer>
+#include <QTimer>
 #include "background/CCBackground.hpp"
 #include "foreground/LoadingScreen.hpp"
 #include "ScreenInput.hpp"
@@ -72,9 +73,12 @@ protected:
     void setTargetFPS(int targetFPS);
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+    void closeWhenOnMapAfterToggle();
 signals:
     void newFPSvalue(const unsigned int FPS);
 private:
+    QTimer closeWhenOnMapAfterTimer_;
+    int closeWhenOnMapAfterRemaining_=0;
     CCBackground b;
     LoadingScreen l;
     ScreenInput *m_backgroundStack;

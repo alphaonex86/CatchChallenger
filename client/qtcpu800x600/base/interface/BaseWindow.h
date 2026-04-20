@@ -143,6 +143,7 @@ private slots:
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);
+    void closeWhenOnMapAfterToggle();
     void setEvents(const std::vector<std::pair<uint8_t, uint8_t> > &events);
     void newEvent(const uint8_t &event,const uint8_t &event_value);
     void forcedEvent(const uint8_t &event,const uint8_t &event_value);
@@ -464,6 +465,8 @@ private:
     std::string imagesInterfaceRepeatableString,imagesInterfaceInProgressString;
     QTimer tip_timeout;
     QTimer gain_timeout;
+    QTimer closeWhenOnMapAfterTimer_;
+    int closeWhenOnMapAfterRemaining_;
     std::vector<QueryType> queryList;
     uint16_t shopId;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     std::unordered_map<uint32_t,ItemToSellOrBuy> itemsIntoTheShop;

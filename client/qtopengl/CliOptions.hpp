@@ -13,6 +13,7 @@ public:
     static bool autologin;
     static QString characterName;
     static bool closeWhenOnMap;
+    static int closeWhenOnMapAfter;
     static bool dropSendDataAfterOnMap;
     static bool autosolo;
 };

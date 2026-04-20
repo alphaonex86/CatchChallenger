@@ -87,6 +87,8 @@ def test_compile(pro_file):
     build_dir = os.path.join(pro_dir, "build", "testing")
     os.makedirs(build_dir, exist_ok=True)
     clean_build_artifacts(build_dir)
+    log_info(f"make distclean {rel}")
+    run_cmd(["make", "distclean"], build_dir, timeout=60)
 
     label = rel
 
