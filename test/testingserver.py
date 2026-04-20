@@ -39,6 +39,9 @@ DATAPACK_SOURCES = [(dp, os.path.basename(dp)) for dp in _config["paths"]["datap
 # client's cached datapack base path
 CLIENT_DATAPACK_CACHE = os.path.expanduser(
     _config["paths"]["client_datapack_cache"])
+CLIENT_CACHE_DIR      = os.path.join(CLIENT_DATAPACK_CACHE, f"argument-{_config['server_host']}-{_config['server_port']}")
+CLIENT_CACHE_BIN      = CLIENT_CACHE_DIR + "-cache"
+CLIENT_SETTINGS       = os.path.expanduser("~/.config/CatchChallenger/client-qtcpu800x600.conf")
 
 COMPILE_TIMEOUT      = 600
 SERVER_READY_TIMEOUT = 60
@@ -76,6 +79,22 @@ def clean_build_artifacts(build_dir):
         for f in globmod.glob(os.path.join(build_dir, pattern)):
             os.remove(f)
 
+def set_map_visibility_minimize(build_dir, value):
+    xml_path = os.path.join(build_dir, "server-properties.xml")
+    if not os.path.exists(xml_path):
+        return
+    if os.path.islink(xml_path):
+        target = os.path.realpath(xml_path)
+        os.remove(xml_path)
+        shutil.copy2(target, xml_path)
+    with open(xml_path, "r") as f:
+        content = f.read()
+    content = re.sub(r'<minimize\s+value="[^"]*"',
+                     f'<minimize value="{value}"', content)
+    with open(xml_path, "w") as f:
+        f.write(content)
+    log_info(f'server-properties.xml minimize="{value}"')
+
 def set_http_datapack_mirror(build_dir, value):
     xml_path = os.path.join(build_dir, "server-properties.xml")
     if not os.path.exists(xml_path):
@@ -92,6 +111,161 @@ def set_http_datapack_mirror(build_dir, value):
         f.write(content)
     log_info(f'server-properties.xml httpDatapackMirror="{value}"')
 
+def get_allowed_extensions():
+    hpp = os.path.join(ROOT, "general", "base", "GeneralVariable.hpp")
+    with open(hpp, "r") as f:
+        content = f.read()
+    m = re.search(r'CATCHCHALLENGER_EXTENSION_ALLOWED\s+"([^"]+)"', content)
+    if not m:
+        return set()
+    return set(m.group(1).split(";"))
+
+DATAPACK_FILE_RE = re.compile(r'^[0-9a-z_./-]*[0-9a-z]\.[a-z]{2,4}$')
+
+def datapack_checksum(directory, allowed_ext):
+    import hashlib
+    h = hashlib.sha256()
+    files = []
+    for dirpath, _dirs, filenames in os.walk(directory):
+        rel_dir = os.path.relpath(dirpath, directory)
+        if rel_dir.startswith("map" + os.sep + "main") or rel_dir.startswith("map/main"):
+            continue
+        for fn in filenames:
+            ext = fn.rsplit(".", 1)[-1] if "." in fn else ""
+            rel_path = os.path.relpath(os.path.join(dirpath, fn), directory)
+            if ext in allowed_ext and DATAPACK_FILE_RE.match(rel_path):
+                files.append(os.path.join(dirpath, fn))
+    files.sort()
+    idx = 0
+    while idx < len(files):
+        with open(files[idx], "rb") as f:
+            h.update(f.read())
+        idx += 1
+    return h.hexdigest()
+
+def dir_checksum(directory, allowed_ext):
+    import hashlib
+    h = hashlib.sha256()
+    files = []
+    for dirpath, _dirs, filenames in os.walk(directory):
+        for fn in filenames:
+            ext = fn.rsplit(".", 1)[-1] if "." in fn else ""
+            if ext in allowed_ext:
+                files.append(os.path.join(dirpath, fn))
+    files.sort()
+    idx = 0
+    while idx < len(files):
+        with open(files[idx], "rb") as f:
+            h.update(f.read())
+        idx += 1
+    return h.hexdigest()
+
+def check_datapack_match(label, server_datapack, client_cache_dir):
+    allowed = get_allowed_extensions()
+    if not os.path.isdir(client_cache_dir):
+        log_fail(f"{label}: datapack match", "client cache dir not found")
+        return
+    server_hash = datapack_checksum(server_datapack, allowed)
+    client_hash = datapack_checksum(client_cache_dir, allowed)
+    if server_hash == client_hash:
+        log_pass(f"{label}: datapack base match", f"checksums equal ({server_hash[:16]}...)")
+    else:
+        log_fail(f"{label}: datapack base match",
+                 f"server={server_hash[:16]}... client={client_hash[:16]}...")
+
+def dir_checksum_exclude_sub(directory, allowed_ext):
+    import hashlib
+    h = hashlib.sha256()
+    files = []
+    for dirpath, _dirs, filenames in os.walk(directory):
+        rel_dir = os.path.relpath(dirpath, directory)
+        if rel_dir.startswith("sub" + os.sep) or rel_dir.startswith("sub/") or rel_dir == "sub":
+            continue
+        for fn in filenames:
+            ext = fn.rsplit(".", 1)[-1] if "." in fn else ""
+            rel_path = os.path.relpath(os.path.join(dirpath, fn), directory)
+            if ext in allowed_ext and DATAPACK_FILE_RE.match(rel_path):
+                files.append(os.path.join(dirpath, fn))
+    files.sort()
+    idx = 0
+    while idx < len(files):
+        with open(files[idx], "rb") as f:
+            h.update(f.read())
+        idx += 1
+    return h.hexdigest()
+
+def check_datapack_main_match(label, server_datapack, client_cache_dir, maincode):
+    allowed = get_allowed_extensions()
+    server_main = os.path.join(server_datapack, "map", "main", maincode)
+    client_main = os.path.join(client_cache_dir, "map", "main", maincode)
+    if not os.path.isdir(server_main):
+        log_fail(f"{label}: datapack main match", f"server map/main/{maincode} not found")
+        return
+    if not os.path.isdir(client_main):
+        log_fail(f"{label}: datapack main match", f"client map/main/{maincode} not found")
+        return
+    server_hash = dir_checksum_exclude_sub(server_main, allowed)
+    client_hash = dir_checksum_exclude_sub(client_main, allowed)
+    if server_hash == client_hash:
+        log_pass(f"{label}: datapack main match", f"map/main/{maincode} checksums equal ({server_hash[:16]}...)")
+    else:
+        log_fail(f"{label}: datapack main match",
+                 f"map/main/{maincode} server={server_hash[:16]}... client={client_hash[:16]}...")
+
+def path_to_settings_key(path):
+    return path.lstrip('/').rstrip('/').replace('/', '\\')
+
+def set_client_hashes_random():
+    if not os.path.isfile(CLIENT_SETTINGS):
+        return
+    key_prefix = path_to_settings_key(CLIENT_CACHE_DIR)
+    random_hash = os.urandom(32).hex()
+    with open(CLIENT_SETTINGS, 'r') as f:
+        lines = f.readlines()
+    new_lines = []
+    for line in lines:
+        if key_prefix in line and '=' in line:
+            key = line.split('=', 1)[0]
+            new_lines.append(f"{key}={random_hash}\n")
+        else:
+            new_lines.append(line)
+    with open(CLIENT_SETTINGS, 'w') as f:
+        f.writelines(new_lines)
+    log_info("client settings: all hashes set to random")
+
+def setup_client_cache_partial(server_datapack):
+    if os.path.exists(CLIENT_CACHE_DIR):
+        shutil.rmtree(CLIENT_CACHE_DIR)
+    shutil.copytree(server_datapack, CLIENT_CACHE_DIR,
+                    ignore=shutil.ignore_patterns(".git"))
+    all_files = []
+    for dirpath, _dirs, files in os.walk(CLIENT_CACHE_DIR):
+        for f in files:
+            all_files.append(os.path.join(dirpath, f))
+    kept = all_files[0] if all_files else None
+    idx = 1
+    while idx < len(all_files):
+        os.remove(all_files[idx])
+        idx += 1
+    for dirpath, _dirs, _files in os.walk(CLIENT_CACHE_DIR, topdown=False):
+        if not os.listdir(dirpath) and dirpath != CLIENT_CACHE_DIR:
+            os.rmdir(dirpath)
+    with open(os.path.join(CLIENT_CACHE_DIR, "toremove.xml"), 'w') as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<test>toremove</test>\n')
+    if kept:
+        log_info(f"client cache: kept {os.path.relpath(kept, CLIENT_CACHE_DIR)} + toremove.xml")
+
+def setup_client_cache_empty():
+    if os.path.exists(CLIENT_CACHE_DIR):
+        shutil.rmtree(CLIENT_CACHE_DIR)
+    os.makedirs(CLIENT_CACHE_DIR, exist_ok=True)
+    log_info("client cache: emptied")
+
+def clear_client_bin_cache():
+    if os.path.isdir(CLIENT_CACHE_BIN):
+        shutil.rmtree(CLIENT_CACHE_BIN)
+        log_info(f"cleared client binary cache: {CLIENT_CACHE_BIN}")
+
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
     try:
         p = subprocess.run(args, cwd=cwd, timeout=timeout,
@@ -104,9 +278,8 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
 def build_project(pro_file, build_dir, label, extra_defines=None, clean_first=False):
     ensure_dir(build_dir)
     clean_build_artifacts(build_dir)
-    if clean_first:
-        log_info(f"make distclean {label}")
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
+    log_info(f"make distclean {label}")
+    run_cmd(["make", "distclean"], build_dir, timeout=60)
     name = f"compile {label}"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
                   "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug"]
@@ -304,7 +477,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail(label, "binary not found")
-        return False
+        return False, ""
     log_info(f"running: {bin_name} {' '.join(args)}")
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
@@ -314,29 +487,30 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
         out = p.stdout.decode(errors="replace")
         if p.returncode == 0:
             log_pass(label, "exit code 0")
-            return True
+            return True, out
         log_fail(label, f"exit code {p.returncode}")
         for line in out.splitlines()[-20:]:
             print(f"  | {line}")
-        return False
+        return False, out
     except subprocess.TimeoutExpired as e:
         out = e.stdout.decode(errors="replace") if e.stdout else ""
         if success_marker and success_marker in out:
             log_pass(label, f"timeout but connected (found '{success_marker}')")
-            return True
+            return True, out
         log_fail(label, f"timeout after {timeout}s")
         for line in out.splitlines()[-20:]:
             print(f"  | {line}")
-        return False
+        return False, out
 
 def client_connect(client_build, label):
     """Shorthand: connect qtcpu800x600 to server."""
-    return run_client(client_build, CLIENT_CPU_BIN,
-                      ["--host", SERVER_HOST, "--port", str(SERVER_PORT),
-                       "--autologin", "--character", "Player",
-                       "--closewhenonmap"],
-                      label,
-                      success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+    ok, out = run_client(client_build, CLIENT_CPU_BIN,
+                         ["--host", SERVER_HOST, "--port", str(SERVER_PORT),
+                          "--autologin", "--character", "Player",
+                          "--closewhenonmap"],
+                         label,
+                         success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+    return ok, out
 
 
 # ── per-server cache / NOXML cycle ─────────────────────────────────────────
@@ -386,8 +560,7 @@ def find_client_cache_dir():
     """Find the client datapack cache subdir used by --host/--port connections."""
     if not os.path.isdir(CLIENT_DATAPACK_CACHE):
         return None
-    # unique_code="cli-host-port" → settings group "Xml-cli-host-port" → cache dir
-    for name in ("Xml-cli-host-port", f"{SERVER_HOST}:{SERVER_PORT}", SERVER_HOST):
+    for name in (f"argument-{SERVER_HOST}-{SERVER_PORT}", f"{SERVER_HOST}:{SERVER_PORT}", SERVER_HOST):
         p = os.path.join(CLIENT_DATAPACK_CACHE, name)
         if os.path.isdir(p):
             return p
@@ -493,6 +666,89 @@ def test_xml_change_detection(build_dir, client_build):
                      f"{deleted_rel} still in client cache")
 
 
+def check_mirror_empty(label, client_out):
+    """Check that mirror markers show empty value (no HTTP mirror)."""
+    base_empty = "CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase is now: \n"
+    server_empty = "CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer is now: \n"
+    if base_empty in client_out:
+        log_pass(f"{label}: mirror base empty", "httpDatapackMirrorBase is empty")
+    else:
+        log_fail(f"{label}: mirror base empty",
+                 "expected empty httpDatapackMirrorBase in client output")
+        for line in client_out.splitlines()[-30:]:
+            print(f"  | {line}")
+    if server_empty in client_out:
+        log_pass(f"{label}: mirror server empty", "httpDatapackMirrorServer is empty")
+    else:
+        log_fail(f"{label}: mirror server empty",
+                 "expected empty httpDatapackMirrorServer in client output")
+        for line in client_out.splitlines()[-30:]:
+            print(f"  | {line}")
+
+def test_client_datapack_mechanism(build_dir, client_build):
+    """Test 3 client datapack cache scenarios."""
+    server_datapack = os.path.join(build_dir, "datapack")
+    if not os.path.isdir(server_datapack):
+        log_fail("client datapack mechanism", "no server datapack")
+        return
+    # detect maincode from server-properties.xml
+    sp_path = os.path.join(build_dir, "server-properties.xml")
+    maincode = "test"
+    if os.path.isfile(sp_path):
+        with open(sp_path, "r") as f:
+            sp = f.read()
+        mc_m = re.search(r'mainDatapackCode\s+value="([^"]*)"', sp)
+        if mc_m:
+            maincode = mc_m.group(1)
+
+    # case 3: empty client cache (full download)
+    print(f"\n{C_CYAN}  -- Case 3: empty client cache --{C_RESET}\n")
+    clear_database_filedb(build_dir)
+    remove_cache(build_dir)
+    setup_client_cache_empty()
+    clear_client_bin_cache()
+    set_client_hashes_random()
+    set_http_datapack_mirror(build_dir, "")
+    srv = start_server(build_dir)
+    if srv:
+        ok, out = client_connect(client_build, "case3: empty cache")
+        if ok:
+            check_mirror_empty("case3", out)
+        check_datapack_match("case3", server_datapack, CLIENT_CACHE_DIR)
+        check_datapack_main_match("case3", server_datapack, CLIENT_CACHE_DIR, maincode)
+        stop_server()
+
+    # case 2: partial client cache (diff download)
+    print(f"\n{C_CYAN}  -- Case 2: partial client cache --{C_RESET}\n")
+    clear_database_filedb(build_dir)
+    remove_cache(build_dir)
+    setup_client_cache_partial(server_datapack)
+    clear_client_bin_cache()
+    set_client_hashes_random()
+    set_http_datapack_mirror(build_dir, "")
+    srv = start_server(build_dir)
+    if srv:
+        ok, out = client_connect(client_build, "case2: partial cache")
+        if ok:
+            check_mirror_empty("case2", out)
+        check_datapack_match("case2", server_datapack, CLIENT_CACHE_DIR)
+        check_datapack_main_match("case2", server_datapack, CLIENT_CACHE_DIR, maincode)
+        stop_server()
+
+    # case 1: same datapack (hash match, no download)
+    print(f"\n{C_CYAN}  -- Case 1: same datapack --{C_RESET}\n")
+    clear_database_filedb(build_dir)
+    set_http_datapack_mirror(build_dir, "")
+    srv = start_server(build_dir)
+    if srv:
+        ok, out = client_connect(client_build, "case1: same datapack")
+        if ok:
+            check_mirror_empty("case1", out)
+        check_datapack_match("case1", server_datapack, CLIENT_CACHE_DIR)
+        check_datapack_main_match("case1", server_datapack, CLIENT_CACHE_DIR, maincode)
+        stop_server()
+
+
 def test_datapacks(build_dir, client_build):
     """Copy each datapack source to server, test each maincode in map/main/."""
     for dp_src, dp_name in DATAPACK_SOURCES:
@@ -565,14 +821,25 @@ def main():
     if build_project(SERVER_FILEDB_PRO, filedb_build, "server-filedb"):
         for dp_index, dp_path in enumerate(DATAPACK_SOURCES):
             dp_src, dp_name = dp_path
-            print(f"\n{C_CYAN}  -- filedb datapack {dp_index}: {dp_name} --{C_RESET}\n")
             setup_server_datapack(filedb_build, dp_src)
-            clear_database_filedb(filedb_build)
-            set_http_datapack_mirror(filedb_build, "")
-            srv = start_server(filedb_build)
-            if srv:
-                client_connect(client_build, f"filedb: client connect ({dp_name})")
-                stop_server()
+            map_main = os.path.join(filedb_build, "datapack", "map", "main")
+            maincodes = sorted([d for d in os.listdir(map_main)
+                                if os.path.isdir(os.path.join(map_main, d))]) if os.path.isdir(map_main) else []
+            if not maincodes:
+                log_fail(f"filedb {dp_name}", "no maincodes in map/main/")
+                continue
+            log_info(f"{dp_name}: maincodes found: {', '.join(maincodes)}")
+            for mc in maincodes:
+                print(f"\n{C_CYAN}  -- filedb {dp_name} maincode={mc} --{C_RESET}\n")
+                setup_server_config(filedb_build, maincode=mc)
+                clear_database_filedb(filedb_build)
+                remove_cache(filedb_build)
+                set_http_datapack_mirror(filedb_build, "")
+                set_map_visibility_minimize(filedb_build, "network")
+                srv = start_server(filedb_build)
+                if srv:
+                    client_connect(client_build, f"filedb: {dp_name} maincode={mc}")
+                    stop_server()
 
         test_server_cache_cycle(SERVER_FILEDB_PRO, filedb_build,
                                 "filedb", client_build, is_filedb=True)
@@ -582,18 +849,28 @@ def main():
     if build_project(SERVER_CLIEPO_PRO, cliepo_build, "server-cli-epoll"):
         for dp_index, dp_path in enumerate(DATAPACK_SOURCES):
             dp_src, dp_name = dp_path
-            print(f"\n{C_CYAN}  -- cli-epoll datapack {dp_index}: {dp_name} --{C_RESET}\n")
             setup_server_datapack(cliepo_build, dp_src, patch_db=True)
-            clear_database_postgresql()
-            set_http_datapack_mirror(cliepo_build, "")
-            srv = start_server(cliepo_build)
-            if srv:
-                client_connect(client_build, f"cli-epoll: client connect ({dp_name})")
-                stop_server()
-            else:
-                log_fail(f"server-cli-epoll tests ({dp_name})",
-                         "server failed to start (PostgreSQL may not be available)")
-                break
+            map_main = os.path.join(cliepo_build, "datapack", "map", "main")
+            maincodes = sorted([d for d in os.listdir(map_main)
+                                if os.path.isdir(os.path.join(map_main, d))]) if os.path.isdir(map_main) else []
+            if not maincodes:
+                log_fail(f"cli-epoll {dp_name}", "no maincodes in map/main/")
+                continue
+            log_info(f"{dp_name}: maincodes found: {', '.join(maincodes)}")
+            for mc in maincodes:
+                print(f"\n{C_CYAN}  -- cli-epoll {dp_name} maincode={mc} --{C_RESET}\n")
+                setup_server_config(cliepo_build, maincode=mc, patch_db=True)
+                clear_database_postgresql()
+                set_http_datapack_mirror(cliepo_build, "")
+                set_map_visibility_minimize(cliepo_build, "network")
+                srv = start_server(cliepo_build)
+                if srv:
+                    client_connect(client_build, f"cli-epoll: {dp_name} maincode={mc}")
+                    stop_server()
+                else:
+                    log_fail(f"cli-epoll {dp_name} maincode={mc}",
+                             "server failed to start (PostgreSQL may not be available)")
+                    break
         test_server_cache_cycle(SERVER_CLIEPO_PRO, cliepo_build,
                                 "cli-epoll", client_build, is_filedb=False,
                                 patch_db=True)
@@ -607,6 +884,13 @@ def main():
         test_datapacks(filedb_build, client_build)
     else:
         log_fail("datapack tests", "server-filedb binary not available")
+
+    # ── Phase D: Client datapack mechanism ─────────────────────────
+    print(f"\n{C_CYAN}--- Client datapack mechanism ---{C_RESET}\n")
+    if os.path.isfile(os.path.join(filedb_build, SERVER_BIN_NAME)):
+        test_client_datapack_mechanism(filedb_build, client_build)
+    else:
+        log_fail("client datapack mechanism", "server-filedb binary not available")
 
     stop_server()
     summary()

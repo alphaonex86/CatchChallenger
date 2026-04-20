@@ -1,4 +1,5 @@
 #include "QtDatapackClientLoader.hpp"
+#include "../../general/base/CatchChallenger_Hash.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
@@ -91,7 +92,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashBase-"+QString::fromStdString(datapackPath)).toString().toUtf8());
         hash=std::string(data.constData(),data.size());
     }
-    if(hash.size()!=28)
+    if(hash.size()!=CATCHCHALLENGER_HASH_SIZE)
     {
         Settings::settings->remove("DatapackHashBase-"+QString::fromStdString(datapackPath));
         hash.clear();
@@ -352,7 +353,7 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
         const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashMain-"+QString::fromStdString(datapackPathMain)).toString().toUtf8());
         hashMain=std::string(data.constData(),data.size());
     }
-    if(hashMain.size()!=28)
+    if(hashMain.size()!=CATCHCHALLENGER_HASH_SIZE)
     {
         Settings::settings->remove("DatapackHashMain-"+QString::fromStdString(datapackPathMain));
         hashMain.clear();
@@ -363,7 +364,7 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
         const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashSub-"+QString::fromStdString(datapackPathSub)).toString().toUtf8());
         hashSub=std::string(data.constData(),data.size());
     }
-    if(hashSub.size()!=28)
+    if(hashSub.size()!=CATCHCHALLENGER_HASH_SIZE)
     {
         Settings::settings->remove("DatapackHashSub-"+QString::fromStdString(datapackPathSub));
         hashSub.clear();

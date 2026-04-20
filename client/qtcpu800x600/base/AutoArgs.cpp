@@ -10,6 +10,7 @@ uint16_t AutoArgs::port=0;
 bool AutoArgs::autologin=false;
 QString AutoArgs::character;
 bool AutoArgs::closeWhenOnMap=false;
+int AutoArgs::closeWhenOnMapAfter=0;
 bool AutoArgs::dropSendDataAfterOnMap=false;
 bool AutoArgs::autosolo=false;
 
@@ -29,6 +30,7 @@ void AutoArgs::printHelp(const char *progName)
         << "  --character=NAME           Auto-select a character by pseudo.\n"
         << "  --character NAME           Same as above.\n"
         << "  --closewhenonmap           Quit 1s after the first map is loaded.\n"
+        << "  --closewhenonmapafter=N    On map: toggle direction each 1s, quit after N seconds.\n"
         << "  --dropsenddataafteronmap   Drop outgoing traffic after the first map is loaded.\n"
         << "  --autosolo                 Load the first savegame, enter the game; on 10s\n"
         << "                             timeout dump character/current map and close.\n"
@@ -64,6 +66,14 @@ void AutoArgs::parse(int &argc, char *argv[])
         if(std::strcmp(arg,"--closewhenonmap")==0)
         {
             closeWhenOnMap=true;
+            i++;
+            continue;
+        }
+        if(std::strncmp(arg,"--closewhenonmapafter=",22)==0)
+        {
+            closeWhenOnMapAfter=std::atoi(arg+22);
+            if(closeWhenOnMapAfter<1)
+                closeWhenOnMapAfter=1;
             i++;
             continue;
         }
@@ -132,6 +142,7 @@ void AutoArgs::parse(int &argc, char *argv[])
               << " autologin=" << (autologin?"true":"false")
               << " character=\"" << character.toStdString() << "\""
               << " closeWhenOnMap=" << (closeWhenOnMap?"true":"false")
+              << " closeWhenOnMapAfter=" << closeWhenOnMapAfter
               << " dropSendDataAfterOnMap=" << (dropSendDataAfterOnMap?"true":"false")
               << " autosolo=" << (autosolo?"true":"false") << std::endl;
 }

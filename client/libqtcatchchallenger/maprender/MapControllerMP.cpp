@@ -32,6 +32,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     playerpseudofont.setPixelSize(14);
     player_informations_is_set=false;
     pendingInitialPlayerLoad=false;
+    chatHelloSent=false;
 
     resetAll();
 

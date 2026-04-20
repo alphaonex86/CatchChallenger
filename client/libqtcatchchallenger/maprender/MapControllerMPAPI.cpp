@@ -15,28 +15,50 @@ void MapControllerMP::insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifi
         std::cerr << "MapControllerMP::insert_player( call but client == nullptr, this will crash all (abort)" << std::endl;
         abort();
     }
+    std::cout << "MapControllerMP::insert_player() id=" << (int)simplifiedIndex
+              << " pseudo=" << player.pseudo
+              << " mapId=" << mapId << " x=" << (int)x << " y=" << (int)y
+              << " direction=" << (int)direction << std::endl;
     setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     insert_player_final(simplifiedIndex,player,mapId,x,y,direction,false);
+    if(!chatHelloSent && client->getCaracterSelected())
+    {
+        chatHelloSent=true;
+        client->sendChatText(CatchChallenger::Chat_type_all,"hello");
+    }
 }
 
 void MapControllerMP::move_player(const uint8_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement)
 {
+    std::cout << "MapControllerMP::move_player() id=" << (int)id
+              << " steps=" << movement.size() << std::endl;
     move_player_final(id,movement,false);
 }
 
 void MapControllerMP::remove_player(const uint8_t &id)
 {
+    std::cout << "MapControllerMP::remove_player() id=" << (int)id << std::endl;
     remove_player_final(id,false);
 }
 
 void MapControllerMP::reinsert_player(const uint8_t &id, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction)
 {
     reinsert_player_final(id,x,y,direction,false);
+    if(!chatHelloSent && client!=nullptr && client->getCaracterSelected())
+    {
+        chatHelloSent=true;
+        client->sendChatText(CatchChallenger::Chat_type_all,"hello");
+    }
 }
 
 void MapControllerMP::full_reinsert_player(const uint8_t &id, const CATCHCHALLENGER_TYPE_MAPID &mapId, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction)
 {
     full_reinsert_player_final(id,mapId,x,y,direction,false);
+    if(!chatHelloSent && client!=nullptr && client->getCaracterSelected())
+    {
+        chatHelloSent=true;
+        client->sendChatText(CatchChallenger::Chat_type_all,"hello");
+    }
 }
 
 void MapControllerMP::dropAllPlayerOnTheMap()

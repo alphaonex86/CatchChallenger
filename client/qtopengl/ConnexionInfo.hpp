@@ -9,6 +9,7 @@ public:
     QString unique_code;
     QString name;
     bool isCustom;
+    bool isArgument=false;
 
     //hightest priority
     QString host;

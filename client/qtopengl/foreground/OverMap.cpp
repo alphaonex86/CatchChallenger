@@ -803,9 +803,9 @@ void OverMap::new_system_text(const CatchChallenger::Chat_type &/*chat_type*/,co
         chat->setImage(":/CC/images/interface/chatnew.png");
 }
 
-void OverMap::new_chat_text(CatchChallenger::Chat_type /*chat_type*/,std::string /*text*/,std::string /*pseudo*/,CatchChallenger::Player_type /*player_type*/)
+void OverMap::new_chat_text(CatchChallenger::Chat_type /*chat_type*/,std::string text,std::string pseudo,CatchChallenger::Player_type /*player_type*/)
 {
-    //argument not used, see Api_protocol::add_system_text()
+    std::cout << "Chat::new_chat_text() pseudo=" << pseudo << " text=" << text << std::endl;
     updateChat();
     if(!chat->isChecked())
         chat->setImage(":/CC/images/interface/chatnew.png");

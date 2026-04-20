@@ -373,11 +373,8 @@ void CharacterList::updateCharacterList()
             if(characterEntry.pseudo==wanted && characterEntry.delete_time_left==0)
             {
                 autoSelectCharacterTried=true;
-                if((int)i<characterEntryList->count())
-                {
-                    characterEntryList->item(i)->setSelected(true);
-                    select_clicked();
-                }
+                std::cerr << "AutoSelect character: " << wanted << " id=" << characterEntry.character_id << std::endl;
+                emit selectCharacter(serverSelected,characterEntry.character_id);
                 return;
             }
             i++;

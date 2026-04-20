@@ -19,6 +19,7 @@
 #include "CliOptions.hpp"
 #include "../libcatchchallenger/Api_protocol.hpp"
 #include <QTimer>
+#include <QKeyEvent>
 #include "../../general/base/Version.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
@@ -28,6 +29,7 @@
 #endif
 #include <iostream>
 #include <QOpenGLWidget>
+#include <QGuiApplication>
 #include <QComboBox>
 #ifdef Q_OS_ANDROID
 #include <QtAndroidExtras>
@@ -60,11 +62,14 @@ ScreenTransition::ScreenTransition() :
     mScene(new QGraphicsScene(this))
 {
     {
-        QOpenGLWidget *context=new QOpenGLWidget();
-        setViewport(context);
-        setRenderHint(QPainter::Antialiasing,true);
-        setRenderHint(QPainter::TextAntialiasing,true);
-        setRenderHint(QPainter::SmoothPixmapTransform,false);
+        const QString platform=QGuiApplication::platformName();
+        if(platform!=QLatin1String("offscreen") && platform!=QLatin1String("minimal")) {
+            QOpenGLWidget *context=new QOpenGLWidget();
+            setViewport(context);
+            setRenderHint(QPainter::Antialiasing,true);
+            setRenderHint(QPainter::TextAntialiasing,true);
+            setRenderHint(QPainter::SmoothPixmapTransform,false);
+        }
         //else use the CPU only
     }
     multiplaySelected=false;
@@ -429,8 +434,10 @@ void ScreenTransition::toMainScreen()
         ci.host=h;
         ci.port=CliOptions::port;
         ci.name=h+QStringLiteral(":")+QString::number(CliOptions::port);
-        const QString login=QStringLiteral("test01");
-        const QString pass=QStringLiteral("test01test01");
+        ci.unique_code=h+QStringLiteral("-")+QString::number(CliOptions::port);
+        ci.isArgument=true;
+        const QString login=CliOptions::characterName.isEmpty() ? QStringLiteral("test01") : CliOptions::characterName;
+        const QString pass=login+login;
         connectToServer(ci,login,pass);
         return;
     }
@@ -894,6 +901,14 @@ void ScreenTransition::goToMap()
         std::cerr << "CliOptions: --closewhenonmap, exiting in 1s" << std::endl;
         QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
     }
+    if(CliOptions::closeWhenOnMapAfter>0 && !closeWhenOnMapAfterTimer_.isActive())
+    {
+        std::cerr << "CliOptions: --closewhenonmapafter=" << CliOptions::closeWhenOnMapAfter
+                  << ", toggling direction each 1s, quitting in " << CliOptions::closeWhenOnMapAfter << "s" << std::endl;
+        closeWhenOnMapAfterRemaining_=CliOptions::closeWhenOnMapAfter;
+        connect(&closeWhenOnMapAfterTimer_,&QTimer::timeout,this,&ScreenTransition::closeWhenOnMapAfterToggle);
+        closeWhenOnMapAfterTimer_.start(1000);
+    }
     if(CliOptions::dropSendDataAfterOnMap && !CatchChallenger::Api_protocol::dropOutputAfterOnMap)
     {
         std::cerr << "CliOptions: --dropsenddataafteronmap, dropping all client->server traffic from now on" << std::endl;
@@ -1018,4 +1033,47 @@ void ScreenTransition::keyReleaseEvent(QKeyEvent *event)
     }
     if(!event->isAccepted())
         QGraphicsView::keyReleaseEvent(event);
+}
+
+void ScreenTransition::closeWhenOnMapAfterToggle()
+{
+    closeWhenOnMapAfterRemaining_--;
+    if(closeWhenOnMapAfterRemaining_<=0)
+    {
+        closeWhenOnMapAfterTimer_.stop();
+        std::cerr << "CliOptions: --closewhenonmapafter time elapsed, exiting" << std::endl;
+        QCoreApplication::quit();
+        return;
+    }
+    CatchChallenger::Direction current=ccmap->mapController.getDirection();
+    Qt::Key key;
+    CatchChallenger::Direction next;
+    switch(current)
+    {
+        case CatchChallenger::Direction_look_at_bottom:
+            key=Qt::Key_Up; next=CatchChallenger::Direction_look_at_top;
+        break;
+        case CatchChallenger::Direction_look_at_top:
+            key=Qt::Key_Down; next=CatchChallenger::Direction_look_at_bottom;
+        break;
+        case CatchChallenger::Direction_look_at_left:
+            key=Qt::Key_Right; next=CatchChallenger::Direction_look_at_right;
+        break;
+        case CatchChallenger::Direction_look_at_right:
+            key=Qt::Key_Left; next=CatchChallenger::Direction_look_at_left;
+        break;
+        default:
+            key=Qt::Key_Up; next=CatchChallenger::Direction_look_at_top;
+        break;
+    }
+    std::cerr << "CliOptions: --closewhenonmapafter direction " << (int)next
+              << " (" << closeWhenOnMapAfterRemaining_ << "s remaining)" << std::endl;
+    {
+        QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier);
+        QKeyEvent release(QEvent::KeyRelease, key, Qt::NoModifier);
+        ccmap->mapController.keyPressEvent(&press);
+        ccmap->mapController.keyReleaseEvent(&release);
+    }
+    if(connexionManager!=nullptr && connexionManager->client!=nullptr && connexionManager->client->getCaracterSelected())
+        connexionManager->client->send_player_direction(next);
 }

@@ -169,6 +169,7 @@ private:
     double scaleSize;
     float requestedScaleSize;
     bool isTeleported;
+    bool chatHelloSent;
     static QFont playerpseudofont;
     static QPixmap *imgForPseudoAdmin;
     static QPixmap *imgForPseudoDev;

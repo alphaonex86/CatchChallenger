@@ -6,6 +6,7 @@
 
 #include <QRegularExpression>
 #include <QScrollBar>
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -187,9 +188,7 @@ void Chat::new_system_text(CatchChallenger::Chat_type chat_type,std::string text
 
 void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type)
 {
-    #ifdef DEBUG_BASEWINDOWS
-    qDebug() << QStringLiteral("new_chat_text: %1 by %2").arg(text).arg(pseudo);
-    #endif
+    std::cout << "Chat::new_chat_text() pseudo=" << pseudo << " text=" << text << std::endl;
     ChatEntry newEntry;
     newEntry.player_type=player_type;
     newEntry.player_pseudo=pseudo;

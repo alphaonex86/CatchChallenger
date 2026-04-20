@@ -7,6 +7,7 @@
 #include "../AutoArgs.h"
 #include <QTimer>
 #include <QCoreApplication>
+#include <QKeyEvent>
 #include <iostream>
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../../../libqtcatchchallenger/Audio.hpp"
@@ -218,6 +219,14 @@ void BaseWindow::currentMapLoaded()
         std::cerr << "AutoArgs: --closewhenonmap, exiting in 1s" << std::endl;
         QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
     }
+    if(AutoArgs::closeWhenOnMapAfter>0 && !closeWhenOnMapAfterTimer_.isActive())
+    {
+        std::cerr << "AutoArgs: --closewhenonmapafter=" << AutoArgs::closeWhenOnMapAfter
+                  << ", toggling direction each 1s, quitting in " << AutoArgs::closeWhenOnMapAfter << "s" << std::endl;
+        closeWhenOnMapAfterRemaining_=AutoArgs::closeWhenOnMapAfter;
+        connect(&closeWhenOnMapAfterTimer_,&QTimer::timeout,this,&BaseWindow::closeWhenOnMapAfterToggle);
+        closeWhenOnMapAfterTimer_.start(1000);
+    }
     if(AutoArgs::dropSendDataAfterOnMap && !CatchChallenger::Api_protocol::dropOutputAfterOnMap)
     {
         std::cerr << "AutoArgs: --dropsenddataafteronmap, dropping all client->server traffic from now on" << std::endl;
@@ -375,4 +384,47 @@ void BaseWindow::currentMapLoaded()
                 mapController->setColor(Qt::transparent);
         }
     }
+}
+
+void BaseWindow::closeWhenOnMapAfterToggle()
+{
+    closeWhenOnMapAfterRemaining_--;
+    if(closeWhenOnMapAfterRemaining_<=0)
+    {
+        closeWhenOnMapAfterTimer_.stop();
+        std::cerr << "AutoArgs: --closewhenonmapafter time elapsed, exiting" << std::endl;
+        QCoreApplication::quit();
+        return;
+    }
+    CatchChallenger::Direction current=mapController->getDirection();
+    Qt::Key key;
+    CatchChallenger::Direction next;
+    switch(current)
+    {
+        case CatchChallenger::Direction_look_at_bottom:
+            key=Qt::Key_Up; next=CatchChallenger::Direction_look_at_top;
+        break;
+        case CatchChallenger::Direction_look_at_top:
+            key=Qt::Key_Down; next=CatchChallenger::Direction_look_at_bottom;
+        break;
+        case CatchChallenger::Direction_look_at_left:
+            key=Qt::Key_Right; next=CatchChallenger::Direction_look_at_right;
+        break;
+        case CatchChallenger::Direction_look_at_right:
+            key=Qt::Key_Left; next=CatchChallenger::Direction_look_at_left;
+        break;
+        default:
+            key=Qt::Key_Up; next=CatchChallenger::Direction_look_at_top;
+        break;
+    }
+    std::cerr << "AutoArgs: --closewhenonmapafter direction " << (int)next
+              << " (" << closeWhenOnMapAfterRemaining_ << "s remaining)" << std::endl;
+    {
+        QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier);
+        QKeyEvent release(QEvent::KeyRelease, key, Qt::NoModifier);
+        mapController->keyPressEvent(&press);
+        mapController->keyReleaseEvent(&release);
+    }
+    if(client!=nullptr)
+        client->send_player_direction(next);
 }
