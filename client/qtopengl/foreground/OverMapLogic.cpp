@@ -22,6 +22,7 @@
 #include "../../../general/base/CommonDatapack.hpp"
 #include "Battle.hpp"
 #include <iostream>
+#include <QBuffer>
 #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
 #include "../../../server/qt/InternalServer.hpp"
 #endif
@@ -108,9 +109,11 @@ void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
         abort();
     if(!connect(opentolan,&CustomButton::clicked,this,&OverMapLogic::opentolan_open))
         abort();
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     if(CatchChallenger::InternalServer::internalServer!=nullptr)
         if(!connect(CatchChallenger::InternalServer::internalServer,&CatchChallenger::InternalServer::emitLanPort,this,&OverMapLogic::displayLanPort))
             abort();
+    #endif
 }
 
 void OverMapLogic::resetAll()
@@ -477,8 +480,10 @@ void OverMapLogic::displayLanPort(uint16_t port)
 
 void OverMapLogic::opentolan_open()
 {
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     if(CatchChallenger::InternalServer::internalServer!=nullptr)
         CatchChallenger::InternalServer::internalServer->openToLan(tr("%1's server").arg(QString::fromStdString(connexionManager->client->getPseudo())),true);
+    #endif
 }
 
 void OverMapLogic::inventoryNext()

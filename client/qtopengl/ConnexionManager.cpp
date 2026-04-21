@@ -19,7 +19,7 @@ ConnexionManager::ConnexionManager(LoadingScreen *l)
     #ifndef NOWEBSOCKET
     realWebSocket=nullptr;
     #endif
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     fakeSocket=nullptr;
     #endif
     this->datapckFileSize=0;
@@ -61,7 +61,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
             socket=new CatchChallenger::ConnectedSocket(realSslSocket);
         }
         else {
-            #ifdef CATCHCHALLENGER_SOLO
+            #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
             fakeSocket=new QFakeSocket();
             socket=new CatchChallenger::ConnectedSocket(fakeSocket);
             #else
@@ -215,7 +215,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         realWebSocket->open(request);
     }
     #endif
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
     {
         haveTryConnect=true;
@@ -234,7 +234,11 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
 
 bool ConnexionManager::isLocalGame()
 {
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     return fakeSocket!=nullptr;
+    #else
+    return false;
+    #endif
 }
 
 void ConnexionManager::selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter)
@@ -308,7 +312,7 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
 
     /*baseWindow->connectAllSignals();
     baseWindow->setMultiPlayer(true,client);*/
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     QDir datapack;
     if(fakeSocket!=nullptr)
         datapack=QDir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"));
@@ -383,7 +387,7 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
              && realWebSocket==NULL
         #endif
             )
-        #ifdef CATCHCHALLENGER_SOLO
+        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
              && fakeSocket!=NULL
         #endif
                 )
@@ -411,7 +415,7 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
             realWebSocket=NULL;
         }
         #endif
-        #ifdef CATCHCHALLENGER_SOLO
+        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
         if(fakeSocket!=NULL)
         {
             fakeSocket->deleteLater();

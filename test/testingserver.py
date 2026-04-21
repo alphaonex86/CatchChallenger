@@ -48,6 +48,55 @@ SERVER_READY_TIMEOUT = 60
 CLIENT_TIMEOUT       = 5
 SAVE_TIMEOUT         = 120
 
+NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
+
+# ── compilers and server target flag combinations ─────────────────────────
+COMPILERS = [
+    ("gcc",   "linux-g++"),
+    ("clang", "linux-clang"),
+]
+
+# (pro_relative_path, name, build_base_relative, [optional_flags])
+# Flags are commented-out DEFINES in each .pro (excluding SERVERSSL,
+# SERVERBENCHMARK, PROTOCOLPARSINGDEBUG, USING_PCH, and DB-backend
+# variants that require library changes).
+# Excluded flags (broken C++ code, not test-script issues):
+#   CATCHCHALLENGERSERVERDROPIFCLENT — incompatible with CATCHCHALLENGER_EXTRA_CHECK
+#       (hardcoded in filedb) and has ProtocolParsing constructor bugs in all epoll targets
+#   EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION — CompressionProtocol references not guarded
+#       in login/gateway LinkToGameServerProtocolParsing.cpp
+# Excluded targets:
+#   server-test — c++20 build errors in ClientHeavyLoadLogin.cpp
+#   server-gui / server-cli — relative include path resolution fails from build dir
+#       (../../general/base/cpp11addition.hpp not found)
+SERVER_TARGETS = [
+    ("server/epoll/catchchallenger-server-filedb.pro",
+     "server-filedb", "server/epoll/build",
+     ["CATCHCHALLENGER_NOXML", "CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR",
+      "CATCHCHALLENGER_HARDENED", "CATCHCHALLENGER_LIMIT_254CONNECTED",
+      "CATCHCHALLENGER_DUMP_DATATREE_CACHE_DATAPACK",
+      "HPS_VECTOR_RAW_BINARY"]),
+    ("server/epoll/catchchallenger-server-cli-epoll.pro",
+     "server-cli-epoll", "server/epoll/build",
+     ["CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR",
+      "CATCHCHALLENGER_NOXML", "CATCHCHALLENGER_HARDENED"]),
+    ("server/login/login.pro",
+     "server-login", "server/login/build",
+     []),
+    ("server/master/master.pro",
+     "server-master", "server/master/build",
+     []),
+    ("server/gateway/gateway.pro",
+     "server-gateway", "server/gateway/build",
+     []),
+    ("server/game-server-alone/game-server-alone.pro",
+     "game-server-alone", "server/game-server-alone/build",
+     ["CATCHCHALLENGER_HARDENED"]),
+    ("server/epoll/filedb-converter/filedb-converter.pro",
+     "filedb-converter", "server/epoll/filedb-converter/build",
+     []),
+]
+
 # ── colours ─────────────────────────────────────────────────────────────────
 C_GREEN  = "\033[92m"
 C_RED    = "\033[91m"
@@ -66,6 +115,46 @@ def log_pass(name, detail=""):
 def log_fail(name, detail=""):
     results.append((name, False, detail))
     print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}")
+
+
+def flag_combinations(flags):
+    """Generate all subsets (powerset) of the given flags."""
+    result = []
+    count = len(flags)
+    idx = 0
+    while idx < (1 << count):
+        combo = []
+        j = 0
+        while j < count:
+            if idx & (1 << j):
+                combo.append(flags[j])
+            j += 1
+        result.append(tuple(combo))
+        idx += 1
+    return result
+
+
+def flag_short(flag):
+    """Shorten a flag name for directory paths."""
+    s = flag.lower()
+    s = s.replace("epollcatchchallengerserver", "epoll-")
+    s = s.replace("catchchallenger_", "")
+    if s.startswith("catchchallenger"):
+        s = s[len("catchchallenger"):]
+    return s
+
+
+def combo_suffix(compiler_name, flags):
+    """Build a unique directory/label suffix for a compiler+flags combination."""
+    parts = [compiler_name]
+    if flags:
+        idx = 0
+        while idx < len(flags):
+            parts.append(flag_short(flags[idx]))
+            idx += 1
+    else:
+        parts.append("default")
+    return "-".join(parts)
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -268,21 +357,22 @@ def clear_client_bin_cache():
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
     try:
-        p = subprocess.run(args, cwd=cwd, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                            env=env or os.environ)
         return p.returncode, p.stdout.decode(errors="replace")
     except subprocess.TimeoutExpired:
         return -1, f"TIMEOUT after {timeout}s"
 
-def build_project(pro_file, build_dir, label, extra_defines=None, clean_first=False):
+def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
+                   extra_defines=None, clean_first=False):
     ensure_dir(build_dir)
     clean_build_artifacts(build_dir)
     log_info(f"make distclean {label}")
     run_cmd(["make", "distclean"], build_dir, timeout=60)
     name = f"compile {label}"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug"]
+                  "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug"]
     if extra_defines:
         for d in extra_defines:
             qmake_args.append(f"DEFINES+={d}")
@@ -436,7 +526,7 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
         return None
     log_info(f"starting server: {binary}")
     server_proc = subprocess.Popen(
-        [binary], cwd=build_dir,
+        NICE_PREFIX + [binary], cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         preexec_fn=os.setsid)
     ready = threading.Event()
@@ -482,7 +572,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
     try:
-        p = subprocess.run([binary] + args, cwd=build_dir, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + [binary] + args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         out = p.stdout.decode(errors="replace")
         if p.returncode == 0:
@@ -547,6 +637,23 @@ def test_server_cache_cycle(server_pro, build_dir, server_label, client_build,
         srv = start_server(build_dir)
         if srv:
             client_connect(client_build, f"{tag} client (with cache, NOXML off)")
+            stop_server()
+
+    # 4. with cache, NOXML on (recompile with CATCHCHALLENGER_NOXML)
+    log_info(f"{tag} phase 4: with cache, NOXML on (recompile)")
+    if build_project(server_pro, build_dir,
+                     f"{server_label} (NOXML on)",
+                     extra_defines=["CATCHCHALLENGER_NOXML"],
+                     clean_first=True):
+        setup_server_config(build_dir, patch_db=patch_db)
+        if is_filedb:
+            clear_database_filedb(build_dir)
+        else:
+            clear_database_postgresql()
+        set_http_datapack_mirror(build_dir, "")
+        srv = start_server(build_dir)
+        if srv:
+            client_connect(client_build, f"{tag} client (with cache, NOXML on)")
             stop_server()
 
     # restore
@@ -803,13 +910,54 @@ def main():
     print("  CatchChallenger — Server Testing")
     print(f"{'='*60}{C_RESET}\n")
 
+    # ═══════════════════════════════════════════════════════════════
+    # Phase 0: COMPILATION — all flag + compiler combinations
+    # ═══════════════════════════════════════════════════════════════
+    print(f"\n{C_CYAN}--- Phase 0: Compilation (all combinations) ---{C_RESET}\n")
+
+    total_builds = 0
+    ti = 0
+    while ti < len(SERVER_TARGETS):
+        _pro, _name, _base, opt_flags = SERVER_TARGETS[ti]
+        total_builds += len(COMPILERS) * len(flag_combinations(opt_flags))
+        ti += 1
+    log_info(f"total server compilation combinations: {total_builds}")
+
+    ti = 0
+    while ti < len(SERVER_TARGETS):
+        pro_rel, target_name, build_base_rel, opt_flags = SERVER_TARGETS[ti]
+        pro_path = os.path.join(ROOT, pro_rel)
+        build_base = os.path.join(ROOT, build_base_rel)
+        combos = flag_combinations(opt_flags)
+        n_combos = len(COMPILERS) * len(combos)
+        log_info(f"{target_name}: {n_combos} combinations "
+                 f"({len(COMPILERS)} compilers x {len(combos)} flag sets)")
+
+        ci = 0
+        while ci < len(COMPILERS):
+            compiler_name, compiler_spec = COMPILERS[ci]
+            fi = 0
+            while fi < len(combos):
+                flags = combos[fi]
+                suffix = combo_suffix(compiler_name, flags)
+                build_dir = os.path.join(build_base,
+                                         f"testing-combo-{target_name}-{suffix}")
+                label = f"{target_name} {compiler_name}"
+                if flags:
+                    label += " " + "+".join(flags)
+                build_project(pro_path, build_dir, label, compiler_spec,
+                              extra_defines=list(flags) if flags else None)
+                fi += 1
+            ci += 1
+        ti += 1
+
+    # ═══════════════════════════════════════════════════════════════
+    # Phases A–D: functional tests (use default gcc builds)
+    # ═══════════════════════════════════════════════════════════════
+
     filedb_build = os.path.join(ROOT, "server/epoll/build/testing-filedb")
     cliepo_build = os.path.join(ROOT, "server/epoll/build/testing-cli-epoll")
     client_build = os.path.join(ROOT, "client/qtcpu800x600/build/testing-cpu")
-
-    # clean all testing build dirs upfront
-    for d in (filedb_build, cliepo_build, client_build):
-        clean_build_artifacts(d)
 
     # build client once
     if not build_project(CLIENT_CPU_PRO, client_build, "qtcpu800x600"):

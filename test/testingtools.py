@@ -23,6 +23,8 @@ NPROC     = str(multiprocessing.cpu_count())
 
 COMPILE_TIMEOUT = 600
 
+NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
+
 # ── colours ─────────────────────────────────────────────────────────────────
 C_GREEN  = "\033[92m"
 C_RED    = "\033[91m"
@@ -50,7 +52,7 @@ def log_fail(name, detail=""):
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT):
     try:
         p = subprocess.run(
-            args, cwd=cwd, timeout=timeout,
+            NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         )
         return p.returncode, p.stdout.decode(errors="replace")

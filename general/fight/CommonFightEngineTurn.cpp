@@ -805,7 +805,9 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
                 float OtherMulti=1.0;
                 if(vectorcontainsAtLeastOne(commonMonster.type,type))
                 {
+                    #ifndef CATCHCHALLENGER_NOXML
                     std::cout << "1.45x because the attack is same type as the current monster: " << typeDefinition.name << std::endl;
+                    #endif
                     OtherMulti*=1.45;
                 }
                 effect_to_return.effective=1.0;
@@ -820,14 +822,14 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
                             const int8_t &multiplicator=typeDefinition.multiplicator.at(typeList.at(index));
                             if(multiplicator>0)
                             {
-                                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                                #if defined(CATCHCHALLENGER_DEBUG_FIGHT) && !defined(CATCHCHALLENGER_NOXML)
                                 std::cout << "type: " << typeList.at(index) << "very effective againts" << typeDefinition.name << std::endl;
                                 #endif
                                 effect_to_return.effective*=multiplicator;
                             }
                             else
                             {
-                                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                                #if defined(CATCHCHALLENGER_DEBUG_FIGHT) && !defined(CATCHCHALLENGER_NOXML)
                                 std::cout << "type: " << typeList.at(index) << "not effective againts" << typeDefinition.name << std::endl;
                                 #endif
                                 effect_to_return.effective/=-multiplicator;

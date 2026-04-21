@@ -62,7 +62,7 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
     #endif
     {
         #ifndef NOTCPSOCKET
-        #ifdef CATCHCHALLENGER_SOLO
+        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
         if(socket->fakeSocket!=NULL)
         {
             //haveFirstHeader=true;
@@ -334,7 +334,7 @@ void Api_protocol_Qt::readForFirstHeader()
        #ifndef NOWEBSOCKET
          && socket->webSocket==NULL
        #endif
-       #ifdef CATCHCHALLENGER_SOLO
+       #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
          && socket->fakeSocket==NULL
        #endif
             )
@@ -396,7 +396,7 @@ void Api_protocol_Qt::resetAll()
 {
     messageParsingLayer("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(socket!=NULL && socket->fakeSocket!=NULL)
         haveFirstHeader=true;
     else

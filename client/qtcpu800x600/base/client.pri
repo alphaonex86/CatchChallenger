@@ -10,7 +10,7 @@ wasm: {
 }
 else
 {
-    DEFINES += NOWEBSOCKET
+#    DEFINES += NOWEBSOCKET
 }
 !contains(DEFINES, NOWEBSOCKET) {
     QT += websockets

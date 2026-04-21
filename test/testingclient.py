@@ -46,6 +46,28 @@ COMPILE_TIMEOUT      = 600
 SERVER_READY_TIMEOUT = 60
 CLIENT_TIMEOUT       = 5
 
+NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
+
+# ── compilers and optional flag combinations ───────────────────────────────
+COMPILERS = [
+    ("gcc",   "linux-g++"),
+    ("clang", "linux-clang"),
+]
+
+# CATCHCHALLENGER_NOAUDIO is commented out in qtcpu800x600.pro but the build
+# requires it (Qt multimedia audio path has issues), so always add it as a
+# base define.  The remaining flags are independently toggleable.
+CPU_BASE_DEFINES = ["CATCHCHALLENGER_NOAUDIO"]
+CPU_OPTIONAL_FLAGS = ["NOSINGLEPLAYER", "CATCHCHALLENGER_EXTRA_CHECK", "NOWEBSOCKET"]
+
+# qtopengl default build has audio enabled (Qt multimedia works).
+# Only CATCHCHALLENGER_EXTRA_CHECK and NOWEBSOCKET are safe independent
+# toggles; NOSINGLEPLAYER/CATCHCHALLENGER_NOAUDIO/NOTCPSOCKET/NOTHREADS
+# are WASM-only flags with interdependencies that break native builds.
+GL_BASE_DEFINES = []
+GL_OPTIONAL_FLAGS = ["NOSINGLEPLAYER", "CATCHCHALLENGER_NOAUDIO",
+                     "CATCHCHALLENGER_EXTRA_CHECK", "NOWEBSOCKET"]
+
 # ── colours ─────────────────────────────────────────────────────────────────
 C_GREEN  = "\033[92m"
 C_RED    = "\033[91m"
@@ -67,6 +89,36 @@ def log_pass(name, detail=""):
 def log_fail(name, detail=""):
     results.append((name, False, detail))
     print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}")
+
+
+def flag_combinations(flags):
+    """Generate all subsets (powerset) of the given flags."""
+    result = []
+    count = len(flags)
+    idx = 0
+    while idx < (1 << count):
+        combo = []
+        j = 0
+        while j < count:
+            if idx & (1 << j):
+                combo.append(flags[j])
+            j += 1
+        result.append(tuple(combo))
+        idx += 1
+    return result
+
+
+def combo_suffix(compiler_name, flags):
+    """Build a unique directory/label suffix for a compiler+flags combination."""
+    parts = [compiler_name]
+    if flags:
+        idx = 0
+        while idx < len(flags):
+            parts.append(flags[idx].lower())
+            idx += 1
+    else:
+        parts.append("default")
+    return "-".join(parts)
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -103,7 +155,7 @@ def set_http_datapack_mirror(build_dir, value):
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
     try:
-        p = subprocess.run(args, cwd=cwd, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                            env=env or os.environ)
         return p.returncode, p.stdout.decode(errors="replace")
@@ -111,14 +163,16 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
         return -1, f"TIMEOUT after {timeout}s"
 
 
-def build_project(pro_file, build_dir, label, clean_first=False):
+def build_project(pro_file, build_dir, label, compiler_spec="linux-g++", extra_defines=None):
     ensure_dir(build_dir)
     clean_build_artifacts(build_dir)
     log_info(f"make distclean {label}")
     run_cmd(["make", "distclean"], build_dir, timeout=60)
     name = f"compile {label}"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug"]
+                  "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug"]
+    if extra_defines:
+        qmake_args.append("DEFINES+=" + " ".join(extra_defines))
     log_info(f"qmake {label}")
     rc, out = run_cmd(qmake_args, build_dir)
     if rc != 0:
@@ -188,7 +242,7 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
         return None
     log_info(f"starting server: {binary}")
     server_proc = subprocess.Popen(
-        [binary], cwd=build_dir,
+        NICE_PREFIX + [binary], cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         preexec_fn=os.setsid)
     ready = threading.Event()
@@ -241,7 +295,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     if use_offscreen:
         env["QT_QPA_PLATFORM"] = "offscreen"
     try:
-        p = subprocess.run([binary] + args, cwd=build_dir, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + [binary] + args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         out = p.stdout.decode(errors="replace")
         if p.returncode == 0:
@@ -286,17 +340,71 @@ def main():
     print("  CatchChallenger — Client Testing")
     print(f"{'='*60}{C_RESET}\n")
 
-    # clean all testing build dirs upfront
-    for d in (CLIENT_CPU_BUILD, CLIENT_GL_BUILD, SERVER_BUILD):
-        clean_build_artifacts(d)
-
     # ═══════════════════════════════════════════════════════════════
-    # 1. COMPILATION
+    # 1. COMPILATION — all flag + compiler combinations
     # ═══════════════════════════════════════════════════════════════
-    print(f"\n{C_CYAN}--- Compilation ---{C_RESET}\n")
+    print(f"\n{C_CYAN}--- Compilation (all combinations) ---{C_RESET}\n")
 
-    cpu_ok = build_project(CLIENT_CPU_PRO, CLIENT_CPU_BUILD, "qtcpu800x600")
-    gl_ok  = build_project(CLIENT_GL_PRO, CLIENT_GL_BUILD, "qtopengl")
+    cpu_combos = flag_combinations(CPU_OPTIONAL_FLAGS)
+    gl_combos = flag_combinations(GL_OPTIONAL_FLAGS)
+
+    total_cpu = len(COMPILERS) * len(cpu_combos)
+    total_gl = len(COMPILERS) * len(gl_combos)
+    log_info(f"qtcpu800x600: {total_cpu} combinations "
+             f"({len(COMPILERS)} compilers x {len(cpu_combos)} flag sets)")
+    log_info(f"qtopengl:     {total_gl} combinations "
+             f"({len(COMPILERS)} compilers x {len(gl_combos)} flag sets)")
+
+    cpu_ok = False
+    gl_ok = False
+
+    # qtcpu800x600 — all combinations
+    ci = 0
+    while ci < len(COMPILERS):
+        compiler_name, compiler_spec = COMPILERS[ci]
+        fi = 0
+        while fi < len(cpu_combos):
+            flags = cpu_combos[fi]
+            all_defines = list(CPU_BASE_DEFINES) + list(flags)
+            suffix = combo_suffix(compiler_name, flags)
+            if compiler_name == "gcc" and not flags:
+                build_dir = CLIENT_CPU_BUILD
+            else:
+                build_dir = os.path.join(ROOT, "client", "qtcpu800x600", "build",
+                                         f"testing-cpu-{suffix}")
+            label = f"qtcpu800x600 {compiler_name}"
+            if flags:
+                label += " " + "+".join(flags)
+            ok = build_project(CLIENT_CPU_PRO, build_dir, label, compiler_spec,
+                               all_defines if all_defines else None)
+            if compiler_name == "gcc" and not flags:
+                cpu_ok = ok
+            fi += 1
+        ci += 1
+
+    # qtopengl — all combinations
+    ci = 0
+    while ci < len(COMPILERS):
+        compiler_name, compiler_spec = COMPILERS[ci]
+        fi = 0
+        while fi < len(gl_combos):
+            flags = gl_combos[fi]
+            all_defines = list(GL_BASE_DEFINES) + list(flags)
+            suffix = combo_suffix(compiler_name, flags)
+            if compiler_name == "gcc" and not flags:
+                build_dir = CLIENT_GL_BUILD
+            else:
+                build_dir = os.path.join(ROOT, "client", "qtopengl", "build",
+                                         f"testing-gl-{suffix}")
+            label = f"qtopengl {compiler_name}"
+            if flags:
+                label += " " + "+".join(flags)
+            ok = build_project(CLIENT_GL_PRO, build_dir, label, compiler_spec,
+                               all_defines if all_defines else None)
+            if compiler_name == "gcc" and not flags:
+                gl_ok = ok
+            fi += 1
+        ci += 1
 
     # ═══════════════════════════════════════════════════════════════
     # 2 + 3. DATAPACK SETUP + SOLO (iterate each datapack + maincode)
@@ -346,7 +454,7 @@ def main():
     # ═══════════════════════════════════════════════════════════════
     print(f"\n{C_CYAN}--- Multiplayer on server ---{C_RESET}\n")
 
-    if not build_project(SERVER_PRO, SERVER_BUILD, "server-filedb", clean_first=True):
+    if not build_project(SERVER_PRO, SERVER_BUILD, "server-filedb"):
         stop_server()
         summary()
         return
