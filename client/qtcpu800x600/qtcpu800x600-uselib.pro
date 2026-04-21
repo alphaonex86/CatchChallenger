@@ -18,11 +18,6 @@ include(ultimate/specific.pri)
 include(base/client.pri)
 include(base/multi.pri)
 
-linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"
-linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
-linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"
-linux:LIBS += -fuse-ld=mold
-
 LIBS += -L../build-qtcatchchallengerclient-Desktop-Debug/ -lqtcatchchallengerclient
 
 # CATCHCHALLENGER_CACHE_HPS -> include hps.pri

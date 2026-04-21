@@ -58,10 +58,6 @@ HEADERS += \
     $$PWD/MiniMap.h \
     $$PWD/MapBrush.h
 
-
-#choose one of:
-DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
-
 HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.hpp
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2b.cpp \

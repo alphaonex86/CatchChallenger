@@ -132,8 +132,6 @@ HEADERS += \
     ../base/VariableServer.hpp \
     TimerDetectTimeout.hpp
 
-DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
-
 HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.hpp
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
@@ -141,8 +139,6 @@ SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 
 LIBS += -lzstd
 
-linux:QMAKE_LFLAGS += -fuse-ld=mold
-linux:LIBS += -fuse-ld=mold
 #precompile_header:!isEmpty(PRECOMPILED_HEADER) {
 #DEFINES += USING_PCH
 #

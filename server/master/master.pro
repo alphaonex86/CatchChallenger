@@ -128,9 +128,6 @@ HEADERS += \
     ../base/SqlFunction.h \
     ../VariableServer.h
 
-#choose one of:
-DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
-
 HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
@@ -138,8 +135,3 @@ SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 
 LIBS += -lxxhash
 
-linux:QMAKE_LFLAGS += -fuse-ld=mold
-linux:LIBS += -fuse-ld=mold
-#precompile_header:!isEmpty(PRECOMPILED_HEADER) {
-#DEFINES += USING_PCH
-#

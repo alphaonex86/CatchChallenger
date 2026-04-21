@@ -1,8 +1,5 @@
 DEFINES += CATCHCHALLENGER_NOAUDIO
 
-linux:QMAKE_LFLAGS += -fuse-ld=mold
-linux:LIBS += -fuse-ld=mold
-
 include(../../general/general.pri)
 include(../libbot/simple/Simple.pri)
 
@@ -62,15 +59,7 @@ HEADERS  += \
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 
-#choose one of:
-DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
-
 HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.hpp
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2c.cpp
-
-#linux:LIBS += -fuse-ld=mold
-#precompile_header:!isEmpty(PRECOMPILED_HEADER) {
-#DEFINES += USING_PCH
-#

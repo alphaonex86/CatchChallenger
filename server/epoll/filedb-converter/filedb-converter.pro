@@ -6,10 +6,7 @@ QT -= core gui widgets network sql xml
 
 DEFINES += CATCHCHALLENGER_DB_FILE
 DEFINES += CATCHCHALLENGER_CACHE_HPS
-DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
-linux:QMAKE_LFLAGS += -fuse-ld=mold
-linux:LIBS += -fuse-ld=mold
 linux:QMAKE_CFLAGS   += -fstack-protector-all -g -fno-rtti -fno-exceptions
 linux:QMAKE_CXXFLAGS += -fstack-protector-all -g -fno-rtti -fno-exceptions
 linux:QMAKE_CXXFLAGS += -Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra

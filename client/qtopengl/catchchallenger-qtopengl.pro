@@ -1,10 +1,3 @@
-linux: {
-    QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
-    QMAKE_CFLAGS+="-Wno-deprecated-declarations"
-    QMAKE_LFLAGS += -fuse-ld=mold
-    LIBS += -fuse-ld=mold
-}
-
 DEFINES += OPENGL CATCHCHALLENGER_CACHE_HPS
 wasm: DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS CATCHCHALLENGER_NOAUDIO
 DEFINES += CATCHCHALLENGER_DB_SQLITE
