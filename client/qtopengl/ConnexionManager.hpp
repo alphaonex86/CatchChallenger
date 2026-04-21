@@ -7,7 +7,9 @@
 #include "../../general/base/GeneralStructures.hpp"
 #include "../libqtcatchchallenger/Api_protocol_Qt.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
+#if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
 #include "../../server/qt/QFakeSocket.hpp"
+#endif
 
 class LoadingScreen;
 
@@ -55,7 +57,7 @@ private:
     #ifndef NOWEBSOCKET
     QWebSocket *realWebSocket;
     #endif
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     QFakeSocket *fakeSocket;
     #endif
     QString lastServer;

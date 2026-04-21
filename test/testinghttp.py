@@ -47,6 +47,8 @@ COMPILE_TIMEOUT      = 600
 SERVER_READY_TIMEOUT = 60
 CLIENT_TIMEOUT       = 60
 
+NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
+
 # ── colours ─────────────────────────────────────────────────────────────────
 C_GREEN  = "\033[92m"
 C_RED    = "\033[91m"
@@ -272,7 +274,7 @@ def clear_client_bin_cache():
 def run_cmd_raw(args, cwd, timeout=COMPILE_TIMEOUT):
     """Run command and return (returncode, raw bytes)."""
     try:
-        p = subprocess.run(args, cwd=cwd, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return p.returncode, p.stdout
     except subprocess.TimeoutExpired:
@@ -318,7 +320,7 @@ def generate_datapack_lists(www_root):
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
     try:
-        p = subprocess.run(args, cwd=cwd, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                            env=env or os.environ)
         return p.returncode, p.stdout.decode(errors="replace")
@@ -356,7 +358,7 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
         return None
     log_info(f"starting server: {binary}")
     server_proc = subprocess.Popen(
-        [binary], cwd=build_dir,
+        NICE_PREFIX + [binary], cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         preexec_fn=os.setsid)
     ready = threading.Event()
@@ -403,7 +405,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
     try:
-        p = subprocess.run([binary] + args, cwd=build_dir, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + [binary] + args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         out = p.stdout.decode(errors="replace")
         if p.returncode == 0:

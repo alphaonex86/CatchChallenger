@@ -38,6 +38,9 @@
 # generated output
 /tools/map-procedural-generation/dest
 /tools/datapack-explorer-generator-cli/datapack-explorer-generator
+/server/game-server-alone/catchchallenger-game-server-alone
+/server/login/catchchallenger-server-login
+/server/master/catchchallenger-server-master
 
 ### Qt ###
 # C++ objects and libs

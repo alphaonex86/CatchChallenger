@@ -537,9 +537,11 @@ void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &call
     chat->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     bag->mousePressEventXY(p,pressValidated);
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
         if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
             opentolan->mousePressEventXY(p,pressValidated);
+    #endif
     QRectF f(IG_dialog_textBack->x(),IG_dialog_textBack->y(),IG_dialog_textBack->width(),IG_dialog_textBack->height());
     if(IG_dialog_textBack->isVisible() && f.contains(p))
     {
@@ -583,9 +585,11 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
     chat->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     bag->mouseReleaseEventXY(p,pressValidated);
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
         if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
             opentolan->mouseReleaseEventXY(p,pressValidated);
+    #endif
     QRectF f(IG_dialog_textBack->x(),IG_dialog_textBack->y(),IG_dialog_textBack->width(),IG_dialog_textBack->height());
     if(IG_dialog_textBack->isVisible() && f.contains(p))
     {

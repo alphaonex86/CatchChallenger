@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <fcntl.h>
-#ifdef CATCHCHALLENGER_SOLO
+#if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
 #include "../../server/qt/QFakeSocket.hpp"
 #endif
 
@@ -13,7 +13,7 @@
 
 using namespace CatchChallenger;
 #ifndef NOTCPSOCKET
-#ifdef CATCHCHALLENGER_SOLO
+#if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
 ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
     fakeSocket(socket),
     sslSocket(NULL),
@@ -39,7 +39,7 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
 #endif
 
 ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     fakeSocket(NULL),
     #endif
     sslSocket(socket),
@@ -75,7 +75,7 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
 }
 
 ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     fakeSocket(NULL),
     #endif
     sslSocket(NULL),
@@ -125,7 +125,7 @@ ConnectedSocket::ConnectedSocket(QWebSocket *socket) :
         abort();*/
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     fakeSocket=nullptr;
     #endif
     sslSocket=nullptr;
@@ -147,7 +147,7 @@ ConnectedSocket::~ConnectedSocket()
         tcpSocket->deleteLater();
         tcpSocket=nullptr;
     }
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
     {
         fakeSocket->deleteLater();
@@ -228,7 +228,7 @@ void ConnectedSocket::destroyedSocket()
     #ifndef NOTCPSOCKET
     sslSocket=nullptr;
     tcpSocket=nullptr;
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     fakeSocket=nullptr;
     #endif
     #endif
@@ -242,7 +242,7 @@ void ConnectedSocket::abort()
     port=0;
 
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         fakeSocket->abort();
     #endif
@@ -262,7 +262,7 @@ void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         fakeSocket->connectToHost();
     else
@@ -304,7 +304,7 @@ void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
     {
         fakeSocket->connectToHost();
@@ -339,7 +339,7 @@ void ConnectedSocket::disconnectFromHost()
     hostName.clear();
     port=0;
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         fakeSocket->disconnectFromHost();
     #endif
@@ -357,7 +357,7 @@ void ConnectedSocket::disconnectFromHost()
 QAbstractSocket::SocketError ConnectedSocket::error() const
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return fakeSocket->error();
     #endif
@@ -376,7 +376,7 @@ QAbstractSocket::SocketError ConnectedSocket::error() const
 bool ConnectedSocket::flush()
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return true;
     #endif
@@ -395,7 +395,7 @@ bool ConnectedSocket::flush()
 bool ConnectedSocket::isValid() const
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return fakeSocket->isValid();
     else
@@ -418,7 +418,7 @@ QHostAddress ConnectedSocket::localAddress() const
     std::cerr << "ConnectedSocket::localAddress(): deprecated form incorrect value for i2p" << std::endl;
 
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return QHostAddress::LocalHost;
     #endif
@@ -433,7 +433,7 @@ QHostAddress ConnectedSocket::localAddress() const
 quint16	ConnectedSocket::localPort() const
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return 9999;
     #endif
@@ -451,7 +451,7 @@ QHostAddress	ConnectedSocket::peerAddress() const
     std::cerr << "ConnectedSocket::peerAddress(): deprecated form incorrect value for i2p" << std::endl;
 
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return QHostAddress::LocalHost;
     #endif
@@ -468,7 +468,7 @@ QString ConnectedSocket::peerName() const
     #ifndef NOTCPSOCKET
     /// \warning via direct value for i2p. Never pass by peerAddress()
     QString pearName;
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return QString();
     #endif
@@ -489,7 +489,7 @@ QString ConnectedSocket::peerName() const
 quint16	ConnectedSocket::peerPort() const
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return 15000;
     #endif
@@ -504,7 +504,7 @@ quint16	ConnectedSocket::peerPort() const
 QAbstractSocket::SocketState ConnectedSocket::state() const
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return fakeSocket->state();
     #endif
@@ -523,7 +523,7 @@ QAbstractSocket::SocketState ConnectedSocket::state() const
 bool ConnectedSocket::waitForConnected(int msecs)
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return true;
     #endif
@@ -539,7 +539,7 @@ bool ConnectedSocket::waitForConnected(int msecs)
 bool ConnectedSocket::waitForDisconnected(int msecs)
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return true;
     #endif
@@ -555,7 +555,7 @@ bool ConnectedSocket::waitForDisconnected(int msecs)
 qint64 ConnectedSocket::bytesAvailable() const
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return fakeSocket->bytesAvailable();
     #endif
@@ -575,7 +575,7 @@ qint64 ConnectedSocket::bytesAvailable() const
 QIODevice::OpenMode ConnectedSocket::openMode() const
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return fakeSocket->openMode();
     #endif
@@ -590,7 +590,7 @@ QIODevice::OpenMode ConnectedSocket::openMode() const
 QString ConnectedSocket::errorString() const
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return fakeSocket->errorString();
     #endif
@@ -614,7 +614,7 @@ void ConnectedSocket::close()
 qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return fakeSocket->read(data,maxSize);
     #endif
@@ -638,7 +638,7 @@ qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
 qint64 ConnectedSocket::writeData(const char * data, qint64 maxSize)
 {
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     if(fakeSocket!=nullptr)
         return fakeSocket->write(data,maxSize);
     #endif

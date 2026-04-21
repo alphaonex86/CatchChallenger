@@ -15,7 +15,7 @@
 #include <QObject>
 #include <QByteArray>
 
-#ifdef CATCHCHALLENGER_SOLO
+#if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
 class QFakeSocket;
 #endif
 
@@ -28,7 +28,7 @@ class DLL_PUBLIC ConnectedSocket : public QIODevice
     Q_OBJECT
 public:
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     explicit ConnectedSocket(QFakeSocket *socket);
     #endif
     explicit ConnectedSocket(QSslSocket *socket);
@@ -60,7 +60,7 @@ public:
     qint64	writeData(const char * data, qint64 maxSize);
     void	close();
     #ifndef NOTCPSOCKET
-    #ifdef CATCHCHALLENGER_SOLO
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
     QFakeSocket *fakeSocket;
     #endif
     QSslSocket *sslSocket;
