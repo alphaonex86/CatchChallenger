@@ -2,4 +2,4 @@ include(qtopengl/catchchallenger-qtopengl.pro)
 #DEFINES += DEBUG_PROTOCOLPARSING_RAW_NETWORK
 #DEFINES += DEBUG_MESSAGE_CLIENT_SQL
 DEFINES += CATCHCHALLENGER_CACHE_HPS
-linux:QMAKE_LFLAGS += -fuse-ld=mold
+

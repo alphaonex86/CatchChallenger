@@ -22,6 +22,5 @@ DEFINES += CATCHCHALLENGER_CLASS_QT
 TARGET = catchchallenger
 include(client.pri)
 include(../libqtcatchchallenger/libqtheader.pri)
-linux:LIBS += -fuse-ld=mold
 
 LIBS += -L../build-qtcatchchallengerclient-Desktop-Debug/ -lqtcatchchallengerclient

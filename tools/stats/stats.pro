@@ -1,9 +1,9 @@
 QT       -= gui core
 CONFIG += c++20
 
-QMAKE_CXXFLAGS += -Os -flto -fno-exceptions
-QMAKE_CFLAGS += -Os -flto -fno-exceptions
-QMAKE_LFLAGS += -Os -flto -s
+QMAKE_CXXFLAGS += -Os -fno-exceptions
+QMAKE_CFLAGS += -Os -fno-exceptions
+QMAKE_LFLAGS += -Os -s
 
 TARGET = stats
 CONFIG   += console
@@ -56,16 +56,11 @@ HEADERS += \
     ../../server/epoll/EpollUnixSocketServer.h \
     EpollServerStats.h
 
-#choose one of:
-DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
-
 HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2c.cpp
 
-linux:QMAKE_LFLAGS += -fuse-ld=mold
-linux:LIBS += -fuse-ld=mold
 #precompile_header:!isEmpty(PRECOMPILED_HEADER) {
 #DEFINES += USING_PCH
 #}

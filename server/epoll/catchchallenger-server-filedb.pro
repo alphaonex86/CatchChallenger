@@ -21,13 +21,6 @@ DEFINES += CATCHCHALLENGER_EXTRA_CHECK
 DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
 #DEFINES += CATCHCHALLENGERSERVERDROPIFCLENT
 
-#just to minize size
-CONFIG(release, debug|release) {
-    QMAKE_CXXFLAGS += -Os -flto
-    QMAKE_CFLAGS += -Os -flto
-    QMAKE_LFLAGS += -Os -flto -s
-}
-
 TARGET = catchchallenger-server-cli-epoll
 CONFIG   += console
 
