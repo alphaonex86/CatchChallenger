@@ -33,9 +33,7 @@ HEADERS  += \
     $$PWD/Audio.hpp \
     $$PWD/QInfiniteBuffer.hpp
 
-    INCLUDEPATH += /usr/include/opus/
-    #Opus requires one of VAR_ARRAYS, USE_ALLOCA, or NONTHREADSAFE_PSEUDOSTACK be defined to select the temporary allocation mode.
-    #DEFINES += USE_ALLOCA OPUS_BUILD
-    LIBS += -lopus -lopusfile
-
-equals(QT_MAJOR_VERSION, 6):QT += core5compat
+INCLUDEPATH += /usr/include/opus/
+#Opus requires one of VAR_ARRAYS, USE_ALLOCA, or NONTHREADSAFE_PSEUDOSTACK be defined to select the temporary allocation mode.
+#DEFINES += USE_ALLOCA OPUS_BUILD
+LIBS += -lopus -lopusfile
