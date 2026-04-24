@@ -1,7 +1,9 @@
 #include <unordered_map>
-#include <tiled/mapobject.h>
-#include <tiled/maprenderer.h>
-#include <tiled/objectgroup.h>
+#include <mapobject.h>
+
+#include <maprenderer.h>
+
+#include <objectgroup.h>
 
 #ifndef MAPOBJECTITEM_H
 #define MAPOBJECTITEM_H

@@ -4,7 +4,7 @@ TARGET = map-procedural-generation
 
 CONFIG += debug
 
-LIBS += -ltiled
+# libtiled already included via map-procedural-generation-terrain.pri
 
 DEFINES += MAPPROCEDURALGENFULL
 

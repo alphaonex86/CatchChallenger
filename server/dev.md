@@ -45,3 +45,7 @@ QMAKE_CXXFLAGS += -Os -flto -fno-exceptions
 QMAKE_CFLAGS += -Os -flto -fno-exceptions
 QMAKE_LFLAGS += -Os -flto -s
 * 253K stats
+
+# More performance
+* Async DB for server is better, actually only PostgreSQL
+* LTO flag is better due to compreansive overall code, can optimize cross-file

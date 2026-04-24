@@ -6,6 +6,7 @@
 #include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
 #include "../../../../general/base/CommonDatapack.hpp"
+#include <QGuiApplication>
 
 using namespace CatchChallenger;
 
@@ -61,7 +62,19 @@ void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
 
 void BaseWindow::loadSettings()
 {
-    ui->audioVolume->setValue(Options::options.getAudioVolume());
+    const QString platform=QGuiApplication::platformName();
+    if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+    {
+        ui->audioVolume->blockSignals(true);
+        ui->audioVolume->setValue(0);
+        ui->audioVolume->blockSignals(false);
+        #ifndef CATCHCHALLENGER_NOAUDIO
+        if(Audio::audio!=nullptr)
+            Audio::audio->setVolume(0);
+        #endif
+    }
+    else
+        ui->audioVolume->setValue(Options::options.getAudioVolume());
     ui->checkBoxLimitFPS->setChecked(Options::options.getLimitedFPS());
     ui->spinBoxMaxFPS->setValue(Options::options.getFPS());
     mapController->setTargetFPS(Options::options.getFinalFPS());

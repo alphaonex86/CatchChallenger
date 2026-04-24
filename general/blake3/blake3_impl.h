@@ -1,6 +1,8 @@
 #ifndef BLAKE3_IMPL_H
 #define BLAKE3_IMPL_H
 
+#include "blake3_catchchallenger_config.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>

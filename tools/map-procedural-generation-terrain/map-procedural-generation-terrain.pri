@@ -7,7 +7,7 @@ QMAKE_CXXFLAGS += -fno-omit-frame-pointer -g
 CONFIG -= c++17
 
 DEFINES += TILED_ZLIB
-LIBS += -lz -ltiled
+include(../../client/libqtcatchchallenger/libtiled.pri)
 
 QT += xml
 

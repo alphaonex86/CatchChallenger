@@ -4,6 +4,7 @@
 #include "../../../libqtcatchchallenger/ClientVariableAudio.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioOutput>
+#include <QAudioSink>
 #include "../QInfiniteBuffer.h"
 #endif
 
@@ -632,7 +633,7 @@ private:
     struct Ambiance
     {
         #ifndef CATCHCHALLENGER_NOAUDIO
-        QAudioOutput *player;
+        QAudioSink *player;
         QInfiniteBuffer *buffer;
         QByteArray *data;
         #endif

@@ -1,3 +1,5 @@
+# internal libtiled include path (set via libtiled.pri)
+
 HEADERS  += \
     $$PWD/MapController.hpp \
     $$PWD/MapControllerMP.hpp \

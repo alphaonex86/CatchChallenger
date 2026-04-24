@@ -25,7 +25,8 @@ HEADERS  += \
     HEADERS += $$PWD/SoloDatabaseInit.hpp
 }
 
-INCLUDEPATH += /usr/include/tiled/
+# internal libtiled include path (replaces /usr/include/tiled/)
+# already included via libtiled.pri in libqt.pri
 
 QT += multimedia
 
@@ -33,7 +34,5 @@ HEADERS  += \
     $$PWD/Audio.hpp \
     $$PWD/QInfiniteBuffer.hpp
 
-INCLUDEPATH += /usr/include/opus/
-#Opus requires one of VAR_ARRAYS, USE_ALLOCA, or NONTHREADSAFE_PSEUDOSTACK be defined to select the temporary allocation mode.
-#DEFINES += USE_ALLOCA OPUS_BUILD
-LIBS += -lopus -lopusfile
+# internal libopus/libopusfile include paths (replaces /usr/include/opus/ and -lopus -lopusfile)
+# already included via libopus.pri and libopusfile.pri in libqt.pri

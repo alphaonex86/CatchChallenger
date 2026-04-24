@@ -396,6 +396,9 @@ void ScreenTransition::toMainScreen()
     {
         AudioGL* a=new AudioGL();
         Audio::audio=a;
+        const QString platform=QGuiApplication::platformName();
+        if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+            a->setVolume(0);
         if(!connect(QCoreApplication::instance(),&QCoreApplication::aboutToQuit,a,&AudioGL::stopCurrentAmbiance,Qt::DirectConnection))
             abort();
     }

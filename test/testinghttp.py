@@ -57,16 +57,17 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+total_expected = [0]
 server_proc = None
 
 def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
 def log_pass(name, detail=""):
     results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}")
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 def log_fail(name, detail=""):
     results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}")
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -334,7 +335,9 @@ def build_project(pro_file, build_dir, label):
     run_cmd(["make", "distclean"], build_dir, timeout=60)
     name = f"compile {label}"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug"]
+                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug",
+                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
+                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
     log_info(f"qmake {label}")
     rc, out = run_cmd(qmake_args, build_dir)
     if rc != 0:
@@ -404,8 +407,14 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     log_info(f"running: {bin_name} {' '.join(args)}")
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
+    gdb_args = ["gdb", "-batch",
+                "-ex", "set breakpoint pending on",
+                "-ex", "handle SIGPIPE nostop noprint pass",
+                "-ex", "break __throw_out_of_range",
+                "-ex", "run", "-ex", "bt", "-ex", "quit",
+                "--args", binary] + args
     try:
-        p = subprocess.run(NICE_PREFIX + [binary] + args, cwd=build_dir, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + gdb_args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         out = p.stdout.decode(errors="replace")
         if p.returncode == 0:
@@ -413,7 +422,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
             return True, out
         else:
             log_fail(label, f"exit code {p.returncode}")
-            for line in out.splitlines()[-20:]:
+            for line in out.splitlines()[-40:]:
                 print(f"  | {line}")
             return False, out
     except subprocess.TimeoutExpired as e:
@@ -445,6 +454,18 @@ def main():
     # clean all testing build dirs upfront
     for d in (SERVER_BUILD, CLIENT_CPU_BUILD):
         clean_build_artifacts(d)
+
+    SETUP_CHECKS = ["automatic_account_creation", "http_symlink",
+                     "datapack_archive", "mirror_json_generator"]
+    COMPILES = ["server", "client"]
+    CACHE_CASES = ["empty", "partial", "same"]
+    checks_per_case = ["server_start", "client",
+                       "mirror_base", "mirror_server",
+                       "datapack_base_match", "datapack_main_match"]
+    extra_same_case = ["initial_populate"]
+    total_expected[0] = (len(SETUP_CHECKS) + len(COMPILES)
+                         + len(CACHE_CASES) * len(checks_per_case)
+                         + len(extra_same_case))
 
     # ── 1. check automatic_account_creation ─────────────────────────
     if os.path.isfile(SERVER_PROPS):

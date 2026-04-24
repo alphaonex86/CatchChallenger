@@ -25,6 +25,7 @@
 #include <QDesktopServices>
 #include <QRegularExpression>
 #include <QComboBox>
+#include <QGuiApplication>
 #include <iostream>
 
 //do buy queue
@@ -194,7 +195,12 @@ BaseWindow::BaseWindow() :
     datapackFileSize=0;
     #ifndef CATCHCHALLENGER_NOAUDIO
     if(Audio::audio==nullptr)
+    {
         Audio::audio=new Audio();
+        const QString platform=QGuiApplication::platformName();
+        if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+            Audio::audio->setVolume(0);
+    }
     currentAmbiance.player=NULL;
     #endif
 
