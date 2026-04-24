@@ -11,6 +11,10 @@ Phases:
 """
 
 import os, sys, signal, subprocess, threading, shutil, multiprocessing, time, glob as globmod, json, re
+from remote_build import (start_remote_builds, collect_remote_results,
+                          REMOTE_SERVERS, REMOTE_DIR,
+                          setup_remote_server_runtime, start_remote_server,
+                          stop_remote_server, get_remote_server_address)
 
 # ── config ─────────────────────────────────────────────────────────────────
 _CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".config", "catchchallenger-testing", "config.json")
@@ -55,6 +59,8 @@ COMPILERS = [
     ("gcc",   "linux-g++"),
     ("clang", "linux-clang"),
 ]
+
+CXX_VERSIONS = ["c++11", "c++23"]
 
 # (pro_relative_path, name, build_base_relative, [optional_flags])
 # Flags are commented-out DEFINES in each .pro (excluding SERVERSSL,
@@ -105,16 +111,17 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+total_expected = [0]
 server_proc = None
 
 def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
 def log_pass(name, detail=""):
     results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}")
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 def log_fail(name, detail=""):
     results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}")
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 
 
 def flag_combinations(flags):
@@ -365,14 +372,18 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
         return -1, f"TIMEOUT after {timeout}s"
 
 def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
-                   extra_defines=None, clean_first=False):
+                   extra_defines=None, clean_first=False, cxx_version=None):
     ensure_dir(build_dir)
     clean_build_artifacts(build_dir)
     log_info(f"make distclean {label}")
     run_cmd(["make", "distclean"], build_dir, timeout=60)
     name = f"compile {label}"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug"]
+                  "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug",
+                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
+                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
+    if cxx_version:
+        qmake_args.append(f"QMAKE_CXXFLAGS+=-std={cxx_version}")
     if extra_defines:
         for d in extra_defines:
             qmake_args.append(f"DEFINES+={d}")
@@ -571,15 +582,21 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     log_info(f"running: {bin_name} {' '.join(args)}")
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
+    gdb_args = ["gdb", "-batch",
+                "-ex", "set breakpoint pending on",
+                "-ex", "handle SIGPIPE nostop noprint pass",
+                "-ex", "break __throw_out_of_range",
+                "-ex", "run", "-ex", "bt", "-ex", "quit",
+                "--args", binary] + args
     try:
-        p = subprocess.run(NICE_PREFIX + [binary] + args, cwd=build_dir, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + gdb_args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         out = p.stdout.decode(errors="replace")
         if p.returncode == 0:
             log_pass(label, "exit code 0")
             return True, out
         log_fail(label, f"exit code {p.returncode}")
-        for line in out.splitlines()[-20:]:
+        for line in out.splitlines()[-40:]:
             print(f"  | {line}")
         return False, out
     except subprocess.TimeoutExpired as e:
@@ -915,13 +932,58 @@ def main():
     # ═══════════════════════════════════════════════════════════════
     print(f"\n{C_CYAN}--- Phase 0: Compilation (all combinations) ---{C_RESET}\n")
 
+    # start remote builds in parallel with local builds
+    remote_pro_rels = [pro_rel for pro_rel, _, _, _ in SERVER_TARGETS]
+    remote_threads, remote_results, remote_lock = start_remote_builds(remote_pro_rels)
+    log_info("remote builds started in background")
+
     total_builds = 0
     ti = 0
     while ti < len(SERVER_TARGETS):
         _pro, _name, _base, opt_flags = SERVER_TARGETS[ti]
-        total_builds += len(COMPILERS) * len(flag_combinations(opt_flags))
+        total_builds += len(CXX_VERSIONS) * len(COMPILERS) * len(flag_combinations(opt_flags))
         ti += 1
+    # compute total expected results
+    from remote_build import REMOTE_SERVERS as _RS, GUI_PRO_FILES as _GF
+    remote_count = 0
+    ri = 0
+    while ri < len(_RS):
+        remote_count += 1  # rsync
+        si = 0
+        while si < len(remote_pro_rels):
+            if _RS[ri][5] or remote_pro_rels[si] not in _GF:
+                remote_count += 1
+            si += 1
+        remote_count += len(["server_start", "client_connect"])  # per remote
+        ri += 1
+    # count maincodes across all datapacks
+    n_maincodes = 0
+    di = 0
+    while di < len(DATAPACK_SOURCES):
+        dp_src = DATAPACK_SOURCES[di][0]
+        mm = os.path.join(dp_src, "map", "main")
+        if os.path.isdir(mm):
+            n_maincodes += len([d for d in os.listdir(mm)
+                                if os.path.isdir(os.path.join(mm, d))])
+        di += 1
+    # functional tests computation
+    server_variants = [SERVER_FILEDB_PRO, SERVER_CLIEPO_PRO]
+    cache_cycle_phases = ["empty_db", "generate_cache", "noxml_off", "noxml_on"]
+    cache_cycle_checks = ["build", "server_start", "client"]
+    datapack_scenarios = ["empty_cache", "partial_cache", "same_datapack"]
+    checks_per_scenario = ["server_start", "client", "datapack_base_match", "datapack_main_match"]
+    xml_change_checks = ["baseline_connect", "reconnect", "modified_synced", "added_synced", "deleted_removed", "extra"]
+    mc_checks = ["server_start", "client"]
+    remote_phase_checks = ["setup", "server_start", "client"]
+    client_build = 1
+    per_variant = 1 + n_maincodes * len(mc_checks) + len(cache_cycle_phases) * len(cache_cycle_checks)
+    phase_c = n_maincodes * len(mc_checks) + len(xml_change_checks)
+    phase_d = len(datapack_scenarios) * len(checks_per_scenario)
+    phase_e = len(_RS) * len(remote_phase_checks)
+    functional = client_build + len(server_variants) * per_variant + phase_c + phase_d + phase_e
+    total_expected[0] = total_builds + remote_count + functional
     log_info(f"total server compilation combinations: {total_builds}")
+    log_info(f"total expected results: {total_expected[0]}")
 
     ti = 0
     while ti < len(SERVER_TARGETS):
@@ -929,27 +991,44 @@ def main():
         pro_path = os.path.join(ROOT, pro_rel)
         build_base = os.path.join(ROOT, build_base_rel)
         combos = flag_combinations(opt_flags)
-        n_combos = len(COMPILERS) * len(combos)
+        n_combos = len(CXX_VERSIONS) * len(COMPILERS) * len(combos)
         log_info(f"{target_name}: {n_combos} combinations "
-                 f"({len(COMPILERS)} compilers x {len(combos)} flag sets)")
+                 f"({len(CXX_VERSIONS)} c++ versions x {len(COMPILERS)} compilers x {len(combos)} flag sets)")
 
-        ci = 0
-        while ci < len(COMPILERS):
-            compiler_name, compiler_spec = COMPILERS[ci]
-            fi = 0
-            while fi < len(combos):
-                flags = combos[fi]
-                suffix = combo_suffix(compiler_name, flags)
-                build_dir = os.path.join(build_base,
-                                         f"testing-combo-{target_name}-{suffix}")
-                label = f"{target_name} {compiler_name}"
-                if flags:
-                    label += " " + "+".join(flags)
-                build_project(pro_path, build_dir, label, compiler_spec,
-                              extra_defines=list(flags) if flags else None)
-                fi += 1
-            ci += 1
+        vi = 0
+        while vi < len(CXX_VERSIONS):
+            cxx_ver = CXX_VERSIONS[vi]
+            ci = 0
+            while ci < len(COMPILERS):
+                compiler_name, compiler_spec = COMPILERS[ci]
+                fi = 0
+                while fi < len(combos):
+                    flags = combos[fi]
+                    suffix = combo_suffix(compiler_name, flags)
+                    build_dir = os.path.join(build_base,
+                                             f"testing-combo-{target_name}-{cxx_ver}-{suffix}")
+                    label = f"{target_name} {cxx_ver} {compiler_name}"
+                    if flags:
+                        label += " " + "+".join(flags)
+                    build_project(pro_path, build_dir, label, compiler_spec,
+                                  extra_defines=list(flags) if flags else None,
+                                  cxx_version=cxx_ver)
+                    fi += 1
+                ci += 1
+            vi += 1
         ti += 1
+
+    # collect remote build results
+    log_info("waiting for remote builds to finish...")
+    remote = collect_remote_results(remote_threads, remote_results, remote_lock)
+    idx = 0
+    while idx < len(remote):
+        name, ok, detail = remote[idx]
+        if ok:
+            log_pass(name, detail)
+        else:
+            log_fail(name, detail)
+        idx += 1
 
     # ═══════════════════════════════════════════════════════════════
     # Phases A–D: functional tests (use default gcc builds)
@@ -1039,6 +1118,51 @@ def main():
         test_client_datapack_mechanism(filedb_build, client_build)
     else:
         log_fail("client datapack mechanism", "server-filedb binary not available")
+
+    # ── Phase E: Remote server + local client ────────────────────
+    print(f"\n{C_CYAN}--- Phase E: Remote server + local client ---{C_RESET}\n")
+
+    remote_filedb_bin = f"{REMOTE_DIR}/build-remote/catchchallenger-server-filedb/catchchallenger-server-cli-epoll"
+    remote_filedb_build = f"{REMOTE_DIR}/build-remote/catchchallenger-server-filedb"
+
+    ri = 0
+    while ri < len(REMOTE_SERVERS):
+        label, host, ssh_port, _use_mold, _extra_defines, _has_gui = REMOTE_SERVERS[ri]
+        server_addr = get_remote_server_address(host)
+        print(f"\n{C_CYAN}  -- Remote server: {label} ({server_addr}) --{C_RESET}\n")
+
+        # setup datapack on remote
+        dp_src = DATAPACK_SOURCES[0][0] if DATAPACK_SOURCES else None
+        if dp_src is None:
+            log_fail(f"remote {label}", "no datapack source")
+            ri += 1
+            continue
+        if not setup_remote_server_runtime(host, ssh_port, remote_filedb_build, dp_src):
+            log_fail(f"remote {label} setup", "failed to rsync datapack")
+            ri += 1
+            continue
+        log_pass(f"remote {label} setup", "datapack synced")
+
+        # start server on remote
+        ssh_proc, actual_port = start_remote_server(host, ssh_port,
+                                                    remote_filedb_bin,
+                                                    remote_filedb_build)
+        if actual_port == 0:
+            log_fail(f"remote {label} server start", "timeout or binary not found")
+            ri += 1
+            continue
+        log_pass(f"remote {label} server start", f"port {actual_port}")
+
+        # connect local client to remote server
+        ok, out = run_client(client_build, CLIENT_CPU_BIN,
+                             ["--host", server_addr, "--port", str(actual_port),
+                              "--autologin", "--character", "Player",
+                              "--closewhenonmap"],
+                             f"local client -> remote {label}",
+                             success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+
+        stop_remote_server(ssh_proc, host, ssh_port)
+        ri += 1
 
     stop_server()
     summary()

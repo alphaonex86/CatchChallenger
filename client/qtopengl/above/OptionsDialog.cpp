@@ -11,6 +11,7 @@
 #include "../../libqtcatchchallenger/Ultimate.hpp"
 #include <QDesktopServices>
 #include <QLineEdit>
+#include <QGuiApplication>
 
 OptionsDialog::OptionsDialog() :
     wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),
@@ -49,7 +50,11 @@ OptionsDialog::OptionsDialog() :
     languagesList->setPos(100,200);
 
     {
-        volumeSlider->setValue(Settings::settings->value("keyaudioVolume").toUInt());
+        const QString platform=QGuiApplication::platformName();
+        if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+            volumeSlider->setValue(0);
+        else
+            volumeSlider->setValue(Settings::settings->value("keyaudioVolume").toUInt());
         QString key=Settings::settings->value("key").toString();
         productKeyInput->setText(key);
         if(true)//Ultimate::ultimate.isUltimate())
@@ -223,7 +228,9 @@ void OptionsDialog::volumeSliderChange()
     #ifndef CATCHCHALLENGER_NOAUDIO
     AudioGL::audio->setVolume(volumeSlider->value());
     #endif
-    Settings::settings->setValue("audioVolume",volumeSlider->value());
+    const QString platform=QGuiApplication::platformName();
+    if(platform!=QLatin1String("offscreen") && platform!=QLatin1String("minimal"))
+        Settings::settings->setValue("audioVolume",volumeSlider->value());
 }
 
 void OptionsDialog::productKeyChange()

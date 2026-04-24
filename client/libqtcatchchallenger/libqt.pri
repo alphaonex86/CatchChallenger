@@ -1,6 +1,7 @@
 DEFINES += CATCHCHALLENGER_CLIENT
 
-LIBS += -ltiled
+# internal libtiled (replaces -ltiled)
+include($$PWD/libtiled.pri)
 
 SOURCES += \
     $$PWD/Api_client_real_base.cpp \
@@ -30,7 +31,10 @@ SOURCES += \
 DEFINES += CATCHCHALLENGERLIB
 
 QT += multimedia
-LIBS += -lopus -logg
+# internal libogg, libopus, libopusfile (replaces -lopus -logg)
+include($$PWD/libogg.pri)
+include($$PWD/libopus.pri)
+include($$PWD/libopusfile.pri)
 SOURCES += \
     $$PWD/Audio.cpp \
     $$PWD/QInfiniteBuffer.cpp

@@ -3,9 +3,9 @@
 
 #include <QObject>
 #include <QTimer>
+#include <mapobject.h>
 
-#include <tiled/mapobject.h>
-#include <tiled/tile.h>
+#include <tile.h>
 
 class TemporaryTile : public QObject
 {

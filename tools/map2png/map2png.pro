@@ -6,8 +6,7 @@ QMAKE_CXXFLAGS+="-fstack-protector-all -g"
 
 QT += xml network opengl
 
-LIBS += -ltiled
-INCLUDEPATH += /usr/include/tiled/
+include(../../client/libqtcatchchallenger/libtiled.pri)
 
 DEFINES += ONLYMAPRENDER NOWEBSOCKET
 

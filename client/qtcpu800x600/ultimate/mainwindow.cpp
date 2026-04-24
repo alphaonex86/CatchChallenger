@@ -170,7 +170,7 @@ MainWindow::MainWindow(QWidget *parent) :
         const std::string &soundFile=QCoreApplication::applicationDirPath().toStdString()+CATCHCHALLENGER_CLIENT_MUSIC_LOADING;
         if(QFile(soundFile.c_str()).exists())
         {
-            player = new QAudioOutput(Audio::audio->format(), this);
+            player = new QAudioSink(QMediaDevices::defaultAudioOutput(), Audio::audio->format());
             if(Audio::decodeOpus(soundFile,data))
             {
                 buffer.open(QBuffer::ReadOnly);
@@ -286,8 +286,8 @@ MainWindow::~MainWindow()
     #ifndef CATCHCHALLENGER_NOAUDIO
     if(player!=NULL)
     {
-        player->stop();
         buffer.close();
+        player->stop();
         Audio::audio->removePlayer(player);
         delete player;
         player=NULL;

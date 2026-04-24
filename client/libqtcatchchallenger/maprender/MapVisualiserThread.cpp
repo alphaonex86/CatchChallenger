@@ -7,9 +7,11 @@
 #include "../../general/base/Map_loader.hpp"
 #include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
-#include <tiled/mapobject.h>
-#include <tiled/isometricrenderer.h>
-#include <tiled/orthogonalrenderer.h>
+#include <mapobject.h>
+
+#include <isometricrenderer.h>
+
+#include <orthogonalrenderer.h>
 #include <QFileInfo>
 #include <QRegularExpression>
 #include "../libcatchchallenger/ClientVariable.hpp"

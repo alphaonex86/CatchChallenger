@@ -10,6 +10,10 @@ Sections:
 """
 
 import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re
+from remote_build import (start_remote_builds, collect_remote_results,
+                          REMOTE_SERVERS, REMOTE_DIR,
+                          setup_remote_server_runtime, start_remote_server,
+                          stop_remote_server, get_remote_server_address)
 
 # ── config ─────────────────────────────────────────────────────────────────
 _CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".config", "catchchallenger-testing", "config.json")
@@ -45,6 +49,7 @@ SERVER_PORT  = str(_config["server_port"])
 COMPILE_TIMEOUT      = 600
 SERVER_READY_TIMEOUT = 60
 CLIENT_TIMEOUT       = 5
+CLIENT_SOLO_TIMEOUT  = 30
 
 NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
 
@@ -53,6 +58,8 @@ COMPILERS = [
     ("gcc",   "linux-g++"),
     ("clang", "linux-clang"),
 ]
+
+CXX_VERSIONS = ["c++11", "c++23"]
 
 # CATCHCHALLENGER_NOAUDIO is commented out in qtcpu800x600.pro but the build
 # requires it (Qt multimedia audio path has issues), so always add it as a
@@ -76,6 +83,7 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+total_expected = [0]
 server_proc = None
 
 
@@ -84,11 +92,11 @@ def log_info(msg):
 
 def log_pass(name, detail=""):
     results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}")
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 
 def log_fail(name, detail=""):
     results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}")
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 
 
 def flag_combinations(flags):
@@ -163,14 +171,19 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
         return -1, f"TIMEOUT after {timeout}s"
 
 
-def build_project(pro_file, build_dir, label, compiler_spec="linux-g++", extra_defines=None):
+def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
+                   extra_defines=None, cxx_version=None):
     ensure_dir(build_dir)
     clean_build_artifacts(build_dir)
     log_info(f"make distclean {label}")
     run_cmd(["make", "distclean"], build_dir, timeout=60)
     name = f"compile {label}"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug"]
+                  "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug",
+                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
+                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
+    if cxx_version:
+        qmake_args.append(f"QMAKE_CXXFLAGS+=-std={cxx_version}")
     if extra_defines:
         qmake_args.append("DEFINES+=" + " ".join(extra_defines))
     log_info(f"qmake {label}")
@@ -294,8 +307,19 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     env = os.environ.copy()
     if use_offscreen:
         env["QT_QPA_PLATFORM"] = "offscreen"
+    gdb_commands = ("handle SIGPIPE nostop noprint pass\n"
+                    "break __throw_out_of_range\n"
+                    "run\n"
+                    "bt\n"
+                    "quit\n")
+    gdb_args = ["gdb", "-batch",
+                "-ex", "set breakpoint pending on",
+                "-ex", "handle SIGPIPE nostop noprint pass",
+                "-ex", "break __throw_out_of_range",
+                "-ex", "run", "-ex", "bt", "-ex", "quit",
+                "--args", binary] + args
     try:
-        p = subprocess.run(NICE_PREFIX + [binary] + args, cwd=build_dir, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + gdb_args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         out = p.stdout.decode(errors="replace")
         if p.returncode == 0:
@@ -303,7 +327,8 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
             return True
         else:
             log_fail(label, f"exit code {p.returncode}")
-            for line in out.splitlines()[-20:]:
+            # print backtrace from gdb output
+            for line in out.splitlines()[-40:]:
                 print(f"  | {line}")
             return False
     except subprocess.TimeoutExpired as e:
@@ -345,66 +370,127 @@ def main():
     # ═══════════════════════════════════════════════════════════════
     print(f"\n{C_CYAN}--- Compilation (all combinations) ---{C_RESET}\n")
 
+    # start remote builds in parallel with local builds
+    remote_pro_rels = [
+        os.path.relpath(CLIENT_CPU_PRO, ROOT),
+        os.path.relpath(CLIENT_GL_PRO, ROOT),
+    ]
+    remote_threads, remote_results, remote_lock = start_remote_builds(remote_pro_rels)
+    log_info("remote builds started in background")
+
     cpu_combos = flag_combinations(CPU_OPTIONAL_FLAGS)
     gl_combos = flag_combinations(GL_OPTIONAL_FLAGS)
 
-    total_cpu = len(COMPILERS) * len(cpu_combos)
-    total_gl = len(COMPILERS) * len(gl_combos)
+    total_cpu = len(CXX_VERSIONS) * len(COMPILERS) * len(cpu_combos)
+    total_gl = len(CXX_VERSIONS) * len(COMPILERS) * len(gl_combos)
+
+    # compute total expected results
+    n_maincodes = 0
+    idx = 0
+    while idx < len(DATAPACKS):
+        mc = detect_maincodes(DATAPACKS[idx])
+        n_maincodes += len(mc) if mc else 0
+        idx += 1
+    from remote_build import REMOTE_SERVERS as _RS, GUI_PRO_FILES as _GF
+    remote_count = 0
+    ri = 0
+    while ri < len(_RS):
+        remote_count += 1  # rsync
+        si = 0
+        while si < len(remote_pro_rels):
+            if _RS[ri][5] or remote_pro_rels[si] not in _GF:
+                remote_count += 1
+            si += 1
+        client_builds_list = [CLIENT_CPU_PRO, CLIENT_GL_PRO]
+        remote_count += 1 + len(client_builds_list)  # server_start + client per client type
+        ri += 1
+    client_types_list = [CLIENT_CPU_BUILD, CLIENT_GL_BUILD]
+    solo_runs_list = ["first run", "come back"]
+    # per maincode: datapack setups + solo runs per client
+    per_maincode = len(client_types_list) + len(client_types_list) * len(solo_runs_list)
+    # multiplayer: server build + server start + client connects
+    multiplayer_parts = ["server_build", "server_start"] + client_types_list
+    multiplayer = len(multiplayer_parts)
+    # remote: already counted in remote_count (rsync + builds + server_start + client_connects)
+    total_expected[0] = total_cpu + total_gl + remote_count + n_maincodes * per_maincode + multiplayer
     log_info(f"qtcpu800x600: {total_cpu} combinations "
-             f"({len(COMPILERS)} compilers x {len(cpu_combos)} flag sets)")
+             f"({len(CXX_VERSIONS)} c++ versions x {len(COMPILERS)} compilers x {len(cpu_combos)} flag sets)")
     log_info(f"qtopengl:     {total_gl} combinations "
-             f"({len(COMPILERS)} compilers x {len(gl_combos)} flag sets)")
+             f"({len(CXX_VERSIONS)} c++ versions x {len(COMPILERS)} compilers x {len(gl_combos)} flag sets)")
+    log_info(f"total expected results: {total_expected[0]}")
 
     cpu_ok = False
     gl_ok = False
 
     # qtcpu800x600 — all combinations
-    ci = 0
-    while ci < len(COMPILERS):
-        compiler_name, compiler_spec = COMPILERS[ci]
-        fi = 0
-        while fi < len(cpu_combos):
-            flags = cpu_combos[fi]
-            all_defines = list(CPU_BASE_DEFINES) + list(flags)
-            suffix = combo_suffix(compiler_name, flags)
-            if compiler_name == "gcc" and not flags:
-                build_dir = CLIENT_CPU_BUILD
-            else:
-                build_dir = os.path.join(ROOT, "client", "qtcpu800x600", "build",
-                                         f"testing-cpu-{suffix}")
-            label = f"qtcpu800x600 {compiler_name}"
-            if flags:
-                label += " " + "+".join(flags)
-            ok = build_project(CLIENT_CPU_PRO, build_dir, label, compiler_spec,
-                               all_defines if all_defines else None)
-            if compiler_name == "gcc" and not flags:
-                cpu_ok = ok
-            fi += 1
-        ci += 1
+    vi = 0
+    while vi < len(CXX_VERSIONS):
+        cxx_ver = CXX_VERSIONS[vi]
+        ci = 0
+        while ci < len(COMPILERS):
+            compiler_name, compiler_spec = COMPILERS[ci]
+            fi = 0
+            while fi < len(cpu_combos):
+                flags = cpu_combos[fi]
+                all_defines = list(CPU_BASE_DEFINES) + list(flags)
+                suffix = combo_suffix(compiler_name, flags)
+                if compiler_name == "gcc" and not flags and cxx_ver == CXX_VERSIONS[0]:
+                    build_dir = CLIENT_CPU_BUILD
+                else:
+                    build_dir = os.path.join(ROOT, "client", "qtcpu800x600", "build",
+                                             f"testing-cpu-{cxx_ver}-{suffix}")
+                label = f"qtcpu800x600 {cxx_ver} {compiler_name}"
+                if flags:
+                    label += " " + "+".join(flags)
+                ok = build_project(CLIENT_CPU_PRO, build_dir, label, compiler_spec,
+                                   all_defines if all_defines else None,
+                                   cxx_version=cxx_ver)
+                if compiler_name == "gcc" and not flags and cxx_ver == CXX_VERSIONS[0]:
+                    cpu_ok = ok
+                fi += 1
+            ci += 1
+        vi += 1
 
     # qtopengl — all combinations
-    ci = 0
-    while ci < len(COMPILERS):
-        compiler_name, compiler_spec = COMPILERS[ci]
-        fi = 0
-        while fi < len(gl_combos):
-            flags = gl_combos[fi]
-            all_defines = list(GL_BASE_DEFINES) + list(flags)
-            suffix = combo_suffix(compiler_name, flags)
-            if compiler_name == "gcc" and not flags:
-                build_dir = CLIENT_GL_BUILD
-            else:
-                build_dir = os.path.join(ROOT, "client", "qtopengl", "build",
-                                         f"testing-gl-{suffix}")
-            label = f"qtopengl {compiler_name}"
-            if flags:
-                label += " " + "+".join(flags)
-            ok = build_project(CLIENT_GL_PRO, build_dir, label, compiler_spec,
-                               all_defines if all_defines else None)
-            if compiler_name == "gcc" and not flags:
-                gl_ok = ok
-            fi += 1
-        ci += 1
+    vi = 0
+    while vi < len(CXX_VERSIONS):
+        cxx_ver = CXX_VERSIONS[vi]
+        ci = 0
+        while ci < len(COMPILERS):
+            compiler_name, compiler_spec = COMPILERS[ci]
+            fi = 0
+            while fi < len(gl_combos):
+                flags = gl_combos[fi]
+                all_defines = list(GL_BASE_DEFINES) + list(flags)
+                suffix = combo_suffix(compiler_name, flags)
+                if compiler_name == "gcc" and not flags and cxx_ver == CXX_VERSIONS[0]:
+                    build_dir = CLIENT_GL_BUILD
+                else:
+                    build_dir = os.path.join(ROOT, "client", "qtopengl", "build",
+                                             f"testing-gl-{cxx_ver}-{suffix}")
+                label = f"qtopengl {cxx_ver} {compiler_name}"
+                if flags:
+                    label += " " + "+".join(flags)
+                ok = build_project(CLIENT_GL_PRO, build_dir, label, compiler_spec,
+                                   all_defines if all_defines else None,
+                                   cxx_version=cxx_ver)
+                if compiler_name == "gcc" and not flags and cxx_ver == CXX_VERSIONS[0]:
+                    gl_ok = ok
+                fi += 1
+            ci += 1
+        vi += 1
+
+    # collect remote build results
+    log_info("waiting for remote builds to finish...")
+    remote = collect_remote_results(remote_threads, remote_results, remote_lock)
+    idx = 0
+    while idx < len(remote):
+        name, ok, detail = remote[idx]
+        if ok:
+            log_pass(name, detail)
+        else:
+            log_fail(name, detail)
+        idx += 1
 
     # ═══════════════════════════════════════════════════════════════
     # 2 + 3. DATAPACK SETUP + SOLO (iterate each datapack + maincode)
@@ -433,20 +519,26 @@ def main():
                 remove_savegames(SAVEGAME_CPU, "qtcpu800x600")
                 run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
                            ["--autosolo", "--closewhenonmap"],
-                           f"qtcpu800x600 solo first run ({dp_name} {mc})")
+                           f"qtcpu800x600 solo first run ({dp_name} {mc})",
+                           timeout=CLIENT_SOLO_TIMEOUT,
+                           success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
                 run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
                            ["--autosolo", "--closewhenonmap"],
-                           f"qtcpu800x600 solo come back ({dp_name} {mc})")
+                           f"qtcpu800x600 solo come back ({dp_name} {mc})",
+                           timeout=CLIENT_SOLO_TIMEOUT,
+                           success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
 
             if gl_ok and dp_gl:
                 remove_savegames(SAVEGAME_GL, "qtopengl")
                 run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
                            ["--autosolo", "--closewhenonmap"],
                            f"qtopengl solo first run ({dp_name} {mc})",
+                           timeout=CLIENT_SOLO_TIMEOUT,
                            success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
                 run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
                            ["--autosolo", "--closewhenonmap"],
                            f"qtopengl solo come back ({dp_name} {mc})",
+                           timeout=CLIENT_SOLO_TIMEOUT,
                            success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
 
     # ═══════════════════════════════════════════════════════════════
@@ -489,6 +581,61 @@ def main():
                    success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
 
     stop_server()
+
+    # ═══════════════════════════════════════════════════════════════
+    # 5. REMOTE SERVER + LOCAL CLIENT
+    # ═══════════════════════════════════════════════════════════════
+    print(f"\n{C_CYAN}--- Remote server + local client ---{C_RESET}\n")
+
+    remote_filedb_bin = f"{REMOTE_DIR}/build-remote/catchchallenger-server-filedb/catchchallenger-server-cli-epoll"
+    remote_filedb_build = f"{REMOTE_DIR}/build-remote/catchchallenger-server-filedb"
+    dp_src = DATAPACKS[0] if DATAPACKS else None
+
+    ri = 0
+    while ri < len(REMOTE_SERVERS):
+        label, host, ssh_port, _use_mold, _extra_defines, _has_gui = REMOTE_SERVERS[ri]
+        server_addr = get_remote_server_address(host)
+        print(f"\n{C_CYAN}  -- Remote: {label} ({server_addr}) --{C_RESET}\n")
+
+        if dp_src is None:
+            log_fail(f"remote {label}", "no datapack source")
+            ri += 1
+            continue
+        if not setup_remote_server_runtime(host, ssh_port, remote_filedb_build, dp_src):
+            log_fail(f"remote {label} setup", "failed to rsync datapack")
+            ri += 1
+            continue
+
+        ssh_proc, actual_port = start_remote_server(host, ssh_port,
+                                                    remote_filedb_bin,
+                                                    remote_filedb_build)
+        if actual_port == 0:
+            log_fail(f"remote {label} server start", "timeout or binary not found")
+            ri += 1
+            continue
+        log_pass(f"remote {label} server start", f"port {actual_port}")
+
+        if cpu_ok:
+            run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                       ["--host", server_addr, "--port", str(actual_port),
+                        "--autologin", "--character", "PlayerCPU",
+                        "--closewhenonmap"],
+                       f"qtcpu800x600 -> remote {label}",
+                       timeout=30,
+                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+
+        if gl_ok:
+            run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                       ["--host", server_addr, "--port", str(actual_port),
+                        "--autologin", "--character", "PlayerGL",
+                        "--closewhenonmap"],
+                       f"qtopengl -> remote {label}",
+                       timeout=30,
+                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+
+        stop_remote_server(ssh_proc, host, ssh_port)
+        ri += 1
+
     summary()
 
 

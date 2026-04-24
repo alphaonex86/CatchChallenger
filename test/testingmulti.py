@@ -64,16 +64,17 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+total_expected = [0]
 server_proc = None
 
 def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
 def log_pass(name, detail=""):
     results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}")
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 def log_fail(name, detail=""):
     results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}")
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -136,7 +137,9 @@ def build_project(pro_file, build_dir, label):
     run_cmd(["make", "distclean"], build_dir, timeout=60)
     name = f"compile {label}"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug"]
+                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug",
+                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
+                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
     log_info(f"qmake {label}")
     rc, out = run_cmd(qmake_args, build_dir)
     if rc != 0:
@@ -220,10 +223,16 @@ def stop_server():
     server_proc = None
 
 def run_client_async(build_dir, bin_name, args, env):
-    """Run client in background, return (proc, threading.Event for done, output list)."""
+    """Run client in background under gdb, return (proc, threading.Event for done, output list)."""
     binary = os.path.join(build_dir, bin_name)
+    gdb_args = ["gdb", "-batch",
+                "-ex", "set breakpoint pending on",
+                "-ex", "handle SIGPIPE nostop noprint pass",
+                "-ex", "break __throw_out_of_range",
+                "-ex", "run", "-ex", "bt", "-ex", "quit",
+                "--args", binary] + args
     proc = subprocess.Popen(
-        NICE_PREFIX + [binary] + args, cwd=build_dir,
+        NICE_PREFIX + gdb_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         env=env, preexec_fn=os.setsid)
     output_lines = []
@@ -266,6 +275,12 @@ def main():
     dp_name = os.path.basename(DATAPACK_SRC)
     log_info(f"datapack: {dp_name}, maincode: {MAINCODE}")
 
+    MINIMIZE_MODES = ("network", "cpu")
+    CLIENTS = (CLIENT_CPU_BUILD, CLIENT_GL_BUILD)
+    CHECK_TYPES = ("map_displayed", "insert_player", "direction", "chat")
+    # per mode: 1 server_start + len(CLIENTS) * len(CHECK_TYPES)
+    total_expected[0] = 3 + len(MINIMIZE_MODES) * (1 + len(CLIENTS) * len(CHECK_TYPES))
+
     # ── 1. build ────────────────────────────────────────────────────
     print(f"\n{C_CYAN}--- Compilation ---{C_RESET}\n")
 
@@ -279,7 +294,7 @@ def main():
         return
 
     # ── 2. run multiplayer test with both minimize modes ──────────────
-    for minimize_mode in ("network", "cpu"):
+    for minimize_mode in MINIMIZE_MODES:
         run_multiplayer_test(dp_name, minimize_mode)
 
     summary()

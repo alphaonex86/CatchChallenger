@@ -20,6 +20,9 @@
 #include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
 #include "../base/QInfiniteBuffer.h"
 #include "../../libqtcatchchallenger/Audio.hpp"
+#include <QAudioOutput>
+#include <QAudioSink>
+#include <QMediaDevices>
 #endif
 
 #include "../../../general/base/GeneralStructures.hpp"
@@ -207,7 +210,7 @@ private:
     QCompleter *completer;
     QString lastServer;
     #ifndef CATCHCHALLENGER_NOAUDIO
-    QAudioOutput *player;
+    QAudioSink *player;
     QInfiniteBuffer buffer;
     QByteArray data;
     #endif

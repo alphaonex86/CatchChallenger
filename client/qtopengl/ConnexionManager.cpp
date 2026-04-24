@@ -206,7 +206,11 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         std::cout << "try connect WebSocket on: " << connexionInfo.host.toStdString() << ": " << connexionInfo.port << std::endl;
         if(!connect(realWebSocket,&QWebSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::DirectConnection))
             abort();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         if(!connect(realWebSocket,&QWebSocket::errorOccurred,           this,&ConnexionManager::error,Qt::QueuedConnection))
+#else
+        if(!connect(realWebSocket,QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error),this,&ConnexionManager::error,Qt::QueuedConnection))
+#endif
             abort();
 
         QUrl url{QString(connexionInfo.ws)};

@@ -9,6 +9,7 @@ For each .pro found:
 """
 
 import os, sys, subprocess, multiprocessing, json
+from remote_build import start_remote_builds, collect_remote_results
 
 # ── config ─────────────────────────────────────────────────────────────────
 _CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".config", "catchchallenger-testing", "config.json")
@@ -33,6 +34,7 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+total_expected = [0]
 
 
 def log_info(msg):
@@ -41,12 +43,12 @@ def log_info(msg):
 
 def log_pass(name, detail=""):
     results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}")
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 
 
 def log_fail(name, detail=""):
     results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}")
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT):
@@ -96,7 +98,9 @@ def test_compile(pro_file):
 
     # qmake
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug"]
+                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug",
+                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
+                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
     log_info(f"qmake {label}")
     rc, out = run_cmd(qmake_args, build_dir)
     if rc != 0:
@@ -149,9 +153,45 @@ def main():
         print(f"  {os.path.relpath(pf, ROOT)}")
     print()
 
+    # start remote builds in parallel with local builds
+    remote_pro_rels = [
+        "tools/stats/stats.pro",
+        "tools/map2png/map2png.pro",
+        "tools/datapack-explorer-generator-cli/datapack-explorer-generator.pro",
+    ]
+    # total = local builds + remote (rsync per server + builds per server)
+    from remote_build import REMOTE_SERVERS, GUI_PRO_FILES
+    remote_build_count = 0
+    ri = 0
+    while ri < len(REMOTE_SERVERS):
+        remote_build_count += 1  # rsync
+        si = 0
+        while si < len(remote_pro_rels):
+            if REMOTE_SERVERS[ri][5] or remote_pro_rels[si] not in GUI_PRO_FILES:
+                remote_build_count += 1
+            si += 1
+        ri += 1
+    total_expected[0] = len(pro_files) + remote_build_count
+    log_info(f"total expected: {total_expected[0]} ({len(pro_files)} local + {remote_build_count} remote)")
+
+    remote_threads, remote_results, remote_lock = start_remote_builds(remote_pro_rels)
+    log_info("remote builds started in background")
+
     for pf in pro_files:
         test_compile(pf)
         print()
+
+    # collect remote results
+    log_info("waiting for remote builds to finish...")
+    remote = collect_remote_results(remote_threads, remote_results, remote_lock)
+    idx = 0
+    while idx < len(remote):
+        name, ok, detail = remote[idx]
+        if ok:
+            log_pass(name, detail)
+        else:
+            log_fail(name, detail)
+        idx += 1
 
     # summary
     print(f"\n{C_CYAN}{'='*60}")

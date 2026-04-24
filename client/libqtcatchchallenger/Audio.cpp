@@ -2,6 +2,7 @@
 #include "PlatformMacro.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <iostream>
 
 Audio *Audio::audio=nullptr;
@@ -19,7 +20,11 @@ Audio::Audio()
         return;
     }
 
-    volume=100;
+    const QString platform=QGuiApplication::platformName();
+    if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+        volume=0;
+    else
+        volume=100;
     ambiance_player=nullptr;
     ambiance_buffer=nullptr;
 }
@@ -129,6 +134,10 @@ bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
 //if already playing ambiance then call stopCurrentAmbiance
 std::string Audio::startAmbiance(const std::string &soundPath)
 {
+    const QString platform=QGuiApplication::platformName();
+    if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+        return std::string();
+
     stopCurrentAmbiance();
 
     QAudioDevice info=QMediaDevices::defaultAudioOutput();

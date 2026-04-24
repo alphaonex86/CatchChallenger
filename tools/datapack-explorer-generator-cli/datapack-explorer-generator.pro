@@ -15,8 +15,7 @@ DEFINES += CATCHCHALLENGER_NOAUDIO
 QMAKE_CXXFLAGS += -fstack-protector-all -g
 DEFINES += SRC_DIR=\\\"$$PWD\\\"
 
-LIBS += -ltiled
-INCLUDEPATH += /usr/include/tiled/
+include(../../client/libqtcatchchallenger/libtiled.pri)
 
 include(../../general/general.pri)
 

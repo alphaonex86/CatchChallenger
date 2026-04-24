@@ -1,8 +1,8 @@
 #include "MapObjectItem.hpp"
 #include "../libcatchchallenger/ClientVariable.hpp"
-#include <tiled/objectgroup.h>
-#include <tiled/tile.h>
+#include <objectgroup.h>
 
+#include <tile.h>
 std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
 std::unordered_map<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;
 

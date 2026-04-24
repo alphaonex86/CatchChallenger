@@ -8,6 +8,8 @@
 #include <QTimer>
 #include <QCoreApplication>
 #include <QKeyEvent>
+#include <QMediaDevices>
+#include <QAudioDevice>
 #include <iostream>
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../../../libqtcatchchallenger/Audio.hpp"
@@ -322,7 +324,7 @@ void BaseWindow::currentMapLoaded()
             }
 
             Ambiance ambiance;
-            ambiance.player = new QAudioOutput(Audio::audio->format());
+            ambiance.player = new QAudioSink(QMediaDevices::defaultAudioOutput(), Audio::audio->format());
             // Create a new Media
             if(ambiance.player!=NULL)
             {

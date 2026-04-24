@@ -1,6 +1,6 @@
 CONFIG += c++23
 mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
-DEFINES += BLAKE3_NO_SSE2 BLAKE3_NO_SSE41 BLAKE3_NO_AVX2 BLAKE3_NO_AVX512
+
 
 QT       -= core
 
@@ -96,7 +96,15 @@ SOURCES += \
     $$PWD/fight/FightLoaderSkill.cpp
 }
 
-LIBS    += -lzstd -lxxhash
+# xxhash: always use internal
+include($$PWD/libxxhash.pri)
+
+# zstd: external when EXTERNALLIBZSTD is defined (normal servers), internal otherwise (clients, single player)
+contains(DEFINES, EXTERNALLIBZSTD) {
+    LIBS += -lzstd
+} else {
+    include($$PWD/libzstd.pri)
+}
 
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
