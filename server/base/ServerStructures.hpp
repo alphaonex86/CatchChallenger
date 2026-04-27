@@ -46,7 +46,7 @@ namespace CatchChallenger {
 class CommonMap;
 class Client;
 class MapServer;
-class Map_server_MapVisibility_Simple_StoreOnSender;
+class MapVisibilityAlgorithm;
 class PlayerUpdaterBase;
 
 struct Map_player_info
@@ -515,7 +515,7 @@ struct ServerPrivateVariables
      * Then can't just use pointer archimectic
      * then Object size save into CommonMap */
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
-    //Map_server_MapVisibility_Simple_StoreOnSender * flat_map_list;
+    //MapVisibilityAlgorithm * flat_map_list;
     //CATCHCHALLENGER_TYPE_MAPID flat_map_size;
     //std::unordered_map<std::string,CommonMap *> map_list;
     //std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::string > id_map_to_map;

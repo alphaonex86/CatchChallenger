@@ -16,6 +16,7 @@ SOURCES += \
     $$PWD/QZstdDecodeThread.cpp \
     $$PWD/Language.cpp \
     $$PWD/Settings.cpp \
+    $$PWD/CliClientOptions.cpp \
     $$PWD/FeedNews.cpp \
     $$PWD/InternetUpdater.cpp \
     $$PWD/Ultimate.cpp \

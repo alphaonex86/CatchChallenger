@@ -1,7 +1,7 @@
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <fstream>
 #endif
@@ -109,13 +109,13 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         return;
     }
     const CATCHCHALLENGER_TYPE_MAPID &rescue_map_index=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id);
-    if(rescue_map_index>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+    if(rescue_map_index>=MapVisibilityAlgorithm::flat_map_list.size())
     {
         normalOutput("rescue map not resolved");
         characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    const Map_server_MapVisibility_Simple_StoreOnSender &rescue_map_final=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(rescue_map_index);
+    const MapVisibilityAlgorithm &rescue_map_final=MapVisibilityAlgorithm::flat_map_list.at(rescue_map_index);
     const uint8_t &rescue_new_x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(rescue_x,&ok);
     if(!ok)
     {
@@ -184,13 +184,13 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         return;
     }
     const CATCHCHALLENGER_TYPE_MAPID &unvalidated_rescue_map_index=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id);
-    if(unvalidated_rescue_map_index>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+    if(unvalidated_rescue_map_index>=MapVisibilityAlgorithm::flat_map_list.size())
     {
         normalOutput("unvalidated rescue map not resolved");
         characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    const Map_server_MapVisibility_Simple_StoreOnSender &unvalidated_rescue_map_final=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(unvalidated_rescue_map_index);
+    const MapVisibilityAlgorithm &unvalidated_rescue_map_final=MapVisibilityAlgorithm::flat_map_list.at(unvalidated_rescue_map_index);
     const uint8_t &unvalidated_rescue_new_x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(unvalidated_rescue_x,&ok);
     if(!ok)
     {

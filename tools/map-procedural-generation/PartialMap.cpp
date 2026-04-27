@@ -1,11 +1,11 @@
 #include "PartialMap.h"
 
-#include <tiled/mapwriter.h>
-#include <tiled/mapreader.h>
-#include <tiled/mapobject.h>
-#include <tiled/objectgroup.h>
-#include <tiled/tileset.h>
-#include <tiled/tile.h>
+#include <libtiled/mapwriter.h>
+#include <libtiled/mapreader.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/tileset.h>
+#include <libtiled/tile.h>
 #include "../../general/base/cpp11addition.hpp"
 
 #include <QDir>

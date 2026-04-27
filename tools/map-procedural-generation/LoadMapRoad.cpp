@@ -2,10 +2,10 @@
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
 
-#include <tiled/tileset.h>
-#include <tiled/tile.h>
-#include <tiled/objectgroup.h>
-#include <tiled/mapwriter.h>
+#include <libtiled/tileset.h>
+#include <libtiled/tile.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/mapwriter.h>
 
 #include <iostream>
 #include <algorithm>

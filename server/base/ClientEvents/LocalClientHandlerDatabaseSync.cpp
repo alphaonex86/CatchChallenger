@@ -2,7 +2,7 @@
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../MapServer.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 
@@ -267,7 +267,7 @@ void Client::syncBotAlreadyBeaten(const CATCHCHALLENGER_TYPE_MAPID &mapId)
         buffer[posOutput]=bot_id;
         posOutput+=1;
     }
-    const uint32_t map_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId).id_db;
+    const uint32_t map_database_id=MapVisibilityAlgorithm::flat_map_list.at(mapId).id_db;
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_bot_already_beaten.asyncWrite({
                 binarytoHexa(buffer,posOutput),
                 std::to_string(character_id_db),
@@ -318,7 +318,7 @@ void Client::syncIndustries(const CATCHCHALLENGER_TYPE_MAPID &mapId)
             posOutput+=4;
         }
     }
-    const uint32_t map_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId).id_db;
+    const uint32_t map_database_id=MapVisibilityAlgorithm::flat_map_list.at(mapId).id_db;
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_industries.asyncWrite({
                 binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
                 std::to_string(character_id_db),
@@ -353,9 +353,9 @@ void Client::savePosition()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
-    const Map_server_MapVisibility_Simple_StoreOnSender &tmap=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(getMapId());
-    const Map_server_MapVisibility_Simple_StoreOnSender &trescue_map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(rescue.mapIndex);
-    const Map_server_MapVisibility_Simple_StoreOnSender &tunvalidated_rescue_map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(unvalidated_rescue.mapIndex);
+    const MapVisibilityAlgorithm &tmap=MapVisibilityAlgorithm::flat_map_list.at(getMapId());
+    const MapVisibilityAlgorithm &trescue_map=MapVisibilityAlgorithm::flat_map_list.at(rescue.mapIndex);
+    const MapVisibilityAlgorithm &tunvalidated_rescue_map=MapVisibilityAlgorithm::flat_map_list.at(unvalidated_rescue.mapIndex);
     const uint32_t &map_file_database_id=tmap.id_db;
     const uint32_t &rescue_map_file_database_id=trescue_map.id_db;
     const uint32_t &unvalidated_rescue_map_file_database_id=tunvalidated_rescue_map.id_db;

@@ -19,7 +19,7 @@
 #include "../MultiItem.hpp"
 #include "../above/AddOrEditServer.hpp"
 #include "../above/Login.hpp"
-#include "../CliOptions.hpp"
+#include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include <iostream>
 #include <utime.h>
 #if defined(_WIN32) || defined(Q_OS_MAC)
@@ -133,13 +133,13 @@ void Multi::displayServerList()
     }
 
     //auto select the server with name from --server CLI arg
-    if(!autoSelectTried && !CliOptions::serverName.isEmpty())
+    if(!autoSelectTried && !CliClientOptions::serverName.isEmpty())
     {
         unsigned int i=0;
         while(i<mergedConnexionInfoList.size())
         {
             const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(i);
-            if(connexionInfo.name==CliOptions::serverName &&
+            if(connexionInfo.name==CliClientOptions::serverName &&
                (!connexionInfo.host.isEmpty() || !connexionInfo.ws.isEmpty()))
             {
                 autoSelectTried=true;
@@ -888,7 +888,7 @@ void Multi::server_select_clicked()
     emit setAbove(login);
     //auto login when --autologin CLI arg was set
     static bool autoLoginTried=false;
-    if(!autoLoginTried && CliOptions::autologin)
+    if(!autoLoginTried && CliClientOptions::autologin)
     {
         autoLoginTried=true;
         // fill default credentials if empty so validate() passes

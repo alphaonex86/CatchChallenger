@@ -12,6 +12,10 @@ Steps:
 """
 
 import os, sys, signal, subprocess, threading, multiprocessing, json, shutil, re
+import diagnostic
+
+DIAG = diagnostic.parse_diag_args()
+_DIAG_SUFFIX = diagnostic.build_dir_suffix(DIAG)
 
 # ── config ─────────────────────────────────────────────────────────────────
 _CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".config", "catchchallenger-testing", "config.json")
@@ -25,11 +29,16 @@ NPROC      = str(multiprocessing.cpu_count())
 HTTP_DATAPACK_MIRROR = _config["httpDatapackMirror"]
 
 SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
-SERVER_BUILD       = os.path.join(ROOT, "server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
+# Diagnostic builds use their own dir so they don't share .o files with the
+# regular reference build (which stays the source of server-properties.xml).
+_SERVER_REF_BUILD  = os.path.join(ROOT, "server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
+SERVER_BUILD       = _SERVER_REF_BUILD if not _DIAG_SUFFIX else _SERVER_REF_BUILD + _DIAG_SUFFIX
 SERVER_BIN_NAME    = "catchchallenger-server-cli-epoll"
 
 CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
-CLIENT_CPU_BUILD   = os.path.join(ROOT, "client/qtcpu800x600/build/testing-cpu")
+# build dir is suffixed below once DIAG is parsed so diagnostic runs do not
+# collide with the regular build's object files.
+CLIENT_CPU_BUILD   = os.path.join(ROOT, "client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
 CLIENT_CPU_BIN     = "catchchallenger"
 
 CLIENT_DATAPACK_CACHE = os.path.expanduser(_config["paths"]["client_datapack_cache"])
@@ -59,6 +68,58 @@ C_RESET  = "\033[0m"
 results = []
 total_expected = [0]
 server_proc = None
+
+SCRIPT_NAME = os.path.basename(__file__)
+FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+
+
+def load_failed_cases():
+    """Load failed cases for this script from failed.json.
+    Returns None (run everything), [] (skip all), or [names] (resume only those)."""
+    if not os.path.isfile(FAILED_JSON):
+        return None
+    try:
+        with open(FAILED_JSON, "r") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return None
+    if SCRIPT_NAME not in data:
+        return None
+    return data[SCRIPT_NAME]
+
+
+def should_run(test_name, failed_cases):
+    """Check if test should run. None=run all, []=skip all, [..]=only listed."""
+    if failed_cases is None:
+        return True
+    idx = 0
+    while idx < len(failed_cases):
+        if failed_cases[idx] == test_name:
+            return True
+        idx += 1
+    return False
+
+
+def save_failed_cases():
+    """Update failed.json with current failures for this script."""
+    data = {}
+    if os.path.isfile(FAILED_JSON):
+        try:
+            with open(FAILED_JSON, "r") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            data = {}
+    failed = []
+    idx = 0
+    while idx < len(results):
+        name, ok, detail = results[idx]
+        if not ok:
+            failed.append(name)
+        idx += 1
+    data[SCRIPT_NAME] = failed
+    with open(FAILED_JSON, "w") as f:
+        json.dump(data, f, indent=2)
+
 
 def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
@@ -330,14 +391,16 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
 
 def build_project(pro_file, build_dir, label):
     ensure_dir(build_dir)
-    clean_build_artifacts(build_dir)
     log_info(f"make distclean {label}")
     run_cmd(["make", "distclean"], build_dir, timeout=60)
+    clean_build_artifacts(build_dir)
     name = f"compile {label}"
+    spec = diagnostic.compiler_spec(DIAG) or "linux-g++"
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", "linux-g++", "CONFIG+=debug", "CONFIG+=qml_debug",
+                  "-spec", spec, "CONFIG+=debug", "CONFIG+=qml_debug",
                   "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
                   "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
+    qmake_args.extend(diagnostic.qmake_extra_args(DIAG))
     log_info(f"qmake {label}")
     rc, out = run_cmd(qmake_args, build_dir)
     if rc != 0:
@@ -360,9 +423,13 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
         log_fail("start server", f"binary not found: {binary}")
         return None
     log_info(f"starting server: {binary}")
+    env = os.environ.copy()
+    for k, v in diagnostic.runtime_env(DIAG).items():
+        env[k] = v
+    wrapper = diagnostic.runtime_wrapper(DIAG)
     server_proc = subprocess.Popen(
-        NICE_PREFIX + [binary], cwd=build_dir,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        NICE_PREFIX + wrapper + [binary], cwd=build_dir,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
     ready = threading.Event()
     output_lines = []
@@ -374,7 +441,7 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
                 ready.set()
     t = threading.Thread(target=reader, daemon=True)
     t.start()
-    if ready.wait(timeout=SERVER_READY_TIMEOUT):
+    if ready.wait(timeout=diagnostic.scale_timeout(DIAG, SERVER_READY_TIMEOUT)):
         log_pass("server start", "correctly bind: detected")
         return server_proc
     else:
@@ -407,12 +474,21 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     log_info(f"running: {bin_name} {' '.join(args)}")
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
-    gdb_args = ["gdb", "-batch",
-                "-ex", "set breakpoint pending on",
-                "-ex", "handle SIGPIPE nostop noprint pass",
-                "-ex", "break __throw_out_of_range",
-                "-ex", "run", "-ex", "bt", "-ex", "quit",
-                "--args", binary] + args
+    for k, v in diagnostic.runtime_env(DIAG).items():
+        env[k] = v
+    timeout = diagnostic.scale_timeout(DIAG, timeout)
+    wrapper = diagnostic.runtime_wrapper(DIAG)
+    if wrapper:
+        # gdb + valgrind don't compose well — run the binary under valgrind
+        # directly when in valgrind mode.
+        gdb_args = wrapper + [binary] + args
+    else:
+        gdb_args = ["gdb", "-batch",
+                    "-ex", "set breakpoint pending on",
+                    "-ex", "handle SIGPIPE nostop noprint pass",
+                    "-ex", "break __throw_out_of_range",
+                    "-ex", "run", "-ex", "bt", "-ex", "quit",
+                    "--args", binary] + args
     try:
         p = subprocess.run(NICE_PREFIX + gdb_args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
@@ -450,6 +526,11 @@ def main():
     print(f"\n{C_CYAN}{'='*60}")
     print("  CatchChallenger — HTTP Mirror Testing")
     print(f"{'='*60}{C_RESET}\n")
+
+    failed_cases = load_failed_cases()
+    if failed_cases is not None and len(failed_cases) == 0:
+        log_info("all previously passed, skipping (delete test/failed.json for full re-run)")
+        return
 
     # clean all testing build dirs upfront
     for d in (SERVER_BUILD, CLIENT_CPU_BUILD):
@@ -695,6 +776,7 @@ def summary():
         print(f"  [{tag}] {name}  {detail}")
     print()
     print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}")
+    save_failed_cases()
     if failed:
         sys.exit(1)
 

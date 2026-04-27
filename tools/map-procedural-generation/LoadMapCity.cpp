@@ -3,11 +3,11 @@
 #include "../map-procedural-generation-terrain/LoadMap.h"
 #include "../map-procedural-generation-terrain/MapBrush.h"
 
-#include <tiled/tileset.h>
-#include <tiled/tile.h>
-#include <tiled/objectgroup.h>
-#include <tiled/mapobject.h>
-#include <tiled/mapwriter.h>
+#include <libtiled/tileset.h>
+#include <libtiled/tile.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/mapwriter.h>
 #include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>

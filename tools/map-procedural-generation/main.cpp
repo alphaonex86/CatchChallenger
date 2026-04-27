@@ -5,9 +5,9 @@
 #include <QDir>
 #include <iostream>
 
-#include <tiled/mapwriter.h>
-#include <tiled/mapobject.h>
-#include <tiled/objectgroup.h>
+#include <libtiled/mapwriter.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/objectgroup.h>
 
 #include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"

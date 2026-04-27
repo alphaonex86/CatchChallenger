@@ -10,7 +10,7 @@
 #include "../../general/hps/hps.h"
 #endif
 
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonMap/CommonMap.hpp"
@@ -36,7 +36,7 @@ bool BaseServer::preload_9_sync_the_map()
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     std::cout << "start preload the map, into: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << std::endl;
     #endif
-    Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.clear();
+    MapVisibilityAlgorithm::flat_map_list.clear();
     mapPathToId.clear();
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<tinyxml2::XMLDocument*> xmlDocsToKeep;
@@ -57,11 +57,11 @@ bool BaseServer::preload_9_sync_the_map()
         }
         #endif
         // create new MapServer vector same size as received CommonMap vector
-        Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.resize(flat_map_list_temp.size());
+        MapVisibilityAlgorithm::flat_map_list.resize(flat_map_list_temp.size());
         unsigned int i=0;
         while(i<flat_map_list_temp.size())
         {
-            Map_server_MapVisibility_Simple_StoreOnSender &map_server=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[i];
+            MapVisibilityAlgorithm &map_server=MapVisibilityAlgorithm::flat_map_list[i];
             const Map_semi &map_semi=semi_loaded_map.at(i);
             // copy CommonMap data to MapServer (border, id, flat_simplified_map, teleporters, width, height, zones, industries, botFights, shops, botsFightTrigger, items, monsterDrops)
             static_cast<CommonMap &>(map_server)=std::move(flat_map_list_temp[i]);
@@ -84,9 +84,9 @@ bool BaseServer::preload_9_sync_the_map()
     // process buffered unknown entries on each MapServer
     {
         unsigned int i=0;
-        while(i<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        while(i<MapVisibilityAlgorithm::flat_map_list.size())
         {
-            Map_server_MapVisibility_Simple_StoreOnSender &map_server=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[i];
+            MapVisibilityAlgorithm &map_server=MapVisibilityAlgorithm::flat_map_list[i];
             const std::string &mapFile=mapIdToPath.find(i)!=mapIdToPath.cend() ? mapIdToPath.at(i) : std::string("unknown");
             if(i<mapLoadBuffers.size())
             {
@@ -147,10 +147,10 @@ bool BaseServer::preload_9_sync_the_map()
     #ifdef CATCHCHALLENGER_DUMP_DATATREE_CACHE_DATAPACK
     {
         unsigned int i=0;
-        while(i<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        while(i<MapVisibilityAlgorithm::flat_map_list.size())
         {
             const std::string &mapPath=mapIdToPath.find(i)!=mapIdToPath.cend() ? mapIdToPath.at(i) : std::string("unknown_")+std::to_string(i);
-            const Map_server_MapVisibility_Simple_StoreOnSender &map_server=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[i];
+            const MapVisibilityAlgorithm &map_server=MapVisibilityAlgorithm::flat_map_list[i];
             const std::string dumpDir=std::string("dump/")+mapPath;
             //mkpath
             {
@@ -385,7 +385,7 @@ bool BaseServer::preload_9_sync_the_map()
             }
             i++;
         }
-        std::cout << "CATCHCHALLENGER_DUMP_DATATREE_CACHE_DATAPACK: dumped " << Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size() << " maps into dump/" << std::endl;
+        std::cout << "CATCHCHALLENGER_DUMP_DATATREE_CACHE_DATAPACK: dumped " << MapVisibilityAlgorithm::flat_map_list.size() << " maps into dump/" << std::endl;
     }
     #endif
 

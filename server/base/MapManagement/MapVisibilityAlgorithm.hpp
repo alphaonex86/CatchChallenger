@@ -1,5 +1,5 @@
-#ifndef CATCHCHALLENGER_MAP_SERVER_MAPVISIBILITY_SIMPLE_STOREONSENDER_H
-#define CATCHCHALLENGER_MAP_SERVER_MAPVISIBILITY_SIMPLE_STOREONSENDER_H
+#ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_H
+#define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_H
 
 #include "../MapServer.hpp"
 
@@ -14,11 +14,11 @@
 namespace CatchChallenger {
 class ClientWithMap;
 
-class Map_server_MapVisibility_Simple_StoreOnSender : public MapServer
+class MapVisibilityAlgorithm : public MapServer
 {
 public:
-    Map_server_MapVisibility_Simple_StoreOnSender();
-    virtual ~Map_server_MapVisibility_Simple_StoreOnSender();
+    MapVisibilityAlgorithm();
+    virtual ~MapVisibilityAlgorithm();
     void purgeBuffer();
 
     //void send_dropAll();
@@ -54,7 +54,7 @@ public:
      * index imply always pass the list map and type to always be able to resolv index to data
      */
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
-    static std::vector<Map_server_MapVisibility_Simple_StoreOnSender> flat_map_list;//std::vector<CommonMap *> will request 2x more memory fetch, one to get the pointer, one to get the data. With the actual pointer, just get the data, need one list for server and multiple list for client
+    static std::vector<MapVisibilityAlgorithm> flat_map_list;//std::vector<CommonMap *> will request 2x more memory fetch, one to get the pointer, one to get the data. With the actual pointer, just get the data, need one list for server and multiple list for client
 };
 }
 

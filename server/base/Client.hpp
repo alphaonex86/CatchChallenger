@@ -533,8 +533,8 @@ private:
     bool isInBattle() const override;
     bool learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &skill);
     void getRandomNumberIfNeeded() const;
-    bool botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const Map_server_MapVisibility_Simple_StoreOnSender &map, const COORD_TYPE &x, const COORD_TYPE &y);
-    bool checkFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const MapVisibilityAlgorithm &map, const COORD_TYPE &x, const COORD_TYPE &y);
+    bool checkFightCollision(const MapVisibilityAlgorithm &map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(Client &otherPlayerBattle);
     void saveAllMonsterPosition();
 
@@ -597,7 +597,7 @@ private:
     bool removeSkill(PlayerMonster * currentMonster,const unsigned int &index) override;
 
     //return nullptr if can't move in this direction
-    const Map_server_MapVisibility_Simple_StoreOnSender *mapAndPosIfMoveInLookingDirectionJumpColision(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y);
+    const MapVisibilityAlgorithm *mapAndPosIfMoveInLookingDirectionJumpColision(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y);
 
     //trade
     PLAYER_INDEX_FOR_CONNECTED otherPlayerTrade;
@@ -643,8 +643,8 @@ private:
     void insertIntoAClan(const uint32_t &clanId);
     void ejectToClan();
 
-    void insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map);
-    void removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map);
+    void insertClientOnMap(MapVisibilityAlgorithm &map);
+    void removeClientOnMap(MapVisibilityAlgorithm &map);
 
     void errorFightEngine(const std::string &error) override;
     void messageFightEngine(const std::string &message) const override;

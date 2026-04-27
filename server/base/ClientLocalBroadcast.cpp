@@ -4,7 +4,7 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "GlobalServerData.hpp"
-#include "MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "MapManagement/MapVisibilityAlgorithm.hpp"
 
 using namespace CatchChallenger;
 
@@ -12,7 +12,7 @@ void Client::sendLocalChatText(const std::string &text)
 {
     if(mapIndex>=65535)
         return;
-    Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex];
+    MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list[mapIndex];
     if((map.localChatDropTotalCache+map.localChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
         return;
     map.localChatDropNewValue++;
@@ -68,7 +68,7 @@ void Client::sendLocalChatText(const std::string &text)
     }
 }
 
-void Client::insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
+void Client::insertClientOnMap(MapVisibilityAlgorithm &map)
 {
     if(getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
@@ -77,7 +77,7 @@ void Client::insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &ma
     index_on_map=map.insertOnMap(getIndexConnect());
 }
 
-void Client::removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
+void Client::removeClientOnMap(MapVisibilityAlgorithm &map)
 {
     if(getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;

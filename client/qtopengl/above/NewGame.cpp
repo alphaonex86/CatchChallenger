@@ -1,5 +1,5 @@
 #include "NewGame.hpp"
-#include "../CliOptions.hpp"
+#include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../../libqtcatchchallenger/Settings.hpp"
 #include "../../../general/base/cpp11addition.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
@@ -278,10 +278,10 @@ void NewGame::setDatapack(const std::string &skinPath, const std::string &monste
         return;
     }
     // auto-fill and confirm when running automated
-    if(CliOptions::autosolo || !CliOptions::characterName.isEmpty())
+    if(CliClientOptions::autosolo || !CliClientOptions::characterName.isEmpty())
     {
         if(uipseudo->text().isEmpty())
-            uipseudo->setText(CliOptions::characterName.isEmpty() ? QStringLiteral("Player") : CliOptions::characterName);
+            uipseudo->setText(CliClientOptions::characterName.isEmpty() ? QStringLiteral("Player") : CliClientOptions::characterName);
         on_ok_clicked();// Step1 → Step2 (auto-skips to StepOk if only 1 monster group)
         if(step==Step2)
             on_ok_clicked();// Step2 → StepOk

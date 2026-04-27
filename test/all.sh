@@ -2,15 +2,53 @@
 # Run all testing*.py scripts sequentially.
 # Remote compilations run in parallel with local builds inside each script.
 # Exit on first script failure unless --continue is passed.
+#
+# Diagnostic-tool runs:
+#   --sanitize asan|lsan|msan      forwarded to each testing*.py
+#   --valgrind memcheck|helgrind|drd  forwarded to each testing*.py
+#                                  (per-test timeouts are scaled 10x there)
+# --sanitize and --valgrind are mutually exclusive.
 
 set -e
 
 cd "$(dirname "$0")"
 
 CONTINUE=0
-if [ "$1" = "--continue" ]; then
-    CONTINUE=1
-    set +e
+DIAG_ARGS=()
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --continue)
+            CONTINUE=1
+            set +e
+            shift
+            ;;
+        --sanitize|--valgrind)
+            if [ -z "$2" ]; then
+                echo "$1 requires a value (asan|lsan|msan or memcheck|helgrind|drd)" >&2
+                exit 2
+            fi
+            DIAG_ARGS+=("$1" "$2")
+            shift 2
+            ;;
+        *)
+            echo "unknown argument: $1" >&2
+            exit 2
+            ;;
+    esac
+done
+
+# argparse-side check still runs in each python script; this is just a
+# friendly preflight for the orchestrator.
+SAW_S=0
+SAW_V=0
+for a in "${DIAG_ARGS[@]}"; do
+    [ "$a" = "--sanitize" ] && SAW_S=1
+    [ "$a" = "--valgrind" ] && SAW_V=1
+done
+if [ "$SAW_S" = "1" ] && [ "$SAW_V" = "1" ]; then
+    echo "error: --sanitize and --valgrind are mutually exclusive" >&2
+    exit 2
 fi
 
 GREEN='\033[92m'
@@ -22,9 +60,9 @@ FAILED=0
 
 run_test() {
     echo -e "\n${CYAN}========================================${RESET}"
-    echo -e "${CYAN}  Running: $1${RESET}"
+    echo -e "${CYAN}  Running: $1 ${DIAG_ARGS[*]}${RESET}"
     echo -e "${CYAN}========================================${RESET}\n"
-    if python3 "$1"; then
+    if python3 "$1" "${DIAG_ARGS[@]}"; then
         echo -e "\n${GREEN}[OK] $1${RESET}\n"
     else
         echo -e "\n${RED}[FAILED] $1${RESET}\n"
@@ -38,6 +76,7 @@ run_test() {
 
 run_test testingtools.py
 run_test testingclient.py
+run_test testingbots.py
 run_test testingserver.py
 run_test testinghttp.py
 run_test testingmulti.py

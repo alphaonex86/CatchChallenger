@@ -1,4 +1,4 @@
-#include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "MapVisibilityAlgorithm.hpp"
 #include "ClientWithMap.hpp"
 #include "../GlobalServerData.hpp"
 #include "../Client.hpp"
@@ -7,7 +7,24 @@
 #include <iostream>
 #include <iomanip>
 
-/** limit visible 254 player at time (store internal index, 255, 65535 if not found), drop branch, /2 network, less code
+/** CRITICAL CODE: performance-sensitive hot path that drives how every player
+ *  sees the others on the map. Touch with care — this runs on every tick for
+ *  every visible player on every map.
+ *
+ *  Two broadcast strategies are implemented, picked per server configuration:
+ *
+ *  - min_CPU (stateless): rebroadcast every player's x, y and direction every
+ *    tick regardless of whether anything changed. The server keeps no per-
+ *    recipient state; clients filter out their own and unchanged data on
+ *    receipt. Cheapest possible CPU on the server, at the cost of higher
+ *    network usage.
+ *
+ *  - min_network (stateful): for each recipient, remember what was last sent
+ *    (sendedStatus) and only emit the players whose data actually changed
+ *    (insert / remove / move). Much heavier on CPU (per-recipient diff every
+ *    tick) but uses far less network.
+ *
+ *  limit visible 254 player at time (store internal index, 255, 65535 if not found), drop branch, /2 network, less code
  *  way to do:
  *  1) dropall + just do full insert and send all vector
  *  2) store last state and do a diff for each player
@@ -28,17 +45,17 @@
 using namespace CatchChallenger;
 
 //to prevent allocate memory
-char Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[];
-char Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove[];
-std::vector<Map_server_MapVisibility_Simple_StoreOnSender> Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list;
+char MapVisibilityAlgorithm::tempBigBufferForChanges[];
+char MapVisibilityAlgorithm::tempBigBufferForRemove[];
+std::vector<MapVisibilityAlgorithm> MapVisibilityAlgorithm::flat_map_list;
 
-Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_StoreOnSender()
+MapVisibilityAlgorithm::MapVisibilityAlgorithm()
 {
-    Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[0x00]=0x66;
-    Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove[0x00]=0x69;
+    MapVisibilityAlgorithm::tempBigBufferForChanges[0x00]=0x66;
+    MapVisibilityAlgorithm::tempBigBufferForRemove[0x00]=0x69;
 }
 
-Map_server_MapVisibility_Simple_StoreOnSender::~Map_server_MapVisibility_Simple_StoreOnSender()
+MapVisibilityAlgorithm::~MapVisibilityAlgorithm()
 {
 }
 
@@ -46,7 +63,7 @@ Map_server_MapVisibility_Simple_StoreOnSender::~Map_server_MapVisibility_Simple_
 /// Buffer layout: [0x6B][size:4][map_count:1][mapId:2][player_count:1][player_entries...]
 /// Each player entry: [slot:1][x:1][y:1][dir|type:1][pseudo_len:1][pseudo:N][skinId:1][monsterId:2]
 /// Returns total bytes written to output (including the 0x6B header).
-unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size)
+unsigned int MapVisibilityAlgorithm::send_reinsertAll(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size)
 {
     if(clients_size<=1)
         return 0;
@@ -85,7 +102,7 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(con
 }
 
 /// Same as send_reinsertAll but skips the player at local slot skipped_id (the recipient).
-unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWithFilter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size,const size_t &skipped_id)
+unsigned int MapVisibilityAlgorithm::send_reinsertAllWithFilter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size,const size_t &skipped_id)
 {
     if(clients_size<=1)
         return 0;
@@ -125,11 +142,14 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWith
     return posOutput;
 }
 
-/// min_CPU: broadcast all, no filter then resend same data.
+/// min_CPU (stateless broadcast): resend every player's x, y and direction
+/// every tick whether or not anything actually changed. The server keeps no
+/// per-recipient state; clients are responsible for filtering out themselves
+/// and ignoring unchanged entries. Minimises CPU at the cost of more network.
 /// Every tick (150ms), sends [0x65 drop_all][0x6B full_insert][0xE3 ping] to each client.
 /// First tick for a client also prepends [0x6C first_insert self_slot].
 /// Caches the 0x65+0x6B block across clients on the same map (same data, different ping).
-void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     uint32_t posOutput=0;//if > 0 then cache created
     uint32_t baseOutput=0;
@@ -214,22 +234,25 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU(const CATCHCHALLENGE
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             else
-                std::cerr << "Map_server_MapVisibility_Simple_StoreOnSender::min_CPU() ClientList::list.empty(): " << map_c_idP << std::endl;
+                std::cerr << "MapVisibilityAlgorithm::min_CPU() ClientList::list.empty(): " << map_c_idP << std::endl;
             #endif
         }
         index_client++;
     }
 }
 
-/// min_network: filter if already sent, then consume CPU and use MapManagement/ClientWithMap sendedStatus/sendedMap.
-/// Tracks what was last sent to each client via sendedStatus. On each tick:
+/// min_network (stateful diff): only send the other players that actually
+/// changed since the last tick, by remembering per recipient what was last
+/// sent (ClientWithMap::sendedStatus / sendedMap). Costs significantly more
+/// CPU than min_CPU (diff per recipient per tick) but uses far less network.
+/// On each tick:
 ///   - Path 1 (new map): sends [0x65 drop_all][0x6B full_insert_filtered][0xE3 ping], populates sendedStatus
 ///   - Path 2 (same map): compares current state with sendedStatus, sends only:
 ///       * 0x6B for new/replaced players (inserts)
 ///       * 0x69 for removed players (removes)
 ///       * 0x66 for moved players (changes = x/y/direction diff)
 ///     then updates sendedStatus
-void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     //if too many player then just stop update
     size_t clients_size=map_clients_id.size();
@@ -345,10 +368,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                                             //position or direction changed -> send 0x66 change entry
                                             {
                                                 //only send partial changes: slot + x + y + direction (4 bytes per entry)
-                                                Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)]=static_cast<uint8_t>(index);
-                                                Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1]=static_cast<uint8_t>(other_client.getX());
-                                                Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1]=static_cast<uint8_t>(other_client.getY());
-                                                Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1+1]=static_cast<uint8_t>(other_client.getLastDirection());
+                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)]=static_cast<uint8_t>(index);
+                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1]=static_cast<uint8_t>(other_client.getX());
+                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1]=static_cast<uint8_t>(other_client.getY());
+                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1+1]=static_cast<uint8_t>(other_client.getLastDirection());
                                                 changesCount++;
                                             }
                                         }
@@ -379,7 +402,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                                         std::cerr << "min_network() PATH2 slot=" << index_client << " scan other_slot=" << index << " REMOVE old_charId=" << c_stat.characterId_db << std::endl;
                                         //player left this slot -> send 0x69 remove entry
                                         {
-                                            Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove[1+4+1+removeCount]=static_cast<uint8_t>(index);
+                                            MapVisibilityAlgorithm::tempBigBufferForRemove[1+4+1+removeCount]=static_cast<uint8_t>(index);
                                             removeCount++;
                                         }
                                     }
@@ -435,20 +458,20 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
                             if(removeCount>0)
                             {
                                 std::cerr << "min_network() PATH2 slot=" << index_client << " +0x69 remove count=" << std::to_string(removeCount) << " at_pos=" << posOutput << std::endl;
-                                Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove[1+4]=static_cast<uint8_t>(removeCount);//player count
-                                *reinterpret_cast<uint32_t *>(Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove+1)=htole32(1+removeCount);//dynamic size = count_byte + indices
+                                MapVisibilityAlgorithm::tempBigBufferForRemove[1+4]=static_cast<uint8_t>(removeCount);//player count
+                                *reinterpret_cast<uint32_t *>(MapVisibilityAlgorithm::tempBigBufferForRemove+1)=htole32(1+removeCount);//dynamic size = count_byte + indices
                                 //copy the pre-built remove buffer [0x69][size4][count1][indices...] into main output
-                                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove,1+4+1+removeCount);
+                                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,MapVisibilityAlgorithm::tempBigBufferForRemove,1+4+1+removeCount);
                                 posOutput+=1+4+1+removeCount;
                             }
                             //append 0x66 changes packet (if any) after removes
                             if(changesCount>0)
                             {
                                 std::cerr << "min_network() PATH2 slot=" << index_client << " +0x66 changes count=" << std::to_string(changesCount) << " at_pos=" << posOutput << std::endl;
-                                Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[1+4]=static_cast<uint8_t>(changesCount);//player count
-                                *reinterpret_cast<uint32_t *>(Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges+1)=htole32(1+changesCount*(1+1+1+1));//dynamic size = count_byte + count * 4 bytes per entry
+                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4]=static_cast<uint8_t>(changesCount);//player count
+                                *reinterpret_cast<uint32_t *>(MapVisibilityAlgorithm::tempBigBufferForChanges+1)=htole32(1+changesCount*(1+1+1+1));//dynamic size = count_byte + count * 4 bytes per entry
                                 //copy the pre-built changes buffer [0x66][size4][count1][entries...] into main output
-                                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges,1+4+1+changesCount*(1+1+1+1));
+                                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,MapVisibilityAlgorithm::tempBigBufferForChanges,1+4+1+changesCount*(1+1+1+1));
                                 posOutput+=1+4+1+changesCount*(1+1+1+1);
                             }
                             //only append ping if none pending, to avoid exhausting query numbers
@@ -489,7 +512,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             else
-                std::cerr << "Map_server_MapVisibility_Simple_StoreOnSender::min_network() ClientList::list.empty(): " << map_c_idP << std::endl;
+                std::cerr << "MapVisibilityAlgorithm::min_network() ClientList::list.empty(): " << map_c_idP << std::endl;
             #endif
         }
         index_client++;

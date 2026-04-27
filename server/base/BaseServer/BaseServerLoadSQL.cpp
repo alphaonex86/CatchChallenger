@@ -11,7 +11,7 @@
 #endif
 #include <iostream>
 
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 
@@ -30,7 +30,7 @@ void BaseServer::preload_12_async_dictionary_map()
     #else
     #error Define what do here
     #endif
-    if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size()==0)
+    if(MapVisibilityAlgorithm::flat_map_list.size()==0)
     {
         std::cerr << "No map to list" << std::endl;
         abort();
@@ -134,7 +134,7 @@ void BaseServer::preload_dictionary_map_return()
             {
                 DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=mapPathToId.at(map);
                 foundMap.insert(map);
-                Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapPathToId.at(map)].id_db=databaseMapId;
+                MapVisibilityAlgorithm::flat_map_list[mapPathToId.at(map)].id_db=databaseMapId;
             }
             else
                 obsoleteMap++;
@@ -203,7 +203,7 @@ void BaseServer::preload_dictionary_map_return()
             while(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
                 DictionaryServer::dictionary_map_database_to_internal.push_back(65535);
             DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=mapPathToId.at(map);
-            Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapPathToId.at(map)].id_db=databaseMapId;
+            MapVisibilityAlgorithm::flat_map_list[mapPathToId.at(map)].id_db=databaseMapId;
         }
         index++;
     }
@@ -253,7 +253,7 @@ void BaseServer::preload_dictionary_map_return()
     {
         CATCHCHALLENGER_TYPE_MAPID mapListSize=0;
         *serialBuffer >> mapListSize;
-        *serialBuffer >> Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list;
+        *serialBuffer >> MapVisibilityAlgorithm::flat_map_list;
         DictionaryServer::dictionary_map_database_to_internal.clear();
         *serialBuffer >> DictionaryServer::dictionary_map_database_to_internal;
         obsoleteMap=0;
@@ -525,7 +525,7 @@ void BaseServer::preload_industries_return()
         uint32_t mapSize=0;
         size_t lastSize=out_file->tellp();
 
-        hps::to_stream(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list, *out_file);
+        hps::to_stream(MapVisibilityAlgorithm::flat_map_list, *out_file);
 
         std::cout << "map id size: " << idSize << "B" << std::endl;
         std::cout << "map pathSize size: " << pathSize << "B" << std::endl;

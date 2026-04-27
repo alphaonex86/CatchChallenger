@@ -5,7 +5,7 @@ QT += gui
 
 # For #include "map.h" style (used by maprender/ and libtiled/ internally)
 INCLUDEPATH += $$PWD/libtiled/
-# For #include <tiled/map.h> style (tiled/ is a symlink to libtiled/)
+# For #include <libtiled/map.h> style (via $$PWD include path)
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/libtiled/
 

@@ -1,5 +1,5 @@
 #include "MapBasicMove.hpp"
-#include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "MapVisibilityAlgorithm.hpp"
 #include "../../../general/base/MoveOnTheMap.hpp"
 #include "../../../general/base/CommonMap/CommonMap.hpp"
 
@@ -108,7 +108,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 {
                     if(!singleMove(Direction_move_at_top))
                         return false;
-                    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+                    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
                     ledge=MoveOnTheMap::getLedge(map,x,y);
                 } while(ledge==ParsedLayerLedges_LedgesTop);
                 if(ledge!=ParsedLayerLedges_NoLedges)
@@ -145,7 +145,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 {
                     if(!singleMove(Direction_move_at_right))
                         return false;
-                    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+                    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
                     ledge=MoveOnTheMap::getLedge(map,x,y);
                 } while(ledge==ParsedLayerLedges_LedgesRight);
                 if(ledge!=ParsedLayerLedges_NoLedges)
@@ -181,7 +181,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 {
                     if(!singleMove(Direction_move_at_bottom))
                         return false;
-                    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+                    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
                     ledge=MoveOnTheMap::getLedge(map,x,y);
                 } while(ledge==ParsedLayerLedges_LedgesBottom);
                 if(ledge!=ParsedLayerLedges_NoLedges)
@@ -217,7 +217,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 {
                     if(!singleMove(Direction_move_at_left))
                         return false;
-                    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+                    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
                     ledge=MoveOnTheMap::getLedge(map,x,y);
                 } while(ledge==ParsedLayerLedges_LedgesLeft);
                 if(ledge!=ParsedLayerLedges_NoLedges)

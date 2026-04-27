@@ -233,7 +233,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 receiveSystemText("wrong second argument: "+arguments.at(1)+", usage: /goto map x y");
                 return;
             }
-            if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.find(arguments.front())==Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.end())
+            if(MapVisibilityAlgorithm::flat_map_list.find(arguments.front())==MapVisibilityAlgorithm::flat_map_list.end())
             {
                 receiveSystemText(arguments.front()+" map not found, usage: /goto map x y");
                 return;
@@ -251,7 +251,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 receiveSystemText(arguments.front()+" y not number, usage: /goto map x y");
                 return;
             }
-            CommonMap * tempMap=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(arguments.front());
+            CommonMap * tempMap=MapVisibilityAlgorithm::flat_map_list.at(arguments.front());
             if(tempX>=tempMap->width)
             {
                 receiveSystemText(arguments.front()+" x too big, usage: /goto map x y");

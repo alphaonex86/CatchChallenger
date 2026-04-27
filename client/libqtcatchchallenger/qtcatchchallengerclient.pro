@@ -1,6 +1,6 @@
 DEFINES += CATCHCHALLENGER_SOLO CATCHCHALLENGER_MULTI TINYXML2_EXPORT
 TEMPLATE = lib
-CONFIG   += precompile_header
+CONFIG   += precompile_header object_parallel_to_source
 precompile_header:!isEmpty(PRECOMPILED_HEADER) {
 DEFINES += USING_PCH
 }

@@ -12,6 +12,7 @@ HEADERS  += \
     $$PWD/DisplayStructures.hpp \
     $$PWD/PlatformMacro.hpp \
     $$PWD/Settings.hpp \
+    $$PWD/CliClientOptions.hpp \
     $$PWD/ClientVariableAudio.hpp \
     $$PWD/FeedNews.hpp \
     $$PWD/InternetUpdater.hpp \

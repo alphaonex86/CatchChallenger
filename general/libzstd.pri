@@ -1,3 +1,6 @@
+# object_parallel_to_source: avoid xxhash.o/debug.o basename collisions with libxxhash and libopus
+CONFIG += object_parallel_to_source
+
 INCLUDEPATH += $$PWD/libzstd/lib/ \
     $$PWD/libzstd/lib/common/
 

@@ -18,7 +18,7 @@ HEADERS += \
     $$PWD/base/MapServer.hpp \
     $$PWD/base/MapManagement/ClientMapManagement.hpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.hpp \
-    $$PWD/base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm.hpp \
     $$PWD/base/MapManagement/MapBasicMove.hpp \
     $$PWD/base/DictionaryLogin.hpp \
     $$PWD/base/DdosBuffer.hpp \
