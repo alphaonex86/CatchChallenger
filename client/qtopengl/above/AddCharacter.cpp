@@ -1,5 +1,5 @@
 #include "AddCharacter.hpp"
-#include "../CliOptions.hpp"
+#include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../../libqtcatchchallenger/Settings.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
 #include <QPainter>
@@ -188,7 +188,7 @@ void AddCharacter::setDatapack(std::string path)
 
     }
     validate->setEnabled(comboBox->count()>0);
-    if(profileTextList.size()==1 || CliOptions::autosolo || !CliOptions::characterName.isEmpty())
+    if(profileTextList.size()==1 || CliClientOptions::autosolo || !CliClientOptions::characterName.isEmpty())
         on_ok_clicked();
 }
 

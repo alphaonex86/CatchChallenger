@@ -64,7 +64,7 @@ public:
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> quests;
     //std::map<std::pair<uint8_t,uint8_t>,PlantOnMap,pairhash> plants;->see MapServerCrafting
 
-    //see Map_server_MapVisibility_Simple_StoreOnSender for flat_map_list
+    //see MapVisibilityAlgorithm for flat_map_list
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>

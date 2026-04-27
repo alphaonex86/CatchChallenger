@@ -5,7 +5,7 @@
 #include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -228,9 +228,9 @@ void BaseServer::loadAndFixSettings()
     else
         player_list_size=sizeof(uint16_t);*/
     uint8_t map_list_size;
-    if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size()<=255)
+    if(MapVisibilityAlgorithm::flat_map_list.size()<=255)
         map_list_size=sizeof(uint8_t);
-    else if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size()<=65534)
+    else if(MapVisibilityAlgorithm::flat_map_list.size()<=65534)
         map_list_size=sizeof(uint16_t);
     else
     {

@@ -1,6 +1,7 @@
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "AudioGL.hpp"
 #include "GameLoader.hpp"
+#include "../libqtcatchchallenger/CliClientOptions.hpp"
 #include <QCoreApplication>
 #include <QMediaDevices>
 #include <QAudioDevice>
@@ -16,6 +17,8 @@ AudioGL::~AudioGL()
 //if already playing ambiance then call stopCurrentAmbiance
 std::string AudioGL::startAmbiance(const std::string &soundPath)
 {
+    if(CliClientOptions::autosolo || CliClientOptions::closeWhenOnMap)
+        return std::string();
     const QString QtsoundPath=QString::fromStdString(soundPath);
     if(!QtsoundPath.startsWith(":/"))
         return Audio::startAmbiance(soundPath);

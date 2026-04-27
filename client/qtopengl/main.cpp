@@ -16,7 +16,7 @@
 #include <QScreen>
 #include "../libqtcatchchallenger/Language.hpp"
 #include "MyApplication.h"
-#include "CliOptions.hpp"
+#include "../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../libqtcatchchallenger/Settings.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../libqtcatchchallenger/Audio.hpp"
@@ -192,41 +192,41 @@ int main(int argc, char *argv[])
             {
                 if((index+1)<arguments.size())
                 {
-                    CliOptions::serverName=arguments.at(index+1);
+                    CliClientOptions::serverName=arguments.at(index+1);
                     index++;
                 }
                 else
                     std::cerr << "--server require a name argument" << std::endl;
             }
             else if(arg==QStringLiteral("--autologin"))
-                CliOptions::autologin=true;
+                CliClientOptions::autologin=true;
             else if(arg==QStringLiteral("--character"))
             {
                 if((index+1)<arguments.size())
                 {
-                    CliOptions::characterName=arguments.at(index+1);
+                    CliClientOptions::characterName=arguments.at(index+1);
                     index++;
                 }
                 else
                     std::cerr << "--character require a name argument" << std::endl;
             }
             else if(arg==QStringLiteral("--closewhenonmap"))
-                CliOptions::closeWhenOnMap=true;
+                CliClientOptions::closeWhenOnMap=true;
             else if(arg.startsWith(QStringLiteral("--closewhenonmapafter=")))
             {
-                CliOptions::closeWhenOnMapAfter=arg.mid(22).toInt();
-                if(CliOptions::closeWhenOnMapAfter<1)
-                    CliOptions::closeWhenOnMapAfter=1;
+                CliClientOptions::closeWhenOnMapAfter=arg.mid(22).toInt();
+                if(CliClientOptions::closeWhenOnMapAfter<1)
+                    CliClientOptions::closeWhenOnMapAfter=1;
             }
             else if(arg==QStringLiteral("--dropsenddataafteronmap"))
-                CliOptions::dropSendDataAfterOnMap=true;
+                CliClientOptions::dropSendDataAfterOnMap=true;
             else if(arg==QStringLiteral("--autosolo"))
-                CliOptions::autosolo=true;
+                CliClientOptions::autosolo=true;
             else if(arg==QStringLiteral("--host"))
             {
                 if((index+1)<arguments.size())
                 {
-                    CliOptions::host=arguments.at(index+1);
+                    CliClientOptions::host=arguments.at(index+1);
                     index++;
                 }
                 else
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
             {
                 if((index+1)<arguments.size())
                 {
-                    CliOptions::port=static_cast<uint16_t>(arguments.at(index+1).toUShort());
+                    CliClientOptions::port=static_cast<uint16_t>(arguments.at(index+1).toUShort());
                     index++;
                 }
                 else
@@ -258,9 +258,9 @@ int main(int argc, char *argv[])
     QIcon icon;
     icon.addFile(":/CC/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
-    if(!CliOptions::host.isEmpty() || !CliOptions::serverName.isEmpty() ||
-       CliOptions::closeWhenOnMap || CliOptions::dropSendDataAfterOnMap ||
-       CliOptions::autosolo)
+    if(!CliClientOptions::host.isEmpty() || !CliClientOptions::serverName.isEmpty() ||
+       CliClientOptions::closeWhenOnMap || CliClientOptions::dropSendDataAfterOnMap ||
+       CliClientOptions::autosolo)
     {
         //s.setWindowFlags(s.windowFlags() | Qt::WindowStaysOnBottomHint);
         s.show();

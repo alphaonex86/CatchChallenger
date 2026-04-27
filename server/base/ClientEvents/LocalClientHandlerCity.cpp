@@ -1,7 +1,7 @@
 #include "../Client.hpp"
 #include "../ClientList.hpp"
 #include "../PreparedDBQuery.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../GlobalServerData.hpp"
 #include <string.h>
 #include "../../general/base/FacilityLib.hpp"
@@ -71,7 +71,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
         #endif
         COORD_TYPE new_x=0,new_y=0;
         CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-        const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+        const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
         if(new_map==nullptr)
         {
             errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -229,13 +229,13 @@ void Client::startTheCityCapture()
                     {
                         const CATCHCHALLENGER_TYPE_MAPID &mapId=mapsList.at(index);
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        if(mapId>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+                        if(mapId>=MapVisibilityAlgorithm::flat_map_list.size())
                         {
                             std::cerr << "Client::startTheCityCapture() mapId is > map list size" << std::endl;
                             abort();
                         }
                         #endif
-                        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId);
+                        const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapId);
                         std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> temp;
                         for (const std::pair<const uint8_t/*npc id*/,BotFight>& n : map.botFights)
                         {

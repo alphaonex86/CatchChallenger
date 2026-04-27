@@ -12,9 +12,15 @@ Phases:
 
 import os, sys, signal, subprocess, threading, shutil, multiprocessing, time, glob as globmod, json, re
 from remote_build import (start_remote_builds, collect_remote_results,
-                          REMOTE_SERVERS, REMOTE_DIR,
+                          REMOTE_SERVERS, REMOTE_NODES, node_runs, get_node,
                           setup_remote_server_runtime, start_remote_server,
-                          stop_remote_server, get_remote_server_address)
+                          stop_remote_server, get_remote_server_address,
+                          cleanup_remote_node, SERVER_MAKE_SCRIPTS,
+                          build_server_via_make, compare_qmake_make)
+import diagnostic
+
+DIAG = diagnostic.parse_diag_args()
+_DIAG_SUFFIX = diagnostic.build_dir_suffix(DIAG)
 
 # ── config ─────────────────────────────────────────────────────────────────
 _CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".config", "catchchallenger-testing", "config.json")
@@ -79,9 +85,7 @@ SERVER_TARGETS = [
     ("server/epoll/catchchallenger-server-filedb.pro",
      "server-filedb", "server/epoll/build",
      ["CATCHCHALLENGER_NOXML", "CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR",
-      "CATCHCHALLENGER_HARDENED", "CATCHCHALLENGER_LIMIT_254CONNECTED",
-      "CATCHCHALLENGER_DUMP_DATATREE_CACHE_DATAPACK",
-      "HPS_VECTOR_RAW_BINARY"]),
+      "CATCHCHALLENGER_HARDENED"]),
     ("server/epoll/catchchallenger-server-cli-epoll.pro",
      "server-cli-epoll", "server/epoll/build",
      ["CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR",
@@ -114,6 +118,58 @@ results = []
 total_expected = [0]
 server_proc = None
 
+SCRIPT_NAME = os.path.basename(__file__)
+FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+
+
+def load_failed_cases():
+    """Load failed cases for this script from failed.json.
+    Returns None (run everything), [] (skip all), or [names] (resume only those)."""
+    if not os.path.isfile(FAILED_JSON):
+        return None
+    try:
+        with open(FAILED_JSON, "r") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return None
+    if SCRIPT_NAME not in data:
+        return None
+    return data[SCRIPT_NAME]
+
+
+def should_run(test_name, failed_cases):
+    """Check if test should run. None=run all, []=skip all, [..]=only listed."""
+    if failed_cases is None:
+        return True
+    idx = 0
+    while idx < len(failed_cases):
+        if failed_cases[idx] == test_name:
+            return True
+        idx += 1
+    return False
+
+
+def save_failed_cases():
+    """Update failed.json with current failures for this script."""
+    data = {}
+    if os.path.isfile(FAILED_JSON):
+        try:
+            with open(FAILED_JSON, "r") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            data = {}
+    failed = []
+    idx = 0
+    while idx < len(results):
+        name, ok, detail = results[idx]
+        if not ok:
+            failed.append(name)
+        idx += 1
+    data[SCRIPT_NAME] = failed
+    with open(FAILED_JSON, "w") as f:
+        json.dump(data, f, indent=2)
+
+
 def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
 def log_pass(name, detail=""):
@@ -124,20 +180,84 @@ def log_fail(name, detail=""):
     print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
 
 
+# Flags tested as standalone single-flag combos rather than being part of
+# the multi-flag powerset.  In every multi-flag combination produced by
+# flag_combinations(), ALWAYS_ON_IN_COMBOS flags (that are also in the
+# target's optional list) are always added and ALWAYS_OFF_IN_COMBOS flags
+# are never added.
+ALWAYS_ON_IN_COMBOS  = ["CATCHCHALLENGER_EXTRA_CHECK"]
+ALWAYS_OFF_IN_COMBOS = ["CATCHCHALLENGER_NOAUDIO", "NOWEBSOCKET"]
+
+
 def flag_combinations(flags):
-    """Generate all subsets (powerset) of the given flags."""
-    result = []
-    count = len(flags)
+    """Generate test flag combos.
+
+    Strategy:
+      * Empty combo () — baseline.
+      * Each flag in ALWAYS_ON_IN_COMBOS or ALWAYS_OFF_IN_COMBOS that is
+        present in `flags` is tested as a standalone single-flag combo.
+      * The remaining ("base") flags are powerset-combined; for each
+        base subset we always add the ALWAYS_ON_IN_COMBOS flags that
+        appear in `flags` and never add the ALWAYS_OFF_IN_COMBOS flags.
+    """
+    separate = []
     idx = 0
-    while idx < (1 << count):
+    while idx < len(ALWAYS_ON_IN_COMBOS):
+        separate.append(ALWAYS_ON_IN_COMBOS[idx])
+        idx += 1
+    idx = 0
+    while idx < len(ALWAYS_OFF_IN_COMBOS):
+        separate.append(ALWAYS_OFF_IN_COMBOS[idx])
+        idx += 1
+
+    base_flags = []
+    on_in_combos = []
+    idx = 0
+    while idx < len(flags):
+        f = flags[idx]
+        if f in ALWAYS_ON_IN_COMBOS:
+            on_in_combos.append(f)
+        elif f in ALWAYS_OFF_IN_COMBOS:
+            pass
+        else:
+            base_flags.append(f)
+        idx += 1
+
+    seen = set()
+    result = []
+
+    seen.add(tuple())
+    result.append(tuple())
+
+    idx = 0
+    while idx < len(flags):
+        f = flags[idx]
+        if f in separate:
+            combo = (f,)
+            if combo not in seen:
+                seen.add(combo)
+                result.append(combo)
+        idx += 1
+
+    n = len(base_flags)
+    i = 0
+    while i < (1 << n):
         combo = []
         j = 0
-        while j < count:
-            if idx & (1 << j):
-                combo.append(flags[j])
+        while j < n:
+            if i & (1 << j):
+                combo.append(base_flags[j])
             j += 1
-        result.append(tuple(combo))
-        idx += 1
+        k = 0
+        while k < len(on_in_combos):
+            combo.append(on_in_combos[k])
+            k += 1
+        combo_tuple = tuple(combo)
+        if combo_tuple not in seen:
+            seen.add(combo_tuple)
+            result.append(combo_tuple)
+        i += 1
+
     return result
 
 
@@ -374,14 +494,18 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
 def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
                    extra_defines=None, clean_first=False, cxx_version=None):
     ensure_dir(build_dir)
-    clean_build_artifacts(build_dir)
     log_info(f"make distclean {label}")
     run_cmd(["make", "distclean"], build_dir, timeout=60)
+    clean_build_artifacts(build_dir)
     name = f"compile {label}"
+    diag_spec = diagnostic.compiler_spec(DIAG)
+    if diag_spec:
+        compiler_spec = diag_spec
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
                   "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug",
                   "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
                   "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
+    qmake_args.extend(diagnostic.qmake_extra_args(DIAG))
     if cxx_version:
         qmake_args.append(f"QMAKE_CXXFLAGS+=-std={cxx_version}")
     if extra_defines:
@@ -490,13 +614,29 @@ def remove_cache(build_dir):
         os.remove(cache)
         log_info("removed datapack-cache.bin")
 
+def sync_cache_mtime(build_dir):
+    """Set datapack-cache.bin mtime to match server-properties.xml mtime.
+    The server only loads the cache when both mtimes match."""
+    cache_path = os.path.join(build_dir, "datapack-cache.bin")
+    xml_path = os.path.join(build_dir, "server-properties.xml")
+    if os.path.isfile(cache_path) and os.path.isfile(xml_path):
+        xml_stat = os.stat(xml_path)
+        os.utime(cache_path, (xml_stat.st_atime, xml_stat.st_mtime))
+        log_info("synced datapack-cache.bin mtime to match server-properties.xml")
+
 def generate_cache(build_dir, bin_name=SERVER_BIN_NAME):
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail("generate cache", "binary not found")
         return False
     log_info(f"generating cache: {binary} --save")
-    rc, out = run_cmd([binary, "--save"], build_dir, timeout=SAVE_TIMEOUT)
+    wrapper = diagnostic.runtime_wrapper(DIAG)
+    cache_env = os.environ.copy()
+    for k, v in diagnostic.runtime_env(DIAG).items():
+        cache_env[k] = v
+    rc, out = run_cmd(wrapper + [binary, "--save"], build_dir,
+                      timeout=diagnostic.scale_timeout(DIAG, SAVE_TIMEOUT),
+                      env=cache_env)
     cache = os.path.join(build_dir, "datapack-cache.bin")
     if rc == 0 and os.path.isfile(cache):
         log_pass("generate cache", f"{os.path.getsize(cache)} bytes")
@@ -536,9 +676,13 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
         log_fail("start server", f"binary not found: {binary}")
         return None
     log_info(f"starting server: {binary}")
+    env = os.environ.copy()
+    for k, v in diagnostic.runtime_env(DIAG).items():
+        env[k] = v
+    wrapper = diagnostic.runtime_wrapper(DIAG)
     server_proc = subprocess.Popen(
-        NICE_PREFIX + [binary], cwd=build_dir,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        NICE_PREFIX + wrapper + [binary], cwd=build_dir,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
     ready = threading.Event()
     output_lines = []
@@ -550,7 +694,7 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
                 ready.set()
     t = threading.Thread(target=reader, daemon=True)
     t.start()
-    if ready.wait(timeout=SERVER_READY_TIMEOUT):
+    if ready.wait(timeout=diagnostic.scale_timeout(DIAG, SERVER_READY_TIMEOUT)):
         log_pass("server start", "correctly bind: detected")
         return server_proc
     log_fail("server start", "timeout waiting for 'correctly bind:'")
@@ -582,12 +726,19 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     log_info(f"running: {bin_name} {' '.join(args)}")
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
-    gdb_args = ["gdb", "-batch",
-                "-ex", "set breakpoint pending on",
-                "-ex", "handle SIGPIPE nostop noprint pass",
-                "-ex", "break __throw_out_of_range",
-                "-ex", "run", "-ex", "bt", "-ex", "quit",
-                "--args", binary] + args
+    for k, v in diagnostic.runtime_env(DIAG).items():
+        env[k] = v
+    timeout = diagnostic.scale_timeout(DIAG, timeout)
+    wrapper = diagnostic.runtime_wrapper(DIAG)
+    if wrapper:
+        gdb_args = wrapper + [binary] + args
+    else:
+        gdb_args = ["gdb", "-batch",
+                    "-ex", "set breakpoint pending on",
+                    "-ex", "handle SIGPIPE nostop noprint pass",
+                    "-ex", "break __throw_out_of_range",
+                    "-ex", "run", "-ex", "bt", "-ex", "quit",
+                    "--args", binary] + args
     try:
         p = subprocess.run(NICE_PREFIX + gdb_args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
@@ -668,6 +819,7 @@ def test_server_cache_cycle(server_pro, build_dir, server_label, client_build,
         else:
             clear_database_postgresql()
         set_http_datapack_mirror(build_dir, "")
+        sync_cache_mtime(build_dir)
         srv = start_server(build_dir)
         if srv:
             client_connect(client_build, f"{tag} client (with cache, NOXML on)")
@@ -927,15 +1079,27 @@ def main():
     print("  CatchChallenger — Server Testing")
     print(f"{'='*60}{C_RESET}\n")
 
+    failed_cases = load_failed_cases()
+    if failed_cases is not None and len(failed_cases) == 0:
+        log_info("all previously passed, skipping (delete test/failed.json for full re-run)")
+        return
+
     # ═══════════════════════════════════════════════════════════════
     # Phase 0: COMPILATION — all flag + compiler combinations
     # ═══════════════════════════════════════════════════════════════
     print(f"\n{C_CYAN}--- Phase 0: Compilation (all combinations) ---{C_RESET}\n")
 
+    if diagnostic.is_active(DIAG):
+        log_info(f"diagnostic mode: {diagnostic.describe(DIAG)}")
     # start remote builds in parallel with local builds
     remote_pro_rels = [pro_rel for pro_rel, _, _, _ in SERVER_TARGETS]
-    remote_threads, remote_results, remote_lock = start_remote_builds(remote_pro_rels)
-    log_info("remote builds started in background")
+    if failed_cases is None:
+        remote_threads, remote_results, remote_lock = start_remote_builds(
+            remote_pro_rels, diag=DIAG)
+        log_info("remote builds started in background")
+    else:
+        remote_threads, remote_results, remote_lock = [], [], None
+        log_info("resume mode: skipping remote builds")
 
     total_builds = 0
     ti = 0
@@ -1010,17 +1174,95 @@ def main():
                     label = f"{target_name} {cxx_ver} {compiler_name}"
                     if flags:
                         label += " " + "+".join(flags)
-                    build_project(pro_path, build_dir, label, compiler_spec,
-                                  extra_defines=list(flags) if flags else None,
-                                  cxx_version=cxx_ver)
+                    if should_run(f"compile {label}", failed_cases):
+                        build_project(pro_path, build_dir, label, compiler_spec,
+                                      extra_defines=list(flags) if flags else None,
+                                      cxx_version=cxx_ver)
                     fi += 1
                 ci += 1
             vi += 1
         ti += 1
 
+    # ── Phase 0c: qmake-vs-make.py parity check (same sources + -D flags)
+    log_info("Phase 0c: comparing qmake vs make.py source/-D flag sets")
+    ti = 0
+    while ti < len(SERVER_TARGETS):
+        pro_rel, target_name, build_base_rel, opt_flags = SERVER_TARGETS[ti]
+        if pro_rel not in SERVER_MAKE_SCRIPTS:
+            ti += 1
+            continue
+        build_base = os.path.join(ROOT, build_base_rel)
+        combos = flag_combinations(opt_flags)
+        fi = 0
+        while fi < len(combos):
+            flags = combos[fi]
+            suffix = combo_suffix("gcc", flags)
+            qd = os.path.join(build_base, f"cmp-qmake-{target_name}-{suffix}")
+            md = os.path.join(build_base, f"cmp-make-{target_name}-{suffix}")
+            cmp_label = target_name
+            if flags:
+                cmp_label += " " + "+".join(flags)
+            cmp_results = compare_qmake_make(
+                pro_rel, qd, md, label=cmp_label,
+                extra_defines=list(flags) if flags else None)
+            ri = 0
+            while ri < len(cmp_results):
+                name, ok, detail = cmp_results[ri]
+                test_name = name
+                if should_run(test_name, failed_cases):
+                    if ok:
+                        log_pass(test_name, detail)
+                    else:
+                        log_fail(test_name, detail)
+                ri += 1
+            fi += 1
+        ti += 1
+
+    # ── Phase 0b: same matrix via make*.py (gcc + clang, all flag combos)
+    # The make scripts hardcode their C++ standard; we don't iterate cxx_ver here.
+    log_info("Phase 0b: compiling each server target via its make*.py companion")
+    ti = 0
+    while ti < len(SERVER_TARGETS):
+        pro_rel, target_name, build_base_rel, opt_flags = SERVER_TARGETS[ti]
+        if pro_rel not in SERVER_MAKE_SCRIPTS:
+            ti += 1
+            continue
+        build_base = os.path.join(ROOT, build_base_rel)
+        combos = flag_combinations(opt_flags)
+        ci = 0
+        while ci < len(COMPILERS):
+            compiler_name = COMPILERS[ci][0]
+            fi = 0
+            while fi < len(combos):
+                flags = combos[fi]
+                suffix = combo_suffix(compiler_name, flags)
+                build_dir = os.path.join(build_base,
+                                         f"testing-make-{target_name}-{suffix}")
+                label = f"{target_name} make.py {compiler_name}"
+                if flags:
+                    label += " " + "+".join(flags)
+                test_name = f"compile {label}"
+                if should_run(test_name, failed_cases):
+                    log_info(f"make.py {label}")
+                    rc, out = build_server_via_make(
+                        pro_rel, build_dir, label,
+                        extra_defines=list(flags) if flags else None,
+                        compiler=compiler_name, diag=DIAG)
+                    if rc == 0:
+                        log_pass(test_name)
+                    else:
+                        log_fail(test_name, f"rc={rc}")
+                        if out.strip():
+                            for line in out.splitlines()[-25:]:
+                                print(f"  | {line}")
+                fi += 1
+            ci += 1
+        ti += 1
+
     # collect remote build results
-    log_info("waiting for remote builds to finish...")
-    remote = collect_remote_results(remote_threads, remote_results, remote_lock)
+    if remote_threads:
+        log_info("waiting for remote builds to finish...")
+    remote = collect_remote_results(remote_threads, remote_results, remote_lock) if remote_threads else []
     idx = 0
     while idx < len(remote):
         name, ok, detail = remote[idx]
@@ -1034,9 +1276,9 @@ def main():
     # Phases A–D: functional tests (use default gcc builds)
     # ═══════════════════════════════════════════════════════════════
 
-    filedb_build = os.path.join(ROOT, "server/epoll/build/testing-filedb")
-    cliepo_build = os.path.join(ROOT, "server/epoll/build/testing-cli-epoll")
-    client_build = os.path.join(ROOT, "client/qtcpu800x600/build/testing-cpu")
+    filedb_build = os.path.join(ROOT, "server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
+    cliepo_build = os.path.join(ROOT, "server/epoll/build/testing-cli-epoll" + _DIAG_SUFFIX)
+    client_build = os.path.join(ROOT, "client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
 
     # build client once
     if not build_project(CLIENT_CPU_PRO, client_build, "qtcpu800x600"):
@@ -1120,48 +1362,70 @@ def main():
         log_fail("client datapack mechanism", "server-filedb binary not available")
 
     # ── Phase E: Remote server + local client ────────────────────
-    print(f"\n{C_CYAN}--- Phase E: Remote server + local client ---{C_RESET}\n")
+    if failed_cases is not None:
+        log_info("resume mode: skipping Phase E remote server tests")
+        stop_server()
+        summary()
+        return
 
-    remote_filedb_bin = f"{REMOTE_DIR}/build-remote/catchchallenger-server-filedb/catchchallenger-server-cli-epoll"
-    remote_filedb_build = f"{REMOTE_DIR}/build-remote/catchchallenger-server-filedb"
+    print(f"\n{C_CYAN}--- Phase E: Remote server + local client ---{C_RESET}\n")
 
     ri = 0
     while ri < len(REMOTE_SERVERS):
-        label, host, ssh_port, _use_mold, _extra_defines, _has_gui = REMOTE_SERVERS[ri]
+        (label, host, ssh_port, _use_mold, _extra_defines, _has_gui, _cxx_ver,
+         remote_dir) = REMOTE_SERVERS[ri]
+        if not node_runs(label, "server-client"):
+            log_info(f"skipping remote {label}: not opted into 'server-client'")
+            ri += 1
+            continue
+        node = get_node(label)
+        if node is not None and not diagnostic.node_supports(node, DIAG):
+            log_info(f"skipping remote {label}: no "
+                     f"{diagnostic.compiler_name(DIAG)} for diagnostic mode")
+            ri += 1
+            continue
         server_addr = get_remote_server_address(host)
         print(f"\n{C_CYAN}  -- Remote server: {label} ({server_addr}) --{C_RESET}\n")
 
-        # setup datapack on remote
-        dp_src = DATAPACK_SOURCES[0][0] if DATAPACK_SOURCES else None
-        if dp_src is None:
-            log_fail(f"remote {label}", "no datapack source")
-            ri += 1
-            continue
-        if not setup_remote_server_runtime(host, ssh_port, remote_filedb_build, dp_src):
-            log_fail(f"remote {label} setup", "failed to rsync datapack")
-            ri += 1
-            continue
-        log_pass(f"remote {label} setup", "datapack synced")
+        remote_build_root = f"{remote_dir}/build-remote{_DIAG_SUFFIX}"
+        remote_filedb_bin = f"{remote_build_root}/catchchallenger-server-filedb/catchchallenger-server-cli-epoll"
+        remote_filedb_build = f"{remote_build_root}/catchchallenger-server-filedb"
 
-        # start server on remote
-        ssh_proc, actual_port = start_remote_server(host, ssh_port,
-                                                    remote_filedb_bin,
-                                                    remote_filedb_build)
-        if actual_port == 0:
-            log_fail(f"remote {label} server start", "timeout or binary not found")
-            ri += 1
-            continue
-        log_pass(f"remote {label} server start", f"port {actual_port}")
+        try:
+            # setup datapack on remote
+            dp_src = DATAPACK_SOURCES[0][0] if DATAPACK_SOURCES else None
+            if dp_src is None:
+                log_fail(f"remote {label}", "no datapack source")
+                ri += 1
+                continue
+            if not setup_remote_server_runtime(host, ssh_port, remote_filedb_build, dp_src):
+                log_fail(f"remote {label} setup", "failed to rsync datapack")
+                ri += 1
+                continue
+            log_pass(f"remote {label} setup", "datapack synced")
 
-        # connect local client to remote server
-        ok, out = run_client(client_build, CLIENT_CPU_BIN,
-                             ["--host", server_addr, "--port", str(actual_port),
-                              "--autologin", "--character", "Player",
-                              "--closewhenonmap"],
-                             f"local client -> remote {label}",
-                             success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+            # start server on remote
+            ssh_proc, actual_port = start_remote_server(host, ssh_port,
+                                                        remote_filedb_bin,
+                                                        remote_filedb_build,
+                                                        diag=DIAG)
+            if actual_port == 0:
+                log_fail(f"remote {label} server start", "timeout or binary not found")
+                ri += 1
+                continue
+            log_pass(f"remote {label} server start", f"port {actual_port}")
 
-        stop_remote_server(ssh_proc, host, ssh_port)
+            # connect local client to remote server
+            ok, out = run_client(client_build, CLIENT_CPU_BIN,
+                                 ["--host", server_addr, "--port", str(actual_port),
+                                  "--autologin", "--character", "Player",
+                                  "--closewhenonmap"],
+                                 f"local client -> remote {label}",
+                                 success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+
+            stop_remote_server(ssh_proc, host, ssh_port)
+        finally:
+            cleanup_remote_node(host, ssh_port, remote_dir)
         ri += 1
 
     stop_server()
@@ -1179,6 +1443,7 @@ def summary():
         print(f"  [{tag}] {name}  {detail}")
     print()
     print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}")
+    save_failed_cases()
     if failed:
         sys.exit(1)
 

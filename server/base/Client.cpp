@@ -12,7 +12,7 @@
 #include "../../general/base/cpp11addition.hpp"
 
 #include "BaseServer/BaseServerLogin.hpp"
-#include "MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "MapManagement/MapVisibilityAlgorithm.hpp"
 
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <fstream>
@@ -368,7 +368,7 @@ bool Client::disconnectClient()
         }
         #endif
         if(mapIndex<65535)
-            removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
+            removeClientOnMap(MapVisibilityAlgorithm::flat_map_list[mapIndex]);
         /*        if(!vectorremoveOne(clientBroadCastList,this))
             std::cout << "Client::disconnectClient(): vectorremoveOne(clientBroadCastList,this)" << std::endl;*/
         if(GlobalServerData::serverSettings.sendPlayerNumber)
@@ -788,7 +788,7 @@ void Client::breakNeedMoreData()
     #endif
 }
 
-//Client::sendPing() can be call by another function using the buffer like Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer(), then use their own
+//Client::sendPing() can be call by another function using the buffer like MapVisibilityAlgorithm::purgeBuffer(), then use their own
 void Client::sendPing()
 {
     if(queryIdPool.empty())
@@ -801,7 +801,7 @@ void Client::sendPing()
         pingInProgress++;
 
     //send the network reply
-    char buffer[2];//Client::sendPing() can be call by another function using the buffer like Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer(), then use their own
+    char buffer[2];//Client::sendPing() can be call by another function using the buffer like MapVisibilityAlgorithm::purgeBuffer(), then use their own
     buffer[0x00]=0xE3;
     buffer[0x01]=queryIdPool.back();
     registerOutputQuery(queryIdPool.back(),0xE3);
@@ -874,15 +874,15 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;
     CATCHCHALLENGER_TYPE_MAPID rescue_map_file_database_id=0;
     CATCHCHALLENGER_TYPE_MAPID unvalidated_rescue_map_file_database_id=0;
-    map_file_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(map_entry.mapIndex).id_db;
-    rescue_map_file_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(rescue.mapIndex).id_db;
-    unvalidated_rescue_map_file_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(unvalidated_rescue.mapIndex).id_db;
+    map_file_database_id=MapVisibilityAlgorithm::flat_map_list.at(map_entry.mapIndex).id_db;
+    rescue_map_file_database_id=MapVisibilityAlgorithm::flat_map_list.at(rescue.mapIndex).id_db;
+    unvalidated_rescue_map_file_database_id=MapVisibilityAlgorithm::flat_map_list.at(unvalidated_rescue.mapIndex).id_db;
     buf << map_file_database_id << map_entry.x << map_entry.y << (uint8_t)map_entry.orientation;
     buf << rescue_map_file_database_id << rescue.x << rescue.y << (uint8_t)rescue.orientation;
     buf << unvalidated_rescue_map_file_database_id << unvalidated_rescue.x << unvalidated_rescue.y << (uint8_t)unvalidated_rescue.orientation;
 
     CATCHCHALLENGER_TYPE_MAPID map_id=0;
-    map_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex).id_db;
+    map_id=MapVisibilityAlgorithm::flat_map_list.at(mapIndex).id_db;
     buf << map_id << x << y << (uint8_t)last_direction;
 }
 
@@ -1021,12 +1021,12 @@ void Client::serializeServerPart(hps::StreamOutputBuffer& buf) const {
     for(const std::pair<const CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> &entry : mapData)
     {
         const CATCHCHALLENGER_TYPE_MAPID internalId=entry.first;
-        if(internalId>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        if(internalId>=MapVisibilityAlgorithm::flat_map_list.size())
         {
             std::cerr << "serializeServerPart mapData internalId out of range " << __FILE__ << ":" << __LINE__ << std::endl;
             abort();
         }
-        const uint32_t db_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(internalId).id_db;
+        const uint32_t db_id=MapVisibilityAlgorithm::flat_map_list.at(internalId).id_db;
         buf << db_id << entry.second;
     }
     buf << public_and_private_informations.quests;

@@ -4,7 +4,7 @@
 #include "../DictionaryServer.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonDatapack.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -349,12 +349,12 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             return;
         }
         mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_database_id);
-        if(mapIndex>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        if(mapIndex>=MapVisibilityAlgorithm::flat_map_list.size())
         {
             characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse: "+std::to_string(map_database_id)+", mostly due to start previously start with another mainDatapackCode");
             return;
         }
-        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
         if(!ok)
         {
@@ -391,11 +391,11 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         if(!goToFinal)
         {
             mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_database_id);
-            if(mapIndex>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+            if(mapIndex>=MapVisibilityAlgorithm::flat_map_list.size())
                 goToFinal=true;
             if(!goToFinal)
             {
-                const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+                const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
                 x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
                 if(!ok)
                     goToFinal=true;
@@ -494,12 +494,12 @@ void Client::loadCharacterByMap_return()
             continue;
         }
         const CATCHCHALLENGER_TYPE_MAPID &mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_database_id);
-        if(mapIndex>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        if(mapIndex>=MapVisibilityAlgorithm::flat_map_list.size())
         {
             normalOutput("character_bymap: mapIndex out of range: "+std::to_string(mapIndex));
             continue;
         }
-        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         Player_private_and_public_informations_Map &playerMapData=public_and_private_informations.mapData[mapIndex];
 
         //items blob: [x(1B), y(1B)] pairs

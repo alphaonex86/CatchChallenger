@@ -16,7 +16,7 @@
 #include "above/OptionsDialog.hpp"
 #include "above/DebugDialog.hpp"
 #include "ConnexionManager.hpp"
-#include "CliOptions.hpp"
+#include "../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../libcatchchallenger/Api_protocol.hpp"
 #include <QTimer>
 #include <QKeyEvent>
@@ -419,7 +419,7 @@ void ScreenTransition::toMainScreen()
     setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));
     //if --autosolo, auto open the Solo screen (only the first time)
     static bool autoOpenSoloTried=false;
-    if(!autoOpenSoloTried && CliOptions::autosolo)
+    if(!autoOpenSoloTried && CliClientOptions::autosolo)
     {
         autoOpenSoloTried=true;
         openSolo();
@@ -427,26 +427,26 @@ void ScreenTransition::toMainScreen()
     }
     //if --host/--port or --server/--port CLI args set, connect directly (no server list entry)
     static bool autoDirectConnectTried=false;
-    if(!autoDirectConnectTried && CliOptions::port!=0 &&
-       (!CliOptions::host.isEmpty() || !CliOptions::serverName.isEmpty()))
+    if(!autoDirectConnectTried && CliClientOptions::port!=0 &&
+       (!CliClientOptions::host.isEmpty() || !CliClientOptions::serverName.isEmpty()))
     {
         autoDirectConnectTried=true;
         multiplaySelected=true;
-        const QString &h=CliOptions::host.isEmpty() ? CliOptions::serverName : CliOptions::host;
+        const QString &h=CliClientOptions::host.isEmpty() ? CliClientOptions::serverName : CliClientOptions::host;
         ConnexionInfo ci;
         ci.host=h;
-        ci.port=CliOptions::port;
-        ci.name=h+QStringLiteral(":")+QString::number(CliOptions::port);
-        ci.unique_code=h+QStringLiteral("-")+QString::number(CliOptions::port);
+        ci.port=CliClientOptions::port;
+        ci.name=h+QStringLiteral(":")+QString::number(CliClientOptions::port);
+        ci.unique_code=h+QStringLiteral("-")+QString::number(CliClientOptions::port);
         ci.isArgument=true;
-        const QString login=CliOptions::characterName.isEmpty() ? QStringLiteral("test01") : CliOptions::characterName;
+        const QString login=CliClientOptions::characterName.isEmpty() ? QStringLiteral("test01") : CliClientOptions::characterName;
         const QString pass=login+login;
         connectToServer(ci,login,pass);
         return;
     }
     //if --server CLI arg was set (without --port), open the Multi screen to match by name
     static bool autoOpenMultiTried=false;
-    if(!autoOpenMultiTried && !CliOptions::serverName.isEmpty())
+    if(!autoOpenMultiTried && !CliClientOptions::serverName.isEmpty())
     {
         autoOpenMultiTried=true;
         openMulti();
@@ -899,22 +899,22 @@ void ScreenTransition::goToMap()
     setForeground(overmap);
     setAbove(nullptr);
     //if --closewhenonmap CLI arg was set, close 1s after spawning
-    if(CliOptions::closeWhenOnMap)
+    if(CliClientOptions::closeWhenOnMap)
     {
-        std::cerr << "CliOptions: --closewhenonmap, exiting in 1s" << std::endl;
+        std::cerr << "CliClientOptions: --closewhenonmap, exiting in 1s" << std::endl;
         QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
     }
-    if(CliOptions::closeWhenOnMapAfter>0 && !closeWhenOnMapAfterTimer_.isActive())
+    if(CliClientOptions::closeWhenOnMapAfter>0 && !closeWhenOnMapAfterTimer_.isActive())
     {
-        std::cerr << "CliOptions: --closewhenonmapafter=" << CliOptions::closeWhenOnMapAfter
-                  << ", toggling direction each 1s, quitting in " << CliOptions::closeWhenOnMapAfter << "s" << std::endl;
-        closeWhenOnMapAfterRemaining_=CliOptions::closeWhenOnMapAfter;
+        std::cerr << "CliClientOptions: --closewhenonmapafter=" << CliClientOptions::closeWhenOnMapAfter
+                  << ", toggling direction each 1s, quitting in " << CliClientOptions::closeWhenOnMapAfter << "s" << std::endl;
+        closeWhenOnMapAfterRemaining_=CliClientOptions::closeWhenOnMapAfter;
         connect(&closeWhenOnMapAfterTimer_,&QTimer::timeout,this,&ScreenTransition::closeWhenOnMapAfterToggle);
         closeWhenOnMapAfterTimer_.start(1000);
     }
-    if(CliOptions::dropSendDataAfterOnMap && !CatchChallenger::Api_protocol::dropOutputAfterOnMap)
+    if(CliClientOptions::dropSendDataAfterOnMap && !CatchChallenger::Api_protocol::dropOutputAfterOnMap)
     {
-        std::cerr << "CliOptions: --dropsenddataafteronmap, dropping all client->server traffic from now on" << std::endl;
+        std::cerr << "CliClientOptions: --dropsenddataafteronmap, dropping all client->server traffic from now on" << std::endl;
         CatchChallenger::Api_protocol::dropOutputAfterOnMap=true;
     }
 }
@@ -1044,7 +1044,7 @@ void ScreenTransition::closeWhenOnMapAfterToggle()
     if(closeWhenOnMapAfterRemaining_<=0)
     {
         closeWhenOnMapAfterTimer_.stop();
-        std::cerr << "CliOptions: --closewhenonmapafter time elapsed, exiting" << std::endl;
+        std::cerr << "CliClientOptions: --closewhenonmapafter time elapsed, exiting" << std::endl;
         QCoreApplication::quit();
         return;
     }
@@ -1069,7 +1069,7 @@ void ScreenTransition::closeWhenOnMapAfterToggle()
             key=Qt::Key_Up; next=CatchChallenger::Direction_look_at_top;
         break;
     }
-    std::cerr << "CliOptions: --closewhenonmapafter direction " << (int)next
+    std::cerr << "CliClientOptions: --closewhenonmapafter direction " << (int)next
               << " (" << closeWhenOnMapAfterRemaining_ << "s remaining)" << std::endl;
     {
         QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier);

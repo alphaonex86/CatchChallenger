@@ -2,7 +2,7 @@
 #include "../base/MapServer.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/PreparedDBQuery.hpp"
-#include "../base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../base/MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 
@@ -22,7 +22,7 @@ void Client::plantSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id)
     }
     COORD_TYPE new_x=0,new_y=0;
     CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+    const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -130,7 +130,7 @@ void Client::collectPlant()
     #endif
     COORD_TYPE new_x=0,new_y=0;
     CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+    const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");

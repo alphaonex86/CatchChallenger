@@ -5,7 +5,7 @@
 #include "../ConnexionManager.hpp"
 #include "../above/AddCharacter.hpp"
 #include "../above/NewGame.hpp"
-#include "../CliOptions.hpp"
+#include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
@@ -363,9 +363,9 @@ void CharacterList::updateCharacterList()
     add->setEnabled(charaterCount<CommonSettingsCommon::commonSettingsCommon.max_character);
     //auto select the character with name from --character CLI arg
     static bool autoSelectCharacterTried=false;
-    if(!autoSelectCharacterTried && !CliOptions::characterName.isEmpty())
+    if(!autoSelectCharacterTried && !CliClientOptions::characterName.isEmpty())
     {
-        const std::string wanted=CliOptions::characterName.toStdString();
+        const std::string wanted=CliClientOptions::characterName.toStdString();
         unsigned int i=0;
         while(i<characterListForSelection.at(charactersGroupIndex).size())
         {
@@ -383,14 +383,14 @@ void CharacterList::updateCharacterList()
     if(charaterCount<CommonSettingsCommon::commonSettingsCommon.min_character && charaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         // auto-create character when running automated (--autosolo or --character)
-        if(CliOptions::autosolo || !CliOptions::characterName.isEmpty())
+        if(CliClientOptions::autosolo || !CliClientOptions::characterName.isEmpty())
         {
             const std::vector<CatchChallenger::Profile> &profiles=CatchChallenger::CommonDatapack::commonDatapack.get_profileList();
             if(!profiles.empty())
             {
                 const uint8_t profileIndex=0;
                 const CatchChallenger::Profile &profile=profiles.at(profileIndex);
-                const std::string pseudo=CliOptions::characterName.isEmpty() ? "Player" : CliOptions::characterName.toStdString();
+                const std::string pseudo=CliClientOptions::characterName.isEmpty() ? "Player" : CliClientOptions::characterName.toStdString();
                 const uint8_t monsterGroupId=0;
                 const uint8_t skinId=profile.forcedskin.empty() ? 0 : profile.forcedskin.front();
                 CatchChallenger::CharacterEntry ce;

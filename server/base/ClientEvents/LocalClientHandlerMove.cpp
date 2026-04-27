@@ -1,5 +1,5 @@
 #include "../Client.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../GlobalServerData.hpp"
 #include "../MapServer.hpp"
 
@@ -9,7 +9,7 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
         {
             std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
@@ -34,7 +34,7 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(returnValue)
     {
-        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
         {
             std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
@@ -56,7 +56,7 @@ bool Client::singleMove(const Direction &direction)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
         {
             std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
@@ -94,23 +94,23 @@ bool Client::singleMove(const Direction &direction)
     Direction temp_direction=direction;
     CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
     {
-        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
         normalOutput("Client::singleMove(), go in this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
         #endif
-        if(!MoveOnTheMap::canGoTo<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,map,x,y,true))
+        if(!MoveOnTheMap::canGoTo<MapVisibilityAlgorithm>(MapVisibilityAlgorithm::flat_map_list,direction,map,x,y,true))
         {
             errorOutput("Client::singleMove(), can't go into this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
             return false;
         }
-        if(!MoveOnTheMap::moveWithoutTeleport<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,mapIndex,x,y,false,true))
+        if(!MoveOnTheMap::moveWithoutTeleport<MapVisibilityAlgorithm>(MapVisibilityAlgorithm::flat_map_list,direction,mapIndex,x,y,false,true))
         {
             errorOutput("Client::singleMove(), can go but move failed into this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
             return false;
         }
     }
 
-    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
     uint8_t index_search=0;
     while(index_search<map.teleporters.size())
     {
@@ -184,8 +184,8 @@ bool Client::singleMove(const Direction &direction)
 
     if(this->mapIndex!=mapIndex)
     {
-        removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(this->mapIndex));
-        insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex));
+        removeClientOnMap(MapVisibilityAlgorithm::flat_map_list.at(this->mapIndex));
+        insertClientOnMap(MapVisibilityAlgorithm::flat_map_list.at(mapIndex));
     }
 
     this->mapIndex=mapIndex;
@@ -227,7 +227,7 @@ bool Client::singleMove(const Direction &direction)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->mapIndex!=65535)
     {
-        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
         {
             std::cerr << "x to out of map: "+std::to_string(this->x)+" > "+std::to_string(map.width)+" ("+std::to_string(this->mapIndex)+")" << std::endl;

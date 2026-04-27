@@ -1,5 +1,5 @@
 #include "LocalClientHandlerWithoutSender.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../Client.hpp"
 #include "../ClientList.hpp"
 #include "../GlobalServerData.hpp"
@@ -37,9 +37,9 @@ void LocalClientHandlerWithoutSender::doDDOSChat()
 {
     {
         CATCHCHALLENGER_TYPE_MAPID index=0;
-        while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        while(index<MapVisibilityAlgorithm::flat_map_list.size())
         {
-            Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[index].doDDOSLocalChat();
+            MapVisibilityAlgorithm::flat_map_list[index].doDDOSLocalChat();
             index++;
         }
     }

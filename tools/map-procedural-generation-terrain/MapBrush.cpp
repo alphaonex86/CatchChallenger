@@ -1,9 +1,9 @@
 #include "MapBrush.h"
-#include <tiled/tileset.h>
-#include <tiled/tilelayer.h>
-#include <tiled/objectgroup.h>
-#include <tiled/mapobject.h>
-#include <tiled/tile.h>
+#include <libtiled/tileset.h>
+#include <libtiled/tilelayer.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/tile.h>
 #include "LoadMap.h"
 
 #include <unordered_set>

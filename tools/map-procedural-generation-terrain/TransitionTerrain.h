@@ -1,7 +1,7 @@
 #ifndef TRANSITIONTERRAIN_H
 #define TRANSITIONTERRAIN_H
 
-#include <tiled/map.h>
+#include <libtiled/map.h>
 #include "LoadMap.h"
 
 class TransitionTerrain

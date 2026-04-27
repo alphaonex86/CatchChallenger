@@ -1,5 +1,5 @@
 #include "MapVisibilityAlgorithm_WithoutSender.hpp"
-#include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "MapVisibilityAlgorithm.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 
@@ -27,18 +27,18 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
     switch(GlobalServerData::serverSettings.mapVisibility.minimize)
     {
     case GameServerSettings::MapVisibility::Minimize_CPU:
-       while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())//put loop into condition to have best performance
+       while(index<MapVisibilityAlgorithm::flat_map_list.size())//put loop into condition to have best performance
        {
-           Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(index).min_CPU(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
+           MapVisibilityAlgorithm::flat_map_list.at(index).min_CPU(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
            index++;
        }
        break;
     case GameServerSettings::MapVisibility::Minimize_Network:
        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x6B;
        ProtocolParsingBase::tempBigBufferForOutput[1+4]=0x01;//map list count
-       while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())//put loop into condition to have best performance
+       while(index<MapVisibilityAlgorithm::flat_map_list.size())//put loop into condition to have best performance
        {
-           Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(index).min_network(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
+           MapVisibilityAlgorithm::flat_map_list.at(index).min_network(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
            index++;
        }
        break;

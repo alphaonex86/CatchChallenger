@@ -27,6 +27,7 @@ include(../libqtcatchchallenger/libqtheader.pri)
 include(../libqtcatchchallenger/maprender/render.pri)
 include(../libqtcatchchallenger/maprender/renderheader.pri)
 TEMPLATE = app
+CONFIG += object_parallel_to_source
 linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
 linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"
 linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"

@@ -1,6 +1,9 @@
 # libopus - Opus audio codec library (float mode)
 # Embedded build for CatchChallenger
 
+# object_parallel_to_source: avoid debug.o basename collision with libzstd's debug.c
+CONFIG += object_parallel_to_source
+
 DEFINES += OPUS_BUILD HAVE_CONFIG_H FLOAT_APPROX HAVE_LRINT HAVE_LRINTF HAVE_STDINT_H
 
 # Use C99 variable-length arrays on compilers that support them,

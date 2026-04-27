@@ -8,7 +8,7 @@
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../base/MapManagement/ClientWithMap.hpp"
-#include "../base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../base/MapManagement/MapVisibilityAlgorithm.hpp"
 
 using namespace CatchChallenger;
 
@@ -238,7 +238,7 @@ void Client::fightFinished()
     CommonFightEngine::fightFinished();
 }
 
-bool Client::botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const Map_server_MapVisibility_Simple_StoreOnSender &map,const COORD_TYPE &x,const COORD_TYPE &y)
+bool Client::botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const MapVisibilityAlgorithm &map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())
     {
@@ -270,7 +270,7 @@ bool Client::botFightStart(const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,u
     }
     const CATCHCHALLENGER_TYPE_MAPID &mapId=botFight.first;
     const uint8_t &botFightId=botFight.second;
-    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId);
+    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapId);
     if(map.botFights.find(botFightId)==map.botFights.cend())
     {
         errorOutput("error: bot id "+std::to_string(botFightId)+" not found");
@@ -285,7 +285,7 @@ bool Client::botFightStart(const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,u
     startTheFight();
     //const CATCHCHALLENGER_TYPE_MAPID &mapId=botFight.first;
     //const uint8_t &botFightId=botFight.second;
-    //const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId);
+    //const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapId);
     //const BotFight &botFightContent=map.botFights.at(botFightId);
     unsigned int index=0;
     while(index<botFightContent.monsters.size())
@@ -405,7 +405,7 @@ bool Client::finishTheTurn(const bool &isBot)
         return false;
     }
     const uint8_t &botFightId=botFight.second;
-    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId);
+    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapId);
     if(map.botFights.find(botFightId)==map.botFights.cend())
     {
         normalOutput("Client::finishTheTurn() but when map.botFights.find(botFightId)==map.botFights.cend()");

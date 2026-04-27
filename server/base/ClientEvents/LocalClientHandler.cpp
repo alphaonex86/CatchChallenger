@@ -2,7 +2,7 @@
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../ClientList.hpp"
 #include "../GlobalServerData.hpp"
 #include <cstring>
@@ -11,7 +11,7 @@ using namespace CatchChallenger;
 
 bool Client::checkCollision()
 {
-    if(!MoveOnTheMap::isWalkable(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex),x,y))
+    if(!MoveOnTheMap::isWalkable(MapVisibilityAlgorithm::flat_map_list.at(mapIndex),x,y))
     {
         errorOutput("can't wall at: "+std::to_string(x)+","+std::to_string(y)+" on map: "+std::to_string(mapIndex));
         return false;
@@ -90,9 +90,9 @@ std::string Client::orientationToStringToSave(const Orientation &orientation)
 void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
     //CATCHCHALLENGER_TYPE_MAPID sendedMap;//see mapIndex -> not need change directly, Client::removeClientOnMap(() Client::singleMove()
-    Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+    MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
     MapBasicMove::put_on_the_map(mapIndex,x,y,orientation);
-    insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
+    insertClientOnMap(MapVisibilityAlgorithm::flat_map_list[mapIndex]);
 
 /* now send via Client::characterIsRightSendData() and now player on map is independent algo   uint32_t posOutput=0;
 
@@ -105,7 +105,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     posOutput+=1;
 
     //send the current map of the player
-    if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size()<=255)
+    if(MapVisibilityAlgorithm::flat_map_list.size()<=255)
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(map.id);
         posOutput+=1;
@@ -326,7 +326,7 @@ void Client::teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,cons
     bool mapChange=(this->mapIndex!=mapIndex);
     normalOutput("MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo() with mapChange: "+std::to_string(mapChange));
     if(mapChange)
-        removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex));
+        removeClientOnMap(MapVisibilityAlgorithm::flat_map_list.at(mapIndex));
 }
 
 Direction Client::lookToMove(const Direction &direction)
@@ -351,11 +351,11 @@ Direction Client::lookToMove(const Direction &direction)
 }
 
 //return nullptr if can't move in this direction
-const Map_server_MapVisibility_Simple_StoreOnSender * Client::mapAndPosIfMoveInLookingDirectionJumpColision(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y)
+const MapVisibilityAlgorithm * Client::mapAndPosIfMoveInLookingDirectionJumpColision(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y)
 {
     // to not apply the changes
     mapIndex=this->mapIndex;
-    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
     x=this->x;
     y=this->y;
     //resolv the object
@@ -367,16 +367,16 @@ const Map_server_MapVisibility_Simple_StoreOnSender * Client::mapAndPosIfMoveInL
         case Direction_look_at_bottom:
         case Direction_look_at_left:
             direction=lookToMove(direction);
-            if(MoveOnTheMap::canGoTo(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,map,x,y,false))
+            if(MoveOnTheMap::canGoTo(MapVisibilityAlgorithm::flat_map_list,direction,map,x,y,false))
             {
-                if(!MoveOnTheMap::move<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,mapIndex,x,y,false))
+                if(!MoveOnTheMap::move<MapVisibilityAlgorithm>(MapVisibilityAlgorithm::flat_map_list,direction,mapIndex,x,y,false))
                 {
-                    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+                    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
                     if(!MoveOnTheMap::isWalkable(map,x,y))
                     {
-                        if(MoveOnTheMap::canGoTo(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,map,x,y,true))
+                        if(MoveOnTheMap::canGoTo(MapVisibilityAlgorithm::flat_map_list,direction,map,x,y,true))
                         {
-                            if(!MoveOnTheMap::move<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,mapIndex,x,y,true))
+                            if(!MoveOnTheMap::move<MapVisibilityAlgorithm>(MapVisibilityAlgorithm::flat_map_list,direction,mapIndex,x,y,true))
                             {}
                         }
                         else
@@ -392,7 +392,7 @@ const Map_server_MapVisibility_Simple_StoreOnSender * Client::mapAndPosIfMoveInL
             return nullptr;
         return nullptr;
     }
-    return &Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+    return &MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
 }
 
 bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)

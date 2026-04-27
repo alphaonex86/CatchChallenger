@@ -6,7 +6,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 
 #include <vector>
 #include <time.h>
@@ -81,7 +81,7 @@ void BaseServer::unload_the_bots()
 
 void BaseServer::unload_the_map()
 {
-    Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.clear();
+    MapVisibilityAlgorithm::flat_map_list.clear();
     mapPathToId.clear();
 }
 

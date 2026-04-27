@@ -4,9 +4,9 @@
 #include <QFile>
 #include <iostream>
 
-#include <tiled/mapwriter.h>
-#include <tiled/mapobject.h>
-#include <tiled/objectgroup.h>
+#include <libtiled/mapwriter.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/objectgroup.h>
 
 #include "znoise/headers/Simplex.hpp"
 #include "VoronioForTiledMapTmx.h"
@@ -16,8 +16,8 @@
 #include "MapPlants.h"
 #include "MiniMap.h"
 
-#include <tiled/tileset.h>
-#include <tiled/map.h>
+#include <libtiled/tileset.h>
+#include <libtiled/map.h>
 #include <memory>
 
 std::vector<Tiled::SharedTileset> LoadMap_tilesets_hack;

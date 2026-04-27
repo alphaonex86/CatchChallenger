@@ -1,5 +1,5 @@
 #include "../Client.hpp"
-#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 
@@ -14,7 +14,7 @@ void Client::getShopList(const uint8_t &query_id)
     #endif
     COORD_TYPE new_x=0,new_y=0;
     CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+    const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -79,7 +79,7 @@ void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM 
     }
     COORD_TYPE new_x=0,new_y=0;
     CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+    const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -178,7 +178,7 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
     }
     COORD_TYPE new_x=0,new_y=0;
     CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+    const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");

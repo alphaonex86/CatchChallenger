@@ -36,6 +36,12 @@ QAudioFormat Audio::format() const
 
 void Audio::setVolume(const int &volume)
 {
+    const QString platform=QGuiApplication::platformName();
+    if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+    {
+        this->volume=0;
+        return;
+    }
     std::cout << "Audio volume set to: " << volume << std::endl;
     unsigned int index=0;
     while(index<playerList.size())
@@ -61,6 +67,12 @@ void Audio::removePlayer(QAudioSink * const player)
 
 void Audio::setPlayerVolume(QAudioSink * const player)
 {
+    const QString platform=QGuiApplication::platformName();
+    if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+    {
+        player->setVolume(0.0);
+        return;
+    }
     player->setVolume((qreal)volume/100);
 }
 

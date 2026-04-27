@@ -6,11 +6,11 @@
 #include <unordered_map>
 #include <string>
 
-//#include <tiled/tilelayer.h>
-//#include <tiled/map.h>
+//#include <libtiled/tilelayer.h>
+//#include <libtiled/map.h>
 //#include "/usr/include/libtiled/tilelayer.h"
-#include <tiled/tilelayer.h>
-#include <tiled/map.h>
+#include <libtiled/tilelayer.h>
+#include <libtiled/map.h>
 
 
 #include "VoronioForTiledMapTmx.h"

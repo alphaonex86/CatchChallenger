@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <tiled/map.h>
+#include <libtiled/map.h>
 
 class MapBrush
 {
