@@ -277,7 +277,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
                   )
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.empty())
     {
         errorOutput("loginIsRightWithParsedRescue() Query is empty, bug");
@@ -411,7 +411,7 @@ void Client::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, co
     //network send
     *(Client::loginIsWrongBuffer+1)=query_id;
     *(Client::loginIsWrongBuffer+1+1+4)=returnCode;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     removeFromQueryReceived(query_id);
     #endif
     inputQueryNumberToPacketCode[query_id]=0;

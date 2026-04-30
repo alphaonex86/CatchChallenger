@@ -20,7 +20,7 @@
 #endif
 #include <cstring>
 
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 
 using namespace CatchChallenger;
 

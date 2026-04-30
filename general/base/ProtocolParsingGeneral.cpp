@@ -3,13 +3,14 @@
 #include "ProtocolParsingCheck.hpp"
 #include <iostream>
 #include <cstring>
+#include <unistd.h>
 //#include <openssl/sha.h>
 
 
 
 using namespace CatchChallenger;
 
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 char ProtocolParsingBase::tempBigBufferForOutput[];
 //tempBigBufferForInput moved to a stack-local in parseIncommingData()
 #ifndef DYNAMICPACKETFIXEDSIZE
@@ -47,7 +48,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #endif
 
             memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
-            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+            #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
             //tempBigBufferForCompressedOutput / tempBigBufferForUncompressedInput
             //removed: now a per-callsite local std::vector<uint8_t>
             CompressionProtocol::compressionTypeServer=CompressionProtocol::CompressionType::Zstandard;
@@ -238,8 +239,8 @@ ProtocolParsingBase::ProtocolParsingBase(
         PacketModeTransmission packetModeTransmission
         #endif
         ) :
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-        #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             ProtocolParsing(),
         #else
             ProtocolParsing(),
@@ -254,7 +255,7 @@ ProtocolParsingBase::ProtocolParsingBase(
     packetCode(0),
     queryNumber(0)
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     //if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInputOutput::parseIncommingData,Qt::QueuedConnection/*to virtual socket*/))
     //    messageParsingLayer(std::to_string(isClient)+std::stringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
     #endif
@@ -286,7 +287,32 @@ ProtocolParsingBase::~ProtocolParsingBase()
 {
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
+ssize_t ProtocolParsingBase::writeFileToSocket(int file_fd,off_t *offset,size_t len)
+{
+    //Portable fallback for the non-Linux server backends (Qt-based on
+    //Windows/macOS/BSD/Haiku, ESP32-class RTOS with FS). Read one chunk
+    //into a stack buffer and ship it through the virtual writeToSocket();
+    //*offset is advanced only by the bytes the socket actually accepted,
+    //so the caller's loop converges identically to the sendfile(2) fast
+    //path used by the Linux/epoll override (Epoll::sendFile).
+    //
+    //Server base stays plain C++ here — no QFile / no Qt I/O — so this
+    //path also works for any future no-Qt non-Linux build.
+    char buf[64*1024];
+    const size_t chunk=(len<sizeof(buf))?len:sizeof(buf);
+    if(::lseek(file_fd,*offset,SEEK_SET)==static_cast<off_t>(-1))
+        return -1;
+    const ssize_t r=::read(file_fd,buf,chunk);
+    if(r<=0)
+        return r;
+    const ssize_t w=writeToSocket(buf,static_cast<size_t>(r));
+    if(w<=0)
+        return w;
+    *offset+=w;
+    return w;
+}
+
+#ifndef CATCHCHALLENGER_SERVER
 uint64_t ProtocolParsingInputOutput::getRXSize() const
 {
     return RXSize;
@@ -321,11 +347,11 @@ void ProtocolParsingInputOutput::resetForReconnect()
 {
     ProtocolParsingBase::resetForReconnect();
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     parseIncommingDataCount=0;
     #endif
     //ProtocolParsingInputOutput
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     RXSize=0;
     TXSize=0;
     #endif
@@ -350,11 +376,11 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         packetModeTransmission
         #endif
         ),
-      #ifdef CATCHCHALLENGER_EXTRA_CHECK
+      #ifdef CATCHCHALLENGER_HARDENED
       parseIncommingDataCount(0)
       #endif
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         if(packetModeTransmission==PacketModeTransmission_Client)
             flags |= 0x10;
@@ -363,10 +389,10 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         else
             protocolParsingCheck=new ProtocolParsingCheck(PacketModeTransmission_Client);
     #else
-        #error "Can't have both CATCHCHALLENGERSERVERDROPIFCLENT and CATCHCHALLENGER_EXTRA_CHECK enabled because ProtocolParsingCheck work as client"
+        #error "Can't have both CATCHCHALLENGERSERVERDROPIFCLENT and CATCHCHALLENGER_HARDENED enabled because ProtocolParsingCheck work as client"
     #endif
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     RXSize=0;
     TXSize=0;
     #endif
@@ -375,7 +401,7 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
 
 ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(protocolParsingCheck!=NULL)
     {
         delete protocolParsingCheck;
@@ -384,7 +410,7 @@ ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
     #endif
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 CompressionProtocol::CompressionType ProtocolParsingInputOutput::getCompressType() const
 {
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT

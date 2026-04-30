@@ -16,7 +16,7 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
         catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, uint32_t> &repel,
         catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, Trap> &trap)
 {
-    #ifdef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+    #ifndef CATCHCHALLENGER_SOLO
     (void)monsterBuffs;
     #endif
     itemMaxId=0;
@@ -37,7 +37,7 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
             file_index++;
             continue;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
             domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
         else
@@ -53,7 +53,7 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
         }
         #endif
         const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -217,7 +217,7 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
                                     hpItem = hpItem->NextSiblingElement("hp");
                                 }
                             }
-                            #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+                            #ifdef CATCHCHALLENGER_SOLO
                             {
                                 const tinyxml2::XMLElement * buffItem = item->FirstChildElement("buff");
                                 while(buffItem!=NULL)
@@ -302,7 +302,7 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
                 std::cerr << "Unable to open the file, have not the item id, file: " << file << ", child->Name(): " << item->Name() << std::endl;
             item = item->NextSiblingElement("item");
         }
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifdef CATCHCHALLENGER_SERVER
         delete domDocument;
         #endif
         file_index++;

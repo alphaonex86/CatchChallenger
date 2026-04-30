@@ -98,7 +98,7 @@ int main(int argc, const char *argv[])
     bool tcpCork=false,tcpNodelay=false;
 
     char encodingBuff[1];
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     encodingBuff[0]=0x01;
     #else
     encodingBuff[0]=0x00;
@@ -216,11 +216,11 @@ int main(int argc, const char *argv[])
                             }
 
                             EpollClientLoginMaster *client=new EpollClientLoginMaster(infd
-                                               #ifdef SERVERSSL
+                                               #ifdef CATCHCHALLENGER_SERVER_SSL
                                                ,server->getCtx()
                                                #endif
                                 );
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
                             {
                                 std::cerr << "Wrong post check type (abort)" << std::endl;

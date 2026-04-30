@@ -21,7 +21,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
     playerMonster.egg_step=0;
     playerMonster.remaining_xp=0;
     uint8_t randomMonsterInt=getOneSeed(100);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     uint8_t randomMonsterIntOriginal=randomMonsterInt;
     std::string monsterListString;
     #endif
@@ -31,7 +31,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
     {
         const MapMonster &mapMonster=monsterList.at(index);
         const int &luck=mapMonster.luck;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         monsterListString="luck:"+std::to_string(mapMonster.luck)+";id:"+std::to_string(mapMonster.id)+";";
         #endif
         if(randomMonsterInt<=luck)// with < it crash because randomMonsterInt can be 0
@@ -54,7 +54,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
     {
         if(monsterList.empty())
         {
-            #ifndef CATCHCHALLENGER_EXTRA_CHECK
+            #ifndef CATCHCHALLENGER_HARDENED
             errorFightEngine("error: no wild monster selected, with: randomMonsterInt: "+std::to_string(randomMonsterInt));
             #else
             errorFightEngine("error: no wild monster selected, with: randomMonsterIntOriginal: "+std::to_string(randomMonsterIntOriginal)+", monsterListString: "+monsterListString);
@@ -68,7 +68,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
         }
         else
         {
-            #ifndef CATCHCHALLENGER_EXTRA_CHECK
+            #ifndef CATCHCHALLENGER_HARDENED
             messageFightEngine("warning: no wild monster selected, with: randomMonsterInt: "+std::to_string(randomMonsterInt));
             #else
             messageFightEngine("warning: no wild monster selected, with: randomMonsterIntOriginal: "+std::to_string(randomMonsterIntOriginal)+", monsterListString: "+monsterListString);
@@ -149,11 +149,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
 
 //return true if now have wild monter to fight
 bool CommonFightEngine::generateWildFightIfCollision(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y,
-                                                     #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-                                                     const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items
-                                                     #else
                                                      const std::map<CATCHCHALLENGER_TYPE_ITEM, CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items
-                                                     #endif
                                                      , const std::vector<uint8_t> &events)
 {
     bool ok;

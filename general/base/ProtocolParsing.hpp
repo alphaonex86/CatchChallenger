@@ -8,7 +8,7 @@
 #include <string>
 
 #include "GeneralVariable.hpp"
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 #include "CompressionProtocol.hpp"
 #endif
 #include "lib.h"
@@ -22,11 +22,11 @@
 // than one packet's worth of bytes.
 #define CATCHCHALLENGER_BIGBUFFERSIZE CATCHCHALLENGER_MAX_PACKET_SIZE
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
     #ifndef CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER
     #define CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER CATCHCHALLENGER_BIGBUFFERSIZE-16
     #endif
-    #ifndef CATCHCHALLENGER_EXTRA_CHECK
+    #ifndef CATCHCHALLENGER_HARDENED
         #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
             #define CATCHCHALLENGERSERVERDROPIFCLENT
         #endif
@@ -45,7 +45,7 @@
 
 namespace CatchChallenger {
 
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 class ProtocolParsingCheck;
 
 class DLL_PUBLIC ProtocolParsing
@@ -104,18 +104,22 @@ public:
     friend class ProtocolParsingCheck;
     virtual ssize_t readFromSocket(char * data, const size_t &size) = 0;
     virtual ssize_t writeToSocket(const char * const data, const size_t &size) = 0;
-    //Zero-copy file content -> socket. Default returns -1 ("not supported");
-    //epoll-based clients override it with a sendfile(2) call.
-    virtual ssize_t writeFileToSocket(int /*file_fd*/, off_t * /*offset*/, size_t /*len*/) { return -1; }
+    //Sends up to len bytes from file_fd at *offset to the socket; updates
+    //*offset by the bytes the socket actually accepted. Returns bytes sent
+    //(>0), 0 on EOF, <0 on error. The default impl is a portable
+    //read()+writeToSocket() loop so non-Linux server backends (Qt-based on
+    //Win/Mac/BSD/Haiku, ESP32-class RTOS with FS) still work; the Linux
+    //epoll backend overrides this with sendfile(2) for kernel zero-copy.
+    virtual ssize_t writeFileToSocket(int file_fd, off_t *offset, size_t len);
     virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode) = 0;
 public:
     //this interface allow 0 copy method, return 1 if all is ok, return 0 if need more data, -1 if critical error and need disconnect
     int8_t parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size,uint32_t &cursor);
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     std::vector<std::string> getQueryRunningList();
     #endif
 protected:
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
     //internal fast path to boost the move on map performance
     virtual void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction) = 0;
@@ -175,7 +179,7 @@ protected:
     //reply to the query
     bool removeFromQueryReceived(const uint8_t &queryNumber);
     virtual bool disconnectClient() = 0;
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     virtual CompressionProtocol::CompressionType getCompressType() const = 0;
     #endif
 };
@@ -190,7 +194,7 @@ public:
        );
     virtual ~ProtocolParsingInputOutput();
     //friend class Client;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     uint64_t getTXSize() const;
     uint64_t getRXSize() const;
     #endif
@@ -206,21 +210,21 @@ public:
 protected:
     /*virtual for void LinkToGameServer::parseIncommingData()
     of gateway, readTheFirstSslHeader() */virtual void parseIncommingData();
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     CompressionProtocol::CompressionType getCompressType() const override;
     #endif
     ssize_t write(const char * const data, const size_t &size);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     ProtocolParsingCheck *protocolParsingCheck;
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     uint64_t TXSize;
     uint64_t RXSize;
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
     #endif
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     int parseIncommingDataCount;//by object
     #endif
 };

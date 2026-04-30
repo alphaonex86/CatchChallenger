@@ -171,7 +171,7 @@ protected:
 
     std::vector<FacilityLibGeneral::InodeDescriptor> entryListZone;
     unsigned int entryListIndex;
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     #ifndef CATCHCHALLENGER_NOXML
     std::vector<tinyxml2::XMLDocument *> toDeleteAfterBotLoad;
     #endif

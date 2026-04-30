@@ -47,17 +47,17 @@ void BaseServer::preload_12_async_dictionary_map()
         default:
         abort();
         break;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`map` FROM `dictionary_map` ORDER BY `map`";
         break;
         #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,map FROM dictionary_map ORDER BY map";
         break;
         #endif
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,map FROM dictionary_map ORDER BY map";
         break;
@@ -173,17 +173,17 @@ void BaseServer::preload_dictionary_map_return()
                 default:
                 abort();
                 break;
-                #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER))
                 case DatabaseBase::DatabaseType::Mysql:
                     queryText="INSERT INTO `dictionary_map`(`id`,`map`) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
                 #endif
-                #ifndef EPOLLCATCHCHALLENGERSERVER
+                #ifndef CATCHCHALLENGER_SERVER
                 case DatabaseBase::DatabaseType::SQLite:
                     queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
                 #endif
-                #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+                #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                 case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
@@ -306,17 +306,17 @@ void BaseServer::preload_21_async_industries()
         default:
         abort();
         break;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`resources`,`products`,`last_update` FROM `factory`";
         break;
         #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,resources,products,last_update FROM factory";
         break;
         #endif
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,resources,products,last_update FROM factory";
         break;
@@ -599,17 +599,17 @@ void BaseServer::preload_20_async_clan_max_id()
         default:
         abort();
         break;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;";
         break;
         #endif
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 1;";
         break;
@@ -673,17 +673,17 @@ void BaseServer::load_account_max_id()
         default:
         abort();
         break;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM account ORDER BY id DESC LIMIT 0,1;";
         break;
         #endif
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM account ORDER BY id DESC LIMIT 1;";
         break;
@@ -749,17 +749,17 @@ void BaseServer::load_character_max_id()
         default:
         abort();
         break;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM character ORDER BY id DESC LIMIT 0,1;";
         break;
         #endif
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM character ORDER BY id DESC LIMIT 1;";
         break;

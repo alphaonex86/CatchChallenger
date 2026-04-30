@@ -20,7 +20,7 @@
 
 //need host + port here to have datapack base
 
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 using namespace CatchChallenger;
 
 const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
@@ -129,7 +129,7 @@ void Api_protocol::parseIncommingData()
 void Api_protocol::errorParsingLayer(const std::string &error)
 {
     newError(("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)),error);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     //abort();-> same behaviour on all platform
     #endif
     #ifdef CATCHCHALLENGER_ABORTIFERROR
@@ -151,7 +151,7 @@ void Api_protocol::parseError(const std::string &userMessage,const std::string &
         std::cerr << userMessage << " " << errorString << std::endl;
         newError(userMessage,errorString);
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     abort();
     #endif
 }
@@ -408,7 +408,7 @@ void Api_protocol::send_player_move(const uint8_t &moved_unit,const Direction &d
         }
         else // if look
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(moved_unit>0)
                 abort();
             if(last_step>0)
@@ -2080,7 +2080,7 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
         {
             std::cout << "postReplyData() Sended packet size: " << size << ": " << binarytoHexa(data,size)
                       << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #endif
             return false;
@@ -2130,7 +2130,7 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
         {
             std::cout << "packOutcommingData(): Sended packet size: " << size << ": " << binarytoHexa(data,size)
                       << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #endif
             return false;
@@ -2178,7 +2178,7 @@ bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode, const uint8_t 
         {
             std::cout << "packOutcommingQuery(): Sended packet size: " << size << ": " << binarytoHexa(data,size)
                       << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #endif
             return false;

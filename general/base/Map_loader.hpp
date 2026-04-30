@@ -144,15 +144,13 @@ public:
 
     static void loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep=nullptr,std::vector<MapLoadBuffers> *mapLoadBuffers=nullptr);
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     std::vector<tinyxml2::XMLDocument*> xmlDocsToKeepInternal;
     #endif
     #endif
 
     //for tiled
-    #ifdef TILED_ZLIB
     static int32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    #endif
 
 private:
     std::string error;

@@ -1,7 +1,7 @@
 #ifndef EPOLL_SSL_CLIENT_H
 #define EPOLL_SSL_CLIENT_H
 
-#ifdef SERVERSSL
+#ifdef CATCHCHALLENGER_SERVER_SSL
 #include <openssl/ssl.h>
 
 #include "BaseClassSwitch.h"

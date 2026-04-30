@@ -42,7 +42,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Usage of recipe
         case 0x85:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint16_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -57,7 +57,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Use object
         case 0x86:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint16_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -99,7 +99,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Get factory list
         case 0x8A:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint16_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -114,7 +114,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Buy factory object
         case 0x8B:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -132,7 +132,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Sell factory object
         case 0x8C:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -310,7 +310,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             partialHashList.reserve(number_of_file);
             std::string tempFileName;
             uint32_t index=0;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
             #endif
             if(number_of_file>1000000)
@@ -365,7 +365,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     }
                     else
                         tempFileName.clear();
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(!std::regex_match(tempFileName,datapack_rightFileName))
                     {
                         errorOutput("wrong file name \""+tempFileName+"\": parseQuery("+
@@ -514,7 +514,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint8_t)+sizeof(uint32_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -539,7 +539,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));

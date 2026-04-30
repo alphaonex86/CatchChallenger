@@ -217,7 +217,7 @@ void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const 
             abort();
         }
 
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             FILE *pFile = fopen(fullPath.c_str(),"rb");
             if(pFile!=NULL)
@@ -271,7 +271,7 @@ void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const 
         XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
         memcpy(&h,&htemp.digest,sizeof(h));
         utimbuf butime;butime.actime=h;butime.modtime=h;
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        #ifndef CATCHCHALLENGER_HARDENED
         utime(fullPath.c_str(),&butime);
         #else
         if(utime(fullPath.c_str(),&butime)!=0)
@@ -281,7 +281,7 @@ void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const 
         }
         #endif
 
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         struct stat sb;
         if (stat(fullPath.c_str(), &sb) == 0)
         {
@@ -376,7 +376,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
     }
 
     std::cout << "DatapackDownloaderBase::datapackChecksumDoneBase() " << " " << __FILE__ << ":" << __LINE__ << std::endl;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(!partialHashList.empty())
         std::cout << "DatapackDownloaderBase::datapackChecksumDoneBase() partialHashList first entry " << partialHashList.at(0) << " " << __FILE__ << ":" << __LINE__ << std::endl;
     #endif
@@ -748,7 +748,7 @@ void DatapackDownloaderBase::decodedIsFinishBase(const std::vector<char> &rawDat
                         XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
                         memcpy(&h,&htemp.digest,sizeof(h));
                         utimbuf butime;butime.actime=h;butime.modtime=h;
-                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifndef CATCHCHALLENGER_HARDENED
                         utime((mDatapackBase+fileList.at(index)).c_str(),&butime);
                         #else
                         if(utime((mDatapackBase+fileList.at(index)).c_str(),&butime)!=0)
@@ -758,7 +758,7 @@ void DatapackDownloaderBase::decodedIsFinishBase(const std::vector<char> &rawDat
                         }
                         #endif
 
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         struct stat sb;
                         if (stat((mDatapackBase+fileList.at(index)).c_str(), &sb) == 0)
                         {
@@ -893,7 +893,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                         int indexInDatapackList=vectorindexOf(datapackFilesListBase,fileString);
                         if(indexInDatapackList!=-1)
                         {
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if((unsigned int)indexInDatapackList>=partialHashListBase.size())
                             {
                                 std::cerr << "out of bound (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -1056,7 +1056,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                                 abort();
                             }
 
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             {
                                 FILE *pFile = fopen(chunk->fileName.c_str(),"rb");
                                 if(pFile!=NULL)
@@ -1110,7 +1110,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                             XXH32_canonicalFromHash(&htemp,XXH32(chunk->memory,chunk->size,0));
                             memcpy(&h,&htemp.digest,sizeof(h));
                             utimbuf butime;butime.actime=h;butime.modtime=h;
-                            #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifndef CATCHCHALLENGER_HARDENED
                             utime(chunk->fileName.c_str(),&butime);
                             #else
                             if(utime(chunk->fileName.c_str(),&butime)!=0)
@@ -1124,7 +1124,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                             if(chunk->size<=0)
                                 std::cerr << "download save: " << chunk->fileName.c_str() << " size: " << chunk->size << ", empty file? bug? " << __FILE__ << ":" << __LINE__ << std::endl;
 
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             struct stat sb;
                             if (stat(chunk->fileName.c_str(), &sb) == 0)
                             {
@@ -1255,7 +1255,7 @@ void DatapackDownloaderBase::sendDatapackContentBase()
     datapackFilesListBase=listDatapackBase(std::string());
     std::sort(datapackFilesListBase.begin(),datapackFilesListBase.end());
     const DatapackChecksum::FullDatapackChecksumReturn &fullDatapackChecksumReturn=DatapackChecksum::doFullSyncChecksumBase(mDatapackBase);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(!fullDatapackChecksumReturn.partialHashList.empty())
         std::cout << "DatapackDownloaderBase::datapackChecksumDoneBase() partialHashList first entry " << fullDatapackChecksumReturn.partialHashList.at(0) << " " << __FILE__ << ":" << __LINE__ << std::endl;
     #endif

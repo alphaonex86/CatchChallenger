@@ -44,7 +44,7 @@ public slots:
                     const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
     void internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destination_map_index, const COORD_TYPE &destination_x, const COORD_TYPE &destination_y, const CATCHCHALLENGER_TYPE_MAPID &source_map_index, const COORD_TYPE &source_x, const COORD_TYPE &source_y, const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
     void cancel();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     static void extraControlOnData(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation);
     #endif
 private:

@@ -180,7 +180,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
     memcpy(EpollClientLoginMaster::private_token,tokenbinary.data(),TOKEN_SIZE_FOR_MASTERAUTH);
 
     //connection
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     if(!settings.contains("compression"))
         settings.setValue("compression","zstd");
     if(settings.value("compression").toString()=="none")
@@ -694,7 +694,7 @@ void EpollServerLoginMaster::doTheServerList()
     //memset(EpollClientLoginMaster::serverPartialServerList,0x00,sizeof(EpollClientLoginMaster::serverPartialServerList));//improve the performance
     unsigned int pos=0x00;
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::unordered_map<uint8_t/*charactersgroup index*/,std::unordered_set<uint32_t/*unique key*/> > duplicateDetect;
     #endif
     EpollClientLoginMaster::serverPartialServerList[pos]=EpollClientLoginMaster::gameServers.size();
@@ -702,7 +702,7 @@ void EpollServerLoginMaster::doTheServerList()
     unsigned int serverListIndex=0;
     while(serverListIndex<EpollClientLoginMaster::gameServers.size())
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(serverListIndex>=EpollClientLoginMaster::gameServers.size())
         {
             std::cerr << "serverListIndex>=EpollClientLoginMaster::gameServers.size() (abort)" << std::endl;
@@ -710,7 +710,7 @@ void EpollServerLoginMaster::doTheServerList()
         }
         #endif
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(gameServerOnEpollClientLoginMaster==NULL)
         {
             std::cerr << "charactersGroup==NULL (abort)" << std::endl;
@@ -718,7 +718,7 @@ void EpollServerLoginMaster::doTheServerList()
         }
         #endif
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(gameServerOnCharactersGroup==NULL)
         {
             std::cerr << "charactersGroup==NULL (abort)" << std::endl;
@@ -737,7 +737,7 @@ void EpollServerLoginMaster::doTheServerList()
 
             pos+=sizeof(gameServerOnEpollClientLoginMaster->uniqueKey);
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         //add more control
         {
             const uint8_t &charactersGroupIndex=gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->index;
@@ -810,7 +810,7 @@ void EpollServerLoginMaster::doTheServerList()
     serverListIndex=0;
     while(serverListIndex<EpollClientLoginMaster::gameServers.size())
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(serverListIndex>=EpollClientLoginMaster::gameServers.size())
         {
             std::cerr << "serverListIndex>=EpollClientLoginMaster::gameServers.size() (abort)" << std::endl;
@@ -819,7 +819,7 @@ void EpollServerLoginMaster::doTheServerList()
         #endif
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(gameServerOnCharactersGroup==NULL)
         {
             std::cerr << "charactersGroup==NULL (abort)" << std::endl;
@@ -890,7 +890,7 @@ void EpollServerLoginMaster::doTheReplyCache()
 
 bool EpollServerLoginMaster::tryListen()
 {
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
         const bool &returnedValue=trySslListen(server_ip, server_port,"server.crt", "server.key");
     #else
         const bool &returnedValue=tryListenInternal(server_ip, server_port);

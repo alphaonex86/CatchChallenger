@@ -322,11 +322,17 @@ def android_env():
 
 
 def build_android_apk(pro_file, build_dir, label):
-    """qmake-android + make + make install + androiddeployqt for a client
-    .pro.  Returns the local path to the produced .apk, or None on failure."""
+    """Phase 5 (qmake -> CMake) Android build path:
+       qt-cmake (Android toolchain) configure
+        + cmake --build
+        + cmake --install
+        + androiddeployqt
+    Returns the local path to the produced .apk, or None on failure."""
+    import cmake_helpers as _ch
     name = f"compile {label} (android-{ANDROID_QT_ABI})"
-    qmake = find_android_qmake()
+    qmake = find_android_qmake()  # still useful as a "Qt-for-Android present" probe
     qt_bin_dir = os.path.dirname(qmake)
+    qt_cmake = os.path.join(qt_bin_dir, "qt-cmake")
     host_bin = os.path.join(os.path.dirname(os.path.dirname(qt_bin_dir)),
                             "gcc_64", "bin")
     androiddeployqt = None
@@ -341,40 +347,55 @@ def build_android_apk(pro_file, build_dir, label):
     if androiddeployqt is None:
         log_fail(name, f"androiddeployqt not found (looked in {host_bin} and {qt_bin_dir})")
         return None
+    if not os.path.isfile(qt_cmake):
+        log_fail(name, f"qt-cmake not found at {qt_cmake}")
+        return None
+    pro_rel = os.path.relpath(pro_file, ROOT).replace(os.sep, "/")
+    try:
+        target, configure_flags, _output_subdir = _ch.pro_to_cmake_target(pro_rel)
+    except KeyError:
+        log_fail(name, f"no cmake target mapping for {pro_rel}")
+        return None
     ensure_dir(build_dir)
-    log_info(f"make distclean {label} (android)")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
-
     env = android_env()
 
-    log_info(f"android-qmake {label}")
-    rc, out = run_cmd([qmake, "-spec", "android-clang", "-o", "Makefile", pro_file,
-                       "DEFINES+=NOWEBSOCKET", "DEFINES+=CATCHCHALLENGER_NOAUDIO"],
-                      build_dir, env=env)
+    log_info(f"android qt-cmake configure {label}")
+    args = [qt_cmake, "-S", ROOT, "-B", build_dir,
+            "-DCMAKE_BUILD_TYPE=Debug",
+            "-DCATCHCHALLENGER_NOAUDIO=ON",
+            "-DCATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS=OFF",
+            "-DCATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS=OFF"]
+    args.extend(configure_flags)
+    rc, out = run_cmd(args, build_dir, env=env)
     if rc != 0:
-        log_fail(name, f"qmake failed (rc={rc})")
+        log_fail(name, f"qt-cmake configure failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None
-    log_info(f"android-make -j{NPROC} {label}")
-    rc, out = run_cmd(["make", "-j" + NPROC], build_dir, env=env)
+    log_info(f"android cmake --build -j{NPROC} {label}")
+    rc, out = run_cmd(["cmake", "--build", build_dir,
+                       "--target", target, "-j", NPROC],
+                      build_dir, env=env)
     if rc != 0:
-        log_fail(name, f"make failed (rc={rc})")
+        log_fail(name, f"cmake build failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None
     install_root = os.path.join(build_dir, "android-build")
-    log_info(f"android-make install INSTALL_ROOT={install_root}")
-    rc, out = run_cmd(["make", "install", f"INSTALL_ROOT={install_root}"],
+    log_info(f"android cmake --install --prefix={install_root}")
+    rc, out = run_cmd(["cmake", "--install", build_dir,
+                       "--prefix", install_root],
                       build_dir, env=env)
     if rc != 0:
-        log_fail(name, f"make install failed (rc={rc})")
+        log_fail(name, f"cmake install failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None
-    deploy_json = os.path.join(build_dir, "android-" + os.path.basename(pro_file).replace(".pro", "") + "-deployment-settings.json")
+    deploy_json = os.path.join(build_dir, "android-" + target + "-deployment-settings.json")
     if not os.path.isfile(deploy_json):
-        matches = glob.glob(os.path.join(build_dir, "android-*-deployment-settings.json"))
+        matches = glob.glob(os.path.join(build_dir, "**",
+                                         "android-*-deployment-settings.json"),
+                            recursive=True)
         if matches:
             deploy_json = matches[0]
     if not os.path.isfile(deploy_json):

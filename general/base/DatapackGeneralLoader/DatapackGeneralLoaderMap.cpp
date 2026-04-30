@@ -1,6 +1,6 @@
 #include "DatapackGeneralLoader.hpp"
 #include <iostream>
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 #include "../../general/base/CommonDatapack.hpp"
 #endif
 #include "../../tinyXML2/customtinyxml2.hpp"
@@ -32,7 +32,7 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
     }
     std::vector<MonstersCollisionTemp> returnVar;
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -48,7 +48,7 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return returnVar;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -221,7 +221,7 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
         }
         monstersCollisionItem = monstersCollisionItem->NextSiblingElement("monstersCollision");
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return returnVar;
@@ -232,7 +232,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     LayersOptions returnVar;
     returnVar.zoom=2;
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -248,7 +248,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return returnVar;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -287,7 +287,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
             }
         }
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return returnVar;
@@ -298,7 +298,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     std::vector<Event> returnVar;
 
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -314,7 +314,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return returnVar;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -362,7 +362,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
         }
         eventItem = eventItem->NextSiblingElement("event");
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return returnVar;

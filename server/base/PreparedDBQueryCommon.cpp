@@ -10,14 +10,14 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
     switch(type)
     {
         default:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
         #else
         std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
         #endif
         abort();
         return;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id=PreparedStatementUnit("DELETE FROM `monster` WHERE `id`=%1",database);
@@ -69,7 +69,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         break;
         #endif
 
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id=PreparedStatementUnit("DELETE FROM monster WHERE id=%1",database);
@@ -121,7 +121,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         break;
         #endif
 
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id=PreparedStatementUnit("DELETE FROM monster WHERE id=%1",database);
@@ -190,14 +190,14 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
     switch(type)
     {
         default:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
         #else
         std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
         #endif
         abort();
         return;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
         PreparedDBQueryCommon::db_query_select_monsters_by_player_id=PreparedStatementUnit("SELECT `id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,LOWER(HEX(`buffs`)),LOWER(HEX(`skills`)),LOWER(HEX(`skills_endurance`)) FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC",database);
@@ -207,7 +207,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
         break;
         #endif
 
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
         PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=PreparedStatementUnit("UPDATE monster SET hp=%1,xp=%2,level=%3 WHERE id=%4",database);
@@ -217,7 +217,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
         break;
         #endif
 
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
         PreparedDBQueryCommon::db_query_update_monster_xp_hp_level=PreparedStatementUnit("UPDATE monster SET hp=%1,xp=%2,level=%3 WHERE id=%4",database);

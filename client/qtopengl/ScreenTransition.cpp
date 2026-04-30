@@ -1,5 +1,5 @@
 #include "ScreenTransition.hpp"
-#if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+#if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
 #include "../../server/qt/InternalServer.hpp"
 #include "../libqtcatchchallenger/Settings.hpp"
 #include "../libqtcatchchallenger/SoloDatabaseInit.hpp"
@@ -92,7 +92,7 @@ ScreenTransition::ScreenTransition() :
     multi=nullptr;
     login=nullptr;
     inGame=false;
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     internalServer=nullptr;
     #endif
     setBackground(&b);
@@ -256,7 +256,7 @@ void ScreenTransition::closeEvent(QCloseEvent *event)
 {
     std::cout << " ScreenTransition::closeEvent()" << std::endl;
     inGame=false;
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     if(internalServer!=nullptr)
     {
         if(!internalServer->isFinished())
@@ -497,7 +497,7 @@ void ScreenTransition::openSolo()
     QString savegamesPath=l.first()+"/solo/";
     if(m!=nullptr)
         m->setError(std::string());
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     //locate the new folder and create it
     if(!QDir().mkpath(savegamesPath))
     {
@@ -673,7 +673,7 @@ void ScreenTransition::openSolo()
 void ScreenTransition::is_started(bool started)
 {
     std::cout << "ScreenTransition::is_started(" << started << ")" << std::endl;
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     if(started)
     {
         ConnexionInfo connexionInfo;
@@ -854,7 +854,7 @@ void ScreenTransition::selectCharacter(const int indexSubServer,const int indexC
 void ScreenTransition::disconnectedFromServer()
 {
     inGame=false;
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     if(internalServer!=nullptr)
         internalServer->stop();
     #endif
@@ -870,7 +870,7 @@ void ScreenTransition::errorString(std::string error)
     if(connexionManager!=nullptr)
         if(connexionManager->client!=nullptr)
             connexionManager->client->disconnectFromHost();
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     if(internalServer!=nullptr)
     {
         std::cerr << "ScreenTransition::errorString(): internalServer!=nullptr" << std::endl;

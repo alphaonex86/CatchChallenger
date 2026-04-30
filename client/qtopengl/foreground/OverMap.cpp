@@ -2,7 +2,7 @@
 #include "../../libqtcatchchallenger/Language.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../libqtcatchchallenger/Ultimate.hpp"
-#if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+#if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
 #include "../../../server/qt/InternalServer.hpp"
 #endif
 #include "../ConnexionManager.hpp"
@@ -303,7 +303,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
     {
         bool showPlayersCount=!connexionManager->isLocalGame();
-        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+        #if defined(CATCHCHALLENGER_SOLO) && !defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
         if(!showPlayersCount && CatchChallenger::InternalServer::internalServer!=nullptr
            && CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
             showPlayersCount=true;
@@ -414,7 +414,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
             bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
         }
     }
-    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
     {
         if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
@@ -537,7 +537,7 @@ void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &call
     chat->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     bag->mousePressEventXY(p,pressValidated);
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
         if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
             opentolan->mousePressEventXY(p,pressValidated);
@@ -585,7 +585,7 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
     chat->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     bag->mouseReleaseEventXY(p,pressValidated);
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+    #if defined(CATCHCHALLENGER_SOLO) && !defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
         if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
             opentolan->mouseReleaseEventXY(p,pressValidated);

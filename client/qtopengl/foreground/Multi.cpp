@@ -88,7 +88,7 @@ Multi::~Multi()
 void Multi::displayServerList()
 {
     serverEmpty->setVisible(mergedConnexionInfoList.empty());
-    #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_NO_WEBSOCKET)
     #error Web socket and tcp socket are both not supported
     return;
     #endif
@@ -233,7 +233,7 @@ void Multi::server_add_finished()
     if(addServer->type()==0)
     {
         connexionInfo.port=addServer->port();
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         connexionInfo.host=addServer->server();
         #endif
         connexionInfo.ws.clear();
@@ -242,7 +242,7 @@ void Multi::server_add_finished()
     {
         connexionInfo.port=0;
         connexionInfo.host.clear();
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         connexionInfo.ws=addServer->server();
         #endif
     }
@@ -276,7 +276,7 @@ void Multi::server_edit_clicked()
                 if(!connect(addServer,&AddOrEditServer::removeAbove,this,&Multi::server_edit_finished))
                     abort();
             }
-            #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
+            #if ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && ! defined(CATCHCHALLENGER_NO_WEBSOCKET)
             if(connexionInfo.ws.isEmpty())
             {
                 addServer->setType(0);
@@ -289,11 +289,11 @@ void Multi::server_edit_clicked()
                 addServer->setServer(connexionInfo.ws);
             }
             #else
-                #if defined(NOTCPSOCKET)
+                #if defined(CATCHCHALLENGER_NO_TCPSOCKET)
                 addServer->setType(1);
                 addServer->setServer(connexionInfo.ws);
                 #else
-                    #if defined(NOWEBSOCKET)
+                    #if defined(CATCHCHALLENGER_NO_WEBSOCKET)
                     addServer->setType(0);
                     addServer->setServer(connexionInfo.host);
                     addServer->setPort(connexionInfo.port);
@@ -338,7 +338,7 @@ void Multi::server_edit_finished()
             if(addServer->type()==0)
             {
                 connexionInfo.port=addServer->port();
-                #ifndef NOTCPSOCKET
+                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
                 connexionInfo.host=addServer->server();
                 #endif
                 connexionInfo.ws.clear();
@@ -347,7 +347,7 @@ void Multi::server_edit_finished()
             {
                 connexionInfo.port=0;
                 connexionInfo.host.clear();
-                #ifndef NOWEBSOCKET
+                #ifndef CATCHCHALLENGER_NO_WEBSOCKET
                 connexionInfo.ws=addServer->server();
                 #endif
             }
@@ -752,7 +752,7 @@ std::vector<ConnexionInfo> Multi::loadConfigConnexionInfoList()
                 connexionInfo.ws=ws;
             else
             {
-                #ifndef NOTCPSOCKET
+                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
                 uint16_t port=static_cast<uint16_t>(port_string.toInt(&ok));
                 if(!ok)
                     qDebug() << "dropped connexion, port wrong: " << port_string;

@@ -599,7 +599,7 @@ void BaseWindow::connectAllSignals()
        abort();
 }
 
-#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+#if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
 void BaseWindow::receiveLanPort(uint16_t port)
 {
    chat->new_system_text(CatchChallenger::Chat_type::Chat_type_system_important,tr("Open to port %1").arg(port).toStdString());
@@ -2061,7 +2061,7 @@ void BaseWindow::on_openToLan_clicked()
     ui->openToLan->setEnabled(false);
     ui->toolButtonLan->setEnabled(false);
     const Player_private_and_public_informations &informations=client->get_player_informations_ro();
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
     #endif
 }
@@ -2073,7 +2073,7 @@ void BaseWindow::on_toolButtonLan_clicked()
     ui->toolButtonLan->setEnabled(false);
     ui->toolButtonLan->setVisible(false);
     const Player_private_and_public_informations &informations=client->get_player_informations_ro();
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
     #endif
 }

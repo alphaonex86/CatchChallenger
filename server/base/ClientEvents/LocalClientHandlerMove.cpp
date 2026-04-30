@@ -7,7 +7,7 @@ using namespace CatchChallenger;
 
 bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
@@ -31,7 +31,7 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
               << "), next direction: " << MoveOnTheMap::directionToString(direction) << std::endl;
     #endif
     const bool &returnValue=MapBasicMove::moveThePlayer(previousMovedUnit,direction);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(returnValue)
     {
         const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
@@ -54,7 +54,7 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
 
 bool Client::singleMove(const Direction &direction)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
@@ -77,7 +77,7 @@ bool Client::singleMove(const Direction &direction)
         errorOutput("error: try move when is in fight");
         return false;
     }
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(captureCityInProgress())
     {
         errorOutput("Try move when is in capture city");
@@ -224,7 +224,7 @@ bool Client::singleMove(const Direction &direction)
     else
         public_and_private_informations.repel_step--;
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(this->mapIndex!=65535)
     {
         const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);

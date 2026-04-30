@@ -17,7 +17,7 @@ uint8_t EpollClientLoginSlave::clientToDeleteIndex=0;
 std::unordered_set<void *> EpollClientLoginSlave::detectDuplicateClientToDelete;
 
 EpollClientLoginSlave::EpollClientLoginSlave(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -57,7 +57,7 @@ uint64_t EpollClientLoginSlave::get_lastActivity() const
 
 bool EpollClientLoginSlave::disconnectClient()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "EpollClientLoginSlave::disconnectClient() " << this << " (" << infd << ")" << std::endl;
     #endif
 
@@ -93,7 +93,7 @@ bool EpollClientLoginSlave::disconnectClient()
                         index++;
                     }
                     //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(BaseServerLogin::tokenForAuth[0].client==NULL)
                         abort();
                     #endif
@@ -255,7 +255,7 @@ void EpollClientLoginSlave::breakNeedMoreData()
         disconnectClient();
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "Break due to need more in parse data" << std::endl;
     #endif
 }
@@ -275,7 +275,7 @@ ssize_t EpollClientLoginSlave::writeToSocket(const char * const data, const size
 
 void EpollClientLoginSlave::closeSocket()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "EpollClientLoginSlave::closeSocket(): " << this << " (" << infd << ")" << std::endl;
     #endif
     disconnectClient();

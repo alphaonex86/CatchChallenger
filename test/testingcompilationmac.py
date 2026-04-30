@@ -196,35 +196,51 @@ def rsync_to_mac():
 
 
 def build_mac_client(pro_rel, label):
-    """qmake -spec macx-clang + make on the Mac VM via ssh.  Returns the
-    .app bundle path on the VM, or None on failure."""
+    """cmake configure + cmake --build on the Mac VM via ssh. Returns the
+    .app bundle path on the VM, or None on failure.
+
+    Phase 5 (qmake -> CMake): the VM still has its own Qt 6.8.0 install
+    so cmake configure on the VM picks that up via $PATH (Qt6_DIR is
+    discovered automatically when /Users/user/Qt/6.8.0/macos/bin is on
+    PATH). NOWEBSOCKET stays defined because the VM's Qt 6.8 doesn't
+    ship QtWebSockets."""
+    import cmake_helpers as _ch
     name = f"compile {label} (mac, ssh)"
-    pro_dir  = MAC_WORK_DIR + "/" + os.path.dirname(pro_rel)
-    pro_path = MAC_WORK_DIR + "/" + pro_rel
-    log_info(f"mac-qmake {label}")
-    #The VM's Qt 6.8.0 install does not ship QtWebSockets so build with
-    #NOWEBSOCKET. CONFIG+=c++17 because Qt 6.8 headers require >= C++17 and
-    #the macx-clang spec defaults to a pre-c++17 standard.
-    rc, out = mac_ssh(f"cd {pro_dir} && /usr/bin/make distclean > /dev/null 2>&1; "
-                      f"{MAC_QMAKE} -o Makefile {pro_path} -spec macx-clang "
-                      f"-config debug 'CONFIG+=c++17' 'DEFINES+=NOWEBSOCKET' 2>&1",
-                      timeout=COMPILE_TIMEOUT)
+    try:
+        target, configure_flags, output_subdir = _ch.pro_to_cmake_target(pro_rel)
+    except KeyError:
+        log_fail(name, f"no cmake target mapping for {pro_rel}")
+        return None
+    build_dir = MAC_WORK_DIR + "/build-mac/" + target
+    src_dir   = MAC_WORK_DIR
+    flag_args = " ".join("'" + f + "'" for f in configure_flags)
+    log_info(f"mac-cmake configure {label}")
+    rc, out = mac_ssh(
+        f"mkdir -p {build_dir} && "
+        f"cmake -S {src_dir} -B {build_dir} -DCMAKE_BUILD_TYPE=Debug "
+        f"-DCMAKE_CXX_STANDARD=17 -DNOWEBSOCKET=ON "
+        f"-DCATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS=OFF "
+        f"-DCATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS=OFF "
+        f"{flag_args} 2>&1",
+        timeout=COMPILE_TIMEOUT)
     if rc != 0:
-        log_fail(name, f"qmake failed (rc={rc})")
+        log_fail(name, f"cmake configure failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None
-    log_info(f"mac-make -j$(sysctl -n hw.ncpu) {label}")
-    rc, out = mac_ssh(f"cd {pro_dir} && /usr/bin/make -j$(sysctl -n hw.ncpu) 2>&1",
-                      timeout=COMPILE_TIMEOUT)
+    log_info(f"mac-cmake --build -j$(sysctl -n hw.ncpu) {label}")
+    rc, out = mac_ssh(
+        f"cmake --build {build_dir} --target {target} -j$(sysctl -n hw.ncpu) 2>&1",
+        timeout=COMPILE_TIMEOUT)
     if rc != 0:
-        log_fail(name, f"make failed (rc={rc})")
+        log_fail(name, f"cmake build failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None
-    rc, out = mac_ssh(f"ls -d {pro_dir}/{MAC_APP_NAME} 2>/dev/null || "
-                      f"ls -d {pro_dir}/*.app 2>/dev/null | head -1",
-                      timeout=15)
+    rc, out = mac_ssh(
+        f"ls -d {build_dir}/{output_subdir}/{MAC_APP_NAME} 2>/dev/null || "
+        f"ls -d {build_dir}/{output_subdir}/*.app 2>/dev/null | head -1",
+        timeout=15)
     app_path = out.strip().splitlines()[0] if out.strip() else ""
     if rc != 0 or not app_path:
         log_fail(name, ".app bundle not found on mac")

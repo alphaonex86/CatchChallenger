@@ -3,7 +3,7 @@
 #include "VariableServer.hpp"
 #include "Client.hpp"
 #include <string.h>
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 #include <vector>
 #endif
 #include "../../general/base/CommonSettingsServer.hpp"
@@ -77,7 +77,7 @@ PLAYER_INDEX_FOR_CONNECTED MapServer::map_clients_list_size() const
 
 bool MapServer::map_clients_list_isValid(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=map_clients_id.size())
     {
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << map_clients_id.size() << std::endl;
@@ -90,7 +90,7 @@ bool MapServer::map_clients_list_isValid(const PLAYER_INDEX_FOR_CONNECTED &index
 //abort if index is not valid
 const PLAYER_INDEX_FOR_CONNECTED &MapServer::map_clients_list_at(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=map_clients_id.size())
     {
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << map_clients_id.size() << std::endl;

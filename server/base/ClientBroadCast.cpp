@@ -313,7 +313,7 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
 
 void Client::receive_instant_player_number(const uint16_t &connected_players, const char * const data, const uint8_t &size)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(size!=2 && size!=3)
         return;
     #endif

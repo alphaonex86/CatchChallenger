@@ -130,7 +130,7 @@ public slots:
     void selectObject(const ObjectType &objectType);
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void connectAllSignals();
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     void receiveLanPort(uint16_t port);
     #endif
 private slots:
@@ -687,7 +687,7 @@ signals:
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);
     #endif
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     void emitOpenToLan(QString name, bool allowInternet);
     #endif
 };

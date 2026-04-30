@@ -4,7 +4,7 @@
 #include "../base/CommonDatapack.hpp"
 #include "../base/cpp11addition.hpp"
 #include "../base/GeneralVariable.hpp"
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 #include "../base/CommonDatapack.hpp"
 #endif
 #include <iostream>
@@ -21,7 +21,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     loadMonsterName(tempNameToMonsterId,folder);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(types.size()>255)
     {
         std::cerr << "FightLoader::loadMonster() types.size()>255" << std::endl;
@@ -60,7 +60,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
         }
         #endif
         tinyxml2::XMLDocument *domDocument;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
             domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -77,7 +77,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
         }
         #endif
         const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -244,7 +244,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                         }
                     }
                     #ifndef CATCHCHALLENGER_CLASS_MASTER
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+                    #ifdef CATCHCHALLENGER_SOLO
                     powerVar*=static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow)/1000.0;
                     #endif
                     #endif
@@ -591,7 +591,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                                 }
                             }
                         }
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(powerVar==0)
                         {
                             std::cerr << "powerVar==0" << std::endl;
@@ -607,7 +607,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                             uint64_t tempXp=xp_for_this_level*xp_for_max_level/max_xp;
                             if(tempXp<1)
                                 tempXp=1;
-                            /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            /*#ifdef CATCHCHALLENGER_HARDENED
                             if(id==7 && monster.level_to_xp.size()==20)
                                 std::cout << "Example level to xp: " << tempXp << std::endl;
                             #endif*/
@@ -625,8 +625,8 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                         std::cerr << "monster.level_to_xp.size(): " << monster.level_to_xp.size() << std::endl;
                         #endif
 
-                        #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_SOLO
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(monster.give_xp!=0)
                             if((monster.xp_for_max_level*CommonSettingsServer::commonSettingsServer.rates_xp/1000/monster.give_xp)>150)
                                 std::cerr << "Warning: you need more than " << monster.xp_for_max_level/monster.give_xp << " monster(s) to pass the last level, prefer do that's with the rate for the monster id: " << id << std::endl;
@@ -646,7 +646,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                 std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child->Name(): " << monsterNode->Name() << std::endl;
             monsterNode = monsterNode->NextSiblingElement("monster");
         }
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifdef CATCHCHALLENGER_SERVER
         delete domDocument;
         #endif
         file_index++;
@@ -728,7 +728,7 @@ void FightLoader::loadMonsterName(catchchallenger_datapack_map<std::string,CATCH
             continue;
         }
         tinyxml2::XMLDocument *domDocument;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
             domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -745,7 +745,7 @@ void FightLoader::loadMonsterName(catchchallenger_datapack_map<std::string,CATCH
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
         }
         #endif
         const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -799,7 +799,7 @@ void FightLoader::loadMonsterName(catchchallenger_datapack_map<std::string,CATCH
                 std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child->Name(): " << monsterNode->Name() << std::endl;
             monsterNode = monsterNode->NextSiblingElement("monster");
         }
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifdef CATCHCHALLENGER_SERVER
         delete domDocument;
         #endif
         file_index++;

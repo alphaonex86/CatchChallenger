@@ -1,7 +1,7 @@
 #include "FightLoader.hpp"
 #include "../base/FacilityLibGeneral.hpp"
 #include "../base/cpp11addition.hpp"
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 #include "../base/CommonDatapack.hpp"
 #endif
 #include <iostream>
@@ -39,7 +39,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::load
         }
         #endif // CATCHCHALLENGER_CLASS_MASTER
         tinyxml2::XMLDocument *domDocument;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
             domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -56,7 +56,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::load
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
         }
         #endif
         const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -335,7 +335,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::load
                 std::cerr << "Unable to open the xml file: " << file << ", have not the skill id: child->Name(): " << item->Name() << std::endl;
             item = item->NextSiblingElement("skill");
         }
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifdef CATCHCHALLENGER_SERVER
         delete domDocument;
         #endif
         file_index++;

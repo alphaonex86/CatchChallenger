@@ -12,7 +12,7 @@
 #include "MainWindow.h"
 #include <iostream>
 
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 void BotTargetList::checkDuplicatePointOnMap_Item(const std::map<std::pair<uint8_t, uint8_t>, MapServerMini::ItemOnMap> &pointOnMap_Item)
 {
     std::unordered_set<uint32_t> known_indexOfItemOnMap;
@@ -138,7 +138,7 @@ void BotTargetList::updatePlayerStep()
                             uint8_t x=player.x,y=player.y;
                             if(ActionsAction::move(api,newDirectionToMove,&destMap,&x,&y,false,false))
                             {
-                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                #ifdef CATCHCHALLENGER_HARDENED
                                 checkDuplicatePointOnMap_Item(playerMap->pointOnMap_Item);
                                 #endif
                                 std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
@@ -513,7 +513,7 @@ void BotTargetList::updatePlayerStep()
                     {
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
                         {
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             {
                                 std::unordered_set<uint32_t> known_indexOfItemOnMap;
                                 for ( const std::pair<const std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap> &item : mapServer->pointOnMap_Item )

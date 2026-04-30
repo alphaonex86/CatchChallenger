@@ -43,7 +43,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             const uint8_t &returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
             {
-                if(size!=(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                if(size!=(1+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                 {
                     std::cerr << "wrong size for protocol header " << returnCode << std::endl;
                     abort();
@@ -67,11 +67,11 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     unsigned char tempHashResult[CATCHCHALLENGER_HASH_SIZE];
                     CatchChallenger::Hash hash;
                     hash.update(reinterpret_cast<const unsigned char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH);
-                    hash.update(reinterpret_cast<const unsigned char *>(data)+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    hash.update(reinterpret_cast<const unsigned char *>(data)+1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                     hash.final(tempHashResult);
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     std::cout << "Hash(" << binarytoHexa(reinterpret_cast<const char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH)
-                              << " " << binarytoHexa(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) << ") to auth on master" << std::endl;
+                              << " " << binarytoHexa(data+1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER) << ") to auth on master" << std::endl;
                     #endif
 
                     //memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));//To reauth after disconnexion
@@ -359,7 +359,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 abort();
             }
             EpollClientLoginSlave::maxAccountIdRequested=false;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::cout << "Add more id to list: EpollClientLoginSlave::maxAccountIdList.size(): " << EpollClientLoginSlave::maxAccountIdList.size() << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             #endif
         }

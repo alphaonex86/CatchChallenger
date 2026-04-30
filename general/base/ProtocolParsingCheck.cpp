@@ -1,6 +1,6 @@
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 #include "ProtocolParsingCheck.hpp"
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 
 #include <iostream>
 
@@ -126,7 +126,7 @@ void ProtocolParsingCheck::registerOutputQuery(const uint8_t &queryNumber, const
     inputQueryNumberToPacketCode[queryNumber]=packetCode;
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 CompressionProtocol::CompressionType ProtocolParsingCheck::getCompressType() const
 {
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT

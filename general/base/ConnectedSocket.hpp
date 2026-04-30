@@ -1,16 +1,16 @@
 #ifndef CATCHCHALLENGER_CONNECTEDSOCKET_H
 #define CATCHCHALLENGER_CONNECTEDSOCKET_H
 
-#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
+#if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 
 #include <QIODevice>
 #include <QHostAddress>
-#ifndef NOTCPSOCKET
+#ifndef CATCHCHALLENGER_NO_TCPSOCKET
     #include <QSslSocket>
     #include <QAbstractSocket>
     #include "../../server/qt/QFakeSocket.hpp"
 #endif
-#ifndef NOWEBSOCKET
+#ifndef CATCHCHALLENGER_NO_WEBSOCKET
     #include <QtWebSockets/QWebSocket>
 #endif
 #include <QObject>
@@ -22,14 +22,14 @@ class ConnectedSocket : public QIODevice
 {
     Q_OBJECT
 public:
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     #if defined(CATCHCHALLENGER_SOLO)
     explicit ConnectedSocket(QFakeSocket *socket);
     #endif
     explicit ConnectedSocket(QSslSocket *socket);
     explicit ConnectedSocket(QTcpSocket *socket);
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     explicit ConnectedSocket(QWebSocket *socket);
     #endif
     ~ConnectedSocket();
@@ -55,14 +55,14 @@ public:
     qint64	readData(char * data, qint64 maxSize);
     qint64	writeData(const char * data, qint64 maxSize);
     void	close();
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     #if defined(CATCHCHALLENGER_SOLO)
     QFakeSocket *fakeSocket;
     #endif
     QSslSocket *sslSocket;
     QTcpSocket *tcpSocket;
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     QWebSocket *webSocket;
     #endif
 protected:
@@ -71,7 +71,7 @@ protected:
     #ifndef __EMSCRIPTEN__
         QList<QSslError> sslErrors() const;
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         QByteArray buffer;
         #ifndef __EMSCRIPTEN__
             QList<QSslError> m_sslErrors;
@@ -81,7 +81,7 @@ protected:
     //workaround because QSslSocket don't return correct value for i2p via proxy
     QString hostName;
     uint16_t port;
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     void binaryMessageReceived(const QByteArray &message);
     #endif
 signals:

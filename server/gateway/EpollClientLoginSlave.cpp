@@ -9,7 +9,7 @@
 using namespace CatchChallenger;
 
 EpollClientLoginSlave::EpollClientLoginSlave(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -144,7 +144,7 @@ void EpollClientLoginSlave::breakNeedMoreData()
         disconnectClient();
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     //std::cerr << "Break due to need more in parse data" << std::endl;
     #endif
 }

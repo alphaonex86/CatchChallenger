@@ -208,7 +208,7 @@ int Epoll::wait(epoll_event *events,const int &maxevents)
 
 int Epoll::ctl(int __op, int __fd,epoll_event *__event)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(efd==-1)
     {
         std::cerr << "Epoll::ctl failed, efd==-1, call Epoll::init() before" << std::endl;

@@ -1,4 +1,4 @@
-#ifdef SERVERSSL
+#ifdef CATCHCHALLENGER_SERVER_SSL
 
 #include "EpollSslServer.h"
 #include "EpollSocket.h"

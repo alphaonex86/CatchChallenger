@@ -1,7 +1,7 @@
 #ifndef EPOLL_CLIENT_H
 #define EPOLL_CLIENT_H
 
-#ifndef SERVERSSL
+#ifndef CATCHCHALLENGER_SERVER_SSL
 
 #include "BaseClassSwitch.hpp"
 #include <sys/types.h>

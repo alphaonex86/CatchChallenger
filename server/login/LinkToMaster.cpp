@@ -25,7 +25,7 @@ char LinkToMaster::host[];
 uint16_t LinkToMaster::port=0;
 
 LinkToMaster::LinkToMaster(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -39,7 +39,7 @@ LinkToMaster::LinkToMaster(
             ),
         stat(Stat::Connected)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "LinkToMaster::LinkToMaster()" << std::endl;
     #endif
     flags|=0x08;
@@ -56,7 +56,7 @@ LinkToMaster::LinkToMaster(
 
 LinkToMaster::~LinkToMaster()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "LinkToMaster::~LinkToMaster()" << std::endl;
     #endif
     memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
@@ -257,7 +257,7 @@ void LinkToMaster::readTheFirstSslHeader()
         //abort();
         return;
     }
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     if(buffer[0]!=0x01)
     {
         std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;

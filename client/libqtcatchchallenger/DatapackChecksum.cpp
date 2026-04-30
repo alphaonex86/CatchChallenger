@@ -13,13 +13,13 @@
 
 using namespace CatchChallenger;
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
 QThread DatapackChecksum::thread;
 #endif
 
 DatapackChecksum::DatapackChecksum()
 {
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+    #if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
     if(!thread.isRunning())
         thread.start();
     moveToThread(&thread);
@@ -29,12 +29,12 @@ DatapackChecksum::DatapackChecksum()
 
 DatapackChecksum::~DatapackChecksum()
 {
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+    #if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
     stopThread();
     #endif
 }
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
 void DatapackChecksum::stopThread()
 {
     thread.exit();
@@ -91,7 +91,7 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
     return hashResult;
 }
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER)
 void DatapackChecksum::doDifferedChecksumBase(const std::string &datapackPath)
 {
     std::cerr << "DatapackChecksum::doDifferedChecksumBase" << std::endl;
@@ -197,7 +197,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
     return hashResult;
 }
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER)
 void DatapackChecksum::doDifferedChecksumMain(const std::string &datapackPath)
 {
     const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumMain(datapackPath);
@@ -300,7 +300,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
     return hashResult;
 }
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER)
 void DatapackChecksum::doDifferedChecksumSub(const std::string &datapackPath)
 {
     const FullDatapackChecksumReturn &fullDatapackChecksumReturn=doFullSyncChecksumSub(datapackPath);

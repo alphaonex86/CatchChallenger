@@ -35,7 +35,7 @@ void StringWithReplacement::set(const std::string &query)
     if((query.size()+16+2)>=65535 || (query.size()+16+2)>=sizeof(composeBuffer))
     {
         std::cerr << "StringWithReplacement::operator=(): query to big to de stored: (query.size(): " << query.size() << "+16+2)>255" << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
         return;
@@ -66,7 +66,7 @@ void StringWithReplacement::set(const std::string &query)
                     if(foundinternal<previousStringPos)
                     {
                         std::cerr << "StringWithReplacement::operator=(): id to replace need be ordened" << std::endl;
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         abort();
                         #endif
                         return;
@@ -85,7 +85,7 @@ void StringWithReplacement::set(const std::string &query)
                 else
                 {
                     std::cerr << "StringWithReplacement::operator=(): missing id to replace" << std::endl;
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     abort();
                     #endif
                     return;
@@ -95,7 +95,7 @@ void StringWithReplacement::set(const std::string &query)
             if(numberOfReplace>15)
             {
                 std::cerr << "StringWithReplacement::set(): numberOfReplace>15: " << numberOfReplace << std::endl;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 abort();
                 #endif
                 return;
@@ -107,7 +107,7 @@ void StringWithReplacement::set(const std::string &query)
             if(size>0)
             {
                 const std::string extractedPart(query.substr(previousStringPos,size));
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if((uint32_t)sizeof(preparedQueryTemp)<(uint32_t)(pos+size+1))
                     abort();
                 #endif
@@ -117,7 +117,7 @@ void StringWithReplacement::set(const std::string &query)
             //previousStringPos=size;
             const uint16_t headerSize=pos-3-(numberOfReplace*2+1);
             memcpy(preparedQueryTemp+1,&headerSize,sizeof(headerSize));
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(pos>=arraysize)
             {
                 std::cerr << "pos>=arraysize (abort)" << std::endl;
@@ -131,13 +131,13 @@ void StringWithReplacement::set(const std::string &query)
             {
                 std::cerr << "StringWithReplacement::set(): preparedQuery header size too big: " << headerSize << "+1+100>" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
                 std::cerr << "StringWithReplacement::set(): pos-3-(numberOfReplace*2+1): " << std::to_string(pos) << "-3-(" << std::to_string(numberOfReplace) << "*2+1)" << std::endl;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 abort();
                 #endif
                 return;
             }
             //dump:
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             //std::cout << "StringWithReplacement: saved: " << originalQuery() << std::endl;
             #endif
             return;
@@ -167,7 +167,7 @@ std::string StringWithReplacement::originalQuery() const
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
         return std::string();
@@ -263,7 +263,7 @@ std::string StringWithReplacement::compose(const std::vector<std::string> &value
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
         return std::string();
@@ -271,7 +271,7 @@ std::string StringWithReplacement::compose(const std::vector<std::string> &value
     if(preparedQuery[0]!=values.size())
     {
         std::cerr << "StringWithReplacement::compose(): compose with wrong arguments count: " << originalQuery() << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
         return std::string();
@@ -298,7 +298,7 @@ std::string StringWithReplacement::compose(const std::vector<std::string> &value
             index++;
         }
         std::cerr << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
         return std::string();
@@ -330,7 +330,7 @@ uint8_t StringWithReplacement::argumentsCount() const
     if(preparedQuery==NULL)
     {
         std::cerr << "StringWithReplacement::argumentsCount(): preparedQuery==NULL" << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
         return 0;

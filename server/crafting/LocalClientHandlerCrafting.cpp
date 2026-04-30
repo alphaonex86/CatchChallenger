@@ -142,24 +142,9 @@ bool Client::syncDatabaseItemOnMap()
         auto i=public_and_private_informations.itemOnMap.begin();
         while(i!=public_and_private_informations.itemOnMap.cend())
         {
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint16_t itemonmapInt;
-            if(lastItemonmapId<=*i)
-            {
-                itemonmapInt=*i-lastItemonmapId;
-                lastItemonmapId=*i;
-            }
-            else
-            {
-                itemonmapInt=static_cast<uint16_t>(65536-static_cast<uint32_t>(lastItemonmapId)+static_cast<uint32_t>(*i));
-                lastItemonmapId=*i;
-            }
-            #else
             //ordened
             const uint16_t &itemonmapInt=*i-lastItemonmapId;
             lastItemonmapId=*i;
-            #endif
             {const uint16_t _tmp_le=(htole16(itemonmapInt));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
 
             posOutput+=2;

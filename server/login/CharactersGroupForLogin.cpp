@@ -52,7 +52,7 @@ void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,
 
 void CharactersGroupForLogin::setIndexServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(servers.find(serverUniqueKey)==servers.cend())
     {
         std::cerr << "setIndexServerUniqueKey(" << std::to_string(indexOnFlatList) << "," << std::to_string(serverUniqueKey) << ") unique key not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -100,7 +100,7 @@ DatabaseBase * CharactersGroupForLogin::database() const
     return databaseBaseCommon;
 }
 
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 uint8_t CharactersGroupForLogin::serverCountForAllCharactersGroup()
 {
     uint8_t count=0;
@@ -128,7 +128,7 @@ void CharactersGroupForLogin::serverDumpCharactersGroup()
             const uint32_t &uniqueKey=n.first;
             const InternalGameServer& server=n.second;
             std::cout << "server " << std::to_string(server.indexOnFlatList) << ", host: " << server.host << ":" << std::to_string(server.port) << ", unique key: " << std::to_string(uniqueKey) << std::endl;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(server.indexOnFlatList>=serverCountForAllCharactersGroup())
             {
                 std::cerr << "CharactersGroupForLogin::server_list_object(): server.indexOnFlatList(" << std::to_string(server.indexOnFlatList) << ")>=servers.size(" << std::to_string(serverCountForAllCharactersGroup()) << ")" << std::endl;

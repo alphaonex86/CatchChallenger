@@ -108,7 +108,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 if(!client->useObjectOnMonsterByPosition(item,monsterPosition))
                 {
                     std::cerr << "client->useObjectOnMonsterByPosition() Bug at " << __FILE__ << ":" << __LINE__ << std::endl;
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     abort();
                     #endif
                 }
@@ -323,7 +323,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             //if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
             {
                 //debug
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
                 {
                     std::unordered_set<int> detectDuplicate;
                     const CATCHCHALLENGER_TYPE_MAPID seedMapId=QtDatapackClientLoader::datapackLoader->get_mapToId(seedInWaiting.map);

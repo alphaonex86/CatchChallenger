@@ -2128,7 +2128,7 @@ void Battle::finalFightTextQuit()
 void Battle::loose()
 {
     qDebug() << "loose()";
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     PublicPlayerMonster *currentMonster=connexionManager->client->getCurrentMonster();
     if(currentMonster!=NULL)
         if((int)currentMonster->hp!=progressBarFightBottomHP->value())
@@ -2201,7 +2201,7 @@ void Battle::loose()
 
 void Battle::win()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     PublicPlayerMonster *currentMonster=connexionManager->client->getCurrentMonster();
     if(currentMonster!=NULL)
         if((int)currentMonster->hp!=progressBarFightBottomHP->value())
@@ -2224,7 +2224,7 @@ void Battle::win()
         }
     #endif
     connexionManager->client->fightFinished();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(currentMonster!=NULL)
         if((int)currentMonster->hp!=progressBarFightBottomHP->value())
         {
@@ -2317,7 +2317,7 @@ void Battle::displayExperienceGain()
     //animation finished
     if(mLastGivenXP<=0)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(mLastGivenXP>4294000000)
         {
             newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
@@ -2356,7 +2356,7 @@ void Battle::displayExperienceGain()
                                          QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(currentMonster->monster).name))
                                      .arg(mLastGivenXP));
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(mLastGivenXP>4294000000)
     {
         newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
@@ -2417,7 +2417,7 @@ void Battle::displayExperienceGain()
         progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.monsters.at(currentMonster->monster).level_to_xp.at(currentMonsterLevel-1));
         progressBarFightBottomExp->setValue(progressBarFightBottomExp->maximum());
         progressBarFightBottomExp->repaint();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(mLastGivenXP>4294000000)
         {
             newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
@@ -2465,7 +2465,7 @@ void Battle::displayExperienceGain()
         mLastGivenXP-=xp_to_change;
     else
         mLastGivenXP=0;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(mLastGivenXP>4294000000)
     {
         newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
@@ -3102,7 +3102,7 @@ void Battle::doNextAction()
             return;
         }
         updateCurrentMonsterInformationXp();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(connexionManager->client->getAttackReturnList().empty())
         {
             PublicPlayerMonster * otherMonster=connexionManager->client->getOtherMonster();
@@ -3147,7 +3147,7 @@ void Battle::doNextAction()
     //nothing to done, show the menu
     qDebug() << "doNextAction(): show the menu";
     stackedWidgetFightBottomBarsetCurrentWidget(stackedWidgetFightBottomBarPageMain);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     PublicPlayerMonster *currentMonster=connexionManager->client->getCurrentMonster();
     if(currentMonster!=NULL)
     {
@@ -3345,7 +3345,7 @@ bool Battle::displayFirstAttackText(bool firstText)
         const Skill::BuffEffect &addBuffEffectMonster=currentAttack.addBuffEffectMonster.front();
         std::unordered_map<uint8_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         QListWidget *listWidget=NULL;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         bool onBuffCurrentMonster=false;
         #endif
         if(currentAttack.doByTheCurrentMonster)
@@ -3357,7 +3357,7 @@ bool Battle::displayFirstAttackText(bool firstText)
                     .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
                 listWidget=topBuff;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 onBuffCurrentMonster=false;
                 #endif
             }
@@ -3367,7 +3367,7 @@ bool Battle::displayFirstAttackText(bool firstText)
                     .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
                 listWidget=bottomBuff;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 onBuffCurrentMonster=true;
                 #endif
             }
@@ -3381,7 +3381,7 @@ bool Battle::displayFirstAttackText(bool firstText)
                     .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
                 listWidget=bottomBuff;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 onBuffCurrentMonster=true;
                 #endif
             }
@@ -3391,7 +3391,7 @@ bool Battle::displayFirstAttackText(bool firstText)
                     .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
                 listWidget=topBuff;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 onBuffCurrentMonster=false;
                 #endif
             }
@@ -3444,7 +3444,7 @@ bool Battle::displayFirstAttackText(bool firstText)
         connexionManager->client->removeTheFirstAddBuffEffectAttackReturn();
         if(!connexionManager->client->firstAttackReturnHaveMoreEffect())
             connexionManager->client->removeTheFirstAttackReturn();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(!onBuffCurrentMonster && otherMonster!=NULL)
         {
             if(otherMonster->buffs.size()!=(uint32_t)listWidget->count())

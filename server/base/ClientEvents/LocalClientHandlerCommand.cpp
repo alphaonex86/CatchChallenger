@@ -397,7 +397,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("You are in fight");
             return;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         if(captureCityInProgress())
         {
             errorOutput("Try battle when is in capture city");

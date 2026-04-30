@@ -175,10 +175,10 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     QSslSocket *realSslSocket;
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     QWebSocket *realWebSocket;
     #endif
     std::vector<ListEntryEnvolued *> datapack,server;

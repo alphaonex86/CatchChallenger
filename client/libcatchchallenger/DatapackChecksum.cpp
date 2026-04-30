@@ -336,7 +336,7 @@ bool DatapackChecksum::writeFileMDateTime(const std::string &file,const int64_t 
         struct utimbuf butime;
         butime.actime=date;
         butime.modtime=date;
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        #ifndef CATCHCHALLENGER_HARDENED
         return utime(file.c_str(),&butime)==0;
         #else
         if(utime(file.c_str(),&butime)!=0)

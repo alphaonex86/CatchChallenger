@@ -70,24 +70,9 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
             const PlayerMonster::PlayerSkill &playerSkill=newMonster.skills.at(sub_index);
             raw_skill_endurance[sub_index]=playerSkill.endurance;
 
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint16_t skillInt;
-            if(lastSkillId<=playerSkill.skill)
-            {
-                skillInt=playerSkill.skill-lastSkillId;
-                lastSkillId=playerSkill.skill;
-            }
-            else
-            {
-                skillInt=static_cast<uint16_t>(65536-static_cast<uint32_t>(lastSkillId)+static_cast<uint32_t>(playerSkill.skill));
-                lastSkillId=playerSkill.skill;
-            }
-            #else
             //ordened
             const uint16_t &skillInt=playerSkill.skill-lastSkillId;
             lastSkillId=playerSkill.skill;
-            #endif
 
             {const uint16_t _tmp_le=(htole16(skillInt));memcpy(raw_skill+sub_index*(2+1),&_tmp_le,sizeof(_tmp_le));}
 
@@ -105,24 +90,9 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         {
             const PlayerBuff &buff=newMonster.buffs.at(sub_index);
 
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint8_t buffInt;
-            if(lastBuffId<=buff.buff)
-            {
-                buffInt=buff.buff-lastBuffId;
-                lastBuffId=buff.buff;
-            }
-            else
-            {
-                buffInt=static_cast<uint8_t>(256-static_cast<uint16_t>(lastBuffId)+static_cast<uint16_t>(buff.buff));
-                lastBuffId=buff.buff;
-            }
-            #else
             //ordened
             const uint8_t &buffInt=buff.buff-lastBuffId;
             lastBuffId=buff.buff;
-            #endif
 
             raw_buff[sub_index*3+0]=buffInt;
             raw_buff[sub_index*3+1]=buff.level;
@@ -159,7 +129,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         #else
         #error Define what do here
         #endif
-        #if defined(CATCHCHALLENGER_EXTRA_CHECK)
+        #if defined(CATCHCHALLENGER_HARDENED)
         if(sizeof(raw_skill)==0)
         {
             std::cerr << "skills='\\x' when have skills to save" << std::endl;
@@ -195,7 +165,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         #else
         #error Define what do here
         #endif
-        #if defined(CATCHCHALLENGER_EXTRA_CHECK)
+        #if defined(CATCHCHALLENGER_HARDENED)
         if(sizeof(raw_skill)==0)
         {
             std::cerr << "skills='\\x' when have skills to save" << std::endl;

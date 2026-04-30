@@ -14,7 +14,7 @@ using namespace CatchChallenger;
 
 void Client::characterIsRightSendData()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(this->mapIndex==65535)
         return;
     #endif
@@ -44,7 +44,7 @@ void Client::characterIsRightSendData()
     Client::timeRangeEventNew=true;
     checkLoose(false);
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(selectCharacterQueryId.empty())
         abort();
     #endif
@@ -78,7 +78,7 @@ void Client::characterIsRightSendData()
         unsigned int index=0;
         while(index<GlobalServerData::serverPrivateVariables.events.size())
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(GlobalServerData::serverPrivateVariables.events.size()<=index)
             {
                 std::cerr << "GlobalServerData::serverPrivateVariables.events.size()<=index" << std::endl;
@@ -95,7 +95,7 @@ void Client::characterIsRightSendData()
         posOutput+=1;
         while(index<events.size())
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(events.size()<=index)
             {
                 std::cerr << "events.size()<=index" << std::endl;
@@ -165,7 +165,7 @@ void Client::characterIsRightSendData()
     posOutput+=1;
     while(index<size)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(public_and_private_informations.monsters.size()<=index)
         {
             std::cerr << "public_and_private_informations.playerMonster.size()<=index" << std::endl;
@@ -181,7 +181,7 @@ void Client::characterIsRightSendData()
     posOutput+=1;
     while(index<size)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(public_and_private_informations.warehouse_monsters.size()<=index)
         {
             std::cerr << "public_and_private_informations.warehouse_playerMonster.size()<=index" << std::endl;
@@ -230,7 +230,7 @@ void Client::characterIsRightSendData()
         //recipes
         if(public_and_private_informations.recipes!=NULL)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()==0)
             {
                 errorOutput("CommonDatapack::commonDatapack.crafingRecipesMaxId==0");
@@ -252,7 +252,7 @@ void Client::characterIsRightSendData()
         //encyclopedia_monster
         if(public_and_private_informations.encyclopedia_monster!=NULL)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(CommonDatapack::commonDatapack.get_monstersMaxId()==0)
             {
                 errorOutput("CommonDatapack::commonDatapack.monstersMaxId==0");
@@ -274,7 +274,7 @@ void Client::characterIsRightSendData()
         //encyclopedia_item
         if(public_and_private_informations.encyclopedia_item!=NULL)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(CommonDatapack::commonDatapack.get_itemMaxId()==0)
             {
                 errorOutput("CommonDatapack::commonDatapack.items.itemMaxId==0");
@@ -451,11 +451,9 @@ void Client::characterIsRightSendData()
     updateCanDoFight();
 
     //send signals into the server
-    #ifndef SERVERBENCHMARK
     /*normalOutput("Logged: "+public_and_private_informations.public_informations.pseudo+
                  " on the map: "+map->map_file+
                  " ("+std::to_string(x)+","+std::to_string(y)+")");*/
-    #endif
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("load the normal player id: "+std::to_string(character_id)+", simplified id: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));

@@ -124,7 +124,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     errorOutput("stat!=EpollClientLoginStat::None for case 0xA0, stat=" + std::to_string(static_cast<uint8_t>(stat)));
                     return false;
                 }
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 removeFromQueryReceived(queryNumber);
                 #endif
                 inputQueryNumberToPacketCode[queryNumber]=0;
@@ -155,7 +155,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                         }
                         //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
                         //don't set the last wrong entry to improve performance againts DDOS
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(BaseServerLogin::tokenForAuth[0].client==NULL)
                             abort();
                         #endif
@@ -178,7 +178,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                         abort();
                         #endif
                         int index=0;
-                        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                        while(index<CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                         {
                             token->value[index]=static_cast<uint8_t>(rand()%256);
                             index++;
@@ -186,15 +186,15 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     }
                     else
                     {
-                        const int32_t readedByte=static_cast<int32_t>(fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile));
-                        if(readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                        const int32_t readedByte=static_cast<int32_t>(fread(token->value,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile));
+                        if(readedByte!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                         {
                             /// \todo check why client not disconnected if pass here
                             errorOutput(
-                                        "Not correct number of byte to generate the token readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: "+
+                                        "Not correct number of byte to generate the token readedByte!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER: "+
                                         std::to_string(readedByte)+
                                         "!="+
-                                        std::to_string(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)+
+                                        std::to_string(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)+
                                         ", errno: "+
                                         std::to_string(errno)+"");
                             return false;
@@ -204,7 +204,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     /// \warning total insecure implementation
                     // not abort(); because under not linux will not work
                     int index=0;
-                    while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                    while(index<CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                     {
                         token->value[index]=rand()%256;
                         index++;
@@ -212,21 +212,21 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                     #endif
                 }
                 #endif
-                //normalOutput(std::string("Protocol reply send with token: ")+binarytoHexa(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT));
-                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                //normalOutput(std::string("Protocol reply send with token: ")+binarytoHexa(token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER));
+                #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
                 switch(CompressionProtocol::compressionTypeServer)
                 {
                     case CompressionProtocol::CompressionType::None:
                         *(Client::protocolReplyCompressionNone+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompressionNone+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(Client::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
                     case CompressionProtocol::CompressionType::Zstandard:
                         *(Client::protocolReplyCompresssionZstandard+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompresssionZstandard+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(Client::protocolReplyCompresssionZstandard+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZstandard),sizeof(Client::protocolReplyCompresssionZstandard));
                     break;
@@ -236,7 +236,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 }
                 #else
                 *(Client::protocolReplyCompressionNone+1)=queryNumber;
-                memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE);
+                memcpy(Client::protocolReplyCompressionNone+4,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                 #endif
                 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -263,7 +263,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
             }
             if(stat==ClientStat::LoginInProgress)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 //removeFromQueryReceived(queryNumber);
                 #endif
                 //replyOutputSize.remove(queryNumber);
@@ -285,7 +285,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
             }
             if(stat==ClientStat::LoginInProgress)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                 #endif
                 //replyOutputSize.remove(queryNumber);//all list dropped at client destruction
@@ -302,7 +302,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 }
                 else
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                     #endif
                     //replyOutputSize.remove(queryNumber);//all list dropped at client destruction
@@ -321,7 +321,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
             }
             if(stat==ClientStat::LoginInProgress)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                 #endif
                 //replyOutputSize.remove(queryNumber);//all list dropped at client destruction
@@ -344,7 +344,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -370,7 +370,7 @@ void Client::moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &
 
 //send reply
 bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             size
                             #endif
                             )
@@ -406,7 +406,7 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
         //Another player request a trade
         case 0xDF:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the full reply data main ident: "+std::to_string(packetCode)+
@@ -454,7 +454,7 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
         //Another player request a trade
         case 0xE0:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the full reply data main ident: "+

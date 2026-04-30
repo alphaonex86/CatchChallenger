@@ -71,7 +71,7 @@ void BaseServer::preload_30_sync_other()
 
                 posOutput+=2;
                 Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+static_cast<uint16_t>(posOutput);
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber==0)
                 {
                     std::cerr << "Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber==0 corruption detected" << std::endl;
@@ -107,7 +107,7 @@ void BaseServer::preload_30_sync_other()
         memcpy(Client::protocolMessageLogicalGroupAndServerList,logicalGroup,9);
         memcpy(Client::protocolMessageLogicalGroupAndServerList+9,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 && Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
     {
         std::cerr << "Client::protocolMessageLogicalGroupAndServerList corruption detected" << std::endl;

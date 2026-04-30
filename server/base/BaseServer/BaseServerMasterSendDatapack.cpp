@@ -21,7 +21,7 @@ using namespace CatchChallenger;
 catchchallenger_datapack_map<std::string,uint8_t> BaseServerMasterSendDatapack::skinList;
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 catchchallenger_datapack_set<std::string> BaseServerMasterSendDatapack::compressedExtension;
 std::vector<BaseServerMasterSendDatapack::PendingFile> BaseServerMasterSendDatapack::compressedFilesPending;
 uint64_t BaseServerMasterSendDatapack::compressedFilesPendingRawSize=0;
@@ -81,7 +81,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
         std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
         extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
         std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
         compressedExtension=catchchallenger_datapack_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
         #endif
@@ -177,7 +177,7 @@ void BaseServerMasterSendDatapack::unload()
     skinList.clear();
 
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     compressedExtension.clear();
     //Free the pending list. swap-with-empty actually releases the storage,
     //unlike .clear() which keeps capacity. Matches the "free when finished"

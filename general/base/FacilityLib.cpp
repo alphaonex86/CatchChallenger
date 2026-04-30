@@ -4,7 +4,7 @@
 #include "CommonSettingsServer.hpp"
 #include "PortableEndian.hpp"
 
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 #include <iostream>
 #endif
 
@@ -49,7 +49,7 @@ uint16_t FacilityLib::publicPlayerMonsterToBinary(char *data,const PublicPlayerM
     posOutput+=2;
     data[posOutput]=(uint8_t)publicPlayerMonster.gender;
     posOutput+=1;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(publicPlayerMonster.buffs.size()>255)
     {
         std::cerr << "FacilityLib::publicPlayerMonsterToBinary() buffs.size()>255" << std::endl;
@@ -86,7 +86,7 @@ uint16_t FacilityLib::playerMonsterToBinary(char *data,const PlayerMonster &play
     posOutput+=2;
     data[posOutput]=(uint8_t)playerMonster.gender;
     posOutput+=1;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(playerMonster.buffs.size()>255)
     {
         std::cerr << "FacilityLib::publicPlayerMonsterToBinary() buffs.size()>255" << std::endl;
@@ -200,7 +200,7 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     data[posOutput]=(uint8_t)monster.character_origin==character_id;
     posOutput+=1;
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(monster.buffs.size()>255)
     {
         std::cerr << "FacilityLib::publicPlayerMonsterToBinary() buffs.size()>255" << std::endl;

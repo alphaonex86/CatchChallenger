@@ -42,7 +42,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
     }
     std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > returnVar;
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -58,7 +58,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return returnVar;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -324,7 +324,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
         }
         startItem = startItem->NextSiblingElement("start");
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return returnVar;
@@ -395,7 +395,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
     std::vector<ServerSpecProfile> serverProfileList;
 
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -411,7 +411,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return serverProfileList;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -501,7 +501,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
         }
         startItem = startItem->NextSiblingElement("start");
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return serverProfileList;

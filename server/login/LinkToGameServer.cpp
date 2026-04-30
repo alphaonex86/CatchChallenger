@@ -22,7 +22,7 @@ uint8_t LinkToGameServer::gameLinkToDeleteIndex=0;
 std::unordered_set<void *> LinkToGameServer::detectDuplicateGameLinkToDelete;
 
 LinkToGameServer::LinkToGameServer(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -217,7 +217,7 @@ void LinkToGameServer::readTheFirstSslHeader()
         std::cerr << "ERROR reading from socket to game server server, wait more data" << std::endl;
         return;
     }
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     if(buffer[0]!=0x01)
     {
         std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;

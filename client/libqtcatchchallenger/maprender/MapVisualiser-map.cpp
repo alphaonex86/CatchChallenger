@@ -119,7 +119,7 @@ void MapVisualiser::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
         asyncMapLoaded(mapIndex,tempMapObject);
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(mapIndex>=QtDatapackClientLoader::datapackLoader->get_maps().size())
         qDebug() << QStringLiteral("file not found to async: mapIndex %1").arg(mapIndex);
     #endif
@@ -390,7 +390,7 @@ void MapVisualiser::applyTheAnimationTimer()
     }
     if(!isUsed)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cout << "MapVisualiser::applyTheAnimationTimer() : !isUsed for timer: " << std::to_string(interval) << std::endl;
         #endif
         animationTimer.erase(interval);

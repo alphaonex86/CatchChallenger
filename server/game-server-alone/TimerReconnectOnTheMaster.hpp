@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_TimerReconnectOnTheMaster_H
 #define CATCHCHALLENGER_TimerReconnectOnTheMaster_H
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
 
 #include "../epoll/EpollTimer.hpp"
 
@@ -16,5 +16,5 @@ private:
 };
 }
 
-#endif // def EPOLLCATCHCHALLENGERSERVER
+#endif // def CATCHCHALLENGER_SERVER
 #endif // TimerReconnectOnTheMaster_H

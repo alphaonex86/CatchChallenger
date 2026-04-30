@@ -13,7 +13,7 @@ using namespace CatchChallenger;
 std::unordered_set<std::string> EpollClientLoginMaster::wrongProtocolEmited;
 
 EpollClientLoginMaster::EpollClientLoginMaster(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -247,7 +247,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
         const CharactersGroup::CharacterLock &lockResult=CharactersGroup::list.at(charactersGroupIndex)->characterIsLocked(characterId);
         if(lockResult!=CharactersGroup::CharacterLock::Unlocked)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             messageParsingLayer("Lock result wrong: "+std::to_string(lockResult)+" CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name);
             #endif
             //send the network reply
@@ -280,7 +280,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
     EpollClientLoginMaster * gameServer=static_cast<EpollClientLoginMaster *>(CharactersGroup::list.at(charactersGroupIndex)->gameServers.at(serverUniqueKey).link);
     if(!gameServer->trySelectCharacterGameServer(this,query_id,serverUniqueKey,charactersGroupIndex,characterId,accountId))
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         messageParsingLayer("Unable to lock: CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->trySelectCharacterGameServer("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+": "+std::to_string(characterId));
         #endif
         //send the network reply
@@ -301,7 +301,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
 
     CharactersGroup::list[charactersGroupIndex]->lockTheCharacter(characterId);
     gameServer->charactersGroupForGameServerInformation->lockedAccountByGameserver.insert(characterId);
-    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+    /*#ifdef CATCHCHALLENGER_HARDENED
     messageParsingLayer("Locked: CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+" on server: "+gameServer->charactersGroupForGameServerInformation->host+":"+std::to_string(gameServer->charactersGroupForGameServerInformation->port)+" "+std::to_string(gameServer->uniqueKey));
     #endif*/
 
@@ -707,7 +707,7 @@ void EpollClientLoginMaster::addToInserList()
             foundIntoAdd=true;
             break;
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         else
         {
             if(server->charactersGroupForGameServer->index==charactersGroupForGameServer->index && server->uniqueKey==uniqueKey)
@@ -850,7 +850,7 @@ void EpollClientLoginMaster::breakNeedMoreData()
         disconnectClient();
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     //std::cerr << "Break due to need more in parse data" << std::endl;
     #endif
 }

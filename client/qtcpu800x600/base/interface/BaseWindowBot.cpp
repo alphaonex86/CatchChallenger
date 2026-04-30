@@ -35,7 +35,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     while(index<botQuests.size())
     {
         const uint16_t &questId=botQuests.at(index);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
@@ -848,7 +848,7 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
     while(index<botQuests.size())
     {
         const uint16_t &questId=botQuests.at(index);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif

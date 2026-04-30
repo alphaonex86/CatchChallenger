@@ -1,13 +1,13 @@
 #ifndef CATCHCHALLENGER_PROTOCOL_H
 #define CATCHCHALLENGER_PROTOCOL_H
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 
 #include <vector>
 #include <map>
 
 #include "ClientStructures.hpp"
 #include "../../general/base/GeneralStructures.hpp"
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 #include "../../general/base/ProtocolParsing.hpp"
 #endif
 #include "../../general/base/MoveOnTheMap.hpp"

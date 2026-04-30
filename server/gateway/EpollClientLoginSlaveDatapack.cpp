@@ -24,7 +24,7 @@ static const std::string text_slash="/";
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollClientLoginSlave::datapack_file_list(const std::string &path,const bool withHash)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(path.empty())
     {
         //mostly for listFolderNotRecursive()/listFolder() protect
@@ -117,7 +117,7 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
                 }
             }
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         else
         {
             std::cerr << "For Client::datapack_file_list(" << path << "," << withHash << ")" << std::endl;
@@ -138,7 +138,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         std::cerr << "EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList) linkToGameServer==NULL" << std::endl;
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     /// \see EpollClientLoginSlave::parseFullQuery() already checked here
     #endif
     tempDatapackListReplyArray.clear();
@@ -246,7 +246,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
             if(filesListForSize.find(fileName)!=filesListForSize.cend())
             {
                 const uint32_t &serverPartialHash=filesListForSize.at(fileName).partialHash;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(serverPartialHash==0)
                 {
                     std::cerr << "serverPartialHash==0 at " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -479,7 +479,7 @@ void EpollClientLoginSlave::sendFileContent()
     }
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 void EpollClientLoginSlave::sendCompressedFileContent()
 {
     if(EpollClientLoginSlave::compressedFilesBuffer.size()>0 && EpollClientLoginSlave::compressedFilesBufferCount>0)
@@ -534,7 +534,7 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
         const unsigned int &contentsize=static_cast<uint32_t>(content.size());
 
         const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
         if(CompressionProtocol::compressionTypeServer!=CompressionProtocol::CompressionType::None &&
                 EpollClientLoginSlave::compressedExtension.find(suffix)!=EpollClientLoginSlave::compressedExtension.cend() &&
                 (

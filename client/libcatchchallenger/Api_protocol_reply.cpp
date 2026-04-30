@@ -21,7 +21,7 @@
 #include <unistd.h>
 #endif
 
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 
 using namespace CatchChallenger;
 
@@ -74,7 +74,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                 }
                 if(stageConnexion==StageConnexion::Stage1)
                 {
-                    if(size!=(sizeof(uint8_t)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                    if(size!=(sizeof(uint8_t)+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                     {
                         newError("Protocol wrong or corrupted","compression type wrong size (stage 1) with main ident: "+
                                  std::to_string(packetCode)+" and queryNumber: "+std::to_string(queryNumber)+
@@ -82,7 +82,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                                  );
                         return false;
                     }
-                    token=std::string(data+sizeof(uint8_t),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    token=std::string(data+sizeof(uint8_t),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                     have_receive_protocol=true;
                     protocol_is_good();
                     if(!login.empty())
@@ -603,7 +603,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                 else
                     string=std::string("Unknown error: ")+std::to_string(returnCode);
                 std::cerr << "Selected character not found, reason: " << string << ", data: " << binarytoHexa(data,size) << std::endl;
-                /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+                /*#ifdef CATCHCHALLENGER_HARDENED
                 abort();//to debug
                 #endif*/
                 notLogged(string);

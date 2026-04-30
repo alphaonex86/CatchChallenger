@@ -21,7 +21,7 @@ public:
     struct TokenLink
     {
         void * client;
-        char value[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+        char value[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     };
     static TokenLink tokenForAuth[CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION];
     static uint32_t tokenForAuthSize;

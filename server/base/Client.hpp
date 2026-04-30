@@ -19,7 +19,7 @@
 #endif
 #endif
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
     #ifdef CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
         //BIGBUFFERSIZE only needs to fit one wire packet (already enforced
         //against CATCHCHALLENGER_MAX_PACKET_SIZE in ProtocolParsing.hpp).
@@ -128,12 +128,12 @@ public:
     bool mapSyncMiss;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     /// \todo group all reply in one
-    static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static unsigned char protocolReplyCompresssionZstandard[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionNone[7+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
+    static unsigned char protocolReplyCompresssionZstandard[7+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     #endif
     //static std::vector<Client *> stat_client_list;-> see ClientList.hpp:    std::unordered_set<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> clientForStatus;
-    static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char private_token_statclient[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
 
     static unsigned char *protocolReplyCharacterList;
     static uint16_t protocolReplyCharacterListSize;
@@ -224,7 +224,7 @@ private:
     //-------------------
     uint32_t account_id_db;//0 if not logged
     uint32_t character_id_db;//0 if not selected
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     bool isConnected;
     #endif
     uint16_t randomIndex,randomSize;
@@ -270,7 +270,7 @@ private:
 
     int32_t last_sended_connected_players;//it's th last number of connected player send
     std::queue<void *> paramToPassToCallBack;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::queue<std::string > paramToPassToCallBackType;
     #endif
     std::vector<uint8_t> selectCharacterQueryId;
@@ -312,11 +312,11 @@ private:
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
 
     //socket related
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     //void connectionError(QAbstractSocket::SocketError);
     #endif
 
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     /// \warning it need be complete protocol trame
     void fake_receive_data(std::vector<char> data);
     #endif
@@ -364,7 +364,7 @@ private:
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     void sendCompressedFileContent();
     #endif
     #endif
@@ -612,7 +612,7 @@ private:
     //Clan *clan;->public_and_private_informations.clan + clanList
     PLAYER_INDEX_FOR_CONNECTED otherCityPlayerBattle;
 public:
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     char *socketString;
     int socketStringSize;
     #endif
@@ -668,7 +668,7 @@ private:
     //send reply
     bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) override;
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
     void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction) override;
     #else
@@ -741,11 +741,9 @@ private:
     void loadItemOnMap();
     static void loadItemOnMap_static(void *object);
     void loadItemOnMap_return();
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     void loadPlantOnMap();
     static void loadPlantOnMap_static(void *object);
     void loadPlantOnMap_return();
-    #endif
 
     static void loadPlayerMonsterBuffs_static(void *object);
     void loadPlayerMonsterBuffs_object();

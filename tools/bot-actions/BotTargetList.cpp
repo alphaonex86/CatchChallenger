@@ -177,11 +177,11 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &firstValue=returnVar.front();
         if(firstValue.first==CatchChallenger::Orientation::Orientation_none)
         {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
             if(firstValue.second==0)
         #endif
                 returnVar.erase(returnVar.cbegin());
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
             else
                 abort();
         #endif
@@ -193,11 +193,11 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &lastValue=returnVar.back();
         if(lastValue.first==CatchChallenger::Orientation::Orientation_none)
         {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
             if(lastValue.second==0)
         #endif
                 returnVar.erase(returnVar.cbegin()+returnVar.size()-1);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
             else
                 abort();
         #endif

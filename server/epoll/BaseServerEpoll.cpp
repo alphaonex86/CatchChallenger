@@ -42,7 +42,7 @@ void BaseServerEpoll::unload_the_visibility_algorithm()
 {
     if(ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove!=NULL)
     {
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove->stop();
         ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove->deleteLater();
         ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove=NULL;

@@ -103,7 +103,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 default:
                 break;
             }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(otherPlayer.pendingMonsterMoves.size()>2)
             abort();
         #endif
@@ -423,7 +423,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_left;
                 otherPlayer.moveStep=0;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(otherPlayer.pendingMonsterMoves.size()>1)
                     abort();
                 #endif
@@ -450,7 +450,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_right;
                 otherPlayer.moveStep=0;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(otherPlayer.pendingMonsterMoves.size()>1)
                     abort();
                 #endif
@@ -478,7 +478,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_top;
                 otherPlayer.moveStep=0;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(otherPlayer.pendingMonsterMoves.size()>1)
                     abort();
                 #endif
@@ -505,7 +505,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_bottom;
                 otherPlayer.moveStep=0;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(otherPlayer.pendingMonsterMoves.size()>1)
                     abort();
                 #endif
@@ -521,7 +521,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             otherPlayer.oneStepMore->stop();
         }
 
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(otherPlayer.pendingMonsterMoves.size()>1)
             abort();
         #endif

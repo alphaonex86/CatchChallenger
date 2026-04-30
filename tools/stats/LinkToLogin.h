@@ -16,7 +16,7 @@ class LinkToLogin : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToLogin(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             SSL_CTX *ctx
         #endif
             );
@@ -69,7 +69,7 @@ public:
     //to unordered reply
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
     static unsigned char header_magic_number[5];
-    static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char private_token_statclient[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
 
     #ifndef STATSODROIDSHOW2
     static FILE * pFile;

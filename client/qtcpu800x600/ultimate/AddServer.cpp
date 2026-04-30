@@ -9,9 +9,9 @@ AddOrEditServer::AddOrEditServer(QWidget *parent) :
 {
     ui->setupUi(this);
     ok=false;
-    #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET) || defined(CATCHCHALLENGER_NO_WEBSOCKET)
         ui->type->hide();
-        #if defined(NOTCPSOCKET)
+        #if defined(CATCHCHALLENGER_NO_TCPSOCKET)
             ui->port->hide();
             ui->server->setPlaceholderText("ws://www.server.com:9999/");
         #endif
@@ -25,13 +25,13 @@ AddOrEditServer::~AddOrEditServer()
 
 int AddOrEditServer::type() const
 {
-#if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+#if defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_NO_WEBSOCKET)
 return -1;
 #else
-    #if defined(NOTCPSOCKET)
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET)
     return 1;
     #else
-        #if defined(NOWEBSOCKET)
+        #if defined(CATCHCHALLENGER_NO_WEBSOCKET)
         return 0;
         #else
         return ui->type->currentIndex();
@@ -42,13 +42,13 @@ return -1;
 
 void AddOrEditServer::setType(const int &type)
 {
-#if !  defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
+#if !  defined(CATCHCHALLENGER_NO_TCPSOCKET) && ! defined(CATCHCHALLENGER_NO_WEBSOCKET)
 ui->type->setCurrentIndex(type);
 #else
-    #if defined(NOTCPSOCKET)
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET)
     ui->type->setCurrentIndex(1);
     #else
-        #if defined(NOWEBSOCKET)
+        #if defined(CATCHCHALLENGER_NO_WEBSOCKET)
         ui->type->setCurrentIndex(0);
         #endif
     #endif

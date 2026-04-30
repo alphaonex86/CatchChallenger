@@ -59,7 +59,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         settings.setValue("httpDatapackMirrorRewriteBase","");
     if(!settings.contains("httpDatapackMirrorRewriteMainAndSub"))
         settings.setValue("httpDatapackMirrorRewriteMainAndSub","");
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     if(!settings.contains("compression"))
         settings.setValue("compression","zstd");
     if(!settings.contains("compressionLevel"))
@@ -164,7 +164,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
 
     //connection
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     if(settings.value("compression")=="none")
         CompressionProtocol::compressionTypeServer          = CompressionProtocol::CompressionType::None;
     else if(settings.value("compression")=="zstd")
@@ -284,7 +284,7 @@ void EpollServerLoginSlave::close()
 
 bool EpollServerLoginSlave::tryListen()
 {
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
         const bool &returnedValue=trySslListen(server_ip, server_port,"server.crt", "server.key");
     #else
         const bool &returnedValue=tryListenInternal(server_ip, server_port);

@@ -170,7 +170,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(Map_full *tempMapObject,b
                     {
                         qDebug() << "Layer Moving, bot object at " << objects.at(index2)->x() << "," << objects.at(index2)->y() << " type: " << objects.at(index2)->type();
                         /// \see MapController::loadBotOnTheMap()
-                        #ifndef ONLYMAPRENDER
+                        #ifndef CATCHCHALLENGER_ONLYMAPRENDER
                         /*objectGroup->removeObject(objects.at(index2));
                         delete objects.at(index2);*/
                         #endif
@@ -599,7 +599,7 @@ void Map2Png::layerChangeLevelAndTagsChange(Map_full *tempMapObject,bool hideThe
                     {
                         qDebug() << "layer Object, bot object at " << objects.at(index2)->x() << "," << objects.at(index2)->y() << " type: " << objects.at(index2)->type();
                         /// \see MapController::loadBotOnTheMap()
-                        #ifndef ONLYMAPRENDER
+                        #ifndef CATCHCHALLENGER_ONLYMAPRENDER
                         /*objectGroup->removeObject(objects.at(index2));
                         delete objects.at(index2);*/
                         #endif

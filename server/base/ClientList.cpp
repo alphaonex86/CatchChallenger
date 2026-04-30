@@ -40,14 +40,14 @@ PLAYER_INDEX_FOR_CONNECTED ClientList::global_clients_list_bypseudo(const std::s
 
 void ClientList::insert_characterSelected(const Client &c)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(playerByPseudo.find(c.getPseudo())!=playerByPseudo.cend())
     {
         std::cerr << "this pseudo is already found" << std::endl;
         abort();
     }
     #endif
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     for (const std::pair<const std::string,PLAYER_INDEX_FOR_CONNECTED>& n : playerByPseudo)
     {
         if(n.second==c.getIndexConnect())
@@ -68,7 +68,7 @@ void ClientList::insert_characterSelected(const Client &c)
 
 void ClientList::insert_StatusWatcher(const Client &c)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(clientForStatus.find(c.getIndexConnect())!=clientForStatus.cend())
     {
         std::cerr << "this clientForStatus is already found" << std::endl;

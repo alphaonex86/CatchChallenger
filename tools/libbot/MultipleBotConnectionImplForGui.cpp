@@ -1,5 +1,5 @@
 #include "MultipleBotConnectionImplForGui.h"
-#ifdef BOTACTIONS
+#ifdef CATCHCHALLENGER_BOT_ACTIONS
 #include "actions/ActionsAction.h"
 #endif
 
@@ -150,7 +150,7 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
 
 void MultipleBotConnectionImplForGui::serverSelect(const uint8_t &charactersGroupIndex,const quint32 &uniqueKey)
 {
-    #ifdef BOTTESTCONNECT
+    #ifdef CATCHCHALLENGER_BOT_TESTCONNECT
     qDebug() << "MultipleBotConnectionImplForGui::serverSelect(): " << charactersGroupIndex << ", uniqueKey: " << uniqueKey;
     #endif
     if(uniqueKey==0)
@@ -314,7 +314,7 @@ void MultipleBotConnectionImplForGui::haveTheDatapack()
         return;
     }
     MultipleBotConnection::haveTheDatapack_with_client(apiToCatchChallengerClient.value(senderObject));
-    #ifndef BOTTESTCONNECT
+    #ifndef CATCHCHALLENGER_BOT_TESTCONNECT
     if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
     {
         qDebug() << "Profile list is empty";
@@ -383,7 +383,7 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
 {
     qDebug() << "newSocketError()" << error;
     mHaveAnError=true;
-    #ifdef BOTACTIONS
+    #ifdef CATCHCHALLENGER_BOT_ACTIONS
     ActionsAction::actionsAction->stopAll();
     #endif
 
@@ -498,7 +498,7 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
 void MultipleBotConnectionImplForGui::newError(const std::string &error, const std::string &detailedError)
 {
     mHaveAnError=true;
-    #ifdef BOTACTIONS
+    #ifdef CATCHCHALLENGER_BOT_ACTIONS
     ActionsAction::actionsAction->stopAll();
     #endif
 

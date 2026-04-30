@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
         delete QtDatapackClientLoader::datapackLoader;
         QtDatapackClientLoader::datapackLoader=nullptr;
     }
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+    #if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
     CatchChallenger::QtDatapackChecksum::thread.quit();
     CatchChallenger::QtDatapackChecksum::thread.wait();
     #endif

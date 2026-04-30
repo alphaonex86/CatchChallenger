@@ -9,14 +9,14 @@ unsigned char Client::protocolReplyProtocolNotSupported[]={0x7F/*reply server to
 unsigned char Client::protocolReplyServerFull[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x03/*return code*/};
 unsigned char Client::protocolReplyCompressionNone[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                       #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                                                      +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
+                                                      +CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER/*reply size*/
                                                       #endif
                                                       ,0x00,0x00,0x00/*little endian*/
                                                       ,0x04/*compression: none*/};
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 unsigned char Client::protocolReplyCompresssionZstandard[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                                                       +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
+                                                       +CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER/*reply size*/
                                                        #endif
                                                        ,0x00,0x00,0x00/*little endian*/
                                                        ,0x08/*compression: zstd*/};
@@ -25,7 +25,7 @@ unsigned char Client::protocolReplyCompresssionZstandard[]={0x7F/*reply server t
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 unsigned char Client::loginIsWrongBuffer[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x00/*temp return code*/};
 //std::vector<Client *> Client::stat_client_list;
-unsigned char Client::private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+unsigned char Client::private_token_statclient[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
 #endif
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -70,7 +70,7 @@ uint32_t Client::characterIsRightFinalStepHeaderSize=0;
 bool Client::timeRangeEventNew=false;
 uint64_t Client::timeRangeEventTimestamps=0;
 
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 Player_private_and_public_informations *ClientBase::public_and_private_informations_solo=NULL;
 #endif
 

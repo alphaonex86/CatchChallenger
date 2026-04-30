@@ -6,7 +6,7 @@
 #include "MapBasicMove.hpp"
 
 namespace CatchChallenger {
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
 class Client;
 #endif
 class Map_custom;

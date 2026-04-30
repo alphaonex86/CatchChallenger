@@ -800,7 +800,7 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
     while(index<botQuests.size())
     {
         const CATCHCHALLENGER_TYPE_QUEST &questId=botQuests.at(index);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at OverMapLogic::getQuestList()";
         #endif

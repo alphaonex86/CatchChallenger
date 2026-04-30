@@ -18,7 +18,7 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data);
 #endif
 
 void send_settings(
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     EpollSslServer *server
     #else
     EpollServer *server
@@ -585,7 +585,7 @@ void send_settings(
         if(!settings->contains("token"))
             generateTokenStatClient(*settings,formatedServerSettings.private_token_statclient);
         std::string token=settings->value("token");
-        if(token.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2/*String Hexa, not binary*/)
+        if(token.size()!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER*2/*String Hexa, not binary*/)
             generateTokenStatClient(*settings,formatedServerSettings.private_token_statclient);
         token=settings->value("token");
         const std::vector<char> &tokenBinary=hexatoBinary(token);
@@ -594,7 +594,7 @@ void send_settings(
             std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
             abort();
         }
-        memcpy(formatedServerSettings.private_token_statclient,tokenBinary.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        memcpy(formatedServerSettings.private_token_statclient,tokenBinary.data(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
     }
     settings->endGroup();
     #endif

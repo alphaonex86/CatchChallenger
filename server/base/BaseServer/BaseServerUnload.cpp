@@ -103,7 +103,7 @@ void BaseServer::unload_the_datapack()
     CommonSettingsServer::commonSettingsServer.datapackHashServerMain.clear();
     CommonSettingsServer::commonSettingsServer.datapackHashServerSub.clear();
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     baseServerMasterSendDatapack.compressedExtension.clear();
     #endif
     BaseServerMasterSendDatapack::datapack_file_hash_cache_base.clear();

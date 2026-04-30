@@ -62,7 +62,7 @@ void Client::saveCurrentMonsterStat()
 
 void Client::saveMonsterStat(const PlayerMonster &monster)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         if(!CatchChallenger::CommonDatapack::commonDatapack.has_monster(monster.monster))
         {
@@ -153,7 +153,7 @@ bool Client::checkLoose(bool withTeleport)
         fightFinished();
         if(tempInBattle)
             updateCanDoFight();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         normalOutput("You lost the battle");
         if(!ableToFight)
         {
@@ -427,7 +427,7 @@ bool Client::finishTheTurn(const bool &isBot)
         {
             if(isBot)
             {
-                #ifndef EPOLLCATCHCHALLENGERSERVER
+                #ifndef CATCHCHALLENGER_SERVER
                 if(!isInCityCapture)
                 #endif
                 {
@@ -777,7 +777,7 @@ bool Client::addPlayerMonsterWithChange(const PlayerMonster &playerMonster)
 
 void Client::confirmEvolutionTo(PlayerMonster * playerMonster, const uint16_t &monster)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     PlayerMonster * currentMonster=getCurrentMonster();
     const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
     /// \note NO OTHER MONSTER because it's evolution on current monster
@@ -855,7 +855,7 @@ void Client::confirmEvolution(const uint8_t &monsterPosition)
 
 void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();
@@ -886,7 +886,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
     }
     #endif
     CommonFightEngine::hpChange(currentMonster,newHpValue);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();

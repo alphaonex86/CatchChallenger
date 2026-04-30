@@ -1,6 +1,6 @@
 #include "FightLoader.hpp"
 #ifndef CATCHCHALLENGER_NOXML
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 #include "../base/CommonDatapack.hpp"
 #endif
 #endif
@@ -25,7 +25,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     std::vector<Type> types;
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
@@ -40,7 +40,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             std::cerr << file+", "+domDocument->ErrorName() << std::endl;
             return types;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -140,7 +140,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
             typeItem = typeItem->NextSiblingElement("type");
         }
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return types;
@@ -148,7 +148,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
 #endif
 #endif
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+#ifdef CATCHCHALLENGER_SOLO
 catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> > FightLoader::loadMonsterEvolutionItems(const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters)
 {
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_map<uint16_t,uint16_t> > evolutionItem;
@@ -168,7 +168,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack
 }
 #endif
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+#ifdef CATCHCHALLENGER_SOLO
 catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_MONSTER> > FightLoader::loadMonsterItemToEvolution(const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters,const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> > &evolutionItem)
 {
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_MONSTER> > learnItem;

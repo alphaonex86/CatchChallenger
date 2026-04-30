@@ -18,7 +18,7 @@ return end != nullptr;
 }*/
 
 static const std::regex ishexa("^([0-9a-fA-F][0-9a-fA-F])+$",std::regex::optimize);
-#if defined(_WIN32) || defined(CATCHCHALLENGER_EXTRA_CHECK)
+#if defined(_WIN32) || defined(CATCHCHALLENGER_HARDENED)
 static const std::regex regexseparators("[/\\\\]+",std::regex::optimize);
 #endif
 
@@ -306,7 +306,7 @@ std::string binarytoHexa(const char * const data, const uint32_t &size, bool *ok
 {
     if(size==0)
         return std::string();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(__builtin_expect((size>100000000),0))
     {
         std::cerr << "cpp11addition binarytoHexa() size>100000000, seam be a bug, dropped to empty string" << std::endl;
@@ -376,7 +376,7 @@ uint8_t hexToDecUnit(const std::string& data, bool *ok)
             case 'F':
                 return 15;
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -390,7 +390,7 @@ std::vector<char> hexatoBinary(const std::string &data,bool *ok)
 {
     if(data.size()%2!=0)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -408,7 +408,7 @@ std::vector<char> hexatoBinary(const std::string &data,bool *ok)
             const uint8_t &x=hexToDecUnit(partpfchain,&ok2);
             if(!ok2)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
                 #endif
                 if(ok!=NULL)
@@ -423,7 +423,7 @@ std::vector<char> hexatoBinary(const std::string &data,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)

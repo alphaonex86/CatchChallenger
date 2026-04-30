@@ -73,7 +73,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                         }
                         //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
                         //don't set the last wrong entry to improve performance againts DDOS
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(BaseServerLogin::tokenForAuth[0].client==NULL)
                             abort();
                         #endif
@@ -88,7 +88,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                         //insecure implementation
                         abort();
                         int index=0;
-                        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                        while(index<CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                         {
                             token->value[index]=rand()%256;
                             index++;
@@ -96,27 +96,27 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                     }
                     else
                     {
-                        const int &size=fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile);
-                        if(size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                        const int &size=fread(token->value,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile);
+                        if(size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                         {
-                            parseNetworkReadError("Not correct number of byte to generate the token: size!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT: "+std::to_string(size)+"!="+std::to_string(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT));
+                            parseNetworkReadError("Not correct number of byte to generate the token: size!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER: "+std::to_string(size)+"!="+std::to_string(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER));
                             return false;
                         }
-                        //messageParsingLayer("auth token send: "+binarytoHexa(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT));
+                        //messageParsingLayer("auth token send: "+binarytoHexa(token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER));
                     }
                 }
                 //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
-                #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
                 switch(CompressionProtocol::compressionTypeServer)
                 {
                     case CompressionProtocol::CompressionType::None:
                         *(EpollClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
                     break;
                     case CompressionProtocol::CompressionType::Zstandard:
                         *(EpollClientLoginSlave::protocolReplyCompresssionZstandard+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompresssionZstandard+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(EpollClientLoginSlave::protocolReplyCompresssionZstandard+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompresssionZstandard),sizeof(EpollClientLoginSlave::protocolReplyCompresssionZstandard));
                     break;
                     default:
@@ -125,7 +125,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                 }
                 #else
                 *(EpollClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
-                memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE);
+                memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
                 #endif
                 //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -191,7 +191,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                 }
                 else
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     //removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                     #endif
                     //replyOutputSize.remove(queryNumber);//all list dropped at client destruction
@@ -453,7 +453,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
         //Remove character
         case 0xAB:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=((int)sizeof(uint32_t)+(int)sizeof(uint8_t)))
             {
                 parseNetworkReadError("wrong size with the main ident: "+std::to_string(mainCodeType)+", data: "+binarytoHexa(data,size));

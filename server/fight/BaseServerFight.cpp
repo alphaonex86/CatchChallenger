@@ -25,7 +25,7 @@ void BaseServer::preload_8_sync_monsters_drops()
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::preload_19_async_sql_monsters_max_id()
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     std::cout << GlobalServerData::serverPrivateVariables.cityStatusList.size() << " SQL city loaded" << std::endl;
     #endif
 
@@ -43,7 +43,7 @@ void BaseServer::preload_19_async_sql_monsters_max_id()
             queryText="SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;";
         break;

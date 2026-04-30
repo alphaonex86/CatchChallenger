@@ -36,7 +36,7 @@ void Api_client_real::writeNewFileBase(const std::string &fileName,const std::st
 
         if(file.exists())
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             {
                 QFile file(QString::fromStdString(fullPath));
                 if(file.open(QIODevice::ReadOnly))
@@ -77,7 +77,7 @@ void Api_client_real::writeNewFileBase(const std::string &fileName,const std::st
         XXH32_canonical_t htemp;
         XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
         memcpy(&h,&htemp.digest,sizeof(h));
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        #ifndef CATCHCHALLENGER_HARDENED
         DatapackChecksum::writeCachePartialHash(fullPath,h);
         #else
         if(!DatapackChecksum::writeCachePartialHash(fullPath,h))
@@ -416,7 +416,7 @@ void Api_client_real::decodedIsFinishBase()
                         XXH32_canonical_t htemp;
                         XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
                         memcpy(&h,&htemp.digest,sizeof(h));
-                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifndef CATCHCHALLENGER_HARDENED
                         DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h);
                         #else
                         if(!DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h))

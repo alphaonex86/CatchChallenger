@@ -5,7 +5,7 @@
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 #include "../SqlFunction.hpp"
 #endif
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #endif
 #include <cstring>
@@ -85,7 +85,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             else
             {
                 paramToPassToCallBack.push(clanActionParam);
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 paramToPassToCallBackType.push("ClanActionParam");
                 #endif
                 callbackRegistred.push(callback);
@@ -93,7 +93,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             #elif CATCHCHALLENGER_DB_FILE
             paramToPassToCallBack.push(clanActionParam);
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             paramToPassToCallBackType.push("ClanActionParam");
             #endif
             addClan_object();
@@ -149,7 +149,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 return;
             }
             const Clan clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
             if(clan.captureCityInProgress!=ZONE_TYPE_MAX)
             {
                 errorOutput("You can't disolv the clan if is in city capture");
@@ -187,7 +187,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             #else
             #error Define what do here
             #endif
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
             {
                 if(CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().size()>clan.capturedCity)
                     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
@@ -199,7 +199,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             #endif
             //update the object
             GlobalServerData::serverPrivateVariables.clanList.erase(public_and_private_informations.clan);
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
             GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(public_and_private_informations.clan);
             GlobalServerData::serverPrivateVariables.cityStatusList[clan.captureCityInProgress].clan=0;
             #endif
@@ -358,7 +358,7 @@ void Client::addClan_static(void *object)
 
 void Client::addClan_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.size()==0)
     {
         std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
@@ -373,7 +373,7 @@ void Client::addClan_object()
 
 void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::string &text)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="ClanActionParam")
     {
         std::cerr << "is not ClanActionParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;

@@ -10,14 +10,14 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
     switch(type)
     {
         default:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
         #else
         std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
         #endif
         abort();
         return;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryServer::db_query_update_character_forserver_map=PreparedStatementUnit("UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,`rescue_map`=%5,`rescue_x`=%6,`rescue_y`=%7,`rescue_orientation`=%8,`unvalidated_rescue_map`=%9,`unvalidated_rescue_x`=%10,`unvalidated_rescue_y`=%11,`unvalidated_rescue_orientation`=%12 WHERE `character`=%13",database);
         PreparedDBQueryServer::db_query_character_server_by_id=PreparedStatementUnit("SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,LOWER(HEX(`quest`)),`date` FROM `character_forserver` WHERE `character`=%1",database);
@@ -36,7 +36,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         break;
         #endif
 
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryServer::db_query_update_character_forserver_map=PreparedStatementUnit("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,rescue_map=%5,rescue_x=%6,rescue_y=%7,rescue_orientation=%8,unvalidated_rescue_map=%9,unvalidated_rescue_x=%10,unvalidated_rescue_y=%11,unvalidated_rescue_orientation=%12 WHERE character=%13",database);
 
@@ -56,7 +56,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         break;
         #endif
 
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryServer::db_query_update_character_forserver_map=PreparedStatementUnit("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,rescue_map=%5,rescue_x=%6,rescue_y=%7,rescue_orientation=%8,unvalidated_rescue_map=%9,unvalidated_rescue_x=%10,unvalidated_rescue_y=%11,unvalidated_rescue_orientation=%12 WHERE character=%13",database);
 

@@ -50,7 +50,7 @@ public:
         std::string name;
         uint32_t size;
     };
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     static catchchallenger_datapack_set<std::string> compressedExtension;
     static std::vector<PendingFile> compressedFilesPending;
     //Sum of raw on-wire body bytes (1+namelen+4+filesize per file).

@@ -1310,7 +1310,7 @@ void BaseWindow::finalFightTextQuit()
 void BaseWindow::loose()
 {
     qDebug() << "loose()";
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     PublicPlayerMonster *currentMonster=client->getCurrentMonster();
     if(currentMonster!=NULL)
         if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
@@ -1383,7 +1383,7 @@ void BaseWindow::loose()
 
 void BaseWindow::win()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     PublicPlayerMonster *currentMonster=client->getCurrentMonster();
     if(currentMonster!=NULL)
         if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
@@ -1406,7 +1406,7 @@ void BaseWindow::win()
         }
     #endif
     client->fightFinished();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(currentMonster!=NULL)
         if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
         {
@@ -1501,7 +1501,7 @@ void BaseWindow::displayExperienceGain()
     //animation finished
     if(mLastGivenXP<=0)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(mLastGivenXP>4294000000)
         {
             newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
@@ -1540,7 +1540,7 @@ void BaseWindow::displayExperienceGain()
                                          QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(currentMonster->monster).name))
                                      .arg(mLastGivenXP));
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(mLastGivenXP>4294000000)
     {
         newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
@@ -1601,7 +1601,7 @@ void BaseWindow::displayExperienceGain()
         ui->progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.get_monster(currentMonster->monster).level_to_xp.at(currentMonsterLevel-1));
         ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->maximum());
         ui->progressBarFightBottomExp->repaint();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(mLastGivenXP>4294000000)
         {
             newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
@@ -1649,7 +1649,7 @@ void BaseWindow::displayExperienceGain()
         mLastGivenXP-=xp_to_change;
     else
         mLastGivenXP=0;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(mLastGivenXP>4294000000)
     {
         newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),

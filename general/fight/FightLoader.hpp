@@ -33,7 +33,7 @@ public:
                                                  #endif
                                                  );
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+    #ifdef CATCHCHALLENGER_SOLO
     static catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> > loadMonsterEvolutionItems(const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters);
     static catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_MONSTER> > loadMonsterItemToEvolution(const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters, const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM, catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> > &evolutionItem);
     #ifndef CATCHCHALLENGER_NOXML

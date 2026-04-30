@@ -228,7 +228,7 @@ void Client::startTheCityCapture()
                     while(index<mapsList.size())
                     {
                         const CATCHCHALLENGER_TYPE_MAPID &mapId=mapsList.at(index);
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(mapId>=MapVisibilityAlgorithm::flat_map_list.size())
                         {
                             std::cerr << "Client::startTheCityCapture() mapId is > map list size" << std::endl;

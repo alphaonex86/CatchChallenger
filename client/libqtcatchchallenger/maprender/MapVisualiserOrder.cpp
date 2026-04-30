@@ -88,7 +88,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(QMap_client *tempMapObjec
                                 }
                                 else
                                 {
-                                    #ifndef ONLYMAPRENDER
+                                    #ifndef CATCHCHALLENGER_ONLYMAPRENDER
                                     qDebug() << "animation properties not found for the door at " << x << "," << y;
                                     #endif
                                     objectGroup->removeObject(objects.at(index2));
@@ -111,7 +111,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(QMap_client *tempMapObjec
                     }
                     else
                     {
-                        #ifndef ONLYMAPRENDER
+                        #ifndef CATCHCHALLENGER_ONLYMAPRENDER
                         qDebug() << "Layer Moving, unknown object at " << x << "," << y << " type: " << objects.at(index2)->type();
                         #endif
                         objectGroup->removeObject(objects.at(index2));
@@ -131,7 +131,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(QMap_client *tempMapObjec
                     if(objects.at(index2)->type()=="bot")
                     {
                         /// \see MapController::loadBotOnTheMap()
-                        #ifndef ONLYMAPRENDER
+                        #ifndef CATCHCHALLENGER_ONLYMAPRENDER
                         objectGroup->removeObject(objects.at(index2));
                         delete objects.at(index2);
                         #endif
@@ -141,7 +141,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(QMap_client *tempMapObjec
                     //remove the unknow object
                     else
                     {
-                        #ifndef ONLYMAPRENDER
+                        #ifndef CATCHCHALLENGER_ONLYMAPRENDER
                         qDebug() << "layer Object, unknown object at " << objects.at(index2)->x() << "," << objects.at(index2)->y() << " type: " << objects.at(index2)->type();
                         #endif
                         objectGroup->removeObject(objects.at(index2));

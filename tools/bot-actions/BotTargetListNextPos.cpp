@@ -189,7 +189,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
                 abort();
                 break;
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(step==0)
             {
                 const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);

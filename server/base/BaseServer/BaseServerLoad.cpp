@@ -187,7 +187,7 @@ bool BaseServer::preload_zone_init()
             else
                 std::cerr << "Unable to open the file: " << file << ", is not found" << std::endl;
         }
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifdef CATCHCHALLENGER_SERVER
         delete domDocument;
         #endif
         index++;

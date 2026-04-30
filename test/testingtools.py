@@ -11,7 +11,7 @@ For each .pro found:
 import os, sys, subprocess, multiprocessing, json, time
 from remote_build import (start_remote_builds, collect_remote_results,
                           SERVER_MAKE_SCRIPTS, build_server_via_make,
-                          compare_qmake_make, count_remote_tests)
+                          count_remote_tests)
 import diagnostic
 
 DIAG = diagnostic.parse_diag_args()
@@ -148,57 +148,29 @@ def find_pro_files():
 
 
 def test_compile(pro_file):
-    """Build a .pro file, then distclean.  Returns True on success."""
+    """Build a .pro file via cmake. Returns True on success."""
+    import cmake_helpers as _ch
     rel = os.path.relpath(pro_file, ROOT)
     pro_dir = os.path.dirname(pro_file)
-    pro_name = os.path.basename(pro_file)
-
-    # build in a subdirectory to avoid polluting the source tree
     suffix = diagnostic.build_dir_suffix(DIAG)
     build_dir = os.path.join(pro_dir, "build", "testing" + suffix)
     os.makedirs(build_dir, exist_ok=True)
-    log_info(f"make distclean {rel}")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
-    clean_build_artifacts(build_dir)
 
     label = rel + diagnostic.label_suffix(DIAG)
 
-    # qmake
-    spec = diagnostic.compiler_spec(DIAG) or "linux-g++"
-    qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", spec, "CONFIG+=debug", "CONFIG+=qml_debug",
-                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
-                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
-    qmake_args.extend(diagnostic.qmake_extra_args(DIAG))
-    log_info(f"qmake {label}")
-    rc, out = run_cmd(qmake_args, build_dir)
-    if rc != 0:
-        log_fail(f"compile {label}", f"qmake failed (rc={rc})")
-        if out.strip():
-            for line in out.splitlines()[-15:]:
-                print(f"  | {line}")
-        # still try to clean up
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
+    ok = _ch.build_project(
+        pro_file, build_dir, label,
+        root=ROOT, nproc=NPROC,
+        log_info=log_info, log_pass=log_pass, log_fail=log_fail,
+        ensure_dir=lambda d: os.makedirs(d, exist_ok=True),
+        run_cmd=run_cmd,
+        diag=DIAG, diag_module=diagnostic,
+    )
+    if not ok:
+        # Wipe so retry starts clean (matches old `make distclean` on fail).
+        import shutil
+        shutil.rmtree(build_dir, ignore_errors=True)
         return False
-
-    # make
-    log_info(f"make -j{NPROC} {label}")
-    rc, out = run_cmd(["make", f"-j{NPROC}"], build_dir)
-    if rc != 0:
-        log_fail(f"compile {label}", f"make failed (rc={rc})")
-        if out.strip():
-            for line in out.splitlines()[-20:]:
-                print(f"  | {line}")
-        # clean up
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
-        return False
-
-    log_pass(f"compile {label}")
-
-    # distclean
-    log_info(f"make distclean {label}")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
-
     return True
 
 
@@ -256,8 +228,11 @@ def main():
             test_compile(pf)
         print()
 
-    # ── make.py build + qmake-vs-make.py parity check (for tools with make.py)
-    log_info("tools with make.py: build + parity check")
+    # ── make.py build (for tools with make.py companion).
+    # The qmake-vs-make.py parity check is gone with the cmake migration —
+    # there's no qmake side to compare against anymore. The make.py
+    # wrappers themselves drive cmake (see cmake_make_helper.py).
+    log_info("tools with make.py: build via wrapper")
     for pf in pro_files:
         rel = os.path.relpath(pf, ROOT)
         if rel not in SERVER_MAKE_SCRIPTS:
@@ -265,10 +240,7 @@ def main():
         tool_dir = os.path.dirname(pf)
         suffix = diagnostic.build_dir_suffix(DIAG)
         bd_make = os.path.join(tool_dir, "build", "testing-make.py" + suffix)
-        bd_q = os.path.join(tool_dir, "build", "cmp-qmake" + suffix)
-        bd_m = os.path.join(tool_dir, "build", "cmp-make" + suffix)
         label = os.path.basename(tool_dir)
-        # build
         test_name = f"compile {rel} (make.py)"
         if should_run(test_name, failed_cases):
             log_info(f"make.py {label}")
@@ -280,17 +252,6 @@ def main():
                 if out.strip():
                     for line in out.splitlines()[-20:]:
                         print(f"  | {line}")
-        # parity
-        cmp_results = compare_qmake_make(rel, bd_q, bd_m, label=label)
-        ri = 0
-        while ri < len(cmp_results):
-            name, ok, detail = cmp_results[ri]
-            if should_run(name, failed_cases):
-                if ok:
-                    log_pass(name, detail)
-                else:
-                    log_fail(name, detail)
-            ri += 1
 
     # collect remote results
     if failed_cases is None:

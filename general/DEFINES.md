@@ -15,7 +15,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ## Server architecture
 
-### `EPOLLCATCHCHALLENGERSERVER`
+### `CATCHCHALLENGER_SERVER`
 - **Scope:** global (client + server + tools) — server: base,epoll,fight,game-server-alone,gateway,login,master,qt; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: libbot,stats
 - **Description:** Enables the epoll-based async I/O server implementation (Linux high-performance server). Drives all server I/O code paths.
 - **Used in:**
@@ -362,7 +362,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB`
 - **Scope:** server-only — server: base,gateway,login
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Threshold (in KB) above which a single datapack file is sent **uncompressed** to the client. Files larger than this skip the compressed-batch path because compressing very-large files dominates the connect-time CPU budget without much wire-size benefit (most large files are already-compressed assets like .png/.opus).
 - **Used in:**
   - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
   - `server/gateway/EpollClientLoginSlave.hpp`
@@ -373,13 +373,13 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_SERVER_DATAPACK_LZ4_COMPRESSEDFILEPURGE_KB`
 - **Scope:** server-only — server: base
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Flush threshold (in KB of accumulated raw input) for the LZ4-compressed datapack send path. When the pending raw bundle reaches this size, the server emits one compressed `0x77` packet and clears the buffer. LZ4 is fast at the cost of slightly larger output; this threshold is tuned higher than `_ZLIB_COMPRESSEDFILEPURGE_KB`.
 - **Used in:**
   - `server/base/VariableServer.hpp`
 
 ### `CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB`
 - **Scope:** server-only — server: base,gateway,login
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Flush threshold (in KB) for the **raw** (uncompressed) datapack send path. When the accumulated raw-files-pending body reaches this size, `Client::sendFileContent` flushes one `0x76` packet and clears the buffer. Smaller = more packets / less latency; larger = fewer round-trips.
 - **Used in:**
   - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
   - `server/gateway/EpollClientLoginSlave.hpp`
@@ -390,7 +390,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB`
 - **Scope:** server-only — server: base,gateway,login
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Lower bound (in KB) for the "send this file as a standalone packet rather than batch it" decision. Files larger than `MIN_FILEPURGE_KB` get their own packet (one file = one wire frame); smaller files are accumulated in the raw-batch buffer until it hits `MAX_FILEPURGE_KB`. Reduces overhead for tiny files (XML metadata) while keeping big assets out of the batch buffer.
 - **Used in:**
   - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
   - `server/gateway/EpollClientLoginSlave.hpp`
@@ -401,7 +401,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB`
 - **Scope:** server-only — server: base,gateway,login
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Flush threshold (in KB of raw input) for the XZ/LZMA-compressed datapack send path. Tighter compression than zlib at higher CPU cost; threshold is set higher than `_ZLIB_COMPRESSEDFILEPURGE_KB` to amortize the slower compression over a larger batch.
 - **Used in:**
   - `server/gateway/EpollClientLoginSlave.hpp`
   - `server/login/EpollClientLoginSlave.hpp`
@@ -410,7 +410,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB`
 - **Scope:** server-only — server: base,gateway,login
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Flush threshold (in KB of raw input) for the zlib/zstd-compressed datapack send path. When the accumulated raw bundle hits this size, the server runs streaming compression and emits one `0x77` packet. Tuned smaller than the LZ4/XZ thresholds because zlib/zstd at level 6 hits a sensible CPU/ratio sweet spot at modest batch sizes.
 - **Used in:**
   - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
   - `server/gateway/EpollClientLoginSlave.hpp`
@@ -555,7 +555,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ## Network protocol
 
-### `NOTCPSOCKET`
+### `CATCHCHALLENGER_NO_TCPSOCKET`
 - **Scope:** global (client + server) — server: qt; client: libqtcatchchallenger,qtcpu800x600,qtopengl
 - **Description:** Disable raw TCP (browser/WASM builds).
 - **Used in:**
@@ -569,7 +569,7 @@ tools-only when references concentrate in one of those subtrees.
   - `client/qtcpu800x600/ultimate/AddServer.cpp`
   - *(…and 16 more)*
 
-### `NOWEBSOCKET`
+### `CATCHCHALLENGER_NO_WEBSOCKET`
 - **Scope:** global (client + server + tools) — server: qt; client: libqtcatchchallenger,qtcpu800x600,qtopengl; tools: bot-test-connect-to-gameserver-cli,datapack-explorer-generator-cli,map2png,stats
 - **Description:** Disable WebSocket support (raw TCP only).
 - **Used in:**
@@ -583,7 +583,7 @@ tools-only when references concentrate in one of those subtrees.
   - `tools/stats/stats.pro`
   - *(…and 13 more)*
 
-### `SERVERSSL`
+### `CATCHCHALLENGER_SERVER_SSL`
 - **Scope:** global (server + tools) — server: epoll,game-server-alone,gateway,login,master; tools: stats
 - **Description:** Enable TLS on server sockets.
 - **Used in:**
@@ -913,14 +913,14 @@ tools-only when references concentrate in one of those subtrees.
 
 ## Tools / bot / bench
 
-### `BOTACTIONS`
+### `CATCHCHALLENGER_BOT_ACTIONS`
 - **Scope:** tools-only — tools: bot-actions,libbot
 - **Description:** Player-action bot tool.
 - **Used in:**
   - `tools/libbot/MultipleBotConnectionImplForGui.cpp`
   - `tools/bot-actions/bot-actions.pro`
 
-### `BOTTESTCONNECT`
+### `CATCHCHALLENGER_BOT_TESTCONNECT`
 - **Scope:** global (client + tools) — client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600; tools: bot-test-connect-to-gameserver-cli,libbot
 - **Description:** Bot connects directly to the game server (skips gateway/login).
 - **Used in:**
@@ -982,7 +982,7 @@ tools-only when references concentrate in one of those subtrees.
   - `client/libqtcatchchallenger/Api_client_real_main.cpp`
   - *(…and 25 more)*
 
-### `ONLYMAPRENDER`
+### `CATCHCHALLENGER_ONLYMAPRENDER`
 - **Scope:** global (client + server + tools) — server: qt; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600; tools: datapack-explorer-generator-cli,map-procedural-generation-terrain,map2png
 - **Description:** Map rendering only — skip game logic.
 - **Used in:**
@@ -998,7 +998,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ## Build / hardening
 
-### `CATCHCHALLENGER_EXTRA_CHECK`
+### `CATCHCHALLENGER_HARDENED`
 - **Scope:** global (client + server + tools) — server: base,epoll,fight,game-server-alone,gateway,login,master,qt; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: bot-actions,libbot,map-procedural-generation
 - **Description:** Adds extra runtime checks (auto-defined unless RELEASE).
 - **Used in:**
@@ -1134,7 +1134,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `DEBUG_MESSAGE_CLIENT_SQL`
 - **Scope:** global (client + server) — server: base,epoll,login; client: qtcpu800x600
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Verbose debug logging for SQL queries (each prepared/raw statement and its result is printed). Off by default; switch on when investigating database issues. Adds noticeable overhead — never enable in a release build.
 - **Used in:**
   - `server/epoll/db/EpollMySQL.cpp`
   - `server/epoll/db/EpollPostgresql.hpp`
@@ -1151,7 +1151,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGERSERVERDROPIFCLENT`
 - **Scope:** global (server + tools) — server: base,epoll,game-server-alone,gateway,login,master; tools: stats
-- **Description:** Purpose not documented; usage details below.
+- **Description:** "Drop if client" — when defined, server-side TUs strip the client-direction code paths from the protocol parser (the `flags & 0x10 == isClient` branch). Set automatically by the all-in-one server build because that build cannot serve clients pretending to be servers, so the dispatch table for client-bound packets can be omitted entirely. Note: macro name is misspelled (CLENT instead of CLIENT) — kept for source compatibility.
 - **Used in:**
   - `general/base/CompressionProtocol.hpp`
   - `general/base/ProtocolParsingInput.cpp`
@@ -1179,14 +1179,14 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_GAMESERVER_EVENTSTARTONLOCALTIME`
 - **Scope:** server-only — server: base
-- **Description:** Purpose not documented; usage details below.
+- **Description:** When defined, day/night and other periodic in-game events anchor to the server host's **local** wall-clock instead of the cluster-synchronised reference epoch. Useful for single-host dev/test where the server time is the only clock; less useful in a multi-server cluster where you want all game servers to switch event states simultaneously.
 - **Used in:**
   - `server/base/VariableServer.hpp`
   - `server/base/BaseServer/BaseServerLoad.cpp`
 
 ### `CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER`
 - **Scope:** server-only (+ general/) — server: game-server-alone,gateway,login
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Wire-protocol header byte `0x01` that marks a packet as "client → server reply" (client answering a query the server sent it). Used by `ProtocolParsingInput` to route incoming bytes into the reply dispatch path. Constant, not a toggle.
 - **Used in:**
   - `general/base/ProtocolParsingInput.cpp`
   - `general/base/ProtocolParsing.hpp`
@@ -1196,7 +1196,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT`
 - **Scope:** server-only (+ general/) — server: base,crafting,gateway,login,master
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Wire-protocol header byte `0x7F` that marks a packet as "server → client reply" (server answering a query the client sent it). Mirror of `CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER` for the opposite direction. Constant, not a toggle.
 - **Used in:**
   - `general/base/ProtocolParsingInput.cpp`
   - `general/base/ProtocolParsing.hpp`
@@ -1219,19 +1219,19 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_XMLATTRIBUTETOSTRING`
 - **Scope:** global (general/ only)
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Helper macro that wraps a tinyxml2 attribute fetch into a `std::string` for log/error formatting (handles the nullptr case so logging code doesn't have to). Currently referenced only from commented-out diagnostic prints in FightLoaderMonster.cpp; the macro itself isn't defined in the active build — will resolve when the diagnostic prints are restored.
 - **Used in:**
   - `general/fight/FightLoaderMonster.cpp`
 
 ### `CATCHCHALLENGER_XMLDOCUMENT`
 - **Scope:** tools-only — tools: libbot
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Alias macro for the XML document type used by the bot tooling. Resolves to `tinyxml2::XMLDocument` after the XML-parser unification (Phase 5 macro cleanup made tinyxml2 the only XML parser; the alias stays for source-compatibility with older bot scripts that referenced it directly).
 - **Used in:**
   - `tools/libbot/actions/ActionsBot.cpp`
 
 ### `CATCHCHALLENGER_XMLELENTATLINE`
 - **Scope:** global (general/ only)
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Helper macro that pulls the source-line number out of a tinyxml2 element for diagnostic messages (e.g. "wrong attribute on `<monster>` at line 47"). Currently referenced only from commented-out diagnostic prints in the loader code; the macro is defined alongside the parser (typo notwithstanding — "ELENT" should be "ELEMENT", kept for source compatibility).
 - **Used in:**
   - `general/fight/FightLoaderBuff.cpp`
   - `general/fight/FightLoaderSkill.cpp`

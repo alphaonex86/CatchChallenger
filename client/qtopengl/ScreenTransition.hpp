@@ -87,7 +87,7 @@ private:
     OptionsDialog *o;
     DebugDialog *d;
     MainScreen *m;
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     CatchChallenger::InternalServer *internalServer;
     #endif
     #ifndef NOTHREADS

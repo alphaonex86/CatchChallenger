@@ -136,7 +136,7 @@ bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol_Qt *api,con
     while(index<botQuests.size())
     {
         const uint32_t &questId=botQuests.at(index);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at ActionsAction::getQuestList()";
         #endif
@@ -452,7 +452,7 @@ std::vector<std::pair<uint16_t,std::string> > ActionsAction::getQuestList(CatchC
     while(index<botQuests.size())
     {
         const uint16_t &questId=botQuests.at(index);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at ActionsAction::getQuestList()";
         #endif

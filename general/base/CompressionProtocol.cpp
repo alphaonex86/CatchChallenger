@@ -1,4 +1,4 @@
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 #include "CompressionProtocol.hpp"
 #include <zstd.h>
 #include <iostream>
@@ -35,7 +35,7 @@ int32_t CompressionProtocol::compressZstandard(const char * const input, const u
 
 int32_t CompressionProtocol::computeDecompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(maxDecompressedSize<sourceSize)
     {
         std::cerr << "maxDecompressedSize<compressedSize in ProtocolParsingBase::computeDecompression" << std::endl;
@@ -58,7 +58,7 @@ int32_t CompressionProtocol::computeDecompression(const char* const source, char
 
 int32_t CompressionProtocol::computeCompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(maxDecompressedSize<sourceSize)
     {
         std::cerr << "maxDecompressedSize<compressedSize in ProtocolParsingBase::computeDecompression" << std::endl;

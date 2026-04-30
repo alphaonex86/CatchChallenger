@@ -851,7 +851,7 @@ bool MapControllerMP::remove_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id
 
 bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction, bool inReplayMode)
 {
-    #if defined (ONLYMAPRENDER)
+    #if defined (CATCHCHALLENGER_ONLYMAPRENDER)
     (void)simplifiedIndex;
     (void)x;
     (void)y;

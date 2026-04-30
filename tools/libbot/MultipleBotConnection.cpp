@@ -436,7 +436,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
         {
             qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #else
             return;
@@ -445,7 +445,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
         {
             qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #else
             return;
@@ -652,7 +652,7 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
     QNetworkProxy proxyObject;
     if(!proxy().isEmpty())
     {
-        #ifdef BOTTESTCONNECT
+        #ifdef CATCHCHALLENGER_BOT_TESTCONNECT
         qDebug() << "use proxy: " << proxy() << ":" << proxyport();
         #endif
         proxyObject.setType(QNetworkProxy::Socks5Proxy);
@@ -687,7 +687,7 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::errorOccurred),this,&MultipleBotConnection::newSocketError))
         abort();
     #endif
-    #ifdef BOTTESTCONNECT
+    #ifdef CATCHCHALLENGER_BOT_TESTCONNECT
     qDebug() << "Try connect on: " << host() << ":" << port();
     #endif
     sslSocket->connectToHost(host(),port());

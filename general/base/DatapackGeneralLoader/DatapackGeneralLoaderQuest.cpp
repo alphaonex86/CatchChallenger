@@ -59,7 +59,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     quest.id=0;
     quest.rewards.allow_create_clan=false;
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
@@ -74,7 +74,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return std::pair<bool,Quest>(false,quest);
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -469,7 +469,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         step = step->NextSiblingElement("step");
     }
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
 

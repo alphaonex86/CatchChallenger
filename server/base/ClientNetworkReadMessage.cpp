@@ -30,7 +30,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         case 0x02:
             if(movePacketKick.total()>=GlobalServerData::serverSettings.ddos.kickLimitMove)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 errorOutput("Too many move in sort time, check DDOS limit: ("+std::to_string(movePacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitMove)+" "+movePacketKick.dump()+" flush each "+std::to_string(movePacketKick.get_lastFlushTime())+"s");
                 #else
                 errorOutput("Too many move in sort time, check DDOS limit: ("+std::to_string(movePacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitMove)+" "+movePacketKick.dump());
@@ -42,7 +42,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         case 0x03:
             if(chatPacketKick.total()>=GlobalServerData::serverSettings.ddos.kickLimitChat)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 errorOutput("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitChat)+" "+chatPacketKick.dump()+" flush each "+std::to_string(chatPacketKick.get_lastFlushTime())+"s");
                 #else
                 errorOutput("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitChat)+" "+chatPacketKick.dump());
@@ -54,7 +54,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         default:
             if(otherPacketKick.total()>=GlobalServerData::serverSettings.ddos.kickLimitOther)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 errorOutput("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitOther)+" "+otherPacketKick.dump()+" flush each "+std::to_string(otherPacketKick.get_lastFlushTime())+"s");
                 #else
                 errorOutput("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitOther)+" "+otherPacketKick.dump());
@@ -330,7 +330,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Clan invite accept
         case 0x04:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=((int)sizeof(uint8_t)))
             {
                 errorOutput("wrong remaining size for clan invite");
@@ -587,7 +587,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Use seed into dirt
         case 0x19:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=(int)sizeof(uint8_t))
             {
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -606,7 +606,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Quest start
         case 0x1B:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=((int)sizeof(uint16_t)))
             {
                 errorOutput("wrong remaining size for quest start");
@@ -621,7 +621,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Quest finish
         case 0x1C:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=((int)sizeof(uint16_t)))
             {
                 errorOutput("wrong remaining size for quest finish");
@@ -636,7 +636,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Quest cancel
         case 0x1D:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=((int)sizeof(uint16_t)))
             {
                 errorOutput("wrong remaining size for quest cancel");
@@ -651,7 +651,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Quest next step
         case 0x1E:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=((int)sizeof(uint16_t)))
             {
                 errorOutput("wrong remaining size for quest next step");
@@ -663,11 +663,11 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             return true;
         }
         break;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         //Waiting for city capture
         case 0x1F:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=((int)sizeof(uint8_t)))
             {
                 errorOutput("wrong remaining size for city capture");

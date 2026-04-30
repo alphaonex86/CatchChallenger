@@ -12,7 +12,7 @@ using namespace CatchChallenger;
 void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId, const uint64_t &characterCreationDate)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.empty())
     {
         characterSelectionIsWrong(query_id,0x04,"selectCharacterServer() Query is empty, bug");
@@ -42,7 +42,7 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
         characterCreationDateList[characterId]=characterCreationDate;
 
         paramToPassToCallBack.push(selectCharacterParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("SelectCharacterParam");
         #endif
         callbackRegistred.push(callback);
@@ -51,7 +51,7 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     characterCreationDateList[characterId]=characterCreationDate;
 
     paramToPassToCallBack.push(selectCharacterParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("SelectCharacterParam");
     #endif
     selectCharacterServer_object();
@@ -77,7 +77,7 @@ void Client::selectCharacterServer_static(void *object)
 
 void Client::selectCharacterServer_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
@@ -85,7 +85,7 @@ void Client::selectCharacterServer_object()
     }
     #endif
     SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(selectCharacterParam==NULL)
         abort();
     #endif
@@ -103,7 +103,7 @@ void Client::selectCharacterServer_object()
 
 void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="SelectCharacterParam")
     {
         std::cerr << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -226,7 +226,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     //quest
     {
         const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        #ifndef CATCHCHALLENGER_HARDENED
         const char * const raw_quests=quests.data();
         #endif
         if(!ok)
@@ -243,16 +243,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             }
             else
             {
-                #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-                public_and_private_informations.quests.reserve(quests.size()/(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/));
-                #endif
                 PlayerQuest playerQuest;
                 uint32_t lastQuestId=0;
                 uint32_t pos=0;
                 while(pos<quests.size())
                 {
                     uint32_t questInt=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
-                                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                        #ifdef CATCHCHALLENGER_HARDENED
                                         quests.data()
                                         #else
                                         raw_quests
@@ -264,7 +261,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     const uint16_t questId=static_cast<uint16_t>(questInt);
                     pos+=2;
                     playerQuest.finish_one_time=
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             quests
                             #else
                             raw_quests
@@ -272,7 +269,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                             [pos];
                     ++pos;
                     playerQuest.step=
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             quests
                             #else
                             raw_quests
@@ -299,7 +296,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                         pos+=2;
                         continue;
                     }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(public_and_private_informations.quests.find(questId)!=public_and_private_informations.quests.cend())
                     {
                         normalOutput("can't be to step 0 if have never finish the quest, skip: "+std::to_string(questId));

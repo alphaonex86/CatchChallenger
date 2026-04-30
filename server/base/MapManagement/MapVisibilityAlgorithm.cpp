@@ -177,7 +177,7 @@ void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
         const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.at(index_client);
         if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(!ClientList::list->isNull(map_c_idP))
             #endif
             {
@@ -233,7 +233,7 @@ void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
                     client.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput+baseOutput,posOutput-baseOutput);
                 }
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             else
                 std::cerr << "MapVisibilityAlgorithm::min_CPU() ClientList::list.empty(): " << map_c_idP << std::endl;
             #endif
@@ -279,7 +279,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
         const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.at(index_client);
         if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(!ClientList::list->isNull(map_c_idP))
             #endif
             {
@@ -511,7 +511,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                     }
                 }
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             else
                 std::cerr << "MapVisibilityAlgorithm::min_network() ClientList::list.empty(): " << map_c_idP << std::endl;
             #endif

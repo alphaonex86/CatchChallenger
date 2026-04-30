@@ -26,35 +26,35 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                             errorParsingLayer("!tokenForAuth.isEmpty()");
                             return false;
                         }
-                        tokenForAuth.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        const int &returnedSize=fread(tokenForAuth.data(),1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,EpollClientLoginMaster::fpRandomFile);
-                        if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+                        tokenForAuth.resize(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        const int &returnedSize=fread(tokenForAuth.data(),1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,EpollClientLoginMaster::fpRandomFile);
+                        if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                         {
                             std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
                             abort();
                         }
                     }
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
                     switch(ProtocolParsing::compressionType)
                     {
                         case CompressionType_None:
                             *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+7,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+7,tokenForAuth.constData(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
                         break;
                         case CompressionType_Zlib:
                             *(EpollClientLoginMaster::protocolReplyCompresssionZlib+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompresssionZlib+7,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompresssionZlib+7,tokenForAuth.constData(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompresssionZlib),sizeof(EpollClientLoginMaster::protocolReplyCompresssionZlib));
                         break;
                         case CompressionType_Xz:
                             *(EpollClientLoginMaster::protocolReplyCompressionXz+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompressionXz+7,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionXz+7,tokenForAuth.constData(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionXz),sizeof(EpollClientLoginMaster::protocolReplyCompressionXz));
                         break;
                         case CompressionType_Lz4:
                             *(EpollClientLoginMaster::protocolReplyCompressionLz4+1)=queryNumber;
-                            memcpy(EpollClientLoginMaster::protocolReplyCompressionLz4+7,tokenForAuth.constData(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                            memcpy(EpollClientLoginMaster::protocolReplyCompressionLz4+7,tokenForAuth.constData(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionLz4),sizeof(EpollClientLoginMaster::protocolReplyCompressionLz4));
                         break;
                         default:
@@ -63,7 +63,7 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                     }
                     #else
                     *(EpollClientLoginMaster::protocolReplyCompressionNone+1)=queryNumber;
-                    memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+7,tokenForAuth.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    memcpy(EpollClientLoginMaster::protocolReplyCompressionNone+7,tokenForAuth.data(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyCompressionNone),sizeof(EpollClientLoginMaster::protocolReplyCompressionNone));
                     #endif
                     stat=EpollClientLoginMasterStat::Logged;
@@ -167,7 +167,7 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const cha
                 parseNetworkReadError("charactersGroupForGameServerInformation==NULL main ident: "+std::to_string(mainCodeType));
                 return false;
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(size!=2)
             {
                 parseNetworkReadError("size!=2 main ident: "+std::to_string(mainCodeType));
@@ -347,7 +347,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 hash.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                 if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data+pos,CATCHCHALLENGER_HASH_SIZE)!=0)
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     std::cout << "Hash(" << binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH)
                               << " " << binarytoHexa(tokenForAuth) << ") to auth on master failed: " << __FILE__ << ":" << __LINE__ << std::endl;
                     #endif
@@ -630,7 +630,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 hash.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                 if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data,CATCHCHALLENGER_HASH_SIZE)!=0)
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     std::cout << "Hash(" << binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH)
                               << " " << binarytoHexa(tokenForAuth) << ") to auth on master failed: " << __FILE__ << ":" << __LINE__ << std::endl;
                     #endif

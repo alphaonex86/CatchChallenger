@@ -217,43 +217,17 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
 
 def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
                    extra_defines=None):
-    ensure_dir(build_dir)
-    name = f"compile {label}"
-    diag_spec = diagnostic.compiler_spec(DIAG)
-    if diag_spec:
-        compiler_spec = diag_spec
-    # State-aware cleanup: full distclean only when compiler or C++
-    # standard changed since the previous run in this dir; otherwise
-    # let make handle incremental rebuild via .o-mtime tracking +
-    # qmake_helpers macro invalidation for EXTRA_DEFINES changes.
-    import qmake_helpers as _qh
-    _decision = _qh.prepare_qmake_build_dir(build_dir, compiler_spec,
-                                            None, extra_defines, ROOT)
-    if _decision == "full":
-        log_info(f"compiler/std changed → make distclean {label}")
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
-        clean_build_artifacts(build_dir)
-    qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug",
-                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
-                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
-    qmake_args.extend(diagnostic.qmake_extra_args(DIAG))
-    if extra_defines:
-        qmake_args.append("DEFINES+=" + " ".join(extra_defines))
-    log_info(f"qmake {label}")
-    rc, out = run_cmd(qmake_args, build_dir)
-    if rc != 0:
-        log_fail(name, f"qmake failed (rc={rc})")
-        if out.strip(): print(out[-2000:])
-        return False
-    log_info(f"make -j{NPROC} {label}")
-    rc, out = run_cmd(["make", f"-j{NPROC}"], build_dir)
-    if rc != 0:
-        log_fail(name, f"make failed (rc={rc})")
-        if out.strip(): print(out[-3000:])
-        return False
-    log_pass(name)
-    return True
+    """Phase 5 (qmake -> CMake) port via cmake_helpers."""
+    import cmake_helpers as _ch
+    return _ch.build_project(
+        pro_file, build_dir, label,
+        root=ROOT, nproc=NPROC,
+        log_info=log_info, log_pass=log_pass, log_fail=log_fail,
+        ensure_dir=ensure_dir, run_cmd=run_cmd,
+        diag=DIAG, diag_module=diagnostic,
+        compiler_spec=compiler_spec,
+        extra_defines=extra_defines,
+    )
 
 
 def setup_server_runtime(build_dir, ref_dir=None):

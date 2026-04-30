@@ -34,7 +34,7 @@ char LinkToMaster::host[];
 uint16_t LinkToMaster::port=0;
 
 LinkToMaster::LinkToMaster(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -267,7 +267,7 @@ void LinkToMaster::readTheFirstSslHeader()
         //abort();//normal for disconnect
         return;
     }
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     if(buffer[0]!=0x01)
     {
         std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;
@@ -450,7 +450,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         CatchChallenger::Hash hashToken;
 
         hashToken.update(reinterpret_cast<const unsigned char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
-        hashToken.update(reinterpret_cast<const unsigned char *>(dynamicToken),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        hashToken.update(reinterpret_cast<const unsigned char *>(dynamicToken),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
         hashToken.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput));
         posOutput+=CATCHCHALLENGER_HASH_SIZE;
         //memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));->to reconnect after be disconnected
@@ -572,7 +572,7 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
 
 void LinkToMaster::characterDisconnected(const uint32_t &characterId)
 {
-    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+    /*#ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "unlock the char " << std::to_string(characterId) << std::endl;
     #endif*/
     {const uint32_t _tmp_le=(htole32(characterId));memcpy(LinkToMaster::sendDisconnectedPlayer+0x01,&_tmp_le,sizeof(_tmp_le));}
@@ -679,7 +679,7 @@ void LinkToMaster::tryReconnect()
     }
 
     {
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
         EpollSslServer *server=static_cast<EpollSslServer *>(baseServer);
         #else
         EpollServer *server=static_cast<EpollServer *>(baseServer);

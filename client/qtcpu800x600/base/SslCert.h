@@ -1,7 +1,7 @@
 #ifndef SSLCERT_H
 #define SSLCERT_H
 
-#if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
+#if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(CATCHCHALLENGER_BOT_TESTCONNECT)
 #include <QDialog>
 
 namespace Ui {

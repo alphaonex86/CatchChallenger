@@ -919,7 +919,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             newBlock.oldIndex=index;
 
                             //here because minor cost
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -928,7 +928,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             #endif
                             newBlock.charactersgroup=EpollClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -938,7 +938,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EpollClientLoginSlave::serverServerList+serverServerListPos)));
                             serverServerListPos+=4;
 
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -946,7 +946,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             }
                             #endif
                             const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -954,7 +954,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             }
                             #endif
                             serverServerListPos+=2;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -962,7 +962,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             }
                             #endif
                             serverServerListPos+=xmlStringSize;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -992,7 +992,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             newBlock.oldIndex=index;
 
                             //here because minor cost
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1001,7 +1001,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             #endif
                             newBlock.charactersgroup=EpollClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1010,7 +1010,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             #endif
                             newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EpollClientLoginSlave::serverServerList+serverServerListPos)));
                             serverServerListPos+=4;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1019,7 +1019,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             #endif
                             const uint8_t &hostStringSize=EpollClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1030,7 +1030,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             //port
                             serverServerListPos+=2;
 
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1038,7 +1038,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             }
                             #endif
                             const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1046,7 +1046,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             }
                             #endif
                             serverServerListPos+=2;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1054,7 +1054,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             }
                             #endif
                             serverServerListPos+=xmlStringSize;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                             {
                                 std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1073,14 +1073,14 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             index++;
                         }
                     }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
                     {
                         std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                         abort();
                     }
                     #endif
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if((EpollClientLoginSlave::serverServerListSize-serverServerListPos)!=(serverListCount*sizeof(uint16_t)))
                     {
                         std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -1127,7 +1127,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         if(deleteIndex<serverBlockList.size())
                         {
                             const ServerBlock &serverBlock=serverBlockList.at(deleteIndex);
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(serverBlock.charactersgroup>=CharactersGroupForLogin::list.size())
                             {
                                 parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", serverBlock.charactersgroup>=CharactersGroupForLogin::list.size(), file:"+__FILE__+":"+std::to_string(__LINE__));
@@ -1224,7 +1224,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         #endif
 
                         CharactersGroupForLogin * const charactersGroup=CharactersGroupForLogin::list.at(serverBlock.charactersgroup);
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(serverBlock.charactersgroup>=CharactersGroupForLogin::list.size())
                         {
                             parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", serverBlock.charactersgroup>=CharactersGroupForLogin::list.size(), file:"+__FILE__+":"+std::to_string(__LINE__));

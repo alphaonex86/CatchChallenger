@@ -14,7 +14,7 @@ using namespace CatchChallenger;
 void Client::loadMonsters()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.empty())
     {
         errorOutput("loadMonsters() Query is empty, bug");
@@ -221,7 +221,7 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
                          " for the level "+std::to_string(playerMonster.level)+
                          " of the monster database id: "+std::to_string(playerMonster.id)+
                          ", truncated" << std::endl;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #endif
             playerMonster.hp=stat.hp;
@@ -267,7 +267,7 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
     #else
     #error Define what do here
     #endif
-    #ifndef CATCHCHALLENGER_EXTRA_CHECK
+    #ifndef CATCHCHALLENGER_HARDENED
     const char * const raw_buffs=buffs.data();
     #endif
     if(!ok)
@@ -285,7 +285,7 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
             while(pos<buffs.size())
             {
                 uint16_t buffint=(uint16_t)
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         buffs
                         #else
                         raw_buffs
@@ -297,7 +297,7 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
                 buff.buff=static_cast<uint8_t>(buffint);
                 ++pos;
                 buff.level=
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         buffs
                         #else
                         raw_buffs
@@ -305,7 +305,7 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
                         [pos];
                 ++pos;
                 buff.remainingNumberOfTurn=
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         buffs
                         #else
                         raw_buffs
@@ -381,7 +381,7 @@ bool Client::loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMon
                 skill.skill=static_cast<uint16_t>(skillInt);
                 pos+=2;
                 skill.level=
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         skills
                         #else
                         raw_skills
@@ -425,7 +425,7 @@ bool Client::loadSkillEnduranceBlock(const std::string &dataHexa,PlayerMonster &
     #else
     #error Define what do here
     #endif
-    #ifndef CATCHCHALLENGER_EXTRA_CHECK
+    #ifndef CATCHCHALLENGER_HARDENED
     const char * const raw_skills_endurance=skills_endurance.data();
     #endif
     if(!ok)
@@ -441,7 +441,7 @@ bool Client::loadSkillEnduranceBlock(const std::string &dataHexa,PlayerMonster &
             {
                 PlayerMonster::PlayerSkill &skill=playerMonster.skills[pos];
                 skill.endurance=
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         skills_endurance
                         #else
                         raw_skills_endurance

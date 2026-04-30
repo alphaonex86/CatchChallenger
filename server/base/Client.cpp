@@ -41,7 +41,7 @@ Client::Client(const uint16_t &index_connected_player) :
 {
     this->index_connected_player=index_connected_player;
     setToDefault();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
     queryIdPool.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
@@ -58,10 +58,10 @@ Client::Client(const uint16_t &index_connected_player) :
 void Client::setToDefault()
 {
     //protocol
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     parseIncommingDataCount=0;
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     RXSize=0;
     TXSize=0;
     #endif
@@ -127,7 +127,7 @@ void Client::setToDefault()
     index_on_map=PLAYER_INDEX_FOR_CONNECTED_MAX;
     account_id_db=0;
     character_id_db=0;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     isConnected=true;
     #endif
     randomIndex=0;
@@ -177,21 +177,21 @@ void Client::setToDefault()
 
     while(!paramToPassToCallBack.empty())
         paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     while(!paramToPassToCallBackType.empty())
         paramToPassToCallBackType.pop();
     #endif
 
     botFight=std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(0,0);
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     isInCityCapture=false;
     #endif
     tradeIsValidated=false;
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     socketString=NULL;
     socketStringSize=0;
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     otherCityPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
     #endif
 }
@@ -199,17 +199,17 @@ void Client::setToDefault()
 //need be call after isReadyToDelete() emited
 Client::~Client()
 {
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     std::cerr << "should never pass here, client now should just set to free slot" << std::endl;
     abort();
     #endif
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     ClientBase::public_and_private_informations_solo=NULL;
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     //normalOutput("Destroyed client");
     #endif
-    /*#ifndef EPOLLCATCHCHALLENGERSERVER
+    /*#ifndef CATCHCHALLENGER_SERVER
     if(socket!=NULL)
     {
         delete socket;
@@ -282,7 +282,7 @@ bool Client::disconnectClient()
     #else
     #error Define what do here
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     isConnected=false;
     /*if(socket!=NULL)
     {
@@ -307,7 +307,7 @@ bool Client::disconnectClient()
                         index++;
                     }
                     //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(BaseServerLogin::tokenForAuth[0].client==NULL)
                         abort();
                     #endif
@@ -388,7 +388,7 @@ bool Client::disconnectClient()
         /*playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         playerById_db.erase(character_id_db);
         characterCreationDateList.erase(character_id_db);*/
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         leaveTheCityCapture();
         #endif
         const uint64_t &addTime=sFrom1970()-connectedSince;
@@ -446,7 +446,7 @@ void Client::errorOutput(const std::string &errorString)
 {
     if(stat==ClientStat::None)
     {
-        #ifndef NOSINGLEPLAYER
+        #ifdef CATCHCHALLENGER_SOLO
         std::cerr << headerOutput() << "Kicked when stat==ClientStat::None by: " << sanitizeUtf8String(errorString) << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
         #endif
         disconnectClient();//include closeSocket();, but do it again:
@@ -477,7 +477,7 @@ std::string Client::headerOutput() const
     }
     else
     {
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         /*std::string ip;
         if(socket==NULL)
             ip="unknown";
@@ -528,7 +528,7 @@ void Client::dropAllBorderClients()
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 /*void Client::fake_receive_data(std::vector<char> data)
 {
     fake_send_received_data(data);
@@ -661,7 +661,7 @@ bool Client::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHAL
 void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorParsingLayer("askLogin() Query login is empty, bug");
@@ -674,7 +674,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
     #error Define what do here
     #endif
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::vector<char> tempAddedToken;
     std::vector<char> secretTokenBinary;
     #endif
@@ -686,21 +686,21 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
             if(tokenLink.client==this)
             {
                 //append the token
-                memcpy(Client::private_token_statclient+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                memcpy(Client::private_token_statclient+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                secretTokenBinary.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                memcpy(secretTokenBinary.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                if(secretTokenBinary.size()!=(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                #ifdef CATCHCHALLENGER_HARDENED
+                secretTokenBinary.resize(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                memcpy(secretTokenBinary.data(),tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                tempAddedToken.resize(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                memcpy(tempAddedToken.data(),tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                if(secretTokenBinary.size()!=(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                 {
-                    std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
+                    std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)" << std::endl;
                     abort();
                 }
                 #endif
                 CatchChallenger::Hash ctx;
-                ctx.update(Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                ctx.update(Client::private_token_statclient,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                 ctx.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
 
                 BaseServerLogin::tokenForAuthSize--;
@@ -713,7 +713,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
                         tokenForAuthIndex++;
                     }
                     //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(BaseServerLogin::tokenForAuth[0].client==NULL)
                         abort();
                     #endif
@@ -741,7 +741,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
         ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x02;
         internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         errorParsingLayer("Password wrong: "+
                      binarytoHexa(secretTokenBinary)+
                      " + token "+
@@ -783,7 +783,7 @@ void Client::breakNeedMoreData()
         disconnectClient();
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     //std::cerr << "Break due to need more in parse data" << std::endl;
     #endif
 }
