@@ -32,24 +32,9 @@ void Client::updateObjectInDatabase()
         std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>::iterator i=public_and_private_informations.items.begin();
         while(i!=public_and_private_informations.items.cend())
         {
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint16_t item;
-            if(lastItemId<=i->first)
-            {
-                item=i->first-lastItemId;
-                lastItemId=i->first;
-            }
-            else
-            {
-                item=static_cast<uint16_t>(65536-lastItemId)+static_cast<uint16_t>(i->first);
-                lastItemId=i->first;
-            }
-            #else
             //ordened
             const uint16_t &item=i->first-lastItemId;
             lastItemId=i->first;
-            #endif
             const uint32_t &quantity=i->second;
             {const uint16_t _tmp_le=(htole16(item));memcpy(item_raw+pos,&_tmp_le,sizeof(_tmp_le));}
 
@@ -117,24 +102,9 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
         std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>::iterator i=public_and_private_informations.items.begin();
         while(i!=public_and_private_informations.items.cend())
         {
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint16_t item;
-            if(lastItemId<=i->first)
-            {
-                item=i->first-lastItemId;
-                lastItemId=i->first;
-            }
-            else
-            {
-                item=static_cast<uint16_t>(65536-lastItemId)+static_cast<uint16_t>(i->first);
-                lastItemId=i->first;
-            }
-            #else
             //ordened
             const uint16_t &item=i->first-lastItemId;
             lastItemId=i->first;
-            #endif
             const uint32_t &quantity=i->second;
             {const uint16_t _tmp_le=(htole16(item));memcpy(item_raw+pos,&_tmp_le,sizeof(_tmp_le));}
 
@@ -209,7 +179,7 @@ void Client::syncDatabaseReputation()
     std::map<uint8_t,PlayerReputation>::iterator i=public_and_private_informations.reputation.begin();
     while(i!=public_and_private_informations.reputation.cend())
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(i->first>=CommonDatapack::commonDatapack.get_reputation().size())
         {
             std::cerr << "public_and_private_informations.reputation internal id is out of range to save: " << i->first << std::endl;
@@ -217,24 +187,9 @@ void Client::syncDatabaseReputation()
         }
         #endif
         const uint8_t &databaseType=static_cast<uint8_t>(CommonDatapack::commonDatapack.get_reputation().at(i->first).reverse_database_id);
-        #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-        //not ordened
-        uint8_t type;
-        if(lastReputationId<=databaseType)
-        {
-            type=databaseType-lastReputationId;
-            lastReputationId=databaseType;
-        }
-        else
-        {
-            type=static_cast<uint8_t>(256-lastReputationId+databaseType);
-            lastReputationId=databaseType;
-        }
-        #else
         //ordened
         const uint8_t &type=databaseType-lastReputationId;
         lastReputationId=databaseType;
-        #endif
         const PlayerReputation &reputation=i->second;
         {const uint32_t _tmp_le=(htole32(reputation.point));memcpy(buffer+posOutput,&_tmp_le,sizeof(_tmp_le));}
 

@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_PurgeTheLockedAccount_H
 #define CATCHCHALLENGER_PurgeTheLockedAccount_H
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
 
 #include "../epoll/EpollTimer.hpp"
 
@@ -16,5 +16,5 @@ private:
 };
 }
 
-#endif // def EPOLLCATCHCHALLENGERSERVER
+#endif // def CATCHCHALLENGER_SERVER
 #endif // PurgeTheLockedAccount_H

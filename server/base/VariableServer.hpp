@@ -27,7 +27,7 @@
 #define CATCHCHALLENGER_SERVER_NORMAL_SPEED 250 //then 250ms, see the protocol
 #define CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE 6
 
-#define CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION 50 //smaller = more performance, but less simmulaneous connexion try, this number * (CATCHCHALLENGER_TOKENSIZE+pointer)
+#define CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION 50 //smaller = more performance, but less simmulaneous connexion try, this number * (CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER+pointer)
 #define CATCHCHALLENGER_SERVER_OWNER_TIMEOUT 60*60*24
 
 //#define CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
@@ -41,21 +41,8 @@
 #endif
 
 #define CATCHCHALLENGER_EXTENSION_COMPRESSED "tmx;xml;tsx;js"
-//the % of the price change when the resource/product if full/empty
-#define CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE 20
 
 #define RANDOMFILEDEVICE "/dev/urandom"
-
-/** map visibility bandwidth optimisation
- Do in define to not drop cpu performance, due to heavy call **/
-
-/** convert the overflow of move into insert, use more cpu than CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR
- * Disable on very slow configuration, add <5% of cpu with simple algorithm with 400 benchmark's bot on same map */
-#define CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE
-/// not send all packet, drop move/insert if remove, ... use very few more cpu, < 1% more cpu
-#define CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR
-/// \brief drop the previous if stopped step, need CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE
-#define CATCHCHALLENGER_SERVER_MAP_DROP_STOP_MOVE
 
 //put for map, add for local thread
 //put this size into the options
@@ -63,12 +50,8 @@
 #define CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE 255 // not 256 to don't add 00 into size header
 #define CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE 32
 
-#define CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION 0
-#define CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION 0
-
 /// check more, then use more cpu, it's to develop and detect the internal bug
 //#define CATCHCHALLENGER_SERVER_EXTRA_CHECK
-#define CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
 
 #define CATCHCHALLENGER_GAMESERVER_EVENTSTARTONLOCALTIME
 
@@ -79,7 +62,7 @@
 #define CATCHCHALLENGER_DDOS_FILTER
 #endif
 
-#if defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+#if defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
     #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         #define CATCHCHALLENGERDEFAULTDBTYPE "postgresql"
     #else

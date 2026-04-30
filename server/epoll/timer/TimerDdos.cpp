@@ -13,7 +13,7 @@ TimerDdos::TimerDdos()
 
 void TimerDdos::exec()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE<=0)
     {
         std::cerr << "CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE out of range:" << CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE << std::endl;

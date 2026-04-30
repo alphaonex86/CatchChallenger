@@ -19,7 +19,7 @@ void BaseServer::preload_18_sync_profile()
     std::cout << DictionaryLogin::dictionary_skin_database_to_internal.size() << " SQL skin dictionary" << std::endl;
     #endif
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(CommonDatapack::commonDatapack.get_profileList().size()!=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().size())
     {
         std::cout << "preload_profile() profile common and server don't match, maybe the main code ou sub code don't have start.xml valid" << std::endl;
@@ -147,7 +147,7 @@ void BaseServer::preload_18_sync_profile()
                     if(source.internalIndex>=CommonDatapack::commonDatapack.get_reputation().size())
                     {
                         std::cerr << "profile index out of range for profile preparation. internal error" << std::endl;
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         abort();
                         #else
                         break;
@@ -413,29 +413,9 @@ void BaseServer::preload_18_sync_profile()
                 std::to_string(serverProfileInternal.y)+
                 ","+
                 std::to_string(Orientation_bottom);
-        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
         {
             default:
-            case DatabaseBase::DatabaseType::Mysql:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`quest`) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,UNHEX(''));"),GlobalServerData::serverPrivateVariables.db_server);
-            break;
-            case DatabaseBase::DatabaseType::SQLite:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,'');"),GlobalServerData::serverPrivateVariables.db_server);
-            break;
-            case DatabaseBase::DatabaseType::PostgreSQL:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,'\\x');"),GlobalServerData::serverPrivateVariables.db_server);
-            break;
-        }
-        #else
-        switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-        {
-            default:
-            abort();
-            break;
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
             case DatabaseBase::DatabaseType::Mysql:
                 serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`quest`) VALUES("
@@ -455,7 +435,6 @@ void BaseServer::preload_18_sync_profile()
             break;
             #endif
         }
-        #endif
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         #else
@@ -467,7 +446,7 @@ void BaseServer::preload_18_sync_profile()
         profileIndex++;
     }
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         if(profileIndex!=CommonDatapack::commonDatapack.get_profileList().size())
         {

@@ -1,7 +1,7 @@
 #ifndef EPOLL_SERVER_H
 #define EPOLL_SERVER_H
 
-#ifndef SERVERSSL
+#ifndef CATCHCHALLENGER_SERVER_SSL
 
 #include "EpollGenericServer.hpp"
 #include "BaseServerEpoll.hpp"

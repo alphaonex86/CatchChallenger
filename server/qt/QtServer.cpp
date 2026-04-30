@@ -17,7 +17,7 @@
 #include <QCoreApplication>
 #include <QSqlDatabase>
 #include <QDebug>
-#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+#if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
 #include <QDataStream>
 #include <QTcpSocket>
 #endif
@@ -51,7 +51,7 @@ QtServer::QtServer()
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
-    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(!connect(&server,&QTcpServer::newConnection,this,&QtServer::newConnection,Qt::QueuedConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
@@ -250,7 +250,7 @@ void QtServer::removeOneClient()
 
 void QtServer::newConnection()
 {
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     CatchChallenger::QtClientList *qtClientList=static_cast<CatchChallenger::QtClientList *>(CatchChallenger::ClientList::list);
     while(QFakeServer::server.hasPendingConnections())
     {
@@ -271,7 +271,7 @@ void QtServer::newConnection()
         else
             qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection()");
     }
-    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     while(server.hasPendingConnections())
     {
         QTcpSocket *socket = server.nextPendingConnection();
@@ -318,7 +318,7 @@ bool QtServer::check_if_now_stopped()
     if(stat!=InDown)
         return false;
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     #ifdef CATCHCHALLENGER_SOLO
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server!=NULL && CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->isConnected())
         if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->databaseType()!=CatchChallenger::DatabaseBase::DatabaseType::SQLite)
@@ -467,7 +467,7 @@ void QtServer::unload_the_events()
 {
 }
 
-#if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+#if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
 void QtServer::openToLan(QString name, bool allowInternet)
 {
     server.listen();

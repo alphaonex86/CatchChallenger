@@ -58,7 +58,7 @@ void Client::requestFight()
         errorOutput("error: requestFight, is in fight");
         return;
     }
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(captureCityInProgress())
     {
         errorOutput("Try requestFight when is in capture city");

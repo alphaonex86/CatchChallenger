@@ -25,7 +25,7 @@ void PlayerUpdaterBase::removeConnectedPlayer()
 
 void PlayerUpdaterBase::internal_addConnectedPlayer()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(connected_players<GlobalServerData::serverSettings.max_players)
     #endif
         connected_players++;
@@ -54,7 +54,7 @@ void PlayerUpdaterBase::internal_addConnectedPlayer()
 
 void PlayerUpdaterBase::internal_removeConnectedPlayer()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(connected_players>0)
     #endif
         connected_players--;
@@ -91,7 +91,7 @@ void PlayerUpdaterBase::exec()
                     {const uint16_t _tmp_le=(htole16(connected_players));memcpy(Client::protocolMessageLogicalGroupAndServerList+9/*logical group size*/+Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber,&_tmp_le,sizeof(_tmp_le));}
 
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 || Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
             {
                 std::cerr << "Client::protocolMessageLogicalGroupAndServerList corruption detected" << std::endl;

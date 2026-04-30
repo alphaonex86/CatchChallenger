@@ -1,6 +1,6 @@
 #ifndef CATCHCHALLENGER_API_CLIENT_REAL_H
 #define CATCHCHALLENGER_API_CLIENT_REAL_H
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 
 #include "../../general/base/GeneralVariable.hpp"
 #include "QtDatapackChecksum.hpp"

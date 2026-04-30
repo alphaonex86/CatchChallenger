@@ -48,7 +48,7 @@ MapControllerMP::~MapControllerMP()
 void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client)
 {
     this->client=client;
-    #if ! defined (ONLYMAPRENDER)
+    #if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
     //connect the map controler
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qthave_current_player_info,   this,&MapControllerMP::have_current_player_info,Qt::QueuedConnection))
         abort();
@@ -413,7 +413,7 @@ void MapControllerMP::loadCurrentPlayer(const CATCHCHALLENGER_TYPE_MAPID &mapId,
 bool MapControllerMP::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     std::cerr << "MapControllerMP::teleportTo() mapIndex=" << mapIndex << " x=" << std::to_string(x) << " y=" << std::to_string(y) << " mHaveTheDatapack=" << mHaveTheDatapack << " player_informations_is_set=" << player_informations_is_set << std::endl;
-    #if defined (ONLYMAPRENDER)
+    #if defined (CATCHCHALLENGER_ONLYMAPRENDER)
     (void)mapIndex;
     (void)x;
     (void)y;

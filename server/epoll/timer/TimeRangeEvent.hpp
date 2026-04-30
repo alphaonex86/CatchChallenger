@@ -2,7 +2,7 @@
 #ifndef CATCHCHALLENGER_TimeRangeEvent_H
 #define CATCHCHALLENGER_TimeRangeEvent_H
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
 
 #include "../epoll/EpollTimer.hpp"
 
@@ -17,6 +17,6 @@ private:
 };
 }
 
-#endif // def EPOLLCATCHCHALLENGERSERVER
+#endif // def CATCHCHALLENGER_SERVER
 #endif // PLAYERUPDATERTOLOGIN_H
 #endif

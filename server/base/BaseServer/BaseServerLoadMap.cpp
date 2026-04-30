@@ -38,18 +38,18 @@ bool BaseServer::preload_9_sync_the_map()
     #endif
     MapVisibilityAlgorithm::flat_map_list.clear();
     mapPathToId.clear();
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     std::vector<tinyxml2::XMLDocument*> xmlDocsToKeep;
     #endif
     std::vector<MapLoadBuffers> mapLoadBuffers;
     {
         std::vector<CommonMap> flat_map_list_temp;
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifdef CATCHCHALLENGER_SERVER
         Map_loader::loadAllMapsAndLink(flat_map_list_temp,GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId,&xmlDocsToKeep,&mapLoadBuffers);
         #else
         Map_loader::loadAllMapsAndLink(flat_map_list_temp,GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId,nullptr,&mapLoadBuffers);
         #endif
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(flat_map_list_temp.size()!=semi_loaded_map.size())
         {
             std::cerr << "flat_map_list_temp.size()!=semi_loaded_map.size()" << __FILE__ << ":" << __LINE__ << std::endl;
@@ -121,7 +121,7 @@ bool BaseServer::preload_9_sync_the_map()
     }
     mapLoadBuffers.clear();
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     {
         // delete XML docs kept alive for BotStep buffer processing
         unsigned int index=0;

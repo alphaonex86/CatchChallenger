@@ -30,7 +30,6 @@
     #define CATCHCHALLENGER_RSS_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/rss_global.xml"
 #endif
 
-#define CATCHCHALLENGER_CLIENT_MUSIC_LOADING "/music/loading.opus"
 #define CATCHCHALLENGER_CLIENT_INSTANT_SHOP
 
 #define TIMETODISPLAY_TIP 8000

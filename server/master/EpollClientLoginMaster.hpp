@@ -18,7 +18,7 @@ class EpollClientLoginMaster : public EpollClient, public ProtocolParsingInputOu
 {
 public:
     EpollClientLoginMaster(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -90,11 +90,11 @@ public:
     static unsigned char protocolReplyProtocolNotSupported[7];
     static unsigned char protocolReplyWrongAuth[7];
     /// \todo group all reply in one
-    static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionXz[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionLz4[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionNone[7+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
+    static unsigned char protocolReplyCompresssionZlib[7+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    static unsigned char protocolReplyCompressionXz[7+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    static unsigned char protocolReplyCompressionLz4[7+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     #endif
     static unsigned char selectCharaterRequestOnGameServer[2/*header*/+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     static unsigned char duplicateConnexionDetected[1/*header*/+4];

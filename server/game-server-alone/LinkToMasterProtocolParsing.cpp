@@ -152,7 +152,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             const uint8_t &returnCode=data[0x00];
             if(returnCode>=0x04 && returnCode<=0x06)
             {
-                if(size!=(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                if(size!=(1+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                 {
                     std::cerr << "wrong size for protocol header " << returnCode << std::endl;
                     abort();
@@ -410,7 +410,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
         return true;
         //get maxMonsterId block
         case 0xB0:
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(size!=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4)
         {
             std::cerr << "parseFullReplyData() size!=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4: mainCodeType: " << mainCodeType << ", queryNumber: " << queryNumber << std::endl;
@@ -436,7 +436,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
         return true;
         //get maxClanId block
         case 0xB1:
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(size!=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK*4)
         {
             std::cerr << "parseFullReplyData() size!=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK*4: mainCodeType: " << mainCodeType << ", queryNumber: " << queryNumber << std::endl;

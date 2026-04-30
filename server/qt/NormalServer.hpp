@@ -24,7 +24,7 @@
 namespace CatchChallenger {
 class NormalServer : public QtServer
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     Q_OBJECT
     #endif
 public:
@@ -37,7 +37,7 @@ public:
     uint16_t player_max();
 public:
     //to manipulate the server for restart and stop
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     bool isListen();
     bool isStopped();
     void start_server();

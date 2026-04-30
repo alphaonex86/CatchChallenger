@@ -398,7 +398,7 @@ void MapVisualiserPlayer::moveStepSlot()
             return;
         }
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(!moveTimer.isSingleShot())
     {
         qDebug() << QStringLiteral("moveTimer is not in single shot").arg(moveStep);
@@ -420,7 +420,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 default:
                 break;
             }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(pendingMonsterMoves.size()>2)
             abort();
         #endif

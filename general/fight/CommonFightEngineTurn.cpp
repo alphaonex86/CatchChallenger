@@ -24,7 +24,7 @@ bool CommonFightEngine::doTheOtherMonsterTurn()
 
 void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         if(currentMonster==NULL)
@@ -70,7 +70,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
     #endif
     if(currentMonsterStatIsFirstToAttack)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
@@ -112,7 +112,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
         }
         #endif
         doTheCurrentMonsterAttack(skill,skillLevel);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
@@ -164,7 +164,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
             }
         }
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         if(currentMonster==NULL)
@@ -203,7 +203,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
     //do the other monster attack
     if(!turnIsEnd)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
@@ -246,7 +246,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
         #endif
         if(doTheOtherMonsterTurn())
             turnIsEnd=true;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
@@ -283,7 +283,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
         }
         #endif
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         if(currentMonster==NULL)
@@ -322,7 +322,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
     //do the current monster attack
     if(!turnIsEnd && !currentMonsterStatIsFirstToAttack)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
@@ -364,7 +364,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
         }
         #endif
         doTheCurrentMonsterAttack(skill,skillLevel);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             PlayerMonster * currentMonster=getCurrentMonster();
             if(currentMonster==NULL)
@@ -412,7 +412,7 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
         }
     }
     (void)turnIsEnd;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         if(currentMonster==NULL)
@@ -487,7 +487,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
         position=0;
     else
         position=getOneSeed(static_cast<uint8_t>(otherMonster->skills.size())-1);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(position>=otherMonster->skills.size())
     {
         messageFightEngine("Position out of range: "+std::to_string(position)+" on "+std::to_string(otherMonster->skills.size())+" total skill(s)");
@@ -512,7 +512,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     attackReturn.attackReturnCase=Skill::AttackReturnCase_NormalAttack;
     attackReturn.attack=skill;
     attackReturn.success=false;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         if(currentMonster==NULL)
         {
@@ -578,7 +578,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                     success=(getOneSeed(100)<life.success);
                 if(success)
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     //don't use pointer  here because the value of currentMonster->hp will change
                     const uint32_t currentMonsterHp=currentMonster->hp;
                     const uint32_t otherMonsterHp=otherMonster->hp;
@@ -586,7 +586,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                     attackReturn.success=true;//the attack have work because at less have a buff
                     Skill::LifeEffectReturn lifeEffectReturn;
                     lifeEffectReturn=applyLifeEffect(skillDef.type,life.effect,currentMonster,otherMonster);
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(lifeEffectReturn.on==ApplyOn_AllAlly || lifeEffectReturn.on==ApplyOn_Themself)
                     {
                         if(currentMonster->hp!=(currentMonsterHp+lifeEffectReturn.quantity))
@@ -614,7 +614,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             index++;
         }
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         //both can be KO here
         const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
@@ -679,7 +679,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             index++;
         }
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         //both can be KO here
         const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
@@ -714,7 +714,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     }
     if(genericMonsterIsKO(currentMonster) && !genericMonsterIsKO(otherMonster))
         doTurnIfChangeOfMonster=false;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         //both can be KO here
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);

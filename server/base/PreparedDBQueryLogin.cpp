@@ -18,28 +18,28 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
     switch(type)
     {
         default:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
         #else
         std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
         #endif
         abort();
         return;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryLogin::db_query_login=PreparedStatementUnit("SELECT `id`,LOWER(HEX(`password`)) FROM `account` WHERE `login`=UNHEX('%1')",database);
         PreparedDBQueryLogin::db_query_insert_login=PreparedStatementUnit("INSERT INTO account(id,login,password,date) VALUES(%1,UNHEX('%2'),UNHEX('%3'),%4)",database);
         break;
         #endif
 
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryLogin::db_query_login=PreparedStatementUnit("SELECT id,password FROM account WHERE login='%1'",database);
         PreparedDBQueryLogin::db_query_insert_login=PreparedStatementUnit("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4)",database);
         break;
         #endif
 
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryLogin::db_query_login=PreparedStatementUnit("SELECT id,encode(password,'hex') FROM account WHERE login=decode('%1','hex')",database);
         PreparedDBQueryLogin::db_query_insert_login=PreparedStatementUnit("INSERT INTO account(id,login,password,date) VALUES(%1,decode('%2','hex'),decode('%3','hex'),%4)",database);
@@ -55,14 +55,14 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
     switch(type)
     {
         default:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
         #else
         std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
         #endif
         abort();
         return;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryCommonForLogin::db_query_characters=PreparedStatementUnit("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect` FROM `character` WHERE `account`=%1",database);
         PreparedDBQueryCommonForLogin::db_query_select_server_time=PreparedStatementUnit("SELECT `server`,`played_time`,`last_connect` FROM `server_time` WHERE `account`=%1",database);//not by characters to prevent too hurge datas to store
@@ -75,7 +75,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         break;
         #endif
 
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryCommonForLogin::db_query_characters=PreparedStatementUnit("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1",database);
         PreparedDBQueryCommonForLogin::db_query_select_server_time=PreparedStatementUnit("SELECT server,played_time,last_connect FROM server_time WHERE account=%1",database);//not by characters to prevent too hurge datas to store
@@ -88,7 +88,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         break;
         #endif
 
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
+        #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryCommonForLogin::db_query_characters=PreparedStatementUnit("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=%1",database);
         PreparedDBQueryCommonForLogin::db_query_select_server_time=PreparedStatementUnit("SELECT server,played_time,last_connect FROM server_time WHERE account=%1",database);//not by characters to prevent too hurge datas to store

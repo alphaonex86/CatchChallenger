@@ -69,9 +69,9 @@ AddOrEditServer::AddOrEditServer() :
 
     newLanguage();
 
-    #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET) || defined(CATCHCHALLENGER_NO_WEBSOCKET)
         m_type->setVisible(false);
-        #if defined(NOTCPSOCKET)
+        #if defined(CATCHCHALLENGER_NO_TCPSOCKET)
             proxyPortInput->setVisible(false);
             serverInput->setPlaceholderText("ws://www.server.com:9999/");
         #endif
@@ -255,13 +255,13 @@ void AddOrEditServer::newLanguage()
 
 int AddOrEditServer::type() const
 {
-#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
+#if ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && ! defined(CATCHCHALLENGER_NO_WEBSOCKET)
 return m_type->currentIndex();
 #else
-    #if defined(NOTCPSOCKET)
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET)
     return 1;
     #else
-        #if defined(NOWEBSOCKET)
+        #if defined(CATCHCHALLENGER_NO_WEBSOCKET)
         return 0;
         #else
         #error add server but no tcp or web socket defined
@@ -273,13 +273,13 @@ return m_type->currentIndex();
 
 void AddOrEditServer::setType(const int &type)
 {
-#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
+#if ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && ! defined(CATCHCHALLENGER_NO_WEBSOCKET)
 m_type->setCurrentIndex(type);
 #else
-    #if defined(NOTCPSOCKET)
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET)
     m_type->setCurrentIndex(1);
     #else
-        #if defined(NOWEBSOCKET)
+        #if defined(CATCHCHALLENGER_NO_WEBSOCKET)
         m_type->setCurrentIndex(0);
         #endif
     #endif

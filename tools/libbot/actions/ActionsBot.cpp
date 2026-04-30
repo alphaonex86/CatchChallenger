@@ -558,7 +558,7 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
         return;
     botFiles[file];//create the entry
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(CatchChallenger::CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
@@ -573,7 +573,7 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     bool ok;
@@ -624,7 +624,7 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
         child = child->NextSiblingElement("bot");
     }
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     toDeleteAfterBotLoad.push_back(domDocument);
     #endif
     //delete domDocument;->reused after, need near botFiles.clear

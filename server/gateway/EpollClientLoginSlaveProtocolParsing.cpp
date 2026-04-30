@@ -327,7 +327,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                 partialHashList.reserve(number_of_file);
                 std::string tempFileName;
                 uint32_t index=0;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
                 #endif
                 if(number_of_file>1000000)
@@ -382,7 +382,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                         }
                         else
                             tempFileName.clear();
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(!std::regex_match(tempFileName,datapack_rightFileName))
                         {
                             parseNetworkReadError("wrong file name \""+tempFileName+"\": parseQuery("+

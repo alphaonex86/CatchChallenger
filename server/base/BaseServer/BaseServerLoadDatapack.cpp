@@ -18,7 +18,7 @@ void BaseServer::preload_6_sync_the_datapack()
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED)+";"+std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     BaseServerMasterSendDatapack::extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     BaseServerMasterSendDatapack::compressedExtension=catchchallenger_datapack_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
     #endif
@@ -35,7 +35,7 @@ void BaseServer::preload_6_sync_the_datapack()
             "map/main/"+
             CommonSettingsServer::commonSettingsServer.mainDatapackCode+
             "/";
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.size()==0)
         {
@@ -96,7 +96,7 @@ void BaseServer::preload_6_sync_the_datapack()
             std::cout << "Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,\"map/main/\",false) empty (abort)" << std::endl;
             abort();
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::const_iterator i=pair.begin();
             while(i!=pair.cend())
@@ -116,7 +116,7 @@ void BaseServer::preload_6_sync_the_datapack()
         #endif
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
-        #if defined(CATCHCHALLENGER_EXTRA_CHECK) || defined(_WIN32)
+        #if defined(CATCHCHALLENGER_HARDENED) || defined(_WIN32)
         const std::string mainDatapackBaseFilter("map/main/");
         #endif
         /// \todo check under windows
@@ -160,7 +160,7 @@ void BaseServer::preload_6_sync_the_datapack()
                     }
                     #endif
 
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     bool skip=false;
                     if(fileName.size()>mainDatapackBaseFilter.size())
                         if(stringStartWith(fileName,mainDatapackBaseFilter)
@@ -249,7 +249,7 @@ void BaseServer::preload_6_sync_the_datapack()
     {
         CatchChallenger::Hash hashMain;
         const catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/",false);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile>::const_iterator i=pair.begin();
             while(i!=pair.cend())
@@ -265,7 +265,7 @@ void BaseServer::preload_6_sync_the_datapack()
         #endif
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
-        #if defined(CATCHCHALLENGER_EXTRA_CHECK) || defined(_WIN32)
+        #if defined(CATCHCHALLENGER_HARDENED) || defined(_WIN32)
         const std::string mainDatapackFolderFilter("sub/");
         #endif
         #ifdef _WIN32
@@ -291,7 +291,7 @@ void BaseServer::preload_6_sync_the_datapack()
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                            #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
                             if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(fileName))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
@@ -310,7 +310,7 @@ void BaseServer::preload_6_sync_the_datapack()
                     }
                     #endif
 
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     bool skip=false;
                     if(fileName.size()>mainDatapackFolderFilter.size())
                         if(stringStartWith(fileName,mainDatapackFolderFilter)
@@ -381,7 +381,7 @@ void BaseServer::preload_6_sync_the_datapack()
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+                            #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
                             if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(fileName))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)

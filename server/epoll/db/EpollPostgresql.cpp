@@ -333,7 +333,7 @@ CatchChallenger::DatabaseBaseCallBack * EpollPostgresql::asyncPreparedRead(
     }
     start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(tempQuery);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     const unsigned int &stringlen=static_cast<unsigned int>(query.size());
     if(stringlen==0)
     {
@@ -399,7 +399,7 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
     }
     start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(tempQuery);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     const int &stringlen=static_cast<int>(query.size());
     if(stringlen==0)
     {
@@ -482,7 +482,7 @@ CatchChallenger::DatabaseBaseCallBack * EpollPostgresql::asyncRead(const std::st
     }
     start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(tempQuery);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     const int &stringlen=static_cast<int>(query.size());
     if(stringlen==0)
     {
@@ -526,7 +526,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
     }
     start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(tempQuery);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     const int &stringlen=static_cast<int>(query.size());
     if(stringlen==0)
     {
@@ -785,14 +785,6 @@ const std::string EpollPostgresql::value(const int &value) const
 
 bool EpollPostgresql::stringtobool(const std::string &string,bool *ok)
 {
-    #ifdef CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
-    if(ok!=NULL)
-        *ok=true;
-    if(string=="t")
-        return true;
-    else
-        return false;
-    #else
     if(string=="t")
     {
         if(ok!=NULL)
@@ -807,14 +799,13 @@ bool EpollPostgresql::stringtobool(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
             *ok=false;
         return false;
     }
-    #endif
 }
 
 std::vector<char> EpollPostgresql::hexatoBinary(const std::string &data,bool *ok)
@@ -823,7 +814,7 @@ std::vector<char> EpollPostgresql::hexatoBinary(const std::string &data,bool *ok
         return std::vector<char>();
     if(data.size()%2!=0)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -839,81 +830,11 @@ std::vector<char> EpollPostgresql::hexatoBinary(const std::string &data,bool *ok
             return std::vector<char>();
         }
         const std::string &hexaextract=data.substr(2,data.size()-2);
-        #ifdef CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
-        if(hexaextract.size()%2!=0)
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
-            #endif
-            if(ok!=NULL)
-                *ok=false;
-            return std::vector<char>();
-        }
-        bool ok2;
-        if(ok!=NULL)
-            *ok=true;
-        std::vector<char> out;
-        out.reserve(hexaextract.length()/2);
-        for(size_t i=0;i<hexaextract.length();i+=2)
-        {
-            const std::string &partpfchain=hexaextract.substr(i,2);
-            const uint8_t &x=::hexToDecUnit(partpfchain,&ok2);
-            if(!ok2)
-            {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
-                #endif
-                if(ok!=NULL)
-                    *ok=false;
-                return std::vector<char>();
-            }
-            out.push_back(x);
-        }
-        if(ok!=NULL)
-            *ok=true;
-        return out;
-        #else
         return ::hexatoBinary(hexaextract,ok);
-        #endif
     }
     else
     {
-        #ifdef CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
-        if(data.size()%2!=0)
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
-            #endif
-            if(ok!=NULL)
-                *ok=false;
-            return std::vector<char>();
-        }
-        bool ok2;
-        if(ok!=NULL)
-            *ok=true;
-        std::vector<char> out;
-        out.reserve(data.length()/2);
-        for(size_t i=0;i<data.length();i+=2)
-        {
-            const std::string &partpfchain=data.substr(i,2);
-            const uint8_t &x=::hexToDecUnit(partpfchain,&ok2);
-            if(!ok2)
-            {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
-                #endif
-                if(ok!=NULL)
-                    *ok=false;
-                return std::vector<char>();
-            }
-            out.push_back(x);
-        }
-        if(ok!=NULL)
-            *ok=true;
-        return out;
-        #else
         return ::hexatoBinary(data,ok);
-        #endif
     }
 }
 

@@ -194,7 +194,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             //drop the drop item here
             wildDrop(wildMonster.monster);
             //give xp/sp here
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(!CommonDatapack::commonDatapack.has_monster(wildMonster.monster))
             {
                 std::cerr << "Error, monster into list not found: " << std::to_string(wildMonster.monster) << std::endl;
@@ -209,7 +209,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             const Monster &wildMonsterInfo=CommonDatapack::commonDatapack.get_monster(wildMonster.monster);
             //multiplicator do at datapack loading
             int xp=wildMonsterInfo.give_xp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(wildMonsterInfo.give_xp<=0)
             {
                 std::cerr << "Error, monster into list have wildmonster.give_xp == 0: " << std::to_string(wildMonster.monster) << std::endl;

@@ -192,15 +192,25 @@ def setup_datapack_client(build_dir, datapack_src, maincode, label):
 
 
 def mxe_available():
-    return os.path.isfile(MXE_QMAKE) and os.path.isfile(WINE_BIN)
+    # Phase 5: we now drive the MXE cmake wrapper, but qmake6 in MXE is
+    # still a useful "this MXE install is healthy" signal — qt-cmake
+    # doesn't add a separate filesystem marker, so qmake's existence
+    # remains the cheap probe.
+    mxe_cmake = MXE_ROOT + "/usr/bin/x86_64-w64-mingw32.shared-cmake"
+    return (os.path.isfile(MXE_QMAKE) and os.path.isfile(mxe_cmake)
+            and os.path.isfile(WINE_BIN))
 
 
 def find_built_exe(build_dir):
-    """Locate catchchallenger.exe inside an MXE qmake build dir
-    (debug-build qmake puts it directly in build_dir; release in release/)."""
+    """Locate catchchallenger.exe inside the MXE-cmake build dir. CMake
+    drops the binary at build_dir/<output_subdir>/<target>.exe; the legacy
+    qmake-era paths (build_dir/, release/, debug/) are still searched as
+    a fallback during the migration."""
     candidates = [build_dir,
                   os.path.join(build_dir, "release"),
-                  os.path.join(build_dir, "debug")]
+                  os.path.join(build_dir, "debug"),
+                  os.path.join(build_dir, "client", "qtopengl"),
+                  os.path.join(build_dir, "client", "qtcpu800x600")]
     idx = 0
     while idx < len(candidates):
         cand = os.path.join(candidates[idx], WIN_EXE_NAME)
@@ -270,24 +280,41 @@ def deploy_mxe_dependencies(exe_path):
 
 
 def build_mxe_client(pro_file, build_dir, label):
+    """Phase 5 (qmake -> CMake) cross-compile for x86_64 mingw-w64 via
+    MXE's `x86_64-w64-mingw32.shared-cmake` wrapper. The wrapper sets
+    the right CMAKE_TOOLCHAIN_FILE so Qt6 / std libs are picked up
+    from MXE."""
+    import cmake_helpers as _ch
     name = f"compile {label} (mxe-x86_64)"
     ensure_dir(build_dir)
-    log_info(f"make distclean {label} (mxe)")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
+    pro_rel = os.path.relpath(pro_file, ROOT).replace(os.sep, "/")
+    try:
+        target, configure_flags, _output_subdir = _ch.pro_to_cmake_target(pro_rel)
+    except KeyError:
+        log_fail(name, f"no cmake target mapping for {pro_rel}")
+        return None
     env = os.environ.copy()
     env["PATH"] = MXE_BIN + ":" + MXE_QT_BIN + ":" + env.get("PATH", "")
-    log_info(f"mxe-qmake {label}")
-    rc, out = run_cmd([MXE_QMAKE, "-o", "Makefile", pro_file],
-                      build_dir, env=env)
+    mxe_cmake = MXE_ROOT + "/usr/bin/x86_64-w64-mingw32.shared-cmake"
+    log_info(f"mxe-cmake configure {label}")
+    args = [mxe_cmake, "-S", ROOT, "-B", build_dir,
+            "-DCMAKE_BUILD_TYPE=Debug",
+            "-DCATCHCHALLENGER_NOAUDIO=ON",
+            "-DCATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS=OFF",
+            "-DCATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS=OFF"]
+    args.extend(configure_flags)
+    rc, out = run_cmd(args, build_dir, env=env)
     if rc != 0:
-        log_fail(name, f"qmake failed (rc={rc})")
+        log_fail(name, f"cmake configure failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None
-    log_info(f"mxe-make -j{NPROC} {label}")
-    rc, out = run_cmd(["make", "-j" + NPROC], build_dir, env=env)
+    log_info(f"mxe-cmake --build -j{NPROC} {label}")
+    rc, out = run_cmd([mxe_cmake, "--build", build_dir,
+                       "--target", target, "-j", NPROC],
+                      build_dir, env=env)
     if rc != 0:
-        log_fail(name, f"make failed (rc={rc})")
+        log_fail(name, f"cmake build failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None

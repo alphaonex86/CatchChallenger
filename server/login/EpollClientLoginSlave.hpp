@@ -14,7 +14,11 @@
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
+    // Same rationale as server/base/Client.hpp: BIGBUFFERSIZE only needs
+    // to fit one wire packet (CATCHCHALLENGER_MAX_PACKET_SIZE). The XZ /
+    // DONT_COMPRESS guards were over-strict; with streaming compression
+    // and sendfile() the runtime never holds a full file in this buffer.
     #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024
     #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
     #endif
@@ -23,12 +27,6 @@
     #endif
     #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024
     #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB
-    #endif
-    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024
-    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB
-    #endif
-    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
-    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB
     #endif
 #endif
 
@@ -44,7 +42,7 @@ class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOut
 {
 public:
     EpollClientLoginSlave(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -189,16 +187,16 @@ public:
 private:
     std::queue<DatabaseBaseCallBack *> callbackRegistred;
     std::queue<void *> paramToPassToCallBack;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::queue<std::string> paramToPassToCallBackType;
     #endif
 
     static unsigned char protocolReplyProtocolNotSupported[7];
     static unsigned char protocolReplyServerFull[7];
     /// \todo group all reply in one
-    static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static unsigned char protocolReplyCompresssionZstandard[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompressionNone[7+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
+    static unsigned char protocolReplyCompresssionZstandard[7+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     #endif
 
     static unsigned char loginInProgressBuffer[7];

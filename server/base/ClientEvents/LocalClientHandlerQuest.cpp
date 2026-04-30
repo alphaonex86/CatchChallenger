@@ -212,24 +212,9 @@ void Client::syncDatabaseQuest()
         std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest>::iterator i=public_and_private_informations.quests.begin();
         while(i!=public_and_private_informations.quests.cend())
         {
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint16_t item;
-            if(lastQuestId<=i->first)
-            {
-                item=i->first-lastQuestId;
-                lastQuestId=i->first;
-            }
-            else
-            {
-                item=static_cast<uint16_t>(65536-lastQuestId)+static_cast<uint16_t>(i->first);
-                lastQuestId=i->first;
-            }
-            #else
             //ordened
             const uint16_t &item=i->first-lastQuestId;
             lastQuestId=i->first;
-            #endif
             const PlayerQuest &quest=i->second;
             {const uint16_t _tmp_le=(htole16(item));memcpy(quest_raw+pos,&_tmp_le,sizeof(_tmp_le));}
 
@@ -261,24 +246,9 @@ void Client::syncDatabaseQuest()
         std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest>::iterator i=public_and_private_informations.quests.begin();
         while(i!=public_and_private_informations.quests.cend())
         {
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint16_t item;
-            if(lastQuestId<=i->first)
-            {
-                item=i->first-lastQuestId;
-                lastQuestId=i->first;
-            }
-            else
-            {
-                item=static_cast<uint16_t>(65536-lastQuestId)+static_cast<uint16_t>(i->first);
-                lastQuestId=i->first;
-            }
-            #else
             //ordened
             const uint16_t &item=i->first-lastQuestId;
             lastQuestId=i->first;
-            #endif
             const PlayerQuest &quest=i->second;
             {const uint16_t _tmp_le=(htole16(item));memcpy(tempBigBufferForOutput+pos,&_tmp_le,sizeof(_tmp_le));}
 

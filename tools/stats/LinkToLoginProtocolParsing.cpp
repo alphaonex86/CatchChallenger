@@ -514,7 +514,7 @@ bool LinkToLogin::parseReplyData(const uint8_t &mainCodeType,const uint8_t &quer
             const uint8_t &returnCode=data[0x00];
             if(returnCode==0x08)
             {
-                if(size!=(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                if(size!=(1+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                 {
                     std::cerr << "wrong size for protocol header " << returnCode << std::endl;
                     abort();

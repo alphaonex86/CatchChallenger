@@ -1,6 +1,6 @@
 #ifndef API_PROTOCOL_QT_H
 #define API_PROTOCOL_QT_H
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 
 #include <QObject>
 #include "../libcatchchallenger/ClientStructures.hpp"
@@ -46,7 +46,7 @@ public:
     
     ssize_t readFromSocket(char * data, const size_t &size) override;
     ssize_t writeToSocket(const char * const data, const size_t &size) override;
-#ifndef NOTCPSOCKET
+#ifndef CATCHCHALLENGER_NO_TCPSOCKET
 protected:
     void saveCert(const std::string &file);
 #endif

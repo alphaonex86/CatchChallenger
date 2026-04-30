@@ -54,7 +54,7 @@ void Client::server_list_static(void *object)
 
 void Client::server_list_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
@@ -68,7 +68,7 @@ void Client::server_list_object()
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(askLoginParam==NULL)
         abort();
     #endif
@@ -89,7 +89,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     //send signals into the server
 
     //0x44 and 0x40, logical block and server list
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 || Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
     {
         std::cerr << "Client::protocolMessageLogicalGroupAndServerList corruption detected" << std::endl;
@@ -98,7 +98,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     #endif
     sendRawBlock((char *)Client::protocolMessageLogicalGroupAndServerList,Client::protocolMessageLogicalGroupAndServerListSize);
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(Client::protocolReplyCharacterListSize==0)
     {
         std::cerr << "Client::protocolReplyCharacterListSize==0: never init" << std::endl;
@@ -189,7 +189,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
 void Client::deleteCharacterNow(const uint32_t &characterId)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_character.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
@@ -223,7 +223,7 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
 void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.empty())
     {
         std::cerr << "addCharacter() Query is empty, bug" << std::endl;
@@ -266,7 +266,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         errorOutput("You can't create more account, you have already "+std::to_string(number_of_character)+" on "+std::to_string(CommonSettingsCommon::commonSettingsCommon.max_character)+" allowed");
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(CommonDatapack::commonDatapack.get_profileList().size()!=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().size())
     {
         errorOutput("Client::addCharacter() profile common and server don't match");
@@ -393,20 +393,20 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     else
     {
         paramToPassToCallBack.push(addCharacterParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("AddCharacterParam");
         #endif
         callbackRegistred.push(callback);
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     paramToPassToCallBack.push(addCharacterParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("AddCharacterParam");
     #endif
     addCharacter_object();
     #elif CATCHCHALLENGER_DB_FILE
     paramToPassToCallBack.push(addCharacterParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("AddCharacterParam");
     #endif
     addCharacter_object();
@@ -430,7 +430,7 @@ void Client::addCharacter_static(void *object)
 
 void Client::addCharacter_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
@@ -439,7 +439,7 @@ void Client::addCharacter_object()
     #endif
     AddCharacterParam *addCharacterParam=static_cast<AddCharacterParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(addCharacterParam==NULL)
         abort();
     #endif
@@ -456,7 +456,7 @@ void Client::addCharacter_object()
 
 void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="AddCharacterParam")
     {
         std::cerr << "is not AddCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -908,7 +908,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &characterId)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.empty())
     {
         std::cerr << "removeCharacter() Query is empty, bug" << std::endl;
@@ -950,13 +950,13 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     {
         callbackRegistred.push(callback);
         paramToPassToCallBack.push(removeCharacterParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("RemoveCharacterParam");
         #endif
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     paramToPassToCallBack.push(removeCharacterParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("RemoveCharacterParam");
     #endif
     removeCharacterLater_object();
@@ -981,7 +981,7 @@ void Client::removeCharacterLater_static(void *object)
 
 void Client::removeCharacterLater_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
@@ -990,7 +990,7 @@ void Client::removeCharacterLater_object()
     #endif
     RemoveCharacterParam *removeCharacterParam=static_cast<RemoveCharacterParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(removeCharacterParam==NULL)
         abort();
     #endif
@@ -1000,7 +1000,7 @@ void Client::removeCharacterLater_object()
 
 void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="RemoveCharacterParam")
     {
         std::cerr << "is not RemoveCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;

@@ -32,7 +32,7 @@ public:
     template<class MapType>
     static bool canGoTo(const std::vector<MapType> &mapList,const Direction &direction,const MapType &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision, const bool &allowTeleport=true)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         switch(direction)
         {
             case CatchChallenger::Direction_move_at_left:
@@ -200,7 +200,7 @@ public:
     template<class MapType>
     static bool move(const std::vector<MapType> &mapList,const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport=true)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         switch(direction)
         {
             case CatchChallenger::Direction_move_at_left:
@@ -221,7 +221,7 @@ public:
     template<class MapType>
     static bool moveWithoutTeleport(const std::vector<MapType> &mapList,const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport=true)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         switch(direction)
         {
             case CatchChallenger::Direction_move_at_left:

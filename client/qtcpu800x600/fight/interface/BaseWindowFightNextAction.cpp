@@ -138,7 +138,7 @@ void BaseWindow::doNextAction()
             return;
         }
         updateCurrentMonsterInformationXp();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(client->getAttackReturnList().empty())
         {
             PublicPlayerMonster * otherMonster=client->getOtherMonster();
@@ -183,7 +183,7 @@ void BaseWindow::doNextAction()
     //nothing to done, show the menu
     qDebug() << "doNextAction(): show the menu";
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     #ifdef CATCHCHALLENGER_SOLO
     /*if(ClientBase::public_and_private_informations_solo!=NULL)
     {
@@ -407,7 +407,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
         const Skill::BuffEffect &addBuffEffectMonster=currentAttack.addBuffEffectMonster.front();
         std::unordered_map<uint8_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         QListWidget *listWidget=NULL;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         bool onBuffCurrentMonster=false;
         #endif
         if(currentAttack.doByTheCurrentMonster)
@@ -419,7 +419,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                     .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
                 listWidget=ui->topBuff;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 onBuffCurrentMonster=false;
                 #endif
             }
@@ -429,7 +429,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                     .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
                 listWidget=ui->bottomBuff;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 onBuffCurrentMonster=true;
                 #endif
             }
@@ -443,7 +443,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                     .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
                 listWidget=ui->bottomBuff;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 onBuffCurrentMonster=true;
                 #endif
             }
@@ -453,7 +453,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                     .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterBuffExtra(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
                 listWidget=ui->topBuff;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 onBuffCurrentMonster=false;
                 #endif
             }
@@ -505,7 +505,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
         client->removeTheFirstAddBuffEffectAttackReturn();
         if(!client->firstAttackReturnHaveMoreEffect())
             client->removeTheFirstAttackReturn();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(!onBuffCurrentMonster && otherMonster!=NULL)
         {
             if(otherMonster->buffs.size()!=(uint32_t)listWidget->count())

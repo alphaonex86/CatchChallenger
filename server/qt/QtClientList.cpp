@@ -54,7 +54,7 @@ PLAYER_INDEX_FOR_CONNECTED QtClientList::size() const
 
 bool QtClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
     {
         std::cerr << "QtClientList::isNull() out of range: " << index << "/" << clients.size() << " then fix the caller, check before into the backtrace" << std::endl;
@@ -76,7 +76,7 @@ bool QtClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
 
 const Client &QtClientList::at(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
     {
         std::cerr << "QtClientList::at() out of range: " << index << "/" << clients.size() << std::endl;
@@ -93,7 +93,7 @@ const Client &QtClientList::at(const PLAYER_INDEX_FOR_CONNECTED &index) const
 
 Client &QtClientList::rw(const PLAYER_INDEX_FOR_CONNECTED &index)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
     {
         std::cerr << "QtClientList::rw() out of range: " << index << "/" << clients.size() << std::endl;
@@ -115,7 +115,7 @@ PLAYER_INDEX_FOR_CONNECTED QtClientList::connected_size() const
 
 ClientWithMap &QtClientList::rwWithMap(const PLAYER_INDEX_FOR_CONNECTED &index)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
     {
         std::cerr << "QtClientList::rwWithMap() out of range: " << index << "/" << clients.size() << std::endl;

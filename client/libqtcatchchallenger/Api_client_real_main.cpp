@@ -34,7 +34,7 @@ void Api_client_real::writeNewFileMain(const std::string &fileName,const std::st
 
         if(file.exists())
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             {
                 QFile file(QString::fromStdString(fullPath));
                 if(file.open(QIODevice::ReadOnly))
@@ -75,7 +75,7 @@ void Api_client_real::writeNewFileMain(const std::string &fileName,const std::st
         XXH32_canonical_t htemp;
         XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
         memcpy(&h,&htemp.digest,sizeof(h));
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        #ifndef CATCHCHALLENGER_HARDENED
         DatapackChecksum::writeCachePartialHash(fullPath,h);
         #else
         if(!DatapackChecksum::writeCachePartialHash(fullPath,h))
@@ -241,7 +241,7 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
         if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
         {
             qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #else
             return;
@@ -250,7 +250,7 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
         if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
         {
             qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #else
             return;
@@ -259,7 +259,7 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
         if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
         {
             qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             abort();
             #else
             return;
@@ -440,7 +440,7 @@ void Api_client_real::decodedIsFinishMain()
                         XXH32_canonical_t htemp;
                         XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
                         memcpy(&h,&htemp.digest,sizeof(h));
-                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifndef CATCHCHALLENGER_HARDENED
                         DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h);
                         #else
                         if(!DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h))

@@ -184,7 +184,7 @@ bool CommonFightEngine::useSkill(const uint16_t &skill)
             return false;
         }
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster),otherMonster->level);
@@ -209,7 +209,7 @@ bool CommonFightEngine::useSkill(const uint16_t &skill)
     }
     #endif
     doTheTurn(skill,skillLevel,currentMonsterAttackFirst(currentMonster,otherMonster));
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
         Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster),otherMonster->level);
@@ -288,7 +288,7 @@ uint8_t CommonFightEngine::getSkillLevel(const uint16_t &skill)//no const due to
         index++;
     }
     errorFightEngine("Unable to locate the current monster skill to get the level");
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     abort();//it's internal error
     #endif
     return 0;
@@ -304,7 +304,7 @@ uint8_t CommonFightEngine::decreaseSkillEndurance(PlayerMonster::PlayerSkill *sk
     else
     {
         errorFightEngine("Skill don't have correct endurance count");
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();//it's internal error
         #endif
         return 0;

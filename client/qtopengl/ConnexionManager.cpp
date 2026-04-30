@@ -13,13 +13,13 @@ ConnexionManager::ConnexionManager(LoadingScreen *l)
 {
     client=nullptr;
     socket=nullptr;
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     realSslSocket=nullptr;
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     realWebSocket=nullptr;
     #endif
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     fakeSocket=nullptr;
     #endif
     this->datapckFileSize=0;
@@ -44,24 +44,24 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         socket->abort();
         delete socket;
         socket=NULL;
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         realSslSocket=nullptr;
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         realWebSocket=nullptr;
         #endif
     }
-    #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
-        #error can t be both NOTCPSOCKET and NOWEBSOCKET disabled
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_NO_WEBSOCKET)
+        #error can t be both CATCHCHALLENGER_NO_TCPSOCKET and CATCHCHALLENGER_NO_WEBSOCKET disabled
     #else
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(!connexionInfo.host.isEmpty())
         {
             realSslSocket=new QSslSocket();
             socket=new CatchChallenger::ConnectedSocket(realSslSocket);
         }
         else {
-            #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+            #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
             fakeSocket=new QFakeSocket();
             socket=new CatchChallenger::ConnectedSocket(fakeSocket);
             #else
@@ -70,7 +70,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
             #endif
         }
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(socket==nullptr)
         {
             if(!connexionInfo.ws.isEmpty())
@@ -144,22 +144,22 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     if(!connexionInfo.proxyHost.isEmpty())
     {
         QNetworkProxy proxy;
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=nullptr)
             proxy=realSslSocket->proxy();
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=nullptr)
             proxy=realWebSocket->proxy();
         #endif
         proxy.setType(QNetworkProxy::Socks5Proxy);
         proxy.setHostName(connexionInfo.proxyHost);
         proxy.setPort(connexionInfo.proxyPort);
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=nullptr)
             realSslSocket->setProxy(proxy);
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=nullptr)
             realWebSocket->setProxy(proxy);
         #endif
@@ -184,7 +184,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         abort();
 
     bool haveTryConnect=false;
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     if(realSslSocket!=nullptr)
     {
         haveTryConnect=true;
@@ -199,7 +199,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         socket->connectToHost(connexionInfo.host,connexionInfo.port);
     }
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     if(realWebSocket!=nullptr)
     {
         haveTryConnect=true;
@@ -219,7 +219,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         realWebSocket->open(request);
     }
     #endif
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     if(fakeSocket!=nullptr)
     {
         haveTryConnect=true;
@@ -238,7 +238,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
 
 bool ConnexionManager::isLocalGame()
 {
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     return fakeSocket!=nullptr;
     #else
     return false;
@@ -300,11 +300,11 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
     if(!connexionInfo.proxyHost.isEmpty())
     {
         QNetworkProxy proxy;
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=nullptr)
             proxy=realSslSocket->proxy();
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=nullptr)
             proxy=realWebSocket->proxy();
         #endif
@@ -316,7 +316,7 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
 
     /*baseWindow->connectAllSignals();
     baseWindow->setMultiPlayer(true,client);*/
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     QDir datapack;
     if(fakeSocket!=nullptr)
         datapack=QDir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"));
@@ -384,14 +384,14 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
     {
         //If uncomment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
         /*if((1
-            #if !defined(NOTCPSOCKET)
+            #if !defined(CATCHCHALLENGER_NO_TCPSOCKET)
                 && realSslSocket==NULL
             #endif
-        #if !defined(NOWEBSOCKET)
+        #if !defined(CATCHCHALLENGER_NO_WEBSOCKET)
              && realWebSocket==NULL
         #endif
             )
-        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+        #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
              && fakeSocket!=NULL
         #endif
                 )
@@ -405,21 +405,21 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
         std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") mostly quit " << client->stage() << std::endl;
         if(client->stage()==CatchChallenger::Api_protocol::StageConnexion::Stage2 || client->stage()==CatchChallenger::Api_protocol::StageConnexion::Stage3)
             return;
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=NULL)
         {
             realSslSocket->deleteLater();
             realSslSocket=NULL;
         }
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=NULL)
         {
             realWebSocket->deleteLater();
             realWebSocket=NULL;
         }
         #endif
-        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+        #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
         if(fakeSocket!=NULL)
         {
             fakeSocket->deleteLater();
@@ -454,11 +454,11 @@ void ConnexionManager::error(QAbstractSocket::SocketError socketError)
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=NULL)
             return;
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=NULL)
             return;
         #endif

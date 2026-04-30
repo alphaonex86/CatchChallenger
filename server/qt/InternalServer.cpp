@@ -103,7 +103,7 @@ void InternalServer::run()
 {
     loadAndFixSettings();
 
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     if(!QFakeServer::server.listen())
     {
         qDebug() << (QStringLiteral("Unable to listen the internal server"));
@@ -116,7 +116,7 @@ void InternalServer::run()
 
     if(!initialize_the_database())
     {
-        #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+        #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
         QFakeServer::server.close();
         #endif
         stat=Down;

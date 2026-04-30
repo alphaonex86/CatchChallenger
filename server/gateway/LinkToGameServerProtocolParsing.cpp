@@ -64,7 +64,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                                               " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
                     return false;
                 }
-                if(size!=(sizeof(uint8_t)+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                if(size!=(sizeof(uint8_t)+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                 {
                     parseNetworkReadError("compression type wrong size (stage 3) with main ident: "+std::to_string(mainCodeType)+
                                           " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
@@ -124,7 +124,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         posOutput+=1;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                         posOutput+=1+4;
-                        {const uint32_t _tmp_le=(htole32(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+                        {const uint32_t _tmp_le=(htole32(1+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                         //the gateway can different compression than server connected
                         switch(CompressionProtocol::compressionTypeServer)
@@ -140,9 +140,9 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             return false;
                         }
                         posOutput+=1;
-                        //std::cout << "Transmit the token: " << binarytoHexa(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) << std::endl;
-                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        posOutput+=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT;
+                        //std::cout << "Transmit the token: " << binarytoHexa(data+1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER) << std::endl;
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        posOutput+=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
 
                         return client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                     }
@@ -961,7 +961,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         return false;
                     }
                 }
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 messageParsingLayer("main datapack code: "+main);
                 #endif
                 {
@@ -990,7 +990,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     else
                         sub.clear();
                 }
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 messageParsingLayer("sub datapack code: "+sub);
                 #endif
 
@@ -1010,7 +1010,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 downloader->sendedHashMain.resize(CATCHCHALLENGER_HASH_SIZE);
                 memcpy(downloader->sendedHashMain.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
                 pos+=CATCHCHALLENGER_HASH_SIZE;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 messageParsingLayer("sendedHashMain: "+binarytoHexa(downloader->sendedHashMain));
                 #endif
                 if(!sub.empty())
@@ -1023,7 +1023,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     downloader->sendedHashSub.resize(CATCHCHALLENGER_HASH_SIZE);
                     memcpy(downloader->sendedHashSub.data(),data+pos,CATCHCHALLENGER_HASH_SIZE);
                     pos+=CATCHCHALLENGER_HASH_SIZE;
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     messageParsingLayer("sendedHashSub: "+binarytoHexa(downloader->sendedHashSub));
                     #endif
                 }
@@ -1073,7 +1073,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                             }
                         }
                     }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     messageParsingLayer("httpDatapackMirrorServer: "+httpDatapackMirrorServer);
                     #endif
                 }
@@ -1217,7 +1217,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             return false;
         }
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(client==NULL)
     {
         //ERROR connecting to game server server on: cc-server-test.portable-datacenter.first-world.info:22768: Name or service not known

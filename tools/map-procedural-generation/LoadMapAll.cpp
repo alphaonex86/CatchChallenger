@@ -560,7 +560,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 coord=std::pair<uint16_t,uint16_t>(tempPoint.x,tempPoint.y);
                 if(tempMap.pathToGo.find(coord)==tempMap.pathToGo.cend())
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     extraControlOnData(pathToGo.left,Orientation_left);
                     extraControlOnData(pathToGo.right,Orientation_right);
                     extraControlOnData(pathToGo.top,Orientation_top);

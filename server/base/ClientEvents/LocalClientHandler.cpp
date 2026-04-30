@@ -146,7 +146,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
 
     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(public_and_private_informations.public_informations.pseudo.size()>255)
         {
             std::cerr << "preload_other() public_and_private_informations.public_informations.pseudo size > 255 abort" << std::endl;
@@ -182,7 +182,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     //load the first time the random number list
     generateRandomNumber();
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index_connected_player==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cerr << "index_connected_player is not set (abort)" << std::endl;
@@ -208,7 +208,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
 
 void Client::createMemoryClan()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index_connected_player==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cout << "not connected player, abort" << std::endl;
@@ -222,7 +222,7 @@ void Client::createMemoryClan()
         clan.cash=0;
         clan.connected_players.push_back(index_connected_player);
         GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan]=clan;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.find(public_and_private_informations.clan)!=GlobalServerData::serverPrivateVariables.cityStatusListReverse.end())
             clan.capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse.at(public_and_private_informations.clan);
         #endif
@@ -418,7 +418,7 @@ bool Client::triggerDaillyGift(const uint64_t &timeRangeEventTimestamps)
 {
     if(lastdaillygift==timeRangeEventTimestamps || stat!=ClientStat::CharacterSelected)
         return false;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(GlobalServerData::serverPrivateVariables.gift_list.empty())
     {
         std::cerr << "triggerDaillyGift can't have GlobalServerData::serverPrivateVariables.gift_list.empty()" << std::endl;

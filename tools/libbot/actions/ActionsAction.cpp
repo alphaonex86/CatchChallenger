@@ -724,8 +724,7 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
 
             const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
             const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
-            const std::unordered_map<uint16_t,uint32_t> itemsUnordered(playerInformationsRO.items.cbegin(),playerInformationsRO.items.cend());
-            if(player.api->generateWildFightIfCollision(*playerMap,player.x,player.y,itemsUnordered,player.events))
+            if(player.api->generateWildFightIfCollision(*playerMap,player.x,player.y,playerInformationsRO.items,player.events))
             {
                 player.canMoveOnMap=false;
                 player.api->stopMove();
@@ -776,7 +775,7 @@ void ActionsAction::doMove()
                         if(ActionsAction::move(api,newDirection,&destMap,&x,&y,false,false))
                         {
                             //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             {
                                 std::unordered_set<uint32_t> known_indexOfItemOnMap;
                                 for ( const std::pair<const std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap> &item : playerMap->pointOnMap_Item )

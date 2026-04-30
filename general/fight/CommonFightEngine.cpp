@@ -59,7 +59,7 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const uint8_t &x,c
         messageFightEngine("map canDoRandomFight is in fight");
         return false;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if((unsigned int)(x+y*map.width)>=map.flat_simplified_map.size())
     {
         std::cerr << "CommonFightEngine::canDoRandomFight() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
@@ -68,7 +68,7 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const uint8_t &x,c
     #endif
 
     const uint8_t &zoneCode=map.flat_simplified_map.at(x+y*map.width);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(zoneCode>=map.zones.size())
     {
         std::cerr << "CommonFightEngine::canDoRandomFight() zoneCode>=map.monstersCollisionList.size()" << std::endl;
@@ -137,7 +137,7 @@ PlayerMonster * CommonFightEngine::getCurrentMonster()//no const due to error me
     const size_t &playerMonsterSize=get_public_and_private_informations().monsters.size();
     if(selectedMonster<playerMonsterSize)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(!CommonDatapack::commonDatapack.has_monster(get_public_and_private_informations().monsters.at(selectedMonster).monster))
         {
             errorFightEngine("Current monster don't exists: "+std::to_string(get_public_and_private_informations().monsters.at(selectedMonster).monster));

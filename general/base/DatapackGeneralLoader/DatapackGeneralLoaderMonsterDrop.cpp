@@ -27,7 +27,7 @@ catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > DatapackGenera
         }
 
         tinyxml2::XMLDocument *domDocument;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
             domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -44,7 +44,7 @@ catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > DatapackGenera
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
         }
         #endif
         const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -222,7 +222,7 @@ catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > DatapackGenera
                 std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.tagName(): " << item->Name() << std::endl;
             item = item->NextSiblingElement("monster");
         }
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifdef CATCHCHALLENGER_SERVER
         delete domDocument;
         #endif
         file_index++;

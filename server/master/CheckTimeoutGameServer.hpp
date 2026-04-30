@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_CheckTimeoutGameServer_H
 #define CATCHCHALLENGER_CheckTimeoutGameServer_H
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
 
 #include "../epoll/EpollTimer.hpp"
 #include <stdint.h>
@@ -18,5 +18,5 @@ private:
 };
 }
 
-#endif // def EPOLLCATCHCHALLENGERSERVER
+#endif // def CATCHCHALLENGER_SERVER
 #endif // PLAYERUPDATERTOLOGIN_H

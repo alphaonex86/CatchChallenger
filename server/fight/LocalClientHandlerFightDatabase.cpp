@@ -16,24 +16,9 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
     {
         const PlayerBuff &buff=monster.buffs.at(sub_index);
 
-        #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-        //not ordened
-        uint8_t buffInt;
-        if(lastBuffId<=buff.buff)
-        {
-            buffInt=buff.buff-lastBuffId;
-            lastBuffId=buff.buff;
-        }
-        else
-        {
-            buffInt=static_cast<uint8_t>(256-static_cast<uint16_t>(lastBuffId)+static_cast<uint16_t>(buff.buff));
-            lastBuffId=buff.buff;
-        }
-        #else
         //ordened
         const uint8_t &buffInt=buff.buff-lastBuffId;
         lastBuffId=buff.buff;
-        #endif
 
         raw_buff[sub_index*3+0]=buffInt;
         raw_buff[sub_index*3+1]=buff.level;
@@ -58,7 +43,7 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
     if(monster.skills.empty())
     {
         normalOutput("Internal error: try sync skill when don't have skill");
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
         return;
@@ -72,24 +57,9 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
         const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
         skills_endurance[sub_index]=playerSkill.endurance;
 
-        #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-        //not ordened
-        uint16_t skillInt;
-        if(lastSkillId<=playerSkill.skill)
-        {
-            skillInt=playerSkill.skill-lastSkillId;
-            lastSkillId=playerSkill.skill;
-        }
-        else
-        {
-            skillInt=static_cast<uint16_t>(65536-static_cast<uint32_t>(lastSkillId)+static_cast<uint32_t>(playerSkill.skill));
-            lastSkillId=playerSkill.skill;
-        }
-        #else
         //ordened
         const uint16_t &skillInt=playerSkill.skill-lastSkillId;
         lastSkillId=playerSkill.skill;
-        #endif
 
         {const uint16_t _tmp_le=(htole16(skillInt));memcpy(skills+sub_index*(2+1),&_tmp_le,sizeof(_tmp_le));}
 
@@ -116,7 +86,7 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
     if(monster.skills.empty())
     {
         normalOutput("Internal error: try sync skill when don't have skill");
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
         return;
@@ -163,7 +133,7 @@ void Client::syncForEndOfTurn()
 
 void Client::saveStat()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         PlayerMonster * currentMonster=getCurrentMonster();
         PublicPlayerMonster * otherMonster=getOtherMonster();

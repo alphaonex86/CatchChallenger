@@ -1,6 +1,6 @@
 #include "FightLoader.hpp"
 #include "../base/FacilityLibGeneral.hpp"
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 #include "../base/CommonDatapack.hpp"
 #endif
 #include "../base/cpp11addition.hpp"
@@ -8,7 +8,7 @@
 
 using namespace CatchChallenger;
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+#ifdef CATCHCHALLENGER_SOLO
 catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BUFF,Buff> FightLoader::loadMonsterBuff(catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_BUFF> &tempNameToBuffId,const std::string &folder)
 {
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BUFF,Buff> monsterBuffs;
@@ -23,7 +23,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BUFF,Buff> FightLoader::loadMo
             continue;
         }
         tinyxml2::XMLDocument *domDocument;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
             domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -40,7 +40,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BUFF,Buff> FightLoader::loadMo
                 file_index++;
                 continue;
             }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            #ifndef CATCHCHALLENGER_SERVER
         }
         #endif
         const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -304,7 +304,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BUFF,Buff> FightLoader::loadMo
                 std::cerr << "Unable to open the xml file: " << file << ", have not the buff id: child->Name(): " << item->Name() << std::endl;
             item = item->NextSiblingElement("buff");
         }
-        #ifdef EPOLLCATCHCHALLENGERSERVER
+        #ifdef CATCHCHALLENGER_SERVER
         delete domDocument;
         #endif
         file_index++;

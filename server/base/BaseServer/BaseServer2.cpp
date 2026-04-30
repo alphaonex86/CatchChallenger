@@ -277,7 +277,7 @@ void BaseServer::SQL_common_load_finish()
 
 void BaseServer::preload_finish()//call after preload_industries_return(), after SQL, preload_industries_return() save the cache/and db file
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()==0)
     {
         std::cerr << "CommonDatapack::commonDatapack.crafingRecipesMaxId==0" << std::endl;
@@ -298,7 +298,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     const uint64_t &now = msFrom1970();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_30_sync_other();
-    #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
+    #if defined(CATCHCHALLENGER_SERVER) && ! defined(CATCHCHALLENGER_CLIENT)
     #ifndef CATCHCHALLENGER_NOXML
     //delete content of Map_loader::getXmlCondition()
     CommonDatapack::commonDatapack.clear_xmlLoadedFile();
@@ -306,7 +306,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     entryListZone.clear();
     #endif
     CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();

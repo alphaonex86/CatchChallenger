@@ -25,7 +25,7 @@ char LinkToLogin::host[]="localhost";
 uint16_t LinkToLogin::port=22222;
 
 LinkToLogin::LinkToLogin(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             SSL_CTX *ctx
         #endif
         ) :
@@ -269,7 +269,7 @@ void LinkToLogin::readTheFirstSslHeader()
         //reconnect, need maybe more time
         EpollSocket::make_non_blocking(infd);
     }
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     if(buffer[0]!=0x01)
     {
         std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;
@@ -347,8 +347,8 @@ bool LinkToLogin::registerStatsClient(const char * const dynamicToken)
 
     {
         CatchChallenger::Hash hashFile;
-        hashFile.update(reinterpret_cast<const unsigned char *>(LinkToLogin::private_token_statclient),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-        hashFile.update(reinterpret_cast<const unsigned char *>(dynamicToken),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        hashFile.update(reinterpret_cast<const unsigned char *>(LinkToLogin::private_token_statclient),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+        hashFile.update(reinterpret_cast<const unsigned char *>(dynamicToken),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
         hashFile.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput));
         posOutput+=CATCHCHALLENGER_HASH_SIZE;
         //memset(LinkToLogin::private_token,0x00,sizeof(LinkToLogin::private_token));->to reconnect after be disconnected

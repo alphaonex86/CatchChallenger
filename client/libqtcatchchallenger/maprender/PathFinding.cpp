@@ -266,7 +266,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,CATCHC
     }
 }
 
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 void PathFinding::extraControlOnData(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation)
 {
     if(!controlVar.empty())
@@ -417,7 +417,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                         uint8_t newX=tempPoint.x,newY=tempPoint.y;
                         if(canMove(CatchChallenger::Orientation_right,newMap,newX,newY,simplifiedMapList))
                         {
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(newX==tempPoint.x && newY==tempPoint.y)
                             {
                                 std::cerr << "can't be same point after move (abort)" << std::endl;
@@ -447,7 +447,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                             }
                         }
                     }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
@@ -482,7 +482,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                         uint8_t newX=tempPoint.x,newY=tempPoint.y;
                         if(canMove(CatchChallenger::Orientation_left,newMap,newX,newY,simplifiedMapList))
                         {
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(newX==tempPoint.x && newY==tempPoint.y)
                             {
                                 std::cerr << "can't be same point after move (abort)" << std::endl;
@@ -512,7 +512,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                             }
                         }
                     }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
@@ -547,7 +547,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                         uint8_t newX=tempPoint.x,newY=tempPoint.y;
                         if(canMove(CatchChallenger::Orientation_bottom,newMap,newX,newY,simplifiedMapList))
                         {
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(newX==tempPoint.x && newY==tempPoint.y)
                             {
                                 std::cerr << "can't be same point after move (abort)" << std::endl;
@@ -577,7 +577,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                             }
                         }
                     }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
@@ -612,7 +612,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                         uint8_t newX=tempPoint.x,newY=tempPoint.y;
                         if(canMove(CatchChallenger::Orientation_top,newMap,newX,newY,simplifiedMapList))
                         {
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(newX==tempPoint.x && newY==tempPoint.y)
                             {
                                 std::cerr << "can't be same point after move (abort)" << std::endl;
@@ -642,7 +642,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                             }
                         }
                     }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
@@ -680,7 +680,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                 const SimplifiedMapForPathFinding &currentMapObject=simplifiedMapList.at(local_current_map);
                 if(currentMapObject.pathToGo.find(coord)==currentMapObject.pathToGo.cend())
                 {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
@@ -764,7 +764,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                     uint8_t newX=tempPoint.x,newY=tempPoint.y;
                     if(canMove(CatchChallenger::Orientation_right,newMap,newX,newY,simplifiedMapList))
                     {
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(newX==tempPoint.x && newY==tempPoint.y)
                         {
                             std::cerr << "can't be same point after move (abort)" << std::endl;
@@ -797,7 +797,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                     uint8_t newX=tempPoint.x,newY=tempPoint.y;
                     if(canMove(CatchChallenger::Orientation_left,newMap,newX,newY,simplifiedMapList))
                     {
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(newX==tempPoint.x && newY==tempPoint.y)
                         {
                             std::cerr << "can't be same point after move (abort)" << std::endl;
@@ -830,7 +830,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                     uint8_t newX=tempPoint.x,newY=tempPoint.y;
                     if(canMove(CatchChallenger::Orientation_bottom,newMap,newX,newY,simplifiedMapList))
                     {
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(newX==tempPoint.x && newY==tempPoint.y)
                         {
                             std::cerr << "can't be same point after move (abort)" << std::endl;
@@ -863,7 +863,7 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                     uint8_t newX=tempPoint.x,newY=tempPoint.y;
                     if(canMove(CatchChallenger::Orientation_top,newMap,newX,newY,simplifiedMapList))
                     {
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         if(newX==tempPoint.x && newY==tempPoint.y)
                         {
                             std::cerr << "can't be same point after move (abort)" << std::endl;

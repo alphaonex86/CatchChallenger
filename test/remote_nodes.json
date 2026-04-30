@@ -112,7 +112,7 @@
     },
     {
       "label": "mips-lxc",
-      "comment": "LXC container on the local host (replaces 2803:1920::3:440a). No Qt GUI, no mold, builds with -std=c++23, NOAUDIO + NOWEBSOCKET defines.",
+      "comment": "LXC container on the local host (replaces 2803:1920::3:440a). No Qt GUI, no mold, builds with -std=c++23, NOAUDIO + CATCHCHALLENGER_NO_WEBSOCKET defines.",
       "enabled": true,
       "ssh": {
         "host": "2803:1920::2:ff03",
@@ -130,7 +130,7 @@
       "x11": null,
       "cxx_version": ["c++11","c++23"],
       "compilers": ["gcc", "clang"],
-      "extra_defines": ["CATCHCHALLENGER_NOAUDIO", "NOWEBSOCKET"],
+      "extra_defines": ["CATCHCHALLENGER_NOAUDIO", "CATCHCHALLENGER_NO_WEBSOCKET"],
       "tests": ["compile", "server-client", "solo"],
       "save_timeout": 600,
       "server_ready_timeout": 600,

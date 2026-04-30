@@ -184,50 +184,54 @@ def rsync_to_remote(host, port, remote_dir):
         return False
 
 
-def detect_qmake(host, port):
-    """Detect qmake6 or qmake on remote server."""
-    rc, out = ssh_cmd(host, port, "which qmake6 2>/dev/null || which qmake 2>/dev/null", timeout=15)
+def detect_cmake(host, port):
+    """Detect a usable cmake on the remote server."""
+    rc, out = ssh_cmd(host, port, "which cmake 2>/dev/null", timeout=15)
     if rc == 0 and out.strip():
-        qmake = out.strip().splitlines()[0]
-        log_info(f"detected qmake: {qmake}")
-        return qmake
-    log_fail(f"detect qmake on {host}", "qmake6/qmake not found")
+        cmake = out.strip().splitlines()[0]
+        log_info(f"detected cmake: {cmake}")
+        return cmake
+    log_fail(f"detect cmake on {host}", "cmake not found")
     return None
 
 
-def build_pro_remote(host, port, qmake, pro_rel, label, use_mold, remote_dir):
-    """Build a .pro file on the remote server."""
-    pro_path = f"{remote_dir}/{pro_rel}"
+# Phase 5 (qmake -> CMake): builds on remote nodes now drive cmake too.
+# The .pro -> cmake target mapping is the same one local builds use; we
+# import it lazily here to avoid a hard dependency on cmake_helpers when
+# cmake isn't available on the remote (the function returns False
+# cleanly).
+def build_pro_remote(host, port, cmake, pro_rel, label, use_mold, remote_dir):
+    """Build a target on the remote server via cmake. The pro_rel is
+    used purely as a key for the .pro -> cmake target mapping in
+    cmake_helpers.py."""
+    import cmake_helpers as _ch
     suffix = diagnostic.build_dir_suffix(DIAG)
-    build_dir = f"{remote_dir}/build-remote{suffix}/{os.path.basename(pro_rel).replace('.pro', '')}"
-
-    mold_flags = ""
+    name = f"compile {pro_rel} ({label})"
+    try:
+        target, configure_flags, _output_subdir = _ch.pro_to_cmake_target(pro_rel)
+    except KeyError:
+        log_fail(name, f"no cmake target mapping for {pro_rel}")
+        return False
+    build_dir = f"{remote_dir}/build-remote{suffix}/{target}"
+    mold_args = ""
     if use_mold:
-        mold_flags = '"QMAKE_LFLAGS+=-fuse-ld=mold" "LIBS+=-fuse-ld=mold"'
-
-    spec = diagnostic.compiler_spec(DIAG) or "linux-g++"
-    diag_args = " ".join('"' + a + '"' for a in diagnostic.qmake_extra_args(DIAG))
+        mold_args = "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=mold"
+    flag_args = " ".join(configure_flags)
     cmd = (
         f"mkdir -p {build_dir} && "
-        f"cd {build_dir} && "
-        f"make distclean 2>/dev/null; "
-        f"{qmake} -o Makefile {pro_path} "
-        f"-spec {spec} CONFIG+=debug "
-        f"\"QMAKE_CXXFLAGS+=-std={CXX_VERSION}\" "
-        f"\"QMAKE_CXXFLAGS+=-g\" \"QMAKE_CFLAGS+=-g\" \"QMAKE_LFLAGS+=-g\" "
-        f"{mold_flags} {diag_args} "
+        f"{cmake} -S {remote_dir} -B {build_dir} "
+        f"-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD={CXX_VERSION.replace('c++','')} "
+        f"{flag_args} {mold_args} "
         f"2>&1 && "
-        f"make -j$(nproc) 2>&1"
+        f"{cmake} --build {build_dir} --target {target} -j$(nproc) 2>&1"
     )
-    log_info(f"building {pro_rel} on {label}")
+    log_info(f"building {target} on {label}")
     rc, out = ssh_cmd(host, port, cmd)
-    name = f"compile {pro_rel} ({label})"
     if rc == 0:
         log_pass(name)
         return True
     log_fail(name, f"rc={rc}")
     lines = out.splitlines()
-    # print last 30 lines of output for diagnosis
     start = len(lines) - 30
     if start < 0:
         start = 0
@@ -267,14 +271,14 @@ def test_server(label, host, port, use_mold, remote_dir, failed_cases=None):
         if not rsync_to_remote(host, port, remote_dir):
             return
 
-        qmake = detect_qmake(host, port)
-        if qmake is None:
+        cmake = detect_cmake(host, port)
+        if cmake is None:
             return
 
         idx = 0
         while idx < len(PRO_FILES):
             if should_run(f"compile {PRO_FILES[idx]} ({label})", failed_cases):
-                build_pro_remote(host, port, qmake, PRO_FILES[idx], label,
+                build_pro_remote(host, port, cmake, PRO_FILES[idx], label,
                                  use_mold, remote_dir)
             idx += 1
     finally:

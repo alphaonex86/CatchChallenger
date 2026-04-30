@@ -301,51 +301,28 @@ def clean_build_artifacts(build_dir):
             os.remove(f)
 
 def test_compile():
-    """Build map2png.pro, then clean up. Returns True on success."""
+    """Build map2png.pro via cmake, then clean up. Returns True on success."""
+    import cmake_helpers as _ch
     suffix = diagnostic.build_dir_suffix(DIAG)
     build_dir = os.path.join(os.path.dirname(MAP2PNG_PRO), "build", "testing" + suffix)
     os.makedirs(build_dir, exist_ok=True)
-    
-    log_info(f"make distclean (map2png.pro)")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
-    clean_build_artifacts(build_dir)
-    
+
     label = "map2png.pro" + diagnostic.label_suffix(DIAG)
-    
-    # qmake
-    spec = diagnostic.compiler_spec(DIAG) or "linux-g++"
-    qmake_args = [QMAKE, "-o", "Makefile", MAP2PNG_PRO,
-                  "-spec", spec, "CONFIG+=debug", "CONFIG+=qml_debug",
-                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
-                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
-    qmake_args.extend(diagnostic.qmake_extra_args(DIAG))
-    log_info(f"qmake {label}")
-    rc, out = run_cmd(qmake_args, build_dir)
-    if rc != 0:
-        log_fail(f"compile {label}", f"qmake failed (rc={rc})")
-        if out.strip():
-            for line in out.splitlines()[-15:]:
-                print(f"  | {line}")
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
+
+    ok = _ch.build_project(
+        MAP2PNG_PRO, build_dir, label,
+        root=ROOT, nproc=NPROC,
+        log_info=log_info, log_pass=log_pass, log_fail=log_fail,
+        ensure_dir=lambda d: os.makedirs(d, exist_ok=True),
+        run_cmd=run_cmd,
+        diag=DIAG, diag_module=diagnostic,
+    )
+    if not ok:
+        # Wipe the build dir so retry starts clean (matches the qmake-era
+        # `make distclean` on failure).
+        import shutil
+        shutil.rmtree(build_dir, ignore_errors=True)
         return False
-    
-    # make
-    log_info(f"make -j{NPROC} {label}")
-    rc, out = run_cmd(["make", f"-j{NPROC}"], build_dir)
-    if rc != 0:
-        log_fail(f"compile {label}", f"make failed (rc={rc})")
-        if out.strip():
-            for line in out.splitlines()[-20:]:
-                print(f"  | {line}")
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
-        return False
-    
-    log_pass(f"compile {label}")
-    
-    # distclean
-    log_info(f"make distclean {label}")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
-    
     return True
 
 def test_run():
@@ -363,22 +340,20 @@ def test_run():
     map2png_binary = os.path.join(build_dir, "map2png")
     
     if not os.path.isfile(map2png_binary):
-        # Need to build it
+        # Need to build it (via cmake_helpers shared driver).
+        import cmake_helpers as _ch
         log_info(f"Building map2png for runtime test")
-        spec = diagnostic.compiler_spec(DIAG) or "linux-g++"
-        qmake_args = [QMAKE, "-o", "Makefile", MAP2PNG_PRO,
-                      "-spec", spec, "CONFIG+=debug", "CONFIG+=qml_debug"]
-        qmake_args.extend(diagnostic.qmake_extra_args(DIAG))
         os.makedirs(build_dir, exist_ok=True)
-        rc, out = run_cmd(qmake_args, build_dir)
-        if rc != 0:
-            log_fail(SCRIPT_RUN_NAME, "qmake failed for runtime test")
-            return False
-        
-        log_info(f"make -j{NPROC} (runtime test)")
-        rc, out = run_cmd(["make", f"-j{NPROC}"], build_dir)
-        if rc != 0:
-            log_fail(SCRIPT_RUN_NAME, "make failed for runtime test")
+        ok = _ch.build_project(
+            MAP2PNG_PRO, build_dir, "map2png runtime test",
+            root=ROOT, nproc=NPROC,
+            log_info=log_info, log_pass=log_pass, log_fail=log_fail,
+            ensure_dir=lambda d: os.makedirs(d, exist_ok=True),
+            run_cmd=run_cmd,
+            diag=DIAG, diag_module=diagnostic,
+        )
+        if not ok:
+            log_fail(SCRIPT_RUN_NAME, "cmake build failed for runtime test")
             return False
     
     if not os.path.isfile(map2png_binary):

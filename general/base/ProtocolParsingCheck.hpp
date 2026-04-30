@@ -1,11 +1,11 @@
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 #ifndef CATCHCHALLENGER_PROTOCOLPARSINGCHECK_H
 #define CATCHCHALLENGER_PROTOCOLPARSINGCHECK_H
 
 #include "ProtocolParsing.hpp"
 #include "GeneralVariable.hpp"
 
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 
 namespace CatchChallenger {
 
@@ -32,7 +32,7 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction);
         void breakNeedMoreData();
 
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
         CompressionProtocol::CompressionType getCompressType() const; /// if client get server because it's check then mirror
         #endif
 

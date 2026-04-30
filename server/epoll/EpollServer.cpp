@@ -1,4 +1,4 @@
-#ifndef SERVERSSL
+#ifndef CATCHCHALLENGER_SERVER_SSL
 
 #include "EpollServer.hpp"
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL

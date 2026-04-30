@@ -20,7 +20,7 @@ using namespace CatchChallenger;
 void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterId)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.empty())
     {
         errorOutput("selectCharacter() Query is empty, bug");
@@ -61,20 +61,20 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     else
     {
         paramToPassToCallBack.push(selectCharacterParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("SelectCharacterParam");
         #endif
         callbackRegistred.push(callback);
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     paramToPassToCallBack.push(selectCharacterParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("SelectCharacterParam");
     #endif
     selectCharacter_object();
     #elif CATCHCHALLENGER_DB_FILE
     paramToPassToCallBack.push(selectCharacterParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("SelectCharacterParam");
     #endif
     selectCharacter_object();
@@ -91,7 +91,7 @@ void Client::selectCharacter_static(void *object)
 
 void Client::selectCharacter_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
@@ -99,7 +99,7 @@ void Client::selectCharacter_object()
     }
     #endif
     SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(selectCharacterParam==NULL)
         abort();
     #endif
@@ -117,7 +117,7 @@ void Client::selectCharacter_object()
 
 void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="SelectCharacterParam")
     {
         std::cerr << "is not SelectCharacterParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -312,7 +312,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         characterSelectionIsWrong(query_id,0x04,"start from base selection");
         return;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(CommonDatapack::commonDatapack.get_profileList().size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
     {
         character_id_db=characterId;
@@ -430,7 +430,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 const uint16_t &item16=static_cast<uint16_t>(item);
                 const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
                 public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(public_and_private_informations.items.find(item16)!=public_and_private_informations.items.cend())
                 {
                     character_id_db=characterId;
@@ -563,7 +563,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                         continue;
                     }
                 }
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(public_and_private_informations.reputation.find(reputationInternalId)!=public_and_private_informations.reputation.cend())
                 {
                     normalOutput("The reputation duplicate");

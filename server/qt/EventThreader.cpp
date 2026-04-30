@@ -1,6 +1,6 @@
 #include "EventThreader.hpp"
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 using namespace CatchChallenger;
 EventThreader::EventThreader()
 {

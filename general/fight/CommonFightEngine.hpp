@@ -65,11 +65,7 @@ public:
     virtual bool isInBattle() const = 0;
     //return true if now have wild monter to fight
     virtual bool generateWildFightIfCollision(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y,
-                                          #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-                                              const std::unordered_map<uint16_t, uint32_t> &items
-                                          #else
                                               const std::map<uint16_t, uint32_t> &items
-                                          #endif
                                               , const std::vector<uint8_t> &events);
     virtual bool doTheOtherMonsterTurn();
     virtual void doTheTurn(const uint16_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack);

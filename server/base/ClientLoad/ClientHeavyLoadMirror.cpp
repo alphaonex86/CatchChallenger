@@ -6,7 +6,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 #include <zstd.h>
 #endif
 
@@ -152,7 +152,7 @@ catchchallenger_datapack_map<std::string, BaseServerMasterSendDatapack::Datapack
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void Client::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     /// \see Client::parseFullQuery() already checked here
     #endif
     tempDatapackListReplyArray.clear();
@@ -161,7 +161,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     //the heap storage from any prior batch that errored mid-flush.
     std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(BaseServerMasterSendDatapack::rawFilesPending);
     BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(BaseServerMasterSendDatapack::compressedFilesPending);
     BaseServerMasterSendDatapack::compressedFilesPendingRawSize=0;
     #endif
@@ -241,7 +241,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             if(filesListForSize.find(fileName)!=filesListForSize.cend())
             {
                 const uint32_t &serverPartialHash=filesListForSize.at(fileName).partialHash;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(serverPartialHash==0)
                 {
                     errorOutput("serverPartialHash==0 at " __FILE__ ":"+std::to_string(__LINE__));
@@ -551,7 +551,7 @@ void Client::sendFileContent()
             {
                 if(sent==0)
                     break;//EOF; file shorter than fstat? caller error
-                errorOutput("sendFileContent: sendfile() failed");
+                errorOutput("sendFileContent: writeFileToSocket() failed");
                 ::close(fd);
                 disconnectClient();
                 pending.clear();
@@ -570,7 +570,7 @@ void Client::sendFileContent()
     BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 void Client::sendCompressedFileContent()
 {
     //Streaming compression for the 0x77 packet. Replaces the former
@@ -766,7 +766,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
     }
     const uint32_t contentsize=static_cast<uint32_t>(st.st_size);
     const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     if(CompressionProtocol::compressionTypeServer!=CompressionProtocol::CompressionType::None &&
             BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
             (

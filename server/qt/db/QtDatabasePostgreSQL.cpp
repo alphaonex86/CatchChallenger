@@ -15,7 +15,7 @@ QtDatabasePostgreSQL::~QtDatabasePostgreSQL()
 
 bool QtDatabasePostgreSQL::syncConnect(const std::string &host,const std::string &dbname,const std::string &user,const std::string &password)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     #ifdef CATCHCHALLENGER_SOLO
     std::cerr << "Disconnected to incorrect database type for solo into QtDatabase class" << std::endl;
     abort();

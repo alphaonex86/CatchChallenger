@@ -2,7 +2,7 @@
 #include "GeneralVariable.hpp"
 #include <cstdio>
 #include <stdexcept>
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 #include <iostream>
 #endif
 
@@ -25,7 +25,7 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
       tempValue = static_cast<unsigned int>(std::stoul(string));
     }
     catch(...) {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(Q_LIKELY(ok!=NULL))
@@ -40,7 +40,7 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -57,7 +57,7 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
             return tempValue;
         else
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
             #endif
             if(ok!=NULL)
@@ -67,7 +67,7 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -85,7 +85,7 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
       tempValue = static_cast<unsigned int>(std::stoul(string));
     }
     catch(...) {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(Q_LIKELY(ok!=NULL))
@@ -100,7 +100,7 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -117,7 +117,7 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
             return tempValue;
         else
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
             #endif
             if(ok!=NULL)
@@ -127,7 +127,7 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -145,7 +145,7 @@ uint32_t stringtouint32(const std::string &string,bool *ok)
       tempValue = static_cast<unsigned int>(std::stoul(string));
     }
     catch(...) {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(Q_LIKELY(ok!=NULL))
@@ -165,7 +165,7 @@ uint32_t stringtouint32(const std::string &string,bool *ok)
             return tempValue;
         else
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
             #endif
             if(ok!=NULL)
@@ -175,7 +175,7 @@ uint32_t stringtouint32(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -211,7 +211,7 @@ bool stringtobool(const std::string &string,bool *ok)
             *ok=true;
         return false;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
     #endif
     if(ok!=NULL)
@@ -227,7 +227,7 @@ uint64_t stringtouint64(const std::string &string,bool *ok)
       tempValue = std::stoull(string);
     }
     catch(...) {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(Q_LIKELY(ok!=NULL))
@@ -246,7 +246,7 @@ uint64_t stringtouint64(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -264,7 +264,7 @@ int8_t stringtoint8(const std::string &string,bool *ok)
       tempValue = static_cast<int>(std::stol(string));
     }
     catch(...) {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(Q_LIKELY(ok!=NULL))
@@ -279,7 +279,7 @@ int8_t stringtoint8(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -296,7 +296,7 @@ int8_t stringtoint8(const std::string &string,bool *ok)
             return tempValue;
         else
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
             #endif
             if(ok!=NULL)
@@ -306,7 +306,7 @@ int8_t stringtoint8(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -324,7 +324,7 @@ int16_t stringtoint16(const std::string &string,bool *ok)
       tempValue = static_cast<int>(std::stol(string));
     }
     catch(...) {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(Q_LIKELY(ok!=NULL))
@@ -339,7 +339,7 @@ int16_t stringtoint16(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -356,7 +356,7 @@ int16_t stringtoint16(const std::string &string,bool *ok)
             return tempValue;
         else
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
             #endif
             if(ok!=NULL)
@@ -366,7 +366,7 @@ int16_t stringtoint16(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -384,7 +384,7 @@ int32_t stringtoint32(const std::string &string,bool *ok)
       tempValue = static_cast<int>(std::stol(string));
     }
     catch(...) {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(Q_LIKELY(ok!=NULL))
@@ -403,7 +403,7 @@ int32_t stringtoint32(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -421,7 +421,7 @@ int64_t stringtoint64(const std::string &string,bool *ok)
       tempValue = std::stoll(string);
     }
     catch(...) {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(Q_LIKELY(ok!=NULL))
@@ -440,7 +440,7 @@ int64_t stringtoint64(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -460,7 +460,7 @@ float stringtofloat(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)
@@ -479,7 +479,7 @@ double stringtodouble(const std::string &string,bool *ok)
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         std::cerr << "Convertion failed and repported at " << __FILE__ << ":" << __LINE__ << std::endl;
         #endif
         if(ok!=NULL)

@@ -178,7 +178,7 @@ void MapController::updateBot()
 void MapController::connectAllSignals(CatchChallenger::Api_protocol_Qt *client)
 {
     MapControllerMP::connectAllSignals(client);
-    /*#if ! defined (ONLYMAPRENDER)
+    /*#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
     if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,this,&MapController::insert_plant))
         abort();
     if(!connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,this,&MapController::remove_plant))

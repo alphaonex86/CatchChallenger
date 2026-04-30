@@ -56,7 +56,7 @@ void MoveOnTheMap::newDirection(const Direction &the_new_direction)
             case Direction_look_at_bottom:
             case Direction_look_at_left:
             //to drop the dual same trame
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(last_step>0)
                 abort();
             if(last_direction==the_new_direction)

@@ -5,7 +5,7 @@
 #include "../../general/base/ProtocolVersion.hpp"
 #include "Client.hpp"
 #include <iostream>
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 #include <QtGlobal>
 #endif
 #include <random>
@@ -48,7 +48,7 @@ void NormalServerGlobal::displayInfo()
               << binarytoHexa(gameheader,sizeof(gameheader)) << " "
               << binarytoHexa(loginheader,sizeof(loginheader))
               << std::endl;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     std::cout << "Qt version: " << qVersion() << " (" << QT_VERSION << ")" << std::endl;
     #endif
     std::cout << "Base client size without string/pointer content: " << sizeof(CatchChallenger::Client)
@@ -83,7 +83,7 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("min_character"))
         settings->setValue("min_character",1);
     if(!settings->contains("automatic_account_creation"))
-    #if defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+    #if defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
         settings->setValue("automatic_account_creation",false);
     #else
         settings->setValue("automatic_account_creation",true);

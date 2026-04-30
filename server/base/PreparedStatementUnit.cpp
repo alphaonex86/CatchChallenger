@@ -1,6 +1,6 @@
 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 #include "PreparedStatementUnit.hpp"
-#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(CATCHCHALLENGER_SERVER)
 #include <postgresql/libpq-fe.h>
 #endif
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
@@ -114,7 +114,7 @@ std::string PreparedStatementUnit::writeToPrepare(const std::string &query)
 
 bool PreparedStatementUnit::empty() const
 {
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(CATCHCHALLENGER_SERVER)
     return false;
     #else
     return query.empty();
@@ -143,7 +143,7 @@ DatabaseBaseCallBack *PreparedStatementUnit::asyncRead(void * returnObject,CallB
         return NULL;
     }
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
             return database->asyncPreparedRead(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,returnObject,method,values);
         #else
             return database->asyncPreparedRead("",uniqueName,returnObject,method,values);
@@ -168,7 +168,7 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
         return false;
     }
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
             return database->asyncPreparedWrite(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,values);
         #else
             return database->asyncPreparedWrite("",uniqueName,values);
@@ -185,7 +185,7 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
 PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other) // copy constructor
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     switch(other.database->databaseType())
     {
         default:
@@ -237,7 +237,7 @@ PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : //
       query(other.query)
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     switch(other.database->databaseType())
     {
         default:
@@ -279,7 +279,7 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
         #endif
         return *this;
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     switch(other.database->databaseType())
     {
         default:
@@ -317,7 +317,7 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
 PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& other) // move assignment
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     switch(other.database->databaseType())
     {
         default:

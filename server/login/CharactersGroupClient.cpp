@@ -212,7 +212,7 @@ void CharactersGroupForLogin::server_list_object()
             {
                 //server index
                 const InternalGameServer &server=servers.at(server_id);
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 if(server.indexOnFlatList>=serverCountForAllCharactersGroup())
                 {
                     std::cerr << "CharactersGroupForLogin::server_list_object(): server.indexOnFlatList(" << std::to_string(server.indexOnFlatList) << ")>=servers.size(" << std::to_string(serverCountForAllCharactersGroup()) << ")" << std::endl;
@@ -256,7 +256,7 @@ void CharactersGroupForLogin::server_list_object()
 
 void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(preparedDBQueryCommonForLogin.db_query_delete_character.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
@@ -277,7 +277,7 @@ void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
 /*
 void CharactersGroupForLogin::deleteCharacterNow(const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(preparedDBQueryCommonForLogin.db_query_delete_character.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
@@ -388,7 +388,7 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
 
 int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.empty())
     {
         std::cerr << "addCharacter() Query is empty, bug" << std::endl;
@@ -514,7 +514,7 @@ void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * c
     }
 
     DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.asyncRead(this,&CharactersGroupForLogin::addCharacterStep2_static,{
-                                                                                                                                      #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+                                                                                                                                      #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(CATCHCHALLENGER_SERVER)
                                                                                                                                       pseudo
                                                                                                                                       #else
                                                                                                                                       SqlFunction::quoteSqlVariable(pseudo)
@@ -608,7 +608,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         }
         else
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::cout << "Don't ask more to master (already requested): maxCharacterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << std::to_string(maxCharacterId.size()) << "<" << std::to_string(CATCHCHALLENGER_SERVER_MINIDBLOCK) << " for charactersGroupIndex: " << std::to_string(charactersGroupIndex) << std::endl;
             #endif
         }
@@ -625,7 +625,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         std::cerr << "At addCharacterStep2_return, prepared query not found" << std::endl;
         abort();
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(profile.preparedStatementForCreationByCommon.find(databaseBaseCommon)==profile.preparedStatementForCreationByCommon.cend())
     {
         std::cerr << "At addCharacterStep2_return, database not found" << std::endl;
@@ -633,7 +633,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     }
     #endif
     EpollServerLoginSlave::LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon.at(databaseBaseCommon);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(profileIndex>=preparedStatementForCreation.type.size())
     {
         std::cerr << "At addCharacterStep2_return, profileIndex " << std::to_string(profileIndex) << " not found" << std::endl;
@@ -641,7 +641,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     }
     #endif
     EpollServerLoginSlave::LoginProfile::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type.at(profileIndex);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(monsterGroupId>=preparedStatementForCreationType.monsterGroup.size())
     {
         std::cerr << "At addCharacterStep2_return, monsterGroupId " << std::to_string(monsterGroupId) << " not found" << std::endl;
@@ -738,7 +738,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     character_insert.asyncWrite({
                 characterIdString,
                 std::to_string(client->account_id),
-                #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+                #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(CATCHCHALLENGER_SERVER)
                 pseudo,
                 #else
                 SqlFunction::quoteSqlVariable(pseudo),
@@ -766,7 +766,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
 
 bool CharactersGroupForLogin::removeCharacterLater(void * const client,const uint8_t &query_id, const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.empty())
     {
         std::cerr << "removeCharacter() Query is empty, bug" << std::endl;
@@ -855,7 +855,7 @@ void CharactersGroupForLogin::removeCharacterLater_return(EpollClientLoginSlave 
 
 void CharactersGroupForLogin::dbQueryWriteCommon(const std::string &queryText)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(queryText.empty())
     {
         std::cerr << "dbQuery() Query is empty, bug" << std::endl;

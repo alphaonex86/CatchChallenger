@@ -16,7 +16,7 @@
 #include <unistd.h>
 #endif
 
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 
 using namespace CatchChallenger;
 

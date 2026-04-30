@@ -22,7 +22,7 @@ catchchallenger_datapack_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(c
     catchchallenger_datapack_map<uint8_t, Plant> plants;
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
@@ -37,7 +37,7 @@ catchchallenger_datapack_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(c
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return plants;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -289,7 +289,7 @@ catchchallenger_datapack_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(c
             std::cerr << "Unable to open the plants file: " << file << ", have not the plant id: child->Name(): " << plantItem->Name() << std::endl;
         plantItem = plantItem->NextSiblingElement("plant");
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return plants;

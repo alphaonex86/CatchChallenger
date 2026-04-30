@@ -110,7 +110,7 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const s
     this->datapackPath=datapackPath;
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=std::string(DATAPACK_BASE_PATH_MAPSUB1)+"na/"+std::string(DATAPACK_BASE_PATH_MAPSUB2)+"nabis/";
-    #ifndef BOTTESTCONNECT
+    #ifndef CATCHCHALLENGER_BOT_TESTCONNECT
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
 

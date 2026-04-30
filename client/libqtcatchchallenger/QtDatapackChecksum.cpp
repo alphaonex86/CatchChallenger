@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_set>
 #include <iostream>
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER)
 //with Qt client
 #include <QCryptographicHash>
 #else
@@ -14,13 +14,13 @@
 
 using namespace CatchChallenger;
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
 QThread QtDatapackChecksum::thread;
 #endif
 
 QtDatapackChecksum::QtDatapackChecksum()
 {
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+    #if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
     if(!thread.isRunning())
         thread.start();
     moveToThread(&thread);
@@ -30,12 +30,12 @@ QtDatapackChecksum::QtDatapackChecksum()
 
 QtDatapackChecksum::~QtDatapackChecksum()
 {
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+    #if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
     stopThread();
     #endif
 }
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
 void QtDatapackChecksum::stopThread()
 {
     thread.exit();
@@ -44,7 +44,7 @@ void QtDatapackChecksum::stopThread()
 }
 #endif
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER)
 void QtDatapackChecksum::doDifferedChecksumBase(const std::string &datapackPath)
 {
     std::cerr << "QtDatapackChecksum::doDifferedChecksumBase" << std::endl;
@@ -53,7 +53,7 @@ void QtDatapackChecksum::doDifferedChecksumBase(const std::string &datapackPath)
 }
 #endif
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER)
 void QtDatapackChecksum::doDifferedChecksumMain(const std::string &datapackPath)
 {
     const DatapackChecksum::FullDatapackChecksumReturn &FullDatapackChecksumReturn=doFullSyncChecksumMain(datapackPath);
@@ -61,7 +61,7 @@ void QtDatapackChecksum::doDifferedChecksumMain(const std::string &datapackPath)
 }
 #endif
 
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+#if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER)
 void QtDatapackChecksum::doDifferedChecksumSub(const std::string &datapackPath)
 {
     const DatapackChecksum::FullDatapackChecksumReturn &FullDatapackChecksumReturn=doFullSyncChecksumSub(datapackPath);

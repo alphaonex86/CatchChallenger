@@ -9,7 +9,7 @@
 
 namespace CatchChallenger {
 class DLL_PUBLIC QtDatapackChecksum :
-        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+        #if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
         public QThread
         #else
         public QObject
@@ -20,12 +20,12 @@ class DLL_PUBLIC QtDatapackChecksum :
 public:
     explicit QtDatapackChecksum();
     ~QtDatapackChecksum();
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+    #if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER) && !defined(NOTHREADS)
     void stopThread();
     static QThread thread;
 private:
     #endif
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+    #if ! defined(QT_NO_EMIT) && ! defined(CATCHCHALLENGER_SERVER)
 public slots:
     void doDifferedChecksumBase(const std::string &datapackPath);
     void doDifferedChecksumMain(const std::string &datapackPath);

@@ -44,7 +44,7 @@
 
 using namespace CatchChallenger;
 
-#ifdef SERVERSSL
+#ifdef CATCHCHALLENGER_SERVER_SSL
 EpollSslServer *server=NULL;
 #else
 EpollServer *server=NULL;
@@ -68,14 +68,14 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
-    const size_t &returnedSize=fread(data,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
-    if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+    const size_t &returnedSize=fread(data,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,fpRandomFile);
+    if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
+        std::cerr << "Unable to read the " << CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
     settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(data)
-                                           ,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).c_str());
+                                           ,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER).c_str());
     fclose(fpRandomFile);
     settings.sync();
 }
@@ -116,7 +116,7 @@ void signal_callback_handler(int signum){
 
 #ifndef CATCHCHALLENGER_NOXML
 void send_settings(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
         EpollSslServer *server
         #else
         EpollServer *server
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
     #endif
     #endif
 
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     server=new EpollSslServer();
     #else
     server=new EpollServer();
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
             std::cerr << "Unable to connect on master" << std::endl;
             abort();
         }
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
         ctx from what?
         LoginLinkToMaster::loginLinkToMaster=new LoginLinkToMaster(linkfd,ctx);
         #else
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
         }
 
 
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
         if(!formatedServerNormalSettings.useSsl)
         {
             qDebug() << "Ssl connexion requested but server not compiled with ssl support!";
@@ -650,7 +650,7 @@ int main(int argc, char *argv[])
     epoll_event events[MAXEVENTS];
 
     char encodingBuff[1];
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     encodingBuff[0]=0x01;
     #else
     encodingBuff[0]=0x00;
@@ -659,7 +659,7 @@ int main(int argc, char *argv[])
     bool acceptSocketWarningShow=false;
     int numberOfConnectedClient=0;
     /* The event loop */
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     unsigned int clientnumberToDebug=0;
     #endif
     int number_of_events, i;
@@ -690,9 +690,6 @@ int main(int argc, char *argv[])
             elementsToDeleteSize-=elementsToDeleteSub.size();
             elementsToDelete[elementsToDeleteIndex].clear();
         }
-        #ifdef SERVERBENCHMARK
-        EpollUnixSocketClientFinal::start = std::chrono::high_resolution_clock::now();
-        #endif
         for(i = 0; i < number_of_events; i++)
         {
             #ifdef PROTOCOLPARSINGDEBUG
@@ -785,7 +782,7 @@ int main(int argc, char *argv[])
                         {
                             ClientWithMapEpoll &client=epollClientList->getByReference();
                             client.reset(infd);
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             ++clientnumberToDebug;
                             if(client.getType()!=BaseClassSwitch::EpollObjectType::Client)
                             {
@@ -955,10 +952,6 @@ int main(int argc, char *argv[])
                 break;
             }
         }
-        #ifdef SERVERBENCHMARK
-        std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-EpollUnixSocketClientFinal::start;
-        EpollUnixSocketClientFinal::timeUsed+=elapsed_seconds.count();
-        #endif
     }
     server->close();
     server->unload_the_data();

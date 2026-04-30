@@ -76,10 +76,10 @@ MainWindow::MainWindow(QWidget *parent) :
     Settings::settings=new QSettings();
 
     socket=NULL;
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     realSslSocket=NULL;
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     realWebSocket=NULL;
     #endif
     #if defined(CATCHCHALLENGER_SOLO)
@@ -119,7 +119,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(ui->stackedWidget->indexOf(solowindow)<0)
         ui->solo->hide();
     #endif
-    #ifdef NOSINGLEPLAYER
+    #ifndef CATCHCHALLENGER_SOLO
     ui->solo->hide();
     #else
     #if defined(CATCHCHALLENGER_SOLO)
@@ -167,7 +167,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // Create a new Media
     {
         player=NULL;
-        const std::string &soundFile=QCoreApplication::applicationDirPath().toStdString()+CATCHCHALLENGER_CLIENT_MUSIC_LOADING;
+        const std::string &soundFile=QCoreApplication::applicationDirPath().toStdString()+"/music/loading.opus";
         if(QFile(soundFile.c_str()).exists())
         {
             player = new QAudioSink(QMediaDevices::defaultAudioOutput(), Audio::audio->format());
@@ -438,7 +438,7 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
         if(connexion.contains(regexConnexion) || connexion.startsWith("ws://") || connexion.startsWith("wss://"))
         {
             bool ok=true;
-            #ifndef NOTCPSOCKET
+            #ifndef CATCHCHALLENGER_NO_TCPSOCKET
             QString host=connexion;
             uint16_t port=0;
             #endif
@@ -446,7 +446,7 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
             {}
             else
             {
-                #ifndef NOTCPSOCKET
+                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
                 host=connexion;
                 host.remove(hostRemove);
                 QString port_string=connexion;
@@ -464,13 +464,13 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                 connexionInfo.lan=false;
                 if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
                 {
-                    #ifndef NOWEBSOCKET
+                    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
                     connexionInfo.ws=connexion;
                     #endif
                 }
                 else
                 {
-                    #ifndef NOTCPSOCKET
+                    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
                     connexionInfo.host=host;
                     connexionInfo.port=port;
                     #endif
@@ -767,7 +767,7 @@ void MainWindow::displayServerList()
 
     if(mergedConnexionInfoList.empty())
         ui->serverEmpty->setText(QStringLiteral("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
-    #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+    #if defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_NO_WEBSOCKET)
     #error Web socket and tcp socket are both not supported
     return;
     #endif
@@ -782,10 +782,10 @@ void MainWindow::displayServerList()
             abort();
         const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
         QString connexionInfoHost;
-        #ifdef NOTCPSOCKET
+        #ifdef CATCHCHALLENGER_NO_TCPSOCKET
         connexionInfoHost=connexionInfo.ws;
         #else
-            #ifdef NOWEBSOCKET
+            #ifdef CATCHCHALLENGER_NO_WEBSOCKET
             connexionInfoHost=connexionInfo.host;
             #else
             if(!connexionInfo.host.isEmpty())
@@ -815,7 +815,7 @@ void MainWindow::displayServerList()
             QString tempUniqueCode;
             if(connexionInfo.proxyHost.isEmpty())
             {
-                #ifndef NOTCPSOCKET
+                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
                 if(!connexionInfo.host.isEmpty())
                     tempUniqueCode=QString("%1:%2")
                         .arg(connexionInfo.host)
@@ -827,7 +827,7 @@ void MainWindow::displayServerList()
             }
             else
             {
-                #ifndef NOTCPSOCKET
+                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
                 if(!connexionInfo.host.isEmpty())
                     tempUniqueCode=QString("%1:%2:%3:%4")
                         .arg(connexionInfo.host)
@@ -852,13 +852,13 @@ void MainWindow::displayServerList()
                 selectedServer=newEntry;
         }
         QString stringPort;
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(!connexionInfo.host.isEmpty())
             stringPort=":"+QString::number(connexionInfo.port);
         #endif
         if(connexionInfo.name.isEmpty())
         {
-            #ifndef NOTCPSOCKET
+            #ifndef CATCHCHALLENGER_NO_TCPSOCKET
             if(!connexionInfo.host.isEmpty())
                 name=QStringLiteral("%1:%2").arg(connexionInfoHost).arg(connexionInfo.port);
             else
@@ -987,7 +987,7 @@ void MainWindow::server_add_finished()
     if(addServer->type()==0)
     {
         connexionInfo.port=addServer->port();
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         connexionInfo.host=addServer->server();
         #endif
         connexionInfo.ws.clear();
@@ -996,7 +996,7 @@ void MainWindow::server_add_finished()
     {
         connexionInfo.port=0;
         connexionInfo.host.clear();
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         connexionInfo.ws=addServer->server();
         #endif
     }
@@ -1390,21 +1390,21 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         socket->abort();
         delete socket;
         socket=NULL;
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         realSslSocket=nullptr;
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         realWebSocket=nullptr;
         #endif
     }
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     if(!selectedServerConnexion->host.isEmpty())
     {
         realSslSocket=new QSslSocket();
         socket=new CatchChallenger::ConnectedSocket(realSslSocket);
     }
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     else if(!selectedServerConnexion->ws.isEmpty())
     {
         realWebSocket=new QWebSocket();
@@ -1425,22 +1425,22 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     if(!selectedServerConnexion->proxyHost.isEmpty())
     {
         QNetworkProxy proxy;
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=nullptr)
             proxy=realSslSocket->proxy();
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=nullptr)
             proxy=realWebSocket->proxy();
         #endif
         proxy.setType(QNetworkProxy::Socks5Proxy);
         proxy.setHostName(selectedServerConnexion->proxyHost);
         proxy.setPort(selectedServerConnexion->proxyPort);
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=nullptr)
             realSslSocket->setProxy(proxy);
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=nullptr)
             realWebSocket->setProxy(proxy);
         #endif
@@ -1448,7 +1448,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     ui->stackedWidget->setCurrentWidget(baseWindow);
     baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     baseWindow->stateChanged(QAbstractSocket::ConnectingState);
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     if(realSslSocket!=nullptr)
     {
         if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection))
@@ -1462,7 +1462,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         socket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
     }
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     if(realWebSocket!=nullptr)
     {
         if(!connect(realWebSocket,&QWebSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
@@ -1500,11 +1500,11 @@ void MainWindow::connectTheExternalSocket()
     if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())
     {
         QNetworkProxy proxy;
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=nullptr)
             proxy=realSslSocket->proxy();
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=nullptr)
             proxy=realWebSocket->proxy();
         #endif
@@ -1553,24 +1553,24 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         //the first byte written by QtServer::newConnection(), so we must NOT send
         //it a second time from here or we trip have_send_protocol and kill the
         //connection with "Have already send the protocol".
-        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET)
+        #if defined(CATCHCHALLENGER_SOLO) && !defined(CATCHCHALLENGER_NO_TCPSOCKET)
         const bool usingFakeSocket=(socket!=NULL && socket->fakeSocket!=NULL);
         #else
         const bool usingFakeSocket=false;
         #endif
-        #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
+        #if !defined(CATCHCHALLENGER_NO_TCPSOCKET) && !defined(CATCHCHALLENGER_NO_WEBSOCKET)
         if(realSslSocket==NULL && realWebSocket==NULL)
         {}//client->sendProtocol();
         else
             qDebug() << "Tcp/Web socket found, skip sendProtocol()";
-        #elif !defined(NOTCPSOCKET)
+        #elif !defined(CATCHCHALLENGER_NO_TCPSOCKET)
         if(realSslSocket==NULL && !usingFakeSocket)
             client->sendProtocol();
         else if(usingFakeSocket)
             qDebug() << "Fake socket found, skip sendProtocol() (already sent by readForFirstHeader)";
         else
             qDebug() << "Tcp socket found, skip sendProtocol()";
-        #elif !defined(NOWEBSOCKET)
+        #elif !defined(CATCHCHALLENGER_NO_WEBSOCKET)
         if(realWebSocket==NULL)
             client->sendProtocol();
         else
@@ -1613,14 +1613,14 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             internalServer->stop();
         #endif
         /* to fix bug: firstly try connect but connexion refused on localhost, secondly try local game */
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=NULL)
         {
             realSslSocket->deleteLater();
             realSslSocket=NULL;
         }
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=NULL)
         {
             realWebSocket->deleteLater();
@@ -1657,11 +1657,11 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(realSslSocket!=NULL)
             return;
         #endif
-        #ifndef NOWEBSOCKET
+        #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(realWebSocket!=NULL)
             return;
         #endif
@@ -2569,7 +2569,7 @@ void MainWindow::on_server_edit_clicked()
             connexionInfo->name=editServer.name();
             if(editServer.type()==0)
             {
-                #ifndef NOTCPSOCKET
+                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
                 connexionInfo->host=editServer.server();
                 #endif
                 connexionInfo->port=editServer.port();
@@ -2577,7 +2577,7 @@ void MainWindow::on_server_edit_clicked()
             }
             else
             {
-                #ifndef NOWEBSOCKET
+                #ifndef CATCHCHALLENGER_NO_WEBSOCKET
                 connexionInfo->ws=editServer.server();
                 #endif
                 connexionInfo->port=editServer.port();

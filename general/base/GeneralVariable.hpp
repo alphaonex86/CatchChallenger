@@ -4,8 +4,8 @@
 #include "CatchChallenger_Hash.hpp"
 
 #ifndef CATCHCHALLENGER_RELEASE
-#ifndef CATCHCHALLENGER_EXTRA_CHECK
-#define CATCHCHALLENGER_EXTRA_CHECK
+#ifndef CATCHCHALLENGER_HARDENED
+#define CATCHCHALLENGER_HARDENED
 #endif
 #endif
 
@@ -29,8 +29,13 @@
 #define CATCHCHALLENGER_DEBUG_FIGHT
 //*/
 
-//name better:#define CATCHCHALLENGER_TOKENSIZE 16//can't be more than 250 due to server conception, and useless, with 8bytes, at 2 billions connexion rate, it's 300years to crack
-#define CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER 32
+// 16-byte random token used both for the client auth handshake and for
+// the per-character connect-to-game-server hop. Not a blake3 digest
+// (blake3 would be 32 bytes); this is a plain random nonce, 16 bytes
+// is enough to cover ~300 years of brute-force at 2 billion connect/sec.
+// Legacy aliases (CATCHCHALLENGER_TOKENSIZE, TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+// were merged into this single name.
+#define CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER 16
 #define CATCHCHALLENGER_MONSTER_LEVEL_MAX 100
 #define CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER 5
 //32Bits for the monster, 8Bits for the gender, 8Bits for level, 8Bits for the next step
@@ -48,7 +53,9 @@
 #endif
 //here to ProtocolParsingGeneral
 #define TOKEN_SIZE_FOR_MASTERAUTH 32
-#define TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT 16
+// TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT removed: merged into
+// CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER (same 16-byte size,
+// same client-auth handshake semantics).
 #define CATCHCHALLENGER_MAXPROTOCOLQUERY 16
 
 #define RANDOM_FLOAT_PART_DIVIDER 10000

@@ -7,7 +7,7 @@
 #include "../../general/base/GeneralStructures.hpp"
 #include "../libqtcatchchallenger/Api_protocol_Qt.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
-#if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+#if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
 #include "../../server/qt/QFakeSocket.hpp"
 #endif
 
@@ -51,13 +51,13 @@ public slots:
     void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression);
 private:
     CatchChallenger::ConnectedSocket *socket;
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     QSslSocket *realSslSocket;
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     QWebSocket *realWebSocket;
     #endif
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     QFakeSocket *fakeSocket;
     #endif
     QString lastServer;

@@ -86,19 +86,19 @@ void MainWindow::generateTokenStatClient(TinyXMLSettings &settings,char * const 
     {
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token, use unsafe rand()" << std::endl;
         unsigned int index=0;
-        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+        while(index<CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
         {
             data[index]=rand();
             index++;
         }
         return;
     }
-    const int &returnedSize=fread(data,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
-    if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+    const int &returnedSize=fread(data,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,fpRandomFile);
+    if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from, use unsafe rand()" << RANDOMFILEDEVICE << std::endl;
+        std::cerr << "Unable to read the " << CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER << " needed to do the token from, use unsafe rand()" << RANDOMFILEDEVICE << std::endl;
         unsigned int index=0;
-        while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+        while(index<CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
         {
             data[index]=rand();
             index++;
@@ -106,7 +106,7 @@ void MainWindow::generateTokenStatClient(TinyXMLSettings &settings,char * const 
         return;
     }
     settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(data)
-                                           ,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).c_str());
+                                           ,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER).c_str());
     fclose(fpRandomFile);
     settings.sync();
 }
@@ -746,7 +746,7 @@ void MainWindow::load_settings()
             if(!settings->contains("token"))
                 generateTokenStatClient(*settings,formatedServerSettings.private_token_statclient);
             std::string token=settings->value("token");
-            if(token.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2/*String Hexa, not binary*/)
+            if(token.size()!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER*2/*String Hexa, not binary*/)
                 generateTokenStatClient(*settings,formatedServerSettings.private_token_statclient);
             token=settings->value("token");
             const std::vector<char> &tokenBinary=hexatoBinary(token);
@@ -755,7 +755,7 @@ void MainWindow::load_settings()
                 std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
                 abort();
             }
-            memcpy(formatedServerSettings.private_token_statclient,tokenBinary.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+            memcpy(formatedServerSettings.private_token_statclient,tokenBinary.data(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
         }
         settings->endGroup();
     }

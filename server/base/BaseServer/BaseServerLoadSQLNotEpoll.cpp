@@ -141,17 +141,17 @@ void BaseServer::preload_16_async_zone_sql()
                 default:
                 abort();
                 break;
-                #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(CATCHCHALLENGER_SERVER))
                 case DatabaseBase::DatabaseType::Mysql:
                     queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
                 break;
                 #endif
-                #ifndef EPOLLCATCHCHALLENGERSERVER
+                #ifndef CATCHCHALLENGER_SERVER
                 case DatabaseBase::DatabaseType::SQLite:
                     queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
                 break;
                 #endif
-                #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+                #if not defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                 case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
                 break;

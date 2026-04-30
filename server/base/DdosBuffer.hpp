@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 #include <sys/time.h>
 #endif
 
@@ -18,14 +18,14 @@ public:
     void flush();            // flush the oldest tab value if the array is at the biggest size
     void reset();
     std::string dump();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     uint64_t get_lastFlushTime();
     #endif
 private:
     uint8_t m_start,m_stop;
     T m_total,m_newValue;
     T m_elems[maxItems];     // elements
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     uint64_t lastFlush;
     #endif
 };
@@ -42,7 +42,7 @@ DdosBuffer<T,maxItems>::DdosBuffer() :
         std::cerr << "circularbuffer can't have 0 element" << std::endl;
         abort();
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     struct timeval tv;
     gettimeofday(&tv,NULL);
     lastFlush=(uint64_t)tv.tv_sec;
@@ -52,7 +52,7 @@ DdosBuffer<T,maxItems>::DdosBuffer() :
 template <class T,uint8_t maxItems>
 T DdosBuffer<T,maxItems>::total() const
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     struct timeval tv;
     gettimeofday(&tv,NULL);
     if(lastFlush>(uint64_t)tv.tv_sec)
@@ -103,7 +103,7 @@ void DdosBuffer<T,maxItems>::incrementLastValue()
         m_newValue++;
 }
 
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#ifdef CATCHCHALLENGER_HARDENED
 template <class T,uint8_t maxItems>
 uint64_t DdosBuffer<T,maxItems>::get_lastFlushTime()
 {
@@ -121,7 +121,7 @@ uint64_t DdosBuffer<T,maxItems>::get_lastFlushTime()
 template <class T,uint8_t maxItems>
 void DdosBuffer<T,maxItems>::flush()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     struct timeval tv;
     gettimeofday(&tv,NULL);
     lastFlush=(uint64_t)tv.tv_sec;
@@ -173,7 +173,7 @@ void DdosBuffer<T,maxItems>::reset()
     m_stop=0;
     m_total=0;
     m_newValue=0;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     struct timeval tv;
     gettimeofday(&tv,NULL);
     lastFlush=(uint64_t)tv.tv_sec;

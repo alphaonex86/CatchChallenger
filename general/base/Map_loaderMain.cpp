@@ -16,7 +16,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
 bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable)
 #endif
 {
-    #ifndef ONLYMAPRENDER
+    #ifndef CATCHCHALLENGER_ONLYMAPRENDER
     if(CommonDatapack::commonDatapack.get_tempNameToItemId_size()==0)
     {
         std::cerr << "no item name loaded " << __FILE__ << ":" << __LINE__ << " (abort)" << std::endl;
@@ -47,7 +47,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
     tinyxml2::XMLDocument *domDocument;
 
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
@@ -62,7 +62,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
             error=file+", "+tinyxml2errordoc(domDocument);
             return false;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -559,18 +559,12 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                 return false;
             }
             else if(
-                    #ifdef TILED_ZLIB
                     strcmp(data->Attribute("compression"),"zlib")!=0
                     &&
-                    #endif
                     strcmp(data->Attribute("compression"),"zstd")!=0
                     )
             {
-                #ifdef TILED_ZLIB
                 error=std::string("Only compression zlib or zstd is supported, file: ")+file;
-                #else
-                error=std::string("Only compression zstd is supported, file: ")+file;
-                #endif
                 return false;
             }
             else
@@ -584,14 +578,12 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                     std::vector<char> dataRaw;
                     dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
                     int32_t decompressedSize=0;
-                    #ifdef TILED_ZLIB
                     if(strcmp(data->Attribute("compression"),"zlib")==0)
                         decompressedSize=decompressZlib(
                                 compressedData.data(),static_cast<uint32_t>(compressedData.size()),
                                 dataRaw.data(),static_cast<uint32_t>(dataRaw.size())
                                     );
                     else
-                    #endif
                         {
                             decompressedSize=ZSTD_decompress(dataRaw.data(),static_cast<uint32_t>(dataRaw.size()), compressedData.data(),static_cast<uint32_t>(compressedData.size()));
                             if (ZSTD_isError(decompressedSize)) {
@@ -910,11 +902,11 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
     }
 
     // merge TMX data into this->map_to_send so loadExtraXml and loadAllMapsAndLink
-    // can access it. The assignment must happen for ONLYMAPRENDER too (map2png),
+    // can access it. The assignment must happen for CATCHCHALLENGER_ONLYMAPRENDER too (map2png),
     // because map2png reads map_to_send.border.{left,right,top,bottom}.fileName to
     // recurse into adjacent maps when rendering --renderAll.
     this->map_to_send = map_to_send_temp;
-    #ifndef ONLYMAPRENDER
+    #ifndef CATCHCHALLENGER_ONLYMAPRENDER
     this->map_to_send.flat_simplified_map = simplifiedMap;
 
     std::string xmlExtra=file;
@@ -975,7 +967,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
     // save final simplified map (with zone IDs) back to this->map_to_send
     this->map_to_send.flat_simplified_map = std::move(simplifiedMap);
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return true;

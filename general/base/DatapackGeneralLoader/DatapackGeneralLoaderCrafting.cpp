@@ -21,7 +21,7 @@ std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,Craft
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe> crafingRecipes;
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> itemToCrafingRecipes;
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     //open and quick check the file
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
@@ -37,7 +37,7 @@ std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,Craft
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -322,7 +322,7 @@ std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,Craft
             std::cerr << "Unable to open the crafting recipe file: " << file << ", have not the crafting recipe id: child->Name(): " << recipeItem->Name() << std::endl;
         recipeItem = recipeItem->NextSiblingElement("recipe");
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> >(crafingRecipes,itemToCrafingRecipes);

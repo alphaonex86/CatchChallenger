@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     epoll_event events[MAXEVENTS];
 
     char encodingBuff[1];
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     encodingBuff[0]=0x01;
     #else
     encodingBuff[0]=0x00;
@@ -181,11 +181,11 @@ int main(int argc, char *argv[])
                             }
 
                             EpollClientLoginSlave *client=new EpollClientLoginSlave(infd
-                                               #ifdef SERVERSSL
+                                               #ifdef CATCHCHALLENGER_SERVER_SSL
                                                ,EpollServerLoginSlave::epollServerLoginSlave->getCtx()
                                                #endif
                                 );
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
                             {
                                 std::cerr << "Wrong post check type (abort)" << std::endl;

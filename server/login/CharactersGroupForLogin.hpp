@@ -83,7 +83,7 @@ public:
     void server_list_object();
     DatabaseBase::DatabaseType databaseType() const;
     DatabaseBase * database() const;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     static uint8_t serverCountForAllCharactersGroup();
     #endif
     #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST

@@ -1,7 +1,7 @@
 #ifndef EPOLL_SERVER_LOGIN_MASTER_H
 #define EPOLL_SERVER_LOGIN_MASTER_H
 
-#ifndef SERVERSSL
+#ifndef CATCHCHALLENGER_SERVER_SSL
 
 #include "../epoll/EpollGenericServer.hpp"
 #include "EpollClientLoginMaster.hpp"

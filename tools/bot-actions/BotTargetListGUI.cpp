@@ -455,7 +455,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 MapServerMini::BlockObject *playerBlockObject=step2.layers[codeZone-1].blockObject;
                 noGoBack=!canGoFromBlockToBlock(blockObject,playerBlockObject);
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             {
                 std::unordered_set<uint32_t> known_indexOfItemOnMap;
                 for ( const std::pair<const std::pair<uint8_t,uint8_t>, MapServerMini::ItemOnMap> &item : blockObject->pointOnMap_Item )

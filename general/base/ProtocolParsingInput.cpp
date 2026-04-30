@@ -1,4 +1,4 @@
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 #include "ProtocolParsing.hpp"
 #include "ProtocolParsingCheck.hpp"
 #include "GeneralVariable.hpp"
@@ -12,7 +12,7 @@ using namespace CatchChallenger;
 ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t &size)
 {
     //control the content BEFORE send
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         if(ProtocolParsingBase::packetFixedSize[0x02]!=2)
         {
@@ -63,7 +63,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
         } while(cursor!=(uint32_t)size);
     }
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     TXSize+=size;
     #endif
     writeToSocket(data,size);
@@ -80,7 +80,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
     #ifdef PROTOCOLPARSINGDEBUG
     std::cout << "client " << this << " ProtocolParsingInputOutput::parseIncommingData() start" << std::endl;
     #endif
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(parseIncommingDataCount>0)
     {
         std::cerr << "Multiple client on same section" << std::endl;
@@ -88,7 +88,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
     }
     parseIncommingDataCount++;
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     #ifdef PROTOCOLPARSINGDEBUG
     messageParsingLayer(
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -112,14 +112,14 @@ void ProtocolParsingInputOutput::parseIncommingData()
             #endif
             if(size<0)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 parseIncommingDataCount--;
                 #endif
                 return;
             }
             if(size>0)
             {
-                #ifndef EPOLLCATCHCHALLENGERSERVER
+                #ifndef CATCHCHALLENGER_SERVER
                 RXSize+=size;
                 #endif
                 size+=header_cut.size();
@@ -129,7 +129,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
             }
             else
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 parseIncommingDataCount--;
                 #endif
                 return;
@@ -150,14 +150,14 @@ void ProtocolParsingInputOutput::parseIncommingData()
                 #ifdef PROTOCOLPARSINGDEBUG
                 std::cout << "ProtocolParsingInputOutput::parseIncommingData() !header_cut.empty() size<0" << std::endl;
                 #endif
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 parseIncommingDataCount--;
                 #endif
                 return;
             }
             if(size>0)
             {
-                #ifndef EPOLLCATCHCHALLENGERSERVER
+                #ifndef CATCHCHALLENGER_SERVER
                 RXSize+=size;
                 #endif
                 #ifdef PROTOCOLPARSINGDEBUG
@@ -172,7 +172,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
 std::to_string(flags & 0x10)+
 #endif
 std::string(" parseIncommingData(): size returned is 0!"));*/
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             parseIncommingDataCount--;
             #endif
             return;
@@ -181,14 +181,14 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
         int8_t returnVar;
         do
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             const uint32_t oldcursor=cursor;
             #endif
             #ifdef PROTOCOLPARSINGDEBUG
             std::cout << "Start split: " << binarytoHexa(tempBigBufferForInput+cursor,size-cursor) << " and size " << size-cursor << ", cursor: " << cursor << std::endl;
             #endif
             returnVar=parseIncommingDataRaw(tempBigBufferForInput,static_cast<uint32_t>(size),cursor);
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(oldcursor==cursor && returnVar==1)
             {
                 std::cerr << "Cursor don't move but the function have returned 1" << std::endl;
@@ -198,7 +198,7 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
             //this interface allow 0 copy method
             if(returnVar<0)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 parseIncommingDataCount--;
                 #endif
                 return;
@@ -212,9 +212,9 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
                 #endif
     std::string(" parseIncommingData(): finish parse the input"));
     #endif
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     parseIncommingDataCount--;
-    #if defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_SERVER)
     /*if(epollSocket.bytesAvailable()>0)
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
@@ -228,7 +228,7 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
 //this interface allow 0 copy method
 int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(ProtocolParsingBase::packetFixedSize[0x02]!=2)
     {
         std::cerr << "parseIncommingDataRaw() You have never call: ProtocolParsing::initialiseTheVariable()" << std::endl;
@@ -239,7 +239,7 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         const int8_t &returnVar=parseHeader(commonBuffer,size,cursor);
         if(returnVar!=1)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(returnVar==0)
                 errorParsingLayer("Break due to need more in query number (1)");
             else
@@ -247,7 +247,7 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
             #endif
             return returnVar;
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(cursor==0 && !(flags & 0x80))
         {
             std::cerr << "Critical bug" << std::endl;
@@ -259,7 +259,7 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         const int8_t &returnVar=parseQueryNumber(commonBuffer,size,cursor);
         if(returnVar!=1)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(returnVar==0)
                 errorParsingLayer("Break due to need more in query number (2)");
             else
@@ -267,7 +267,7 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
             #endif
             return returnVar;
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(cursor==0 && !(flags & 0x80))
         {
             std::cerr << "Critical bug" << std::endl;
@@ -279,12 +279,12 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         const int8_t &returnVar=parseDataSize(commonBuffer,size,cursor);
         if(returnVar!=1)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             //qDebug() << "Break due to need more in parse data size";
             #endif
             return returnVar;
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(cursor==0 && !(flags & 0x80))
         {
             std::cerr << "Critical bug" << std::endl;
@@ -380,7 +380,7 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
             return 0;
         }
         queryNumber=*(commonBuffer+cursor);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(Q_UNLIKELY(cursor==0))
         {
             errorParsingLayer("cursor==0, don't have read the header?"
@@ -414,7 +414,7 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
             //not a reply to a query
             if(replyTo==0x00)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 std::string returnedList;
                 unsigned int index=0;
                 while(index<sizeof(outputQueryNumberToPacketCode))
@@ -524,7 +524,7 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
         //if have too many data, or just the size
         if(dataSize<=(size-cursor))
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             if(cursor==0 && !(flags & 0x80))
             {
                 std::cerr << "Critical bug" << std::endl;
@@ -562,7 +562,7 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
         std::string(" parseIncommingData(): remaining data: ")+std::to_string(size-cursor)+
                     (", buffer data: ")+binarytoHexa(commonBuffer,sizeof(commonBuffer)));
         #endif
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(dataSize!=(uint32_t)dataToWithoutHeader.size())
         {
             errorParsingLayer("wrong data size here");
@@ -633,7 +633,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         std::string(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: ")+
                     std::to_string(queryNumber)+(", packetCode: ")+std::to_string(packetCode)+", replyTo: "+std::to_string(replyTo));
         #endif
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(!returnValue)
             errorParsingLayer("parseReplyData(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
         #endif
@@ -649,7 +649,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         std::string(" parseIncommingData(): !need_query_number && !need_subCodeType, packetCode: ")+std::to_string(packetCode));
         #endif
         const bool &returnValue=parseMessage(packetCode,data,size);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(!returnValue)
             errorParsingLayer("parseMessage(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
         #endif
@@ -667,7 +667,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         #endif
         storeInputQuery(packetCode,queryNumber);
         const bool &returnValue=parseQuery(packetCode,queryNumber,data,size);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(!returnValue)
             errorParsingLayer("parseQuery(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
         #endif
@@ -681,7 +681,7 @@ void ProtocolParsingBase::dataClear()
     flags &= 0x18;
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 std::vector<std::string> ProtocolParsingBase::getQueryRunningList()
 {
     std::vector<std::string> returnedList;
@@ -702,7 +702,7 @@ void ProtocolParsingBase::storeInputQuery(const uint8_t &,const uint8_t &)
 
 void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(inputQueryNumberToPacketCode[queryNumber]!=0x00)
     {
         messageParsingLayer(
@@ -714,7 +714,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const
     }
     #endif
     //registrer on the check
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     protocolParsingCheck->storeInputQuery(packetCode,queryNumber);
     #endif
     //register the size of the reply to send

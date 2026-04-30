@@ -1,7 +1,7 @@
 #ifndef EPOLL_SSL_SERVER_H
 #define EPOLL_SSL_SERVER_H
 
-#ifdef SERVERSSL
+#ifdef CATCHCHALLENGER_SERVER_SSL
 
 #include "EpollGenericSslServer.h"
 #include "../base/BaseServer.h"

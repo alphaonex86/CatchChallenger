@@ -37,14 +37,14 @@ void generateTokenStatClient(TinyXMLSettings &settings)
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(LinkToLogin::private_token_statclient,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
-    if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+    const int &returnedSize=fread(LinkToLogin::private_token_statclient,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,fpRandomFile);
+    if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
+        std::cerr << "Unable to read the " << CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
     settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(LinkToLogin::private_token_statclient)
-                                           ,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).c_str());
+                                           ,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER).c_str());
     fclose(fpRandomFile);
     settings.sync();
 }
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
         if(!settings.contains("token"))
             generateTokenStatClient(settings);
         std::string token=settings.value("token");
-        if(token.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2/*String Hexa, not binary*/)
+        if(token.size()!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER*2/*String Hexa, not binary*/)
             generateTokenStatClient(settings);
         token=settings.value("token");
 
@@ -140,12 +140,12 @@ int main(int argc, char *argv[])
             std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
             abort();
         }
-        memcpy(LinkToLogin::private_token_statclient,tokenBinary.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        memcpy(LinkToLogin::private_token_statclient,tokenBinary.data(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 
         if(!Epoll::epoll.init())
             return EPOLLERR;
 
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
         ctx from what?
         LoginLinkToLogin::loginLinkToLogin=new LoginLinkToLogin(ctx);
         #else

@@ -223,7 +223,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
     //old locked account
     if(lockedAccountByDisconnectedServer.find(uniqueKey)!=lockedAccountByDisconnectedServer.cend())
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(lockedAccountByDisconnectedServer.at(uniqueKey).size()>0)
             std::cerr << "lockedAccountByDisconnectedServer for this server have account locked: " << lockedAccountByDisconnectedServer.at(uniqueKey).size() << std::endl;
         #endif
@@ -235,7 +235,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
             {
                 //was disconnected from the last game server disconnection
                 this->lockedAccount[*i]=now+5;//wait 5s before reconnect
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 std::cerr << "not more locked on gameserver, database id: " << *i << std::endl;
                 #endif
             }
@@ -327,7 +327,7 @@ void CharactersGroup::removeGameServerUniqueKey(EpollClientLoginMaster * const c
     }
 
     const InternalGameServer &internalGameServer=gameServers.at(uniqueKey);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(internalGameServer.lockedAccountByGameserver.size()>0)
         std::cerr << "removeGameServerUniqueKey with account locked: " << internalGameServer.lockedAccountByGameserver.size() << std::endl;
     #endif
@@ -366,7 +366,7 @@ CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t
         const uint64_t timeStamps=lockedAccount.at(characterId);
         if(timeStamps==0)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::unordered_map<uint32_t,InternalGameServer>::iterator i=gameServers.begin();
             while(i!=gameServers.cend())
             {
@@ -392,7 +392,7 @@ CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t
         }
         else
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::cerr << "lockedAccount: " << characterId << ", beacause timeStamps: " << timeStamps << " >= varsFrom1970: " << varsFrom1970 << std::endl;
             #endif
             return CharactersGroup::CharacterLock::RecentlyUnlocked;
@@ -406,7 +406,7 @@ CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t
 //don't apply on InternalGameServer
 void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(lockedAccount.find(characterId)!=lockedAccount.cend())
     {
         if(lockedAccount.at(characterId)==0)
@@ -432,7 +432,7 @@ void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
     }
     #endif
     lockedAccount[characterId]=0;
-    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+    /*#ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "lock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
     #endif*/
 }
@@ -440,7 +440,7 @@ void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
 //don't apply on InternalGameServer
 void CharactersGroup::unlockTheCharacter(const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(lockedAccount.find(characterId)==lockedAccount.cend())
         std::cerr << "try unlock " << characterId << " but already unlocked, relock for 5s" << std::endl;
     else if(lockedAccount.at(characterId)!=0)
@@ -449,14 +449,14 @@ void CharactersGroup::unlockTheCharacter(const uint32_t &characterId)
     const uint64_t &now=sFrom1970();
     lockedAccount[characterId]=now+CharactersGroup::maxLockAge;
     addToCacheLockToDelete(characterId,now+CharactersGroup::maxLockAge);
-    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+    /*#ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "unlock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
     #endif*/
 }
 
 void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(lockedAccount.find(characterId)==lockedAccount.cend())
         std::cerr << "lockedAccount not contains: " << characterId << std::endl;
     else if(lockedAccount.at(characterId)!=0)
@@ -465,7 +465,7 @@ void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
     const uint64_t &now=sFrom1970();
     lockedAccount[characterId]=now+5;
     addToCacheLockToDelete(characterId,now+CharactersGroup::maxLockAge);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::cerr << "waitBeforeReconnect the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
     #endif
 }
@@ -503,7 +503,7 @@ void CharactersGroup::purgeTheLockedAccount()
     }
     if(index>=cacheLockToDeleteList.size())
     {
-        /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+        /*#ifdef CATCHCHALLENGER_HARDENED
         std::cout << "purged char number: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
         #endif*/
         cacheLockToDeleteList.clear();
@@ -511,7 +511,7 @@ void CharactersGroup::purgeTheLockedAccount()
     else if(index<cacheLockToDeleteList.size() && index>0)
     {
         cacheLockToDeleteList.erase(cacheLockToDeleteList.cbegin(),cacheLockToDeleteList.cbegin()+index);
-        /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+        /*#ifdef CATCHCHALLENGER_HARDENED
         std::cout << "purged char number " << std::to_string(index) << ", total locked: " << std::to_string(lockedAccount.size()) << ", remaining time locked: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
         #endif*/
     }

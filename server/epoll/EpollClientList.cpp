@@ -71,7 +71,7 @@ PLAYER_INDEX_FOR_CONNECTED EpollClientList::size() const
 
 bool EpollClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
     {
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << " then fix the caller, check before into the backtrace" << std::endl;
@@ -94,7 +94,7 @@ bool EpollClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
 //abort if index is not valid
 const CatchChallenger::Client &EpollClientList::at(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
     {
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << std::endl;
@@ -112,7 +112,7 @@ const CatchChallenger::Client &EpollClientList::at(const PLAYER_INDEX_FOR_CONNEC
 //abort if index is not valid
 CatchChallenger::Client &EpollClientList::rw(const PLAYER_INDEX_FOR_CONNECTED &index)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
     {
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << std::endl;
@@ -134,7 +134,7 @@ PLAYER_INDEX_FOR_CONNECTED EpollClientList::connected_size() const
 
 CatchChallenger::ClientWithMap &EpollClientList::rwWithMap(const PLAYER_INDEX_FOR_CONNECTED &index)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
     {
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << std::endl;

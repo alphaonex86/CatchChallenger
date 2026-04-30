@@ -400,38 +400,15 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
         return -1, f"TIMEOUT after {timeout}s"
 
 def build_project(pro_file, build_dir, label):
-    ensure_dir(build_dir)
-    name = f"compile {label}"
-    spec = diagnostic.compiler_spec(DIAG) or "linux-g++"
-    # State-aware cleanup: full distclean only when compiler or C++
-    # standard changed since the previous run in this dir; otherwise
-    # let make handle incremental rebuild via .o-mtime tracking +
-    # qmake_helpers macro invalidation.
-    import qmake_helpers as _qh
-    _decision = _qh.prepare_qmake_build_dir(build_dir, spec, None, None, ROOT)
-    if _decision == "full":
-        log_info(f"compiler/std changed → make distclean {label}")
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
-        clean_build_artifacts(build_dir)
-    qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", spec, "CONFIG+=debug", "CONFIG+=qml_debug",
-                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
-                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
-    qmake_args.extend(diagnostic.qmake_extra_args(DIAG))
-    log_info(f"qmake {label}")
-    rc, out = run_cmd(qmake_args, build_dir)
-    if rc != 0:
-        log_fail(name, f"qmake failed (rc={rc})")
-        if out.strip(): print(out[-2000:])
-        return False
-    log_info(f"make -j{NPROC} {label}")
-    rc, out = run_cmd(["make", f"-j{NPROC}"], build_dir)
-    if rc != 0:
-        log_fail(name, f"make failed (rc={rc})")
-        if out.strip(): print(out[-3000:])
-        return False
-    log_pass(name)
-    return True
+    """Phase 5 (qmake -> CMake) port via cmake_helpers."""
+    import cmake_helpers as _ch
+    return _ch.build_project(
+        pro_file, build_dir, label,
+        root=ROOT, nproc=NPROC,
+        log_info=log_info, log_pass=log_pass, log_fail=log_fail,
+        ensure_dir=ensure_dir, run_cmd=run_cmd,
+        diag=DIAG, diag_module=diagnostic,
+    )
 
 def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     global server_proc

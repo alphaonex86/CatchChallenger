@@ -45,7 +45,7 @@ void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,cons
             abort();
         }
 
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         {
             FILE *pFile = fopen(fullPath.c_str(),"rb");
             if(pFile!=NULL)
@@ -99,7 +99,7 @@ void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,cons
         XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
         memcpy(&h,&htemp.digest,sizeof(h));
         utimbuf butime;butime.actime=h;butime.modtime=h;
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        #ifndef CATCHCHALLENGER_HARDENED
         utime(fullPath.c_str(),&butime);
         #else
         if(utime(fullPath.c_str(),&butime)!=0)
@@ -109,7 +109,7 @@ void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,cons
         }
         #endif
 
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         struct stat sb;
         if (stat(fullPath.c_str(), &sb) == 0)
         {
@@ -576,7 +576,7 @@ void DatapackDownloaderMainSub::decodedIsFinishSub(const std::vector<char> &rawD
                         XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
                         memcpy(&h,&htemp.digest,sizeof(h));
                         utimbuf butime;butime.actime=h;butime.modtime=h;
-                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifndef CATCHCHALLENGER_HARDENED
                         utime((mDatapackSub+fileList.at(index)).c_str(),&butime);
                         #else
                         if(utime((mDatapackSub+fileList.at(index)).c_str(),&butime)!=0)
@@ -586,7 +586,7 @@ void DatapackDownloaderMainSub::decodedIsFinishSub(const std::vector<char> &rawD
                         }
                         #endif
 
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         struct stat sb;
                         if (stat((mDatapackSub+fileList.at(index)).c_str(), &sb) == 0)
                         {
@@ -867,7 +867,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                                 abort();
                             }
 
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             {
                                 FILE *pFile = fopen(chunk->fileName.c_str(),"rb");
                                 if(pFile!=NULL)
@@ -921,7 +921,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                             XXH32_canonicalFromHash(&htemp,XXH32(chunk->memory,chunk->size,0));
                             memcpy(&h,&htemp.digest,sizeof(h));
                             utimbuf butime;butime.actime=h;butime.modtime=h;
-                            #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifndef CATCHCHALLENGER_HARDENED
                             utime(chunk->fileName.c_str(),&butime);
                             #else
                             if(utime(chunk->fileName.c_str(),&butime)!=0)
@@ -931,7 +931,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                             }
                             #endif
 
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             struct stat sb;
                             if (stat(chunk->fileName.c_str(), &sb) == 0)
                             {

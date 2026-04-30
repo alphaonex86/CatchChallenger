@@ -43,7 +43,7 @@ void CommonDatapackServerSpec::parseDatapackAfterZoneAndMap(const std::string &d
     this->mainDatapackCode=mainDatapackCode;
     this->subDatapackCode=subDatapackCode;
 
-    #ifndef BOTTESTCONNECT
+    #ifndef CATCHCHALLENGER_BOT_TESTCONNECT
     parseQuests(mapPathToId);
     parseServerProfileList(mapPathToId);
     #ifdef CATCHCHALLENGER_CLIENT
@@ -54,7 +54,7 @@ void CommonDatapackServerSpec::parseDatapackAfterZoneAndMap(const std::string &d
     #endif
     #endif
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
 
@@ -153,7 +153,7 @@ void CommonDatapackServerSpec::unload()
         return;
     parsingSpec=true;
     quests.clear();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     #ifndef CATCHCHALLENGER_NOXML
     Map_loader::teleportConditionsUnparsed.clear();
     #endif

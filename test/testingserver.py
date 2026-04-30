@@ -16,7 +16,7 @@ from remote_build import (start_remote_builds, collect_remote_results,
                           setup_remote_server_runtime, start_remote_server,
                           stop_remote_server, get_remote_server_address,
                           cleanup_remote_node, SERVER_MAKE_SCRIPTS,
-                          build_server_via_make, compare_qmake_make)
+                          build_server_via_make)
 import diagnostic
 
 DIAG = diagnostic.parse_diag_args()
@@ -509,48 +509,21 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
 def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
                    extra_defines=None, clean_first=False, cxx_version=None,
                    extra_qmake_args=None):
-    ensure_dir(build_dir)
-    name = f"compile {label}"
-    diag_spec = diagnostic.compiler_spec(DIAG)
-    if diag_spec:
-        compiler_spec = diag_spec
-    # State-aware cleanup: full distclean only when compiler or C++
-    # standard changed since the previous run in this dir; otherwise
-    # let make handle incremental rebuild via .o-mtime tracking +
-    # qmake_helpers macro invalidation for EXTRA_DEFINES changes.
-    import qmake_helpers as _qh
-    _decision = _qh.prepare_qmake_build_dir(build_dir, compiler_spec,
-                                            cxx_version, extra_defines, ROOT)
-    if _decision == "full" or clean_first:
-        log_info(f"compiler/std changed → make distclean {label}")
-        run_cmd(["make", "distclean"], build_dir, timeout=60)
-        clean_build_artifacts(build_dir)
-    qmake_args = [QMAKE, "-o", "Makefile", pro_file,
-                  "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug",
-                  "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
-                  "QMAKE_LFLAGS+=-fuse-ld=mold", "LIBS+=-fuse-ld=mold"]
-    qmake_args.extend(diagnostic.qmake_extra_args(DIAG))
-    if cxx_version:
-        qmake_args.append(f"QMAKE_CXXFLAGS+=-std={cxx_version}")
-    if extra_defines:
-        for d in extra_defines:
-            qmake_args.append(f"DEFINES+={d}")
-    if extra_qmake_args:
-        qmake_args.extend(extra_qmake_args)
-    log_info(f"qmake {label}")
-    rc, out = run_cmd(qmake_args, build_dir)
-    if rc != 0:
-        log_fail(name, f"qmake failed (rc={rc})")
-        if out.strip(): print(out[-2000:])
-        return False
-    log_info(f"make -j{NPROC} {label}")
-    rc, out = run_cmd(["make", f"-j{NPROC}"], build_dir)
-    if rc != 0:
-        log_fail(name, f"make failed (rc={rc})")
-        if out.strip(): print(out[-3000:])
-        return False
-    log_pass(name)
-    return True
+    """Phase 5 (qmake -> CMake) port. Same call shape as the qmake-era
+    function but drives `cmake` + `cmake --build` via cmake_helpers."""
+    import cmake_helpers as _ch
+    return _ch.build_project(
+        pro_file, build_dir, label,
+        root=ROOT, nproc=NPROC,
+        log_info=log_info, log_pass=log_pass, log_fail=log_fail,
+        ensure_dir=ensure_dir, run_cmd=run_cmd,
+        diag=DIAG, diag_module=diagnostic,
+        compiler_spec=compiler_spec,
+        extra_defines=extra_defines,
+        clean_first=clean_first,
+        cxx_version=cxx_version,
+        extra_qmake_args=extra_qmake_args,
+    )
 
 def setup_server_datapack(build_dir, datapack_src, patch_db=False):
     """Copy datapack and adapt server-properties.xml mainDatapackCode to match."""
@@ -1206,40 +1179,11 @@ def main():
             vi += 1
         ti += 1
 
-    # ── Phase 0c: qmake-vs-make.py parity check (same sources + -D flags)
-    log_info("Phase 0c: comparing qmake vs make.py source/-D flag sets")
-    ti = 0
-    while ti < len(SERVER_TARGETS):
-        pro_rel, target_name, build_base_rel, opt_flags = SERVER_TARGETS[ti]
-        if pro_rel not in SERVER_MAKE_SCRIPTS:
-            ti += 1
-            continue
-        build_base = os.path.join(ROOT, build_base_rel)
-        combos = flag_combinations(opt_flags)
-        fi = 0
-        while fi < len(combos):
-            flags = combos[fi]
-            suffix = combo_suffix("gcc", flags)
-            qd = os.path.join(build_base, f"cmp-qmake-{target_name}-{suffix}")
-            md = os.path.join(build_base, f"cmp-make-{target_name}-{suffix}")
-            cmp_label = target_name
-            if flags:
-                cmp_label += " " + "+".join(flags)
-            cmp_results = compare_qmake_make(
-                pro_rel, qd, md, label=cmp_label,
-                extra_defines=list(flags) if flags else None)
-            ri = 0
-            while ri < len(cmp_results):
-                name, ok, detail = cmp_results[ri]
-                test_name = name
-                if should_run(test_name, failed_cases):
-                    if ok:
-                        log_pass(test_name, detail)
-                    else:
-                        log_fail(test_name, detail)
-                ri += 1
-            fi += 1
-        ti += 1
+    # ── Phase 0c (was: qmake-vs-make.py parity check) — REMOVED with the
+    # cmake migration. The qmake build path no longer exists, so there's
+    # nothing to compare make.py output against. Phase 0b below now
+    # exercises both compilers + flag combos via the make.py wrappers,
+    # which themselves drive cmake.
 
     # ── Phase 0b: same matrix via make*.py (gcc + clang, all flag combos)
     # The make scripts hardcode their C++ standard; we don't iterate cxx_ver here.

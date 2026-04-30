@@ -42,7 +42,7 @@ void CommonDatapack::parseDatapack(const std::string &datapackPath)
     parsing=true;
 
     this->datapackPath=datapackPath;
-    #ifndef BOTTESTCONNECT
+    #ifndef CATCHCHALLENGER_BOT_TESTCONNECT
     parseSkins();
     parseReputation();
     parseBuff();
@@ -125,7 +125,7 @@ void CommonDatapack::parseReputation()
 
 void CommonDatapack::parseBuff()
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+    #ifdef CATCHCHALLENGER_SOLO
     monsterBuffs=FightLoader::loadMonsterBuff(tempNameToBuffId,datapackPath+DATAPACK_BASE_PATH_BUFF);
     std::cout << monsterBuffs.size() << " monster buff(s) loaded" << std::endl;
     #endif
@@ -190,7 +190,7 @@ void CommonDatapack::parseMonstersCollision()
 
 void CommonDatapack::parseMonstersEvolutionItems()
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+    #ifdef CATCHCHALLENGER_SOLO
     evolutionItem=FightLoader::loadMonsterEvolutionItems(monsters);
     std::cout << evolutionItem.size() << " monster evolution items(s) loaded" << std::endl;
     #endif
@@ -198,7 +198,7 @@ void CommonDatapack::parseMonstersEvolutionItems()
 
 void CommonDatapack::parseMonstersItemToLearn()
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+    #ifdef CATCHCHALLENGER_SOLO
     itemToLearn=FightLoader::loadMonsterItemToEvolution(monsters,evolutionItem);
     std::cout << itemToLearn.size() << " monster items(s) to learn loaded" << std::endl;
     #endif
@@ -258,7 +258,7 @@ void CommonDatapack::unload()
     monstersCollision.clear();
     types.clear();
     #endif // CATCHCHALLENGER_CLASS_MASTER
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     #ifndef CATCHCHALLENGER_NOXML
     xmlLoadedFile.clear();
     #endif

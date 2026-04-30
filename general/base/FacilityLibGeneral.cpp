@@ -44,7 +44,7 @@ unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,
 
 std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderNotRecursive(const std::string& folder,const ListFolder &type)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(folder.empty())
     {
         std::cerr << "can't FacilityLibGeneral::listFolderNotRecursive(\"\")" << std::endl;
@@ -107,7 +107,7 @@ std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderN
 
 std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(folder.empty())
     {
         //mostly for listFolderNotRecursive() protect

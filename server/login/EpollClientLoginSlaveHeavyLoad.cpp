@@ -19,7 +19,7 @@ using namespace CatchChallenger;
 
 void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorParsingLayer("askLogin() Query login is empty, bug");
@@ -49,7 +49,7 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     else
     {
         paramToPassToCallBack.push(askLoginParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("AskLoginParam");
         #endif
         callbackRegistred.push(callback);
@@ -58,7 +58,7 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
 
 void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *rawdata)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorParsingLayer("askLogin() Query login is empty, bug");
@@ -66,7 +66,7 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
     }
     #endif
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::vector<char> tempAddedToken;
     std::vector<char> secretTokenBinary;
     #endif
@@ -78,21 +78,21 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
             if(tokenLink.client==this)
             {
                 //append the token
-                memcpy(LinkToMaster::private_token_statclient+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                memcpy(LinkToMaster::private_token_statclient+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                secretTokenBinary.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                memcpy(secretTokenBinary.data(),LinkToMaster::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                if(secretTokenBinary.size()!=(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                #ifdef CATCHCHALLENGER_HARDENED
+                secretTokenBinary.resize(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                memcpy(secretTokenBinary.data(),LinkToMaster::private_token_statclient,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                tempAddedToken.resize(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                memcpy(tempAddedToken.data(),tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                if(secretTokenBinary.size()!=(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                 {
-                    std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) askStatClient()" << std::endl;
+                    std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER) askStatClient()" << std::endl;
                     abort();
                 }
                 #endif
                 CatchChallenger::Hash ctx;
-                ctx.update(LinkToMaster::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                ctx.update(LinkToMaster::private_token_statclient,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                 ctx.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
 
                 BaseServerLogin::tokenForAuthSize--;
@@ -105,7 +105,7 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
                         tokenForAuthIndex++;
                     }
                     //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     if(BaseServerLogin::tokenForAuth[0].client==NULL)
                         abort();
                     #endif
@@ -133,7 +133,7 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
         ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x02;
         internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         errorParsingLayer("Password wrong: "+
                      binarytoHexa(secretTokenBinary)+
                      " + token "+
@@ -215,7 +215,7 @@ void EpollClientLoginSlave::askLogin_static(void *object)
 
 void EpollClientLoginSlave::askLogin_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
@@ -223,7 +223,7 @@ void EpollClientLoginSlave::askLogin_object()
     }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());//but not delete because will reinster at the end, then not take!
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(askLoginParam==NULL)
         abort();
     #endif
@@ -233,7 +233,7 @@ void EpollClientLoginSlave::askLogin_object()
 
 void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="AskLoginParam")
     {
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -249,7 +249,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
             {
                 //network send
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 //removeFromQueryReceived(askLoginParam->query_id);//all list dropped at client destruction
                 #endif
                 *(EpollClientLoginSlave::loginIsWrongBufferReply+1)=(uint8_t)askLoginParam->query_id;
@@ -258,7 +258,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
                 stat=EpollClientLoginStat::ProtocolGood;
                 paramToPassToCallBack.pop();
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 paramToPassToCallBackType.pop();
                 #endif
                 delete askLoginParam;
@@ -272,7 +272,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             {
                 loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)+", pass: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE));
                 paramToPassToCallBack.pop();
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 paramToPassToCallBackType.pop();
                 #endif
                 delete askLoginParam;
@@ -282,7 +282,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         }
         else
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::vector<char> tempAddedToken;
             std::vector<char> secretTokenBinary;
             #endif
@@ -294,7 +294,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     if(tokenLink.client==this)
                     {
                         const std::string &secretToken(databaseBaseLogin.value(1));
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         secretTokenBinary=databaseBaseLogin.hexatoBinary(secretToken);
                         #else
                         std::vector<char> secretTokenBinary=databaseBaseLogin.hexatoBinary(secretToken);
@@ -306,14 +306,14 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                         }
 
                         //append the token
-                        secretTokenBinary.resize(secretTokenBinary.size()+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        memcpy(secretTokenBinary.data()+CATCHCHALLENGER_HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        if(secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                        secretTokenBinary.resize(secretTokenBinary.size()+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        memcpy(secretTokenBinary.data()+CATCHCHALLENGER_HASH_SIZE,tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        #ifdef CATCHCHALLENGER_HARDENED
+                        tempAddedToken.resize(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        memcpy(tempAddedToken.data(),tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        if(secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                         {
-                            std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
+                            std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)" << std::endl;
                             abort();
                         }
                         #endif
@@ -331,7 +331,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                                 tokenForAuthIndex++;
                             }
                             //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(BaseServerLogin::tokenForAuth[0].client==NULL)
                                 abort();
                             #endif
@@ -349,7 +349,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             }
             if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE)!=0)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
                              binarytoHexa(secretTokenBinary.data(),secretTokenBinary.size()-tempAddedToken.size())+
                              " + token "+
@@ -370,7 +370,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                              );
                 #endif
                 paramToPassToCallBack.pop();
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 paramToPassToCallBackType.pop();
                 #endif
                 delete askLoginParam;
@@ -385,7 +385,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                     account_id=0;
                     loginIsWrong(askLoginParam->query_id,0x03,"Account id is not a number");
                     paramToPassToCallBack.pop();
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    #ifdef CATCHCHALLENGER_HARDENED
                     paramToPassToCallBackType.pop();
                     #endif
                     delete askLoginParam;
@@ -411,7 +411,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
 
 void EpollClientLoginSlave::askLogin_cancel()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
@@ -420,7 +420,7 @@ void EpollClientLoginSlave::askLogin_cancel()
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(askLoginParam==NULL)
         abort();
     #endif
@@ -434,7 +434,7 @@ void EpollClientLoginSlave::character_list_return(const uint8_t &characterGroupI
     characterTempListForReply[characterGroupIndex].rawData=tempRawData;
     characterTempListForReply[characterGroupIndex].rawDataSize=tempRawDataSize;
     characterListForReplyInSuspend--;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(
             //if all the query is finished
             (characterListForReplyInSuspend==0 && serverListForReplyInSuspend==0)
@@ -466,7 +466,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
     serverListForReplyInSuspend--;
     if(serverListForReplyInSuspend==0)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(
                 //if all the query is finished
                 (characterListForReplyInSuspend==0 && serverListForReplyInSuspend==0)
@@ -512,7 +512,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
             tempSize+=sizeof(uint8_t);
         }
 
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(paramToPassToCallBackType.front()!="AskLoginParam")
         {
             std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -521,7 +521,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         #endif
         AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
         paramToPassToCallBack.pop();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         if(askLoginParam==NULL)
             abort();
         #endif
@@ -533,7 +533,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         {const uint32_t _tmp_le=(htole32(tempSize-1-1-4));memcpy(EpollClientLoginSlave::loginGood+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         internalSendRawSmallPacket(EpollClientLoginSlave::loginGood,tempSize);
         //paramToPassToCallBack.pop();double call, look above
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.pop();
         #endif
         delete askLoginParam;
@@ -544,7 +544,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
 
 void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *rawdata)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorParsingLayer("createAccount() Query login is empty, bug");
@@ -584,7 +584,7 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
     else
     {
         paramToPassToCallBack.push(askLoginParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("AskLoginParam");
         #endif
         callbackRegistred.push(callback);
@@ -600,7 +600,7 @@ void EpollClientLoginSlave::createAccount_static(void *object)
 
 void EpollClientLoginSlave::createAccount_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.isEmpty()" << __FILE__ << __LINE__ << std::endl;
@@ -609,7 +609,7 @@ void EpollClientLoginSlave::createAccount_object()
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(askLoginParam==NULL)
         abort();
     #endif
@@ -620,7 +620,7 @@ void EpollClientLoginSlave::createAccount_object()
 
 void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="AskLoginParam")
     {
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -631,7 +631,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
     if(!databaseBaseLogin.next())
     {
         //network send
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         //removeFromQueryReceived(askLoginParam->query_id);//->only if use fast path
         #endif
         if(maxAccountIdList.empty())
@@ -705,7 +705,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
 
 void EpollClientLoginSlave::dbQueryWriteLogin(const std::string &queryText)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(queryText.empty())
     {
         errorParsingLayer("dbQuery() Query is empty, bug");

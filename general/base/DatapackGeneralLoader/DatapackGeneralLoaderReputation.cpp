@@ -1,6 +1,6 @@
 #include "DatapackGeneralLoader.hpp"
 #include "../cpp11addition.hpp"
-#ifndef EPOLLCATCHCHALLENGERSERVER
+#ifndef CATCHCHALLENGER_SERVER
 #include "../CommonDatapack.hpp"
 #endif
 #include "../../tinyXML2/customtinyxml2.hpp"
@@ -15,7 +15,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     std::regex typeRegex("^[a-z]{1,32}$");
     std::vector<Reputation> reputation;
     tinyxml2::XMLDocument *domDocument;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
@@ -30,7 +30,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return reputation;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
@@ -194,7 +194,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
         item = item->NextSiblingElement("reputation");
     }
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     delete domDocument;
     #endif
     return reputation;

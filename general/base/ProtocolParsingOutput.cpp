@@ -1,4 +1,4 @@
-#if ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 #include "ProtocolParsing.hpp"
 #include "GeneralVariable.hpp"
 #include "ProtocolParsingCheck.hpp"
@@ -10,7 +10,7 @@ using namespace CatchChallenger;
 
 void ProtocolParsingInputOutput::registerOutputQuery(const uint8_t &queryNumber,const uint8_t &packetCode)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(outputQueryNumberToPacketCode[queryNumber]!=0x00)
     {
         std::cerr << "registerOutputQuery() conflict: queryNumber=" << std::to_string(queryNumber)
@@ -25,7 +25,7 @@ void ProtocolParsingInputOutput::registerOutputQuery(const uint8_t &queryNumber,
     std::cout << this << " ProtocolParsingInputOutput::registerOutputQuery(" << std::to_string(queryNumber) << "," << std::to_string(packetCode) << ")" << std::endl;
     #endif
     //registrer on the check
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     protocolParsingCheck->registerOutputQuery(queryNumber,packetCode);
     #endif
     outputQueryNumberToPacketCode[queryNumber]=packetCode;
@@ -34,7 +34,7 @@ void ProtocolParsingInputOutput::registerOutputQuery(const uint8_t &queryNumber,
 
 bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,const int &size)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(size<=0)
     {
         std::cerr << "ProtocolParsingInputOutput::internalPackOutcommingData size is null: " << __LINE__ << std::endl;
@@ -102,7 +102,7 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
 //no control to be more fast
 bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,const int &size)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(size<=0)
     {
         std::cerr << "ProtocolParsingInputOutput::internalSendRawSmallPacket size is null " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -116,7 +116,7 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
     std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << std::endl;
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(size>1)
     {
         if((uint8_t)(data[0x00])==0xE3)
@@ -146,7 +146,7 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
 
 bool ProtocolParsingBase::removeFromQueryReceived(const uint8_t &queryNumber)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(queryNumber>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1))
     {
         std::cerr << "queryNumber: " << queryNumber << " < CATCHCHALLENGER_MAXPROTOCOLQUERY: " << CATCHCHALLENGER_MAXPROTOCOLQUERY << std::endl;

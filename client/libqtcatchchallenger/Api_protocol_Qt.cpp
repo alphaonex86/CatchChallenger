@@ -1,7 +1,7 @@
 #include "Api_protocol_Qt.hpp"
 #include "Language.hpp"
 #include "../../general/base/CommonDatapack.hpp"
-#ifndef NOTCPSOCKET
+#ifndef CATCHCHALLENGER_NO_TCPSOCKET
 //#include "SslCert.h"
 #include <QSslKey>
 #endif
@@ -17,7 +17,7 @@ using namespace CatchChallenger;
 Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
 {
     //register meta type
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
         qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol_Qt::tradeAddTradeMonster()
         qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
         qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
@@ -27,7 +27,7 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
         qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
         qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
         #ifndef __EMSCRIPTEN__
-            #if ! defined (ONLYMAPRENDER)
+            #if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
                 qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
             #endif
         #endif
@@ -40,7 +40,7 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
     this->socket=socket;
     if(!QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol_Qt::QtsocketDestroyed))
         abort();
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     if(socket->sslSocket!=NULL)
     {
         if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::readForFirstHeader))
@@ -50,7 +50,7 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
     }
     else
     #endif
-    #ifndef NOWEBSOCKET
+    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
     if(socket->webSocket!=NULL)
     {
         if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::readForFirstHeader))
@@ -61,8 +61,8 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
     else
     #endif
     {
-        #ifndef NOTCPSOCKET
-        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
+        #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
         if(socket->fakeSocket!=NULL)
         {
             //haveFirstHeader=true;
@@ -185,7 +185,7 @@ void Api_protocol_Qt::socketDestroyed()
 
 void Api_protocol_Qt::connectTheExternalSocketInternal()
 {
-    #ifndef NOTCPSOCKET
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
     if(socket->sslSocket!=NULL)
     {
         if(socket->peerName().isEmpty() || socket->sslSocket->state()!=QSslSocket::SocketState::ConnectedState)
@@ -226,7 +226,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
             {
                 if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
                 {
-                    #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
+                    #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(CATCHCHALLENGER_BOT_TESTCONNECT)
                     /*SslCert sslCert(NULL);
                     sslCert.exec();
                     if(sslCert.validated())
@@ -242,7 +242,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
                 {
                     if(socket->sslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
                     {
-                        #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
+                        #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(CATCHCHALLENGER_BOT_TESTCONNECT)
                         /*SslCert sslCert(NULL);
                         sslCert.exec();
                         if(sslCert.validated())
@@ -281,7 +281,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
         parseIncommingData();
 }
 
-#ifndef NOTCPSOCKET
+#ifndef CATCHCHALLENGER_NO_TCPSOCKET
 void Api_protocol_Qt::saveCert(const std::string &file)
 {
     if(socket->sslSocket==NULL)
@@ -328,13 +328,13 @@ void Api_protocol_Qt::readForFirstHeader()
     if(haveFirstHeader)
         return;
     if(1
-       #ifndef NOTCPSOCKET
+       #ifndef CATCHCHALLENGER_NO_TCPSOCKET
          && socket->sslSocket==NULL
        #endif
-       #ifndef NOWEBSOCKET
+       #ifndef CATCHCHALLENGER_NO_WEBSOCKET
          && socket->webSocket==NULL
        #endif
-       #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+       #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
          && socket->fakeSocket==NULL
        #endif
             )
@@ -353,7 +353,7 @@ void Api_protocol_Qt::readForFirstHeader()
         stageConnexion=StageConnexion::Stage3;
     }
     {
-        #ifndef NOTCPSOCKET
+        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(socket->sslSocket!=NULL && socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
         {
             newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol_Qt::readForFirstHeader()"));
@@ -366,7 +366,7 @@ void Api_protocol_Qt::readForFirstHeader()
             haveFirstHeader=true;
             if(value==0x01)
             {
-                #ifndef NOTCPSOCKET
+                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
                 if(socket->sslSocket!=NULL)
                 {
                     socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
@@ -395,8 +395,8 @@ void Api_protocol_Qt::sslHandcheckIsFinished()
 void Api_protocol_Qt::resetAll()
 {
     messageParsingLayer("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-    #ifndef NOTCPSOCKET
-    #if defined(CATCHCHALLENGER_SOLO) && !defined(NOSINGLEPLAYER)
+    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
+    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     if(socket!=NULL && socket->fakeSocket!=NULL)
         haveFirstHeader=true;
     else
@@ -818,7 +818,7 @@ void Api_protocol_Qt::captureCityWin()
 std::string Api_protocol_Qt::getLanguage() const
 {
     #ifndef CATCHCHALLENGER_BOT
-        #ifndef BOTTESTCONNECT
+        #ifndef CATCHCHALLENGER_BOT_TESTCONNECT
         return Language::language.getLanguage().toStdString();
         #else
         return "en";

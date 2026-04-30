@@ -16,7 +16,7 @@
 
 #define BASE_PROTOCOL_MAGIC_SIZE 8
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
+#ifdef CATCHCHALLENGER_SERVER
     #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024
     #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
     #endif
@@ -26,12 +26,10 @@
     #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024
     #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB
     #endif
-    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024
-    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB
-    #endif
-    #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
-    #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB
-    #endif
+    // Same rationale as server/base/Client.hpp: BIGBUFFERSIZE only needs
+    // to fit one wire packet (CATCHCHALLENGER_MAX_PACKET_SIZE). The XZ /
+    // DONT_COMPRESS guards were over-strict; with streaming compression
+    // and sendfile() the runtime never holds a full file in this buffer.
 #endif
 
 #define CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE 8
@@ -53,7 +51,7 @@ class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOut
 {
 public:
     EpollClientLoginSlave(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -115,7 +113,7 @@ public:
     static std::unordered_map<std::string,std::unordered_map<std::string,DatapackData> > datapack_file_sub;
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_list(const std::string &path,const bool withHash=true);
 private:
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     std::vector<std::string> paramToPassToCallBackType;
     #endif
 
@@ -141,7 +139,7 @@ private:
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     void sendCompressedFileContent();
     #endif
 public:

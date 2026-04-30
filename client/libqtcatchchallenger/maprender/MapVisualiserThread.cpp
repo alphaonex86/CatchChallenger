@@ -16,7 +16,7 @@
 #include <QRegularExpression>
 #include "../libcatchchallenger/ClientVariable.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#if ! defined (CATCHCHALLENGER_BOT) && ! defined (ONLYMAPRENDER)
+#if ! defined (CATCHCHALLENGER_BOT) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
 #include "../libqtcatchchallenger/Language.hpp"
 #endif
 #include <QDebug>
@@ -30,7 +30,7 @@ MapVisualiserThread::MapVisualiserThread()
     start(QThread::IdlePriority);
     #endif
     hideTheDoors=false;
-    #if ! defined (CATCHCHALLENGER_BOT) && ! defined (ONLYMAPRENDER)
+    #if ! defined (CATCHCHALLENGER_BOT) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
     language=Language::language.getLanguage().toStdString();
     #else
     language="en";
@@ -140,7 +140,7 @@ QMap_client *MapVisualiserThread::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID 
 
     //logical map data now comes from DatapackClientLoader::getMap(mapIndex)
     //items now loaded via DatapackClientLoader
-    #if defined(CATCHCHALLENGER_EXTRA_CHECK) && ! defined(MAPVISUALISER)
+    #if defined(CATCHCHALLENGER_HARDENED) && ! defined(MAPVISUALISER)
     if(mapIndex>=QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
         mLastError="Map id out of range: "+std::to_string(mapIndex);

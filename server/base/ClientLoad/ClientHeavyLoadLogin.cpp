@@ -25,7 +25,7 @@ using namespace CatchChallenger;
 bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorOutput("askLogin() Query login is empty, bug");
@@ -60,7 +60,7 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     else
     {
         paramToPassToCallBack.push(askLoginParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("AskLoginParam");
         #endif
         callbackRegistred.push(callback);
@@ -68,14 +68,14 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     paramToPassToCallBack.push(askLoginParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("AskLoginParam");
     #endif
     askLogin_object();
     return true;
     #elif CATCHCHALLENGER_DB_FILE
     paramToPassToCallBack.push(askLoginParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("AskLoginParam");
     #endif
     askLogin_object();
@@ -101,7 +101,7 @@ void Client::askLogin_static(void *object)
 
 void Client::askLogin_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
@@ -115,7 +115,7 @@ void Client::askLogin_object()
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(askLoginParam==NULL)
         abort();
     #endif
@@ -125,7 +125,7 @@ void Client::askLogin_object()
 
 void Client::askLogin_return(AskLoginParam *askLoginParam)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="AskLoginParam")
     {
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -158,7 +158,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 //network send
                 *(Client::loginIsWrongBuffer+1)=(uint8_t)askLoginParam->query_id;
                 *(Client::loginIsWrongBuffer+1+1+4)=(uint8_t)0x07;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 removeFromQueryReceived(askLoginParam->query_id);
                 #endif
                 inputQueryNumberToPacketCode[askLoginParam->query_id]=0;
@@ -194,7 +194,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             #ifndef CATCHCHALLENGER_DB_FILE
             bool ok=false;
             #endif
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            #ifdef CATCHCHALLENGER_HARDENED
             std::vector<char> tempAddedToken;
             std::vector<char> secretTokenBinary;
             #endif
@@ -215,7 +215,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         }
                         #else
                         const std::string &secretToken(GlobalServerData::serverPrivateVariables.db_login->value(1));
-                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifndef CATCHCHALLENGER_HARDENED
                         std::vector<char> secretTokenBinary;
                         #endif
                         secretTokenBinary=hexatoBinary(secretToken);
@@ -225,16 +225,16 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                             abort();
                         }
                         #endif
-                        secretTokenBinary.resize(secretTokenBinary.size()+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        memcpy(secretTokenBinary.data()+CATCHCHALLENGER_HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        secretTokenBinary.resize(secretTokenBinary.size()+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        memcpy(secretTokenBinary.data()+CATCHCHALLENGER_HASH_SIZE,tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        #ifdef CATCHCHALLENGER_HARDENED
                         //append the token
-                        tempAddedToken.resize(TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        memcpy(tempAddedToken.data(),tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        if(secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
+                        tempAddedToken.resize(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        memcpy(tempAddedToken.data(),tokenLink.value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        if(secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER))
                         {
-                            std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)" << std::endl;
+                            std::cerr << "secretTokenBinary.size()!=(CATCHCHALLENGER_HASH_SIZE+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)" << std::endl;
                             abort();
                         }
                         #endif
@@ -251,7 +251,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                                 tokenForAuthIndex++;
                             }
                             //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            #ifdef CATCHCHALLENGER_HARDENED
                             if(BaseServerLogin::tokenForAuth[0].client==NULL)
                                 abort();
                             #endif
@@ -269,7 +269,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
             if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE)!=0)
             {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                #ifdef CATCHCHALLENGER_HARDENED
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
                              binarytoHexa(secretTokenBinary)+
                              " + token "+
@@ -405,7 +405,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     else
     {
         paramToPassToCallBack.push(askLoginParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("AskLoginParam");
         #endif
         callbackRegistred.push(callback);
@@ -420,7 +420,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
 bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorOutput("createAccount() Query login is empty, bug");
@@ -463,7 +463,7 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     {
         number_of_character++;
         paramToPassToCallBack.push(askLoginParam);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.push("AskLoginParam");
         #endif
         callbackRegistred.push(callback);
@@ -472,7 +472,7 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     number_of_character++;
     paramToPassToCallBack.push(askLoginParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("AskLoginParam");
     #endif
     createAccount_object();
@@ -480,7 +480,7 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     #elif CATCHCHALLENGER_DB_FILE
     number_of_character++;
     paramToPassToCallBack.push(askLoginParam);
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     paramToPassToCallBackType.push("AskLoginParam");
     #endif
     createAccount_object();
@@ -505,7 +505,7 @@ void Client::createAccount_static(void *object)
 
 void Client::createAccount_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
@@ -519,7 +519,7 @@ void Client::createAccount_object()
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(askLoginParam==NULL)
         abort();
     #endif
@@ -529,7 +529,7 @@ void Client::createAccount_object()
 
 void Client::createAccount_return(AskLoginParam *askLoginParam)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="AskLoginParam")
     {
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -551,7 +551,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     #endif
     {
         //network send
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         //removeFromQueryReceived(askLoginParam->query_id);//->only if use fast path
         #endif
         GlobalServerData::serverPrivateVariables.maxAccountId++;
@@ -646,7 +646,7 @@ void Client::character_list_static(void *object)
 
 void Client::character_list_object()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
     {
         std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
@@ -660,7 +660,7 @@ void Client::character_list_object()
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(askLoginParam==NULL)
         abort();
     #endif
@@ -725,7 +725,7 @@ uint32_t Client::send_characterEntryList(const std::vector<CharacterEntry> &char
 
 uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="AskLoginParam")
     {
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
@@ -745,9 +745,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     #error Define what do here
     #endif
     //send signals into the server
-    #ifndef SERVERBENCHMARK
     //normalOutput("Logged the account "+std::to_string(account_id));
-    #endif
     //send the network reply
 
     {

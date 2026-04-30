@@ -16,7 +16,7 @@ class LinkToMaster : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToMaster(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd

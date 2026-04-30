@@ -23,7 +23,7 @@ unsigned char protocolHeaderToMatchLogin[] = {0xA0,0x00,0x9c,0xd6,0x49,0x8d,PROT
 unsigned char protocolHeaderToMatchGameServer[] = {0xA0,0x00,0x60,0x0c,0xd9,0xbb,PROTOCOL_HEADER_VERSION};
 
 LinkToGameServer::LinkToGameServer(
-        #ifdef SERVERSSL
+        #ifdef CATCHCHALLENGER_SERVER_SSL
             const int &infd, SSL_CTX *ctx
         #else
             const int &infd
@@ -339,7 +339,7 @@ void LinkToGameServer::readTheFirstSslHeader()
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
     std::cerr << "read LinkToGameServer::readTheFirstSslHeader(): " << binarytoHexa(buffer,size) << ", stat: " << std::to_string(stat) << std::endl;
     #endif
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
     if(buffer[0]!=0x01)
     {
         std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;

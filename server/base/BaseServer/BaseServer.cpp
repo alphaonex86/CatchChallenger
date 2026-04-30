@@ -29,7 +29,7 @@ bool BaseServer::load_next_city_capture()
 
 bool BaseServer::initialize_the_database()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     #ifdef CATCHCHALLENGER_SOLO
     #if ! defined(CATCHCHALLENGER_DB_SQLITE) && ! defined(CATCHCHALLENGER_CLASS_QT)
     #error should CATCHCHALLENGER_DB_SQLITE or CATCHCHALLENGER_CLASS_QT enabled if CATCHCHALLENGER_SOLO enabled
@@ -372,7 +372,7 @@ bool BaseServer::initialize_the_database()
 void BaseServer::initialize_the_database_prepared_query()
 {
     #if ! defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT)
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     {
         //test memory leak around prepared string
         StringWithReplacement test;
@@ -413,7 +413,7 @@ void BaseServer::setSettings(const GameServerSettings &settings)
     //load it
     GlobalServerData::serverSettings=settings;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    memcpy(Client::private_token_statclient,settings.private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    memcpy(Client::private_token_statclient,settings.private_token_statclient,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
     #endif
 
     loadAndFixSettings();

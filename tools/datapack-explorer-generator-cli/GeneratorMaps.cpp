@@ -382,7 +382,7 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
         meta.name=(pos!=std::string::npos)?mapStem.substr(pos+1):mapStem;
     }
 
-    // Parse wild monster layers from XML (ONLYMAPRENDER leaves zones empty)
+    // Parse wild monster layers from XML (CATCHCHALLENGER_ONLYMAPRENDER leaves zones empty)
     {
         static const char *s_wildTypes[]={"grass","water","cave","waterRod","waterSuperRod","lava",nullptr};
         static const char *s_wildNames[]={"Grass","Water","Cave","Water (Rod)","Water (Super Rod)","Lava",nullptr};

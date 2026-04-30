@@ -28,7 +28,7 @@ catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackC
     #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     const catchchallenger_datapack_set<std::string> &extensionAllowed=catchchallenger_datapack_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(extensionAllowed.empty())
     {
         std::cerr << "extensionAllowed can't be empty when you call Client::datapack_file_list()" << std::endl;
@@ -36,7 +36,7 @@ catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackC
     }
     #endif
     #else
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(BaseServerMasterSendDatapack::extensionAllowed.empty())
     {
         std::cerr << "BaseServerMasterSendDatapack::extensionAllowed can't be empty when you call Client::datapack_file_list()" << std::endl;
@@ -119,7 +119,7 @@ catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackC
                 }
             }
         }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         else
         {
             std::cerr << "For Client::datapack_file_list(" << path << "," << exclude << "," << withHash << ")" << std::endl;
@@ -171,7 +171,7 @@ bool CatchChallenger::operator!=(const CatchChallenger::PlayerMonster &monster1,
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::dbQueryWriteLogin(const std::string &queryText)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(queryText.empty())
     {
         errorOutput("dbQueryWriteLogin() Query is empty, bug");
@@ -198,7 +198,7 @@ void Client::dbQueryWriteLogin(const std::string &queryText)
 
 void Client::dbQueryWriteCommon(const std::string &queryText)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(queryText.empty())
     {
         errorOutput("dbQueryWriteCommon() Query is empty, bug");
@@ -224,7 +224,7 @@ void Client::dbQueryWriteCommon(const std::string &queryText)
 
 void Client::dbQueryWriteServer(const std::string &queryText)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(queryText.empty())
     {
         errorOutput("dbQueryWriteServer() Query is empty, bug");
@@ -250,7 +250,7 @@ void Client::dbQueryWriteServer(const std::string &queryText)
 
 /*void Client::loadReputation()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryCommon::db_query_select_reputation_by_id.empty())
     {
         errorOutput("loadReputation() Query is empty, bug");
@@ -376,7 +376,7 @@ void Client::loadReputation_return()
 
 void Client::loadQuests()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryServer::db_query_select_quest_by_id.empty())
     {
         errorOutput("loadQuests() Query is empty, bug");

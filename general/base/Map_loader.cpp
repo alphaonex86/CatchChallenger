@@ -9,13 +9,11 @@
 #include <chrono>
 #include <sys/stat.h>
 
-#ifdef TILED_ZLIB
     #ifndef __EMSCRIPTEN__
         #include <zlib.h>
     #else
         #include <QtZlib/zlib.h>
     #endif
-#endif
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -25,7 +23,7 @@ std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,tinyxm
 
 /// \todo put at walkable the tp on push
 
-#ifndef BOTTESTCONNECT
+#ifndef CATCHCHALLENGER_BOT_TESTCONNECT
 #if defined(__has_feature)
 #  if __has_feature(address_sanitizer)
 extern "C" {
@@ -49,14 +47,13 @@ Map_loader::Map_loader()
 
 Map_loader::~Map_loader()
 {
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     for(tinyxml2::XMLDocument *doc : xmlDocsToKeepInternal)
         delete doc;
     xmlDocsToKeepInternal.clear();
     #endif
 }
 
-#ifdef TILED_ZLIB
 static void logZlibError(int error)
 {
     switch (error)
@@ -74,7 +71,7 @@ static void logZlibError(int error)
     default:
     {
         std::cerr << "Unknown error while (de)compressing data!" << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        #ifdef CATCHCHALLENGER_HARDENED
         abort();
         #endif
     }
@@ -148,7 +145,6 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 
     return maxOutputSize-strm.avail_out;
 }
-#endif
 
 bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers)
 {
@@ -163,7 +159,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
     tinyxml2::XMLDocument *domDocument=NULL;
 
     //open and quick check the file
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_SERVER
     if(CommonDatapack::commonDatapack.has_xmlLoadedFile(file))
         domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw(file);
     else
@@ -178,7 +174,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
             std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
             return false;
         }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
+        #ifndef CATCHCHALLENGER_SERVER
     }
     #endif
     this->map_to_send.xmlRoot = domDocument->RootElement();
@@ -614,7 +610,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
         }
         bot = bot->NextSiblingElement("bot");
     }
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     xmlDocsToKeepInternal.push_back(domDocument);
     #endif
     return true;
@@ -622,7 +618,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
 
 std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileName,const std::string &monsterType)
 {
-    #ifdef ONLYMAPRENDER
+    #ifdef CATCHCHALLENGER_ONLYMAPRENDER
     return std::vector<MapMonster>();
     #endif
     std::vector<MapMonster> monsterTypeList;
@@ -1286,7 +1282,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << semi_loaded_map.size() << " map(s) loaded into " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     if(xmlDocsToKeep!=nullptr)
         *xmlDocsToKeep=std::move(map_temp.xmlDocsToKeepInternal);
     //else: map_temp destructor will delete them

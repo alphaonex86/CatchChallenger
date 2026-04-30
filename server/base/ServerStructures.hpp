@@ -28,7 +28,7 @@
 #include <regex>
 
 #include "../../general/base/GeneralStructures.hpp"
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 #include "../../general/base/CompressionProtocol.hpp"
 #endif
 #include "PlayerUpdaterBase.hpp"
@@ -96,7 +96,7 @@ struct LoginServerSettings
 class GameServerSettings
 {
 public:
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     CompressionProtocol::CompressionType compressionType;
     #endif
     bool sendPlayerNumber;
@@ -249,7 +249,7 @@ public:
     };
     std::unordered_map<std::string/*type, example: day*/,std::unordered_map<std::string/*groupName, example: day/night*/,ProgrammedEvent> > programmedEventList;
 
-    char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    char private_token_statclient[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
 
     //content
     std::string server_message;
@@ -259,7 +259,7 @@ public:
 template <class B>
 void serialize(B& buf) const {
     buf << (uint8_t)compressionType;
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     buf << (uint8_t)CompressionProtocol::compressionLevel;
     #else
     buf << (uint8_t)6;
@@ -304,7 +304,7 @@ void serialize(B& buf) const {
 
     buf << programmedEventList;
 
-    buf.write((char *)private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    buf.write((char *)private_token_statclient,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 
     //content
     buf << server_message;
@@ -314,12 +314,12 @@ template <class B>
 void parse(B& buf) {
     uint8_t smallTemp=0;
     buf >> smallTemp;
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     compressionType=(CompressionProtocol::CompressionType)smallTemp;
     #endif
     uint8_t tempcompressionLevel=0;
     buf >> tempcompressionLevel;
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     CompressionProtocol::compressionLevel=tempcompressionLevel;
     #endif
     buf >> sendPlayerNumber;
@@ -362,7 +362,7 @@ void parse(B& buf) {
 
     buf >> programmedEventList;
 
-    buf.read(private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    buf.read(private_token_statclient,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 
     //content
     buf >> server_message;
@@ -481,7 +481,7 @@ struct ServerPrivateVariables
     std::vector<uint32_t> maxClanId;
     #else
     //for the single player
-    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifdef CATCHCHALLENGER_SERVER
     unsigned int maxClanId;
         #ifndef CATCHCHALLENGER_DB_FILE
             unsigned int maxMonsterId;

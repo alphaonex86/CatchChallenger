@@ -66,10 +66,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         settings.setValue("port",rand()%40000+10000);
     server_port=settings.value("port");
 
-    #if CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION > 15
-    #error CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION can t be greater than 15
-    #endif
-
     //token
     settings.beginGroup("master");
     {
@@ -94,7 +90,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(!settings.contains("token"))
             generateTokenStatClient(settings);
         std::string token=settings.value("token");
-        if(token.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT*2/*String Hexa, not binary*/)
+        if(token.size()!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER*2/*String Hexa, not binary*/)
             generateTokenStatClient(settings);
         token=settings.value("token");
         const std::vector<char> &tokenBinary=hexatoBinary(token);
@@ -103,7 +99,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
             abort();
         }
-        memcpy(LinkToMaster::private_token_statclient,tokenBinary.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        memcpy(LinkToMaster::private_token_statclient,tokenBinary.data(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
     }
     settings.endGroup();
 
@@ -167,7 +163,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
 
     //connection
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     if(!settings.contains("compression"))
         settings.setValue("compression","zstd");
     if(settings.value("compression")=="none")
@@ -411,7 +407,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 std::cerr << "Unable to connect on master" << std::endl;
                 abort();
             }
-            #ifdef SERVERSSL
+            #ifdef CATCHCHALLENGER_SERVER_SSL
             ctx from what?
             linkToMaster::linkToMaster=new linkToMaster(linkfd,ctx);
             #else
@@ -477,7 +473,7 @@ void EpollServerLoginSlave::SQL_common_load_finish()
 
 bool EpollServerLoginSlave::tryListen()
 {
-    #ifdef SERVERSSL
+    #ifdef CATCHCHALLENGER_SERVER_SSL
         const bool &returnedValue=trySslListen(server_ip, server_port,"server.crt", "server.key");
     #else
         const bool &returnedValue=tryListenInternal(server_ip.c_str(), server_port.c_str());
@@ -528,14 +524,14 @@ void EpollServerLoginSlave::generateTokenStatClient(TinyXMLSettings &settings)
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(LinkToMaster::private_token_statclient,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
-    if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+    const int &returnedSize=fread(LinkToMaster::private_token_statclient,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,fpRandomFile);
+    if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
-        std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
+        std::cerr << "Unable to read the " << CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
     settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(LinkToMaster::private_token_statclient)
-                                           ,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT).c_str());
+                                           ,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER).c_str());
     fclose(fpRandomFile);
     settings.sync();
 }
