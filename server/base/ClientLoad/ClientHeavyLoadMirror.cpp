@@ -4,6 +4,11 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include <sys/stat.h>
 #include <cstring>
+#include <fcntl.h>
+#include <unistd.h>
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#include <zstd.h>
+#endif
 
 /// \todo solve disconnecting/destroy during the SQL loading
 
@@ -152,10 +157,14 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     #endif
     tempDatapackListReplyArray.clear();
     tempDatapackListReplyTestCount=0;
-    BaseServerMasterSendDatapack::rawFilesBuffer.clear();
-    BaseServerMasterSendDatapack::compressedFilesBuffer.clear();
-    BaseServerMasterSendDatapack::rawFilesBufferCount=0;
-    BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
+    //Reset the per-batch pending lists. swap-with-empty actually frees
+    //the heap storage from any prior batch that errored mid-flush.
+    std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(BaseServerMasterSendDatapack::rawFilesPending);
+    BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(BaseServerMasterSendDatapack::compressedFilesPending);
+    BaseServerMasterSendDatapack::compressedFilesPendingRawSize=0;
+    #endif
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
     std::string datapackPath;
@@ -293,9 +302,11 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x75;
             posOutput+=1;
 
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileNumber);
+            {const uint32_t _tmp_le=(htole32(datapckFileNumber));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileSize);
+            {const uint32_t _tmp_le=(htole32(datapckFileSize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=4;
 
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -444,7 +455,7 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(tempDatapackListReplyArray.size());//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(tempDatapackListReplyArray.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         if(tempDatapackListReplyArray.size()>64*1024)
         {
@@ -461,64 +472,273 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
 
 void Client::sendFileContent()
 {
-    if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>0 && BaseServerMasterSendDatapack::rawFilesBufferCount>0)
+    //Zero-copy raw datapack send. Walks the pending list, computes the
+    //total packet body size up-front (fstat-derived), writes the small
+    //packet/per-file headers via sendRawBlock, and streams each file's
+    //content via sendfile(2) (kernel page-cache -> socket, no userspace
+    //buffer). Replaces the former in-RAM concatenation in
+    //BaseServerMasterSendDatapack::rawFilesBuffer.
+    std::vector<BaseServerMasterSendDatapack::PendingFile> &pending=
+            BaseServerMasterSendDatapack::rawFilesPending;
+    if(pending.empty())
+        return;
+
+    //bodySize = 1 (count) + sum(1+namelen+4+filesize)
+    uint64_t bodySize=1;
     {
-        //send the network message
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
-        posOutput+=1+4;
-
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
-        posOutput+=1;
-        if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        unsigned int i=0;
+        while(i<pending.size())
         {
-            errorOutput("Client::sendFileContent too big to reply");
-            return;
+            bodySize+=1+pending[i].name.size()+4+pending[i].size;
+            i++;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
-        posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
-
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-
-        BaseServerMasterSendDatapack::rawFilesBuffer.clear();
-        BaseServerMasterSendDatapack::rawFilesBufferCount=0;
     }
+    //Whole packet must still fit one wire packet.
+    if(bodySize+1+4>CATCHCHALLENGER_MAX_PACKET_SIZE)
+    {
+        errorOutput("Client::sendFileContent too big to reply");
+        std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+        BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
+        return;
+    }
+
+    //Packet header: [0x76][bodySize_le32][count_u8]
+    char hdr[1+4+1];
+    hdr[0]=0x76;
+    {const uint32_t le=htole32(static_cast<uint32_t>(bodySize));memcpy(hdr+1,&le,sizeof(le));}
+    hdr[5]=static_cast<uint8_t>(pending.size());
+    if(!sendRawBlock(hdr,sizeof(hdr)))
+    {
+        std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+        BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
+        return;
+    }
+
+    //One file at a time, in protocol order.
+    unsigned int i=0;
+    while(i<pending.size())
+    {
+        const BaseServerMasterSendDatapack::PendingFile &p=pending[i];
+        //Per-file metadata: [namelen_u8][name][filesize_le32]
+        char meta[1+255+4];
+        size_t mp=0;
+        meta[mp]=static_cast<uint8_t>(p.name.size());
+        mp+=1;
+        memcpy(meta+mp,p.name.data(),p.name.size());
+        mp+=p.name.size();
+        {const uint32_t le=htole32(p.size);memcpy(meta+mp,&le,sizeof(le));}
+        mp+=4;
+        if(!sendRawBlock(meta,static_cast<unsigned int>(mp)))
+            break;
+
+        //Open + sendfile + close. fopen/fclose are not needed; raw fd is
+        //all we want for sendfile(2).
+        const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_CLOEXEC);
+        if(fd<0)
+        {
+            //We've already committed bytes for the next file's content
+            //to the wire; the only safe thing left is to drop the link.
+            errorOutput("sendFileContent: open() failed for "+p.fullPath);
+            disconnectClient();
+            break;
+        }
+        off_t off=0;
+        size_t remaining=p.size;
+        while(remaining>0)
+        {
+            const ssize_t sent=writeFileToSocket(fd,&off,remaining);
+            if(sent<=0)
+            {
+                if(sent==0)
+                    break;//EOF; file shorter than fstat? caller error
+                errorOutput("sendFileContent: sendfile() failed");
+                ::close(fd);
+                disconnectClient();
+                pending.clear();
+                BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
+                return;
+            }
+            remaining-=static_cast<size_t>(sent);
+        }
+        ::close(fd);
+        i++;
+    }
+
+    //Free pending list — matches the user's "free related buffer when
+    //finished sending datapack" rule.
+    std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+    BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 void Client::sendCompressedFileContent()
 {
-    if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>0 && BaseServerMasterSendDatapack::compressedFilesBufferCount>0)
+    //Streaming compression for the 0x77 packet. Replaces the former
+    //"accumulate raw bytes in compressedFilesBuffer, then ZSTD_compress
+    //in one shot" approach. Now the raw content NEVER lives in RAM:
+    //we feed each file in protocol order through ZSTD_compressStream2
+    //chunk-by-chunk (one shared 64 KB read scratch). Output goes into
+    //a single bounded heap vector that we hand to sendRawBlock and free
+    //on return.
+    std::vector<BaseServerMasterSendDatapack::PendingFile> &pending=
+            BaseServerMasterSendDatapack::compressedFilesPending;
+    if(pending.empty())
+        return;
+
+    if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
     {
-        //send the network message
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
-        posOutput+=1+4;
-
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(BaseServerMasterSendDatapack::compressedFilesBufferCount);
-        posOutput+=1;
-        if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
-        {
-            errorOutput("Client::sendFileContent too big to reply");
-            return;
-        }
-
-        const uint32_t &compressedSize=CompressionProtocol::computeCompression(
-                    BaseServerMasterSendDatapack::compressedFilesBuffer.data(),
-                    ProtocolParsingBase::tempBigBufferForOutput+posOutput,
-                    static_cast<uint32_t>(BaseServerMasterSendDatapack::compressedFilesBuffer.size()),
-                    sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput,
-                    CompressionProtocol::compressionTypeServer
-                    );
-        posOutput+=compressedSize;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-
-        BaseServerMasterSendDatapack::compressedFilesBuffer.clear();
-        BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
+        //Compression disabled at runtime — caller should have routed
+        //this through the raw path instead.
+        errorOutput("sendCompressedFileContent called with compression off");
+        std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+        BaseServerMasterSendDatapack::compressedFilesPendingRawSize=0;
+        return;
     }
+
+    ZSTD_CStream * const cctx=ZSTD_createCStream();
+    if(cctx==nullptr)
+    {
+        errorOutput("ZSTD_createCStream failed");
+        std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+        BaseServerMasterSendDatapack::compressedFilesPendingRawSize=0;
+        return;
+    }
+    ZSTD_initCStream(cctx,CompressionProtocol::compressionLevel);
+
+    //Output buffer holds the compressed payload only. ZSTD_compressBound
+    //is the worst case for the raw input; in practice the compressed
+    //size is much smaller. We only ever appended bytes to this vector;
+    //it never gets read or memcpy'd elsewhere, so growth is fine.
+    std::vector<uint8_t> compressed;
+    compressed.reserve(ZSTD_compressBound(BaseServerMasterSendDatapack::compressedFilesPendingRawSize));
+
+    //64 KB shared read scratch. One file at a time -> sequential reads,
+    //no per-file buffer fan-out (matches the user's preference: avoid
+    //growing memory by parallelising reads).
+    char readBuf[64*1024];
+    uint8_t outBuf[64*1024];
+
+    bool failed=false;
+    {
+        unsigned int i=0;
+        while(i<pending.size() && !failed)
+        {
+            const BaseServerMasterSendDatapack::PendingFile &p=pending[i];
+
+            //Per-file prefix: [namelen_u8][name][filesize_le32]. Push
+            //through the stream as raw input bytes (the prefix bytes
+            //get compressed too — receiver decompresses then parses).
+            char meta[1+255+4];
+            size_t mp=0;
+            meta[mp]=static_cast<uint8_t>(p.name.size());
+            mp+=1;
+            memcpy(meta+mp,p.name.data(),p.name.size());
+            mp+=p.name.size();
+            {const uint32_t le=htole32(p.size);memcpy(meta+mp,&le,sizeof(le));}
+            mp+=4;
+
+            ZSTD_inBuffer inMeta={meta,mp,0};
+            while(inMeta.pos<inMeta.size && !failed)
+            {
+                ZSTD_outBuffer out={outBuf,sizeof(outBuf),0};
+                const size_t r=ZSTD_compressStream2(cctx,&out,&inMeta,ZSTD_e_continue);
+                if(ZSTD_isError(r))
+                {
+                    errorOutput(std::string("ZSTD_compressStream2 (meta): ")+ZSTD_getErrorName(r));
+                    failed=true;
+                    break;
+                }
+                if(out.pos>0)
+                    compressed.insert(compressed.end(),outBuf,outBuf+out.pos);
+            }
+            if(failed)
+                break;
+
+            //File content, chunked. Open + read + close per file; never
+            //hold more than one fd or one chunk at a time.
+            const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_CLOEXEC);
+            if(fd<0)
+            {
+                errorOutput("sendCompressedFileContent: open() failed for "+p.fullPath);
+                failed=true;
+                break;
+            }
+            uint32_t remaining=p.size;
+            while(remaining>0 && !failed)
+            {
+                const size_t chunk=remaining<sizeof(readBuf) ? remaining : sizeof(readBuf);
+                const ssize_t got=::read(fd,readBuf,chunk);
+                if(got<=0)
+                {
+                    errorOutput("sendCompressedFileContent: read() short for "+p.fullPath);
+                    failed=true;
+                    break;
+                }
+                ZSTD_inBuffer in={readBuf,static_cast<size_t>(got),0};
+                while(in.pos<in.size && !failed)
+                {
+                    ZSTD_outBuffer out={outBuf,sizeof(outBuf),0};
+                    const size_t r=ZSTD_compressStream2(cctx,&out,&in,ZSTD_e_continue);
+                    if(ZSTD_isError(r))
+                    {
+                        errorOutput(std::string("ZSTD_compressStream2 (data): ")+ZSTD_getErrorName(r));
+                        failed=true;
+                        break;
+                    }
+                    if(out.pos>0)
+                        compressed.insert(compressed.end(),outBuf,outBuf+out.pos);
+                }
+                remaining-=static_cast<uint32_t>(got);
+            }
+            ::close(fd);
+            i++;
+        }
+    }
+
+    //Flush the frame.
+    while(!failed)
+    {
+        ZSTD_inBuffer in={nullptr,0,0};
+        ZSTD_outBuffer out={outBuf,sizeof(outBuf),0};
+        const size_t r=ZSTD_compressStream2(cctx,&out,&in,ZSTD_e_end);
+        if(ZSTD_isError(r))
+        {
+            errorOutput(std::string("ZSTD_compressStream2 (end): ")+ZSTD_getErrorName(r));
+            failed=true;
+            break;
+        }
+        if(out.pos>0)
+            compressed.insert(compressed.end(),outBuf,outBuf+out.pos);
+        if(r==0)
+            break;//frame finalised
+    }
+    ZSTD_freeCStream(cctx);
+
+    if(!failed)
+    {
+        //bodySize = 1 (count) + compressed.size().
+        const uint64_t bodySize=1+compressed.size();
+        if(bodySize+1+4>CATCHCHALLENGER_MAX_PACKET_SIZE)
+            errorOutput("Client::sendCompressedFileContent too big to reply");
+        else
+        {
+            //Header [0x77][bodySize_le32][count_u8] then the compressed
+            //payload. Two sendRawBlock() calls — receiver sees one
+            //continuous packet on the TCP stream.
+            char hdr[1+4+1];
+            hdr[0]=0x77;
+            {const uint32_t le=htole32(static_cast<uint32_t>(bodySize));memcpy(hdr+1,&le,sizeof(le));}
+            hdr[5]=static_cast<uint8_t>(pending.size());
+            if(sendRawBlock(hdr,sizeof(hdr)))
+                sendRawBlock(reinterpret_cast<const char *>(compressed.data()),
+                             static_cast<unsigned int>(compressed.size()));
+        }
+    }
+
+    //Free buffers regardless of failure.
+    std::vector<uint8_t>().swap(compressed);
+    std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+    BaseServerMasterSendDatapack::compressedFilesPendingRawSize=0;
 }
 #endif
 
@@ -530,123 +750,85 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         return false;
     }
 
+    //Stat-only path: the file content is no longer materialised in
+    //userspace here. We only need {fullPath, name, size} so the eventual
+    //flush (sendFileContent / sendCompressedFileContent) can stream the
+    //file through sendfile(2) or ZSTD_compressStream2.
     std::string fullPathFileToOpen=datapackPath+fileName;
     #ifdef Q_OS_WIN32
     stringreplaceAll(fullPathFileToOpen,"/","\\");
     #endif
-    FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
-    if(filedesc!=NULL)
+    struct stat st;
+    if(::stat(fullPathFileToOpen.c_str(),&st)!=0)
     {
-        const std::vector<char> &content=FacilityLibGeneral::readAllFileAndClose(filedesc);
-        const unsigned int &contentsize=static_cast<uint32_t>(content.size());
-
-        const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
-        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        if(CompressionProtocol::compressionTypeServer!=CompressionProtocol::CompressionType::None &&
-                BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
-                (
-                    contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
-                    ||
-                    contentsize>CATCHCHALLENGER_MAX_PACKET_SIZE
-                )
-            )
-        {
-            uint32_t posOutput=0;
-            /// \todo maybe cache will be useful here, on files group
-            {
-                const std::string &text=fileName;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
-                posOutput+=1;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                posOutput+=text.size();
-            }
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
-            posOutput+=4;
-
-            binaryAppend(BaseServerMasterSendDatapack::compressedFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-            binaryAppend(BaseServerMasterSendDatapack::compressedFilesBuffer,content);
-            BaseServerMasterSendDatapack::compressedFilesBufferCount++;
-            switch(CompressionProtocol::compressionTypeServer)
-            {
-                default:
-                case CompressionProtocol::CompressionType::Zstandard:
-                if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
-                    sendCompressedFileContent();
-                break;
-            }
-        }
-        else
-        #endif
-        {
-            if(contentsize>CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024)
-            {
-                if((1+fileName.size()+4+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
-                {
-                    normalOutput("Error: outputData2(1)+fileNameRaw("+
-                                 std::to_string(fileName.size()+4)+
-                                 ")+content("+
-                                 std::to_string(contentsize)+
-                                 ")>CATCHCHALLENGER_MAX_PACKET_SIZE for file "+
-                                 fileName
-                                 );
-                    return false;
-                }
-
-                //send the network message
-                uint32_t posOutput=0;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
-                posOutput+=1+4;
-
-                //number of file
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=1;
-                posOutput+=1;
-                //filename
-                {
-                    const std::string &text=fileName;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
-                    posOutput+=1;
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                    posOutput+=text.size();
-                }
-                //file size
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
-                posOutput+=4;
-
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,content.data(),contentsize);
-                posOutput+=contentsize;
-
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-
-                //std::cout << binaryToHex() << std::endl;
-
-                sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-            }
-            else
-            {
-                uint32_t posOutput=0;
-                {
-                    const std::string &text=fileName;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
-                    posOutput+=1;
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                    posOutput+=text.size();
-                }
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
-                posOutput+=4;
-
-                binaryAppend(BaseServerMasterSendDatapack::rawFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                binaryAppend(BaseServerMasterSendDatapack::rawFilesBuffer,content);
-                BaseServerMasterSendDatapack::rawFilesBufferCount++;
-                if(BaseServerMasterSendDatapack::rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || BaseServerMasterSendDatapack::rawFilesBufferCount>=255)
-                    sendFileContent();
-            }
-        }
-        return true;
-    }
-    else
-    {
-        errorOutput("Unable to open into CatchChallenger::sendFile(): "+fileName);
+        errorOutput("Unable to stat into CatchChallenger::sendFile(): "+fileName);
         return false;
     }
+    const uint32_t contentsize=static_cast<uint32_t>(st.st_size);
+    const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    if(CompressionProtocol::compressionTypeServer!=CompressionProtocol::CompressionType::None &&
+            BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
+            (
+                contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
+                ||
+                contentsize>CATCHCHALLENGER_MAX_PACKET_SIZE
+            )
+        )
+    {
+        BaseServerMasterSendDatapack::PendingFile pf;
+        pf.fullPath=fullPathFileToOpen;
+        pf.name=fileName;
+        pf.size=contentsize;
+        BaseServerMasterSendDatapack::compressedFilesPending.push_back(pf);
+        BaseServerMasterSendDatapack::compressedFilesPendingRawSize+=1+fileName.size()+4+contentsize;
+        if(BaseServerMasterSendDatapack::compressedFilesPendingRawSize>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024
+                || BaseServerMasterSendDatapack::compressedFilesPending.size()>=255)
+            sendCompressedFileContent();
+    }
+    else
+    #endif
+    {
+        if(contentsize>CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024)
+        {
+            if((1+fileName.size()+4+contentsize)>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+            {
+                normalOutput("Error: outputData2(1)+fileNameRaw("+
+                             std::to_string(fileName.size()+4)+
+                             ")+content("+
+                             std::to_string(contentsize)+
+                             ")>CATCHCHALLENGER_MAX_PACKET_SIZE for file "+
+                             fileName
+                             );
+                return false;
+            }
+            //Big-but-fits-one-packet file: route through the same pending
+            //list as a count=1 batch, then flush immediately. This way
+            //the sendfile(2) path is the single code path for raw data.
+            //Flush any prior pending bundle first to preserve ordering.
+            if(!BaseServerMasterSendDatapack::rawFilesPending.empty())
+                sendFileContent();
+            BaseServerMasterSendDatapack::PendingFile pf;
+            pf.fullPath=fullPathFileToOpen;
+            pf.name=fileName;
+            pf.size=contentsize;
+            BaseServerMasterSendDatapack::rawFilesPending.push_back(pf);
+            BaseServerMasterSendDatapack::rawFilesPendingRawSize+=1+fileName.size()+4+contentsize;
+            sendFileContent();
+        }
+        else
+        {
+            BaseServerMasterSendDatapack::PendingFile pf;
+            pf.fullPath=fullPathFileToOpen;
+            pf.name=fileName;
+            pf.size=contentsize;
+            BaseServerMasterSendDatapack::rawFilesPending.push_back(pf);
+            BaseServerMasterSendDatapack::rawFilesPendingRawSize+=1+fileName.size()+4+contentsize;
+            if(BaseServerMasterSendDatapack::rawFilesPendingRawSize>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024
+                    || BaseServerMasterSendDatapack::rawFilesPending.size()>=255)
+                sendFileContent();
+        }
+    }
+    return true;
 }
 #endif

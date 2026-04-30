@@ -23,13 +23,13 @@ catchchallenger_datapack_map<std::string,uint8_t> BaseServerMasterSendDatapack::
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 catchchallenger_datapack_set<std::string> BaseServerMasterSendDatapack::compressedExtension;
-std::vector<char> BaseServerMasterSendDatapack::compressedFilesBuffer;
-uint8_t BaseServerMasterSendDatapack::compressedFilesBufferCount;
+std::vector<BaseServerMasterSendDatapack::PendingFile> BaseServerMasterSendDatapack::compressedFilesPending;
+uint64_t BaseServerMasterSendDatapack::compressedFilesPendingRawSize=0;
 #endif
 catchchallenger_datapack_set<std::string> BaseServerMasterSendDatapack::extensionAllowed;
 
-std::vector<char> BaseServerMasterSendDatapack::rawFilesBuffer;
-uint8_t BaseServerMasterSendDatapack::rawFilesBufferCount;
+std::vector<BaseServerMasterSendDatapack::PendingFile> BaseServerMasterSendDatapack::rawFilesPending;
+uint64_t BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
 
 catchchallenger_datapack_map<std::string,uint32_t> BaseServerMasterSendDatapack::datapack_file_list_cache;
 catchchallenger_datapack_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
@@ -179,10 +179,15 @@ void BaseServerMasterSendDatapack::unload()
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     compressedExtension.clear();
-    compressedFilesBuffer.clear();
+    //Free the pending list. swap-with-empty actually releases the storage,
+    //unlike .clear() which keeps capacity. Matches the "free when finished"
+    //policy the user asked for.
+    std::vector<PendingFile>().swap(compressedFilesPending);
+    compressedFilesPendingRawSize=0;
     #endif
     extensionAllowed.clear();
-    rawFilesBuffer.clear();
+    std::vector<PendingFile>().swap(rawFilesPending);
+    rawFilesPendingRawSize=0;
     datapack_file_list_cache.clear();
     datapack_file_hash_cache_base.clear();
     #endif

@@ -1,4 +1,5 @@
 #include "PlayerUpdaterBase.hpp"
+#include <cstring>
 #include "GlobalServerData.hpp"
 #include "Client.hpp"
 #include "BroadCastWithoutSender.hpp"
@@ -87,7 +88,8 @@ void PlayerUpdaterBase::exec()
             if(GlobalServerData::serverSettings.sendPlayerNumber)
             {
                 if(Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber!=0)
-                    *reinterpret_cast<uint16_t *>(Client::protocolMessageLogicalGroupAndServerList+9/*logical group size*/+Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber)=htole16(connected_players);
+                    {const uint16_t _tmp_le=(htole16(connected_players));memcpy(Client::protocolMessageLogicalGroupAndServerList+9/*logical group size*/+Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber,&_tmp_le,sizeof(_tmp_le));}
+
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 || Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)

@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <cstring>
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../PreparedDBQuery.hpp"
@@ -230,7 +231,8 @@ void Client::syncDatabaseQuest()
             lastQuestId=i->first;
             #endif
             const PlayerQuest &quest=i->second;
-            *reinterpret_cast<uint16_t *>(quest_raw+pos)=htole16(item);
+            {const uint16_t _tmp_le=(htole16(item));memcpy(quest_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
             pos+=2;
             if(quest.finish_one_time)
                 quest_raw[pos]=0x01;
@@ -278,7 +280,8 @@ void Client::syncDatabaseQuest()
             lastQuestId=i->first;
             #endif
             const PlayerQuest &quest=i->second;
-            *reinterpret_cast<uint16_t *>(tempBigBufferForOutput+pos)=htole16(item);
+            {const uint16_t _tmp_le=(htole16(item));memcpy(tempBigBufferForOutput+pos,&_tmp_le,sizeof(_tmp_le));}
+
             pos+=2;
             if(quest.finish_one_time)
                 tempBigBufferForOutput[pos]=0x01;

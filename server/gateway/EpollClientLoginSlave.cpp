@@ -1,4 +1,5 @@
 #include "EpollClientLoginSlave.hpp"
+#include <cstring>
 #include "EpollServerLoginSlave.hpp"
 #include "../../general/base/cpp11addition.hpp"
 
@@ -121,7 +122,7 @@ bool EpollClientLoginSlave::sendDatapackProgression(const uint8_t progression)
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x78;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+1);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1+1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EpollServerLoginSlave::epollServerLoginSlave->gatewayNumber;
     posOutput+=1;

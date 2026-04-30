@@ -31,11 +31,18 @@ SOURCES += \
 
 DEFINES += CATCHCHALLENGERLIB
 
-QT += multimedia
+#match qtopengl/client.pri: opt out of QtMultimedia when CATCHCHALLENGER_NOAUDIO
+#is set (Qt-for-Android in this workspace doesn't ship the Multimedia module).
+#Audio.cpp #include <QAudioSink> unconditionally so we must also drop it from
+#SOURCES when audio is off, otherwise the compile fails with
+#"QAudioSink: No such file or directory".
+!contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
+    QT += multimedia
+    SOURCES += $$PWD/Audio.cpp
+}
 # internal libogg, libopus, libopusfile (replaces -lopus -logg)
 include($$PWD/libogg.pri)
 include($$PWD/libopus.pri)
 include($$PWD/libopusfile.pri)
 SOURCES += \
-    $$PWD/Audio.cpp \
     $$PWD/QInfiniteBuffer.cpp

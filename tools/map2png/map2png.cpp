@@ -8,6 +8,7 @@
 
 #include "map2png.h"
 
+#include <iostream>
 #include <QCoreApplication>
 #include <QGraphicsItem>
 #include <QGraphicsScene>
@@ -280,7 +281,14 @@ public:
 
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
     {
-        const QColor &color = mMapObject->objectGroup()->color();
+        // libtiled's OrthogonalRenderer::drawMapObject() unconditionally
+        // derefs object->objectGroup()->effectiveTintColor(); but
+        // ObjectGroup::removeObject() clears that back-pointer to nullptr,
+        // so an orphaned MapObject would SEGV. Skip painting it.
+        Tiled::ObjectGroup *group = mMapObject->objectGroup();
+        if(group == nullptr)
+            return;
+        const QColor &color = group->color();
         const QColor &c = color.isValid() ? color : Qt::darkGray;
         Tiled::MapObjectColors colors;
         colors.main = c;
@@ -721,107 +729,131 @@ QString Map2Png::loadOtherMap(const QString &fileName)
         tempMapObject->tiledMap=tempMapObjectFull->tiledMap;
     }
 
-    int index=0;
-    while(index<tempMapObject->tiledMap->layerCount())
+    int objectGroupIndex=-1;
     {
-        if(tempMapObject->tiledMap->layerAt(index)->name()=="Object" && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
+        int index=0;
+        while(index<tempMapObject->tiledMap->layerCount())
         {
-            QList<MapObject *> objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
-            int index2=0;
-            while(index2<objects.size())
+            if(tempMapObject->tiledMap->layerAt(index)->name()=="Object" && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
             {
-                if(objects.at(index2)->type()=="bot")
+                objectGroupIndex=index;
+                break;
+            }
+            index++;
+        }
+    }
+    if(objectGroupIndex>=0)
+    {
+        QList<MapObject *> objects=tempMapObject->tiledMap->layerAt(objectGroupIndex)->asObjectGroup()->objects();
+        int index2=0;
+        while(index2<objects.size())
+        {
+            if(objects.at(index2)->type()=="bot")
+            {
+                //qDebug() << "bot found at " << __FILE__ << ":" << __LINE__;
+                if(objects.at(index2)->property("skin").toString().isEmpty())
                 {
-                    //qDebug() << "bot found at " << __FILE__ << ":" << __LINE__;
-                    if(objects.at(index2)->property("skin").toString().isEmpty())
-                    {
-                        qDebug() << "bot found but no skin at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x()/16 << objects.at(index2)->y()/16-1 << objects.at(index2)->property("skin").toString();
-                        tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
-                        objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
-                        index2--;
-                    }
+                    qDebug() << "bot found but no skin at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x()/16 << objects.at(index2)->y()/16-1 << objects.at(index2)->property("skin").toString();
+                    tempMapObject->tiledMap->layerAt(objectGroupIndex)->asObjectGroup()->removeObjectAt(index2);
+                    objects=tempMapObject->tiledMap->layerAt(objectGroupIndex)->asObjectGroup()->objects();
+                    index2--;
+                }
+                else
+                {
+                    Tiled::SharedTileset tileset=NULL;
+                    QString tilesetPath=QString("%2/skin/fighter/%1/trainer.png").arg(objects.at(index2)->property("skin").toString()).arg(baseDatapack);
+                    if(QFile(tilesetPath).exists())
+                        tileset=Map2Png::getTileset(tempMapObject->tiledMap.get(),tilesetPath);
                     else
                     {
-                        Tiled::SharedTileset tileset=NULL;
-                        QString tilesetPath=QString("%2/skin/fighter/%1/trainer.png").arg(objects.at(index2)->property("skin").toString()).arg(baseDatapack);
-                        if(QFile(tilesetPath).exists())
-                            tileset=Map2Png::getTileset(tempMapObject->tiledMap.get(),tilesetPath);
-                        else
+                        int entryListIndex=0;
+                        while(entryListIndex<folderListSkin.size())
                         {
-                            int entryListIndex=0;
+                            tilesetPath=QStringLiteral("%1/skin/%2/%3/trainer.png").arg(baseDatapack).arg(folderListSkin.at(entryListIndex)).arg(objects.at(index2)->property("skin").toString());
+                            if(QFile(tilesetPath).exists())
+                            {
+                                tileset=Map2Png::getTileset(tempMapObject->tiledMap.get(),tilesetPath);
+                                break;
+                            }
+                            entryListIndex++;
+                        }
+                        if(entryListIndex>=folderListSkin.size())
+                        {
+                            qDebug() << "Skin bot not found: " << tilesetPath << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y();
+                            entryListIndex=0;
                             while(entryListIndex<folderListSkin.size())
                             {
                                 tilesetPath=QStringLiteral("%1/skin/%2/%3/trainer.png").arg(baseDatapack).arg(folderListSkin.at(entryListIndex)).arg(objects.at(index2)->property("skin").toString());
-                                if(QFile(tilesetPath).exists())
-                                {
-                                    tileset=Map2Png::getTileset(tempMapObject->tiledMap.get(),tilesetPath);
-                                    break;
-                                }
+                                qDebug() << "Skin bot not found into: " << tilesetPath;
                                 entryListIndex++;
                             }
-                            if(entryListIndex>=folderListSkin.size())
-                            {
-                                qDebug() << "Skin bot not found: " << tilesetPath << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y();
-                                entryListIndex=0;
-                                while(entryListIndex<folderListSkin.size())
-                                {
-                                    tilesetPath=QStringLiteral("%1/skin/%2/%3/trainer.png").arg(baseDatapack).arg(folderListSkin.at(entryListIndex)).arg(objects.at(index2)->property("skin").toString());
-                                    qDebug() << "Skin bot not found into: " << tilesetPath;
-                                    entryListIndex++;
-                                }
-                                //abort();
-                            }
+                            //abort();
                         }
-                        if(tileset!=NULL)
+                    }
+                    if(tileset!=NULL)
+                    {
+                        if(tileset.isNull())
+                            qDebug() << "insert bot but tileset.isNull() at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
+                        else
+                            qDebug() << "insert bot at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
+                        QString lookAt=objects.at(index2)->property("lookAt").toString();
+                        Layer * layer=tempMapObject->tiledMap->layerAt(objectGroupIndex);
+                        ObjectGroup *objGrou=layer->asObjectGroup();
+
+                        Cell cell=objects.at(index2)->cell();
+                        if(lookAt=="top")
+                            cell.setTile(tileset->tileAt(1));
+                        else if(lookAt=="right")
+                            cell.setTile(tileset->tileAt(4));
+                        else if(lookAt=="left")
+                            cell.setTile(tileset->tileAt(10));
+                        else
+                            cell.setTile(tileset->tileAt(7));
+                        objects.at(index2)->setCell(cell);
+                        if(objects.at(index2)->hasDimensions())
+                            objects.at(index2)->setSize(tileset->tileAt(1)->width(),tileset->tileAt(1)->height());
+                        //tempMapObject->objectGroup->addObject(objects.at(index2));
+
+                        if(tempMapObject->objectGroup!=nullptr && objGrou!=nullptr)
                         {
-                            if(tileset.isNull())
-                                qDebug() << "insert bot but tileset.isNull() at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
-                            else
-                                qDebug() << "insert bot at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
-                            QString lookAt=objects.at(index2)->property("lookAt").toString();
-                            Layer * layer=tempMapObject->tiledMap->layerAt(index);
-                            ObjectGroup *objGrou=layer->asObjectGroup();
-
-                            Cell cell=objects.at(index2)->cell();
-                            if(lookAt=="top")
-                                cell.setTile(tileset->tileAt(1));
-                            else if(lookAt=="right")
-                                cell.setTile(tileset->tileAt(4));
-                            else if(lookAt=="left")
-                                cell.setTile(tileset->tileAt(10));
-                            else
-                                cell.setTile(tileset->tileAt(7));
-                            objects.at(index2)->setCell(cell);
-                            if(objects.at(index2)->hasDimensions())
-                                objects.at(index2)->setSize(tileset->tileAt(1)->width(),tileset->tileAt(1)->height());
-                            //tempMapObject->objectGroup->addObject(objects.at(index2));
-
-                            if(tempMapObject->objectGroup!=nullptr)
-                            {
-                                tempMapObject->objectGroup->addObject(objects.at(index2));
-                                objGrou->removeObject(objects.at(index2));
-                                index2--;
-                            }
-                            else
-                                qDebug() << "insert bot but tempMapObject->objectGroup==null at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
+                            // Order matters: ObjectGroup::removeObject() calls
+                            // object->setObjectGroup(nullptr) on the way out.
+                            // Doing addObject() first then removeObject() leaves
+                            // the bot in the destination group but with a stale
+                            // null back-pointer, which makes
+                            // OrthogonalRenderer::drawMapObject() SEGV (and the
+                            // null-check guard in MapObjectItem::paint() then
+                            // skips it, so the bot disappears from the render).
+                            objGrou->removeObject(objects.at(index2));
+                            tempMapObject->objectGroup->addObject(objects.at(index2));
+                            objects=tempMapObject->tiledMap->layerAt(objectGroupIndex)->asObjectGroup()->objects();
+                            index2--;
                         }
                         else
-                            qDebug() << "bot found tileset NULL at " << __FILE__ << ":" << __LINE__;
+                            qDebug() << "insert bot but tempMapObject->objectGroup==null or objGrou==null at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
                     }
+                    else
+                        qDebug() << "bot found tileset NULL at " << __FILE__ << ":" << __LINE__;
                 }
-                else if(objects.at(index2)->type()=="object")
-                {
-                    if(objects.at(index2)->property("visible")=="false")
-                    {
-                        tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
-                        objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
-                        index2--;
-                    }
-                }
-                index2++;
             }
+            else if(objects.at(index2)->type()=="object")
+            {
+                if(objects.at(index2)->property("visible")=="false")
+                {
+                    tempMapObject->tiledMap->layerAt(objectGroupIndex)->asObjectGroup()->removeObjectAt(index2);
+                    objects=tempMapObject->tiledMap->layerAt(objectGroupIndex)->asObjectGroup()->objects();
+                    index2--;
+                }
+            }
+            else
+            {
+                qDebug() << "layer Object, unknown object at" << objects.at(index2)->x() << "," << objects.at(index2)->y() << "type:" << objects.at(index2)->type();
+                tempMapObject->tiledMap->layerAt(objectGroupIndex)->asObjectGroup()->removeObjectAt(index2);
+                objects=tempMapObject->tiledMap->layerAt(objectGroupIndex)->asObjectGroup()->objects();
+                index2--;
+            }
+            index2++;
         }
-        index++;
     }
     CatchChallenger::Map_loader map_loader;
     if(!map_loader.tryLoadMap(resolvedFileName.toStdString(), tempMapObject->logicalMap, false))
@@ -831,6 +863,13 @@ QString Map2Png::loadOtherMap(const QString &fileName)
         //delete tempMapObject->tiledMap;
         return QString();
     }
+
+    // tryLoadMap leaves mapFinal.width/height untouched — the server populates
+    // them in loadAllMapsAndLink (Map_loader.cpp:851-852). map2png skips that
+    // path, so copy width/height here, otherwise loadCurrentMap's recursive
+    // placement uses 0 and stacks adjacent maps on top of each other.
+    tempMapObject->logicalMap.width  = static_cast<uint8_t>(map_loader.map_to_send.width);
+    tempMapObject->logicalMap.height = static_cast<uint8_t>(map_loader.map_to_send.height);
 
     //border mapIndex not resolved for map2png (no global map list)
     tempMapObject->logicalMap.border.bottom.mapIndex                = 65535;
@@ -1004,11 +1043,60 @@ void Map2Png::viewMap(const bool &renderAll,const QString &fileName,const QStrin
     //qDebug() << startTime.elapsed();
     mScene->addItem(mapItem);
 
-    QSizeF size=mScene->sceneRect().size();
-    QImage newImage(QSize(size.width(),size.height()),QImage::Format_ARGB32);
+    // Compute the render rect from the actual loaded map dimensions, not from
+    // mScene->sceneRect(). Tiled stores TileLayers in 16x16 chunks, so
+    // TileLayer::bounds() (and therefore the scene rect) is rounded up to the
+    // next chunk multiple — for a 30x34 map that yields 32x48 tiles of bounds
+    // and the rendered PNG ends up with 32px of right-padding and ~224px of
+    // bottom-padding past the actual map content.
+    QRectF mapBounds;
+    {
+        QHash<QString,Map_full_map2png *>::const_iterator mi = other_map.constBegin();
+        while(mi != other_map.constEnd())
+        {
+            Map_full_map2png *m = mi.value();
+            if(m != nullptr)
+            {
+                QRectF r(m->x*16, m->y*16,
+                         m->logicalMap.width*16, m->logicalMap.height*16);
+                mapBounds = mapBounds.united(r);
+            }
+            ++mi;
+        }
+    }
+    // Emit one machine-parseable layout line per loaded map: image-space
+    // position, size, and the .tmx-declared tile size. testingmap2png.py reads
+    // these to build the per-map checker mask in fail.png; the tile size is
+    // per-map (different .tmx files can declare different tilewidth /
+    // tileheight values).
+    {
+        QHash<QString,Map_full_map2png *>::const_iterator mi = other_map.constBegin();
+        while(mi != other_map.constEnd())
+        {
+            Map_full_map2png *m = mi.value();
+            if(m != nullptr)
+            {
+                int tw = m->tiledMap ? m->tiledMap->tileWidth() : 16;
+                int th = m->tiledMap ? m->tiledMap->tileHeight() : 16;
+                int img_x = m->x*16 - static_cast<int>(mapBounds.left());
+                int img_y = m->y*16 - static_cast<int>(mapBounds.top());
+                int img_w = m->logicalMap.width*16;
+                int img_h = m->logicalMap.height*16;
+                std::cout << "LAYOUT_MAP image_x=" << img_x
+                          << " image_y=" << img_y
+                          << " image_w=" << img_w
+                          << " image_h=" << img_h
+                          << " tilewidth=" << tw
+                          << " tileheight=" << th
+                          << std::endl;
+            }
+            ++mi;
+        }
+    }
+    QImage newImage(QSize(mapBounds.width(),mapBounds.height()),QImage::Format_ARGB32);
     newImage.fill(Qt::transparent);
     QPainter painter(&newImage);
-    mScene->render(&painter);//,mScene->sceneRect()
+    mScene->render(&painter, QRectF(0,0,mapBounds.width(),mapBounds.height()), mapBounds);
     /*qDebug() << QStringLiteral("mScene size: %1,%2").arg(mScene->sceneRect().size().width()).arg(mScene->sceneRect().size().height());
     qDebug() << QStringLiteral("save as: %1").arg(destination);*/
 

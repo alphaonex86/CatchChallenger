@@ -94,7 +94,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
                 posOutput+=1+4;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+                {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
                 posOutput+=1;
@@ -126,7 +126,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
             }
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
@@ -362,13 +362,15 @@ void Client::cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1+2+2));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    {const uint16_t _tmp_le=(htole16(number_of_player));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    {const uint16_t _tmp_le=(htole16(number_of_clan));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -380,13 +382,15 @@ void Client::cityCaptureBotFight(const uint16_t &number_of_player, const uint16_
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2+4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1+2+2+4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    {const uint16_t _tmp_le=(htole16(number_of_player));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    {const uint16_t _tmp_le=(htole16(number_of_clan));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     *reinterpret_cast<CATCHCHALLENGER_TYPE_MAPID *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(fight.first);
     posOutput+=2;
@@ -402,13 +406,15 @@ void Client::cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+2);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1+2+2));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x05;
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_player);
+    {const uint16_t _tmp_le=(htole16(number_of_player));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
+    {const uint16_t _tmp_le=(htole16(number_of_clan));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -420,7 +426,7 @@ void Client::cityCaptureWin()
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x06;
     posOutput+=1;
@@ -434,7 +440,7 @@ void Client::previousCityCaptureNotFinished()
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5E;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
     posOutput+=1;

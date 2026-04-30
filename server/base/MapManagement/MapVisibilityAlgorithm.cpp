@@ -1,4 +1,5 @@
 #include "MapVisibilityAlgorithm.hpp"
+#include <cstring>
 #include "ClientWithMap.hpp"
 #include "../GlobalServerData.hpp"
 #include "../Client.hpp"
@@ -74,7 +75,7 @@ unsigned int MapVisibilityAlgorithm::send_reinsertAll(const CATCHCHALLENGER_TYPE
     // can be only this map with this algo, then 1 map
     output[posOutput]=0x01;//map list count
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(output+posOutput)=htole16(mapIndex);//map id
+    {const uint16_t _tmp_le=(htole16(mapIndex));memcpy(output+posOutput,&_tmp_le,sizeof(_tmp_le));}//map id
     posOutput+=2;
     posOutput+=1;//skip player count, filled at end
     unsigned int count=0;
@@ -92,7 +93,7 @@ unsigned int MapVisibilityAlgorithm::send_reinsertAll(const CATCHCHALLENGER_TYPE
         }
         index++;
     }
-    *reinterpret_cast<uint32_t *>(output+1)=htole32(posOutput-1-4);//set the dynamic size (data bytes after code+size)
+    {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(output+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size (data bytes after code+size)
     if(count<254)
         output[1+4+1+2]=static_cast<uint8_t>(count);//player count
     else
@@ -115,7 +116,7 @@ unsigned int MapVisibilityAlgorithm::send_reinsertAllWithFilter(const CATCHCHALL
     // can be only this map with this algo, then 1 map
     output[posOutput]=0x01;//map list count
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(output+posOutput)=htole16(mapIndex);//map id
+    {const uint16_t _tmp_le=(htole16(mapIndex));memcpy(output+posOutput,&_tmp_le,sizeof(_tmp_le));}//map id
     posOutput+=2;
     posOutput+=1;
     unsigned int count=0;
@@ -133,7 +134,7 @@ unsigned int MapVisibilityAlgorithm::send_reinsertAllWithFilter(const CATCHCHALL
         }
         index++;
     }
-    *reinterpret_cast<uint32_t *>(output+1)=htole32(posOutput-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(output+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     if(count<254)
         output[1+4+1+2]=static_cast<uint8_t>(count);//player count
     else
@@ -274,7 +275,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
     while(index_client<map_clients_id.size())
     {
         if(index_client==0)
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(mapIndex);//map id (pre-set for path 2 insert header)
+            {const uint16_t _tmp_le=(htole16(mapIndex));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4+1,&_tmp_le,sizeof(_tmp_le));}//map id (pre-set for path 2 insert header)
         const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.at(index_client);
         if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
@@ -440,9 +441,9 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                 std::cerr << "min_network() PATH2 slot=" << index_client << " +0x6B insert_bytes=" << posOutput << std::endl;
                                 //fill the reserved 0x6B header at [0..8] now that we know insert data size
                                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x6B;//full Insert player on map
-                                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size (data bytes after code+size)
+                                {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size (data bytes after code+size)
                                 ProtocolParsingBase::tempBigBufferForOutput[1+4]=0x01;//map list count
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(mapIndex);//map id
+                                {const uint16_t _tmp_le=(htole16(mapIndex));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4+1,&_tmp_le,sizeof(_tmp_le));}//map id
                                 if(insertCount<254)
                                     ProtocolParsingBase::tempBigBufferForOutput[1+4+1+2]=static_cast<uint8_t>(insertCount);//player count
                                 else
@@ -459,7 +460,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             {
                                 std::cerr << "min_network() PATH2 slot=" << index_client << " +0x69 remove count=" << std::to_string(removeCount) << " at_pos=" << posOutput << std::endl;
                                 MapVisibilityAlgorithm::tempBigBufferForRemove[1+4]=static_cast<uint8_t>(removeCount);//player count
-                                *reinterpret_cast<uint32_t *>(MapVisibilityAlgorithm::tempBigBufferForRemove+1)=htole32(1+removeCount);//dynamic size = count_byte + indices
+                                {const uint32_t _tmp_le=(htole32(1+removeCount));memcpy(MapVisibilityAlgorithm::tempBigBufferForRemove+1,&_tmp_le,sizeof(_tmp_le));}//dynamic size = count_byte + indices
                                 //copy the pre-built remove buffer [0x69][size4][count1][indices...] into main output
                                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,MapVisibilityAlgorithm::tempBigBufferForRemove,1+4+1+removeCount);
                                 posOutput+=1+4+1+removeCount;
@@ -469,7 +470,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             {
                                 std::cerr << "min_network() PATH2 slot=" << index_client << " +0x66 changes count=" << std::to_string(changesCount) << " at_pos=" << posOutput << std::endl;
                                 MapVisibilityAlgorithm::tempBigBufferForChanges[1+4]=static_cast<uint8_t>(changesCount);//player count
-                                *reinterpret_cast<uint32_t *>(MapVisibilityAlgorithm::tempBigBufferForChanges+1)=htole32(1+changesCount*(1+1+1+1));//dynamic size = count_byte + count * 4 bytes per entry
+                                {const uint32_t _tmp_le=(htole32(1+changesCount*(1+1+1+1)));memcpy(MapVisibilityAlgorithm::tempBigBufferForChanges+1,&_tmp_le,sizeof(_tmp_le));}//dynamic size = count_byte + count * 4 bytes per entry
                                 //copy the pre-built changes buffer [0x66][size4][count1][entries...] into main output
                                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,MapVisibilityAlgorithm::tempBigBufferForChanges,1+4+1+changesCount*(1+1+1+1));
                                 posOutput+=1+4+1+changesCount*(1+1+1+1);

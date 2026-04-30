@@ -1,4 +1,5 @@
 #include "BroadCastWithoutSender.hpp"
+#include <cstring>
 #include "Client.hpp"
 #include "ClientList.hpp"
 #include "GlobalServerData.hpp"
@@ -28,7 +29,8 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
         }
         else
         {
-            *reinterpret_cast<uint16_t *>(bufferSendPlayer+0x01)=htole16(connected_players);
+            {const uint16_t _tmp_le=(htole16(connected_players));memcpy(bufferSendPlayer+0x01,&_tmp_le,sizeof(_tmp_le));}
+
             outputSize=3;
         }
 

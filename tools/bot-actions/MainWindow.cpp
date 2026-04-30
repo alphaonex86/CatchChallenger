@@ -166,11 +166,18 @@ void MainWindow::autoConnect(const QString &host, quint16 port, int bots, const 
     if(!pass.isEmpty())
         ui->pass->setText(pass);
 
+    //force the multipleConnexion checkbox to match the requested bot count.
+    //QSettings could otherwise carry over a stale "multipleConnexion=true" from
+    //a previous run, which makes ifMultipleConnexionStartCreation() spin its
+    //connectTimer and re-resetAll() the api (the bot then loops on reconnect
+    //instead of reaching the map).
     if(bots>1)
     {
         ui->multipleConnexion->setChecked(true);
         ui->connexionCountTarget->setValue(bots);
     }
+    else
+        ui->multipleConnexion->setChecked(false);
 
     ui->autoCreateCharacter->setChecked(true);
 

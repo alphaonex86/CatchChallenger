@@ -3,8 +3,6 @@
 #include <zstd.h>
 #include <iostream>
 
-char CompressionProtocol::tempBigBufferForUncompressedInput[];
-char CompressionProtocol::tempBigBufferForCompressedOutput[];
 uint8_t CompressionProtocol::compressionLevel=6;
 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
 CompressionProtocol::CompressionType    CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::None;

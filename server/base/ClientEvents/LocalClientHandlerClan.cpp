@@ -74,7 +74,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 std::cerr << "Sql error for: "+GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_clan_by_name.queryText()+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
                 removeFromQueryReceived(query_id);
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -120,7 +120,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             clanChangeWithoutDb(public_and_private_informations.clan);
             //send the network reply
             removeFromQueryReceived(query_id);
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -159,7 +159,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             const std::vector<PLAYER_INDEX_FOR_CONNECTED> temp_connected_players=clan.connected_players;
             //send the network reply
             removeFromQueryReceived(query_id);
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -241,7 +241,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 return;
             }
 
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
             const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
             if(indexConnected!=PLAYER_INDEX_FOR_CONNECTED_MAX)
@@ -295,7 +295,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
 
             //send the network reply
             removeFromQueryReceived(query_id);
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
             const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
             if(indexConnected!=PLAYER_INDEX_FOR_CONNECTED_MAX)
@@ -400,7 +400,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -442,7 +442,8 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
         }
         if(duplicateFound)
         {
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+            {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -456,7 +457,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     const uint32_t clanId=getMaxClanId(&ok);
     if(!ok)
     {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -470,10 +471,11 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     clan.name=text;
     public_and_private_informations.clan_leader=true;
     //send the network reply
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1+4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
+    {const uint32_t _tmp_le=(htole32(clanId));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     //add into db
@@ -555,7 +557,7 @@ void Client::sendClanInfo()
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,clan.name.data(),clan.name.size());
         posOutput+=clan.name.size();
     }
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -568,7 +570,7 @@ void Client::dissolvedClan()
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x61;
     posOutput+=1+4;
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=0;//set the dynamic size
+    {const uint32_t _tmp_le=(0);memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     clanChangeWithoutDb(public_and_private_informations.clan);
@@ -589,7 +591,8 @@ bool Client::inviteToClan(const uint32_t &clanId)
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x63;
     posOutput+=1+4;
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
+    {const uint32_t _tmp_le=(htole32(clanId));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
     {
         const std::string &text=clan.name;
@@ -598,7 +601,7 @@ bool Client::inviteToClan(const uint32_t &clanId)
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     return true;

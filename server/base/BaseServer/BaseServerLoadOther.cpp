@@ -1,4 +1,5 @@
 #include "BaseServer.hpp"
+#include <cstring>
 #include "../GlobalServerData.hpp"
 
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -52,11 +53,12 @@ void BaseServer::preload_30_sync_other()
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//charactersgroup empty
             posOutput+=1;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;//unique key, useless here
+            {const uint32_t _tmp_le=(0x00000000);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}//unique key, useless here
             posOutput+=4;
             {
                 const std::string &text=CommonSettingsServer::commonSettingsServer.exportedXml;
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(text.size());
+                {const uint16_t _tmp_le=(htole16(text.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=2;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
@@ -65,7 +67,8 @@ void BaseServer::preload_30_sync_other()
             posOutput+=1;
             if(GlobalServerData::serverSettings.sendPlayerNumber)
             {
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
+                {const uint16_t _tmp_le=(htole16(GlobalServerData::serverSettings.max_players));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=2;
                 Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+static_cast<uint16_t>(posOutput);
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -75,23 +78,27 @@ void BaseServer::preload_30_sync_other()
                     abort();
                 }
                 #endif
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                {const uint16_t _tmp_le=(0);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=2;
             }
             else
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65534);
+                    {const uint16_t _tmp_le=(htole16(65534));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 else
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
+                    {const uint16_t _tmp_le=(htole16(65535));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=2;
                 //allow onfly change GlobalServerData::serverSettings.sendPlayerNumber
                 Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+static_cast<uint16_t>(posOutput);
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(0);
+                {const uint16_t _tmp_le=(htole16(0));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=2;
             }
             Client::protocolMessageLogicalGroupAndServerListSize+=posOutput;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         }
         if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
             delete Client::protocolMessageLogicalGroupAndServerList;
@@ -119,7 +126,8 @@ void BaseServer::preload_30_sync_other()
         posOutput+=1;
 
         //login/common part
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+        {const uint32_t _tmp_le=(htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.max_character;
         posOutput+=1;
@@ -129,7 +137,8 @@ void BaseServer::preload_30_sync_other()
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
         posOutput+=1;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+        {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
 
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=CATCHCHALLENGER_HASH_SIZE)
@@ -188,34 +197,42 @@ void BaseServer::preload_30_sync_other()
         posOutput+=1;
 
         if(GlobalServerData::serverSettings.sendPlayerNumber)
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
+            {const uint16_t _tmp_le=(htole16(GlobalServerData::serverSettings.max_players));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         else
         {
             if(GlobalServerData::serverSettings.max_players<=255)
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65534);
+                {const uint16_t _tmp_le=(htole16(65534));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             else
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
+                {const uint16_t _tmp_le=(htole16(65535));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         }
         posOutput+=2;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0xffffffff;//-1 to disable, set at sending time
+        {const uint32_t _tmp_le=(0xffffffff);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}//-1 to disable, set at sending time
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=GlobalServerData::serverSettings.city.capture.frenquency;
         posOutput+=1;
 
         //common settings
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick);
+        {const uint32_t _tmp_le=(htole32(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.dontSendPseudo;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_xp);
+        {const uint32_t _tmp_le=(htole32(CommonSettingsServer::commonSettingsServer.rates_xp));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_gold);
+        {const uint32_t _tmp_le=(htole32(CommonSettingsServer::commonSettingsServer.rates_gold));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
+        {const uint32_t _tmp_le=(htole32(CommonSettingsServer::commonSettingsServer.rates_xp_pow));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_drop);
+        {const uint32_t _tmp_le=(htole32(CommonSettingsServer::commonSettingsServer.rates_drop));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.chat_allow_all;
         posOutput+=1;

@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <cstring>
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"
@@ -21,7 +22,8 @@ void Client::characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &re
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+    {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=returnCode;

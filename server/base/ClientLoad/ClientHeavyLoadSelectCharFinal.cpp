@@ -1,10 +1,13 @@
 #include "../Client.hpp"
+#include <cstring>
+#include <vector>
 #include "../ClientList.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/CompressionProtocol.hpp"
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"
 
 using namespace CatchChallenger;
@@ -108,7 +111,8 @@ void Client::characterIsRightSendData()
         }
     }
 
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(mapIndex);
+    {const uint16_t _tmp_le=(htole16(mapIndex));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=getX();
     posOutput+=1;
@@ -135,7 +139,8 @@ void Client::characterIsRightSendData()
     posOutput+=1;
 
     //clan related
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(public_and_private_informations.clan);
+    {const uint32_t _tmp_le=(htole32(public_and_private_informations.clan));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
     if(public_and_private_informations.clan_leader)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
@@ -207,11 +212,19 @@ void Client::characterIsRightSendData()
     }
     /// \todo make the buffer overflow control here or above
     {
+        //Per-callsite scratch (replaces former 16 MB static
+        //CompressionProtocol::tempBigBufferForCompressedOutput).
+        //Heap-backed; only allocated when compression is enabled, and
+        //freed on scope exit.
+        std::vector<uint8_t> compressScratch;
         char *buffer;
         if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
             buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput+4;
         else
-            buffer=CompressionProtocol::tempBigBufferForCompressedOutput;
+        {
+            compressScratch.resize(CATCHCHALLENGER_COMPRESSBUFFERSIZE);
+            buffer=reinterpret_cast<char *>(compressScratch.data());
+        }
         uint32_t posOutputTemp=0;
 
         //recipes
@@ -311,12 +324,14 @@ void Client::characterIsRightSendData()
     //send quest
     {
         unsigned int index=0;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.quests.size());
+        {const uint16_t _tmp_le=(htole16(public_and_private_informations.quests.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
         std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest>::iterator j=public_and_private_informations.quests.begin();
         while(index<=255 && j!=public_and_private_informations.quests.cend())
         {
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(j->first);
+            {const uint16_t _tmp_le=(htole16(j->first));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=2;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=j->second.step;
             posOutput+=1;
@@ -329,12 +344,14 @@ void Client::characterIsRightSendData()
 
     {
         const uint16_t &mapDataSize=public_and_private_informations.mapData.size();
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(mapDataSize);
+        {const uint16_t _tmp_le=(htole16(mapDataSize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
         for(const std::pair<const CATCHCHALLENGER_TYPE_MAPID, Player_private_and_public_informations_Map>& pair : public_and_private_informations.mapData)
         {
             const uint16_t &mapId=pair.first;
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(mapId);
+            {const uint16_t _tmp_le=(htole16(mapId));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=2;
             const Player_private_and_public_informations_Map &mapData=pair.second;
 
@@ -363,7 +380,8 @@ void Client::characterIsRightSendData()
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=plant.plant;
                 posOutput+=1;
                 const uint64_t &mature_at=plant.mature_at;
-                *reinterpret_cast<uint64_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole64(mature_at);
+                {const uint64_t _tmp_le=(htole64(mature_at));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=8;
             }
 
@@ -381,16 +399,19 @@ void Client::characterIsRightSendData()
             posOutput+=1;
             for(const IndustryStatus &ind : mapData.industriesStatus)
             {
-                *reinterpret_cast<uint64_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole64(ind.last_update);
+                {const uint64_t _tmp_le=(htole64(ind.last_update));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=8;
                 const uint8_t resCount=ind.resources.size();
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=resCount;
                 posOutput+=1;
                 for(const std::pair<const CATCHCHALLENGER_TYPE_ITEM,uint32_t> &res : ind.resources)
                 {
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(res.first);
+                    {const uint16_t _tmp_le=(htole16(res.first));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=2;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(res.second);
+                    {const uint32_t _tmp_le=(htole32(res.second));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=4;
                 }
                 const uint8_t prodCount=ind.products.size();
@@ -398,9 +419,11 @@ void Client::characterIsRightSendData()
                 posOutput+=1;
                 for(const std::pair<const CATCHCHALLENGER_TYPE_ITEM,uint32_t> &prod : ind.products)
                 {
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(prod.first);
+                    {const uint16_t _tmp_le=(htole16(prod.first));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=2;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(prod.second);
+                    {const uint32_t _tmp_le=(htole32(prod.second));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=4;
                 }
             }
@@ -416,7 +439,7 @@ void Client::characterIsRightSendData()
             std::cerr << t.datapack_index_item << " " << t.map->id << " " << t.x << " " << t.y << " " << std::endl;
     }*/
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     if(posOutput>100000 || posOutput>sizeof(ProtocolParsingBase::tempBigBufferForOutput))
         std::cerr << "strange output is bigger than 100K" << std::endl;
     if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))
@@ -459,7 +482,8 @@ void Client::characterIsRightSendData()
         }
         else
         {
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x01)=htole16(last_sended_connected_players);
+            {const uint16_t _tmp_le=(htole16(last_sended_connected_players));memcpy(ProtocolParsingBase::tempBigBufferForOutput+0x01,&_tmp_le,sizeof(_tmp_le));}
+
             outputSize=3;
         }
         //can't use receive_instant_player_number() due this->connected_players==connected_players

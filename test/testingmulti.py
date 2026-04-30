@@ -11,7 +11,7 @@ Steps:
   5. Check each client sees the other player (insert/move)
 """
 
-import os, sys, signal, subprocess, threading, multiprocessing, json, shutil, re
+import os, sys, signal, subprocess, threading, multiprocessing, json, shutil, re, time
 import diagnostic
 
 DIAG = diagnostic.parse_diag_args()
@@ -68,6 +68,7 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+_last_log_time = [time.monotonic()]
 total_expected = [0]
 server_proc = None
 
@@ -114,9 +115,8 @@ def save_failed_cases():
     failed = []
     idx = 0
     while idx < len(results):
-        name, ok, detail = results[idx]
-        if not ok:
-            failed.append(name)
+        if not results[idx][1]:
+            failed.append(results[idx][0])
         idx += 1
     data[SCRIPT_NAME] = failed
     with open(FAILED_JSON, "w") as f:
@@ -126,11 +126,21 @@ def save_failed_cases():
 def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
 def log_pass(name, detail=""):
-    results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, True, detail, elapsed))
+    if len(results) > total_expected[0]:
+        total_expected[0] = len(results)
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
 def log_fail(name, detail=""):
-    results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, False, detail, elapsed))
+    if len(results) > total_expected[0]:
+        total_expected[0] = len(results)
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -188,11 +198,18 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
 
 def build_project(pro_file, build_dir, label):
     ensure_dir(build_dir)
-    log_info(f"make distclean {label}")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
-    clean_build_artifacts(build_dir)
     name = f"compile {label}"
     spec = diagnostic.compiler_spec(DIAG) or "linux-g++"
+    # State-aware cleanup: full distclean only when compiler or C++
+    # standard changed since the previous run in this dir; otherwise
+    # let make handle incremental rebuild via .o-mtime tracking +
+    # qmake_helpers macro invalidation.
+    import qmake_helpers as _qh
+    _decision = _qh.prepare_qmake_build_dir(build_dir, spec, None, None, ROOT)
+    if _decision == "full":
+        log_info(f"compiler/std changed → make distclean {label}")
+        run_cmd(["make", "distclean"], build_dir, timeout=60)
+        clean_build_artifacts(build_dir)
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
                   "-spec", spec, "CONFIG+=debug", "CONFIG+=qml_debug",
                   "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
@@ -540,11 +557,13 @@ def summary():
     print(f"\n{C_CYAN}{'='*60}")
     print("  Summary")
     print(f"{'='*60}{C_RESET}")
-    passed = sum(1 for _, ok, _ in results if ok)
-    failed = sum(1 for _, ok, _ in results if not ok)
-    for name, ok, detail in results:
+    passed = sum(1 for r in results if r[1])
+    failed = sum(1 for r in results if not r[1])
+    total_elapsed = sum(r[3] for r in results)
+    for name, ok, detail, elapsed in results:
         tag = f"{C_GREEN}PASS{C_RESET}" if ok else f"{C_RED}FAIL{C_RESET}"
-        print(f"  [{tag}] {name}  {detail}")
+        print(f"  [{tag}] {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"  total elapsed: {total_elapsed:.1f}s")
     print()
     print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}")
     save_failed_cases()

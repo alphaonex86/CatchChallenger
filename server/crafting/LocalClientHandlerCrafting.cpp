@@ -1,4 +1,5 @@
 #include "../base/Client.hpp"
+#include <cstring>
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../base/MapManagement/MapVisibilityAlgorithm.hpp"
@@ -74,7 +75,7 @@ void Client::useRecipe(const uint8_t &query_id,const uint16_t &recipe_id)
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     if(success)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)RecipeUsage_ok;
@@ -159,7 +160,8 @@ bool Client::syncDatabaseItemOnMap()
             const uint16_t &itemonmapInt=*i-lastItemonmapId;
             lastItemonmapId=*i;
             #endif
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(itemonmapInt);
+            {const uint16_t _tmp_le=(htole16(itemonmapInt));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=2;
 
             ++i;

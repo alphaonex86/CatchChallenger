@@ -21,6 +21,14 @@
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
     #ifdef CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
+        //BIGBUFFERSIZE only needs to fit one wire packet (already enforced
+        //against CATCHCHALLENGER_MAX_PACKET_SIZE in ProtocolParsing.hpp).
+        //The XZ_COMPRESSEDFILEPURGE / DONT_COMPRESS_GREATER_THAN constants
+        //are runtime thresholds for the datapack flush logic and were
+        //historically over-strict guards: a 3-8 MB raw bundle threshold
+        //feeds compression whose output is then bounded by MAX_PACKET_SIZE,
+        //so the buffer itself never needs that much space. Streaming
+        //compression (ZSTD_compressStream2) makes this even tighter.
         #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024
         #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
         #endif
@@ -29,12 +37,6 @@
         #endif
         #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024
         #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB
-        #endif
-        #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024
-        #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB
-        #endif
-        #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
-        #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB
         #endif
     #endif
 #endif

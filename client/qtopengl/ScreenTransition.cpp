@@ -32,13 +32,15 @@
 #include <QGuiApplication>
 #include <QComboBox>
 #ifdef Q_OS_ANDROID
-#include <QtAndroidExtras>
+#include <QJniObject>
+#include <QJniEnvironment>
+#include <QtCore/qnativeinterface.h>
 
 void keep_screen_on(bool on) {
-  QtAndroid::runOnAndroidThread([on]{
-    QAndroidJniObject activity = QtAndroid::androidActivity();
+  QNativeInterface::QAndroidApplication::runOnAndroidMainThread([on]{
+    QJniObject activity = QJniObject(QNativeInterface::QAndroidApplication::context());
     if (activity.isValid()) {
-      QAndroidJniObject window =
+      QJniObject window =
           activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
 
       if (window.isValid()) {
@@ -50,10 +52,11 @@ void keep_screen_on(bool on) {
         }
       }
     }
-    QAndroidJniEnvironment env;
+    QJniEnvironment env;
     if (env->ExceptionCheck()) {
       env->ExceptionClear();
     }
+    return QVariant();
   });
 }
 #endif

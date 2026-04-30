@@ -157,7 +157,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char 
             uint32_t posOutput=0;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
             posOutput+=1+4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
             posOutput+=size;
@@ -471,7 +471,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
             posOutput+=1+4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
             posOutput+=size;
@@ -532,7 +532,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
                 posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                 posOutput+=1+4;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+                {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
                 posOutput+=size;

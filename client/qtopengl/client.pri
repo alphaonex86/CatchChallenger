@@ -124,11 +124,12 @@ else
 #    DEFINES += NOWEBSOCKET
 }
 android: {
-    INCLUDEPATH += /var/lib/docker/overlay2/e914fb178b67f59eee382992f7f454c694a769808d18e8f452675ee1959aae30/diff/opt/android-sdk/ndk-r19c/platforms/android-26/arch-arm64/usr/include/
-    INCLUDEPATH += /var/lib/docker/overlay2/e914fb178b67f59eee382992f7f454c694a769808d18e8f452675ee1959aae30/diff/opt/android-sdk/ndk-r19c/platforms/android-26/arch-arm/usr/include/
-    LIBS += -L/opt/Qt5.12.4/5.12.4/android_arm64_v8a/lib/
-    LIBS += -L/opt/Qt5.12.4/5.12.4/android_armv7/lib/
-    QT += androidextras
+    #Qt6 dropped QT_androidextras and the qmake feature pulls Qt5-only includes;
+    #the previously-hardcoded NDK r19c / Qt5.12.4 paths no longer exist on this
+    #host and androidextras isn't published as a Qt6 module either, so the
+    #qmake invocation fails with "Unknown module(s) in QT: androidextras".
+    #Drop it and keep just the Android packaging hooks (Qt6 has the JNI APIs
+    #built into QtCore now).
     QMAKE_CFLAGS += -g
     QMAKE_CXXFLAGS += -g
     DISTFILES += $$PWD/../android-sources/AndroidManifest.xml

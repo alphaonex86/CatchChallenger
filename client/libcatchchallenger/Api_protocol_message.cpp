@@ -728,16 +728,21 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
 
             uint32_t sub_size32=size-pos;
             uint32_t decompressedSize=0;
+            //Per-callsite scratch (replaces former 16 MB static
+            //CompressionProtocol::tempBigBufferForUncompressedInput).
+            //Heap-backed via std::vector; freed on scope exit.
+            std::vector<uint8_t> decompressBuffer(CATCHCHALLENGER_COMPRESSBUFFERSIZE);
+            char * const tempBigBufferForUncompressedInput=reinterpret_cast<char *>(decompressBuffer.data());
             if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None || packetCode==0x76)
             {
                 decompressedSize=sub_size32;
-                memcpy(CompressionProtocol::tempBigBufferForUncompressedInput,data+pos,sub_size32);
+                memcpy(tempBigBufferForUncompressedInput,data+pos,sub_size32);
             }
             else
-                decompressedSize=CompressionProtocol::computeDecompression(data+pos,CompressionProtocol::tempBigBufferForUncompressedInput,sub_size32,
-                    sizeof(CompressionProtocol::tempBigBufferForUncompressedInput),CompressionProtocol::compressionTypeClient);
+                decompressedSize=CompressionProtocol::computeDecompression(data+pos,tempBigBufferForUncompressedInput,sub_size32,
+                    decompressBuffer.size(),CompressionProtocol::compressionTypeClient);
 
-            const char * const data2=CompressionProtocol::tempBigBufferForUncompressedInput;
+            const char * const data2=tempBigBufferForUncompressedInput;
             int pos2=0;
             int size2=decompressedSize;
 

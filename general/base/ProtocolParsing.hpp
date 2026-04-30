@@ -15,15 +15,12 @@
 
 #define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
 
-#ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-// without datapack send
-#define CATCHCHALLENGER_BIGBUFFERSIZE 256*1024
-#else
-#define CATCHCHALLENGER_BIGBUFFERSIZE 16*1024*1024
-#endif
-#if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_MAX_PACKET_SIZE
-#error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_MAX_PACKET_SIZE
-#endif
+// tempBigBufferForOutput now sizes to exactly the protocol packet ceiling.
+// Previously the non-mirror build pinned this at 16 MB (16x over MAX_PACKET_SIZE).
+// With streaming compression + sendfile() for datapack content (see
+// ClientHeavyLoadMirror::sendFile), the output buffer never needs more
+// than one packet's worth of bytes.
+#define CATCHCHALLENGER_BIGBUFFERSIZE CATCHCHALLENGER_MAX_PACKET_SIZE
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
     #ifndef CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER
@@ -107,6 +104,9 @@ public:
     friend class ProtocolParsingCheck;
     virtual ssize_t readFromSocket(char * data, const size_t &size) = 0;
     virtual ssize_t writeToSocket(const char * const data, const size_t &size) = 0;
+    //Zero-copy file content -> socket. Default returns -1 ("not supported");
+    //epoll-based clients override it with a sendfile(2) call.
+    virtual ssize_t writeFileToSocket(int /*file_fd*/, off_t * /*offset*/, size_t /*len*/) { return -1; }
     virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode) = 0;
 public:
     //this interface allow 0 copy method, return 1 if all is ok, return 0 if need more data, -1 if critical error and need disconnect
@@ -159,7 +159,9 @@ public:
     char inputQueryNumberToPacketCode[CATCHCHALLENGER_MAXPROTOCOLQUERY];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
 
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
-    static char tempBigBufferForInput[CATCHCHALLENGER_BIGBUFFERSIZE];//to store the input buffer on linux READ() interface or with Qt
+    //tempBigBufferForInput was a 16 MB static, but parseIncommingData() only
+    //reads up to CATCHCHALLENGER_COMMONBUFFERSIZE (4 KB) per call. It is now
+    //declared as a stack-local 4 KB array inside parseIncommingData().
 private:
     bool internalPackOutcommingData(const char * const data,const int &size);
 

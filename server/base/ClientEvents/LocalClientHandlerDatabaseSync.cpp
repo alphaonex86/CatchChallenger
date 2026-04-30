@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <cstring>
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../MapServer.hpp"
@@ -50,9 +51,11 @@ void Client::updateObjectInDatabase()
             lastItemId=i->first;
             #endif
             const uint32_t &quantity=i->second;
-            *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
+            {const uint16_t _tmp_le=(htole16(item));memcpy(item_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
             pos+=2;
-            *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(quantity);
+            {const uint32_t _tmp_le=(htole32(quantity));memcpy(item_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
             pos+=4;
             ++i;
         }
@@ -88,7 +91,8 @@ void Client::updateObjectInDatabase()
         unsigned int index=0;
         while(index<public_and_private_informations.playerMonster.size())
         {
-            *reinterpret_cast<uint32_t *>(monster_raw+pos)=htole32(public_and_private_informations.playerMonster.at(index).id);
+            {const uint32_t _tmp_le=(htole32(public_and_private_informations.playerMonster.at(index).id));memcpy(monster_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
             pos+=4;
             index++;
         }
@@ -132,9 +136,11 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
             lastItemId=i->first;
             #endif
             const uint32_t &quantity=i->second;
-            *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
+            {const uint16_t _tmp_le=(htole16(item));memcpy(item_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
             pos+=2;
-            *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(quantity);
+            {const uint32_t _tmp_le=(htole32(quantity));memcpy(item_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
             pos+=4;
             ++i;
         }
@@ -230,7 +236,8 @@ void Client::syncDatabaseReputation()
         lastReputationId=databaseType;
         #endif
         const PlayerReputation &reputation=i->second;
-        *reinterpret_cast<uint32_t *>(buffer+posOutput)=htole32(reputation.point);
+        {const uint32_t _tmp_le=(htole32(reputation.point));memcpy(buffer+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
         buffer[posOutput]=type;
         posOutput+=1;

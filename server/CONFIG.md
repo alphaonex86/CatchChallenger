@@ -33,9 +33,6 @@ The file is located in the application/build directory.
 | `server-ip` | string | `""` (all interfaces) | IP address to bind |
 | `server-port` | int | random 10000-65535 | Listen port (valid: 1-65535) |
 | `max-players` | int | `10` | Max concurrent players (clamped 1-65533) |
-| `useSsl` | bool | `false` | Enable SSL/TLS |
-| `proxy` | string | `""` | SOCKS proxy address |
-| `proxy_port` | int | `9050` | Proxy port |
 | `automatic_account_creation` | bool | `true` (GUI), `false` (epoll) | Auto-create accounts on login |
 | `anonymous` | bool | `false` | Anonymous mode |
 | `sendPlayerNumber` | bool | `false` | Broadcast player count to clients |
@@ -49,7 +46,6 @@ The file is located in the application/build directory.
 | `teleportIfMapNotFoundOrOutOfMap` | bool | `true` | Teleport player if map is invalid |
 | `dontSendPseudo` | bool | `false` | Hide player names from others |
 | `dontSendPlayerType` | bool | `false` | Hide player types from others |
-| `plantOnlyVisibleByPlayer` | bool | `false` | Plants visible only to planter |
 | `forceClientToSendAtMapChange` | bool | `true` | Force client state update on map change |
 | `pvp` | bool | `true` | Enable PvP combat |
 | `tolerantMode` | bool | `false` | Relaxed error checking |
@@ -57,8 +53,6 @@ The file is located in the application/build directory.
 | `compressionLevel` | int | `6` | Compression level (clamped 1-9) |
 | `datapackCache` | int | `-1` | Datapack cache: `-1` disable, `0` no timeout, `>0` timeout in seconds |
 | `httpDatapackMirror` | string | `""` | HTTP mirror URLs for datapack download (`;` separated) |
-| `server_blobversion_datapack` | int | `0` | Server datapack blob version |
-| `common_blobversion_datapack` | int | `0` | Common datapack blob version |
 | `programmedEventFirstInit` | bool | `true` | Whether programmed events need initialization |
 
 ## Group: `<db>` - Database Synchronization

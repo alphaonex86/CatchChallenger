@@ -1,4 +1,5 @@
 #include "EpollServerLoginMaster.hpp"
+#include <cstring>
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -564,12 +565,14 @@ std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(TinyXMLSett
 void EpollServerLoginMaster::charactersGroupListReply(std::vector<std::string> &charactersGroupList)
 {
     rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
-    *reinterpret_cast<uint32_t *>(rawServerListForC211+0x01)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    {const uint32_t _tmp_le=(htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time));memcpy(rawServerListForC211+0x01,&_tmp_le,sizeof(_tmp_le));}
+
     rawServerListForC211[0x05]=CommonSettingsCommon::commonSettingsCommon.min_character;
     rawServerListForC211[0x06]=CommonSettingsCommon::commonSettingsCommon.max_character;
     rawServerListForC211[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
     rawServerListForC211[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-    *reinterpret_cast<uint16_t *>(rawServerListForC211+0x09)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+    {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(rawServerListForC211+0x09,&_tmp_le,sizeof(_tmp_le));}
+
     rawServerListForC211Size=0x0B;
     //do the Characters group
     rawServerListForC211[rawServerListForC211Size]=(unsigned char)charactersGroupList.size();
@@ -664,7 +667,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
                 }
                 else
                 {
-                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverLogicalGroupList+EpollClientLoginMaster::serverLogicalGroupListSize)=0;//not convert to le16... 0 remain 0
+                    {const uint16_t _tmp_le=(0);memcpy(EpollClientLoginMaster::serverLogicalGroupList+EpollClientLoginMaster::serverLogicalGroupListSize,&_tmp_le,sizeof(_tmp_le));}//not convert to le16... 0 remain 0
                     EpollClientLoginMaster::serverLogicalGroupListSize+=2;
                 }
             }
@@ -673,7 +676,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
         }
         settings.endGroup();
     }
-    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverLogicalGroupList+1)=htole32(EpollClientLoginMaster::serverLogicalGroupListSize-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(EpollClientLoginMaster::serverLogicalGroupListSize-1-4));memcpy(EpollClientLoginMaster::serverLogicalGroupList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     EpollClientLoginMaster::serverLogicalGroupList[1+4]=logicalGroup;
 
     if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
@@ -730,7 +733,8 @@ void EpollServerLoginMaster::doTheServerList()
         }
         //key
         {
-            *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverPartialServerList+pos)=htole32(gameServerOnEpollClientLoginMaster->uniqueKey);
+            {const uint32_t _tmp_le=(htole32(gameServerOnEpollClientLoginMaster->uniqueKey));memcpy(EpollClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
+
             pos+=sizeof(gameServerOnEpollClientLoginMaster->uniqueKey);
         }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -775,12 +779,14 @@ void EpollServerLoginMaster::doTheServerList()
             {
                 if(gameServerOnCharactersGroup->metaData.size()>65535)
                 {
-                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+pos)=0;
+                    {const uint16_t _tmp_le=(0);memcpy(EpollClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
+
                     pos+=2;
                 }
                 else
                 {
-                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverPartialServerList+pos)=htole16(gameServerOnCharactersGroup->metaData.size());
+                    {const uint16_t _tmp_le=(htole16(gameServerOnCharactersGroup->metaData.size()));memcpy(EpollClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
+
                     pos+=2;
                     memcpy(EpollClientLoginMaster::serverPartialServerList+pos,gameServerOnCharactersGroup->metaData.data(),gameServerOnCharactersGroup->metaData.size());
                     pos+=gameServerOnCharactersGroup->metaData.size();
@@ -835,7 +841,7 @@ void EpollServerLoginMaster::doTheServerList()
 
     //send the network message
     EpollClientLoginMaster::serverServerList[0x00]=0x45;
-    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverServerList+1)=htole32(pos);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(pos));memcpy(EpollClientLoginMaster::serverServerList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     memcpy(EpollClientLoginMaster::serverServerList+1+4,EpollClientLoginMaster::serverPartialServerList,pos);
     EpollClientLoginMaster::serverServerListSize=pos+1+4;
     if(EpollClientLoginMaster::serverServerListSize==0)
@@ -1024,7 +1030,8 @@ void EpollServerLoginMaster::loadTheProfile()
     unsigned int skinId=0;
     while(skinId<CommonDatapack::commonDatapack.get_skins().size())
     {
-        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.at(skinId));
+        {const uint16_t _tmp_le=(htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.at(skinId)));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
         rawServerListForC211Size+=2;
         skinId++;
     }
@@ -1038,7 +1045,8 @@ void EpollServerLoginMaster::loadTheProfile()
         const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(index);
         {
             //database id
-            *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(dictionary_starter_internal_to_database.at(index));
+            {const uint16_t _tmp_le=(htole16(dictionary_starter_internal_to_database.at(index)));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
             rawServerListForC211Size+=sizeof(uint16_t);
             //skin
             rawServerListForC211[rawServerListForC211Size]=profile.forcedskin.size();
@@ -1075,13 +1083,15 @@ void EpollServerLoginMaster::loadTheProfile()
                         const Profile::Monster &playerMonster=monsters.at(monsterListIndex);
 
                         //monster
-                        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.id);
+                        {const uint16_t _tmp_le=(htole16(playerMonster.id));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
                         rawServerListForC211Size+=sizeof(uint16_t);
                         //level
                         rawServerListForC211[rawServerListForC211Size]=playerMonster.level;
                         rawServerListForC211Size+=1;
                         //captured with
-                        *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
+                        {const uint16_t _tmp_le=(htole16(playerMonster.captured_with));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
                         rawServerListForC211Size+=sizeof(uint16_t);
 
                         if(!CommonDatapack::commonDatapack.has_monster(playerMonster.id))
@@ -1094,7 +1104,8 @@ void EpollServerLoginMaster::loadTheProfile()
                         const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
 
                         //hp
-                        *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(monsterStat.hp);
+                        {const uint32_t _tmp_le=(htole32(monsterStat.hp));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
                         rawServerListForC211Size+=sizeof(uint32_t);
                         //gender
                         rawServerListForC211[rawServerListForC211Size]=(int8_t)monster.ratio_gender;
@@ -1113,7 +1124,8 @@ void EpollServerLoginMaster::loadTheProfile()
                                 abort();
                             }
                             //skill
-                            *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(skill.skill);
+                            {const uint16_t _tmp_le=(htole16(skill.skill));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
                             rawServerListForC211Size+=sizeof(uint16_t);
                             //skill level
                             rawServerListForC211[rawServerListForC211Size]=skill.level;
@@ -1145,13 +1157,15 @@ void EpollServerLoginMaster::loadTheProfile()
                         abort();
                     }
                     //type
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.get_reputation().at(reputation.internalIndex).reverse_database_id);
+                    {const uint16_t _tmp_le=(htole16(CommonDatapack::commonDatapack.get_reputation().at(reputation.internalIndex).reverse_database_id));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //level
                     rawServerListForC211[rawServerListForC211Size]=reputation.level;
                     rawServerListForC211Size+=sizeof(uint8_t);
                     //point
-                    *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(reputation.point);
+                    {const uint32_t _tmp_le=(htole32(reputation.point));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
                     rawServerListForC211Size+=sizeof(uint32_t);
                     reputationIndex++;
                 }
@@ -1172,10 +1186,12 @@ void EpollServerLoginMaster::loadTheProfile()
                         abort();
                     }*/
                     //item id
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(item.id);
+                    {const uint16_t _tmp_le=(htole16(item.id));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //quantity
-                    *reinterpret_cast<uint32_t *>(rawServerListForC211+rawServerListForC211Size)=htole32(item.quantity);
+                    {const uint32_t _tmp_le=(htole32(item.quantity));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+
                     rawServerListForC211Size+=sizeof(uint32_t);
                     reputationIndex++;
                 }
@@ -1190,7 +1206,7 @@ void EpollServerLoginMaster::loadTheProfile()
 
     //send the network message
     EpollClientLoginMaster::loginSettingsAndCharactersGroup[0x00]=0x46;
-    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::loginSettingsAndCharactersGroup+1)=htole32(rawServerListForC211Size);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(rawServerListForC211Size));memcpy(EpollClientLoginMaster::loginSettingsAndCharactersGroup+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     memcpy(EpollClientLoginMaster::loginSettingsAndCharactersGroup+1+4,rawServerListForC211,rawServerListForC211Size);
     EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=1+4+rawServerListForC211Size;
 
@@ -1218,7 +1234,8 @@ void EpollServerLoginMaster::loadTheDictionary()
     }
     //Max warehouse player monsters
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+        {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
     }
     //send reputation

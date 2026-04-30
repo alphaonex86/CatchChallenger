@@ -43,18 +43,6 @@ tools-only when references concentrate in one of those subtrees.
   - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
   - *(…and 22 more)*
 
-### `EPOLLCATCHCHALLENGERSERVERNOGAMESERVER`
-- **Scope:** server-only (+ general/) — server: master
-- **Description:** Compiles without local game-server features (set on master so it stays a pure cluster coordinator).
-- **Used in:**
-  - `general/fight/FightLoader.cpp`
-  - `general/fight/FightLoaderBuff.cpp`
-  - `general/fight/FightLoader.hpp`
-  - `general/fight/FightLoaderMonster.cpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp`
-  - `general/base/CommonDatapack.cpp`
-  - `server/master/master.pro`
-
 
 ## Server / Client class
 
@@ -265,30 +253,6 @@ tools-only when references concentrate in one of those subtrees.
   - `server/epoll/db/EpollPostgresql.cpp`
 
 
-## Database blob versioning / safety
-
-### `CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION`
-- **Scope:** server-only — server: base,login
-- **Description:** Common blob format version (`0`).
-- **Used in:**
-  - `server/login/EpollServerLoginSlave.cpp`
-  - `server/base/VariableServer.hpp`
-
-### `CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION`
-- **Scope:** server-only — server: base
-- **Description:** Server-specific blob format version (`0`).
-- **Used in:**
-  - `server/base/VariableServer.hpp`
-
-### `CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN`
-- **Scope:** server-only — server: base,epoll
-- **Description:** Trust DB return values without validation (perf vs safety).
-- **Used in:**
-  - `server/epoll/db/EpollPostgresql.cpp`
-  - `server/base/DatabaseFunction.cpp`
-  - `server/base/VariableServer.hpp`
-
-
 ## Datapack / parser
 
 ### `CATCHCHALLENGER_CACHE_HPS`
@@ -365,14 +329,6 @@ tools-only when references concentrate in one of those subtrees.
   - `server/base/BaseServer/BaseServerLoadDatapack.cpp`
   - `server/base/BaseServer/BaseServerMasterSendDatapack.cpp`
 
-### `CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER`
-- **Scope:** server-only — server: base
-- **Description:** Player-placed plants (farming feature).
-- **Used in:**
-  - `server/base/NormalServerGlobal.cpp`
-  - `server/base/Client.hpp`
-  - `server/base/BaseServer/BaseServerLoadProfile.cpp`
-
 ### `CATCHCHALLENGER_NOXML`
 - **Scope:** server-only (+ general/) — server: base,epoll,fight
 - **Description:** Disable runtime XML parsing — server uses the binary cache only (`datapack-cache.bin`). When set, all XML loaders, TinyXMLSettings, Map_loader, DatapackGeneralLoader, FightLoader{Buff,Monster,Skill}, and tinyXML2 sources are excluded.
@@ -400,40 +356,6 @@ tools-only when references concentrate in one of those subtrees.
   - `server/gateway/EpollClientLoginSlaveProtocolParsing.cpp`
   - `server/epoll/catchchallenger-server-filedb.pro`
   - *(…and 14 more)*
-
-### `CATCHCHALLENGER_XLMPARSER_TINYXML2`
-- **Scope:** server-only — server: epoll
-- **Description:** Use TinyXML2 as the XML parser when XML is enabled.
-- **Used in:**
-  - `server/epoll/catchchallenger-server-epoll.pri`
-
-### `TILED_LIBRARY`
-- **Scope:** client-only — client: libqtcatchchallenger
-- **Description:** Use the bundled Tiled map-editor library.
-- **Used in:**
-  - `client/libqtcatchchallenger/libtiled.pri`
-
-### `TILED_ZLIB`
-- **Scope:** global (server + tools) — tools: map-procedural-generation-terrain
-- **Description:** zlib-compressed map layers in the Tiled loader.
-- **Used in:**
-  - `general/base/Map_loader.cpp`
-  - `general/base/Map_loaderMain.cpp`
-  - `general/base/Map_loader.hpp`
-  - `server/catchchallenger-serverheader.pri`
-  - `tools/map-procedural-generation-terrain/map-procedural-generation-terrain.pri`
-
-### `TILED_ZSTD_SUPPORT`
-- **Scope:** client-only — client: libqtcatchchallenger
-- **Description:** zstd-compressed map layers in the Tiled loader.
-- **Used in:**
-  - `client/libqtcatchchallenger/libtiled.pri`
-
-### `TIXML_USE_STL`
-- **Scope:** server-only — server: login
-- **Description:** Use STL containers in TinyXML.
-- **Used in:**
-  - `server/login/login.pro`
 
 
 ## Datapack size and compression
@@ -500,14 +422,6 @@ tools-only when references concentrate in one of those subtrees.
 
 ## Compression / vendored libs
 
-### `BLAKE3_NO_SSE2`
-- **Scope:** server-only — server: gateway,login,master
-- **Description:** Disable BLAKE3 SSE2 SIMD code path (portability).
-- **Used in:**
-  - `server/gateway/gateway.pro`
-  - `server/master/master.pro`
-  - `server/login/login.pro`
-
 ### `EXTERNALLIBZSTD`
 - **Scope:** server-only (+ general/) — server: epoll
 - **Description:** Link against system libzstd (servers) instead of bundled zstd. Clients embed zstd to avoid the runtime dependency.
@@ -559,13 +473,6 @@ tools-only when references concentrate in one of those subtrees.
   - `client/libqtcatchchallenger/maprender/MapVisualiser-map.cpp`
   - `client/libcatchchallenger/ClientVariable.hpp`
 
-### `CATCHCHALLENGER_CLIENT_MUSIC_LOADING`
-- **Scope:** client-only — client: libcatchchallenger,qtcpu800x600
-- **Description:** Loading music asset path (`/music/loading.opus`).
-- **Used in:**
-  - `client/qtcpu800x600/ultimate/mainwindow.cpp`
-  - `client/libcatchchallenger/ClientVariable.hpp`
-
 ### `CATCHCHALLENGER_MULTI`
 - **Scope:** global (client + server) — server: qt; client: libqtcatchchallenger,qtcpu800x600,qtopengl
 - **Description:** Multi-player networking mode.
@@ -608,24 +515,6 @@ tools-only when references concentrate in one of those subtrees.
   - `server/qt/NormalServer.cpp`
   - *(…and 27 more)*
 
-### `CATCHCHALLENGER_VERSION_SINGLESERVER`
-- **Scope:** client-only (+ general/) — client: libqtcatchchallenger,qtcpu800x600
-- **Description:** Single-server (no federation/cluster) deployment.
-- **Used in:**
-  - `general/fight/CommonFightEngineWild.cpp`
-  - `general/base/GeneralStructures.hpp`
-  - `general/base/FacilityLib.cpp`
-  - `client/qtcpu800x600/ultimate/mainwindow.cpp`
-  - `client/libqtcatchchallenger/Api_protocol_Qt.cpp`
-
-### `CATCHCHALLENGER_VERSION_SOLO`
-- **Scope:** client-only — client: libqtcatchchallenger,qtcpu800x600
-- **Description:** Solo-version branding marker.
-- **Used in:**
-  - `client/qtcpu800x600/ultimate/mainwindow.cpp`
-  - `client/qtcpu800x600/base/SslCert.h`
-  - `client/libqtcatchchallenger/Api_protocol_Qt.cpp`
-
 ### `CATCHCHALLENGER_VERSION_ULTIMATE`
 - **Scope:** client-only — client: qtcpu800x600
 - **Description:** “Ultimate” client features (extra crafting, shops, UI).
@@ -634,20 +523,6 @@ tools-only when references concentrate in one of those subtrees.
   - `client/qtcpu800x600/crafting/interface/BaseWindowCrafting.cpp`
   - `client/qtcpu800x600/ultimate/mainwindow.cpp`
   - `client/qtcpu800x600/ultimate/specific.pri`
-
-### `NOSINGLEPLAYER`
-- **Scope:** global (client + server) — server: base,qt; client: libqtcatchchallenger,qtcpu800x600,qtopengl
-- **Description:** Forbid single-player (multiplayer-only client, e.g. WASM).
-- **Used in:**
-  - `server/qt/QtServer.hpp`
-  - `server/qt/QtServer.cpp`
-  - `server/base/Client.cpp`
-  - `client/qtcpu800x600/qtcpu800x600-uselib.pro`
-  - `client/qtcpu800x600/ultimate/mainwindow.cpp`
-  - `client/qtcpu800x600/ultimate/catchchallenger-ultimate.pro`
-  - `client/qtcpu800x600/qtcpu800x600.pro`
-  - `client/qtcpu800x600/base/client.pri`
-  - *(…and 13 more)*
 
 
 ## Client URLs
@@ -676,42 +551,6 @@ tools-only when references concentrate in one of those subtrees.
   - `client/qtcpu800x600/base/InternetUpdater.cpp`
   - `client/libqtcatchchallenger/InternetUpdater.cpp`
   - `client/libcatchchallenger/ClientVariable.hpp`
-
-
-## Platform metadata
-
-### `CATCHCHALLENGER_GITCOMMIT`
-- **Scope:** client-only (+ general/) — client: qtcpu800x600
-- **Description:** Git commit hash (optionally injected at build time).
-- **Used in:**
-  - `general/base/GeneralVariable.hpp`
-  - `client/qtcpu800x600/ultimate/mainwindow.cpp`
-  - `client/qtcpu800x600/base/solo/SoloWindow.cpp`
-
-### `CATCHCHALLENGER_PLATFORM_CODE`
-- **Scope:** client-only — client: libqtcatchchallenger,qtcpu800x600,qtopengl
-- **Description:** Updater identifier (e.g. ‘linux-x86_64-pc’).
-- **Used in:**
-  - `client/qtcpu800x600/ultimate/mainwindow.cpp`
-  - `client/qtcpu800x600/base/PlatformMacro.h`
-  - `client/qtcpu800x600/base/InternetUpdater.cpp`
-  - `client/libqtcatchchallenger/PlatformMacro.hpp`
-  - `client/libqtcatchchallenger/InternetUpdater.cpp`
-  - `client/qtopengl/foreground/Multi.cpp`
-
-### `CATCHCHALLENGER_PLATFORM_NAME`
-- **Scope:** client-only — client: libqtcatchchallenger,qtcpu800x600
-- **Description:** Human-readable platform name (e.g. ‘Linux 64Bits’).
-- **Used in:**
-  - `client/qtcpu800x600/base/PlatformMacro.h`
-  - `client/libqtcatchchallenger/PlatformMacro.hpp`
-
-### `CATCHCHALLENGER_VERSION_PRIVATE`
-- **Scope:** global (general/ only)
-- **Description:** Internal version string.
-- **Used in:**
-  - `general/base/Version.cpp`
-  - `general/base/VersionPrivate.hpp`
 
 
 ## Network protocol
@@ -1007,30 +846,12 @@ tools-only when references concentrate in one of those subtrees.
 
 ## Map visibility / movement
 
-### `CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE`
-- **Scope:** server-only — server: base
-- **Description:** Items dropped on map can collide with movement.
-- **Used in:**
-  - `server/base/VariableServer.hpp`
-
-### `CATCHCHALLENGER_SERVER_MAP_DROP_STOP_MOVE`
-- **Scope:** server-only — server: base
-- **Description:** Items fully block movement.
-- **Used in:**
-  - `server/base/VariableServer.hpp`
-
 ### `CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT`
 - **Scope:** server-only — server: base,epoll
 - **Description:** ms between movement broadcasts (`150`).
 - **Used in:**
   - `server/epoll/BaseServerEpoll.cpp`
   - `server/epoll/main-epoll.cpp`
-  - `server/base/VariableServer.hpp`
-
-### `CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR`
-- **Scope:** server-only — server: base
-- **Description:** Clear-on-move visibility refresh.
-- **Used in:**
   - `server/base/VariableServer.hpp`
 
 
@@ -1088,176 +909,6 @@ tools-only when references concentrate in one of those subtrees.
   - `general/fight/CommonFightEngineBase.cpp`
   - `general/fight/CommonFightEngineWild.cpp`
   - `general/base/GeneralVariable.hpp`
-
-### `CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE`
-- **Scope:** server-only — server: base
-- **Description:** Shop factory price change percentage (`20`).
-- **Used in:**
-  - `server/base/VariableServer.hpp`
-
-
-## Type widths
-
-### `CATCHCHALLENGER_TYPE_BOTID`
-- **Scope:** global (client + server + tools) — server: base,epoll; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: bot-actions,libbot
-- **Description:** Bot/NPC ID width (`uint8_t`).
-- **Used in:**
-  - `general/fight/CommonFightEngineEnd.cpp`
-  - `general/fight/CommonFightEngine.hpp`
-  - `general/fight/FightLoader.hpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp`
-  - `general/base/GeneralStructures.hpp`
-  - `general/base/GeneralType.hpp`
-  - `server/epoll/filedb-converter/FiledbConverter.cpp`
-  - `server/base/ClientEvents/LocalClientHandlerDatabaseSync.cpp`
-  - *(…and 24 more)*
-
-### `CATCHCHALLENGER_TYPE_BUFF`
-- **Scope:** global (client + tools) — client: libqtcatchchallenger; tools: datapack-explorer-generator-cli
-- **Description:** Buff ID width (`uint8_t`).
-- **Used in:**
-  - `general/fight/FightLoaderBuff.cpp`
-  - `general/fight/FightLoaderSkill.cpp`
-  - `general/fight/FightLoader.hpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp`
-  - `general/base/CommonDatapack.hpp`
-  - `general/base/CommonDatapack.cpp`
-  - `general/base/GeneralType.hpp`
-  - `tools/datapack-explorer-generator-cli/GeneratorBuffs.cpp`
-  - *(…and 2 more)*
-
-### `CATCHCHALLENGER_TYPE_CRAFTINGRECIPE`
-- **Scope:** global (general/ only)
-- **Description:** Crafting recipe ID width (`uint8_t`).
-- **Used in:**
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderCrafting.cpp`
-  - `general/base/CommonDatapack.hpp`
-  - `general/base/CommonDatapack.cpp`
-  - `general/base/GeneralType.hpp`
-
-### `CATCHCHALLENGER_TYPE_ITEM`
-- **Scope:** global (client + server + tools) — server: base,crafting,epoll,login; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: bot-actions,datapack-explorer-generator-cli,libbot
-- **Description:** Item ID width (`uint16_t`).
-- **Used in:**
-  - `general/fight/FightLoader.cpp`
-  - `general/fight/FightLoader.hpp`
-  - `general/fight/CommonFightEngineWild.cpp`
-  - `general/fight/FightLoaderMonster.cpp`
-  - `general/base/Map_loader.cpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderCrafting.cpp`
-  - *(…and 38 more)*
-
-### `CATCHCHALLENGER_TYPE_ITEM_QUANTITY`
-- **Scope:** global (client + server) — server: base,crafting,epoll; client: libqtcatchchallenger
-- **Description:** Item quantity width (`uint32_t`).
-- **Used in:**
-  - `general/fight/CommonFightEngineWild.cpp`
-  - `general/base/GeneralStructures.hpp`
-  - `general/base/GeneralType.hpp`
-  - `server/crafting/ClientHeavyLoadCrafting.cpp`
-  - `server/epoll/filedb-converter/FiledbConverter.cpp`
-  - `server/base/ClientEvents/LocalClientHandlerDatabaseSync.cpp`
-  - `server/base/ClientEvents/LocalClientHandlerShop.cpp`
-  - `server/base/Client.hpp`
-  - *(…and 4 more)*
-
-### `CATCHCHALLENGER_TYPE_MAPID`
-- **Scope:** global (client + server + tools) — server: base,crafting,epoll,fight; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: bot-actions,datapack-explorer-generator-cli,libbot
-- **Description:** Map ID width (`uint16_t`).
-- **Used in:**
-  - `general/fight/CommonFightEngineEnd.cpp`
-  - `general/fight/CommonFightEngine.hpp`
-  - `general/base/Map_loader.cpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.cpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp`
-  - `general/base/CommonDatapackServerSpec.cpp`
-  - `general/base/CommonMap/Map_Border.hpp`
-  - *(…and 97 more)*
-
-### `CATCHCHALLENGER_TYPE_MONSTER`
-- **Scope:** global (client + tools) — client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: datapack-explorer-generator-cli
-- **Description:** Monster species ID width (`uint16_t`).
-- **Used in:**
-  - `general/fight/FightLoader.cpp`
-  - `general/fight/FightLoader.hpp`
-  - `general/fight/FightLoaderMonster.cpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp`
-  - `general/base/CommonDatapackServerSpec.cpp`
-  - `general/base/CommonDatapack.hpp`
-  - `general/base/GeneralStructures.hpp`
-  - `general/base/CommonDatapack.cpp`
-  - *(…and 15 more)*
-
-### `CATCHCHALLENGER_TYPE_MONSTER_LIST_SIZE`
-- **Scope:** global (general/ only)
-- **Description:** Party monster count width (`uint8_t`).
-- **Used in:**
-  - `general/base/GeneralType.hpp`
-
-### `CATCHCHALLENGER_TYPE_MONSTER_LIST_SIZE_WAREHOUSE`
-- **Scope:** global (general/ only)
-- **Description:** Warehouse monster count width (`uint16_t`).
-- **Used in:**
-  - `general/base/GeneralType.hpp`
-
-### `CATCHCHALLENGER_TYPE_PLANT`
-- **Scope:** global (client + server) — server: base,crafting; client: libcatchchallenger,libqtcatchchallenger
-- **Description:** Plant ID width (`uint8_t`).
-- **Used in:**
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp`
-  - `general/base/CommonDatapack.hpp`
-  - `general/base/CommonDatapack.cpp`
-  - `general/base/GeneralType.hpp`
-  - `server/crafting/ClientLocalBroadcastCrafting.cpp`
-  - `server/crafting/LocalClientHandlerCrafting.cpp`
-  - `server/base/Client.hpp`
-  - `client/libqtcatchchallenger/Api_protocol_Qt.hpp`
-  - *(…and 4 more)*
-
-### `CATCHCHALLENGER_TYPE_QUEST`
-- **Scope:** global (client + server + tools) — server: base,epoll; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: datapack-explorer-generator-cli,libbot
-- **Description:** Quest ID width (`uint8_t`).
-- **Used in:**
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp`
-  - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp`
-  - `general/base/CommonDatapackServerSpec.cpp`
-  - `general/base/CommonDatapackServerSpec.hpp`
-  - `general/base/GeneralStructures.hpp`
-  - `general/base/GeneralType.hpp`
-  - `server/epoll/filedb-converter/FiledbConverter.cpp`
-  - `server/base/ClientEvents/LocalClientHandlerQuest.cpp`
-  - *(…and 18 more)*
-
-### `CATCHCHALLENGER_TYPE_REPUTATION`
-- **Scope:** global (general/ only)
-- **Description:** Reputation ID width (`uint8_t`).
-- **Used in:**
-  - `general/base/CommonDatapack.hpp`
-  - `general/base/GeneralType.hpp`
-
-### `CATCHCHALLENGER_TYPE_SKILL`
-- **Scope:** global (client + tools) — client: libcatchchallenger,libqtcatchchallenger; tools: datapack-explorer-generator-cli
-- **Description:** Skill ID width (`uint16_t`).
-- **Used in:**
-  - `general/fight/FightLoader.cpp`
-  - `general/fight/FightLoaderSkill.cpp`
-  - `general/fight/FightLoader.hpp`
-  - `general/fight/FightLoaderMonster.cpp`
-  - `general/base/CommonDatapack.hpp`
-  - `general/base/GeneralStructures.hpp`
-  - `general/base/CommonDatapack.cpp`
-  - `general/base/GeneralType.hpp`
-  - *(…and 5 more)*
-
-### `CATCHCHALLENGER_TYPE_TELEPORTERID`
-- **Scope:** global (general/ only)
-- **Description:** Teleporter ID width (`uint16_t`).
-- **Used in:**
-  - `general/base/GeneralType.hpp`
 
 
 ## Tools / bot / bench
@@ -1345,21 +996,6 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsingCheck.hpp`
   - *(…and 30 more)*
 
-### `SERVERBENCHMARK`
-- **Scope:** server-only — server: base,epoll
-- **Description:** Benchmark instrumentation in epoll server.
-- **Used in:**
-  - `server/epoll/catchchallenger-server-filedb.pro`
-  - `server/epoll/EpollUnixSocketClientFinal.hpp`
-  - `server/epoll/main-epoll.cpp`
-  - `server/epoll/catchchallenger-server-test.pro`
-  - `server/epoll/EpollUnixSocketClientFinal.cpp`
-  - `server/epoll/catchchallenger-server-cli-epoll.pro`
-  - `server/base/ClientLoad/ClientHeavyLoadSelectCharCommon.cpp`
-  - `server/base/ClientLoad/ClientHeavyLoadSelectCharFinal.cpp`
-  - *(…and 1 more)*
-
-
 ## Build / hardening
 
 ### `CATCHCHALLENGER_EXTRA_CHECK`
@@ -1383,18 +1019,6 @@ tools-only when references concentrate in one of those subtrees.
   - `server/epoll/catchchallenger-server-filedb.pro`
   - `server/epoll/catchchallenger-server-cli-epoll.pro`
 
-### `CATCHCHALLENGER_LIMIT_254CONNECTED`
-- **Scope:** server-only — server: epoll
-- **Description:** Cap simultaneous connections at 254 (constrained deployments).
-- **Used in:**
-  - `server/epoll/catchchallenger-server-filedb.pro`
-
-### `CATCHCHALLENGER_RELEASE`
-- **Scope:** global (general/ only)
-- **Description:** Release build (suppresses EXTRA_CHECK).
-- **Used in:**
-  - `general/base/GeneralVariable.hpp`
-
 ### `CATCHCHALLENGER_SERVER_EXTRA_CHECK`
 - **Scope:** server-only (+ general/) — server: base,fight
 - **Description:** Server-only extra assertions.
@@ -1403,17 +1027,6 @@ tools-only when references concentrate in one of those subtrees.
   - `server/fight/LocalClientHandlerFight.cpp`
   - `server/base/MapManagement/MapBasicMove.cpp`
   - `server/base/VariableServer.hpp`
-
-### `USING_PCH`
-- **Scope:** global (client + server + tools) — server: login; client: libqtcatchchallenger,qtcpu800x600,qtopengl; tools: stats
-- **Description:** Enable precompiled headers.
-- **Used in:**
-  - `server/login/login.pro`
-  - `tools/stats/stats.pro`
-  - `client/qtcpu800x600/qtcpu800x600-uselib.pro`
-  - `client/libqtcatchchallenger/qtcatchchallengerclient.pro`
-  - `client/qtopengl/catchchallenger-qtopengl-uselib.pro`
-
 
 ## Library export markers
 
@@ -1445,7 +1058,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `DEBUG_PROTOCOLPARSING_RAW_NETWORK`
 - **Scope:** global (client + server + tools) — server: gateway; tools: stats
-- **Description:** Log raw network bytes (hex dumps).
+- **Description:** Log raw network bytes (hex dumps). Very verbose.
 - **Used in:**
   - `general/base/GeneralVariable.hpp`
   - `general/base/ProtocolParsingInput.cpp`
@@ -1458,7 +1071,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `PROTOCOLPARSINGDEBUG`
 - **Scope:** global (client + server + tools) — server: epoll; client: qtcpu800x600,qtopengl; tools: stats
-- **Description:** Verbose log of every protocol message parsed.
+- **Description:** Very verbose log of every protocol message parsed.
 - **Used in:**
   - `general/base/GeneralVariable.hpp`
   - `general/base/ProtocolParsingInput.cpp`
@@ -1595,15 +1208,9 @@ tools-only when references concentrate in one of those subtrees.
   - `server/master/EpollClientLoginMaster.cpp`
   - *(…and 15 more)*
 
-### `CATCHCHALLENGER_SAVEGAME_VERSION`
-- **Scope:** global (general/ only)
-- **Description:** Purpose not documented; usage details below.
-- **Used in:**
-  - `general/base/SavegameVersion.hpp`
-
 ### `CATCHCHALLENGER_TOKENSIZE`
 - **Scope:** server-only (+ general/) — server: base,login
-- **Description:** Purpose not documented; usage details below.
+- **Description:** To define the token size for the client to disconnect from login server and reconnect to game server.
 - **Used in:**
   - `general/base/GeneralVariable.hpp`
   - `server/login/EpollClientLoginSlaveProtocolParsing.cpp`
@@ -1633,41 +1240,6 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `HPS_VECTOR_RAW_BINARY`
 - **Scope:** server-only — server: epoll
-- **Description:** Purpose not documented; usage details below.
+- **Description:** Store in std c++ format and not HPS format (can load as block std::flat_map to speedup the loading)
 - **Used in:**
   - `server/epoll/catchchallenger-server-filedb.pro`
-
-### `OPENGL`
-- **Scope:** client-only — client: qtopengl
-- **Description:** Purpose not documented; usage details below.
-- **Used in:**
-  - `client/qtopengl/catchchallenger-qtopengl.pro`
-  - `client/qtopengl/LanguagesSelect.cpp`
-  - `client/qtopengl/catchchallenger-qtopengl-uselib.pro`
-
-### `OPUS_BUILD`
-- **Scope:** client-only — client: libqtcatchchallenger
-- **Description:** Purpose not documented; usage details below.
-- **Used in:**
-  - `client/libqtcatchchallenger/libopus.pri`
-
-### `SRC_DIR`
-- **Scope:** tools-only — tools: datapack-explorer-generator-cli
-- **Description:** Purpose not documented; usage details below.
-- **Used in:**
-  - `tools/datapack-explorer-generator-cli/datapack-explorer-generator.pro`
-  - `tools/datapack-explorer-generator-cli/GeneratorMaps.cpp`
-  - `tools/datapack-explorer-generator-cli/main.cpp`
-
-### `USE_ALLOCA`
-- **Scope:** client-only — client: libqtcatchchallenger
-- **Description:** Purpose not documented; usage details below.
-- **Used in:**
-  - `client/libqtcatchchallenger/libopus.pri`
-
-### `VAR_ARRAYS`
-- **Scope:** client-only — client: libqtcatchchallenger
-- **Description:** Purpose not documented; usage details below.
-- **Used in:**
-  - `client/libqtcatchchallenger/libopus.pri`
-

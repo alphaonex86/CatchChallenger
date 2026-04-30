@@ -470,7 +470,8 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
 
     //the unique key to save the info by server
     {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(uniqueKey);
+        {const uint32_t _tmp_le=(htole32(uniqueKey));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
     }
 
@@ -480,7 +481,8 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         posOutput+=newSizeText;
     }
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(externalServerPort);
+        {const uint16_t _tmp_le=(htole16(externalServerPort));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
     }
 
@@ -512,22 +514,28 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     //current player number and max player
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(ClientList::list->connected_size());
+        {const uint16_t _tmp_le=(htole16(ClientList::list->connected_size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
+        {const uint16_t _tmp_le=(htole16(GlobalServerData::serverSettings.max_players));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
     }
     else
     {
         if(ClientList::list->connected_size()<=255)
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(0);
+            {const uint16_t _tmp_le=(htole16(0));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         else
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(0);
+            {const uint16_t _tmp_le=(htole16(0));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
         if(GlobalServerData::serverSettings.max_players<=255)
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65534);
+            {const uint16_t _tmp_le=(htole16(65534));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         else
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
+            {const uint16_t _tmp_le=(htole16(65535));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
     }
 
@@ -544,17 +552,19 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
                 const uint32_t &character_id=ClientList::list->at(index).getPlayerId();
                 if(character_id!=0)
                 {
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(character_id);
+                    {const uint32_t _tmp_le=(htole32(character_id));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=4;
                     character_count++;
                 }
             }
             index++;
         }
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+sizePos)=htole16(character_count);
+        {const uint16_t _tmp_le=(htole16(character_count));memcpy(ProtocolParsingBase::tempBigBufferForOutput+sizePos,&_tmp_le,sizeof(_tmp_le));}
+
     }
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     return true;
@@ -565,13 +575,15 @@ void LinkToMaster::characterDisconnected(const uint32_t &characterId)
     /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::cerr << "unlock the char " << std::to_string(characterId) << std::endl;
     #endif*/
-    *reinterpret_cast<uint32_t *>(LinkToMaster::sendDisconnectedPlayer+0x01)=htole32(characterId);
+    {const uint32_t _tmp_le=(htole32(characterId));memcpy(LinkToMaster::sendDisconnectedPlayer+0x01,&_tmp_le,sizeof(_tmp_le));}
+
     internalSendRawSmallPacket(LinkToMaster::sendDisconnectedPlayer,sizeof(LinkToMaster::sendDisconnectedPlayer));
 }
 
 void LinkToMaster::currentPlayerChange(const uint16_t &currentPlayer)
 {
-    *reinterpret_cast<uint16_t *>(LinkToMaster::sendCurrentPlayer+0x01)=htole16(currentPlayer);
+    {const uint16_t _tmp_le=(htole16(currentPlayer));memcpy(LinkToMaster::sendCurrentPlayer+0x01,&_tmp_le,sizeof(_tmp_le));}
+
     internalSendRawSmallPacket(LinkToMaster::sendCurrentPlayer,sizeof(LinkToMaster::sendCurrentPlayer));
 }
 

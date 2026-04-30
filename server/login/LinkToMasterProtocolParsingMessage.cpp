@@ -1,4 +1,5 @@
 #include "LinkToMaster.hpp"
+#include <cstring>
 #include "EpollClientLoginSlave.hpp"
 #include "EpollServerLoginSlave.hpp"
 #include "EpollClientLoginSlave.hpp"
@@ -78,7 +79,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             }
             //copy it
             EpollClientLoginSlave::serverLogicalGroupList[0x00]=0x44;
-            *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverLogicalGroupList+1)=htole32(size);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(size));memcpy(EpollClientLoginSlave::serverLogicalGroupList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
             memcpy(EpollClientLoginSlave::serverLogicalGroupList+1+4,rawData,size);
             EpollClientLoginSlave::serverLogicalGroupListSize=size+1+4;
             if(EpollClientLoginSlave::serverLogicalGroupListSize==0)
@@ -421,7 +422,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 abort();
             }
             EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
-            *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(EpollClientLoginSlave::serverServerListSize));memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
             memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
             EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
@@ -812,7 +813,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 EpollClientLoginSlave::serverServerListCurrentPlayerSize);
 
             EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
-            *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(EpollClientLoginSlave::serverServerListSize));memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
             memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
             EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
             EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
@@ -820,7 +821,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
 
             {
                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x47;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);
+                {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}
+
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,rawData,size);
 
                 unsigned int index=0;
@@ -869,7 +871,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 EpollClientLoginSlave::serverServerList[0x01]=0;//server list size
                 EpollClientLoginSlave::serverServerListSize=2;
                 EpollClientLoginSlave::serverServerListCurrentPlayerSize=0;
-                *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
+                {const uint32_t _tmp_le=(htole32(EpollClientLoginSlave::serverServerListSize));memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
                 memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
                 EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
                 //purge the internal data
@@ -1588,7 +1590,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 size_t index=0;
                 while(index<currentPlayerNumberList.size())
                 {
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer)=currentPlayerNumberList.at(index);
+                    {const uint16_t _tmp_le=(currentPlayerNumberList.at(index));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,&_tmp_le,sizeof(_tmp_le));}
+
                     posTempBuffer+=2;
                     index++;
                 }
@@ -1639,7 +1642,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
 
             //update the EpollClientLoginSlave::serverServerListComputedMessage
             EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
-            *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(EpollClientLoginSlave::serverServerListSize));memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
             memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
             EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
             if(EpollClientLoginSlave::serverServerListSize==0)
@@ -1665,7 +1668,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x48;
                 if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Reconnect)
                 {
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);
+                    {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}
+
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,rawData,size);
                     sizeTosend=1+4+size;
                 }
@@ -1687,7 +1691,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         pos+=serverListSize*sizeof(uint16_t);
 
                     }
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);
+                    {const uint32_t _tmp_le=(htole32(pos-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}
+
                     sizeTosend=pos;
                 }
                 unsigned int index=0;

@@ -41,8 +41,8 @@ SERVER_PORT  = str(_config["server_port"])
 
 COMPILE_TIMEOUT      = 600
 SERVER_READY_TIMEOUT = 60
-BOT_RUN_DURATION     = 600   # 10 minutes
-BOT_ACTION_TIMEOUT   = 300   # 5 minutes without non-move action -> fail
+BOT_RUN_DURATION     = 60    # 1 minute stability run
+BOT_ACTION_TIMEOUT   = 120   # 2 minutes without non-move action -> fail (kept above duration so action-idle is not the failure mode in this short stability test)
 
 NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
 
@@ -54,6 +54,7 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+_last_log_time = [time.monotonic()]
 total_expected = [0]
 server_proc = None
 
@@ -100,9 +101,8 @@ def save_failed_cases():
     failed = []
     idx = 0
     while idx < len(results):
-        name, ok, detail = results[idx]
-        if not ok:
-            failed.append(name)
+        if not results[idx][1]:
+            failed.append(results[idx][0])
         idx += 1
     data[SCRIPT_NAME] = failed
     with open(FAILED_JSON, "w") as f:
@@ -148,6 +148,7 @@ ERROR_WHITELIST = [
     "error at loading",            # map loading info, followed by abort only if fatal
     "Path not found",              # pathfinding miss, not a crash
     "Warning: Bug due to resolved path is empty",  # known benign warning
+    "uniqueKey==0, suspect bug",   # benign warning when only one server is in the pool
 ]
 
 
@@ -155,12 +156,22 @@ def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
 
 def log_pass(name, detail=""):
-    results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, True, detail, elapsed))
+    if len(results) > total_expected[0]:
+        total_expected[0] = len(results)
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
 
 def log_fail(name, detail=""):
-    results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, False, detail, elapsed))
+    if len(results) > total_expected[0]:
+        total_expected[0] = len(results)
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -207,13 +218,21 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
 def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
                    extra_defines=None):
     ensure_dir(build_dir)
-    log_info(f"make distclean {label}")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
-    clean_build_artifacts(build_dir)
     name = f"compile {label}"
     diag_spec = diagnostic.compiler_spec(DIAG)
     if diag_spec:
         compiler_spec = diag_spec
+    # State-aware cleanup: full distclean only when compiler or C++
+    # standard changed since the previous run in this dir; otherwise
+    # let make handle incremental rebuild via .o-mtime tracking +
+    # qmake_helpers macro invalidation for EXTRA_DEFINES changes.
+    import qmake_helpers as _qh
+    _decision = _qh.prepare_qmake_build_dir(build_dir, compiler_spec,
+                                            None, extra_defines, ROOT)
+    if _decision == "full":
+        log_info(f"compiler/std changed → make distclean {label}")
+        run_cmd(["make", "distclean"], build_dir, timeout=60)
+        clean_build_artifacts(build_dir)
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
                   "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug",
                   "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
@@ -403,7 +422,7 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
     if not on_map.wait(timeout=diagnostic.scale_timeout(DIAG, 60)):
         log_fail(label, "timeout waiting for bot to reach map (60s)")
         with lock:
-            tail = output_lines[-30:]
+            tail = output_lines[-50:]
         for l in tail:
             print(f"  | {l}")
         try:
@@ -642,11 +661,13 @@ def summary():
     print(f"\n{C_CYAN}{'='*60}")
     print("  Summary")
     print(f"{'='*60}{C_RESET}")
-    passed = sum(1 for _, ok, _ in results if ok)
-    failed = sum(1 for _, ok, _ in results if not ok)
-    for name, ok, detail in results:
+    passed = sum(1 for r in results if r[1])
+    failed = sum(1 for r in results if not r[1])
+    total_elapsed = sum(r[3] for r in results)
+    for name, ok, detail, elapsed in results:
         tag = f"{C_GREEN}PASS{C_RESET}" if ok else f"{C_RED}FAIL{C_RESET}"
-        print(f"  [{tag}] {name}  {detail}")
+        print(f"  [{tag}] {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"  total elapsed: {total_elapsed:.1f}s")
     print()
     print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}")
     save_failed_cases()

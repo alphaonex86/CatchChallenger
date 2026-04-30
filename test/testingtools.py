@@ -8,7 +8,7 @@ For each .pro found:
   3. make distclean to clean up
 """
 
-import os, sys, subprocess, multiprocessing, json
+import os, sys, subprocess, multiprocessing, json, time
 from remote_build import (start_remote_builds, collect_remote_results,
                           SERVER_MAKE_SCRIPTS, build_server_via_make,
                           compare_qmake_make, count_remote_tests)
@@ -39,6 +39,7 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+_last_log_time = [time.monotonic()]
 total_expected = [0]
 
 SCRIPT_NAME = os.path.basename(__file__)
@@ -84,9 +85,8 @@ def save_failed_cases():
     failed = []
     idx = 0
     while idx < len(results):
-        name, ok, detail = results[idx]
-        if not ok:
-            failed.append(name)
+        if not results[idx][1]:
+            failed.append(results[idx][0])
         idx += 1
     data[SCRIPT_NAME] = failed
     with open(FAILED_JSON, "w") as f:
@@ -98,13 +98,23 @@ def log_info(msg):
 
 
 def log_pass(name, detail=""):
-    results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, True, detail, elapsed))
+    if len(results) > total_expected[0]:
+        total_expected[0] = len(results)
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
 
 
 def log_fail(name, detail=""):
-    results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, False, detail, elapsed))
+    if len(results) > total_expected[0]:
+        total_expected[0] = len(results)
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
 
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT):
@@ -299,11 +309,13 @@ def main():
     print(f"\n{C_CYAN}{'='*60}")
     print("  Summary")
     print(f"{'='*60}{C_RESET}")
-    passed = sum(1 for _, ok, _ in results if ok)
-    failed = sum(1 for _, ok, _ in results if not ok)
-    for name, ok, detail in results:
+    passed = sum(1 for r in results if r[1])
+    failed = sum(1 for r in results if not r[1])
+    total_elapsed = sum(r[3] for r in results)
+    for name, ok, detail, elapsed in results:
         tag = f"{C_GREEN}PASS{C_RESET}" if ok else f"{C_RED}FAIL{C_RESET}"
-        print(f"  [{tag}] {name}  {detail}")
+        print(f"  [{tag}] {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"  total elapsed: {total_elapsed:.1f}s")
     print()
     print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}")
     save_failed_cases()

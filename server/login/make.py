@@ -67,7 +67,6 @@ DEFINES = [
     'CATCHCHALLENGER_CLASS_LOGIN',
     'CATCHCHALLENGER_DB_POSTGRESQL',
     'CATCHCHALLENGER_DB_PREPAREDSTATEMENT',
-    'BLAKE3_NO_SSE2', 'BLAKE3_NO_SSE41', 'BLAKE3_NO_AVX2', 'BLAKE3_NO_AVX512',
     'QT_NO_DEBUG',
 ]
 CXX_STD = '-std=gnu++20'
@@ -176,6 +175,138 @@ while _si < len(sources):
     object_files.append(ofile)
     _si += 1
 
+# ── resolvCtoO + EXTRA_DEFINES-aware incremental compile ────────────────
+# Helpers are duplicated in every make*.py (per CLAUDE.md request) so each
+# script stays self-contained.  Mirrors test/qmake_helpers.py so the same
+# logic runs whether the build was driven by qmake or by make.py.
+def resolvCtoO(sources, build_dir):
+    """Return a {source_path: obj_path} dict for the given sources, using
+    the same disambiguating-by-counter rule the compile_commands loop
+    uses (so two sources sharing a basename each get a unique .o)."""
+    out = {}
+    used = set()
+    si = 0
+    while si < len(sources):
+        src = sources[si]
+        si += 1
+        base = os.path.splitext(os.path.basename(src))[0]
+        candidate = base
+        i = 1
+        while candidate in used:
+            candidate = base + '_' + str(i)
+            i += 1
+        used.add(candidate)
+        out[src] = os.path.join(build_dir, candidate + '.o')
+    return out
+
+
+def find_sources_referencing(macros, source_paths):
+    """Return the subset of *source_paths* that mention any macro in
+    *macros* via #ifdef / #ifndef / #if defined() / #elif lines."""
+    if not macros:
+        return set()
+    macro_alt = '|'.join(re.escape(m) for m in macros)
+    rx = re.compile(
+        r'^\s*#\s*(?:if|ifdef|ifndef|elif)\b.*?\b(?:' + macro_alt + r')\b',
+        re.MULTILINE,
+    )
+    found = set()
+    si = 0
+    while si < len(source_paths):
+        s = source_paths[si]
+        si += 1
+        try:
+            with open(s, 'r', errors='replace') as _f:
+                text = _f.read()
+        except IOError:
+            continue
+        if rx.search(text):
+            found.add(s)
+    return found
+
+
+# Incremental rebuild gate: macro-level invalidation only runs when the
+# compiler (gcc/clang) AND the C++ standard (-std=...) are both unchanged
+# from the previous run.  If either changed, the existing .o files were
+# built for a different ABI and are not reusable — wipe them all.
+src_to_obj = resolvCtoO(sources, BUILD_DIR)
+_state_file = os.path.join(BUILD_DIR, '.cc_make_state.txt')
+_last_compiler = ''
+_last_std = ''
+_last_defines = set()
+if os.path.isfile(_state_file):
+    try:
+        with open(_state_file, 'r') as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if not _line or '=' not in _line:
+                    continue
+                _k, _v = _line.split('=', 1)
+                if _k == 'compiler':
+                    _last_compiler = _v
+                elif _k == 'std':
+                    _last_std = _v
+                elif _k == 'defines' and _v:
+                    for _d in _v.split():
+                        _last_defines.add(_d)
+    except IOError:
+        pass
+
+_current_defines = set()
+_cur_extra = os.environ.get('EXTRA_DEFINES', '').strip()
+if _cur_extra:
+    for _d in _cur_extra.split():
+        _current_defines.add(_d)
+_std_matches = re.findall(r'(?:^|\s)(-std=\S+)', cxx_flags)
+_current_std = _std_matches[-1] if _std_matches else ''
+_current_compiler = COMPILER
+
+_abi_changed = ((_last_compiler != '' and _last_compiler != _current_compiler) or
+                (_last_std != '' and _last_std != _current_std))
+if _abi_changed:
+    logging.info('compiler/std changed (' + _last_compiler + ' / '
+                 + _last_std + ' -> ' + _current_compiler + ' / '
+                 + _current_std + '); wiping all .o for a full rebuild')
+    _oi = 0
+    while _oi < len(object_files):
+        if os.path.isfile(object_files[_oi]):
+            try:
+                os.unlink(object_files[_oi])
+            except OSError:
+                pass
+        _oi += 1
+else:
+    _changed_defs = _last_defines.symmetric_difference(_current_defines)
+    if _changed_defs:
+        _affected = find_sources_referencing(_changed_defs, list(src_to_obj.keys()))
+        if _affected:
+            logging.info('EXTRA_DEFINES changed (' + ' '.join(sorted(_changed_defs))
+                         + '); invalidating ' + str(len(_affected)) + ' .o file(s)')
+            _aff_list = list(_affected)
+            _ai = 0
+            while _ai < len(_aff_list):
+                _o = src_to_obj.get(_aff_list[_ai])
+                _ai += 1
+                if _o and os.path.isfile(_o):
+                    try:
+                        os.unlink(_o)
+                    except OSError:
+                        pass
+
+# Skip any compile command whose .o is already up-to-date on disk.
+_new_cc = []
+_ci = 0
+while _ci < len(compile_commands):
+    if not os.path.isfile(object_files[_ci]):
+        _new_cc.append(compile_commands[_ci])
+    _ci += 1
+_skipped = len(compile_commands) - len(_new_cc)
+if _skipped:
+    logging.info('incremental: skipping ' + str(_skipped) + ' .o already up-to-date '
+                 '(rm them under ' + BUILD_DIR + ' to force rebuild)')
+compile_commands = _new_cc
+
+
 class Requester(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -220,6 +351,17 @@ main_thread = threading.currentThread()
 for t in threading.enumerate():
     if t is not main_thread:
         t.join()
+
+# Save compiler+std+defines so the next run can decide between a full
+# rebuild (compiler/std changed) and a minimal incremental rebuild
+# (only EXTRA_DEFINES changed) — see resolvCtoO block above.
+try:
+    with open(_state_file, 'w') as _f:
+        _f.write('compiler=' + _current_compiler + '\n')
+        _f.write('std=' + _current_std + '\n')
+        _f.write('defines=' + ' '.join(sorted(_current_defines)) + '\n')
+except IOError:
+    pass
 
 if not has_success:
     sys.exit(123)

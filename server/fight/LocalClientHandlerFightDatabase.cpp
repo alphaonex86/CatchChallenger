@@ -1,4 +1,5 @@
 #include "../base/GlobalServerData.hpp"
+#include <cstring>
 #include "../base/Client.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../base/Client.hpp"
@@ -90,7 +91,8 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
         lastSkillId=playerSkill.skill;
         #endif
 
-        *reinterpret_cast<uint16_t *>(skills+sub_index*(2+1))=htole16(skillInt);
+        {const uint16_t _tmp_le=(htole16(skillInt));memcpy(skills+sub_index*(2+1),&_tmp_le,sizeof(_tmp_le));}
+
         skills[2+sub_index*(2+1)]=playerSkill.level;
 
         sub_index++;

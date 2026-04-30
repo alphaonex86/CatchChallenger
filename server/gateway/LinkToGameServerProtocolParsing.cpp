@@ -37,7 +37,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         posOutput+=1;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                         posOutput+=1+4;
-                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+                        {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
                         posOutput+=size;
@@ -124,7 +124,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         posOutput+=1;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                         posOutput+=1+4;
-                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);//set the dynamic size
+                        {const uint32_t _tmp_le=(htole32(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                         //the gateway can different compression than server connected
                         switch(CompressionProtocol::compressionTypeServer)
@@ -240,7 +240,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         posOutput+=1;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryIdToReconnect;
                         posOutput+=1+4;
-                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+                        {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
                         posOutput+=size;
@@ -297,7 +297,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                         uint32_t posOutput=0;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
                         posOutput+=1+4;
-                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+                        {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
                         posOutput+=size;
@@ -412,7 +412,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
 
                 gameServerMode=GameServerMode::Reconnect;
 
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+                {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                 client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return true;
@@ -447,13 +447,18 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
 
             uint32_t sub_size32=size-pos;
             uint32_t decompressedSize=0;
+            //Per-callsite scratch (replaces former 16 MB static
+            //tempBigBufferForUncompressedInput).
+            //Heap-backed via std::vector; freed on scope exit.
+            std::vector<uint8_t> decompressBuffer(CATCHCHALLENGER_COMPRESSBUFFERSIZE);
+            char * const tempBigBufferForUncompressedInput=reinterpret_cast<char *>(decompressBuffer.data());
             if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None || mainCodeType==0x76)
             {
                 decompressedSize=sub_size32;
-                memcpy(CompressionProtocol::tempBigBufferForUncompressedInput,data+pos,sub_size32);
+                memcpy(tempBigBufferForUncompressedInput,data+pos,sub_size32);
             }
             else
-                decompressedSize=CompressionProtocol::computeDecompression(data+pos,CompressionProtocol::tempBigBufferForUncompressedInput,sub_size32,sizeof(CompressionProtocol::tempBigBufferForUncompressedInput),CompressionProtocol::compressionTypeClient);
+                decompressedSize=CompressionProtocol::computeDecompression(data+pos,tempBigBufferForUncompressedInput,sub_size32,decompressBuffer.size(),CompressionProtocol::compressionTypeClient);
 
             unsigned int decompressedDataPos=0;
             uint8_t index=0;
@@ -465,7 +470,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     return false;
                 }
                 std::string fileName;
-                uint8_t fileNameSize=CompressionProtocol::tempBigBufferForUncompressedInput[decompressedDataPos];
+                uint8_t fileNameSize=tempBigBufferForUncompressedInput[decompressedDataPos];
                 decompressedDataPos+=1;
                 if(fileNameSize>0)
                 {
@@ -474,12 +479,12 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                         parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
-                    fileName=std::string(CompressionProtocol::tempBigBufferForUncompressedInput+decompressedDataPos,fileNameSize);
+                    fileName=std::string(tempBigBufferForUncompressedInput+decompressedDataPos,fileNameSize);
                     decompressedDataPos+=fileNameSize;
                 }
                 if(DatapackDownloaderBase::extensionAllowed.find(CatchChallenger::FacilityLibGeneral::getSuffix(fileName))==DatapackDownloaderBase::extensionAllowed.cend())
                 {
-                    std::cerr << "datadump: " << binarytoHexa(CompressionProtocol::tempBigBufferForUncompressedInput,decompressedDataPos) << " " << binarytoHexa(CompressionProtocol::tempBigBufferForUncompressedInput+decompressedDataPos,decompressedSize-decompressedDataPos) << std::endl;
+                    std::cerr << "datadump: " << binarytoHexa(tempBigBufferForUncompressedInput,decompressedDataPos) << " " << binarytoHexa(tempBigBufferForUncompressedInput+decompressedDataPos,decompressedSize-decompressedDataPos) << std::endl;
                     parseNetworkReadError("main code: "+std::to_string(mainCodeType)+" extension not allowed: \""+CatchChallenger::FacilityLibGeneral::getSuffix(fileName)+"\" for file \""+fileName+"\" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
@@ -488,7 +493,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
-                const uint32_t &fileSize=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(CompressionProtocol::tempBigBufferForUncompressedInput+decompressedDataPos)));
+                const uint32_t &fileSize=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(tempBigBufferForUncompressedInput+decompressedDataPos)));
                 decompressedDataPos+=4;
                 if((decompressedSize-decompressedDataPos)<fileSize)
                 {
@@ -497,7 +502,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                 }
                 std::vector<char> dataFile;
                 dataFile.resize(fileSize);
-                memcpy(dataFile.data(),CompressionProtocol::tempBigBufferForUncompressedInput+decompressedDataPos,fileSize);
+                memcpy(dataFile.data(),tempBigBufferForUncompressedInput+decompressedDataPos,fileSize);
                 decompressedDataPos+=fileSize;
                 if(mainCodeType==0x76)
                     std::cout << "Raw file to create: " << fileName << std::endl;
@@ -583,7 +588,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
         posOutput+=size;
@@ -635,7 +640,7 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
         posOutput+=size;
@@ -776,7 +781,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                 posOutput+=1+4;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectListInWaitSize);//set the dynamic size
+                {const uint32_t _tmp_le=(htole32(replySelectListInWaitSize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectListInWait,replySelectListInWaitSize);
                 posOutput+=replySelectListInWaitSize;
@@ -905,7 +910,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         posOutput+=1;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                         posOutput+=1+4;
-                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+                        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint32_t)*data;
                         posOutput+=1;
 
@@ -1122,7 +1127,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     posOutput+=1;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                     posOutput+=1+4;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectCharInWaitSize);//set the dynamic size
+                    {const uint32_t _tmp_le=(htole32(replySelectCharInWaitSize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectCharInWait,replySelectCharInWaitSize);
                     posOutput+=replySelectCharInWaitSize;
@@ -1193,7 +1198,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=replySelectCharInWaitQueryNumber;
             posOutput+=1+4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectCharInWaitSize);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(replySelectCharInWaitSize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectCharInWait,replySelectCharInWaitSize);
             posOutput+=replySelectCharInWaitSize;
@@ -1259,7 +1264,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
         posOutput+=size;

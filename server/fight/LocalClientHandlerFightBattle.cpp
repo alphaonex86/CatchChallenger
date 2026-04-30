@@ -43,7 +43,7 @@ void Client::registerBattleRequest(Client &otherPlayerBattle)
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle.get_public_and_private_informations().public_informations.skinId;
     posOutput+=1;
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendBattleRequest(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -229,7 +229,7 @@ void Client::internalBattleAccepted(const bool &send)
             return;
         posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,FacilityLib::playerMonsterToPublicPlayerMonster(*p));
 
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
 }
@@ -272,7 +272,8 @@ void Client::sendBattleReturn()
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.success;
         posOutput+=1;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(attackReturnTemp.attack);
+        {const uint16_t _tmp_le=(htole16(attackReturnTemp.attack));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
         //ad buff
         index=0;
@@ -320,7 +321,8 @@ void Client::sendBattleReturn()
         posOutput+=1;
         while(index<attackReturnTemp.buffLifeEffectMonster.size())
         {
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.buffLifeEffectMonster.at(index).quantity);
+            {const uint32_t _tmp_le=(htole32(attackReturnTemp.buffLifeEffectMonster.at(index).quantity));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=4;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.buffLifeEffectMonster.at(index).on;
             posOutput+=1;
@@ -342,7 +344,7 @@ void Client::sendBattleReturn()
     }
     attackReturn.clear();
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
@@ -363,7 +365,7 @@ void Client::sendBattleMonsterChange()
     posOutput+=1;
     posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,*getOtherMonster());
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 

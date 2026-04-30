@@ -12,22 +12,23 @@ using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_NOXML
 bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable, MapLoadBuffers *buffers)
-{
 #else
 bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable)
-{
 #endif
+{
+    #ifndef ONLYMAPRENDER
     if(CommonDatapack::commonDatapack.get_tempNameToItemId_size()==0)
     {
-        std::cerr << "no item name loaded (abort)" << std::endl;
+        std::cerr << "no item name loaded " << __FILE__ << ":" << __LINE__ << " (abort)" << std::endl;
         abort();
     }
     if(CommonDatapack::commonDatapack.get_tempNameToMonsterId_size()==0)
     {
-        std::cerr << "no monster name loaded (abort)" << std::endl;
+        std::cerr << "no monster name loaded " << __FILE__ << ":" << __LINE__ << " (abort)" << std::endl;
         abort();
     }
-
+    #endif
+    
     error.clear();
     Map_to_send map_to_send_temp;
     map_to_send_temp.border.bottom.x_offset=0;
@@ -908,8 +909,12 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
         }
     }
 
-    // merge TMX data into this->map_to_send so loadExtraXml and loadAllMapsAndLink can access it
+    // merge TMX data into this->map_to_send so loadExtraXml and loadAllMapsAndLink
+    // can access it. The assignment must happen for ONLYMAPRENDER too (map2png),
+    // because map2png reads map_to_send.border.{left,right,top,bottom}.fileName to
+    // recurse into adjacent maps when rendering --renderAll.
     this->map_to_send = map_to_send_temp;
+    #ifndef ONLYMAPRENDER
     this->map_to_send.flat_simplified_map = simplifiedMap;
 
     std::string xmlExtra=file;
@@ -965,6 +970,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
             }
         }
     }
+    #endif
 
     // save final simplified map (with zone IDs) back to this->map_to_send
     this->map_to_send.flat_simplified_map = std::move(simplifiedMap);

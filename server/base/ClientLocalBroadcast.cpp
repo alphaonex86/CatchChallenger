@@ -52,7 +52,8 @@ void Client::sendLocalChatText(const std::string &text)
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
+        {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}
+
     }
 
     const PLAYER_INDEX_FOR_CONNECTED &size=map.map_clients_list_size();

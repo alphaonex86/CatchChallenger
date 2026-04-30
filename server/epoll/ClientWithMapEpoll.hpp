@@ -12,6 +12,7 @@ public:
     bool isValid() override;
     ssize_t readFromSocket(char * data, const size_t &size) override;
     ssize_t writeToSocket(const char * const data, const size_t &size) override;
+    ssize_t writeFileToSocket(int file_fd, off_t *offset, size_t len) override;
     void reset(int infd);
 };
 

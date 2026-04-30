@@ -112,7 +112,8 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     }
     else
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map.id);
+        {const uint16_t _tmp_le=(htole16(map.id));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
     }
     //send only for this player
@@ -129,7 +130,8 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
         posOutput+=1;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId_forMap);
+        {const uint16_t _tmp_le=(htole16(public_and_private_informations.public_informations.simplifiedId_forMap));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
     }
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=x;
@@ -163,13 +165,16 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
 
     //the following monster id to show
     if(public_and_private_informations.playerMonster.empty())
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+        {const uint16_t _tmp_le=(0);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     else
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.playerMonster.front().monster);
+        {const uint16_t _tmp_le=(htole16(public_and_private_informations.playerMonster.front().monster));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
 
     //set the dynamic size
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
+    {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}
+
 
     if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))
         return;*/

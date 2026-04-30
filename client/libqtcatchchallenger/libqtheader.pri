@@ -7,7 +7,6 @@ HEADERS  += \
     $$PWD/QtDatapackChecksum.hpp \
     $$PWD/QZstdDecodeThread.hpp \
     $$PWD/QInfiniteBuffer.hpp \
-    $$PWD/Audio.hpp \
     $$PWD/Language.hpp \
     $$PWD/DisplayStructures.hpp \
     $$PWD/PlatformMacro.hpp \
@@ -29,10 +28,16 @@ HEADERS  += \
 # internal libtiled include path (replaces /usr/include/tiled/)
 # already included via libtiled.pri in libqt.pri
 
-QT += multimedia
+#match qtopengl/client.pri: opt out of QtMultimedia when CATCHCHALLENGER_NOAUDIO
+#is set (Qt-for-Android in this workspace doesn't ship the Multimedia module).
+#Audio.hpp #include <QAudioSink> unconditionally so it must also drop out of
+#HEADERS when audio is off.
+!contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
+    QT += multimedia
+    HEADERS += $$PWD/Audio.hpp
+}
 
 HEADERS  += \
-    $$PWD/Audio.hpp \
     $$PWD/QInfiniteBuffer.hpp
 
 # internal libopus/libopusfile include paths (replaces /usr/include/opus/ and -lopus -lopusfile)

@@ -1,4 +1,5 @@
 #include "EpollServerLoginSlave.hpp"
+#include <cstring>
 #include "CharactersGroupForLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
@@ -570,12 +571,14 @@ void EpollServerLoginSlave::compose04Reply()
 
     EpollClientLoginSlave::loginGood[0x06]=0x01;//good
 
-    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::loginGood+0x07)=htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time);
+    {const uint32_t _tmp_le=(htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time));memcpy(EpollClientLoginSlave::loginGood+0x07,&_tmp_le,sizeof(_tmp_le));}
+
     EpollClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.max_character;
     EpollClientLoginSlave::loginGood[0x0C]=CommonSettingsCommon::commonSettingsCommon.min_character;
     EpollClientLoginSlave::loginGood[0x0D]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
     EpollClientLoginSlave::loginGood[0x0E]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-    *reinterpret_cast<uint16_t *>(EpollClientLoginSlave::loginGood+0x0F)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
+    {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(EpollClientLoginSlave::loginGood+0x0F,&_tmp_le,sizeof(_tmp_le));}
+
     EpollClientLoginSlave::loginGoodSize=0x11;
 
     memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
@@ -625,10 +628,12 @@ void EpollServerLoginSlave::preload_profile()
             while(index<item_list.size())
             {
                 const LoginProfile::Item &item=item_list.at(index);
-                *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id-lastItemId);
+                {const uint16_t _tmp_le=(htole16(item.id-lastItemId));memcpy(item_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
                 pos+=2;
                 lastItemId=item.id;
-                *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(item.quantity);
+                {const uint32_t _tmp_le=(htole32(item.quantity));memcpy(item_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
                 pos+=4;
                 index++;
             }
@@ -661,7 +666,8 @@ void EpollServerLoginSlave::preload_profile()
             while(index<reputations_list.size())
             {
                 const LoginProfile::Reputation &reputation=reputations_list.at(index);
-                *reinterpret_cast<uint32_t *>(reputation_raw+pos)=htole32(reputation.point);
+                {const uint32_t _tmp_le=(htole32(reputation.point));memcpy(reputation_raw+pos,&_tmp_le,sizeof(_tmp_le));}
+
                 pos+=4;
                 reputation_raw[pos]=reputation.reputationDatabaseId-lastReputationId;
                 pos+=1;
@@ -717,7 +723,8 @@ void EpollServerLoginSlave::preload_profile()
                         while(sub_index<skills_list.size())
                         {
                             const LoginProfile::Monster::Skill &skill=skills_list.at(sub_index);
-                            *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id-lastSkillId);
+                            {const uint16_t _tmp_le=(htole16(skill.id-lastSkillId));memcpy(raw_skill+sub_index*(2+1),&_tmp_le,sizeof(_tmp_le));}
+
                             lastSkillId=skill.id;
                             raw_skill[sub_index*(2+1)+2]=skill.level;
                             raw_skill_endurance[sub_index]=skill.endurance;
