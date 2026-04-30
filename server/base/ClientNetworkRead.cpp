@@ -61,8 +61,9 @@ void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const uint8_
     registerOutputQuery(queryIdPool.back(),0xE1);
     queryIdPool.pop_back();
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/2+1+1+1);//set the dynamic size
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(mapIndex);
+    {const uint32_t _tmp_le=(htole32(/*map:*/2+1+1+1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+    {const uint16_t _tmp_le=(htole16(mapIndex));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,&_tmp_le,sizeof(_tmp_le));}
+
     ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=x;
     ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=y;
     ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=(uint8_t)orientation;

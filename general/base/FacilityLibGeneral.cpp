@@ -36,7 +36,8 @@ unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,
 {
     if(text.empty() || text.size()>65535)
         return 0;
-    *reinterpret_cast<uint16_t *>(data+0)=(uint16_t)htole16((uint16_t)text.size());
+    {const uint16_t _tmp_le=((uint16_t)htole16((uint16_t)text.size()));memcpy(data+0,&_tmp_le,sizeof(_tmp_le));}
+
     memcpy(data+2,text.data(),static_cast<size_t>(text.size()));
     return 2+static_cast<uint8_t>(text.size());
 }

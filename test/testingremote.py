@@ -10,7 +10,7 @@ Per-node config is loaded from test/remote_nodes.json via remote_build.
 Only nodes with "compile" in their `tests` list are exercised here.
 """
 
-import os, sys, subprocess, json
+import os, sys, subprocess, json, time
 from remote_build import REMOTE_NODES
 import diagnostic
 
@@ -59,6 +59,7 @@ C_CYAN = "\033[96m"
 C_RESET = "\033[0m"
 
 results = []
+_last_log_time = [time.monotonic()]
 
 SCRIPT_NAME = os.path.basename(__file__)
 FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
@@ -103,9 +104,8 @@ def save_failed_cases():
     failed = []
     idx = 0
     while idx < len(results):
-        name, ok, detail = results[idx]
-        if not ok:
-            failed.append(name)
+        if not results[idx][1]:
+            failed.append(results[idx][0])
         idx += 1
     data[SCRIPT_NAME] = failed
     with open(FAILED_JSON, "w") as f:
@@ -116,12 +116,18 @@ def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
 
 def log_pass(name, detail=""):
-    results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, True, detail, elapsed))
+    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
 
 def log_fail(name, detail=""):
-    results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, False, detail, elapsed))
+    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
 
 
 def ssh_cmd(host, port, command, timeout=COMPILE_TIMEOUT):
@@ -304,14 +310,16 @@ def main():
     print(f"\n{C_CYAN}{'='*60}")
     print("  Summary")
     print(f"{'='*60}{C_RESET}")
-    passed = sum(1 for _, ok, _ in results if ok)
-    failed = sum(1 for _, ok, _ in results if not ok)
+    passed = sum(1 for r in results if r[1])
+    failed = sum(1 for r in results if not r[1])
+    total_elapsed = sum(r[3] for r in results)
     idx = 0
     while idx < len(results):
-        name, ok, detail = results[idx]
+        name, ok, detail, elapsed = results[idx]
         tag = f"{C_GREEN}PASS{C_RESET}" if ok else f"{C_RED}FAIL{C_RESET}"
-        print(f"  [{tag}] {name}  {detail}")
+        print(f"  [{tag}] {name}  {detail}  ({elapsed:.1f}s)")
         idx += 1
+    print(f"  total elapsed: {total_elapsed:.1f}s")
     print()
     print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}")
     save_failed_cases()

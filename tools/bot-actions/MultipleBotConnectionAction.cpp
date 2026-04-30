@@ -1,5 +1,7 @@
 #include "MultipleBotConnectionAction.h"
 
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
 #include <iostream>
 #include <QFile>
 #include <QMessageBox>
@@ -48,9 +50,9 @@ std::string MultipleBotConnectionAction::getNewPseudo()
     {
         if(pseudoNotUsed.empty())
         {
-            QMessageBox::critical(NULL,tr("Error"),tr("no file pseudo-not-used.txt, empty or too few entries"));
-            abort();
-            //return std::string("bot")+CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3);
+            //fall back to a random pseudo when pseudo-not-used.txt is absent or
+            //exhausted, so the bot does not abort in headless test runs.
+            return std::string("bot")+CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3);
         }
         unsigned int index=rand()%pseudoNotUsed.size();
         choosePseudo=pseudoNotUsed.at(index);

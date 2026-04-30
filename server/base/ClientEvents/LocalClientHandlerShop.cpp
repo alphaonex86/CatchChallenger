@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <cstring>
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonDatapack.hpp"
@@ -48,18 +49,23 @@ void Client::getShopList(const uint8_t &query_id)
         unsigned int objectCount=0;
         for (const auto& [key, value] : shop.items)
         {
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(key);
+            {const uint16_t _tmp_le=(htole16(key));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=2;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(value);
+            {const uint32_t _tmp_le=(htole32(value));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0);
+            {const uint32_t _tmp_le=(htole32(0));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=4;
             objectCount++;
         }
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(objectCount);
+        {const uint16_t _tmp_le=(htole16(objectCount));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,&_tmp_le,sizeof(_tmp_le));}
+
 
         //set the dynamic size
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+        {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
@@ -111,7 +117,8 @@ void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM 
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
@@ -123,7 +130,8 @@ void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM 
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
@@ -134,7 +142,8 @@ void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM 
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
@@ -143,7 +152,8 @@ void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM 
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_BetterPrice;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(price);
+        {const uint32_t _tmp_le=(htole32(price));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
     }
     else
@@ -161,7 +171,8 @@ void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM 
     addObject(objectId,quantity);
 
     //set the dynamic size
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+    {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -234,7 +245,8 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
         posOutput+=1;
 
         //set the dynamic size
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
@@ -243,7 +255,8 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)SoldStat_BetterPrice;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(realPrice);
+        {const uint32_t _tmp_le=(htole32(realPrice));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
     }
     else
@@ -255,7 +268,8 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
     addCash(realPrice*quantity);
 
     //set the dynamic size
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);
+    {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }

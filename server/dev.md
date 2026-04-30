@@ -49,3 +49,9 @@ QMAKE_LFLAGS += -Os -flto -s
 # More performance
 * Async DB for server is better, actually only PostgreSQL
 * LTO flag is better due to compreansive overall code, can optimize cross-file
+
+# RAM needed
+* objdump -h catchchallenger-server-cli-epoll | grep -A 1 ".bss"
+* size catchchallenger-server-cli-epoll
+* nm -S --size-sort -r catchchallenger-server-cli-epoll | head -n 5
+* It needs RAM for the .data and .bss segments. Eg 10592 and 67118080

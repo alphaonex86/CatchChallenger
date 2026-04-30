@@ -147,9 +147,11 @@ unsigned int MapServer::playerToFullInsert(const Client& client, char * const bu
     posOutput+=1;
     //the following monster id to show
     if(client.public_and_private_informations.monsters.empty())
-        *reinterpret_cast<uint16_t *>(bufferForOutput+posOutput)=0;
+        {const uint16_t _tmp_le=(0);memcpy(bufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     else
-        *reinterpret_cast<uint16_t *>(bufferForOutput+posOutput)=htole16(client.public_and_private_informations.monsters.front().monster);
+        {const uint16_t _tmp_le=(htole16(client.public_and_private_informations.monsters.front().monster));memcpy(bufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     return posOutput;
 }

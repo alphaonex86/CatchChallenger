@@ -1,8 +1,12 @@
 QT       += sql core
 DEFINES += CATCHCHALLENGER_CLASS_QT CATCHCHALLENGER_DB_SQLITE
 
-QT += websockets
-#DEFINES+=NOWEBSOCKET
+#match the client pris (qtcpu800x600/base/client.pri, qtopengl/client.pri):
+#opt out of QtWebSockets when NOWEBSOCKET is set (cross-builds where the
+#WebSockets module is unavailable, e.g. Qt-for-mac without QtWebSockets).
+!contains(DEFINES, NOWEBSOCKET) {
+    QT += websockets
+}
 
 RESOURCES += $$PWD/../all-server-resources.qrc \
     $$PWD/../databases/resources-db-sqlite.qrc

@@ -440,9 +440,12 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xBE;
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
     ProtocolParsingBase::tempBigBufferForOutput[0x02]=charactersGroupIndex;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x03)=serverUniqueKey;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x07)=htole32(characterId);
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x0B)=htole32(static_cast<EpollClientLoginSlave *>(client)->account_id);
+    {const uint32_t _tmp_le=(serverUniqueKey);memcpy(ProtocolParsingBase::tempBigBufferForOutput+0x03,&_tmp_le,sizeof(_tmp_le));}
+
+    {const uint32_t _tmp_le=(htole32(characterId));memcpy(ProtocolParsingBase::tempBigBufferForOutput+0x07,&_tmp_le,sizeof(_tmp_le));}
+
+    {const uint32_t _tmp_le=(htole32(static_cast<EpollClientLoginSlave *>(client)->account_id));memcpy(ProtocolParsingBase::tempBigBufferForOutput+0x0B,&_tmp_le,sizeof(_tmp_le));}
+
 
     queryNumberList.pop_back();
     return internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,(/*header*/1+1)+1+4+4+4);

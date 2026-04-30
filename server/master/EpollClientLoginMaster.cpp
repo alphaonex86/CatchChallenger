@@ -1,4 +1,5 @@
 #include "EpollClientLoginMaster.hpp"
+#include <cstring>
 #include "EpollServerLoginMaster.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
@@ -234,7 +235,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x05;
         posOutput+=1;
@@ -256,7 +257,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
             posOutput+=1+4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
             switch(lockResult)
             {
@@ -289,7 +290,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x05;
         posOutput+=1;
@@ -352,8 +353,10 @@ bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster
     const uint8_t &queryNumber=queryNumberList.back();
     registerOutputQuery(queryNumber,0xF8);
     EpollClientLoginMaster::getTokenForCharacterSelect[0x01]=queryNumber;
-    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x02)=htole32(characterId);
-    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::getTokenForCharacterSelect+0x06)=htole32(accountId);
+    {const uint32_t _tmp_le=(htole32(characterId));memcpy(EpollClientLoginMaster::getTokenForCharacterSelect+0x02,&_tmp_le,sizeof(_tmp_le));}
+
+    {const uint32_t _tmp_le=(htole32(accountId));memcpy(EpollClientLoginMaster::getTokenForCharacterSelect+0x06,&_tmp_le,sizeof(_tmp_le));}
+
     queryNumberList.pop_back();
     return sendRawBlock(reinterpret_cast<char *>(EpollClientLoginMaster::getTokenForCharacterSelect),sizeof(EpollClientLoginMaster::getTokenForCharacterSelect));
 }
@@ -367,7 +370,7 @@ void EpollClientLoginMaster::selectCharacter_ReturnToken(const uint8_t &query_id
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
     posOutput+=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
@@ -384,7 +387,7 @@ void EpollClientLoginMaster::selectCharacter_ReturnFailed(const uint8_t &query_i
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=errorCode;
     posOutput+=1;
@@ -462,7 +465,8 @@ void EpollClientLoginMaster::sendServerChange()
             }
             //key
             {
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(gameServerOnEpollClientLoginMaster->uniqueKey);
+                {const uint32_t _tmp_le=(htole32(gameServerOnEpollClientLoginMaster->uniqueKey));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=sizeof(gameServerOnEpollClientLoginMaster->uniqueKey);
             }
             //host
@@ -491,12 +495,14 @@ void EpollClientLoginMaster::sendServerChange()
                 {
                     if(xmlString.size()>65535)
                     {
-                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                        {const uint16_t _tmp_le=(0);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                         posOutput+=2;
                     }
                     else
                     {
-                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(xmlString.size());
+                        {const uint16_t _tmp_le=(htole16(xmlString.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                         posOutput+=2;
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,xmlString.data(),xmlString.size());
                         posOutput+=xmlString.size();
@@ -528,7 +534,7 @@ void EpollClientLoginMaster::sendServerChange()
             index++;
         }
 
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         if(posOutput>=EpollClientLoginMaster::serverServerListSize)
             useTheDiff=false;
     }
@@ -568,13 +574,14 @@ int EpollClientLoginMaster::sendCurrentPlayer()
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x47;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(EpollClientLoginMaster::gameServers.size()*2);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(EpollClientLoginMaster::gameServers.size()*2));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         unsigned int index=0;
         while(index<EpollClientLoginMaster::gameServers.size())
         {
             const EpollClientLoginMaster * const gameServer=EpollClientLoginMaster::gameServers.at(index);
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(gameServer->charactersGroupForGameServerInformation->currentPlayer);
+            {const uint16_t _tmp_le=(htole16(gameServer->charactersGroupForGameServerInformation->currentPlayer));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             numberOfPlayer+=gameServer->charactersGroupForGameServerInformation->currentPlayer;
             posOutput+=2;
             index++;
@@ -615,7 +622,8 @@ void EpollClientLoginMaster::sendTimeRangeEvent()
 
 void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint32_t &characterId)
 {
-    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::duplicateConnexionDetected+1)=htole32(characterId);
+    {const uint32_t _tmp_le=(htole32(characterId));memcpy(EpollClientLoginMaster::duplicateConnexionDetected+1,&_tmp_le,sizeof(_tmp_le));}
+
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::duplicateConnexionDetected),sizeof(EpollClientLoginMaster::duplicateConnexionDetected));
 }
 
@@ -737,7 +745,8 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
         std::cerr << "Generate new unique key for a game server: " << std::to_string(newUniqueKey) << std::endl;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint32_t)htole32(newUniqueKey);
+        {const uint32_t _tmp_le=((uint32_t)htole32(newUniqueKey));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
     }
     else
@@ -756,7 +765,8 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
         int index=0;
         while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
         {
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput+index*4/*size of int*/)=(uint32_t)htole32(charactersGroupForGameServer->maxMonsterId+1+index);
+            {const uint32_t _tmp_le=((uint32_t)htole32(charactersGroupForGameServer->maxMonsterId+1+index));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput+index*4/*size of int*/,&_tmp_le,sizeof(_tmp_le));}
+
             index++;
         }
         posOutput+=4*CATCHCHALLENGER_SERVER_MAXIDBLOCK;
@@ -772,7 +782,8 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
         int index=0;
         while(index<CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)
         {
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput+index*4/*size of int*/)=(uint32_t)htole32(charactersGroupForGameServer->maxClanId+1+index);
+            {const uint32_t _tmp_le=((uint32_t)htole32(charactersGroupForGameServer->maxClanId+1+index));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput+index*4/*size of int*/,&_tmp_le,sizeof(_tmp_le));}
+
             index++;
         }
         posOutput+=4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
@@ -793,7 +804,7 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
         posOutput+=EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize;
     }
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     //only game server will receive query

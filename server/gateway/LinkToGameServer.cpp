@@ -564,7 +564,7 @@ void LinkToGameServer::sendDifferedA8Reply()
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=replySelectListInWaitQueryNumber;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectListInWaitSize);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(replySelectListInWaitSize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectListInWait,replySelectListInWaitSize);
     posOutput+=replySelectListInWaitSize;
@@ -597,7 +597,7 @@ void LinkToGameServer::sendDiffered93OrACReply()
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=replySelectCharInWaitQueryNumber;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectCharInWaitSize);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(replySelectCharInWaitSize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectCharInWait,replySelectCharInWaitSize);
     posOutput+=replySelectCharInWaitSize;

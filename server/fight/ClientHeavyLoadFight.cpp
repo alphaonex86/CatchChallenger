@@ -471,7 +471,7 @@ void Client::generateRandomNumber()
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x53;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     if((randomIndex+randomSize+CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {

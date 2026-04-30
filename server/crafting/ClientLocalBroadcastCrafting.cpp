@@ -1,4 +1,5 @@
 #include "../base/Client.hpp"
+#include <cstring>
 #include "../base/MapServer.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/PreparedDBQuery.hpp"
@@ -81,7 +82,8 @@ bool Client::syncDatabasePlant()
             lastPlantId=i->first;
             #endif
             const PlayerPlant &plant=i->second;
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(dirtOnMap);
+            {const uint16_t _tmp_le=(htole16(dirtOnMap));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=2;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=plant.plant;
             posOutput+=1;

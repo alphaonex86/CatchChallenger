@@ -40,14 +40,26 @@ public:
         #endif
     };
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+    //Per-file metadata used by the zero-copy / streaming-compress send paths.
+    //We store the path + name + on-disk size only — the file content stays
+    //on disk until the flush actually happens (sendfile() for raw,
+    //ZSTD_compressStream2 fed in chunks for compressed).
+    struct PendingFile
+    {
+        std::string fullPath;
+        std::string name;
+        uint32_t size;
+    };
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static catchchallenger_datapack_set<std::string> compressedExtension;
-    static std::vector<char> compressedFilesBuffer;
-    static uint8_t compressedFilesBufferCount;
+    static std::vector<PendingFile> compressedFilesPending;
+    //Sum of raw on-wire body bytes (1+namelen+4+filesize per file).
+    //Used for the "flush at threshold" decision.
+    static uint64_t compressedFilesPendingRawSize;
     #endif
     static catchchallenger_datapack_set<std::string> extensionAllowed;
-    static std::vector<char> rawFilesBuffer;
-    static uint8_t rawFilesBufferCount;
+    static std::vector<PendingFile> rawFilesPending;
+    static uint64_t rawFilesPendingRawSize;
     static catchchallenger_datapack_map<std::string,uint32_t> datapack_file_list_cache;
     static catchchallenger_datapack_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base;
     #endif

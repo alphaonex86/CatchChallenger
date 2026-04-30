@@ -1,4 +1,5 @@
 #include "CharactersGroupForLogin.hpp"
+#include <cstring>
 #include "EpollServerLoginSlave.hpp"
 #include "VariableLoginServer.hpp"
 #include "LinkToMaster.hpp"
@@ -66,7 +67,8 @@ void CharactersGroupForLogin::character_list_object()
 
                 //Character id
                 {
-                    *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(character_id);
+                    {const uint32_t _tmp_le=(htole32(character_id));memcpy(tempRawData+tempRawDataSize,&_tmp_le,sizeof(_tmp_le));}
+
                     tempRawDataSize+=sizeof(uint32_t);
                 }
 
@@ -123,7 +125,8 @@ void CharactersGroupForLogin::character_list_object()
                         delete_time_left=0;
                     else
                         delete_time_left=time_to_delete-current_time;
-                    *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(delete_time_left);
+                    {const uint32_t _tmp_le=(htole32(delete_time_left));memcpy(tempRawData+tempRawDataSize,&_tmp_le,sizeof(_tmp_le));}
+
                     tempRawDataSize+=sizeof(uint32_t);
                 }
 
@@ -135,7 +138,8 @@ void CharactersGroupForLogin::character_list_object()
                         std::cerr << "played_time is not number: " << sanitizeUtf8String(databaseBaseCommon->value(4)) << " for " << character_id << " fixed by 0" << std::endl;
                         played_time=0;
                     }
-                    *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
+                    {const uint32_t _tmp_le=(htole32(played_time));memcpy(tempRawData+tempRawDataSize,&_tmp_le,sizeof(_tmp_le));}
+
                     tempRawDataSize+=sizeof(uint32_t);
                 }
 
@@ -147,7 +151,8 @@ void CharactersGroupForLogin::character_list_object()
                         std::cerr << "last_connect is not number: " << sanitizeUtf8String(databaseBaseCommon->value(5)) << " for " << character_id << " fixed by 0" << std::endl;
                         last_connect=current_time;
                     }
-                    *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
+                    {const uint32_t _tmp_le=(htole32(last_connect));memcpy(tempRawData+tempRawDataSize,&_tmp_le,sizeof(_tmp_le));}
+
                     tempRawDataSize+=sizeof(uint32_t);
                 }
             }
@@ -224,7 +229,8 @@ void CharactersGroupForLogin::server_list_object()
                     std::cerr << "played_time is not number: " << sanitizeUtf8String(databaseBaseCommon->value(1)) << " fixed by 0" << std::endl;
                     played_time=0;
                 }
-                *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
+                {const uint32_t _tmp_le=(htole32(played_time));memcpy(tempRawData+tempRawDataSize,&_tmp_le,sizeof(_tmp_le));}
+
                 tempRawDataSize+=sizeof(uint32_t);
 
                 //last_connect
@@ -234,7 +240,8 @@ void CharactersGroupForLogin::server_list_object()
                     std::cerr << "last_connect is not number: " << sanitizeUtf8String(databaseBaseCommon->value(2)) << " fixed by 0" << std::endl;
                     last_connect=current_time;
                 }
-                *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
+                {const uint32_t _tmp_le=(htole32(last_connect));memcpy(tempRawData+tempRawDataSize,&_tmp_le,sizeof(_tmp_le));}
+
                 tempRawDataSize+=sizeof(uint32_t);
 
                 validServerCount++;
@@ -750,7 +757,8 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(characterId);
+    {const uint32_t _tmp_le=(htole32(characterId));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

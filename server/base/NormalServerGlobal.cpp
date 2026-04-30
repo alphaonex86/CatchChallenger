@@ -100,10 +100,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("teleportIfMapNotFoundOrOutOfMap",true);
     if(!settings->contains("server-ip"))
         settings->setValue("server-ip","");
-    if(!settings->contains("common_blobversion_datapack"))
-        settings->setValue("common_blobversion_datapack",0);
-    if(!settings->contains("server_blobversion_datapack"))
-        settings->setValue("server_blobversion_datapack",0);
     if(!settings->contains("pvp"))
         settings->setValue("pvp",true);
     if(!settings->contains("server-port"))
@@ -118,10 +114,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("compressionLevel",6);
     if(!settings->contains("anonymous"))
         settings->setValue("anonymous",false);
-    if(!settings->contains("proxy"))
-        settings->setValue("proxy","");
-    if(!settings->contains("proxy_port"))
-        settings->setValue("proxy_port",9050);
     if(!settings->contains("dontSendPseudo"))
         settings->setValue("dontSendPseudo",false);
     if(!settings->contains("dontSendPlayerType"))
@@ -132,12 +124,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("httpDatapackMirror","");
     if(!settings->contains("datapackCache"))
         settings->setValue("datapackCache",-1);
-    if(!settings->contains("plantOnlyVisibleByPlayer"))
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        settings->setValue("plantOnlyVisibleByPlayer",true);
-    #else
-        settings->setValue("plantOnlyVisibleByPlayer",false);
-    #endif
     if(!settings->contains("useSsl"))
     #ifdef __linux__
         settings->setValue("useSsl",false);

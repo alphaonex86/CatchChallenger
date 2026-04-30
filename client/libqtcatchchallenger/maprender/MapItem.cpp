@@ -9,6 +9,9 @@
 #include <QDebug>
 #include <QLabel>
 #include <iostream>
+#include <tileset.h>
+
+std::unordered_set<Tiled::Tileset *> MapItem::validTilesets_;
 
 MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     : QGraphicsObject(parent)
@@ -26,6 +29,21 @@ void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map,
     {
         std::cerr << "MapItem::addMap() map is NULL (abort add)" << std::endl;
         return;
+    }
+    {
+        std::unordered_set<Tiled::Tileset *> &perMap=tilesetsPerMap_[map];
+        const QVector<Tiled::SharedTileset> &mapTilesets=map->tilesets();
+        int tsIndex=0;
+        while(tsIndex<mapTilesets.size())
+        {
+            Tiled::Tileset *ts=mapTilesets.at(tsIndex).data();
+            if(ts!=NULL)
+            {
+                perMap.insert(ts);
+                validTilesets_.insert(ts);
+            }
+            tsIndex++;
+        }
     }
     if(renderer==NULL)
     {
@@ -164,6 +182,26 @@ void MapItem::removeMap(Tiled::Map *map)
         delete value;
     }
     displayed_layer.erase(map);
+    if(tilesetsPerMap_.find(map)!=tilesetsPerMap_.cend())
+    {
+        const std::unordered_set<Tiled::Tileset *> &perMap=tilesetsPerMap_.at(map);
+        for( Tiled::Tileset * const& ts : perMap )
+        {
+            //only erase from the global set when no other still-loaded map keeps it.
+            bool stillUsed=false;
+            for( const std::pair<Tiled::Map * const,std::unordered_set<Tiled::Tileset *> > &n : tilesetsPerMap_ )
+            {
+                if(n.first!=map && n.second.find(ts)!=n.second.cend())
+                {
+                    stillUsed=true;
+                    break;
+                }
+            }
+            if(!stillUsed)
+                validTilesets_.erase(ts);
+        }
+        tilesetsPerMap_.erase(map);
+    }
 }
 
 void MapItem::setMapPosition(Tiled::Map *map, int16_t global_x/*pixel, need be 16Bits*/, int16_t global_y/*pixel, need be 16Bits*/)

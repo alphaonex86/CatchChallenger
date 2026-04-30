@@ -3,6 +3,15 @@ DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 QT       -= gui widgets network sql
 QT       -= core xml
 
+# Optional alternative IO backends — default is real epoll. Pass either
+# CONFIG+=catchchallenger_poll or CONFIG+=catchchallenger_io_uring on
+# the qmake command line to switch. Only one may be selected.
+catchchallenger_poll: DEFINES += CATCHCHALLENGER_POLL
+catchchallenger_io_uring {
+    DEFINES += CATCHCHALLENGER_IO_URING
+    LIBS    += -luring
+}
+
 linux: {
 QMAKE_CFLAGS+="-fstack-protector-all -fno-rtti -fno-exceptions -Wno-missing-braces -Wall -Wextra"
 QMAKE_CXXFLAGS+="-fstack-protector-all -fno-rtti -fno-exceptions -Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"

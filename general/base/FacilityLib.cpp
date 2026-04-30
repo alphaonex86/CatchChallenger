@@ -1,4 +1,5 @@
 #include "FacilityLib.hpp"
+#include <cstring>
 #include "CommonDatapack.hpp"
 #include "CommonSettingsServer.hpp"
 #include "PortableEndian.hpp"
@@ -35,13 +36,16 @@ PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const Player
 uint16_t FacilityLib::publicPlayerMonsterToBinary(char *data,const PublicPlayerMonster &publicPlayerMonster)
 {
     uint16_t posOutput=0;
-    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(publicPlayerMonster.monster);
+    {const uint16_t _tmp_le=(htole16(publicPlayerMonster.monster));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     data[posOutput]=publicPlayerMonster.level;
     posOutput+=1;
-    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(publicPlayerMonster.hp);
+    {const uint32_t _tmp_le=(htole32(publicPlayerMonster.hp));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
-    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(publicPlayerMonster.catched_with);
+    {const uint16_t _tmp_le=(htole16(publicPlayerMonster.catched_with));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     data[posOutput]=(uint8_t)publicPlayerMonster.gender;
     posOutput+=1;
@@ -69,13 +73,16 @@ uint16_t FacilityLib::publicPlayerMonsterToBinary(char *data,const PublicPlayerM
 uint16_t FacilityLib::playerMonsterToBinary(char *data,const PlayerMonster &playerMonster)
 {
     uint16_t posOutput=0;
-    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(playerMonster.monster);
+    {const uint16_t _tmp_le=(htole16(playerMonster.monster));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     data[posOutput]=playerMonster.level;
     posOutput+=1;
-    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(playerMonster.hp);
+    {const uint32_t _tmp_le=(htole32(playerMonster.hp));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
-    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(playerMonster.catched_with);
+    {const uint16_t _tmp_le=(htole16(playerMonster.catched_with));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     data[posOutput]=(uint8_t)playerMonster.gender;
     posOutput+=1;
@@ -170,19 +177,24 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     //send the network reply
     uint32_t posOutput=0;
 
-    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(monster.monster);
+    {const uint16_t _tmp_le=(htole16(monster.monster));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     data[posOutput]=monster.level;
     posOutput+=1;
-    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.remaining_xp);
+    {const uint32_t _tmp_le=(htole32(monster.remaining_xp));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
-    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.hp);
+    {const uint32_t _tmp_le=(htole32(monster.hp));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
-    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(monster.catched_with);
+    {const uint16_t _tmp_le=(htole16(monster.catched_with));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     data[posOutput]=(uint8_t)monster.gender;
     posOutput+=1;
-    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.egg_step);
+    {const uint32_t _tmp_le=(htole32(monster.egg_step));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     data[posOutput]=(uint8_t)monster.character_origin==character_id;
@@ -211,13 +223,15 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
         sub_index++;
     }
     sub_index=0;
-    *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(monster.skills.size());
+    {const uint16_t _tmp_le=(htole16(monster.skills.size()));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
     while(sub_index<monster.skills.size())
     {
         const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
 
-        *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(playerSkill.skill);
+        {const uint16_t _tmp_le=(htole16(playerSkill.skill));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=2;
         data[posOutput]=playerSkill.level;
         posOutput+=1;

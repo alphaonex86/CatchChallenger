@@ -263,7 +263,8 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapackFilesListMain.size());
+        {const uint32_t _tmp_le=(htole32(datapackFilesListMain.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
         unsigned int index=0;
         while(index<datapackFilesListMain.size())
@@ -283,7 +284,8 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
             const std::string &text=datapackFilesListMain.at(index);
             if(!text.empty() && text.size()<255)
             {
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(partialHashList.at(index));
+                {const uint32_t _tmp_le=(htole32(partialHashList.at(index)));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=4;
             }
             else
@@ -291,7 +293,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
             index++;
         }
 
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         client->sendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     else

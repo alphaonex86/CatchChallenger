@@ -35,8 +35,10 @@ public:
     #endif
     static CompressionType compressionTypeServer;
 
-    static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_COMPRESSBUFFERSIZE];
-    static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_COMPRESSBUFFERSIZE];
+    //Previously two static char[CATCHCHALLENGER_COMPRESSBUFFERSIZE] (16 MB each)
+    //ate 32 MB of .bss for scratch space that was only used during a few
+    //(de)compression call sites. Each call site now declares a local
+    //std::vector<uint8_t> sized to actual need; RAII frees it on return.
 };
 
 #endif // COMPRESSIONPROTOCOL_H

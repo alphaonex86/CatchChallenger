@@ -61,7 +61,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     posOutput+=1;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                     posOutput+=1+4;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+                    {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data,size);
                     posOutput+=size;
@@ -115,7 +115,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
             uint32_t posOutput=0;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
             posOutput+=1+4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
             posOutput+=size;
@@ -163,7 +163,7 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
             posOutput+=1+4;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+            {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
             posOutput+=size;
@@ -212,7 +212,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         client->removeFromQueryReceived(queryNumber);
                         ProtocolParsingBase::tempBigBufferForOutput[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                         ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumber;
-                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+                        {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                         /// \warning
                         /// multiple game server mean multiple max client, then multiple packet size
@@ -272,7 +272,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     posOutput+=1;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                     posOutput+=1+4;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+                    {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
                     posOutput+=size;

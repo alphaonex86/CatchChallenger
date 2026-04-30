@@ -8,6 +8,12 @@
     "Per-node fields:",
     "  label             short id used in test names and resume keys",
     "  comment           free-text description (not parsed)",
+    "  enabled           true/false. When false the node is skipped everywhere",
+    "                    (compile / server-client / solo) regardless of the",
+    "                    'tests' list. Use this — instead of zeroing out 'tests'",
+    "                    — to temporarily turn a node off, so the original",
+    "                    'tests' opt-in list survives across off/on toggles.",
+    "                    Default when missing: true.",
     "  ssh.host/user/port",
     "  work_dir          temp path on the node where sources are rsynced and built;",
     "                    removed after the test phase by cleanup_remote_node()",
@@ -33,13 +39,19 @@
     "                    requires gcc. Default when missing/empty: [\"gcc\"].",
     "                    Eg: [\"gcc\"], [\"gcc\",\"clang\"]",
     "  extra_defines     CatchChallenger DEFINES+= passed at qmake invocation",
-    "  tests             which test phases this node opts into:",
+    "  tests             which test phases this node opts into when 'enabled' is true:",
     "                      'compile'        compile-only tests (remote_build / testingremote)",
     "                      'server-client'  remote server + client (Phase E in testingserver,",
     "                                        and the remote-server block in testingclient)",
     "                      'solo'           build both clients (qtcpu800x600 + qtopengl) on",
     "                                        the node and run each with --autosolo to verify",
     "                                        the standalone savegame flow (testingclient)",
+    "  save_timeout      seconds allowed for `<server> --save` (datapack-cache.bin",
+    "                    generation) on this node; XML parsing + cache write is",
+    "                    slow on MIPS so 600s+ may be needed. Default 120s.",
+    "  server_ready_timeout  seconds allowed for the remote server to print",
+    "                    \"correctly bind:\" after launch. Slow nodes (MIPS,",
+    "                    valgrind, cold caches) need longer than the default 60s.",
     "  lxc_rootfs        path to the LXC rootfs on the host (only for lxc nodes,",
     "                    handy when fixing the container from outside)"
   ],
@@ -47,6 +59,7 @@
     {
       "label": "pentium-m",
       "comment": "Real hardware with partial GPU support: only OpenGL ES 2.0 works (partial OpenGL). Only node where client tests can run on a real DISPLAY (no offscreen). The Trinity DE session is logged in as 'user' too — launch the client as a graphical process under DISPLAY :0.",
+      "enabled": false,
       "ssh": {
         "host": "2803:1920::2:ff01",
         "user": "user",
@@ -72,7 +85,8 @@
     },
     {
       "label": "atom-n455",
-      "comment": "DISABLED — temporarily off (tests: []). Real hardware with working GPU: OpenGL 4.5 — 0ad and SuperTuxKart run fine, so 3D games appear to work. Compile + server-side tests work — launch the client as a graphical process under DISPLAY :0.",
+      "comment": "Real hardware with working GPU: OpenGL 4.5 — 0ad and SuperTuxKart run fine, so 3D games appear to work. Compile + server-side tests work — launch the client as a graphical process under DISPLAY :0.",
+      "enabled": false,
       "ssh": {
         "host": "2803:1920::2:ff02",
         "user": "user",
@@ -94,11 +108,12 @@
       "cxx_version": ["c++23"],
       "compilers": ["gcc", "clang"],
       "extra_defines": [],
-      "tests": []
+      "tests": ["compile", "server-client", "solo"]
     },
     {
       "label": "mips-lxc",
       "comment": "LXC container on the local host (replaces 2803:1920::3:440a). No Qt GUI, no mold, builds with -std=c++23, NOAUDIO + NOWEBSOCKET defines.",
+      "enabled": true,
       "ssh": {
         "host": "2803:1920::2:ff03",
         "user": "root",
@@ -117,11 +132,14 @@
       "compilers": ["gcc", "clang"],
       "extra_defines": ["CATCHCHALLENGER_NOAUDIO", "NOWEBSOCKET"],
       "tests": ["compile", "server-client", "solo"],
+      "save_timeout": 600,
+      "server_ready_timeout": 600,
       "lxc_rootfs": "/mnt/data/perso/pc-virtuel/lxc/mips-gentoo-2026-mips2r2-rootfs/"
     },
     {
       "label": "x86-lxc",
-      "comment": "LXC container on the local host (replaces 982.vps.confiared.com). i686 with mold linker.",
+      "comment": "LXC container on the local host (replaces 982.vps.confiared.com). i686 with mold linker. cxx_version=[c++23] only — Qt 6 headers (qmetatype.h, qarraydataops.h) require c++17+; c++11 fails to compile any Qt 6 client/tool target.",
+      "enabled": true,
       "ssh": {
         "host": "2803:1920::2:ff04",
         "user": "root",
@@ -136,10 +154,11 @@
       "gpu_works": false,
       "client_run_mode": "offscreen",
       "x11": null,
-      "cxx_version": ["c++11","c++23"],
+      "cxx_version": ["c++23"],
       "compilers": ["gcc", "clang"],
       "extra_defines": [],
       "tests": ["compile", "server-client", "solo"],
+      "save_timeout": 120,
       "lxc_rootfs": "/mnt/data/perso/pc-virtuel/lxc/x86-debian-12-i686-rootfs/"
     }
   ]

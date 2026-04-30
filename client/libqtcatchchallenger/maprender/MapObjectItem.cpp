@@ -1,10 +1,25 @@
 #include "MapObjectItem.hpp"
+#include "MapItem.hpp"
 #include "../libcatchchallenger/ClientVariable.hpp"
 #include <objectgroup.h>
 
 #include <tile.h>
 std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
 std::unordered_map<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;
+
+//async map (un)loading can leave a Tiled::Cell pointing at a Tileset whose
+//refcount has dropped to zero (the SharedTileset in Map::mTilesets was the
+//last owner, and the cell holds only a raw pointer). Cell::tile() would then
+//deref the freed Tileset and crash. Returns true when cell is safe to access.
+static bool cellTilesetIsValid(const Tiled::Cell &cell)
+{
+    if(cell.isEmpty())
+        return true;
+    Tiled::Tileset *ts=cell.tileset();
+    if(ts==nullptr)
+        return true;
+    return MapItem::validTilesets_.find(ts)!=MapItem::validTilesets_.cend();
+}
 
 MapObjectItem::MapObjectItem(Tiled::MapObject *mapObject,
               QGraphicsItem *parent)
@@ -23,6 +38,8 @@ QRectF MapObjectItem::boundingRect() const
     //The existing renderer->boundingRect(mMapObject) returns tile-unit coordinates
     //because positions here are stored in tile-unit. Override to return the correct
     //pixel-unit rect so Qt doesn't cull the sprite out of the view.
+    if(!cellTilesetIsValid(mMapObject->cell()))
+        return QRectF();
     if(mMapObject->type()!="door" && !mMapObject->cell().isEmpty() && mMapObject->cell().tile()!=nullptr)
     {
         const QSize tileSize=mMapObject->cell().tile()->size();
@@ -55,6 +72,11 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     // The object real position
     QPointF realPos;
 
+    //skip the entire paint when the cell points at a freed tileset — a stale
+    //Tileset* would crash inside Cell::tile() (and downstream drawMapObject).
+    if(!cellTilesetIsValid(mMapObject->cell()))
+        return;
+
     // Only doors are properly located
     if(mMapObject->type()!="door"){
         // Tile size (Width and Height) is 16 px
@@ -68,12 +90,43 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         mMapObject->setPosition(QPointF(0,0));
         // If the object doesn't have a size, we assign one (required by drawMapObject)
         if(mMapObject->size().isNull()){
-            mMapObject->setSize(mMapObject->cell().tile()->size());
+            if(!mMapObject->cell().isEmpty() && mMapObject->cell().tile()!=nullptr){
+                mMapObject->setSize(mMapObject->cell().tile()->size());
+            }
+            else{
+                mMapObject->setPosition(realPos);
+                return;
+            }
         }
         // Translate the painter to the object's pixel position
         p->translate(xx,yy);
         // Set the translate flag
         translate = true;
+    }
+    //skip drawing when the cell tile's pixmap is not loaded yet — async map load
+    //can deliver the MapObject before its tileset image is ready, and the
+    //CellRenderer flush would otherwise drawPixmap a null/invalid QPixmap and crash.
+    //Animated tiles use currentFrameTile() which may differ from cell.tile().
+    if(!mMapObject->cell().isEmpty() && mMapObject->cell().tile()!=nullptr){
+        const Tiled::Tile *renderTile=mMapObject->cell().tile();
+        if(renderTile->isAnimated())
+            renderTile=renderTile->currentFrameTile();
+        if(renderTile==nullptr || renderTile->image().isNull()
+           || renderTile->image().width()<=0 || renderTile->image().height()<=0
+           || renderTile->imageStatus()!=Tiled::LoadingReady){
+            if(translate){
+                p->translate(-xx,-yy);
+                mMapObject->setPosition(realPos);
+            }
+            return;
+        }
+    }
+    if(mRendererList.find(mMapObject->objectGroup())==mRendererList.cend()){
+        if(translate){
+            p->translate(-xx,-yy);
+            mMapObject->setPosition(realPos);
+        }
+        return;
     }
     Tiled::MapObjectColors colors;
     colors.main = color.isValid() ? color : Qt::transparent;

@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <cstring>
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/cpp11addition.hpp"
@@ -13,16 +14,19 @@ void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x55;
     posOutput=1;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
+    {const uint32_t _tmp_le=(htole32(2+2+4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
+    {const uint16_t _tmp_le=(htole16(item));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+    {const uint32_t _tmp_le=(htole32(quantity));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -130,16 +134,19 @@ void Client::sendRemoveObject(const uint16_t &item,const uint32_t &quantity)
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x56;
     posOutput=1;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(2+2+4);
+    {const uint32_t _tmp_le=(htole32(2+2+4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
+    {const uint16_t _tmp_le=(htole16(item));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+    {const uint32_t _tmp_le=(htole32(quantity));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -224,7 +231,8 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
 
         //type
@@ -270,7 +278,8 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
 
         //type
@@ -296,7 +305,8 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(1);
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
 
         //type

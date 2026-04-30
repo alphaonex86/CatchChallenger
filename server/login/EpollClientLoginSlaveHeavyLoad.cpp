@@ -530,7 +530,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         //send the reply
         removeFromQueryReceived(askLoginParam->query_id);
         EpollClientLoginSlave::loginGood[0x01]=askLoginParam->query_id;
-        *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::loginGood+1+1)=htole32(tempSize-1-1-4);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(tempSize-1-1-4));memcpy(EpollClientLoginSlave::loginGood+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         internalSendRawSmallPacket(EpollClientLoginSlave::loginGood,tempSize);
         //paramToPassToCallBack.pop();double call, look above
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -690,7 +690,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=askLoginParam->query_id;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
@@ -755,7 +755,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x05;
         posOutput+=1;
@@ -780,7 +780,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)0x04;
         posOutput+=1;
@@ -807,7 +807,7 @@ void EpollClientLoginSlave::selectCharacter_ReturnToken(const uint8_t &query_id,
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
         posOutput+=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
@@ -910,7 +910,8 @@ void EpollClientLoginSlave::addCharacter_ReturnOk(const uint8_t &query_id,const 
     EpollClientLoginSlave::addCharacterReply[1]=query_id;
     EpollClientLoginSlave::addCharacterReply[2]=0x00;
     removeFromQueryReceived(query_id);
-    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::addCharacterReply+0x03)=htole32(characterId);
+    {const uint32_t _tmp_le=(htole32(characterId));memcpy(EpollClientLoginSlave::addCharacterReply+0x03,&_tmp_le,sizeof(_tmp_le));}
+
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterReply),sizeof(EpollClientLoginSlave::addCharacterReply));
 }
 

@@ -264,7 +264,13 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
             {
                 qDebug() << client->login << "create new character";
                 quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size();
-                QString pseudo=QString::fromStdString(getNewPseudo());
+                std::cerr << "DEBUG: logged_with_client create-character branch profileIndex="
+                          << (int)profileIndex << " max_pseudo_size="
+                          << (int)CommonSettingsCommon::commonSettingsCommon.max_pseudo_size << std::endl;
+                std::string pseudoStd=getNewPseudo();
+                std::cerr << "DEBUG: getNewPseudo returned len=" << pseudoStd.size()
+                          << " value=" << pseudoStd << std::endl;
+                QString pseudo=QString::fromStdString(pseudoStd);
                 uint8_t skinId;
                 const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
                 if(!profile.forcedskin.empty())
@@ -272,7 +278,12 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
                 else
                     skinId=rand()%skinsList.size();
                 uint8_t monstergroupId=rand()%profile.monstergroup.size();
+                std::cerr << "DEBUG: about to addCharacter charactersGroupIndex="
+                          << (int)charactersGroupIndex << " profileIndex=" << (int)profileIndex
+                          << " skinId=" << (int)skinId << " monstergroupId="
+                          << (int)monstergroupId << std::endl;
                 client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo.toStdString(),monstergroupId,skinId);
+                std::cerr << "DEBUG: returned from addCharacter" << std::endl;
                 numberOfStartCreatingCharacter++;
                 emit_numberOfStartCreatingCharacter(numberOfStartCreatingCharacter);
                 client->stat=Status_CreatingCharacter;

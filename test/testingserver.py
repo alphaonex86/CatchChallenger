@@ -55,8 +55,13 @@ CLIENT_SETTINGS       = os.path.expanduser("~/.config/CatchChallenger/client-qtc
 
 COMPILE_TIMEOUT      = 600
 SERVER_READY_TIMEOUT = 60
-CLIENT_TIMEOUT       = 5
-SAVE_TIMEOUT         = 120
+# Both 5s and 30s were too short for the local-client→remote-server path:
+# gdb startup + Qt offscreen plugin init + IPv6 connect + datapack hash
+# exchange + map handshake on a slow remote node + a debug build easily
+# exceeds 30s, so the closewhenonmap marker is never seen in time. 120s
+# gives the client real headroom (still well below CI per-test budgets).
+CLIENT_TIMEOUT       = 120
+SAVE_TIMEOUT         = 600   # generating datapack-cache.bin via --save can be slow on MIPS / valgrind / first-pass cold caches
 
 NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
 
@@ -115,6 +120,7 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 results = []
+_last_log_time = [time.monotonic()]
 total_expected = [0]
 server_proc = None
 
@@ -161,9 +167,8 @@ def save_failed_cases():
     failed = []
     idx = 0
     while idx < len(results):
-        name, ok, detail = results[idx]
-        if not ok:
-            failed.append(name)
+        if not results[idx][1]:
+            failed.append(results[idx][0])
         idx += 1
     data[SCRIPT_NAME] = failed
     with open(FAILED_JSON, "w") as f:
@@ -173,11 +178,21 @@ def save_failed_cases():
 def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
 def log_pass(name, detail=""):
-    results.append((name, True, detail))
-    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, True, detail, elapsed))
+    if len(results) > total_expected[0]:
+        total_expected[0] = len(results)
+    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
 def log_fail(name, detail=""):
-    results.append((name, False, detail))
-    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}")
+    now = time.monotonic()
+    elapsed = now - _last_log_time[0]
+    _last_log_time[0] = now
+    results.append((name, False, detail, elapsed))
+    if len(results) > total_expected[0]:
+        total_expected[0] = len(results)
+    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
 
 
 # Flags tested as standalone single-flag combos rather than being part of
@@ -492,15 +507,24 @@ def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
         return -1, f"TIMEOUT after {timeout}s"
 
 def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
-                   extra_defines=None, clean_first=False, cxx_version=None):
+                   extra_defines=None, clean_first=False, cxx_version=None,
+                   extra_qmake_args=None):
     ensure_dir(build_dir)
-    log_info(f"make distclean {label}")
-    run_cmd(["make", "distclean"], build_dir, timeout=60)
-    clean_build_artifacts(build_dir)
     name = f"compile {label}"
     diag_spec = diagnostic.compiler_spec(DIAG)
     if diag_spec:
         compiler_spec = diag_spec
+    # State-aware cleanup: full distclean only when compiler or C++
+    # standard changed since the previous run in this dir; otherwise
+    # let make handle incremental rebuild via .o-mtime tracking +
+    # qmake_helpers macro invalidation for EXTRA_DEFINES changes.
+    import qmake_helpers as _qh
+    _decision = _qh.prepare_qmake_build_dir(build_dir, compiler_spec,
+                                            cxx_version, extra_defines, ROOT)
+    if _decision == "full" or clean_first:
+        log_info(f"compiler/std changed → make distclean {label}")
+        run_cmd(["make", "distclean"], build_dir, timeout=60)
+        clean_build_artifacts(build_dir)
     qmake_args = [QMAKE, "-o", "Makefile", pro_file,
                   "-spec", compiler_spec, "CONFIG+=debug", "CONFIG+=qml_debug",
                   "QMAKE_CXXFLAGS+=-g", "QMAKE_CFLAGS+=-g", "QMAKE_LFLAGS+=-g",
@@ -511,6 +535,8 @@ def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
     if extra_defines:
         for d in extra_defines:
             qmake_args.append(f"DEFINES+={d}")
+    if extra_qmake_args:
+        qmake_args.extend(extra_qmake_args)
     log_info(f"qmake {label}")
     rc, out = run_cmd(qmake_args, build_dir)
     if rc != 0:
@@ -731,16 +757,11 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     timeout = diagnostic.scale_timeout(DIAG, timeout)
     wrapper = diagnostic.runtime_wrapper(DIAG)
     if wrapper:
-        gdb_args = wrapper + [binary] + args
+        run_args = wrapper + [binary] + args
     else:
-        gdb_args = ["gdb", "-batch",
-                    "-ex", "set breakpoint pending on",
-                    "-ex", "handle SIGPIPE nostop noprint pass",
-                    "-ex", "break __throw_out_of_range",
-                    "-ex", "run", "-ex", "bt", "-ex", "quit",
-                    "--args", binary] + args
+        run_args = [binary] + args
     try:
-        p = subprocess.run(NICE_PREFIX + gdb_args, cwd=build_dir, timeout=timeout,
+        p = subprocess.run(NICE_PREFIX + run_args, cwd=build_dir, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
         out = p.stdout.decode(errors="replace")
         if p.returncode == 0:
@@ -1144,7 +1165,9 @@ def main():
     phase_c = n_maincodes * len(mc_checks) + len(xml_change_checks)
     phase_d = len(datapack_scenarios) * len(checks_per_scenario)
     phase_e = len(_RS) * len(remote_phase_checks)
-    functional = client_build + len(server_variants) * per_variant + phase_c + phase_d + phase_e
+    # Phase A2: 2 IO backends (poll, io_uring) × {build, server_start, client}
+    phase_a2 = 2 * 3
+    functional = client_build + len(server_variants) * per_variant + phase_a2 + phase_c + phase_d + phase_e
     total_expected[0] = total_builds + remote_count + functional
     log_info(f"total server compilation combinations: {total_builds}")
     log_info(f"total expected results: {total_expected[0]}")
@@ -1313,6 +1336,50 @@ def main():
         test_server_cache_cycle(SERVER_FILEDB_PRO, filedb_build,
                                 "filedb", client_build, is_filedb=True)
 
+    # ── Phase A2: server-filedb alternative IO backends ─────────────
+    # Build server-filedb with CATCHCHALLENGER_POLL (poll(2)) and again
+    # with CATCHCHALLENGER_IO_URING (liburing) — two flags that swap the
+    # epoll(7) IO backend in server/epoll/Epoll.cpp. Each backend gets
+    # one full client run that connects, logs in, and walks onto the
+    # map. The two flags are mutually exclusive and are wired via
+    # CONFIG+= in catchchallenger-server-epoll.pri (io_uring also pulls
+    # in -luring), so we pass them through extra_qmake_args.
+    print(f"\n{C_CYAN}--- Phase A2: server-filedb IO backends (poll, io_uring) ---{C_RESET}\n")
+    backends = [
+        ("poll",    "CONFIG+=catchchallenger_poll"),
+        ("iouring", "CONFIG+=catchchallenger_io_uring"),
+    ]
+    bi = 0
+    while bi < len(backends):
+        backend_name, qarg = backends[bi]
+        backend_build = os.path.join(ROOT,
+            "server/epoll/build/testing-filedb-" + backend_name + _DIAG_SUFFIX)
+        print(f"\n{C_CYAN}  -- server-filedb backend: {backend_name} --{C_RESET}\n")
+        if build_project(SERVER_FILEDB_PRO, backend_build,
+                         "server-filedb " + backend_name,
+                         extra_qmake_args=[qarg]):
+            dp_src = DATAPACK_SOURCES[0][0] if DATAPACK_SOURCES else None
+            if dp_src is not None and os.path.isdir(dp_src):
+                setup_server_datapack(backend_build, dp_src)
+                map_main = os.path.join(backend_build, "datapack", "map", "main")
+                if os.path.isdir(map_main):
+                    mcs = sorted([d for d in os.listdir(map_main)
+                                  if os.path.isdir(os.path.join(map_main, d))])
+                    if mcs:
+                        setup_server_config(backend_build, maincode=mcs[0])
+                clear_database_filedb(backend_build)
+                remove_cache(backend_build)
+                set_http_datapack_mirror(backend_build, "")
+                set_map_visibility_minimize(backend_build, "network")
+                srv = start_server(backend_build)
+                if srv:
+                    client_connect(client_build,
+                                   "filedb " + backend_name + ": client to map")
+                    stop_server()
+            else:
+                log_fail("filedb " + backend_name, "no datapack source")
+        bi += 1
+
     # ── Phase B: server-cli-epoll (PostgreSQL) ──────────────────────
     print(f"\n{C_CYAN}--- Phase B: server-cli-epoll ---{C_RESET}\n")
     if build_project(SERVER_CLIEPO_PRO, cliepo_build, "server-cli-epoll"):
@@ -1405,12 +1472,19 @@ def main():
             log_pass(f"remote {label} setup", "datapack synced")
 
             # start server on remote
+            node_ready_timeout = node.get("server_ready_timeout") if node else None
             ssh_proc, actual_port = start_remote_server(host, ssh_port,
                                                         remote_filedb_bin,
                                                         remote_filedb_build,
-                                                        diag=DIAG)
+                                                        diag=DIAG,
+                                                        ready_timeout=node_ready_timeout)
             if actual_port == 0:
-                log_fail(f"remote {label} server start", "timeout or binary not found")
+                if ssh_proc == "BINARY_MISSING":
+                    log_fail(f"remote {label} server start",
+                             f"binary missing at {remote_filedb_bin}")
+                else:
+                    log_fail(f"remote {label} server start",
+                             "timeout waiting for 'correctly bind:'")
                 ri += 1
                 continue
             log_pass(f"remote {label} server start", f"port {actual_port}")
@@ -1436,11 +1510,13 @@ def summary():
     print(f"\n{C_CYAN}{'='*60}")
     print("  Summary")
     print(f"{'='*60}{C_RESET}")
-    passed = sum(1 for _, ok, _ in results if ok)
-    failed = sum(1 for _, ok, _ in results if not ok)
-    for name, ok, detail in results:
+    passed = sum(1 for r in results if r[1])
+    failed = sum(1 for r in results if not r[1])
+    total_elapsed = sum(r[3] for r in results)
+    for name, ok, detail, elapsed in results:
         tag = f"{C_GREEN}PASS{C_RESET}" if ok else f"{C_RED}FAIL{C_RESET}"
-        print(f"  [{tag}] {name}  {detail}")
+        print(f"  [{tag}] {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"  total elapsed: {total_elapsed:.1f}s")
     print()
     print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}")
     save_failed_cases()

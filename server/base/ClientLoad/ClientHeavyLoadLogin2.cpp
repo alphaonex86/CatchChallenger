@@ -134,7 +134,8 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
             std::cerr << "played_time is not number: " << GlobalServerData::serverPrivateVariables.db_common->value(1) << " fixed by 0" << std::endl;
             played_time=0;
         }
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(played_time);
+        {const uint32_t _tmp_le=(htole32(played_time));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=sizeof(uint32_t);
 
         //last_connect
@@ -144,7 +145,8 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
             std::cerr << "last_connect is not number: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " fixed by 0" << std::endl;
             last_connect=static_cast<uint32_t>(current_time);
         }
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(last_connect);
+        {const uint32_t _tmp_le=(htole32(last_connect));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=sizeof(uint32_t);
 
         validServerCount++;
@@ -179,7 +181,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     //send the network reply
     removeFromQueryReceived(query_id);
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -252,7 +254,8 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        {const uint32_t _tmp_le=(0x00000000);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -378,7 +381,8 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        {const uint32_t _tmp_le=(0x00000000);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -482,7 +486,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        {const uint32_t _tmp_le=(0x00000000);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -516,7 +521,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+            {const uint32_t _tmp_le=(0x00000000);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=4;
 
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -630,7 +636,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        {const uint32_t _tmp_le=(0x00000000);memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -891,7 +898,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(characterId);
+    {const uint32_t _tmp_le=(htole32(characterId));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

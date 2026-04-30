@@ -300,9 +300,11 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
         /*bug this is fixed size *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(8);//set the dynamic size
          * posOutput+=4; */
 
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileNumber);
+        {const uint32_t _tmp_le=(htole32(datapckFileNumber));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapckFileSize);
+        {const uint32_t _tmp_le=(htole32(datapckFileSize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -439,7 +441,7 @@ void EpollClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(tempDatapackListReplyArray.size());//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(tempDatapackListReplyArray.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,tempDatapackListReplyArray.data(),tempDatapackListReplyArray.size());
     posOutput+=tempDatapackListReplyArray.size();
@@ -468,7 +470,7 @@ void EpollClientLoginSlave::sendFileContent()
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollClientLoginSlave::rawFilesBuffer.data(),EpollClientLoginSlave::rawFilesBuffer.size());
         posOutput+=EpollClientLoginSlave::rawFilesBuffer.size();
 
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
@@ -503,7 +505,7 @@ void EpollClientLoginSlave::sendCompressedFileContent()
                     CompressionProtocol::compressionTypeServer
                     );
         posOutput+=compressedSize;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
         EpollClientLoginSlave::compressedFilesBuffer.clear();
@@ -550,7 +552,8 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
             }
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+            {const uint32_t _tmp_le=(htole32(contentsize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
             posOutput+=4;
 
             binaryAppend(EpollClientLoginSlave::compressedFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -599,13 +602,14 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
                     posOutput+=text.size();
                 }
                 //file size
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+                {const uint32_t _tmp_le=(htole32(contentsize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=4;
 
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,content.data(),contentsize);
                 posOutput+=contentsize;
 
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+                {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
                 //std::cout << binaryToHex() << std::endl;
 
@@ -621,7 +625,8 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                     posOutput+=text.size();
                 }
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(contentsize);
+                {const uint32_t _tmp_le=(htole32(contentsize));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                 posOutput+=4;
 
                 binaryAppend(EpollClientLoginSlave::rawFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);

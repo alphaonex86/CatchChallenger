@@ -11,7 +11,7 @@ using namespace CatchChallenger;
 
 #if ! defined (ONLYMAPRENDER)
 char ProtocolParsingBase::tempBigBufferForOutput[];
-char ProtocolParsingBase::tempBigBufferForInput[];//to store the input buffer on linux READ() interface or with Qt
+//tempBigBufferForInput moved to a stack-local in parseIncommingData()
 #ifndef DYNAMICPACKETFIXEDSIZE
 uint8_t ProtocolParsing::packetFixedSize[];
 #else
@@ -48,8 +48,8 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
 
             memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            memset(CompressionProtocol::tempBigBufferForCompressedOutput,0,sizeof(CompressionProtocol::tempBigBufferForCompressedOutput));
-            memset(CompressionProtocol::tempBigBufferForUncompressedInput,0,sizeof(CompressionProtocol::tempBigBufferForUncompressedInput));
+            //tempBigBufferForCompressedOutput / tempBigBufferForUncompressedInput
+            //removed: now a per-callsite local std::vector<uint8_t>
             CompressionProtocol::compressionTypeServer=CompressionProtocol::CompressionType::Zstandard;
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::Zstandard;

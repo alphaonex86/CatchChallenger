@@ -8,10 +8,10 @@
 #include <QTimer>
 #include <QCoreApplication>
 #include <QKeyEvent>
-#include <QMediaDevices>
-#include <QAudioDevice>
 #include <iostream>
 #ifndef CATCHCHALLENGER_NOAUDIO
+#include <QMediaDevices>
+#include <QAudioDevice>
 #include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
 

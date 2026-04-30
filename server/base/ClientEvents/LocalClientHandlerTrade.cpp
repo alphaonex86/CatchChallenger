@@ -41,7 +41,8 @@ void Client::registerTradeRequest(Client &otherPlayerTrade)
     pos+=1;
 
     //set the dynamic size
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(pos-1-1-4);
+    {const uint32_t _tmp_le=(htole32(pos-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}
+
 
     sendTradeRequest(ProtocolParsingBase::tempBigBufferForOutput,pos);
 }
@@ -225,7 +226,7 @@ void Client::tradeAddTradeCash(const uint64_t &cash)
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+8);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1+8));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
     posOutput+=1;
@@ -274,13 +275,15 @@ void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x57;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+2+4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(1+2+4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(item);
+    {const uint16_t _tmp_le=(htole16(item));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=2;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+    {const uint32_t _tmp_le=(htole32(quantity));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
     posOutput+=4;
 
     Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
@@ -338,7 +341,7 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
 
     posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,monster,character_id_db);
 
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+    {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
     otherPlayerTrade.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
@@ -431,7 +434,7 @@ void Client::internalTradeAccepted(const bool &send)
         ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade.public_and_private_informations.public_informations.skinId;
         pos+=1;
 
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(pos-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
     }

@@ -96,10 +96,16 @@ void BaseServer::preload_18_sync_profile()
             while(index<item_list.size())
             {
                 const Profile::Item &item=item_list.at(index);
-                *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item.id-lastItemId);
+                //memcpy instead of reinterpret_cast write: each iteration writes
+                //uint16 + uint32 packed to a char buffer at +0/+2 (and +6/+8...),
+                //so the uint32 lands at a 2-aligned but not 4-aligned offset and
+                //a direct *uint32_t* write traps with "Bus error" on MIPS.
+                const uint16_t id_le=htole16(item.id-lastItemId);
+                memcpy(item_raw+pos,&id_le,sizeof(id_le));
                 pos+=2;
                 lastItemId=item.id;
-                *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(item.quantity);
+                const uint32_t qty_le=htole32(item.quantity);
+                memcpy(item_raw+pos,&qty_le,sizeof(qty_le));
                 pos+=4;
                 index++;
             }
@@ -163,7 +169,12 @@ void BaseServer::preload_18_sync_profile()
             while(index<reputations_list.size())
             {
                 const ReputationTemp &reputation=reputations_list.at(index);
-                *reinterpret_cast<uint32_t *>(reputation_raw+pos)=htole32(reputation.point);
+                //memcpy instead of reinterpret_cast write: per iteration is 6
+                //bytes so the uint32 starts at offsets 0, 6, 12, ... — none of
+                //those are 4-aligned past the first, so a *uint32_t* write
+                //traps with "Bus error" on MIPS.
+                const uint32_t point_le=htole32(reputation.point);
+                memcpy(reputation_raw+pos,&point_le,sizeof(point_le));
                 pos+=4;
                 reputation_raw[pos]=static_cast<uint8_t>(reputation.reputationDatabaseId-lastReputationId);
                 pos+=1;
@@ -234,7 +245,12 @@ void BaseServer::preload_18_sync_profile()
                     while(sub_index<skills_list.size())
                     {
                         const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills_list.at(sub_index);
-                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.skill-lastSkillId);
+                        //memcpy instead of reinterpret_cast write: each iteration
+                        //is 3 bytes so the uint16 lands at offsets 0, 3, 6, 9, ...
+                        //(odd alignment for offsets 3, 9, ...) — a direct
+                        //*uint16_t* write traps with "Bus error" on MIPS.
+                        const uint16_t skill_le=htole16(skill.skill-lastSkillId);
+                        memcpy(raw_skill+sub_index*(2+1),&skill_le,sizeof(skill_le));
                         lastSkillId=skill.skill;
                         raw_skill[sub_index*(2+1)+2]=skill.level;
                         raw_skill_endurance[sub_index]=skill.endurance;

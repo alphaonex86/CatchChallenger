@@ -330,7 +330,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 while(index<characterEntryList.size())
                 {
                     const CharacterEntry &characterEntry=characterEntryList.at(index);
-                    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.character_id);
+                    {const uint32_t _tmp_le=(htole32(characterEntry.character_id));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=4;
                     {
                         {
@@ -343,12 +344,15 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     }
                     data[posOutput]=characterEntry.skinId;
                     posOutput+=1;
-                    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.delete_time_left);
+                    {const uint32_t _tmp_le=(htole32(characterEntry.delete_time_left));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=4;
                     /// \todo optimise by simple suming here, not SQL query
-                    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.played_time);
+                    {const uint32_t _tmp_le=(htole32(characterEntry.played_time));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=4;
-                    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.last_connect);
+                    {const uint32_t _tmp_le=(htole32(characterEntry.last_connect));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
                     posOutput+=4;
                     index++;
                 }
@@ -615,7 +619,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=askLoginParam->query_id;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
+        {const uint32_t _tmp_le=(htole32(1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
@@ -690,7 +694,8 @@ uint32_t Client::send_characterEntryList(const std::vector<CharacterEntry> &char
     while(index<characterEntryList.size())
     {
         const CharacterEntry &characterEntry=characterEntryList.at(index);
-        *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.character_id);
+        {const uint32_t _tmp_le=(htole32(characterEntry.character_id));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
         {
             {
@@ -703,12 +708,15 @@ uint32_t Client::send_characterEntryList(const std::vector<CharacterEntry> &char
         }
         data[posOutput]=characterEntry.skinId;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.delete_time_left);
+        {const uint32_t _tmp_le=(htole32(characterEntry.delete_time_left));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
         /// \todo optimise by simple suming here, not SQL query
-        *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.played_time);
+        {const uint32_t _tmp_le=(htole32(characterEntry.played_time));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.last_connect);
+        {const uint32_t _tmp_le=(htole32(characterEntry.last_connect));memcpy(data+posOutput,&_tmp_le,sizeof(_tmp_le));}
+
         posOutput+=4;
         index++;
     }
