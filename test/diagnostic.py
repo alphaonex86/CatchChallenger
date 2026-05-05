@@ -253,6 +253,44 @@ def node_supports(node, diag):
     return needed in compilers
 
 
+def exec_node_supports(exec_node, diag, parent_compile_node=None):
+    """True when the per-execution-node opt-in flag for the active
+    diagnostic mode is set AND the parent compile node has the matching
+    compiler available. Two opt-in flags gate diagnostic runs on exec
+    nodes (declared in remote_nodes.json as mandatory keys, see
+    remote_build._REQUIRED_EXEC_NODE_KEYS):
+      sanitizer_gcc=true   → exec node will run --valgrind passes —
+                              ONLY if its compile node has gcc in
+                              `compilers`. valgrind needs a debug-
+                              info-rich gcc-built binary.
+      sanitizer_clang=true → exec node will run --sanitize passes —
+                              ONLY if its compile node has clang in
+                              `compilers`. asan/lsan/msan are clang
+                              flags.
+    Outside diagnostic mode (no --sanitize / --valgrind), this returns
+    True so normal runs are unaffected. Both flags default to false on
+    a fresh node so the operator opts in deliberately after checking
+    the runtime has the required tooling.
+
+    When `parent_compile_node` is omitted the function checks only the
+    exec-side flag — for callers that already filtered by node_supports()
+    on the compile side and don't want to re-do that work.
+    """
+    if is_sanitize(diag):
+        if not bool(exec_node.get("sanitizer_clang", False)):
+            return False
+        if parent_compile_node is not None:
+            return node_supports(parent_compile_node, diag)
+        return True
+    if is_valgrind(diag):
+        if not bool(exec_node.get("sanitizer_gcc", False)):
+            return False
+        if parent_compile_node is not None:
+            return node_supports(parent_compile_node, diag)
+        return True
+    return True
+
+
 def forward_args(diag):
     """The CLI flags used to reproduce the active diagnostic mode. Used by
     all.sh-style orchestrators that re-invoke other testing*.py scripts."""
@@ -270,3 +308,53 @@ def describe(diag):
     if is_valgrind(diag):
         return "gcc + valgrind (" + diag["tool"] + "), per-test timeouts x10"
     return "regular run"
+
+
+# ── last-shell-command tracking (shown by log_fail on failure) ────────────────
+# Each testing*.py keeps its own run_cmd() wrapper around subprocess.run.
+# We expose record_cmd() / last_cmd_lines() so every wrapper can stash
+# (args, cwd) here and every log_fail() can pull it back out — without a
+# shared `run_cmd` (the wrappers each build their own NICE_PREFIX, env,
+# timeout, gdb wrapping, etc.). The state is process-local; sequentially
+# overwriting is fine because failures are reported synchronously after
+# the call that produced them.
+_LAST_CMD = {"args": None, "cwd": None}
+
+
+def record_cmd(args, cwd):
+    """Stash (args, cwd) of the most recent shell call.
+    Call from every run_cmd() wrapper before subprocess.run().
+
+    'args' is anything subprocess.run accepts: list[str] (the common form
+    in this repo) or a single shell string. Both render cleanly via str()
+    + ' '.join.
+    """
+    _LAST_CMD["args"] = list(args) if isinstance(args, (list, tuple)) else args
+    _LAST_CMD["cwd"] = cwd
+
+
+def last_cmd_lines():
+    """Return printable lines describing the most recent shell command,
+    or [] if none has been recorded. Used by log_fail() to attach context
+    after the failure detail line so the operator sees pwd + last command
+    without rerunning. Two lines: cwd + the command itself."""
+    if _LAST_CMD["args"] is None:
+        return []
+    args = _LAST_CMD["args"]
+    if isinstance(args, list):
+        # Quote tokens that contain whitespace so the line is paste-safe.
+        rendered = []
+        for a in args:
+            s = str(a)
+            if any(ch.isspace() for ch in s) or s == "":
+                rendered.append("'" + s.replace("'", "'\\''") + "'")
+            else:
+                rendered.append(s)
+        cmd_str = " ".join(rendered)
+    else:
+        cmd_str = str(args)
+    cwd = _LAST_CMD["cwd"] if _LAST_CMD["cwd"] else os.getcwd()
+    return [
+        "  last shell command before fail (cwd=" + str(cwd) + "):",
+        "  $ " + cmd_str,
+    ]

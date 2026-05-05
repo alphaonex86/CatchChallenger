@@ -7,6 +7,7 @@
 #include "../../general/fight/CommonFightEngineBase.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#include <algorithm>
 
 using namespace CatchChallenger;
 

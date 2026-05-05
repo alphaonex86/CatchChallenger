@@ -1,5 +1,13 @@
 # stats — tiny stats collector that connects to the login server over
-# unix socket. No Qt; reuses a small subset of server/epoll + general/.
+# unix socket. Self-contained, one binary. No Qt; reuses a small subset
+# of server/epoll + general/.
+
+cmake_minimum_required(VERSION 3.20)
+project(stats LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
 
 add_executable(stats
     main.cpp
@@ -7,11 +15,11 @@ add_executable(stats
     LinkToLoginProtocolParsing.cpp
     LinkToLoginStaticVar.cpp
     EpollServerStats.cpp
-    ${CMAKE_SOURCE_DIR}/server/epoll/Epoll.cpp
-    ${CMAKE_SOURCE_DIR}/server/epoll/EpollSocket.cpp
-    ${CMAKE_SOURCE_DIR}/server/epoll/EpollClient.cpp
-    ${CMAKE_SOURCE_DIR}/server/epoll/EpollUnixSocketServer.cpp
-    ${CMAKE_SOURCE_DIR}/server/base/TinyXMLSettings.cpp
+    ${CC_REPO_ROOT}/server/epoll/Epoll.cpp
+    ${CC_REPO_ROOT}/server/epoll/EpollSocket.cpp
+    ${CC_REPO_ROOT}/server/epoll/EpollClient.cpp
+    ${CC_REPO_ROOT}/server/epoll/EpollUnixSocketServer.cpp
+    ${CC_REPO_ROOT}/server/base/TinyXMLSettings.cpp
 )
 
 target_compile_definitions(stats PRIVATE
@@ -23,8 +31,8 @@ target_compile_definitions(stats PRIVATE
 )
 
 target_include_directories(stats PRIVATE
-    ${CMAKE_SOURCE_DIR}/server/epoll
-    ${CMAKE_SOURCE_DIR}/server/base
+    ${CC_REPO_ROOT}/server/epoll
+    ${CC_REPO_ROOT}/server/base
 )
 
 target_link_libraries(stats PRIVATE

@@ -66,5 +66,5 @@ double DatabaseFunction::stringtodouble(const std::string &string,bool *ok)
 
 std::vector<char> DatabaseFunction::hexatoBinary(const std::string &data,bool *ok)
 {
-    return ::hexatoBinary(data);
+    return ::hexatoBinary(data,ok);
 }

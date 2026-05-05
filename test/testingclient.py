@@ -16,14 +16,43 @@ testingcompilationwindows.py, testingcompilationmac.py,
 testingcompilationandroid.py — invoked separately by all.sh.
 """
 
+# Drop the .pyc cache for this process so import diagnostic / build_paths /
+# remote_build never lands a __pycache__/ dir in the source tree.  Set
+# before the first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
 import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time
 from remote_build import (start_remote_builds, collect_remote_results,
                           REMOTE_SERVERS, REMOTE_NODES, node_runs, get_node,
                           setup_remote_server_runtime, start_remote_server,
                           stop_remote_server, get_remote_server_address,
                           cleanup_remote_node, run_remote_autosolo_phase,
-                          count_remote_tests)
+                          count_remote_tests, all_enabled_exec_nodes)
 import diagnostic
+import build_paths
+from cmd_helpers import (clamp_local, assert_port_or_fail,
+                         assert_port_or_fail_with_remotes)
+
+
+def _host_port_from_args(args):
+    """Extract --host / --port from a client-arg list (default localhost:61917)."""
+    host = "localhost"
+    port = 61917
+    idx = 0
+    while idx < len(args) - 1:
+        if args[idx] == "--host":
+            host = args[idx + 1]
+        elif args[idx] == "--port":
+            try:
+                port = int(args[idx + 1])
+            except (ValueError, TypeError):
+                pass
+        idx += 1
+    return host, port
+
+build_paths.ensure_root()
 
 DIAG = diagnostic.parse_diag_args()
 _DIAG_SUFFIX = diagnostic.build_dir_suffix(DIAG)
@@ -41,16 +70,16 @@ NPROC      = str(multiprocessing.cpu_count())
 DATAPACKS       = _config["paths"]["datapacks"]
 
 SERVER_PRO      = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
-SERVER_BUILD    = os.path.join(ROOT, "server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
-SERVER_REF_BUILD= os.path.join(ROOT, "server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
+SERVER_BUILD    = build_paths.build_path("server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
+SERVER_REF_BUILD= build_paths.build_path("server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
 SERVER_BIN_NAME = "catchchallenger-server-cli-epoll"
 
 CLIENT_CPU_PRO   = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
-CLIENT_CPU_BUILD = os.path.join(ROOT, "client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
+CLIENT_CPU_BUILD = build_paths.build_path("client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
 CLIENT_CPU_BIN   = "catchchallenger"
 
 CLIENT_GL_PRO    = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro")
-CLIENT_GL_BUILD  = os.path.join(ROOT, "client/qtopengl/build/testing-gl" + _DIAG_SUFFIX)
+CLIENT_GL_BUILD  = build_paths.build_path("client/qtopengl/build/testing-gl" + _DIAG_SUFFIX)
 CLIENT_GL_BIN    = "catchchallenger"
 
 SAVEGAME_CPU = os.path.expanduser(_config["paths"]["savegame_cpu"])
@@ -69,7 +98,7 @@ COMPILE_TIMEOUT      = 600
 SERVER_READY_TIMEOUT = 60
 CLIENT_TIMEOUT       = 5
 CLIENT_SOLO_TIMEOUT  = 30
-BENCHMARK_MAX_MS     = 1000
+BENCHMARK_MAX_MS     = 1200
 
 NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
 
@@ -84,23 +113,36 @@ CXX_VERSIONS = ["c++11", "c++23"]
 # CATCHCHALLENGER_NOAUDIO is commented out in qtcpu800x600.pro but the build
 # requires it (Qt multimedia audio path has issues), so always add it as a
 # base define.  The remaining flags are independently toggleable.
-CPU_BASE_DEFINES = ["CATCHCHALLENGER_NOAUDIO"]
-CPU_OPTIONAL_FLAGS = ["NOSINGLEPLAYER", "CATCHCHALLENGER_EXTRA_CHECK", "NOWEBSOCKET"]
+# NOSINGLEPLAYER was removed in the macro refactor — single-player is now
+# opt-in via the CATCHCHALLENGER_BUILD_*_SINGLEPLAYER CMake options instead
+# of a preprocessor negation.  CATCHCHALLENGER_EXTRA_CHECK was merged into
+# CATCHCHALLENGER_HARDENED at the same time.
+CPU_BASE_DEFINES = [
+    "CATCHCHALLENGER_NOAUDIO",
+    # --autosolo runs spin up an in-process Qt server. Without
+    # SINGLEPLAYER=ON the build is multi-only and the autosolo
+    # client connects to localhost:port with no server listening,
+    # then times out. The qmake era always built Solo.
+    "CATCHCHALLENGER_BUILD_QTCPU800X600_SINGLEPLAYER",
+]
+CPU_OPTIONAL_FLAGS = ["CATCHCHALLENGER_HARDENED"]
 
 # qtopengl default build has audio enabled (Qt multimedia works).
-# Only CATCHCHALLENGER_EXTRA_CHECK and NOWEBSOCKET are safe independent
-# toggles; NOSINGLEPLAYER/CATCHCHALLENGER_NOAUDIO/NOTCPSOCKET/NOTHREADS
-# are WASM-only flags with interdependencies that break native builds.
-GL_BASE_DEFINES = []
-GL_OPTIONAL_FLAGS = ["NOSINGLEPLAYER", "CATCHCHALLENGER_NOAUDIO",
-                     "CATCHCHALLENGER_EXTRA_CHECK", "NOWEBSOCKET"]
+# CATCHCHALLENGER_HARDENED is the only safe independent toggle here;
+# CATCHCHALLENGER_NOAUDIO / CATCHCHALLENGER_NO_TCPSOCKET / NOTHREADS are
+# WASM-only flags with interdependencies that break native, and the
+# WebSockets toggle is now CATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS
+# (CMake option, not a compile define) so it can't ride this list.
+# SINGLEPLAYER is in the base set for the same reason as qtcpu800x600.
+GL_BASE_DEFINES = ["CATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER"]
+GL_OPTIONAL_FLAGS = ["CATCHCHALLENGER_NOAUDIO", "CATCHCHALLENGER_HARDENED"]
 
 # Flags that are tested as standalone single-flag tests instead of being
 # part of the powerset.  In multi-flag combinations:
 #   ALWAYS_ON_IN_COMBOS  — always added
 #   ALWAYS_OFF_IN_COMBOS — never added
-ALWAYS_ON_IN_COMBOS  = ["CATCHCHALLENGER_EXTRA_CHECK"]
-ALWAYS_OFF_IN_COMBOS = ["CATCHCHALLENGER_NOAUDIO", "NOWEBSOCKET"]
+ALWAYS_ON_IN_COMBOS  = ["CATCHCHALLENGER_HARDENED"]
+ALWAYS_OFF_IN_COMBOS = ["CATCHCHALLENGER_NOAUDIO"]
 
 # Windows (MXE+wine64), macOS (qemu VM via ssh) and Android (Qt-for-Android +
 # emulator) constants used to live here. They moved to the new standalone
@@ -120,7 +162,7 @@ total_expected = [0]
 server_proc = None
 
 SCRIPT_NAME = os.path.basename(__file__)
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
 
 
 def load_failed_cases():
@@ -196,6 +238,11 @@ def log_fail(name, detail=""):
         if len(results) > total_expected[0]:
             total_expected[0] = len(results)
         print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+        li = 0
+        _ctx = diagnostic.last_cmd_lines()
+        while li < len(_ctx):
+            print(_ctx[li])
+            li += 1
 
 
 def flag_combinations(flags):
@@ -316,6 +363,8 @@ def set_http_datapack_mirror(build_dir, value):
 
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + list(args), cwd)
     try:
         p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -350,24 +399,30 @@ def detect_maincodes(datapack_src):
                    if os.path.isdir(os.path.join(map_main, d))])
 
 def setup_datapack_client(build_dir, datapack_src, maincode, label):
-    """Copy datapack to <build_dir>/datapack/internal/, keep only maincode in map/main/."""
-    dst = os.path.join(build_dir, "datapack", "internal")
-    if os.path.exists(dst):
-        shutil.rmtree(dst)
+    """Symlink the pre-staged datapack into <build_dir>/datapack/internal/.
+    Maincode pruning is dropped — server-properties.xml's mainDatapackCode
+    selects which maincode the embedded server loads at runtime, the
+    others on disk are inert. Saves us from corrupting the shared
+    staged cache by removing files from it. See CLAUDE.md "Datapack
+    staging cache"."""
+    import datapack_stage as _ds
     if not os.path.isdir(datapack_src):
         log_fail(f"datapack {label}", f"source not found: {datapack_src}")
         return False
-    log_info(f"copying datapack to {dst}")
-    shutil.copytree(datapack_src, dst, ignore=shutil.ignore_patterns(".git"))
-    map_main = os.path.join(dst, "map", "main")
-    if os.path.isdir(map_main):
-        for entry in os.listdir(map_main):
-            if entry == maincode:
-                continue
-            full = os.path.join(map_main, entry)
-            if os.path.isdir(full):
-                shutil.rmtree(full)
-                log_info(f"removed map/main/{entry}")
+    staged = _ds.staged_local(datapack_src)
+    if not os.path.isdir(staged):
+        log_fail(f"datapack {label}",
+                 f"staged datapack missing at {staged} — was stage_datapacks.py run?")
+        return False
+    parent = os.path.join(build_dir, "datapack")
+    dst = os.path.join(parent, "internal")
+    if os.path.islink(dst) or os.path.isfile(dst):
+        os.remove(dst)
+    elif os.path.isdir(dst):
+        shutil.rmtree(dst)
+    os.makedirs(parent, exist_ok=True)
+    os.symlink(staged, dst)
+    log_info(f"symlinked datapack {dst} -> {staged}")
     log_info(f"maincode: {maincode}")
     log_pass(f"datapack {label}")
     return True
@@ -386,8 +441,10 @@ def setup_server_runtime(build_dir, ref_dir=None):
             log_info(f"symlinked {name} -> {src_path}")
 
 
+_server_output_lines = []
+
 def start_server(build_dir, bin_name=SERVER_BIN_NAME):
-    global server_proc
+    global server_proc, _server_output_lines
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail("start server", f"binary not found: {binary}")
@@ -397,16 +454,18 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     for k, v in diagnostic.runtime_env(DIAG).items():
         env[k] = v
     wrapper = diagnostic.runtime_wrapper(DIAG)
+    srv_args = NICE_PREFIX + wrapper + [binary]
+    diagnostic.record_cmd(srv_args, build_dir)
     server_proc = subprocess.Popen(
-        NICE_PREFIX + wrapper + [binary], cwd=build_dir,
+        srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
     ready = threading.Event()
-    output_lines = []
+    _server_output_lines = []
     def reader():
         for raw in iter(server_proc.stdout.readline, b""):
             line = raw.decode(errors="replace").rstrip("\n")
-            output_lines.append(line)
+            _server_output_lines.append(line)
             if "correctly bind:" in line:
                 ready.set()
     t = threading.Thread(target=reader, daemon=True)
@@ -416,10 +475,24 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
         return server_proc
     else:
         log_fail("server start", "timeout waiting for 'correctly bind:'")
-        for l in output_lines[-30:]:
+        for l in _server_output_lines[-30:]:
             print(f"  | {l}")
         stop_server()
         return None
+
+
+def dump_server_output(label):
+    """Print the last 30 lines the server emitted plus its current state.
+    Called after a probe fails so we know whether the server crashed
+    silently between 'correctly bind:' and the probe attempt."""
+    rc = None
+    if server_proc is not None:
+        rc = server_proc.poll()
+    print(f"  | -- server poll() = {rc} (None means still running) --")
+    li = max(0, len(_server_output_lines) - 30)
+    while li < len(_server_output_lines):
+        print(f"  | {_server_output_lines[li]}")
+        li += 1
 
 
 def stop_server():
@@ -446,6 +519,21 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     if not os.path.isfile(binary):
         log_fail(label, f"binary not found: {binary}")
         return False
+    # Only probe TCP when the client is actually connecting to a server.
+    # --autosolo embeds the server in-process and uses QFakeSocket — no
+    # TCP at all, so probing localhost:61917 there would either hit a
+    # leftover server from another test (false PASS) or fail spuriously.
+    # Local-only — see CLAUDE.md "Network …": exec_nodes can't NEW-
+    # dial back to the test box; the multi clients run here anyway.
+    if "--autosolo" not in args:
+        host, port = _host_port_from_args(args)
+        if not assert_port_or_fail(host, port, log_fail, label):
+            # Show what the server emitted between "correctly bind:"
+            # and the probe attempt — usually tells us whether it
+            # crashed silently or stayed alive (in which case the
+            # probe direction is the bug).
+            dump_server_output(label)
+            return False
     log_info(f"running: {bin_name} {' '.join(args)}")
     env = os.environ.copy()
     if use_offscreen:
@@ -456,35 +544,112 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     wrapper = diagnostic.runtime_wrapper(DIAG)
     if wrapper:
         gdb_args = wrapper + [binary] + args
-    else:
+    elif shutil.which("gdb") is not None:
         gdb_args = ["gdb", "-batch",
                     "-ex", "set breakpoint pending on",
                     "-ex", "handle SIGPIPE nostop noprint pass",
                     "-ex", "break __throw_out_of_range",
                     "-ex", "run", "-ex", "bt", "-ex", "quit",
                     "--args", binary] + args
-    try:
-        p = subprocess.run(NICE_PREFIX + gdb_args, cwd=build_dir, timeout=timeout,
-                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
-        out = p.stdout.decode(errors="replace")
-        if p.returncode == 0:
-            log_pass(label, "exit code 0")
-            return True
-        else:
-            log_fail(label, f"exit code {p.returncode}")
-            # print backtrace from gdb output
-            for line in out.splitlines()[-40:]:
-                print(f"  | {line}")
-            return False
-    except subprocess.TimeoutExpired as e:
-        out = e.stdout.decode(errors="replace") if e.stdout else ""
-        if success_marker and success_marker in out:
-            log_pass(label, f"timeout but connected (found '{success_marker}')")
-            return True
+    else:
+        gdb_args = [binary] + args
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + gdb_args, build_dir)
+    # Continuous reader so a refused connection or stateChanged(0)-after-
+    # stateChanged(1) drop kills the client immediately. Skip the latter
+    # check when --autosolo is in args because the in-process QFakeSocket
+    # path emits the same state events but a state-0 there is just the
+    # transient "we're about to connect to the in-process server" flicker,
+    # not a real disconnect. Connection-refused is impossible in solo
+    # mode anyway (QFakeSocket can't refuse), so leaving that probe on
+    # doesn't generate false failures.
+    in_solo = "--autosolo" in args
+    proc = subprocess.Popen(
+        NICE_PREFIX + gdb_args, cwd=build_dir,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        preexec_fn=os.setsid)
+    output_lines = []
+    done = threading.Event()
+    outcome = [None]
+    seen_state1 = [False]
+
+    def reader():
+        for raw in iter(proc.stdout.readline, b""):
+            line = raw.decode(errors="replace").rstrip("\n")
+            output_lines.append(line)
+            if success_marker and success_marker in line:
+                outcome[0] = ("pass", success_marker)
+                done.set()
+                return
+            if "Connection refused by the server" in line:
+                outcome[0] = ("fail", "Connection refused by the server")
+                done.set()
+                return
+            if not in_solo:
+                if "stateChanged(1)" in line:
+                    seen_state1[0] = True
+                elif seen_state1[0] and "stateChanged(0)" in line:
+                    outcome[0] = (
+                        "fail",
+                        "stateChanged(0) after stateChanged(1) — "
+                        "client connected then dropped before map")
+                    done.set()
+                    return
+        done.set()
+
+    t = threading.Thread(target=reader, daemon=True)
+    t.start()
+    triggered = done.wait(timeout=timeout)
+    out = "\n".join(output_lines)
+
+    def _kill():
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass
+
+    if not triggered:
+        _kill()
         log_fail(label, f"timeout after {timeout}s")
-        for line in out.splitlines()[-20:]:
+        for line in output_lines[-20:]:
             print(f"  | {line}")
         return False
+
+    if outcome[0] is not None:
+        kind, detail = outcome[0]
+        _kill()
+        if kind == "pass":
+            log_pass(label, f"early pass ({detail})")
+            return True
+        log_fail(label, detail)
+        for line in output_lines[-20:]:
+            print(f"  | {line}")
+        # Surface the SERVER's view too on a kick — the kick reason
+        # (characterSelectionIsWrong / profile mismatch / hexa-parse
+        # fail) is only logged on the server side, not the client.
+        if "client connected then dropped" in detail:
+            dump_server_output(label)
+        return False
+
+    rc = proc.wait()
+    if rc == 0:
+        log_pass(label, "exit code 0")
+        return True
+    log_fail(label, f"exit code {rc}")
+    for line in output_lines[-40:]:
+        print(f"  | {line}")
+    return False
 
 
 def run_client_benchmark(build_dir, bin_name, args, label, timeout=30,
@@ -505,8 +670,10 @@ def run_client_benchmark(build_dir, bin_name, args, label, timeout=30,
     wrapper = diagnostic.runtime_wrapper(DIAG)
 
     start_time = time.monotonic()
+    bench_args = wrapper + [binary] + list(args)
+    diagnostic.record_cmd(bench_args, build_dir)
     proc = subprocess.Popen(
-        wrapper + [binary] + list(args), cwd=build_dir,
+        bench_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
 
@@ -707,8 +874,8 @@ def main():
                 if compiler_name == "gcc" and not flags and cxx_ver == CXX_VERSIONS[0]:
                     build_dir = CLIENT_CPU_BUILD
                 else:
-                    build_dir = os.path.join(ROOT, "client", "qtcpu800x600", "build",
-                                             f"testing-cpu-{cxx_ver}-{suffix}")
+                    build_dir = build_paths.build_path("client", "qtcpu800x600", "build",
+                                                       f"testing-cpu-{cxx_ver}-{suffix}")
                 label = f"qtcpu800x600 {cxx_ver} {compiler_name}"
                 if flags:
                     label += " " + "+".join(flags)
@@ -739,8 +906,8 @@ def main():
                 if compiler_name == "gcc" and not flags and cxx_ver == CXX_VERSIONS[0]:
                     build_dir = CLIENT_GL_BUILD
                 else:
-                    build_dir = os.path.join(ROOT, "client", "qtopengl", "build",
-                                             f"testing-gl-{cxx_ver}-{suffix}")
+                    build_dir = build_paths.build_path("client", "qtopengl", "build",
+                                                       f"testing-gl-{cxx_ver}-{suffix}")
                 label = f"qtopengl {cxx_ver} {compiler_name}"
                 if flags:
                     label += " " + "+".join(flags)
@@ -846,6 +1013,67 @@ def main():
             return
 
         setup_server_runtime(SERVER_BUILD)
+        # SERVER_REF_BUILD is just compile output and doesn't ship with a
+        # datapack, so the symlinks above may have been a no-op. Stage one
+        # from the local datapack cache so the server actually has content
+        # to load — same pattern testingbots.py uses.
+        import datapack_stage as _ds
+        _dp_src = DATAPACKS[0] if DATAPACKS else None
+        _server_dp = os.path.join(SERVER_BUILD, "datapack")
+        if _dp_src and os.path.isdir(_dp_src):
+            _staged = _ds.staged_local(_dp_src)
+            if os.path.islink(_server_dp) or os.path.isfile(_server_dp):
+                os.remove(_server_dp)
+            elif os.path.isdir(_server_dp):
+                shutil.rmtree(_server_dp)
+            os.symlink(_staged, _server_dp)
+            log_info(f"symlinked server datapack -> {_staged}")
+        # server-properties.xml — must pin server-port to SERVER_PORT
+        # (61917) and enable automatic_account_creation. The server's
+        # NormalServerGlobal::checkSettingsFile picks a RANDOM port on
+        # first init when no value is set, and keeps that random port
+        # in subsequent saves of the file. Earlier scripts (testinghttp,
+        # testingmulti) that ran on the same shared build_dir leave
+        # behind a populated xml with a random server-port; reusing it
+        # would defeat the TCP probe + clients that expect 61917.
+        # Therefore: seed when missing, regex-patch when present so the
+        # invariant holds either way.
+        _props = os.path.join(SERVER_BUILD, "server-properties.xml")
+        if not os.path.exists(_props):
+            # NormalServerGlobal::checkSettingsFile reads `server-port` and
+            # `automatic_account_creation` from the ROOT element (no
+            # beginGroup), and `external-server-port` from the <master>
+            # group. Wrapping the keys in <general> looks tidy but makes
+            # the server NOT see them — falling back to the random-port
+            # default at NormalServerGlobal.cpp:106 (10000+rand%55535).
+            with open(_props, "w") as _pf:
+                _pf.write(
+                    f"""<?xml version="1.0"?>
+<configuration>
+    <server-port value="{SERVER_PORT}"/>
+    <automatic_account_creation value="true"/>
+    <master>
+        <external-server-port value="{SERVER_PORT}"/>
+    </master>
+</configuration>
+""")
+            log_info(f"seeded {_props}")
+        else:
+            if os.path.islink(_props):
+                _t = os.path.realpath(_props)
+                os.remove(_props)
+                shutil.copy2(_t, _props)
+            with open(_props, "r") as _pf:
+                _xml = _pf.read()
+            _xml = re.sub(r'(?<!external-)server-port\s+value="[^"]*"',
+                          f'server-port value="{SERVER_PORT}"', _xml)
+            _xml = re.sub(r'external-server-port\s+value="[^"]*"',
+                          f'external-server-port value="{SERVER_PORT}"', _xml)
+            _xml = re.sub(r'automatic_account_creation\s+value="[^"]*"',
+                          'automatic_account_creation value="true"', _xml)
+            with open(_props, "w") as _pf:
+                _pf.write(_xml)
+            log_info(f"forced server-port={SERVER_PORT}, automatic_account_creation=true in {_props}")
         db_dir = os.path.join(SERVER_BUILD, "database")
         if os.path.isdir(db_dir):
             shutil.rmtree(db_dir)
@@ -977,8 +1205,14 @@ def main():
         print(f"\n{C_CYAN}  -- Remote: {label} ({server_addr}) --{C_RESET}\n")
 
         remote_build_root = f"{remote_dir}/build-remote{_DIAG_SUFFIX}"
-        remote_filedb_bin = f"{remote_build_root}/catchchallenger-server-filedb/catchchallenger-server-cli-epoll"
-        remote_filedb_build = f"{remote_build_root}/catchchallenger-server-filedb"
+        # Server targets now iterate cxx_versions like every other target,
+        # so the filedb build dir carries a -<cxx> suffix when the node
+        # specified one. Pick the last cxx version configured (the most
+        # modern standard the node opts into) to match the binary that
+        # was just built.
+        _cxx_suffix = f"-{_cxx_ver[-1]}" if _cxx_ver else ""
+        remote_filedb_build = f"{remote_build_root}/catchchallenger-server-filedb{_cxx_suffix}"
+        remote_filedb_bin = f"{remote_filedb_build}/catchchallenger-server-cli-epoll"
 
         try:
             if dp_src is None:

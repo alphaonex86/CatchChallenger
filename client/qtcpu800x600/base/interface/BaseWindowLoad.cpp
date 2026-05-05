@@ -791,8 +791,46 @@ void BaseWindow::updateConnectingStatus()
                             const uint8_t profileIndex=0;
                             const Profile &profile=profiles.at(profileIndex);
                             const std::string pseudo=AutoArgs::character.isEmpty() ? "Player" : AutoArgs::character.toStdString();
-                            const uint8_t monsterGroupId=0;
-                            const uint8_t skinId=profile.forcedskin.empty() ? 0 : profile.forcedskin.front();
+                            //deterministic for testingmap4client.py: pick the
+                            //monstergroup whose lowest monster id is smallest,
+                            //and the skin with the smallest id, so the same
+                            //datapack always yields the same pseudo/skin/
+                            //follower on map.
+                            uint8_t monsterGroupId=0;
+                            {
+                                uint16_t bestMin=UINT16_MAX;
+                                unsigned int gi=0;
+                                while(gi<profile.monstergroup.size())
+                                {
+                                    const std::vector<Profile::Monster> &grp=profile.monstergroup.at(gi);
+                                    uint16_t groupMin=UINT16_MAX;
+                                    unsigned int mi=0;
+                                    while(mi<grp.size())
+                                    {
+                                        if(grp.at(mi).id<groupMin)
+                                            groupMin=grp.at(mi).id;
+                                        mi++;
+                                    }
+                                    if(groupMin<bestMin)
+                                    {
+                                        bestMin=groupMin;
+                                        monsterGroupId=static_cast<uint8_t>(gi);
+                                    }
+                                    gi++;
+                                }
+                            }
+                            uint8_t skinId=0;
+                            if(!profile.forcedskin.empty())
+                            {
+                                skinId=profile.forcedskin.front();
+                                unsigned int si=1;
+                                while(si<profile.forcedskin.size())
+                                {
+                                    if(profile.forcedskin.at(si)<skinId)
+                                        skinId=profile.forcedskin.at(si);
+                                    si++;
+                                }
+                            }
                             CharacterEntry ce;
                             ce.pseudo=pseudo;
                             ce.charactersGroupIndex=monsterGroupId;

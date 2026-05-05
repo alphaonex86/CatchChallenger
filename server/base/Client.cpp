@@ -941,74 +941,96 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     buf >> unvalidated_rescue_map_file_database_id >> unvalidated_rescue.x >> unvalidated_rescue.y >> value;
     unvalidated_rescue.orientation=(Orientation)value;
 
-    if(map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+    // Stale-cache rejection: when a player blob was serialised under one
+    // mainDatapackCode and the server now runs with a different one, the
+    // saved map_file_database_id can be out of range, or the dictionary
+    // entry maps to the 65535 "no-map" sentinel. Original code aborted
+    // the WHOLE server on this; that's still the wrong reaction (one bad
+    // cache should not down the entire game), but resetting the field
+    // to 0 is also wrong — index 0 has no inherent guarantee of pointing
+    // at a real map, and on an empty dictionary there is no valid index
+    // at all. Instead: surface the failure on stderr (so the test
+    // harness's dump_server_output picks it up) and disconnect just
+    // THIS client. The next connection from the same player can succeed
+    // once the cache is regenerated against the current mainDatapackCode.
+    // Bound checks remain — they are the only thing protecting the
+    // .at() calls below from undefined behaviour.
+    const size_t _dict_size=DictionaryServer::dictionary_map_database_to_internal.size();
+    if(_dict_size==0)
     {
-        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "dictionary_map_database_to_internal is empty, kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
-    if(map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
+    if(map_file_database_id>=_dict_size)
     {
-        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "map_file_database_id (" << map_file_database_id
+                  << ") out of range (size=" << _dict_size << "), kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
     map_entry.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_file_database_id);
     if(map_entry.mapIndex>=65535)
     {
-        std::cerr << "map_entry.mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "map_entry.mapIndex>=65535 (stale cache for current mainDatapackCode), kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
-    if(rescue_map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
+    if(rescue_map_file_database_id>=_dict_size)
     {
-        std::cerr << "rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
-    }
-    if(rescue_map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
-    {
-        std::cerr << "rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "rescue_map_file_database_id (" << rescue_map_file_database_id
+                  << ") out of range (size=" << _dict_size << "), kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
     rescue.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_file_database_id);
     if(rescue.mapIndex>=65535)
     {
-        std::cerr << "rescue.mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "rescue.mapIndex>=65535 (stale cache for current mainDatapackCode), kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
-    if(map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
+    if(unvalidated_rescue_map_file_database_id>=_dict_size)
     {
-        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
-    }
-    if(unvalidated_rescue_map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
-    {
-        std::cerr << "unvalidated_rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "unvalidated_rescue_map_file_database_id (" << unvalidated_rescue_map_file_database_id
+                  << ") out of range (size=" << _dict_size << "), kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
     unvalidated_rescue.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_file_database_id);
     if(unvalidated_rescue.mapIndex>=65535)
     {
-        std::cerr << "unvalidated_rescue.mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "unvalidated_rescue.mapIndex>=65535 (stale cache for current mainDatapackCode), kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
 
     CATCHCHALLENGER_TYPE_MAPID map_id=0;
     uint8_t temp_direction=0;
     buf >> map_id >> x >> y >> temp_direction;
     last_direction=(Direction)temp_direction;
-    if(map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
+    if(map_id>=_dict_size)
     {
-        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
-    }
-    if(map_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
-    {
-        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "map_id (" << map_id
+                  << ") out of range (size=" << _dict_size << "), kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
     mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
     if(mapIndex>=65535)
     {
-        std::cerr << "mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        std::cerr << "mapIndex>=65535 (stale cache for current mainDatapackCode), kicking client at "
+                  << __FILE__ << ":" << __LINE__ << std::endl;
+        disconnectClient();
+        return;
     }
 }
 

@@ -111,7 +111,8 @@ void ProcessController::send_settings()
     formatedServerNormalSettings.server_ip				= settings->value("server-ip");
     formatedServerNormalSettings.proxy					= settings->value("proxy");
     formatedServerNormalSettings.proxy_port				= stringtouint32(settings->value("proxy_port"));
-    formatedServerNormalSettings.useSsl					= stringtobool(settings->value("useSsl"));
+    // useSsl removed: the SSL byte preamble that this flag gated was
+    // dropped from the protocol.
     formatedServerSettings.common_blobversion_datapack= stringtouint8(settings->value("common_blobversion_datapack"),&ok);
     if(!ok)
     {

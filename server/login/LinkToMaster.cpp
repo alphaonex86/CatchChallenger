@@ -20,16 +20,11 @@ using namespace CatchChallenger;
 
 LinkToMaster *LinkToMaster::linkToMaster=NULL;
 int LinkToMaster::linkToMasterSocketFd=-1;
-bool LinkToMaster::haveTheFirstSslHeader=false;
 char LinkToMaster::host[];
 uint16_t LinkToMaster::port=0;
 
 LinkToMaster::LinkToMaster(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
         ) :
         EpollClient(infd),
         ProtocolParsingInputOutput(
@@ -143,7 +138,6 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         {
             std::cout << "Connected to master server" << std::endl;
             LinkToMaster::linkToMasterSocketFd=sfd;
-            haveTheFirstSslHeader=false;
             freeaddrinfo(result);
             return sfd;
         }
@@ -156,8 +150,6 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
     else
         std::cerr << "ERROR connecting to master server server on: " << host << ":" << port << std::endl;
     freeaddrinfo(result);           /* No longer needed */
-
-    haveTheFirstSslHeader=false;
 
     return LinkToMaster::linkToMasterSocketFd;
 }
@@ -231,7 +223,6 @@ void LinkToMaster::connectInternal()
         stat=Stat::Unconnected;
         return;
     }
-    haveTheFirstSslHeader=false;
     if(connStatusType>=0)
     {
         stat=Stat::Connected;
@@ -245,37 +236,6 @@ void LinkToMaster::connectInternal()
     setConnexionSettings();
 }
 
-void LinkToMaster::readTheFirstSslHeader()
-{
-    if(haveTheFirstSslHeader)
-        return;
-    std::cout << "linkToMaster::readTheFirstSslHeader()" << std::endl;
-    char buffer[1];
-    if(::read(LinkToMaster::linkToMasterSocketFd,buffer,1)<0)
-    {
-        std::cerr << "ERROR reading from socket to master server (abort): " << std::to_string(errno) << ", LinkToMaster::linkToMasterSocketFd: " << std::to_string(LinkToMaster::linkToMasterSocketFd) << std::endl;
-        //abort();
-        return;
-    }
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    if(buffer[0]!=0x01)
-    {
-        std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;
-        abort();
-    }
-    #else
-    if(buffer[0]!=0x00)
-    {
-        std::cerr << "ERROR server configured in clear mode but protocol not done" << std::endl;
-        abort();
-    }
-    #endif
-    haveTheFirstSslHeader=true;
-    stat=Stat::Connected;
-    EpollSocket::make_non_blocking(LinkToMaster::linkToMasterSocketFd);
-    reconnectTime=0;
-    sendProtocolHeader();
-}
 
 bool LinkToMaster::disconnectClient()
 {
@@ -413,7 +373,9 @@ void LinkToMaster::tryReconnect()
                     std::this_thread::sleep_for(std::chrono::seconds(ms));
             }
         } while(stat!=Stat::Connected);
-        readTheFirstSslHeader();
+        // SSL preamble byte was removed; send the protocol header
+        // immediately on (re)connect.
+        sendProtocolHeader();
     }
 }
 

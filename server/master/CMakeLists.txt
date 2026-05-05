@@ -1,9 +1,17 @@
-# Phase 2 — server/master/master.pro -> CMake.
-# catchchallenger-server-master: CATCHCHALLENGER_CLASS_MASTER +
+# server/master/CMakeLists.txt — catchchallenger-server-master binary.
+# Self-contained, one binary. CATCHCHALLENGER_CLASS_MASTER +
 # CATCHCHALLENGER_DB_POSTGRESQL + DB_PREPAREDSTATEMENT +
 # CATCHCHALLENGER_SERVER_NO_COMPRESSION + NOGAMESERVER.
 # Master has its own self-contained sources; doesn't share
 # catchchallenger_server_base.
+
+cmake_minimum_required(VERSION 3.20)
+project(catchchallenger_server_master LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
@@ -23,11 +31,9 @@ set(_master_sources
     # epoll/ files
     ../epoll/EpollTimer.cpp
     ../epoll/Epoll.cpp
-    ../epoll/EpollGenericSslServer.cpp
     ../epoll/EpollGenericServer.cpp
     ../epoll/EpollClient.cpp
     ../epoll/EpollSocket.cpp
-    ../epoll/EpollSslClient.cpp
     ../epoll/db/EpollPostgresql.cpp
     # server/base subset (SQL plumbing comes via catchchallenger_server_sql).
     ../base/BaseServer/BaseServerMasterLoadDictionary.cpp

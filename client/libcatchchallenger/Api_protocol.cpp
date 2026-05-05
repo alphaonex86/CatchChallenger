@@ -203,8 +203,7 @@ uint8_t Api_protocol::queryNumber()
 bool Api_protocol::sendProtocol()
 {
     /* tcp socket call stack qtcpu800x600:
-     * Api_protocol_Qt::readForFirstHeader()
-     * Api_protocol_Qt::connectTheExternalSocketInternal()
+     * Api_protocol_Qt ctor schedules connectTheExternalSocketInternal()
      * Api_protocol::connectTheExternalSocketInternal() */
     std::cout << "Api_protocol::connectTheExternalSocketInternal()" << std::endl;
     if(have_send_protocol)

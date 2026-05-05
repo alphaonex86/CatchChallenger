@@ -8,11 +8,21 @@ For each .pro found:
   3. make distclean to clean up
 """
 
+# Drop the .pyc cache for this process so import diagnostic / build_paths /
+# remote_build never lands a __pycache__/ dir in the source tree.  Set
+# before the first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
 import os, sys, subprocess, multiprocessing, json, time
 from remote_build import (start_remote_builds, collect_remote_results,
-                          SERVER_MAKE_SCRIPTS, build_server_via_make,
                           count_remote_tests)
 import diagnostic
+import build_paths
+from cmd_helpers import clamp_local
+
+build_paths.ensure_root()
 
 DIAG = diagnostic.parse_diag_args()
 
@@ -43,7 +53,7 @@ _last_log_time = [time.monotonic()]
 total_expected = [0]
 
 SCRIPT_NAME = os.path.basename(__file__)
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
 
 
 def load_failed_cases():
@@ -115,9 +125,16 @@ def log_fail(name, detail=""):
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
     print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    li = 0
+    _ctx = diagnostic.last_cmd_lines()
+    while li < len(_ctx):
+        print(_ctx[li])
+        li += 1
 
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT):
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + list(args), cwd)
     try:
         p = subprocess.run(
             NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
@@ -138,13 +155,17 @@ def clean_build_artifacts(build_dir):
 
 
 def find_pro_files():
-    """Recursively find all .pro files under tools/."""
-    pro_files = []
-    for dirpath, _dirs, files in os.walk(TOOLS_DIR):
-        for f in sorted(files):
-            if f.endswith(".pro"):
-                pro_files.append(os.path.join(dirpath, f))
-    return pro_files
+    """Return the legacy .pro paths for every tool that has a CMake target
+    in cmake_helpers._PRO_TO_CMAKE. The .pro files no longer exist on disk
+    after the qmake -> CMake migration, but the build_project driver keys
+    its target lookup on those paths, so we still pass them through."""
+    import cmake_helpers as _ch
+    out = []
+    for pro_rel in sorted(_ch._PRO_TO_CMAKE.keys()):
+        if not pro_rel.startswith("tools/"):
+            continue
+        out.append(os.path.join(ROOT, pro_rel))
+    return out
 
 
 def test_compile(pro_file):
@@ -153,7 +174,7 @@ def test_compile(pro_file):
     rel = os.path.relpath(pro_file, ROOT)
     pro_dir = os.path.dirname(pro_file)
     suffix = diagnostic.build_dir_suffix(DIAG)
-    build_dir = os.path.join(pro_dir, "build", "testing" + suffix)
+    build_dir = build_paths.src_to_build(pro_dir, ROOT, "build", "testing" + suffix)
     os.makedirs(build_dir, exist_ok=True)
 
     label = rel + diagnostic.label_suffix(DIAG)
@@ -191,7 +212,7 @@ def main():
 
     # clean all tool build dirs upfront
     for pf in pro_files:
-        build_dir = os.path.join(os.path.dirname(pf), "build", "testing")
+        build_dir = build_paths.src_to_build(os.path.dirname(pf), ROOT, "build", "testing")
         clean_build_artifacts(build_dir)
 
     log_info(f"found {len(pro_files)} .pro file(s) in tools/\n")
@@ -228,32 +249,7 @@ def main():
             test_compile(pf)
         print()
 
-    # ── make.py build (for tools with make.py companion).
-    # The qmake-vs-make.py parity check is gone with the cmake migration —
-    # there's no qmake side to compare against anymore. The make.py
-    # wrappers themselves drive cmake (see cmake_make_helper.py).
-    log_info("tools with make.py: build via wrapper")
-    for pf in pro_files:
-        rel = os.path.relpath(pf, ROOT)
-        if rel not in SERVER_MAKE_SCRIPTS:
-            continue
-        tool_dir = os.path.dirname(pf)
-        suffix = diagnostic.build_dir_suffix(DIAG)
-        bd_make = os.path.join(tool_dir, "build", "testing-make.py" + suffix)
-        label = os.path.basename(tool_dir)
-        test_name = f"compile {rel} (make.py)"
-        if should_run(test_name, failed_cases):
-            log_info(f"make.py {label}")
-            rc, out = build_server_via_make(rel, bd_make, label, diag=DIAG)
-            if rc == 0:
-                log_pass(test_name)
-            else:
-                log_fail(test_name, f"rc={rc}")
-                if out.strip():
-                    for line in out.splitlines()[-20:]:
-                        print(f"  | {line}")
-
-    # collect remote results
+# collect remote results
     if failed_cases is None:
         log_info("waiting for remote builds to finish...")
     remote = collect_remote_results(remote_threads, remote_results, remote_lock) if remote_threads else []

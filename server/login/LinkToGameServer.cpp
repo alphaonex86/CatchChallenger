@@ -22,11 +22,7 @@ uint8_t LinkToGameServer::gameLinkToDeleteIndex=0;
 std::unordered_set<void *> LinkToGameServer::detectDuplicateGameLinkToDelete;
 
 LinkToGameServer::LinkToGameServer(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
         ) :
         EpollClient(infd),
         ProtocolParsingInputOutput(
@@ -36,7 +32,6 @@ LinkToGameServer::LinkToGameServer(
             ),
         stat(Stat::Connected),
         client(NULL),
-        haveTheFirstSslHeader(false),
         queryIdToReconnect(0),
         socketFd(infd)
 {
@@ -199,41 +194,6 @@ void LinkToGameServer::setConnexionSettings()
     }*/
 }
 
-void LinkToGameServer::readTheFirstSslHeader()
-{
-    if(haveTheFirstSslHeader)
-        return;
-    char buffer[1];
-    const ssize_t &size=::read(socketFd,buffer,1);
-    if(size<0)
-    {
-        std::cerr << "ERROR reading from socket to game server server, errno " << errno << std::endl;
-        if(errno!=EAGAIN)
-            closeSocket();
-        return;
-    }
-    if(size<1)
-    {
-        std::cerr << "ERROR reading from socket to game server server, wait more data" << std::endl;
-        return;
-    }
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    if(buffer[0]!=0x01)
-    {
-        std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;
-        abort();
-    }
-    #else
-    if(buffer[0]!=0x00)
-    {
-        std::cerr << "ERROR server configured in clear mode but protocol not done" << std::endl;
-        abort();
-    }
-    #endif
-    haveTheFirstSslHeader=true;
-    stat=Stat::Connected;
-    sendProtocolHeader();
-}
 
 bool LinkToGameServer::disconnectClient()
 {
@@ -287,10 +247,11 @@ BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const
 void LinkToGameServer::parseIncommingData()
 {
     lastActivity=LinkToGameServer::msFrom1970();
-    if(!haveTheFirstSslHeader)
-        readTheFirstSslHeader();
-    if(haveTheFirstSslHeader)
-        ProtocolParsingInputOutput::parseIncommingData();
+    // The 1-byte SSL/cleartext preamble that this used to wait on was
+    // removed; sendProtocolHeader() runs as soon as the connection is
+    // established (see EpollClientLoginSlaveProtocolParsing.cpp), so
+    // every byte read here belongs to the protocol-input stream.
+    ProtocolParsingInputOutput::parseIncommingData();
 }
 
 void LinkToGameServer::sendProtocolHeader()

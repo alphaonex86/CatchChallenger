@@ -1,4 +1,3 @@
-#ifndef CATCHCHALLENGER_SERVER_SSL
 
 #include "EpollServer.hpp"
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
@@ -20,7 +19,6 @@ EpollServer::EpollServer()
 
     //normalServerSettings.server_ip
     normalServerSettings.server_port    = 42489;
-    normalServerSettings.useSsl         = true;
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_server=NULL;
     GlobalServerData::serverPrivateVariables.db_common=NULL;
@@ -249,4 +247,4 @@ void EpollServer::loadAndFixSettings()
 {
     BaseServer::loadAndFixSettings();
 }
-#endif
+

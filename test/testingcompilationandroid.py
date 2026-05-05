@@ -12,14 +12,26 @@ Steps:
      testingserver.py already built).
 
 Self-skips when CC_ANDROID_HOME isn't ready. All Android local tooling lives
-under /mnt/data/perso/progs/CatchChallenger-android/ (per CLAUDE.md memory) —
-this script never touches anything outside that workspace and never installs
+under <paths.android_workspace> (see test_config.py / config.json) — this
+script never touches anything outside that workspace and never installs
 packages on the host.
 
 Sibling of testingcompilationmac.py — both used to live inside testingclient.py.
 """
 
+# Drop the .pyc cache for this process so import diagnostic / build_paths /
+# remote_build never lands a __pycache__/ dir in the source tree.  Set
+# before the first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
 import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time, glob
+import build_paths
+import diagnostic
+from cmd_helpers import clamp_local
+
+build_paths.ensure_root()
 
 # ── config ─────────────────────────────────────────────────────────────────
 _CONFIG_PATH = os.path.join(os.path.expanduser("~"),
@@ -35,19 +47,29 @@ NPROC         = str(multiprocessing.cpu_count())
 CLIENT_GL_PRO = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro")
 
 #local server-filedb that the multi-mode emulator client connects back to.
-SERVER_BUILD    = os.path.join(ROOT, "server/epoll/build/testing-filedb")
+SERVER_BUILD    = build_paths.build_path("server/epoll/build/testing-filedb")
 SERVER_BIN_NAME = "catchchallenger-server-cli-epoll"
 
-SERVER_HOST_REMOTE = "192.168.158.10"
+# Android emulator's NAT maps 10.0.2.2 to the HOST's loopback
+# (https://developer.android.com/studio/run/emulator-networking).
+# 192.168.158.10 is the host's LAN IP and is NOT reachable from the
+# emulator over the default user-mode networking — use 10.0.2.2 instead
+# so the multi-mode client can talk to the local server-filedb that
+# testingcompilationandroid.py spins up on 0.0.0.0:port.
+SERVER_HOST_REMOTE = "10.0.2.2"
 SERVER_PORT        = str(_config["server_port"])
 
 # ── Android workspace ──────────────────────────────────────────────────────
+import test_config as _tc
 CC_ANDROID_HOME       = os.environ.get("CC_ANDROID_HOME",
-                                       "/mnt/data/perso/progs/CatchChallenger-android")
+                                       _tc.ANDROID_WORKSPACE)
 ANDROID_SDK           = os.path.join(CC_ANDROID_HOME, "sdk")
 ANDROID_AVD_HOME      = os.path.join(CC_ANDROID_HOME, "avd")
 ANDROID_USER_HOME_DIR = os.path.join(CC_ANDROID_HOME, "user")
 ANDROID_APK_DIR       = os.path.join(CC_ANDROID_HOME, "apk")
+# Android App Bundle (Google Play distribution format) — built alongside
+# the APK in build_android_apk(). Same install_root produces both.
+ANDROID_AAB_DIR       = os.path.join(CC_ANDROID_HOME, "aab")
 ANDROID_BUILD_DIR     = os.path.join(CC_ANDROID_HOME, "build")
 ANDROID_QT_DIR        = os.path.join(CC_ANDROID_HOME, "qt")
 ANDROID_ADB           = os.path.join(ANDROID_SDK, "platform-tools", "adb")
@@ -58,7 +80,14 @@ ANDROID_NDK_HOST      = "linux-x86_64"
 ANDROID_BUILD_TOOLS   = "34.0.0"
 ANDROID_BOOT_TIMEOUT  = 240
 ANDROID_RUN_TIMEOUT   = 120
-ANDROID_PACKAGE       = "org.catchchallenger.android"
+# Package id from the Qt6 androiddeployqt build. The default Qt-for-Android
+# template names the package `org.qtproject.example.<target>` based on the
+# CMake target name (`catchchallenger` here). Verified via
+# `aapt dump badging qtopengl.apk` — using `org.catchchallenger.android`
+# previously made `am start` silently launch the WRONG activity (a
+# non-existent package on a freshly-flashed AVD), so logcat showed only
+# system noise and the success_marker never landed.
+ANDROID_PACKAGE       = "org.qtproject.example.catchchallenger"
 ANDROID_ACTIVITY      = "org.qtproject.qt.android.bindings.QtActivity"
 COMPILE_TIMEOUT       = 600
 SERVER_READY_TIMEOUT  = 60
@@ -75,7 +104,7 @@ total_expected = [0]
 server_proc = None
 
 SCRIPT_NAME = os.path.basename(__file__)
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
 
 
 def load_failed_cases():
@@ -143,6 +172,11 @@ def log_fail(name, detail=""):
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
     print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    li = 0
+    _ctx = diagnostic.last_cmd_lines()
+    while li < len(_ctx):
+        print(_ctx[li])
+        li += 1
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -151,6 +185,8 @@ def ensure_dir(path):
 
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(args, cwd)
     try:
         p = subprocess.run(args, cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -268,6 +304,31 @@ def android_env():
     env["QT_ANDROID_BUILD_ALL_ABIS"] = "FALSE"
     env["CMAKE_BUILD_TYPE"]         = "Debug"
 
+    # Gradle needs a JDK (with javac), not a JRE. The host's default
+    # java often points at a JRE-only install (gentoo's
+    # /opt/openjdk-jre-bin-21 ships no javac, gradle aborts with
+    # "Toolchain installation does not provide JAVA_COMPILER"). Probe
+    # for a JDK with javac and pin JAVA_HOME / ORG_GRADLE_JAVA_HOME so
+    # gradle's auto-toolchain detection picks the right one.
+    jdk_candidates = []
+    import glob as _glob
+    for pat in ("/opt/openjdk-bin-*", "/usr/lib/jvm/java-*-openjdk*",
+                "/usr/lib/jvm/openjdk-*", "/usr/lib/jvm/jdk-*",
+                "/opt/jdk-*"):
+        jdk_candidates.extend(sorted(_glob.glob(pat), reverse=True))
+    java_home = None
+    ji = 0
+    while ji < len(jdk_candidates):
+        cand = jdk_candidates[ji]
+        ji += 1
+        if os.path.isfile(os.path.join(cand, "bin", "javac")):
+            java_home = cand
+            break
+    if java_home is not None:
+        env["JAVA_HOME"]            = java_home
+        env["GRADLE_JAVA_HOME"]     = java_home
+        env["ORG_GRADLE_JAVA_HOME"] = java_home
+
     qt_root = ANDROID_QT_DIR
     qt_host_bin = None
     if os.path.isdir(qt_root):
@@ -305,6 +366,10 @@ def android_env():
             ni += 1
 
     path_parts = []
+    # JDK first so `java -version` resolves to the JDK gradle expects,
+    # not the host's default JRE-only install.
+    if "JAVA_HOME" in env:
+        path_parts.append(os.path.join(env["JAVA_HOME"], "bin"))
     if "QT_ANDROID" in env:
         path_parts.append(os.path.join(env["QT_ANDROID"], "bin"))
     if qt_host_bin is not None:
@@ -352,19 +417,49 @@ def build_android_apk(pro_file, build_dir, label):
         return None
     pro_rel = os.path.relpath(pro_file, ROOT).replace(os.sep, "/")
     try:
-        target, configure_flags, _output_subdir = _ch.pro_to_cmake_target(pro_rel)
+        target, configure_flags, source_subdir = _ch.pro_to_cmake_target(pro_rel)
     except KeyError:
         log_fail(name, f"no cmake target mapping for {pro_rel}")
         return None
+    cmake_source = os.path.join(ROOT, source_subdir)
+    # The source dir flipped during the qmake → CMake refactor (was the
+    # repo root, now points at the binary's own subdir CMakeLists.txt).
+    # CMake refuses to reuse a build dir whose CMakeCache.txt records a
+    # different CMAKE_HOME_DIRECTORY, so detect that case and wipe the
+    # stale cache rather than fail with the cryptic
+    # "source ... does not match the source used to generate cache".
+    cache_path = os.path.join(build_dir, "CMakeCache.txt")
+    if os.path.isfile(cache_path):
+        try:
+            with open(cache_path, "r") as _cf:
+                _cache_txt = _cf.read()
+        except (OSError, UnicodeDecodeError):
+            _cache_txt = ""
+        if (f"CMAKE_HOME_DIRECTORY:INTERNAL={cmake_source}" not in _cache_txt
+                and "CMAKE_HOME_DIRECTORY:INTERNAL=" in _cache_txt):
+            shutil.rmtree(build_dir, ignore_errors=True)
     ensure_dir(build_dir)
     env = android_env()
 
     log_info(f"android qt-cmake configure {label}")
-    args = [qt_cmake, "-S", ROOT, "-B", build_dir,
+    args = [qt_cmake, "-S", cmake_source, "-B", build_dir,
             "-DCMAKE_BUILD_TYPE=Debug",
+            # -fno-lto everywhere on test builds: keeps the link path
+            # predictable and avoids lto-wrapper fanout (see cmake_helpers.py).
+            "-DCMAKE_C_FLAGS_INIT=-fno-lto",
+            "-DCMAKE_CXX_FLAGS_INIT=-fno-lto",
+            "-DCMAKE_EXE_LINKER_FLAGS=-fno-lto",
+            "-DCMAKE_SHARED_LINKER_FLAGS=-fno-lto",
+            "-DCMAKE_MODULE_LINKER_FLAGS=-fno-lto",
             "-DCATCHCHALLENGER_NOAUDIO=ON",
             "-DCATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS=OFF",
-            "-DCATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS=OFF"]
+            "-DCATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS=OFF",
+            # Embed the in-process server so --autosolo can launch
+            # without an external server binary. Same rationale as the
+            # MXE pass; the O_CLOEXEC #ifndef shim in ClientHeavyLoadMirror.cpp
+            # plus the <algorithm> includes for std::sort are what let
+            # this compile cleanly for Android Qt.
+            "-DCATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER=ON"]
     args.extend(configure_flags)
     rc, out = run_cmd(args, build_dir, env=env)
     if rc != 0:
@@ -379,7 +474,7 @@ def build_android_apk(pro_file, build_dir, label):
     if rc != 0:
         log_fail(name, f"cmake build failed (rc={rc})")
         if out.strip():
-            print(out[-2000:])
+            print(out[-8000:])
         return None
     install_root = os.path.join(build_dir, "android-build")
     log_info(f"android cmake --install --prefix={install_root}")
@@ -401,12 +496,22 @@ def build_android_apk(pro_file, build_dir, label):
     if not os.path.isfile(deploy_json):
         log_fail(name, f"deployment-settings.json not produced under {build_dir}")
         return None
-    log_info(f"androiddeployqt --output {install_root}")
+    # androiddeployqt is mode-flagged: `--apk` invokes gradle's
+    # assembleDebug task, `--aab` invokes bundleDebug. The flags don't
+    # combine cleanly across all Qt 6.x point releases (some versions
+    # silently drop the bundle when both are passed), so run the tool
+    # twice against the same install_root — gradle reuses the staged
+    # artefacts so the second pass is fast.
+    # APK goes to apk/ for sideloading + emulator testing; AAB goes to
+    # aab/ for Google Play distribution. Both outputs are mandatory —
+    # failing to produce either surfaces real packaging regressions
+    # instead of half-passing.
+    log_info(f"androiddeployqt --apk --output {install_root}")
     rc, out = run_cmd([androiddeployqt, "--input", deploy_json,
                        "--output", install_root, "--apk", "--gradle"],
                       build_dir, env=env)
     if rc != 0:
-        log_fail(name, f"androiddeployqt failed (rc={rc})")
+        log_fail(name, f"androiddeployqt --apk failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None
@@ -420,11 +525,32 @@ def build_android_apk(pro_file, build_dir, label):
     ensure_dir(ANDROID_APK_DIR)
     apk_dst_path = os.path.join(ANDROID_APK_DIR, label + ".apk")
     shutil.copy2(apk_src, apk_dst_path)
-    log_pass(name, f"-> {os.path.relpath(apk_dst_path, ROOT)}")
+    log_info(f"androiddeployqt --aab --output {install_root}")
+    rc, out = run_cmd([androiddeployqt, "--input", deploy_json,
+                       "--output", install_root, "--aab", "--gradle"],
+                      build_dir, env=env)
+    if rc != 0:
+        log_fail(name, f"androiddeployqt --aab failed (rc={rc})")
+        if out.strip():
+            print(out[-2000:])
+        return None
+    aab_candidates = glob.glob(os.path.join(install_root, "build", "outputs",
+                                            "bundle", "**", "*.aab"),
+                               recursive=True)
+    if not aab_candidates:
+        log_fail(name, f".aab not produced under {install_root}")
+        return None
+    aab_src = aab_candidates[0]
+    ensure_dir(ANDROID_AAB_DIR)
+    aab_dst_path = os.path.join(ANDROID_AAB_DIR, label + ".aab")
+    shutil.copy2(aab_src, aab_dst_path)
+    log_pass(name, f"-> {os.path.relpath(apk_dst_path, ROOT)} + "
+                   f"{os.path.relpath(aab_dst_path, ROOT)}")
     return apk_dst_path
 
 
 def adb_cmd(args, timeout=60):
+    timeout = clamp_local(timeout)
     full = [ANDROID_ADB] + list(args)
     try:
         p = subprocess.run(full, timeout=timeout, env=android_env(),
@@ -441,10 +567,12 @@ def start_android_emulator():
         return None
     log_info(f"starting emulator: {ANDROID_EMULATOR_BIN} -avd {avd_name}")
     env = android_env()
+    emu_args = [ANDROID_EMULATOR_BIN, "-avd", avd_name,
+                "-no-window", "-no-audio", "-no-snapshot",
+                "-gpu", "swiftshader_indirect"]
+    diagnostic.record_cmd(emu_args, None)
     proc = subprocess.Popen(
-        [ANDROID_EMULATOR_BIN, "-avd", avd_name,
-         "-no-window", "-no-audio", "-no-snapshot",
-         "-gpu", "swiftshader_indirect"],
+        emu_args,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env,
         preexec_fn=os.setsid)
     rc, _ = adb_cmd(["wait-for-device"], timeout=ANDROID_BOOT_TIMEOUT)
@@ -506,7 +634,16 @@ def run_android_apk(apk_path, label, args=None, timeout=ANDROID_RUN_TIMEOUT,
     am_args = ["shell", "am", "start", "-W", "-n",
                f"{ANDROID_PACKAGE}/{ANDROID_ACTIVITY}"]
     if args:
-        am_args += ["--es", "applicationArguments", " ".join(args)]
+        # `adb shell` re-joins argv with spaces and re-tokenises on the
+        # device-side /system/bin/sh, so multi-word values to `am --es
+        # KEY VALUE` get split unless we shell-quote on the device.
+        # Wrap the joined VALUE in single quotes so the device shell
+        # sees one token. Without this, args like
+        # "--autosolo --closewhenonmap" arrive at `am start` as two
+        # extra positional flags and `am` rejects "--closewhenonmap" as
+        # "Unknown option".
+        joined = " ".join(args).replace("'", "'\\''")
+        am_args += ["--es", "applicationArguments", f"'{joined}'"]
     log_info(f"am start {ANDROID_PACKAGE}/{ANDROID_ACTIVITY} {' '.join(args) if args else ''}")
     rc, out = adb_cmd(am_args, timeout=30)
     if rc != 0:
@@ -557,8 +694,10 @@ def start_local_server(build_dir, bin_name=SERVER_BIN_NAME):
         log_fail("server start", f"{bin_name} not found in {build_dir}")
         return None
     log_info(f"starting local server: {binary}")
+    srv_args = ["nice", "-n", "19", "ionice", "-c", "3", binary]
+    diagnostic.record_cmd(srv_args, build_dir)
     server_proc = subprocess.Popen(
-        ["nice", "-n", "19", "ionice", "-c", "3", binary], cwd=build_dir,
+        srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         preexec_fn=os.setsid)
     ready = threading.Event()

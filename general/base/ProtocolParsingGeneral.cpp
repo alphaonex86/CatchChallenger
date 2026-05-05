@@ -240,11 +240,7 @@ ProtocolParsingBase::ProtocolParsingBase(
         #endif
         ) :
     #ifdef CATCHCHALLENGER_SERVER
-        #ifdef CATCHCHALLENGER_SERVER_SSL
             ProtocolParsing(),
-        #else
-            ProtocolParsing(),
-        #endif
     #else
     ProtocolParsing(),
     #endif

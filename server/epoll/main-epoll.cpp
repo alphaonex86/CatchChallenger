@@ -44,11 +44,7 @@
 
 using namespace CatchChallenger;
 
-#ifdef CATCHCHALLENGER_SERVER_SSL
-EpollSslServer *server=NULL;
-#else
 EpollServer *server=NULL;
-#endif
 #ifndef CATCHCHALLENGER_NOXML
 TinyXMLSettings *settings=NULL;
 #endif
@@ -116,11 +112,7 @@ void signal_callback_handler(int signum){
 
 #ifndef CATCHCHALLENGER_NOXML
 void send_settings(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-        EpollSslServer *server
-        #else
         EpollServer *server
-        #endif
         ,TinyXMLSettings *settings,
         std::string &master_host,
         uint16_t &master_port,
@@ -193,11 +185,7 @@ int main(int argc, char *argv[])
     #endif
     #endif
 
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    server=new EpollSslServer();
-    #else
     server=new EpollServer();
-    #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     const bool save=argc==2 && (strcmp(argv[1],"save")==0 || strcmp(argv[1],"--save")==0 || strcmp(argv[1],"-s")==0);
@@ -269,15 +257,13 @@ int main(int argc, char *argv[])
             std::cerr << "Unable to connect on master" << std::endl;
             abort();
         }
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-        ctx from what?
-        LoginLinkToMaster::loginLinkToMaster=new LoginLinkToMaster(linkfd,ctx);
-        #else
         LinkToMaster::linkToMaster=new LinkToMaster(linkfd);
-        #endif
         LinkToMaster::linkToMaster->stat=LinkToMaster::Stat::Connected;
         LinkToMaster::linkToMaster->setSettings(settings);
-        LinkToMaster::linkToMaster->readTheFirstSslHeader();
+        // The 1-byte SSL/cleartext preamble that this used to wait on
+        // is gone; LinkToMaster now sends its protocol header straight
+        // away. See server/game-server-alone/LinkToMaster.cpp.
+        LinkToMaster::linkToMaster->sendProtocolHeader();
         LinkToMaster::linkToMaster->setConnexionSettings(master_tryInterval,master_considerDownAfterNumberOfTry);
         const int &s = EpollSocket::make_non_blocking(linkfd);
         if(s == -1)
@@ -389,19 +375,10 @@ int main(int argc, char *argv[])
         }
 
 
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-        if(!formatedServerNormalSettings.useSsl)
-        {
-            qDebug() << "Ssl connexion requested but server not compiled with ssl support!";
-            return EXIT_FAILURE;
-        }
-        #else
-        if(formatedServerNormalSettings.useSsl)
-        {
-            std::cerr << "Clear connexion requested but server compiled with ssl support!" << std::endl;
-            return EXIT_FAILURE;
-        }
-        #endif
+        // useSsl gate removed — the protocol no longer includes the
+        // SSL/cleartext preamble byte, so binaries compiled with or
+        // without CATCHCHALLENGER_SERVER_SSL no longer need to assert
+        // a matching server-properties.xml entry.
         if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
         {
             #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
@@ -649,13 +626,6 @@ int main(int argc, char *argv[])
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
-    char encodingBuff[1];
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    encodingBuff[0]=0x01;
-    #else
-    encodingBuff[0]=0x00;
-    #endif
-
     bool acceptSocketWarningShow=false;
     int numberOfConnectedClient=0;
     /* The event loop */
@@ -830,18 +800,11 @@ int main(int argc, char *argv[])
                                 client.setToDefault();
                                 epollClientList->remove(client);
                             }
-                            else
-                            {
-                                if(::write(infd,encodingBuff,sizeof(encodingBuff))!=sizeof(encodingBuff))
-                                {
-                                    std::cerr << "socket first byte write error" << std::endl;
-                                    client.disconnectClient();
-                                    client.setToDefault();
-                                    epollClientList->remove(client);
-                                }
-                            }
+                            // SSL preamble byte removed; the server no
+                            // longer writes a 0x00/0x01 sentinel — every
+                            // byte on the wire is protocol payload.
                             #ifdef PROTOCOLPARSINGDEBUG
-                            std::cout << "first write: " << infd << std::endl;
+                            std::cout << "client accepted: " << infd << std::endl;
                             #endif
                         }
                     }

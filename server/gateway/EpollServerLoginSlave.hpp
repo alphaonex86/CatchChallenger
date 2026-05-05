@@ -1,8 +1,6 @@
 #ifndef EPOLL_SERVER_LOGIN_MASTER_H
 #define EPOLL_SERVER_LOGIN_MASTER_H
 
-#ifndef CATCHCHALLENGER_SERVER_SSL
-
 #include "../epoll/EpollGenericServer.hpp"
 #include "../base/BaseServer/BaseServerLogin.hpp"
 #include "EpollClientLoginSlave.hpp"
@@ -43,7 +41,5 @@ private:
     char * server_port;
 };
 }
-
-#endif
 
 #endif // EPOLL_SERVER_H

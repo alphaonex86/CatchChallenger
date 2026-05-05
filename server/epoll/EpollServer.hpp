@@ -1,8 +1,6 @@
 #ifndef EPOLL_SERVER_H
 #define EPOLL_SERVER_H
 
-#ifndef CATCHCHALLENGER_SERVER_SSL
-
 #include "EpollGenericServer.hpp"
 #include "BaseServerEpoll.hpp"
 #include "../base/ServerStructures.hpp"
@@ -28,7 +26,5 @@ private:
     bool ready;
 };
 }
-
-#endif
 
 #endif // EPOLL_SERVER_H

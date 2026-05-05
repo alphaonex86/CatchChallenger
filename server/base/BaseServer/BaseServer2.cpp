@@ -205,7 +205,8 @@ NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master
     *serialBuffer >> normalServerSettings.proxy_port;
     *serialBuffer >> normalServerSettings.server_ip;
     *serialBuffer >> normalServerSettings.server_port;
-    *serialBuffer >> normalServerSettings.useSsl;
+    // useSsl was removed from NormalServerSettings; matches the
+    // BaseServer.cpp save() side that no longer writes it.
 
     setSettings(GlobalServerData::serverSettings);
 

@@ -1,49 +1,32 @@
-# server/epoll — catchchallenger-server-cli-epoll target (Phase 1) +
-# the source-list variable that game-server-alone (Phase 2) reuses.
+# server/epoll/CMakeLists.txt — catchchallenger-server-cli-epoll binary.
+#
+# Self-contained: opening this file in Qt Creator (or
+# `cmake -S server/epoll -B build/server-epoll`) configures and builds
+# exactly the epoll game server. Pulls in catchchallenger_general +
+# catchchallenger_server_base via add_subdirectory of the lib subdirs.
+#
+# server/epoll/filedb-converter/ has its own CMakeLists.txt that
+# produces the filedb-converter binary; this CMakeLists.txt does NOT
+# add_subdirectory(filedb-converter) — open that one directly to build it.
 
-# Sources from catchchallenger-server-epoll.pri minus the bits that
-# exclude_list in make-catchchallenger-server-cli-epoll.py drops.
-# Exposed in PARENT_SCOPE so server/game-server-alone/CMakeLists.txt
-# can pick it up (game-server-alone compiles them with a different
-# CLASS macro than this exec, so they have to be re-listed there).
-set(CATCHCHALLENGER_EPOLL_FILEDB_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollSocket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollClient.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollClientList.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollServer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollSslClient.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollSslServer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Epoll.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollTimer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollGenericServer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/EpollGenericSslServer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/BaseServerEpoll.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ServerPrivateVariablesEpoll.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ClientWithMapEpoll.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/main-epoll.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/main-epoll2.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer/TimerCityCapture.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer/TimerSendInsertMoveRemove.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer/TimerPositionSync.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer/TimerDdos.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer/TimerEvents.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer/TimeRangeEvent.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer/PlayerUpdaterEpoll.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timer/TimeRangeEventScan.cpp
-    PARENT_SCOPE
-)
+cmake_minimum_required(VERSION 3.20)
+project(catchchallenger_server_cli_epoll LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
+
+find_package(Threads REQUIRED)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 set(_filedb_sources
     EpollSocket.cpp
     EpollClient.cpp
     EpollClientList.cpp
     EpollServer.cpp
-    EpollSslClient.cpp
-    EpollSslServer.cpp
     Epoll.cpp
     EpollTimer.cpp
     EpollGenericServer.cpp
-    EpollGenericSslServer.cpp
     BaseServerEpoll.cpp
     ServerPrivateVariablesEpoll.cpp
     ClientWithMapEpoll.cpp
@@ -58,8 +41,6 @@ set(_filedb_sources
     timer/PlayerUpdaterEpoll.cpp
     timer/TimeRangeEventScan.cpp
 )
-
-find_package(Threads REQUIRED)
 
 add_executable(catchchallenger-server-cli-epoll ${_filedb_sources})
 
@@ -84,11 +65,35 @@ target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE
 if(CATCHCHALLENGER_CACHE_HPS)
     target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE CATCHCHALLENGER_CACHE_HPS)
 endif()
+# DB mode: default to file-based when no SQL backend was requested.
+# server/base headers (PreparedDBQuery.hpp, ServerStructures.hpp) `#error`
+# if no DB mode is picked. Standalone open in Qt Creator with no -D flags
+# should still produce a compilable binary; pin DB_FILE as the default.
+if(NOT CATCHCHALLENGER_DB_FILE
+   AND NOT CATCHCHALLENGER_DB_POSTGRESQL
+   AND NOT CATCHCHALLENGER_DB_MYSQL
+   AND NOT CATCHCHALLENGER_DB_SQLITE
+   AND NOT CATCHCHALLENGER_DB_BLACKHOLE)
+    set(CATCHCHALLENGER_DB_FILE ON)
+endif()
 if(CATCHCHALLENGER_DB_FILE)
     target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE CATCHCHALLENGER_DB_FILE)
 endif()
+if(CATCHCHALLENGER_DB_POSTGRESQL)
+    target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE CATCHCHALLENGER_DB_POSTGRESQL)
+endif()
+if(CATCHCHALLENGER_DB_MYSQL)
+    target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE CATCHCHALLENGER_DB_MYSQL)
+endif()
+if(CATCHCHALLENGER_DB_SQLITE)
+    target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE CATCHCHALLENGER_DB_SQLITE)
+endif()
 
-# Backend selection — these affect Epoll.cpp only.
+# Backend selection — these affect Epoll.cpp only. The three options
+# are mutually exclusive (Epoll.hpp #error's if more than one is set).
+if(CATCHCHALLENGER_SELECT)
+    target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE CATCHCHALLENGER_SELECT)
+endif()
 if(CATCHCHALLENGER_POLL)
     target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE CATCHCHALLENGER_POLL)
 endif()
@@ -98,8 +103,9 @@ if(CATCHCHALLENGER_IO_URING)
     target_link_libraries(catchchallenger-server-cli-epoll PRIVATE ${LIBURING_LIBRARY})
 endif()
 
-# zstd: external lib in the filedb build.
 if(EXTERNALLIBZSTD)
+    target_link_libraries(catchchallenger-server-cli-epoll PRIVATE ${ZSTD_LIBRARY})
+else()
     target_link_libraries(catchchallenger-server-cli-epoll PRIVATE ${ZSTD_LIBRARY})
 endif()
 

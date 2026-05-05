@@ -2,6 +2,7 @@
 
 using namespace CatchChallenger;
 
+#include <algorithm>
 #include <iostream>
 #include <cmath>
 #include <QRegularExpression>

@@ -16,6 +16,7 @@
 #include <fstream>
 #endif
 #include <sys/stat.h>
+#include <algorithm>
 #include <iostream>
 #include <chrono>
 

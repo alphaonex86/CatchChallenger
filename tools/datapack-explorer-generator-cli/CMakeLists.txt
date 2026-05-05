@@ -1,7 +1,15 @@
 # datapack-explorer-generator — generate static HTML pages summarising
-# the datapack content. Qt6 Core+Xml+Gui (no Widgets).
+# the datapack content. Self-contained, one binary. Qt6 Core+Xml+Gui.
+
+cmake_minimum_required(VERSION 3.20)
+project(datapack_explorer_generator LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Xml Gui REQUIRED)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/client/libqtcatchchallenger/libtiled.cmake)
 
 add_executable(datapack-explorer-generator
     main.cpp
@@ -21,12 +29,12 @@ add_executable(datapack-explorer-generator
     GeneratorIndex.cpp
     GeneratorStart.cpp
     GeneratorTree.cpp
-    ${CMAKE_SOURCE_DIR}/client/libcatchchallenger/DatapackChecksum.cpp
-    ${CMAKE_SOURCE_DIR}/client/libcatchchallenger/DatapackClientLoader.cpp
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger/Language.cpp
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger/QtDatapackClientLoader.cpp
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger/QtDatapackClientLoaderThread.cpp
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger/Settings.cpp
+    ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackChecksum.cpp
+    ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackClientLoader.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/Language.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/QtDatapackClientLoader.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/QtDatapackClientLoaderThread.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/Settings.cpp
 )
 
 target_compile_definitions(datapack-explorer-generator PRIVATE
@@ -39,8 +47,8 @@ target_compile_definitions(datapack-explorer-generator PRIVATE
 )
 
 target_include_directories(datapack-explorer-generator PRIVATE
-    ${CMAKE_SOURCE_DIR}/client/libcatchchallenger
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger
+    ${CC_REPO_ROOT}/client/libcatchchallenger
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger
 )
 
 set_target_properties(datapack-explorer-generator PROPERTIES AUTOMOC ON)

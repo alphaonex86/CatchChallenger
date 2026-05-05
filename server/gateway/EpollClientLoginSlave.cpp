@@ -9,11 +9,7 @@
 using namespace CatchChallenger;
 
 EpollClientLoginSlave::EpollClientLoginSlave(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
         ) :
         EpollClient(infd),
         ProtocolParsingInputOutput(

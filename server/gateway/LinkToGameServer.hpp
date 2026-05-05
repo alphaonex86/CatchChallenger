@@ -16,11 +16,7 @@ class LinkToGameServer : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToGameServer(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
             );
     ~LinkToGameServer();
     enum Stat : uint8_t
@@ -28,13 +24,11 @@ public:
         Unconnected=0,
         Connecting=1,
         WaitingProxy=2,
-        WaitingFirstSslHeader=3,
         WaitingProtocolHeader=4,
         WaitingLogin=5,
         WaitingToken=6,
         Reconnecting=7,
         ReconnectingWaitingProxy=8,
-        ReconnectingWaitingFirstSslHeader=9,
         ReconnectingWaitingProtocolHeader=10,
         WaitingCharacterSelection=11,
         ConnectedOnGameServer=12,
@@ -79,7 +73,6 @@ public:
     void sendProtocolHeaderGameServer();
     void sendDifferedA8Reply();
     void sendDiffered93OrACReply();
-    void readTheFirstSslHeader();
     void readTheProxyReply();
     bool disconnectClient();
     uint8_t freeQueryNumberToServer();

@@ -10,6 +10,13 @@ Phases:
      + XML change/add/delete detection after client connect
 """
 
+# Drop the .pyc cache for this process so import diagnostic / build_paths /
+# remote_build never lands a __pycache__/ dir in the source tree.  Set
+# before the first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
 import os, sys, signal, subprocess, threading, shutil, multiprocessing, time, glob as globmod, json, re
 from remote_build import (start_remote_builds, collect_remote_results,
                           REMOTE_SERVERS, REMOTE_NODES, node_runs, get_node,
@@ -18,6 +25,32 @@ from remote_build import (start_remote_builds, collect_remote_results,
                           cleanup_remote_node, SERVER_MAKE_SCRIPTS,
                           build_server_via_make)
 import diagnostic
+import build_paths
+from cmd_helpers import (clamp_local, assert_port_or_fail,
+                         assert_port_or_fail_with_remotes)
+from remote_build import all_enabled_exec_nodes
+
+
+def _host_port_from_args(args):
+    """Extract --host / --port from a flat client-arg list. Returns
+    (host, port) defaulting to ("localhost", 61917) when missing — that
+    matches the qmake-era qtcpu800x600 default and lets run_client
+    callers omit the explicit flags without breaking the port probe."""
+    host = "localhost"
+    port = 61917
+    idx = 0
+    while idx < len(args) - 1:
+        if args[idx] == "--host":
+            host = args[idx + 1]
+        elif args[idx] == "--port":
+            try:
+                port = int(args[idx + 1])
+            except (ValueError, TypeError):
+                pass
+        idx += 1
+    return host, port
+
+build_paths.ensure_root()
 
 DIAG = diagnostic.parse_diag_args()
 _DIAG_SUFFIX = diagnostic.build_dir_suffix(DIAG)
@@ -34,7 +67,14 @@ NPROC      = str(multiprocessing.cpu_count())
 
 SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
 SERVER_CLIEPO_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-cli-epoll.pro")
-SERVER_REF_BUILD   = os.path.join(ROOT, "server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
+# Reference build dir whose server-properties.xml is the patch source for
+# every per-test build below. After the qmake -> CMake migration the
+# directory is `testing-filedb` (this file's filedb_build also points at
+# it — see Phase A below), so use the same name here. Picking the old
+# qmake path silently broke setup_server_config(): src didn't exist, so
+# no XML patching happened and stale mainDatapackCode="official" leaked
+# into datapack-pkmn runs whose only maincodes are gen2/test.
+SERVER_REF_BUILD   = build_paths.build_path("server/epoll/build/testing-filedb")
 SERVER_BIN_NAME    = "catchchallenger-server-cli-epoll"
 
 CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
@@ -125,7 +165,8 @@ total_expected = [0]
 server_proc = None
 
 SCRIPT_NAME = os.path.basename(__file__)
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
+import test_config
 
 
 def load_failed_cases():
@@ -193,6 +234,11 @@ def log_fail(name, detail=""):
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
     print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    li = 0
+    _ctx = diagnostic.last_cmd_lines()
+    while li < len(_ctx):
+        print(_ctx[li])
+        li += 1
 
 
 # Flags tested as standalone single-flag combos rather than being part of
@@ -200,8 +246,8 @@ def log_fail(name, detail=""):
 # flag_combinations(), ALWAYS_ON_IN_COMBOS flags (that are also in the
 # target's optional list) are always added and ALWAYS_OFF_IN_COMBOS flags
 # are never added.
-ALWAYS_ON_IN_COMBOS  = ["CATCHCHALLENGER_EXTRA_CHECK"]
-ALWAYS_OFF_IN_COMBOS = ["CATCHCHALLENGER_NOAUDIO", "NOWEBSOCKET"]
+ALWAYS_ON_IN_COMBOS  = ["CATCHCHALLENGER_HARDENED"]
+ALWAYS_OFF_IN_COMBOS = ["CATCHCHALLENGER_NOAUDIO"]
 
 
 def flag_combinations(flags):
@@ -325,6 +371,81 @@ def set_map_visibility_minimize(build_dir, value):
     with open(xml_path, "w") as f:
         f.write(content)
     log_info(f'server-properties.xml minimize="{value}"')
+
+_TEST_SERVER_PROPERTIES_SEED = """<?xml version="1.0"?>
+<configuration>
+    <server-port value="{port}"/>
+    <automatic_account_creation value="true"/>
+    <master>
+        <external-server-port value="{port}"/>
+    </master>
+</configuration>
+"""
+
+
+def _seed_server_properties_if_missing(build_dir):
+    """When server-properties.xml doesn't exist yet (very first server
+    run on a fresh build dir), drop a minimal seed so subsequent regex
+    patches operate on a real file. NormalServerGlobal::checkSettingsFile
+    fills in every other field with its defaults but respects what we
+    pre-set, so the random-port branch never fires."""
+    xml = os.path.join(build_dir, "server-properties.xml")
+    if not os.path.exists(xml):
+        os.makedirs(build_dir, exist_ok=True)
+        with open(xml, "w") as f:
+            f.write(_TEST_SERVER_PROPERTIES_SEED.format(port=SERVER_PORT))
+
+
+def set_automatic_account_creation(build_dir, value):
+    """Flip <automatic_account_creation value="..."/> in server-properties.xml.
+    Test clients use --autologin which needs the server to auto-create the
+    account on first connect; the server's default is false (safe for
+    production), so every test that drives an autologin client must enable
+    this before starting the server, otherwise the server replies "Login
+    refused" and the client never reaches the map."""
+    _seed_server_properties_if_missing(build_dir)
+    xml_path = os.path.join(build_dir, "server-properties.xml")
+    if not os.path.exists(xml_path):
+        return
+    if os.path.islink(xml_path):
+        target = os.path.realpath(xml_path)
+        os.remove(xml_path)
+        shutil.copy2(target, xml_path)
+    with open(xml_path, "r") as f:
+        content = f.read()
+    content = re.sub(r'automatic_account_creation\s+value="[^"]*"',
+                     f'automatic_account_creation value="{value}"', content)
+    with open(xml_path, "w") as f:
+        f.write(content)
+    log_info(f'server-properties.xml automatic_account_creation="{value}"')
+
+
+def set_server_port(build_dir, port):
+    """Pin <server-port value="..."/> + <external-server-port> in
+    server-properties.xml. NormalServerGlobal::checkSettingsFile() picks
+    a RANDOM port (10000 + rand()%55535) the first time the server runs
+    against a fresh config, which means the test client / TCP probe can
+    never connect to a stable port. Force the configured test port
+    (config.json's `server_port`, 61917 by default) on every server
+    start so the probe + client both hit the same address as the bind."""
+    _seed_server_properties_if_missing(build_dir)
+    xml_path = os.path.join(build_dir, "server-properties.xml")
+    if not os.path.exists(xml_path):
+        return
+    if os.path.islink(xml_path):
+        target = os.path.realpath(xml_path)
+        os.remove(xml_path)
+        shutil.copy2(target, xml_path)
+    with open(xml_path, "r") as f:
+        content = f.read()
+    content = re.sub(r'(?<!external-)server-port\s+value="[^"]*"',
+                     f'server-port value="{port}"', content)
+    content = re.sub(r'external-server-port\s+value="[^"]*"',
+                     f'external-server-port value="{port}"', content)
+    with open(xml_path, "w") as f:
+        f.write(content)
+    log_info(f'server-properties.xml server-port={port}')
+
 
 def set_http_datapack_mirror(build_dir, value):
     xml_path = os.path.join(build_dir, "server-properties.xml")
@@ -498,6 +619,11 @@ def clear_client_bin_cache():
         log_info(f"cleared client binary cache: {CLIENT_CACHE_BIN}")
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
+    # clamp_local caps any caller-supplied timeout at 600s — matches the
+    # cmd_helpers.LOCAL_MAX_TIMEOUT policy. A returned (-1, "TIMEOUT…")
+    # tuple makes log_fail print "TIMEOUT" instead of a generic rc=-1.
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + list(args), cwd)
     try:
         p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -526,14 +652,21 @@ def build_project(pro_file, build_dir, label, compiler_spec="linux-g++",
     )
 
 def setup_server_datapack(build_dir, datapack_src, patch_db=False):
-    """Copy datapack and adapt server-properties.xml mainDatapackCode to match."""
+    """Symlink the pre-staged datapack into <build>/datapack and adapt
+    server-properties.xml mainDatapackCode to match. The source tree
+    was rsynced once at all.sh startup (see stage_datapacks.py /
+    CLAUDE.md "Datapack staging cache"), so per-test setup is now an
+    instant ln -s instead of a 5-15s shutil.copytree."""
+    import datapack_stage as _ds
+    staged = _ds.staged_local(datapack_src)
     dst = os.path.join(build_dir, "datapack")
-    if os.path.islink(dst):
+    if os.path.islink(dst) or os.path.isfile(dst):
         os.remove(dst)
     elif os.path.isdir(dst):
         shutil.rmtree(dst)
-    shutil.copytree(datapack_src, dst, ignore=shutil.ignore_patterns(".git"))
-    log_info(f"copied datapack from {datapack_src}")
+    os.makedirs(build_dir, exist_ok=True)
+    os.symlink(staged, dst)
+    log_info(f"symlinked datapack {dst} -> {staged} (src {datapack_src})")
     # adapt mainDatapackCode in server-properties.xml to first available maincode
     map_main = os.path.join(dst, "map", "main")
     if os.path.isdir(map_main):
@@ -585,27 +718,144 @@ def clear_database_filedb(build_dir):
         log_info("removed database/")
 
 
+_SQL_BACKEND_DIRS = {
+    "MySQL":      "mysql",
+    "PostgreSQL": "postgresql",
+    "SQLite":     "sqlite",
+}
+
+
+def wipe_via_sql(backend):
+    """Drop every table in db `catchchallenger` on localhost (default port)
+    and replay every .sql under server/databases/<backend>/. ONLY called
+    when an exec_node opts in via execute_sql=[...] in remote_nodes.json;
+    default test runs use the file-db backend exclusively and never call
+    this helper.
+
+    Uses the host-installed SQL CLI (mysql / psql / sqlite3). The exec
+    node operator is responsible for installing the daemon and creating
+    an empty `catchchallenger` DB; missing CLI = backend skipped, not
+    failed.
+
+    See CLAUDE.md "Database backends in testing*.py — file_db only on
+    host, SQL gated to remote_nodes.json"."""
+    sub = _SQL_BACKEND_DIRS.get(backend)
+    if sub is None:
+        log_info(f"wipe_via_sql: unknown backend {backend!r}")
+        return False
+    sql_dir = os.path.join(ROOT, "server", "databases", sub)
+    if not os.path.isdir(sql_dir):
+        log_info(f"wipe_via_sql: {sql_dir} missing")
+        return False
+    db = "catchchallenger"
+    # The DB and user `catchchallenger` are operator-managed (see
+    # CLAUDE.md "testingserver.py + execute_sql contract:
+    # pre-configured DBs only"). We only operate ON the data: drop
+    # every table, replay the schema. Never touch the daemon, never
+    # CREATE/DROP DATABASE, never CREATE USER. Auth is always
+    # localhost + default port + catchchallenger/catchchallenger.
+    SQL_USER = "catchchallenger"
+    SQL_PASS = "catchchallenger"
+    if backend == "PostgreSQL":
+        if not shutil.which("psql"):
+            log_info("wipe_via_sql: psql not installed, skipping PostgreSQL")
+            return False
+        env = os.environ.copy()
+        env["PGPASSWORD"] = SQL_PASS
+        # List → drop loop in a single PL/pgSQL block so we avoid name
+        # quoting / case issues on the python side.
+        drop_sql = (
+            "DO $$ "
+            "DECLARE r RECORD; "
+            "BEGIN "
+            "FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname=current_schema()) LOOP "
+            "  EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE'; "
+            "END LOOP; "
+            "END $$;")
+        psql_base = ["psql", "-h", "localhost", "-U", SQL_USER, "-d", db]
+        try:
+            subprocess.run(psql_base + ["-c", drop_sql], env=env,
+                           timeout=30, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT)
+            for fn in sorted(os.listdir(sql_dir)):
+                if fn.endswith(".sql"):
+                    subprocess.run(psql_base + ["-f", os.path.join(sql_dir, fn)],
+                                   env=env, timeout=60,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
+        except subprocess.TimeoutExpired:
+            log_info("wipe_via_sql: PostgreSQL operation timed out")
+            return False
+        log_info(f"wipe_via_sql: PostgreSQL `{db}` tables dropped + reloaded from {sql_dir}")
+        return True
+    if backend == "MySQL":
+        if not shutil.which("mysql"):
+            log_info("wipe_via_sql: mysql not installed, skipping MySQL")
+            return False
+        # MySQL: use information_schema to enumerate, generate a single
+        # DROP TABLE statement covering every table in the DB. SET
+        # FOREIGN_KEY_CHECKS=0 lets the drops succeed regardless of
+        # FK ordering; the value is connection-local so it does not
+        # leak after the wipe.
+        drop_script = (
+            "SET FOREIGN_KEY_CHECKS=0; "
+            f"SET GROUP_CONCAT_MAX_LEN=1048576; "
+            f"SELECT IFNULL(GROUP_CONCAT('`',table_name,'`'),'') "
+            f"INTO @tbls FROM information_schema.tables "
+            f"WHERE table_schema='{db}'; "
+            "SET @sql := IF(@tbls='','SELECT 1', CONCAT('DROP TABLE IF EXISTS ', @tbls)); "
+            "PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt; "
+            "SET FOREIGN_KEY_CHECKS=1;")
+        mysql_base = ["mysql", "-h", "localhost", "-u", SQL_USER,
+                      f"-p{SQL_PASS}", db]
+        try:
+            subprocess.run(mysql_base + ["-e", drop_script],
+                           timeout=30, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT)
+            for fn in sorted(os.listdir(sql_dir)):
+                if fn.endswith(".sql"):
+                    with open(os.path.join(sql_dir, fn), "rb") as _src:
+                        subprocess.run(mysql_base, stdin=_src,
+                                       timeout=60, stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT)
+        except subprocess.TimeoutExpired:
+            log_info("wipe_via_sql: MySQL operation timed out")
+            return False
+        log_info(f"wipe_via_sql: MySQL `{db}` tables dropped + reloaded from {sql_dir}")
+        return True
+    if backend == "SQLite":
+        if not shutil.which("sqlite3"):
+            log_info("wipe_via_sql: sqlite3 not installed, skipping SQLite")
+            return False
+        # SQLite has no daemon and no auth. The harness uses a single
+        # fixed file at <tmpfs_root>/catchchallenger.sqlite3; the
+        # operator just needs `sqlite3` on $PATH.
+        db_file = os.path.join(test_config.TMPFS_ROOT, "catchchallenger.sqlite3")
+        if os.path.exists(db_file):
+            run_cmd(["bash", "-c",
+                     f"sqlite3 {db_file} \""
+                     f"SELECT 'DROP TABLE IF EXISTS \\\"' || name || '\\\";' "
+                     f"FROM sqlite_master WHERE type='table'\" "
+                     f"| sqlite3 {db_file}"],
+                    ROOT, timeout=30)
+        for fn in sorted(os.listdir(sql_dir)):
+            if fn.endswith(".sql"):
+                run_cmd(["bash", "-c",
+                         f"sqlite3 {db_file} < {os.path.join(sql_dir, fn)}"],
+                        ROOT, timeout=60)
+        log_info(f"wipe_via_sql: SQLite `{db_file}` tables dropped + reloaded from {sql_dir}")
+        return True
+    log_info(f"wipe_via_sql: unsupported backend {backend!r}")
+    return False
+
+
+# Compatibility alias for the legacy direct-postgres path. The name is
+# preserved so any caller still in flight resolves, but it now no-ops
+# unless the caller is inside an opt-in execute_sql=[PostgreSQL] block;
+# otherwise default runs go through the file-db only flow.
 def clear_database_postgresql():
-    """Drop all tables and re-create from SQL schema files."""
-    # drop all tables
-    rc, out = run_cmd(
-        ["psql", PG_DB, PG_USER, "-c",
-         "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"],
-        ROOT, timeout=30)
-    if rc != 0:
-        log_info(f"warning: DROP SCHEMA failed: {out.strip()}")
-    # re-create from SQL files in order: login, common, server
-    for sql_file in ("catchchallenger-postgresql-login.sql",
-                     "catchchallenger-postgresql-common.sql",
-                     "catchchallenger-postgresql-server.sql"):
-        path = os.path.join(PG_SQL_DIR, sql_file)
-        if not os.path.isfile(path):
-            log_info(f"warning: {path} not found")
-            continue
-        rc, out = run_cmd(["psql", PG_DB, PG_USER, "-f", path], ROOT, timeout=30)
-        if rc != 0:
-            log_info(f"warning: {sql_file}: {out.strip()[-200:]}")
-    log_info("PostgreSQL tables re-created")
+    log_info("clear_database_postgresql: skipped (file-db default; opt in via "
+             "execute_sql in remote_nodes.json)")
 
 def remove_cache(build_dir):
     cache = os.path.join(build_dir, "datapack-cache.bin")
@@ -667,28 +917,40 @@ def wait_for_port_free(port=SERVER_PORT, timeout=10):
     return False
 
 
+_server_output_lines = []
+
 def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     wait_for_port_free()
-    global server_proc
+    global server_proc, _server_output_lines
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail("start server", f"binary not found: {binary}")
         return None
+    # Test clients all use --autologin (auto-create + auto-login on first
+    # connect). The server's default is automatic_account_creation=false
+    # (safe for production); flip it on right before launch so the test
+    # client isn't refused with "Login failed: account does not exist".
+    set_automatic_account_creation(build_dir, "true")
+    # Pin the listen port. checkSettingsFile picks a random port on
+    # first run; the test infra and TCP probe expect a stable port.
+    set_server_port(build_dir, SERVER_PORT)
     log_info(f"starting server: {binary}")
     env = os.environ.copy()
     for k, v in diagnostic.runtime_env(DIAG).items():
         env[k] = v
     wrapper = diagnostic.runtime_wrapper(DIAG)
+    srv_args = NICE_PREFIX + wrapper + [binary]
+    diagnostic.record_cmd(srv_args, build_dir)
     server_proc = subprocess.Popen(
-        NICE_PREFIX + wrapper + [binary], cwd=build_dir,
+        srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
     ready = threading.Event()
-    output_lines = []
+    _server_output_lines = []
     def reader():
         for raw in iter(server_proc.stdout.readline, b""):
             line = raw.decode(errors="replace").rstrip("\n")
-            output_lines.append(line)
+            _server_output_lines.append(line)
             if "correctly bind:" in line:
                 ready.set()
     t = threading.Thread(target=reader, daemon=True)
@@ -697,10 +959,22 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
         log_pass("server start", "correctly bind: detected")
         return server_proc
     log_fail("server start", "timeout waiting for 'correctly bind:'")
-    for l in output_lines[-30:]:
+    for l in _server_output_lines[-30:]:
         print(f"  | {l}")
     stop_server()
     return None
+
+
+def dump_server_output(label):
+    """Print last 30 lines of the server's stdout — used after a client
+    `stateChanged(1)→0` drop to surface the kick reason
+    (`characterSelectionIsWrong`, profile mismatch, hexa-parse fail,
+    etc.) that's emitted only on the SERVER side."""
+    print(f"  | -- server output (last 30 lines): --")
+    li = max(0, len(_server_output_lines) - 30)
+    while li < len(_server_output_lines):
+        print(f"  | SRV: {_server_output_lines[li]}")
+        li += 1
 
 def stop_server():
     global server_proc
@@ -718,41 +992,146 @@ def stop_server():
 
 def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
                success_marker=None):
+    """Run a client and watch its stdout/stderr in real time. Returns
+    (ok, output).
+
+    Early-FAIL triggers (kill the client immediately, no need to wait
+    out the timeout):
+      * "Connection refused by the server" — server actively rejected.
+      * stateChanged(0) AFTER stateChanged(1) — the client briefly
+        connected (or tried) and then dropped before reaching the map,
+        which always means the test will fail; killing now saves
+        ~30-120s of pointless wall time.
+
+    Success marker (if given) — a line containing it lets the run end
+    early as PASS. Without a marker, exit-code-0 is success.
+    """
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail(label, "binary not found")
+        return False, ""
+    # TCP probe: server reports "correctly bind: detected" but bind only
+    # proves listen() ran. Local-only probe — see CLAUDE.md "Network —
+    # test box ↔ remote / execution nodes": the firewall blocks NEW
+    # connections from any 2803:1920::2:/112 node back to the test box,
+    # so probing from an exec_node would always FAIL by design when the
+    # server is running on the test box (which is the case here).
+    host, port = _host_port_from_args(args)
+    if not assert_port_or_fail(host, port, log_fail, label):
         return False, ""
     log_info(f"running: {bin_name} {' '.join(args)}")
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
     for k, v in diagnostic.runtime_env(DIAG).items():
         env[k] = v
-    timeout = diagnostic.scale_timeout(DIAG, timeout)
+    timeout = clamp_local(diagnostic.scale_timeout(DIAG, timeout))
     wrapper = diagnostic.runtime_wrapper(DIAG)
     if wrapper:
         run_args = wrapper + [binary] + args
     else:
         run_args = [binary] + args
-    try:
-        p = subprocess.run(NICE_PREFIX + run_args, cwd=build_dir, timeout=timeout,
-                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
-        out = p.stdout.decode(errors="replace")
-        if p.returncode == 0:
-            log_pass(label, "exit code 0")
-            return True, out
-        log_fail(label, f"exit code {p.returncode}")
-        for line in out.splitlines()[-40:]:
-            print(f"  | {line}")
-        return False, out
-    except subprocess.TimeoutExpired as e:
-        out = e.stdout.decode(errors="replace") if e.stdout else ""
-        if success_marker and success_marker in out:
-            log_pass(label, f"timeout but connected (found '{success_marker}')")
-            return True, out
+    diagnostic.record_cmd(NICE_PREFIX + run_args, build_dir)
+    proc = subprocess.Popen(
+        NICE_PREFIX + run_args, cwd=build_dir,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        preexec_fn=os.setsid)
+    output_lines = []
+    done = threading.Event()
+    # `outcome` is set by the reader thread to one of:
+    #   ("pass", marker_string)
+    #   ("fail", reason_string)
+    # (None) means the loop ended without hitting any pattern — falls
+    # back to exit-code-based judgement after the process drains.
+    outcome = [None]
+    seen_state1 = [False]
+
+    def reader():
+        for raw in iter(proc.stdout.readline, b""):
+            line = raw.decode(errors="replace").rstrip("\n")
+            output_lines.append(line)
+            # Early PASS: success marker hit
+            if success_marker and success_marker in line:
+                outcome[0] = ("pass", success_marker)
+                done.set()
+                return
+            # Early FAIL: explicit refusal message (qtcpu800x600 prints
+            # via qWarning; qtopengl via ScreenTransition::errorString).
+            if "Connection refused by the server" in line:
+                outcome[0] = ("fail", "Connection refused by the server")
+                done.set()
+                return
+            # Track stateChanged(1) → stateChanged(0) transitions: client
+            # opened socket then dropped before reaching the map, which
+            # is always a FAIL. Match Api_protocol_Qt::stateChanged(N)
+            # and MainWindow::stateChanged(N) — both emit the same shape.
+            if "stateChanged(1)" in line:
+                seen_state1[0] = True
+            elif seen_state1[0] and "stateChanged(0)" in line:
+                outcome[0] = (
+                    "fail",
+                    "stateChanged(0) after stateChanged(1) — "
+                    "client connected then dropped before map")
+                done.set()
+                return
+        done.set()  # process exited on its own; main thread judges via rc
+
+    t = threading.Thread(target=reader, daemon=True)
+    t.start()
+    triggered = done.wait(timeout=timeout)
+    out = "\n".join(output_lines)
+
+    def _kill():
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass
+
+    if not triggered:
+        _kill()
         log_fail(label, f"timeout after {timeout}s")
-        for line in out.splitlines()[-20:]:
+        for line in output_lines[-20:]:
             print(f"  | {line}")
         return False, out
+
+    if outcome[0] is not None:
+        kind, detail = outcome[0]
+        # Always kill the proc — even on success_marker we don't need to
+        # wait for clean shutdown; --closewhenonmap usually exits within
+        # a second but a hung post-success exit shouldn't block us.
+        _kill()
+        if kind == "pass":
+            log_pass(label, f"early pass ({detail})")
+            return True, out
+        log_fail(label, detail)
+        for line in output_lines[-20:]:
+            print(f"  | {line}")
+        # Surface the SERVER's view too — for "client connected then
+        # dropped" the kick reason (characterSelectionIsWrong / profile
+        # mismatch / hexa-parse fail) is only logged on the server side.
+        if "client connected then dropped" in detail:
+            dump_server_output(label)
+        return False, out
+
+    # Reader returned without a verdict — process exited on its own.
+    rc = proc.wait()
+    if rc == 0:
+        log_pass(label, "exit code 0")
+        return True, out
+    log_fail(label, f"exit code {rc}")
+    for line in output_lines[-40:]:
+        print(f"  | {line}")
+    return False, out
 
 def client_connect(client_build, label):
     """Shorthand: connect qtcpu800x600 to server."""
@@ -770,12 +1149,21 @@ def test_server_cache_cycle(server_pro, build_dir, server_label, client_build,
                             is_filedb, patch_db=False):
     tag = f"[{server_label}]"
 
+    # Both back-ends keep some state on disk (filedb:
+    # <build_dir>/database/, postgres: catchchallenger DB) AND cli-epoll
+    # additionally serialises per-character map state on the local
+    # filesystem via Client::serialize/parse, so a maincode switch
+    # leaves stale map_file_database_id values in BOTH stores. Clear
+    # both back-ends on every phase boundary; whichever we're not
+    # actually using is a cheap no-op.
+    def _wipe_state():
+        clear_database_filedb(build_dir)
+        if not is_filedb:
+            clear_database_postgresql()
+
     # 1. empty DB + no cache
     log_info(f"{tag} phase 1: empty database, no cache")
-    if is_filedb:
-        clear_database_filedb(build_dir)
-    else:
-        clear_database_postgresql()
+    _wipe_state()
     remove_cache(build_dir)
     set_http_datapack_mirror(build_dir, "")
     srv = start_server(build_dir)
@@ -793,8 +1181,7 @@ def test_server_cache_cycle(server_pro, build_dir, server_label, client_build,
                      f"{server_label} (NOXML off)", clean_first=True):
         setup_server_config(build_dir, patch_db=patch_db)
         generate_cache(build_dir)
-        if not is_filedb:
-            clear_database_postgresql()
+        _wipe_state()
         set_http_datapack_mirror(build_dir, "")
         srv = start_server(build_dir)
         if srv:
@@ -808,10 +1195,7 @@ def test_server_cache_cycle(server_pro, build_dir, server_label, client_build,
                      extra_defines=["CATCHCHALLENGER_NOXML"],
                      clean_first=True):
         setup_server_config(build_dir, patch_db=patch_db)
-        if is_filedb:
-            clear_database_filedb(build_dir)
-        else:
-            clear_database_postgresql()
+        _wipe_state()
         set_http_datapack_mirror(build_dir, "")
         sync_cache_mtime(build_dir)
         srv = start_server(build_dir)
@@ -848,92 +1232,160 @@ def test_xml_change_detection(build_dir, client_build):
     if not os.path.isdir(server_dp):
         log_fail("xml change", "no server datapack")
         return
+    # The XML-change detection test MUTATES files inside server_dp
+    # (append-on-modify, create-new, delete). server_dp is normally a
+    # symlink to the shared staged datapack at <LOCAL_CACHE_ROOT>/<id>/,
+    # so mutating it would corrupt the cache for every subsequent test
+    # (see CLAUDE.md "When you must NOT symlink").
+    #
+    # Hardening invariant: regardless of what shape server_dp is in on
+    # entry (symlink, real dir, missing, partial), we ALWAYS materialise
+    # a fresh private copy at <build_dir>/datapack-private and re-point
+    # server_dp at it. The private copy lives OUTSIDE the staged cache
+    # tree, so an os.remove() / open(..,"a") / etc. path inside this test
+    # cannot reach the cache via symlink resolution. The finally block
+    # restores server_dp to the original staged symlink. Even if the
+    # interpreter is killed mid-test, the cache is untouched because we
+    # never had a writable path into it.
+    private_dir = os.path.join(build_dir, "datapack-private")
+    # always start from a clean private copy of the staged source
+    if os.path.islink(private_dir) or os.path.isfile(private_dir):
+        os.remove(private_dir)
+    elif os.path.isdir(private_dir):
+        shutil.rmtree(private_dir)
+    target = os.path.realpath(server_dp)
+    log_info(f"xml change: building private copy at {private_dir} (from {target})")
+    shutil.copytree(target, private_dir, ignore=shutil.ignore_patterns(".git"))
+    # repoint server_dp at the private copy
+    if os.path.islink(server_dp) or os.path.isfile(server_dp):
+        os.remove(server_dp)
+    elif os.path.isdir(server_dp):
+        shutil.rmtree(server_dp)
+    os.symlink(private_dir, server_dp)
 
-    # 1. initial connect to establish baseline
-    clear_database_filedb(build_dir)
-    remove_cache(build_dir)
-    set_http_datapack_mirror(build_dir, "")
-    srv = start_server(build_dir)
-    if not srv:
-        return
-    client_connect(client_build, "xml change: baseline connect")
-    stop_server()
+    try:
+        # 1. initial connect to establish baseline
+        clear_database_filedb(build_dir)
+        remove_cache(build_dir)
+        set_http_datapack_mirror(build_dir, "")
+        srv = start_server(build_dir)
+        if not srv:
+            return
+        client_connect(client_build, "xml change: baseline connect")
+        stop_server()
 
-    cache_dir = find_client_cache_dir()
-    if not cache_dir:
-        log_fail("xml change", "client cache dir not found")
-        return
+        cache_dir = find_client_cache_dir()
+        if not cache_dir:
+            log_fail("xml change", "client cache dir not found")
+            return
 
-    # pick an existing xml to modify
-    xml_files = globmod.glob(os.path.join(server_dp, "**", "*.xml"), recursive=True)
-    xml_files = [f for f in xml_files if os.path.isfile(f)]
-    if not xml_files:
-        log_fail("xml change", "no xml files in server datapack")
-        return
+        # Pick deterministic, NON-CRITICAL xml files to mutate. Earlier
+        # versions of this test grabbed `xml_files[0]` and `xml_files[1]`
+        # from an unsorted glob; depending on filesystem order that
+        # often deleted `crafting/recipes.xml`, `monsters/skill.xml`,
+        # or `items/items.xml`, which makes
+        # `BaseServer::preload_finish()` (HARDENED build) abort with
+        # "CommonDatapack::commonDatapack.crafingRecipesMaxId==0".
+        # The point of this test is to exercise mod/add/delete sync,
+        # NOT to break the server's preload sanity checks — pick
+        # files we know aren't required for preload.
+        #   modify: informations.xml — datapack version manifest, the
+        #     server reads it but missing/changed content does not
+        #     trip the HARDENED asserts.
+        #   delete: a single quest text file — quest text is loaded
+        #     per-quest and the server tolerates it being missing
+        #     (logs a warning, skips that quest's narrative). Pick the
+        #     LAST one alphabetically so the chosen path is stable
+        #     across both maincodes.
+        target_xml = os.path.join(server_dp, "informations.xml")
+        if not os.path.isfile(target_xml):
+            log_fail("xml change", "informations.xml not in server datapack")
+            return
+        rel_path = "informations.xml"
+        client_file = os.path.join(cache_dir, rel_path)
 
-    target_xml = xml_files[0]
-    rel_path = os.path.relpath(target_xml, server_dp)
-    client_file = os.path.join(cache_dir, rel_path)
+        # 2. modify: append a comment to the xml
+        log_info(f"modifying: {rel_path}")
+        with open(target_xml, "a") as f:
+            f.write("\n<!-- test-modification -->\n")
 
-    # 2. modify: append a comment to the xml
-    log_info(f"modifying: {rel_path}")
-    with open(target_xml, "a") as f:
-        f.write("\n<!-- test-modification -->\n")
+        # 3. add: create a new xml
+        added_xml = os.path.join(server_dp, "test_added_file.xml")
+        with open(added_xml, "w") as f:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n<test>added</test>\n')
+        log_info("added: test_added_file.xml")
 
-    # 3. add: create a new xml
-    added_xml = os.path.join(server_dp, "test_added_file.xml")
-    with open(added_xml, "w") as f:
-        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<test>added</test>\n')
-    log_info("added: test_added_file.xml")
+        # 4. delete: a known-noncritical quest text file.
+        deleted_rel = None
+        quest_texts = sorted(globmod.glob(
+            os.path.join(server_dp, "map", "main", "*", "quests", "*", "text.xml")))
+        if quest_texts:
+            deleted_xml = quest_texts[-1]
+            deleted_rel = os.path.relpath(deleted_xml, server_dp)
+            os.remove(deleted_xml)
+            log_info(f"deleted: {deleted_rel}")
 
-    # 4. delete: pick a second xml if available
-    deleted_rel = None
-    if len(xml_files) > 1:
-        deleted_xml = xml_files[1]
-        deleted_rel = os.path.relpath(deleted_xml, server_dp)
-        os.remove(deleted_xml)
-        log_info(f"deleted: {deleted_rel}")
+        # 5. reconnect client
+        clear_database_filedb(build_dir)
+        remove_cache(build_dir)
+        set_http_datapack_mirror(build_dir, "")
+        srv = start_server(build_dir)
+        if not srv:
+            return
+        client_connect(client_build, "xml change: reconnect after changes")
+        stop_server()
 
-    # 5. reconnect client
-    clear_database_filedb(build_dir)
-    remove_cache(build_dir)
-    set_http_datapack_mirror(build_dir, "")
-    srv = start_server(build_dir)
-    if not srv:
-        return
-    client_connect(client_build, "xml change: reconnect after changes")
-    stop_server()
-
-    # 6. verify changes in client cache
-    # check modified file has the marker
-    if os.path.isfile(client_file):
-        with open(client_file, "r") as f:
-            content = f.read()
-        if "test-modification" in content:
-            log_pass("xml change: modified file synced")
+        # 6. verify changes in client cache
+        # check modified file has the marker
+        if os.path.isfile(client_file):
+            with open(client_file, "r") as f:
+                content = f.read()
+            if "test-modification" in content:
+                log_pass("xml change: modified file synced")
+            else:
+                log_fail("xml change: modified file synced",
+                         "marker not found in client cache")
         else:
             log_fail("xml change: modified file synced",
-                     "marker not found in client cache")
-    else:
-        log_fail("xml change: modified file synced",
-                 f"file not in client cache: {rel_path}")
+                     f"file not in client cache: {rel_path}")
 
-    # check added file
-    client_added = os.path.join(cache_dir, "test_added_file.xml")
-    if os.path.isfile(client_added):
-        log_pass("xml change: added file synced")
-    else:
-        log_fail("xml change: added file synced",
-                 "test_added_file.xml not in client cache")
-
-    # check deleted file removed from client
-    if deleted_rel:
-        client_deleted = os.path.join(cache_dir, deleted_rel)
-        if not os.path.isfile(client_deleted):
-            log_pass("xml change: deleted file removed")
+        # check added file
+        client_added = os.path.join(cache_dir, "test_added_file.xml")
+        if os.path.isfile(client_added):
+            log_pass("xml change: added file synced")
         else:
-            log_fail("xml change: deleted file removed",
-                     f"{deleted_rel} still in client cache")
+            log_fail("xml change: added file synced",
+                     "test_added_file.xml not in client cache")
+
+        # check deleted file removed from client
+        if deleted_rel:
+            client_deleted = os.path.join(cache_dir, deleted_rel)
+            if not os.path.isfile(client_deleted):
+                log_pass("xml change: deleted file removed")
+            else:
+                log_fail("xml change: deleted file removed",
+                         f"{deleted_rel} still in client cache")
+    finally:
+        # Always restore the datapack symlink to the shared staged cache,
+        # even on early return / exception. Drop the private copy too —
+        # it was mutated and downstream tests might pick it up if we
+        # left it behind.
+        try:
+            if os.path.islink(server_dp) or os.path.isfile(server_dp):
+                os.remove(server_dp)
+            elif os.path.isdir(server_dp):
+                shutil.rmtree(server_dp)
+            if DATAPACK_SOURCES:
+                import datapack_stage as _ds
+                last_src = DATAPACK_SOURCES[-1][0]
+                if os.path.isdir(last_src):
+                    staged = _ds.staged_local(last_src)
+                    os.symlink(staged, server_dp)
+                    log_info(f"xml change: restored server datapack symlink → {staged}")
+            if os.path.isdir(private_dir):
+                shutil.rmtree(private_dir, ignore_errors=True)
+        except Exception as e:
+            log_info(f"xml change: cleanup error: {e}")
 
 
 def check_mirror_empty(label, client_out):
@@ -1149,7 +1601,7 @@ def main():
     while ti < len(SERVER_TARGETS):
         pro_rel, target_name, build_base_rel, opt_flags = SERVER_TARGETS[ti]
         pro_path = os.path.join(ROOT, pro_rel)
-        build_base = os.path.join(ROOT, build_base_rel)
+        build_base = build_paths.build_path(build_base_rel)
         combos = flag_combinations(opt_flags)
         n_combos = len(CXX_VERSIONS) * len(COMPILERS) * len(combos)
         log_info(f"{target_name}: {n_combos} combinations "
@@ -1194,7 +1646,7 @@ def main():
         if pro_rel not in SERVER_MAKE_SCRIPTS:
             ti += 1
             continue
-        build_base = os.path.join(ROOT, build_base_rel)
+        build_base = build_paths.build_path(build_base_rel)
         combos = flag_combinations(opt_flags)
         ci = 0
         while ci < len(COMPILERS):
@@ -1243,9 +1695,9 @@ def main():
     # Phases A–D: functional tests (use default gcc builds)
     # ═══════════════════════════════════════════════════════════════
 
-    filedb_build = os.path.join(ROOT, "server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
-    cliepo_build = os.path.join(ROOT, "server/epoll/build/testing-cli-epoll" + _DIAG_SUFFIX)
-    client_build = os.path.join(ROOT, "client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
+    filedb_build = build_paths.build_path("server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
+    cliepo_build = build_paths.build_path("server/epoll/build/testing-cli-epoll" + _DIAG_SUFFIX)
+    client_build = build_paths.build_path("client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
 
     # build client once
     if not build_project(CLIENT_CPU_PRO, client_build, "qtcpu800x600"):
@@ -1281,27 +1733,45 @@ def main():
                                 "filedb", client_build, is_filedb=True)
 
     # ── Phase A2: server-filedb alternative IO backends ─────────────
-    # Build server-filedb with CATCHCHALLENGER_POLL (poll(2)) and again
-    # with CATCHCHALLENGER_IO_URING (liburing) — two flags that swap the
-    # epoll(7) IO backend in server/epoll/Epoll.cpp. Each backend gets
-    # one full client run that connects, logs in, and walks onto the
-    # map. The two flags are mutually exclusive and are wired via
-    # CONFIG+= in catchchallenger-server-epoll.pri (io_uring also pulls
-    # in -luring), so we pass them through extra_qmake_args.
-    print(f"\n{C_CYAN}--- Phase A2: server-filedb IO backends (poll, io_uring) ---{C_RESET}\n")
+    # Build server-filedb against each of the three IO multiplexers
+    # supported by server/epoll/Epoll.cpp:
+    #   * select(2)  — most portable, FD_SETSIZE-bound; targets old hardware
+    #   * epoll(7)   — Linux native, default backend (no flag = empty CONFIG+)
+    #   * io_uring   — kernel >=5.13, async via liburing
+    # Each backend gets one full client run that connects, logs in, and
+    # walks onto the map. The three flags are mutually exclusive (the
+    # root CMakeLists / Epoll.hpp #error if two are set together) and
+    # are wired via CONFIG+= in catchchallenger-server-epoll.pri (the
+    # io_uring path also pulls in -luring), so we pass them through
+    # extra_qmake_args. The "epoll" entry passes "" to keep the matrix
+    # symmetrical; build_project() ignores empty extra_qmake_args.
+    print(f"\n{C_CYAN}--- Phase A2: server-filedb IO backends (select, epoll, io_uring) ---{C_RESET}\n")
+    # IO_URING defaults ON on Linux (root CMakeLists.txt), so the
+    # "epoll" matrix entry must explicitly disable it via the synthetic
+    # `catchchallenger_force_epoll` CONFIG flag — empty extra_args
+    # would silently pick the default (io_uring) and hide the epoll
+    # path from coverage. The select/iouring entries set their own
+    # backend ON; the helper turns the others OFF for them.
     backends = [
-        ("poll",    "CONFIG+=catchchallenger_poll"),
+        ("select",  "CONFIG+=catchchallenger_select"),
+        ("epoll",   "CONFIG+=catchchallenger_force_epoll"),
         ("iouring", "CONFIG+=catchchallenger_io_uring"),
     ]
     bi = 0
     while bi < len(backends):
         backend_name, qarg = backends[bi]
-        backend_build = os.path.join(ROOT,
+        backend_build = build_paths.build_path(
             "server/epoll/build/testing-filedb-" + backend_name + _DIAG_SUFFIX)
         print(f"\n{C_CYAN}  -- server-filedb backend: {backend_name} --{C_RESET}\n")
+        # Empty qarg (e.g. the "epoll" default backend) means no extra
+        # CONFIG+= flag — the matrix entry is just "build the default
+        # backend". Pass an empty list rather than [""] so build_project
+        # doesn't end up with a stray empty argv element on the qmake/cmake
+        # command line.
+        extra_args = [qarg] if qarg else []
         if build_project(SERVER_FILEDB_PRO, backend_build,
                          "server-filedb " + backend_name,
-                         extra_qmake_args=[qarg]):
+                         extra_qmake_args=extra_args):
             dp_src = DATAPACK_SOURCES[0][0] if DATAPACK_SOURCES else None
             if dp_src is not None and os.path.isdir(dp_src):
                 setup_server_datapack(backend_build, dp_src)
@@ -1325,8 +1795,20 @@ def main():
         bi += 1
 
     # ── Phase B: server-cli-epoll (PostgreSQL) ──────────────────────
-    print(f"\n{C_CYAN}--- Phase B: server-cli-epoll ---{C_RESET}\n")
-    if build_project(SERVER_CLIEPO_PRO, cliepo_build, "server-cli-epoll"):
+    # Gated on an opt-in `execute_sql` containing "PostgreSQL" somewhere
+    # in remote_nodes.json — see CLAUDE.md "Database backends in
+    # testing*.py — file_db only on host, SQL gated to remote_nodes.json".
+    # No execute_sql opt-in anywhere → skip the whole phase. The default
+    # all.sh run on a clean checkout does not require a running
+    # PostgreSQL daemon.
+    _need_postgresql = any(
+        "PostgreSQL" in (en.get("execute_sql") or [])
+        for n in REMOTE_NODES
+        for en in (n.get("execution_nodes") or []))
+    if not _need_postgresql:
+        log_info("Phase B: skipped — no execute_sql=[PostgreSQL] opt-in "
+                 "in remote_nodes.json (file-db default)")
+    elif build_project(SERVER_CLIEPO_PRO, cliepo_build, "server-cli-epoll"):
         for dp_index, dp_path in enumerate(DATAPACK_SOURCES):
             dp_src, dp_name = dp_path
             setup_server_datapack(cliepo_build, dp_src, patch_db=True)
@@ -1340,7 +1822,20 @@ def main():
             for mc in maincodes:
                 print(f"\n{C_CYAN}  -- cli-epoll {dp_name} maincode={mc} --{C_RESET}\n")
                 setup_server_config(cliepo_build, maincode=mc, patch_db=True)
-                clear_database_postgresql()
+                # Wipe the PostgreSQL backend AND the file-db side; this
+                # whole branch only runs when execute_sql=[PostgreSQL]
+                # opt-in is set on some exec_node.
+                wipe_via_sql("PostgreSQL")
+                # cli-epoll keeps player state on the filesystem too
+                # (server/base/Client.cpp's serialise/parse path writes
+                # under <build_dir>/database/). When we switch
+                # mainDatapackCode the cached map_file_database_ids no
+                # longer point at valid entries in the new maincode's
+                # dictionary; the server protected itself by kicking
+                # the client at startup before this fix landed. Clear
+                # the filedb tree alongside postgres so each
+                # (datapack, maincode) starts from a truly empty state.
+                clear_database_filedb(cliepo_build)
                 set_http_datapack_mirror(cliepo_build, "")
                 set_map_visibility_minimize(cliepo_build, "network")
                 srv = start_server(cliepo_build)
@@ -1399,8 +1894,14 @@ def main():
         print(f"\n{C_CYAN}  -- Remote server: {label} ({server_addr}) --{C_RESET}\n")
 
         remote_build_root = f"{remote_dir}/build-remote{_DIAG_SUFFIX}"
-        remote_filedb_bin = f"{remote_build_root}/catchchallenger-server-filedb/catchchallenger-server-cli-epoll"
-        remote_filedb_build = f"{remote_build_root}/catchchallenger-server-filedb"
+        # Server targets now iterate cxx_versions like every other target,
+        # so the filedb build dir carries a -<cxx> suffix when the node
+        # specified one. Pick the last cxx version configured (the most
+        # modern standard the node opts into) to match the binary that
+        # was just built.
+        _cxx_suffix = f"-{_cxx_ver[-1]}" if _cxx_ver else ""
+        remote_filedb_build = f"{remote_build_root}/catchchallenger-server-filedb{_cxx_suffix}"
+        remote_filedb_bin = f"{remote_filedb_build}/catchchallenger-server-cli-epoll"
 
         try:
             # setup datapack on remote

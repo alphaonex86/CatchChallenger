@@ -1,8 +1,6 @@
 #ifndef EPOLL_CLIENT_H
 #define EPOLL_CLIENT_H
 
-#ifndef CATCHCHALLENGER_SERVER_SSL
-
 #include "BaseClassSwitch.hpp"
 #include <sys/types.h>
 
@@ -25,7 +23,5 @@ private:
     int infd;
 };
 }
-
-#endif
 
 #endif // EPOLL_CLIENT_H

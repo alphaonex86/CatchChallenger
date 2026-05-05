@@ -85,7 +85,6 @@ struct NormalServerSettings
     std::string server_ip;
     std::string proxy;
     uint16_t proxy_port;
-    bool useSsl;
 };
 
 struct LoginServerSettings

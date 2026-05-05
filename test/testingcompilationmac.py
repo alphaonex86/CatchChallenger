@@ -1,23 +1,67 @@
 #!/usr/bin/env python3
 """
-testingcompilationmac.py — CatchChallenger macOS cross-compile + run test.
+testingcompilationmac.py — CatchChallenger macOS cross-compile + package
+test, driven from a Linux osxcross host.
 
-Steps:
-  1. Probe the qemu mac VM (192.168.158.34) over ssh.
-  2. rsync the source tree to the VM.
-  3. qmake -spec macx-clang + make -j$(sysctl -n hw.ncpu) for qtcpu800x600
-     and qtopengl on the VM.
-  4. Optional --autosolo and multi-mode runs (latter uses the local
-     server-filedb that testingserver.py / testingclient.py already built).
+Switched from the qemu mac VM (192.168.158.34) to an osxcross container at
+root@2803:1920::2:ff08 (see operator notes for setup details). The host
+ships:
+  - osxcross (clang 19.x, target darwin20.4 / macOS 11+)
+  - Qt 6.5.3 for macOS at /root/qt6-macos/6.5.3/macos
+  - macports deps (libogg, libopus, opusfile, libvorbis, zstd, lz4,
+    openssl, zlib)
+  - ninja, lld, mold, ccache
 
-Self-skips when the VM is unreachable. The mac VM is shared with other
-projects (per CLAUDE.md memory): never modify the VM's Qt or environment.
-This script is the sibling of testingcompilationandroid.py — both used to
-live inside testingclient.py; extracted so they can be invoked / scheduled
-independently.
+Build pipeline (per --target arch, default x86_64):
+  1. Probe ssh to the osxcross host.
+  2. rsync sources to /root/catchchallenger-test/.
+  3. <arch>-apple-darwin20.4-cmake -G Ninja
+       -DCMAKE_PREFIX_PATH=/root/qt6-macos/6.5.3/macos
+       -DCMAKE_MACOSX_BUNDLE=ON       (so qtcpu800x600 also builds a .app)
+       -DCMAKE_BUILD_TYPE=Release
+       -DCMAKE_C_COMPILER_LAUNCHER=ccache
+       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+       -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld
+     + the per-target -D switches from cmake_helpers.pro_to_cmake_target.
+  4. cmake --build (ninja) -j$(nproc).
+  5. Stage CatchChallenger-datapack/ next to the .app
+     (e.g. /root/.../catchchallenger.app  ->
+            /root/.../datapack/internal/).
+  6. Run Qt's macdeployqt on the .app to bundle frameworks + plugins.
+  7. ad-hoc codesign with osxcross's `<arch>-apple-darwin20.4-codesign`
+     when present (osxcross 13+ ships rcodesign-style fakesign tooling
+     under that name) — otherwise note that real Apple Developer ID
+     codesign + notarize requires a macOS host (xcrun notarytool).
+  8. Package: try macdeployqt -dmg first (needs hdiutil — only present
+     on macOS, so it usually falls through on Linux), else fall back to
+     a portable .zip of the .app + datapack pair, which is the deliverable
+     for users who'll mount the artefact on a real Mac.
+
+This is a compile + package test: macOS Mach-O binaries cannot be
+executed on the Linux host, so there is no run / multi-mode phase. If
+you need to verify that the produced .app actually launches, copy the
+.dmg or .zip onto a real macOS box and run it there.
+
+The optimisation knobs (ccache + ninja + lld) are explicit per the
+user's request. mold has no Mach-O backend (its mac support project
+"sold" is unmaintained), so cross-link uses lld; ccache transparently
+caches every .o across runs in the host's default cache dir.
 """
 
-import os, sys, signal, subprocess, threading, json, re, time
+# Drop the .pyc cache for this process so import diagnostic / build_paths
+# never lands a __pycache__/ dir in the source tree.  Set before the
+# first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
+import os, sys, signal, subprocess, json, time, shlex
+import build_paths
+import diagnostic
+from cmd_helpers import (SSH_OPTS_LIST, RSYNC_SSH_E, SSH_TIMEOUT_MARKER,
+                         is_ssh_timeout, clamp_ssh, clamp_local)
+
+build_paths.ensure_root()
 
 # ── config ─────────────────────────────────────────────────────────────────
 _CONFIG_PATH = os.path.join(os.path.expanduser("~"),
@@ -29,28 +73,24 @@ with open(_CONFIG_PATH, "r") as _f:
 ROOT          = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATAPACKS     = _config["paths"]["datapacks"]
 
-CLIENT_CPU_PRO = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
-CLIENT_GL_PRO  = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro")
+CLIENT_CPU_PRO = "client/qtcpu800x600/qtcpu800x600.pro"
+CLIENT_GL_PRO  = "client/qtopengl/catchchallenger-qtopengl.pro"
 
-#local server-filedb that the multi-mode mac client connects back to.
-SERVER_BUILD    = os.path.join(ROOT, "server/epoll/build/testing-filedb")
-SERVER_BIN_NAME = "catchchallenger-server-cli-epoll"
-
-SERVER_HOST_REMOTE = "192.168.158.10"  # host LAN IP reachable from the mac VM
-SERVER_PORT        = str(_config["server_port"])
-
-# ── macOS qemu VM (ssh) ────────────────────────────────────────────────────
-MAC_HOST          = "192.168.158.34"
-MAC_USER          = "user"
-MAC_QT            = "/Users/user/Qt/6.8.0/macos"
-MAC_QMAKE         = MAC_QT + "/bin/qmake"
-MAC_WORK_DIR      = "/Users/user/Desktop/catchchallenger-test"
-MAC_SSH_PROBE     = 8
-MAC_RUN_TIMEOUT   = 120
-MAC_RSYNC_TIMEOUT = 600
-MAC_APP_NAME      = "catchchallenger.app"
-COMPILE_TIMEOUT   = 600
-SERVER_READY_TIMEOUT = 60
+# ── osxcross host (ssh) ────────────────────────────────────────────────────
+OSX_HOST          = "2803:1920::2:ff08"
+OSX_USER          = "root"
+OSX_QT            = "/root/qt6-macos/6.5.3/macos"
+OSX_MACDEPLOYQT   = OSX_QT + "/bin/macdeployqt"
+OSX_TARGET_TRIPLE = "x86_64-apple-darwin20.4"   # arch wrapper prefix
+OSX_CMAKE         = f"/root/osxcross/target/bin/{OSX_TARGET_TRIPLE}-cmake"
+OSX_WORK_DIR      = "/root/catchchallenger-test"
+OSX_DATAPACK_DIR  = "/root/catchchallenger-datapack"   # rsynced once, reused
+OSX_ARTIFACT_DIR  = "/root/catchchallenger-mac-artifacts"
+SSH_PROBE_TIMEOUT = 10
+RSYNC_TIMEOUT     = 900
+COMPILE_TIMEOUT   = 1800
+DEPLOY_TIMEOUT    = 600
+APP_NAME          = "catchchallenger.app"
 
 # ── colours ─────────────────────────────────────────────────────────────────
 C_GREEN = "\033[92m"
@@ -61,10 +101,9 @@ C_RESET = "\033[0m"
 results = []
 _last_log_time = [time.monotonic()]
 total_expected = [0]
-server_proc = None
 
 SCRIPT_NAME = os.path.basename(__file__)
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
 
 
 def load_failed_cases():
@@ -132,93 +171,113 @@ def log_fail(name, detail=""):
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
     print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    li = 0
+    _ctx = diagnostic.last_cmd_lines()
+    while li < len(_ctx):
+        print(_ctx[li])
+        li += 1
 
 
-# ── helpers ─────────────────────────────────────────────────────────────────
-def detect_maincodes(datapack_src):
-    map_main = os.path.join(datapack_src, "map", "main")
-    if not os.path.isdir(map_main):
-        return []
-    out = []
-    entries = sorted(os.listdir(map_main))
-    idx = 0
-    while idx < len(entries):
-        if os.path.isdir(os.path.join(map_main, entries[idx])):
-            out.append(entries[idx])
-        idx += 1
-    return out
-
-
-def mac_ssh(cmd, timeout=COMPILE_TIMEOUT):
-    args = ["ssh",
-            "-o", "StrictHostKeyChecking=no",
-            "-o", "BatchMode=yes",
-            "-o", f"ConnectTimeout={MAC_SSH_PROBE}",
-            f"{MAC_USER}@{MAC_HOST}", cmd]
+# ── ssh wrappers ────────────────────────────────────────────────────────────
+def osx_ssh(cmd, timeout=COMPILE_TIMEOUT):
+    """Run a remote shell command on the osxcross host. The remote env
+    pulls in osxcross + Qt by sourcing /root/setup-macos-build.sh first
+    so o64-clang / xcrun-style tools and Qt cmake config are visible."""
+    timeout = clamp_ssh(timeout)
+    wrapped = "source /root/setup-macos-build.sh >/dev/null 2>&1 ; " + cmd
+    args = ["ssh"] + SSH_OPTS_LIST + [f"{OSX_USER}@{OSX_HOST}", wrapped]
+    diagnostic.record_cmd(args, None)
     try:
         p = subprocess.run(args, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return p.returncode, p.stdout.decode(errors="replace")
     except subprocess.TimeoutExpired:
-        return -1, f"TIMEOUT after {timeout}s"
+        return -1, f"{SSH_TIMEOUT_MARKER}: {timeout}s"
 
 
-def mac_vm_reachable():
-    """Quick reachability probe; lets the script self-skip when the VM
-    isn't running (no route to host, qemu off, etc.)."""
-    rc, out = mac_ssh("echo lVt75gJ4sJXjq2gWxzXd8pV8",
-                      timeout=MAC_SSH_PROBE + 2)
+def osx_host_reachable():
+    rc, out = osx_ssh("echo lVt75gJ4sJXjq2gWxzXd8pV8",
+                      timeout=SSH_PROBE_TIMEOUT)
     return rc == 0 and "lVt75gJ4sJXjq2gWxzXd8pV8" in out
 
 
-def rsync_to_mac():
-    name = "rsync sources to mac VM"
-    log_info(f"{name}: rsync -art {ROOT}/ {MAC_USER}@{MAC_HOST}:{MAC_WORK_DIR}/")
+def rsync_to_osx(src, dst):
     args = ["rsync", "-art", "--delete",
-            "-e", f"ssh -o StrictHostKeyChecking=no -o BatchMode=yes "
-                  f"-o ConnectTimeout={MAC_SSH_PROBE}",
-            "--exclude=build/", "--exclude=.git/",
-            ROOT + "/", f"{MAC_USER}@{MAC_HOST}:{MAC_WORK_DIR}/"]
+            "-e", RSYNC_SSH_E,
+            "--exclude=build/", "--exclude=build-*/", "--exclude=.git/",
+            src + "/", f"{OSX_USER}@{OSX_HOST}:{dst}/"]
+    diagnostic.record_cmd(args, None)
+    timeout = clamp_local(RSYNC_TIMEOUT)
     try:
-        p = subprocess.run(args, timeout=MAC_RSYNC_TIMEOUT,
+        p = subprocess.run(args, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except subprocess.TimeoutExpired:
-        log_fail(name, f"TIMEOUT after {MAC_RSYNC_TIMEOUT}s")
-        return False
+        return False, f"TIMEOUT after {timeout}s"
     if p.returncode != 0:
-        log_fail(name, f"rc={p.returncode}")
-        out = p.stdout.decode(errors="replace")
-        if out.strip():
-            print(out[-1500:])
-        return False
-    log_pass(name)
-    return True
+        return False, f"rc={p.returncode}\n" + p.stdout.decode(errors="replace")[-1500:]
+    return True, ""
 
 
-def build_mac_client(pro_rel, label):
-    """cmake configure + cmake --build on the Mac VM via ssh. Returns the
-    .app bundle path on the VM, or None on failure.
+def rsync_sources():
+    name = "rsync sources to osxcross"
+    log_info(f"{name}: {ROOT} -> {OSX_USER}@{OSX_HOST}:{OSX_WORK_DIR}")
+    osx_ssh(f"mkdir -p {OSX_WORK_DIR}", timeout=15)
+    ok, err = rsync_to_osx(ROOT, OSX_WORK_DIR)
+    if ok:
+        log_pass(name)
+        return True
+    log_fail(name, err.splitlines()[0] if err else "")
+    print(err[-1500:])
+    return False
 
-    Phase 5 (qmake -> CMake): the VM still has its own Qt 6.8.0 install
-    so cmake configure on the VM picks that up via $PATH (Qt6_DIR is
-    discovered automatically when /Users/user/Qt/6.8.0/macos/bin is on
-    PATH). NOWEBSOCKET stays defined because the VM's Qt 6.8 doesn't
-    ship QtWebSockets."""
+
+def rsync_datapack(src):
+    name = "rsync datapack to osxcross"
+    log_info(f"{name}: {src} -> {OSX_USER}@{OSX_HOST}:{OSX_DATAPACK_DIR}")
+    osx_ssh(f"mkdir -p {OSX_DATAPACK_DIR}", timeout=15)
+    ok, err = rsync_to_osx(src, OSX_DATAPACK_DIR)
+    if ok:
+        log_pass(name)
+        return True
+    log_fail(name, err.splitlines()[0] if err else "")
+    print(err[-1500:])
+    return False
+
+
+# ── build ───────────────────────────────────────────────────────────────────
+def build_target(pro_rel, label):
+    """cmake configure + ninja build via osxcross. Returns the remote
+    .app path on success, None on failure."""
     import cmake_helpers as _ch
-    name = f"compile {label} (mac, ssh)"
+    name = f"compile {label} (mac, osxcross)"
     try:
-        target, configure_flags, output_subdir = _ch.pro_to_cmake_target(pro_rel)
+        target, configure_flags, source_subdir = _ch.pro_to_cmake_target(pro_rel)
     except KeyError:
         log_fail(name, f"no cmake target mapping for {pro_rel}")
         return None
-    build_dir = MAC_WORK_DIR + "/build-mac/" + target
-    src_dir   = MAC_WORK_DIR
-    flag_args = " ".join("'" + f + "'" for f in configure_flags)
-    log_info(f"mac-cmake configure {label}")
-    rc, out = mac_ssh(
+    build_dir = f"{OSX_WORK_DIR}/build-mac-{OSX_TARGET_TRIPLE}/{target}"
+    # Per "one binary per CMakeLists.txt" refactor: -S points at the
+    # binary's specific subdir, not the repo root.
+    src_dir   = f"{OSX_WORK_DIR}/{source_subdir}"
+    flag_args = " ".join(shlex.quote(f) for f in configure_flags)
+    log_info(f"osxcross cmake configure {label} ({OSX_TARGET_TRIPLE})")
+    rc, out = osx_ssh(
         f"mkdir -p {build_dir} && "
-        f"cmake -S {src_dir} -B {build_dir} -DCMAKE_BUILD_TYPE=Debug "
-        f"-DCMAKE_CXX_STANDARD=17 -DNOWEBSOCKET=ON "
+        f"{OSX_CMAKE} -S {src_dir} -B {build_dir} "
+        f"-G Ninja "
+        f"-DCMAKE_BUILD_TYPE=Release "
+        f"-DCMAKE_CXX_STANDARD=17 "
+        f"-DCMAKE_PREFIX_PATH={OSX_QT} "
+        f"-DCMAKE_MACOSX_BUNDLE=ON "
+        f"-DCMAKE_C_COMPILER_LAUNCHER=ccache "
+        f"-DCMAKE_CXX_COMPILER_LAUNCHER=ccache "
+        # -fno-lto on test builds (see cmake_helpers.py for the rationale).
+        f"-DCMAKE_C_FLAGS_INIT=-fno-lto "
+        f"-DCMAKE_CXX_FLAGS_INIT=-fno-lto "
+        f"-DCMAKE_EXE_LINKER_FLAGS='-fuse-ld=lld -fno-lto' "
+        f"-DCMAKE_SHARED_LINKER_FLAGS='-fuse-ld=lld -fno-lto' "
+        f"-DCMAKE_MODULE_LINKER_FLAGS='-fuse-ld=lld -fno-lto' "
+        f"-DCATCHCHALLENGER_NO_WEBSOCKET=ON "
         f"-DCATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS=OFF "
         f"-DCATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS=OFF "
         f"{flag_args} 2>&1",
@@ -226,142 +285,146 @@ def build_mac_client(pro_rel, label):
     if rc != 0:
         log_fail(name, f"cmake configure failed (rc={rc})")
         if out.strip():
-            print(out[-2000:])
+            print(out[-3000:])
         return None
-    log_info(f"mac-cmake --build -j$(sysctl -n hw.ncpu) {label}")
-    rc, out = mac_ssh(
-        f"cmake --build {build_dir} --target {target} -j$(sysctl -n hw.ncpu) 2>&1",
+    log_info(f"ninja build {label} -j$(nproc)")
+    rc, out = osx_ssh(
+        f"{OSX_CMAKE} --build {build_dir} --target {target} -j$(nproc) 2>&1",
         timeout=COMPILE_TIMEOUT)
     if rc != 0:
-        log_fail(name, f"cmake build failed (rc={rc})")
+        log_fail(name, f"ninja build failed (rc={rc})")
         if out.strip():
-            print(out[-2000:])
+            print(out[-3000:])
         return None
-    rc, out = mac_ssh(
-        f"ls -d {build_dir}/{output_subdir}/{MAC_APP_NAME} 2>/dev/null || "
-        f"ls -d {build_dir}/{output_subdir}/*.app 2>/dev/null | head -1",
+    # Self-contained per-binary CMakeLists.txt: the .app lands at
+    # <build_dir>/<APP_NAME> directly (or some *.app under build_dir).
+    rc, out = osx_ssh(
+        f"ls -d {build_dir}/{APP_NAME} 2>/dev/null || "
+        f"ls -d {build_dir}/*.app 2>/dev/null | head -1",
         timeout=15)
     app_path = out.strip().splitlines()[0] if out.strip() else ""
     if rc != 0 or not app_path:
-        log_fail(name, ".app bundle not found on mac")
+        log_fail(name, ".app bundle not found on osxcross")
+        if out.strip():
+            print(out[-1500:])
         return None
     log_pass(name, f"-> {app_path}")
     return app_path
 
 
-def setup_mac_datapack(app_path, datapack_src, maincode):
-    """rsync the datapack onto the Mac VM at <parent-of-.app>/datapack/internal/
-    and prune map/main/ to one maincode."""
-    target_dir = os.path.dirname(app_path) + "/datapack/internal"
-    log_info(f"staging datapack on mac VM at {target_dir} (maincode={maincode})")
-    mac_ssh(f"rm -rf {target_dir} && mkdir -p {target_dir}", timeout=15)
-    args = ["rsync", "-art", "--delete",
-            "-e", f"ssh -o StrictHostKeyChecking=no -o BatchMode=yes "
-                  f"-o ConnectTimeout={MAC_SSH_PROBE}",
-            "--exclude=.git/",
-            datapack_src + "/", f"{MAC_USER}@{MAC_HOST}:{target_dir}/"]
-    try:
-        p = subprocess.run(args, timeout=MAC_RSYNC_TIMEOUT,
-                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    except subprocess.TimeoutExpired:
-        log_info(f"setup_mac_datapack: TIMEOUT after {MAC_RSYNC_TIMEOUT}s")
+# ── stage datapack next to the .app ─────────────────────────────────────────
+def stage_datapack(app_path):
+    """Copy CatchChallenger-datapack/ to <parent-of-.app>/datapack/internal/.
+    The parent dir mirrors the runtime layout: an .app at /root/foo.app
+    expects its datapack at /root/datapack/internal/."""
+    name = f"stage datapack near {os.path.basename(app_path)}"
+    parent = os.path.dirname(app_path)
+    target = parent + "/datapack/internal"
+    log_info(f"{name}: {OSX_DATAPACK_DIR} -> {target}")
+    rc, out = osx_ssh(
+        f"rm -rf {parent}/datapack && mkdir -p {target} && "
+        f"cp -a {OSX_DATAPACK_DIR}/. {target}/ 2>&1",
+        timeout=300)
+    if rc != 0:
+        log_fail(name, f"rc={rc}")
+        if out.strip():
+            print(out[-1500:])
         return False
-    if p.returncode != 0:
-        log_info(f"setup_mac_datapack: rsync rc={p.returncode}")
-        return False
-    map_main = target_dir + "/map/main"
-    mac_ssh(f"if [ -d {map_main} ]; then "
-            f"find {map_main} -mindepth 1 -maxdepth 1 -type d "
-            f"! -name {maincode} -exec rm -rf {{}} +; fi",
-            timeout=30)
+    log_pass(name)
     return True
 
 
-def run_mac_client(app_path, label, args, timeout=MAC_RUN_TIMEOUT,
-                   success_marker="MapVisualiserPlayer::mapDisplayedSlot()"):
-    name = f"mac run {label}"
-    bin_path = app_path + "/Contents/MacOS/catchchallenger"
-    cwd = os.path.dirname(app_path)
-    quoted = " ".join("'" + a.replace("'", "'\\''") + "'" for a in args)
-    log_info(f"ssh run cd={cwd} {bin_path} {' '.join(args)}")
-    cmd = (f"cd {cwd} && export QT_QPA_PLATFORM=offscreen "
-           f"DYLD_FRAMEWORK_PATH={MAC_QT}/lib && "
-           f"{bin_path} {quoted} 2>&1")
-    rc, out = mac_ssh(cmd, timeout=timeout)
-    if success_marker in out:
-        log_pass(name, f"reached map ({success_marker})")
-        return True
-    if rc == -1:
-        log_fail(name, f"timeout {timeout}s without success_marker")
-    else:
-        log_fail(name, f"exit code {rc} without success_marker")
-    lines = out.splitlines()
-    li = max(0, len(lines) - 30)
-    while li < len(lines):
-        print(f"  | {lines[li]}")
-        li += 1
-    return False
+# ── deploy + sign + package ─────────────────────────────────────────────────
+def deploy_and_package(app_path, label):
+    """Run macdeployqt, ad-hoc codesign (best-effort), then produce a
+    distributable archive next to the .app:
+      - macdeployqt -dmg if the host has hdiutil (macOS only) OR if
+        macdeployqt's built-in dmg path succeeds.
+      - else, zip the .app for transport to a real Mac.
 
-
-def set_http_datapack_mirror(build_dir, value):
-    xml_path = os.path.join(build_dir, "server-properties.xml")
-    if not os.path.exists(xml_path):
-        return
-    if os.path.islink(xml_path):
-        target = os.path.realpath(xml_path)
-        os.remove(xml_path)
-        import shutil as _sh
-        _sh.copy2(target, xml_path)
-    with open(xml_path, "r") as f:
-        content = f.read()
-    content = re.sub(r'httpDatapackMirror\s+value="[^"]*"',
-                     f'httpDatapackMirror value="{value}"', content)
-    with open(xml_path, "w") as f:
-        f.write(content)
-
-
-def start_local_server(build_dir, bin_name=SERVER_BIN_NAME):
-    global server_proc
-    binary = os.path.join(build_dir, bin_name)
-    if not os.path.isfile(binary):
-        log_fail("server start", f"{bin_name} not found in {build_dir}")
+    Returns the artifact path on the remote host on success, None on
+    deploy failure (packaging failure is non-fatal — the bundled .app
+    is still useful)."""
+    deploy_name = f"macdeployqt {label}"
+    log_info(f"{deploy_name}: {OSX_MACDEPLOYQT} {app_path} -verbose=1")
+    # macdeployqt resolves frameworks via OSX_QT/lib so DYLD_FRAMEWORK_PATH
+    # is irrelevant here; we just need the binary on the remote.
+    rc, out = osx_ssh(
+        f"{OSX_MACDEPLOYQT} {shlex.quote(app_path)} -verbose=1 2>&1",
+        timeout=DEPLOY_TIMEOUT)
+    if rc != 0:
+        log_fail(deploy_name, f"rc={rc}")
+        if out.strip():
+            print(out[-2500:])
         return None
-    log_info(f"starting local server: {binary}")
-    server_proc = subprocess.Popen(
-        ["nice", "-n", "19", "ionice", "-c", "3", binary], cwd=build_dir,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid)
-    ready = threading.Event()
-    def reader():
-        for raw in iter(server_proc.stdout.readline, b""):
-            line = raw.decode(errors="replace").rstrip("\n")
-            if "correctly bind:" in line:
-                ready.set()
-    t = threading.Thread(target=reader, daemon=True)
-    t.start()
-    if ready.wait(timeout=SERVER_READY_TIMEOUT):
-        return server_proc
-    log_fail("server start", "timeout waiting for 'correctly bind:'")
-    stop_local_server()
-    return None
+    log_pass(deploy_name)
+
+    # Ad-hoc codesign — osxcross ships per-target codesign_allocate but no
+    # actual codesign tool, so on Linux we cannot produce an Apple-valid
+    # signature. Try osxcross's `xcrun codesign` shim if it exists,
+    # otherwise warn and continue. A real Developer ID signature + notarize
+    # has to happen on a Mac (xcrun notarytool submit ... --wait).
+    sign_name = f"codesign --sign - {label} (ad-hoc)"
+    rc, out = osx_ssh(
+        f"if command -v {OSX_TARGET_TRIPLE}-codesign >/dev/null 2>&1; then "
+        f"  {OSX_TARGET_TRIPLE}-codesign --force --deep --sign - {shlex.quote(app_path)} 2>&1; "
+        f"elif command -v xcrun >/dev/null 2>&1 && xcrun -f codesign >/dev/null 2>&1; then "
+        f"  xcrun codesign --force --deep --sign - {shlex.quote(app_path)} 2>&1; "
+        f"else "
+        f"  echo 'no codesign tool on this Linux host; ad-hoc signature skipped'; "
+        f"  echo 'real Apple Developer ID signing must run on macOS:'; "
+        f"  echo '  codesign --deep --force --sign \"Developer ID Application: ...\" {os.path.basename(app_path)}'; "
+        f"  echo '  xcrun notarytool submit ... --wait'; "
+        f"  exit 0; "
+        f"fi",
+        timeout=120)
+    if rc == 0:
+        log_pass(sign_name)
+    else:
+        log_fail(sign_name, f"rc={rc}")
+        if out.strip():
+            print(out[-1500:])
+
+    # Try .dmg first via macdeployqt -dmg (needs hdiutil, macOS-only).
+    # Fallback: portable zip of the .app (and its sibling datapack/) so the
+    # user can drop the archive on a Mac, double-click the .app, and run.
+    pkg_name = f"package {label} (.dmg or .zip)"
+    parent = os.path.dirname(app_path)
+    app_base = os.path.basename(app_path)
+    artifact_base = f"{label}-{OSX_TARGET_TRIPLE}"
+    osx_ssh(f"mkdir -p {OSX_ARTIFACT_DIR}", timeout=15)
+    rc, out = osx_ssh(
+        f"if command -v hdiutil >/dev/null 2>&1; then "
+        f"  cd {shlex.quote(parent)} && "
+        f"  {OSX_MACDEPLOYQT} {shlex.quote(app_base)} -dmg -verbose=1 2>&1 && "
+        f"  mv {shlex.quote(app_base[:-4] + '.dmg')} "
+        f"     {OSX_ARTIFACT_DIR}/{shlex.quote(artifact_base + '.dmg')} && "
+        f"  echo PACKAGE_OK={OSX_ARTIFACT_DIR}/{artifact_base}.dmg; "
+        f"else "
+        f"  cd {shlex.quote(parent)} && "
+        f"  zip -qry {OSX_ARTIFACT_DIR}/{shlex.quote(artifact_base + '.zip')} "
+        f"      {shlex.quote(app_base)} datapack 2>&1 && "
+        f"  echo PACKAGE_OK={OSX_ARTIFACT_DIR}/{artifact_base}.zip; "
+        f"fi",
+        timeout=DEPLOY_TIMEOUT)
+    artifact = ""
+    li = 0
+    lines = out.splitlines()
+    while li < len(lines):
+        if lines[li].startswith("PACKAGE_OK="):
+            artifact = lines[li].split("=", 1)[1].strip()
+        li += 1
+    if rc != 0 or not artifact:
+        log_fail(pkg_name, f"rc={rc}")
+        if out.strip():
+            print(out[-2000:])
+        return app_path
+    log_pass(pkg_name, f"-> {artifact}")
+    return artifact
 
 
-def stop_local_server():
-    global server_proc
-    if server_proc is None:
-        return
-    try: os.killpg(os.getpgid(server_proc.pid), signal.SIGTERM)
-    except ProcessLookupError: pass
-    try: server_proc.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        try: os.killpg(os.getpgid(server_proc.pid), signal.SIGKILL)
-        except ProcessLookupError: pass
-        server_proc.wait(timeout=5)
-    server_proc = None
-
-
+# ── main ────────────────────────────────────────────────────────────────────
 def cleanup(*_args):
-    stop_local_server()
     sys.exit(1)
 
 
@@ -369,10 +432,9 @@ signal.signal(signal.SIGINT, cleanup)
 signal.signal(signal.SIGTERM, cleanup)
 
 
-# ── main ────────────────────────────────────────────────────────────────────
 def main():
     print(f"\n{C_CYAN}{'='*60}")
-    print("  CatchChallenger — macOS cross-compile testing")
+    print("  CatchChallenger — macOS osxcross compile + package")
     print(f"{'='*60}{C_RESET}\n")
 
     failed_cases = load_failed_cases()
@@ -380,67 +442,39 @@ def main():
         log_info("all previously passed, skipping (delete failed.json for full re-run)")
         return
 
-    if not mac_vm_reachable():
-        log_info(f"mac VM {MAC_USER}@{MAC_HOST} unreachable — skipping mac test "
-                 f"(start qemu, then re-run)")
+    if not osx_host_reachable():
+        log_info(f"osxcross host {OSX_USER}@{OSX_HOST} unreachable — skipping mac test")
         save_failed_cases()
         summary()
         return
 
-    cpu_app = None
-    gl_app  = None
-    rsync_ok = True
-    if should_run("rsync sources to mac VM", failed_cases):
-        rsync_ok = rsync_to_mac()
+    if should_run("rsync sources to osxcross", failed_cases):
+        if not rsync_sources():
+            save_failed_cases(); summary(); return
 
-    if rsync_ok:
-        if should_run("compile qtcpu800x600 (mac, ssh)", failed_cases):
-            cpu_app = build_mac_client(os.path.relpath(CLIENT_CPU_PRO, ROOT),
-                                       "qtcpu800x600")
-        if should_run("compile qtopengl (mac, ssh)", failed_cases):
-            gl_app = build_mac_client(os.path.relpath(CLIENT_GL_PRO, ROOT),
-                                      "qtopengl")
+    dp_src = DATAPACKS[0] if DATAPACKS else None
+    if dp_src is None:
+        log_fail("rsync datapack to osxcross", "no datapack configured")
+        save_failed_cases(); summary(); return
+    if should_run("rsync datapack to osxcross", failed_cases):
+        if not rsync_datapack(dp_src):
+            save_failed_cases(); summary(); return
 
-    mac_dp_src = DATAPACKS[0] if DATAPACKS else None
-    mac_mc = None
-    if mac_dp_src is not None:
-        mcs = detect_maincodes(mac_dp_src)
-        if mcs:
-            mac_mc = mcs[0]
-
-    if cpu_app is not None and should_run("mac run qtcpu800x600 --autosolo", failed_cases):
-        if mac_dp_src and mac_mc:
-            setup_mac_datapack(cpu_app, mac_dp_src, mac_mc)
-        run_mac_client(cpu_app, "qtcpu800x600 --autosolo",
-                       ["--autosolo", "--closewhenonmap"])
-    if gl_app is not None and should_run("mac run qtopengl --autosolo", failed_cases):
-        if mac_dp_src and mac_mc:
-            setup_mac_datapack(gl_app, mac_dp_src, mac_mc)
-        run_mac_client(gl_app, "qtopengl --autosolo",
-                       ["--autosolo", "--closewhenonmap"])
-
-    mac_need_multi = ((cpu_app is not None and should_run("mac run qtcpu800x600", failed_cases)) or
-                      (gl_app  is not None and should_run("mac run qtopengl", failed_cases)))
-    if mac_need_multi:
-        srv = None
-        if os.path.isfile(os.path.join(SERVER_BUILD, SERVER_BIN_NAME)):
-            set_http_datapack_mirror(SERVER_BUILD, "")
-            srv = start_local_server(SERVER_BUILD)
-        else:
-            log_fail("mac run: server start",
-                     f"{SERVER_BIN_NAME} not found in {SERVER_BUILD}")
-        if srv is not None:
-            if cpu_app is not None and should_run("mac run qtcpu800x600", failed_cases):
-                run_mac_client(cpu_app, "qtcpu800x600",
-                               ["--host", SERVER_HOST_REMOTE, "--port", SERVER_PORT,
-                                "--autologin", "--character", "MacCPU",
-                                "--closewhenonmap"])
-            if gl_app is not None and should_run("mac run qtopengl", failed_cases):
-                run_mac_client(gl_app, "qtopengl",
-                               ["--host", SERVER_HOST_REMOTE, "--port", SERVER_PORT,
-                                "--autologin", "--character", "MacGL",
-                                "--closewhenonmap"])
-            stop_local_server()
+    targets = [
+        (CLIENT_CPU_PRO, "qtcpu800x600"),
+        (CLIENT_GL_PRO,  "qtopengl"),
+    ]
+    ti = 0
+    while ti < len(targets):
+        pro_rel, label = targets[ti]
+        if should_run(f"compile {label} (mac, osxcross)", failed_cases):
+            app_path = build_target(pro_rel, label)
+            if app_path is not None:
+                if should_run(f"stage datapack near {APP_NAME}", failed_cases):
+                    stage_datapack(app_path)
+                if should_run(f"macdeployqt {label}", failed_cases):
+                    deploy_and_package(app_path, label)
+        ti += 1
 
     save_failed_cases()
     summary()

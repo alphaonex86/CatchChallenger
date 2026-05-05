@@ -8,7 +8,6 @@
 #include "../epoll/Epoll.hpp"
 #include "../epoll/EpollSocket.hpp"
 #include "../epoll/EpollServer.hpp"
-#include "../epoll/EpollSslServer.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -28,17 +27,12 @@ uint16_t LinkToMaster::purgeLockPeriod=3*60;
 uint16_t LinkToMaster::maxLockAge=10*60;
 LinkToMaster *LinkToMaster::linkToMaster=NULL;
 int LinkToMaster::linkToMasterSocketFd=-1;
-bool LinkToMaster::haveTheFirstSslHeader=false;
 sockaddr_in LinkToMaster::serv_addr;
 char LinkToMaster::host[];
 uint16_t LinkToMaster::port=0;
 
 LinkToMaster::LinkToMaster(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
         ) :
         EpollClient(infd),
         ProtocolParsingInputOutput(
@@ -151,7 +145,6 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         {
             std::cout << "Connected to master server" << std::endl;
             LinkToMaster::linkToMasterSocketFd=sfd;
-            haveTheFirstSslHeader=false;
             freeaddrinfo(result);
             return sfd;
         }
@@ -163,8 +156,6 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
     else
         std::cerr << "ERROR connecting to master server server on: " << host << ":" << port << std::endl;
     freeaddrinfo(result);           /* No longer needed */
-
-    haveTheFirstSslHeader=false;
 
     return LinkToMaster::linkToMasterSocketFd;
 }
@@ -241,7 +232,6 @@ void LinkToMaster::connectInternal()
         stat=Stat::Unconnected;
         return;
     }
-    haveTheFirstSslHeader=false;
     if(connStatusType>=0)
     {
         stat=Stat::Connected;
@@ -255,42 +245,6 @@ void LinkToMaster::connectInternal()
     setConnexionSettings(this->tryInterval,this->considerDownAfterNumberOfTry);
 }
 
-void LinkToMaster::readTheFirstSslHeader()
-{
-    if(haveTheFirstSslHeader)
-        return;
-    std::cout << "LoginLinkToMaster::readTheFirstSslHeader()" << std::endl;
-    char buffer[1];
-    if(::read(LinkToMaster::linkToMasterSocketFd,buffer,1)<0)
-    {
-        std::cerr << "ERROR reading from socket to master server (abort)" << std::endl;
-        //abort();//normal for disconnect
-        return;
-    }
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    if(buffer[0]!=0x01)
-    {
-        std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;
-        abort();
-    }
-    #else
-    if(buffer[0]!=0x00)
-    {
-        std::cerr << "ERROR server configured in clear mode but protocol not done" << std::endl;
-        abort();
-    }
-    #endif
-    haveTheFirstSslHeader=true;
-    stat=Stat::Connected;
-    /*const int s = EpollSocket::make_non_blocking(LinkToMaster::linkToMasterSocketFd);
-    if(s == -1)
-    {
-        std::cerr << "unable to make to socket non blocking" << std::endl;
-        abort();
-    }*/
-    reconnectTime=0;
-    sendProtocolHeader();
-}
 
 bool LinkToMaster::disconnectClient()
 {
@@ -675,15 +629,14 @@ void LinkToMaster::tryReconnect()
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
         } while(stat!=Stat::Connected);
-        readTheFirstSslHeader();
+        // Used to read a 1-byte SSL/cleartext preamble here before
+        // proceeding; the protocol no longer includes that byte. Send
+        // the protocol header straight away.
+        sendProtocolHeader();
     }
 
     {
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-        EpollSslServer *server=static_cast<EpollSslServer *>(baseServer);
-        #else
         EpollServer *server=static_cast<EpollServer *>(baseServer);
-        #endif
         if(!server->isListening())
         {
             std::cout << "Waiting connection after master link" << std::endl;

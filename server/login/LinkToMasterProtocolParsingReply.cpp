@@ -273,9 +273,10 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                                     linkToGameServer->stat=LinkToGameServer::Stat::Connected;
                                     linkToGameServer->client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
                                     memcpy(linkToGameServer->tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
-                                    //send the protocol
-                                    //wait readTheFirstSslHeader() to sendProtocolHeader();
+                                    //send the protocol header straight away —
+                                    //the SSL/cleartext preamble byte was removed.
                                     linkToGameServer->setConnexionSettings();
+                                    linkToGameServer->sendProtocolHeader();
                                     linkToGameServer->parseIncommingData();
                                     /*const int &s = EpollSocket::make_non_blocking(socketFd);
                                     if(s == -1)

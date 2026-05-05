@@ -20,14 +20,10 @@
 using namespace CatchChallenger;
 
 LinkToLogin *LinkToLogin::linkToLogin=NULL;
-bool LinkToLogin::haveTheFirstSslHeader=false;
 char LinkToLogin::host[]="localhost";
 uint16_t LinkToLogin::port=22222;
 
 LinkToLogin::LinkToLogin(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            SSL_CTX *ctx
-        #endif
         ) :
         EpollClient(-1),
         ProtocolParsingInputOutput(
@@ -161,7 +157,6 @@ bool LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const
                     abort();
                 }
             }
-            haveTheFirstSslHeader=false;
             freeaddrinfo(result);
             if(infd==-1)
             {
@@ -179,7 +174,6 @@ bool LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const
         std::cerr << "ERROR connecting to login server server on: " << host << ":" << port << std::endl;
     freeaddrinfo(result);           /* No longer needed */
 
-    haveTheFirstSslHeader=false;
     if(infd>=0)
     {
         epoll_event event;
@@ -231,7 +225,6 @@ void LinkToLogin::connectInternal()
         stat=Stat::Unconnected;
         return;
     }
-    haveTheFirstSslHeader=false;
     if(connStatusType)
     {
         if(infd==-1)
@@ -250,42 +243,6 @@ void LinkToLogin::connectInternal()
         stat=Stat::Connecting;
         std::cout << "(Re)Connecting in progress to login" << std::endl;
     }*/
-}
-
-void LinkToLogin::readTheFirstSslHeader()
-{
-    if(haveTheFirstSslHeader)
-        return;
-    //std::cout << "LoginLinkToLogin::readTheFirstSslHeader()" << std::endl;
-    char buffer[1];
-    if(::read(infd,buffer,1)<0)
-    {
-        /*then disable:
-        jsonFileContent.clear();
-        displayErrorAndQuit("ERROR reading from socket to login server (abort)");*/
-    }
-    else if(infd>=0)
-    {
-        //reconnect, need maybe more time
-        EpollSocket::make_non_blocking(infd);
-    }
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    if(buffer[0]!=0x01)
-    {
-        std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;
-        abort();
-    }
-    #else
-    if(buffer[0]!=0x00)
-    {
-        std::cerr << "ERROR server configured in clear mode but protocol not done" << std::endl;
-        abort();
-    }
-    #endif
-    haveTheFirstSslHeader=true;
-    stat=Stat::Connected;
-    EpollSocket::make_non_blocking(infd);
-    sendProtocolHeader();
 }
 
 bool LinkToLogin::disconnectClient()
@@ -390,7 +347,8 @@ void LinkToLogin::tryReconnect()
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
         } while(stat!=Stat::Connected);
-        readTheFirstSslHeader();
+        EpollSocket::make_non_blocking(infd);
+        sendProtocolHeader();
     }
 }
 

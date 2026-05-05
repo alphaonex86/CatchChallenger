@@ -890,11 +890,7 @@ void EpollServerLoginMaster::doTheReplyCache()
 
 bool EpollServerLoginMaster::tryListen()
 {
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-        const bool &returnedValue=trySslListen(server_ip, server_port,"server.crt", "server.key");
-    #else
         const bool &returnedValue=tryListenInternal(server_ip, server_port);
-    #endif
     if(server_ip!=NULL)
     {
         if(returnedValue)

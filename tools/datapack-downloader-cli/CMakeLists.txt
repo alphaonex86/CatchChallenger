@@ -1,7 +1,16 @@
 # datapack-downloader — minimal Qt6 client that downloads only the
-# datapack from a server. Reuses libcatchchallenger + libqtcatchchallenger.
+# datapack from a server. Self-contained, one binary.
+
+cmake_minimum_required(VERSION 3.20)
+project(datapack_downloader LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Network Sql WebSockets Gui Widgets REQUIRED)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/client/libcatchchallenger/lib.cmake)
+include(${CC_REPO_ROOT}/client/libqtcatchchallenger/libqt.cmake)
 
 add_executable(datapack-downloader
     main.cpp

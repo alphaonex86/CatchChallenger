@@ -1,38 +1,64 @@
-# Phase 2 — server/game-server-alone/game-server-alone.pro -> CMake.
-# catchchallenger-game-server-alone: same big source set as the
-# all-in-one filedb cli-epoll exec, but compiled with
-# CATCHCHALLENGER_CLASS_ONLYGAMESERVER + DATAPACK_ONLYBYMIRROR
-# (instead of CATCHCHALLENGER_CLASS_ALLINONESERVER) AND adds
-# the LinkToMaster + PlayerUpdaterToMaster + TimerPurgeTokenAuthList
-# sources from this dir.
+# server/game-server-alone/CMakeLists.txt — catchchallenger-game-server-alone binary.
+# Self-contained, one binary. Same big source set as the cli-epoll exec
+# under server/epoll/, but compiled with CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+# + DATAPACK_ONLYBYMIRROR (instead of _ALLINONESERVER) AND adds
+# LinkToMaster + PlayerUpdaterToMaster + TimerPurgeTokenAuthList sources.
+
+cmake_minimum_required(VERSION 3.20)
+project(catchchallenger_game_server_alone LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
 
-# Re-use the source list set in PARENT_SCOPE by server/epoll/CMakeLists.txt.
-# game-server-alone defaults to PostgreSQL: same as the cli-epoll.pro
-# default. DB_FILE-mode game-server-alone is not supported by upstream.
+# Inlined source list — server/epoll/ also references these, but each
+# binary is its own CMake project, so duplicate the list rather than
+# share a PARENT_SCOPE variable.
+set(_epoll_sources
+    ${CC_REPO_ROOT}/server/epoll/EpollSocket.cpp
+    ${CC_REPO_ROOT}/server/epoll/EpollClient.cpp
+    ${CC_REPO_ROOT}/server/epoll/EpollClientList.cpp
+    ${CC_REPO_ROOT}/server/epoll/EpollServer.cpp
+    ${CC_REPO_ROOT}/server/epoll/Epoll.cpp
+    ${CC_REPO_ROOT}/server/epoll/EpollTimer.cpp
+    ${CC_REPO_ROOT}/server/epoll/EpollGenericServer.cpp
+    ${CC_REPO_ROOT}/server/epoll/BaseServerEpoll.cpp
+    ${CC_REPO_ROOT}/server/epoll/ServerPrivateVariablesEpoll.cpp
+    ${CC_REPO_ROOT}/server/epoll/ClientWithMapEpoll.cpp
+    ${CC_REPO_ROOT}/server/epoll/main-epoll.cpp
+    ${CC_REPO_ROOT}/server/epoll/main-epoll2.cpp
+    ${CC_REPO_ROOT}/server/epoll/timer/TimerCityCapture.cpp
+    ${CC_REPO_ROOT}/server/epoll/timer/TimerSendInsertMoveRemove.cpp
+    ${CC_REPO_ROOT}/server/epoll/timer/TimerPositionSync.cpp
+    ${CC_REPO_ROOT}/server/epoll/timer/TimerDdos.cpp
+    ${CC_REPO_ROOT}/server/epoll/timer/TimerEvents.cpp
+    ${CC_REPO_ROOT}/server/epoll/timer/TimeRangeEvent.cpp
+    ${CC_REPO_ROOT}/server/epoll/timer/PlayerUpdaterEpoll.cpp
+    ${CC_REPO_ROOT}/server/epoll/timer/TimeRangeEventScan.cpp
+)
+
 set(_extra_sources
     LinkToMaster.cpp
     LinkToMasterProtocolParsing.cpp
     LinkToMasterStaticVar.cpp
     timer/PlayerUpdaterToMaster.cpp
-    ../epoll/timer/TimerPurgeTokenAuthList.cpp
-    # TimerReconnectOnTheMaster.cpp exists in this dir but is NOT
-    # listed in game-server-alone.pro — likely dead code.
-    # DB-mode-specific source. cli-epoll.pro adds this conditionally;
+    ${CC_REPO_ROOT}/server/epoll/timer/TimerPurgeTokenAuthList.cpp
     # game-server-alone always uses PostgreSQL.
-    ../epoll/db/EpollPostgresql.cpp
+    ${CC_REPO_ROOT}/server/epoll/db/EpollPostgresql.cpp
 )
 
 add_executable(catchchallenger-game-server-alone
-    ${CATCHCHALLENGER_EPOLL_FILEDB_SOURCES}
+    ${_epoll_sources}
     ${_extra_sources}
 )
 
 target_include_directories(catchchallenger-game-server-alone PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../epoll
+    ${CC_REPO_ROOT}/server/epoll
 )
 
 target_link_libraries(catchchallenger-game-server-alone PRIVATE
@@ -45,9 +71,6 @@ target_link_libraries(catchchallenger-game-server-alone PRIVATE
     ${LIBPQ_LIBRARY}
 )
 
-# Class-mode + DB-mode overrides. ONLYGAMESERVER replaces
-# ALLINONESERVER; DATAPACK_ONLYBYMIRROR is required (datapack content
-# is fetched from the master mirror, never served by this process).
 target_compile_definitions(catchchallenger-game-server-alone PRIVATE
     CATCHCHALLENGER_SERVER
     QT_NO_EMIT
@@ -69,9 +92,7 @@ if(CATCHCHALLENGER_IO_URING)
     target_link_libraries(catchchallenger-game-server-alone PRIVATE ${LIBURING_LIBRARY})
 endif()
 
-if(EXTERNALLIBZSTD)
-    target_link_libraries(catchchallenger-game-server-alone PRIVATE ${ZSTD_LIBRARY})
-endif()
+target_link_libraries(catchchallenger-game-server-alone PRIVATE ${ZSTD_LIBRARY})
 
 find_program(MOLD_EXE mold)
 if(MOLD_EXE)

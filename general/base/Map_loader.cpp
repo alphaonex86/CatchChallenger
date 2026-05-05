@@ -6,6 +6,7 @@
 #include "cpp11addition.hpp"
 #include "MoveOnTheMap.hpp"
 #include "FacilityLibGeneral.hpp"
+#include <algorithm>
 #include <chrono>
 #include <sys/stat.h>
 

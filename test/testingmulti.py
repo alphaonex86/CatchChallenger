@@ -11,8 +11,21 @@ Steps:
   5. Check each client sees the other player (insert/move)
 """
 
+# Drop the .pyc cache for this process so import diagnostic / build_paths /
+# remote_build never lands a __pycache__/ dir in the source tree.  Set
+# before the first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
 import os, sys, signal, subprocess, threading, multiprocessing, json, shutil, re, time
 import diagnostic
+import build_paths
+from cmd_helpers import (clamp_local, assert_port_or_fail,
+                         assert_port_or_fail_with_remotes)
+from remote_build import all_enabled_exec_nodes
+
+build_paths.ensure_root()
 
 DIAG = diagnostic.parse_diag_args()
 _DIAG_SUFFIX = diagnostic.build_dir_suffix(DIAG)
@@ -31,16 +44,16 @@ DATAPACK_SRC       = _config["paths"]["datapacks"][0]
 MAINCODE           = "test"
 
 SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
-SERVER_REF_BUILD   = os.path.join(ROOT, "server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
-SERVER_BUILD       = os.path.join(ROOT, "server/epoll/build/testing-multi" + _DIAG_SUFFIX)
+SERVER_REF_BUILD   = build_paths.build_path("server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
+SERVER_BUILD       = build_paths.build_path("server/epoll/build/testing-multi" + _DIAG_SUFFIX)
 SERVER_BIN_NAME    = "catchchallenger-server-cli-epoll"
 
 CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
-CLIENT_CPU_BUILD   = os.path.join(ROOT, "client/qtcpu800x600/build/testing-multi-cpu" + _DIAG_SUFFIX)
+CLIENT_CPU_BUILD   = build_paths.build_path("client/qtcpu800x600/build/testing-multi-cpu" + _DIAG_SUFFIX)
 CLIENT_CPU_BIN     = "catchchallenger"
 
 CLIENT_GL_PRO      = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro")
-CLIENT_GL_BUILD    = os.path.join(ROOT, "client/qtopengl/build/testing-multi-gl" + _DIAG_SUFFIX)
+CLIENT_GL_BUILD    = build_paths.build_path("client/qtopengl/build/testing-multi-gl" + _DIAG_SUFFIX)
 CLIENT_GL_BIN      = "catchchallenger"
 
 SERVER_HOST = _config["server_host"]
@@ -73,7 +86,7 @@ total_expected = [0]
 server_proc = None
 
 SCRIPT_NAME = os.path.basename(__file__)
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
 
 
 def load_failed_cases():
@@ -141,6 +154,11 @@ def log_fail(name, detail=""):
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
     print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    li = 0
+    _ctx = diagnostic.last_cmd_lines()
+    while li < len(_ctx):
+        print(_ctx[li])
+        li += 1
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -188,6 +206,8 @@ def set_http_datapack_mirror(build_dir, value):
     log_info(f'server-properties.xml httpDatapackMirror="{value}"')
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + list(args), cwd)
     try:
         p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -208,13 +228,16 @@ def build_project(pro_file, build_dir, label):
     )
 
 def setup_server_datapack(build_dir, datapack_src, maincode):
+    import datapack_stage as _ds
+    staged = _ds.staged_local(datapack_src)
     dst = os.path.join(build_dir, "datapack")
-    if os.path.islink(dst):
+    if os.path.islink(dst) or os.path.isfile(dst):
         os.remove(dst)
     elif os.path.isdir(dst):
         shutil.rmtree(dst)
-    shutil.copytree(datapack_src, dst, ignore=shutil.ignore_patterns(".git"))
-    log_info(f"copied datapack from {datapack_src}")
+    os.makedirs(build_dir, exist_ok=True)
+    os.symlink(staged, dst)
+    log_info(f"symlinked datapack {dst} -> {staged}")
     # set mainDatapackCode
     src_xml = os.path.join(SERVER_REF_BUILD, "server-properties.xml")
     dst_xml = os.path.join(build_dir, "server-properties.xml")
@@ -229,19 +252,66 @@ def setup_server_datapack(build_dir, datapack_src, maincode):
             f.write(content)
         log_info(f"server-properties.xml mainDatapackCode={maincode}")
 
+_TEST_SERVER_PROPERTIES_SEED = """<?xml version="1.0"?>
+<configuration>
+    <server-port value="{port}"/>
+    <automatic_account_creation value="true"/>
+    <master>
+        <external-server-port value="{port}"/>
+    </master>
+</configuration>
+"""
+
+
+def _force_test_server_settings(build_dir):
+    """Flip server-properties.xml so PlayerA / PlayerB --autologin works:
+      * automatic_account_creation=true (default false rejects the
+        implicit account-create from autologin).
+      * server-port pinned to SERVER_PORT (server picks a RANDOM port
+        on first init via NormalServerGlobal::checkSettingsFile, which
+        defeats both the test's --port arg and the TCP probe).
+
+    When server-properties.xml doesn't exist yet (first run on a fresh
+    build dir), seed it with these two settings — checkSettingsFile()
+    fills in everything else and respects what we pre-set."""
+    xml = os.path.join(build_dir, "server-properties.xml")
+    if not os.path.exists(xml):
+        os.makedirs(build_dir, exist_ok=True)
+        with open(xml, "w") as f:
+            f.write(_TEST_SERVER_PROPERTIES_SEED.format(port=SERVER_PORT))
+        return
+    if os.path.islink(xml):
+        target = os.path.realpath(xml)
+        os.remove(xml)
+        shutil.copy2(target, xml)
+    with open(xml, "r") as f:
+        content = f.read()
+    content = re.sub(r'automatic_account_creation\s+value="[^"]*"',
+                     'automatic_account_creation value="true"', content)
+    content = re.sub(r'(?<!external-)server-port\s+value="[^"]*"',
+                     f'server-port value="{SERVER_PORT}"', content)
+    content = re.sub(r'external-server-port\s+value="[^"]*"',
+                     f'external-server-port value="{SERVER_PORT}"', content)
+    with open(xml, "w") as f:
+        f.write(content)
+
+
 def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     global server_proc
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail("start server", f"binary not found: {binary}")
         return None
+    _force_test_server_settings(build_dir)
     log_info(f"starting server: {binary}")
     env = os.environ.copy()
     for k, v in diagnostic.runtime_env(DIAG).items():
         env[k] = v
     wrapper = diagnostic.runtime_wrapper(DIAG)
+    srv_args = NICE_PREFIX + wrapper + [binary]
+    diagnostic.record_cmd(srv_args, build_dir)
     server_proc = subprocess.Popen(
-        NICE_PREFIX + wrapper + [binary], cwd=build_dir,
+        srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
     ready = threading.Event()
@@ -287,26 +357,50 @@ def run_client_async(build_dir, bin_name, args, env):
     if wrapper:
         # gdb + valgrind don't compose well — run under valgrind directly.
         gdb_args = wrapper + [binary] + args
-    else:
+    elif shutil.which("gdb") is not None:
         gdb_args = ["gdb", "-batch",
                     "-ex", "set breakpoint pending on",
                     "-ex", "handle SIGPIPE nostop noprint pass",
                     "-ex", "break __throw_out_of_range",
                     "-ex", "run", "-ex", "bt", "-ex", "quit",
                     "--args", binary] + args
+    else:
+        gdb_args = [binary] + args
+    cli_args = NICE_PREFIX + gdb_args
+    diagnostic.record_cmd(cli_args, build_dir)
     proc = subprocess.Popen(
-        NICE_PREFIX + gdb_args, cwd=build_dir,
+        cli_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         env=env, preexec_fn=os.setsid)
     output_lines = []
     done = threading.Event()
+    # `early_fail` is set by the reader when the client either explicitly
+    # refuses the connection or drops after a stateChanged(1) — both
+    # always-FAIL conditions that let the harness skip the rest of the
+    # timeout window. Returned alongside (proc, done, lines) so the
+    # caller can read it after wait().
+    early_fail = [None]
+    seen_state1 = [False]
+
     def reader():
         for raw in iter(proc.stdout.readline, b""):
-            output_lines.append(raw.decode(errors="replace").rstrip("\n"))
+            line = raw.decode(errors="replace").rstrip("\n")
+            output_lines.append(line)
+            if early_fail[0] is None:
+                if "Connection refused by the server" in line:
+                    early_fail[0] = "Connection refused by the server"
+                    done.set()
+                elif "stateChanged(1)" in line:
+                    seen_state1[0] = True
+                elif seen_state1[0] and "stateChanged(0)" in line:
+                    early_fail[0] = ("stateChanged(0) after stateChanged(1) — "
+                                     "client connected then dropped before map")
+                    done.set()
         done.set()
+
     t = threading.Thread(target=reader, daemon=True)
     t.start()
-    return proc, done, output_lines
+    return proc, done, output_lines, early_fail
 
 def kill_client(proc):
     if proc is None:
@@ -401,6 +495,17 @@ def run_multiplayer_test(dp_name, minimize_mode):
     if srv is None:
         return
 
+    # Local-only TCP probe. The "correctly bind: detected" line only
+    # proves listen() ran; this catches the rare case where bind
+    # silently fell through. Remote probes would always FAIL by design:
+    # the firewall blocks NEW connections from exec_nodes back to the
+    # test box (see CLAUDE.md "Network …"), and both clients here run
+    # on the test box anyway.
+    if not assert_port_or_fail(SERVER_HOST, int(SERVER_PORT),
+                               log_fail, f"[{minimize_mode}] tcp probe"):
+        stop_server()
+        return
+
     tag = f"[{minimize_mode}]"
 
     tmpdir_a = tempfile.mkdtemp(prefix="cc-test-a-")
@@ -437,10 +542,12 @@ def run_multiplayer_test(dp_name, minimize_mode):
     args_b = client_args_base + ["--character", CHAR_B]
 
     log_info(f"starting {CHAR_A} (qtcpu800x600)")
-    proc_a, done_a, out_a = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args_a, env_a)
+    proc_a, done_a, out_a, fail_a = run_client_async(
+        CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args_a, env_a)
     time.sleep(5)
     log_info(f"starting {CHAR_B} (qtopengl)")
-    proc_b, done_b, out_b = run_client_async(CLIENT_GL_BUILD, CLIENT_GL_BIN, args_b, env_b)
+    proc_b, done_b, out_b, fail_b = run_client_async(
+        CLIENT_GL_BUILD, CLIENT_GL_BIN, args_b, env_b)
 
     done_a.wait(timeout=diagnostic.scale_timeout(DIAG, CLIENT_TIMEOUT))
     done_b.wait(timeout=diagnostic.scale_timeout(DIAG, CLIENT_TIMEOUT))
@@ -450,6 +557,13 @@ def run_multiplayer_test(dp_name, minimize_mode):
     if proc_b.poll() is None:
         log_info(f"{CHAR_B} still running, killing")
         kill_client(proc_b)
+    # Surface early-fail signals (Connection refused / disconnect-after-
+    # connect) BEFORE the marker checks. The reader thread already killed
+    # the proc on detection — log here so the operator sees why.
+    if fail_a[0] is not None:
+        log_info(f"{CHAR_A} early fail: {fail_a[0]}")
+    if fail_b[0] is not None:
+        log_info(f"{CHAR_B} early fail: {fail_b[0]}")
 
     text_a = "\n".join(out_a)
     text_b = "\n".join(out_b)

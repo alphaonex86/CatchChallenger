@@ -1848,7 +1848,18 @@ void MapVisualiserPlayer::loadGrassTile()
 
 void MapVisualiserPlayer::mapDisplayedSlot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
+    // Emit via BOTH std::cerr AND qDebug. Linux/MXE-wine tests grep
+    // stderr directly (std::cerr lands there with no prefix). Android
+    // Qt routes std::cerr through a pipe-to-logcat redirector that is
+    // not always active for native streams; qDebug() is forwarded by
+    // Qt's android log message handler under tag "QtCore" reliably,
+    // which is what testingcompilationandroid.py grep'd from
+    // `adb logcat -d`. Both paths emit the same success_marker
+    // substring "MapVisualiserPlayer::mapDisplayedSlot()" so every
+    // testing*.py contract still matches.
     std::cerr << "MapVisualiserPlayer::mapDisplayedSlot() mapIndex=" << mapIndex << " current_map=" << current_map << std::endl;
+    qDebug() << "MapVisualiserPlayer::mapDisplayedSlot() mapIndex="
+             << mapIndex << "current_map=" << current_map;
     if(current_map==mapIndex)
     {
         emit currentMapLoaded();
