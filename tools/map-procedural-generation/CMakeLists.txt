@@ -1,19 +1,23 @@
 # map-procedural-generation — full procedural map generator (city + road
-# + plants on top of terrain). Reuses map_procgen_terrain_lib INTERFACE
-# from the sibling tool, just like the .pro `include`s its .pri.
+# + plants on top of terrain). Self-contained, one binary. Reuses the
+# znoise + procgen sources from the sibling map-procedural-generation-
+# terrain/ directory by directly compiling them in (the sibling tool's
+# CMakeLists.txt also exports them as map_procgen_terrain_lib INTERFACE
+# for the case where someone configures both — but here we are a
+# standalone project, so we list the sources inline).
+
+cmake_minimum_required(VERSION 3.20)
+project(map_procedural_generation LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Xml Widgets Gui REQUIRED)
 
-# map_procgen_terrain_lib lives in the sibling subdir. CMake doesn't
-# automatically traverse it unless the user enabled that tool too,
-# so include it here if needed.
-if(NOT TARGET map_procgen_terrain_lib)
-    add_subdirectory(
-        ${CMAKE_SOURCE_DIR}/tools/map-procedural-generation-terrain
-        ${CMAKE_BINARY_DIR}/tools/map-procedural-generation-terrain-aux
-        EXCLUDE_FROM_ALL
-    )
-endif()
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/client/libqtcatchchallenger/libtiled.cmake)
+# Pull in the terrain lib's INTERFACE source list (matches the qmake-era
+# include of map-procedural-generation-terrain.pri).
+include(${CC_REPO_ROOT}/tools/map-procedural-generation-terrain/map-procedural-generation-terrain.cmake)
 
 add_executable(map-procedural-generation
     main.cpp

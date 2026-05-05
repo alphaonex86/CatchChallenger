@@ -208,8 +208,8 @@ public:
     void setMaxPlayers(const uint16_t &maxPlayers) override;
     #endif
 protected:
-    /*virtual for void LinkToGameServer::parseIncommingData()
-    of gateway, readTheFirstSslHeader() */virtual void parseIncommingData();
+    /*virtual for void LinkToGameServer::parseIncommingData() of gateway*/
+    virtual void parseIncommingData();
     #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     CompressionProtocol::CompressionType getCompressType() const override;
     #endif

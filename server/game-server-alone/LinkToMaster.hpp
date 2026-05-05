@@ -16,11 +16,7 @@ class LinkToMaster : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToMaster(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
             );
     ~LinkToMaster();
     enum Stat
@@ -60,7 +56,6 @@ public:
     static uint16_t maxLockAge;
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;
-    static bool haveTheFirstSslHeader;
     std::vector<uint8_t> queryNumberList;
     BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
@@ -76,7 +71,6 @@ public:
     bool askMoreMaxMonsterId();
     bool askMoreMaxClanId();
     void tryReconnect();
-    void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
 
     ssize_t readFromSocket(char * data, const size_t &size);

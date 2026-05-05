@@ -30,7 +30,11 @@ Multi::Multi() :
     reply(nullptr),
     autoSelectTried(false)
 {
-    srand(time(0));
+    //--take-screenshot already pinned srand(42) for reproducible map
+    //rendering; don't reseed here, otherwise grass-tile randomness and
+    //animation-frame offsets will diverge between runs.
+    if(CliClientOptions::takeScreenshotPath.isEmpty())
+        srand(time(0));
     login=nullptr;
 
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList();

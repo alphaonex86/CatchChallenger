@@ -1,39 +1,27 @@
 # map-procedural-generation-terrain — terrain-only procedural map gen.
+# Self-contained, one binary (`map-procedural-generation-terrain`).
 # Bundles vendored znoise (Perlin/Simplex/Worley/...) sources.
+#
+# Also exports `map_procgen_terrain_lib` (INTERFACE) so the sibling
+# tools/map-procedural-generation/ can reuse the same source list when
+# its CMakeLists.txt opts into building both.
+
+cmake_minimum_required(VERSION 3.20)
+project(map_procedural_generation_terrain LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Xml Widgets Gui REQUIRED)
 
-# This same source list is reused by map-procedural-generation as a
-# CMake INTERFACE lib so we don't repeat 30 .cpp lines.
-add_library(map_procgen_terrain_lib INTERFACE)
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/client/libqtcatchchallenger/libtiled.cmake)
+# Reusable INTERFACE lib (mirrors map-procedural-generation-terrain.pri).
+include(${CMAKE_CURRENT_LIST_DIR}/map-procedural-generation-terrain.cmake)
 
-target_sources(map_procgen_terrain_lib INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/cpp/FBM.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/cpp/HybridMultiFractal.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/cpp/MixerBase.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/cpp/NoiseBase.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/cpp/NoiseTools.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/cpp/Perlin.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/cpp/Simplex.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/cpp/Worley.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/VoronioForTiledMapTmx.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/LoadMap.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TransitionTerrain.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Settings.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/MapPlants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/MiniMap.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/MapBrush.cpp
-)
-
-target_include_directories(map_procgen_terrain_lib INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/znoise/headers
-)
-
-target_compile_definitions(map_procgen_terrain_lib INTERFACE
-    CATCHCHALLENGER_ONLYMAPRENDER
-)
-
+# When this CMakeLists.txt is the standalone-opened project, also produce
+# the binary. When add_subdirectory'd from the sibling map-procedural-
+# generation/ project, EXCLUDE_FROM_ALL means this binary doesn't end up
+# in the parent's default-build set.
 add_executable(map-procedural-generation-terrain
     main.cpp
     resources.qrc

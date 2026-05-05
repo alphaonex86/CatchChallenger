@@ -7,10 +7,21 @@ testingmap2png.py — Test map2png tool compilation and output verification.
 3. Compare generated image with reference using pixel comparison
 """
 
+# Drop the .pyc cache for this process so import diagnostic / build_paths /
+# remote_build never lands a __pycache__/ dir in the source tree.  Set
+# before the first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
 import os, sys, subprocess, json, time, shutil
 import multiprocessing
 from remote_build import start_remote_builds, collect_remote_results, count_remote_tests
 import diagnostic
+import build_paths
+from cmd_helpers import clamp_local
+
+build_paths.ensure_root()
 
 DIAG = diagnostic.parse_diag_args()
 
@@ -28,9 +39,10 @@ NPROC = str(multiprocessing.cpu_count())
 COMPILE_TIMEOUT = 600
 RUN_TIMEOUT = 60
 
-OUTPUT_IMAGE = "/mnt/data/perso/tmpfs/catchchallenger-map2png.png"
+import test_config as _tc
+OUTPUT_IMAGE = _tc.MAP2PNG_OUTPUT
 REFERENCE_IMAGE = os.path.join(ROOT, "test", "map-test.png")
-DIFF_IMAGE = "/mnt/data/perso/tmpfs/fail.png"
+DIFF_IMAGE = _tc.MAP2PNG_DIFF
 TEST_MAP = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack/map/main/test/city.tmx"
 
 # ── colors ──────────────────────────────────────────────────────────────────
@@ -42,7 +54,7 @@ C_RESET  = "\033[0m"
 
 SCRIPT_NAME = "compile map2png.map2png.pro"
 SCRIPT_RUN_NAME = "run map2png.map2png.pro"
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
 
 results = []
 _last_log_time = [time.monotonic()]
@@ -106,11 +118,19 @@ def log_fail(name, detail=""):
     _last_log_time[0] = now
     results.append((name, False, detail, elapsed))
     print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+    li = 0
+    _ctx = diagnostic.last_cmd_lines()
+    while li < len(_ctx):
+        print(_ctx[li])
+        li += 1
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT):
+    timeout = clamp_local(timeout)
+    full_args = ["nice", "-n", "19", "ionice", "-c", "3"] + list(args)
+    diagnostic.record_cmd(full_args, cwd)
     try:
         p = subprocess.run(
-            ["nice", "-n", "19", "ionice", "-c", "3"] + list(args),
+            full_args,
             cwd=cwd, timeout=timeout,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         )
@@ -304,7 +324,7 @@ def test_compile():
     """Build map2png.pro via cmake, then clean up. Returns True on success."""
     import cmake_helpers as _ch
     suffix = diagnostic.build_dir_suffix(DIAG)
-    build_dir = os.path.join(os.path.dirname(MAP2PNG_PRO), "build", "testing" + suffix)
+    build_dir = build_paths.src_to_build(os.path.dirname(MAP2PNG_PRO), ROOT, "build", "testing" + suffix)
     os.makedirs(build_dir, exist_ok=True)
 
     label = "map2png.pro" + diagnostic.label_suffix(DIAG)
@@ -336,7 +356,7 @@ def test_run():
         os.remove(DIFF_IMAGE)
     
     # Build the tool first (if not already built)
-    build_dir = os.path.join(os.path.dirname(MAP2PNG_PRO), "build", "testing" + diagnostic.build_dir_suffix(DIAG))
+    build_dir = build_paths.src_to_build(os.path.dirname(MAP2PNG_PRO), ROOT, "build", "testing" + diagnostic.build_dir_suffix(DIAG))
     map2png_binary = os.path.join(build_dir, "map2png")
     
     if not os.path.isfile(map2png_binary):
@@ -417,9 +437,11 @@ def main():
     print("  CatchChallenger — map2png Tool Testing")
     print(f"{'='*60}{C_RESET}\n")
     
-    # Check prerequisites
-    if not os.path.isfile(MAP2PNG_PRO):
-        print(f"Error: {MAP2PNG_PRO} not found")
+    # Check prerequisites. After the qmake -> CMake migration the .pro file
+    # is no longer present on disk; cmake_helpers maps the legacy .pro path
+    # to a CMake target, so we just need the parent directory to exist.
+    if not os.path.isdir(os.path.dirname(MAP2PNG_PRO)):
+        print(f"Error: {os.path.dirname(MAP2PNG_PRO)} not found")
         sys.exit(1)
     
     if not os.path.isfile(REFERENCE_IMAGE):

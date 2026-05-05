@@ -1,8 +1,16 @@
-# Phase 2 — server/login/login.pro -> CMake.
-# catchchallenger-server-login: CATCHCHALLENGER_CLASS_LOGIN +
+# server/login/CMakeLists.txt — catchchallenger-server-login binary.
+# Self-contained, one binary. CATCHCHALLENGER_CLASS_LOGIN +
 # CATCHCHALLENGER_DB_POSTGRESQL + DB_PREPAREDSTATEMENT.
 # Doesn't share catchchallenger_server_base (no game-logic sources);
 # pulls only a small subset of server/base + a few server/epoll files.
+
+cmake_minimum_required(VERSION 3.20)
+project(catchchallenger_server_login LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
@@ -29,14 +37,11 @@ set(_login_sources
     TimerDetectTimeout.cpp
     # epoll/ files reused by all servers
     ../epoll/Epoll.cpp
-    ../epoll/EpollGenericSslServer.cpp
     ../epoll/EpollGenericServer.cpp
     ../epoll/EpollClient.cpp
     ../epoll/EpollSocket.cpp
-    ../epoll/EpollSslClient.cpp
     ../epoll/db/EpollPostgresql.cpp
     ../epoll/EpollClientToServer.cpp
-    ../epoll/EpollSslClientToServer.cpp
     ../epoll/EpollTimer.cpp
     # Small subset of server/base/ specific to login. The SQL plumbing
     # (DatabaseBase, PreparedDBQuery*, etc.) is pulled via the

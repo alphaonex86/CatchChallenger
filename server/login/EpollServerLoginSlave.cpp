@@ -407,14 +407,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 std::cerr << "Unable to connect on master" << std::endl;
                 abort();
             }
-            #ifdef CATCHCHALLENGER_SERVER_SSL
-            ctx from what?
-            linkToMaster::linkToMaster=new linkToMaster(linkfd,ctx);
-            #else
             LinkToMaster::linkToMaster=new LinkToMaster(linkfd);
-            #endif
             LinkToMaster::linkToMaster->stat=LinkToMaster::Stat::Connected;
-            LinkToMaster::linkToMaster->readTheFirstSslHeader();
+            // SSL/cleartext preamble byte was removed; jump straight
+            // to the protocol-header send.
+            LinkToMaster::linkToMaster->sendProtocolHeader();
             LinkToMaster::linkToMaster->setConnexionSettings();
             /*const int &s = EpollSocket::make_non_blocking(linkfd);
             if(s == -1)
@@ -473,11 +470,7 @@ void EpollServerLoginSlave::SQL_common_load_finish()
 
 bool EpollServerLoginSlave::tryListen()
 {
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-        const bool &returnedValue=trySslListen(server_ip, server_port,"server.crt", "server.key");
-    #else
         const bool &returnedValue=tryListenInternal(server_ip.c_str(), server_port.c_str());
-    #endif
 
     preload_2_sync_the_randomData();
     preload_profile();

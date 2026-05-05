@@ -53,16 +53,15 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
                     this->linkToGameServer=linkToGameServer;
                     if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
-                        linkToGameServer->stat=LinkToGameServer::Stat::WaitingFirstSslHeader;
+                        linkToGameServer->stat=LinkToGameServer::Stat::WaitingProtocolHeader;
                     else
                         linkToGameServer->stat=LinkToGameServer::Stat::WaitingProxy;
                     linkToGameServer->client=this;
                     linkToGameServer->protocolQueryNumber=queryNumber;
-                    //send the protocol
-                    //wait readTheFirstSslHeader() to sendProtocolHeader();
+                    //send the protocol header straight away (no SSL preamble byte)
                     linkToGameServer->setConnexionSettings();
                     if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
-                        linkToGameServer->parseIncommingData();
+                        linkToGameServer->sendProtocolHeader();
                     else
                         linkToGameServer->sendProxyRequest(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port);
                     /*int s = EpollSocket::make_non_blocking(socketFd);

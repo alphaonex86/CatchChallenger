@@ -4,6 +4,7 @@
 #include "../CommonDatapack.hpp"
 #endif
 #include "../../tinyXML2/customtinyxml2.hpp"
+#include <algorithm>
 #include <iostream>
 #include <regex>
 

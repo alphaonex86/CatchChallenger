@@ -4,14 +4,14 @@
 # rules + cross-package find_package(Ogg) we'd have to satisfy in the
 # in-tree build). Keep upstream sources untouched per CLAUDE.md.
 
-set(_libogg_root ${CMAKE_CURRENT_SOURCE_DIR}/libogg)
+set(_libogg_root ${CMAKE_CURRENT_LIST_DIR}/libogg)
 add_library(catchchallenger_libogg STATIC
     ${_libogg_root}/src/bitwise.c
     ${_libogg_root}/src/framing.c
 )
 target_include_directories(catchchallenger_libogg PUBLIC ${_libogg_root}/include)
 
-set(_libopus_root ${CMAKE_CURRENT_SOURCE_DIR}/libopus)
+set(_libopus_root ${CMAKE_CURRENT_LIST_DIR}/libopus)
 # Pulled from libopus.pri SOURCES list (CELT + SILK common + SILK float
 # + opus core + opus float analysis). 134 .c files — listed verbatim.
 set(_libopus_celt
@@ -85,7 +85,7 @@ target_compile_definitions(catchchallenger_libopus PRIVATE
     VAR_ARRAYS
 )
 
-set(_libopusfile_root ${CMAKE_CURRENT_SOURCE_DIR}/libopusfile)
+set(_libopusfile_root ${CMAKE_CURRENT_LIST_DIR}/libopusfile)
 add_library(catchchallenger_libopusfile STATIC
     ${_libopusfile_root}/src/info.c
     ${_libopusfile_root}/src/internal.c

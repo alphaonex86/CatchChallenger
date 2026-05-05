@@ -1,7 +1,7 @@
 #include "NormalServer.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include <QSslSocket>
+#include <QTcpSocket>
 #include <QTcpSocket>
 #include <QNetworkProxy>
 #include <QProcess>
@@ -31,12 +31,9 @@ NormalServer::NormalServer() :
     QtServer()
 {
     sslServer               = NULL;
-    sslCertificate          = NULL;
-    sslKey                  = NULL;
 
     normalServerSettings.server_ip      = std::string();
     normalServerSettings.server_port    = 42489;
-    normalServerSettings.useSsl         = true;
 
     //botThread = new EventThreader();
     //crash if this, due to different socket and thread
@@ -70,17 +67,6 @@ NormalServer::~NormalServer()
         sslServer->deleteLater();
         sslServer=NULL;
     }
-
-    /*botThread->quit();
-    botThread->wait();
-    delete botThread;*/
-    /*eventDispatcherThread->quit();
-    eventDispatcherThread->wait();
-    delete eventDispatcherThread;*/
-    if(sslKey!=NULL)
-        delete sslKey;
-    if(sslCertificate!=NULL)
-        delete sslCertificate;
 }
 
 void NormalServer::setNormalSettings(const NormalServerSettings &settings)
@@ -109,98 +95,16 @@ void NormalServer::load_settings()
 //start with allow real player to connect
 void NormalServer::start_internal_server()
 {
-    if(normalServerSettings.useSsl)
-    {
-        if(!QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
-        {
-            QStringList args;
-            args << "req" << "-newkey" << "rsa:4096" << "-sha512" << "-x509" << "-nodes" << "-days" << "3560" << "-out" << QCoreApplication::applicationDirPath()+"/server.crt"
-                    << "-keyout" << QCoreApplication::applicationDirPath()+"/server.key" << "-subj" << "/C=FR/ST=South-West/L=Paris/O=Catchchallenger/OU=Developer Department/CN=*"
-                    << "-extensions usr_cert";
-            #ifdef _WIN32
-            QString opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl/openssl.exe";
-            #else
-            QString opensslAppPath="/usr/bin/openssl";
-            #endif
-            QProcess process;
-            process.start(opensslAppPath,args);
-            process.waitForFinished();
-            process.setWorkingDirectory(QCoreApplication::applicationDirPath());
-            if(process.exitCode()!=0 || !QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
-            {
-                if(process.exitCode()!=0)
-                {
-                    std::cerr << "return code: " << process.exitCode()
-                              << ", output: " << QString::fromLocal8Bit(process.readAll()).toStdString()
-                              << ", error: " << process.error()
-                              << ", error string: " << process.errorString().toStdString()
-                              << ", exitStatus: " << process.exitStatus()
-                              << std::endl;
-                    std::cerr << "To start: " << opensslAppPath.toStdString() << " " << args.join(" ").toStdString() << std::endl;
-                }
-                process.kill();
-                std::cerr << "Certificate for the ssl connexion not found, buy or generate self signed, and put near the application" << std::endl;
-                stat=Down;
-                is_started(false);
-                error("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application");
-                return;
-            }
-            process.kill();
-        }
-
-        if(sslKey!=NULL)
-            delete sslKey;
-        QFile key(QCoreApplication::applicationDirPath()+"/server.key");
-        if(!key.open(QIODevice::ReadOnly))
-        {
-            std::cerr << "Unable to access to the server key: " << key.errorString().toStdString() << std::endl;
-            stat=Down;
-            is_started(false);
-            error("Unable to access to the server key");
-            return;
-        }
-        QByteArray keyData=key.readAll();
-        key.close();
-        QSslKey sslKey(keyData,QSsl::Rsa);
-        if(sslKey.isNull())
-        {
-            std::cerr << "Server key is wrong" << std::endl;
-            stat=Down;
-            is_started(false);
-            error("Server key is wrong");
-            return;
-        }
-
-        if(sslCertificate!=NULL)
-            delete sslCertificate;
-        QFile certificate(QCoreApplication::applicationDirPath()+"/server.crt");
-        if(!certificate.open(QIODevice::ReadOnly))
-        {
-            std::cerr << "Unable to access to the server certificate: " << certificate.errorString().toStdString() << std::endl;
-            stat=Down;
-            is_started(false);
-            error("Unable to access to the server certificate");
-            return;
-        }
-        QByteArray certificateData=certificate.readAll();
-        certificate.close();
-        QSslCertificate sslCertificate(certificateData);
-        if(sslCertificate.isNull())
-        {
-            std::cerr << "Server certificate is wrong" << std::endl;
-            stat=Down;
-            is_started(false);
-            error("Server certificate is wrong");
-            return;
-        }
-        if(sslServer==NULL)
-            sslServer=new QSslServer(sslCertificate,sslKey);
-    }
-    else
-    {
-        if(sslServer==NULL)
-            sslServer=new QSslServer();
-    }
+    // Cleartext-only listen path. The qmake-era code branched on a
+    // server-side `useSsl` setting and constructed QSslServer with a
+    // self-signed cert when it was on; that branch (and the openssl
+    // sub-process that generated the cert on first launch) is gone,
+    // along with the 1-byte SSL preamble the server used to write at
+    // accept-time. TLS deployments now belong to a separate listener
+    // (e.g. an external reverse proxy) rather than being negotiated
+    // in-band by the protocol.
+    if(sslServer==NULL)
+        sslServer=new QTcpServer();
     if(!connect(sslServer,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection))
         abort();
     if(sslServer->isListening())
@@ -299,11 +203,6 @@ void NormalServer::stop_internal_server()
         delete sslServer;
         sslServer=NULL;
     }
-
-    if(sslKey!=NULL)
-        delete sslKey;
-    if(sslCertificate!=NULL)
-        delete sslCertificate;
 }
 
 /////////////////////////////////////////////////// Object removing /////////////////////////////////////
@@ -371,7 +270,9 @@ void NormalServer::newConnection()
     if(sslServer!=NULL)
         while(sslServer->hasPendingConnections())
         {
-            QSslSocket *socket = static_cast<QSslSocket *>(sslServer->nextPendingConnection());
+            // Plain QTcpSocket — the QSslSocket cast disappeared along
+            // with the QSslServer wrapper; the wire is cleartext.
+            QTcpSocket *socket = sslServer->nextPendingConnection();
             const QHostAddress &peerAddress=socket->peerAddress();
             bool kicked=kickedHosts.contains(peerAddress);
             if(kicked)
@@ -382,7 +283,6 @@ void NormalServer::newConnection()
                 }
             if(!kicked)
             {
-                connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
                 if(socket!=NULL)
                 {
                     const PLAYER_INDEX_FOR_CONNECTED index=qtClientList->insert(nullptr);
@@ -425,17 +325,6 @@ void NormalServer::purgeKickedHost()
 void NormalServer::timeRangeEvent()
 {
     Client::timeRangeEvent(QDateTime::currentMSecsSinceEpoch()/1000);
-}
-
-void NormalServer::sslErrors(const QList<QSslError> &errors)
-{
-    std::cerr << "Ssl error: " << std::endl;
-    int index=0;
-    while(index<errors.size())
-    {
-        std::cerr << errors.at(index).errorString().toStdString() << std::endl;
-        index++;
-    }
 }
 
 bool NormalServer::isListen()

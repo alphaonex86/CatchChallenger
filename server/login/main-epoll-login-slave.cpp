@@ -67,12 +67,7 @@ int main(int argc, char *argv[])
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
-    char encodingBuff[1];
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    encodingBuff[0]=0x01;
-    #else
-    encodingBuff[0]=0x00;
-    #endif
+    // SSL preamble byte removed; no per-connect sentinel byte is emitted.
 
     TimerDdos timerDdos;
     {
@@ -219,9 +214,6 @@ int main(int argc, char *argv[])
                             }
 
                             EpollClientLoginSlave *client=new EpollClientLoginSlave(infd
-                                               #ifdef CATCHCHALLENGER_SERVER_SSL
-                                               ,EpollServerLoginSlave::epollServerLoginSlave->getCtx()
-                                               #endif
                                 );
                             #ifdef CATCHCHALLENGER_HARDENED
                             if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
@@ -258,15 +250,7 @@ int main(int argc, char *argv[])
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
                                 delete client;
                             }
-                            else
-                            {
-                                const ssize_t &returnVal=::write(infd,encodingBuff,sizeof(encodingBuff));
-                                if(returnVal!=sizeof(encodingBuff))
-                                {
-                                    std::cerr << "epoll_ctl on socket error, unable to write encodingBuff" << std::endl;
-                                    delete client;
-                                }
-                            }
+                            // SSL preamble byte removed; nothing to write here.
                         }
                     }
                     continue;

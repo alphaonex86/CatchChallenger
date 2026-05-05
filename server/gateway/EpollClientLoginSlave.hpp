@@ -2,7 +2,6 @@
 #define EPOLLCLIENTLOGINMASTER_H
 
 #include "../epoll/EpollClient.hpp"
-#include "../epoll/EpollSslClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/VariableServer.hpp"
 #include "../epoll/db/EpollPostgresql.hpp"
@@ -51,11 +50,7 @@ class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOut
 {
 public:
     EpollClientLoginSlave(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
         );
     ~EpollClientLoginSlave();
     bool disconnectClient();

@@ -7,10 +7,40 @@ Sections:
   2. Bot run: start server, run bot for 10 minutes, check for crashes/errors/inactivity
 """
 
+# Drop the .pyc cache for this process so import diagnostic / build_paths /
+# remote_build never lands a __pycache__/ dir in the source tree.  Set
+# before the first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
 import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time
 from remote_build import (start_remote_builds, collect_remote_results,
                           REMOTE_SERVERS, REMOTE_DIR, count_remote_tests)
 import diagnostic
+import build_paths
+from cmd_helpers import (clamp_local, assert_port_or_fail,
+                         assert_port_or_fail_with_remotes)
+from remote_build import all_enabled_exec_nodes
+
+
+def _host_port_from_args(args):
+    """Extract --host / --port from a client-arg list (default localhost:61917)."""
+    host = "localhost"
+    port = 61917
+    idx = 0
+    while idx < len(args) - 1:
+        if args[idx] == "--host":
+            host = args[idx + 1]
+        elif args[idx] == "--port":
+            try:
+                port = int(args[idx + 1])
+            except (ValueError, TypeError):
+                pass
+        idx += 1
+    return host, port
+
+build_paths.ensure_root()
 
 DIAG = diagnostic.parse_diag_args()
 _DIAG_SUFFIX = diagnostic.build_dir_suffix(DIAG)
@@ -28,12 +58,12 @@ NPROC      = str(multiprocessing.cpu_count())
 DATAPACKS       = _config["paths"]["datapacks"]
 
 SERVER_PRO      = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
-SERVER_BUILD    = os.path.join(ROOT, "server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
-SERVER_REF_BUILD= os.path.join(ROOT, "server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
+SERVER_BUILD    = build_paths.build_path("server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
+SERVER_REF_BUILD= build_paths.build_path("server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
 SERVER_BIN_NAME = "catchchallenger-server-cli-epoll"
 
 BOT_PRO         = os.path.join(ROOT, "tools/bot-actions/bot-actions.pro")
-BOT_BUILD       = os.path.join(ROOT, "tools/bot-actions/build/testing" + _DIAG_SUFFIX)
+BOT_BUILD       = build_paths.build_path("tools/bot-actions/build/testing" + _DIAG_SUFFIX)
 BOT_BIN         = "bot-actions"
 
 SERVER_HOST  = _config["server_host"]
@@ -59,7 +89,7 @@ total_expected = [0]
 server_proc = None
 
 SCRIPT_NAME = os.path.basename(__file__)
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
 
 
 def load_failed_cases():
@@ -149,6 +179,11 @@ ERROR_WHITELIST = [
     "Path not found",              # pathfinding miss, not a crash
     "Warning: Bug due to resolved path is empty",  # known benign warning
     "uniqueKey==0, suspect bug",   # benign warning when only one server is in the pool
+    "Parse error:",                # tinyxml2 attribute warning, not a crash;
+                                   # the surrounding code logs and continues
+                                   # (matches both the "test" maincode
+                                   # intentional bugs and the equivalent
+                                   # warnings the official maincode emits)
 ]
 
 
@@ -172,6 +207,11 @@ def log_fail(name, detail=""):
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
     print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    li = 0
+    _ctx = diagnostic.last_cmd_lines()
+    while li < len(_ctx):
+        print(_ctx[li])
+        li += 1
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -206,6 +246,9 @@ def set_http_datapack_mirror(build_dir, value):
 
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
+    # clamp_local caps any caller-supplied timeout at LOCAL_MAX_TIMEOUT (600s).
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + list(args), cwd)
     try:
         p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -243,19 +286,69 @@ def setup_server_runtime(build_dir, ref_dir=None):
             log_info(f"symlinked {name} -> {src_path}")
 
 
+_TEST_SERVER_PROPERTIES_SEED = """<?xml version="1.0"?>
+<configuration>
+    <server-port value="{port}"/>
+    <automatic_account_creation value="true"/>
+    <master>
+        <external-server-port value="{port}"/>
+    </master>
+</configuration>
+"""
+
+
+def _force_test_server_settings(build_dir):
+    """Flip server-properties.xml so the test bot can connect:
+      * automatic_account_creation=true so --autologin can auto-create
+        the testbot1 account on first connect (server default is false).
+      * server-port pinned to SERVER_PORT — the server otherwise picks
+        a random port on first init (10000 + rand()%55535) which would
+        defeat the test's --port arg and the TCP probe.
+
+    When server-properties.xml doesn't exist yet (very first server run
+    on a fresh testing-filedb dir), seed it with these two settings
+    only. The server's NormalServerGlobal::checkSettingsFile() will
+    fill in every other field with its defaults, but it RESPECTS the
+    values we pre-set, so the random-port branch never fires."""
+    xml = os.path.join(build_dir, "server-properties.xml")
+    import re as _re
+    if not os.path.exists(xml):
+        os.makedirs(build_dir, exist_ok=True)
+        with open(xml, "w") as f:
+            f.write(_TEST_SERVER_PROPERTIES_SEED.format(port=SERVER_PORT))
+        return
+    if os.path.islink(xml):
+        target = os.path.realpath(xml)
+        os.remove(xml)
+        shutil.copy2(target, xml)
+    with open(xml, "r") as f:
+        content = f.read()
+    content = _re.sub(r'automatic_account_creation\s+value="[^"]*"',
+                      'automatic_account_creation value="true"', content)
+    content = _re.sub(r'(?<!external-)server-port\s+value="[^"]*"',
+                      f'server-port value="{SERVER_PORT}"', content)
+    content = _re.sub(r'external-server-port\s+value="[^"]*"',
+                      f'external-server-port value="{SERVER_PORT}"', content)
+    with open(xml, "w") as f:
+        f.write(content)
+
+
 def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     global server_proc
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail("start server", f"binary not found: {binary}")
         return None
+    _force_test_server_settings(build_dir)
     log_info(f"starting server: {binary}")
     env = os.environ.copy()
     for k, v in diagnostic.runtime_env(DIAG).items():
         env[k] = v
     wrapper = diagnostic.runtime_wrapper(DIAG)
+    srv_args = NICE_PREFIX + wrapper + [binary]
+    diagnostic.record_cmd(srv_args, build_dir)
     server_proc = subprocess.Popen(
-        NICE_PREFIX + wrapper + [binary], cwd=build_dir,
+        srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
     ready = threading.Event()
@@ -341,6 +434,13 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
         log_fail(label, f"binary not found: {binary}")
         return True, [], False, 0
 
+    # Local-only probe — exec_nodes can't dial back to the test box
+    # (firewall, see CLAUDE.md "Network …"), and the bot connects to
+    # the server running here.
+    host, port = _host_port_from_args(args)
+    if not assert_port_or_fail(host, port, log_fail, label):
+        return True, [], False, 0
+
     duration = diagnostic.scale_timeout(DIAG, duration)
     action_timeout = diagnostic.scale_timeout(DIAG, action_timeout)
     log_info(f"running bot: {bin_name} {' '.join(args)} for {duration}s")
@@ -350,8 +450,10 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
         env[k] = v
     wrapper = diagnostic.runtime_wrapper(DIAG)
 
+    bot_args = NICE_PREFIX + wrapper + [binary] + list(args)
+    diagnostic.record_cmd(bot_args, build_dir)
     proc = subprocess.Popen(
-        NICE_PREFIX + wrapper + [binary] + list(args), cwd=build_dir,
+        bot_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
 
@@ -363,6 +465,12 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
     action_timeout_detected = [False]
     crashed = [False]
     stop_event = threading.Event()
+    # Early-FAIL detection so we don't sit out the 60s on-map timeout
+    # when the bot's connection was already refused / dropped after
+    # opening. Set by the reader thread when one of the patterns hits;
+    # the wait-for-map loop polls this and bails immediately.
+    early_fail = [None]
+    seen_state1 = [False]
 
     def reader():
         while True:
@@ -389,12 +497,32 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
                 with lock:
                     error_lines.append(line)
 
+            # Early-FAIL signals — bot cannot recover from these.
+            if early_fail[0] is None:
+                if "Connection refused by the server" in line:
+                    early_fail[0] = "Connection refused by the server"
+                elif "stateChanged(1)" in line:
+                    seen_state1[0] = True
+                elif seen_state1[0] and "stateChanged(0)" in line:
+                    early_fail[0] = ("stateChanged(0) after stateChanged(1) — "
+                                     "client connected then dropped before map")
+
     reader_thread = threading.Thread(target=reader, daemon=True)
     reader_thread.start()
 
-    # wait for bot to reach map (use 60s timeout like the bot itself)
-    if not on_map.wait(timeout=diagnostic.scale_timeout(DIAG, 60)):
-        log_fail(label, "timeout waiting for bot to reach map (60s)")
+    # Wait for bot to reach map (60s like the bot itself), but bail
+    # immediately if the reader thread caught a connection-refused or
+    # stateChanged(1)→(0) drop — neither is recoverable.
+    map_deadline = time.monotonic() + diagnostic.scale_timeout(DIAG, 60)
+    while time.monotonic() < map_deadline and not on_map.is_set():
+        if early_fail[0] is not None:
+            break
+        time.sleep(0.2)
+    if not on_map.is_set():
+        if early_fail[0] is not None:
+            log_fail(label, f"client gave up: {early_fail[0]}")
+        else:
+            log_fail(label, "timeout waiting for bot to reach map (60s)")
         with lock:
             tail = output_lines[-50:]
         for l in tail:
@@ -552,26 +680,31 @@ def main():
 
     setup_server_runtime(SERVER_BUILD)
     # replace server datapack with clean copy (previous tests may have modified it)
+    import datapack_stage as _ds
     dp_src = DATAPACKS[0] if DATAPACKS else None
     server_dp = os.path.join(SERVER_BUILD, "datapack")
     if dp_src and os.path.isdir(dp_src):
-        if os.path.islink(server_dp):
+        staged = _ds.staged_local(dp_src)
+        if os.path.islink(server_dp) or os.path.isfile(server_dp):
             os.remove(server_dp)
         elif os.path.isdir(server_dp):
             shutil.rmtree(server_dp)
-        shutil.copytree(dp_src, server_dp, ignore=shutil.ignore_patterns(".git"))
-        log_info(f"copied server datapack from {dp_src}")
-    # clear stale bot datapack and copy from actual datapack source
+        os.makedirs(SERVER_BUILD, exist_ok=True)
+        os.symlink(staged, server_dp)
+        log_info(f"symlinked server datapack {server_dp} -> {staged}")
+    # clear stale bot datapack and re-symlink from the staged cache
     bot_dp = os.path.join(BOT_BUILD, "datapack")
     if os.path.exists(bot_dp) or os.path.islink(bot_dp):
-        if os.path.islink(bot_dp):
+        if os.path.islink(bot_dp) or os.path.isfile(bot_dp):
             os.remove(bot_dp)
         else:
             shutil.rmtree(bot_dp)
         log_info("removed stale bot datapack")
     if dp_src and os.path.isdir(dp_src):
-        shutil.copytree(dp_src, bot_dp, ignore=shutil.ignore_patterns(".git"))
-        log_info(f"copied bot datapack from {dp_src}")
+        staged = _ds.staged_local(dp_src)
+        os.makedirs(BOT_BUILD, exist_ok=True)
+        os.symlink(staged, bot_dp)
+        log_info(f"symlinked bot datapack {bot_dp} -> {staged}")
     db_dir = os.path.join(SERVER_BUILD, "database")
     if os.path.isdir(db_dir):
         shutil.rmtree(db_dir)

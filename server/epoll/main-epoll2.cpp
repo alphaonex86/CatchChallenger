@@ -18,11 +18,7 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data);
 #endif
 
 void send_settings(
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    EpollSslServer *server
-    #else
     EpollServer *server
-    #endif
 , TinyXMLSettings *settings,
         std::string &master_host,
         uint16_t &master_port,
@@ -81,7 +77,7 @@ void send_settings(
     formatedServerNormalSettings.server_ip				= settings->value("server-ip");
     formatedServerNormalSettings.proxy					= settings->value("proxy");
     formatedServerNormalSettings.proxy_port				= stringtouint16(settings->value("proxy_port"));
-    formatedServerNormalSettings.useSsl					= stringtobool(settings->value("useSsl"));
+    // useSsl removed; see ServerStructures.hpp.
 
     settings->beginGroup("content");
         if(settings->contains("mainDatapackCode"))

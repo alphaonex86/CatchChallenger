@@ -614,8 +614,16 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     if(this->mapIndex==65535)
     {
-        std::cerr << "select char into FILE DB this->map==NULL (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-        abort();
+        // Reached when the cached character blob references a map that
+        // doesn't exist in the current mainDatapackCode (Client::parse
+        // already disconnected the client when its bound checks
+        // tripped, but the surrounding char-load flow has no way to
+        // observe that and falls through to here with mapIndex still
+        // at its 65535 sentinel). Kick this client cleanly via the
+        // protocol; never abort the whole server — one bad blob must
+        // not down the game for every other connected player.
+        characterSelectionIsWrong(query_id,0x04,
+            "this->mapIndex==65535 (stale cache for current mainDatapackCode)");
         return;
     }
     if(public_and_private_informations.clan!=0)

@@ -97,12 +97,7 @@ int main(int argc, const char *argv[])
 
     bool tcpCork=false,tcpNodelay=false;
 
-    char encodingBuff[1];
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    encodingBuff[0]=0x01;
-    #else
-    encodingBuff[0]=0x00;
-    #endif
+    // SSL preamble byte removed; no per-connect sentinel byte is emitted.
 
     PlayerUpdaterToLogin playerUpdaterToLogin;
     if(!playerUpdaterToLogin.start())
@@ -216,9 +211,6 @@ int main(int argc, const char *argv[])
                             }
 
                             EpollClientLoginMaster *client=new EpollClientLoginMaster(infd
-                                               #ifdef CATCHCHALLENGER_SERVER_SSL
-                                               ,server->getCtx()
-                                               #endif
                                 );
                             #ifdef CATCHCHALLENGER_HARDENED
                             if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
@@ -254,14 +246,7 @@ int main(int argc, const char *argv[])
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
                                 delete client;
                             }
-                            else
-                            {
-                                if(::write(infd,encodingBuff,sizeof(encodingBuff))!=sizeof(encodingBuff))
-                                {
-                                    std::cerr << "epoll_ctl on socket write error" << std::endl;
-                                    delete client;
-                                }
-                            }
+                            // SSL preamble byte removed; nothing to write here.
                         }
                     }
                     continue;

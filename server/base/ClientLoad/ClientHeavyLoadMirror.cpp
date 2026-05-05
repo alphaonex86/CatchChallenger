@@ -6,6 +6,15 @@
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
+#include <algorithm>
+
+// MinGW/Windows lacks O_CLOEXEC (it's POSIX). Define it as 0 so the
+// `O_RDONLY|O_CLOEXEC` calls compile cleanly on the Windows cross-build.
+// On Windows the close-on-exec semantic is achieved differently anyway
+// (HANDLE inheritance flag); ::open() ignores the bit either way.
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
 #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 #include <zstd.h>
 #endif

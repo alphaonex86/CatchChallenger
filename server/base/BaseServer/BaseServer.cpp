@@ -451,7 +451,9 @@ void BaseServer::setNormalSettings(const NormalServerSettings &normalServerSetti
         hps::to_stream(normalServerSettings.proxy_port, *out_file);
         hps::to_stream(normalServerSettings.server_ip, *out_file);
         hps::to_stream(normalServerSettings.server_port, *out_file);
-        hps::to_stream(normalServerSettings.useSsl, *out_file);
+        // useSsl was removed from NormalServerSettings (the protocol no
+        // longer carries an SSL/cleartext preamble byte); skip it in
+        // the HPS cache stream.
     }
 }
 #endif

@@ -2,6 +2,7 @@
 #define EPOLL_H
 
 // IO backend façade. Default is real epoll. Define one of:
+//   CATCHCHALLENGER_SELECT   -> use select(2), most portable; FD_SETSIZE-bound
 //   CATCHCHALLENGER_POLL     -> use poll(2), portable old-school path
 //   CATCHCHALLENGER_IO_URING -> use io_uring (kernel >=5.13, liburing)
 // to switch backend. Public API stays the same on purpose: existing
@@ -9,8 +10,8 @@
 // backend. The non-epoll backends translate internally.
 #include <sys/epoll.h>
 
-#if defined(CATCHCHALLENGER_POLL) && defined(CATCHCHALLENGER_IO_URING)
-#error CATCHCHALLENGER_POLL and CATCHCHALLENGER_IO_URING are mutually exclusive
+#if (defined(CATCHCHALLENGER_SELECT) + defined(CATCHCHALLENGER_POLL) + defined(CATCHCHALLENGER_IO_URING)) > 1
+#error CATCHCHALLENGER_SELECT, CATCHCHALLENGER_POLL, and CATCHCHALLENGER_IO_URING are mutually exclusive
 #endif
 
 class Epoll

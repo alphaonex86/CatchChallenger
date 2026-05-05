@@ -1,4 +1,3 @@
-#ifndef CATCHCHALLENGER_SERVER_SSL
 
 #include "EpollClientToServer.hpp"
 
@@ -105,4 +104,4 @@ long int EpollClientToServer::bytesAvailable() const
     else
         return -1;
 }
-#endif
+

@@ -224,7 +224,13 @@ QMap_client *MapVisualiserThread::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID 
                                 const uint8_t random_int=stringtouint8(random,&ok);
                                 if(ok)
                                 {
-                                    cell.setTile(cell.tile()->tileset()->tileAt(cell.tile()->id()+rand()%random_int));
+                                    //per-tile deterministic hash of (x,y) instead of rand():
+                                    //rand() races across threads under --take-screenshot,
+                                    //so the same tile can flip variants between runs.
+                                    const uint32_t tileHash=static_cast<uint32_t>(x)*73856093u
+                                                            ^static_cast<uint32_t>(y)*19349663u
+                                                            ^static_cast<uint32_t>(cell.tile()->id())*83492791u;
+                                    cell.setTile(cell.tile()->tileset()->tileAt(cell.tile()->id()+tileHash%random_int));
                                     tileLayer->setCell(x,y,cell);
                                 }
                                 else
@@ -280,7 +286,13 @@ QMap_client *MapVisualiserThread::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID 
                                                 }
                                                 Map_animation_object map_animation_object;
                                                 if(animationList.size()>=3 && animationList.at(2)=="random-offset")
-                                                    cell.setTile(tile->tileset()->tileAt(tileId+rand()%frames));
+                                                {
+                                                    //per-tile deterministic hash, see comment above
+                                                    const uint32_t animHash=static_cast<uint32_t>(x)*73856093u
+                                                                            ^static_cast<uint32_t>(y)*19349663u
+                                                                            ^static_cast<uint32_t>(tileId)*83492791u;
+                                                    cell.setTile(tile->tileset()->tileAt(tileId+animHash%frames));
+                                                }
                                                 else
                                                     cell.setTile(tile);
                                                 object->setCell(cell);

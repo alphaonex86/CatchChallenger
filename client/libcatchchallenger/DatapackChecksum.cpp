@@ -1,5 +1,6 @@
 #include "DatapackChecksum.hpp"
 
+#include <algorithm>
 #include <regex>
 #include <string>
 #include <unordered_set>

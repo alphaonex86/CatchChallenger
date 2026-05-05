@@ -262,11 +262,7 @@ void QtServer::newConnection()
             QtClientWithMap *client=new QtClientWithMap(socket,index);
             CatchChallenger::QtClientList::clients[index]=client;
             connect_the_last_client(client,socket);
-
-            QByteArray data;
-            data.resize(1);
-            data[0x00]=0x00;
-            socket->write(data.constData(),data.size());
+            // SSL preamble byte removed; client no longer expects a cleartext sentinel.
         }
         else
             qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection()");
@@ -282,11 +278,7 @@ void QtServer::newConnection()
             QtClientWithMap *client=new QtClientWithMap(socket,index);
             CatchChallenger::QtClientList::clients[index]=client;
             connect_the_last_client(client,socket);
-
-            QByteArray data;
-            data.resize(1);
-            data[0x00]=0x00;
-            socket->write(data.constData(),data.size());
+            // SSL preamble byte removed; client no longer expects a cleartext sentinel.
         }
         else
             qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection() TCP socket");

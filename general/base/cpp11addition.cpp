@@ -1,5 +1,6 @@
 #include "cpp11addition.hpp"
 #include "GeneralVariable.hpp"
+#include <algorithm>
 #include <sstream>
 #include <cassert>
 #include <stdlib.h>
@@ -388,6 +389,16 @@ uint8_t hexToDecUnit(const std::string& data, bool *ok)
 
 std::vector<char> hexatoBinary(const std::string &data,bool *ok)
 {
+    // Empty input is valid: a fresh character has no quests, no
+    // achievements, etc., and the SQL field comes back as "". The
+    // ishexa regex below requires [0-9a-fA-F]+ (one or more) and
+    // would otherwise reject the empty string.
+    if(data.empty())
+    {
+        if(ok!=NULL)
+            *ok=true;
+        return std::vector<char>();
+    }
     if(data.size()%2!=0)
     {
         #ifdef CATCHCHALLENGER_HARDENED

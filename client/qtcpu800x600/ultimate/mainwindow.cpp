@@ -231,19 +231,37 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     #endif
 
-    // --host/--port or --server/--port: direct connect (no server list entry)
-    const QString directHost=AutoArgs::host.isEmpty() ? AutoArgs::server : AutoArgs::host;
-    if(!directHost.isEmpty() && AutoArgs::port!=0)
+    // --host/--port: TCP direct connect (no server list entry)
+    if(!AutoArgs::host.isEmpty() && AutoArgs::port!=0)
     {
         on_multiplayer_clicked();
         // temporary entry: mapped so on_login_clicked() can find it,
         // but NOT added to customServerConnexion or the UI.
         // unique_code is set so saveConnexionInfoList() skips the custom-server path.
         ConnexionInfo ci;
-        ci.host=directHost;
+        ci.host=AutoArgs::host;
         ci.port=AutoArgs::port;
-        ci.name=directHost+QStringLiteral(":")+QString::number(AutoArgs::port);
-        ci.unique_code=directHost+QStringLiteral("-")+QString::number(AutoArgs::port);
+        ci.name=AutoArgs::host+QStringLiteral(":")+QString::number(AutoArgs::port);
+        ci.unique_code=AutoArgs::host+QStringLiteral("-")+QString::number(AutoArgs::port);
+        mergedConnexionInfoList.push_back(ci);
+
+        ListEntryEnvolued *newEntry=new ListEntryEnvolued();
+        serverConnexion[newEntry]=&mergedConnexionInfoList.back();
+
+        selectedServer=newEntry;
+        on_server_select_clicked();
+    }
+    // --url: WebSocket direct connect (no server list entry). Mirrors
+    // the TCP path above but writes the ws/wss URL into ConnexionInfo::ws
+    // and leaves host/port unset.
+    else if(!AutoArgs::url.isEmpty())
+    {
+        on_multiplayer_clicked();
+        ConnexionInfo ci;
+        ci.ws=AutoArgs::url;
+        ci.name=AutoArgs::url;
+        ci.unique_code=AutoArgs::url;
+        ci.port=0;
         mergedConnexionInfoList.push_back(ci);
 
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
@@ -1547,35 +1565,12 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
     if(socketState==QAbstractSocket::ConnectedState)
     {
-        //If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
-        //For fake socket (solo mode) Api_protocol_Qt::readForFirstHeader() already
-        //calls connectTheExternalSocketInternal() -> sendProtocol() after reading
-        //the first byte written by QtServer::newConnection(), so we must NOT send
-        //it a second time from here or we trip have_send_protocol and kill the
-        //connection with "Have already send the protocol".
-        #if defined(CATCHCHALLENGER_SOLO) && !defined(CATCHCHALLENGER_NO_TCPSOCKET)
-        const bool usingFakeSocket=(socket!=NULL && socket->fakeSocket!=NULL);
-        #else
-        const bool usingFakeSocket=false;
-        #endif
-        #if !defined(CATCHCHALLENGER_NO_TCPSOCKET) && !defined(CATCHCHALLENGER_NO_WEBSOCKET)
-        if(realSslSocket==NULL && realWebSocket==NULL)
-        {}//client->sendProtocol();
-        else
-            qDebug() << "Tcp/Web socket found, skip sendProtocol()";
-        #elif !defined(CATCHCHALLENGER_NO_TCPSOCKET)
-        if(realSslSocket==NULL && !usingFakeSocket)
-            client->sendProtocol();
-        else if(usingFakeSocket)
-            qDebug() << "Fake socket found, skip sendProtocol() (already sent by readForFirstHeader)";
-        else
-            qDebug() << "Tcp socket found, skip sendProtocol()";
-        #elif !defined(CATCHCHALLENGER_NO_WEBSOCKET)
-        if(realWebSocket==NULL)
-            client->sendProtocol();
-        else
-            qDebug() << "Web socket found, skip sendProtocol()";
-        #endif
+        // SSL preamble byte was removed; the client must send its protocol
+        // header on its own once the socket is connected (the server no
+        // longer writes a 0x00/0x01 sentinel that used to trigger
+        // readForFirstHeader via readyRead).
+        if(client!=NULL)
+            client->readForFirstHeader();
     }
     if(socketState==QAbstractSocket::UnconnectedState)
     {
@@ -1654,6 +1649,13 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     if(!lastServer.isEmpty())
         additionalText=tr(" on %1").arg(lastServer);
     resetAll();
+    // Mirror every UI dialog message to the console (qWarning -> stderr)
+    // so the testing*.py harness can scan stdout/stderr for the exact
+    // failure reason ("Connection refused by the server" etc.) and FAIL
+    // the test fast instead of waiting for its 60-120s timeout. The
+    // QMessageBox below is non-blocking only with QT_QPA_PLATFORM=offscreen
+    // because the dialog never gets shown — but it'd block a real GUI run,
+    // which is why we print BEFORE the dialog call.
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
@@ -1670,9 +1672,26 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
             haveShowDisconnectionReason=false;
             return;
         }
+        qWarning() << "MainWindow::error(): Connection closed by the server"
+                   << additionalText;
         QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server")+additionalText);
     break;
     case QAbstractSocket::ConnectionRefusedError:
+        qWarning() << "MainWindow::error(): Connection refused by the server"
+                   << additionalText;
+        // If the run is non-interactive (--closewhenonmap /
+        // --closewhenonmapafter set the test harness's "drive then exit"
+        // intent), the map will never load — so closing the QMessageBox
+        // is impossible under QT_QPA_PLATFORM=offscreen and the app
+        // would hang until the harness's outer timeout. Exit with
+        // non-zero so the python `proc.wait()` rc check FAILs the test
+        // immediately.
+        if(AutoArgs::closeWhenOnMap || AutoArgs::closeWhenOnMapAfter>0)
+        {
+            std::cerr << "AutoArgs: connection refused with --closewhenonmap[after], exiting with rc=2" << std::endl;
+            QCoreApplication::exit(2);
+            break;
+        }
         QMessageBox::information(this,tr("Connection closed"),tr("Connection refused by the server")+additionalText);
     break;
     case QAbstractSocket::SocketTimeoutError:
@@ -2243,7 +2262,12 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         event.value="night";
     }
     settings.beginGroup("content");
-        if(settings.contains("mainDatapackCode"))
+        if(!AutoArgs::mainDatapackCodeOverride.isEmpty())
+        {
+            settings.setValue("mainDatapackCode",AutoArgs::mainDatapackCodeOverride);
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=AutoArgs::mainDatapackCodeOverride.toStdString();
+        }
+        else if(settings.contains("mainDatapackCode"))
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings.value("mainDatapackCode","[main]").toString().toStdString();
         else
         {

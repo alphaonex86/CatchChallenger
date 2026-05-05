@@ -16,9 +16,6 @@ class LinkToLogin : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToLogin(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            SSL_CTX *ctx
-        #endif
             );
     ~LinkToLogin();
     enum Stat
@@ -79,7 +76,6 @@ public:
     static std::string pFilePath;
     static LinkToLogin *linkToLogin;
     static bool withIndentation;
-    static bool haveTheFirstSslHeader;
     std::vector<uint8_t> queryNumberList;
     BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
@@ -89,7 +85,6 @@ public:
     bool registerStatsClient(const char * const dynamicToken);
     void sendProtocolHeader();
     virtual void tryReconnect();
-    void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
     virtual void updateJsonFile(const bool &withIndentation);
     #ifndef STATSODROIDSHOW2

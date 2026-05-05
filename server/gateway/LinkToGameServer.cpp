@@ -23,11 +23,7 @@ unsigned char protocolHeaderToMatchLogin[] = {0xA0,0x00,0x9c,0xd6,0x49,0x8d,PROT
 unsigned char protocolHeaderToMatchGameServer[] = {0xA0,0x00,0x60,0x0c,0xd9,0xbb,PROTOCOL_HEADER_VERSION};
 
 LinkToGameServer::LinkToGameServer(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
         ) :
         EpollClient(infd),
         ProtocolParsingInputOutput(
@@ -307,72 +303,21 @@ void LinkToGameServer::readTheProxyReply()
     //skip check port (should be same)
     //skip check ip (should be same)
     if(stat==LinkToGameServer::Stat::WaitingProxy)
-        stat=LinkToGameServer::Stat::WaitingFirstSslHeader;
-    else if(stat==LinkToGameServer::Stat::ReconnectingWaitingProxy)
-        stat=LinkToGameServer::Stat::ReconnectingWaitingFirstSslHeader;
-    else
-    {
-        std::cerr << "readTheFirstSslHeader() stat corrupted " << std::to_string(stat) << " (abort)" << std::endl;
-        abort();
-    }
-    std::cout << "Connected to game server via proxy" << std::endl;
-}
-
-void LinkToGameServer::readTheFirstSslHeader()
-{
-    if(stat!=LinkToGameServer::Stat::WaitingFirstSslHeader && stat!=LinkToGameServer::Stat::ReconnectingWaitingFirstSslHeader)
-        return;
-    char buffer[1];
-    const ssize_t &size=::read(socketFd,buffer,1);
-    if(size<0)
-    {
-        std::cerr << "ERROR reading from socket to game server server, errno " << errno << std::endl;
-        if(errno!=EAGAIN)
-            closeSocket();
-        return;
-    }
-    if(size<1)
-    {
-        std::cerr << "ERROR reading from socket to game server server, wait more data" << std::endl;
-        return;
-    }
-    #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    std::cerr << "read LinkToGameServer::readTheFirstSslHeader(): " << binarytoHexa(buffer,size) << ", stat: " << std::to_string(stat) << std::endl;
-    #endif
-    #ifdef CATCHCHALLENGER_SERVER_SSL
-    if(buffer[0]!=0x01)
-    {
-        std::cerr << "ERROR server configured in ssl mode but protocol not done" << std::endl;
-        abort();
-    }
-    #else
-    if(buffer[0]!=0x00)
-    {
-        std::cerr << "ERROR server configured in clear mode but protocol not done" << std::endl;
-        abort();
-    }
-    #endif
-    if(stat==LinkToGameServer::Stat::WaitingFirstSslHeader)
     {
         stat=LinkToGameServer::Stat::WaitingProtocolHeader;
-        #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-        std::cerr << "send sendProtocolHeader() " << __FILE__ << ":" << __LINE__ << std::endl;
-        #endif
         sendProtocolHeader();
     }
-    else if(stat==LinkToGameServer::Stat::ReconnectingWaitingFirstSslHeader)
+    else if(stat==LinkToGameServer::Stat::ReconnectingWaitingProxy)
     {
         stat=LinkToGameServer::Stat::ReconnectingWaitingProtocolHeader;
-        #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-        std::cerr << "send sendProtocolHeaderGameServer() " << __FILE__ << ":" << __LINE__ << std::endl;
-        #endif
         sendProtocolHeaderGameServer();
     }
     else
     {
-        std::cerr << "readTheFirstSslHeader() stat corrupted " << std::to_string(stat) << " (abort)" << std::endl;
+        std::cerr << "readTheProxyReply() stat corrupted " << std::to_string(stat) << " (abort)" << std::endl;
         abort();
     }
+    std::cout << "Connected to game server via proxy" << std::endl;
 }
 
 bool LinkToGameServer::disconnectClient()
@@ -394,12 +339,12 @@ bool LinkToGameServer::disconnectClient()
                 }
             }
             memset(&outputQueryNumberToPacketCode,0x00,sizeof(outputQueryNumberToPacketCode));
-            //if true continue in read socket loop -> bug, because at reconnect need reparse the SSL/proxy header
+            //if true continue in read socket loop -> bug, because at reconnect need reparse the proxy header
             socketFd=reopenSocketFd;
             EpollClient::reopen(socketFd);
 
             if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
-                stat=LinkToGameServer::Stat::ReconnectingWaitingFirstSslHeader;
+                stat=LinkToGameServer::Stat::ReconnectingWaitingProtocolHeader;
             else
                 stat=LinkToGameServer::Stat::ReconnectingWaitingProxy;
 
@@ -441,7 +386,7 @@ bool LinkToGameServer::disconnectClient()
             if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
                 sendProxyRequest(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port);
             else
-                parseIncommingData();
+                sendProtocolHeaderGameServer();
 
             reopenSocketFd=-1;
             return false;
@@ -513,8 +458,6 @@ void LinkToGameServer::parseIncommingData()
     //to debug, remove this
     if(stat==LinkToGameServer::Stat::WaitingProxy || stat==LinkToGameServer::Stat::ReconnectingWaitingProxy)
         readTheProxyReply();
-    if(stat==LinkToGameServer::Stat::WaitingFirstSslHeader || stat==LinkToGameServer::Stat::ReconnectingWaitingFirstSslHeader)
-        readTheFirstSslHeader();
     switch(stat)
     {
         case LinkToGameServer::Stat::WaitingToken:

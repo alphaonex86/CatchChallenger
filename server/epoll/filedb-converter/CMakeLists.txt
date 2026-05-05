@@ -1,14 +1,19 @@
 # filedb-converter — bidirectional binary <-> XML converter for the
-# filedb database (server-side debug utility). Mirrors the .pro:
-# pure C++, no Qt, just hps + tinyXML2.
+# filedb database (server-side debug utility). Self-contained, one binary.
+# Pure C++, no Qt — just hps + tinyXML2 from general/.
+
+cmake_minimum_required(VERSION 3.20)
+project(filedb_converter LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../../general/CCCommon.cmake)
 
 add_executable(filedb-converter
     main.cpp
     FiledbConverter.cpp
     # tinyXML2 sources (vendored, three-file split — see general/).
-    ${CMAKE_SOURCE_DIR}/general/tinyXML2/tinyxml2.cpp
-    ${CMAKE_SOURCE_DIR}/general/tinyXML2/tinyxml2b.cpp
-    ${CMAKE_SOURCE_DIR}/general/tinyXML2/tinyxml2c.cpp
+    ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2.cpp
+    ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2b.cpp
+    ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2c.cpp
 )
 
 target_compile_definitions(filedb-converter PRIVATE
@@ -17,9 +22,9 @@ target_compile_definitions(filedb-converter PRIVATE
 )
 
 target_include_directories(filedb-converter PRIVATE
-    ${CMAKE_SOURCE_DIR}/general
-    ${CMAKE_SOURCE_DIR}/general/hps
-    ${CMAKE_SOURCE_DIR}/general/tinyXML2
+    ${CC_REPO_ROOT}/general
+    ${CC_REPO_ROOT}/general/hps
+    ${CC_REPO_ROOT}/general/tinyXML2
 )
 
 target_link_libraries(filedb-converter PRIVATE

@@ -2,6 +2,7 @@
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
+#include <algorithm>
 #if defined(CATCHCHALLENGER_CACHE_HPS) || defined(CATCHCHALLENGER_DB_FILE)
 #include <fstream>
 #endif

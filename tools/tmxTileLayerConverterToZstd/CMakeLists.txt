@@ -1,8 +1,14 @@
 # tmxTileLayerConverterToZstd — single-file CLI tool that converts
-# Tiled .tmx tile layer compression from gzip/zlib to zstd.
+# Tiled .tmx tile layer compression from gzip/zlib to zstd. Self-contained,
+# one binary. The only catchchallenger lib it touches is via CCCommon's
+# zstd discovery (system or vendored static) — no general/, libtiled, etc.
+
+cmake_minimum_required(VERSION 3.20)
+project(tmxTileLayerConverterToZstd LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Xml REQUIRED)
-find_package(ZLIB REQUIRED)
 
 add_executable(tmxTileLayerConverterToZstd main.cpp)
 

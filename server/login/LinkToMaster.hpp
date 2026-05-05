@@ -13,11 +13,7 @@ class LinkToMaster : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToMaster(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
             );
     ~LinkToMaster();
     enum Stat
@@ -46,7 +42,6 @@ public:
 
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;
-    static bool haveTheFirstSslHeader;
     static unsigned char header_magic_number[11];
     static unsigned char private_token_master[TOKEN_SIZE_FOR_MASTERAUTH];
     static unsigned char private_token_statclient[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
@@ -61,7 +56,6 @@ public:
     void tryReconnect();
     void setConnexionSettings();
     void connectInternal();
-    void readTheFirstSslHeader();
     bool sendRawBlock(const char * const data,const unsigned int &size);
     std::string listTheRunningQuery() const;
 

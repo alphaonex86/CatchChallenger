@@ -1,8 +1,17 @@
-# bot-actions — Qt6 GUI bot debugger. Mirrors bot-actions.pro: pulls
-# the full libqtcatchchallenger middleware + an Actions sub-engine
-# from tools/libbot/actions/. CATCHCHALLENGER_NOAUDIO ON to match.
+# bot-actions — Qt6 GUI bot debugger. Self-contained, one binary.
+# Pulls libqtcatchchallenger (catchchallenger_qt_lib) which transitively
+# brings in libcatchchallenger and Qt6.
+
+cmake_minimum_required(VERSION 3.20)
+project(bot_actions LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Gui Xml Network Sql Widgets WebSockets REQUIRED)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/client/libcatchchallenger/lib.cmake)
+include(${CC_REPO_ROOT}/client/libqtcatchchallenger/libqt.cmake)
 
 add_executable(bot-actions
     main.cpp
@@ -19,6 +28,10 @@ add_executable(bot-actions
     TargetFilter.cpp
     MultipleBotConnectionAction.cpp
     DatabaseBot.cpp
+    # Qt resource: ships config.db that DatabaseBot::init() loads from
+    # :/config.db before opening the SQLite handle. AUTORCC alone does
+    # not discover .qrc files; they have to appear in sources.
+    localr.qrc
     # tools/libbot common helpers
     ../libbot/MultipleBotConnection.cpp
     ../libbot/MultipleBotConnectionImplForGui.cpp

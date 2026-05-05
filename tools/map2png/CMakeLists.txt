@@ -1,7 +1,16 @@
-# map2png — render TMX maps to PNG. Qt6 + libtiled + general/.
-# CATCHCHALLENGER_ONLYMAPRENDER trims the protocol/datapack pipeline.
+# map2png — render TMX maps to PNG. Self-contained, one binary.
+# Pulls catchchallenger_general + catchchallenger_tiled (libtiled) from
+# their library subdirs.
+
+cmake_minimum_required(VERSION 3.20)
+project(map2png LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Gui Xml Network OpenGL Widgets REQUIRED)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
+include(${CC_REPO_ROOT}/client/libqtcatchchallenger/libtiled.cmake)
 
 add_executable(map2png
     main.cpp
@@ -9,12 +18,12 @@ add_executable(map2png
     MapDoor.cpp
     Map_client.cpp
     TriggerAnimation.cpp
-    ${CMAKE_SOURCE_DIR}/client/libcatchchallenger/DatapackChecksum.cpp
-    ${CMAKE_SOURCE_DIR}/client/libcatchchallenger/DatapackClientLoader.cpp
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger/Language.cpp
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger/QtDatapackClientLoader.cpp
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger/QtDatapackClientLoaderThread.cpp
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger/Settings.cpp
+    ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackChecksum.cpp
+    ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackClientLoader.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/Language.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/QtDatapackClientLoader.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/QtDatapackClientLoaderThread.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/Settings.cpp
     resources.qrc
 )
 
@@ -24,8 +33,8 @@ target_compile_definitions(map2png PRIVATE
 )
 
 target_include_directories(map2png PRIVATE
-    ${CMAKE_SOURCE_DIR}/client/libcatchchallenger
-    ${CMAKE_SOURCE_DIR}/client/libqtcatchchallenger
+    ${CC_REPO_ROOT}/client/libcatchchallenger
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger
 )
 
 set_target_properties(map2png PROPERTIES

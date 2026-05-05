@@ -10,8 +10,6 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QDir>
-#include <QSslKey>
-#include <QSslCertificate>
 
 #include "../base/ServerStructures.hpp"
 #include "../base/Client.hpp"
@@ -19,7 +17,6 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/MapServer.hpp"
 #include "QtServer.hpp"
-#include "QSslServer.hpp"
 
 namespace CatchChallenger {
 class NormalServer : public QtServer
@@ -53,16 +50,15 @@ private:
     virtual void initAll();//call before all
     //internal useful function
     std::string listenIpAndPort(std::string server_ip,uint16_t server_port);
-    //store about the network
-    QSslServer *sslServer;
+    //store about the network. Plain QTcpServer — the in-band TLS
+    //negotiation byte and the QSslServer wrapper that fronted it have
+    //been removed; TLS now belongs to a separate listener (e.g. an
+    //external reverse proxy).
+    QTcpServer *sslServer;
     int number_of_client;
-    //EventThreader * botThread;
-    //EventThreader * eventDispatcherThread;
     //to check double instance
     //shared into all the program
     static bool oneInstanceRunning;
-    QSslCertificate *sslCertificate;
-    QSslKey *sslKey;
     QHash<QHostAddress,QDateTime> kickedHosts;
     QTimer purgeKickedHostTimer;
     QTimer timeRangeEventTimer;
@@ -85,7 +81,6 @@ private:
     void stop_internal_server();
     bool check_if_now_stopped();
     virtual void start_internal_server();
-    void sslErrors(const QList<QSslError> &errors);
     virtual void loadAndFixSettings();
     void preload_finish();
 signals:

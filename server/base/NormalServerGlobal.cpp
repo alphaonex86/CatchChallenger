@@ -124,12 +124,10 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("httpDatapackMirror","");
     if(!settings->contains("datapackCache"))
         settings->setValue("datapackCache",-1);
-    if(!settings->contains("useSsl"))
-    #ifdef __linux__
-        settings->setValue("useSsl",false);
-    #else
-        settings->setValue("useSsl",false);
-    #endif
+    // The qmake-era `useSsl` key is no longer read or written. The
+    // 1-byte SSL/cleartext preamble it gated has been removed from the
+    // protocol; TLS now belongs to a separate listener (e.g. an
+    // external reverse proxy) rather than being negotiated in-band.
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup("master");
     if(!settings->contains("external-server-ip"))
@@ -382,13 +380,29 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
             settings->setValue("server_message","");
         if(!settings->contains("mainDatapackCode"))
         {
+            // Pick a preferred maincode rather than hardcoding any specific
+            // value. Strategy: alphabetically first folder under map/main/
+            // whose name matches the allowed charset. Falls back to the
+            // "[main]" placeholder only when map/main/ is empty or no name
+            // matches the regex (the server then refuses to start, which
+            // is the same outcome as before but no longer triggered just
+            // because there happens to be more than one maincode on disk).
             const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &fileInfoList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(datapack_basePath+"map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
-            if(fileInfoList.size()==1)
+            const std::regex maincodeRegex("^[a-z0-9\\- _]+$",std::regex_constants::optimize);
+            std::string preferred;
+            unsigned int fi=0;
+            while(fi<fileInfoList.size())
             {
-                const std::string &string=fileInfoList.at(0).name;
-                if(regex_search(string,std::regex("^[a-z0-9\\- _]+$",std::regex_constants::optimize)))
-                    settings->setValue("mainDatapackCode",string);
+                const std::string &name=fileInfoList.at(fi).name;
+                if(regex_search(name,maincodeRegex))
+                {
+                    if(preferred.empty() || name<preferred)
+                        preferred=name;
+                }
+                fi++;
             }
+            if(!preferred.empty())
+                settings->setValue("mainDatapackCode",preferred);
             else
                 settings->setValue("mainDatapackCode","[main]");
         }

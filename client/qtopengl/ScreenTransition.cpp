@@ -6,6 +6,7 @@
 #endif
 #include <QStandardPaths>
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../libqtcatchchallenger/CliClientOptions.hpp"
 #include "background/CCMap.hpp"
 #include "foreground/CharacterList.hpp"
 #include "foreground/LoadingScreen.hpp"
@@ -134,6 +135,11 @@ ScreenTransition::ScreenTransition() :
     mScene->addItem(imageText);
     imageText->setPos(0,0);
     imageText->setZValue(999);
+    // --take-screenshot wants a clean reference image; hide the FPS counter
+    // overlay so it doesn't bleed pixels into the saved PNG (the FPS digit
+    // varies run-to-run and would defeat pixel-diff regression testing).
+    if(!CliClientOptions::takeScreenshotPath.isEmpty())
+        imageText->setVisible(false);
 
     render();
     setTargetFPS(100);
@@ -447,6 +453,26 @@ void ScreenTransition::toMainScreen()
         connectToServer(ci,login,pass);
         return;
     }
+    //if --url CLI arg set (WebSocket direct-connect counterpart of
+    //--host/--port), connect directly via ws/wss URL with no server-list
+    //entry. The label/unique_code is derived from the URL so the runtime
+    //has a stable identity even when the user supplies no friendly name.
+    static bool autoDirectWsConnectTried=false;
+    if(!autoDirectWsConnectTried && !CliClientOptions::url.isEmpty())
+    {
+        autoDirectWsConnectTried=true;
+        multiplaySelected=true;
+        ConnexionInfo ci;
+        ci.ws=CliClientOptions::url;
+        ci.name=CliClientOptions::url;
+        ci.unique_code=CliClientOptions::url;
+        ci.port=0;
+        ci.isArgument=true;
+        const QString login=CliClientOptions::characterName.isEmpty() ? QStringLiteral("test01") : CliClientOptions::characterName;
+        const QString pass=login+login;
+        connectToServer(ci,login,pass);
+        return;
+    }
     //if --server CLI arg was set (without --port), open the Multi screen to match by name
     static bool autoOpenMultiTried=false;
     if(!autoOpenMultiTried && !CliClientOptions::serverName.isEmpty())
@@ -613,6 +639,9 @@ void ScreenTransition::openSolo()
             event.offset=30;
             event.value="night";
         }
+        if(!CliClientOptions::mainDatapackCodeOverride.isEmpty())
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=CliClientOptions::mainDatapackCodeOverride.toStdString();
+        else
         {
             const QFileInfoList &list=QDir(QString::fromStdString(datapackPathBase)+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
             if(list.isEmpty())
@@ -886,6 +915,19 @@ void ScreenTransition::errorString(std::string error)
     }
     if(m!=nullptr)
         m->setError(error);
+    // Non-interactive runs (--closewhenonmap / --closewhenonmapafter)
+    // can't recover from a connection error: the map will never load,
+    // the error widget waits for a click that the test harness will
+    // never produce, and under QT_QPA_PLATFORM=offscreen the click
+    // can't even fire. Exit with non-zero so the python harness's
+    // proc.wait() rc check FAILs the test immediately instead of
+    // sitting through its outer 60-120s timeout.
+    if(!error.empty() &&
+       (CliClientOptions::closeWhenOnMap || CliClientOptions::closeWhenOnMapAfter>0))
+    {
+        std::cerr << "CliClientOptions: errorString with --closewhenonmap[after], exiting with rc=2" << std::endl;
+        QCoreApplication::exit(2);
+    }
 }
 
 void ScreenTransition::goToServerList()
@@ -920,6 +962,27 @@ void ScreenTransition::goToMap()
         std::cerr << "CliClientOptions: --dropsenddataafteronmap, dropping all client->server traffic from now on" << std::endl;
         CatchChallenger::Api_protocol::dropOutputAfterOnMap=true;
     }
+    if(!CliClientOptions::takeScreenshotPath.isEmpty())
+    {
+        // Wait one full event-loop tick + a beat for the first paint cycle
+        // to compose all layers (tiles, doors, animation frame 0). The
+        // viewport grab below mirrors what the user sees on screen.
+        const QString outPath=CliClientOptions::takeScreenshotPath;
+        std::cerr << "CliClientOptions: --take-screenshot=" << outPath.toStdString()
+                  << ", will save and exit in 500ms" << std::endl;
+        QTimer::singleShot(500,this,[this,outPath]{
+            // Force one render pass before grabbing so the QGraphicsView's
+            // viewport has actually painted the map.
+            viewport()->repaint();
+            QPixmap shot=viewport()->grab();
+            if(!shot.save(outPath))
+                std::cerr << "--take-screenshot: failed to save " << outPath.toStdString() << std::endl;
+            else
+                std::cerr << "--take-screenshot: saved " << outPath.toStdString()
+                          << " (" << shot.width() << "x" << shot.height() << ")" << std::endl;
+            QCoreApplication::quit();
+        });
+    }
 }
 
 void ScreenTransition::render()
@@ -950,6 +1013,16 @@ void ScreenTransition::updateFPS()
 {
     const unsigned int FPS=(int)(((float)frameCounter)*1000)/timeUpdateFPS.elapsed();
     emit newFPSvalue(FPS);
+    // Skip the on-screen FPS overlay rendering when --take-screenshot is on.
+    // The pixmap is already hidden in the constructor, so painting into it
+    // would just waste CPU; bail before the QPainter dance.
+    if(!CliClientOptions::takeScreenshotPath.isEmpty())
+    {
+        frameCounter=0;
+        timeUpdateFPS.restart();
+        timerUpdateFPS.start();
+        return;
+    }
     QImage pix(50,40,QImage::Format_ARGB32_Premultiplied);
     pix.fill(Qt::transparent);
     QPainter p(&pix);

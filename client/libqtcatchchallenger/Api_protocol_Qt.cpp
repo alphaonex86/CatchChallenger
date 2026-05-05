@@ -65,8 +65,6 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
         #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
         if(socket->fakeSocket!=NULL)
         {
-            //haveFirstHeader=true;
-            //sendProtocol();
             if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::readForFirstHeader))
                 abort();
             if(socket->bytesAvailable())
@@ -327,64 +325,15 @@ void Api_protocol_Qt::readForFirstHeader()
 {
     if(haveFirstHeader)
         return;
-    if(1
-       #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-         && socket->sslSocket==NULL
-       #endif
-       #ifndef CATCHCHALLENGER_NO_WEBSOCKET
-         && socket->webSocket==NULL
-       #endif
-       #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
-         && socket->fakeSocket==NULL
-       #endif
-            )
-    {
-        newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() socket->sslSocket==NULL"));
-        return;
-    }
-    if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2 && stageConnexion!=StageConnexion::Stage3)
-    {
-        newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));
-        return;
-    }
     if(stageConnexion==StageConnexion::Stage2)
     {
         message("stageConnexion=CatchChallenger::Api_protocol_Qt::StageConnexion::Stage3 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         stageConnexion=StageConnexion::Stage3;
     }
-    {
-        #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-        if(socket->sslSocket!=NULL && socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
-        {
-            newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol_Qt::readForFirstHeader()"));
-            return;
-        }
-        #endif
-        uint8_t value;
-        if(socket!=NULL && socket->read((char*)&value,sizeof(value))==sizeof(value))
-        {
-            haveFirstHeader=true;
-            if(value==0x01)
-            {
-                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-                if(socket->sslSocket!=NULL)
-                {
-                    socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
-                    socket->sslSocket->ignoreSslErrors();
-                    socket->sslSocket->startClientEncryption();
-                    if(!QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol_Qt::sslHandcheckIsFinished))
-                        abort();
-                }
-                else
-                    newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol_Qt::readForFirstHeader()"));
-                #else
-                newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol_Qt::readForFirstHeader()"));
-                #endif
-            }
-            else
-                connectTheExternalSocketInternal();
-        }
-    }
+    // SSL preamble byte was removed; trigger straight into the post-handshake
+    // path that previously fired after reading buffer[0]==0x00.
+    haveFirstHeader=true;
+    connectTheExternalSocketInternal();
 }
 
 void Api_protocol_Qt::sslHandcheckIsFinished()
@@ -395,17 +344,6 @@ void Api_protocol_Qt::sslHandcheckIsFinished()
 void Api_protocol_Qt::resetAll()
 {
     messageParsingLayer("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-    #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
-    if(socket!=NULL && socket->fakeSocket!=NULL)
-        haveFirstHeader=true;
-    else
-    #endif
-    #else
-    if(socket==NULL)
-        haveFirstHeader=true;
-    else
-    #endif
     mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
     #ifdef Q_OS_ANDROID
     mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString()+"/datapack/";

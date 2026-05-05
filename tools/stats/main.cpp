@@ -145,12 +145,7 @@ int main(int argc, char *argv[])
         if(!Epoll::epoll.init())
             return EPOLLERR;
 
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-        ctx from what?
-        LoginLinkToLogin::loginLinkToLogin=new LoginLinkToLogin(ctx);
-        #else
         LinkToLogin::linkToLogin=new LinkToLogin();
-        #endif
         const int &linkfd=LinkToLogin::linkToLogin->tryConnect(
                     host.c_str(),
                     port,
@@ -164,7 +159,8 @@ int main(int argc, char *argv[])
         }
 
         LinkToLogin::linkToLogin->stat=LinkToLogin::Stat::Connected;
-        LinkToLogin::linkToLogin->readTheFirstSslHeader();
+        EpollSocket::make_non_blocking(linkfd);
+        LinkToLogin::linkToLogin->sendProtocolHeader();
         LinkToLogin::linkToLogin->setConnexionSettings(tryInterval,considerDownAfterNumberOfTry);
     }
 

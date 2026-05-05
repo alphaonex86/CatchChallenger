@@ -7,6 +7,7 @@
 #ifndef CATCHCHALLENGER_SERVER
 #include "../base/CommonDatapack.hpp"
 #endif
+#include <algorithm>
 #include <iostream>
 #include <cmath>
 

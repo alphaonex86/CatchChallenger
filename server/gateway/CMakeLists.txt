@@ -1,9 +1,16 @@
-# Phase 2 — server/gateway/gateway.pro -> CMake.
-# catchchallenger-gateway: CATCHCHALLENGER_CLASS_GATEWAY +
+# server/gateway/CMakeLists.txt — catchchallenger-gateway binary.
+# Self-contained, one binary. CATCHCHALLENGER_CLASS_GATEWAY +
 # CATCHCHALLENGER_DB_BLACKHOLE. Links libcurl. Pulls a couple of
 # client/libcatchchallenger sources directly (DatapackChecksum,
 # TarDecode) since gateway re-uses the client-side datapack download
 # code path.
+
+cmake_minimum_required(VERSION 3.20)
+project(catchchallenger_gateway LANGUAGES C CXX)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
+
+include(${CC_REPO_ROOT}/general/general.cmake)
 
 find_package(Threads REQUIRED)
 find_library(LIBCURL_LIBRARY NAMES curl REQUIRED)
@@ -27,13 +34,10 @@ set(_gateway_sources
     main-epoll-gateway.cpp
     # epoll/ shared
     ../epoll/Epoll.cpp
-    ../epoll/EpollGenericSslServer.cpp
     ../epoll/EpollGenericServer.cpp
     ../epoll/EpollClient.cpp
     ../epoll/EpollSocket.cpp
-    ../epoll/EpollSslClient.cpp
     ../epoll/EpollClientToServer.cpp
-    ../epoll/EpollSslClientToServer.cpp
     ../epoll/EpollTimer.cpp
     # tiny client/libcatchchallenger reuse
     ../../client/libcatchchallenger/DatapackChecksum.cpp

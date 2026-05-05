@@ -11,8 +11,41 @@ Steps:
   6. Build & run qtcpu800x600 client connecting via --host/--port
 """
 
+# Drop the .pyc cache for this process so import diagnostic / build_paths /
+# remote_build never lands a __pycache__/ dir in the source tree.  Set
+# before the first LOCAL import; stdlib bytecode is unaffected.
+import sys
+sys.dont_write_bytecode = True
+
+
 import os, sys, signal, subprocess, threading, multiprocessing, json, shutil, re, time
 import diagnostic
+import build_paths
+from cmd_helpers import (clamp_local, assert_port_or_fail,
+                         assert_port_or_fail_with_remotes)
+from remote_build import all_enabled_exec_nodes
+
+
+def _host_port_from_args(args):
+    """Extract --host / --port from a flat client-arg list. Defaults
+    ("localhost", 61917) match the qtcpu800x600 default, so callers can
+    omit the explicit flags without breaking the TCP-reachability probe
+    that runs before each client launch."""
+    host = "localhost"
+    port = 61917
+    idx = 0
+    while idx < len(args) - 1:
+        if args[idx] == "--host":
+            host = args[idx + 1]
+        elif args[idx] == "--port":
+            try:
+                port = int(args[idx + 1])
+            except (ValueError, TypeError):
+                pass
+        idx += 1
+    return host, port
+
+build_paths.ensure_root()
 
 DIAG = diagnostic.parse_diag_args()
 _DIAG_SUFFIX = diagnostic.build_dir_suffix(DIAG)
@@ -27,18 +60,24 @@ ROOT       = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QMAKE      = _config["qmake"]
 NPROC      = str(multiprocessing.cpu_count())
 HTTP_DATAPACK_MIRROR = _config["httpDatapackMirror"]
+SERVER_HOST = _config["server_host"]
+SERVER_PORT = _config["server_port"]
 
 SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
 # Diagnostic builds use their own dir so they don't share .o files with the
 # regular reference build (which stays the source of server-properties.xml).
-_SERVER_REF_BUILD  = os.path.join(ROOT, "server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
+# After the qmake -> CMake migration the reference dir produced by
+# testingserver.py is now `testing-filedb` (see testingserver.py:1256);
+# match that so the symlink + server-properties.xml lookups land on the
+# already-populated build tree.
+_SERVER_REF_BUILD  = build_paths.build_path("server/epoll/build/testing-filedb")
 SERVER_BUILD       = _SERVER_REF_BUILD if not _DIAG_SUFFIX else _SERVER_REF_BUILD + _DIAG_SUFFIX
 SERVER_BIN_NAME    = "catchchallenger-server-cli-epoll"
 
 CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 # build dir is suffixed below once DIAG is parsed so diagnostic runs do not
 # collide with the regular build's object files.
-CLIENT_CPU_BUILD   = os.path.join(ROOT, "client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
+CLIENT_CPU_BUILD   = build_paths.build_path("client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
 CLIENT_CPU_BIN     = "catchchallenger"
 
 CLIENT_DATAPACK_CACHE = os.path.expanduser(_config["paths"]["client_datapack_cache"])
@@ -71,7 +110,7 @@ total_expected = [0]
 server_proc = None
 
 SCRIPT_NAME = os.path.basename(__file__)
-FAILED_JSON = "/mnt/data/perso/tmpfs/failed.json"
+from test_config import FAILED_JSON
 
 
 def load_failed_cases():
@@ -139,6 +178,11 @@ def log_fail(name, detail=""):
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
     print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    li = 0
+    _ctx = diagnostic.last_cmd_lines()
+    while li < len(_ctx):
+        print(_ctx[li])
+        li += 1
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -345,6 +389,8 @@ def clear_client_bin_cache():
 
 def run_cmd_raw(args, cwd, timeout=COMPILE_TIMEOUT):
     """Run command and return (returncode, raw bytes)."""
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + list(args), cwd)
     try:
         p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -391,6 +437,8 @@ def generate_datapack_lists(www_root):
                         log_info(f"generated sub-{mc}-{sc}.txt")
 
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + list(args), cwd)
     try:
         p = subprocess.run(NICE_PREFIX + list(args), cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -410,19 +458,62 @@ def build_project(pro_file, build_dir, label):
         diag=DIAG, diag_module=diagnostic,
     )
 
+_TEST_SERVER_PROPERTIES_SEED = """<?xml version="1.0"?>
+<configuration>
+    <server-port value="{port}"/>
+    <automatic_account_creation value="true"/>
+    <master>
+        <external-server-port value="{port}"/>
+    </master>
+</configuration>
+"""
+
+
+def _force_test_server_settings(build_dir):
+    """Flip server-properties.xml so the http test's autologin clients
+    can connect:
+      * automatic_account_creation=true (default false rejects autologin).
+      * server-port pinned to SERVER_PORT (server otherwise picks a
+        RANDOM port on first init, defeating the TCP probe + clients).
+    Seeds the file when it doesn't exist yet (fresh build dir)."""
+    xml = os.path.join(build_dir, "server-properties.xml")
+    if not os.path.exists(xml):
+        os.makedirs(build_dir, exist_ok=True)
+        with open(xml, "w") as f:
+            f.write(_TEST_SERVER_PROPERTIES_SEED.format(port=SERVER_PORT))
+        return
+    if os.path.islink(xml):
+        target = os.path.realpath(xml)
+        os.remove(xml)
+        shutil.copy2(target, xml)
+    with open(xml, "r") as f:
+        content = f.read()
+    content = re.sub(r'automatic_account_creation\s+value="[^"]*"',
+                     'automatic_account_creation value="true"', content)
+    content = re.sub(r'(?<!external-)server-port\s+value="[^"]*"',
+                     f'server-port value="{SERVER_PORT}"', content)
+    content = re.sub(r'external-server-port\s+value="[^"]*"',
+                     f'external-server-port value="{SERVER_PORT}"', content)
+    with open(xml, "w") as f:
+        f.write(content)
+
+
 def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     global server_proc
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail("start server", f"binary not found: {binary}")
         return None
+    _force_test_server_settings(build_dir)
     log_info(f"starting server: {binary}")
     env = os.environ.copy()
     for k, v in diagnostic.runtime_env(DIAG).items():
         env[k] = v
     wrapper = diagnostic.runtime_wrapper(DIAG)
+    srv_args = NICE_PREFIX + wrapper + [binary]
+    diagnostic.record_cmd(srv_args, build_dir)
     server_proc = subprocess.Popen(
-        NICE_PREFIX + wrapper + [binary], cwd=build_dir,
+        srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=os.setsid)
     ready = threading.Event()
@@ -465,6 +556,12 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     if not os.path.isfile(binary):
         log_fail(label, f"binary not found")
         return False, ""
+    # Local-only probe — see CLAUDE.md "Network …": the firewall
+    # blocks NEW connections from exec_nodes back to the test box, so
+    # remote probes would always FAIL by design when the server runs here.
+    host, port = _host_port_from_args(args)
+    if not assert_port_or_fail(host, port, log_fail, label):
+        return False, ""
     log_info(f"running: {bin_name} {' '.join(args)}")
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
@@ -476,34 +573,100 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
         # gdb + valgrind don't compose well — run the binary under valgrind
         # directly when in valgrind mode.
         gdb_args = wrapper + [binary] + args
-    else:
+    elif shutil.which("gdb") is not None:
         gdb_args = ["gdb", "-batch",
                     "-ex", "set breakpoint pending on",
                     "-ex", "handle SIGPIPE nostop noprint pass",
                     "-ex", "break __throw_out_of_range",
                     "-ex", "run", "-ex", "bt", "-ex", "quit",
                     "--args", binary] + args
-    try:
-        p = subprocess.run(NICE_PREFIX + gdb_args, cwd=build_dir, timeout=timeout,
-                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
-        out = p.stdout.decode(errors="replace")
-        if p.returncode == 0:
-            log_pass(label, "exit code 0")
-            return True, out
-        else:
-            log_fail(label, f"exit code {p.returncode}")
-            for line in out.splitlines()[-40:]:
-                print(f"  | {line}")
-            return False, out
-    except subprocess.TimeoutExpired as e:
-        out = e.stdout.decode(errors="replace") if e.stdout else ""
-        if success_marker and success_marker in out:
-            log_pass(label, f"timeout but connected (found '{success_marker}')")
-            return True, out
+    else:
+        gdb_args = [binary] + args
+    timeout = clamp_local(timeout)
+    diagnostic.record_cmd(NICE_PREFIX + gdb_args, build_dir)
+    # Continuous reader so a refused connection or stateChanged(0)-after-(1)
+    # transition kills the client immediately instead of waiting out
+    # the timeout. Same logic as testingserver.py's run_client.
+    proc = subprocess.Popen(
+        NICE_PREFIX + gdb_args, cwd=build_dir,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        preexec_fn=os.setsid)
+    output_lines = []
+    done = threading.Event()
+    outcome = [None]
+    seen_state1 = [False]
+
+    def reader():
+        for raw in iter(proc.stdout.readline, b""):
+            line = raw.decode(errors="replace").rstrip("\n")
+            output_lines.append(line)
+            if success_marker and success_marker in line:
+                outcome[0] = ("pass", success_marker)
+                done.set()
+                return
+            if "Connection refused by the server" in line:
+                outcome[0] = ("fail", "Connection refused by the server")
+                done.set()
+                return
+            if "stateChanged(1)" in line:
+                seen_state1[0] = True
+            elif seen_state1[0] and "stateChanged(0)" in line:
+                outcome[0] = (
+                    "fail",
+                    "stateChanged(0) after stateChanged(1) — "
+                    "client connected then dropped before map")
+                done.set()
+                return
+        done.set()
+
+    t = threading.Thread(target=reader, daemon=True)
+    t.start()
+    triggered = done.wait(timeout=timeout)
+    out = "\n".join(output_lines)
+
+    def _kill():
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass
+
+    if not triggered:
+        _kill()
         log_fail(label, f"timeout after {timeout}s")
-        for line in out.splitlines()[-20:]:
+        for line in output_lines[-20:]:
             print(f"  | {line}")
         return False, out
+
+    if outcome[0] is not None:
+        kind, detail = outcome[0]
+        _kill()
+        if kind == "pass":
+            log_pass(label, f"early pass ({detail})")
+            return True, out
+        log_fail(label, detail)
+        for line in output_lines[-20:]:
+            print(f"  | {line}")
+        return False, out
+
+    rc = proc.wait()
+    if rc == 0:
+        log_pass(label, "exit code 0")
+        return True, out
+    log_fail(label, f"exit code {rc}")
+    for line in output_lines[-40:]:
+        print(f"  | {line}")
+    return False, out
 
 
 # ── cleanup ─────────────────────────────────────────────────────────────────

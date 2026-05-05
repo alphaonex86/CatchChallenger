@@ -1,8 +1,6 @@
 #ifndef EPOLL_SERVER_LOGIN_MASTER_H
 #define EPOLL_SERVER_LOGIN_MASTER_H
 
-#ifndef CATCHCHALLENGER_SERVER_SSL
-
 #include "../epoll/EpollGenericServer.hpp"
 #include "../base/BaseServer/BaseServerLogin.hpp"
 #include "../base/PreparedStatementUnit.hpp"
@@ -91,7 +89,5 @@ private:
     void SQL_common_load_finish();
 };
 }
-
-#endif
 
 #endif // EPOLL_SERVER_H

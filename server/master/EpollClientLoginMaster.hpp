@@ -18,11 +18,7 @@ class EpollClientLoginMaster : public EpollClient, public ProtocolParsingInputOu
 {
 public:
     EpollClientLoginMaster(
-        #ifdef CATCHCHALLENGER_SERVER_SSL
-            const int &infd, SSL_CTX *ctx
-        #else
             const int &infd
-        #endif
         );
     ~EpollClientLoginMaster();
     bool disconnectClient();
