@@ -12,9 +12,22 @@
 #include "../base/NormalServerGlobal.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+// Tee std::cout / std::cerr into the GUI's textEditConsole.  Lives in
+// general/base/ so any non-Qt server binary could also opt in (gated
+// on CATCHCHALLENGER_GUI_STATS, defined only for this binary).
+#include "../../general/base/CCGuiLog.hpp"
 
 int main(int argc, char *argv[])
 {
+    // Wire the GUI log tee BEFORE the first std::cout — every line
+    // emitted from here on lands in the textEditConsole ring as well
+    // as the original stdout/stderr.  install_stdio_redirect=false
+    // keeps the operator's terminal echo for printf/qDebug/Qt plugin
+    // loader output; flip it on (e.g. when running with no controlling
+    // tty / under testingqtserver --autostart) when you want the GUI
+    // console to be the single source of truth.
+    CatchChallenger::gui_log::install(/*install_stdio_redirect=*/false);
+
     NormalServerGlobal::displayInfo();
 
     QApplication a(argc, argv);

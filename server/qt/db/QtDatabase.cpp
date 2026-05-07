@@ -6,6 +6,12 @@
 #include <chrono>
 #include <QSqlError>
 #include <QDebug>
+// Mirror this layer's qtDbStats_* atomics into the general/base/
+// CCGuiStats surface so the admin GUI reads ONE set of counters
+// regardless of which DB layer is active.  Header is a no-op when
+// CATCHCHALLENGER_GUI_STATS is undefined, so non-GUI binaries don't
+// pull anything in.
+#include "../../../general/base/CCGuiStats.hpp"
 
 using namespace CatchChallenger;
 
@@ -110,6 +116,10 @@ DatabaseBaseCallBack *QtDatabase::asyncRead(const std::string &query,void * retu
     #ifdef CATCHCHALLENGER_CLASS_QT
     qtDbStats_queryTotalCount.fetch_add(1, std::memory_order_relaxed);
     #endif
+    #ifdef CATCHCHALLENGER_GUI_STATS
+    // Same bump on the GUI-facing counter.
+    CatchChallenger::gui_stats::db_query_total.fetch_add(1, std::memory_order_relaxed);
+    #endif
     if(conn==NULL)
     {
         std::cerr << "db not connected" << std::endl;
@@ -196,9 +206,13 @@ bool QtDatabase::asyncWrite(const std::string &query)
         // memory_order_relaxed: the GUI poll only reads the LAST value
         // it ever sees, no ordering against other writes is required.
         const auto qEnd = std::chrono::steady_clock::now();
-        qtDbStats_lastQueryDurationNs.store(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(qEnd - qStart).count(),
-            std::memory_order_relaxed);
+        const auto durNs =
+            std::chrono::duration_cast<std::chrono::nanoseconds>(qEnd - qStart).count();
+        qtDbStats_lastQueryDurationNs.store(durNs, std::memory_order_relaxed);
+        #ifdef CATCHCHALLENGER_GUI_STATS
+        CatchChallenger::gui_stats::db_query_last_duration_ns.store(
+            durNs, std::memory_order_relaxed);
+        #endif
     }
     #endif
     return true;
