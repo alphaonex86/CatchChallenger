@@ -29,9 +29,9 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderMap.cpp`
   - *(…and 79 more)*
 
-### `EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION`
+### `CATCHCHALLENGER_SERVER_NO_COMPRESSION`
 - **Scope:** global (server + tools) — server: base,gateway,login,master; tools: stats
-- **Description:** Disables network packet compression (used by master server, stats tool — saves CPU at the cost of bandwidth).
+- **Description:** Disables network packet compression (used by master server, stats tool — saves CPU at the cost of bandwidth). **Renamed from `EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION`** during the qmake → CMake migration: the old name was epoll-specific even though the toggle applied to every server backend; the new name reflects that the protocol code is shared and the macro just gates compression at the wire level regardless of I/O backend.
 - **Used in:**
   - `general/base/CompressionProtocol.hpp`
   - `general/base/ProtocolParsingGeneral.cpp`
@@ -954,20 +954,6 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `tools/map-procedural-generation/map-procedural-generation.pro`
 
-### `MAXIMIZEPERFORMANCEOVERDATABASESIZE`
-- **Scope:** global (server + tools) — server: base,crafting,fight; tools: bot-actions,map2png
-- **Description:** Trade larger DB size for speed (used in tools and game-server).
-- **Used in:**
-  - `general/fight/CommonFightEngine.hpp`
-  - `general/fight/CommonFightEngineWild.cpp`
-  - `server/fight/LocalClientHandlerFightWild.cpp`
-  - `server/fight/LocalClientHandlerFightDatabase.cpp`
-  - `server/crafting/ClientLocalBroadcastCrafting.cpp`
-  - `server/crafting/LocalClientHandlerCrafting.cpp`
-  - `server/base/ClientEvents/LocalClientHandlerDatabaseSync.cpp`
-  - `server/base/ClientEvents/LocalClientHandlerQuest.cpp`
-  - *(…and 3 more)*
-
 ### `NOTHREADS`
 - **Scope:** global (client + server + tools) — server: qt; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: datapack-explorer-generator-cli,map2png
 - **Description:** Single-threaded build (WASM/embedded).
@@ -1261,3 +1247,186 @@ tools-only when references concentrate in one of those subtrees.
   - `server/qt/QtClient.cpp`
   - `server/qt/db/QtDatabase.cpp`
   - `server/base/Client.cpp`
+
+
+## Renames / removals (recent)
+
+The qmake → CMake migration plus the "one binary per CMakeLists.txt" refactor renamed some defines to drop misleading prefixes and dropped a couple that no longer had consumers. Concrete history (oldest first):
+
+- `EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION` → **`CATCHCHALLENGER_SERVER_NO_COMPRESSION`** — old name was epoll-specific even though the toggle gates compression at the wire layer for every backend.
+- `MAXIMIZEPERFORMANCEOVERDATABASESIZE` → **dropped** — the prepared-statement / DB-cache reorganisation removed the only call sites; references in current code are zero.
+
+(Older renames that pre-date this doc are not back-filled here; this section is authoritative going forward.)
+
+
+## I/O backends
+
+The epoll server picked up alternative event loops; pick exactly one per
+build (gated mutually-exclusive in `general/CCCommon.cmake`).
+
+### `CATCHCHALLENGER_IO_URING`
+- **Scope:** server-only — server: epoll
+- **Description:** Use Linux io_uring as the I/O backend (lowest syscall overhead on modern kernels). Default-on for the Linux epoll server when liburing is detected; otherwise falls through to plain epoll. Selecting this requires linking `LIBURING_LIBRARY`.
+- **Used in:**
+  - `general/CCCommon.cmake`
+  - `server/epoll/Epoll.cpp`
+
+### `CATCHCHALLENGER_POLL`
+- **Scope:** server-only — server: epoll
+- **Description:** Use POSIX `poll()` as the I/O backend. Mostly a portability fallback for non-Linux hosts (BSD without kqueue, etc.); slower than epoll/io_uring at high client counts but works without per-OS shims. Mutually exclusive with `CATCHCHALLENGER_SELECT` and `CATCHCHALLENGER_IO_URING`.
+- **Used in:**
+  - `general/CCCommon.cmake`
+  - `server/epoll/Epoll.cpp`
+
+### `CATCHCHALLENGER_SELECT`
+- **Scope:** server-only — server: epoll
+- **Description:** Use POSIX `select()` as the I/O backend. Lowest-common-denominator portability fallback (FD_SETSIZE-bound; only useful for tiny test deployments). Mutually exclusive with `CATCHCHALLENGER_POLL` / `CATCHCHALLENGER_IO_URING`.
+- **Used in:**
+  - `general/CCCommon.cmake`
+  - `server/epoll/Epoll.cpp`
+
+
+## Qt build options
+
+Per-binary CMake options, declared with `option(... ON|OFF)` in each Qt
+binary's `CMakeLists.txt`. They translate to the `target_compile_definitions`
+the binary reads at compile time.
+
+### `CATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER`
+- **Scope:** client-only — client: qtopengl
+- **Description:** Embed the in-process Qt server (`CATCHCHALLENGER_CLASS_QT` + `CATCHCHALLENGER_DB_SQLITE`) into the qtopengl client so a single binary can serve as both client and server (solo mode). Default-on; turn off for a multiplayer-only build that talks to an external server. Equivalent to `-DCATCHCHALLENGER_SOLO=ON`.
+- **Used in:**
+  - `client/CMakeLists.txt`
+
+### `CATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS`
+- **Scope:** client-only — client: qtopengl
+- **Description:** Link `Qt6::WebSockets` into the qtopengl client (matches the default qmake-era build). Auto-disabled by `client/CMakeLists.txt` when `find_package(Qt6 COMPONENTS WebSockets)` fails — typical on Android Qt-for-Android builds where the WebSockets module isn't provided.
+- **Used in:**
+  - `client/CMakeLists.txt`
+
+### `CATCHCHALLENGER_BUILD_QTCPU800X600_SINGLEPLAYER`
+- **Scope:** client-only — client: qtcpu800x600
+- **Description:** Same role as `CATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER` but for the qtcpu800x600 client (which sets `OUTPUT_NAME=catchchallenger`). Embeds the Qt server for solo play.
+- **Used in:**
+  - `client/qtcpu800x600/CMakeLists.txt`
+
+### `CATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS`
+- **Scope:** client-only — client: qtcpu800x600
+- **Description:** Link `Qt6::WebSockets` into qtcpu800x600. Same auto-off-on-missing behaviour as the qtopengl variant.
+- **Used in:**
+  - `client/qtcpu800x600/CMakeLists.txt`
+
+
+## Version / platform metadata
+
+STRING-valued macros (not toggles) injected by CMake at configure time so the running binary can self-identify in logs / Settings → About / crash reports.
+
+### `CATCHCHALLENGER_VERSION_SOLO`
+- **Scope:** client-only (+ general/) — client: libqtcatchchallenger,qtopengl
+- **Description:** Display version of the solo (single-player) datapack expected by this client build. Compared at runtime against the staged datapack's `informations.xml` so a mismatch surfaces as a clear "version mismatch" error instead of an obscure asset failure later.
+- **Used in:**
+  - `general/base/CommonSettingsCommon.cpp`
+  - `client/libqtcatchchallenger/Api_protocol_Qt.cpp`
+
+### `CATCHCHALLENGER_VERSION_SINGLESERVER`
+- **Scope:** server-only (+ general/) — server: epoll,game-server-alone
+- **Description:** Display version of the single-server profile (game-server-alone). Same role as `CATCHCHALLENGER_VERSION_SOLO`, but reported by the server-side binaries.
+- **Used in:**
+  - `general/base/CommonSettingsServer.cpp`
+
+### `CATCHCHALLENGER_VERSION_PRIVATE`
+- **Scope:** server-only (+ general/) — server: master,gateway
+- **Description:** Display version of the private-cluster profile (master + gateway + game-servers). Reported in the master ↔ slave handshake so a mixed-version cluster is rejected at boot rather than producing subtle protocol-mismatch bugs at runtime.
+- **Used in:**
+  - `general/base/CommonSettingsServer.cpp`
+
+### `CATCHCHALLENGER_GITCOMMIT`
+- **Scope:** global (client + server)
+- **Description:** Short git rev (set by CMake via `git describe --always`) baked into the binary. Used in About-box / startup banner / crash logs so a stack trace can be tied to an exact source revision.
+- **Used in:**
+  - `general/base/Version.cpp`
+
+### `CATCHCHALLENGER_PLATFORM_CODE`
+- **Scope:** client-only — client: libqtcatchchallenger,qtcpu800x600,qtopengl
+- **Description:** Short platform tag (e.g. `linux-x64`, `mac-arm64`, `win-x64`, `android-arm64`) injected by CMake from `CMAKE_SYSTEM_NAME` / `CMAKE_SYSTEM_PROCESSOR`. The auto-updater uses it to ask the update server for the right artefact.
+- **Used in:**
+  - `client/libqtcatchchallenger/PlatformMacro.hpp`
+  - `client/libqtcatchchallenger/InternetUpdater.cpp`
+  - `client/qtcpu800x600/base/PlatformMacro.h`
+
+### `CATCHCHALLENGER_PLATFORM_NAME`
+- **Scope:** client-only — client: libqtcatchchallenger,qtcpu800x600,qtopengl
+- **Description:** Human-readable platform string (e.g. `Linux 64-bit`, `macOS Apple Silicon`). Same source as `CATCHCHALLENGER_PLATFORM_CODE` but for display in About-box / log banners; the *_CODE variant goes on the wire.
+- **Used in:**
+  - `client/libqtcatchchallenger/PlatformMacro.hpp`
+  - `client/qtcpu800x600/base/PlatformMacro.h`
+
+### `CATCHCHALLENGER_RELEASE`
+- **Scope:** global (client + server) — set by CMake `if(CMAKE_BUILD_TYPE STREQUAL Release)` blocks
+- **Description:** Marks a release-style build (strips assert-only paths, optimises log levels, swaps verbose dev banners for production ones). Independent of `CMAKE_BUILD_TYPE` — a Debug-symbols build can still be a "release" build for product flag purposes.
+- **Used in:**
+  - `general/base/CommonSettingsCommon.cpp`
+
+
+## Game-data type aliases
+
+Macros (not `typedef`/`using`) so wire-protocol code can spell out
+`sizeof(CATCHCHALLENGER_TYPE_…)` literally inside `#if`-guarded packet
+dispatch tables. Defined in `general/base/GeneralType.hpp` and consumed
+everywhere the game data crosses a translation-unit boundary.
+
+### `CATCHCHALLENGER_TYPE_BOTID`
+- **Scope:** global
+- **Description:** Underlying integer type for in-datapack bot IDs (interactive NPCs that hand out shops / quests / dialogue).
+
+### `CATCHCHALLENGER_TYPE_BUFF`
+- **Scope:** global
+- **Description:** Underlying integer type for fight-engine buff IDs.
+
+### `CATCHCHALLENGER_TYPE_CRAFTINGRECIPE`
+- **Scope:** global
+- **Description:** Underlying integer type for crafting-recipe IDs.
+
+### `CATCHCHALLENGER_TYPE_ITEM`
+- **Scope:** global
+- **Description:** Underlying integer type for item IDs (everything in the inventory grid).
+
+### `CATCHCHALLENGER_TYPE_ITEM_QUANTITY`
+- **Scope:** global
+- **Description:** Underlying integer type for the quantity field on an inventory stack. Separate from `CATCHCHALLENGER_TYPE_ITEM` so the wire format can pick a smaller type (e.g. `uint16_t`) without touching item ID width.
+
+### `CATCHCHALLENGER_TYPE_MAPID`
+- **Scope:** global
+- **Description:** Underlying integer type for map IDs (one per `*.tmx` in the datapack).
+
+### `CATCHCHALLENGER_TYPE_MONSTER`
+- **Scope:** global
+- **Description:** Underlying integer type for monster (Pokémon-equivalent) species IDs.
+
+### `CATCHCHALLENGER_TYPE_MONSTER_LIST_SIZE`
+- **Scope:** global
+- **Description:** Integer type wide enough to count entries in a player's owned-monster list. Caps the in-memory monster slot limit.
+
+### `CATCHCHALLENGER_TYPE_MONSTER_LIST_SIZE_WAREHOUSE`
+- **Scope:** global
+- **Description:** Same role as `CATCHCHALLENGER_TYPE_MONSTER_LIST_SIZE` but for the (typically larger) warehouse storage box.
+
+### `CATCHCHALLENGER_TYPE_PLANT`
+- **Scope:** global
+- **Description:** Underlying integer type for plant (farming) IDs.
+
+### `CATCHCHALLENGER_TYPE_QUEST`
+- **Scope:** global
+- **Description:** Underlying integer type for quest IDs.
+
+### `CATCHCHALLENGER_TYPE_REPUTATION`
+- **Scope:** global
+- **Description:** Underlying integer type for reputation track IDs.
+
+### `CATCHCHALLENGER_TYPE_SKILL`
+- **Scope:** global
+- **Description:** Underlying integer type for fight-engine skill IDs.
+
+### `CATCHCHALLENGER_TYPE_TELEPORTERID`
+- **Scope:** global
+- **Description:** Underlying integer type for teleporter (warp pad) IDs in maps.
