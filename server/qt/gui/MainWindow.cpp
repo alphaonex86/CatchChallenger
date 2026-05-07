@@ -2,6 +2,7 @@
 #include "ui_MainWindow.h"
 #include "ChartWidget.hpp"
 #include "gaugewidget.h"
+#include <iostream>
 
 #include <QMessageBox>
 #include <QFileDialog>
@@ -171,6 +172,18 @@ void MainWindow::setupConnections()
 void MainWindow::onNavClicked(int row)
 {
     ui->stackedWidget->setCurrentIndex(row);
+}
+
+void MainWindow::autostart()
+{
+    // Programmatic Start, used by main(--autostart). Idempotent: if the
+    // server is already running we leave it alone. We deliberately go
+    // through onStartStopClicked() instead of duplicating its body so
+    // any future logic added to the manual-click path stays in sync.
+    std::cout << "[autostart] clicking Start" << std::endl;
+    std::cout.flush();
+    if (!serverRunning)
+        onStartStopClicked();
 }
 
 void MainWindow::onStartStopClicked()

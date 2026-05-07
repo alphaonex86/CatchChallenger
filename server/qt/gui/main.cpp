@@ -94,12 +94,14 @@ int main(int argc, char *argv[])
         });
     }
 
-    // --autostart was previously routed through MainWindow::autostart(),
-    // but that slot has no implementation in the new gui/ tree — the
-    // lambda generated an undefined-reference link error.  Until the
-    // autostart action is reimplemented on the new MainWindow, swallow
-    // the flag so testingqtserver.py and the link both stay green.
-    (void)wantAutostart;
+    // --autostart routes through MainWindow::autostart() — passed as a
+    // pointer-to-member so we don't generate a closure (lambdas captured
+    // &w produced a 'main::{lambda()#2}::operator()() const' link error
+    // referencing autostart() before it had a body; using the method
+    // pointer overload of QTimer::singleShot keeps the link clean).
+    if (wantAutostart) {
+        QTimer::singleShot(0, &w, &MainWindow::autostart);
+    }
 
     return a.exec();
 }
