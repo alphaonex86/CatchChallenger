@@ -146,7 +146,9 @@ def save_failed_cases():
     failed = []
     for name, ok, detail, _elapsed in results:
         if not ok:
-            failed.append((name, _fc.make_detail(detail)))
+            d = _fc.make_detail(detail)
+            d.update(_fc.pop_extras(name))
+            failed.append((name, d))
     _fc.save(SCRIPT_NAME, failed)
 
 
@@ -414,11 +416,8 @@ def build_mxe_client(pro_file, build_dir, label):
     if rc != 0:
         import shlex as _shlex
         cmd_str = " ".join(_shlex.quote(a) for a in args)
-        tail = (out or "").rstrip().splitlines()[-25:]
-        detail = (f"cmake configure failed (rc={rc})\n"
-                  f"cmd: {cmd_str}\n"
-                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
-        log_fail(name, detail)
+        _fc.set_extras(name, cmd=cmd_str, compile_output=(out or ""))
+        log_fail(name, f"cmake configure failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return None
@@ -437,11 +436,8 @@ def build_mxe_client(pro_file, build_dir, label):
         if rc != 0:
             import shlex as _shlex
             cmd_str = " ".join(_shlex.quote(a) for a in build_args)
-            tail = (out or "").rstrip().splitlines()[-25:]
-            detail = (f"cmake build failed (rc={rc}) [retried after ccache -C]\n"
-                      f"cmd: {cmd_str}\n"
-                      + ("output:\n  " + "\n  ".join(tail) if tail else ""))
-            log_fail(name, detail)
+            _fc.set_extras(name, cmd=cmd_str, compile_output=(out or ""))
+            log_fail(name, f"cmake build failed (rc={rc}) [retried after ccache -C]")
             if out.strip():
                 print(out[-2000:])
             return None

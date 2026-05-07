@@ -123,7 +123,9 @@ def save_failed_cases():
     failed = []
     for name, ok, detail, _elapsed in results:
         if not ok:
-            failed.append((name, _fc.make_detail(detail)))
+            d = _fc.make_detail(detail)
+            d.update(_fc.pop_extras(name))
+            failed.append((name, d))
     _fc.save(SCRIPT_NAME, failed)
 
 
@@ -261,11 +263,8 @@ def build_target(pro_rel, label):
         f"{flag_args} 2>&1",
         timeout=COMPILE_TIMEOUT)
     if rc != 0:
-        tail = (out or "").rstrip().splitlines()[-25:]
-        detail = (f"cmake configure failed (rc={rc})\n"
-                  f"host: {OSX_HOST if 'OSX_HOST' in dir() else 'osx-vm'}\n"
-                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
-        log_fail(name, detail)
+        _fc.set_extras(name, host=OSX_HOST, compile_output=(out or ""))
+        log_fail(name, f"cmake configure failed (rc={rc})")
         if out.strip():
             print(out[-3000:])
         return None
@@ -273,17 +272,15 @@ def build_target(pro_rel, label):
     build_cmd = f"{OSX_CMAKE} --build {build_dir} --target {target} -j$(nproc) 2>&1"
     rc, out = osx_ssh(build_cmd, timeout=COMPILE_TIMEOUT)
     if rc != 0:
-        # ccache may be poisoned on the macOS VM — flush + retry once
-        # before declaring a real failure.
         log_info(f"build failed; flushing remote ccache and retrying once ({label})")
         osx_ssh("ccache -C 2>/dev/null || true", timeout=120)
         rc, out = osx_ssh(build_cmd, timeout=COMPILE_TIMEOUT)
     if rc != 0:
-        tail = (out or "").rstrip().splitlines()[-25:]
-        detail = (f"ninja build failed (rc={rc}) [retried after remote ccache -C]\n"
-                  f"cmd: {build_cmd}\n"
-                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
-        log_fail(name, detail)
+        _fc.set_extras(name,
+                       host=OSX_HOST,
+                       cmd=f"ssh {OSX_USER}@{OSX_HOST} {build_cmd!r}",
+                       compile_output=(out or ""))
+        log_fail(name, f"ninja build failed (rc={rc}) [retried after remote ccache -C]")
         if out.strip():
             print(out[-3000:])
         return None

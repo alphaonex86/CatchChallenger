@@ -720,15 +720,16 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
                        timeout=configure_timeout_for(label),
                        control_path=control_path)
     if rc != 0:
-        # Detail is the human reproducer: ssh target + the exact remote
-        # shell command + last 30 output lines.  save_failed_cases()
-        # picks this up verbatim into failed.json.
-        lines = out.splitlines()[-30:]
-        detail = (f"configure rc={rc}\n"
-                  f"host: {host}:{port}\n"
-                  f"cmd:  ssh -p {port} {host} {configure_cmd!r}\n"
-                  + "\n".join(f"  | {ln}" for ln in lines))
-        return (name, False, detail)
+        # Persist FULL remote output via failed_cases side channel — the
+        # detail string stays a one-liner summary; failed.json captures
+        # the whole compile_output so a human can read what configure
+        # printed.  Operator policy: never truncate.
+        import failed_cases as _fc
+        _fc.set_extras(name,
+                       host=f"{host}:{port}",
+                       cmd=f"ssh -p {port} {host} {configure_cmd!r}",
+                       compile_output=(out or ""))
+        return (name, False, f"configure rc={rc} on {host}:{port}")
     build_cmd = (
         f"{tmp_prefix}{nice_prefix}"
         f"{linker_path_prefix}{ccache_env}$NICE {cmake} --build {build_dir} --target {target} -j$(nproc) 2>&1"
@@ -752,12 +753,13 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
                        control_path=control_path)
     if rc == 0:
         return (name, True, "")
-    lines = out.splitlines()[-30:]
-    detail = (f"build rc={rc} [retried after remote ccache -C]\n"
-              f"host: {host}:{port}\n"
-              f"cmd:  ssh -p {port} {host} {build_cmd!r}\n"
-              + "\n".join(f"  | {ln}" for ln in lines))
-    return (name, False, detail)
+    import failed_cases as _fc
+    _fc.set_extras(name,
+                   host=f"{host}:{port}",
+                   cmd=f"ssh -p {port} {host} {build_cmd!r}",
+                   compile_output=(out or ""))
+    return (name, False,
+            f"build rc={rc} on {host}:{port} [retried after remote ccache -C]")
 
 
 def _run_server(label, host, port, use_mold, extra_defines, has_gui,

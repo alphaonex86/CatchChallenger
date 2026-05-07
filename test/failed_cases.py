@@ -99,13 +99,69 @@ def save(script_name, failures):
         json.dump(data, f, indent=2)
 
 
-def make_detail(detail="", *, cmd=None, host=None, error=None):
-    """Build a detail dict with only the populated fields."""
+def make_detail(detail="", *, cmd=None, host=None,
+                compile_output=None, run_output=None):
+    """Build a detail dict with only the populated fields.
+
+    Operator policy: failed.json captures the FULL stdout/stderr of any
+    failing command — never truncated.  Two separate fields so a human
+    can tell which phase failed even when both phases ran:
+
+      compile_output — full output of the cmake/qmake/cross-compile step
+      run_output     — full output of the actual binary / test step
+
+    A producer with only a tail should still pass it (better than
+    nothing); the convention is "best-effort full output" — the caller
+    must pipe stderr to stdout (`2>&1`) and capture without trimming.
+    """
     d = {"detail": detail or ""}
     if cmd is not None:
         d["cmd"] = cmd
     if host is not None:
         d["host"] = host
-    if error is not None:
-        d["error"] = error
+    if compile_output is not None:
+        d["compile_output"] = compile_output
+    if run_output is not None:
+        d["run_output"] = run_output
     return d
+
+
+# Side channel for richer failure metadata.  Scripts that produce a test
+# failure deep inside a helper (cmake_helpers, remote_build, ...) call
+# `set_extras(name, cmd=..., host=..., compile_output=..., run_output=...)`
+# next to log_fail(); the per-script save_failed_cases() pulls the
+# extras at persist time and merges them into the detail dict so the
+# operator sees command + host + full per-phase output in failed.json
+# without each helper having to know about every script's logging
+# convention.
+_extras = {}
+
+
+def set_extras(name, *, cmd=None, host=None,
+               compile_output=None, run_output=None):
+    """Record extras for `name`.  Repeated calls merge — last write wins
+    per field.  Empty string is treated as "no value" so a caller can
+    safely pass cmd="" without overwriting a previously-recorded cmd."""
+    cur = _extras.setdefault(name, {})
+    if cmd:
+        cur["cmd"] = cmd
+    if host:
+        cur["host"] = host
+    if compile_output:
+        cur["compile_output"] = compile_output
+    if run_output:
+        cur["run_output"] = run_output
+
+
+def pop_extras(name):
+    """Return + clear the extras dict for `name`.  save_failed_cases() in
+    each testing*.py calls this once per failure to drain the side
+    channel as it builds the per-failure dict."""
+    return _extras.pop(name, {})
+
+
+def clear_extras():
+    """Reset the side channel.  Tests that re-run inside the same
+    process (resume mode, --bisect smoke tests) call this between
+    iterations so old entries don't leak forward."""
+    _extras.clear()
