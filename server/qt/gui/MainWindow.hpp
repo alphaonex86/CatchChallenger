@@ -55,9 +55,9 @@ private:
 
     // Last-tick snapshots used to compute deltas from the cumulative
     // probe counters in QtDatabase / QtClient (atomic, ever-increasing).
-    uint64_t lastTickDbQueries_ = 0;
-    uint64_t lastChartRxBytes_ = 0;
-    uint64_t lastChartTxBytes_ = 0;
+    uint64_t lastTickDbQueries_;
+    uint64_t lastChartRxBytes_;
+    uint64_t lastChartTxBytes_;
 
     void setupNavigation();
     void setupCharts();
