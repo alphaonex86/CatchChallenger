@@ -188,7 +188,9 @@ def save_failed_cases():
     failed = []
     for name, ok, detail, _elapsed in results:
         if not ok:
-            failed.append((name, _fc.make_detail(detail)))
+            d = _fc.make_detail(detail)
+            d.update(_fc.pop_extras(name))
+            failed.append((name, d))
     _fc.save(SCRIPT_NAME, failed)
 
 

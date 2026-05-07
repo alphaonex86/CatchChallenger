@@ -479,16 +479,15 @@ def build_project(pro_file, build_dir, label, *,
                  f"retrying once after wiping CMakeScratch/")
         rc, out = run_cmd(cmake_args, build_dir, timeout=cfg_timeout)
     if rc != 0:
-        # Persist the exact reproducer (command + last lines of cmake's
-        # own output) into the detail string so save_failed_cases →
-        # failed.json captures everything a human needs.
-        import shlex as _shlex
+        # Persist the exact reproducer + FULL output via the failed_cases
+        # side channel so failed.json captures everything a human needs.
+        # `detail` is a one-line summary; the full text goes to
+        # compile_output so failed.json can be read straight without
+        # rerunning.  Operator policy: NEVER truncate the captured output.
+        import shlex as _shlex, failed_cases as _fc
         cmd_str = " ".join(_shlex.quote(a) for a in cmake_args)
-        tail = (out or "").rstrip().splitlines()[-25:]
-        detail = (f"cmake configure failed (rc={rc})\n"
-                  f"cmd: {cmd_str}\n"
-                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
-        log_fail(name, detail)
+        _fc.set_extras(name, cmd=cmd_str, compile_output=(out or ""))
+        log_fail(name, f"cmake configure failed (rc={rc})")
         if out.strip():
             print(out[-2000:])
         return False
@@ -516,13 +515,10 @@ def build_project(pro_file, build_dir, label, *,
                 log_info(f"ccache -C raised {exc!r}; retrying anyway")
             rc, out = run_cmd(build_cmd, build_dir, timeout=build_timeout)
         if rc != 0:
-            import shlex as _shlex
+            import shlex as _shlex, failed_cases as _fc
             cmd_str = " ".join(_shlex.quote(a) for a in build_cmd)
-            tail = (out or "").rstrip().splitlines()[-25:]
-            detail = (f"cmake build failed (rc={rc}) [retried after ccache -C]\n"
-                      f"cmd: {cmd_str}\n"
-                      + ("output:\n  " + "\n  ".join(tail) if tail else ""))
-            log_fail(name, detail)
+            _fc.set_extras(name, cmd=cmd_str, compile_output=(out or ""))
+            log_fail(name, f"cmake build failed (rc={rc}) [retried after ccache -C]")
             if out.strip():
                 print(out[-3000:])
             return False

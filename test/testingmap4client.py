@@ -134,7 +134,9 @@ def save_failed_cases():
     failed_run = []
     for name, ok, detail, _elapsed in results:
         if not ok:
-            entry = (name, _fc.make_detail(detail))
+            d = _fc.make_detail(detail)
+            d.update(_fc.pop_extras(name))
+            entry = (name, d)
             if "compile" in name:
                 failed_compile.append(entry)
             else:
@@ -349,12 +351,15 @@ def test_run():
     cwd = os.path.dirname(CLIENT_BIN)
     wrapper = diagnostic.runtime_wrapper(DIAG)
     rc, out = run_cmd(wrapper + args, cwd, timeout, env=env)
+    cmd_str = " ".join(__import__("shlex").quote(a) for a in (wrapper + args))
     if rc != 0:
+        _fc.set_extras(name, cmd=cmd_str, run_output=(out or ""))
         log_fail(name, f"client exited rc={rc}")
         for line in out.splitlines()[-30:]:
             print(f"  | {line}")
         return False
     if not os.path.isfile(OUTPUT_IMAGE):
+        _fc.set_extras(name, cmd=cmd_str, run_output=(out or ""))
         log_fail(name, "screenshot file not produced")
         for line in out.splitlines()[-30:]:
             print(f"  | {line}")
@@ -372,6 +377,7 @@ def test_run():
         if os.path.isfile(OUTPUT_IMAGE):
             os.remove(OUTPUT_IMAGE)
         return True
+    _fc.set_extras(name, cmd=cmd_str, run_output=(out or ""))
     log_fail(name, detail)
     return False
 

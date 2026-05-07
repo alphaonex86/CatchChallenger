@@ -109,7 +109,9 @@ def save_failed_cases():
     fc, fr = [], []
     for name, ok, detail, _elapsed in results:
         if not ok:
-            entry = (name, _fc.make_detail(detail))
+            d = _fc.make_detail(detail)
+            d.update(_fc.pop_extras(name))
+            entry = (name, d)
             if "compile" in name:
                 fc.append(entry)
             else:
