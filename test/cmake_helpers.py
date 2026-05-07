@@ -502,16 +502,30 @@ def build_project(pro_file, build_dir, label, *,
         build_cmd.append("--clean-first")
     rc, out = run_cmd(build_cmd, build_dir, timeout=build_timeout)
     if rc != 0:
-        import shlex as _shlex
-        cmd_str = " ".join(_shlex.quote(a) for a in build_cmd)
-        tail = (out or "").rstrip().splitlines()[-25:]
-        detail = (f"cmake build failed (rc={rc})\n"
-                  f"cmd: {cmd_str}\n"
-                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
-        log_fail(name, detail)
-        if out.strip():
-            print(out[-3000:])
-        return False
+        # ccache poisoning can produce phantom compile errors that
+        # disappear after `ccache -C`.  Per operator policy: try once
+        # more after wiping the cache before declaring a real failure.
+        # Only retry on a build failure (the configure phase doesn't
+        # touch ccache, so retry there would just re-fail identically).
+        if shutil.which("ccache"):
+            log_info(f"build failed; flushing ccache and retrying once ({label})")
+            try:
+                subprocess.run(["ccache", "-C"], capture_output=True,
+                               text=True, timeout=120)
+            except (OSError, subprocess.SubprocessError) as exc:
+                log_info(f"ccache -C raised {exc!r}; retrying anyway")
+            rc, out = run_cmd(build_cmd, build_dir, timeout=build_timeout)
+        if rc != 0:
+            import shlex as _shlex
+            cmd_str = " ".join(_shlex.quote(a) for a in build_cmd)
+            tail = (out or "").rstrip().splitlines()[-25:]
+            detail = (f"cmake build failed (rc={rc}) [retried after ccache -C]\n"
+                      f"cmd: {cmd_str}\n"
+                      + ("output:\n  " + "\n  ".join(tail) if tail else ""))
+            log_fail(name, detail)
+            if out.strip():
+                print(out[-3000:])
+            return False
 
     # With self-contained per-binary CMakeLists.txt, the executable lands
     # at build_dir/<target> directly (each binary's CMakeLists.txt is the

@@ -412,19 +412,39 @@ def build_mxe_client(pro_file, build_dir, label):
     args.extend(configure_flags)
     rc, out = run_cmd(args, build_dir, env=env)
     if rc != 0:
-        log_fail(name, f"cmake configure failed (rc={rc})")
+        import shlex as _shlex
+        cmd_str = " ".join(_shlex.quote(a) for a in args)
+        tail = (out or "").rstrip().splitlines()[-25:]
+        detail = (f"cmake configure failed (rc={rc})\n"
+                  f"cmd: {cmd_str}\n"
+                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
+        log_fail(name, detail)
         if out.strip():
             print(out[-2000:])
         return None
     log_info(f"mxe-cmake --build -j{NPROC} {label}")
-    rc, out = run_cmd([MXE_CMAKE, "--build", build_dir,
-                       "--target", target, "-j", NPROC],
-                      build_dir, env=env)
+    build_args = [MXE_CMAKE, "--build", build_dir, "--target", target, "-j", NPROC]
+    rc, out = run_cmd(build_args, build_dir, env=env)
     if rc != 0:
-        log_fail(name, f"cmake build failed (rc={rc})")
-        if out.strip():
-            print(out[-2000:])
-        return None
+        if shutil.which("ccache"):
+            log_info(f"MXE build failed; flushing ccache and retrying once ({label})")
+            try:
+                subprocess.run(["ccache", "-C"], capture_output=True,
+                               text=True, timeout=120)
+            except (OSError, subprocess.SubprocessError) as exc:
+                log_info(f"ccache -C raised {exc!r}; retrying anyway")
+            rc, out = run_cmd(build_args, build_dir, env=env)
+        if rc != 0:
+            import shlex as _shlex
+            cmd_str = " ".join(_shlex.quote(a) for a in build_args)
+            tail = (out or "").rstrip().splitlines()[-25:]
+            detail = (f"cmake build failed (rc={rc}) [retried after ccache -C]\n"
+                      f"cmd: {cmd_str}\n"
+                      + ("output:\n  " + "\n  ".join(tail) if tail else ""))
+            log_fail(name, detail)
+            if out.strip():
+                print(out[-2000:])
+            return None
     exe = find_built_exe(build_dir)
     if exe is None:
         log_fail(name, f"{WIN_EXE_NAME} not produced under {build_dir}")
