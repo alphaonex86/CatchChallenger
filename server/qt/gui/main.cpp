@@ -77,7 +77,11 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    a.setQuitOnLastWindowClosed(false);
+    // Operator wants closing the window to terminate the process — no
+    // background "invisible app still running" mode.  Qt's default is
+    // already true; spell it out so a future copy-paste from another
+    // tray-app project doesn't silently flip it.
+    a.setQuitOnLastWindowClosed(true);
     MainWindow w;
     w.resize(initialWidth, initialHeight);
     w.show();
