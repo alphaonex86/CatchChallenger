@@ -88,17 +88,15 @@ def log_fail(name, detail=""):
 
 
 # ── failed.json resume plumbing ─────────────────────────────────────────────
+import failed_cases as _fc
+
+
 def load_failed_cases():
-    if not os.path.isfile(FAILED_JSON):
+    a = _fc.load_names(SCRIPT_COMPILE_NAME)
+    b = _fc.load_names(SCRIPT_RUN_NAME)
+    if a is None and b is None:
         return None
-    try:
-        with open(FAILED_JSON, "r") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return None
-    if SCRIPT_COMPILE_NAME not in data and SCRIPT_RUN_NAME not in data:
-        return None
-    return data.get(SCRIPT_COMPILE_NAME, []) + data.get(SCRIPT_RUN_NAME, [])
+    return (a or []) + (b or [])
 
 
 def should_run(test_name, failed_cases):
@@ -108,33 +106,16 @@ def should_run(test_name, failed_cases):
 
 
 def save_failed_cases():
-    data = {}
-    if os.path.isfile(FAILED_JSON):
-        try:
-            with open(FAILED_JSON, "r") as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, IOError):
-            data = {}
     fc, fr = [], []
-    for name, ok, _detail, _elapsed in results:
+    for name, ok, detail, _elapsed in results:
         if not ok:
+            entry = (name, _fc.make_detail(detail))
             if "compile" in name:
-                fc.append(name)
+                fc.append(entry)
             else:
-                fr.append(name)
-    if fc:
-        data[SCRIPT_COMPILE_NAME] = fc
-    elif SCRIPT_COMPILE_NAME in data:
-        del data[SCRIPT_COMPILE_NAME]
-    if fr:
-        data[SCRIPT_RUN_NAME] = fr
-    elif SCRIPT_RUN_NAME in data:
-        del data[SCRIPT_RUN_NAME]
-    if data:
-        with open(FAILED_JSON, "w") as f:
-            json.dump(data, f, indent=2)
-    elif os.path.isfile(FAILED_JSON):
-        os.remove(FAILED_JSON)
+                fr.append(entry)
+    _fc.save(SCRIPT_COMPILE_NAME, fc)
+    _fc.save(SCRIPT_RUN_NAME, fr)
 
 
 # ── build helpers ──────────────────────────────────────────────────────────

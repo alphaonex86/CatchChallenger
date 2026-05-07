@@ -479,7 +479,16 @@ def build_project(pro_file, build_dir, label, *,
                  f"retrying once after wiping CMakeScratch/")
         rc, out = run_cmd(cmake_args, build_dir, timeout=cfg_timeout)
     if rc != 0:
-        log_fail(name, f"cmake configure failed (rc={rc})")
+        # Persist the exact reproducer (command + last lines of cmake's
+        # own output) into the detail string so save_failed_cases →
+        # failed.json captures everything a human needs.
+        import shlex as _shlex
+        cmd_str = " ".join(_shlex.quote(a) for a in cmake_args)
+        tail = (out or "").rstrip().splitlines()[-25:]
+        detail = (f"cmake configure failed (rc={rc})\n"
+                  f"cmd: {cmd_str}\n"
+                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
+        log_fail(name, detail)
         if out.strip():
             print(out[-2000:])
         return False
@@ -493,7 +502,13 @@ def build_project(pro_file, build_dir, label, *,
         build_cmd.append("--clean-first")
     rc, out = run_cmd(build_cmd, build_dir, timeout=build_timeout)
     if rc != 0:
-        log_fail(name, f"cmake build failed (rc={rc})")
+        import shlex as _shlex
+        cmd_str = " ".join(_shlex.quote(a) for a in build_cmd)
+        tail = (out or "").rstrip().splitlines()[-25:]
+        detail = (f"cmake build failed (rc={rc})\n"
+                  f"cmd: {cmd_str}\n"
+                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
+        log_fail(name, detail)
         if out.strip():
             print(out[-3000:])
         return False

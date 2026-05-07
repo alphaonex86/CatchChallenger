@@ -198,26 +198,18 @@ def main():
     print(f"  total elapsed: {total:.1f}s")
     print(f"  {C_GREEN}{len(passed)} passed{C_RESET}, {C_RED}{len(failed)} failed{C_RESET}\n")
 
-    # failed.json bookkeeping — same pattern as other testing*.py
-    data = {}
-    if os.path.isfile(FAILED_JSON):
-        try:
-            with open(FAILED_JSON) as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, IOError):
-            data = {}
-    if failed:
-        data[SCRIPT_NAME] = [r[0] for r in failed]
-    else:
-        data.pop(SCRIPT_NAME, None)
-    if data:
-        with open(FAILED_JSON, "w") as f:
-            json.dump(data, f, indent=2)
-    elif os.path.isfile(FAILED_JSON):
-        # Don't delete the file if other scripts have entries; but if it's
-        # empty post-pop, write an empty object so the file shape stays valid.
-        with open(FAILED_JSON, "w") as f:
-            json.dump(data, f, indent=2)
+    # failed.json bookkeeping — same dict shape as the other testing*.py.
+    # Each failure entry carries `cmd` (the cmake command that failed) +
+    # `error` (last lines of cmake stderr, already in r[2]).
+    import failed_cases as _fc
+    failure_entries = []
+    for label, ok, msg, _secs in failed:
+        cmd = (f"cmake -S {os.path.relpath(os.path.dirname(label), ROOT) if os.path.isabs(label) else label}"
+               f" -B <fresh build dir> -DCMAKE_BUILD_TYPE=Debug")
+        failure_entries.append(
+            (label, _fc.make_detail(msg, cmd=cmd, error=msg))
+        )
+    _fc.save(SCRIPT_NAME, failure_entries)
 
     sys.exit(0 if not failed else 1)
 
