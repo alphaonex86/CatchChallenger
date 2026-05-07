@@ -261,16 +261,29 @@ def build_target(pro_rel, label):
         f"{flag_args} 2>&1",
         timeout=COMPILE_TIMEOUT)
     if rc != 0:
-        log_fail(name, f"cmake configure failed (rc={rc})")
+        tail = (out or "").rstrip().splitlines()[-25:]
+        detail = (f"cmake configure failed (rc={rc})\n"
+                  f"host: {OSX_HOST if 'OSX_HOST' in dir() else 'osx-vm'}\n"
+                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
+        log_fail(name, detail)
         if out.strip():
             print(out[-3000:])
         return None
     log_info(f"ninja build {label} -j$(nproc)")
-    rc, out = osx_ssh(
-        f"{OSX_CMAKE} --build {build_dir} --target {target} -j$(nproc) 2>&1",
-        timeout=COMPILE_TIMEOUT)
+    build_cmd = f"{OSX_CMAKE} --build {build_dir} --target {target} -j$(nproc) 2>&1"
+    rc, out = osx_ssh(build_cmd, timeout=COMPILE_TIMEOUT)
     if rc != 0:
-        log_fail(name, f"ninja build failed (rc={rc})")
+        # ccache may be poisoned on the macOS VM — flush + retry once
+        # before declaring a real failure.
+        log_info(f"build failed; flushing remote ccache and retrying once ({label})")
+        osx_ssh("ccache -C 2>/dev/null || true", timeout=120)
+        rc, out = osx_ssh(build_cmd, timeout=COMPILE_TIMEOUT)
+    if rc != 0:
+        tail = (out or "").rstrip().splitlines()[-25:]
+        detail = (f"ninja build failed (rc={rc}) [retried after remote ccache -C]\n"
+                  f"cmd: {build_cmd}\n"
+                  + ("output:\n  " + "\n  ".join(tail) if tail else ""))
+        log_fail(name, detail)
         if out.strip():
             print(out[-3000:])
         return None

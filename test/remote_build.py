@@ -740,8 +740,20 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
         # Self-contained per-binary CMakeLists.txt: the produced binary
         # lands at <build>/<target> directly. No copy needed.
         return (name, True, "")
+    # ccache on the remote may be poisoned (e.g. inode reuse after a
+    # previous build dir got rsync'd over).  Per operator policy: flush
+    # it once and retry — only mark as failed if it fails again.
+    print(f"{C_CYAN}[INFO]{C_RESET} {label} build failed on {host}:{port}; "
+          f"flushing remote ccache and retrying once")
+    _ssh_cmd(host, port, "ccache -C 2>/dev/null || true",
+             timeout=120, control_path=control_path)
+    rc, out = _ssh_cmd(host, port, build_cmd,
+                       timeout=compile_timeout_for(label),
+                       control_path=control_path)
+    if rc == 0:
+        return (name, True, "")
     lines = out.splitlines()[-30:]
-    detail = (f"build rc={rc}\n"
+    detail = (f"build rc={rc} [retried after remote ccache -C]\n"
               f"host: {host}:{port}\n"
               f"cmd:  ssh -p {port} {host} {build_cmd!r}\n"
               + "\n".join(f"  | {ln}" for ln in lines))
