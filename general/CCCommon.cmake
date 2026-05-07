@@ -27,6 +27,34 @@ if(CC_COMMON_LOADED)
 endif()
 set(CC_COMMON_LOADED TRUE)
 
+# ── build-type defaulting (works for single + multi-config) ───────────────
+# Qt Creator's Ninja-Multi-Config kit asks the project for a "Debug"
+# configuration on first open; if CMAKE_CONFIGURATION_TYPES doesn't
+# expose one the IDE bails with
+#     "CMake project configuration failed.  No CMake configuration for
+#      build type 'Debug' found."
+# testing*.py builds with single-config Ninja and never sets
+# CMAKE_CONFIGURATION_TYPES, so without these guards the same project
+# builds fine from CLI but breaks the moment you open it in Qt Creator
+# with the wrong kit.  Apply uniformly here so every binary's
+# CMakeLists.txt inherits the behaviour.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING
+        "Choose the type of build (Debug Release RelWithDebInfo MinSizeRel)" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+        Debug Release RelWithDebInfo MinSizeRel)
+endif()
+if(CMAKE_CONFIGURATION_TYPES AND NOT "Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)
+    list(APPEND CMAKE_CONFIGURATION_TYPES Debug)
+    set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING
+        "Available multi-config build types" FORCE)
+endif()
+
+# Always emit compile_commands.json so Qt Creator / clangd / any other
+# IDE works out of the box.  No-op for multi-config generators (cmake
+# already produces it per-config) but harmless to set everywhere.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # CC_REPO_ROOT is the directory one level up from this file
 # (general/CCCommon.cmake → general/ → repo root). Compute it once and
 # expose it to the caller's scope so they can spell out absolute paths
