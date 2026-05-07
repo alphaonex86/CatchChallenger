@@ -4,6 +4,10 @@
 #include <atomic>
 #include <cstdint>
 #endif
+// Mirror this layer's qtNetStats_* atomics into the unified
+// general/base/CCGuiStats counters when CATCHCHALLENGER_GUI_STATS is
+// on (catchchallenger-server-gui only).  No-op in non-GUI binaries.
+#include "../../general/base/CCGuiStats.hpp"
 
 using namespace CatchChallenger;
 
@@ -41,6 +45,10 @@ ssize_t QtClient::read(char * data, const size_t &size)
     #ifdef CATCHCHALLENGER_CLASS_QT
     qtNetStats_bytesReceived.fetch_add(static_cast<uint64_t>(size), std::memory_order_relaxed);
     #endif
+    #ifdef CATCHCHALLENGER_GUI_STATS
+    CatchChallenger::gui_stats::net_bytes_received.fetch_add(
+        static_cast<uint64_t>(size), std::memory_order_relaxed);
+    #endif
     return socket->read(data,size);
 }
 
@@ -56,6 +64,10 @@ ssize_t QtClient::write(const char * const data, const size_t &size)
     // counter reflects bytes-handed-off, not bytes-the-kernel-accepted.
     #ifdef CATCHCHALLENGER_CLASS_QT
     qtNetStats_bytesSent.fetch_add(static_cast<uint64_t>(size), std::memory_order_relaxed);
+    #endif
+    #ifdef CATCHCHALLENGER_GUI_STATS
+    CatchChallenger::gui_stats::net_bytes_sent.fetch_add(
+        static_cast<uint64_t>(size), std::memory_order_relaxed);
     #endif
     return socket->write(data,size);
 }

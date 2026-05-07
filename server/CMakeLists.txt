@@ -84,6 +84,14 @@ set(_server_gui_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/all-server-resources.qrc
     # Schema for SQLite auto-init in QtDatabaseSQLite::syncConnect.
     ${CMAKE_CURRENT_SOURCE_DIR}/databases/resources-db-sqlite.qrc
+    # ── live-stats hookup (general/base/CCGuiStats.{hpp,cpp},
+    # general/base/CCGuiLog.{hpp,cpp}) — plain-C++ atomics + log
+    # capture that engine code outside server/qt/ feeds, and the GUI
+    # reads to replace the random placeholder values.  Both files are
+    # gated on CATCHCHALLENGER_GUI_STATS (added below) so non-GUI
+    # binaries compile them as empty translation units.
+    ${CC_REPO_ROOT}/general/base/CCGuiStats.cpp
+    ${CC_REPO_ROOT}/general/base/CCGuiLog.cpp
 )
 
 # qt_add_executable when present (Qt 6.3+) — Qt Creator hooks into this
@@ -103,6 +111,11 @@ set_target_properties(catchchallenger-server-gui PROPERTIES
 )
 
 target_compile_definitions(catchchallenger-server-gui PRIVATE
+    # Light up the live-stats / log-capture surfaces in
+    # general/base/CCGuiStats.* and general/base/CCGuiLog.*.  Defined
+    # ONLY for this binary so the headless / epoll / login servers
+    # compile those files as empty translation units.
+    CATCHCHALLENGER_GUI_STATS
     # Compile in all three SQL backends so the operator can pick the
     # active backend at runtime via the Database tab. CATCHCHALLENGER_CLASS_QT
     # already enables the abstract DatabaseBase enums for all three; the

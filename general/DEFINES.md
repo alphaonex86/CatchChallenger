@@ -1243,3 +1243,21 @@ tools-only when references concentrate in one of those subtrees.
 - **Description:** Store in std c++ format and not HPS format (can load as block std::flat_map to speedup the loading)
 - **Used in:**
   - `server/epoll/catchchallenger-server-filedb.pro`
+
+
+## Admin GUI live-stats hookup
+
+### `CATCHCHALLENGER_GUI_STATS`
+- **Scope:** server-only — defined ONLY for the `catchchallenger-server-gui` binary (added by `server/CMakeLists.txt`'s `target_compile_definitions`). Other server / client / tools binaries see it as undefined and the gated code becomes empty.
+- **Description:** Lights up the live-stats and console-log capture surfaces in `general/base/CCGuiStats.{hpp,cpp}` and `general/base/CCGuiLog.{hpp,cpp}`. These two files are plain C++ (no Qt) so engine code outside `server/qt/` can bump counters and push events without taking a Qt dependency, while the Qt admin GUI in `server/qt/gui/MainWindow.cpp` reads the same counters to populate the dashboard (player count, DB queries, SQL latency, network rx/tx chart, ping chart, `textEditAnalytics` event feed, `textEditConsole` stdout/stderr capture). The `[HH:MM:SS]` time prefix is generated GUI-side at drain — non-Qt producer code stays time-agnostic so it can't drift if events get batched. When the macro is undefined the headers expose nothing, the .cpp files compile to empty translation units, and the engine's bump sites collapse to no-ops, so non-GUI binaries pay zero overhead.
+- **Used in:**
+  - `general/base/CCGuiStats.hpp`
+  - `general/base/CCGuiStats.cpp`
+  - `general/base/CCGuiLog.hpp`
+  - `general/base/CCGuiLog.cpp`
+  - `server/CMakeLists.txt`
+  - `server/qt/gui/main.cpp`
+  - `server/qt/gui/MainWindow.cpp`
+  - `server/qt/QtClient.cpp`
+  - `server/qt/db/QtDatabase.cpp`
+  - `server/base/Client.cpp`

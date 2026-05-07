@@ -3,6 +3,12 @@
 #include "ChartWidget.hpp"
 #include "gaugewidget.h"
 #include <iostream>
+// Live-stats hookup that lives in general/base/ (plain C++, no Qt).
+// catchchallenger-server-gui's CMakeLists defines CATCHCHALLENGER_GUI_STATS
+// so these atomic counters / event ring / log capture are real.  Other
+// binaries compile the same headers as empty namespaces.
+#include "../../../general/base/CCGuiStats.hpp"
+#include "../../../general/base/CCGuiLog.hpp"
 
 #include <QMessageBox>
 #include <QFileDialog>
@@ -214,35 +220,62 @@ void MainWindow::onTimerTick()
 {
     tickCount++;
     if (serverRunning) {
-        dbQueryCount = QRandomGenerator::global()->bounded(0, 21);
+        // Real DB-query rate: cumulative counter delta since the last
+        // tick.  CCGuiStats::db_query_total is bumped from
+        // server/qt/db/QtDatabase + (when CATCHCHALLENGER_GUI_STATS is
+        // on) the non-Qt DB layer.  No more random.
+        const uint64_t dbTotal = CatchChallenger::gui_stats::db_query_total.load();
+        dbQueryCount = static_cast<int>(dbTotal - lastTickDbQueries_);
+        lastTickDbQueries_ = dbTotal;
         if (dbQueryCount > maxDbQuerySinceStart)
             maxDbQuerySinceStart = dbQueryCount;
 
         maxPlayers = ui->maxPlayer->value();
 
-        double basePlayers = 15 + sin(tickCount * 0.05) * 10;
-        currentPlayers = qBound(0, static_cast<int>(basePlayers + QRandomGenerator::global()->bounded(-3, 4)), maxPlayers);
+        // Real connected-player count (engine bumps it on accept /
+        // disconnect).  Falls back to 0 if no engine has registered
+        // yet — which means the server hasn't actually accepted
+        // anybody, exactly the right answer.
+        currentPlayers = qBound(0,
+            static_cast<int>(CatchChallenger::gui_stats::players_connected.load()),
+            maxPlayers);
 
-        if (tickCount % 30 == 0) {
-            QStringList names = {"Ash", "Misty", "Brock", "Pikachu", "Charizard", "Greninja", "Lucario", "Eevee"};
-            QStringList actions = {"joined the server", "left the game", "caught a wild Pokemon", "started a battle",
-                                   "completed a quest", "traded a monster"};
-            QString name = names[QRandomGenerator::global()->bounded(names.size())];
-            QString action = actions[QRandomGenerator::global()->bounded(actions.size())];
-            int mins = QRandomGenerator::global()->bounded(1, 60);
-            QString time = QTime::currentTime().toString("HH:mm:ss");
-            addAnalyticsLine(QString("<b>%1</b> %2 <span style='color: grey'>(%3 min ago)</span> [%4]")
-                                .arg(name).arg(action).arg(mins).arg(time));
+        // Drain engine-pushed analytics events.  Each event becomes a
+        // [HH:MM:SS] <player> <text> line.  Time mark is generated
+        // here, GUI-side, per project policy ("all time mark
+        // generated into server/qt/gui/").
+        auto evs = CatchChallenger::gui_stats::drain_events();
+        for (const auto &e : evs) {
+            const QString stamp = QTime::currentTime().toString("[HH:mm:ss]");
+            const QString player = QString::fromStdString(e.player);
+            const QString text   = QString::fromStdString(e.text);
+            QString line;
+            if (player.isEmpty())
+                line = QString("<span style='color: grey'>%1</span> %2")
+                           .arg(stamp).arg(text);
+            else
+                line = QString("<span style='color: grey'>%1</span> "
+                               "<b>%2</b> %3")
+                           .arg(stamp).arg(player).arg(text);
+            addAnalyticsLine(line, e.bold);
         }
 
-        if (tickCount % 15 == 0) {
-            QString logMsg;
-            int msgType = QRandomGenerator::global()->bounded(4);
-            if (msgType == 0) logMsg = QString("[Player] %1 connected").arg(QRandomGenerator::global()->bounded(1, 50));
-            else if (msgType == 1) logMsg = "[DB] Query executed in " + QString::number(QRandomGenerator::global()->bounded(1, 15)) + "ms";
-            else if (msgType == 2) logMsg = "[Network] Packet processed: " + formatBytes(QRandomGenerator::global()->bounded(100, 5000));
-            else logMsg = "[System] Heartbeat OK";
-            addConsoleLine(logMsg);
+        // Drain captured stdout / stderr.  Same time-mark policy.  err
+        // lines get tinted red so the operator sees crashes / warnings
+        // at a glance.
+        auto logs = CatchChallenger::gui_log::drain_classified_lines();
+        for (const auto &l : logs) {
+            const QString stamp = QTime::currentTime().toString("[HH:mm:ss]");
+            const QString text  = QString::fromStdString(l.text).toHtmlEscaped();
+            QString line;
+            if (l.is_err)
+                line = QString("<span style='color: grey'>%1</span> "
+                               "<span style='color: #d94a4a'>%2</span>")
+                           .arg(stamp).arg(text);
+            else
+                line = QString("<span style='color: grey'>%1</span> %2")
+                           .arg(stamp).arg(text);
+            addConsoleLine(line);
         }
     }
     updateDashboard();
@@ -256,17 +289,33 @@ void MainWindow::onChartTick()
 
 void MainWindow::generateChartData()
 {
-    int playerCount = QRandomGenerator::global()->bounded(5, 50);
+    // Player chart: live count, no smoothing.
+    const int playerCount = static_cast<int>(
+        CatchChallenger::gui_stats::players_connected.load());
     ui->chartPlayers->addDataPoint(0, playerCount);
 
-    double rx = 50.0 + QRandomGenerator::global()->generateDouble() * 450.0;
-    double tx = 30.0 + QRandomGenerator::global()->generateDouble() * 270.0;
+    // Network chart: bytes/sec since the last chart tick.  Counters
+    // are cumulative; convert to delta divided by the chart interval.
+    const uint64_t rxNow = CatchChallenger::gui_stats::net_bytes_received.load();
+    const uint64_t txNow = CatchChallenger::gui_stats::net_bytes_sent.load();
+    const double dtSecs = 5.0;  // chartTimer interval — see setupCharts().
+    const double rx = (rxNow - lastChartRxBytes_) / dtSecs;
+    const double tx = (txNow - lastChartTxBytes_) / dtSecs;
+    lastChartRxBytes_ = rxNow;
+    lastChartTxBytes_ = txNow;
     ui->chartNetwork->addDataPoint(0, rx);
     ui->chartNetwork->addDataPoint(1, tx);
 
-    double minPing = 5.0 + QRandomGenerator::global()->generateDouble() * 20.0;
-    double avgPing = minPing + 10.0 + QRandomGenerator::global()->generateDouble() * 30.0;
-    double maxPing = avgPing + 20.0 + QRandomGenerator::global()->generateDouble() * 60.0;
+    // Ping chart: engine-reported min/avg/max.  Stored in ms so no
+    // unit conversion needed.  When the engine hasn't set them yet
+    // (server idle, no clients) all three read 0 — chart shows a
+    // flat baseline, which is the right answer.
+    const double minPing = static_cast<double>(
+        CatchChallenger::gui_stats::player_latency_ms_min.load());
+    const double avgPing = static_cast<double>(
+        CatchChallenger::gui_stats::player_latency_ms_avg.load());
+    const double maxPing = static_cast<double>(
+        CatchChallenger::gui_stats::player_latency_ms_max.load());
     ui->chartPing->addDataPoint(0, minPing);
     ui->chartPing->addDataPoint(1, avgPing);
     ui->chartPing->addDataPoint(2, maxPing);
@@ -285,9 +334,16 @@ void MainWindow::updateDashboard()
     ui->valueMemory->setText(formatBytes(memBytes > 0 ? memBytes : static_cast<qint64>(1.5 * 1024 * 1024)));
 
     if (serverRunning) {
-        int latency = 5 + QRandomGenerator::global()->bounded(15);
-        ui->valueLatency->setText(QString("%1ms").arg(latency));
-        ui->valueSqlLatency->setText(QString("%1ms").arg(2 + QRandomGenerator::global()->bounded(8)));
+        // Average player latency from the engine's RTT tracker.  0ms
+        // before any client has been pinged — same as old random
+        // baseline when nobody's connected.
+        const uint64_t pingMs =
+            CatchChallenger::gui_stats::player_latency_ms_avg.load();
+        ui->valueLatency->setText(QString("%1ms").arg(pingMs));
+        // SQL latency: most recent query duration converted ns→ms.
+        const uint64_t sqlNs =
+            CatchChallenger::gui_stats::db_query_last_duration_ns.load();
+        ui->valueSqlLatency->setText(QString("%1ms").arg(sqlNs / 1000000));
         ui->valueCpuLatency->setText(QString("%1ms").arg(accumulatedProcessingTime));
     } else {
         ui->valueLatency->setText("0ms");

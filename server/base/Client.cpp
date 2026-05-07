@@ -10,6 +10,7 @@
 #endif
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#include "../../general/base/CCGuiStats.hpp"
 
 #include "BaseServer/BaseServerLogin.hpp"
 #include "MapManagement/MapVisibilityAlgorithm.hpp"
@@ -53,6 +54,15 @@ Client::Client(const uint16_t &index_connected_player) :
             index++;
         }
     }
+#ifdef CATCHCHALLENGER_GUI_STATS
+    // Bump the "live connected players" counter for the admin GUI
+    // dashboard.  Only compiled when CATCHCHALLENGER_GUI_STATS is on
+    // (catchchallenger-server-gui only); other binaries see this as a
+    // no-op block.  Decrement happens in ~Client.
+    CatchChallenger::gui_stats::players_connected.fetch_add(1, std::memory_order_relaxed);
+    CatchChallenger::gui_stats::players_logged_total.fetch_add(1, std::memory_order_relaxed);
+    CatchChallenger::gui_stats::push_event("connected", std::string());
+#endif
 }
 
 void Client::setToDefault()
@@ -199,6 +209,13 @@ void Client::setToDefault()
 //need be call after isReadyToDelete() emited
 Client::~Client()
 {
+#ifdef CATCHCHALLENGER_GUI_STATS
+    // Pair with the bump in Client::Client.  No fetch_sub overflow
+    // guard — the ctor/dtor pairing is invariant; if we ever hit
+    // underflow that's a real refcount bug, not a counter issue.
+    CatchChallenger::gui_stats::players_connected.fetch_sub(1, std::memory_order_relaxed);
+    CatchChallenger::gui_stats::push_event("disconnected", std::string());
+#endif
     #ifdef CATCHCHALLENGER_SERVER
     std::cerr << "should never pass here, client now should just set to free slot" << std::endl;
     abort();
