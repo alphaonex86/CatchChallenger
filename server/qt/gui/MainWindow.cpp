@@ -260,22 +260,19 @@ void MainWindow::onTimerTick()
             addAnalyticsLine(line, e.bold);
         }
 
-        // Drain captured stdout / stderr.  Same time-mark policy.  err
-        // lines get tinted red so the operator sees crashes / warnings
-        // at a glance.
+        // Drain captured stdout / stderr.  addConsoleLine() already
+        // prepends a `[HH:mm:ss]` of its own, so we hand it the bare
+        // captured text — wrapping a stamp here would produce the
+        // duplicate `[18:58:59] [18:58:59] …` pattern.  err lines are
+        // tinted red so the operator spots crashes / warnings at a
+        // glance.
         auto logs = CatchChallenger::gui_log::drain_classified_lines();
         for (const auto &l : logs) {
-            const QString stamp = QTime::currentTime().toString("[HH:mm:ss]");
-            const QString text  = QString::fromStdString(l.text).toHtmlEscaped();
-            QString line;
+            const QString text = QString::fromStdString(l.text).toHtmlEscaped();
             if (l.is_err)
-                line = QString("<span style='color: grey'>%1</span> "
-                               "<span style='color: #d94a4a'>%2</span>")
-                           .arg(stamp).arg(text);
+                addConsoleLine(QString("<span style='color: #d94a4a'>%1</span>").arg(text));
             else
-                line = QString("<span style='color: grey'>%1</span> %2")
-                           .arg(stamp).arg(text);
-            addConsoleLine(line);
+                addConsoleLine(text);
         }
     }
     updateDashboard();

@@ -38,18 +38,23 @@ ssize_t QtClient::read(char * data, const size_t &size)
 {
     if(socket==nullptr)
         abort();
-    // Bump the GUI dashboard's RX counter immediately before the actual
-    // QTcpSocket read. We charge the requested buffer size — partial
-    // reads get over-counted slightly, but it keeps the increment on
-    // the same line as the socket call so the boundary is unambiguous.
-    #ifdef CATCHCHALLENGER_CLASS_QT
-    qtNetStats_bytesReceived.fetch_add(static_cast<uint64_t>(size), std::memory_order_relaxed);
-    #endif
+    // Issue the read first, then bump the counter with the ACTUAL bytes
+    // returned (partial reads + EOF return less than the requested
+    // buffer size).  The dashboard wants real bytes-on-the-wire, not an
+    // upper bound.  Errors return -1; skip the bump in that case so a
+    // disconnect-with-pending-read doesn't poison the counter.
+    const ssize_t got = socket->read(data, size);
     #ifdef CATCHCHALLENGER_GUI_STATS
-    CatchChallenger::gui_stats::net_bytes_received.fetch_add(
-        static_cast<uint64_t>(size), std::memory_order_relaxed);
+    if (got > 0)
+        CatchChallenger::gui_stats::net_bytes_received.fetch_add(
+            static_cast<uint64_t>(got), std::memory_order_relaxed);
     #endif
-    return socket->read(data,size);
+    #ifdef CATCHCHALLENGER_CLASS_QT
+    if (got > 0)
+        qtNetStats_bytesReceived.fetch_add(
+            static_cast<uint64_t>(got), std::memory_order_relaxed);
+    #endif
+    return got;
 }
 
 ssize_t QtClient::write(const char * const data, const size_t &size)
@@ -59,17 +64,22 @@ ssize_t QtClient::write(const char * const data, const size_t &size)
         return -1;*/
     if(socket==nullptr)
         abort();
-    // Bump the GUI dashboard's TX counter immediately before the actual
-    // QTcpSocket write. `size` is exactly what we hand the socket — the
-    // counter reflects bytes-handed-off, not bytes-the-kernel-accepted.
-    #ifdef CATCHCHALLENGER_CLASS_QT
-    qtNetStats_bytesSent.fetch_add(static_cast<uint64_t>(size), std::memory_order_relaxed);
-    #endif
+    // Same policy as read(): write, then count real bytes-handed-off.
+    // QIODevice::write() can write less than requested under back-
+    // pressure; counting the return value matches what the kernel /
+    // QSslSocket actually accepted.
+    const ssize_t put = socket->write(data, size);
     #ifdef CATCHCHALLENGER_GUI_STATS
-    CatchChallenger::gui_stats::net_bytes_sent.fetch_add(
-        static_cast<uint64_t>(size), std::memory_order_relaxed);
+    if (put > 0)
+        CatchChallenger::gui_stats::net_bytes_sent.fetch_add(
+            static_cast<uint64_t>(put), std::memory_order_relaxed);
     #endif
-    return socket->write(data,size);
+    #ifdef CATCHCHALLENGER_CLASS_QT
+    if (put > 0)
+        qtNetStats_bytesSent.fetch_add(
+            static_cast<uint64_t>(put), std::memory_order_relaxed);
+    #endif
+    return put;
 }
 
 bool QtClient::disconnectClient()
