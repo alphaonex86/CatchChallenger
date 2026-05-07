@@ -55,7 +55,11 @@ if(NOT TARGET catchchallenger_server_qt)
         ${CMAKE_CURRENT_LIST_DIR}/timer/QtTimerEvents.cpp
         ${CMAKE_CURRENT_LIST_DIR}/QtServer.cpp
         ${CMAKE_CURRENT_LIST_DIR}/InternalServer.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/NormalServer.cpp
+        # NormalServer.cpp moved to qt/gui/ — it's used only by the
+        # admin GUI binary (catchchallenger-server-gui), not by the
+        # in-process server that solo clients spawn (that one goes
+        # through InternalServer + QtServer here). The GUI binary
+        # adds it to its own add_executable() source list.
         ${CMAKE_CURRENT_LIST_DIR}/db/QtDatabase.cpp
         ${CMAKE_CURRENT_LIST_DIR}/db/QtDatabaseMySQL.cpp
         ${CMAKE_CURRENT_LIST_DIR}/db/QtDatabasePostgreSQL.cpp

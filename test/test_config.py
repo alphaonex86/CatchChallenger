@@ -64,7 +64,9 @@ _DUMMY_CONFIG = {
         "mxe_prefix": "/path/to/mxe",
         "msi_dir": "/path/to/msi-tooling",
         "android_workspace": "/path/to/android-workspace",
-        "remote_nodes_json": "/path/to/remote_nodes.json"
+        "remote_nodes_json": "/path/to/remote_nodes.json",
+        "git_repo": "/path/to/CatchChallenger/git",
+        "bisect_work": "/tmp/cc-test/bisec"
     },
     "postgresql": {
         "database": "catchchallenger",
@@ -139,6 +141,21 @@ def __getattr__(name):
         return _path("android_workspace")
     if name == "REMOTE_NODES_JSON":
         return _path("remote_nodes_json")
+    if name == "GIT_REPO":
+        # Source git repo for testingbisect.py. Optional — defaults to
+        # /home/user/Desktop/CatchChallenger/git when not configured (the
+        # operator's current setup) so existing configs keep working.
+        try:
+            return _path("git_repo")
+        except KeyError:
+            return os.path.expanduser("/home/user/Desktop/CatchChallenger/git")
+    if name == "BISECT_WORK":
+        # Per-bisect-run work tree. Lives on tmpfs by default to avoid
+        # hammering the SSD with 20 worktree checkouts × full builds.
+        try:
+            return _path("bisect_work")
+        except KeyError:
+            return os.path.join(_path("tmpfs_root"), "bisec")
     raise AttributeError(f"module 'test_config' has no attribute {name!r}")
 
 

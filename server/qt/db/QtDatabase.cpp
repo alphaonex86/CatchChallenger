@@ -3,10 +3,22 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
+#include <chrono>
 #include <QSqlError>
 #include <QDebug>
 
 using namespace CatchChallenger;
+
+#ifdef CATCHCHALLENGER_CLASS_QT
+// Definition of the GUI-only stats counters declared in QtDatabase.hpp.
+// Zero-initialised; bumped on every async/sync query at the call site
+// (and reset to zero per-tick by the GUI's polling code).
+namespace CatchChallenger {
+std::atomic<uint64_t> qtDbStats_queryTotalCount{0};
+std::atomic<uint64_t> qtDbStats_replyTotalCount{0};
+std::atomic<uint64_t> qtDbStats_lastQueryDurationNs{0};
+}
+#endif
 
 char QtDatabase::emptyString[]={'\0'};
 
@@ -95,6 +107,9 @@ void QtDatabase::syncDisconnect()
 DatabaseBaseCallBack *QtDatabase::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
 {
     std::cerr << "[SQL read] " << query << std::endl;
+    #ifdef CATCHCHALLENGER_CLASS_QT
+    qtDbStats_queryTotalCount.fetch_add(1, std::memory_order_relaxed);
+    #endif
     if(conn==NULL)
     {
         std::cerr << "db not connected" << std::endl;
@@ -121,6 +136,9 @@ DatabaseBaseCallBack *QtDatabase::asyncRead(const std::string &query,void * retu
 
 void QtDatabase::receiveReply(const QSqlQuery &queryReturn)
 {
+    #ifdef CATCHCHALLENGER_CLASS_QT
+    qtDbStats_replyTotalCount.fetch_add(1, std::memory_order_relaxed);
+    #endif
     if(sqlQuery!=NULL)
     {
         delete sqlQuery;
@@ -153,6 +171,10 @@ void QtDatabase::receiveReply(const QSqlQuery &queryReturn)
 bool QtDatabase::asyncWrite(const std::string &query)
 {
     std::cerr << "[SQL exec-sync] " << query << std::endl;
+    #ifdef CATCHCHALLENGER_CLASS_QT
+    qtDbStats_queryTotalCount.fetch_add(1, std::memory_order_relaxed);
+    const auto qStart = std::chrono::steady_clock::now();
+    #endif
     if(conn==NULL)
     {
         std::cerr << "[SQL exec-sync] FAILED: db not connected (" << query << ")" << std::endl;
@@ -168,6 +190,17 @@ bool QtDatabase::asyncWrite(const std::string &query)
                   << " (" << query << ")" << std::endl;
         return false;
     }
+    #ifdef CATCHCHALLENGER_CLASS_QT
+    {
+        // Capture sync-write duration for the GUI's "SQL latency" tile.
+        // memory_order_relaxed: the GUI poll only reads the LAST value
+        // it ever sees, no ordering against other writes is required.
+        const auto qEnd = std::chrono::steady_clock::now();
+        qtDbStats_lastQueryDurationNs.store(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(qEnd - qStart).count(),
+            std::memory_order_relaxed);
+    }
+    #endif
     return true;
 }
 

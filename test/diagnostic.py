@@ -208,6 +208,13 @@ def runtime_wrapper(diag):
     mode (sanitizer-instrumented binaries run unwrapped)."""
     if not is_valgrind(diag):
         return []
+    # Probe valgrind once and emit a clear warning if it's missing — otherwise
+    # the harness silently falls back to running the binary unwrapped, which
+    # defeats the whole point of --valgrind.
+    from cmd_helpers import find_tool as _find_tool
+    if _find_tool("valgrind",
+                  purpose=f"valgrind:{diag.get('tool', '?')} diagnostic mode") is None:
+        return []
     base = ["valgrind",
             "--error-exitcode=23",
             "--child-silent-after-fork=yes"]

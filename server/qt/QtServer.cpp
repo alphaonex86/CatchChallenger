@@ -295,6 +295,14 @@ void QtServer::connect_the_last_client(CatchChallenger::Client *client, QIODevic
     if(!connect(socket,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection))
         abort();
     client_list.insert(client);
+    // QFakeSocket pairing happens synchronously inside the client's
+    // connectToHost(), and the client may have already written its
+    // protocol header by the time newConnection() runs and we wire up
+    // readyRead here. readyRead is edge-triggered — it won't fire for
+    // bytes already buffered. Schedule a parseIncommingData() pass so
+    // we drain whatever the client sent before we got here.
+    if(socket->bytesAvailable()>0)
+        QMetaObject::invokeMethod(c,[c](){c->parseIncommingData();},Qt::QueuedConnection);
 }
 
 void QtServer::load_next_city_capture()
@@ -433,6 +441,42 @@ void QtServer::quitForCriticalDatabaseQueryFailed()
     emit haveQuitForCriticalDatabaseQueryFailed();
     stop_internal_server();
 }
+
+void QtServer::cc_datapack_fail(const std::string &msg)
+{
+    // Log to stderr so the message lands in the running console even
+    // when no GUI listener is attached, then emit the error() signal
+    // for MainWindow's QMessageBox slot. Caller is still responsible
+    // for `return`-ing from its own function — this only signals.
+    std::cerr << msg << std::endl;
+    emit error(msg);
+}
+
+#ifdef CATCHCHALLENGER_CLASS_QT
+size_t QtServer::currentClientCount() const
+{
+    // The set itself is mutated only on the QtServer thread (insert on
+    // newConnection, erase on disconnect). The GUI poll runs on the
+    // same thread (single-threaded admin GUI), so a plain size() is
+    // safe — no atomic snapshot dance needed.
+    return client_list.size();
+}
+
+void QtServer::clientPingStats(uint32_t &minOut, uint32_t &avgOut, uint32_t &maxOut) const
+{
+    // The CC protocol does not currently round-trip-time stamp pings
+    // (Client::sendPing is fire-and-forget) so per-client latency
+    // isn't tracked by the server. Return zeros — the GUI's "Player
+    // Ping" chart will show flat 0ms while the server is local-only,
+    // which is honest. When per-client RTT lands, this is the spot to
+    // expose it (iterate client_list and aggregate the min/avg/max).
+    minOut = 0;
+    avgOut = 0;
+    maxOut = 0;
+    if(client_list.empty())
+        return;
+}
+#endif
 
 void QtServer::loadAndFixSettings()
 {

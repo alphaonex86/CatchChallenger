@@ -44,6 +44,26 @@ public:
     virtual void preload_finish() override;
     void quitForCriticalDatabaseQueryFailed() override;
     void loadAndFixSettings() override;
+    // Surface datapack-load failures via the error() signal instead of
+    // aborting (the BaseServer default). Lets the GUI pop a
+    // QMessageBox::warning and stay alive so the operator can fix the
+    // datapack and retry.
+    void cc_datapack_fail(const std::string &msg) override;
+#ifdef CATCHCHALLENGER_CLASS_QT
+    // ── Live-stats probes (GUI-only) ────────────────────────────────
+    // The dashboard (server/qt/gui/MainWindow) polls these every second
+    // to render real numbers instead of synthetic data. They're gated
+    // on CATCHCHALLENGER_CLASS_QT so the headless epoll/io_uring path
+    // pays nothing — no atomics, no per-byte counter increments.
+    //
+    // currentClientCount(): live size of client_list (in-process count
+    //     of connected QtClient instances, both real-TCP and QFakeSocket).
+    // pingMs/Min/Avg/Max(): per-client last-known ping in ms; zeroes
+    //     when no clients are connected. Pulled from each Client's
+    //     ProtocolParsingInputOutput latency snapshot.
+    size_t currentClientCount() const;
+    void clientPingStats(uint32_t &minOut, uint32_t &avgOut, uint32_t &maxOut) const;
+#endif
 
     void setEventTimer(const uint8_t &event,const uint8_t &value,const unsigned int &time,const unsigned int &start) override;
     void preload_the_visibility_algorithm() override;

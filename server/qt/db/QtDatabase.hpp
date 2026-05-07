@@ -6,12 +6,30 @@
 #include <QSqlError>
 #include <QThread>
 #include <QObject>
+#include <atomic>
+#include <cstdint>
 
 #define CATCHCHALLENGER_MAXBDQUERIES 255
 
 #include "../../base/DatabaseBase.hpp"
 
 namespace CatchChallenger {
+
+#ifdef CATCHCHALLENGER_CLASS_QT
+// Live SQL stats (GUI dashboard probe). Increment on every asyncRead/
+// asyncWrite/syncWrite/syncRead and on every reply received. The
+// MainWindow polls these counters once per second + computes deltas
+// for the "DB query" KPI tile and "SQL latency" gauge.
+//
+// Atomic + process-wide so the counters are correct across the
+// QtDatabaseThread that actually runs the queries. They're declared
+// here (header) and defined in QtDatabase.cpp; gated on the
+// CATCHCHALLENGER_CLASS_QT define so the headless epoll/io_uring
+// build never sees the symbols.
+extern std::atomic<uint64_t> qtDbStats_queryTotalCount;
+extern std::atomic<uint64_t> qtDbStats_replyTotalCount;
+extern std::atomic<uint64_t> qtDbStats_lastQueryDurationNs;
+#endif
 
 class QtDatabaseThread : public QThread
 {

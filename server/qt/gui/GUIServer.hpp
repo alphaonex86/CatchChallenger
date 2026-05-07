@@ -1,5 +1,5 @@
-#ifndef CATCHCHALLENGER_EVENTDISPATCHER_H
-#define CATCHCHALLENGER_EVENTDISPATCHER_H
+#ifndef CATCHCHALLENGER_GUISERVER_H
+#define CATCHCHALLENGER_GUISERVER_H
 
 #include <QObject>
 #include <QSettings>
@@ -19,14 +19,14 @@
 #include "QtServer.hpp"
 
 namespace CatchChallenger {
-class NormalServer : public QtServer
+class GUIServer : public QtServer
 {
     #ifndef CATCHCHALLENGER_SERVER
     Q_OBJECT
     #endif
 public:
-    explicit NormalServer();
-    virtual ~NormalServer();
+    explicit GUIServer();
+    virtual ~GUIServer();
     void setNormalSettings(const NormalServerSettings &settings);
     NormalServerSettings getNormalSettings() const;
     //stat function

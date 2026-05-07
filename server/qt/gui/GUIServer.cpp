@@ -1,10 +1,15 @@
-#include "NormalServer.hpp"
+#include "GUIServer.hpp"
 #include "../base/GlobalServerData.hpp"
+#include "../base/TinyXMLSettings.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include <QCoreApplication>
 #include <QTcpSocket>
 #include <QTcpSocket>
 #include <QNetworkProxy>
 #include <QProcess>
+#include <algorithm>
+#include <cstdlib>
 #include "QtClientWithMap.hpp"
 #include "QtClientList.hpp"
 
@@ -22,12 +27,12 @@
 
 using namespace CatchChallenger;
 
-bool NormalServer::oneInstanceRunning=false;
+bool GUIServer::oneInstanceRunning=false;
 
-std::string NormalServer::text_restart="restart";
-std::string NormalServer::text_stop="stop";
+std::string GUIServer::text_restart="restart";
+std::string GUIServer::text_stop="stop";
 
-NormalServer::NormalServer() :
+GUIServer::GUIServer() :
     QtServer()
 {
     sslServer               = NULL;
@@ -40,26 +45,26 @@ NormalServer::NormalServer() :
     //eventDispatcherThread = new EventThreader();
     //moveToThread(eventDispatcherThread);
 
-/*    if(!connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::serverCommand,this,&NormalServer::serverCommand,Qt::QueuedConnection))
+/*    if(!connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::serverCommand,this,&GUIServer::serverCommand,Qt::QueuedConnection))
         abort();
-    if(!connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_player_is_connected,this,&NormalServer::new_player_is_connected,Qt::QueuedConnection))
+    if(!connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_player_is_connected,this,&GUIServer::new_player_is_connected,Qt::QueuedConnection))
         abort();
-    if(!connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::player_is_disconnected,this,&NormalServer::player_is_disconnected,Qt::QueuedConnection))
+    if(!connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::player_is_disconnected,this,&GUIServer::player_is_disconnected,Qt::QueuedConnection))
         abort();
-    if(!connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_chat_message,this,&NormalServer::new_chat_message,Qt::QueuedConnection))
+    if(!connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_chat_message,this,&GUIServer::new_chat_message,Qt::QueuedConnection))
         abort();*/
-    if(!connect(&purgeKickedHostTimer,&QTimer::timeout,this,&NormalServer::purgeKickedHost,Qt::QueuedConnection))
+    if(!connect(&purgeKickedHostTimer,&QTimer::timeout,this,&GUIServer::purgeKickedHost,Qt::QueuedConnection))
         abort();
-    if(!connect(this,&QtServer::need_be_started,this,&NormalServer::start_internal_server,Qt::QueuedConnection))
+    if(!connect(this,&QtServer::need_be_started,this,&GUIServer::start_internal_server,Qt::QueuedConnection))
         abort();
-    if(!connect(&timeRangeEventTimer,&QTimer::timeout,this,&NormalServer::timeRangeEvent,Qt::QueuedConnection))
+    if(!connect(&timeRangeEventTimer,&QTimer::timeout,this,&GUIServer::timeRangeEvent,Qt::QueuedConnection))
         abort();
     timeRangeEventTimer.start(1000*60*60*24);
 }
 
 /** call only when the server is down
  * \warning this function is thread safe because it quit all thread before remove */
-NormalServer::~NormalServer()
+GUIServer::~GUIServer()
 {
     if(sslServer!=NULL)
     {
@@ -69,31 +74,153 @@ NormalServer::~NormalServer()
     }
 }
 
-void NormalServer::setNormalSettings(const NormalServerSettings &settings)
+void GUIServer::setNormalSettings(const NormalServerSettings &settings)
 {
     normalServerSettings=settings;
     loadAndFixSettings();
 }
 
-NormalServerSettings NormalServer::getNormalSettings() const
+NormalServerSettings GUIServer::getNormalSettings() const
 {
     return normalServerSettings;
 }
 
-void NormalServer::initAll()
+void GUIServer::initAll()
 {
     BaseServer::initAll();
 }
 
 //////////////////////////////////////////// server starting //////////////////////////////////////
 
-void NormalServer::load_settings()
+// Parse one db-* group out of server-properties.xml into a Database struct.
+// Mirrors the parser in epoll/main-epoll2.cpp::send_settings(): convert the
+// "type" string ("sqlite" / "mysql" / "postgresql") into the DatabaseType
+// enum, then pull host/db/login/pass for SQL or file= for SQLite. Caller is
+// responsible for begin/endGroup() around the call.
+static bool loadOneDbGroup(TinyXMLSettings *settings,
+                           CatchChallenger::GameServerSettings::Database &dst,
+                           const std::string &groupName)
 {
-    GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
+    settings->beginGroup(groupName);
+    const std::string typ = settings->value("type", "sqlite");
+    if(typ == "mysql")
+        dst.tryOpenType = CatchChallenger::DatabaseBase::DatabaseType::Mysql;
+    else if(typ == "sqlite")
+        dst.tryOpenType = CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+    else if(typ == "postgresql")
+        dst.tryOpenType = CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL;
+    else
+    {
+        std::cerr << "[GUIServer::load_settings] unsupported db type "
+                  << typ << " in " << groupName << "; falling back to sqlite"
+                  << std::endl;
+        dst.tryOpenType = CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+    }
+    if(dst.tryOpenType == CatchChallenger::DatabaseBase::DatabaseType::SQLite)
+    {
+        // SQLite path is relative to the binary's working dir; keep it
+        // pliable so QtDatabaseSQLite::syncConnect can resolve it.
+        dst.file = settings->value("file", "database.sqlite");
+    }
+    else
+    {
+        dst.host  = settings->value("host", "localhost");
+        dst.db    = settings->value("db",   "catchchallenger");
+        dst.login = settings->value("login","catchchallenger");
+        dst.pass  = settings->value("pass", "catchchallenger");
+    }
+    {
+        const std::string s = settings->value("tryInterval", "5");
+        dst.tryInterval = static_cast<unsigned int>(std::max(1, std::atoi(s.c_str())));
+    }
+    {
+        const std::string s = settings->value("considerDownAfterNumberOfTry", "3");
+        dst.considerDownAfterNumberOfTry = static_cast<unsigned int>(std::max(1, std::atoi(s.c_str())));
+    }
+    settings->endGroup();
+    return true;
+}
+
+void GUIServer::load_settings()
+{
+    GlobalServerData::serverPrivateVariables.number_of_bots_logged = 0;
+
+    const std::string xmlPath =
+        QCoreApplication::applicationDirPath().toStdString()
+        + "/server-properties.xml";
+    TinyXMLSettings settings(xmlPath);
+
+    // Datapack code: required for preload_6_sync_the_datapack — passing
+    // an empty mainDatapackCode aborts inside CATCHCHALLENGER_HARDENED.
+    // Mirror the seed logic from epoll/main-epoll2.cpp: read mainDatapackCode
+    // from <content>, fall back to "[main]" → which means "auto-pick the
+    // first directory under <datapack>/map/main/". Same idea for sub.
+    settings.beginGroup("content");
+    if(settings.contains("mainDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode = settings.value("mainDatapackCode", "[main]");
+    else
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode = "[main]";
+    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode == "[main]")
+    {
+        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list =
+            CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(
+                GlobalServerData::serverSettings.datapack_basePath + "/map/main/",
+                CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+        if(list.empty())
+        {
+            // No maincode dirs: log + emit error; do NOT abort. The GUI
+            // will catch this via the error() signal and pop a
+            // QMessageBox::warning so the operator can fix the datapack.
+            std::cerr << "No main code detected into the current datapack" << std::endl;
+            error("No main code detected in datapack: " + GlobalServerData::serverSettings.datapack_basePath + "map/main/");
+        }
+        else
+        {
+            settings.setValue("mainDatapackCode", list.at(0).name);
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode = list.at(0).name;
+        }
+    }
+    if(settings.contains("subDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.subDatapackCode = settings.value("subDatapackCode", "");
+    else
+    {
+        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list =
+            CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(
+                GlobalServerData::serverSettings.datapack_basePath + "/map/main/" +
+                CommonSettingsServer::commonSettingsServer.mainDatapackCode + "/sub/",
+                CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+        if(list.size() == 1)
+        {
+            settings.setValue("subDatapackCode", list.at(0).name);
+            CommonSettingsServer::commonSettingsServer.subDatapackCode = list.at(0).name;
+        }
+        else
+        {
+            settings.setValue("subDatapackCode", "");
+            CommonSettingsServer::commonSettingsServer.subDatapackCode = "";
+        }
+    }
+    settings.endGroup();
+    settings.sync();
+
+    // Load DB settings from server-properties.xml. Without this the
+    // database_*.tryOpenType fields stay at DatabaseType::Unknown and the
+    // first switch() in BaseServer::syncConnectDb hits the default branch
+    // (`std::cerr << "database type unknown"; abort()`). The MainWindow
+    // already kicks NormalServerGlobal::checkSettingsFile() at construction
+    // so the file is guaranteed to exist with seeded defaults.
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    loadOneDbGroup(&settings, GlobalServerData::serverSettings.database_login, "db-login");
+    loadOneDbGroup(&settings, GlobalServerData::serverSettings.database_base,  "db-base");
+    #endif
+    loadOneDbGroup(&settings, GlobalServerData::serverSettings.database_common,"db-common");
+    loadOneDbGroup(&settings, GlobalServerData::serverSettings.database_server,"db-server");
+    #endif
 }
 
 //start with allow real player to connect
-void NormalServer::start_internal_server()
+void GUIServer::start_internal_server()
 {
     // Cleartext-only listen path. The qmake-era code branched on a
     // server-side `useSsl` setting and constructed QSslServer with a
@@ -105,7 +232,7 @@ void NormalServer::start_internal_server()
     // in-band by the protocol.
     if(sslServer==NULL)
         sslServer=new QTcpServer();
-    if(!connect(sslServer,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection))
+    if(!connect(sslServer,&QTcpServer::newConnection,this,&GUIServer::newConnection,Qt::QueuedConnection))
         abort();
     if(sslServer->isListening())
     {
@@ -178,7 +305,7 @@ void NormalServer::start_internal_server()
 
 ////////////////////////////////////////////////// server stopping ////////////////////////////////////////////
 
-bool NormalServer::check_if_now_stopped()
+bool GUIServer::check_if_now_stopped()
 {
     if(!QtServer::check_if_now_stopped())
         return false;
@@ -193,7 +320,7 @@ bool NormalServer::check_if_now_stopped()
 }
 
 //call by normal stop
-void NormalServer::stop_internal_server()
+void GUIServer::stop_internal_server()
 {
     QtServer::stop_internal_server();
 
@@ -207,7 +334,7 @@ void NormalServer::stop_internal_server()
 
 /////////////////////////////////////////////////// Object removing /////////////////////////////////////
 
-void NormalServer::removeOneClient()
+void GUIServer::removeOneClient()
 {
     /*Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
@@ -222,7 +349,7 @@ void NormalServer::removeOneClient()
 
 ///////////////////////////////////// Generic command //////////////////////////////////
 
-void NormalServer::serverCommand(const std::string &command, const std::string &extraText)
+void GUIServer::serverCommand(const std::string &command, const std::string &extraText)
 {
     Q_UNUSED(command);
     Q_UNUSED(extraText);
@@ -232,23 +359,23 @@ void NormalServer::serverCommand(const std::string &command, const std::string &
         DebugClass::debugConsole("NULL client at serverCommand()");
         return;
     }
-    if(command==NormalServer::text_restart)
+    if(command==GUIServer::text_restart)
         need_be_restarted();
-    else if(command==NormalServer::text_stop)
+    else if(command==GUIServer::text_stop)
         need_be_stopped();
     else
         DebugClass::debugConsole(std::stringLiteral("unknow command: %1").arg(command));*/
 }
 
 //////////////////////////////////// Function secondary //////////////////////////////
-std::string NormalServer::listenIpAndPort(std::string server_ip,uint16_t server_port)
+std::string GUIServer::listenIpAndPort(std::string server_ip,uint16_t server_port)
 {
     if(server_ip.empty())
         server_ip="*";
     return server_ip+":"+std::to_string(server_port);
 }
 
-void NormalServer::newConnection()
+void GUIServer::newConnection()
 {
     CatchChallenger::QtClientList *qtClientList=static_cast<CatchChallenger::QtClientList *>(CatchChallenger::ClientList::list);
     #ifdef CATCHCHALLENGER_SOLO
@@ -298,13 +425,13 @@ void NormalServer::newConnection()
         }
 }
 
-void NormalServer::kicked(const QHostAddress &host)
+void GUIServer::kicked(const QHostAddress &host)
 {
     if(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick>0)
         kickedHosts[host]=QDateTime::currentDateTime();
 }
 
-void NormalServer::purgeKickedHost()
+void GUIServer::purgeKickedHost()
 {
     std::vector<QHostAddress> hostsToRemove;
     const QDateTime &currentDateTime=QDateTime::currentDateTime();
@@ -322,46 +449,46 @@ void NormalServer::purgeKickedHost()
     }
 }
 
-void NormalServer::timeRangeEvent()
+void GUIServer::timeRangeEvent()
 {
     Client::timeRangeEvent(QDateTime::currentMSecsSinceEpoch()/1000);
 }
 
-bool NormalServer::isListen()
+bool GUIServer::isListen()
 {
     return QtServer::isListen();
 }
 
-bool NormalServer::isStopped()
+bool GUIServer::isStopped()
 {
     return QtServer::isStopped();
 }
 
-uint16_t NormalServer::player_current()
+uint16_t GUIServer::player_current()
 {
     if(ClientList::list==nullptr)
         return 0;
     return ClientList::list->connected_size();
 }
 
-uint16_t NormalServer::player_max()
+uint16_t GUIServer::player_max()
 {
     return GlobalServerData::serverSettings.max_players;
 }
 
 /////////////////////////////////// Async the call ///////////////////////////////////
 /// \brief Called when event loop is setup
-void NormalServer::start_server()
+void GUIServer::start_server()
 {
     need_be_started();
 }
 
-void NormalServer::stop_server()
+void GUIServer::stop_server()
 {
     try_stop_server();
 }
 
-void NormalServer::loadAndFixSettings()
+void GUIServer::loadAndFixSettings()
 {
     if(normalServerSettings.server_port<=0)
     {
@@ -376,7 +503,7 @@ void NormalServer::loadAndFixSettings()
     }
 }
 
-void NormalServer::preload_finish()
+void GUIServer::preload_finish()
 {
     QtServer::preload_finish();
     std::cerr << "Waiting connection on port " << normalServerSettings.server_port << std::endl;

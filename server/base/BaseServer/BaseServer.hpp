@@ -118,6 +118,13 @@ protected:
     void load_monsters_max_id_return();
     virtual void criticalDatabaseQueryFailed();
     virtual void quitForCriticalDatabaseQueryFailed() = 0;
+    // Report a datapack-load failure with `msg`. Default impl logs to
+    // std::cerr + abort()s, which is what every headless binary wants.
+    // QtServer overrides this to emit an error() signal instead, so the
+    // GUI surfaces it as a QMessageBox::warning. The caller is still
+    // responsible for `return`-ing from its own function — this method
+    // only signals the failure, it does not unwind the stack.
+    virtual void cc_datapack_fail(const std::string &msg);
 
     static void preload_zone_static(void *object);
     bool preload_zone_init();

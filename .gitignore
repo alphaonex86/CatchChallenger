@@ -1,122 +1,202 @@
-### C++ ###
-# Prerequisites
-*.d
+# ─────────────────────────────────────────────────────────────────────────
+# CatchChallenger — .gitignore
+#
+# Goal: after `sync.sh` rsyncs `working/` → `git/`, `git status` shows
+# *only real source changes* — never compilation artifacts, never Qt
+# Creator personal state, never Python bytecode, never datapack
+# downloads or generated config files.
+#
+# When a new build/scratch dir appears, prefer adding the pattern here
+# over teaching every test/sync script to skip it. Single source of
+# truth: this file. sync.sh's --exclude list is now redundant; kept
+# only as a belt-and-braces guard while the layout settles.
+# ─────────────────────────────────────────────────────────────────────────
 
-# Compiled Object files
+# ── C/C++ object files & compiled libraries ────────────────────────────────
+*.d
 *.slo
 *.lo
 *.o
 *.obj
-
-# Precompiled Headers
 *.gch
 *.pch
-
-# Compiled Dynamic libraries
 *.so
+*.so.*
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
 *.lai
 *.la
 *.a
 *.lib
+*.mod
+*.smod
 
-# Executables
+# ── Executables / standalone binaries ──────────────────────────────────────
 *.exe
 *.out
 *.app
-/server/catchchallenger-server-cli-epoll
-/server/epoll/catchchallenger-server-cli-epoll
-/client/catchchallenger
+client/catchchallenger
+client/qtopengl/catchchallenger
+client/qtopengl/catchchallenger800x600
+client/qtcpu800x600/catchchallenger
+client/qtcpu800x600/catchchallenger800x600
+server/catchchallenger-server-cli-epoll
+server/catchchallenger-server-gui
+server/epoll/catchchallenger-server-cli-epoll
+server/epoll/filedb-converter/filedb-converter
+server/game-server-alone/catchchallenger-game-server-alone
+server/login/catchchallenger-server-login
+server/master/catchchallenger-server-master
+server/gateway/catchchallenger-gateway
+tools/bot-actions/bot-actions
+tools/bot-test-connect-to-gameserver-cli/bot-test-connect-to-gameserver
+tools/datapack-downloader-cli/datapack-downloader
+tools/datapack-explorer-generator-cli/datapack-explorer-generator
+tools/datapack-explorer-generator/datapack-explorer-generator
+tools/map-procedural-generation-terrain/map-procedural-generation-terrain
+tools/map-procedural-generation/map-procedural-generation
+tools/map-procedural-generation/dest
+tools/map2png/map2png
+tools/stats/stats
+tools/tmxTileLayerConverterToZstd/tmxTileLayerConverterToZstd
 
-# generated output
-/tools/map-procedural-generation/dest
-/tools/datapack-explorer-generator-cli/datapack-explorer-generator
-/server/game-server-alone/catchchallenger-game-server-alone
-/server/login/catchchallenger-server-login
-/server/master/catchchallenger-server-master
-
-### Qt ###
-# C++ objects and libs
-*.so.*
-
-# Qt-es
+# ── qmake / Make build droppings ───────────────────────────────────────────
+# `Makefile` and `Makefile.*` are qmake-generated artefacts at the root
+# of in-source build dirs. We have to re-include vendored libraries'
+# upstream Makefiles below — they're real source, not artefacts.
+Makefile
+Makefile.*
+*.makefile
+!**/libzstd/**/Makefile*
+!**/libzstd/**/*.makefile
+!**/libopus/**/Makefile*
+!**/libogg/**/Makefile*
+!**/libopusfile/**/Makefile*
+!**/libxxhash/**/Makefile*
+!**/blake3/**/Makefile*
+!**/hps/**/Makefile*
+.qmake.cache
+.qmake.stash
+*.qmake.stash
+*/.qmake.cache
+*/.qmake.stash
 object_script.*.Release
 object_script.*.Debug
 *_plugin_import.cpp
-*/.qmake.cache
-*/.qmake.stash
+*.moc
+moc_*
+moc_*.cpp
+moc_*.h
+qrc_*
+qrc_*.cpp
+ui_*
+ui_*.h
+*.qm
+*.qmlc
+*.jsc
+*.prl
+target_wrapper.*
+
+# ── CMake build droppings (anywhere) ───────────────────────────────────────
+# Project layout is "one CMakeLists.txt per binary, no root cmake" — so
+# build/ dirs can appear under any subdir. Match them everywhere.
+build/
+build-*/
+*-build/
+**/build/
+CMakeCache.txt
+CMakeFiles/
+**/CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+CMakeScripts/
+Testing/
+install_manifest.txt
+compile_commands.json
+
+# ── Qt Creator personal / generated state ──────────────────────────────────
 *.pro.user
 *.pro.user.*
 *.qbs.user
 *.qbs.user.*
-*.moc
-moc_*.cpp
-moc_*.h
-qrc_*.cpp
-ui_*.h
-*.qmlc
-*.jsc
-Makefile*
-*build-*
-*build*
-*.qm
-*.prl
-
-.qtcreator
-moc_*
-ui_*
-qrc_*
-Makefile
-.claude
-
-# Qt unit tests
-target_wrapper.*
-
-# QtCreator
-*.autosave
-*.autosave*
-
-# QtCreator Qml
 *.qmlproject.user
 *.qmlproject.user.*
-
-# QtCreator CMake
-CMakeLists.txt.user*
-
-# QtCreator 4.8< compilation database 
-compile_commands.json
-
-# QtCreator local machine specific files for imported projects
+CMakeLists.txt.user
+CMakeLists.txt.user.*
 *creator.user*
+*.autosave
+*.autosave.*
+.qtcreator
+.qtcreator/
+**/.qtcreator/
 
-# Preserved from original file
-*build-desktop*
-*build-Desktop-Debug*
-*build-Desktop*
+# ── Cross-compile / per-kit build directories ──────────────────────────────
+# Qt Creator's "Build for kit X" creates sibling dirs like
+# `build-MyProject-Desktop-Debug`. Match all of them.
+build-Desktop*
+build-desktop*
+build-Qt*
+*Qt5-Debug*
 *Desktop-Debug*
-*Desktop*
-*kate-swp
+*Desktop-Release*
 *windows-x86*
-tools/to-pack/data/windows-x*
+*android-arm*
+*android-x86*
+tools/to-pack/data/
 
-# Configurations
-/server/server-properties.xml
-/client/datapack
-/server/datapack
+# ── Editor / IDE state ─────────────────────────────────────────────────────
+*.kate-swp
+*.kate-swp.*
+*kate-swp
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
-client/qtopengl/catchchallenger
-client/qtcpu800x600/catchchallenger
+# ── Claude Code per-dir state ──────────────────────────────────────────────
+.claude/
+**/.claude/
 
-/tools/__pycache__/
-*__pycache__/
+# ── Python bytecode (test scripts) ─────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
 
+# ── Generated datapack content ─────────────────────────────────────────────
+# `datapack/internal/` is what the CLIENT downloads from a server / mirror
+# at runtime. `datapack/` (anywhere except the canonical /datapack-*
+# repos at the root) is the staged copy used by tests. Both are
+# regenerated per-run, never committed.
+**/datapack/internal/
+**/datapack/internal
+client/datapack
+client/qtopengl/datapack
+client/qtcpu800x600/datapack
+server/datapack
+server/datapack/
+tools/client/
+tools/server/
 
-/tools/client/
-/tools/server/
+# ── Generated runtime config ───────────────────────────────────────────────
+# Each binary's startup writes a default <binary>/server-properties.xml
+# the first time it runs. Never commit those — the canonical settings
+# live in CONFIG.md / per-test seeds.
+server/server-properties.xml
+server/*/server-properties.xml
+**/server-properties.xml
+**/datapack-cache.bin
+**/database/
+
+# ── Misc test scratch / stage files ────────────────────────────────────────
+/temp/
+**/temp/
+test/build_paths.py.local
+test/remote_build.py.local
+*.log
+*.core
+core
+core.*

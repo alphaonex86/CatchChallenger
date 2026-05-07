@@ -254,6 +254,15 @@ void BaseServer::criticalDatabaseQueryFailed()
     quitForCriticalDatabaseQueryFailed();
 }
 
+void BaseServer::cc_datapack_fail(const std::string &msg)
+{
+    // Default headless behaviour: log + abort. QtServer overrides this
+    // to emit error(msg) so the GUI can surface a QMessageBox::warning
+    // instead of crashing.
+    std::cerr << msg << std::endl;
+    abort();
+}
+
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::SQL_common_load_finish()
 {
