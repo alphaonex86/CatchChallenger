@@ -66,7 +66,10 @@ MainWindow::MainWindow(QWidget *parent) :
     maxDbQuerySinceStart(20),
     currentPlayers(0),
     maxPlayers(200),
-    tickCount(0)
+    tickCount(0),
+    lastTickDbQueries_(0),
+    lastChartRxBytes_(0),
+    lastChartTxBytes_(0)
 {
     ui->setupUi(this);
     setupNavigation();
