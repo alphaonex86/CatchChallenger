@@ -18,12 +18,33 @@
 cmake_minimum_required(VERSION 3.20)
 project(catchchallenger_server_gui LANGUAGES C CXX)
 
+# Qt Creator's clangd code model (and any out-of-tree tooling) needs
+# compile_commands.json in the build dir.  Switching this on as the
+# project default means "open server/CMakeLists.txt in Qt Creator and
+# code-completion just works" — no per-kit checkbox to remember.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Default to ${PROJECT_SOURCE_DIR} as the binary's working directory in
+# Qt Creator's Run config: the binary aborts in main.cpp when
+# <cwd>/datapack/informations.xml is missing.  Persisted as a CMake
+# property so QtC picks it up; an explicit WORKING_DIRECTORY tag on the
+# target also covers cmake-Generated CodeBlocks/Ninja Multi-Config.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 include(${CMAKE_CURRENT_LIST_DIR}/../general/CCCommon.cmake)
 
 # Qt6::Widgets + Qt6::Gui for the MainWindow admin GUI; Sql for the
 # SQLite backend; Network for the listening server.
 find_package(Qt6 COMPONENTS Core Gui Widgets Network Sql REQUIRED)
 find_package(Threads REQUIRED)
+# qt_standard_project_setup() (Qt 6.3+) wires AUTOMOC/AUTOUIC/AUTORCC
+# defaults the Qt-recommended way and registers the project with Qt
+# Creator's Qt-aware tooling so target categorisation, deployment
+# settings, and run-config working dirs all light up.  Idempotent and
+# safe on Qt 6.3+.
+if(COMMAND qt_standard_project_setup)
+    qt_standard_project_setup()
+endif()
 
 # Pull in the dependency libraries via .cmake fragment files (mirroring
 # the qmake-era include of .pri fragments). Each fragment defines its
@@ -43,7 +64,7 @@ include(${CC_REPO_ROOT}/server/qt/catchchallenger-server-qt.cmake)
 # `--autostart` (used by testingqtserver.py) auto-clicks the GUI's
 # "start server" button on the first event-loop tick so headless CI
 # can boot the server without a clicker.
-add_executable(catchchallenger-server-gui
+set(_server_gui_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/MainWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/MainWindow.hpp
@@ -68,6 +89,16 @@ add_executable(catchchallenger-server-gui
     # Schema for SQLite auto-init in QtDatabaseSQLite::syncConnect.
     ${CMAKE_CURRENT_SOURCE_DIR}/databases/resources-db-sqlite.qrc
 )
+
+# qt_add_executable when present (Qt 6.3+) — Qt Creator hooks into this
+# wrapper to expose the binary in its Project tree as a "Qt Application"
+# (deployment / icon / Run-config working dir all light up).  Falls back
+# to add_executable on older Qt or non-Qt cmake.
+if(COMMAND qt_add_executable)
+    qt_add_executable(catchchallenger-server-gui ${_server_gui_sources})
+else()
+    add_executable(catchchallenger-server-gui ${_server_gui_sources})
+endif()
 
 set_target_properties(catchchallenger-server-gui PROPERTIES
     AUTOMOC ON
