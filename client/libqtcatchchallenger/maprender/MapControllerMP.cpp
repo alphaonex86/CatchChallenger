@@ -1,4 +1,5 @@
 #include "MapController.hpp"
+#include "MapItem.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
@@ -184,6 +185,7 @@ void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const
         if(!image.isNull())
         {
             tempPlayer.monsterTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),32,32);
+            MapItem::validTilesets_.insert(tempPlayer.monsterTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
             if(!tempPlayer.monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
                 abort();
             monsterTilesetCache[imagePath]=tempPlayer.monsterTileset;
@@ -853,6 +855,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                             if(!image.isNull())
                             {
                                 otherPlayer.playerTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),16,24);
+                                MapItem::validTilesets_.insert(otherPlayer.playerTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
                                 otherPlayer.playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
                             }
                             else

@@ -44,10 +44,27 @@ include(${CC_REPO_ROOT}/server/qt/catchchallenger-server-qt.cmake)
 # "start server" button on the first event-loop tick so headless CI
 # can boot the server without a clicker.
 add_executable(catchchallenger-server-gui
-    ${CMAKE_CURRENT_SOURCE_DIR}/qt/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/qt/MainWindow.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/qt/MainWindow.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/qt/MainWindow.ui
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/MainWindow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/MainWindow.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/MainWindow.ui
+    # GUIServer (formerly NormalServer): the QTcpServer-fronting wrapper
+    # the admin GUI uses to actually listen for clients. Stays gui-private
+    # because solo clients reach the in-process server via QFakeServer
+    # (InternalServer + QtServer in catchchallenger_server_qt) instead.
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/GUIServer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/GUIServer.hpp
+    # Custom QPainter-driven widgets used by the admin dashboard.
+    # ChartWidget renders the player/CPU/network history line graphs;
+    # GaugeWidget renders the per-stat circular gauges. Both are pure
+    # QWidget + QPainter — no Qt::Charts dependency.
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/ChartWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/ChartWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/gaugewidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/gaugewidget.h
+    # GUI-side resources: window icon + the catchchallenger.png used
+    # behind the empty-state chat panel.
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui/all-server-resources.qrc
     # Schema for SQLite auto-init in QtDatabaseSQLite::syncConnect.
     ${CMAKE_CURRENT_SOURCE_DIR}/databases/resources-db-sqlite.qrc
 )
@@ -59,7 +76,16 @@ set_target_properties(catchchallenger-server-gui PROPERTIES
 )
 
 target_compile_definitions(catchchallenger-server-gui PRIVATE
+    # Compile in all three SQL backends so the operator can pick the
+    # active backend at runtime via the Database tab. CATCHCHALLENGER_CLASS_QT
+    # already enables the abstract DatabaseBase enums for all three; the
+    # DB-specific defines below pull in the matching prepared-statement
+    # bind-style + the schema-init paths. SQLite stays the default since
+    # QtDatabaseSQLite::syncConnect auto-creates the file from the
+    # embedded :/catchchallenger-sqlite.sql resource on first run.
     CATCHCHALLENGER_DB_SQLITE
+    CATCHCHALLENGER_DB_MYSQL
+    CATCHCHALLENGER_DB_POSTGRESQL
     CATCHCHALLENGER_CLASS_QT
     CATCHCHALLENGER_SOLO
     CATCHCHALLENGER_DYNAMIC_MAP_LIST
@@ -89,6 +115,7 @@ target_link_libraries(catchchallenger-server-gui PRIVATE
 target_include_directories(catchchallenger-server-gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/qt
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt/gui
     ${CC_REPO_ROOT}
 )
 

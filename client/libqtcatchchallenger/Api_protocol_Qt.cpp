@@ -108,6 +108,18 @@ void Api_protocol_Qt::stateChanged(QAbstractSocket::SocketState socketState)
         std::cout << "Api_protocol_Qt::stateChanged(" << std::to_string((int)socketState) << ") for " << socket->peerAddress().toString().toStdString() << ":" << std::to_string(socket->peerPort()) << std::endl;
     else
         std::cout << "Api_protocol_Qt::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
+    if(socketState==QAbstractSocket::ConnectedState)
+    {
+        // The SSL preamble byte that the server used to write at accept-
+        // time was removed; nothing arrives on readyRead until our own
+        // protocol header has been answered. So the *client* must take
+        // the first step the moment the socket reaches ConnectedState.
+        // readForFirstHeader is idempotent (haveFirstHeader gate), so
+        // duplicate calls from a per-frontend stateChanged handler
+        // (MainWindow / ConnexionManager) are harmless.
+        if(!haveFirstHeader)
+            readForFirstHeader();
+    }
     if(socketState==QAbstractSocket::UnconnectedState)
     {
         if(socket!=nullptr)

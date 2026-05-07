@@ -33,6 +33,43 @@ SSH_CONNECT_TIMEOUT = 5
 SSH_MAX_TIMEOUT = 1200
 LOCAL_MAX_TIMEOUT = 600
 
+
+# ── tool availability ──────────────────────────────────────────────────────
+# Wraps shutil.which() so testing*.py can fall back gracefully when an
+# optional debug helper (gdb / valgrind / strace …) is missing AND so
+# the operator sees, exactly once per process, which tool was missing.
+# Without the warning, a SEGV in a remote autosolo would just print
+# "rc=139" with no backtrace and the operator would assume the harness
+# didn't try — when in fact it tried and gdb wasn't installed.
+import shutil as _shutil
+import sys as _sys
+
+_warned_missing_tools = set()
+
+def find_tool(name, *, purpose="", quiet=False):
+    """Return the absolute path of `name` if on $PATH, else None.
+
+    On the FIRST miss for a given name, prints a one-line stderr warning
+    explaining what capability the harness loses without it. Subsequent
+    misses are silent (avoids spamming the per-test logs).
+
+    purpose: short string shown in the warning, e.g. "stack traces on
+             SEGV" or "valgrind diagnostic mode". Skipped when empty.
+    quiet:   suppress the one-shot warning (used by callers that want
+             to handle the missing-tool case themselves with a richer
+             message).
+    """
+    path = _shutil.which(name)
+    if path is None and not quiet and name not in _warned_missing_tools:
+        _warned_missing_tools.add(name)
+        msg = f"[WARN] {name!r} not found on $PATH"
+        if purpose:
+            msg += f" — {purpose} unavailable"
+        msg += "; install it for richer test diagnostics"
+        print(msg, file=_sys.stderr)
+    return path
+
+
 SSH_OPTS_LIST = [
     "-o", "StrictHostKeyChecking=no",
     "-o", "BatchMode=yes",

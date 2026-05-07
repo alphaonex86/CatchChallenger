@@ -1,4 +1,5 @@
 #include "MapVisualiserPlayer.hpp"
+#include "MapItem.hpp"
 
 #include "../../general/base/MoveOnTheMap.hpp"
 #include "../../general/base/CommonDatapack.hpp"
@@ -70,6 +71,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     }
     stepAlternance=false;
     animationTileset=Tiled::Tileset::create(QStringLiteral("animation"),16,16);
+    MapItem::validTilesets_.insert(animationTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
     nextCurrentObject=new Tiled::MapObject();
     grassCurrentObject=new Tiled::MapObject();
     grassCurrentObject->setName("grassCurrentObject");
@@ -82,6 +84,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
 
     lastTileset=defaultTileset;
     playerTileset=Tiled::Tileset::create(QStringLiteral("player"),16,24);
+    MapItem::validTilesets_.insert(playerTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
     playerTilesetCache[lastTileset]=playerTileset;
 
     lastAction.start();
@@ -909,6 +912,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                                 if(!image.isNull())
                                 {
                                     playerTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),16,24);
+                                    MapItem::validTilesets_.insert(playerTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
                                     playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
                                 }
                                 else
@@ -1651,6 +1655,7 @@ void MapVisualiserPlayer::resetAll()
 
     lastTileset=defaultTileset;
     playerTileset=Tiled::Tileset::create(QStringLiteral("player"),16,24);
+    MapItem::validTilesets_.insert(playerTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
     playerTilesetCache[lastTileset]=playerTileset;
     playerMapObject = new Tiled::MapObject();
 }
@@ -1961,6 +1966,7 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
         if(!image.isNull())
         {
             monsterTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),32,32);
+            MapItem::validTilesets_.insert(monsterTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
             if(!monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
                 abort();
             monsterTilesetCache[imagePath]=monsterTileset;

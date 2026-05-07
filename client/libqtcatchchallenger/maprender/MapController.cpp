@@ -1,4 +1,5 @@
 #include "ClientPlantWithTimer.hpp"
+#include "MapItem.hpp"
 #include "MapController.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
@@ -320,6 +321,7 @@ void MapController::loadBotOnTheMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, 
     botDisplay->mapObject=new Tiled::MapObject();
     botDisplay->mapObject->setName("botDisplay");
     botDisplay->tileset=Tiled::Tileset::create("bot",16,24);
+    MapItem::validTilesets_.insert(botDisplay->tileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
     std::string skinPath=datapackPath+DATAPACK_BASE_PATH_SKIN+"/"+skin+"/trainer.png";
     if(!QFile(QString::fromStdString(skinPath)).exists())
     {

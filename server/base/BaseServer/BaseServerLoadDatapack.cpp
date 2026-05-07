@@ -37,23 +37,27 @@ void BaseServer::preload_6_sync_the_datapack()
             "/";
     #ifdef CATCHCHALLENGER_HARDENED
     {
+        // cc_datapack_fail() is the bail-out method (virtual on
+        // BaseServer): default impl logs + abort()s, QtServer override
+        // emits error() so the GUI pops a QMessageBox::warning. The
+        // caller still has to `return` after — the method only signals.
         if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.size()==0)
         {
-            std::cerr << "CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty" << std::endl;
-            abort();
+            cc_datapack_fail("CommonSettingsServer::commonSettingsServer.mainDatapackCode.isEmpty");
+            return;
         }
         if(!regex_search(CommonSettingsServer::commonSettingsServer.mainDatapackCode,std::regex(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE)))
         {
-            std::cerr << "CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE "
-                      << CommonSettingsServer::commonSettingsServer.mainDatapackCode
-                      << " not contain "
-                      << CATCHCHALLENGER_CHECK_MAINDATAPACKCODE;
-            abort();
+            cc_datapack_fail("CommonSettingsServer::commonSettingsServer.mainDatapackCode not match CATCHCHALLENGER_CHECK_MAINDATAPACKCODE "
+                             + CommonSettingsServer::commonSettingsServer.mainDatapackCode
+                             + " not contain "
+                             + CATCHCHALLENGER_CHECK_MAINDATAPACKCODE);
+            return;
         }
         if(!FacilityLibGeneral::isDir(GlobalServerData::serverPrivateVariables.mainDatapackFolder))
         {
-            std::cerr << GlobalServerData::serverPrivateVariables.mainDatapackFolder << " don't exists" << std::endl;
-            abort();
+            cc_datapack_fail(GlobalServerData::serverPrivateVariables.mainDatapackFolder + " don't exists");
+            return;
         }
     }
     #endif

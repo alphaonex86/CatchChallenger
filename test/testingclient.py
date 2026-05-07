@@ -33,7 +33,7 @@ from remote_build import (start_remote_builds, collect_remote_results,
 import diagnostic
 import build_paths
 from cmd_helpers import (clamp_local, assert_port_or_fail,
-                         assert_port_or_fail_with_remotes)
+                         assert_port_or_fail_with_remotes, find_tool)
 
 
 def _host_port_from_args(args):
@@ -544,7 +544,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     wrapper = diagnostic.runtime_wrapper(DIAG)
     if wrapper:
         gdb_args = wrapper + [binary] + args
-    elif shutil.which("gdb") is not None:
+    elif find_tool("gdb", purpose="stack traces on client SEGV/abort") is not None:
         gdb_args = ["gdb", "-batch",
                     "-ex", "set breakpoint pending on",
                     "-ex", "handle SIGPIPE nostop noprint pass",
@@ -1179,9 +1179,23 @@ def main():
     # 5. REMOTE SERVER + LOCAL CLIENT
     # ═══════════════════════════════════════════════════════════════
     if failed_cases is not None:
-        log_info("resume mode: skipping remote server tests")
-        summary()
-        return
+        # Resume mode: only skip the remote phases when none of the
+        # outstanding failures live there. Otherwise we'd never re-run
+        # the very tests that put the script into resume mode.
+        idx = 0
+        any_remote_pending = False
+        while idx < len(failed_cases):
+            name = failed_cases[idx]
+            if (" -> remote " in name or
+                "solo " in name or
+                "remote " in name and "server start" in name):
+                any_remote_pending = True
+                break
+            idx += 1
+        if not any_remote_pending:
+            log_info("resume mode: skipping remote server tests")
+            summary()
+            return
 
     print(f"\n{C_CYAN}--- Remote server + local client ---{C_RESET}\n")
 

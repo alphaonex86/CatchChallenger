@@ -1,4 +1,5 @@
 #include "MapController.hpp"
+#include "MapItem.hpp"
 #include "../libqtcatchchallenger/Api_protocol_Qt.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
@@ -222,6 +223,7 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
                 otherPlayer.playerMapObject = new Tiled::MapObject();
                 otherPlayer.playerMapObject->setName("Other player");
                 otherPlayer.playerTileset=Tiled::Tileset::create(QString::fromStdString(skinFolderList.at(player.skinId)),16,24);
+                MapItem::validTilesets_.insert(otherPlayer.playerTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
                 if(!otherPlayer.playerTileset->loadFromImage(image,QString::fromStdString(datapackPath+
                      DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png")))
                     abort();
@@ -307,6 +309,7 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
                 otherPlayer.labelMapObject=new Tiled::MapObject();
                 otherPlayer.labelMapObject->setName("labelMapObject");
                 otherPlayer.labelTileset=Tiled::Tileset::create(QString(),pix.width(),pix.height());
+                MapItem::validTilesets_.insert(otherPlayer.labelTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
                 otherPlayer.labelTileset->addTile(pix);
                 Tiled::Cell cell=otherPlayer.labelMapObject->cell();
                 cell.setTile(otherPlayer.labelTileset->tileAt(0));

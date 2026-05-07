@@ -4,6 +4,7 @@
 #include <objectgroup.h>
 
 #include <tile.h>
+#include <iostream>
 std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
 std::unordered_map<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;
 
