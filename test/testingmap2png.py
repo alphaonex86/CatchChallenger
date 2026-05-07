@@ -59,48 +59,33 @@ from test_config import FAILED_JSON
 results = []
 _last_log_time = [time.monotonic()]
 
+import failed_cases as _fc
+
+
 def load_failed_cases():
-    """Load failed cases for this script from failed.json."""
-    if not os.path.isfile(FAILED_JSON):
+    a = _fc.load_names(SCRIPT_NAME)
+    b = _fc.load_names(SCRIPT_RUN_NAME)
+    if a is None and b is None:
         return None
-    try:
-        with open(FAILED_JSON, "r") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return None
-    if SCRIPT_NAME not in data and SCRIPT_RUN_NAME not in data:
-        return None
-    return data.get(SCRIPT_NAME, []) + data.get(SCRIPT_RUN_NAME, [])
+    return (a or []) + (b or [])
 
 def should_run(test_name, failed_cases):
-    """Check if test should run. None=run all, []=skip all, [..]=only listed."""
     if failed_cases is None:
         return True
     return test_name in failed_cases
 
 def save_failed_cases():
-    """Update failed.json with current failures for this script."""
-    data = {}
-    if os.path.isfile(FAILED_JSON):
-        try:
-            with open(FAILED_JSON, "r") as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, IOError):
-            data = {}
     failed_compile = []
     failed_run = []
-    for name, ok, detail, elapsed in results:
+    for name, ok, detail, _elapsed in results:
         if not ok:
+            entry = (name, _fc.make_detail(detail))
             if "compile" in name:
-                failed_compile.append(name)
+                failed_compile.append(entry)
             else:
-                failed_run.append(name)
-    if failed_compile:
-        data[SCRIPT_NAME] = failed_compile
-    if failed_run:
-        data[SCRIPT_RUN_NAME] = failed_run
-    with open(FAILED_JSON, "w") as f:
-        json.dump(data, f, indent=2)
+                failed_run.append(entry)
+    _fc.save(SCRIPT_NAME, failed_compile)
+    _fc.save(SCRIPT_RUN_NAME, failed_run)
 
 def log_info(msg):
     print(f"{C_CYAN}[INFO]{C_RESET} {msg}")

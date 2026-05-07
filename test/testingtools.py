@@ -56,51 +56,27 @@ SCRIPT_NAME = os.path.basename(__file__)
 from test_config import FAILED_JSON
 
 
+import failed_cases as _fc
+
+
 def load_failed_cases():
-    """Load failed cases for this script from failed.json.
-    Returns None (run everything), [] (skip all), or [names] (resume only those)."""
-    if not os.path.isfile(FAILED_JSON):
-        return None
-    try:
-        with open(FAILED_JSON, "r") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return None
-    if SCRIPT_NAME not in data:
-        return None
-    return data[SCRIPT_NAME]
+    """Load failed cases for this script.  See failed_cases.load_names()."""
+    return _fc.load_names(SCRIPT_NAME)
 
 
 def should_run(test_name, failed_cases):
-    """Check if test should run. None=run all, []=skip all, [..]=only listed."""
     if failed_cases is None:
         return True
-    idx = 0
-    while idx < len(failed_cases):
-        if failed_cases[idx] == test_name:
-            return True
-        idx += 1
-    return False
+    return test_name in failed_cases
 
 
 def save_failed_cases():
-    """Update failed.json with current failures for this script."""
-    data = {}
-    if os.path.isfile(FAILED_JSON):
-        try:
-            with open(FAILED_JSON, "r") as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, IOError):
-            data = {}
+    """Persist failures (with detail strings) under SCRIPT_NAME."""
     failed = []
-    idx = 0
-    while idx < len(results):
-        if not results[idx][1]:
-            failed.append(results[idx][0])
-        idx += 1
-    data[SCRIPT_NAME] = failed
-    with open(FAILED_JSON, "w") as f:
-        json.dump(data, f, indent=2)
+    for name, ok, detail, _elapsed in results:
+        if not ok:
+            failed.append((name, _fc.make_detail(detail)))
+    _fc.save(SCRIPT_NAME, failed)
 
 
 def log_info(msg):

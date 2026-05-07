@@ -111,19 +111,16 @@ def log_fail(name, detail=""):
         li += 1
 
 
+import failed_cases as _fc
+
+
 def load_failed_cases():
-    """Return None to run every case, else the list of cases to re-run.
-    Mirrors the pattern in every other testing*.py."""
-    if not os.path.isfile(FAILED_JSON):
+    """Merge the compile-key + run-key failures into one list of names."""
+    a = _fc.load_names(SCRIPT_NAME)
+    b = _fc.load_names(SCRIPT_RUN_NAME)
+    if a is None and b is None:
         return None
-    try:
-        with open(FAILED_JSON, "r") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return None
-    if SCRIPT_NAME not in data and SCRIPT_RUN_NAME not in data:
-        return None
-    return data.get(SCRIPT_NAME, []) + data.get(SCRIPT_RUN_NAME, [])
+    return (a or []) + (b or [])
 
 
 def should_run(test_name, failed_cases):
@@ -133,34 +130,17 @@ def should_run(test_name, failed_cases):
 
 
 def save_failed_cases():
-    data = {}
-    if os.path.isfile(FAILED_JSON):
-        try:
-            with open(FAILED_JSON, "r") as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, IOError):
-            data = {}
     failed_compile = []
     failed_run = []
-    for name, ok, _detail, _elapsed in results:
+    for name, ok, detail, _elapsed in results:
         if not ok:
+            entry = (name, _fc.make_detail(detail))
             if "compile" in name:
-                failed_compile.append(name)
+                failed_compile.append(entry)
             else:
-                failed_run.append(name)
-    if failed_compile:
-        data[SCRIPT_NAME] = failed_compile
-    elif SCRIPT_NAME in data:
-        del data[SCRIPT_NAME]
-    if failed_run:
-        data[SCRIPT_RUN_NAME] = failed_run
-    elif SCRIPT_RUN_NAME in data:
-        del data[SCRIPT_RUN_NAME]
-    if data:
-        with open(FAILED_JSON, "w") as f:
-            json.dump(data, f, indent=2)
-    elif os.path.isfile(FAILED_JSON):
-        os.remove(FAILED_JSON)
+                failed_run.append(entry)
+    _fc.save(SCRIPT_NAME, failed_compile)
+    _fc.save(SCRIPT_RUN_NAME, failed_run)
 
 
 def run_cmd(args, cwd, timeout, env=None):

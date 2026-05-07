@@ -720,15 +720,14 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
                        timeout=configure_timeout_for(label),
                        control_path=control_path)
     if rc != 0:
-        detail = f"configure rc={rc}"
-        lines = out.splitlines()
-        start = len(lines) - 30
-        if start < 0:
-            start = 0
-        idx = start
-        while idx < len(lines):
-            detail += f"\n  | {lines[idx]}"
-            idx += 1
+        # Detail is the human reproducer: ssh target + the exact remote
+        # shell command + last 30 output lines.  save_failed_cases()
+        # picks this up verbatim into failed.json.
+        lines = out.splitlines()[-30:]
+        detail = (f"configure rc={rc}\n"
+                  f"host: {host}:{port}\n"
+                  f"cmd:  ssh -p {port} {host} {configure_cmd!r}\n"
+                  + "\n".join(f"  | {ln}" for ln in lines))
         return (name, False, detail)
     build_cmd = (
         f"{tmp_prefix}{nice_prefix}"
@@ -741,13 +740,12 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
         # Self-contained per-binary CMakeLists.txt: the produced binary
         # lands at <build>/<target> directly. No copy needed.
         return (name, True, "")
-    detail = f"rc={rc}"
-    lines = out.splitlines()
-    start = len(lines) - 30
-    if start < 0:
-        start = 0
-    snippet = "\n".join(f"  | {lines[i]}" for i in range(start, len(lines)))
-    return (name, False, detail + "\n" + snippet)
+    lines = out.splitlines()[-30:]
+    detail = (f"build rc={rc}\n"
+              f"host: {host}:{port}\n"
+              f"cmd:  ssh -p {port} {host} {build_cmd!r}\n"
+              + "\n".join(f"  | {ln}" for ln in lines))
+    return (name, False, detail)
 
 
 def _run_server(label, host, port, use_mold, extra_defines, has_gui,
