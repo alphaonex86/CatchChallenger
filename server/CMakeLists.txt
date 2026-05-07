@@ -18,19 +18,15 @@
 cmake_minimum_required(VERSION 3.20)
 project(catchchallenger_server_gui LANGUAGES C CXX)
 
-# Qt Creator's clangd code model (and any out-of-tree tooling) needs
-# compile_commands.json in the build dir.  Switching this on as the
-# project default means "open server/CMakeLists.txt in Qt Creator and
-# code-completion just works" — no per-kit checkbox to remember.
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Default to ${PROJECT_SOURCE_DIR} as the binary's working directory in
-# Qt Creator's Run config: the binary aborts in main.cpp when
-# <cwd>/datapack/informations.xml is missing.  Persisted as a CMake
-# property so QtC picks it up; an explicit WORKING_DIRECTORY tag on the
-# target also covers cmake-Generated CodeBlocks/Ninja Multi-Config.
+# Default to ${CMAKE_BINARY_DIR} as the binary's location so Qt
+# Creator's Run config can pick a Working Directory next to the produced
+# binary — the server aborts in main.cpp when <cwd>/datapack/
+# informations.xml is missing.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+# Build-type defaults + CMAKE_EXPORT_COMPILE_COMMANDS live in
+# CCCommon.cmake so every binary's CMakeLists.txt inherits the same
+# Qt-Creator-friendly behaviour through one include().
 include(${CMAKE_CURRENT_LIST_DIR}/../general/CCCommon.cmake)
 
 # Qt6::Widgets + Qt6::Gui for the MainWindow admin GUI; Sql for the
