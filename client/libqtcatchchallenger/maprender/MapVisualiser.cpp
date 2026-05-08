@@ -82,7 +82,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
 
     tagTilesetIndex=0;
     markPathFinding=Tiled::Tileset::create(QStringLiteral("mark path finding"),16,24);
-    MapItem::validTilesets_.insert(markPathFinding.data());  // see MapObjectItem.cpp cellTilesetIsValid
+    MapItem::validTilesets_.emplace(markPathFinding.data(), markPathFinding);  // see MapObjectItem.cpp cellTilesetIsValid
     {
         QImage image(QStringLiteral(":/CC/images/map/marker.png"));
         if(image.isNull())

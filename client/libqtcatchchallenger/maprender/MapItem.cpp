@@ -11,7 +11,7 @@
 #include <iostream>
 #include <tileset.h>
 
-std::unordered_set<Tiled::Tileset *> MapItem::validTilesets_;
+std::unordered_map<Tiled::Tileset *,Tiled::SharedTileset> MapItem::validTilesets_;
 
 MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     : QGraphicsObject(parent)
@@ -36,11 +36,15 @@ void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map,
         int tsIndex=0;
         while(tsIndex<mapTilesets.size())
         {
-            Tiled::Tileset *ts=mapTilesets.at(tsIndex).data();
+            const Tiled::SharedTileset &shared=mapTilesets.at(tsIndex);
+            Tiled::Tileset *ts=shared.data();
             if(ts!=NULL)
             {
                 perMap.insert(ts);
-                validTilesets_.insert(ts);
+                // Store the SharedTileset alongside the raw key so the
+                // Tileset stays alive for the lifetime of this entry —
+                // see MapItem.hpp for the full rationale.
+                validTilesets_.emplace(ts, shared);
             }
             tsIndex++;
         }

@@ -223,7 +223,7 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
                 otherPlayer.playerMapObject = new Tiled::MapObject();
                 otherPlayer.playerMapObject->setName("Other player");
                 otherPlayer.playerTileset=Tiled::Tileset::create(QString::fromStdString(skinFolderList.at(player.skinId)),16,24);
-                MapItem::validTilesets_.insert(otherPlayer.playerTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
+                MapItem::validTilesets_.emplace(otherPlayer.playerTileset.data(), otherPlayer.playerTileset);  // see MapObjectItem.cpp cellTilesetIsValid
                 if(!otherPlayer.playerTileset->loadFromImage(image,QString::fromStdString(datapackPath+
                      DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png")))
                     abort();
@@ -309,7 +309,7 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
                 otherPlayer.labelMapObject=new Tiled::MapObject();
                 otherPlayer.labelMapObject->setName("labelMapObject");
                 otherPlayer.labelTileset=Tiled::Tileset::create(QString(),pix.width(),pix.height());
-                MapItem::validTilesets_.insert(otherPlayer.labelTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
+                MapItem::validTilesets_.emplace(otherPlayer.labelTileset.data(), otherPlayer.labelTileset);  // see MapObjectItem.cpp cellTilesetIsValid
                 otherPlayer.labelTileset->addTile(pix);
                 Tiled::Cell cell=otherPlayer.labelMapObject->cell();
                 cell.setTile(otherPlayer.labelTileset->tileAt(0));
@@ -847,6 +847,27 @@ bool MapControllerMP::remove_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id
         delete otherPlayer.labelMapObject;
     /*if(otherPlayer.labelTileset!=NULL)
         delete otherPlayer.labelTileset;*/
+
+    // Erase this OtherPlayer's tilesets from MapItem::validTilesets_
+    // BEFORE otherPlayerList.erase(id) drops the last SharedTileset
+    // refs and frees the underlying Tileset objects.  Without this
+    // step, validTilesets_ still contains the (now-dangling) raw
+    // Tileset* pointers, and the next paint that hits a stale
+    // MapObjectItem (e.g. a queued paint event for an item that's
+    // about to be removed from the scene) passes our cellTilesetIsValid
+    // check, then drmoves into Tiled::Cell::tile() which dereferences
+    // the freed Tileset's mTilesById red-black tree — SIGSEGV inside
+    // std::less<int>::operator() reading garbage memory.  Reproduced
+    // reliably as testingmulti's "[cpu] PlayerB: sends direction
+    // changes — direction toggle not found" ([cpu] minimize-mode
+    // turns over OtherPlayer entries faster than [network] mode, so
+    // this race is much easier to hit there).
+    if(otherPlayer.playerTileset)
+        MapItem::validTilesets_.erase(otherPlayer.playerTileset.data());
+    if(otherPlayer.labelTileset)
+        MapItem::validTilesets_.erase(otherPlayer.labelTileset.data());
+    if(otherPlayer.monsterTileset)
+        MapItem::validTilesets_.erase(otherPlayer.monsterTileset.data());
 
     otherPlayerList.erase(id);
     return true;

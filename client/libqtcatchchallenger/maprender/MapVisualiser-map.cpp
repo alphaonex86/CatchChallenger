@@ -50,7 +50,20 @@ void MapVisualiser::destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
         return;
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
-    //remove from the list
+    // Erase each bot's SharedTileset raw ptr from validTilesets_ BEFORE
+    // `delete map` below — that delete drops the last ref to each
+    // BotDisplay::tileset, freeing the underlying Tileset.  Without
+    // this step, validTilesets_ keeps stale pointers; the next paint
+    // hitting any orphaned MapObjectItem (queued paint events on items
+    // that were just removed) passes cellTilesetIsValid then crashes
+    // inside Tileset::findTile reading the freed mTilesById tree.
+    // Reproduced reliably in testingmulti's [cpu] mode where map
+    // visibility turnover is fast enough to expose the race.
+    for(const auto &bd : map->botsDisplay)
+    {
+        if(bd.second.tileset)
+            MapItem::validTilesets_.erase(bd.second.tileset.data());
+    }
     for( const std::pair<const std::pair<COORD_TYPE,COORD_TYPE>,MapDoor*>/*& crash with ref*/ n : map->doors ) {
         n.second->deleteLater();
     }
