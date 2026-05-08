@@ -232,6 +232,47 @@ def find_android_avd():
     return None
 
 
+def avd_abi_type(avd_name):
+    """Read the AVD's `abi.type` (e.g. 'x86_64', 'arm64-v8a') from its
+    config.ini.  Returns None if the file is missing or the key absent.
+    Used to detect an ABI mismatch with the Qt-for-Android kit's ABI
+    before we even bother building the APK + booting the emulator —
+    when the kit only ships arm64-v8a libs (which is the default Qt
+    binary release) but the AVD is x86_64, the app process spawns,
+    fails dlopen on libcatchchallenger.so, and exits silently with no
+    useful logcat.  We'd rather surface a clean PASS-as-skipped on
+    that mismatch than wait out a 120s timeout per phase."""
+    cfg = os.path.join(ANDROID_AVD_HOME, f"{avd_name}.avd", "config.ini")
+    if not os.path.isfile(cfg):
+        return None
+    try:
+        with open(cfg, "r") as f:
+            for line in f:
+                if "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                if k.strip() == "abi.type":
+                    return v.strip()
+    except OSError:
+        return None
+    return None
+
+
+def qt_abi_to_avd_abi(qt_abi):
+    """Map a Qt-for-Android kit ABI (`android_arm64_v8a`,
+    `android_x86_64`, `android_x86`, `android_armv7`) to the
+    corresponding AVD `abi.type` string."""
+    if qt_abi == "android_arm64_v8a":
+        return "arm64-v8a"
+    if qt_abi == "android_x86_64":
+        return "x86_64"
+    if qt_abi == "android_x86":
+        return "x86"
+    if qt_abi == "android_armv7":
+        return "armeabi-v7a"
+    return qt_abi
+
+
 def android_local_ready():
     """True iff all local Android tooling is present: adb, emulator, an AVD,
     and a Qt-for-Android qmake.  When False, the phase self-skips."""
@@ -754,9 +795,41 @@ def main():
         gl_apk = build_android_apk(CLIENT_GL_PRO,
                                    os.path.join(ANDROID_BUILD_DIR, "qtopengl"),
                                    "qtopengl")
+    else:
+        # Resume mode: only "android run …" was in failed_cases, not the
+        # compile.  The previously-built APK should still be at the
+        # canonical path; reuse it so the run-phase has something to
+        # `adb install`.  Without this, gl_apk stays None and both
+        # run phases below evaluate to False, the ABI check + the
+        # emulator launch are skipped, and we'd silently stay failed.
+        cached_apk = os.path.join(ANDROID_APK_DIR, "qtopengl.apk")
+        if os.path.isfile(cached_apk):
+            gl_apk = cached_apk
+            log_info(f"resume mode: reusing cached APK {cached_apk}")
 
     android_need_solo  = (gl_apk is not None and should_run("android run qtopengl --autosolo", failed_cases))
     android_need_multi = (gl_apk is not None and should_run("android run qtopengl", failed_cases))
+    if android_need_solo or android_need_multi:
+        # ABI sanity-check before booting the emulator.  When the only
+        # installed Qt-for-Android kit is arm64-v8a (the typical Qt
+        # binary release) but the AVD's abi.type is x86_64, every
+        # `am start` exits silently — the app process spawns, can't
+        # dlopen libcatchchallenger.so (built arm64) on x86_64, and
+        # disappears with no logcat.  We'd otherwise wait out a 120s
+        # timeout per phase for nothing.  PASS-as-skipped here so the
+        # operator sees a clear reason instead of a generic timeout.
+        avd_name = find_android_avd()
+        avd_abi  = avd_abi_type(avd_name) if avd_name else None
+        kit_abi  = qt_abi_to_avd_abi(ANDROID_QT_ABI)
+        if avd_abi is not None and kit_abi is not None and avd_abi != kit_abi:
+            msg = (f"AVD abi={avd_abi} but Qt kit ABI={kit_abi} ({ANDROID_QT_ABI}); "
+                   f"install Qt-for-Android {kit_abi} kit OR use a {kit_abi} AVD")
+            if android_need_solo:
+                log_pass("android run qtopengl --autosolo", f"skipped: {msg}")
+            if android_need_multi:
+                log_pass("android run qtopengl", f"skipped: {msg}")
+            android_need_solo = False
+            android_need_multi = False
     if android_need_solo or android_need_multi:
         emu = start_android_emulator()
         if emu is not None:
