@@ -3,6 +3,7 @@
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include <cstring>
+#include "../../general/base/UnalignedLoad.hpp"
 
 using namespace CatchChallenger;
 
@@ -49,7 +50,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             #endif
-            const uint16_t &recipe_id=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &recipe_id=CatchChallenger::loadLe16(data);
             useRecipe(queryNumber,recipe_id);
             return true;
         }
@@ -64,7 +65,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             #endif
-            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &objectId=CatchChallenger::loadLe16(data);
             useObject(queryNumber,objectId);
             return true;
         }
@@ -79,9 +80,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Buy object
         case 0x88:
         {
-            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t))));
-            const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)+sizeof(uint32_t))));
+            const uint16_t &objectId=CatchChallenger::loadLe16(data);
+            const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t));
+            const uint32_t &price=CatchChallenger::loadLe32(data+sizeof(uint16_t)+sizeof(uint32_t));
             buyObject(queryNumber,objectId,quantity,price);
             return true;
         }
@@ -89,9 +90,9 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Sell object
         case 0x89:
         {
-            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t))));
-            const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)+sizeof(uint32_t))));
+            const uint16_t &objectId=CatchChallenger::loadLe16(data);
+            const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t));
+            const uint32_t &price=CatchChallenger::loadLe32(data+sizeof(uint16_t)+sizeof(uint32_t));
             sellObject(queryNumber,objectId,quantity,price);
             return true;
         }
@@ -106,7 +107,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             #endif
-            const uint16_t &factoryId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &factoryId=CatchChallenger::loadLe16(data);
             //getFactoryList(queryNumber,factoryId);
             return true;
         }
@@ -121,10 +122,10 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             #endif
-            const uint16_t &factoryId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint16_t))));
-            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2)));
-            const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2+sizeof(uint32_t))));
+            const uint16_t &factoryId=CatchChallenger::loadLe16(data);
+            const uint16_t &objectId=CatchChallenger::loadLe16(data+sizeof(uint16_t));
+            const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t)*2);
+            const uint32_t &price=CatchChallenger::loadLe32(data+sizeof(uint16_t)*2+sizeof(uint32_t));
             //buyFactoryProduct(queryNumber,factoryId,objectId,quantity,price);
             return true;
         }
@@ -139,10 +140,10 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             #endif
-            const uint16_t &factoryId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint16_t))));
-            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2)));
-            const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2+sizeof(uint32_t))));
+            const uint16_t &factoryId=CatchChallenger::loadLe16(data);
+            const uint16_t &objectId=CatchChallenger::loadLe16(data+sizeof(uint16_t));
+            const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t)*2);
+            const uint32_t &price=CatchChallenger::loadLe32(data+sizeof(uint16_t)*2+sizeof(uint32_t));
             //sellFactoryResource(queryNumber,factoryId,objectId,quantity,price);
             return true;
         }
@@ -302,7 +303,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
                 return false;
             }
-            const uint32_t &number_of_file=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            const uint32_t &number_of_file=CatchChallenger::loadLe32(data+pos);
             pos+=sizeof(uint32_t);
             std::vector<std::string> files;
             files.reserve(number_of_file);
@@ -398,7 +399,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                                           );
                     return false;
                 }
-                const uint32_t &partialHash=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                const uint32_t &partialHash=CatchChallenger::loadLe32(data+pos);
                 pos+=sizeof(uint32_t);
                 partialHashList.push_back(partialHash);
                 index++;
@@ -522,7 +523,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             #endif
             //skip charactersGroupIndex with data+1
-            const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+1)));
+            const uint32_t &characterId=CatchChallenger::loadLe32(data+1);
             removeCharacterLater(queryNumber,characterId);
         }
         break;
@@ -547,7 +548,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             #endif
             //skip charactersGroupIndex with data+4+1
-            const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+1+4)));
+            const uint32_t &characterId=CatchChallenger::loadLe32(data+1+4);
             selectCharacter(queryNumber,characterId);
             return true;
         }

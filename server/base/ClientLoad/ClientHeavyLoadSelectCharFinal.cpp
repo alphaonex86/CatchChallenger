@@ -9,6 +9,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CompressionProtocol.hpp"
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"
+#include "../../../general/base/UnalignedLoad.hpp"
 
 using namespace CatchChallenger;
 
@@ -204,7 +205,7 @@ void Client::characterIsRightSendData()
             posOutput+=1;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->second.level;
             posOutput+=1;
-            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(i->second.point);
+            CatchChallenger::storeLe32(ProtocolParsingBase::tempBigBufferForOutput+posOutput, static_cast<uint32_t>(i->second.point));
             posOutput+=4;
             ++i;
             index++;
@@ -238,14 +239,14 @@ void Client::characterIsRightSendData()
             }
             #endif
             const int &binarySize=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
+            CatchChallenger::storeLe16(buffer+posOutputTemp, static_cast<uint16_t>(binarySize));
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.recipes,binarySize);
             posOutputTemp+=binarySize;
         }
         else
         {
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
+            CatchChallenger::storeLe16(buffer+posOutputTemp, static_cast<uint16_t>(0));
             posOutputTemp+=2;
         }
 
@@ -260,14 +261,14 @@ void Client::characterIsRightSendData()
             }
             #endif
             const int &binarySize=CommonDatapack::commonDatapack.get_monstersMaxId()/8+1;
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
+            CatchChallenger::storeLe16(buffer+posOutputTemp, static_cast<uint16_t>(binarySize));
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_monster,binarySize);
             posOutputTemp+=binarySize;
         }
         else
         {
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
+            CatchChallenger::storeLe16(buffer+posOutputTemp, static_cast<uint16_t>(0));
             posOutputTemp+=2;
         }
 
@@ -282,14 +283,14 @@ void Client::characterIsRightSendData()
             }
             #endif
             const int &binarySize=CommonDatapack::commonDatapack.get_itemMaxId()/8+1;
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
+            CatchChallenger::storeLe16(buffer+posOutputTemp, static_cast<uint16_t>(binarySize));
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_item,binarySize);
             posOutputTemp+=binarySize;
         }
         else
         {
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
+            CatchChallenger::storeLe16(buffer+posOutputTemp, static_cast<uint16_t>(0));
             posOutputTemp+=2;
         }
 
@@ -299,7 +300,7 @@ void Client::characterIsRightSendData()
 
         if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
         {
-            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(posOutputTemp);
+            CatchChallenger::storeLe32(ProtocolParsingBase::tempBigBufferForOutput+posOutput, static_cast<uint32_t>(posOutputTemp));
             posOutput+=4;
             posOutput+=posOutputTemp;
         }
@@ -313,7 +314,7 @@ void Client::characterIsRightSendData()
                 return;
             }
             //copy
-            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(compressedSize);
+            CatchChallenger::storeLe32(ProtocolParsingBase::tempBigBufferForOutput+posOutput, static_cast<uint32_t>(compressedSize));
             posOutput+=4;
             posOutput+=compressedSize;
         }

@@ -17,6 +17,7 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#include "../../general/base/UnalignedLoad.hpp"
 
 //need host + port here to have datapack base
 
@@ -2106,7 +2107,7 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+        CatchChallenger::storeLe32(ProtocolParsingBase::tempBigBufferForOutput+1+1, size);//set the dynamic size
 
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
         posOutput+=size;
@@ -2152,7 +2153,7 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=packetCode;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);//set the dynamic size
+        CatchChallenger::storeLe32(ProtocolParsingBase::tempBigBufferForOutput+1, size);//set the dynamic size
 
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,data,size);
         posOutput+=size;
@@ -2204,7 +2205,7 @@ bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode, const uint8_t 
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
+        CatchChallenger::storeLe32(ProtocolParsingBase::tempBigBufferForOutput+1+1, size);//set the dynamic size
 
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
         posOutput+=size;
@@ -2268,7 +2269,7 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
         parseError("Protocol wrong or corrupted",std::string("wrong size to get the monster id, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return -1;
     }
-    monster.monster=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+    monster.monster=CatchChallenger::loadLe16(data+pos);
     pos+=sizeof(uint16_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
@@ -2282,21 +2283,21 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
         parseError("Protocol wrong or corrupted",std::string("wrong size to get the monster remaining_xp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return -1;
     }
-    monster.remaining_xp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    monster.remaining_xp=CatchChallenger::loadLe32(data+pos);
     pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Protocol wrong or corrupted",std::string("wrong size to get the monster hp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return -1;
     }
-    monster.hp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    monster.hp=CatchChallenger::loadLe32(data+pos);
     pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Protocol wrong or corrupted",std::string("wrong size to get the monster captured_with, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return -1;
     }
-    monster.catched_with=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+    monster.catched_with=CatchChallenger::loadLe16(data+pos);
     pos+=sizeof(uint16_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
@@ -2322,7 +2323,7 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
         parseError("Protocol wrong or corrupted",std::string("wrong size to get the monster egg_step, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return -1;
     }
-    monster.egg_step=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    monster.egg_step=CatchChallenger::loadLe32(data+pos);
     pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
@@ -2375,7 +2376,7 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
         parseError("Protocol wrong or corrupted",std::string("wrong size to get the monster size of list of the skill monsters, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return -1;
     }
-    uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+    uint16_t sub_size16=CatchChallenger::loadLe16(data+pos);
     pos+=sizeof(uint16_t);
     sub_index=0;
     while(sub_index<sub_size16)
@@ -2385,7 +2386,7 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
             parseError("Protocol wrong or corrupted",std::string("wrong size to get the monster skill, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return -1;
         }
-        skill.skill=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+        skill.skill=CatchChallenger::loadLe16(data+pos);
         pos+=sizeof(uint16_t);
         if((size-pos)<(int)sizeof(uint8_t))
         {

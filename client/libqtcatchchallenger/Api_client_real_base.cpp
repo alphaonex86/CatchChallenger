@@ -20,6 +20,7 @@ using namespace CatchChallenger;
 #include "../libcatchchallenger/TarDecode.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include <xxhash.h>
+#include "../../general/base/UnalignedLoad.hpp"
 
 //need host + port here to have datapack base
 
@@ -586,7 +587,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
                     correctContent++;
                     const std::string &fileString=line.substr(0,found);
                     sizeToGet+=stringtouint8(line.substr(found+1,(line.size()-1-found)));
-                    const uint32_t &partialHashString=*reinterpret_cast<uint32_t *>(partialHashListRaw.data()+index*4);
+                    const uint32_t &partialHashString=CatchChallenger::loadLe32(partialHashListRaw.data()+index*4);
                     //const std::string &sizeString=line.substr(found+1,line.size()-found-1);
                     if(regex_search(fileString,datapack_rightFileName))
                     {

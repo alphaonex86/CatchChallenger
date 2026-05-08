@@ -5,6 +5,7 @@
 #include "../../general/base/cpp11addition.hpp"
 #include <vector>
 #include <cstring>
+#include "../../general/base/UnalignedLoad.hpp"
 
 using namespace CatchChallenger;
 
@@ -378,7 +379,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             const uint8_t &monsterPosition=data[0x00];
-            const uint16_t &skill=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint8_t))));
+            const uint16_t &skill=CatchChallenger::loadLe16(data+sizeof(uint8_t));
             return learnSkillByMonsterPosition(monsterPosition,skill);
         }
         break;
@@ -458,7 +459,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for use object on monster");
                 return false;
             }
-            const uint16_t &item=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &item=CatchChallenger::loadLe16(data);
             const uint8_t &monsterPosition=data[sizeof(uint16_t)];
             return useObjectOnMonsterByPosition(item,monsterPosition);
         }
@@ -471,7 +472,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("Wrong size in move packet");
                 return false;
             }
-            useSkill(le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data))));
+            useSkill(CatchChallenger::loadLe16(data));
             return true;
         }
         break;
@@ -487,8 +488,8 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for destroy item id");
                 return false;
             }
-            const uint16_t &itemId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t))));
+            const uint16_t &itemId=CatchChallenger::loadLe16(data);
+            const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t));
             destroyObject(itemId,quantity);
             return true;
         }
@@ -529,14 +530,14 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         errorOutput("wrong remaining size for trade add item id");
                         return false;
                     }
-                    const uint16_t &item=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                    const uint16_t &item=CatchChallenger::loadLe16(data+pos);
                     pos+=sizeof(uint16_t);
                     if((size-pos)<((int)sizeof(uint32_t)))
                     {
                         errorOutput("wrong remaining size for trade add item quantity");
                         return false;
                     }
-                    const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    const uint32_t &quantity=CatchChallenger::loadLe32(data+pos);
                     pos+=sizeof(uint32_t);
                     tradeAddTradeObject(item,quantity);
                 }
@@ -613,7 +614,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             #endif
-            const uint16_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &questId=CatchChallenger::loadLe16(data);
             newQuestAction(QuestAction_Start,questId);
             return true;
         }
@@ -628,7 +629,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             #endif
-            const uint16_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &questId=CatchChallenger::loadLe16(data);
             newQuestAction(QuestAction_Finish,questId);
             return true;
         }
@@ -643,7 +644,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             #endif
-            const uint16_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &questId=CatchChallenger::loadLe16(data);
             newQuestAction(QuestAction_Cancel,questId);
             return true;
         }
@@ -658,7 +659,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             #endif
-            const uint16_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &questId=CatchChallenger::loadLe16(data);
             newQuestAction(QuestAction_NextStep,questId);
             return true;
         }
