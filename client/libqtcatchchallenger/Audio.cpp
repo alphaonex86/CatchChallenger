@@ -7,8 +7,21 @@
 
 Audio *Audio::audio=nullptr;
 
-Audio::Audio()
+Audio::Audio() :
+    volume(0),
+    ambiance_player(nullptr),
+    ambiance_buffer(nullptr)
 {
+    // Init pointers + volume in the ctor init list (CLAUDE.md "always
+    // init in constructor initializer list in .cpp", no in-class init):
+    // the body below has an early-return for the
+    // !info.isFormatSupported() path, so anything assigned only there
+    // (the prior ambiance_player=nullptr at the bottom) would be left
+    // as garbage when the early return fires — exactly the bug seen on
+    // x86-lxc i386 (offscreen Qt platform, no audio backend) where
+    // ~Audio()::stopCurrentAmbiance() then dereferenced a wild pointer
+    // and SIGSEGV'd inside QAudioSink::stop().  Initing in the list
+    // guarantees the members are valid even if the ctor body bails.
     //init audio here
     m_format.setSampleRate(48000);
     m_format.setChannelCount(2);
@@ -25,8 +38,6 @@ Audio::Audio()
         volume=0;
     else
         volume=100;
-    ambiance_player=nullptr;
-    ambiance_buffer=nullptr;
 }
 
 QAudioFormat Audio::format() const
