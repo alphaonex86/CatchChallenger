@@ -37,6 +37,22 @@ public:
 public:
     //std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot,pairhash> bots;-> to detect colision then in logical map just mark as colision to have same data into server and client
     std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::BotDisplay,pairhash> botsDisplay;
+    // Pending-bot table populated by MapVisualiserOrder when it strips
+    // type="bot" MapObjects from the visual layer.  Values carry the
+    // skin / lookAt / id properties read off the MapObject before the
+    // wrapper is destroyed.  MapVisualiser::asyncDetectBorder iterates
+    // this AFTER the map is added to the scene, calling
+    // loadBotOnTheMap() per entry to attach a real sprite (the
+    // earlier "directly populate botsDisplay" approach didn't work
+    // because loadBotOnTheMap early-returns when botsDisplay already
+    // contains the (x,y) key — so we'd block our own re-attach).
+    struct PendingBot
+    {
+        std::string skin;
+        std::string lookAt;
+        CATCHCHALLENGER_TYPE_BOTID botId;
+    };
+    std::unordered_map<std::pair<uint8_t,uint8_t>,PendingBot,pairhash> pendingBots;
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::pair<uint8_t,uint8_t>,pairhash> botsFightTriggerExtra;//trigger x,y -> bot display x,y
     std::vector<std::string> teleport_condition_texts;
 
