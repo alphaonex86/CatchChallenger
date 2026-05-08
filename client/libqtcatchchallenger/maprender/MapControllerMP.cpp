@@ -184,8 +184,16 @@ void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const
         QImage image(QString::fromStdString(imagePath));
         if(!image.isNull())
         {
+            // Erase the OLD tileset's raw ptr from validTilesets_ before
+            // the SharedTileset assignment below drops its last ref and
+            // frees the underlying Tileset.  Without this, validTilesets_
+            // accumulates stale pointers that cellTilesetIsValid() will
+            // happily accept on the next paint, and Cell::tile() then
+            // crashes inside the freed Tileset's mTilesById tree.
+            if(tempPlayer.monsterTileset)
+                MapItem::validTilesets_.erase(tempPlayer.monsterTileset.data());
             tempPlayer.monsterTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),32,32);
-            MapItem::validTilesets_.insert(tempPlayer.monsterTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
+            MapItem::validTilesets_.emplace(tempPlayer.monsterTileset.data(), tempPlayer.monsterTileset);  // see MapObjectItem.cpp cellTilesetIsValid
             if(!tempPlayer.monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
                 abort();
             monsterTilesetCache[imagePath]=tempPlayer.monsterTileset;
@@ -854,8 +862,11 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                             QImage image(QString::fromStdString(imagePath));
                             if(!image.isNull())
                             {
+                                // Erase OLD tileset before reassign — see comment in updateOtherPlayerMonsterTile above.
+                                if(otherPlayer.playerTileset)
+                                    MapItem::validTilesets_.erase(otherPlayer.playerTileset.data());
                                 otherPlayer.playerTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),16,24);
-                                MapItem::validTilesets_.insert(otherPlayer.playerTileset.data());  // see MapObjectItem.cpp cellTilesetIsValid
+                                MapItem::validTilesets_.emplace(otherPlayer.playerTileset.data(), otherPlayer.playerTileset);  // see MapObjectItem.cpp cellTilesetIsValid
                                 otherPlayer.playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
                             }
                             else

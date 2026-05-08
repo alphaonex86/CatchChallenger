@@ -35,11 +35,25 @@ public:
     void setMapPosition(Tiled::Map *map, int16_t global_x, int16_t global_y);
     QRectF boundingRect() const;
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
-    //per-map tilesets currently held alive by addMap (released in removeMap).
-    //MapObjectItem::paint() validates cell.tileset() against this set to skip
+    //Tilesets currently safe to deref via raw `Tileset*` from a Tiled::Cell.
+    //MapObjectItem::paint() validates cell.tileset() against this map to skip
     //paints whose cell points at a tileset that's been freed by an async map
-    //unload — accessing such a stale Tileset* would crash inside Cell::tile().
-    static std::unordered_set<Tiled::Tileset *> validTilesets_;
+    //unload / OtherPlayer turnover — accessing such a stale Tileset* would
+    //crash inside Cell::tile() (Tileset::findTile reads mTilesById, a
+    //red-black tree whose root is now freed memory).
+    //
+    //The value type is a SharedTileset (== QSharedPointer<Tileset>) so each
+    //entry holds a strong ref: while a Tileset is in validTilesets_, the
+    //refcount can't drop to zero, the underlying Tileset can't be freed,
+    //and any cell whose raw `Tileset*` matches a registered key is safe.
+    //Callers who own a SharedTileset can let go of their copy at any time;
+    //the Tileset survives until validTilesets_.erase() is called for that
+    //pointer (typically in MapItem::removeMap or remove_player_final).
+    //
+    //Why we don't store SharedTileset *only* and skip the raw key: lookups
+    //come from `Tiled::Cell::tileset()` which returns a raw `Tileset*` —
+    //we need to match by pointer identity, not by SharedPtr.
+    static std::unordered_map<Tiled::Tileset *,Tiled::SharedTileset> validTilesets_;
 private:
     std::unordered_map<Tiled::Map *,std::unordered_set<QGraphicsItem *> > displayed_layer;
     std::unordered_map<Tiled::Map *,std::unordered_set<Tiled::Tileset *> > tilesetsPerMap_;
