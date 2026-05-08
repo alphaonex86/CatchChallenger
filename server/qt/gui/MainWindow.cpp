@@ -199,6 +199,12 @@ void MainWindow::onStartStopClicked()
 {
     serverRunning = !serverRunning;
     if (serverRunning) {
+        // Actually boot the TCP listener — without this call the button
+        // was purely cosmetic, no socket was bound and the engine never
+        // emitted "Listen ..." so testingqtserver.py spun forever waiting
+        // for that marker. start_server() emits need_be_started which is
+        // queued onto start_internal_server() (see GUIServer ctor).
+        server_.start_server();
         serverStartTime = QDateTime::currentDateTime();
         ui->valueMainServer->setText("Running");
         ui->valueMainServer->setStyleSheet("color: #50c878;");
@@ -209,6 +215,7 @@ void MainWindow::onStartStopClicked()
         addConsoleLine("Server started successfully");
         addAnalyticsLine("Server started", true);
     } else {
+        server_.stop_server();
         ui->valueMainServer->setText("Not Running");
         ui->valueMainServer->setStyleSheet("color: #d94a4a;");
         ui->startStopButton->setText("Start");

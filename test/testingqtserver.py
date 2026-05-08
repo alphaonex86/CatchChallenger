@@ -238,14 +238,25 @@ def test_run():
     for var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
         env.pop(var, None)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    args = [SERVER_BIN, "--autostart"]
-    log_info(f"running: {os.path.basename(SERVER_BIN)} --autostart")
+    # --auto-quit-after lets the binary self-terminate cleanly after
+    # printing Listen and finishing preload; --autostart triggers the
+    # programmatic Start.  /usr/bin/timeout is the belt-and-braces
+    # outer cap so a hang in Qt's offscreen platform / TLS / DB init
+    # can never wedge the test session indefinitely (subprocess.Popen
+    # + select.select on stdout was blocking past `deadline` because
+    # readline() on a dead-but-not-EOF pipe waits forever).
+    inner_quit_secs = max(RUN_TIMEOUT - 2, 3)
+    outer_kill_secs = RUN_TIMEOUT + 5
+    args = ["timeout", "--signal=KILL", str(outer_kill_secs),
+            SERVER_BIN, "--autostart",
+            f"--auto-quit-after={inner_quit_secs}"]
+    log_info(f"running: {os.path.basename(SERVER_BIN)} "
+             f"--autostart --auto-quit-after={inner_quit_secs} "
+             f"(outer timeout {outer_kill_secs}s)")
     diagnostic.record_cmd(args, os.path.dirname(SERVER_BIN))
     proc = subprocess.Popen(
         args, cwd=os.path.dirname(SERVER_BIN), env=env,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        # Line-buffer + own pgid so we can SIGTERM the whole tree on
-        # success (NormalServer doesn't quit on its own once it's up).
         bufsize=1, universal_newlines=True,
         start_new_session=True)
     deadline = time.monotonic() + RUN_TIMEOUT
@@ -253,17 +264,30 @@ def test_run():
     found = False
     try:
         while time.monotonic() < deadline:
+            # readline blocks until a line lands OR the pipe closes.
+            # With --auto-quit-after the child exits on its own; with
+            # the outer `timeout` wrapper a stuck child still gets
+            # killed before this loop's deadline fires, so readline
+            # always returns within the test budget.
             line = proc.stdout.readline()
             if not line:
                 if proc.poll() is not None:
                     break
-                time.sleep(0.05)
                 continue
             captured.append(line.rstrip("\n"))
             if LISTEN_MARKER in line:
                 found = True
+                # Don't break: drain remaining stdout so the child
+                # (which is still running until --auto-quit-after
+                # fires) doesn't get blocked on a full pipe buffer
+                # while we wait for its clean exit below.
                 break
     finally:
+        # Once we've seen the marker (or the deadline elapsed) we don't
+        # need to wait for --auto-quit-after to fire — SIGTERM the
+        # child group right away so the next test can start. The outer
+        # `timeout` wrapper and --auto-quit-after are still there as
+        # last-resort guardrails if SIGTERM somehow doesn't take.
         if proc.poll() is None:
             try:
                 os.killpg(proc.pid, 15)  # SIGTERM
@@ -273,7 +297,7 @@ def test_run():
                 proc.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 try:
-                    os.killpg(proc.pid, 9)  # SIGKILL
+                    os.killpg(proc.pid, 9)
                 except (ProcessLookupError, OSError):
                     pass
                 try:
