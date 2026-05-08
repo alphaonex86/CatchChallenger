@@ -42,12 +42,15 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(QStringLiteral("server-gui"));
 
     // CLI args: --autostart (testingqtserver.py), --screenshot=PATH +
-    // --screenshot-delay-ms=N (visual regression), --size=WxH (testing).
+    // --screenshot-delay-ms=N (visual regression), --size=WxH (testing),
+    // --auto-quit-after=N (seconds) — self-terminate so the test
+    // harness doesn't have to SIGTERM us; pairs with --autostart.
     QString screenshotPath;
     int screenshotDelayMs = 5000;
     int initialWidth = 1100;
     int initialHeight = 750;
     bool wantAutostart = false;
+    int autoQuitAfterSecs = 0;
     {
         int i = 1;
         while (i < argc) {
@@ -65,6 +68,8 @@ int main(int argc, char *argv[])
                 }
             } else if (arg == QStringLiteral("--autostart"))
                 wantAutostart = true;
+            else if (arg.startsWith(QStringLiteral("--auto-quit-after=")))
+                autoQuitAfterSecs = arg.mid(18).toInt();
             ++i;
         }
     }
@@ -118,6 +123,17 @@ int main(int argc, char *argv[])
     // pointer overload of QTimer::singleShot keeps the link clean).
     if (wantAutostart) {
         QTimer::singleShot(0, &w, &MainWindow::autostart);
+    }
+
+    // --auto-quit-after=N: schedule a clean QCoreApplication::quit()
+    // N seconds after the event loop starts so testingqtserver.py and
+    // friends don't have to SIGTERM the process tree. Method-pointer
+    // overload of singleShot — no lambda (CLAUDE.md rule).
+    if (autoQuitAfterSecs > 0) {
+        std::cout << "[auto-quit-after] will quit in "
+                  << autoQuitAfterSecs << "s" << std::endl;
+        QTimer::singleShot(autoQuitAfterSecs * 1000,
+                           qApp, &QCoreApplication::quit);
     }
 
     return a.exec();
