@@ -73,6 +73,15 @@ Explain code where is not clear. Try compile with make -j32 after changes to see
 * embedded third-party libs — vendored as-is, do NOT modify sources/build flags:
   - general/blake3, general/hps, general/libxxhash, general/libzstd
   - client/libqtcatchchallenger/libogg, libopus, libopusfile, libtiled
+* **Prefer fix out of vendor code.** When a bug surfaces in or near a
+  vendored lib (libtiled, libogg/opus/opusfile, libxxhash, libzstd, hps,
+  blake3), the fix lives in OUR code that calls the vendor — guard the
+  call site, hold a stronger reference, validate inputs before the
+  call, fix the surrounding object lifetime — never in the vendor lib
+  itself.  Patching vendor sources forks them away from upstream and
+  makes future re-imports impossible to merge cleanly.  If the only
+  possible fix really is in the vendor, file a bug upstream and route
+  around it on our side until they land it.
 * **No SQL joins.** Fetch related rows with separate `mysqli_query()` calls in PHP loops.
 * **Prefer nested `if`/`else` over `continue`.** Don't use guard `continue;` to skip iterations — wrap rest of body in `if(...) { ... }`. Yes, this nests deeply; that is the style here.
 * **Logging in .cpp files.** Never `fprintf`/`printf`. Use `qDebug()`/`qWarning()`/`qCritical()` when function/file is mostly Qt; `std::cout`/`std::cerr << ... << std::endl` when mostly plain C++ (general/, server/, libcatchchallenger/, ProtocolParsing*, FacilityLibGeneral, etc.).
