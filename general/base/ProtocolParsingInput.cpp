@@ -2,6 +2,7 @@
 #include "ProtocolParsing.hpp"
 #include "ProtocolParsingCheck.hpp"
 #include "GeneralVariable.hpp"
+#include "UnalignedLoad.hpp"
 #include "cpp11addition.hpp"
 #include <iostream>
 #include <cstring>
@@ -479,7 +480,16 @@ int8_t ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const
                 binaryAppend(header_cut,commonBuffer+cursor,(size-cursor));
             return 0;
         }
-        dataSize=le32toh(*reinterpret_cast<const uint32_t *>(commonBuffer+cursor));
+        // Aligned-safe load: commonBuffer+cursor is not guaranteed
+        // 4-byte aligned (a previous packet's header may have left
+        // cursor on an odd offset).  On x86 the unaligned load works;
+        // on strict-alignment archs (MIPS32-BE under qemu-user, RISC-V,
+        // older ARM) it traps SIGBUS and the server vanishes mid-
+        // handshake.  loadLe32 does memcpy-then-le32toh; memcpy of a
+        // fixed small size is folded by every supported compiler into
+        // a single MOV / LW so there's no perf cost.  See
+        // general/base/UnalignedLoad.hpp for the helper's rationale.
+        dataSize=CatchChallenger::loadLe32(commonBuffer+cursor);
         cursor+=sizeof(uint32_t);
 
         if(dataSize>(CATCHCHALLENGER_BIGBUFFERSIZE-8))
