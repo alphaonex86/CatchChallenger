@@ -112,9 +112,23 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         const Tiled::Tile *renderTile=mMapObject->cell().tile();
         if(renderTile->isAnimated())
             renderTile=renderTile->currentFrameTile();
+        // Validate the actual image bytes only — Tile::imageStatus() is
+        // unreliable here.  External-image tilesets (animations.tsx,
+        // most NPC sheets) load the bytes via Tileset::loadFromImage()
+        // which sets *Tileset::mImageReference.status* to LoadingReady,
+        // but each individual Tile's mImageStatus stays whatever it
+        // was at Tile() construction — Tiled::LoadingError for the
+        // implicit-tile case where Tileset::createTile(id) goes through
+        // the Tile(image) ctor with image==nullptr.  Tile::image()
+        // then correctly falls back to mTileset->image() (a valid
+        // QPixmap), but Tile::imageStatus() still reports LoadingError.
+        // Including that status in our guard rejected every door /
+        // flower / animated-object on city.tmx (gid 4145 / 4177 /
+        // 4273) — the screenshot was missing those objects entirely.
+        // Trust the image validity instead; if width/height/isNull
+        // pass, drawPixmap will succeed.
         if(renderTile==nullptr || renderTile->image().isNull()
-           || renderTile->image().width()<=0 || renderTile->image().height()<=0
-           || renderTile->imageStatus()!=Tiled::LoadingReady){
+           || renderTile->image().width()<=0 || renderTile->image().height()<=0){
             if(translate){
                 p->translate(-xx,-yy);
                 mMapObject->setPosition(realPos);
