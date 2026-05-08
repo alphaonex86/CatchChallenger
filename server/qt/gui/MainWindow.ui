@@ -182,54 +182,7 @@
         <item>
          <layout class="QVBoxLayout" name="liveStatusSection">
           <item>
-           <widget class="QFrame" name="cardLiveStatus">
-            <property name="styleSheet">
-             <string notr="true">QFrame#cardLiveStatus { background-color: #ffffff; border: 1px solid #e0e0e8; border-radius: 8px; }</string>
-            </property>
-            <layout class="QHBoxLayout" name="cardLiveStatusLayout">
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QLabel" name="labelLiveStatus">
-               <property name="font">
-                <font>
-                 <pointsize>13</pointsize>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>Live Status: Server</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="cardLiveStatusSpacer">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <layout class="QGridLayout" name="liveStatusGrid" rowstretch="0,0,0" columnstretch="0,0,0,0,0">
+           <layout class="QGridLayout" name="liveStatusGrid" rowstretch="0,0,0" columnstretch="0,0,0,0">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -442,60 +395,6 @@
               </layout>
              </widget>
             </item>
-            <item row="0" column="4">
-             <widget class="QFrame" name="cardPlayers">
-              <property name="styleSheet">
-               <string notr="true">QFrame#cardPlayers { background-color: #ffffff; border: 1px solid #e0e0e8; border-radius: 8px; }</string>
-              </property>
-              <layout class="QVBoxLayout" name="cardPlayersLayout">
-               <property name="spacing">
-                <number>0</number>
-               </property>
-               <property name="leftMargin">
-                <number>0</number>
-               </property>
-               <property name="topMargin">
-                <number>0</number>
-               </property>
-               <property name="rightMargin">
-                <number>0</number>
-               </property>
-               <property name="bottomMargin">
-                <number>0</number>
-               </property>
-               <item>
-                <widget class="QLabel" name="labelPlayers">
-                 <property name="styleSheet">
-                  <string notr="true">color: #888899; font-size: 11px;</string>
-                 </property>
-                 <property name="text">
-                  <string>Players</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="playersInner">
-                 <item>
-                  <widget class="QLabel" name="valuePlayers">
-                   <property name="font">
-                    <font>
-                     <pointsize>14</pointsize>
-                     <bold>true</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>0/200</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="GaugeWidget" name="progressPlayers" native="true"/>
-                 </item>
-                </layout>
-               </item>
-              </layout>
-             </widget>
-            </item>
             <item row="1" column="0">
              <widget class="QFrame" name="cardSqlLatency">
               <property name="styleSheet">
@@ -637,12 +536,25 @@
               </layout>
              </widget>
             </item>
-            <item row="1" column="3">
-             <widget class="QFrame" name="cardAdmin">
-              <property name="styleSheet">
-               <string notr="true">QFrame#cardAdmin { background-color: #ffffff; border: 1px solid #e0e0e8; border-radius: 8px; }</string>
+            <item row="2" column="0" colspan="4">
+             <spacer name="liveStatusBottomSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
-              <layout class="QVBoxLayout" name="cardAdminLayout">
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="1" column="3">
+             <widget class="QFrame" name="cardPlayers">
+              <property name="styleSheet">
+               <string notr="true">QFrame#cardPlayers { background-color: #ffffff; border: 1px solid #e0e0e8; border-radius: 8px; }</string>
+              </property>
+              <layout class="QVBoxLayout" name="cardPlayersLayout">
                <property name="spacing">
                 <number>0</number>
                </property>
@@ -659,144 +571,37 @@
                 <number>0</number>
                </property>
                <item>
-                <widget class="QLabel" name="labelAdmin">
+                <widget class="QLabel" name="labelPlayers">
                  <property name="styleSheet">
                   <string notr="true">color: #888899; font-size: 11px;</string>
                  </property>
                  <property name="text">
-                  <string>Admin user connected</string>
+                  <string>Players</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="adminRowLayout">
-                 <property name="spacing">
-                  <number>0</number>
-                 </property>
+                <layout class="QHBoxLayout" name="playersInner">
                  <item>
-                  <widget class="QFrame" name="adminAvatarFrame">
-                   <property name="minimumSize">
-                    <size>
-                     <width>32</width>
-                     <height>32</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>32</width>
-                     <height>32</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame#adminAvatarFrame { background-color: #4a90d9; border-radius: 16px; }</string>
-                   </property>
-                   <layout class="QVBoxLayout" name="adminAvatarLayout">
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QLabel" name="adminAvatarLabel">
-                      <property name="styleSheet">
-                       <string notr="true">color: white; font-weight: bold; font-size: 14px;</string>
-                      </property>
-                      <property name="text">
-                       <string>A</string>
-                      </property>
-                      <property name="alignment">
-                       <set>Qt::AlignmentFlag::AlignCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="valueAdmin">
+                  <widget class="QLabel" name="valuePlayers">
                    <property name="font">
                     <font>
                      <pointsize>14</pointsize>
                      <bold>true</bold>
                     </font>
                    </property>
-                   <property name="styleSheet">
-                    <string notr="true">color: #4a90d9;</string>
-                   </property>
                    <property name="text">
-                    <string>Admin</string>
+                    <string>0/200</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QFrame" name="adminLiveDot">
-                   <property name="minimumSize">
-                    <size>
-                     <width>10</width>
-                     <height>10</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>10</width>
-                     <height>10</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame#adminLiveDot { background-color: #4caf50; border-radius: 5px; }</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="adminSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
+                  <widget class="GaugeWidget" name="progressPlayers" native="true"/>
                  </item>
                 </layout>
                </item>
               </layout>
              </widget>
-            </item>
-            <item row="1" column="4">
-             <spacer name="liveStatusSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="2" column="0" colspan="5">
-             <spacer name="liveStatusBottomSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>10</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </item>
