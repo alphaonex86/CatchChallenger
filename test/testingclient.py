@@ -30,6 +30,7 @@ from remote_build import (start_remote_builds, collect_remote_results,
                           stop_remote_server, get_remote_server_address,
                           cleanup_remote_node, run_remote_autosolo_phase,
                           count_remote_tests, all_enabled_exec_nodes)
+import remote_build
 import diagnostic
 import build_paths
 from cmd_helpers import (clamp_local, assert_port_or_fail,
@@ -493,7 +494,14 @@ def stop_server():
 
 
 def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
-               success_marker=None, use_offscreen=True):
+               success_marker=None, use_offscreen=True,
+               remote_ssh_proc=None):
+    """`remote_ssh_proc`: when this client is talking to a server started
+    via remote_build.start_remote_server, pass the SSH proc so a failure
+    can be augmented with the server's crash signature (SIGBUS / SIGSEGV
+    / asan banner).  Without it, a server that died mid-handshake on a
+    strict-alignment node only shows up as "stateChanged(0) after (1)"
+    and the operator has to ssh in to see the actual fault."""
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail(label, f"binary not found: {binary}")
@@ -611,6 +619,17 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
         if kind == "pass":
             log_pass(label, f"early pass ({detail})")
             return True
+        # If we're driving a remote-started server and the server died
+        # of a fatal signal, the *real* cause is the crash banner in
+        # its SSH stream (e.g. "qemu: uncaught target signal 10 (Bus
+        # error)") — augment the failure detail so the operator sees
+        # it without having to ssh in.  Give the SSH reader 1s grace
+        # for the last-line banner to land in the pipe before checking.
+        if remote_ssh_proc is not None and "connected then dropped" in detail:
+            time.sleep(1.0)
+            crash = remote_build.detect_remote_crash(remote_ssh_proc)
+            if crash is not None:
+                detail = f"{detail}; remote crash: {crash}"
         log_fail(label, detail)
         for line in output_lines[-20:]:
             print(f"  | {line}")
@@ -1241,7 +1260,8 @@ def main():
                             "--closewhenonmap"],
                            f"qtcpu800x600 -> remote {label}",
                            timeout=30,
-                           success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+                           success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
+                           remote_ssh_proc=ssh_proc)
 
             if gl_ok:
                 run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
@@ -1250,7 +1270,8 @@ def main():
                             "--closewhenonmap"],
                            f"qtopengl -> remote {label}",
                            timeout=30,
-                           success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+                           success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
+                           remote_ssh_proc=ssh_proc)
 
             stop_remote_server(ssh_proc, host, ssh_port)
         finally:
