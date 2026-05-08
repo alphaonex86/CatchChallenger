@@ -3,6 +3,7 @@
 #include "MapController.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
+#include "../libqtcatchchallenger/CliClientOptions.hpp"
 #include "TemporaryTile.hpp"
 #include "QMap_client.hpp"
 #include "../../general/base/CommonDatapack.hpp"
@@ -266,7 +267,21 @@ void MapController::loadBotOnTheMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, 
     botDisplay->botMove=CatchChallenger::BotMove::BotMove_Fixed;
     CatchChallenger::Direction direction;
     int baseTile=-1;
-    if(lookAt=="random" || lookAt=="loop" || lookAt=="move")
+    // Pin random/loop/move bots to face "bottom" (frame 7) when
+    // --take-screenshot is on.  Otherwise the rand()%4 below picks a
+    // direction that depends on every previous rand() call's history
+    // (animation tile randomisation, etc.) — testingmap4client could
+    // see the bot facing left in run A and bottom in run B even with
+    // srand(42) pinned, since changes elsewhere in the boot sequence
+    // shift the rand stream.  Operator's reference is captured with
+    // bots facing "bottom" (the natural front-facing trainer sprite),
+    // so override here for deterministic match.  Companion to the
+    // animation-timer freeze in MapVisualiser-map.cpp.
+    std::string effectiveLookAt=lookAt;
+    if(!CliClientOptions::takeScreenshotPath.isEmpty()
+       && (effectiveLookAt=="random" || effectiveLookAt=="loop" || effectiveLookAt=="move"))
+        effectiveLookAt="bottom";
+    if(effectiveLookAt=="random" || effectiveLookAt=="loop" || effectiveLookAt=="move")
     {
         switch(rand()%4)
         {
@@ -295,24 +310,24 @@ void MapController::loadBotOnTheMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, 
         else
             botDisplay->botMove=CatchChallenger::BotMove::BotMove_Move;
     }
-    else if(lookAt=="left")
+    else if(effectiveLookAt=="left")
     {
         baseTile=10;
         direction=CatchChallenger::Direction_move_at_left;
     }
-    else if(lookAt=="right")
+    else if(effectiveLookAt=="right")
     {
         baseTile=4;
         direction=CatchChallenger::Direction_move_at_right;
     }
-    else if(lookAt=="top")
+    else if(effectiveLookAt=="top")
     {
         baseTile=1;
         direction=CatchChallenger::Direction_move_at_top;
     }
     else
     {
-        if(lookAt!="bottom")
+        if(effectiveLookAt!="bottom")
             qDebug() << (QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(mapIndex).arg(x).arg(y));
         baseTile=7;
         direction=CatchChallenger::Direction_move_at_bottom;
