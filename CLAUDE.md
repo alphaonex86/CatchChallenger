@@ -68,6 +68,18 @@ Explain code where is not clear. Try compile with make -j32 after changes to see
 * never use symlinks in the repository
 * **separate compilation artifacts into their own folder.** CMake build dirs go OUT of source tree. Generated files (`CMakeCache.txt`, `*.o`, `moc_*`, `qrc_*`, `ui_*.h`, `Makefile`, `__pycache__/`) must NEVER appear next to checked-in `.cpp/.hpp/.pro/CMakeLists.txt`. Fix the tool, don't `.gitignore` artefacts.
 * never change `/home/user/Desktop/CatchChallenger/working/test/*.png` reference images. Fix the renderer/determinism, not the reference. Only project owner updates these PNGs.
+* **Never compare reference images by checksum / md5sum / sha256sum.**
+  PNG is a *lossless* format but its compression is *non-canonical*:
+  the same pixel grid can encode to different bytes depending on
+  zlib/libpng's deflate strategy, filter selection, palette ordering,
+  metadata chunks (tIME, pHYs, tEXt …), or the writer's compression
+  level — even between two runs of the same Qt build on the same
+  machine.  `md5sum` matching means a strict subset of "pixels match";
+  `md5sum` differing tells you nothing about whether the pixels match.
+  Always compare via the per-pixel-tolerance checker the test scripts
+  already use (`testingmap2png.py` / `testingmap4client.py`'s ±10%
+  per-channel + diff-mask reporter); when the test reports >0 pixels
+  differing, work the diff-mask hint, not the byte stream.
 * forbid adding new Qt modules to .pro/.pri files; reuse only modules already listed
 * forbid the Qt `quick` module (no QML/QtQuick); UI is widgets/OpenGL only
 * embedded third-party libs — vendored as-is, do NOT modify sources/build flags:
