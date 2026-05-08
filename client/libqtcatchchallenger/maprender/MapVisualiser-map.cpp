@@ -1,4 +1,5 @@
 #include "MapVisualiser.hpp"
+#include "../CliClientOptions.hpp"
 
 #include <QCoreApplication>
 #include <QGraphicsItem>
@@ -231,16 +232,29 @@ bool MapVisualiser::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, Q
     {
         tempMapObject->displayed=false;
         CatchChallenger::QMap_client::all_map[mapIndex]=tempMapObject;
-        for( std::pair<const uint16_t,std::unordered_map<int,MapVisualiserOrder::Map_animation>>& n : tempMapObject->animatedObject ) {
-            const uint16_t &interval=static_cast<uint16_t>(n.first);
-            if(animationTimer.find(interval)==animationTimer.cend())
-            {
-                QTimer *newTimer=new QTimer();
-                newTimer->setInterval(interval);
-                animationTimer[interval]=newTimer;
-                if(!connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer))
-                    abort();
-                newTimer->start();
+        // Skip starting per-interval animation timers when --take-screenshot
+        // is on — tile frames advance via QTimer::timeout firing on wallclock,
+        // so the number of frames advanced between map-load and the 500ms
+        // screenshot grab varies run-to-run.  testingmap4client could see a
+        // ~0.7% pixel diff on byte-identical reference because the building
+        // roof / water animation landed on a different frame each run.
+        // Freezing every animation at frame 0 makes the screenshot
+        // bit-reproducible (matches what the reference is captured against —
+        // the operator's "copy of generated image" workflow).  Doesn't affect
+        // normal interactive runs.
+        if(CliClientOptions::takeScreenshotPath.isEmpty())
+        {
+            for( std::pair<const uint16_t,std::unordered_map<int,MapVisualiserOrder::Map_animation>>& n : tempMapObject->animatedObject ) {
+                const uint16_t &interval=static_cast<uint16_t>(n.first);
+                if(animationTimer.find(interval)==animationTimer.cend())
+                {
+                    QTimer *newTimer=new QTimer();
+                    newTimer->setInterval(interval);
+                    animationTimer[interval]=newTimer;
+                    if(!connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer))
+                        abort();
+                    newTimer->start();
+                }
             }
         }
         //try locate and place it
