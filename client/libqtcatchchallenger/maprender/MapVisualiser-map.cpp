@@ -161,23 +161,37 @@ void MapVisualiser::asyncDetectBorder(const CATCHCHALLENGER_TYPE_MAPID &mapIndex
                                 static_cast<uint16_t>(tempMapObject->relative_y_pixel)
                                 );
         emit mapDisplayed(mapIndex);
-        /*      162 -        //display the bot                                                                                                                                                  
-      163 -        for( const auto& n : tempMapObject->botsDisplay ) {                                                                                                                
-      164 -            std::string skin;                                                                                                                                              
-      165 -            if(n.second.properties.find("skin")!=n.second.properties.cend())                                                                                                      
-      166 -                skin=n.second.properties.at("skin");                                                                                                                       
-      167 -            std::string direction;                                                                                                                                                
-      168 -            if(n.second.properties.find("lookAt")!=n.second.properties.cend())                                                                                                  
-      169 -                direction=n.second.properties.at("lookAt");                                                                                                                       
-      170 -            else                                                                                                                                                                
-      171 -            {                                                                                                                                                                     
-      172 -                if(!skin.empty())                                                                                                                                               
-      173 -                    qDebug() << QStringLiteral("asyncDetectBorder(): lookAt: missing, fixed to bottom for mapIndex %1").arg(mapIndex);                                          
-      174 -                direction="bottom";                                                                                                                                        
-      175 -            }                                                                                                                                                              
-      176 -            loadBotOnTheMap(mapIndex,n.second.botId,n.first.first,n.first.second,direction,skin);                                                                          
-      177 -        }*/
-        //bot display loading now handled separately via DatapackClientLoader
+        // Display the bots parsed out of the map's "Object" layer.
+        // MapVisualiserOrder strips type="bot" entries from the visual
+        // layer (so the placeholder gid 4097 doesn't show), stores the
+        // bot data in tempMapObject->botsDisplay, and expects this loop
+        // to call loadBotOnTheMap() per entry to re-attach a real
+        // sprite (using the bot's `skin` property → trainer.png).  The
+        // loop was commented-out with a "now handled separately via
+        // DatapackClientLoader" note, but no DatapackClientLoader hook
+        // ever called loadBotOnTheMap, so every map-defined NPC was
+        // silently absent from the qtopengl scene (verified on
+        // city.tmx — 4 bots in the TMX, 0 sprites on screen).
+        // Restore the call-site here.  The MapController override
+        // (qtopengl) loads the trainer skin tileset on each call;
+        // testingmap4client's reference relies on this for the
+        // red-haired NPC at (208, 432).
+        for(const auto &n : tempMapObject->pendingBots)
+        {
+            const std::string &skin=n.second.skin;
+            std::string direction=n.second.lookAt;
+            if(direction.empty())
+            {
+                if(!skin.empty())
+                    qDebug() << QStringLiteral("asyncDetectBorder(): lookAt: missing, fixed to bottom for mapIndex %1").arg(mapIndex);
+                direction="bottom";
+            }
+            loadBotOnTheMap(mapIndex,n.second.botId,n.first.first,n.first.second,direction,skin);
+        }
+        // Drained: each entry now has a real BotDisplay in
+        // botsDisplay (or skipped due to empty skin).  Clear the
+        // pending list so we don't double-load on a re-render.
+        tempMapObject->pendingBots.clear();
         //load adjacent maps via resolved borders
         const CatchChallenger::Map_Border &border=logicalMap.border;
         if(border.bottom.mapIndex!=65535)

@@ -132,6 +132,36 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(QMap_client *tempMapObjec
                     {
                         /// \see MapController::loadBotOnTheMap()
                         #ifndef CATCHCHALLENGER_ONLYMAPRENDER
+                        // Read the bot's properties off the MapObject
+                        // BEFORE the visual wrapper is removed/deleted —
+                        // they're our only chance to learn the
+                        // skin/lookAt/id (the city.tmx authors set them
+                        // on the bot object).  Stash into
+                        // tempMapObject->pendingBots keyed on tile
+                        // (x>>4, y>>4) so MapVisualiser::asyncDetectBorder
+                        // can iterate and call loadBotOnTheMap() per
+                        // entry.  pendingBots is a separate container
+                        // from botsDisplay because loadBotOnTheMap
+                        // early-returns when botsDisplay already has
+                        // the (x,y) key — using botsDisplay here would
+                        // block the actual sprite attach.
+                        Tiled::MapObject *bot=objects.at(index2);
+                        const float TILE_SIZE=16.0f;
+                        // Tiled stores object y as the bottom-left
+                        // corner pixel (not top-left like tile layers).
+                        // Subtract 1px before floor so a bot at y=432
+                        // (occupying tile rows ending at row 26) maps
+                        // to tile y=26, not y=27 — same off-by-one
+                        // shift the door path applies a few branches up.
+                        const uint8_t bx=static_cast<uint8_t>(std::floor(bot->x()/TILE_SIZE));
+                        const uint8_t by=static_cast<uint8_t>(std::floor((bot->y()-1)/TILE_SIZE));
+                        CatchChallenger::QMap_client::PendingBot &pb=
+                            tempMapObject->pendingBots[std::pair<uint8_t,uint8_t>(bx,by)];
+                        const QVariantMap props=bot->properties();
+                        pb.skin=props.value(QStringLiteral("skin")).toString().toStdString();
+                        pb.lookAt=props.value(QStringLiteral("lookAt")).toString().toStdString();
+                        pb.botId=static_cast<CATCHCHALLENGER_TYPE_BOTID>(
+                            props.value(QStringLiteral("id")).toUInt());
                         objectGroup->removeObject(objects.at(index2));
                         delete objects.at(index2);
                         #endif
