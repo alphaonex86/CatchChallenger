@@ -24,6 +24,7 @@ from remote_build import (start_remote_builds, collect_remote_results,
                           stop_remote_server, get_remote_server_address,
                           cleanup_remote_node, SERVER_MAKE_SCRIPTS,
                           build_server_via_make)
+import remote_build
 import diagnostic
 import build_paths
 from cmd_helpers import (clamp_local, assert_port_or_fail,
@@ -969,7 +970,7 @@ def stop_server():
     server_proc = None
 
 def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
-               success_marker=None):
+               success_marker=None, remote_ssh_proc=None):
     """Run a client and watch its stdout/stderr in real time. Returns
     (ok, output).
 
@@ -1091,6 +1092,16 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
         if kind == "pass":
             log_pass(label, f"early pass ({detail})")
             return True, out
+        # If we're driving a remote-started server, the *real* failure
+        # cause may be a fatal-signal banner (e.g. "qemu: uncaught
+        # target signal 10 (Bus error)") buried in the SSH session's
+        # stdout.  Append it so the operator sees it without ssh'ing
+        # in.  Reader thread needs ~1s for the last line to land.
+        if remote_ssh_proc is not None and "connected then dropped" in detail:
+            time.sleep(1.0)
+            crash = remote_build.detect_remote_crash(remote_ssh_proc)
+            if crash is not None:
+                detail = f"{detail}; remote crash: {crash}"
         log_fail(label, detail)
         for line in output_lines[-20:]:
             print(f"  | {line}")
@@ -1918,7 +1929,8 @@ def main():
                                   "--autologin", "--character", "Player",
                                   "--closewhenonmap"],
                                  f"local client -> remote {label}",
-                                 success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+                                 success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
+                                 remote_ssh_proc=ssh_proc)
 
             stop_remote_server(ssh_proc, host, ssh_port)
         finally:

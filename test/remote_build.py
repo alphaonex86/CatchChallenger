@@ -1189,6 +1189,17 @@ def start_remote_server(host, ssh_port, bin_path, build_dir,
     ready = threading.Event()
     output_lines = []
     actual_port = [0]
+    # Crash-signature detection.  Without this, a server that SIGBUS'd /
+    # SIGSEGV'd mid-handshake (qemu-user MIPS32-BE alignment fault,
+    # uninstrumented sanitizer-style crash, glibc abort) would only
+    # appear to the test harness as "stateChanged(0) after (1)" — the
+    # client's view of a TCP RST.  The actual diagnostic ("qemu:
+    # uncaught target signal 10 (Bus error) - core dumped") was buried
+    # in the SSH session's stdout that nobody surfaced.  Now: every
+    # captured line is checked against CRASH_SIGNATURES and the first
+    # match is stashed on the proc object for callers (testingclient.py
+    # / testingserver.py) to append into log_fail's detail.
+    crash_signature = [None]
 
     def reader():
         while True:
@@ -1197,6 +1208,13 @@ def start_remote_server(host, ssh_port, bin_path, build_dir,
                 break
             line = raw.decode(errors="replace").rstrip("\n")
             output_lines.append(line)
+            if crash_signature[0] is None:
+                idx = 0
+                while idx < len(CRASH_SIGNATURES):
+                    if CRASH_SIGNATURES[idx] in line:
+                        crash_signature[0] = line
+                        break
+                    idx += 1
             if "correctly bind:" in line:
                 m = _re.search(r"port:\s*(\d+)", line)
                 if m:
@@ -1207,6 +1225,13 @@ def start_remote_server(host, ssh_port, bin_path, build_dir,
 
     t = threading.Thread(target=reader, daemon=True)
     t.start()
+
+    # Stash output + crash-signature refs on the proc so detect_remote_crash()
+    # can read them post-hoc once the in-band test (e.g. local client
+    # connect) reports a failure.  The reader thread keeps appending until
+    # ssh_proc.stdout closes, so callers see live state.
+    ssh_proc._cc_output_lines = output_lines
+    ssh_proc._cc_crash_signature = crash_signature
 
     if ready.wait(timeout=ready_timeout):
         return ssh_proc, actual_port[0]
@@ -1306,6 +1331,59 @@ def remote_gdb_bt_then_kill(host, ssh_port, pid_or_pattern, label,
     _ssh_cmd(host, ssh_port,
              f"pkill -KILL -f {pid_or_pattern!s} 2>/dev/null; true",
              timeout=10)
+
+
+# Substrings whose presence on the remote server's stdout/stderr means
+# the server died of a fatal signal / uninstrumented abort, not a clean
+# protocol error.  When the in-band client test then reports
+# "stateChanged(0)" / "Connection refused" / "TCP probe FAIL", the test
+# harness picks one of these lines up via detect_remote_crash() and
+# appends it to the failure detail so the operator sees the *real*
+# cause (e.g. "qemu: uncaught target signal 10 (Bus error)") instead
+# of having to ssh into the node and dig through the SSH session log.
+#
+# Add new entries when a new strict-alignment / sanitizer / qemu-user
+# variant surfaces a different banner.  Order doesn't matter — first
+# substring match wins.
+CRASH_SIGNATURES = (
+    "qemu: uncaught target signal",        # qemu-user (mips, aarch64, ...)
+    "Bus error",                            # SIGBUS (alignment, mmap)
+    "Segmentation fault",                   # SIGSEGV
+    "core dumped",                          # generic shell crash banner
+    "AddressSanitizer:",                    # asan
+    "LeakSanitizer:",                       # lsan
+    "MemorySanitizer:",                     # msan
+    "UndefinedBehaviorSanitizer:",          # ubsan
+    "ThreadSanitizer:",                     # tsan
+    "==ERROR:",                             # generic *san banner
+    "*** stack smashing detected",          # libssp
+    "double free or corruption",            # glibc malloc
+    "free(): invalid pointer",              # glibc malloc
+    "munmap_chunk(): invalid pointer",      # glibc malloc
+    "*** buffer overflow detected",         # glibc _FORTIFY_SOURCE
+    "terminate called",                     # uncaught C++ exception
+    "Aborted (core dumped)",                # SIGABRT shell banner
+)
+
+
+def detect_remote_crash(ssh_proc):
+    """Return the first crash-signature line seen on the remote server's
+    stdout/stderr stream, or None.  Called by testingclient.py /
+    testingserver.py after their in-band TCP probe / state-machine check
+    fails — turns "stateChanged(0) after (1)" into "stateChanged(0) after
+    (1); remote crash: qemu: uncaught target signal 10 (Bus error) -
+    core dumped".  Safe on any proc object; returns None when the proc
+    isn't one of ours or the reader thread hasn't observed a crash yet.
+
+    No new SSH session is opened — the reader thread launched by
+    start_remote_server() is the one populating the buffer this reads.
+    Callers should give the SSH stream a small grace period (e.g. 1 s)
+    after seeing the client-side disconnect before reading, so any
+    last-line crash banner has time to land in the pipe."""
+    sig = getattr(ssh_proc, "_cc_crash_signature", None)
+    if sig is None:
+        return None
+    return sig[0]
 
 
 def stop_remote_server(ssh_proc, host, ssh_port, game_port=REMOTE_GAME_PORT):
