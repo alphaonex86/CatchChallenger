@@ -70,7 +70,17 @@ void BaseServer::preload_30_sync_other()
                 {const uint16_t _tmp_le=(htole16(GlobalServerData::serverSettings.max_players));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
 
                 posOutput+=2;
-                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+static_cast<uint16_t>(posOutput);
+                // posPlayerNumber is the offset INSIDE tempBigBufferForOutput
+                // where the player-count uint16 lives. PlayerUpdaterBase::exec()
+                // adds the literal `+9` for the leading logicalGroup prefix
+                // when writing into the final cached packet (see
+                // protocolMessageLogicalGroupAndServerList + 9 + ...). Adding
+                // protocolMessageLogicalGroupAndServerListSize here too would
+                // double-count those 9 bytes and write past the end of the
+                // packet — exactly what testingstats.py's player-count check
+                // surfaced (cached packet stayed 0 forever even after the
+                // server registered the new player).
+                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=static_cast<uint16_t>(posOutput);
                 #ifdef CATCHCHALLENGER_HARDENED
                 if(Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber==0)
                 {
@@ -92,7 +102,9 @@ void BaseServer::preload_30_sync_other()
 
                 posOutput+=2;
                 //allow onfly change GlobalServerData::serverSettings.sendPlayerNumber
-                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+static_cast<uint16_t>(posOutput);
+                // Same offset semantics as the sendPlayerNumber branch above —
+                // exec() will add the +9 logicalGroup prefix itself.
+                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=static_cast<uint16_t>(posOutput);
                 {const uint16_t _tmp_le=(htole16(0));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
 
                 posOutput+=2;

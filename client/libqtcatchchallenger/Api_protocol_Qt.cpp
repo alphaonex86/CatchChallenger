@@ -356,12 +356,22 @@ void Api_protocol_Qt::sslHandcheckIsFinished()
 void Api_protocol_Qt::resetAll()
 {
     messageParsingLayer("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-    mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
-    #ifdef Q_OS_ANDROID
-    mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString()+"/datapack/";
-    #endif
-    mDatapackMain=mDatapackBase+"map/main/[main]/";
-    mDatapackSub=mDatapackMain+"sub/[sub]/";
+    // Same guard as Api_protocol::resetAll(): only seed the default
+    // app-local datapack path when nothing has been set yet. Otherwise
+    // a transient resetAll() during the WS connect flow clobbers the
+    // per-server cache path (set by ConnexionManager via
+    // client->setDatapackPath()) — every later read returns
+    // "<app_dir>/datapack/" and the subsequent character-load path
+    // looks for skin/fighter/ relative to that empty dir, aborting.
+    if(mDatapackBase.empty())
+    {
+        mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
+        #ifdef Q_OS_ANDROID
+        mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString()+"/datapack/";
+        #endif
+        mDatapackMain=mDatapackBase+"map/main/[main]/";
+        mDatapackSub=mDatapackMain+"sub/[sub]/";
+    }
     Api_protocol::resetAll();
 
     mLastGivenXP=0;

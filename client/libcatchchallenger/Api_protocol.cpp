@@ -1764,11 +1764,26 @@ void Api_protocol::resetAll()
     tradeRequestId.clear();
     isInBattle=false;
     battleRequestId.clear();
-    mDatapackBase="datapack/";
-    mDatapackMain=mDatapackBase+"map/main/[main]/";
-    mDatapackSub=mDatapackMain+"sub/[sub]/";
-    CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
-    CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
+    // Only re-seed datapack paths + codes to placeholders if they
+    // haven't been set yet. Clobbering an already-set value (cache
+    // path "/home/.../client/datapack/argument-…/", maincode "test")
+    // breaks any queued slot that reads them later — e.g.
+    // MapControllerMP::datapackParsedMainSub, which calls
+    // MapVisualiserPlayer::setDatapackPath(client->datapackPathBase(),
+    // client->mainDatapackCode()) and then errno=2's on
+    // "datapack/skin/fighter/" because mDatapackBase reverted to the
+    // relative default. Callers that legitimately want to forget the
+    // previous server's paths must clear the fields explicitly.
+    if(mDatapackBase.empty())
+    {
+        mDatapackBase="datapack/";
+        mDatapackMain=mDatapackBase+"map/main/[main]/";
+        mDatapackSub=mDatapackMain+"sub/[sub]/";
+    }
+    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.empty())
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
+        CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
     if(player_informations.recipes!=NULL)
     {
         delete player_informations.recipes;
@@ -1842,8 +1857,14 @@ void Api_protocol::setDatapackPath(const std::string &datapack_path)
         mDatapackBase=datapack_path+"/";
     mDatapackMain=mDatapackBase+"map/main/[main]/";
     mDatapackSub=mDatapackMain+"sub/[sub]/";
-    CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
-    CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
+    // Same rationale as resetAll(): never clobber a server-provided
+    // datapack code with the placeholder. Callers that legitimately
+    // want to forget the previous server's code must clear the field
+    // explicitly before invoking setDatapackPath().
+    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.empty())
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+    if(CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
+        CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
 }
 
 bool Api_protocol::getIsLogged() const
