@@ -20,7 +20,19 @@ ChartWidget::ChartWidget(QWidget *parent)
 
 void ChartWidget::setTitle(const QString &t) { title = t; update(); }
 
-void ChartWidget::setSeries(const QVector<ChartSeries> &s) { series = s; update(); }
+void ChartWidget::setSeries(const QVector<ChartSeries> &s) {
+    series = s;
+    // Preallocate the rolling-window buffer so the heap doesn't grow
+    // tick-by-tick as values stream in.  Reaching maxPoints capacity
+    // up front means addDataPoint()'s append+remove(0) reuses the same
+    // storage forever.
+    int i = 0;
+    while (i < series.size()) {
+        series[i].values.reserve(maxPoints);
+        ++i;
+    }
+    update();
+}
 
 void ChartWidget::setUnitSuffix(const QString &suffix) { unitSuffix = suffix; update(); }
 

@@ -69,7 +69,8 @@ MainWindow::MainWindow(QWidget *parent) :
     tickCount(0),
     lastTickDbQueries_(0),
     lastChartRxBytes_(0),
-    lastChartTxBytes_(0)
+    lastChartTxBytes_(0),
+    memoryBaselineBytes_(-1)
 {
     ui->setupUi(this);
     setupNavigation();
@@ -216,6 +217,9 @@ void MainWindow::onStartStopClicked()
         addAnalyticsLine("Server started", true);
     } else {
         server_.stop_server();
+        // Drop the baseline so Memory gauge falls back to "0B" until
+        // the next listen-ready marker is captured.
+        memoryBaselineBytes_ = -1;
         ui->valueMainServer->setText("Not Running");
         ui->valueMainServer->setStyleSheet("color: #d94a4a;");
         ui->startStopButton->setText("Start");
@@ -278,6 +282,14 @@ void MainWindow::onTimerTick()
         // glance.
         auto logs = CatchChallenger::gui_log::drain_classified_lines();
         for (const auto &l : logs) {
+            // The TCP listener emits "Waiting connection on port ..." once
+            // it's actually bound — that's the moment after which any
+            // further heap growth is attributable to the running server,
+            // so it's the right point to snapshot the baseline.
+            if (memoryBaselineBytes_ < 0 &&
+                l.text.find("Waiting connection on port") != std::string::npos) {
+                memoryBaselineBytes_ = getMemoryUsage();
+            }
             const QString text = QString::fromStdString(l.text).toHtmlEscaped();
             if (l.is_err)
                 addConsoleLine(QString("<span style='color: #d94a4a'>%1</span>").arg(text));
@@ -337,8 +349,13 @@ void MainWindow::updateDashboard()
     ui->progressDbQuery->setValue(dbQueryCount);
     ui->progressDbQuery->setBarColor(QColor(74, 144, 217));
 
-    qint64 memBytes = getMemoryUsage();
-    ui->valueMemory->setText(formatBytes(memBytes > 0 ? memBytes : static_cast<qint64>(1.5 * 1024 * 1024)));
+    if (memoryBaselineBytes_ < 0) {
+        ui->valueMemory->setText("0B");
+    } else {
+        qint64 memDelta = getMemoryUsage() - memoryBaselineBytes_;
+        if (memDelta < 0) memDelta = 0;
+        ui->valueMemory->setText(formatBytes(memDelta));
+    }
 
     if (serverRunning) {
         // Average player latency from the engine's RTT tracker.  0ms
@@ -381,7 +398,7 @@ void MainWindow::updateUptime()
 
 void MainWindow::addConsoleLine(const QString &text, bool bold)
 {
-    ui->textEditConsole->document()->setMaximumBlockCount(500);
+    ui->textEditConsole->document()->setMaximumBlockCount(1000);
 
     QString time = QTime::currentTime().toString("HH:mm:ss");
     QString line = QString("<span style='color: grey'>[%1]</span> %2").arg(time).arg(text);
@@ -403,7 +420,7 @@ void MainWindow::addConsoleLine(const QString &text, bool bold)
 
 void MainWindow::addAnalyticsLine(const QString &text, bool bold)
 {
-    ui->textEditAnalytics->document()->setMaximumBlockCount(500);
+    ui->textEditAnalytics->document()->setMaximumBlockCount(1000);
 
     QTextCursor cursor(ui->textEditAnalytics->document());
     cursor.movePosition(QTextCursor::End);
