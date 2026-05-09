@@ -423,8 +423,50 @@ uint16_t Api_client_real::getPort()
     return port;
 }
 
-void Api_client_real::sendDatapackContentMainSub(const std::string &hashMain, const std::string &hashSub)
+void Api_client_real::sendDatapackContentMainSub(const std::string &hashMainArg, const std::string &hashSubArg)
 {
+    // The caller (BaseWindow / ConnexionManager) reads the local hash
+    // from QSettings — which persists across cache wipes. If the user
+    // deletes the cache directory but leaves QSettings alone, the
+    // stored hash "matches" the server's even though the files are
+    // gone: mainNeedUpdate=false, haveTheDatapackMainSub() fires
+    // immediately, parseDatapackMainSub runs on an empty
+    // map/main/<mc>/ tree, setMapNumber(0) errors, and the client
+    // never reaches the map. Treat the local hash as empty whenever
+    // the maincode directory is missing or has no parseable files —
+    // forces a real re-download on the next short-circuit check.
+    std::string hashMain=hashMainArg;
+    std::string hashSub=hashSubArg;
+    {
+        const QDir mainDir(QString::fromStdString(mDatapackMain));
+        if(!mainDir.exists() ||
+           mainDir.entryList(QDir::Files|QDir::NoDotAndDotDot).isEmpty())
+        {
+            if(!hashMain.empty())
+            {
+                std::cerr << "Api_client_real::sendDatapackContentMainSub(): "
+                          << "stored DatapackHashMain hash present but "
+                          << mDatapackMain
+                          << " is missing/empty — forcing re-download"
+                          << std::endl;
+                hashMain.clear();
+            }
+        }
+        const QDir subDir(QString::fromStdString(mDatapackSub));
+        if(!subDir.exists() ||
+           subDir.entryList(QDir::Files|QDir::NoDotAndDotDot).isEmpty())
+        {
+            if(!hashSub.empty())
+            {
+                std::cerr << "Api_client_real::sendDatapackContentMainSub(): "
+                          << "stored DatapackHashSub hash present but "
+                          << mDatapackSub
+                          << " is missing/empty — forcing re-download"
+                          << std::endl;
+                hashSub.clear();
+            }
+        }
+    }
     // server hash all-zeros means no hash computed (e.g. solo internal server)
     // → accept whatever the client has, skip update
     auto isAllZeros=[](const std::vector<char> &h) -> bool {

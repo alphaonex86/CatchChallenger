@@ -60,15 +60,17 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
             realSslSocket=new QSslSocket();
             socket=new CatchChallenger::ConnectedSocket(realSslSocket);
         }
-        else {
-            #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
+        #if defined(CATCHCHALLENGER_SOLO)
+        else if(connexionInfo.ws.isEmpty())
+        {
+            // host empty + ws empty → solo (in-process FakeSocket).
             fakeSocket=new QFakeSocket();
             socket=new CatchChallenger::ConnectedSocket(fakeSocket);
-            #else
-            std::cerr << "host is empty" << std::endl;
-            abort();
-            #endif
         }
+        #endif
+        // else: host empty + ws non-empty → fall through to WS branch
+        // below (no abort here, that decision belongs to the next
+        // #ifndef CATCHCHALLENGER_NO_WEBSOCKET block).
         #endif
         #ifndef CATCHCHALLENGER_NO_WEBSOCKET
         if(socket==nullptr)
@@ -79,11 +81,17 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
                 socket=new CatchChallenger::ConnectedSocket(realWebSocket);
             }
             else {
-                std::cerr << "ws is empty" << std::endl;
+                std::cerr << "host is empty and ws is empty" << std::endl;
                 abort();
             }
         }
         #endif
+        if(socket==nullptr)
+        {
+            std::cerr << "host is empty (no WebSocket fallback compiled in)"
+                      << std::endl;
+            abort();
+        }
     #endif
     //work around for the resetAll() of protocol
     const std::string mainDatapackCode=CommonSettingsServer::commonSettingsServer.mainDatapackCode;
@@ -105,9 +113,19 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         abort();
     if(!connect(client,               &CatchChallenger::Api_client_real::QtnotLogged,       this,&ConnexionManager::disconnected))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveTheDatapack,       this,&ConnexionManager::haveTheDatapack))
+    // Datapack-flow signals MUST use Qt::QueuedConnection — matching
+    // qtcpu800x600 (BaseWindow.cpp:451). With AutoConnection, the
+    // signal fires from inside the protocol-parser call frame and the
+    // slot runs synchronously, so a slot that triggers another protocol
+    // exchange (sendDatapackContentMainSub → server reply) re-enters
+    // the parser before the current packet finishes parsing. The
+    // empty-cache code path on the WS transport hit this: the chain
+    // never reached sendDatapackContentMain, so the maincode tarball
+    // was never requested and parseDatapackMainSub then ran against
+    // an empty map/main/<mc>/ tree.
+    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveTheDatapack,       this,&ConnexionManager::haveTheDatapack, Qt::QueuedConnection))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveTheDatapackMainSub,       this,&ConnexionManager::haveTheDatapackMainSub))
+    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveTheDatapackMainSub,       this,&ConnexionManager::haveTheDatapackMainSub, Qt::QueuedConnection))
         abort();
 
     if(!connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&ConnexionManager::Qtlogged,Qt::QueuedConnection))
@@ -133,7 +151,16 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         abort();
     if(!connect(client,               &CatchChallenger::Api_client_real::QtconnectedOnGameServer,       this,&ConnexionManager::connectedOnGameServer))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,       this,&ConnexionManager::haveDatapackMainSubCode))
+    // Qt::QueuedConnection here mirrors qtcpu800x600 (BaseWindow.cpp).
+    // Without it, the AutoConnection fires the slot synchronously from
+    // inside the protocol parser's call frame, before
+    // commonSettingsServer.mainDatapackCode is fully set up — and on
+    // some build configs the signal is dispatched on a worker thread,
+    // making AutoConnection a Qt::DirectConnection that simply doesn't
+    // arrive in this thread's event loop. The empty-cache code path
+    // exposed this: sendDatapackContentMainSub() never ran, so the
+    // maincode tarball was never requested.
+    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,       this,&ConnexionManager::haveDatapackMainSubCode, Qt::QueuedConnection))
         abort();
     if(!connect(client,               &CatchChallenger::Api_client_real::QtgatewayCacheUpdate,       this,&ConnexionManager::gatewayCacheUpdate))
         abort();
@@ -697,8 +724,22 @@ void ConnexionManager::datapackParsedMainSub()
     emit datapackParsedMainSubMap();
 
     updateConnectingStatus();*/
-    if(!client->setMapNumber(QtDatapackClientLoader::datapackLoader->get_mapToId_size()))
-        emit newError(tr("Internal error").toStdString(),"No map loaded to call client->setMapNumber()");
+    const size_t mapCount=QtDatapackClientLoader::datapackLoader->get_mapToId_size();
+    if(!client->setMapNumber(mapCount))
+    {
+        // Empty mapToId is the normal state when the maincode datapack
+        // hasn't been downloaded yet (parseDatapackMainSub ran on a
+        // cache without map/main/<mc>/ files). The protocol later
+        // re-fires datapackParsedMainSub when the maincode tarball
+        // arrives via the http mirror — promoting this transient
+        // "size 0" condition to a fatal newError() makes
+        // --closewhenonmap kill the client before it can recover.
+        // Warn instead and let the flow continue.
+        std::cerr << "ConnexionManager::datapackParsedMainSub(): "
+                  << "setMapNumber(" << mapCount << ") returned false "
+                  << "(maincode datapack not yet downloaded, will retry)"
+                  << std::endl;
+    }
     client->have_main_and_sub_datapack_loaded();
 }
 
