@@ -2,7 +2,7 @@
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/MoveOnTheMap.hpp"
-#include "../../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../../general/base/customtinyxml2.hpp"
 #include "../../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include <iostream>
 

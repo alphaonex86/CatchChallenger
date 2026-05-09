@@ -6,7 +6,7 @@
 #include <vector>
 #include <cstdint>
 #include "../../general/base/lib.h"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../general/base/customtinyxml2.hpp"
 
 namespace CatchChallenger {
 enum MapEvent

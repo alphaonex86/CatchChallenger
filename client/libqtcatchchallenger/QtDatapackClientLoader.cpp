@@ -5,7 +5,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../general/base/customtinyxml2.hpp"
 #include <tileset.h>
 #include <mapreader.h>
 #include "Settings.hpp"

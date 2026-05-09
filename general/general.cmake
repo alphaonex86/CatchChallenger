@@ -30,24 +30,51 @@ if(NOT TARGET catchchallenger_general_minimal)
         ${CMAKE_CURRENT_LIST_DIR}/base/cpp11additionstringtointc.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/Version.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/CatchChallenger_Hash.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/blake3/blake3.c
-        ${CMAKE_CURRENT_LIST_DIR}/blake3/blake3_dispatch.c
-        ${CMAKE_CURRENT_LIST_DIR}/blake3/blake3_portable.c
-        ${CMAKE_CURRENT_LIST_DIR}/libxxhash/xxhash.c
     )
-    if(NOT CATCHCHALLENGER_NOXML)
+    if(CC_USE_SYSTEM_BLAKE3)
+        target_link_libraries(catchchallenger_general_minimal INTERFACE ${BLAKE3_LIBRARY})
+        target_include_directories(catchchallenger_general_minimal INTERFACE ${BLAKE3_INCLUDE_DIR})
+    else()
         target_sources(catchchallenger_general_minimal INTERFACE
-            ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2b.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2c.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/blake3/blake3.c
+            ${CMAKE_CURRENT_LIST_DIR}/blake3/blake3_dispatch.c
+            ${CMAKE_CURRENT_LIST_DIR}/blake3/blake3_portable.c
         )
+        # Add general/blake3 to the include path so call sites can use
+        # `<blake3.h>` regardless of whether the lib is system or vendored.
+        target_include_directories(catchchallenger_general_minimal INTERFACE
+            ${CMAKE_CURRENT_LIST_DIR}/blake3)
+    endif()
+    if(CC_USE_SYSTEM_XXHASH)
+        target_link_libraries(catchchallenger_general_minimal INTERFACE ${XXHASH_LIBRARY})
+        target_include_directories(catchchallenger_general_minimal INTERFACE ${XXHASH_INCLUDE_DIR})
+    else()
+        target_sources(catchchallenger_general_minimal INTERFACE
+            ${CMAKE_CURRENT_LIST_DIR}/libxxhash/xxhash.c
+        )
+        target_include_directories(catchchallenger_general_minimal INTERFACE
+            ${CMAKE_CURRENT_LIST_DIR}/libxxhash)
+        # XXH_INLINE_ALL only makes sense with the vendored header; the
+        # system header expects to resolve the symbols against -lxxhash.
+        target_compile_definitions(catchchallenger_general_minimal INTERFACE
+            XXH_INLINE_ALL)
+    endif()
+    if(NOT CATCHCHALLENGER_NOXML)
+        if(CC_USE_SYSTEM_TINYXML2)
+            target_link_libraries(catchchallenger_general_minimal INTERFACE ${TINYXML2_LIBRARY})
+            target_include_directories(catchchallenger_general_minimal INTERFACE
+                ${TINYXML2_INCLUDE_DIR}
+                ${CC_TINYXML2_SHIM_DIR})
+        else()
+            target_sources(catchchallenger_general_minimal INTERFACE
+                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2b.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2c.cpp
+            )
+        endif()
     endif()
     target_include_directories(catchchallenger_general_minimal INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}
-        ${CMAKE_CURRENT_LIST_DIR}/libxxhash
-    )
-    target_compile_definitions(catchchallenger_general_minimal INTERFACE
-        XXH_INLINE_ALL
     )
     if(EXTERNALLIBZSTD)
         target_compile_definitions(catchchallenger_general_minimal INTERFACE EXTERNALLIBZSTD)
@@ -116,9 +143,16 @@ if(NOT TARGET catchchallenger_general)
             ${CMAKE_CURRENT_LIST_DIR}/fight/FightLoaderBuff.cpp
             ${CMAKE_CURRENT_LIST_DIR}/fight/FightLoaderMonster.cpp
             ${CMAKE_CURRENT_LIST_DIR}/fight/FightLoaderSkill.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2b.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2c.cpp
         )
+        # tinyxml2 sources only when system lib not used (already added
+        # to catchchallenger_general_minimal otherwise; the duplicate
+        # listing here mirrored the legacy non-NOXML path).
+        if(NOT CC_USE_SYSTEM_TINYXML2)
+            target_sources(catchchallenger_general INTERFACE
+                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2b.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2c.cpp
+            )
+        endif()
     endif()
 endif()

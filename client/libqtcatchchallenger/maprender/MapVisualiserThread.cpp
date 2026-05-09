@@ -6,7 +6,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/Map_loader.hpp"
 #include "../../general/tinyXML2/tinyxml2.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../general/base/customtinyxml2.hpp"
 #include <mapobject.h>
 
 #include <isometricrenderer.h>
