@@ -8,19 +8,9 @@ make
 git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
 ```
 
-# CLI server
-```sh
-cd server/
-qmake catchchallenger-server-cli.pro
-make
-git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
 ```
 
-# Epoll server (linux only, high performance)
-**Ubuntu**: apt-get install libzstd-dev zlib1g-dev libssl-dev libpq-dev
-
-**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev
-
+# Epoll server (Unix only, was only Linux)
 ```sh
 cd server/
 qmake catchchallenger-server-cli-epoll.pro

@@ -58,6 +58,7 @@ private:
     uint64_t lastTickDbQueries_;
     uint64_t lastChartRxBytes_;
     uint64_t lastChartTxBytes_;
+    qint64 memoryBaselineBytes_;
 
     void setupNavigation();
     void setupCharts();
