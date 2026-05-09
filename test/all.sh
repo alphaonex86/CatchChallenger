@@ -28,25 +28,86 @@ cd "$(dirname "$0")"
 # single source of truth — same module the python scripts use). Done
 # once at startup; the python helper also writes a dummy config when
 # the file is missing so a fresh checkout has something to read.
-TEST_CONFIG_OUT="$(python3 -c "import test_config as c; print(c.TMPFS_ROOT); print(c.TMPFS_BUILD_ROOT); print(c.LOCAL_CACHE_ROOT); print(c.CCACHE_ROOT); print(c.PYCACHE_DIR)")"
+TEST_CONFIG_OUT="$(python3 -c "import test_config as c; print(c.TMPFS_ROOT); print(c.TMPFS_BUILD_ROOT); print(c.LOCAL_CACHE_ROOT); print(c.CCACHE_ROOT); print(c.PYCACHE_DIR); print(c.FAILED_JSON)")"
 TMPFS_ROOT="$(echo "$TEST_CONFIG_OUT"        | sed -n '1p')"
 TMPFS_BUILD_ROOT="$(echo "$TEST_CONFIG_OUT"  | sed -n '2p')"
 LOCAL_CACHE_ROOT="$(echo "$TEST_CONFIG_OUT"  | sed -n '3p')"
 CCACHE_ROOT="$(echo "$TEST_CONFIG_OUT"       | sed -n '4p')"
 PYCACHE_DIR="$(echo "$TEST_CONFIG_OUT"       | sed -n '5p')"
+FAILED_JSON="$(echo "$TEST_CONFIG_OUT"       | sed -n '6p')"
+
+# Parse args early — cleanup behaviour below depends on --continue.
+CONTINUE=0
+DIAG_ARGS=()
+NODE_LABELS=()
+ARGS=("$@")
+i=0
+while [ $i -lt ${#ARGS[@]} ]; do
+    a="${ARGS[$i]}"
+    case "$a" in
+        --continue)
+            CONTINUE=1
+            i=$((i+1))
+            ;;
+        --sanitize|--valgrind)
+            n="${ARGS[$((i+1))]}"
+            if [ -z "$n" ]; then
+                echo "$a requires a value (asan|lsan|msan or memcheck|helgrind|drd)" >&2
+                exit 2
+            fi
+            DIAG_ARGS+=("$a" "$n")
+            i=$((i+2))
+            ;;
+        --node)
+            n="${ARGS[$((i+1))]}"
+            if [ -z "$n" ]; then
+                echo "$a requires a node label (e.g. mips-lxc, x86-lxc, pentium-m, atom-n455)" >&2
+                exit 2
+            fi
+            NODE_LABELS+=("$n")
+            i=$((i+2))
+            ;;
+        *)
+            echo "unknown argument: $a" >&2
+            exit 2
+            ;;
+    esac
+done
+
+if [ "$CONTINUE" = "1" ]; then
+    # --continue mode: keep failed.json so each testing*.py only re-runs
+    # its previously-failed cases. set +e so we walk the whole list.
+    set +e
+fi
 
 # to start with fresh folder to be sure test all case.
 # EXCEPT: cc-datapack/ (datapack stage cache, see stage_datapacks.py)
 # and ccache/ (compiler cache); both are persistent benefits across
 # runs and rebuilding them every time would defeat the caching.
+# AND failed.json under --continue (it drives per-script resume).
+EXTRA_KEEP=()
+if [ "$CONTINUE" = "1" ]; then
+    EXTRA_KEEP+=(-not -path "$FAILED_JSON")
+fi
 find "$TMPFS_ROOT/" -mindepth 1 \
      -not -path "$LOCAL_CACHE_ROOT*" \
      -not -path "$CCACHE_ROOT*" \
+     "${EXTRA_KEEP[@]}" \
      -type f -delete 2>/dev/null
 find "$TMPFS_ROOT/" -mindepth 1 -maxdepth 1 \
      -not -name "$(basename "$LOCAL_CACHE_ROOT")" \
      -not -name "$(basename "$CCACHE_ROOT")" \
+     -not -name "$(basename "$FAILED_JSON")" \
      -exec rm -rf {} + 2>/dev/null
+
+if [ "$CONTINUE" = "0" ]; then
+    # No --continue: force fresh full run. Wipe failed.json so every
+    # testing*.py executes its full case matrix from scratch (no skip).
+    rm -f "$FAILED_JSON"
+    echo "[all.sh] full run from scratch (no --continue): wiped $FAILED_JSON; no test will be skipped"
+else
+    echo "[all.sh] resume run (--continue): preserving $FAILED_JSON; testing*.py will re-run only previously-failed cases"
+fi
 
 # Keep the source tree clean: route .pyc bytecode the testing*.py scripts
 # (and their imports) would normally drop into ./__pycache__/ to tmpfs.
@@ -109,40 +170,6 @@ export CCACHE_SLOPPINESS="time_macros,include_file_mtime,include_file_ctime,file
 if command -v ccache >/dev/null 2>&1; then
     ccache --max-size=25G >/dev/null 2>&1 || true
 fi
-
-CONTINUE=0
-DIAG_ARGS=()
-NODE_LABELS=()
-
-while [ $# -gt 0 ]; do
-    case "$1" in
-        --continue)
-            CONTINUE=1
-            set +e
-            shift
-            ;;
-        --sanitize|--valgrind)
-            if [ -z "$2" ]; then
-                echo "$1 requires a value (asan|lsan|msan or memcheck|helgrind|drd)" >&2
-                exit 2
-            fi
-            DIAG_ARGS+=("$1" "$2")
-            shift 2
-            ;;
-        --node)
-            if [ -z "$2" ]; then
-                echo "$1 requires a node label (e.g. mips-lxc, x86-lxc, pentium-m, atom-n455)" >&2
-                exit 2
-            fi
-            NODE_LABELS+=("$2")
-            shift 2
-            ;;
-        *)
-            echo "unknown argument: $1" >&2
-            exit 2
-            ;;
-    esac
-done
 
 if [ ${#NODE_LABELS[@]} -gt 0 ]; then
     # join with commas; consumed by remote_build.py at module load time.
