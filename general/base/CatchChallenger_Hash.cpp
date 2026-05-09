@@ -1,5 +1,5 @@
 #include "CatchChallenger_Hash.hpp"
-#include "../blake3/blake3.h"
+#include <blake3.h>
 #include <cstring>
 
 using namespace CatchChallenger;

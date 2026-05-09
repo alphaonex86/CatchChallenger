@@ -45,6 +45,7 @@
 using namespace CatchChallenger;
 
 EpollServer *server=NULL;
+bool bench_exit_after_bind=false;
 #ifndef CATCHCHALLENGER_NOXML
 TinyXMLSettings *settings=NULL;
 #endif
@@ -139,6 +140,15 @@ int main(int argc, char *argv[])
         std::cerr << "argc<1: wrong arg count" << std::endl;
         return EXIT_FAILURE;
     }
+    {
+        int ai=1;
+        while(ai<argc)
+        {
+            if(strcmp(argv[ai],"--bench-exit")==0)
+                bench_exit_after_bind=true;
+            ++ai;
+        }
+    }
     if(argc>=2 && (strcmp(argv[1],"--help")==0 || strcmp(argv[1],"-h")==0 || strcmp(argv[1],"help")==0))
     {
         std::cout << "Usage: " << argv[0] << " [OPTION]" << std::endl;
@@ -150,6 +160,7 @@ int main(int argc, char *argv[])
 #ifdef CATCHCHALLENGER_CACHE_HPS
         std::cout << "  save, --save, -s    Parse the datapack, write datapack-cache.bin, then exit" << std::endl;
 #endif
+        std::cout << "  --bench-exit        Exit cleanly right after the listen socket is bound (no event loop)" << std::endl;
         std::cout << "  help, --help, -h    Display this help message and exit" << std::endl;
         std::cout << std::endl;
         std::cout << "Files:" << std::endl;
@@ -548,6 +559,17 @@ int main(int argc, char *argv[])
     #else
     #error Define what do here
     #endif
+
+    if(bench_exit_after_bind)
+    {
+        const auto endTs=std::chrono::steady_clock::now();
+        const auto totalMs=std::chrono::duration_cast<std::chrono::milliseconds>(endTs-EpollGenericServer::processStart).count();
+        std::cout << "BENCH startup_total_ms=" << totalMs << std::endl;
+        server->close();
+        server->unload_the_data();
+        delete server;
+        return EXIT_SUCCESS;
+    }
 
     EpollClientList *epollClientList=new EpollClientList();
     ClientList::list=epollClientList;

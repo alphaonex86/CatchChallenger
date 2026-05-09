@@ -3,7 +3,7 @@
 #ifndef CATCHCHALLENGER_SERVER
 #include "../CommonDatapack.hpp"
 #endif
-#include "../../tinyXML2/customtinyxml2.hpp"
+#include "../../base/customtinyxml2.hpp"
 #include <algorithm>
 #include <iostream>
 #include <regex>

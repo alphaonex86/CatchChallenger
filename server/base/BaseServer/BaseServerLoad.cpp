@@ -3,7 +3,7 @@
 #include "../GlobalServerData.hpp"
 #ifndef CATCHCHALLENGER_NOXML
 #include "../../general/tinyXML2/tinyxml2.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../general/base/customtinyxml2.hpp"
 #endif
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"

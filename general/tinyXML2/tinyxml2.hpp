@@ -1,4 +1,11 @@
 #ifndef CATCHCHALLENGER_NOXML
+#ifdef CC_TINYXML2_SYSTEM
+// CCCommon.cmake defined CC_TINYXML2_SYSTEM, meaning the build picked up
+// the system libtinyxml2 (>=v9). Forward this header to the system one
+// so every existing relative include of "tinyxml2.hpp" in our tree
+// transparently resolves to <tinyxml2.h> without touching call sites.
+#include <tinyxml2.h>
+#else
 /*
 Original code by Lee Thomason (www.grinninglizard.com)
 
@@ -2106,4 +2113,5 @@ private:
 #endif
 
 #endif // TINYXML2_INCLUDED
+#endif // CC_TINYXML2_SYSTEM
 #endif // CATCHCHALLENGER_NOXML

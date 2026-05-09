@@ -10,7 +10,7 @@
 #include "../../general/base/Map_loader.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
 #include "../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../general/base/customtinyxml2.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../general/hps/hps.h"
 #include <fstream>

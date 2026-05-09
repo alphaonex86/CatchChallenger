@@ -82,6 +82,37 @@ endif()
 set(CMAKE_AUTOGEN_PARALLEL AUTO)
 set(CMAKE_AUTOMOC_RELAXED_MODE OFF)
 
+# ── compile-time parallelism ───────────────────────────────────────────
+# Per-file compilation in gcc/clang is inherently single-threaded — cc1plus
+# is one process per .cpp. Wall-clock parallelism comes from the build
+# system (ninja -jN, make -jN). The ONE compiler-side knob that actually
+# multi-threads is LTO's worker pool: gcc's -flto=auto / clang's
+# -flto-jobs=N spawn that many parallel LTO partitions during link.
+#
+# Only emit the flag when LTO is actually enabled (CMAKE_INTERPROCEDURAL_
+# OPTIMIZATION) — otherwise -flto=N would *enable* LTO as a side-effect,
+# which CLAUDE.md forbids ("optional accelerators must NEVER be required").
+if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+    if(NOT DEFINED _cc_link_jobs)
+        include(ProcessorCount)
+        ProcessorCount(_cc_link_jobs)
+    endif()
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # gcc accepts =auto (since 10) which means "use $(nproc) — same as
+        # passing the count explicitly, but resilient to cores being added.
+        add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-flto=auto>)
+        add_link_options(-flto=auto)
+        message(STATUS "lto: gcc -flto=auto")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # clang's ThinLTO: -flto=thin then -flto-jobs=N for the link pool.
+        if(_cc_link_jobs GREATER 0)
+            add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-flto=thin>)
+            add_link_options(-flto=thin -flto-jobs=${_cc_link_jobs})
+            message(STATUS "lto: clang -flto=thin -flto-jobs=${_cc_link_jobs}")
+        endif()
+    endif()
+endif()
+
 # Default standards: C++23 / C11. A binary CMakeLists.txt can override
 # by setting CMAKE_CXX_STANDARD before include()ing this file (the
 # testing*.py matrix flips between c++11 and c++23 to cover both ends).
@@ -111,6 +142,57 @@ target_compile_options(catchchallenger_common_flags INTERFACE
 target_compile_definitions(catchchallenger_common_flags INTERFACE
     $<$<PLATFORM_ID:Linux>:__linux__>
 )
+
+# ── multi-threaded linker autopick ─────────────────────────────────────
+# GNU bfd ld is single-threaded; mold and lld are multi-threaded by
+# default (mold uses all hw threads, ld.lld uses --threads=all unless
+# overridden). Both produce identical link output. Probe what's on the
+# host and propagate -fuse-ld=… to every consumer of catchchallenger_common_flags.
+#
+# Order:
+#   1. mold  — fastest on ELF (Linux), but no PE/COFF or Mach-O backend yet
+#   2. lld   — works on ELF/PE/Mach-O, so cross-compiles to MinGW/macOS
+#              also benefit
+#   3. default linker (bfd/system) when neither is installed
+#
+# Per CLAUDE.md: optional accelerators must NEVER be hard-required —
+# the build still produces a working binary on a vanilla VPS without
+# either tool. The CACHE-stamped CC_LINKER variable lets a binary's
+# CMakeLists.txt override (e.g. force lld even on Linux) without
+# editing this file.
+if(NOT DEFINED CC_LINKER)
+    find_program(_cc_mold_exe mold)
+    find_program(_cc_lld_exe NAMES ld.lld lld)
+    if(_cc_mold_exe AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_CROSSCOMPILING)
+        set(CC_LINKER "mold" CACHE STRING "Linker driver flag picked by CCCommon.cmake")
+    elseif(_cc_lld_exe)
+        set(CC_LINKER "lld" CACHE STRING "Linker driver flag picked by CCCommon.cmake")
+    else()
+        set(CC_LINKER "" CACHE STRING "Linker driver flag picked by CCCommon.cmake")
+    endif()
+endif()
+if(CC_LINKER)
+    target_link_options(catchchallenger_common_flags INTERFACE -fuse-ld=${CC_LINKER})
+    # Both mold and ld.lld default to "all hardware threads" already, but
+    # be explicit so a future env where the default changed (or an older
+    # lld < 11 that defaulted to single-threaded) still gets full
+    # parallelism. ProcessorCount returns 0 when it can't tell — guard
+    # against that and only emit the flag with a positive count.
+    include(ProcessorCount)
+    ProcessorCount(_cc_link_jobs)
+    if(_cc_link_jobs GREATER 0)
+        if(CC_LINKER STREQUAL "mold")
+            # mold spelling: --thread-count=N (also accepts --threads=N as alias)
+            target_link_options(catchchallenger_common_flags INTERFACE
+                "LINKER:--thread-count=${_cc_link_jobs}")
+        elseif(CC_LINKER STREQUAL "lld")
+            # ld.lld spelling: --threads=N
+            target_link_options(catchchallenger_common_flags INTERFACE
+                "LINKER:--threads=${_cc_link_jobs}")
+        endif()
+    endif()
+    message(STATUS "linker: -fuse-ld=${CC_LINKER} (threads=${_cc_link_jobs})")
+endif()
 
 # Top-level toggles. Mirror qmake CONFIG+= switches. These are options
 # (not cache vars), so callers can override via -D on the cmake line.
@@ -198,4 +280,120 @@ else()
     add_subdirectory(${CC_REPO_ROOT}/general/libzstd/build/cmake
                      ${CMAKE_BINARY_DIR}/_libzstd EXCLUDE_FROM_ALL)
     set(ZSTD_LIBRARY libzstd_static)
+endif()
+
+# ── system-vs-vendored discovery for the small leaf libs ───────────────
+# For each of blake3 / xxhash / tinyxml2 we try to find the system shared
+# library AND its public header, and we accept it only when it advertises
+# at least the minimum version the vendored copy ships. When system is
+# accepted CC_USE_SYSTEM_<X>=ON; otherwise the vendored sources are
+# compiled in by general/general.cmake. Cross-compile builds default to
+# vendored (system is the host's, not the target's).
+include(CheckCSourceCompiles)
+
+# Helper: probe a system <lib>.h for a "<MAJOR>.<MINOR>.<PATCH>" string
+# >= the vendored minimum. Pure preprocessor — no link required, so we
+# can short-circuit the find_library call when the version is too old.
+function(_cc_check_system_header HEADER_PATH VERSION_DEFINE MIN_VERSION OUT_VAR)
+    if(NOT EXISTS "${HEADER_PATH}")
+        set(${OUT_VAR} OFF PARENT_SCOPE)
+        return()
+    endif()
+    file(STRINGS "${HEADER_PATH}" _ver_line REGEX "${VERSION_DEFINE}.*\"[0-9]+\\.[0-9]+\\.[0-9]+\"")
+    if(NOT _ver_line)
+        set(${OUT_VAR} OFF PARENT_SCOPE)
+        return()
+    endif()
+    string(REGEX REPLACE ".*\"([0-9]+\\.[0-9]+\\.[0-9]+)\".*" "\\1" _ver "${_ver_line}")
+    if(_ver VERSION_LESS "${MIN_VERSION}")
+        set(${OUT_VAR} OFF PARENT_SCOPE)
+    else()
+        set(${OUT_VAR} ON PARENT_SCOPE)
+        set(${OUT_VAR}_VERSION "${_ver}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+# Force-toggle hooks for distros / CI nodes that need to pin behaviour.
+# Default: try system on a normal host build; force vendored on cross.
+if(ANDROID OR CMAKE_CROSSCOMPILING)
+    set(_system_default OFF)
+else()
+    set(_system_default ON)
+endif()
+option(EXTERNALLIBBLAKE3   "Use system libblake3 if found"   ${_system_default})
+option(EXTERNALLIBXXHASH   "Use system libxxhash if found"   ${_system_default})
+option(EXTERNALLIBTINYXML2 "Use system libtinyxml2 if found" ${_system_default})
+
+# blake3 — vendored is 1.8.2; require >= 1.8.0 from system.
+set(CC_USE_SYSTEM_BLAKE3 OFF)
+if(EXTERNALLIBBLAKE3)
+    find_path(BLAKE3_INCLUDE_DIR NAMES blake3.h)
+    find_library(BLAKE3_LIBRARY NAMES blake3)
+    if(BLAKE3_INCLUDE_DIR AND BLAKE3_LIBRARY)
+        _cc_check_system_header("${BLAKE3_INCLUDE_DIR}/blake3.h" "BLAKE3_VERSION_STRING" "1.8.0" _blake3_ok)
+        if(_blake3_ok)
+            set(CC_USE_SYSTEM_BLAKE3 ON)
+            message(STATUS "blake3: system ${BLAKE3_INCLUDE_DIR}/blake3.h v${_blake3_ok_VERSION}")
+        endif()
+    endif()
+endif()
+
+# xxhash — vendored matches upstream 0.8.x (XXH_VERSION_NUMBER 800+); require >= 0.8.0.
+set(CC_USE_SYSTEM_XXHASH OFF)
+if(EXTERNALLIBXXHASH)
+    find_path(XXHASH_INCLUDE_DIR NAMES xxhash.h)
+    find_library(XXHASH_LIBRARY NAMES xxhash)
+    if(XXHASH_INCLUDE_DIR AND XXHASH_LIBRARY)
+        # xxhash exposes its version as 3 separate numeric defines, not a
+        # quoted string — synthesise a comparison without the helper.
+        file(STRINGS "${XXHASH_INCLUDE_DIR}/xxhash.h" _xxh_major REGEX "#define[ \t]+XXH_VERSION_MAJOR[ \t]+[0-9]+")
+        file(STRINGS "${XXHASH_INCLUDE_DIR}/xxhash.h" _xxh_minor REGEX "#define[ \t]+XXH_VERSION_MINOR[ \t]+[0-9]+")
+        if(_xxh_major AND _xxh_minor)
+            string(REGEX REPLACE ".*XXH_VERSION_MAJOR[ \t]+([0-9]+).*" "\\1" _xxh_M "${_xxh_major}")
+            string(REGEX REPLACE ".*XXH_VERSION_MINOR[ \t]+([0-9]+).*" "\\1" _xxh_m "${_xxh_minor}")
+            if(_xxh_M GREATER 0 OR _xxh_m GREATER_EQUAL 8)
+                set(CC_USE_SYSTEM_XXHASH ON)
+                message(STATUS "xxhash: system ${XXHASH_INCLUDE_DIR}/xxhash.h v${_xxh_M}.${_xxh_m}.x")
+            endif()
+        endif()
+    endif()
+endif()
+
+# tinyxml2 — vendored is the 2016 v3 fork. The system-side header switched
+# to <tinyxml2.h> with the same tinyxml2:: namespace and the call sites we
+# use (XMLDocument, LoadFile, FirstChildElement, IntAttribute, …) are
+# stable from v6 onwards. Require >= 9.0.0 to stay safely above the minor
+# API renames in 5.x.
+set(CC_USE_SYSTEM_TINYXML2 OFF)
+if(EXTERNALLIBTINYXML2)
+    find_path(TINYXML2_INCLUDE_DIR NAMES tinyxml2.h)
+    find_library(TINYXML2_LIBRARY NAMES tinyxml2)
+    if(TINYXML2_INCLUDE_DIR AND TINYXML2_LIBRARY)
+        # tinyxml2 exposes TIXML2_MAJOR_VERSION / _MINOR / _PATCH as
+        # `static const int` constants (not preprocessor strings), so we
+        # match the integer literal directly.
+        file(STRINGS "${TINYXML2_INCLUDE_DIR}/tinyxml2.h" _tx2_major REGEX "TIXML2_MAJOR_VERSION[ \t]*=[ \t]*[0-9]+")
+        if(_tx2_major)
+            string(REGEX REPLACE ".*TIXML2_MAJOR_VERSION[ \t]*=[ \t]*([0-9]+).*" "\\1" _tx2_M "${_tx2_major}")
+            if(_tx2_M GREATER_EQUAL 9)
+                set(CC_USE_SYSTEM_TINYXML2 ON)
+                message(STATUS "tinyxml2: system ${TINYXML2_INCLUDE_DIR}/tinyxml2.h v${_tx2_M}.x")
+            endif()
+        endif()
+    endif()
+endif()
+
+# When system tinyxml2 is in use we still need the source-level compat
+# header path "tinyxml2.hpp" (vendored uses the .hpp suffix) to resolve.
+# Generate a one-line shim into the build tree and put that on the
+# include path so every existing `#include "tinyxml2.hpp"` keeps working.
+if(CC_USE_SYSTEM_TINYXML2)
+    set(_tx2_shim_dir "${CMAKE_BINARY_DIR}/_tinyxml2_shim")
+    file(MAKE_DIRECTORY "${_tx2_shim_dir}")
+    file(WRITE "${_tx2_shim_dir}/tinyxml2.hpp"
+         "#pragma once\n#include <tinyxml2.h>\n")
+    set(CC_TINYXML2_SHIM_DIR "${_tx2_shim_dir}")
+    # Source-level branch flag for callers that touch APIs renamed
+    # between v3 (vendored, 2016) and v6+ (e.g. GetErrorStr1/2 → ErrorStr).
+    add_compile_definitions(CC_TINYXML2_SYSTEM=1)
 endif()

@@ -1,5 +1,5 @@
 #include "Map_loader.hpp"
-#include "../tinyXML2/customtinyxml2.hpp"
+#include "../base/customtinyxml2.hpp"
 #include "CommonDatapack.hpp"
 #include "GeneralVariable.hpp"
 #include "CommonDatapackServerSpec.hpp"
@@ -796,8 +796,6 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
     unsigned int index=0;
     unsigned int sub_index;
     std::string tmxRemove(".tmx");
-    std::regex mapFilter("\\.tmx$");
-    std::regex mapExclude("[\"']");
 
     index=0;
     while(index<returnList.size())
@@ -811,7 +809,9 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         //client's (server has e.g. 184 maps, client 182), so a player saved on the
         //last server-only map ends up with an out-of-range mapId on the client
         //(mapId=183 >= maps.size()=182 -> ABORT initial player load, black map).
-        if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude)
+        if(stringEndsWith(fileName,tmxRemove)
+                && fileName.find('"')==std::string::npos
+                && fileName.find('\'')==std::string::npos
                 && FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName)=="tmx")
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
