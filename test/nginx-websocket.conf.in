@@ -1,0 +1,46 @@
+# nginx config used by test/testingwebsocket.py.
+#
+# Edit this file to tweak listen options, locations, headers, etc.
+# without touching the python harness. testingwebsocket.py only
+# substitutes three placeholders at runtime:
+#   @PREFIX@     → tmpfs work-dir (logs, pid, temp_path bases)
+#   @WWW_ROOT@   → directory containing the staged datapack symlink
+#   @NGINX_PORT@ → HTTP listen port for the datapack mirror
+#
+# This nginx instance only serves the datapack over HTTP. The WebSocket
+# bridge is handled by `dev-python/websockify`, which is launched as a
+# separate process by testingwebsocket.py (websockify forwards a WS
+# port to the server's raw-TCP listen port).
+
+worker_processes 1;
+daemon off;
+error_log @PREFIX@/error.log warn;
+pid @PREFIX@/nginx.pid;
+
+events {
+    worker_connections 64;
+}
+
+http {
+    access_log @PREFIX@/access.log;
+    client_body_temp_path @PREFIX@/client_body;
+    proxy_temp_path @PREFIX@/proxy;
+    fastcgi_temp_path @PREFIX@/fastcgi;
+    uwsgi_temp_path @PREFIX@/uwsgi;
+    scgi_temp_path @PREFIX@/scgi;
+
+    default_type application/octet-stream;
+    sendfile on;
+    keepalive_timeout 30;
+
+    server {
+        listen @NGINX_PORT@ default_server;
+        server_name localhost;
+        root @WWW_ROOT@;
+        autoindex on;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
