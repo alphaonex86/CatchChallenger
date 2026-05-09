@@ -98,6 +98,16 @@ Explain code where is not clear. Try compile with make -j32 after changes to see
 * **Prefer nested `if`/`else` over `continue`.** Don't use guard `continue;` to skip iterations — wrap rest of body in `if(...) { ... }`. Yes, this nests deeply; that is the style here.
 * **Logging in .cpp files.** Never `fprintf`/`printf`. Use `qDebug()`/`qWarning()`/`qCritical()` when function/file is mostly Qt; `std::cout`/`std::cerr << ... << std::endl` when mostly plain C++ (general/, server/, libcatchchallenger/, ProtocolParsing*, FacilityLibGeneral, etc.).
 * **Revert changes that fix nothing.** Only changes that demonstrably move [FAIL] to [PASS] stay. Don't accumulate "maybe-this-helps" patches.
+* **Add temporary debug prints when a bug is opaque — then remove them
+  once it's fixed.** Better than guessing blindly. Sprinkle
+  `std::cerr << "[TRACE] ..." << std::endl` (or `qDebug()` in Qt code)
+  at the suspected branch points, run the failing test, READ the
+  output, locate the actual divergence, fix it, then strip every
+  `[TRACE]` line in the same commit as the fix. Do NOT leave traces
+  behind — they were diagnostic, not the fix. Workflow that has
+  worked: add traces → run → identify root cause from trace order →
+  apply minimal fix → re-run to confirm PASS → remove traces →
+  re-run again to confirm PASS still holds without them.
 
 # Project Overview
 CatchChallenger is a Pokémon-like MMORPG engine in C++/Qt. Designed for extremely constrained hardware (i486 66MHz, Geode LX800, MIPS2, RISC-V, RPI1). Epoll server handles hundreds of players with 10-20MB RAM base + 1-4KB per player.
