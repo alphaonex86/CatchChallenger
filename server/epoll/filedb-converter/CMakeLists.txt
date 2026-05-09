@@ -10,11 +10,23 @@ include(${CMAKE_CURRENT_LIST_DIR}/../../../general/CCCommon.cmake)
 add_executable(filedb-converter
     main.cpp
     FiledbConverter.cpp
-    # tinyXML2 sources (vendored, three-file split — see general/).
-    ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2.cpp
-    ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2b.cpp
-    ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2c.cpp
 )
+
+# tinyXML2: pull from system when CCCommon.cmake detected it (>=v9), else
+# fall back to the vendored 3-file split shipped in general/tinyXML2/.
+# The .hpp shim and CC_TINYXML2_SYSTEM macro come from CCCommon.cmake.
+if(CC_USE_SYSTEM_TINYXML2)
+    target_link_libraries(filedb-converter PRIVATE ${TINYXML2_LIBRARY})
+    target_include_directories(filedb-converter PRIVATE
+        ${TINYXML2_INCLUDE_DIR}
+        ${CC_TINYXML2_SHIM_DIR})
+else()
+    target_sources(filedb-converter PRIVATE
+        ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2.cpp
+        ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2b.cpp
+        ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2c.cpp
+    )
+endif()
 
 target_compile_definitions(filedb-converter PRIVATE
     CATCHCHALLENGER_DB_FILE
