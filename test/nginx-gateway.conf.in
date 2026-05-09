@@ -1,0 +1,32 @@
+worker_processes 1;
+daemon on;
+error_log @PREFIX@/error.log warn;
+pid @PREFIX@/nginx.pid;
+
+events {
+    worker_connections 64;
+}
+
+http {
+    access_log @PREFIX@/access.log;
+    client_body_temp_path @PREFIX@/client_body;
+    proxy_temp_path @PREFIX@/proxy;
+    fastcgi_temp_path @PREFIX@/fastcgi;
+    uwsgi_temp_path @PREFIX@/uwsgi;
+    scgi_temp_path @PREFIX@/scgi;
+
+    default_type application/octet-stream;
+    sendfile on;
+    keepalive_timeout 30;
+
+    server {
+        listen @NGINX_PORT@ default_server;
+        server_name localhost;
+        root @WWW_ROOT@;
+        autoindex on;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}

@@ -208,11 +208,16 @@ run_test testingtools.py
 run_test testingmap2png.py
 run_test testingmap4client.py
 run_test testingqtserver.py
+run_test testingfight.py
 run_test testingclient.py
 run_test testingbots.py
 run_test testingserver.py
 run_test testinghttp.py
+run_test testingwebsocket.py
+run_test testinggateway.py
 run_test testingmulti.py
+run_test testingbyIA.py
+run_test testingremote.py
 run_test testingcompilationwindows.py
 # testingcompilationmac.py disabled: host VM /Users/user/Desktop/... has
 # cmake missing from the non-login ssh PATH, so every cmake-configure step

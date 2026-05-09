@@ -81,6 +81,10 @@ _OPTION_MACROS = {
     # macros so testing*.py can request them via extra_defines.
     "CATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER",
     "CATCHCHALLENGER_BUILD_QTCPU800X600_SINGLEPLAYER",
+    # WebSocket transports — opt-in per client. testingwebsocket.py
+    # enables both so the client can dial ws:// URLs via --url.
+    "CATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS",
+    "CATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS",
 }
 
 # _PRO_TO_CMAKE: legacy .pro path -> (cmake_target, configure_flags, source_subdir).
@@ -185,6 +189,14 @@ _PRO_TO_CMAKE = {
         [],
         "client/qtcpu800x600",
     ),
+    # test/fight/ — fight engine unit tests; no .pro, but routed through
+    # the same .pro->cmake table so testingfight.py can call
+    # cmake_helpers.build_project() without a special case.
+    "test/fight/testfightengine.pro": (
+        "testfightengine",
+        [],
+        "test/fight",
+    ),
     # qtopengl moved up to client/CMakeLists.txt; client/qtopengl/ is now
     # source-only (no CMakeLists.txt). Both legacy .pro paths point at
     # the new client/ project.
@@ -220,7 +232,15 @@ def classify_extra_defines(extra_defines):
     flag_defs = []
     for macro in extra_defines:
         if "=" in macro:
-            flag_defs.append("-D" + macro)
+            # `MACRO=VALUE` syntax — when MACRO is a known cmake option,
+            # pass it as a cmake -D flag (e.g. =OFF to disable an
+            # otherwise-default-ON feature). Otherwise treat as a raw
+            # compiler define.
+            name = macro.split("=", 1)[0]
+            if name in _OPTION_MACROS:
+                cmake_opts.append("-D" + macro)
+            else:
+                flag_defs.append("-D" + macro)
             continue
         if macro in _OPTION_MACROS:
             cmake_opts.append(f"-D{macro}=ON")
