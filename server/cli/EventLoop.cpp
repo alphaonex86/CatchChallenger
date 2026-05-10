@@ -114,22 +114,50 @@ struct UringState
 };
 static UringState *g_uring=nullptr;
 
-//Tagging scheme on cqe->user_data:
-// bit 0 == 0 -> poll_multishot CQE (legacy path), pointer is BaseClassSwitch*
-// bit 0 == 1 -> recv_multishot CQE, pointer = (BaseClassSwitch*)(udata & ~1)
-//Pointer alignment makes bit 0 always 0 for legitimate object addresses.
+//Tagging scheme on cqe->user_data (low 2 bits, mutually exclusive):
+// 00 -> poll_multishot CQE (legacy path), pointer is BaseClassSwitch*
+// 01 -> recv_multishot CQE, pointer = (BaseClassSwitch*)(udata & ~3)
+// 10 -> Phase 3 send-chain final CQE, pointer = (PendingSendOp*)(udata & ~3)
+//Pointer alignment makes low 2 bits always 0 for legitimate heap/stack
+//object addresses (malloc returns 16-byte-aligned on glibc).
 static inline __u64 URING_TAG_RECV(void *p)
 {
     return reinterpret_cast<__u64>(p) | 0x1ULL;
 }
 static inline bool URING_IS_RECV(__u64 u)
 {
-    return (u & 0x1ULL) != 0;
+    return (u & 0x3ULL) == 0x1ULL;
+}
+static inline __u64 URING_TAG_SEND_CHAIN(void *p)
+{
+    return reinterpret_cast<__u64>(p) | 0x2ULL;
+}
+static inline bool URING_IS_SEND_CHAIN(__u64 u)
+{
+    return (u & 0x3ULL) == 0x2ULL;
 }
 static inline void *URING_UNTAG(__u64 u)
 {
-    return reinterpret_cast<void *>(u & ~0x1ULL);
+    return reinterpret_cast<void *>(u & ~0x3ULL);
 }
+
+//Phase 3: per-call state for an in-flight datapack-send SQE chain.
+//The chain submits header_send + per-file (metadata_send +
+//splice file→pipe + splice pipe→sock + close file_fd). All
+//intermediate SQEs use user_data=0 (dropped silently); only the
+//final SQE in the chain carries URING_TAG_SEND_CHAIN(this) so we
+//get exactly one completion CQE per chain.
+//
+//Owned bytes (header / per-file metadata) live here because the
+//SQE references the buffer by pointer; the chain takes time to
+//drain so the bytes must outlive Client::sendFileContent() return.
+struct PendingSendOp
+{
+    BaseClassSwitch *client;       //onAsyncSendChainComplete() target
+    std::vector<int> file_fds;     //all pre-opened files; closed by chain
+    std::string header_buf;        //packet header bytes (6 = 1+4+1)
+    std::vector<std::string> meta; //per-file metadata bytes (1+name+4 each)
+};
 
 uint32_t pollMaskToEpoll(uint32_t mask)
 {
@@ -499,6 +527,37 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
                     }
                 }
             }
+            else if(URING_IS_SEND_CHAIN(udata))
+            {
+                //Phase 3: final CQE of a datapack-send chain. All
+                //intermediate CQEs (header send, per-file metadata
+                //send, splice file→pipe, splice pipe→sock, close)
+                //had user_data=0 and were silently dropped above.
+                //We only see this one. cqe->res reflects only the
+                //LAST SQE (close); a partial chain failure shows
+                //up as -ECANCELED on intermediate CQEs (dropped)
+                //AND -ECANCELED on this final close CQE (since
+                //the cancellation propagates down the link chain).
+                PendingSendOp *op=
+                    static_cast<PendingSendOp *>(URING_UNTAG(udata));
+                const bool success=(res>=0);
+                //Close any fds that the chain didn't manage to close
+                //itself (e.g. chain failed before reaching the close
+                //SQEs). Best-effort, idempotent.
+                size_t fi=0;
+                while(fi<op->file_fds.size())
+                {
+                    if(op->file_fds[fi]>=0)
+                    {
+                        ::close(op->file_fds[fi]);
+                        op->file_fds[fi]=-1;
+                    }
+                    fi++;
+                }
+                if(op->client!=nullptr)
+                    op->client->onAsyncSendChainComplete(success);
+                delete op;
+            }
             else
             {
                 void *ptr=reinterpret_cast<void *>(udata);
@@ -663,6 +722,147 @@ bool EventLoop::armRecvMultishot(int fd,void *user_data)
     io_uring_sqe_set_data64(sqe,URING_TAG_RECV(user_data));
     if(io_uring_submit(&g_uring->ring)<0)
         return false;
+    return true;
+}
+
+bool EventLoop::uringEnabled() const
+{
+    return g_uring!=nullptr;
+}
+
+bool EventLoop::submitDatapackChain(int sock_fd,
+                                    int pipe_r,int pipe_w,
+                                    const char *header_bytes,size_t header_len,
+                                    const std::vector<std::string> &per_file_meta,
+                                    const std::vector<int> &file_fds,
+                                    const std::vector<std::vector<size_t> > &per_file_chunks,
+                                    BaseClassSwitch *client)
+{
+    if(g_uring==nullptr)
+        return false;
+    if(per_file_meta.size()!=file_fds.size()
+       || per_file_meta.size()!=per_file_chunks.size())
+    {
+        std::cerr << "submitDatapackChain: vector size mismatch" << std::endl;
+        return false;
+    }
+    //Pre-count required SQEs so we can reject early if the SQ can't fit.
+    //Per file: 1 send (metadata) + 2 splice per chunk + 1 close.
+    //Plus 1 leading header send.
+    size_t needed=(header_len>0?1:0);
+    size_t fi=0;
+    while(fi<per_file_meta.size())
+    {
+        needed+=1;//metadata send
+        needed+=2*per_file_chunks[fi].size();//splice in + splice out
+        needed+=1;//close
+        fi++;
+    }
+    if(needed==0)
+        return false;
+    if(io_uring_sq_space_left(&g_uring->ring)<needed)
+        return false;
+    //Heap-own all bytes referenced by SQEs so they outlive submission.
+    PendingSendOp *op=new PendingSendOp();
+    op->client=client;
+    op->file_fds=file_fds;
+    op->header_buf.assign(header_bytes,header_len);
+    op->meta=per_file_meta;
+    //Build chain. Every SQE except the last gets IOSQE_IO_LINK; every
+    //SQE except the last gets user_data=0 so the CQE drain drops it.
+    //The last SQE carries URING_TAG_SEND_CHAIN(op) so we get exactly
+    //one final completion to free state.
+    io_uring_sqe *sqe;
+    //Header send.
+    if(header_len>0)
+    {
+        sqe=io_uring_get_sqe(&g_uring->ring);
+        if(sqe==nullptr)
+        {
+            delete op;
+            return false;
+        }
+        io_uring_prep_send(sqe,sock_fd,op->header_buf.data(),
+                           op->header_buf.size(),MSG_NOSIGNAL);
+        sqe->flags |= IOSQE_IO_LINK;
+        io_uring_sqe_set_data64(sqe,0);
+    }
+    fi=0;
+    while(fi<per_file_meta.size())
+    {
+        const bool is_last_file=(fi+1==per_file_meta.size());
+        //Per-file metadata send.
+        sqe=io_uring_get_sqe(&g_uring->ring);
+        if(sqe==nullptr)
+        {
+            //SQ exhaustion mid-build. We've already submitted nothing
+            //(io_uring_submit not yet called), but the partially-built
+            //chain occupies SQ slots. Drop them by submitting now —
+            //they'll race with previously-arming-only SQEs but the
+            //link chain breaks here so consequences are bounded. KISS.
+            delete op;
+            return false;
+        }
+        io_uring_prep_send(sqe,sock_fd,op->meta[fi].data(),
+                           op->meta[fi].size(),MSG_NOSIGNAL);
+        sqe->flags |= IOSQE_IO_LINK;
+        io_uring_sqe_set_data64(sqe,0);
+        //Per-chunk splice pair.
+        size_t ci=0;
+        while(ci<per_file_chunks[fi].size())
+        {
+            const size_t chunk=per_file_chunks[fi][ci];
+            //file -> pipe
+            sqe=io_uring_get_sqe(&g_uring->ring);
+            if(sqe==nullptr)
+            {
+                delete op;
+                return false;
+            }
+            io_uring_prep_splice(sqe,file_fds[fi],-1,pipe_w,-1,
+                                 chunk,SPLICE_F_MOVE);
+            sqe->flags |= IOSQE_IO_LINK;
+            io_uring_sqe_set_data64(sqe,0);
+            //pipe -> sock
+            sqe=io_uring_get_sqe(&g_uring->ring);
+            if(sqe==nullptr)
+            {
+                delete op;
+                return false;
+            }
+            io_uring_prep_splice(sqe,pipe_r,-1,sock_fd,-1,
+                                 chunk,SPLICE_F_MOVE);
+            sqe->flags |= IOSQE_IO_LINK;
+            io_uring_sqe_set_data64(sqe,0);
+            ci++;
+        }
+        //Close the file fd. Last SQE in chain (only if last file): final
+        //CQE that surfaces, tagged with op pointer.
+        sqe=io_uring_get_sqe(&g_uring->ring);
+        if(sqe==nullptr)
+        {
+            delete op;
+            return false;
+        }
+        io_uring_prep_close(sqe,file_fds[fi]);
+        if(is_last_file)
+        {
+            io_uring_sqe_set_data64(sqe,URING_TAG_SEND_CHAIN(op));
+            //Last SQE: do NOT set IOSQE_IO_LINK (chain ends here).
+        }
+        else
+        {
+            sqe->flags |= IOSQE_IO_LINK;
+            io_uring_sqe_set_data64(sqe,0);
+        }
+        fi++;
+    }
+    if(io_uring_submit(&g_uring->ring)<0)
+    {
+        std::cerr << "submitDatapackChain: io_uring_submit failed" << std::endl;
+        delete op;
+        return false;
+    }
     return true;
 }
 #endif

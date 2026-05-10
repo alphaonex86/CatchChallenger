@@ -12,6 +12,10 @@
 // call sites pass epoll_event and EPOLL* mask bits regardless of
 // backend. The non-epoll backends translate internally.
 #include "win32_compat.hpp"
+#ifdef CATCHCHALLENGER_IO_URING
+#include <string>
+#include <vector>
+#endif
 
 #if (defined(CATCHCHALLENGER_SELECT) + defined(CATCHCHALLENGER_POLL) + defined(CATCHCHALLENGER_IO_URING)) > 1
 #error CATCHCHALLENGER_SELECT, CATCHCHALLENGER_POLL, and CATCHCHALLENGER_IO_URING are mutually exclusive
@@ -46,6 +50,31 @@ public:
     //poll_multishot dispatch stays primary while the substrate matures.
     bool armRecvMultishot(int fd,void *user_data);
     bool multishotEnabled() const;
+    //Phase 3: submit one SQE chain that sends a packet header, then
+    //per-file (metadata bytes + splice file→pipe + splice pipe→sock +
+    //close file_fd). Intermediate CQEs are silently dropped; one
+    //final CQE invokes client->onAsyncSendChainComplete(success).
+    //Bytes referenced by header_bytes / per_file_meta MUST live until
+    //completion — the caller is expected to heap-own them via
+    //PendingSendOp. file_fds are closed by the chain itself; the
+    //client struct must not double-close on disconnect.
+    //pipe_r / pipe_w form a per-client splice pipe (lazy-created by
+    //the caller, kept open for connection's life).
+    //Returns false if the SQ couldn't fit the chain — caller falls
+    //back to the synchronous sendfile path.
+    //
+    //per_file_chunks: for file i, sizes of consecutive chunks to
+    //splice (sum must equal the file's intended send length). Pipe
+    //capacity caps each chunk at ~64 KiB by default; caller chunks.
+    bool submitDatapackChain(int sock_fd,
+                             int pipe_r,int pipe_w,
+                             const char *header_bytes,size_t header_len,
+                             const std::vector<std::string> &per_file_meta,
+                             const std::vector<int> &file_fds,
+                             const std::vector<std::vector<size_t> > &per_file_chunks,
+                             class BaseClassSwitch *client);
+    //True iff io_uring backend is initialised (regardless of multishot).
+    bool uringEnabled() const;
 #endif
 private:
     int efd;

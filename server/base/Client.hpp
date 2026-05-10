@@ -41,6 +41,11 @@
     #endif
 #endif
 
+//Forward-decl in the global namespace so Client::asBaseClassSwitch()
+//can return ::BaseClassSwitch * without dragging cli/BaseClassSwitch.hpp
+//into shared server/base headers.
+class BaseClassSwitch;
+
 namespace CatchChallenger {
 
 //herit from EventLoop into server/cli/ClientMapManagementEpoll.hpp ... for eatch implementation, then this code here is free of unix/Qt structre
@@ -765,6 +770,30 @@ private:
 
     void generateRandomNumber();
     uint32_t randomSeedsSize() const override;
+
+    #if defined(CATCHCHALLENGER_SERVER) && defined(CATCHCHALLENGER_IO_URING)
+public:
+    //Phase 3 — per-client async datapack send state.
+    //splice_pipe_{r,w}: lazily created pipe2(O_CLOEXEC) used by the
+    //io_uring splice chain (file -> pipe -> sock). Kept open for the
+    //connection's life; closed in disconnectClient().
+    //async_send_in_progress: guards against re-entering sendFileContent
+    //while a chain is still draining (callers fall back to sync send).
+    int splice_pipe_read;
+    int splice_pipe_write;
+    bool async_send_in_progress;
+    //Phase 3 completion handler. Not virtual: ClientWithMapEventLoop's
+    //BaseClassSwitch::onAsyncSendChainComplete override forwards here
+    //(Client doesn't inherit BaseClassSwitch — the cli subclass does).
+    void onAsyncSendChainCompleteImpl(bool success);
+    //Subclasses (cli ClientWithMapEventLoop) provide the underlying
+    //socket fd and BaseClassSwitch downcast so sendFileContent() can
+    //submit the SQE chain without pulling cli/EventLoopClient into
+    //server/base. Defaults to -1/nullptr (no-op fallback).
+    virtual int getEventLoopFd() const { return -1; }
+    virtual ::BaseClassSwitch *asBaseClassSwitch() { return nullptr; }
+private:
+    #endif
 protected:
     //normal management related
     void errorOutput(const std::string &errorString) override;
