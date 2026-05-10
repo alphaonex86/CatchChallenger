@@ -93,6 +93,7 @@ import time
 import build_paths
 import diagnostic
 from cmd_helpers import assert_port_or_fail
+import phase_timer
 
 build_paths.ensure_root()
 
@@ -132,7 +133,12 @@ SERVER_PRO           = os.path.join(ROOT, "server", "epoll",
 SERVER_CMAKELISTS    = os.path.join(ROOT, "server", "epoll", "CMakeLists.txt")
 
 COMPILE_TIMEOUT      = 900
-SERVER_READY_TIMEOUT = 60
+# SQLite cold-start preallocates an EpollClientList of max-players=2000
+# entries (each ~1KB+ ClientWithMapEpoll); on a busy host this takes
+# 60-90s. 60s used to be the limit and we'd miss bind by a few seconds.
+# 180s leaves margin without making a stuck server worse — Server.stop()
+# kills the binary on the upper bound either way.
+SERVER_READY_TIMEOUT = 180
 NICE_PREFIX_COMPILE  = ["nice", "-n", "19", "ionice", "-c", "3"]
 
 # ── colours / logging ─────────────────────────────────────────────────────
@@ -150,7 +156,7 @@ _t_started = [time.monotonic()]
 
 def log_info(msg):
     with _print_lock:
-        print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
+        print(f"{phase_timer.t()} {C_CYAN}[INFO]{C_RESET} {msg}")
 
 
 def log_skip(name, detail=""):
@@ -161,13 +167,15 @@ def log_skip(name, detail=""):
 def log_pass(name, detail="", elapsed=0.0):
     with _print_lock:
         results.append((name, True, detail, elapsed))
-        print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+        print(f"{phase_timer.t()} {C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+        phase_timer.record_event("pass", name, ok=True, dt=elapsed, detail=detail)
 
 
 def log_fail(name, detail="", elapsed=0.0):
     with _print_lock:
         results.append((name, False, detail, elapsed))
-        print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+        print(f"{phase_timer.t()} {C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+        phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
 
 
 # ── method-fingerprint guard ──────────────────────────────────────────────
@@ -308,15 +316,24 @@ def build_server(backend_id, db_define):
     log_info(f"[{backend_id}] building with -D{db_define}")
 
     if os.path.isfile(SERVER_CMAKELISTS):
-        # CMake path: pass DB define via CXXFLAGS.
+        # CMake path: select DB backend via the named CMake option, NOT
+        # via raw -DCMAKE_CXX_FLAGS=-DCATCHCHALLENGER_DB_FOO. The
+        # CMakeLists.txt enables CATCHCHALLENGER_DB_FILE by default
+        # when no backend option is set; passing -DCATCHCHALLENGER_DB_FILE
+        # via CXXFLAGS would just stack a second `#define` next to the
+        # default, leaving BOTH FILE and SQLITE active for the SQLITE
+        # backend build. That confuses BaseServerLoadSQL.cpp's nested
+        # `#if SQL / #else FILE` (different branches each declare
+        # `databaseMapId` — having both compiled = redeclaration error).
+        # Use the option name directly so the ifs in CMakeLists pick
+        # exactly one backend.
         env = os.environ.copy()
-        env["CXXFLAGS"] = f"{env.get('CXXFLAGS', '')} -D{db_define}".strip()
         rc = subprocess.run(
             NICE_PREFIX_COMPILE + [
                 "cmake", "-S", os.path.dirname(SERVER_CMAKELISTS),
                 "-B", bdir,
                 "-DCMAKE_BUILD_TYPE=Release",
-                f"-DCMAKE_CXX_FLAGS=-D{db_define}",
+                f"-D{db_define}=ON",
             ], cwd=ROOT, env=env, timeout=COMPILE_TIMEOUT,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         )

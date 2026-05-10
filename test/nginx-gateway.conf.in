@@ -1,5 +1,8 @@
 worker_processes 1;
-daemon on;
+# We launch nginx with `-g "daemon off;"` so the harness owns its
+# lifetime via Popen. Setting `daemon` again here would be a duplicate
+# directive (rejected by nginx 1.26+); leave it out and rely on the -g
+# override.
 error_log @PREFIX@/error.log warn;
 pid @PREFIX@/nginx.pid;
 

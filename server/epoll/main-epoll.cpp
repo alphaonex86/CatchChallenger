@@ -21,6 +21,16 @@
 #include "EpollServer.hpp"
 #include "EpollClientList.hpp"
 #include "Epoll.hpp"
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+// EpollDatabase is the polymorphic base; the SQL-event dispatch at
+// the bottom of main() casts events[i].data.ptr to EpollDatabase*
+// when the EpollObjectType is Database. Without this include the
+// SQLITE backend (which has no dedicated EpollSQLite.hpp wrapping
+// the include) builds with `EpollDatabase was not declared in this
+// scope`. PostgreSQL/MySQL paths pull this header transitively via
+// their own subclass headers below.
+#include "db/EpollDatabase.hpp"
+#endif
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
 #include "db/EpollPostgresql.hpp"
 #endif

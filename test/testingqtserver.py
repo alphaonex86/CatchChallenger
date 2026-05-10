@@ -65,21 +65,23 @@ _last_log = [time.monotonic()]
 
 
 def log_info(msg):
-    print(f"{C_CYAN}[INFO]{C_RESET} {msg}", flush=True)
+    print(f"{phase_timer.t()} {C_CYAN}[INFO]{C_RESET} {msg}", flush=True)
 
 def log_pass(name, detail=""):
     now = time.monotonic()
     elapsed = now - _last_log[0]
     _last_log[0] = now
     results.append((name, True, detail, elapsed))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)", flush=True)
+    print(f"{phase_timer.t()} {C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)", flush=True)
+    phase_timer.record_event("pass", name, ok=True, dt=elapsed, detail=detail)
 
 def log_fail(name, detail=""):
     now = time.monotonic()
     elapsed = now - _last_log[0]
     _last_log[0] = now
     results.append((name, False, detail, elapsed))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)", flush=True)
+    print(f"{phase_timer.t()} {C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)", flush=True)
+    phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
     li = 0
     _ctx = diagnostic.last_cmd_lines()
     while li < len(_ctx):
@@ -89,6 +91,7 @@ def log_fail(name, detail=""):
 
 # ── failed.json resume plumbing ─────────────────────────────────────────────
 import failed_cases as _fc
+import phase_timer
 
 
 def load_failed_cases():
@@ -226,8 +229,14 @@ def setup_runtime():
 def test_run():
     name = SCRIPT_RUN_NAME
     if not os.path.isfile(SERVER_BIN):
-        log_fail(name, f"binary missing: {SERVER_BIN}")
-        return False
+        # all.sh wipes the build dir between runs, so a "compile
+        # passed previously" cache entry doesn't imply the binary
+        # still exists. Rebuild on demand instead of failing the
+        # whole script — ccache makes the compile cheap.
+        log_info(f"binary missing: {SERVER_BIN} — rebuilding")
+        if not test_compile():
+            log_fail(name, f"binary missing and rebuild failed: {SERVER_BIN}")
+            return False
     if not setup_runtime():
         return False
     # Headless run: catchchallenger-server-gui now uses QApplication (Qt

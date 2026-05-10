@@ -108,6 +108,7 @@ from test_config import FAILED_JSON
 
 
 import failed_cases as _fc
+import phase_timer
 
 
 def load_failed_cases():
@@ -131,7 +132,7 @@ def save_failed_cases():
 
 
 def log_info(msg):
-    print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
+    print(f"{phase_timer.t()} {C_CYAN}[INFO]{C_RESET} {msg}")
 
 
 def log_pass(name, detail=""):
@@ -141,7 +142,8 @@ def log_pass(name, detail=""):
     results.append((name, True, detail, elapsed))
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
-    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"{phase_timer.t()} {C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("pass", name, ok=True, dt=elapsed, detail=detail)
 
 
 def log_fail(name, detail=""):
@@ -151,7 +153,8 @@ def log_fail(name, detail=""):
     results.append((name, False, detail, elapsed))
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
-    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"{phase_timer.t()} {C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
     li = 0
     _ctx = diagnostic.last_cmd_lines()
     while li < len(_ctx):
@@ -581,6 +584,18 @@ def build_android_apk(pro_file, build_dir, label):
     shutil.copy2(aab_src, aab_dst_path)
     log_pass(name, f"-> {os.path.relpath(apk_dst_path, ROOT)} + "
                    f"{os.path.relpath(aab_dst_path, ROOT)}")
+    # Static-baseline size guard. A .apk / .aab that shrinks below 75%
+    # of its known-good size means an entire library / asset bucket
+    # silently dropped out (broken Qt deploy, empty assets/, missing
+    # libcatchchallenger). 10 MiB is the absolute floor — anything
+    # smaller can't possibly contain a Qt-for-Android runtime.
+    import size_check
+    apk_label = "android.apk." + label
+    ok, detail = size_check.verify(apk_label, apk_dst_path)
+    (log_pass if ok else log_fail)(f"size {apk_label}", detail)
+    aab_label = "android.aab." + label
+    ok, detail = size_check.verify(aab_label, aab_dst_path)
+    (log_pass if ok else log_fail)(f"size {aab_label}", detail)
     return apk_dst_path
 
 

@@ -93,6 +93,7 @@ from test_config import FAILED_JSON
 
 
 import failed_cases as _fc
+import phase_timer
 
 
 def load_failed_cases():
@@ -166,7 +167,7 @@ ERROR_WHITELIST = [
 
 
 def log_info(msg):
-    print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
+    print(f"{phase_timer.t()} {C_CYAN}[INFO]{C_RESET} {msg}")
 
 def log_pass(name, detail=""):
     now = time.monotonic()
@@ -175,7 +176,8 @@ def log_pass(name, detail=""):
     results.append((name, True, detail, elapsed))
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
-    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"{phase_timer.t()} {C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("pass", name, ok=True, dt=elapsed, detail=detail)
 
 def log_fail(name, detail=""):
     now = time.monotonic()
@@ -184,7 +186,8 @@ def log_fail(name, detail=""):
     results.append((name, False, detail, elapsed))
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
-    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"{phase_timer.t()} {C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
     li = 0
     _ctx = diagnostic.last_cmd_lines()
     while li < len(_ctx):

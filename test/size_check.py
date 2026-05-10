@@ -1,0 +1,120 @@
+"""
+size_check.py — Static-baseline artifact-size guard.
+
+Every shipping artifact (apk / aab / msi / exe / dmg / installer zip)
+has a known-good size baked into BASELINES below. After producing
+each artifact, the cross-build harnesses call `verify(label, path)`
+which:
+
+    1. Reads the actual file size on disk.
+    2. Fails when the file does NOT exist.
+    3. Fails when size < ABSOLUTE_FLOOR (10 MiB).
+    4. Fails when size < 0.75 × baseline (the artifact shrank
+       suspiciously — empty .apk, missing libs in .msi, etc.).
+    5. Passes otherwise.
+
+The baselines are deliberately HARD-CODED. Drift is the signal: when
+a real source change shrinks a binary by >25%, an operator must
+**manually** update BASELINES rather than letting CI auto-bless. The
+test refuses to silently track regressions.
+
+Updating a baseline: when a legitimate refactor / lib swap shrinks an
+artifact, look at the new size, set the BASELINES entry to that value,
+and commit it as a deliberate change. The PR review then explicitly
+sees the baseline edit alongside the source edit.
+
+Why 75% (not 50%, not 90%)?
+  - <50%: too lax — a half-broken installer (missing translations,
+    missing Qt plugins) would pass.
+  - >90%: too tight — every minor source change would trip the guard
+    for no diagnostic value.
+  - 75% catches the obvious "something major dropped out" without
+    flapping on routine 5–10% size shifts.
+"""
+
+import os
+
+# Absolute floor — every shipping artifact must clear 10 MiB. A
+# server-only build below this is broken (no Qt deps deployed); a
+# client below this is missing the runtime libs.
+ABSOLUTE_FLOOR = 10 * 1024 * 1024  # 10 MiB
+
+# Static baselines, captured from a known-good build snapshot. Update
+# when a real source change shifts the size; do NOT update mechanically
+# from the latest run (that would defeat the regression guard).
+#
+# Sizes are expressed in bytes for clarity at the call site.
+BASELINES = {
+    # ── Android (qt-for-android arm64-v8a, Qt 6.8) ────────────────────
+    "android.apk.qtopengl":   32_000_000,   # ~30.7 MiB
+    "android.aab.qtopengl":   19_000_000,   # ~18.3 MiB
+
+    # ── Windows MXE x86_64 (Qt 6.8 Debug) ─────────────────────────────
+    # The .exe is the unstripped Debug binary — symbols dominate the
+    # size; release would be 5–10× smaller. Baseline matches the Debug
+    # value the testing harness actually produces.
+    "windows.exe.qtcpu800x600":      490_000_000,   # ~467 MiB
+    "windows.exe.qtopengl":          492_000_000,   # ~469 MiB
+    # NSIS installer .zip — 7z-compressed Qt6 deps + the .exe.
+    "windows.installer.qtcpu800x600": 100_000_000,   # ~95 MiB (placeholder)
+    "windows.installer.qtopengl":     100_000_000,   # ~95 MiB (placeholder)
+    # WiX 3.11 .msi — comparable to the .zip (lzx compression).
+    "windows.msi.qtcpu800x600":       100_000_000,   # ~95 MiB (placeholder)
+    "windows.msi.qtopengl":           100_000_000,   # ~95 MiB (placeholder)
+
+    # ── macOS osxcross (Qt 6.5.3) ─────────────────────────────────────
+    # Bundle .zip of the .app + datapack/. macdeployqt brings in
+    # frameworks, so the .zip is comparable to the Windows installer.
+    "macos.bundle.qtcpu800x600":      100_000_000,   # placeholder
+    "macos.bundle.qtopengl":          100_000_000,   # placeholder
+    "macos.dmg.qtcpu800x600":         100_000_000,   # placeholder
+    "macos.dmg.qtopengl":             100_000_000,   # placeholder
+}
+
+
+# Every entry above is required to be present even if the artifact
+# isn't produced on a given run — tests that don't build a particular
+# kind (e.g. android skipped due to missing AVD) just don't call
+# verify(). Missing baselines are a programming error and surface
+# loudly.
+def baseline_for(label):
+    if label not in BASELINES:
+        raise KeyError(
+            f"size_check: no baseline for {label!r}; add it to "
+            f"BASELINES in test/size_check.py")
+    return BASELINES[label]
+
+
+def verify(label, path):
+    """Return (ok: bool, detail: str). NEVER raises — caller logs."""
+    if not os.path.isfile(path):
+        return False, f"artifact missing: {path}"
+    try:
+        size = os.path.getsize(path)
+    except OSError as e:
+        return False, f"stat({path}) failed: {e}"
+    baseline = baseline_for(label)
+    floor = max(ABSOLUTE_FLOOR, int(0.75 * baseline))
+    human_size = _human(size)
+    human_baseline = _human(baseline)
+    human_floor = _human(floor)
+    if size < floor:
+        # Pick the more informative reason.
+        if size < ABSOLUTE_FLOOR:
+            why = f"{human_size} < 10 MiB hard floor"
+        else:
+            why = (f"{human_size} < 75% of baseline {human_baseline} "
+                   f"(floor {human_floor})")
+        return False, f"size regression on {label}: {why}"
+    return True, (f"{human_size} (baseline {human_baseline}, "
+                  f"floor {human_floor})")
+
+
+def _human(n):
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        return f"{n/1024:.1f} KiB"
+    if n < 1024 * 1024 * 1024:
+        return f"{n/(1024*1024):.1f} MiB"
+    return f"{n/(1024*1024*1024):.2f} GiB"

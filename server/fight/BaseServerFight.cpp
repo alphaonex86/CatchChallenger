@@ -43,7 +43,7 @@ void BaseServer::preload_19_async_sql_monsters_max_id()
             queryText="SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;";
         break;
         #endif
-        #ifndef CATCHCHALLENGER_SERVER
+        #if defined(CATCHCHALLENGER_DB_SQLITE)
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;";
         break;

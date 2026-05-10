@@ -17,7 +17,8 @@ import sys
 sys.dont_write_bytecode = True
 
 
-import os, sys, subprocess, json, time
+import os, sys, subprocess, json, time, threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import remote_build as _rb
 from remote_build import (REMOTE_NODES, configure_timeout_for,
                           compile_timeout_for)
@@ -87,7 +88,14 @@ CXX_VERSION = "c++11"
 COMPILE_TIMEOUT = 600
 RSYNC_TIMEOUT = 300
 EXEC_RSYNC_TIMEOUT = 300
-EXEC_BIND_TIMEOUT = 60
+# Datapack load on a slow LXC + non-cached cold run can spend most of
+# its time spitting "Unable to open the xml file" warnings (one per
+# skill). Empirically a fresh load on x86-lxc takes ~60s before the
+# bind line lands; 60s used to be the limit and we'd miss it by
+# milliseconds. 180s gives margin without making a stuck server
+# noticeably worse — `timeout(1)` kills the binary on the upper bound
+# either way.
+EXEC_BIND_TIMEOUT = 180
 NICE_PREFIX = ["nice", "-n", "19"]
 
 # Datapack source on the local machine. Staged onto each exec node next
@@ -106,6 +114,14 @@ C_RESET = "\033[0m"
 
 results = []
 _last_log_time = [time.monotonic()]
+# When per-node compile runs on a worker thread, log_pass / log_fail's
+# `elapsed since last log` value would be meaningless across threads
+# (every other thread keeps mutating the global timestamp). Hold a
+# lock around the print + result append so individual log lines stay
+# whole, and use a threading.local fallback for the elapsed counter
+# so each worker shows time-since-its-own-previous-event.
+_log_lock = threading.Lock()
+_tls = threading.local()
 
 SCRIPT_NAME = os.path.basename(__file__)
 from test_config import FAILED_JSON
@@ -136,27 +152,48 @@ def save_failed_cases():
     _fc.save(SCRIPT_NAME, failed)
 
 
+import phase_timer
+
+
+def _thread_last_log():
+    """Return (and lazily init) the per-thread `last log time` so the
+    elapsed-since-last-log column stays meaningful when nodes run on
+    worker threads in parallel. Falls back to the global on the main
+    thread for back-compat with single-threaded behaviour."""
+    if not hasattr(_tls, "last"):
+        _tls.last = time.monotonic()
+    return _tls
+
+
 def log_info(msg):
-    print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
+    with _log_lock:
+        print(f"{phase_timer.t()} {C_CYAN}[INFO]{C_RESET} {msg}")
+    phase_timer.record_event("info", msg, ok=True, dt=0.0)
 
 def log_pass(name, detail=""):
+    tls = _thread_last_log()
     now = time.monotonic()
-    elapsed = now - _last_log_time[0]
-    _last_log_time[0] = now
-    results.append((name, True, detail, elapsed))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+    elapsed = now - tls.last
+    tls.last = now
+    with _log_lock:
+        results.append((name, True, detail, elapsed))
+        print(f"{phase_timer.t()} {C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("pass", name, ok=True, dt=elapsed, detail=detail)
 
 def log_fail(name, detail=""):
+    tls = _thread_last_log()
     now = time.monotonic()
-    elapsed = now - _last_log_time[0]
-    _last_log_time[0] = now
-    results.append((name, False, detail, elapsed))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
-    li = 0
-    _ctx = diagnostic.last_cmd_lines()
-    while li < len(_ctx):
-        print(_ctx[li])
-        li += 1
+    elapsed = now - tls.last
+    tls.last = now
+    with _log_lock:
+        results.append((name, False, detail, elapsed))
+        print(f"{phase_timer.t()} {C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+        li = 0
+        _ctx = diagnostic.last_cmd_lines()
+        while li < len(_ctx):
+            print(_ctx[li])
+            li += 1
+    phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
 
 
 def ssh_cmd(host, port, command, timeout=COMPILE_TIMEOUT):
@@ -253,6 +290,46 @@ def detect_cmake(host, port):
         return cmake
     log_fail(f"detect cmake on {host}", "cmake not found")
     return None
+
+
+def detect_qt6(host, port):
+    """Detect Qt6Config.cmake on the remote node so we can SKIP a node
+    that cmake / ninja are present on but Qt6 isn't installed yet
+    (every CC binary's CMakeLists.txt does `find_package(Qt6 REQUIRED
+    ...)`, so without Qt6 every configure fails identically with rc=1).
+
+    Returns True when Qt6 looks usable, False when missing. We do NOT
+    log_fail on missing Qt6 — the operator hasn't installed Qt6 yet
+    on that node and a per-PRO failure storm just masks the underlying
+    "Qt6 absent" condition. Caller logs an info-level skip instead."""
+    # Common install layouts:
+    #   /usr/lib/cmake/Qt6/Qt6Config.cmake          (Gentoo, Fedora)
+    #   /usr/lib/<triplet>/cmake/Qt6/Qt6Config.cmake (Debian/Ubuntu)
+    #   /opt/qt6/lib/cmake/Qt6/Qt6Config.cmake      (manual install)
+    #   $HOME/qt6-*/<ver>/<plat>/lib/cmake/Qt6/...  (operator-managed)
+    # An ls -d glob on each candidate is faster than a `find /` walk.
+    probe = (
+        "for d in /usr/lib/cmake/Qt6 /usr/lib/*/cmake/Qt6 "
+        "/usr/lib64/cmake/Qt6 /opt/qt6/lib/cmake/Qt6 "
+        "/opt/Qt6/lib/cmake/Qt6 $HOME/qt6-*/*/*/lib/cmake/Qt6; do "
+        "  [ -f \"$d/Qt6Config.cmake\" ] && { echo \"$d\"; exit 0; }; "
+        "done; "
+        # Fallback: have qmake6 tell us. Some non-standard installs
+        # only ship qmake6 + Qt6Config in a hashed path.
+        "command -v qmake6 >/dev/null 2>&1 && "
+        "qmake6 -query QT_INSTALL_LIBS 2>/dev/null | "
+        "  while read d; do [ -f \"$d/cmake/Qt6/Qt6Config.cmake\" ] && "
+        "  { echo \"$d/cmake/Qt6\"; exit 0; }; done; "
+        "exit 1"
+    )
+    rc, out = ssh_cmd(host, port, probe, timeout=20)
+    if _is_timeout(out):
+        log_info(f"detect Qt6 on {host}: TIMEOUT (treating as missing)")
+        return False
+    if rc == 0 and out.strip():
+        log_info(f"detected Qt6 on {host}: {out.strip().splitlines()[0]}")
+        return True
+    return False
 
 
 # Phase 5 (qmake -> CMake): builds on remote nodes now drive cmake too.
@@ -609,32 +686,84 @@ def _run_on_exec_node(compile_host, compile_port, compile_remote_dir,
     work = exec_node["work_dir"]
     bin_path = f"{work}/{target}"
     # chmod +x just in case the rsync didn't preserve mode bits across
-    # exotic filesystems, then run with timeout(1) so a hung server can't
-    # block the test forever even when ssh_cmd's own timeout fires.
+    # exotic filesystems, then stream the binary's stdout through SSH
+    # back to us. Two earlier shapes failed:
+    #
+    #   `... | head -80` — datapack load on the test maincode emits
+    #       100+ "Unable to open the xml file" warnings (one per
+    #       skill, see CLAUDE.md "datapack/map/main/test/" intentional
+    #       bugs) BEFORE the success marker, so head dropped the bind
+    #       line and every exec phase failed identically.
+    #
+    #   `... | awk '...' | tail -300` — awk exits at "correctly bind:",
+    #       which closes its stdin pipe, but the server enters its
+    #       epoll loop and DOES NOT write to stdout afterward. SIGPIPE
+    #       only fires on the next write, so the server stays alive
+    #       until `timeout(1)` kills it — wasting the full
+    #       EXEC_BIND_TIMEOUT regardless of how fast bind happened.
+    #
+    # The current shape: client-side Popen with line-buffered reads.
+    # We close the SSH pipe (and pkill the remote binary) the moment
+    # we see the marker, so a warm-cache run finishes in ~5–10s
+    # instead of always burning the whole timeout. The remote
+    # `timeout(1)` is still the upper bound on a binary that never
+    # binds.
     run_cmd = (
         f"chmod +x {bin_path} && "
         f"cd {work} && "
-        f"timeout {EXEC_BIND_TIMEOUT}s ./{target} 2>&1 | head -80"
+        f"timeout {EXEC_BIND_TIMEOUT}s ./{target} 2>&1"
     )
-    rc, out = ssh_cmd(f"{user}@{host}", port, run_cmd,
-                      timeout=EXEC_BIND_TIMEOUT + 30)
-    # stop any leftover server (in case "correctly bind:" appeared but
-    # the head -80 closed the pipe before SIGTERM)
+    timeout = EXEC_BIND_TIMEOUT + 30
+    ssh_args = ["ssh"] + SSH_OPTS_LIST + ["-p", str(port),
+                                          f"{user}@{host}", run_cmd]
+    diagnostic.record_cmd(ssh_args, None)
+    captured = []
+    found = False
+    deadline = time.monotonic() + clamp_ssh(timeout)
+    try:
+        proc = subprocess.Popen(ssh_args, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                bufsize=1, text=True,
+                                errors="replace")
+    except OSError as e:
+        log_fail(test_name, f"ssh spawn failed: {e}")
+        return False
+    try:
+        while True:
+            if time.monotonic() > deadline:
+                proc.terminate()
+                break
+            line = proc.stdout.readline()
+            if line == "":  # EOF — remote side died/closed
+                break
+            line = line.rstrip("\n")
+            captured.append(line)
+            if "correctly bind:" in line:
+                found = True
+                # Close ssh pipe + kill server promptly so the next
+                # phase doesn't queue behind a 180s timeout(1).
+                proc.terminate()
+                break
+    finally:
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            try: proc.wait(timeout=5)
+            except subprocess.TimeoutExpired: pass
+    # Always reap the remote binary explicitly — the SSH-side
+    # `timeout(1)` only fires after the full EXEC_BIND_TIMEOUT, and
+    # if our terminate() above raced the binary may still be running.
     ssh_cmd(f"{user}@{host}", port,
             f"pkill -f {target} 2>/dev/null; true", timeout=10)
-    if _is_timeout(out):
-        log_fail(test_name,
-                 f"exec ssh TIMEOUT after {EXEC_BIND_TIMEOUT + 30}s")
-        return False
-    if "correctly bind:" in out:
+    if found:
         log_pass(test_name, "correctly bind: detected")
         return True
     log_fail(test_name, "no 'correctly bind:' before timeout")
-    lines = out.splitlines()
-    start = max(0, len(lines) - 20)
+    start = max(0, len(captured) - 20)
     li = start
-    while li < len(lines):
-        print(f"  | {lines[li]}")
+    while li < len(captured):
+        print(f"  | {captured[li]}")
         li += 1
     return False
 
@@ -725,6 +854,19 @@ def test_server(label, host, port, use_mold, remote_dir, failed_cases=None,
         if cmake is None:
             return
 
+        # Without Qt6 every CC binary's CMakeLists.txt fails the
+        # find_package(Qt6 REQUIRED ...) call with cmake rc=1, which
+        # then logs N identical [FAIL] lines (one per PRO_FILE) — a
+        # noise storm that hides the real cause. Detect once, log_info
+        # the skip, and short-circuit. The operator must install Qt6
+        # on the node (we never auto-install per CLAUDE.md). Resume
+        # mode (--continue) won't loop on these because we don't write
+        # any failure record for the skipped node.
+        if not detect_qt6(host, port):
+            log_info(f"skipping {label}: Qt6 not installed on remote "
+                     f"(install dev-qt/qtbase or equivalent and re-run)")
+            return
+
         idx = 0
         while idx < len(PRO_FILES):
             if should_run(f"compile {PRO_FILES[idx]} ({label})", failed_cases):
@@ -766,23 +908,50 @@ def main():
 
     if diagnostic.is_active(DIAG):
         log_info(f"diagnostic mode: {diagnostic.describe(DIAG)}")
+
+    # Build the worklist first (filtering by diag/compiler/etc.), THEN
+    # fan out across nodes. Nodes are independent — different ssh
+    # endpoints, different work_dirs, different ccache slots — so
+    # serialising them was leaving every node's CPU idle while one
+    # node compiled. With a thread per node, each waits on its own
+    # SSH while others make progress; total wall time drops from
+    # sum(node_times) to max(node_times).
+    work = []
     idx = 0
     while idx < len(SERVERS):
         label, host, port, use_mold, remote_dir = SERVERS[idx]
-        # filter nodes that don't have the compiler we need for the diag mode
         node = next((n for n in REMOTE_NODES if n["label"] == label), None)
         if node is not None and not diagnostic.node_supports(node, DIAG):
             need = diagnostic.compiler_name(DIAG)
             log_info(f"skipping {label}: node has no {need} (diag mode)")
             idx += 1
             continue
-        # exec_nodes is the per-compile-node list of remote machines that
-        # receive the just-built binary + runtime files. Defaults to []
-        # (no run phase) when the JSON entry omits it.
         exec_nodes = node.get("execution_nodes", []) if node else []
-        test_server(label, host, port, use_mold, remote_dir, failed_cases,
-                    exec_nodes=exec_nodes)
+        work.append((label, host, port, use_mold, remote_dir, exec_nodes))
         idx += 1
+
+    # max_workers = len(work) so every selected node gets its own
+    # thread. They're I/O-bound on SSH for most of their lifetime (the
+    # remote build runs on the remote CPU), so the GIL doesn't bite.
+    if work:
+        log_info(f"fanning out across {len(work)} node(s) in parallel")
+        max_workers = max(1, len(work))
+        with ThreadPoolExecutor(max_workers=max_workers,
+                                thread_name_prefix="cc-remote") as pool:
+            futures = []
+            wi = 0
+            while wi < len(work):
+                label, host, port, use_mold, remote_dir, exec_nodes = work[wi]
+                futures.append(pool.submit(test_server, label, host, port,
+                                           use_mold, remote_dir,
+                                           failed_cases,
+                                           exec_nodes=exec_nodes))
+                wi += 1
+            # Drain completions; re-raise any worker exception so a
+            # crashed node fails the whole run rather than silently
+            # disappearing.
+            for fut in as_completed(futures):
+                fut.result()
 
     # summary
     print(f"\n{C_CYAN}{'='*60}")

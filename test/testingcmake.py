@@ -53,13 +53,16 @@ C_RESET  = "\033[0m"
 
 SCRIPT_NAME = os.path.basename(__file__)
 from test_config import FAILED_JSON, TMPFS_BUILD_ROOT
+import phase_timer
 
 
 def log_pass(label, secs=0.0):
-    print(f"  [{C_GREEN}PASS{C_RESET}] {label}  ({secs:.1f}s)")
+    print(f"{phase_timer.t()}   [{C_GREEN}PASS{C_RESET}] {label}  ({secs:.1f}s)")
+    phase_timer.record_event("pass", label, ok=True, dt=secs)
 
 def log_fail(label, why, secs=0.0):
-    print(f"  [{C_RED}FAIL{C_RESET}] {label}  {why}  ({secs:.1f}s)")
+    print(f"{phase_timer.t()}   [{C_RED}FAIL{C_RESET}] {label}  {why}  ({secs:.1f}s)")
+    phase_timer.record_event("fail", label, ok=False, dt=secs, detail=why)
 
 
 def discover_standalone_cmakelists():
