@@ -1,5 +1,5 @@
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-#include "EpollPostgresql.hpp"
+#include "EventLoopPostgresql.hpp"
 
 #include <iostream>
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include "../Epoll.hpp"
+#include "../EventLoop.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
 #include "../../../general/base/cpp11addition.hpp"
 #ifdef DEBUG_MESSAGE_CLIENT_SQL
@@ -19,24 +19,24 @@
 #include <ctime>
 #include <thread>
 
-std::string EpollPostgresql::emptyString;
-CatchChallenger::DatabaseBaseCallBack EpollPostgresql::emptyCallback;
-CatchChallenger::DatabaseBaseCallBack EpollPostgresql::tempCallback;
-bool EpollPostgresql::informationDisplayed=false;
+std::string EventLoopPostgresql::emptyString;
+CatchChallenger::DatabaseBaseCallBack EventLoopPostgresql::emptyCallback;
+CatchChallenger::DatabaseBaseCallBack EventLoopPostgresql::tempCallback;
+bool EventLoopPostgresql::informationDisplayed=false;
 
-void EpollPostgresql::noticeReceiver(void *arg, const PGresult *res)
+void EventLoopPostgresql::noticeReceiver(void *arg, const PGresult *res)
 {
     (void)arg;
     (void)res;
 }
 
-void EpollPostgresql::noticeProcessor(void *arg, const char *message)
+void EventLoopPostgresql::noticeProcessor(void *arg, const char *message)
 {
     (void)arg;
     (void)message;
 }
 
-EpollPostgresql::EpollPostgresql() :
+EventLoopPostgresql::EventLoopPostgresql() :
     conn(NULL),
     tuleIndex(-1),
     ntuples(0),
@@ -53,19 +53,19 @@ EpollPostgresql::EpollPostgresql() :
     /*queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
     queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);*/
 
-    if(EpollPostgresql::informationDisplayed==false)
+    if(EventLoopPostgresql::informationDisplayed==false)
     {
         #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         std::cout << "CATCHCHALLENGER_DB_PREPAREDSTATEMENT enabled" << std::endl;
         #else
         std::cout << "CATCHCHALLENGER_DB_PREPAREDSTATEMENT disabled" << std::endl;
         #endif
-        EpollPostgresql::informationDisplayed=true;
+        EventLoopPostgresql::informationDisplayed=true;
     }
     startTime = time(NULL);
 }
 
-EpollPostgresql::~EpollPostgresql()
+EventLoopPostgresql::~EventLoopPostgresql()
 {
     if(result!=NULL)
     {
@@ -79,7 +79,7 @@ EpollPostgresql::~EpollPostgresql()
     }
 }
 
-bool EpollPostgresql::setMaxDbQueries(const unsigned int &maxDbQueries)
+bool EventLoopPostgresql::setMaxDbQueries(const unsigned int &maxDbQueries)
 {
     if(maxDbQueries<2)
         return false;
@@ -87,17 +87,17 @@ bool EpollPostgresql::setMaxDbQueries(const unsigned int &maxDbQueries)
     return true;
 }
 
-BaseClassSwitch::EpollObjectType EpollPostgresql::getType() const
+BaseClassSwitch::EventLoopObjectType EventLoopPostgresql::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Database;
+    return BaseClassSwitch::EventLoopObjectType::Database;
 }
 
-bool EpollPostgresql::isConnected() const
+bool EventLoopPostgresql::isConnected() const
 {
     return conn!=NULL && started;
 }
 
-bool EpollPostgresql::syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password)
+bool EventLoopPostgresql::syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password)
 {
     if(conn!=NULL)
     {
@@ -145,7 +145,7 @@ bool EpollPostgresql::syncConnect(const std::string &host, const std::string &db
     return syncConnectInternal();
 }
 
-bool EpollPostgresql::syncConnectInternal(bool infinityTry)
+bool EventLoopPostgresql::syncConnectInternal(bool infinityTry)
 {
     conn=PQconnectdb(strCoPG);
     ConnStatusType connStatusType=PQstatus(conn);
@@ -231,7 +231,7 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
     event.data.ptr = this;
 
     // add the socket to the epoll file descriptors
-    if(Epoll::epoll.ctl(EPOLL_CTL_ADD,sock,&event) != 0)
+    if(EventLoop::loop.ctl(EPOLL_CTL_ADD,sock,&event) != 0)
     {
         std::cerr << "epoll_ctl, adding socket error" << std::endl;
         return false;
@@ -245,7 +245,7 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
     return true;
 }
 
-void EpollPostgresql::syncReconnect()
+void EventLoopPostgresql::syncReconnect()
 {
     if(conn!=NULL)
     {
@@ -258,12 +258,12 @@ void EpollPostgresql::syncReconnect()
 }
 
 //return true if success
-bool EpollPostgresql::setBlocking(const bool &val)
+bool EventLoopPostgresql::setBlocking(const bool &val)
 {
     return PQsetnonblocking(conn,val)==0;
 }
 
-void EpollPostgresql::syncDisconnect()
+void EventLoopPostgresql::syncDisconnect()
 {
     if(conn==NULL)
     {
@@ -280,7 +280,7 @@ void EpollPostgresql::syncDisconnect()
 }
 
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-CatchChallenger::DatabaseBaseCallBack * EpollPostgresql::asyncPreparedRead(
+CatchChallenger::DatabaseBaseCallBack * EventLoopPostgresql::asyncPreparedRead(
         const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
     if(conn==NULL)
@@ -354,7 +354,7 @@ CatchChallenger::DatabaseBaseCallBack * EpollPostgresql::asyncPreparedRead(
     return &queue.back();
 }
 
-bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const id,const std::vector<std::string> &values)
+bool EventLoopPostgresql::asyncPreparedWrite(const std::string &query,char * const id,const std::vector<std::string> &values)
 {
     if(conn==NULL)
     {
@@ -420,7 +420,7 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
     return true;
 }
 
-bool EpollPostgresql::queryPrepare(const char *stmtName,
+bool EventLoopPostgresql::queryPrepare(const char *stmtName,
                                      const char *query,const int &nParams,const bool &store)//return NULL if failed
 {
     if(conn==NULL)
@@ -452,7 +452,7 @@ bool EpollPostgresql::queryPrepare(const char *stmtName,
 }
 #endif
 
-CatchChallenger::DatabaseBaseCallBack * EpollPostgresql::asyncRead(const std::string &query,void * returnObject,CallBackDatabase method)
+CatchChallenger::DatabaseBaseCallBack * EventLoopPostgresql::asyncRead(const std::string &query,void * returnObject,CallBackDatabase method)
 {
     if(conn==NULL)
     {
@@ -503,7 +503,7 @@ CatchChallenger::DatabaseBaseCallBack * EpollPostgresql::asyncRead(const std::st
     return &queue.back();
 }
 
-bool EpollPostgresql::asyncWrite(const std::string &query)
+bool EventLoopPostgresql::asyncWrite(const std::string &query)
 {
     if(conn==NULL)
     {
@@ -547,7 +547,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
     return true;
 }
 
-void EpollPostgresql::clear()
+void EventLoopPostgresql::clear()
 {
     while(result!=NULL)
     {
@@ -558,11 +558,11 @@ void EpollPostgresql::clear()
     tuleIndex=-1;
 }
 
-bool EpollPostgresql::epollEvent(const uint32_t &events)
+bool EventLoopPostgresql::unixEvent(const uint32_t &events)
 {
     if(conn==NULL)
     {
-        std::cerr << "epollEvent() conn==NULL" << std::endl;
+        std::cerr << "unixEvent() conn==NULL" << std::endl;
         return false;
     }
 
@@ -715,7 +715,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
     return true;
 }
 
-bool EpollPostgresql::sendNextQuery()
+bool EventLoopPostgresql::sendNextQuery()
 {
     const PreparedStatement &firstEntry=queriesList.front();
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
@@ -752,12 +752,12 @@ bool EpollPostgresql::sendNextQuery()
     return true;
 }
 
-const std::string EpollPostgresql::errorMessage() const
+const std::string EventLoopPostgresql::errorMessage() const
 {
     return PQerrorMessage(conn);
 }
 
-bool EpollPostgresql::next()
+bool EventLoopPostgresql::next()
 {
     if(result==NULL)
         return false;
@@ -773,7 +773,7 @@ bool EpollPostgresql::next()
     }
 }
 
-const std::string EpollPostgresql::value(const int &value) const
+const std::string EventLoopPostgresql::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0)
         return emptyString;
@@ -783,7 +783,7 @@ const std::string EpollPostgresql::value(const int &value) const
     return content;
 }
 
-bool EpollPostgresql::stringtobool(const std::string &string,bool *ok)
+bool EventLoopPostgresql::stringtobool(const std::string &string,bool *ok)
 {
     if(string=="t")
     {
@@ -808,7 +808,7 @@ bool EpollPostgresql::stringtobool(const std::string &string,bool *ok)
     }
 }
 
-std::vector<char> EpollPostgresql::hexatoBinary(const std::string &data,bool *ok)
+std::vector<char> EventLoopPostgresql::hexatoBinary(const std::string &data,bool *ok)
 {
     if(data.empty())
         return std::vector<char>();

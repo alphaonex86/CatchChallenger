@@ -3,11 +3,11 @@
 
 #ifdef CATCHCHALLENGER_SERVER
 
-#include "../epoll/EpollTimer.hpp"
+#include "../cli/EventLoopTimer.hpp"
 
 namespace CatchChallenger {
 class PlayerUpdaterToLogin
-        : public EpollTimer
+        : public EventLoopTimer
 {
 public:
     explicit PlayerUpdaterToLogin();

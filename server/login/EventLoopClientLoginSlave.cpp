@@ -1,4 +1,4 @@
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "LinkToGameServer.hpp"
 #include "LinkToMaster.hpp"
 #include "CharactersGroupForLogin.hpp"
@@ -11,21 +11,21 @@
 
 using namespace CatchChallenger;
 
-std::vector<void *> EpollClientLoginSlave::clientToDelete[16];
-size_t EpollClientLoginSlave::clientToDeleteSize=0;
-uint8_t EpollClientLoginSlave::clientToDeleteIndex=0;
-std::unordered_set<void *> EpollClientLoginSlave::detectDuplicateClientToDelete;
+std::vector<void *> EventLoopClientLoginSlave::clientToDelete[16];
+size_t EventLoopClientLoginSlave::clientToDeleteSize=0;
+uint8_t EventLoopClientLoginSlave::clientToDeleteIndex=0;
+std::unordered_set<void *> EventLoopClientLoginSlave::detectDuplicateClientToDelete;
 
-EpollClientLoginSlave::EpollClientLoginSlave(
+EventLoopClientLoginSlave::EventLoopClientLoginSlave(
             const int &infd
         ) :
-        EpollClient(infd),
+        EventLoopClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Server
             #endif
             ),
-        stat(EpollClientLoginStat::None),
+        stat(EventLoopClientLoginStat::None),
         linkToGameServer(NULL),
         charactersGroupIndex(0),
         serverUniqueKey(0),
@@ -41,20 +41,20 @@ EpollClientLoginSlave::EpollClientLoginSlave(
     lastActivity=LinkToGameServer::msFrom1970();
 }
 
-EpollClientLoginSlave::~EpollClientLoginSlave()
+EventLoopClientLoginSlave::~EventLoopClientLoginSlave()
 {
     disconnectClient();
 }
 
-uint64_t EpollClientLoginSlave::get_lastActivity() const
+uint64_t EventLoopClientLoginSlave::get_lastActivity() const
 {
     return lastActivity;
 }
 
-bool EpollClientLoginSlave::disconnectClient()
+bool EventLoopClientLoginSlave::disconnectClient()
 {
     #ifdef CATCHCHALLENGER_HARDENED
-    std::cerr << "EpollClientLoginSlave::disconnectClient() " << this << " (" << infd << ")" << std::endl;
+    std::cerr << "EventLoopClientLoginSlave::disconnectClient() " << this << " (" << infd << ")" << std::endl;
     #endif
 
     if(detectDuplicateClientToDelete.find(this)==detectDuplicateClientToDelete.cend())
@@ -71,7 +71,7 @@ bool EpollClientLoginSlave::disconnectClient()
         linkToGameServer->client=NULL;
         linkToGameServer=NULL;
     }
-    EpollClient::close();
+    EventLoopClient::close();
 
     {
         uint32_t index=0;
@@ -99,12 +99,12 @@ bool EpollClientLoginSlave::disconnectClient()
             index++;
         }
     }
-    if(stat!=EpollClientLoginStat::LoggedStatClient)
+    if(stat!=EventLoopClientLoginStat::LoggedStatClient)
     {
         unsigned int index=0;
         while(index<client_list.size())
         {
-            const EpollClientLoginSlave * const client=client_list.at(index);
+            const EventLoopClientLoginSlave * const client=client_list.at(index);
             if(this==client)
             {
                 client_list.erase(client_list.begin()+index);
@@ -113,14 +113,14 @@ bool EpollClientLoginSlave::disconnectClient()
             index++;
         }
         if(index>=client_list.size())
-            std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ") client not found" << std::endl;
+            std::cerr << "EventLoopClientLoginSlave::~EventLoopClientLoginSlave() " << this << " (" << infd << ") client not found" << std::endl;
     }
     else
     {
         unsigned int index=0;
         while(index<stat_client_list.size())
         {
-            const EpollClientLoginSlave * const client=stat_client_list.at(index);
+            const EventLoopClientLoginSlave * const client=stat_client_list.at(index);
             if(this==client)
             {
                 stat_client_list.erase(stat_client_list.begin()+index);
@@ -129,7 +129,7 @@ bool EpollClientLoginSlave::disconnectClient()
             index++;
         }
         if(index>=stat_client_list.size())
-            std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ") client not found" << std::endl;
+            std::cerr << "EventLoopClientLoginSlave::~EventLoopClientLoginSlave() " << this << " (" << infd << ") client not found" << std::endl;
     }
 
     if(socketString!=NULL)
@@ -199,9 +199,9 @@ bool EpollClientLoginSlave::disconnectClient()
 }
 
 //input/ouput layer
-void EpollClientLoginSlave::errorParsingLayer(const std::string &error)
+void EventLoopClientLoginSlave::errorParsingLayer(const std::string &error)
 {
-    if(stat==EpollClientLoginStat::None)
+    if(stat==EventLoopClientLoginStat::None)
     {
         //std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
         disconnectClient();
@@ -211,42 +211,42 @@ void EpollClientLoginSlave::errorParsingLayer(const std::string &error)
     disconnectClient();
 }
 
-void EpollClientLoginSlave::messageParsingLayer(const std::string &message) const
+void EventLoopClientLoginSlave::messageParsingLayer(const std::string &message) const
 {
     std::cout << socketString << ": " << sanitizeUtf8String(message) << std::endl;
 }
 
-void EpollClientLoginSlave::errorParsingLayer(const char * const error)
+void EventLoopClientLoginSlave::errorParsingLayer(const char * const error)
 {
     std::cerr << socketString << ": " << sanitizeUtf8String(std::string(error)) << std::endl;
     disconnectClient();
 }
 
-void EpollClientLoginSlave::messageParsingLayer(const char * const message) const
+void EventLoopClientLoginSlave::messageParsingLayer(const char * const message) const
 {
     std::cout << socketString << ": " << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
-BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
+BaseClassSwitch::EventLoopObjectType EventLoopClientLoginSlave::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Client;
+    return BaseClassSwitch::EventLoopObjectType::Client;
 }
 
-void EpollClientLoginSlave::parseIncommingData()
+void EventLoopClientLoginSlave::parseIncommingData()
 {
     lastActivity=LinkToGameServer::msFrom1970();
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-bool EpollClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
+bool EventLoopClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
 {
     return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
 }
 
-void EpollClientLoginSlave::breakNeedMoreData()
+void EventLoopClientLoginSlave::breakNeedMoreData()
 {
-    std::cerr << "EpollClientLoginSlave::breakNeedMoreData()" << std::endl;
-    if(stat==EpollClientLoginStat::None)
+    std::cerr << "EventLoopClientLoginSlave::breakNeedMoreData()" << std::endl;
+    if(stat==EventLoopClientLoginStat::None)
     {
         disconnectClient();
         return;
@@ -256,23 +256,23 @@ void EpollClientLoginSlave::breakNeedMoreData()
     #endif
 }
 
-ssize_t EpollClientLoginSlave::readFromSocket(char * data, const size_t &size)
+ssize_t EventLoopClientLoginSlave::readFromSocket(char * data, const size_t &size)
 {
     lastActivity=LinkToGameServer::msFrom1970();
-    return EpollClient::read(data,size);
+    return EventLoopClient::read(data,size);
 }
 
-ssize_t EpollClientLoginSlave::writeToSocket(const char * const data, const size_t &size)
+ssize_t EventLoopClientLoginSlave::writeToSocket(const char * const data, const size_t &size)
 {
     lastActivity=LinkToGameServer::msFrom1970();
     //do some basic check on low level protocol (message split, ...)
-    return EpollClient::write(data,size);
+    return EventLoopClient::write(data,size);
 }
 
-void EpollClientLoginSlave::closeSocket()
+void EventLoopClientLoginSlave::closeSocket()
 {
     #ifdef CATCHCHALLENGER_HARDENED
-    std::cerr << "EpollClientLoginSlave::closeSocket(): " << this << " (" << infd << ")" << std::endl;
+    std::cerr << "EventLoopClientLoginSlave::closeSocket(): " << this << " (" << infd << ")" << std::endl;
     #endif
     disconnectClient();
 }

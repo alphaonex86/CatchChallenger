@@ -1,9 +1,9 @@
 #ifndef TIMERSENDINSERTMOVEREMOVE_H
 #define TIMERSENDINSERTMOVEREMOVE_H
 
-#include "../EpollTimer.hpp"
+#include "../EventLoopTimer.hpp"
 
-class TimerSendInsertMoveRemove : public EpollTimer
+class TimerSendInsertMoveRemove : public EventLoopTimer
 {
 public:
     TimerSendInsertMoveRemove();

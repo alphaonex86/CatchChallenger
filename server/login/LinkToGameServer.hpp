@@ -2,15 +2,15 @@
 #define LOGINLINKTOGameServer_H
 
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../epoll/EpollClient.hpp"
+#include "../cli/EventLoopClient.hpp"
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
 namespace CatchChallenger {
-class EpollClientLoginSlave;
-class LinkToGameServer : public EpollClient, public ProtocolParsingInputOutput
+class EventLoopClientLoginSlave;
+class LinkToGameServer : public EventLoopClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToGameServer(
@@ -28,7 +28,7 @@ public:
     };
     Stat stat;
 
-    //to delete into the event loop (main-epoll-login-slave.cpp) after unregister for epoll, into the next event loop parse
+    //to delete into the event loop (main-unix-login-slave.cpp) after unregister for epoll, into the next event loop parse
     static std::vector<void *> gameLinkToDelete[16];
     static size_t gameLinkToDeleteSize;
     static uint8_t gameLinkToDeleteIndex;
@@ -39,12 +39,12 @@ public:
     static uint64_t msFrom1970();//ms from 1970
 
     char tokenForGameServer[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
-    EpollClientLoginSlave *client;
+    EventLoopClientLoginSlave *client;
     static unsigned char protocolHeaderToMatchGameServer[2+5];
     uint8_t queryIdToReconnect;
 
     void setConnexionSettings();
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     bool trySelectCharacter(void * const client,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId);

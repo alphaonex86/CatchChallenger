@@ -1,5 +1,5 @@
 #include "LinkToGameServer.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include <iostream>
 #include <string.h>
 
@@ -204,7 +204,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     if(data[0x00]==0x01)
                     {
                         stat=Stat::Logged;
-                        client->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
+                        client->stat=EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnected;
                         /// \note need reply to AC, convert directly by SIMD the reply, adapt the query id
                         // don't use directly parseReplyData() due to cross reply: this->removeFromQueryReceived(query_id); not client->removeFromQueryReceived(query_id);
 

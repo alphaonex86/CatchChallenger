@@ -18,7 +18,7 @@ Cover the four failure-mode buckets the operator listed:
 
 Servers under test
 ------------------
-The script spins up FOUR catchchallenger-server-cli-epoll instances in
+The script spins up FOUR catchchallenger-server-cli instances in
 parallel, each on its own TCP port:
 
     port 61920 — CATCHCHALLENGER_DB_FILE        (always)
@@ -127,14 +127,14 @@ BACKENDS = [
     ("mysql",         "CATCHCHALLENGER_DB_MYSQL",       61923, "mysql",   "mysql"),
 ]
 
-SERVER_BIN_NAME      = "catchchallenger-server-cli-epoll"
-SERVER_PRO           = os.path.join(ROOT, "server", "epoll",
-                                    "catchchallenger-server-cli-epoll.pro")
-SERVER_CMAKELISTS    = os.path.join(ROOT, "server", "epoll", "CMakeLists.txt")
+SERVER_BIN_NAME      = "catchchallenger-server-cli"
+SERVER_PRO           = os.path.join(ROOT, "server", "cli",
+                                    "catchchallenger-server-cli.pro")
+SERVER_CMAKELISTS    = os.path.join(ROOT, "server", "cli", "CMakeLists.txt")
 
 COMPILE_TIMEOUT      = 900
-# SQLite cold-start preallocates an EpollClientList of max-players=2000
-# entries (each ~1KB+ ClientWithMapEpoll); on a busy host this takes
+# SQLite cold-start preallocates an EventLoopClientList of max-players=2000
+# entries (each ~1KB+ ClientWithMapEventLoop); on a busy host this takes
 # 60-90s. 60s used to be the limit and we'd miss bind by a few seconds.
 # 180s leaves margin without making a stuck server worse — Server.stop()
 # kills the binary on the upper bound either way.
@@ -299,11 +299,11 @@ def write_settings(build_dir, port, dbtype):
 # ── build a server binary per backend ─────────────────────────────────────
 def build_dir_for(backend_id):
     return build_paths.build_path(
-        f"server/epoll/build/testing-byIA-{backend_id}")
+        f"server/cli/build/testing-byIA-{backend_id}")
 
 
 def build_server(backend_id, db_define):
-    """Build server-cli-epoll with the given DB define. Uses CMake
+    """Build server-cli with the given DB define. Uses CMake
     when CMakeLists.txt is present (current layout per CLAUDE.md), else
     falls back to qmake. Idempotent: if the binary already exists and
     is newer than the CMakeLists, skip the rebuild."""

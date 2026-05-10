@@ -1,14 +1,14 @@
 #ifndef CHARACTERSGROUP_H
 #define CHARACTERSGROUP_H
 
-#include "../epoll/BaseClassSwitch.hpp"
-#include "../epoll/db/EpollPostgresql.hpp"
+#include "../cli/BaseClassSwitch.hpp"
+#include "../cli/db/EventLoopPostgresql.hpp"
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
 namespace CatchChallenger {
-class EpollClientLoginMaster;
+class EventLoopClientLoginMaster;
 
 class CharactersGroup : public BaseClassSwitch
 {
@@ -20,9 +20,9 @@ public:
     {
         std::string host;
         uint16_t port;
-        EpollClientLoginMaster * link;
+        EventLoopClientLoginMaster * link;
 
-        //stored into EpollClientLoginMaster
+        //stored into EventLoopClientLoginMaster
         //CharactersGroup * charactersGroup;
         //uint32_t uniqueKey;
         std::string metaData;
@@ -44,11 +44,11 @@ public:
         RecentlyUnlocked=0x02
     };
 
-    BaseClassSwitch::EpollObjectType getType() const;
-    InternalGameServer * addGameServerUniqueKey(EpollClientLoginMaster * const client, const uint32_t &uniqueKey, const std::string &host, const uint16_t &port,
+    BaseClassSwitch::EventLoopObjectType getType() const;
+    InternalGameServer * addGameServerUniqueKey(EventLoopClientLoginMaster * const client, const uint32_t &uniqueKey, const std::string &host, const uint16_t &port,
                                 const std::string &metaData, const uint32_t &logicalGroupIndex,
                                 const uint16_t &currentPlayer, const uint16_t &maxPlayer, const std::unordered_set<uint32_t> &lockedAccount);
-    void removeGameServerUniqueKey(EpollClientLoginMaster * const client);
+    void removeGameServerUniqueKey(EventLoopClientLoginMaster * const client);
     bool containsGameServerUniqueKey(const uint32_t &serverUniqueKey) const;
     std::string gameServerUniqueKeyHumanReadableList() const;
     CharacterLock characterIsLocked(const uint32_t &characterId);
@@ -90,7 +90,7 @@ private:
     void deleteToCacheLockToDelete(const uint32_t &uniqueKey);
 private:
     static uint16_t maxLockAge;
-    EpollPostgresql *databaseBaseCommon;
+    EventLoopPostgresql *databaseBaseCommon;
     std::unordered_map<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> lockedAccount;
     std::unordered_map<uint32_t/*uniqueKey*/,std::unordered_set<uint32_t/*lockedAccount*/> > lockedAccountByDisconnectedServer;
 

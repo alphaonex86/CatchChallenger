@@ -112,7 +112,7 @@ All add `-fno-omit-frame-pointer -fno-sanitize-recover=all -O1`. Env: `*_OPTIONS
 
 ### Gcc + valgrind
 * `memcheck` — `--leak-check=full --show-leak-kinds=all --track-origins=yes --errors-for-leak-kinds=definite,possible`.
-* `helgrind` — lock-ordering. Epoll server is single-threaded so should be no-op.
+* `helgrind` — lock-ordering. EventLoop server is single-threaded so should be no-op.
 * `drd` — alternative race detector.
 
 Scales every timeout by **10x**. `--sanitize` and `--valgrind` mutually exclusive.

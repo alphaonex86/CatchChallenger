@@ -10,9 +10,9 @@
 #include <signal.h>
 
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../epoll/Epoll.hpp"
-#include "EpollServerLoginSlave.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "../cli/EventLoop.hpp"
+#include "EventLoopServerLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "TimerDdos.hpp"
 
 #define MAXEVENTS 512
@@ -56,11 +56,11 @@ int main(int argc, char *argv[])
     (void)argv;
 
     ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::LoginServer);
-    if(!Epoll::epoll.init())
+    if(!EventLoop::loop.init())
         return EPOLLERR;
 
     //blocking due to db connexion
-    EpollServerLoginSlave::epollServerLoginSlave=new EpollServerLoginSlave();
+    EventLoopServerLoginSlave::unixServerLoginSlave=new EventLoopServerLoginSlave();
 
     char buf[4096];
     memset(buf,0,4096);
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     int number_of_events, i;
     while(1)
     {
-        number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        number_of_events = EventLoop::loop.wait(events, MAXEVENTS);
         if(elementsToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
             if(elementsToDeleteIndex>=15)
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
                 unsigned int index=0;
                 while(index<elementsToDeleteSub.size())
                 {
-                    delete static_cast<EpollClientLoginSlave *>(elementsToDeleteSub.at(index));
+                    delete static_cast<EventLoopClientLoginSlave *>(elementsToDeleteSub.at(index));
                     index++;
                 }
             }
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::EpollObjectType::Server:
+                case BaseClassSwitch::EventLoopObjectType::Server:
                 {
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
                     {
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
-                        const int &infd = EpollServerLoginSlave::epollServerLoginSlave->accept(&in_addr, &in_len);
+                        const int &infd = EventLoopServerLoginSlave::unixServerLoginSlave->accept(&in_addr, &in_len);
                         if(infd == -1)
                         {
                             if((errno == EAGAIN) ||
@@ -155,19 +155,19 @@ int main(int argc, char *argv[])
                         list of fds to monitor. */
                         numberOfConnectedClient++;
 
-                        /*int s = EpollSocket::make_non_blocking(infd);
+                        /*int s = SocketUtil::make_non_blocking(infd);
                         if(s == -1)
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else*/
                         {
-                            if(EpollServerLoginSlave::epollServerLoginSlave->tcpCork)
+                            if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpCork)
                             {
                                 //set cork for CatchChallener because don't have real time part
                                 int state = 1;
                                 if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
                                     std::cerr << "Unable to apply tcp cork" << std::endl;
                             }
-                            else if(EpollServerLoginSlave::epollServerLoginSlave->tcpNodelay)
+                            else if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpNodelay)
                             {
                                 //set no delay to don't try group the packet and improve the performance
                                 int state = 1;
@@ -175,10 +175,10 @@ int main(int argc, char *argv[])
                                     std::cerr << "Unable to apply tcp no delay" << std::endl;
                             }
 
-                            EpollClientLoginSlave *client=new EpollClientLoginSlave(infd
+                            EventLoopClientLoginSlave *client=new EventLoopClientLoginSlave(infd
                                 );
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
+                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EventLoopObjectType::Client)
                             {
                                 std::cerr << "Wrong post check type (abort)" << std::endl;
                                 abort();
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
                             epoll_event event;
                             event.data.ptr = client;
                             event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT;
-                            const int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                            const int s = EventLoop::loop.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
@@ -217,9 +217,9 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Client:
+                case BaseClassSwitch::EventLoopObjectType::Client:
                 {
-                    EpollClientLoginSlave * const client=static_cast<EpollClientLoginSlave *>(events[i].data.ptr);
+                    EventLoopClientLoginSlave * const client=static_cast<EventLoopClientLoginSlave *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::ClientServer:
+                case BaseClassSwitch::EventLoopObjectType::ClientServer:
                 {
                     LinkToGameServer * const client=static_cast<LinkToGameServer *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
@@ -281,10 +281,10 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Timer:
+                case BaseClassSwitch::EventLoopObjectType::Timer:
                 {
-                    static_cast<EpollTimer *>(events[i].data.ptr)->exec();
-                    static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
+                    static_cast<EventLoopTimer *>(events[i].data.ptr)->exec();
+                    static_cast<EventLoopTimer *>(events[i].data.ptr)->validateTheTimer();
                 }
                 break;
                 default:
@@ -293,8 +293,8 @@ int main(int argc, char *argv[])
             }
         }
     }
-    EpollServerLoginSlave::epollServerLoginSlave->close();
-    delete EpollServerLoginSlave::epollServerLoginSlave;
-    EpollServerLoginSlave::epollServerLoginSlave=NULL;
+    EventLoopServerLoginSlave::unixServerLoginSlave->close();
+    delete EventLoopServerLoginSlave::unixServerLoginSlave;
+    EventLoopServerLoginSlave::unixServerLoginSlave=NULL;
     return EXIT_SUCCESS;
 }

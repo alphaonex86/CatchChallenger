@@ -21,8 +21,8 @@ Before starting a task, always check for a CLAUDE.md file in the current working
 
   **Binary subdirs** (one executable each):
   - `server/CMakeLists.txt` → `catchchallenger-server-gui` (Qt admin)
-  - `server/epoll/` → `catchchallenger-server-cli-epoll`
-  - `server/epoll/filedb-converter/` → `filedb-converter`
+  - `server/cli/` → `catchchallenger-server-cli`
+  - `server/cli/filedb-converter/` → `filedb-converter`
   - `server/login/` → `catchchallenger-server-login` (when ported)
   - `server/master/` → `catchchallenger-server-master`
   - `server/gateway/` → `catchchallenger-gateway`
@@ -86,7 +86,7 @@ Before starting a task, always check for a CLAUDE.md file in the current working
 * **Add temporary debug prints when a bug is opaque — then remove them.** Better than guessing. Sprinkle `std::cerr << "[TRACE] ..." << std::endl` (or `qDebug()` in Qt code) at suspected branches, run, READ output, locate divergence, fix, then strip every `[TRACE]` in the same commit. Workflow: traces → run → root cause → minimal fix → re-run PASS → remove traces → re-run PASS still holds.
 
 # Project Overview
-CatchChallenger is a Pokémon-like MMORPG engine in C++/Qt. Designed for extremely constrained hardware (i486 66MHz, Geode LX800, MIPS2, RISC-V, RPI1). Epoll server handles hundreds of players with 10-20MB RAM base + 1-4KB per player.
+CatchChallenger is a Pokémon-like MMORPG engine in C++/Qt. Designed for extremely constrained hardware (i486 66MHz, Geode LX800, MIPS2, RISC-V, RPI1). EventLoop server handles hundreds of players with 10-20MB RAM base + 1-4KB per player.
 
 # Architecture
 ```
@@ -103,7 +103,7 @@ client/
   qtopengl/                - OpenGL responsive UI (smartphones)
 server/
   base/           - Common server (Client.hpp, BaseServer, MapManagement)
-  epoll/          - Linux epoll single-threaded
+  unix/          - Linux epoll single-threaded
   login/          - Login (auth, server list, DDoS proxy)
   master/         - Master (cluster, CharactersGroup)
   gateway/        - Gateway/proxy
@@ -144,7 +144,7 @@ Login Server (auth + server list) → Client gets token → Game Server (validat
 # Conditional Compilation Defines
 DB: CATCHCHALLENGER_DB_MYSQL/POSTGRESQL/SQLITE/FILE/BLACKHOLE
 Server mode: CATCHCHALLENGER_CLASS_ALLINONESERVER/ONLYGAMESERVER/LOGIN/MASTER/GATEWAY
-Epoll: CATCHCHALLENGER_SERVER
+EventLoop: CATCHCHALLENGER_SERVER
 Cache: CATCHCHALLENGER_CACHE_HPS, CATCHCHALLENGER_NOXML
 
 # Source-control rhythm

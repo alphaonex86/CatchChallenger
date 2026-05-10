@@ -1,8 +1,8 @@
 #include "LinkToMaster.hpp"
 #include <cstring>
-#include "EpollClientLoginSlave.hpp"
-#include "EpollServerLoginSlave.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/cpp11addition.hpp"
@@ -78,32 +78,32 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 abort();
             }
             //copy it
-            EpollClientLoginSlave::serverLogicalGroupList[0x00]=0x44;
-            {const uint32_t _tmp_le=(htole32(size));memcpy(EpollClientLoginSlave::serverLogicalGroupList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-            memcpy(EpollClientLoginSlave::serverLogicalGroupList+1+4,rawData,size);
-            EpollClientLoginSlave::serverLogicalGroupListSize=size+1+4;
-            if(EpollClientLoginSlave::serverLogicalGroupListSize==0)
+            EventLoopClientLoginSlave::serverLogicalGroupList[0x00]=0x44;
+            {const uint32_t _tmp_le=(htole32(size));memcpy(EventLoopClientLoginSlave::serverLogicalGroupList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+            memcpy(EventLoopClientLoginSlave::serverLogicalGroupList+1+4,rawData,size);
+            EventLoopClientLoginSlave::serverLogicalGroupListSize=size+1+4;
+            if(EventLoopClientLoginSlave::serverLogicalGroupListSize==0)
             {
-                std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                std::cerr << "EventLoopClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
-            if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
+            if(EventLoopClientLoginSlave::serverServerListComputedMessageSize>0)
             {
-                EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
-                if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
-                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,
-                           EpollClientLoginSlave::serverLogicalGroupList,
-                           EpollClientLoginSlave::serverLogicalGroupListSize);
-                if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
-                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,
-                           EpollClientLoginSlave::serverServerListComputedMessage,
-                           EpollClientLoginSlave::serverServerListComputedMessageSize);
+                EventLoopClientLoginSlave::serverLogicalGroupAndServerListSize=EventLoopClientLoginSlave::serverServerListComputedMessageSize+EventLoopClientLoginSlave::serverLogicalGroupListSize;
+                if(EventLoopClientLoginSlave::serverLogicalGroupListSize>0)
+                    memcpy(EventLoopClientLoginSlave::serverLogicalGroupAndServerList,
+                           EventLoopClientLoginSlave::serverLogicalGroupList,
+                           EventLoopClientLoginSlave::serverLogicalGroupListSize);
+                if(EventLoopClientLoginSlave::serverServerListComputedMessageSize>0)
+                    memcpy(EventLoopClientLoginSlave::serverLogicalGroupAndServerList+EventLoopClientLoginSlave::serverLogicalGroupListSize,
+                           EventLoopClientLoginSlave::serverServerListComputedMessage,
+                           EventLoopClientLoginSlave::serverServerListComputedMessageSize);
             }
             else
             {
-                memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,
-                       EpollClientLoginSlave::serverLogicalGroupList,
-                       EpollClientLoginSlave::serverLogicalGroupListSize);
+                memcpy(EventLoopClientLoginSlave::serverLogicalGroupAndServerList,
+                       EventLoopClientLoginSlave::serverLogicalGroupList,
+                       EventLoopClientLoginSlave::serverLogicalGroupListSize);
             }
         }
         break;
@@ -138,12 +138,12 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             int serverListIndex=0;
             uint32_t serverUniqueKey;const char * hostData;uint8_t hostDataSize;uint16_t port;uint8_t charactersGroupIndex;
 
-            if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+            if(EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Proxy)
             {
-                //EpollClientLoginSlave::serverServerList[0x00]=0x02;//do into EpollServerLoginSlave::EpollServerLoginSlave()
-                EpollClientLoginSlave::serverServerList[0x01]=serverListSize;
+                //EventLoopClientLoginSlave::serverServerList[0x00]=0x02;//do into EventLoopServerLoginSlave::EventLoopServerLoginSlave()
+                EventLoopClientLoginSlave::serverServerList[0x01]=serverListSize;
                 /// \warning not linked with above
-                EpollClientLoginSlave::serverServerListSize=0x02;
+                EventLoopClientLoginSlave::serverServerListSize=0x02;
                 while(serverListIndex<serverListSize)
                 {
                     //copy the charactersgroup
@@ -154,8 +154,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             abort();
                         }
                         charactersGroupIndex=rawData[pos];
-                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=charactersGroupIndex;
-                        EpollClientLoginSlave::serverServerListSize+=1;
+                        EventLoopClientLoginSlave::serverServerList[EventLoopClientLoginSlave::serverServerListSize]=charactersGroupIndex;
+                        EventLoopClientLoginSlave::serverServerListSize+=1;
                         pos+=1;
                     }
 
@@ -166,7 +166,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size key 32Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,4);
+                        memcpy(EventLoopClientLoginSlave::serverServerList+EventLoopClientLoginSlave::serverServerListSize,rawData+pos,4);
                         if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                         {
                             std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -182,7 +182,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         }
                         serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
                         pos+=4;
-                        EpollClientLoginSlave::serverServerListSize+=4;
+                        EventLoopClientLoginSlave::serverServerListSize+=4;
                     }
                     //add more control
                     {
@@ -235,9 +235,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size xmlString + size 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,2+xmlStringSize);
+                        memcpy(EventLoopClientLoginSlave::serverServerList+EventLoopClientLoginSlave::serverServerListSize,rawData+pos,2+xmlStringSize);
                         pos+=2+xmlStringSize;
-                        EpollClientLoginSlave::serverServerListSize+=2+xmlStringSize;
+                        EventLoopClientLoginSlave::serverServerListSize+=2+xmlStringSize;
                     }
 
                     //copy the logical group
@@ -247,9 +247,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size logicalGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=rawData[pos];
+                        EventLoopClientLoginSlave::serverServerList[EventLoopClientLoginSlave::serverServerListSize]=rawData[pos];
                         pos+=1;
-                        EpollClientLoginSlave::serverServerListSize+=1;
+                        EventLoopClientLoginSlave::serverServerListSize+=1;
                     }
 
                     //copy the max player
@@ -259,10 +259,10 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size the max player 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize+0]=rawData[pos+0];
-                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize+1]=rawData[pos+1];
+                        EventLoopClientLoginSlave::serverServerList[EventLoopClientLoginSlave::serverServerListSize+0]=rawData[pos+0];
+                        EventLoopClientLoginSlave::serverServerList[EventLoopClientLoginSlave::serverServerListSize+1]=rawData[pos+1];
                         pos+=2;
-                        EpollClientLoginSlave::serverServerListSize+=2;
+                        EventLoopClientLoginSlave::serverServerListSize+=2;
                     }
 
                     serverListIndex++;
@@ -270,10 +270,10 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             }
             else
             {
-                //EpollClientLoginSlave::serverServerList[0x00]=0x01;//do into EpollServerLoginSlave::EpollServerLoginSlave()
-                EpollClientLoginSlave::serverServerList[0x01]=serverListSize;
+                //EventLoopClientLoginSlave::serverServerList[0x00]=0x01;//do into EventLoopServerLoginSlave::EventLoopServerLoginSlave()
+                EventLoopClientLoginSlave::serverServerList[0x01]=serverListSize;
                 /// \warning not linked with above
-                EpollClientLoginSlave::serverServerListSize=0x02;
+                EventLoopClientLoginSlave::serverServerListSize=0x02;
                 while(serverListIndex<serverListSize)
                 {
                     //copy the charactersgroup
@@ -285,8 +285,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         }
                         charactersGroupIndex=rawData[pos];
                         pos+=1;
-                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=charactersGroupIndex;
-                        EpollClientLoginSlave::serverServerListSize+=1;
+                        EventLoopClientLoginSlave::serverServerList[EventLoopClientLoginSlave::serverServerListSize]=charactersGroupIndex;
+                        EventLoopClientLoginSlave::serverServerListSize+=1;
                     }
 
                     //copy the unique key
@@ -296,7 +296,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size key 32Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,4);
+                        memcpy(EventLoopClientLoginSlave::serverServerList+EventLoopClientLoginSlave::serverServerListSize,rawData+pos,4);
                         if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                         {
                             std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -311,7 +311,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             abort();
                         }
                         serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
-                        EpollClientLoginSlave::serverServerListSize+=4;
+                        EventLoopClientLoginSlave::serverServerListSize+=4;
                         pos+=4;
                     }
 
@@ -328,7 +328,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size charactersGroupString + size 8Bits header + port too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,1+hostStringSize+2);
+                        memcpy(EventLoopClientLoginSlave::serverServerList+EventLoopClientLoginSlave::serverServerListSize,rawData+pos,1+hostStringSize+2);
                         hostData=rawData+pos+1;
                         hostDataSize=hostStringSize;
                         port=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+pos+1+hostStringSize)));
@@ -343,7 +343,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             abort();
                         }
                         pos+=1+hostStringSize+2;
-                        EpollClientLoginSlave::serverServerListSize+=1+hostStringSize+2;
+                        EventLoopClientLoginSlave::serverServerListSize+=1+hostStringSize+2;
                     }
 
                     CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
@@ -364,9 +364,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size xmlString + size 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,2+xmlStringSize);
+                        memcpy(EventLoopClientLoginSlave::serverServerList+EventLoopClientLoginSlave::serverServerListSize,rawData+pos,2+xmlStringSize);
                         pos+=2+xmlStringSize;
-                        EpollClientLoginSlave::serverServerListSize+=2+xmlStringSize;
+                        EventLoopClientLoginSlave::serverServerListSize+=2+xmlStringSize;
                     }
 
                     //copy the logical group
@@ -376,9 +376,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size logicalGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize]=rawData[pos];
+                        EventLoopClientLoginSlave::serverServerList[EventLoopClientLoginSlave::serverServerListSize]=rawData[pos];
                         pos+=1;
-                        EpollClientLoginSlave::serverServerListSize+=1;
+                        EventLoopClientLoginSlave::serverServerListSize+=1;
                     }
 
                     //copy the max player
@@ -388,16 +388,16 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             std::cerr << "C210 size the max player 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             abort();
                         }
-                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize+0]=rawData[pos+0];
-                        EpollClientLoginSlave::serverServerList[EpollClientLoginSlave::serverServerListSize+1]=rawData[pos+1];
+                        EventLoopClientLoginSlave::serverServerList[EventLoopClientLoginSlave::serverServerListSize+0]=rawData[pos+0];
+                        EventLoopClientLoginSlave::serverServerList[EventLoopClientLoginSlave::serverServerListSize+1]=rawData[pos+1];
                         pos+=2;
-                        EpollClientLoginSlave::serverServerListSize+=2;
+                        EventLoopClientLoginSlave::serverServerListSize+=2;
                     }
 
                     serverListIndex++;
                 }
             }
-            EpollClientLoginSlave::serverServerListCurrentPlayerSize=serverListSize*sizeof(uint16_t);
+            EventLoopClientLoginSlave::serverServerListCurrentPlayerSize=serverListSize*sizeof(uint16_t);
             if(serverListSize>0)
             {
                 if((size-pos)<static_cast<unsigned int>(serverListSize*(sizeof(uint16_t))))
@@ -405,9 +405,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     std::cerr << "C210 co player list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     abort();
                 }
-                memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,serverListSize*(sizeof(uint16_t)));
+                memcpy(EventLoopClientLoginSlave::serverServerList+EventLoopClientLoginSlave::serverServerListSize,rawData+pos,serverListSize*(sizeof(uint16_t)));
                 pos+=serverListSize*(sizeof(uint16_t));
-                EpollClientLoginSlave::serverServerListSize+=serverListSize*(sizeof(uint16_t));
+                EventLoopClientLoginSlave::serverServerListSize+=serverListSize*(sizeof(uint16_t));
             }
 
             if((size-pos)!=0)
@@ -421,34 +421,34 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                           << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
-            EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
-            {const uint32_t _tmp_le=(htole32(EpollClientLoginSlave::serverServerListSize));memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-            memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
-            EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
+            EventLoopClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
+            {const uint32_t _tmp_le=(htole32(EventLoopClientLoginSlave::serverServerListSize));memcpy(EventLoopClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+            memcpy(EventLoopClientLoginSlave::serverServerListComputedMessage+1+4,EventLoopClientLoginSlave::serverServerList,EventLoopClientLoginSlave::serverServerListSize);
+            EventLoopClientLoginSlave::serverServerListComputedMessageSize=EventLoopClientLoginSlave::serverServerListSize+1+4;
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(EventLoopClientLoginSlave::serverServerList,EventLoopClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
-            if(EpollClientLoginSlave::serverServerListSize==0)
+            if(EventLoopClientLoginSlave::serverServerListSize==0)
             {
-                std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                std::cerr << "EventLoopClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
-            if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
+            if(EventLoopClientLoginSlave::serverLogicalGroupListSize>0)
             {
-                EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
+                EventLoopClientLoginSlave::serverLogicalGroupAndServerListSize=EventLoopClientLoginSlave::serverServerListComputedMessageSize+EventLoopClientLoginSlave::serverLogicalGroupListSize;
                 /* First query already set
-                if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
-                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupList,EpollClientLoginSlave::serverLogicalGroupListSize);*/
-                if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
-                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+                if(EventLoopClientLoginSlave::serverLogicalGroupListSize>0)
+                    memcpy(EventLoopClientLoginSlave::serverLogicalGroupAndServerList,EventLoopClientLoginSlave::serverLogicalGroupList,EventLoopClientLoginSlave::serverLogicalGroupListSize);*/
+                if(EventLoopClientLoginSlave::serverServerListComputedMessageSize>0)
+                    memcpy(EventLoopClientLoginSlave::serverLogicalGroupAndServerList+EventLoopClientLoginSlave::serverLogicalGroupListSize,EventLoopClientLoginSlave::serverServerListComputedMessage,EventLoopClientLoginSlave::serverServerListComputedMessageSize);
             }
 
             {
                 unsigned int index=0;
-                while(index<EpollClientLoginSlave::stat_client_list.size())
+                while(index<EventLoopClientLoginSlave::stat_client_list.size())
                 {
-                    EpollClientLoginSlave * const client=EpollClientLoginSlave::stat_client_list.at(index);
-                    client->sendRawBlock(EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+                    EventLoopClientLoginSlave * const client=EventLoopClientLoginSlave::stat_client_list.at(index);
+                    client->sendRawBlock(EventLoopClientLoginSlave::serverServerListComputedMessage,EventLoopClientLoginSlave::serverServerListComputedMessageSize);
                     index++;
                 }
             }
@@ -493,18 +493,18 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 abort();
             }
             unsigned int cursor=0x0E;
-            if((size-cursor)<EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize)
+            if((size-cursor)<EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize)
             {
                 std::cerr << "C211 too small for different CharactersGroup (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
-            if(memcmp(rawData+cursor,EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup,EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize)!=0)
+            if(memcmp(rawData+cursor,EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroup,EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize)!=0)
             {
                 std::cerr << "C211 different CharactersGroup registred on master server (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
             //dynamic data
-            cursor+=EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize;
+            cursor+=EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize;
             //skins
             {
                 if((size-cursor)<1)
@@ -525,7 +525,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     const uint16_t &databaseId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+cursor)));
                     cursor+=sizeof(uint16_t);
                     //index is the internal id
-                    EpollServerLoginSlave::epollServerLoginSlave->setSkinPair(skinListIndex,databaseId);
+                    EventLoopServerLoginSlave::unixServerLoginSlave->setSkinPair(skinListIndex,databaseId);
                     skinListIndex++;
                 }
             }
@@ -546,7 +546,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 uint8_t profileListIndex=0;
                 while(profileListIndex<profileListSize)
                 {
-                    EpollServerLoginSlave::LoginProfile profile;
+                    EventLoopServerLoginSlave::LoginProfile profile;
 
                     //database id
                     if((size-cursor)<(int)sizeof(uint16_t))
@@ -599,7 +599,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     uint8_t monsterGroupListIndex=0;
                     while(monsterGroupListIndex<monsterGroupListSize)
                     {
-                        std::vector<EpollServerLoginSlave::LoginProfile::Monster> monsters;
+                        std::vector<EventLoopServerLoginSlave::LoginProfile::Monster> monsters;
                         //monster
                         if((size-cursor)<1)
                         {
@@ -611,7 +611,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         uint8_t monsterListIndex=0;
                         while(monsterListIndex<monsterListSize)
                         {
-                            EpollServerLoginSlave::LoginProfile::Monster monster;
+                            EventLoopServerLoginSlave::LoginProfile::Monster monster;
                             //monster id
                             if((size-cursor)<sizeof(uint16_t))
                             {
@@ -663,7 +663,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             uint8_t skillListIndex=0;
                             while(skillListIndex<skillListSize)
                             {
-                                EpollServerLoginSlave::LoginProfile::Monster::Skill skill;
+                                EventLoopServerLoginSlave::LoginProfile::Monster::Skill skill;
                                 //skill id
                                 if((size-cursor)<sizeof(uint16_t))
                                 {
@@ -711,7 +711,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     uint8_t reputationListIndex=0;
                     while(reputationListIndex<reputationListSize)
                     {
-                        EpollServerLoginSlave::LoginProfile::Reputation reputation;
+                        EventLoopServerLoginSlave::LoginProfile::Reputation reputation;
 
                         //reputation id
                         if((size-cursor)<sizeof(uint16_t))
@@ -753,7 +753,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     uint8_t itemListIndex=0;
                     while(itemListIndex<itemListSize)
                     {
-                        EpollServerLoginSlave::LoginProfile::Item item;
+                        EventLoopServerLoginSlave::LoginProfile::Item item;
 
                         //item id
                         if((size-cursor)<sizeof(uint16_t))
@@ -776,7 +776,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         itemListIndex++;
                     }
 
-                    EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.push_back(profile);
+                    EventLoopServerLoginSlave::unixServerLoginSlave->loginProfileList.push_back(profile);
                     profileListIndex++;
                 }
             }
@@ -787,7 +787,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 std::cerr << "C211 hash sum item list (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
-            memcpy(EpollClientLoginSlave::baseDatapackSum,rawData+cursor,CATCHCHALLENGER_HASH_SIZE);
+            memcpy(EventLoopClientLoginSlave::baseDatapackSum,rawData+cursor,CATCHCHALLENGER_HASH_SIZE);
             cursor+=CATCHCHALLENGER_HASH_SIZE;
 
             if((size-cursor)!=0)
@@ -796,28 +796,28 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 abort();
             }
 
-            EpollServerLoginSlave::epollServerLoginSlave->compose04Reply();
+            EventLoopServerLoginSlave::unixServerLoginSlave->compose04Reply();
         }
         break;
         //Update the game server current player number on the game server
         case 0x47:
             /// \todo broadcast to client before the logged step
-            if(size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize)
+            if(size!=EventLoopClientLoginSlave::serverServerListCurrentPlayerSize)
             {
-                parseNetworkReadError("size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize main ident: "+std::to_string(mainCodeType));
+                parseNetworkReadError("size!=EventLoopClientLoginSlave::serverServerListCurrentPlayerSize main ident: "+std::to_string(mainCodeType));
                 return false;
             }
-            memcpy(EpollClientLoginSlave::serverServerList+
-               (EpollClientLoginSlave::serverServerListSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
+            memcpy(EventLoopClientLoginSlave::serverServerList+
+               (EventLoopClientLoginSlave::serverServerListSize-EventLoopClientLoginSlave::serverServerListCurrentPlayerSize),
                 rawData,
-                EpollClientLoginSlave::serverServerListCurrentPlayerSize);
+                EventLoopClientLoginSlave::serverServerListCurrentPlayerSize);
 
-            EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
-            {const uint32_t _tmp_le=(htole32(EpollClientLoginSlave::serverServerListSize));memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-            memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
-            EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
-            EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
-            memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+            EventLoopClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
+            {const uint32_t _tmp_le=(htole32(EventLoopClientLoginSlave::serverServerListSize));memcpy(EventLoopClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+            memcpy(EventLoopClientLoginSlave::serverServerListComputedMessage+1+4,EventLoopClientLoginSlave::serverServerList,EventLoopClientLoginSlave::serverServerListSize);
+            EventLoopClientLoginSlave::serverServerListComputedMessageSize=EventLoopClientLoginSlave::serverServerListSize+1+4;
+            EventLoopClientLoginSlave::serverLogicalGroupAndServerListSize=EventLoopClientLoginSlave::serverServerListComputedMessageSize+EventLoopClientLoginSlave::serverLogicalGroupListSize;
+            memcpy(EventLoopClientLoginSlave::serverLogicalGroupAndServerList+EventLoopClientLoginSlave::serverLogicalGroupListSize,EventLoopClientLoginSlave::serverServerListComputedMessage,EventLoopClientLoginSlave::serverServerListComputedMessageSize);
 
             {
                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x47;
@@ -826,9 +826,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,rawData,size);
 
                 unsigned int index=0;
-                while(index<EpollClientLoginSlave::stat_client_list.size())
+                while(index<EventLoopClientLoginSlave::stat_client_list.size())
                 {
-                    EpollClientLoginSlave * const client=EpollClientLoginSlave::stat_client_list.at(index);
+                    EventLoopClientLoginSlave * const client=EventLoopClientLoginSlave::stat_client_list.at(index);
                     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4+size);
                     index++;
                 }
@@ -841,14 +841,14 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             std::cout << "set server list by diff in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
             /// \todo broadcast to client before the logged step
-            if(EpollClientLoginSlave::serverServerListComputedMessageSize==0)
+            if(EventLoopClientLoginSlave::serverServerListComputedMessageSize==0)
             {
-                parseNetworkReadError("EpollClientLoginSlave::serverServerListComputedMessageSize==0 main ident: "+std::to_string(mainCodeType));
+                parseNetworkReadError("EventLoopClientLoginSlave::serverServerListComputedMessageSize==0 main ident: "+std::to_string(mainCodeType));
                 return false;
             }
             if(size==2 && rawData[0x00]==0 && rawData[0x01]==0)
                 return true;
-            uint8_t serverListCount=EpollClientLoginSlave::serverServerList[0x01];
+            uint8_t serverListCount=EventLoopClientLoginSlave::serverServerList[0x01];
             unsigned int pos=0;
             size_t posTempBuffer=2;
             const uint8_t &deleteSize=rawData[pos];
@@ -857,7 +857,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             uint8_t serverBlockListSizeBeforeAdd=0;
 
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(EventLoopClientLoginSlave::serverServerList,EventLoopClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
             //performance boost and null size problem covered with this
             if(deleteSize>=serverListCount)//do without control, should be true
@@ -867,13 +867,13 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     parseNetworkReadError("deleteSize>serverListCount main ident: "+std::to_string(mainCodeType));
                     return false;
                 }
-                //EpollClientLoginSlave::serverServerList[0x00]=EpollClientLoginSlave::proxyMode;
-                EpollClientLoginSlave::serverServerList[0x01]=0;//server list size
-                EpollClientLoginSlave::serverServerListSize=2;
-                EpollClientLoginSlave::serverServerListCurrentPlayerSize=0;
-                {const uint32_t _tmp_le=(htole32(EpollClientLoginSlave::serverServerListSize));memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-                memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
-                EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
+                //EventLoopClientLoginSlave::serverServerList[0x00]=EventLoopClientLoginSlave::proxyMode;
+                EventLoopClientLoginSlave::serverServerList[0x01]=0;//server list size
+                EventLoopClientLoginSlave::serverServerListSize=2;
+                EventLoopClientLoginSlave::serverServerListCurrentPlayerSize=0;
+                {const uint32_t _tmp_le=(htole32(EventLoopClientLoginSlave::serverServerListSize));memcpy(EventLoopClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+                memcpy(EventLoopClientLoginSlave::serverServerListComputedMessage+1+4,EventLoopClientLoginSlave::serverServerList,EventLoopClientLoginSlave::serverServerListSize);
+                EventLoopClientLoginSlave::serverServerListComputedMessageSize=EventLoopClientLoginSlave::serverServerListSize+1+4;
                 //purge the internal data
                 {
                     unsigned int index=0;
@@ -886,12 +886,12 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
                 pos+=deleteSize;
                 serverListCount=0;
-                posTempBuffer=EpollClientLoginSlave::serverServerListSize;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
+                posTempBuffer=EventLoopClientLoginSlave::serverServerListSize;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,EventLoopClientLoginSlave::serverServerList,EventLoopClientLoginSlave::serverServerListSize);
             }
             else
             {
-                //unserialise the data from EpollClientLoginSlave::serverServerList
+                //unserialise the data from EventLoopClientLoginSlave::serverServerList
                 struct ServerBlock
                 {
                     char * data;
@@ -908,64 +908,64 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     size_t serverServerListPos=2;
                     size_t index=0;
                     ServerBlock newBlock;
-                    if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+                    if(EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Proxy)
                     {
                         #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                        std::cout << "serverBlock raw dump EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        std::cout << "serverBlock raw dump EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Proxy at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                         #endif
                         while(index<serverListCount)
                         {
-                            newBlock.data=EpollClientLoginSlave::serverServerList+serverServerListPos;
+                            newBlock.data=EventLoopClientLoginSlave::serverServerList+serverServerListPos;
                             newBlock.oldIndex=index;
 
                             //here because minor cost
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
-                            newBlock.charactersgroup=EpollClientLoginSlave::serverServerList[serverServerListPos];
+                            newBlock.charactersgroup=EventLoopClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
-                            newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EpollClientLoginSlave::serverServerList+serverServerListPos)));
+                            newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EventLoopClientLoginSlave::serverServerList+serverServerListPos)));
                             serverServerListPos+=4;
 
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
-                            const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
+                            const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EventLoopClientLoginSlave::serverServerList+serverServerListPos));
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
                             serverServerListPos+=2;
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
                             serverServerListPos+=xmlStringSize;
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
@@ -984,45 +984,45 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     else
                     {
                         #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                        std::cout << "serverBlock raw dump EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Reconnect at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        std::cout << "serverBlock raw dump EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Reconnect at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                         #endif
                         while(index<serverListCount)
                         {
-                            newBlock.data=EpollClientLoginSlave::serverServerList+serverServerListPos;
+                            newBlock.data=EventLoopClientLoginSlave::serverServerList+serverServerListPos;
                             newBlock.oldIndex=index;
 
                             //here because minor cost
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
-                            newBlock.charactersgroup=EpollClientLoginSlave::serverServerList[serverServerListPos];
+                            newBlock.charactersgroup=EventLoopClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
-                            newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EpollClientLoginSlave::serverServerList+serverServerListPos)));
+                            newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EventLoopClientLoginSlave::serverServerList+serverServerListPos)));
                             serverServerListPos+=4;
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
-                            const uint8_t &hostStringSize=EpollClientLoginSlave::serverServerList[serverServerListPos];
+                            const uint8_t &hostStringSize=EventLoopClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
@@ -1031,33 +1031,33 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             serverServerListPos+=2;
 
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
-                            const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
+                            const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EventLoopClientLoginSlave::serverServerList+serverServerListPos));
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
                             serverServerListPos+=2;
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
                             serverServerListPos+=xmlStringSize;
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                             {
-                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 abort();
                             }
                             #endif
@@ -1074,23 +1074,23 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         }
                     }
                     #ifdef CATCHCHALLENGER_HARDENED
-                    if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                    if(serverServerListPos>=EventLoopClientLoginSlave::serverServerListSize)
                     {
-                        std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                         abort();
                     }
                     #endif
                     #ifdef CATCHCHALLENGER_HARDENED
-                    if((EpollClientLoginSlave::serverServerListSize-serverServerListPos)!=(serverListCount*sizeof(uint16_t)))
+                    if((EventLoopClientLoginSlave::serverServerListSize-serverServerListPos)!=(serverListCount*sizeof(uint16_t)))
                     {
-                        std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        std::cout << "EventLoopClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                         abort();
                     }
                     #endif
                     index=0;
                     while(index<serverListCount)
                     {
-                        serverBlockList[index].rawCurrentPlayerNumber=*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos);
+                        serverBlockList[index].rawCurrentPlayerNumber=*reinterpret_cast<uint16_t *>(EventLoopClientLoginSlave::serverServerList+serverServerListPos);
                         serverServerListPos+=2;
                         index++;
                     }
@@ -1161,7 +1161,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         index++;
                     }
                 }
-                ProtocolParsingBase::tempBigBufferForOutput[0x00]=EpollClientLoginSlave::proxyMode;
+                ProtocolParsingBase::tempBigBufferForOutput[0x00]=EventLoopClientLoginSlave::proxyMode;
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]=serverBlockList.size();
                 serverBlockListSizeBeforeAdd=serverBlockList.size();
 
@@ -1186,7 +1186,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 #endif
 
                 #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 #endif
                 //copy into the big buffer
                 {
@@ -1213,7 +1213,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             posTempBuffer+=mergedSize;
                             firstBlockToCopy=serverBlock.data;
                             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             #endif
                         }
                         previousIndex=serverBlock.oldIndex;
@@ -1269,13 +1269,13 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         posTempBuffer+=mergedSize;
                     }
                     #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                    std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     #endif
                 }
                 //copy the current player number into local variable
             }
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
 
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
@@ -1291,13 +1291,13 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 int serverListIndex=0;
                 uint32_t serverUniqueKey;const char * hostData;uint8_t hostDataSize;uint16_t port;uint8_t charactersGroupIndex;
 
-                if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+                if(EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Proxy)
                 {
                     serverListRawDataAddedFrom=posTempBuffer;
                     while(serverListIndex<serverListSize)
                     {
                         #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                        std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         #endif
                         //copy the charactersgroup
                         {
@@ -1419,14 +1419,14 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             posTempBuffer+=2;
                         }
                         #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                        std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         #endif
 
                         serverListIndex++;
                     }
                     serverListRawDataAddedTo=posTempBuffer;
                     #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                    std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     #endif
                 }
                 else
@@ -1434,7 +1434,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     while(serverListIndex<serverListSize)
                     {
                         #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                        std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         #endif
                         //copy the charactersgroup
                         {
@@ -1567,13 +1567,13 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             posTempBuffer+=2;
                         }
                         #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                        std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         #endif
 
                         serverListIndex++;
                     }
                     #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-                    std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     #endif
                 }
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]+=serverListSize;
@@ -1582,7 +1582,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             CharactersGroupForLogin::serverDumpCharactersGroup();
             #endif
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
             //copy the old current player number
             if(!currentPlayerNumberList.empty())
@@ -1597,11 +1597,11 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
             }
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
             //the the remaing size
             {
-                EpollClientLoginSlave::serverServerListCurrentPlayerSize=(ProtocolParsingBase::tempBigBufferForOutput[0x01])*sizeof(uint16_t);
+                EventLoopClientLoginSlave::serverServerListCurrentPlayerSize=(ProtocolParsingBase::tempBigBufferForOutput[0x01])*sizeof(uint16_t);
                 if((size-pos)!=(serverListSize*sizeof(uint16_t)))
                 {
                     std::cerr << "48 remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -1615,7 +1615,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
             }
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
             //copy the new current player number
             {
@@ -1628,45 +1628,45 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
             }
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
 
-            //serialise to EpollClientLoginSlave::serverServerList
-            memcpy(EpollClientLoginSlave::serverServerList,ProtocolParsingBase::tempBigBufferForOutput,posTempBuffer);
-            //EpollClientLoginSlave::serverServerList[0x00]=0x02;//do into EpollServerLoginSlave::EpollServerLoginSlave()
-            //EpollClientLoginSlave::serverServerList[0x01]+=serverListSize;do above
-            EpollClientLoginSlave::serverServerListSize=posTempBuffer;
+            //serialise to EventLoopClientLoginSlave::serverServerList
+            memcpy(EventLoopClientLoginSlave::serverServerList,ProtocolParsingBase::tempBigBufferForOutput,posTempBuffer);
+            //EventLoopClientLoginSlave::serverServerList[0x00]=0x02;//do into EventLoopServerLoginSlave::EventLoopServerLoginSlave()
+            //EventLoopClientLoginSlave::serverServerList[0x01]+=serverListSize;do above
+            EventLoopClientLoginSlave::serverServerListSize=posTempBuffer;
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            std::cout << "EventLoopClientLoginSlave::serverServerList: " << binarytoHexa(EventLoopClientLoginSlave::serverServerList,EventLoopClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
 
-            //update the EpollClientLoginSlave::serverServerListComputedMessage
-            EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
-            {const uint32_t _tmp_le=(htole32(EpollClientLoginSlave::serverServerListSize));memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-            memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
-            EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
-            if(EpollClientLoginSlave::serverServerListSize==0)
+            //update the EventLoopClientLoginSlave::serverServerListComputedMessage
+            EventLoopClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
+            {const uint32_t _tmp_le=(htole32(EventLoopClientLoginSlave::serverServerListSize));memcpy(EventLoopClientLoginSlave::serverServerListComputedMessage+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+            memcpy(EventLoopClientLoginSlave::serverServerListComputedMessage+1+4,EventLoopClientLoginSlave::serverServerList,EventLoopClientLoginSlave::serverServerListSize);
+            EventLoopClientLoginSlave::serverServerListComputedMessageSize=EventLoopClientLoginSlave::serverServerListSize+1+4;
+            if(EventLoopClientLoginSlave::serverServerListSize==0)
             {
-                std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                std::cerr << "EventLoopClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                 abort();
             }
 
-            //merge with EpollClientLoginSlave::serverLogicalGroupAndServerListSize
-            if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
+            //merge with EventLoopClientLoginSlave::serverLogicalGroupAndServerListSize
+            if(EventLoopClientLoginSlave::serverLogicalGroupListSize>0)
             {
-                EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
+                EventLoopClientLoginSlave::serverLogicalGroupAndServerListSize=EventLoopClientLoginSlave::serverServerListComputedMessageSize+EventLoopClientLoginSlave::serverLogicalGroupListSize;
                 /* First query already set
-                if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
-                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupList,EpollClientLoginSlave::serverLogicalGroupListSize);*/
-                if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
-                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+                if(EventLoopClientLoginSlave::serverLogicalGroupListSize>0)
+                    memcpy(EventLoopClientLoginSlave::serverLogicalGroupAndServerList,EventLoopClientLoginSlave::serverLogicalGroupList,EventLoopClientLoginSlave::serverLogicalGroupListSize);*/
+                if(EventLoopClientLoginSlave::serverServerListComputedMessageSize>0)
+                    memcpy(EventLoopClientLoginSlave::serverLogicalGroupAndServerList+EventLoopClientLoginSlave::serverLogicalGroupListSize,EventLoopClientLoginSlave::serverServerListComputedMessage,EventLoopClientLoginSlave::serverServerListComputedMessageSize);
             }
 
             //send to stat client
             {
                 uint32_t sizeTosend=0;
                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x48;
-                if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Reconnect)
+                if(EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Reconnect)
                 {
                     {const uint32_t _tmp_le=(htole32(size));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}
 
@@ -1684,7 +1684,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     const uint32_t &sizeOfInsert=serverListRawDataAddedTo-serverListRawDataAddedFrom;
                     if(sizeOfInsert>0)
                     {
-                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,EpollClientLoginSlave::serverServerList+serverListRawDataAddedFrom,sizeOfInsert);
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,EventLoopClientLoginSlave::serverServerList+serverListRawDataAddedFrom,sizeOfInsert);
                         pos+=sizeOfInsert;
                         //copy the current connected player
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,rawData+(size-serverListSize*sizeof(uint16_t)),serverListSize*sizeof(uint16_t));
@@ -1696,9 +1696,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     sizeTosend=pos;
                 }
                 unsigned int index=0;
-                while(index<EpollClientLoginSlave::stat_client_list.size())
+                while(index<EventLoopClientLoginSlave::stat_client_list.size())
                 {
-                    EpollClientLoginSlave * const client=EpollClientLoginSlave::stat_client_list.at(index);
+                    EventLoopClientLoginSlave * const client=EventLoopClientLoginSlave::stat_client_list.at(index);
                     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,sizeTosend);
                     index++;
                 }

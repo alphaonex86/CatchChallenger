@@ -1,4 +1,4 @@
-#include "EpollServerLoginMaster.hpp"
+#include "EventLoopServerLoginMaster.hpp"
 #include <cstring>
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonDatapack.hpp"
@@ -25,19 +25,19 @@ using namespace CatchChallenger;
 
 /// \todo the back id get
 
-#include "EpollClientLoginMaster.hpp"
+#include "EventLoopClientLoginMaster.hpp"
 
-EpollServerLoginMaster *EpollServerLoginMaster::epollServerLoginMaster=NULL;
-char * EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;
-int EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
+EventLoopServerLoginMaster *EventLoopServerLoginMaster::unixServerLoginMaster=NULL;
+char * EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;
+int EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
 
-EpollServerLoginMaster::EpollServerLoginMaster() :
+EventLoopServerLoginMaster::EventLoopServerLoginMaster() :
     purgeTheLockedAccount(NULL),
     checkTimeoutGameServer(NULL),
     automaticPingSend(NULL),
     server_ip(NULL),
     server_port(NULL),
-    rawServerListForC211(static_cast<char *>(malloc(sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup)))),
+    rawServerListForC211(static_cast<char *>(malloc(sizeof(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup)))),
     rawServerListForC211Size(0),
     databaseBaseLogin(NULL),
     databaseBaseBase(NULL),
@@ -53,9 +53,9 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
     {
         //empty buffer
-        memset(EpollClientLoginMaster::serverServerList,0x00,sizeof(EpollClientLoginMaster::serverServerList));
-        memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
-        memset(rawServerListForC211,0x00,sizeof(EpollClientLoginMaster::loginSettingsAndCharactersGroup));
+        memset(EventLoopClientLoginMaster::serverServerList,0x00,sizeof(EventLoopClientLoginMaster::serverServerList));
+        memset(EventLoopClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EventLoopClientLoginMaster::serverLogicalGroupList));
+        memset(rawServerListForC211,0x00,sizeof(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup));
     }
 
     TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/master.xml");
@@ -70,19 +70,19 @@ EpollServerLoginMaster::EpollServerLoginMaster() :
     doTheLogicalGroup(settings);
     doTheServerList();
 
-    EpollClientLoginMaster::fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
-    if(EpollClientLoginMaster::fpRandomFile==NULL)
+    EventLoopClientLoginMaster::fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
+    if(EventLoopClientLoginMaster::fpRandomFile==NULL)
     {
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
 }
 
-EpollServerLoginMaster::~EpollServerLoginMaster()
+EventLoopServerLoginMaster::~EventLoopServerLoginMaster()
 {
-    fclose(EpollClientLoginMaster::fpRandomFile);
+    fclose(EventLoopClientLoginMaster::fpRandomFile);
 
-    memset(EpollClientLoginMaster::private_token,0x00,sizeof(EpollClientLoginMaster::private_token));
+    memset(EventLoopClientLoginMaster::private_token,0x00,sizeof(EventLoopClientLoginMaster::private_token));
     if(server_ip!=NULL)
     {
         delete server_ip;
@@ -95,13 +95,13 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
     }
     if(databaseBaseLogin!=NULL)
     {
-        EpollPostgresql *databaseBasePg=static_cast<EpollPostgresql *>(databaseBaseLogin);
+        EventLoopPostgresql *databaseBasePg=static_cast<EventLoopPostgresql *>(databaseBaseLogin);
         delete databaseBasePg;
         databaseBaseLogin=NULL;
     }
     if(databaseBaseBase!=NULL)
     {
-        EpollPostgresql *databaseBasePg=static_cast<EpollPostgresql *>(databaseBaseBase);
+        EventLoopPostgresql *databaseBasePg=static_cast<EventLoopPostgresql *>(databaseBaseBase);
         delete databaseBasePg;
         databaseBaseBase=NULL;
     }
@@ -111,11 +111,11 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
         rawServerListForC211=NULL;
         rawServerListForC211Size=0;
     }
-    if(EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
+    if(EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
     {
-        delete EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
-        EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;
-        EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
+        delete EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
+        EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;
+        EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
     }
     /*
     auto i = CharactersGroup::hash.begin();
@@ -150,7 +150,7 @@ EpollServerLoginMaster::~EpollServerLoginMaster()
     }
 }
 
-void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
+void EventLoopServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
 {
     if(!settings.contains("ip"))
         settings.setValue("ip","");
@@ -177,7 +177,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
         std::cerr << "convertion to binary for pass failed for: " << token << std::endl;
         abort();
     }
-    memcpy(EpollClientLoginMaster::private_token,tokenbinary.data(),TOKEN_SIZE_FOR_MASTERAUTH);
+    memcpy(EventLoopClientLoginMaster::private_token,tokenbinary.data(),TOKEN_SIZE_FOR_MASTERAUTH);
 
     //connection
     #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
@@ -308,7 +308,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
     }
 }
 
-void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
+void EventLoopServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
 {
     if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
     {
@@ -350,7 +350,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
         bool ok;
         //to load the dictionary
         {
-            databaseBaseLogin=new EpollPostgresql();
+            databaseBaseLogin=new EventLoopPostgresql();
             //here to have by login server an auth
 
             databaseBaseLogin->considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
@@ -388,7 +388,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
     }
     else
     {
-        EpollClientLoginMaster::maxAccountId=1;
+        EventLoopClientLoginMaster::maxAccountId=1;
         databaseBaseLogin=NULL;
     }
     {
@@ -430,7 +430,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
         bool ok;
         //to load the dictionary
         {
-            databaseBaseBase=new EpollPostgresql();
+            databaseBaseBase=new EventLoopPostgresql();
             //here to have by login server an auth
 
             databaseBaseBase->considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
@@ -467,7 +467,7 @@ void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
     }
 }
 
-std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(TinyXMLSettings &settings)
+std::vector<std::string> EventLoopServerLoginMaster::loadCharactersGroup(TinyXMLSettings &settings)
 {
     std::string db;
     std::string host;
@@ -562,7 +562,7 @@ std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(TinyXMLSett
     return charactersGroupList;
 }
 
-void EpollServerLoginMaster::charactersGroupListReply(std::vector<std::string> &charactersGroupList)
+void EventLoopServerLoginMaster::charactersGroupListReply(std::vector<std::string> &charactersGroupList)
 {
     rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
     {const uint32_t _tmp_le=(htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time));memcpy(rawServerListForC211+0x01,&_tmp_le,sizeof(_tmp_le));}
@@ -602,12 +602,12 @@ void EpollServerLoginMaster::charactersGroupListReply(std::vector<std::string> &
     }
 }
 
-void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
+void EventLoopServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
 {
     //do the LogicalGroup
-    memset(EpollClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EpollClientLoginMaster::serverLogicalGroupList));
-    EpollClientLoginMaster::serverLogicalGroupList[0x00]=0x44;
-    EpollClientLoginMaster::serverLogicalGroupListSize=1+4+0x01/*logicalGroupSize*/;
+    memset(EventLoopClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EventLoopClientLoginMaster::serverLogicalGroupList));
+    EventLoopClientLoginMaster::serverLogicalGroupList[0x00]=0x44;
+    EventLoopClientLoginMaster::serverLogicalGroupListSize=1+4+0x01/*logicalGroupSize*/;
 
     std::string textToConvert;
     uint8_t logicalGroup=0;
@@ -635,17 +635,17 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
                     abort();
                 }
 
-                EpollClientLoginMaster::logicalGroupHash[textToConvert]=logicalGroup;
+                EventLoopClientLoginMaster::logicalGroupHash[textToConvert]=logicalGroup;
 
                 if(textToConvert.size()>255)
                 {
                     std::cerr << "logical group converted too big (abort)" << std::endl;
                     abort();
                 }
-                EpollClientLoginMaster::serverLogicalGroupList[EpollClientLoginMaster::serverLogicalGroupListSize]=textToConvert.size();
-                EpollClientLoginMaster::serverLogicalGroupListSize+=1;
-                memcpy(EpollClientLoginMaster::serverLogicalGroupList+EpollClientLoginMaster::serverLogicalGroupListSize,textToConvert.data(),textToConvert.size());
-                EpollClientLoginMaster::serverLogicalGroupListSize+=textToConvert.size();
+                EventLoopClientLoginMaster::serverLogicalGroupList[EventLoopClientLoginMaster::serverLogicalGroupListSize]=textToConvert.size();
+                EventLoopClientLoginMaster::serverLogicalGroupListSize+=1;
+                memcpy(EventLoopClientLoginMaster::serverLogicalGroupList+EventLoopClientLoginMaster::serverLogicalGroupListSize,textToConvert.data(),textToConvert.size());
+                EventLoopClientLoginMaster::serverLogicalGroupListSize+=textToConvert.size();
             }
             //translation
             {
@@ -657,18 +657,18 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
                         std::cerr << "translation too hurge (abort)" << std::endl;
                         abort();
                     }
-                    int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,EpollClientLoginMaster::serverLogicalGroupList+EpollClientLoginMaster::serverLogicalGroupListSize);
+                    int newSize=FacilityLibGeneral::toUTF8With16BitsHeader(textToConvert,EventLoopClientLoginMaster::serverLogicalGroupList+EventLoopClientLoginMaster::serverLogicalGroupListSize);
                     if(newSize==0)
                     {
                         std::cerr << "translation null or unable to translate in utf8 (abort)" << std::endl;
                         abort();
                     }
-                    EpollClientLoginMaster::serverLogicalGroupListSize+=newSize;
+                    EventLoopClientLoginMaster::serverLogicalGroupListSize+=newSize;
                 }
                 else
                 {
-                    {const uint16_t _tmp_le=(0);memcpy(EpollClientLoginMaster::serverLogicalGroupList+EpollClientLoginMaster::serverLogicalGroupListSize,&_tmp_le,sizeof(_tmp_le));}//not convert to le16... 0 remain 0
-                    EpollClientLoginMaster::serverLogicalGroupListSize+=2;
+                    {const uint16_t _tmp_le=(0);memcpy(EventLoopClientLoginMaster::serverLogicalGroupList+EventLoopClientLoginMaster::serverLogicalGroupListSize,&_tmp_le,sizeof(_tmp_le));}//not convert to le16... 0 remain 0
+                    EventLoopClientLoginMaster::serverLogicalGroupListSize+=2;
                 }
             }
 
@@ -676,40 +676,40 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
         }
         settings.endGroup();
     }
-    {const uint32_t _tmp_le=(htole32(EpollClientLoginMaster::serverLogicalGroupListSize-1-4));memcpy(EpollClientLoginMaster::serverLogicalGroupList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-    EpollClientLoginMaster::serverLogicalGroupList[1+4]=logicalGroup;
+    {const uint32_t _tmp_le=(htole32(EventLoopClientLoginMaster::serverLogicalGroupListSize-1-4));memcpy(EventLoopClientLoginMaster::serverLogicalGroupList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+    EventLoopClientLoginMaster::serverLogicalGroupList[1+4]=logicalGroup;
 
-    if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
+    if(EventLoopClientLoginMaster::serverLogicalGroupListSize==0)
     {
-        std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
+        std::cerr << "EventLoopClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
         abort();
     }
 }
 
 /// \todo can be optimized by just memory manipulation, and add/remove block and cache the serialisation
-void EpollServerLoginMaster::doTheServerList()
+void EventLoopServerLoginMaster::doTheServerList()
 {
     //do the server list
-    EpollClientLoginMaster::serverPartialServerListSize=0;
-    //memset(EpollClientLoginMaster::serverPartialServerList,0x00,sizeof(EpollClientLoginMaster::serverPartialServerList));//improve the performance
+    EventLoopClientLoginMaster::serverPartialServerListSize=0;
+    //memset(EventLoopClientLoginMaster::serverPartialServerList,0x00,sizeof(EventLoopClientLoginMaster::serverPartialServerList));//improve the performance
     unsigned int pos=0x00;
 
     #ifdef CATCHCHALLENGER_HARDENED
     std::unordered_map<uint8_t/*charactersgroup index*/,std::unordered_set<uint32_t/*unique key*/> > duplicateDetect;
     #endif
-    EpollClientLoginMaster::serverPartialServerList[pos]=EpollClientLoginMaster::gameServers.size();
+    EventLoopClientLoginMaster::serverPartialServerList[pos]=EventLoopClientLoginMaster::gameServers.size();
     pos+=1;
     unsigned int serverListIndex=0;
-    while(serverListIndex<EpollClientLoginMaster::gameServers.size())
+    while(serverListIndex<EventLoopClientLoginMaster::gameServers.size())
     {
         #ifdef CATCHCHALLENGER_HARDENED
-        if(serverListIndex>=EpollClientLoginMaster::gameServers.size())
+        if(serverListIndex>=EventLoopClientLoginMaster::gameServers.size())
         {
-            std::cerr << "serverListIndex>=EpollClientLoginMaster::gameServers.size() (abort)" << std::endl;
+            std::cerr << "serverListIndex>=EventLoopClientLoginMaster::gameServers.size() (abort)" << std::endl;
             abort();
         }
         #endif
-        const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
+        const EventLoopClientLoginMaster * const gameServerOnEpollClientLoginMaster=EventLoopClientLoginMaster::gameServers.at(serverListIndex);
         #ifdef CATCHCHALLENGER_HARDENED
         if(gameServerOnEpollClientLoginMaster==NULL)
         {
@@ -728,12 +728,12 @@ void EpollServerLoginMaster::doTheServerList()
 
         //charactersGroup
         {
-            EpollClientLoginMaster::serverPartialServerList[pos]=gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->index;
+            EventLoopClientLoginMaster::serverPartialServerList[pos]=gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->index;
             pos+=1;
         }
         //key
         {
-            {const uint32_t _tmp_le=(htole32(gameServerOnEpollClientLoginMaster->uniqueKey));memcpy(EpollClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
+            {const uint32_t _tmp_le=(htole32(gameServerOnEpollClientLoginMaster->uniqueKey));memcpy(EventLoopClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
 
             pos+=sizeof(gameServerOnEpollClientLoginMaster->uniqueKey);
         }
@@ -756,7 +756,7 @@ void EpollServerLoginMaster::doTheServerList()
         #endif
         //host
         {
-            int newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->host,EpollClientLoginMaster::serverPartialServerList+pos);
+            int newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->host,EventLoopClientLoginMaster::serverPartialServerList+pos);
             if(newSize==0)
             {
                 std::cerr << "host null or unable to translate in utf8 (abort): " << gameServerOnCharactersGroup->host << std::endl;
@@ -766,7 +766,7 @@ void EpollServerLoginMaster::doTheServerList()
         }
         //port
         {
-            *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16((unsigned short int)gameServerOnCharactersGroup->port);
+            *reinterpret_cast<unsigned short int *>(EventLoopClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16((unsigned short int)gameServerOnCharactersGroup->port);
             pos+=sizeof(unsigned short int);
         }
         //metaData
@@ -779,45 +779,45 @@ void EpollServerLoginMaster::doTheServerList()
             {
                 if(gameServerOnCharactersGroup->metaData.size()>65535)
                 {
-                    {const uint16_t _tmp_le=(0);memcpy(EpollClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
+                    {const uint16_t _tmp_le=(0);memcpy(EventLoopClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
 
                     pos+=2;
                 }
                 else
                 {
-                    {const uint16_t _tmp_le=(htole16(gameServerOnCharactersGroup->metaData.size()));memcpy(EpollClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
+                    {const uint16_t _tmp_le=(htole16(gameServerOnCharactersGroup->metaData.size()));memcpy(EventLoopClientLoginMaster::serverPartialServerList+pos,&_tmp_le,sizeof(_tmp_le));}
 
                     pos+=2;
-                    memcpy(EpollClientLoginMaster::serverPartialServerList+pos,gameServerOnCharactersGroup->metaData.data(),gameServerOnCharactersGroup->metaData.size());
+                    memcpy(EventLoopClientLoginMaster::serverPartialServerList+pos,gameServerOnCharactersGroup->metaData.data(),gameServerOnCharactersGroup->metaData.size());
                     pos+=gameServerOnCharactersGroup->metaData.size();
                 }
             }
         }
         //logicalGroup
         {
-            EpollClientLoginMaster::serverPartialServerList[pos]=gameServerOnCharactersGroup->logicalGroupIndex;
+            EventLoopClientLoginMaster::serverPartialServerList[pos]=gameServerOnCharactersGroup->logicalGroupIndex;
             pos+=1;
         }
         //max player
-        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
+        *reinterpret_cast<unsigned short int *>(EventLoopClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
         pos+=sizeof(unsigned short int);
 
         serverListIndex++;
     }
-    EpollClientLoginMaster::serverPartialServerListSize=pos;
+    EventLoopClientLoginMaster::serverPartialServerListSize=pos;
 
     //Second list part with same size
     serverListIndex=0;
-    while(serverListIndex<EpollClientLoginMaster::gameServers.size())
+    while(serverListIndex<EventLoopClientLoginMaster::gameServers.size())
     {
         #ifdef CATCHCHALLENGER_HARDENED
-        if(serverListIndex>=EpollClientLoginMaster::gameServers.size())
+        if(serverListIndex>=EventLoopClientLoginMaster::gameServers.size())
         {
-            std::cerr << "serverListIndex>=EpollClientLoginMaster::gameServers.size() (abort)" << std::endl;
+            std::cerr << "serverListIndex>=EventLoopClientLoginMaster::gameServers.size() (abort)" << std::endl;
             abort();
         }
         #endif
-        const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
+        const EventLoopClientLoginMaster * const gameServerOnEpollClientLoginMaster=EventLoopClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
         #ifdef CATCHCHALLENGER_HARDENED
         if(gameServerOnCharactersGroup==NULL)
@@ -833,62 +833,62 @@ void EpollServerLoginMaster::doTheServerList()
         #endif
 
         //connected player
-        *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
+        *reinterpret_cast<unsigned short int *>(EventLoopClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
         pos+=sizeof(unsigned short int);
 
         serverListIndex++;
     }
 
     //send the network message
-    EpollClientLoginMaster::serverServerList[0x00]=0x45;
-    {const uint32_t _tmp_le=(htole32(pos));memcpy(EpollClientLoginMaster::serverServerList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-    memcpy(EpollClientLoginMaster::serverServerList+1+4,EpollClientLoginMaster::serverPartialServerList,pos);
-    EpollClientLoginMaster::serverServerListSize=pos+1+4;
-    if(EpollClientLoginMaster::serverServerListSize==0)
+    EventLoopClientLoginMaster::serverServerList[0x00]=0x45;
+    {const uint32_t _tmp_le=(htole32(pos));memcpy(EventLoopClientLoginMaster::serverServerList+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+    memcpy(EventLoopClientLoginMaster::serverServerList+1+4,EventLoopClientLoginMaster::serverPartialServerList,pos);
+    EventLoopClientLoginMaster::serverServerListSize=pos+1+4;
+    if(EventLoopClientLoginMaster::serverServerListSize==0)
     {
-        std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
+        std::cerr << "EventLoopClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
         abort();
     }
 
-    //std::cout << "Now the server list is: " << binarytoHexa(EpollClientLoginMaster::serverServerList,EpollClientLoginMaster::serverServerListSize) << std::endl;
+    //std::cout << "Now the server list is: " << binarytoHexa(EventLoopClientLoginMaster::serverServerList,EventLoopClientLoginMaster::serverServerListSize) << std::endl;
 }
 
-void EpollServerLoginMaster::doTheReplyCache()
+void EventLoopServerLoginMaster::doTheReplyCache()
 {
-    if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
+    if(EventLoopClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
     {
         std::cerr << "loginSettingsAndCharactersGroupSize==0 (abort)" << std::endl;
         abort();
     }
-    if(EpollClientLoginMaster::serverLogicalGroupListSize==0)
+    if(EventLoopClientLoginMaster::serverLogicalGroupListSize==0)
     {
         std::cerr << "loginSettingsAndCharactersGroupSize==0 (abort)" << std::endl;
         abort();
     }
-    if(EpollClientLoginMaster::serverServerListSize==0)
+    if(EventLoopClientLoginMaster::serverServerListSize==0)
     {
         std::cerr << "loginSettingsAndCharactersGroupSize==0 (abort)" << std::endl;
         abort();
     }
     //do the reply cache
-    EpollClientLoginMaster::loginPreviousToReplyCacheSize=0;
-    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize,
-           EpollClientLoginMaster::loginSettingsAndCharactersGroup,
-           EpollClientLoginMaster::loginSettingsAndCharactersGroupSize);
-    EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::loginSettingsAndCharactersGroupSize;
+    EventLoopClientLoginMaster::loginPreviousToReplyCacheSize=0;
+    memcpy(EventLoopClientLoginMaster::loginPreviousToReplyCache+EventLoopClientLoginMaster::loginPreviousToReplyCacheSize,
+           EventLoopClientLoginMaster::loginSettingsAndCharactersGroup,
+           EventLoopClientLoginMaster::loginSettingsAndCharactersGroupSize);
+    EventLoopClientLoginMaster::loginPreviousToReplyCacheSize+=EventLoopClientLoginMaster::loginSettingsAndCharactersGroupSize;
 
-    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize,
-           EpollClientLoginMaster::serverLogicalGroupList,
-           EpollClientLoginMaster::serverLogicalGroupListSize);
-    EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::serverLogicalGroupListSize;
+    memcpy(EventLoopClientLoginMaster::loginPreviousToReplyCache+EventLoopClientLoginMaster::loginPreviousToReplyCacheSize,
+           EventLoopClientLoginMaster::serverLogicalGroupList,
+           EventLoopClientLoginMaster::serverLogicalGroupListSize);
+    EventLoopClientLoginMaster::loginPreviousToReplyCacheSize+=EventLoopClientLoginMaster::serverLogicalGroupListSize;
 
-    memcpy(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize,
-           EpollClientLoginMaster::serverServerList,
-           EpollClientLoginMaster::serverServerListSize);
-    EpollClientLoginMaster::loginPreviousToReplyCacheSize+=EpollClientLoginMaster::serverServerListSize;
+    memcpy(EventLoopClientLoginMaster::loginPreviousToReplyCache+EventLoopClientLoginMaster::loginPreviousToReplyCacheSize,
+           EventLoopClientLoginMaster::serverServerList,
+           EventLoopClientLoginMaster::serverServerListSize);
+    EventLoopClientLoginMaster::loginPreviousToReplyCacheSize+=EventLoopClientLoginMaster::serverServerListSize;
 }
 
-bool EpollServerLoginMaster::tryListen()
+bool EventLoopServerLoginMaster::tryListen()
 {
         const bool &returnedValue=tryListenInternal(server_ip, server_port);
     if(server_ip!=NULL)
@@ -911,7 +911,7 @@ bool EpollServerLoginMaster::tryListen()
     return returnedValue;
 }
 
-void EpollServerLoginMaster::generateToken(TinyXMLSettings &settings)
+void EventLoopServerLoginMaster::generateToken(TinyXMLSettings &settings)
 {
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
@@ -919,17 +919,17 @@ void EpollServerLoginMaster::generateToken(TinyXMLSettings &settings)
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(EpollClientLoginMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=fread(EventLoopClientLoginMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
-    settings.setValue("token",binarytoHexa(EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).c_str());
+    settings.setValue("token",binarytoHexa(EventLoopClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH).c_str());
     fclose(fpRandomFile);
 }
 
-void EpollServerLoginMaster::load_account_max_id()
+void EventLoopServerLoginMaster::load_account_max_id()
 {
     std::string queryText;
     switch(databaseBaseLogin->databaseType())
@@ -953,26 +953,26 @@ void EpollServerLoginMaster::load_account_max_id()
         abort();
         break;
     }
-    if(databaseBaseLogin->asyncRead(queryText,this,&EpollServerLoginMaster::load_account_max_id_static)==NULL)
+    if(databaseBaseLogin->asyncRead(queryText,this,&EventLoopServerLoginMaster::load_account_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseLogin->errorMessage() << std::endl;
         abort();
     }
-    EpollClientLoginMaster::maxAccountId=0;
+    EventLoopClientLoginMaster::maxAccountId=0;
 }
 
-void EpollServerLoginMaster::load_account_max_id_static(void *object)
+void EventLoopServerLoginMaster::load_account_max_id_static(void *object)
 {
-    static_cast<EpollServerLoginMaster *>(object)->load_account_max_id_return();
+    static_cast<EventLoopServerLoginMaster *>(object)->load_account_max_id_return();
 }
 
-void EpollServerLoginMaster::load_account_max_id_return()
+void EventLoopServerLoginMaster::load_account_max_id_return()
 {
     while(databaseBaseLogin->next())
     {
         bool ok;
         //not +1 because incremented before use
-        EpollClientLoginMaster::maxAccountId=stringtouint32(databaseBaseLogin->value(0),&ok);
+        EventLoopClientLoginMaster::maxAccountId=stringtouint32(databaseBaseLogin->value(0),&ok);
         if(!ok)
         {
             std::cerr << "Max account id is failed to convert to number" << std::endl;
@@ -983,7 +983,7 @@ void EpollServerLoginMaster::load_account_max_id_return()
     //will jump to SQL_common_load_finish()
 }
 
-void EpollServerLoginMaster::loadTheDatapack()
+void EventLoopServerLoginMaster::loadTheDatapack()
 {
     CommonDatapack::commonDatapack.parseDatapack("datapack/");
 
@@ -997,7 +997,7 @@ void EpollServerLoginMaster::loadTheDatapack()
     load(databaseBaseBase);
 }
 
-void EpollServerLoginMaster::SQL_common_load_finish()
+void EventLoopServerLoginMaster::SQL_common_load_finish()
 {
     //INSERT INTO dictionary in suspend can't close
     /*databaseBaseLogin->syncDisconnect();
@@ -1012,11 +1012,11 @@ void EpollServerLoginMaster::SQL_common_load_finish()
     BaseServerMasterLoadDictionary::unload();
 }
 
-void EpollServerLoginMaster::loadTheProfile()
+void EventLoopServerLoginMaster::loadTheProfile()
 {
     if(rawServerListForC211==NULL)
     {
-        std::cerr << "EpollServerLoginMaster::loadTheProfile(): rawServerListForC20011==NULL (abort)" << std::endl;
+        std::cerr << "EventLoopServerLoginMaster::loadTheProfile(): rawServerListForC20011==NULL (abort)" << std::endl;
         abort();
     }
 
@@ -1201,25 +1201,25 @@ void EpollServerLoginMaster::loadTheProfile()
     //CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();no memory gain
 
     //send the network message
-    EpollClientLoginMaster::loginSettingsAndCharactersGroup[0x00]=0x46;
-    {const uint32_t _tmp_le=(htole32(rawServerListForC211Size));memcpy(EpollClientLoginMaster::loginSettingsAndCharactersGroup+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-    memcpy(EpollClientLoginMaster::loginSettingsAndCharactersGroup+1+4,rawServerListForC211,rawServerListForC211Size);
-    EpollClientLoginMaster::loginSettingsAndCharactersGroupSize=1+4+rawServerListForC211Size;
+    EventLoopClientLoginMaster::loginSettingsAndCharactersGroup[0x00]=0x46;
+    {const uint32_t _tmp_le=(htole32(rawServerListForC211Size));memcpy(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+    memcpy(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup+1+4,rawServerListForC211,rawServerListForC211Size);
+    EventLoopClientLoginMaster::loginSettingsAndCharactersGroupSize=1+4+rawServerListForC211Size;
 
     delete rawServerListForC211;
     rawServerListForC211=NULL;
     rawServerListForC211Size=0;
 
-    if(EpollClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
+    if(EventLoopClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
     {
-        std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
+        std::cerr << "EventLoopClientLoginMaster::serverLogicalGroupListSize==0 (abort)" << std::endl;
         abort();
     }
 
     doTheReplyCache();
 }
 
-void EpollServerLoginMaster::loadTheDictionary()
+void EventLoopServerLoginMaster::loadTheDictionary()
 {
     uint32_t posOutput=0;
 
@@ -1273,9 +1273,9 @@ void EpollServerLoginMaster::loadTheDictionary()
     posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
     std::cout << "datapackHashBase is " << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase) << std::endl;
 
-    if(EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
-        delete EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
-    EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=(char *)malloc(posOutput+1);
-    EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=posOutput;
-    memcpy(EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    if(EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
+        delete EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
+    EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=(char *)malloc(posOutput+1);
+    EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=posOutput;
+    memcpy(EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }

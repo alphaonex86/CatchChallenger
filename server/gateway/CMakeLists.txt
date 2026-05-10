@@ -16,11 +16,11 @@ find_package(Threads REQUIRED)
 find_library(LIBCURL_LIBRARY NAMES curl REQUIRED)
 
 set(_gateway_sources
-    EpollClientLoginSlave.cpp
-    EpollServerLoginSlave.cpp
-    EpollClientLoginSlaveStaticVar.cpp
-    EpollClientLoginSlaveProtocolParsing.cpp
-    EpollClientLoginSlaveWrite.cpp
+    EventLoopClientLoginSlave.cpp
+    EventLoopServerLoginSlave.cpp
+    EventLoopClientLoginSlaveStaticVar.cpp
+    EventLoopClientLoginSlaveProtocolParsing.cpp
+    EventLoopClientLoginSlaveWrite.cpp
     LinkToGameServerStaticVar.cpp
     LinkToGameServerProtocolParsing.cpp
     LinkToGameServer.cpp
@@ -29,16 +29,16 @@ set(_gateway_sources
     DatapackDownloader_sub.cpp
     DatapackDownloader_main.cpp
     DatapackDownloaderMainSub.cpp
-    EpollClientLoginSlaveDatapack.cpp
+    EventLoopClientLoginSlaveDatapack.cpp
     FacilityLibGateway.cpp
-    main-epoll-gateway.cpp
-    # epoll/ shared
-    ../epoll/Epoll.cpp
-    ../epoll/EpollGenericServer.cpp
-    ../epoll/EpollClient.cpp
-    ../epoll/EpollSocket.cpp
-    ../epoll/EpollClientToServer.cpp
-    ../epoll/EpollTimer.cpp
+    main-unix-gateway.cpp
+    # unix/ shared
+    ../cli/EventLoop.cpp
+    ../cli/EventLoopGenericServer.cpp
+    ../cli/EventLoopClient.cpp
+    ../cli/SocketUtil.cpp
+    ../cli/EventLoopClientToServer.cpp
+    ../cli/EventLoopTimer.cpp
     # tiny client/libcatchchallenger reuse
     ../../client/libcatchchallenger/DatapackChecksum.cpp
     ../../client/libcatchchallenger/TarDecode.cpp
@@ -50,7 +50,7 @@ add_executable(catchchallenger-gateway ${_gateway_sources})
 
 target_include_directories(catchchallenger-gateway PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../epoll
+    ${CMAKE_CURRENT_SOURCE_DIR}/../unix
     ${CMAKE_CURRENT_SOURCE_DIR}/../base
     ${CMAKE_CURRENT_SOURCE_DIR}/../../client/libcatchchallenger
 )
@@ -75,6 +75,19 @@ target_compile_definitions(catchchallenger-gateway PRIVATE
 if(EXTERNALLIBZSTD)
     target_link_libraries(catchchallenger-gateway PRIVATE ${ZSTD_LIBRARY})
 endif()
+
+# io_uring is MANDATORY for this binary.
+if(NOT LIBURING_LIBRARY)
+    find_library(LIBURING_LIBRARY NAMES uring)
+    find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)
+endif()
+if(NOT LIBURING_LIBRARY)
+    message(FATAL_ERROR
+        "catchchallenger-gateway requires liburing (mandatory io_uring backend).")
+endif()
+target_compile_definitions(catchchallenger-gateway PRIVATE CATCHCHALLENGER_IO_URING)
+target_include_directories(catchchallenger-gateway PRIVATE ${LIBURING_INCLUDE_DIR})
+target_link_libraries(catchchallenger-gateway PRIVATE ${LIBURING_LIBRARY})
 
 find_program(MOLD_EXE mold)
 if(MOLD_EXE)

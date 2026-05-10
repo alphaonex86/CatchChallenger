@@ -39,8 +39,8 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsingCheck.cpp`
   - `general/base/ProtocolParsingCheck.hpp`
   - `general/base/ProtocolParsing.hpp`
-  - `server/gateway/EpollServerLoginSlave.cpp`
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopServerLoginSlave.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
   - *(…and 22 more)*
 
 
@@ -52,19 +52,19 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `general/base/ProtocolParsing.hpp`
   - `server/game-server-alone/game-server-alone.pro`
-  - `server/epoll/catchchallenger-server-filedb.pro`
-  - `server/epoll/catchchallenger-server-test.pro`
-  - `server/epoll/timer/TimeRangeEvent.hpp`
-  - `server/epoll/timer/TimeRangeEvent.cpp`
-  - `server/epoll/BaseClassSwitch.hpp`
-  - `server/epoll/catchchallenger-server-cli-epoll.pro`
+  - `server/cli/catchchallenger-server-filedb.pro`
+  - `server/cli/catchchallenger-server-test.pro`
+  - `server/cli/timer/TimeRangeEvent.hpp`
+  - `server/cli/timer/TimeRangeEvent.cpp`
+  - `server/cli/BaseClassSwitch.hpp`
+  - `server/cli/catchchallenger-server-cli.pro`
   - *(…and 9 more)*
 
 ### `CATCHCHALLENGER_CLASS_BOT`
 - **Scope:** server-only — server: epoll
 - **Description:** Bot/load-test class marker for the epoll server target.
 - **Used in:**
-  - `server/epoll/BaseClassSwitch.hpp`
+  - `server/cli/BaseClassSwitch.hpp`
 
 ### `CATCHCHALLENGER_CLASS_CLIENT`
 - **Scope:** client-only — client: qtcpu800x600,qtopengl
@@ -82,7 +82,7 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/Map_loader.hpp`
   - `general/base/ProtocolParsing.hpp`
   - `server/gateway/gateway.pro`
-  - `server/epoll/BaseClassSwitch.hpp`
+  - `server/cli/BaseClassSwitch.hpp`
 
 ### `CATCHCHALLENGER_CLASS_LOGIN`
 - **Scope:** server-only (+ general/) — server: base,epoll,login
@@ -90,7 +90,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `general/base/Map_loader.hpp`
   - `general/base/ProtocolParsing.hpp`
-  - `server/epoll/BaseClassSwitch.hpp`
+  - `server/cli/BaseClassSwitch.hpp`
   - `server/login/login.pro`
   - `server/base/PreparedDBQuery.hpp`
   - `server/base/ServerStructures.hpp`
@@ -122,36 +122,36 @@ tools-only when references concentrate in one of those subtrees.
   - `server/game-server-alone/LinkToMasterProtocolParsing.cpp`
   - `server/game-server-alone/game-server-alone.pro`
   - `server/fight/BaseServerFight.cpp`
-  - `server/epoll/main-epoll.cpp`
-  - `server/epoll/main-epoll2.cpp`
+  - `server/cli/main-unix.cpp`
+  - `server/cli/main-unix2.cpp`
   - *(…and 39 more)*
 
 ### `CATCHCHALLENGER_CLASS_P2PCLUSTER`
 - **Scope:** server-only — server: epoll
 - **Description:** Peer-to-peer cluster mode marker (experimental).
 - **Used in:**
-  - `server/epoll/BaseClassSwitch.hpp`
+  - `server/cli/BaseClassSwitch.hpp`
 
 ### `CATCHCHALLENGER_CLASS_QT`
 - **Scope:** global (client + server) — server: base,epoll,login,master,qt; client: qtcpu800x600,qtopengl
 - **Description:** Qt-based client (graphical, not CLI).
 - **Used in:**
   - `server/MainWindow.cpp`
-  - `server/master/EpollServerLoginMaster.cpp`
+  - `server/master/EventLoopServerLoginMaster.cpp`
   - `server/master/CharactersGroup.cpp`
   - `server/qt/catchchallenger-server-qtheader.pri`
   - `server/qt/catchchallenger-server-qt.pri`
-  - `server/epoll/main-epoll2.cpp`
-  - `server/epoll/BaseClassSwitch.hpp`
-  - `server/login/EpollServerLoginSlave.cpp`
+  - `server/cli/main-unix2.cpp`
+  - `server/cli/BaseClassSwitch.hpp`
+  - `server/login/EventLoopServerLoginSlave.cpp`
   - *(…and 20 more)*
 
 ### `CATCHCHALLENGER_CLASS_STATS`
 - **Scope:** global (server + tools) — server: epoll; tools: stats
 - **Description:** Stats-collector tool (game-server clone gathering metrics).
 - **Used in:**
-  - `server/epoll/EpollUnixSocketServer.cpp`
-  - `server/epoll/BaseClassSwitch.hpp`
+  - `server/cli/UnixSocketServer.cpp`
+  - `server/cli/BaseClassSwitch.hpp`
   - `tools/stats/stats.pro`
 
 
@@ -218,10 +218,10 @@ tools-only when references concentrate in one of those subtrees.
 - **Description:** Use prepared statements for SQL queries.
 - **Used in:**
   - `server/master/master.pro`
-  - `server/epoll/db/EpollPostgresql.hpp`
-  - `server/epoll/db/EpollPostgresql.cpp`
-  - `server/epoll/catchchallenger-server-cli-epoll.pro`
-  - `server/login/EpollServerLoginSlave.cpp`
+  - `server/cli/db/EventLoopPostgresql.hpp`
+  - `server/cli/db/EventLoopPostgresql.cpp`
+  - `server/cli/catchchallenger-server-cli.pro`
+  - `server/login/EventLoopServerLoginSlave.cpp`
   - `server/login/login.pro`
   - `server/base/PreparedDBQueryServer.cpp`
   - `server/base/DatabaseBase.hpp`
@@ -243,14 +243,14 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_MAXBDQUERIES`
 - **Scope:** server-only — server: epoll,qt
-- **Description:** Max concurrent DB queries (Qt: `255`, Epoll: `1024`).
+- **Description:** Max concurrent DB queries (Qt: `255`, EventLoop: `1024`).
 - **Used in:**
   - `server/qt/db/QtDatabase.hpp`
   - `server/qt/db/QtDatabase.cpp`
-  - `server/epoll/db/EpollMySQL.hpp`
-  - `server/epoll/db/EpollMySQL.cpp`
-  - `server/epoll/db/EpollPostgresql.hpp`
-  - `server/epoll/db/EpollPostgresql.cpp`
+  - `server/cli/db/EventLoopMySQL.hpp`
+  - `server/cli/db/EventLoopMySQL.cpp`
+  - `server/cli/db/EventLoopPostgresql.hpp`
+  - `server/cli/db/EventLoopPostgresql.cpp`
 
 
 ## Datapack / parser
@@ -265,8 +265,8 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/CommonDatapackServerSpec.hpp`
   - `general/base/GeneralStructures.hpp`
   - `server/game-server-alone/LinkToMasterProtocolParsing.cpp`
-  - `server/master/main-epoll-login-master.cpp`
-  - `server/epoll/filedb-converter/filedb-converter.pro`
+  - `server/master/main-unix-login-master.cpp`
+  - `server/cli/filedb-converter/filedb-converter.pro`
   - *(…and 24 more)*
 
 ### `CATCHCHALLENGER_CHECK_MAINDATAPACKCODE`
@@ -291,7 +291,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,epoll
 - **Description:** Dump cached datapack trees to disk for debugging.
 - **Used in:**
-  - `server/epoll/catchchallenger-server-filedb.pro`
+  - `server/cli/catchchallenger-server-filedb.pro`
   - `server/base/BaseServer/BaseServerLoadMap.cpp`
 
 ### `CATCHCHALLENGER_DYNAMIC_MAP_LIST`
@@ -308,8 +308,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Description:** Whitelist of file extensions allowed in datapack (`tmx;xml;tsx;js;png;jpg;gif;ogg;opus`).
 - **Used in:**
   - `general/base/GeneralVariable.hpp`
-  - `server/gateway/EpollServerLoginSlave.cpp`
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopServerLoginSlave.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
   - `server/base/ClientLoad/ClientHeavyLoadMirror.cpp`
   - `server/base/ClientLoad/ClientHeavyLoad.cpp`
   - `server/base/BaseServer/BaseServerLoadDatapack.cpp`
@@ -321,8 +321,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,gateway
 - **Description:** Extensions to compress in datapack (`tmx;xml;tsx;js`).
 - **Used in:**
-  - `server/gateway/EpollServerLoginSlave.cpp`
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopServerLoginSlave.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
   - `server/base/ClientLoad/ClientHeavyLoadMirror.cpp`
   - `server/base/ClientLoad/ClientHeavyLoad.cpp`
   - `server/base/VariableServer.hpp`
@@ -351,10 +351,10 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsingInput.cpp`
   - `general/base/ProtocolParsing.hpp`
   - `server/game-server-alone/game-server-alone.pro`
-  - `server/gateway/EpollServerLoginSlave.cpp`
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
-  - `server/gateway/EpollClientLoginSlaveProtocolParsing.cpp`
-  - `server/epoll/catchchallenger-server-filedb.pro`
+  - `server/gateway/EventLoopServerLoginSlave.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveProtocolParsing.cpp`
+  - `server/cli/catchchallenger-server-filedb.pro`
   - *(…and 14 more)*
 
 
@@ -364,9 +364,9 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,gateway,login
 - **Description:** Threshold (in KB) above which a single datapack file is sent **uncompressed** to the client. Files larger than this skip the compressed-batch path because compressing very-large files dominates the connect-time CPU budget without much wire-size benefit (most large files are already-compressed assets like .png/.opus).
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
   - `server/base/ClientLoad/ClientHeavyLoadMirror.cpp`
   - `server/base/VariableServer.hpp`
   - `server/base/Client.hpp`
@@ -381,9 +381,9 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,gateway,login
 - **Description:** Flush threshold (in KB) for the **raw** (uncompressed) datapack send path. When the accumulated raw-files-pending body reaches this size, `Client::sendFileContent` flushes one `0x76` packet and clears the buffer. Smaller = more packets / less latency; larger = fewer round-trips.
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
   - `server/base/ClientLoad/ClientHeavyLoadMirror.cpp`
   - `server/base/VariableServer.hpp`
   - `server/base/Client.hpp`
@@ -392,9 +392,9 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,gateway,login
 - **Description:** Lower bound (in KB) for the "send this file as a standalone packet rather than batch it" decision. Files larger than `MIN_FILEPURGE_KB` get their own packet (one file = one wire frame); smaller files are accumulated in the raw-batch buffer until it hits `MAX_FILEPURGE_KB`. Reduces overhead for tiny files (XML metadata) while keeping big assets out of the batch buffer.
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
   - `server/base/ClientLoad/ClientHeavyLoadMirror.cpp`
   - `server/base/VariableServer.hpp`
   - `server/base/Client.hpp`
@@ -403,8 +403,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,gateway,login
 - **Description:** Flush threshold (in KB of raw input) for the XZ/LZMA-compressed datapack send path. Tighter compression than zlib at higher CPU cost; threshold is set higher than `_ZLIB_COMPRESSEDFILEPURGE_KB` to amortize the slower compression over a larger batch.
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
   - `server/base/VariableServer.hpp`
   - `server/base/Client.hpp`
 
@@ -412,9 +412,9 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,gateway,login
 - **Description:** Flush threshold (in KB of raw input) for the zlib/zstd-compressed datapack send path. When the accumulated raw bundle hits this size, the server runs streaming compression and emits one `0x77` packet. Tuned smaller than the LZ4/XZ thresholds because zlib/zstd at level 6 hits a sensible CPU/ratio sweet spot at modest batch sizes.
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
   - `server/base/ClientLoad/ClientHeavyLoadMirror.cpp`
   - `server/base/VariableServer.hpp`
   - `server/base/Client.hpp`
@@ -427,9 +427,9 @@ tools-only when references concentrate in one of those subtrees.
 - **Description:** Link against system libzstd (servers) instead of bundled zstd. Clients embed zstd to avoid the runtime dependency.
 - **Used in:**
   - `general/general.pri`
-  - `server/epoll/catchchallenger-server-filedb.pro`
-  - `server/epoll/catchchallenger-server-test.pro`
-  - `server/epoll/catchchallenger-server-cli-epoll.pro`
+  - `server/cli/catchchallenger-server-filedb.pro`
+  - `server/cli/catchchallenger-server-test.pro`
+  - `server/cli/catchchallenger-server-cli.pro`
 
 ### `OP_DISABLE_HTTP`
 - **Scope:** client-only — client: libqtcatchchallenger
@@ -590,11 +590,11 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsingGeneral.cpp`
   - `server/game-server-alone/LinkToMaster.cpp`
   - `server/game-server-alone/LinkToMaster.hpp`
-  - `server/gateway/EpollServerLoginSlave.cpp`
-  - `server/gateway/EpollClientLoginSlave.cpp`
+  - `server/gateway/EventLoopServerLoginSlave.cpp`
+  - `server/gateway/EventLoopClientLoginSlave.cpp`
   - `server/gateway/LinkToGameServer.hpp`
   - `server/gateway/LinkToGameServer.cpp`
-  - `server/gateway/EpollServerLoginSlave.hpp`
+  - `server/gateway/EventLoopServerLoginSlave.hpp`
   - *(…and 41 more)*
 
 
@@ -606,8 +606,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `general/base/ProtocolParsingInput.cpp`
   - `general/base/ProtocolParsing.hpp`
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
   - `server/base/Client.hpp`
 
 ### `CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER`
@@ -639,7 +639,7 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsingOutput.cpp`
   - `general/base/ProtocolParsing.hpp`
   - `server/game-server-alone/LinkToMaster.cpp`
-  - `server/master/EpollClientLoginMaster.cpp`
+  - `server/master/EventLoopClientLoginMaster.cpp`
   - `server/login/LinkToMasterStaticVar.cpp`
   - `server/login/LinkToMaster.cpp`
   - *(…and 4 more)*
@@ -649,7 +649,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Description:** Max file per transmission (`16K` mirror / `8M` normal).
 - **Used in:**
   - `general/base/GeneralVariable.hpp`
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
   - `server/gateway/DatapackDownloader_main.cpp`
   - `server/gateway/DatapackDownloader_sub.cpp`
   - `server/gateway/DatapackDownloaderBase.cpp`
@@ -663,7 +663,7 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/GeneralVariable.hpp`
   - `general/base/ProtocolParsingOutput.cpp`
   - `general/base/ProtocolParsing.hpp`
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
   - `server/base/ClientLoad/ClientHeavyLoadMirror.cpp`
   - `server/base/BaseServer/BaseServerLoadDatapack.cpp`
 
@@ -687,17 +687,17 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: gateway,login
 - **Description:** Samples averaged for the DDoS metric (`8`).
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
 
 ### `CATCHCHALLENGER_DDOS_COMPUTERINTERVAL`
 - **Scope:** server-only — server: gateway,login
 - **Description:** Seconds between DDoS evaluations (`5`).
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/gateway/main-epoll-gateway.cpp`
-  - `server/login/main-epoll-login-slave.cpp`
-  - `server/login/EpollClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/gateway/main-unix-gateway.cpp`
+  - `server/login/main-unix-login-slave.cpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
 
 ### `CATCHCHALLENGER_DDOS_FILTER`
 - **Scope:** server-only — server: base,epoll,qt
@@ -705,9 +705,9 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `server/MainWindow.cpp`
   - `server/qt/ProcessController.cpp`
-  - `server/epoll/main-epoll2.cpp`
-  - `server/epoll/timer/TimerDdos.cpp`
-  - `server/epoll/ClientWithMapEpoll.cpp`
+  - `server/cli/main-unix2.cpp`
+  - `server/cli/timer/TimerDdos.cpp`
+  - `server/cli/ClientWithMapEventLoop.cpp`
   - `server/base/ClientNetworkRead.cpp`
   - `server/base/NormalServerGlobal.cpp`
   - `server/base/ClientNetworkReadWithoutSender.cpp`
@@ -717,34 +717,34 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: gateway,login
 - **Description:** Chat msgs per interval before kick (`15`).
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/gateway/EpollClientLoginSlaveProtocolParsing.cpp`
-  - `server/login/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlaveProtocolParsing.cpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlaveProtocolParsing.cpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlaveProtocolParsing.cpp`
 
 ### `CATCHCHALLENGER_DDOS_KICKLIMITMOVE`
 - **Scope:** server-only — server: gateway,login
 - **Description:** Movement msgs per interval before kick (`140`).
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/gateway/EpollClientLoginSlaveProtocolParsing.cpp`
-  - `server/login/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlaveProtocolParsing.cpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlaveProtocolParsing.cpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlaveProtocolParsing.cpp`
 
 ### `CATCHCHALLENGER_DDOS_KICKLIMITOTHER`
 - **Scope:** server-only — server: gateway,login
 - **Description:** Other actions per interval before kick (`45`).
 - **Used in:**
-  - `server/gateway/EpollClientLoginSlave.hpp`
-  - `server/gateway/EpollClientLoginSlaveProtocolParsing.cpp`
-  - `server/login/EpollClientLoginSlave.hpp`
-  - `server/login/EpollClientLoginSlaveProtocolParsing.cpp`
+  - `server/gateway/EventLoopClientLoginSlave.hpp`
+  - `server/gateway/EventLoopClientLoginSlaveProtocolParsing.cpp`
+  - `server/login/EventLoopClientLoginSlave.hpp`
+  - `server/login/EventLoopClientLoginSlaveProtocolParsing.cpp`
 
 ### `CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE`
 - **Scope:** server-only — server: base,epoll
 - **Description:** Max DDoS score before disconnect (`6`).
 - **Used in:**
-  - `server/epoll/timer/TimerDdos.cpp`
+  - `server/cli/timer/TimerDdos.cpp`
   - `server/base/ClientNetworkReadWithoutSender.cpp`
   - `server/base/MapServer.hpp`
   - `server/base/MapServer.cpp`
@@ -767,8 +767,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `general/base/GeneralVariable.hpp`
   - `server/game-server-alone/LinkToMasterProtocolParsing.cpp`
-  - `server/master/EpollClientLoginMasterProtocolParsing.cpp`
-  - `server/master/EpollClientLoginMaster.cpp`
+  - `server/master/EventLoopClientLoginMasterProtocolParsing.cpp`
+  - `server/master/EventLoopClientLoginMaster.cpp`
 
 ### `CATCHCHALLENGER_SERVER_MAXIDBLOCK`
 - **Scope:** server-only (+ general/) — server: game-server-alone,login,master
@@ -777,17 +777,17 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/GeneralVariable.hpp`
   - `general/base/ProtocolParsingGeneral.cpp`
   - `server/game-server-alone/LinkToMasterProtocolParsing.cpp`
-  - `server/master/EpollClientLoginMasterProtocolParsing.cpp`
-  - `server/master/EpollClientLoginMaster.cpp`
+  - `server/master/EventLoopClientLoginMasterProtocolParsing.cpp`
+  - `server/master/EventLoopClientLoginMaster.cpp`
   - `server/login/LinkToMasterProtocolParsingReply.cpp`
 
 ### `CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION`
 - **Scope:** server-only — server: base,epoll,login
 - **Description:** Max pending connections before authentication (`50`).
 - **Used in:**
-  - `server/epoll/main-epoll.cpp`
-  - `server/login/main-epoll-login-slave.cpp`
-  - `server/login/EpollClientLoginSlaveProtocolParsing.cpp`
+  - `server/cli/main-unix.cpp`
+  - `server/login/main-unix-login-slave.cpp`
+  - `server/login/EventLoopClientLoginSlaveProtocolParsing.cpp`
   - `server/base/ClientNetworkRead.cpp`
   - `server/base/VariableServer.hpp`
   - `server/base/BaseServer/BaseServerLogin.hpp`
@@ -805,7 +805,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `general/base/GeneralVariable.hpp`
   - `server/login/CharactersGroupClient.cpp`
-  - `server/login/EpollClientLoginSlaveHeavyLoad.cpp`
+  - `server/login/EventLoopClientLoginSlaveHeavyLoad.cpp`
   - `server/base/Client.cpp`
 
 ### `CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE`
@@ -850,8 +850,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,epoll
 - **Description:** ms between movement broadcasts (`150`).
 - **Used in:**
-  - `server/epoll/BaseServerEpoll.cpp`
-  - `server/epoll/main-epoll.cpp`
+  - `server/cli/BaseServerEventLoop.cpp`
+  - `server/cli/main-unix.cpp`
   - `server/base/VariableServer.hpp`
 
 
@@ -867,7 +867,7 @@ tools-only when references concentrate in one of those subtrees.
   - `server/game-server-alone/LinkToMaster.cpp`
   - `server/game-server-alone/LinkToMasterProtocolParsing.cpp`
   - `server/gateway/LinkToGameServerProtocolParsing.cpp`
-  - `server/master/EpollClientLoginMasterProtocolParsing.cpp`
+  - `server/master/EventLoopClientLoginMasterProtocolParsing.cpp`
   - `server/login/LinkToMasterProtocolParsingReply.cpp`
   - *(…and 21 more)*
 
@@ -882,7 +882,7 @@ tools-only when references concentrate in one of those subtrees.
   - `server/game-server-alone/LinkToMasterProtocolParsing.cpp`
   - `server/gateway/LinkToGameServerProtocolParsing.cpp`
   - `server/gateway/LinkToGameServer.hpp`
-  - `server/master/EpollClientLoginMaster.hpp`
+  - `server/master/EventLoopClientLoginMaster.hpp`
   - *(…and 10 more)*
 
 
@@ -1002,8 +1002,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: epoll
 - **Description:** Extra security checks/protections.
 - **Used in:**
-  - `server/epoll/catchchallenger-server-filedb.pro`
-  - `server/epoll/catchchallenger-server-cli-epoll.pro`
+  - `server/cli/catchchallenger-server-filedb.pro`
+  - `server/cli/catchchallenger-server-cli.pro`
 
 ### `CATCHCHALLENGER_SERVER_EXTRA_CHECK`
 - **Scope:** server-only (+ general/) — server: base,fight
@@ -1062,8 +1062,8 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/GeneralVariable.hpp`
   - `general/base/ProtocolParsingInput.cpp`
   - `general/base/ProtocolParsingOutput.cpp`
-  - `server/epoll/catchchallenger-server-filedb.pro`
-  - `server/epoll/main-epoll.cpp`
+  - `server/cli/catchchallenger-server-filedb.pro`
+  - `server/cli/main-unix.cpp`
   - `tools/stats/stats.pro`
   - `client/qtcpu800x600/qtcpu800x600-uselib.pro`
   - `client/qtcpu800x600/qtcpu800x600.pro`
@@ -1122,11 +1122,11 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (client + server) — server: base,epoll,login; client: qtcpu800x600
 - **Description:** Verbose debug logging for SQL queries (each prepared/raw statement and its result is printed). Off by default; switch on when investigating database issues. Adds noticeable overhead — never enable in a release build.
 - **Used in:**
-  - `server/epoll/db/EpollMySQL.cpp`
-  - `server/epoll/db/EpollPostgresql.hpp`
-  - `server/epoll/db/EpollPostgresql.cpp`
+  - `server/cli/db/EventLoopMySQL.cpp`
+  - `server/cli/db/EventLoopPostgresql.hpp`
+  - `server/cli/db/EventLoopPostgresql.cpp`
   - `server/login/CharactersGroupClient.cpp`
-  - `server/login/EpollClientLoginSlaveHeavyLoad.cpp`
+  - `server/login/EventLoopClientLoginSlaveHeavyLoad.cpp`
   - `server/base/ClientLoad/ClientHeavyLoad.cpp`
   - `server/base/VariableServer.hpp`
   - `server/base/SqlFunction.cpp`
@@ -1177,8 +1177,8 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsingInput.cpp`
   - `general/base/ProtocolParsing.hpp`
   - `server/game-server-alone/LinkToMasterStaticVar.cpp`
-  - `server/gateway/EpollClientLoginSlaveProtocolParsing.cpp`
-  - `server/login/EpollClientLoginSlaveProtocolParsing.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveProtocolParsing.cpp`
+  - `server/login/EventLoopClientLoginSlaveProtocolParsing.cpp`
 
 ### `CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT`
 - **Scope:** server-only (+ general/) — server: base,crafting,gateway,login,master
@@ -1188,10 +1188,10 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsing.hpp`
   - `server/crafting/LocalClientHandlerCrafting.cpp`
   - `server/gateway/LinkToGameServerProtocolParsing.cpp`
-  - `server/gateway/EpollClientLoginSlaveDatapack.cpp`
+  - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
   - `server/gateway/LinkToGameServer.cpp`
-  - `server/master/EpollClientLoginMasterProtocolParsing.cpp`
-  - `server/master/EpollClientLoginMaster.cpp`
+  - `server/master/EventLoopClientLoginMasterProtocolParsing.cpp`
+  - `server/master/EventLoopClientLoginMaster.cpp`
   - *(…and 15 more)*
 
 ### `CATCHCHALLENGER_TOKENSIZE`
@@ -1199,7 +1199,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Description:** To define the token size for the client to disconnect from login server and reconnect to game server.
 - **Used in:**
   - `general/base/GeneralVariable.hpp`
-  - `server/login/EpollClientLoginSlaveProtocolParsing.cpp`
+  - `server/login/EventLoopClientLoginSlaveProtocolParsing.cpp`
   - `server/base/ClientNetworkRead.cpp`
   - `server/base/VariableServer.hpp`
 
@@ -1228,7 +1228,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: epoll
 - **Description:** Store in std c++ format and not HPS format (can load as block std::flat_map to speedup the loading)
 - **Used in:**
-  - `server/epoll/catchchallenger-server-filedb.pro`
+  - `server/cli/catchchallenger-server-filedb.pro`
 
 
 ## Admin GUI live-stats hookup
@@ -1269,21 +1269,21 @@ build (gated mutually-exclusive in `general/CCCommon.cmake`).
 - **Description:** Use Linux io_uring as the I/O backend (lowest syscall overhead on modern kernels). Default-on for the Linux epoll server when liburing is detected; otherwise falls through to plain epoll. Selecting this requires linking `LIBURING_LIBRARY`.
 - **Used in:**
   - `general/CCCommon.cmake`
-  - `server/epoll/Epoll.cpp`
+  - `server/cli/EventLoop.cpp`
 
 ### `CATCHCHALLENGER_POLL`
 - **Scope:** server-only — server: epoll
-- **Description:** Use POSIX `poll()` as the I/O backend. Mostly a portability fallback for non-Linux hosts (BSD without kqueue, etc.); slower than epoll/io_uring at high client counts but works without per-OS shims. Mutually exclusive with `CATCHCHALLENGER_SELECT` and `CATCHCHALLENGER_IO_URING`.
+- **Description:** Use POSIX `poll()` as the I/O backend. Mostly a portability fallback for non-Linux hosts (BSD without kqueue, etc.); slower than unix/io_uring at high client counts but works without per-OS shims. Mutually exclusive with `CATCHCHALLENGER_SELECT` and `CATCHCHALLENGER_IO_URING`.
 - **Used in:**
   - `general/CCCommon.cmake`
-  - `server/epoll/Epoll.cpp`
+  - `server/cli/EventLoop.cpp`
 
 ### `CATCHCHALLENGER_SELECT`
 - **Scope:** server-only — server: epoll
 - **Description:** Use POSIX `select()` as the I/O backend. Lowest-common-denominator portability fallback (FD_SETSIZE-bound; only useful for tiny test deployments). Mutually exclusive with `CATCHCHALLENGER_POLL` / `CATCHCHALLENGER_IO_URING`.
 - **Used in:**
   - `general/CCCommon.cmake`
-  - `server/epoll/Epoll.cpp`
+  - `server/cli/EventLoop.cpp`
 
 
 ## Qt build options

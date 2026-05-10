@@ -1,5 +1,5 @@
 #ifdef CATCHCHALLENGER_DB_MYSQL
-#include "EpollMySQL.hpp"
+#include "EventLoopMySQL.hpp"
 
 #include <iostream>
 #include <stdio.h>
@@ -9,8 +9,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include "../Epoll.hpp"
-#include "../EpollSocket.hpp"
+#include "../EventLoop.hpp"
+#include "../SocketUtil.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
 #include "../../../general/base/cpp11addition.hpp"
 #ifdef DEBUG_MESSAGE_CLIENT_SQL
@@ -21,11 +21,11 @@
 #include <thread>
 #include <mysql/mysqld_error.h>
 
-char EpollMySQL::emptyString[]={'\0'};
-CatchChallenger::DatabaseBaseCallBack EpollMySQL::emptyCallback;
-CatchChallenger::DatabaseBaseCallBack EpollMySQL::tempCallback;
+char EventLoopMySQL::emptyString[]={'\0'};
+CatchChallenger::DatabaseBaseCallBack EventLoopMySQL::emptyCallback;
+CatchChallenger::DatabaseBaseCallBack EventLoopMySQL::tempCallback;
 
-EpollMySQL::EpollMySQL() :
+EventLoopMySQL::EventLoopMySQL() :
     conn(NULL),
     row(NULL),
     tuleIndex(-1),
@@ -42,7 +42,7 @@ EpollMySQL::EpollMySQL() :
     queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);
 }
 
-EpollMySQL::~EpollMySQL()
+EventLoopMySQL::~EventLoopMySQL()
 {
     if(result!=NULL)
     {
@@ -57,12 +57,12 @@ EpollMySQL::~EpollMySQL()
     }
 }
 
-bool EpollMySQL::isConnected() const
+bool EventLoopMySQL::isConnected() const
 {
     return conn!=NULL && started;
 }
 
-bool EpollMySQL::syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password)
+bool EventLoopMySQL::syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password)
 {
     if(conn!=NULL)
     {
@@ -78,7 +78,7 @@ bool EpollMySQL::syncConnect(const std::string &host, const std::string &dbname,
     return syncConnectInternal();
 }
 
-bool EpollMySQL::syncConnectInternal(bool infinityTry)
+bool EventLoopMySQL::syncConnectInternal(bool infinityTry)
 {
     conn = mysql_init(NULL);
     if(conn == NULL)
@@ -125,7 +125,7 @@ bool EpollMySQL::syncConnectInternal(bool infinityTry)
         }
     }
     std::cout << "Connected to mysql" << std::endl;
-    /*if(CatchChallenger::EpollSocket::make_non_blocking(conn->net.fd)!=0)
+    /*if(CatchChallenger::SocketUtil::make_non_blocking(conn->net.fd)!=0)
     {
        std::cerr << "mysql no blocking error" << std::endl;
        return false;
@@ -142,7 +142,7 @@ bool EpollMySQL::syncConnectInternal(bool infinityTry)
     event.data.ptr = this;
 
     // add the socket to the epoll file descriptors
-    if(Epoll::epoll.ctl(EPOLL_CTL_ADD,conn->net.fd,&event) != 0)
+    if(EventLoop::loop.ctl(EPOLL_CTL_ADD,conn->net.fd,&event) != 0)
     {
         std::cerr << "epoll_ctl, adding socket error" << std::endl;
         return false;
@@ -154,7 +154,7 @@ bool EpollMySQL::syncConnectInternal(bool infinityTry)
     return true;
 }
 
-void EpollMySQL::syncReconnect()
+void EventLoopMySQL::syncReconnect()
 {
     if(conn!=NULL)
     {
@@ -166,19 +166,19 @@ void EpollMySQL::syncReconnect()
         sendNextQuery();
 }
 
-BaseClassSwitch::EpollObjectType EpollMySQL::getType() const
+BaseClassSwitch::EventLoopObjectType EventLoopMySQL::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Database;
+    return BaseClassSwitch::EventLoopObjectType::Database;
 }
 
-void EpollMySQL::syncDisconnect()
+void EventLoopMySQL::syncDisconnect()
 {
     if(conn==NULL)
     {
         std::cerr << "mysql not connected" << std::endl;
         return;
     }
-    if(CatchChallenger::EpollSocket::make_blocking(conn->net.fd)!=0)
+    if(CatchChallenger::SocketUtil::make_blocking(conn->net.fd)!=0)
     {
        std::cerr << "mysql blocking error" << std::endl;
        return;
@@ -187,7 +187,7 @@ void EpollMySQL::syncDisconnect()
     conn=NULL;
 }
 
-CatchChallenger::DatabaseBaseCallBack * EpollMySQL::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
+CatchChallenger::DatabaseBaseCallBack * EventLoopMySQL::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
 {
     if(conn==NULL)
     {
@@ -230,7 +230,7 @@ CatchChallenger::DatabaseBaseCallBack * EpollMySQL::asyncRead(const std::string 
     return &queue.back();
 }
 
-bool EpollMySQL::asyncWrite(const std::string &query)
+bool EventLoopMySQL::asyncWrite(const std::string &query)
 {
     if(conn==NULL)
     {
@@ -266,7 +266,7 @@ bool EpollMySQL::asyncWrite(const std::string &query)
     return true;
 }
 
-void EpollMySQL::clear()
+void EventLoopMySQL::clear()
 {
     while(result!=NULL)
     {
@@ -282,11 +282,11 @@ void EpollMySQL::clear()
     tuleIndex=-1;
 }
 
-bool EpollMySQL::epollEvent(const uint32_t &events)
+bool EventLoopMySQL::unixEvent(const uint32_t &events)
 {
     if(conn==NULL)
     {
-        std::cerr << "epollEvent() conn==NULL" << std::endl;
+        std::cerr << "unixEvent() conn==NULL" << std::endl;
         return false;
     }
 
@@ -351,7 +351,7 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
     return true;
 }
 
-bool EpollMySQL::sendNextQuery()
+bool EventLoopMySQL::sendNextQuery()
 {
     const std::string &query=queriesList.front();
     const int &query_id=mysql_send_query(conn,query.c_str(),query.size());
@@ -366,12 +366,12 @@ bool EpollMySQL::sendNextQuery()
     return true;
 }
 
-const std::string EpollMySQL::errorMessage() const
+const std::string EventLoopMySQL::errorMessage() const
 {
     return mysql_error(conn)+std::string(", errno: ")+std::to_string(mysql_errno(conn));
 }
 
-bool EpollMySQL::next()
+bool EventLoopMySQL::next()
 {
     if(result==NULL)
         return false;
@@ -396,7 +396,7 @@ bool EpollMySQL::next()
     }
 }
 
-const std::string EpollMySQL::value(const int &value) const
+const std::string EventLoopMySQL::value(const int &value) const
 {
     if(result==NULL || tuleIndex<0 || value>=nfields)
         return emptyString;

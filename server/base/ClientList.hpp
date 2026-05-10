@@ -14,8 +14,8 @@ class ClientList
 {
 public:
     /* access to glocal/map client list
-    see ClientWithMapEpoll.hpp or QtClientWithMap
-    see BaseServerEpoll.hpp and QtServer.hpp */
+    see ClientWithMapEventLoop.hpp or QtClientWithMap
+    see BaseServerEventLoop.hpp and QtServer.hpp */
     ClientList();
     virtual ~ClientList();
     static ClientList *list;
@@ -42,7 +42,7 @@ protected:
     std::vector<SIMPLIFIED_PLAYER_ID_FOR_MAP> clients_removed_index;//garbage collector, reuse slot and only grow memory, never remove vector index and have to move whole back data
 private:
     //std::unordered_map<uint32_t,PLAYER_INDEX_FOR_CONNECTED> playerById_db;//where used?
-    std::unordered_map<std::string,PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;//see ClientWithMapEpoll.hpp or QtClientWithMap, only after character is selected
+    std::unordered_map<std::string,PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;//see ClientWithMapEventLoop.hpp or QtClientWithMap, only after character is selected
     std::unordered_set<PLAYER_INDEX_FOR_CONNECTED> clientForStatus;//to directly send status update to this specific client (without search into whole list)
 };
 }

@@ -1,17 +1,17 @@
-#ifndef EPOLL_STDIN_H
-#define EPOLL_STDIN_H
+#ifndef EVENT_LOOP_STDIN_H
+#define EVENT_LOOP_STDIN_H
 
 #include "BaseClassSwitch.h"
 
-class EpollStdin : public BaseClassSwitch
+class EventLoopStdin : public BaseClassSwitch
 {
 public:
-    EpollStdin();
-    ~EpollStdin();
-    EpollObjectType getType() const;
+    EventLoopStdin();
+    ~EventLoopStdin();
+    EventLoopObjectType getType() const;
     void read();
 protected:
     virtual void input(const char *input,unsigned int size) = 0;
 };
 
-#endif // EPOLL_STDIN_H
+#endif // EVENT_LOOP_STDIN_H

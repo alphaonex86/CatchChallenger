@@ -1,4 +1,4 @@
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include <cstring>
 #include "CharactersGroupForLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -19,13 +19,13 @@ using namespace CatchChallenger;
 #include <vector>
 #include <algorithm>
 
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "../base/DictionaryLogin.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 
-EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
+EventLoopServerLoginSlave *EventLoopServerLoginSlave::unixServerLoginSlave=NULL;
 
-EpollServerLoginSlave::EpollServerLoginSlave() :
+EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
     tcpNodelay(false),
     tcpCork(false),
     serverReady(false)
@@ -43,9 +43,9 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     {
         memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
         memset(LinkToMaster::private_token_statclient,0x00,sizeof(LinkToMaster::private_token_statclient));
-        memset(EpollClientLoginSlave::serverServerList,0x00,sizeof(EpollClientLoginSlave::serverServerList));
-        memset(EpollClientLoginSlave::serverLogicalGroupList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupList));
-        memset(EpollClientLoginSlave::serverLogicalGroupAndServerList,0x00,sizeof(EpollClientLoginSlave::serverLogicalGroupAndServerList));
+        memset(EventLoopClientLoginSlave::serverServerList,0x00,sizeof(EventLoopClientLoginSlave::serverServerList));
+        memset(EventLoopClientLoginSlave::serverLogicalGroupList,0x00,sizeof(EventLoopClientLoginSlave::serverLogicalGroupList));
+        memset(EventLoopClientLoginSlave::serverLogicalGroupAndServerList,0x00,sizeof(EventLoopClientLoginSlave::serverLogicalGroupAndServerList));
     }
     {
         static const unsigned char tocopy[]=PROTOCOL_HEADER_MASTERSERVER;
@@ -115,13 +115,13 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
         if(mode=="direct")
         {
-            EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
-            EpollClientLoginSlave::serverServerList[0x00]=0x01;//Reconnect mode
+            EventLoopClientLoginSlave::proxyMode=EventLoopClientLoginSlave::ProxyMode::Reconnect;
+            EventLoopClientLoginSlave::serverServerList[0x00]=0x01;//Reconnect mode
         }
         else
         {
-            EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Proxy;
-            EpollClientLoginSlave::serverServerList[0x00]=0x02;//proxy mode
+            EventLoopClientLoginSlave::proxyMode=EventLoopClientLoginSlave::ProxyMode::Proxy;
+            EventLoopClientLoginSlave::serverServerList[0x00]=0x02;//proxy mode
         }
     }
 
@@ -228,7 +228,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             #endif
         }
         settings.sync();
-        EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
+        EventLoopClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
         if(!ok)
         {
             std::cerr << "considerDownAfterNumberOfTry not number" << std::endl;
@@ -238,8 +238,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         host=settings.value("host");
         login=settings.value("login");
         pass=settings.value("pass");
-        EpollClientLoginSlave::databaseBaseLogin.tryInterval=stringtouint32(settings.value("tryInterval"),&ok);
-        if(EpollClientLoginSlave::databaseBaseLogin.tryInterval==0 || !ok)
+        EventLoopClientLoginSlave::databaseBaseLogin.tryInterval=stringtouint32(settings.value("tryInterval"),&ok);
+        if(EventLoopClientLoginSlave::databaseBaseLogin.tryInterval==0 || !ok)
         {
             std::cerr << "tryInterval==0 (abort)" << std::endl;
             abort();
@@ -250,18 +250,18 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "only db type postgresql supported (abort)" << std::endl;
             abort();
         }
-        if(!EpollClientLoginSlave::databaseBaseLogin.syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
+        if(!EventLoopClientLoginSlave::databaseBaseLogin.syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
         {
-            std::cerr << "Connect to login database failed:" << EpollClientLoginSlave::databaseBaseLogin.errorMessage() << ", host: " << host << ", db: " << db << ", login: " << login << std::endl;
+            std::cerr << "Connect to login database failed:" << EventLoopClientLoginSlave::databaseBaseLogin.errorMessage() << ", host: " << host << ", db: " << db << ", login: " << login << std::endl;
             abort();
         }
         settings.endGroup();
         settings.sync();
 
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        PreparedDBQueryLogin::initDatabaseQueryLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType(),&EpollClientLoginSlave::databaseBaseLogin);
+        PreparedDBQueryLogin::initDatabaseQueryLogin(EventLoopClientLoginSlave::databaseBaseLogin.databaseType(),&EventLoopClientLoginSlave::databaseBaseLogin);
         #endif
-        //PreparedDBQueryBase::initDatabaseQueryBase(EpollClientLoginSlave::databaseBaseLogin.databaseType());//don't exist, allow dictionary and loaded without cache
+        //PreparedDBQueryBase::initDatabaseQueryBase(EventLoopClientLoginSlave::databaseBaseLogin.databaseType());//don't exist, allow dictionary and loaded without cache
     }
 
     std::vector<std::string> charactersGroupForLoginList;
@@ -346,8 +346,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     {
         std::sort(charactersGroupForLoginList.begin(),charactersGroupForLoginList.end());
-        EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=(unsigned char)charactersGroupForLoginList.size();
-        EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=sizeof(unsigned char);
+        EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=(unsigned char)charactersGroupForLoginList.size();
+        EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=sizeof(unsigned char);
         unsigned int index=0;
         while(index<charactersGroupForLoginList.size())
         {
@@ -357,10 +357,10 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
                 std::cerr << "CharactersGroupForLoginName too big (abort)" << std::endl;
                 abort();
             }
-            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=CharactersGroupForLoginName.size();
-            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=1;
-            memcpy(EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup+EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize,CharactersGroupForLoginName.data(),CharactersGroupForLoginName.size());
-            EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=CharactersGroupForLoginName.size();
+            EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroup[EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize]=CharactersGroupForLoginName.size();
+            EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=1;
+            memcpy(EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroup+EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize,CharactersGroupForLoginName.data(),CharactersGroupForLoginName.size());
+            EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=CharactersGroupForLoginName.size();
 
             CharactersGroupForLogin::hash[CharactersGroupForLoginName]->charactersGroupIndex=index;
             CharactersGroupForLogin::list.push_back(CharactersGroupForLogin::hash.at(CharactersGroupForLoginName));
@@ -413,7 +413,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             // to the protocol-header send.
             LinkToMaster::linkToMaster->sendProtocolHeader();
             LinkToMaster::linkToMaster->setConnexionSettings();
-            /*const int &s = EpollSocket::make_non_blocking(linkfd);
+            /*const int &s = SocketUtil::make_non_blocking(linkfd);
             if(s == -1)
                 std::cerr << "unable to make to socket non blocking" << std::endl;*/
         }
@@ -422,7 +422,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
         if(LinkToMaster::linkToMaster->httpDatapackMirror.empty())
         {
-            std::cerr << "EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
+            std::cerr << "EventLoopClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
             abort();
         }
         if(LinkToMaster::linkToMaster->httpDatapackMirror.size()>255)
@@ -435,7 +435,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     }
 }
 
-EpollServerLoginSlave::~EpollServerLoginSlave()
+EventLoopServerLoginSlave::~EventLoopServerLoginSlave()
 {
     memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
     memset(LinkToMaster::private_token_statclient,0x00,sizeof(LinkToMaster::private_token_statclient));
@@ -446,18 +446,18 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
     }
 }
 
-void EpollServerLoginSlave::close()
+void EventLoopServerLoginSlave::close()
 {
-    std::cerr << "EpollServerLoginSlave::close()" << std::endl;
+    std::cerr << "EventLoopServerLoginSlave::close()" << std::endl;
     if(LinkToMaster::linkToMaster!=NULL)
     {
         delete LinkToMaster::linkToMaster;
         LinkToMaster::linkToMaster=NULL;
     }
-    EpollGenericServer::close();
+    EventLoopGenericServer::close();
 }
 
-void EpollServerLoginSlave::SQL_common_load_finish()
+void EventLoopServerLoginSlave::SQL_common_load_finish()
 {
     if(!LinkToMaster::linkToMaster->httpDatapackMirror.empty())
         serverReady=true;
@@ -468,7 +468,7 @@ void EpollServerLoginSlave::SQL_common_load_finish()
     }
 }
 
-bool EpollServerLoginSlave::tryListen()
+bool EventLoopServerLoginSlave::tryListen()
 {
         const bool &returnedValue=tryListenInternal(server_ip.c_str(), server_port.c_str());
 
@@ -477,7 +477,7 @@ bool EpollServerLoginSlave::tryListen()
 
     if(server_port.empty())
     {
-        std::cout << "EpollServerLoginSlave::tryListen() port can't be empty (abort)" << std::endl;
+        std::cout << "EventLoopServerLoginSlave::tryListen() port can't be empty (abort)" << std::endl;
         abort();
     }
     if(!server_ip.empty())
@@ -489,7 +489,7 @@ bool EpollServerLoginSlave::tryListen()
     return returnedValue;
 }
 
-void EpollServerLoginSlave::generateToken(TinyXMLSettings &settings)
+void EventLoopServerLoginSlave::generateToken(TinyXMLSettings &settings)
 {
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
@@ -509,7 +509,7 @@ void EpollServerLoginSlave::generateToken(TinyXMLSettings &settings)
     settings.sync();
 }
 
-void EpollServerLoginSlave::generateTokenStatClient(TinyXMLSettings &settings)
+void EventLoopServerLoginSlave::generateTokenStatClient(TinyXMLSettings &settings)
 {
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
@@ -529,7 +529,7 @@ void EpollServerLoginSlave::generateTokenStatClient(TinyXMLSettings &settings)
     settings.sync();
 }
 
-void EpollServerLoginSlave::setSkinPair(const uint8_t &internalId,const uint16_t &databaseId)
+void EventLoopServerLoginSlave::setSkinPair(const uint8_t &internalId,const uint16_t &databaseId)
 {
     while((uint16_t)DictionaryLogin::dictionary_skin_database_to_internal.size()<(databaseId+1))
         DictionaryLogin::dictionary_skin_database_to_internal.push_back(255);
@@ -539,7 +539,7 @@ void EpollServerLoginSlave::setSkinPair(const uint8_t &internalId,const uint16_t
     DictionaryLogin::dictionary_skin_database_to_internal[databaseId]=internalId;
 }
 
-void EpollServerLoginSlave::setProfilePair(const uint8_t &internalId,const uint16_t &databaseId)
+void EventLoopServerLoginSlave::setProfilePair(const uint8_t &internalId,const uint16_t &databaseId)
 {
     while((uint16_t)DictionaryLogin::dictionary_starter_database_to_internal.size()<(databaseId+1))
         DictionaryLogin::dictionary_starter_database_to_internal.push_back(255);
@@ -549,33 +549,33 @@ void EpollServerLoginSlave::setProfilePair(const uint8_t &internalId,const uint1
     DictionaryLogin::dictionary_starter_database_to_internal[databaseId]=internalId;
 }
 
-void EpollServerLoginSlave::compose04Reply()
+void EventLoopServerLoginSlave::compose04Reply()
 {
-    EpollClientLoginSlave::loginGood[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-    EpollClientLoginSlave::loginGood[0x01]=0x00;//reply id, unknow
-    EpollClientLoginSlave::loginGood[0x02]=0x00;//reply size, unknow
-    EpollClientLoginSlave::loginGood[0x03]=0x00;//reply size, unknow
-    EpollClientLoginSlave::loginGood[0x04]=0x00;//reply size, unknow
-    EpollClientLoginSlave::loginGood[0x05]=0x00;//reply size, unknow
+    EventLoopClientLoginSlave::loginGood[0x00]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    EventLoopClientLoginSlave::loginGood[0x01]=0x00;//reply id, unknow
+    EventLoopClientLoginSlave::loginGood[0x02]=0x00;//reply size, unknow
+    EventLoopClientLoginSlave::loginGood[0x03]=0x00;//reply size, unknow
+    EventLoopClientLoginSlave::loginGood[0x04]=0x00;//reply size, unknow
+    EventLoopClientLoginSlave::loginGood[0x05]=0x00;//reply size, unknow
 
-    EpollClientLoginSlave::loginGood[0x06]=0x01;//good
+    EventLoopClientLoginSlave::loginGood[0x06]=0x01;//good
 
-    {const uint32_t _tmp_le=(htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time));memcpy(EpollClientLoginSlave::loginGood+0x07,&_tmp_le,sizeof(_tmp_le));}
+    {const uint32_t _tmp_le=(htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time));memcpy(EventLoopClientLoginSlave::loginGood+0x07,&_tmp_le,sizeof(_tmp_le));}
 
-    EpollClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.max_character;
-    EpollClientLoginSlave::loginGood[0x0C]=CommonSettingsCommon::commonSettingsCommon.min_character;
-    EpollClientLoginSlave::loginGood[0x0D]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
-    EpollClientLoginSlave::loginGood[0x0E]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-    {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(EpollClientLoginSlave::loginGood+0x0F,&_tmp_le,sizeof(_tmp_le));}
+    EventLoopClientLoginSlave::loginGood[0x0B]=CommonSettingsCommon::commonSettingsCommon.max_character;
+    EventLoopClientLoginSlave::loginGood[0x0C]=CommonSettingsCommon::commonSettingsCommon.min_character;
+    EventLoopClientLoginSlave::loginGood[0x0D]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
+    EventLoopClientLoginSlave::loginGood[0x0E]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+    {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(EventLoopClientLoginSlave::loginGood+0x0F,&_tmp_le,sizeof(_tmp_le));}
 
-    EpollClientLoginSlave::loginGoodSize=0x11;
+    EventLoopClientLoginSlave::loginGoodSize=0x11;
 
-    memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,EpollClientLoginSlave::baseDatapackSum,sizeof(EpollClientLoginSlave::baseDatapackSum));
-    EpollClientLoginSlave::loginGoodSize+=sizeof(EpollClientLoginSlave::baseDatapackSum);
+    memcpy(EventLoopClientLoginSlave::loginGood+EventLoopClientLoginSlave::loginGoodSize,EventLoopClientLoginSlave::baseDatapackSum,sizeof(EventLoopClientLoginSlave::baseDatapackSum));
+    EventLoopClientLoginSlave::loginGoodSize+=sizeof(EventLoopClientLoginSlave::baseDatapackSum);
 
     if(LinkToMaster::linkToMaster->httpDatapackMirror.empty())
     {
-        std::cerr << "EpollClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
+        std::cerr << "EventLoopClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
         abort();
     }
     if(LinkToMaster::linkToMaster->httpDatapackMirror.size()>255)
@@ -583,24 +583,24 @@ void EpollServerLoginSlave::compose04Reply()
         std::cerr << "LinkToMaster::linkToMaster->httpDatapackMirror size>255 (abort)" << std::endl;
         abort();
     }
-    EpollClientLoginSlave::loginGood[EpollClientLoginSlave::loginGoodSize]=(uint8_t)LinkToMaster::linkToMaster->httpDatapackMirror.size();
-    EpollClientLoginSlave::loginGoodSize+=1;
-    memcpy(EpollClientLoginSlave::loginGood+EpollClientLoginSlave::loginGoodSize,LinkToMaster::linkToMaster->httpDatapackMirror.data(),LinkToMaster::linkToMaster->httpDatapackMirror.size());
-    EpollClientLoginSlave::loginGoodSize+=LinkToMaster::linkToMaster->httpDatapackMirror.size();
+    EventLoopClientLoginSlave::loginGood[EventLoopClientLoginSlave::loginGoodSize]=(uint8_t)LinkToMaster::linkToMaster->httpDatapackMirror.size();
+    EventLoopClientLoginSlave::loginGoodSize+=1;
+    memcpy(EventLoopClientLoginSlave::loginGood+EventLoopClientLoginSlave::loginGoodSize,LinkToMaster::linkToMaster->httpDatapackMirror.data(),LinkToMaster::linkToMaster->httpDatapackMirror.size());
+    EventLoopClientLoginSlave::loginGoodSize+=LinkToMaster::linkToMaster->httpDatapackMirror.size();
 }
 
-void EpollServerLoginSlave::preload_profile()
+void EventLoopServerLoginSlave::preload_profile()
 {
     if(CharactersGroupForLogin::list.empty())
     {
-        std::cerr << "EpollServerLoginSlave::preload_profile() CharactersGroupForLogin::list.isEmpty() (abort)" << std::endl;
+        std::cerr << "EventLoopServerLoginSlave::preload_profile() CharactersGroupForLogin::list.isEmpty() (abort)" << std::endl;
         abort();
     }
 
     unsigned int profileIndex=0;
-    while(profileIndex<EpollServerLoginSlave::loginProfileList.size())
+    while(profileIndex<EventLoopServerLoginSlave::loginProfileList.size())
     {
-        EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::loginProfileList[profileIndex];
+        EventLoopServerLoginSlave::LoginProfile &profile=EventLoopServerLoginSlave::loginProfileList[profileIndex];
 
         std::string encyclopedia_item,item;
         if(!profile.items.empty())
@@ -842,10 +842,10 @@ void EpollServerLoginSlave::preload_profile()
         profileIndex++;
     }
 
-    if(EpollServerLoginSlave::loginProfileList.size()==0 && CommonSettingsCommon::commonSettingsCommon.min_character!=CommonSettingsCommon::commonSettingsCommon.max_character)
+    if(EventLoopServerLoginSlave::loginProfileList.size()==0 && CommonSettingsCommon::commonSettingsCommon.min_character!=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         std::cout << "no profile loaded! C211 never send? (abort)" << std::endl;
         abort();
     }
-    std::cout << EpollServerLoginSlave::loginProfileList.size() << " profile loaded" << std::endl;
+    std::cout << EventLoopServerLoginSlave::loginProfileList.size() << " profile loaded" << std::endl;
 }

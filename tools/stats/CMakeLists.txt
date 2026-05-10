@@ -1,6 +1,6 @@
 # stats — tiny stats collector that connects to the login server over
 # unix socket. Self-contained, one binary. No Qt; reuses a small subset
-# of server/epoll + general/.
+# of server/cli + general/.
 
 cmake_minimum_required(VERSION 3.20)
 project(stats LANGUAGES C CXX)
@@ -14,11 +14,11 @@ add_executable(stats
     LinkToLogin.cpp
     LinkToLoginProtocolParsing.cpp
     LinkToLoginStaticVar.cpp
-    EpollServerStats.cpp
-    ${CC_REPO_ROOT}/server/epoll/Epoll.cpp
-    ${CC_REPO_ROOT}/server/epoll/EpollSocket.cpp
-    ${CC_REPO_ROOT}/server/epoll/EpollClient.cpp
-    ${CC_REPO_ROOT}/server/epoll/EpollUnixSocketServer.cpp
+    UnixServerStats.cpp
+    ${CC_REPO_ROOT}/server/cli/EventLoop.cpp
+    ${CC_REPO_ROOT}/server/cli/SocketUtil.cpp
+    ${CC_REPO_ROOT}/server/cli/EventLoopClient.cpp
+    ${CC_REPO_ROOT}/server/cli/UnixSocketServer.cpp
     ${CC_REPO_ROOT}/server/base/TinyXMLSettings.cpp
 )
 
@@ -31,7 +31,7 @@ target_compile_definitions(stats PRIVATE
 )
 
 target_include_directories(stats PRIVATE
-    ${CC_REPO_ROOT}/server/epoll
+    ${CC_REPO_ROOT}/server/cli
     ${CC_REPO_ROOT}/server/base
 )
 

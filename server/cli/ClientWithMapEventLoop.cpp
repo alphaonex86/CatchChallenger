@@ -1,13 +1,13 @@
-#include "ClientWithMapEpoll.hpp"
-#include "Epoll.hpp"
+#include "ClientWithMapEventLoop.hpp"
+#include "EventLoop.hpp"
 
-ClientWithMapEpoll::ClientWithMapEpoll(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player) :
-    CatchChallenger::EpollClient(-1),
+ClientWithMapEventLoop::ClientWithMapEventLoop(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player) :
+    CatchChallenger::EventLoopClient(-1),
     ClientWithMap(index_connected_player)
 {
 }
 
-void ClientWithMapEpoll::reset(int infd)
+void ClientWithMapEventLoop::reset(int infd)
 {
     ProtocolParsingBase::reset();
     this->infd=infd;
@@ -24,33 +24,33 @@ void ClientWithMapEpoll::reset(int infd)
     stat=ClientStat::None;
 }
 
-void ClientWithMapEpoll::closeSocket()
+void ClientWithMapEventLoop::closeSocket()
 {
-    CatchChallenger::EpollClient::closeSocket();
+    CatchChallenger::EventLoopClient::closeSocket();
 }
 
-bool ClientWithMapEpoll::isValid()
+bool ClientWithMapEventLoop::isValid()
 {
-    return CatchChallenger::EpollClient::isValid();
+    return CatchChallenger::EventLoopClient::isValid();
 }
 
-ssize_t ClientWithMapEpoll::readFromSocket(char * data, const size_t &size)
+ssize_t ClientWithMapEventLoop::readFromSocket(char * data, const size_t &size)
 {
-    return CatchChallenger::EpollClient::read(data,size);
+    return CatchChallenger::EventLoopClient::read(data,size);
 }
 
-ssize_t ClientWithMapEpoll::writeToSocket(const char * const data, const size_t &size)
+ssize_t ClientWithMapEventLoop::writeToSocket(const char * const data, const size_t &size)
 {
-    return CatchChallenger::EpollClient::write(data,size);
+    return CatchChallenger::EventLoopClient::write(data,size);
 }
 
-ssize_t ClientWithMapEpoll::writeFileToSocket(int file_fd, off_t *offset, size_t len)
+ssize_t ClientWithMapEventLoop::writeFileToSocket(int file_fd, off_t *offset, size_t len)
 {
     //Zero-copy datapack send. The kernel moves bytes from the file's
     //page cache directly into the socket's send queue; no userspace
-    //buffer at all. Same on every backend (epoll/poll/io_uring) — see
-    //Epoll::sendFile for the rationale.
+    //buffer at all. Same on every backend (unix/poll/io_uring) — see
+    //EventLoop::sendFile for the rationale.
     if(this->infd==-1)
         return -1;
-    return Epoll::sendFile(this->infd,file_fd,offset,len);
+    return EventLoop::sendFile(this->infd,file_fd,offset,len);
 }

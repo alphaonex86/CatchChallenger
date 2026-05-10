@@ -1,16 +1,16 @@
-#include "PlayerUpdaterEpoll.hpp"
+#include "PlayerUpdaterEventLoop.hpp"
 
-PlayerUpdaterEpoll::PlayerUpdaterEpoll()
+PlayerUpdaterEventLoop::PlayerUpdaterEventLoop()
 {
     setInterval(1000);
 }
 
-void PlayerUpdaterEpoll::setInterval(int ms)
+void PlayerUpdaterEventLoop::setInterval(int ms)
 {
-    EpollTimer::setInterval(ms);
+    EventLoopTimer::setInterval(ms);
 }
 
-void PlayerUpdaterEpoll::exec()
+void PlayerUpdaterEventLoop::exec()
 {
     PlayerUpdaterBase::exec();
 }

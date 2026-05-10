@@ -5,9 +5,9 @@
 #include "../base/GlobalServerData.hpp"
 #include "../base/Client.hpp"
 #include "../base/ClientList.hpp"
-#include "../epoll/Epoll.hpp"
-#include "../epoll/EpollSocket.hpp"
-#include "../epoll/EpollServer.hpp"
+#include "../cli/EventLoop.hpp"
+#include "../cli/SocketUtil.hpp"
+#include "../cli/EventLoopServer.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -34,7 +34,7 @@ uint16_t LinkToMaster::port=0;
 LinkToMaster::LinkToMaster(
             const int &infd
         ) :
-        EpollClient(infd),
+        EventLoopClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
@@ -176,7 +176,7 @@ void LinkToMaster::setConnexionSettings(const uint8_t &tryInterval,const uint8_t
         memset(&event,0,sizeof(event));
         event.data.ptr = LinkToMaster::linkToMaster;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
-        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToMaster::linkToMasterSocketFd, &event);
+        int s = EventLoop::loop.ctl(EPOLL_CTL_ADD, LinkToMaster::linkToMasterSocketFd, &event);
         if(s == -1)
         {
             std::cerr << "epoll_ctl on socket (master link) error" << std::endl;
@@ -184,7 +184,7 @@ void LinkToMaster::setConnexionSettings(const uint8_t &tryInterval,const uint8_t
         }
     }
     {
-        /*const int s = EpollSocket::make_non_blocking(LoginLinkToMaster::linkToMasterSocketFd);
+        /*const int s = SocketUtil::make_non_blocking(LoginLinkToMaster::linkToMasterSocketFd);
         if(s == -1)
         {
             std::cerr << "unable to make to socket non blocking" << std::endl;
@@ -224,7 +224,7 @@ void LinkToMaster::connectInternal()
         std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
         abort();
     }
-    EpollClient::reopen(LinkToMaster::linkToMasterSocketFd);
+    EventLoopClient::reopen(LinkToMaster::linkToMasterSocketFd);
 
     int connStatusType=tryConnect(host,port,1,1);
     if(connStatusType<0)
@@ -278,9 +278,9 @@ void LinkToMaster::messageParsingLayer(const char * const message) const
     std::cout << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
-BaseClassSwitch::EpollObjectType LinkToMaster::getType() const
+BaseClassSwitch::EventLoopObjectType LinkToMaster::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::MasterLink;
+    return BaseClassSwitch::EventLoopObjectType::MasterLink;
 }
 
 void LinkToMaster::parseIncommingData()
@@ -636,7 +636,7 @@ void LinkToMaster::tryReconnect()
     }
 
     {
-        EpollServer *server=static_cast<EpollServer *>(baseServer);
+        EventLoopServer *server=static_cast<EventLoopServer *>(baseServer);
         if(!server->isListening())
         {
             std::cout << "Waiting connection after master link" << std::endl;
@@ -670,12 +670,12 @@ void LinkToMaster::moveClientFastPath(const uint8_t &,const uint8_t &)
 
 ssize_t LinkToMaster::readFromSocket(char * data, const size_t &size)
 {
-    return EpollClient::read(data,size);
+    return EventLoopClient::read(data,size);
 }
 
 ssize_t LinkToMaster::writeToSocket(const char * const data, const size_t &size)
 {
-    return EpollClient::write(data,size);
+    return EventLoopClient::write(data,size);
 }
 
 void LinkToMaster::closeSocket()

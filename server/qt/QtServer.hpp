@@ -53,7 +53,7 @@ public:
     // ── Live-stats probes (GUI-only) ────────────────────────────────
     // The dashboard (server/qt/gui/MainWindow) polls these every second
     // to render real numbers instead of synthetic data. They're gated
-    // on CATCHCHALLENGER_CLASS_QT so the headless epoll/io_uring path
+    // on CATCHCHALLENGER_CLASS_QT so the headless unix/io_uring path
     // pays nothing — no atomics, no per-byte counter increments.
     //
     // currentClientCount(): live size of client_list (in-process count

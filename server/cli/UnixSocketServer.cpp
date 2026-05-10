@@ -1,6 +1,7 @@
-#include "EpollUnixSocketServer.hpp"
-#include "EpollSocket.hpp"
-#include "Epoll.hpp"
+#ifndef _WIN32
+#include "UnixSocketServer.hpp"
+#include "SocketUtil.hpp"
+#include "EventLoop.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,21 +15,21 @@
 
 using namespace CatchChallenger;
 
-EpollUnixSocketServer::EpollUnixSocketServer()
+UnixSocketServer::UnixSocketServer()
 {
     ready=false;
     sfd=-1;
 }
 
-EpollUnixSocketServer::~EpollUnixSocketServer()
+UnixSocketServer::~UnixSocketServer()
 {
     close();
 }
 
-bool EpollUnixSocketServer::tryListen(const char * const path)
+bool UnixSocketServer::tryListen(const char * const path)
 {
     #ifdef CATCHCHALLENGER_CLASS_STATS
-    std::cout << "EpollUnixSocketServer::tryListen(): " << __FILE__ << ":" << __LINE__ << std::endl;
+    std::cout << "UnixSocketServer::tryListen(): " << __FILE__ << ":" << __LINE__ << std::endl;
     #endif
     unlink(path);
     if(sfd != -1)
@@ -68,7 +69,7 @@ bool EpollUnixSocketServer::tryListen(const char * const path)
         return false;
     }
     {
-        const int s = EpollSocket::make_non_blocking(sfd);
+        const int s = SocketUtil::make_non_blocking(sfd);
         if(s == -1)
         {
             close();
@@ -79,22 +80,22 @@ bool EpollUnixSocketServer::tryListen(const char * const path)
     epoll_event event;
     event.data.ptr = this;
     event.events = EPOLLIN | EPOLLOUT | EPOLLET;
-    if(Epoll::epoll.ctl(EPOLL_CTL_ADD, sfd, &event) == -1)
+    if(EventLoop::loop.ctl(EPOLL_CTL_ADD, sfd, &event) == -1)
     {
         close();
         std::cerr << "epoll_ctl error: " << errno << std::endl;
         return false;
     }
     #ifdef CATCHCHALLENGER_CLASS_STATS
-    std::cout << "EpollUnixSocketServer::tryListen() ok " << sfd << ": " << __FILE__ << ":" << __LINE__ << std::endl;
+    std::cout << "UnixSocketServer::tryListen() ok " << sfd << ": " << __FILE__ << ":" << __LINE__ << std::endl;
     #endif
     return true;
 }
 
-void EpollUnixSocketServer::close()
+void UnixSocketServer::close()
 {
     #ifdef CATCHCHALLENGER_CLASS_STATS
-    std::cout << "EpollUnixSocketServer::close(): " << sfd << " " << __FILE__ << ":" << __LINE__ << std::endl;
+    std::cout << "UnixSocketServer::close(): " << sfd << " " << __FILE__ << ":" << __LINE__ << std::endl;
     #endif
     if(sfd!=-1)
     {
@@ -103,17 +104,18 @@ void EpollUnixSocketServer::close()
     }
 }
 
-int EpollUnixSocketServer::accept(sockaddr *in_addr,socklen_t *in_len)
+int UnixSocketServer::accept(sockaddr *in_addr,socklen_t *in_len)
 {
     return ::accept(sfd, in_addr, in_len);
 }
 
-int EpollUnixSocketServer::getSfd()
+int UnixSocketServer::getSfd()
 {
     return sfd;
 }
 
-BaseClassSwitch::EpollObjectType EpollUnixSocketServer::getType() const
+BaseClassSwitch::EventLoopObjectType UnixSocketServer::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::UnixServer;
+    return BaseClassSwitch::EventLoopObjectType::EventLoopServer;
 }
+#endif // !_WIN32

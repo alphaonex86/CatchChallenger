@@ -1,9 +1,9 @@
-#ifndef EPOLL_SERVER_LOGIN_MASTER_H
-#define EPOLL_SERVER_LOGIN_MASTER_H
+#ifndef EVENTLOOP_SERVER_LOGIN_MASTER_H
+#define EVENTLOOP_SERVER_LOGIN_MASTER_H
 
-#include "../epoll/EpollGenericServer.hpp"
+#include "../cli/EventLoopGenericServer.hpp"
 #include "../base/BaseServer/BaseServerLogin.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 
 #include <string>
 #include <vector>
@@ -15,18 +15,18 @@ struct MemoryStruct {
   std::string fileName;
 };
 
-class EpollServerLoginSlave : public EpollGenericServer
+class EventLoopServerLoginSlave : public EventLoopGenericServer
 {
 public:
-    EpollServerLoginSlave();
-    ~EpollServerLoginSlave();
+    EventLoopServerLoginSlave();
+    ~EventLoopServerLoginSlave();
     bool tryListen();
     void close();
     static std::string httpMirrorFix(const std::string &mirrors);
     static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
     unsigned int toUTF8WithHeader(const std::string &text,char * const data);
 public:
-    static EpollServerLoginSlave *epollServerLoginSlave;
+    static EventLoopServerLoginSlave *unixServerLoginSlave;
 
     std::string destination_server_ip;
     uint16_t destination_server_port;
@@ -42,4 +42,4 @@ private:
 };
 }
 
-#endif // EPOLL_SERVER_H
+#endif // EVENT_LOOP_SERVER_H

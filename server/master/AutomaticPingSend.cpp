@@ -1,5 +1,5 @@
 #include "AutomaticPingSend.hpp"
-#include "EpollClientLoginMaster.hpp"
+#include "EventLoopClientLoginMaster.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include <iostream>
 
@@ -19,9 +19,9 @@ void AutomaticPingSend::exec()
         if(diff<CharactersGroup::pingMSecond)
         {
             unsigned int index=0;
-            while(index<EpollClientLoginMaster::gameServers.size())
+            while(index<EventLoopClientLoginMaster::gameServers.size())
             {
-                EpollClientLoginMaster * const gameServer=EpollClientLoginMaster::gameServers.at(index);
+                EventLoopClientLoginMaster * const gameServer=EventLoopClientLoginMaster::gameServers.at(index);
                 CharactersGroup::InternalGameServer * const gameServerInternal=gameServer->charactersGroupForGameServerInformation;
                 if(gameServerInternal!=NULL)
                 {
@@ -55,9 +55,9 @@ void AutomaticPingSend::timeDrift()
 {
     const uint64_t &msecondFrom1970=msFrom1970();
     unsigned int index=0;
-    while(index<EpollClientLoginMaster::gameServers.size())
+    while(index<EventLoopClientLoginMaster::gameServers.size())
     {
-        EpollClientLoginMaster * const gameServer=EpollClientLoginMaster::gameServers.at(index);
+        EventLoopClientLoginMaster * const gameServer=EventLoopClientLoginMaster::gameServers.at(index);
         if(gameServer!=NULL)
             gameServer->sendGameServerPing(msecondFrom1970);
         index++;

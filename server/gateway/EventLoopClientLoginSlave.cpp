@@ -1,6 +1,6 @@
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include <cstring>
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
@@ -8,16 +8,16 @@
 
 using namespace CatchChallenger;
 
-EpollClientLoginSlave::EpollClientLoginSlave(
+EventLoopClientLoginSlave::EventLoopClientLoginSlave(
             const int &infd
         ) :
-        EpollClient(infd),
+        EventLoopClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Server
             #endif
             ),
-        stat(EpollClientLoginStat::None),
+        stat(EventLoopClientLoginStat::None),
         datapackStatus(DatapackStatus::Base),
         fastForward(false),
         linkToGameServer(NULL),
@@ -27,7 +27,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
     client_list.push_back(this);
 }
 
-EpollClientLoginSlave::~EpollClientLoginSlave()
+EventLoopClientLoginSlave::~EventLoopClientLoginSlave()
 {
     vectorremoveOne(client_list,this);
     if(socketString!=NULL)
@@ -47,7 +47,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         LinkToGameServer::compressionSet=false;
 }
 
-bool EpollClientLoginSlave::disconnectClient()
+bool EventLoopClientLoginSlave::disconnectClient()
 {
     if(linkToGameServer!=NULL)
     {
@@ -56,28 +56,28 @@ bool EpollClientLoginSlave::disconnectClient()
         linkToGameServer->client=NULL;
         linkToGameServer=NULL;
     }
-    EpollClient::close();
+    EventLoopClient::close();
     vectorremoveOne(client_list,this);
-    /*SIGILLif(stat!=EpollClientLoginStat::None)
+    /*SIGILLif(stat!=EventLoopClientLoginStat::None)
         messageParsingLayer("Disconnected client");*/
     return true;
 }
 
 //input/ouput layer
-void EpollClientLoginSlave::errorParsingLayer(const std::string &error)
+void EventLoopClientLoginSlave::errorParsingLayer(const std::string &error)
 {
     std::cerr << socketString << ": " << sanitizeUtf8String(error) << std::endl;
     disconnectClient();
 }
 
-void EpollClientLoginSlave::messageParsingLayer(const std::string &message) const
+void EventLoopClientLoginSlave::messageParsingLayer(const std::string &message) const
 {
     std::cout << socketString << ": " << sanitizeUtf8String(message) << std::endl;
 }
 
-void EpollClientLoginSlave::errorParsingLayer(const char * const error)
+void EventLoopClientLoginSlave::errorParsingLayer(const char * const error)
 {
-    if(stat==EpollClientLoginStat::None)
+    if(stat==EventLoopClientLoginStat::None)
     {
         //std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
         disconnectClient();
@@ -87,32 +87,32 @@ void EpollClientLoginSlave::errorParsingLayer(const char * const error)
     disconnectClient();
 }
 
-void EpollClientLoginSlave::messageParsingLayer(const char * const message) const
+void EventLoopClientLoginSlave::messageParsingLayer(const char * const message) const
 {
     std::cout << socketString << ": " << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
-BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
+BaseClassSwitch::EventLoopObjectType EventLoopClientLoginSlave::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Client;
+    return BaseClassSwitch::EventLoopObjectType::Client;
 }
 
-void EpollClientLoginSlave::parseIncommingData()
+void EventLoopClientLoginSlave::parseIncommingData()
 {
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
-bool EpollClientLoginSlave::sendRawBlock(const char * const data,const int &size)
+bool EventLoopClientLoginSlave::sendRawBlock(const char * const data,const int &size)
 {
     return internalSendRawSmallPacket(data,size);
 }
 
-bool EpollClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
+bool EventLoopClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
 {
     return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
 }
 
-bool EpollClientLoginSlave::sendDatapackProgression(const uint8_t progression)
+bool EventLoopClientLoginSlave::sendDatapackProgression(const uint8_t progression)
 {
     //send the network message
     uint32_t posOutput=0;
@@ -120,7 +120,7 @@ bool EpollClientLoginSlave::sendDatapackProgression(const uint8_t progression)
     posOutput+=1+4;
     {const uint32_t _tmp_le=(htole32(1+1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EpollServerLoginSlave::epollServerLoginSlave->gatewayNumber;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EventLoopServerLoginSlave::unixServerLoginSlave->gatewayNumber;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=progression;
     posOutput+=1;
@@ -128,14 +128,14 @@ bool EpollClientLoginSlave::sendDatapackProgression(const uint8_t progression)
     return sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void EpollClientLoginSlave::allowDynamicSize()
+void EventLoopClientLoginSlave::allowDynamicSize()
 {
     flags|=0x08;
 }
 
-void EpollClientLoginSlave::breakNeedMoreData()
+void EventLoopClientLoginSlave::breakNeedMoreData()
 {
-    if(stat==EpollClientLoginStat::None)
+    if(stat==EventLoopClientLoginStat::None)
     {
         disconnectClient();
         return;
@@ -145,17 +145,17 @@ void EpollClientLoginSlave::breakNeedMoreData()
     #endif
 }
 
-ssize_t EpollClientLoginSlave::readFromSocket(char * data, const size_t &size)
+ssize_t EventLoopClientLoginSlave::readFromSocket(char * data, const size_t &size)
 {
-    return EpollClient::read(data,size);
+    return EventLoopClient::read(data,size);
 }
 
-ssize_t EpollClientLoginSlave::writeToSocket(const char * const data, const size_t &size)
+ssize_t EventLoopClientLoginSlave::writeToSocket(const char * const data, const size_t &size)
 {
-    return EpollClient::write(data,size);
+    return EventLoopClient::write(data,size);
 }
 
-void EpollClientLoginSlave::closeSocket()
+void EventLoopClientLoginSlave::closeSocket()
 {
     disconnectClient();
 }

@@ -109,7 +109,7 @@ public:
     //(>0), 0 on EOF, <0 on error. The default impl is a portable
     //read()+writeToSocket() loop so non-Linux server backends (Qt-based on
     //Win/Mac/BSD/Haiku, ESP32-class RTOS with FS) still work; the Linux
-    //epoll backend overrides this with sendfile(2) for kernel zero-copy.
+    //unix backend overrides this with sendfile(2) for kernel zero-copy.
     virtual ssize_t writeFileToSocket(int file_fd, off_t *offset, size_t len);
     virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode) = 0;
 public:

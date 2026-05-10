@@ -1,4 +1,4 @@
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "LinkToGameServer.hpp"
 #include "../base/BaseServer/BaseServerLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -9,7 +9,7 @@
 
 using namespace CatchChallenger;
 
-void EpollClientLoginSlave::doDDOSComputeAll()
+void EventLoopClientLoginSlave::doDDOSComputeAll()
 {
     unsigned int index=0;
     while(index<client_list.size())
@@ -25,17 +25,17 @@ void EpollClientLoginSlave::doDDOSComputeAll()
     }
 }
 
-void EpollClientLoginSlave::doDDOSCompute()
+void EventLoopClientLoginSlave::doDDOSCompute()
 {
     movePacketKick.flush();
     chatPacketKick.flush();
     otherPacketKick.flush();
 }
 
-bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool EventLoopClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     (void)size;
-    //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
+    //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
         parseNetworkReadError("Too many packet in sort time, check DDOS limit in login before parse: "+std::to_string(otherPacketKick.total())+">="+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER)+" "+otherPacketKick.dump());
@@ -45,21 +45,21 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
     switch(mainCodeType)
     {
         case 0xA0:
-            //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
-            if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
+            //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+            if(memcmp(data,EventLoopClientLoginSlave::protocolHeaderToMatch,sizeof(EventLoopClientLoginSlave::protocolHeaderToMatch))==0)
             {
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 removeFromQueryReceived(queryNumber);
-                if(stat!=EpollClientLoginStat::None)
+                if(stat!=EventLoopClientLoginStat::None)
                 {
-                    parseNetworkReadError("stat!=EpollClientLoginStat::None for case 0xA0");
+                    parseNetworkReadError("stat!=EventLoopClientLoginStat::None for case 0xA0");
                     return false;
                 }
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 //if lot of un logged connection, remove the first
                 if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
                 {
-                    EpollClientLoginSlave *client=static_cast<EpollClientLoginSlave *>(BaseServerLogin::tokenForAuth[0].client);
+                    EventLoopClientLoginSlave *client=static_cast<EventLoopClientLoginSlave *>(BaseServerLogin::tokenForAuth[0].client);
                     std::cerr << "BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION: " << client << std::endl;
                     client->disconnectClient();
                     BaseServerLogin::tokenForAuthSize--;
@@ -79,7 +79,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                         #endif
                     }
                 }
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 BaseServerLogin::TokenLink *token=&BaseServerLogin::tokenForAuth[BaseServerLogin::tokenForAuthSize];
                 {
                     token->client=this;
@@ -105,78 +105,78 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                         //messageParsingLayer("auth token send: "+binarytoHexa(token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER));
                     }
                 }
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
                 switch(CompressionProtocol::compressionTypeServer)
                 {
                     case CompressionProtocol::CompressionType::None:
-                        *(EpollClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
+                        *(EventLoopClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
+                        memcpy(EventLoopClientLoginSlave::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::protocolReplyCompressionNone),sizeof(EventLoopClientLoginSlave::protocolReplyCompressionNone));
                     break;
                     case CompressionProtocol::CompressionType::Zstandard:
-                        *(EpollClientLoginSlave::protocolReplyCompresssionZstandard+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompresssionZstandard+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompresssionZstandard),sizeof(EpollClientLoginSlave::protocolReplyCompresssionZstandard));
+                        *(EventLoopClientLoginSlave::protocolReplyCompresssionZstandard+1)=queryNumber;
+                        memcpy(EventLoopClientLoginSlave::protocolReplyCompresssionZstandard+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::protocolReplyCompresssionZstandard),sizeof(EventLoopClientLoginSlave::protocolReplyCompresssionZstandard));
                     break;
                     default:
                         parseNetworkReadError("Compression selected wrong");
                     return false;
                 }
                 #else
-                *(EpollClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
-                memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
+                *(EventLoopClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
+                memcpy(EventLoopClientLoginSlave::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
+                internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::protocolReplyCompressionNone),sizeof(EventLoopClientLoginSlave::protocolReplyCompressionNone));
                 #endif
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 BaseServerLogin::tokenForAuthSize++;
-                stat=EpollClientLoginStat::ProtocolGood;
+                stat=EventLoopClientLoginStat::ProtocolGood;
             }
             else
             {
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 /*don't send packet to prevent DDOS
-                *(EpollClientLoginSlave::protocolReplyProtocolNotSupported+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginSlave::protocolReplyProtocolNotSupported));*/
+                *(EventLoopClientLoginSlave::protocolReplyProtocolNotSupported+1)=queryNumber;
+                internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::protocolReplyProtocolNotSupported),sizeof(EventLoopClientLoginSlave::protocolReplyProtocolNotSupported));*/
                 parseNetworkReadError("Wrong protocol");
                 return false;
             }
         break;
         //login
         case 0xA8:
-            //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
-            if(stat==EpollClientLoginStat::LoginInProgress)
+            //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+            if(stat==EventLoopClientLoginStat::LoginInProgress)
             {
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 removeFromQueryReceived(queryNumber);
-                *(EpollClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
+                *(EventLoopClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
+                internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::loginInProgressBuffer),sizeof(EventLoopClientLoginSlave::loginInProgressBuffer));
                 parseNetworkReadError("Loggin already in progress");
             }
-            else if(stat!=EpollClientLoginStat::ProtocolGood)
+            else if(stat!=EventLoopClientLoginStat::ProtocolGood)
             {
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 parseNetworkReadError("send login before the protocol");
                 return false;
             }
             else
             {
-                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
-                stat=EpollClientLoginStat::LoginInProgress;
+                //std::cout << " EventLoopClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                stat=EventLoopClientLoginStat::LoginInProgress;
                 askLogin(queryNumber,data);
                 return true;
             }
         break;
         //create account
         case 0xA9:
-            if(stat==EpollClientLoginStat::LoginInProgress)
+            if(stat==EventLoopClientLoginStat::LoginInProgress)
             {
                 removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                 //not reply to prevent DDOS attack
                 parseNetworkReadError("Loggin already in progress");
                 return false;
             }
-            else if(stat!=EpollClientLoginStat::ProtocolGood)
+            else if(stat!=EventLoopClientLoginStat::ProtocolGood)
             {
                 parseNetworkReadError("send login before the protocol");
                 return false;
@@ -185,7 +185,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
             {
                 if(CommonSettingsCommon::commonSettingsCommon.automatic_account_creation)
                 {
-                    stat=EpollClientLoginStat::LoginInProgress;
+                    stat=EventLoopClientLoginStat::LoginInProgress;
                     createAccount(queryNumber,data);
                     return true;
                 }
@@ -203,14 +203,14 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
         break;
         //Stat client
         case 0xAD:
-            if(stat==EpollClientLoginStat::LoginInProgress)
+            if(stat==EventLoopClientLoginStat::LoginInProgress)
             {
                 removeFromQueryReceived(queryNumber);//all list dropped at client destruction
                 //not reply to prevent DDOS attack
                 parseNetworkReadError("Loggin already in progress");
                 return false;
             }
-            else if(stat!=EpollClientLoginStat::ProtocolGood)
+            else if(stat!=EventLoopClientLoginStat::ProtocolGood)
             {
                 parseNetworkReadError("send login before the protocol");
                 return false;
@@ -228,10 +228,10 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
     return true;
 }
 
-bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char * const data, const unsigned int &size)
+bool EventLoopClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char * const data, const unsigned int &size)
 {
-    //std::cout << " EpollClientLoginSlave::parseMessage(" << std::to_string(mainCodeType) << "," << binarytoHexa(data,size) << ")" << std::endl;
-    if(stat==EpollClientLoginStat::GameServerConnecting)
+    //std::cout << " EventLoopClientLoginSlave::parseMessage(" << std::to_string(mainCodeType) << "," << binarytoHexa(data,size) << ")" << std::endl;
+    if(stat==EventLoopClientLoginStat::GameServerConnecting)
     {
         parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return false;
@@ -263,7 +263,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
             otherPacketKick.incrementLastValue();
         break;
     }
-    if(stat==EpollClientLoginStat::GameServerConnected)
+    if(stat==EventLoopClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
         {
@@ -298,7 +298,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EventLoopClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return false;
         }
     }
@@ -314,23 +314,23 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
 }
 
 //have query with reply
-bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool EventLoopClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    //std::cout << " EpollClientLoginSlave::parseQuery(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
+    //std::cout << " EventLoopClientLoginSlave::parseQuery(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
         parseNetworkReadError("Too many packet in sort time, check DDOS limit in login query: "+std::to_string(otherPacketKick.total())+">="+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER)+" "+otherPacketKick.dump());
         return false;
     }
     otherPacketKick.incrementLastValue();
-    if(stat!=EpollClientLoginStat::Logged)
+    if(stat!=EventLoopClientLoginStat::Logged)
     {
-        if(stat==EpollClientLoginStat::GameServerConnecting)
+        if(stat==EventLoopClientLoginStat::GameServerConnecting)
         {
             parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
             return false;
         }
-        if(stat==EpollClientLoginStat::GameServerConnected)
+        if(stat==EventLoopClientLoginStat::GameServerConnected)
         {
             if(Q_LIKELY(linkToGameServer))
             {
@@ -370,7 +370,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             }
             else
             {
-                parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
+                parseNetworkReadError("linkToGameServer==NULL when stat==EventLoopClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
                 return false;
             }
         }
@@ -473,7 +473,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             const uint32_t &serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+1)));
             const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+5)));
             if(characterId==0)
-                std::cerr << "EpollClientLoginMaster::selectCharacter() call with characterId=0" << std::endl;
+                std::cerr << "EventLoopClientLoginMaster::selectCharacter() call with characterId=0" << std::endl;
             selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId);
             return true;
         }
@@ -487,10 +487,10 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
 }
 
 //send reply
-bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool EventLoopClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    std::cout << " EpollClientLoginSlave::parseReplyData(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
-    if(stat==EpollClientLoginStat::GameServerConnecting)
+    std::cout << " EventLoopClientLoginSlave::parseReplyData(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
+    if(stat==EventLoopClientLoginStat::GameServerConnecting)
     {
         parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return false;
@@ -501,7 +501,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         return false;
     }
     otherPacketKick.incrementLastValue();
-    if(stat==EpollClientLoginStat::GameServerConnected)
+    if(stat==EventLoopClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
         {
@@ -541,7 +541,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EventLoopClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return false;
         }
     }
@@ -550,14 +550,14 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
     return false;
 }
 
-void EpollClientLoginSlave::parseNetworkReadError(const std::string &errorString)
+void EventLoopClientLoginSlave::parseNetworkReadError(const std::string &errorString)
 {
     /*not parseNetworkReadError to do soft error, else crash on removeFromQueryReceived();
      * used to prevent abort in case of: ERROR, dns resolution failed on: cc-server-bot.portable-datacenter.first-world.info, h_errno: 2 */
     errorParsingLayer(errorString);
 }
 
-void EpollClientLoginSlave::parseNetworkReadMessage(const std::string &errorString)
+void EventLoopClientLoginSlave::parseNetworkReadMessage(const std::string &errorString)
 {
     /*not parseNetworkReadError to do soft error, else crash on removeFromQueryReceived();
      * used to prevent abort in case of: ERROR, dns resolution failed on: cc-server-bot.portable-datacenter.first-world.info, h_errno: 2 */

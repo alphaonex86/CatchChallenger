@@ -1,7 +1,7 @@
-#include "EpollClientList.hpp"
+#include "EventLoopClientList.hpp"
 #include "../base/GlobalServerData.hpp"
 
-EpollClientList::EpollClientList()
+EventLoopClientList::EventLoopClientList()
 {
     maxIndex=0;
     size_t max=CatchChallenger::GlobalServerData::serverSettings.max_players;
@@ -26,7 +26,7 @@ EpollClientList::EpollClientList()
     while(index<tmax)
     {
         clients.emplace_back(index);
-        ClientWithMapEpoll &c=clients[index];
+        ClientWithMapEventLoop &c=clients[index];
         c.resetAll();
         c.setToDefault();
         c.reset(-1);
@@ -35,7 +35,7 @@ EpollClientList::EpollClientList()
 }
 
 //return index into map list
-ClientWithMapEpoll &EpollClientList::getByReference()
+ClientWithMapEventLoop &EventLoopClientList::getByReference()
 {
     if(!clients_removed_index.empty())
     {
@@ -47,7 +47,7 @@ ClientWithMapEpoll &EpollClientList::getByReference()
     {
         if(maxIndex>=65535)
         {
-            std::cout << "EpollClientList::getByReference() maxIndex>=65535" << std::endl;
+            std::cout << "EventLoopClientList::getByReference() maxIndex>=65535" << std::endl;
             abort();
         }
         maxIndex++;
@@ -55,7 +55,7 @@ ClientWithMapEpoll &EpollClientList::getByReference()
     }
 }
 
-void EpollClientList::remove(const CatchChallenger::Client &client)
+void EventLoopClientList::remove(const CatchChallenger::Client &client)
 {
     const PLAYER_INDEX_FOR_CONNECTED index_global=client.getIndexConnect();
     if(isNull(index_global))
@@ -64,12 +64,12 @@ void EpollClientList::remove(const CatchChallenger::Client &client)
     CatchChallenger::ClientList::remove(client);
 }
 
-PLAYER_INDEX_FOR_CONNECTED EpollClientList::size() const
+PLAYER_INDEX_FOR_CONNECTED EventLoopClientList::size() const
 {
     return maxIndex;
 }
 
-bool EpollClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
+bool EventLoopClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
@@ -78,7 +78,7 @@ bool EpollClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
         abort();
     }
     #endif
-    const ClientWithMapEpoll &c=clients.at(index);
+    const ClientWithMapEventLoop &c=clients.at(index);
     switch(c.getClientStat())
     {
         case CatchChallenger::Client::CharacterSelected:
@@ -92,7 +92,7 @@ bool EpollClientList::isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const
 }
 
 //abort if index is not valid
-const CatchChallenger::Client &EpollClientList::at(const PLAYER_INDEX_FOR_CONNECTED &index) const
+const CatchChallenger::Client &EventLoopClientList::at(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
@@ -110,7 +110,7 @@ const CatchChallenger::Client &EpollClientList::at(const PLAYER_INDEX_FOR_CONNEC
 }
 
 //abort if index is not valid
-CatchChallenger::Client &EpollClientList::rw(const PLAYER_INDEX_FOR_CONNECTED &index)
+CatchChallenger::Client &EventLoopClientList::rw(const PLAYER_INDEX_FOR_CONNECTED &index)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())
@@ -127,12 +127,12 @@ CatchChallenger::Client &EpollClientList::rw(const PLAYER_INDEX_FOR_CONNECTED &i
     return clients[index];
 }
 
-PLAYER_INDEX_FOR_CONNECTED EpollClientList::connected_size() const
+PLAYER_INDEX_FOR_CONNECTED EventLoopClientList::connected_size() const
 {
     return maxIndex-clients_removed_index.size();
 }
 
-CatchChallenger::ClientWithMap &EpollClientList::rwWithMap(const PLAYER_INDEX_FOR_CONNECTED &index)
+CatchChallenger::ClientWithMap &EventLoopClientList::rwWithMap(const PLAYER_INDEX_FOR_CONNECTED &index)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(index>=clients.size())

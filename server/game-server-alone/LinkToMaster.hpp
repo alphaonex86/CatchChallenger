@@ -4,7 +4,7 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #include "TimerReconnectOnTheMaster.hpp"
 #include "../base/TinyXMLSettings.hpp"
-#include "../epoll/EpollClient.hpp"
+#include "../cli/EventLoopClient.hpp"
 #include <vector>
 #include <random>
 #include <netinet/in.h>
@@ -12,7 +12,7 @@
 #include <netdb.h>
 
 namespace CatchChallenger {
-class LinkToMaster : public EpollClient, public ProtocolParsingInputOutput
+class LinkToMaster : public EventLoopClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToMaster(
@@ -57,7 +57,7 @@ public:
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;
     std::vector<uint8_t> queryNumberList;
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void connectInternal();

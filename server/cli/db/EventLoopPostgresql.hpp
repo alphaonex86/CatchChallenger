@@ -1,6 +1,6 @@
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-#ifndef CATCHCHALLENGER_EPOLLPOSTGRESQL_H
-#define CATCHCHALLENGER_EPOLLPOSTGRESQL_H
+#ifndef CATCHCHALLENGER_EVENT_LOOP_POSTGRESQL_H
+#define CATCHCHALLENGER_EVENT_LOOP_POSTGRESQL_H
 
 #include <postgresql/libpq-fe.h>
 #include <queue>
@@ -8,15 +8,15 @@
 #include <string>
 #include <chrono>
 
-#include "EpollDatabase.hpp"
+#include "EventLoopDatabase.hpp"
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
-class EpollPostgresql : public EpollDatabase
+class EventLoopPostgresql : public EventLoopDatabase
 {
 public:
-    EpollPostgresql();
-    ~EpollPostgresql();
+    EventLoopPostgresql();
+    ~EventLoopPostgresql();
     bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
     bool syncConnectInternal(bool infinityTry=false);
     void syncDisconnect();
@@ -32,7 +32,7 @@ public:
     bool asyncWrite(const std::string &query);
     static void noticeReceiver(void *arg, const PGresult *res);
     static void noticeProcessor(void *arg, const char *message);
-    bool epollEvent(const uint32_t &events);
+    bool unixEvent(const uint32_t &events);
     void clear();
     bool sendNextQuery();
     const std::string errorMessage() const;
@@ -44,7 +44,7 @@ public:
     bool stringtobool(const std::string &string,bool *ok=NULL);
     std::vector<char> hexatoBinary(const std::string &data,bool *ok=NULL);
     bool setMaxDbQueries(const unsigned int &maxDbQueries);
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
 private:
     time_t startTime;
     PGconn *conn;

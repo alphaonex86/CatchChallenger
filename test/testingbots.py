@@ -57,10 +57,10 @@ NPROC      = str(multiprocessing.cpu_count())
 
 DATAPACKS       = _config["paths"]["datapacks"]
 
-SERVER_PRO      = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
-SERVER_BUILD    = build_paths.build_path("server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
-SERVER_REF_BUILD= build_paths.build_path("server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
-SERVER_BIN_NAME = "catchchallenger-server-cli-epoll"
+SERVER_PRO      = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
+SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb" + _DIAG_SUFFIX)
+SERVER_REF_BUILD= build_paths.build_path("server/cli/build/catchchallenger-server-filedb-llvm-Debug")
+SERVER_BIN_NAME = "catchchallenger-server-cli"
 
 BOT_PRO         = os.path.join(ROOT, "tools/bot-actions/bot-actions.pro")
 BOT_BUILD       = build_paths.build_path("tools/bot-actions/build/testing" + _DIAG_SUFFIX)

@@ -1,9 +1,9 @@
 #ifndef TIMERCITYCAPTURE_H
 #define TIMERCITYCAPTURE_H
 
-#include "../EpollTimer.hpp"
+#include "../EventLoopTimer.hpp"
 
-class TimerCityCapture : public EpollTimer
+class TimerCityCapture : public EventLoopTimer
 {
 public:
     TimerCityCapture();

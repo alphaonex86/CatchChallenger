@@ -1,8 +1,8 @@
-#include "ServerPrivateVariablesEpoll.hpp"
+#include "ServerPrivateVariablesEventLoop.hpp"
 
-ServerPrivateVariablesEpoll ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll;
+ServerPrivateVariablesEventLoop ServerPrivateVariablesEventLoop::serverPrivateVariablesEventLoop;
 
-ServerPrivateVariablesEpoll::ServerPrivateVariablesEpoll()
+ServerPrivateVariablesEventLoop::ServerPrivateVariablesEventLoop()
 {
     timer_to_send_insert_move_remove = nullptr;
     nextTimeStampsToCaptureCity=0;

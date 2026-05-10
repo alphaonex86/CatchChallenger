@@ -216,7 +216,7 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
     #ifdef CATCHCHALLENGER_HARDENED
     parseIncommingDataCount--;
     #if defined(CATCHCHALLENGER_SERVER)
-    /*if(epollSocket.bytesAvailable()>0)
+    /*if(unixSocket.bytesAvailable()>0)
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+

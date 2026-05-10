@@ -2,12 +2,23 @@
 #define BASECLASSSWITCH_H
 
 #include <stdint.h>
+#include <cstddef>
 
 class BaseClassSwitch
 {
 public:
     virtual ~BaseClassSwitch() {}
-    enum EpollObjectType : uint8_t
+#ifdef CATCHCHALLENGER_IO_URING
+    //Phase 2 substrate hook: io_uring recv_multishot delivers RX bytes
+    //via this method instead of the legacy epoll-event -> read() loop.
+    //Default no-op; EventLoopClient overrides. Only called when the
+    //buffer ring is initialised AND armRecvMultishot() was used for
+    //the underlying fd. The buffer is owned by the caller and recycled
+    //immediately after this returns — implementations must consume or
+    //copy synchronously.
+    virtual void onAsyncRecv(const char * /*buf*/,size_t /*len*/) {}
+#endif
+    enum EventLoopObjectType : uint8_t
     {
         #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
             Server,
@@ -44,7 +55,7 @@ public:
         #endif
         #ifdef CATCHCHALLENGER_CLASS_STATS
             Client,
-            UnixServer,
+            EventLoopServer,
         #endif
         #ifdef CATCHCHALLENGER_CLASS_QT
             Database,
@@ -55,12 +66,12 @@ public:
             Stdin
         #endif
         #ifdef CATCHCHALLENGER_CLASS_BOT
-            UnixServer,
+            EventLoopServer,
             Client,
             Timer,
         #endif
     };
-    virtual EpollObjectType getType() const = 0;
+    virtual EventLoopObjectType getType() const = 0;
 };
 
 #endif // BASECLASSSWITCH_H

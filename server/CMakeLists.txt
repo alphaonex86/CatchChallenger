@@ -6,7 +6,7 @@
 # admin server that listens on the network and ships a SQLite-by-default
 # DB. No libtiled, no client libs, no other server execs. Game-server-
 # alone, login, master, gateway, and the epoll game server live in their
-# own sibling CMakeLists.txt files (server/epoll/, server/login/, …) and
+# own sibling CMakeLists.txt files (server/cli/, server/login/, …) and
 # are NOT pulled in here.
 #
 # The ONE-binary-per-CMakeLists rule means each binary has its own

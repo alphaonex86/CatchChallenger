@@ -290,7 +290,7 @@ void QtDatabaseThread::receiveQuery(const std::string &query,const QSqlDatabase 
     emit sendReply(queryReturn);
 }
 
-bool QtDatabase::epollEvent(const uint32_t &events)
+bool QtDatabase::unixEvent(const uint32_t &events)
 {
     Q_UNUSED(events);
     return false;

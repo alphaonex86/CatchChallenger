@@ -47,8 +47,8 @@ NPROC         = str(multiprocessing.cpu_count())
 CLIENT_GL_PRO = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro")
 
 #local server-filedb that the multi-mode emulator client connects back to.
-SERVER_BUILD    = build_paths.build_path("server/epoll/build/testing-filedb")
-SERVER_BIN_NAME = "catchchallenger-server-cli-epoll"
+SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb")
+SERVER_BIN_NAME = "catchchallenger-server-cli"
 
 # Android emulator's NAT maps 10.0.2.2 to the HOST's loopback
 # (https://developer.android.com/studio/run/emulator-networking).

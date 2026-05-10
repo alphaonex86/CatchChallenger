@@ -1,15 +1,15 @@
 #ifndef CATCHCHALLENGER_PLAYERUPDATEREPOLL_H
 #define CATCHCHALLENGER_PLAYERUPDATEREPOLL_H
 
-#include "../EpollTimer.hpp"
+#include "../EventLoopTimer.hpp"
 #include "../../base/PlayerUpdaterBase.hpp"
 #include <stdint.h>
 
-class PlayerUpdaterEpoll : public EpollTimer, public CatchChallenger::PlayerUpdaterBase
+class PlayerUpdaterEventLoop : public EventLoopTimer, public CatchChallenger::PlayerUpdaterBase
 {
     friend class PlayerUpdaterToMaster;
 public:
-    explicit PlayerUpdaterEpoll();
+    explicit PlayerUpdaterEventLoop();
 private:
     void exec();
     void setInterval(int ms);

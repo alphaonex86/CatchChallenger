@@ -298,7 +298,7 @@ int64_t DatapackChecksum::readFileMDateTime(const std::string &file)
             return -1;
         }
         CloseHandle(hFileSouce);
-        //const int64_t UNIX_TIME_START = 0x019DB1DED53E8000; //January 1, 1970 (start of Unix epoch) in "ticks"
+        //const int64_t UNIX_TIME_START = 0x019DB1DED53E8000; //January 1, 1970 (start of EventLoop epoch) in "ticks"
         //const int64_t TICKS_PER_SECOND = 10000000; //a tick is 100ns
         LARGE_INTEGER li;
         li.LowPart  = ftWrite.dwLowDateTime;

@@ -1,7 +1,7 @@
-#ifndef EPOLL_SERVER_LOGIN_MASTER_H
-#define EPOLL_SERVER_LOGIN_MASTER_H
+#ifndef EVENTLOOP_SERVER_LOGIN_MASTER_H
+#define EVENTLOOP_SERVER_LOGIN_MASTER_H
 
-#include "../epoll/EpollGenericServer.hpp"
+#include "../cli/EventLoopGenericServer.hpp"
 #include "../base/BaseServer/BaseServerLogin.hpp"
 #include "../base/PreparedStatementUnit.hpp"
 #include "../base/TinyXMLSettings.hpp"
@@ -11,11 +11,11 @@
 #include <vector>
 
 namespace CatchChallenger {
-class EpollServerLoginSlave : public EpollGenericServer, public BaseServerLogin
+class EventLoopServerLoginSlave : public EventLoopGenericServer, public BaseServerLogin
 {
 public:
-    EpollServerLoginSlave();
-    ~EpollServerLoginSlave();
+    EventLoopServerLoginSlave();
+    ~EventLoopServerLoginSlave();
     bool tryListen();
     void close();
     void setSkinPair(const uint8_t &internalId,const uint16_t &databaseId);
@@ -75,7 +75,7 @@ public:
     };
     std::vector<LoginProfile> loginProfileList;
 
-    static EpollServerLoginSlave *epollServerLoginSlave;
+    static EventLoopServerLoginSlave *unixServerLoginSlave;
 public:
     bool tcpNodelay,tcpCork;
     bool serverReady;
@@ -90,4 +90,4 @@ private:
 };
 }
 
-#endif // EPOLL_SERVER_H
+#endif // EVENT_LOOP_SERVER_H

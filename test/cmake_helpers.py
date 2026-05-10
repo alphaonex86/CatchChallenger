@@ -99,20 +99,20 @@ _OPTION_MACROS = {
 # the root project's add_subdirectory calls; standalone subdirs have no such
 # gate.
 _PRO_TO_CMAKE = {
-    "server/epoll/catchchallenger-server-filedb.pro": (
-        "catchchallenger-server-cli-epoll",
+    "server/cli/catchchallenger-server-filedb.pro": (
+        "catchchallenger-server-cli",
         ["-DCATCHCHALLENGER_DB_FILE=ON"],
-        "server/epoll",
+        "server/cli",
     ),
-    "server/epoll/catchchallenger-server-cli-epoll.pro": (
-        "catchchallenger-server-cli-epoll",
+    "server/cli/catchchallenger-server-cli.pro": (
+        "catchchallenger-server-cli",
         ["-DCATCHCHALLENGER_DB_FILE=ON"],
-        "server/epoll",
+        "server/cli",
     ),
-    "server/epoll/catchchallenger-server-test.pro": (
-        "catchchallenger-server-cli-epoll",
+    "server/cli/catchchallenger-server-test.pro": (
+        "catchchallenger-server-cli",
         ["-DCATCHCHALLENGER_DB_FILE=ON"],
-        "server/epoll",
+        "server/cli",
     ),
     "server/login/login.pro": (
         "catchchallenger-server-login",
@@ -134,10 +134,10 @@ _PRO_TO_CMAKE = {
         [],
         "server/game-server-alone",
     ),
-    "server/epoll/filedb-converter/filedb-converter.pro": (
+    "server/cli/filedb-converter/filedb-converter.pro": (
         "filedb-converter",
         [],
-        "server/epoll/filedb-converter",
+        "server/cli/filedb-converter",
     ),
     "tools/stats/stats.pro": (
         "stats",

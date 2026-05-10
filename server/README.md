@@ -10,17 +10,17 @@ git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack data
 
 ```
 
-# Epoll server (Unix only, was only Linux)
+# EventLoop server (EventLoop only, was only Linux)
 ```sh
 cd server/
-qmake catchchallenger-server-cli-epoll.pro
+qmake catchchallenger-server-cli.pro
 make
 git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
-chmod a+x catchchallenger-server-cli-epoll
-./catchchallenger-server-cli-epoll
+chmod a+x catchchallenger-server-cli
+./catchchallenger-server-cli
 ```
 
-## Hardware server for Epoll server
+## Hardware server for EventLoop server
 Tested on physical hardware:
 * Intel i486DX2-66 at 66Mhz for x86
 * Geode LX800 (i486/i586 like) at 500MHz for x86

@@ -2,8 +2,8 @@
 #define LOGINLINKTOGameServer_H
 
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../epoll/BaseClassSwitch.hpp"
-#include "../epoll/EpollClient.hpp"
+#include "../cli/BaseClassSwitch.hpp"
+#include "../cli/EventLoopClient.hpp"
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -11,8 +11,8 @@
 #include <regex>
 
 namespace CatchChallenger {
-class EpollClientLoginSlave;
-class LinkToGameServer : public EpollClient, public ProtocolParsingInputOutput
+class EventLoopClientLoginSlave;
+class LinkToGameServer : public EventLoopClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToGameServer(
@@ -49,7 +49,7 @@ public:
     std::unordered_map<uint8_t/*charactersGroupIndex*/,std::unordered_map<uint32_t/*unique key*/,ServerReconnect> > serverReconnectList;
     ServerReconnect selectedServer;
 
-    EpollClientLoginSlave *client;
+    EventLoopClientLoginSlave *client;
     uint8_t protocolQueryNumber;
     static std::vector<char> httpDatapackMirrorRewriteBase;
     static std::vector<char> httpDatapackMirrorRewriteMainAndSub;
@@ -65,7 +65,7 @@ public:
     static const std::string protocolHttps;
 
     void setConnexionSettings();
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void sendProxyRequest(const std::string &host, const uint16_t &port);

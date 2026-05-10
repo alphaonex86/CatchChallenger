@@ -22,7 +22,7 @@ Missing settings are automatically populated with defaults on first run by `Norm
 | Normal Server (GUI/CLI) | `server-properties.xml` | Full standalone server |
 | Login Server | `login.xml` | Authentication server |
 | Game Server (alone) | `server-properties.xml` | Connects to master server |
-| Epoll Server | `server-properties.xml` | Linux high-performance variant |
+| EventLoop Server | `server-properties.xml` | Linux high-performance variant |
 
 The file is located in the application/build directory.
 
@@ -324,7 +324,7 @@ Only present when compiled as `CATCHCHALLENGER_CLASS_ONLYGAMESERVER`:
 | `maxLockAge` | int | `30` | Max lock age in seconds |
 | `purgeLockPeriod` | int | `15` | Lock purge period in seconds |
 
-## Group: `<Linux>` - Linux TCP Options (Epoll Only)
+## Group: `<Linux>` - Linux TCP Options (EventLoop Only)
 
 ```xml
 <Linux>
@@ -340,7 +340,7 @@ Only present when compiled as `CATCHCHALLENGER_CLASS_ONLYGAMESERVER`:
 
 ## Example Complete Configuration
 
-See `epoll/build/llvm-Debug/server-properties.xml` for a working example.
+See `unix/build/llvm-Debug/server-properties.xml` for a working example.
 
 ## Key Source Files
 

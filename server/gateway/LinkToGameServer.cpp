@@ -1,7 +1,7 @@
 #include "LinkToGameServer.hpp"
-#include "EpollClientLoginSlave.hpp"
-#include "../epoll/Epoll.hpp"
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
+#include "../cli/EventLoop.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
 #include "../../general/base/ProtocolVersion.hpp"
@@ -25,7 +25,7 @@ unsigned char protocolHeaderToMatchGameServer[] = {0xA0,0x00,0x60,0x0c,0xd9,0xbb
 LinkToGameServer::LinkToGameServer(
             const int &infd
         ) :
-        EpollClient(infd),
+        EventLoopClient(infd),
         ProtocolParsingInputOutput(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
@@ -153,7 +153,7 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
         }
         if(connStatusType>=0)
         {
-            if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+            if(strlen(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip)<=0)
                 std::cout << "Connected to proxy server" << std::endl;
             else
                 std::cout << "Connected to game server" << std::endl;
@@ -209,7 +209,7 @@ void LinkToGameServer::setConnexionSettings()
         epoll_event event;
         event.data.ptr = this;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
-        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
+        int s = EventLoop::loop.ctl(EPOLL_CTL_ADD, socketFd, &event);
         if(s == -1)
         {
             std::cerr << "epoll_ctl on socket (LinkToGameServer) error, errno: " << std::to_string(errno) << std::endl;
@@ -217,7 +217,7 @@ void LinkToGameServer::setConnexionSettings()
         }
     }
     {
-        if(EpollServerLoginSlave::epollServerLoginSlave->tcpCork)
+        if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpCork)
         {
             //set cork for CatchChallener because don't have real time part
             int state = 1;
@@ -227,7 +227,7 @@ void LinkToGameServer::setConnexionSettings()
                 abort();
             }
         }
-        else if(EpollServerLoginSlave::epollServerLoginSlave->tcpNodelay)
+        else if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpNodelay)
         {
             //set no delay to don't try group the packet and improve the performance
             int state = 1;
@@ -238,7 +238,7 @@ void LinkToGameServer::setConnexionSettings()
             }
         }
     }
-    /*const int s = EpollSocket::make_non_blocking(socketFd);
+    /*const int s = SocketUtil::make_non_blocking(socketFd);
     if(s == -1)
     {
         std::cerr << "unable to make to socket non blocking" << std::endl;
@@ -333,7 +333,7 @@ bool LinkToGameServer::disconnectClient()
                 event.data.ptr = this;
                 event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
                 {
-                    const int &s = Epoll::epoll.ctl(EPOLL_CTL_DEL, socketFd, &event);
+                    const int &s = EventLoop::loop.ctl(EPOLL_CTL_DEL, socketFd, &event);
                     if(s == -1)
                         std::cerr << "epoll_ctl on socket error, on del for reconnect" << std::endl;
                 }
@@ -341,9 +341,9 @@ bool LinkToGameServer::disconnectClient()
             memset(&outputQueryNumberToPacketCode,0x00,sizeof(outputQueryNumberToPacketCode));
             //if true continue in read socket loop -> bug, because at reconnect need reparse the proxy header
             socketFd=reopenSocketFd;
-            EpollClient::reopen(socketFd);
+            EventLoopClient::reopen(socketFd);
 
-            if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+            if(strlen(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip)<=0)
                 stat=LinkToGameServer::Stat::ReconnectingWaitingProtocolHeader;
             else
                 stat=LinkToGameServer::Stat::ReconnectingWaitingProxy;
@@ -352,7 +352,7 @@ bool LinkToGameServer::disconnectClient()
             event.data.ptr = this;
             event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
             {
-                const int &s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
+                const int &s = EventLoop::loop.ctl(EPOLL_CTL_ADD, socketFd, &event);
                 if(s == -1)
                 {
                     std::cerr << "epoll_ctl on socket error" << std::endl;
@@ -361,7 +361,7 @@ bool LinkToGameServer::disconnectClient()
                 }
             }
             {
-                if(EpollServerLoginSlave::epollServerLoginSlave->tcpCork)
+                if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpCork)
                 {
                     //set cork for CatchChallener because don't have real time part
                     int state = 1;
@@ -371,7 +371,7 @@ bool LinkToGameServer::disconnectClient()
                         abort();
                     }
                 }
-                else if(EpollServerLoginSlave::epollServerLoginSlave->tcpNodelay)
+                else if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpNodelay)
                 {
                     //set no delay to don't try group the packet and improve the performance
                     int state = 1;
@@ -383,8 +383,8 @@ bool LinkToGameServer::disconnectClient()
                 }
             }
 
-            if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
-                sendProxyRequest(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port);
+            if(strlen(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip)>0)
+                sendProxyRequest(EventLoopServerLoginSlave::unixServerLoginSlave->destination_server_ip,EventLoopServerLoginSlave::unixServerLoginSlave->destination_server_port);
             else
                 sendProtocolHeaderGameServer();
 
@@ -411,7 +411,7 @@ bool LinkToGameServer::disconnectClient()
         delete replySelectCharInWait;
         replySelectCharInWait=NULL;
     }
-    EpollClient::close();
+    EventLoopClient::close();
     messageParsingLayer("Disconnected login/game server: "+std::to_string(stat));
     return true;
 }
@@ -447,9 +447,9 @@ void LinkToGameServer::messageParsingLayer(const char * const message) const
     std::cout << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
-BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const
+BaseClassSwitch::EventLoopObjectType LinkToGameServer::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::ClientServer;
+    return BaseClassSwitch::EventLoopObjectType::ClientServer;
 }
 
 void LinkToGameServer::parseIncommingData()
@@ -565,7 +565,7 @@ bool LinkToGameServer::removeFromQueryReceived(const uint8_t &queryNumber)
 
 ssize_t LinkToGameServer::readFromSocket(char * data, const size_t &size)
 {
-    return EpollClient::read(data,size);
+    return EventLoopClient::read(data,size);
 }
 
 ssize_t LinkToGameServer::writeToSocket(const char * const data, const size_t &size)
@@ -573,10 +573,10 @@ ssize_t LinkToGameServer::writeToSocket(const char * const data, const size_t &s
     //do some basic check on low level protocol (message split, ...)
     if(ProtocolParsingInputOutput::write(data,size)<0)
         return -1;
-    return EpollClient::write(data,size);
+    return EventLoopClient::write(data,size);
 }
 
 void LinkToGameServer::closeSocket()
 {
-    EpollClient::closeSocket();
+    EventLoopClient::closeSocket();
 }

@@ -1,5 +1,5 @@
 #include "TimeRangeEvent.hpp"
-#include "EpollClientLoginMaster.hpp"
+#include "EventLoopClientLoginMaster.hpp"
 
 using namespace CatchChallenger;
 
@@ -10,5 +10,5 @@ TimeRangeEvent::TimeRangeEvent()
 
 void TimeRangeEvent::exec()
 {
-    EpollClientLoginMaster::sendTimeRangeEvent();
+    EventLoopClientLoginMaster::sendTimeRangeEvent();
 }

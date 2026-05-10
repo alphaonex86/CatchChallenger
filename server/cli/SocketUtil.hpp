@@ -1,8 +1,8 @@
-#ifndef EPOLL_SOCKET_H
-#define EPOLL_SOCKET_H
+#ifndef SOCKET_UTIL_H
+#define SOCKET_UTIL_H
 
 namespace CatchChallenger {
-class EpollSocket
+class SocketUtil
 {
 public:
     static int make_non_blocking(int sfd);
@@ -10,4 +10,4 @@ public:
 };
 }
 
-#endif // EPOLL_SOCKET_H
+#endif // SOCKET_UTIL_H

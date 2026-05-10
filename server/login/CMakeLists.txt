@@ -2,7 +2,7 @@
 # Self-contained, one binary. CATCHCHALLENGER_CLASS_LOGIN +
 # CATCHCHALLENGER_DB_POSTGRESQL + DB_PREPAREDSTATEMENT.
 # Doesn't share catchchallenger_server_base (no game-logic sources);
-# pulls only a small subset of server/base + a few server/epoll files.
+# pulls only a small subset of server/base + a few server/cli files.
 
 cmake_minimum_required(VERSION 3.20)
 project(catchchallenger_server_login LANGUAGES C CXX)
@@ -16,18 +16,18 @@ find_package(Threads REQUIRED)
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
 
 set(_login_sources
-    main-epoll-login-slave.cpp
-    EpollClientLoginSlave.cpp
-    EpollServerLoginSlave.cpp
-    EpollClientLoginSlaveStaticVar.cpp
-    EpollClientLoginSlaveHeavyLoad.cpp
+    main-unix-login-slave.cpp
+    EventLoopClientLoginSlave.cpp
+    EventLoopServerLoginSlave.cpp
+    EventLoopClientLoginSlaveStaticVar.cpp
+    EventLoopClientLoginSlaveHeavyLoad.cpp
     LinkToMaster.cpp
     LinkToMasterStaticVar.cpp
     LinkToMasterProtocolParsing.cpp
     LinkToMasterProtocolParsingMessage.cpp
     LinkToMasterProtocolParsingReply.cpp
-    EpollClientLoginSlaveProtocolParsing.cpp
-    EpollClientLoginSlaveWrite.cpp
+    EventLoopClientLoginSlaveProtocolParsing.cpp
+    EventLoopClientLoginSlaveWrite.cpp
     CharactersGroupForLogin.cpp
     CharactersGroupClient.cpp
     LinkToGameServerStaticVar.cpp
@@ -35,14 +35,14 @@ set(_login_sources
     LinkToGameServer.cpp
     TimerDdos.cpp
     TimerDetectTimeout.cpp
-    # epoll/ files reused by all servers
-    ../epoll/Epoll.cpp
-    ../epoll/EpollGenericServer.cpp
-    ../epoll/EpollClient.cpp
-    ../epoll/EpollSocket.cpp
-    ../epoll/db/EpollPostgresql.cpp
-    ../epoll/EpollClientToServer.cpp
-    ../epoll/EpollTimer.cpp
+    # unix/ files reused by all servers
+    ../cli/EventLoop.cpp
+    ../cli/EventLoopGenericServer.cpp
+    ../cli/EventLoopClient.cpp
+    ../cli/SocketUtil.cpp
+    ../cli/db/EventLoopPostgresql.cpp
+    ../cli/EventLoopClientToServer.cpp
+    ../cli/EventLoopTimer.cpp
     # Small subset of server/base/ specific to login. The SQL plumbing
     # (DatabaseBase, PreparedDBQuery*, etc.) is pulled via the
     # catchchallenger_server_sql INTERFACE lib in target_link_libraries.
@@ -57,7 +57,7 @@ add_executable(catchchallenger-server-login ${_login_sources})
 
 target_include_directories(catchchallenger-server-login PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../epoll
+    ${CMAKE_CURRENT_SOURCE_DIR}/../unix
     ${CMAKE_CURRENT_SOURCE_DIR}/../base
 )
 
@@ -82,6 +82,19 @@ target_compile_definitions(catchchallenger-server-login PRIVATE
 if(EXTERNALLIBZSTD)
     target_link_libraries(catchchallenger-server-login PRIVATE ${ZSTD_LIBRARY})
 endif()
+
+# io_uring is MANDATORY for this binary.
+if(NOT LIBURING_LIBRARY)
+    find_library(LIBURING_LIBRARY NAMES uring)
+    find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)
+endif()
+if(NOT LIBURING_LIBRARY)
+    message(FATAL_ERROR
+        "catchchallenger-server-login requires liburing (mandatory io_uring backend).")
+endif()
+target_compile_definitions(catchchallenger-server-login PRIVATE CATCHCHALLENGER_IO_URING)
+target_include_directories(catchchallenger-server-login PRIVATE ${LIBURING_INCLUDE_DIR})
+target_link_libraries(catchchallenger-server-login PRIVATE ${LIBURING_LIBRARY})
 
 find_program(MOLD_EXE mold)
 if(MOLD_EXE)

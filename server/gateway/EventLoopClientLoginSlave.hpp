@@ -1,10 +1,10 @@
-#ifndef EPOLLCLIENTLOGINMASTER_H
-#define EPOLLCLIENTLOGINMASTER_H
+#ifndef EVENTLOOPCLIENTLOGINMASTER_H
+#define EVENTLOOPCLIENTLOGINMASTER_H
 
-#include "../epoll/EpollClient.hpp"
+#include "../cli/EventLoopClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/VariableServer.hpp"
-#include "../epoll/db/EpollPostgresql.hpp"
+#include "../cli/db/EventLoopPostgresql.hpp"
 #include "LinkToGameServer.hpp"
 #include "../base/DdosBuffer.hpp"
 
@@ -46,22 +46,22 @@ struct FileToSend
 };
 bool operator<(const FileToSend &fileToSend1,const FileToSend &fileToSend2);
 
-class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOutput
+class EventLoopClientLoginSlave : public EventLoopClient, public ProtocolParsingInputOutput
 {
 public:
-    EpollClientLoginSlave(
+    EventLoopClientLoginSlave(
             const int &infd
         );
-    ~EpollClientLoginSlave();
+    ~EventLoopClientLoginSlave();
     bool disconnectClient();
-    enum EpollClientLoginStat : uint8_t
+    enum EventLoopClientLoginStat : uint8_t
     {
         None,
         ProtocolGood,
         GameServerConnecting,
         GameServerConnected,
     };
-    EpollClientLoginStat stat;
+    EventLoopClientLoginStat stat;
     enum DatapackStatus : uint8_t
     {
         Base=0x01,
@@ -113,7 +113,7 @@ private:
     #endif
 
     static const unsigned char protocolHeaderToMatch[5];
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
 private:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
@@ -140,7 +140,7 @@ private:
 public:
     bool sendRawBlock(const char * const data, const unsigned int &size);
 private:
-    static std::vector<EpollClientLoginSlave *> client_list;
+    static std::vector<EventLoopClientLoginSlave *> client_list;
 
     DdosBuffer<uint8_t,3> movePacketKick;
     DdosBuffer<uint8_t,3> chatPacketKick;
@@ -158,4 +158,4 @@ private:
 };
 }
 
-#endif // EPOLLCLIENTLOGINMASTER_H
+#endif // EVENTLOOPCLIENTLOGINMASTER_H

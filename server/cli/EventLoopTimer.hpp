@@ -1,14 +1,14 @@
-#ifndef EPOLL_TIMER_H
-#define EPOLL_TIMER_H
+#ifndef EVENT_LOOP_TIMER_H
+#define EVENT_LOOP_TIMER_H
 
 #include "BaseClassSwitch.hpp"
 
-class EpollTimer : public BaseClassSwitch
+class EventLoopTimer : public BaseClassSwitch
 {
 public:
-    EpollTimer();
-    ~EpollTimer();
-    EpollObjectType getType() const;
+    EventLoopTimer();
+    ~EventLoopTimer();
+    EventLoopObjectType getType() const;
     bool start(const unsigned int &msec,unsigned int offset=0);
     bool start();
     bool stop();
@@ -22,6 +22,9 @@ private:
     unsigned int msec;
     unsigned int offset;
     bool singleShot;
+#ifdef _WIN32
+    void *timer_ctx;
+#endif
 };
 
-#endif // EPOLL_TIMER_H
+#endif // EVENT_LOOP_TIMER_H

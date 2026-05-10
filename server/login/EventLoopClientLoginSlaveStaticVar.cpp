@@ -1,47 +1,47 @@
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "../../general/base/ProtocolVersion.hpp"
 
 #include <iostream>
 
 using namespace CatchChallenger;
 
-std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::client_list;
-std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::stat_client_list;
-std::vector<unsigned int> EpollClientLoginSlave::maxAccountIdList;
-bool EpollClientLoginSlave::maxAccountIdRequested=false;
+std::vector<EventLoopClientLoginSlave *> EventLoopClientLoginSlave::client_list;
+std::vector<EventLoopClientLoginSlave *> EventLoopClientLoginSlave::stat_client_list;
+std::vector<unsigned int> EventLoopClientLoginSlave::maxAccountIdList;
+bool EventLoopClientLoginSlave::maxAccountIdRequested=false;
 
-unsigned char EpollClientLoginSlave::protocolReplyProtocolNotSupported[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x02/*return code*/};
-unsigned char EpollClientLoginSlave::protocolReplyServerFull[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x03/*return code*/};
-unsigned char EpollClientLoginSlave::protocolReplyCompressionNone[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,0x00,0x00,0x00/*reply size*/,0x04/*return code*/};
+unsigned char EventLoopClientLoginSlave::protocolReplyProtocolNotSupported[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x02/*return code*/};
+unsigned char EventLoopClientLoginSlave::protocolReplyServerFull[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x03/*return code*/};
+unsigned char EventLoopClientLoginSlave::protocolReplyCompressionNone[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,0x00,0x00,0x00/*reply size*/,0x04/*return code*/};
 #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
-unsigned char EpollClientLoginSlave::protocolReplyCompresssionZstandard[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,0x00,0x00,0x00/*reply size*/,0x08/*return code*/};
+unsigned char EventLoopClientLoginSlave::protocolReplyCompresssionZstandard[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,0x00,0x00,0x00/*reply size*/,0x08/*return code*/};
 #endif
 
-unsigned char EpollClientLoginSlave::loginIsWrongBufferReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x00/*temp return code*/};
+unsigned char EventLoopClientLoginSlave::loginIsWrongBufferReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x00/*temp return code*/};
 
-unsigned char EpollClientLoginSlave::loginInProgressBuffer[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x06/*return code*/};
-unsigned char EpollClientLoginSlave::addCharacterIsWrongBuffer[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x00/*temp return code*/,0x00,0x00,0x00,0x00/*Fixed size to drop dynamic size overhead*/};
-unsigned char EpollClientLoginSlave::addCharacterReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x00/*temp return code*/,0x00,0x00,0x00,0x00};
-unsigned char EpollClientLoginSlave::removeCharacterReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x00/*temp return code*/};
-char EpollClientLoginSlave::baseDatapackSum[];
-char EpollClientLoginSlave::loginGood[];
-unsigned int EpollClientLoginSlave::loginGoodSize=0;
+unsigned char EventLoopClientLoginSlave::loginInProgressBuffer[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x06/*return code*/};
+unsigned char EventLoopClientLoginSlave::addCharacterIsWrongBuffer[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x00/*temp return code*/,0x00,0x00,0x00,0x00/*Fixed size to drop dynamic size overhead*/};
+unsigned char EventLoopClientLoginSlave::addCharacterReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x00/*temp return code*/,0x00,0x00,0x00,0x00};
+unsigned char EventLoopClientLoginSlave::removeCharacterReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x00/*temp return code*/};
+char EventLoopClientLoginSlave::baseDatapackSum[];
+char EventLoopClientLoginSlave::loginGood[];
+unsigned int EventLoopClientLoginSlave::loginGoodSize=0;
 
-char EpollClientLoginSlave::serverServerList[];
-unsigned int EpollClientLoginSlave::serverServerListSize=0;
-char EpollClientLoginSlave::serverServerListComputedMessage[];
-unsigned int EpollClientLoginSlave::serverServerListComputedMessageSize=0;
-unsigned int EpollClientLoginSlave::serverServerListCurrentPlayerSize=0;
-char EpollClientLoginSlave::serverLogicalGroupList[];
-unsigned int EpollClientLoginSlave::serverLogicalGroupListSize=0;
-char EpollClientLoginSlave::serverLogicalGroupAndServerList[];
-unsigned int EpollClientLoginSlave::serverLogicalGroupAndServerListSize=0;
-EpollClientLoginSlave::ProxyMode EpollClientLoginSlave::proxyMode=EpollClientLoginSlave::ProxyMode::Reconnect;
+char EventLoopClientLoginSlave::serverServerList[];
+unsigned int EventLoopClientLoginSlave::serverServerListSize=0;
+char EventLoopClientLoginSlave::serverServerListComputedMessage[];
+unsigned int EventLoopClientLoginSlave::serverServerListComputedMessageSize=0;
+unsigned int EventLoopClientLoginSlave::serverServerListCurrentPlayerSize=0;
+char EventLoopClientLoginSlave::serverLogicalGroupList[];
+unsigned int EventLoopClientLoginSlave::serverLogicalGroupListSize=0;
+char EventLoopClientLoginSlave::serverLogicalGroupAndServerList[];
+unsigned int EventLoopClientLoginSlave::serverLogicalGroupAndServerListSize=0;
+EventLoopClientLoginSlave::ProxyMode EventLoopClientLoginSlave::proxyMode=EventLoopClientLoginSlave::ProxyMode::Reconnect;
 
-const unsigned char EpollClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
+const unsigned char EventLoopClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
 
-EpollPostgresql EpollClientLoginSlave::databaseBaseLogin;
-EpollPostgresql EpollClientLoginSlave::databaseBaseCommon;
+EventLoopPostgresql EventLoopClientLoginSlave::databaseBaseLogin;
+EventLoopPostgresql EventLoopClientLoginSlave::databaseBaseCommon;
 
-char EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup[1024];
-unsigned int EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize=0;
+char EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroup[1024];
+unsigned int EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize=0;

@@ -3,11 +3,11 @@
 
 #ifdef CATCHCHALLENGER_SERVER
 
-#include "../epoll/EpollTimer.hpp"
+#include "../cli/EventLoopTimer.hpp"
 
 namespace CatchChallenger {
 class PurgeTheLockedAccount
-        : public EpollTimer
+        : public EventLoopTimer
 {
 public:
     explicit PurgeTheLockedAccount(unsigned int intervalInSeconds);

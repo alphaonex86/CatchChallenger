@@ -13,9 +13,9 @@
 
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/Version.hpp"
-#include "../epoll/Epoll.hpp"
-#include "EpollServerLoginMaster.hpp"
-#include "EpollClientLoginMaster.hpp"
+#include "../cli/EventLoop.hpp"
+#include "EventLoopServerLoginMaster.hpp"
+#include "EventLoopClientLoginMaster.hpp"
 #include "PlayerUpdaterToLogin.hpp"
 
 #define MAXEVENTS 512
@@ -78,16 +78,16 @@ int main(int argc, const char *argv[])
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
     ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::MasterServer);
-    if(!Epoll::epoll.init())
+    if(!EventLoop::loop.init())
         return EPOLLERR;
 
-    EpollServerLoginMaster::epollServerLoginMaster=new EpollServerLoginMaster();
+    EventLoopServerLoginMaster::unixServerLoginMaster=new EventLoopServerLoginMaster();
     #ifdef CATCHCHALLENGER_CACHE_HPS
     const bool save=argc==2 && strcmp(argv[1],"save")==0;
     if(save)
-        EpollServerLoginMaster::epollServerLoginMaster->setSave(datapackCache);
+        EventLoopServerLoginMaster::unixServerLoginMaster->setSave(datapackCache);
     else
-        EpollServerLoginMaster::epollServerLoginMaster->setLoad(datapackCache);
+        EventLoopServerLoginMaster::unixServerLoginMaster->setLoad(datapackCache);
     #endif
 
     char buf[4096];
@@ -115,7 +115,7 @@ int main(int argc, const char *argv[])
     int number_of_events, i;
     while(1)
     {
-        number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        number_of_events = EventLoop::loop.wait(events, MAXEVENTS);
         if(elementsToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
             if(elementsToDeleteIndex>=15)
@@ -128,7 +128,7 @@ int main(int argc, const char *argv[])
                 unsigned int index=0;
                 while(index<elementsToDeleteSub.size())
                 {
-                    delete static_cast<EpollClientLoginMaster *>(elementsToDeleteSub.at(index));
+                    delete static_cast<EventLoopClientLoginMaster *>(elementsToDeleteSub.at(index));
                     index++;
                 }
             }
@@ -139,7 +139,7 @@ int main(int argc, const char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::EpollObjectType::Server:
+                case BaseClassSwitch::EventLoopObjectType::Server:
                 {
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -156,7 +156,7 @@ int main(int argc, const char *argv[])
                     {
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
-                        const int &infd = EpollServerLoginMaster::epollServerLoginMaster->accept(&in_addr, &in_len);
+                        const int &infd = EventLoopServerLoginMaster::unixServerLoginMaster->accept(&in_addr, &in_len);
                         if(elementsToDeleteSize>64)
                         {
                             /// \todo dont clean error on client into this case
@@ -190,7 +190,7 @@ int main(int argc, const char *argv[])
                         list of fds to monitor. */
                         numberOfConnectedClient++;
 
-                        /*int s = EpollSocket::make_non_blocking(infd);
+                        /*int s = SocketUtil::make_non_blocking(infd);
                         if(s == -1)
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else*/
@@ -210,10 +210,10 @@ int main(int argc, const char *argv[])
                                     std::cerr << "Unable to apply tcp no delay" << std::endl;
                             }
 
-                            EpollClientLoginMaster *client=new EpollClientLoginMaster(infd
+                            EventLoopClientLoginMaster *client=new EventLoopClientLoginMaster(infd
                                 );
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
+                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EventLoopObjectType::Client)
                             {
                                 std::cerr << "Wrong post check type (abort)" << std::endl;
                                 abort();
@@ -239,8 +239,8 @@ int main(int argc, const char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT /*EPOLLOUT: CLOSE_WAIT but put the cpu at 100%, loop between user and kernel space as EpollTimer::validateTheTimer() missing */;
-                            const int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT /*EPOLLOUT: CLOSE_WAIT but put the cpu at 100%, loop between user and kernel space as EventLoopTimer::validateTheTimer() missing */;
+                            const int s = EventLoop::loop.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
@@ -252,9 +252,9 @@ int main(int argc, const char *argv[])
                     continue;
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Client:
+                case BaseClassSwitch::EventLoopObjectType::Client:
                 {
-                    EpollClientLoginMaster * const client=static_cast<EpollClientLoginMaster *>(events[i].data.ptr);
+                    EventLoopClientLoginMaster * const client=static_cast<EventLoopClientLoginMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -285,17 +285,17 @@ int main(int argc, const char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Timer:
+                case BaseClassSwitch::EventLoopObjectType::Timer:
                 {
-                    EpollTimer * const timer=static_cast<EpollTimer *>(events[i].data.ptr);
+                    EventLoopTimer * const timer=static_cast<EventLoopTimer *>(events[i].data.ptr);
                     timer->exec();
                     timer->validateTheTimer();
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Database:
+                case BaseClassSwitch::EventLoopObjectType::Database:
                 {
-                    EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
-                    db->epollEvent(events[i].events);
+                    EventLoopPostgresql * const db=static_cast<EventLoopPostgresql *>(events[i].data.ptr);
+                    db->unixEvent(events[i].events);
 
                     //disconnected after finish of use
                     if(!db->isConnected())
@@ -305,7 +305,7 @@ int main(int argc, const char *argv[])
                     }
                     if(CharactersGroup::serverWaitedToBeReady==0)
                     {
-                        if(!EpollServerLoginMaster::epollServerLoginMaster->tryListen())
+                        if(!EventLoopServerLoginMaster::unixServerLoginMaster->tryListen())
                             abort();
                         CharactersGroup::serverWaitedToBeReady--;
                     }
@@ -317,8 +317,8 @@ int main(int argc, const char *argv[])
             }
         }
     }
-    EpollServerLoginMaster::epollServerLoginMaster->close();
-    delete EpollServerLoginMaster::epollServerLoginMaster;
-    EpollServerLoginMaster::epollServerLoginMaster=NULL;
+    EventLoopServerLoginMaster::unixServerLoginMaster->close();
+    delete EventLoopServerLoginMaster::unixServerLoginMaster;
+    EventLoopServerLoginMaster::unixServerLoginMaster=NULL;
     return EXIT_SUCCESS;
 }

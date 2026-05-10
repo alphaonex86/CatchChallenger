@@ -11,11 +11,11 @@
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../server/base/TinyXMLSettings.hpp"
-#include "../../server/epoll/Epoll.hpp"
-#include "../../server/epoll/EpollSocket.hpp"
+#include "../../server/cli/EventLoop.hpp"
+#include "../../server/cli/SocketUtil.hpp"
 #include "../../server/base/VariableServer.hpp"
 #include "LinkToLogin.h"
-#include "EpollServerStats.h"
+#include "UnixServerStats.h"
 
 #define MAXEVENTS 512
 
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
         }
         memcpy(LinkToLogin::private_token_statclient,tokenBinary.data(),CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
 
-        if(!Epoll::epoll.init())
+        if(!EventLoop::loop.init())
             return EPOLLERR;
 
         LinkToLogin::linkToLogin=new LinkToLogin();
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
         }
 
         LinkToLogin::linkToLogin->stat=LinkToLogin::Stat::Connected;
-        EpollSocket::make_non_blocking(linkfd);
+        SocketUtil::make_non_blocking(linkfd);
         LinkToLogin::linkToLogin->sendProtocolHeader();
         LinkToLogin::linkToLogin->setConnexionSettings(tryInterval,considerDownAfterNumberOfTry);
     }
@@ -183,15 +183,15 @@ int main(int argc, char *argv[])
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
-    if(!EpollServerStats::epollServerStats.tryListen(unixSocketPath.c_str()))
+    if(!UnixServerStats::unixServerStats.tryListen(unixSocketPath.c_str()))
         std::cerr << "Unable to listen the unix socket, file: " << unixSocketPath << std::endl;
 
     /* The event loop */
-    std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
+    std::vector<std::pair<void *,BaseClassSwitch::EventLoopObjectType> > elementsToDelete;
     int number_of_events, i;
     while(1)
     {
-        number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        number_of_events = EventLoop::loop.wait(events, MAXEVENTS);
         if(!elementsToDelete.empty())
         {
             unsigned int index=0;
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
             {
                 switch(elementsToDelete.at(index).second)
                 {
-                    case BaseClassSwitch::EpollObjectType::Client:
+                    case BaseClassSwitch::EventLoopObjectType::Client:
                         delete static_cast<LinkToLogin *>(elementsToDelete.at(index).first);
                     break;
                     default:
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::EpollObjectType::Client:
+                case BaseClassSwitch::EventLoopObjectType::Client:
                 {
                     LinkToLogin * const client=static_cast<LinkToLogin *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
                         client->tryReconnect();
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::UnixServer:
+                case BaseClassSwitch::EventLoopObjectType::EventLoopServer:
                 {
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
                     {
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
-                        const int &infd = EpollServerStats::epollServerStats.accept(&in_addr, &in_len);
+                        const int &infd = UnixServerStats::unixServerStats.accept(&in_addr, &in_len);
                         if(infd == -1)
                         {
                             if((errno == EAGAIN) ||

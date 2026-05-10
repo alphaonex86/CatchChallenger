@@ -154,7 +154,7 @@ package via `nacptool` + `elf2nro`. Self-skip when `${DEVKITPRO}` /
 
 ### 6.2 Networking
 
-`server/epoll/EpollClient.hpp` is server-side and not built on Switch.
+`server/cli/EventLoopClient.hpp` is server-side and not built on Switch.
 Client-side `Api_protocol` uses `QTcpSocket` only — no change needed.
 
 ### 6.3 Filesystem layout on the cartridge

@@ -1,25 +1,25 @@
-#ifndef EPOLL_UNIX_SOCKET_SERVER_H
-#define EPOLL_UNIX_SOCKET_SERVER_H
+#ifndef UNIX_SOCKET_SERVER_H
+#define UNIX_SOCKET_SERVER_H
 
 #include <sys/socket.h>
 
 #include "BaseClassSwitch.hpp"
 
 namespace CatchChallenger {
-class EpollUnixSocketServer : public BaseClassSwitch
+class UnixSocketServer : public BaseClassSwitch
 {
 public:
-    EpollUnixSocketServer();
-    ~EpollUnixSocketServer();
+    UnixSocketServer();
+    ~UnixSocketServer();
     bool tryListen(const char * const path);
     void close();
     int accept(sockaddr *in_addr,socklen_t *in_len);
     int getSfd();
-    EpollObjectType getType() const;
+    EventLoopObjectType getType() const;
 private:
     int sfd;
     bool ready;
 };
 }
 
-#endif // EPOLL_UNIX_SOCKET_SERVER_H
+#endif // UNIX_SOCKET_SERVER_H

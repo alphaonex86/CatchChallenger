@@ -1,12 +1,24 @@
-#include "EpollSocket.hpp"
+#include "SocketUtil.hpp"
+#include "win32_compat.hpp"
 
 #include <iostream>
+#ifndef _WIN32
 #include <fcntl.h>
+#endif
 
 using namespace CatchChallenger;
 
-int EpollSocket::make_non_blocking(int sfd)
+int SocketUtil::make_non_blocking(int sfd)
 {
+#ifdef _WIN32
+    u_long mode=1;
+    if(::ioctlsocket(static_cast<SOCKET>(sfd),FIONBIO,&mode)!=0)
+    {
+        std::cerr << "ioctlsocket FIONBIO=1 error on " << sfd << std::endl;
+        return -1;
+    }
+    return 0;
+#else
     int flags, s;
 
     flags = fcntl(sfd, F_GETFL, 0);
@@ -25,10 +37,20 @@ int EpollSocket::make_non_blocking(int sfd)
     }
 
     return 0;
+#endif
 }
 
-int EpollSocket::make_blocking(int sfd)
+int SocketUtil::make_blocking(int sfd)
 {
+#ifdef _WIN32
+    u_long mode=0;
+    if(::ioctlsocket(static_cast<SOCKET>(sfd),FIONBIO,&mode)!=0)
+    {
+        std::cerr << "ioctlsocket FIONBIO=0 error" << std::endl;
+        return -1;
+    }
+    return 0;
+#else
     int flags, s;
 
     flags = fcntl(sfd, F_GETFL, 0);
@@ -47,4 +69,5 @@ int EpollSocket::make_blocking(int sfd)
     }
 
     return 0;
+#endif
 }
