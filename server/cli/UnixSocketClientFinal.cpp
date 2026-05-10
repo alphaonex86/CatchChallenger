@@ -1,23 +1,24 @@
-#include "EpollUnixSocketClientFinal.h"
+#ifndef _WIN32
+#include "UnixSocketClientFinal.h"
 
 #include <iostream>
 
 using namespace CatchChallenger;
 
 
-EpollUnixSocketClientFinal::EpollUnixSocketClientFinal(const int &infd) :
-    EpollUnixSocketClient(infd)
+UnixSocketClientFinal::UnixSocketClientFinal(const int &infd) :
+    UnixSocketClient(infd)
 {
 }
 
-EpollUnixSocketClientFinal::~EpollUnixSocketClientFinal()
+UnixSocketClientFinal::~UnixSocketClientFinal()
 {
 }
 
-void EpollUnixSocketClientFinal::parseIncommingData()
+void UnixSocketClientFinal::parseIncommingData()
 {
     char buffer[4096];
-    int size=EpollUnixSocketClient::read(buffer,sizeof(buffer));
+    int size=UnixSocketClient::read(buffer,sizeof(buffer));
     if(size<=0)
         return;
     int cursor=0;
@@ -27,13 +28,14 @@ void EpollUnixSocketClientFinal::parseIncommingData()
         if(buffer[0x0000]==0x01)
         {
                 static const unsigned long long timeUsed=0;
-                EpollUnixSocketClient::write(reinterpret_cast<const char *>(&timeUsed),sizeof(timeUsed)*4);
+                UnixSocketClient::write(reinterpret_cast<const char *>(&timeUsed),sizeof(timeUsed)*4);
             cursor+=1;
         }
         else
         {
-            std::cerr << "Unix socket: unknown main code" << std::endl;
+            std::cerr << "EventLoop socket: unknown main code" << std::endl;
             return;
         }
     }
 }
+#endif // !_WIN32

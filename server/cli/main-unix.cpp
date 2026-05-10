@@ -2,9 +2,14 @@
 #include <fstream>
 #include <chrono>
 #include <signal.h>
+#include "win32_compat.hpp"
+#ifndef _WIN32
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
+#else
+#include <direct.h>
+#endif
 #if defined(CATCHCHALLENGER_DB_FILE) || defined(CATCHCHALLENGER_CACHE_HPS)
 #include <sys/stat.h>
 //dictionary_serialBuffer and server_serialBuffer now open as DB
@@ -18,29 +23,29 @@
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
-#include "EpollServer.hpp"
-#include "EpollClientList.hpp"
-#include "Epoll.hpp"
+#include "EventLoopServer.hpp"
+#include "EventLoopClientList.hpp"
+#include "EventLoop.hpp"
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-// EpollDatabase is the polymorphic base; the SQL-event dispatch at
-// the bottom of main() casts events[i].data.ptr to EpollDatabase*
-// when the EpollObjectType is Database. Without this include the
-// SQLITE backend (which has no dedicated EpollSQLite.hpp wrapping
-// the include) builds with `EpollDatabase was not declared in this
+// EventLoopDatabase is the polymorphic base; the SQL-event dispatch at
+// the bottom of main() casts events[i].data.ptr to EventLoopDatabase*
+// when the EventLoopObjectType is Database. Without this include the
+// SQLITE backend (which has no dedicated UnixSQLite.hpp wrapping
+// the include) builds with `EventLoopDatabase was not declared in this
 // scope`. PostgreSQL/MySQL paths pull this header transitively via
 // their own subclass headers below.
-#include "db/EpollDatabase.hpp"
+#include "db/EventLoopDatabase.hpp"
 #endif
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-#include "db/EpollPostgresql.hpp"
+#include "db/EventLoopPostgresql.hpp"
 #endif
 #ifdef CATCHCHALLENGER_DB_MYSQL
-#include "db/EpollMySQL.hpp"
+#include "db/EventLoopMySQL.hpp"
 #endif
 #include "../base/NormalServerGlobal.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
-#include "EpollSocket.hpp"
+#include "SocketUtil.hpp"
 #include "timer/TimerPurgeTokenAuthList.hpp"
 #endif
 
@@ -48,13 +53,13 @@
 #include "timer/TimerDdos.hpp"
 #include "timer/TimerPositionSync.hpp"
 #include "timer/TimerSendInsertMoveRemove.hpp"
-#include "timer/PlayerUpdaterEpoll.hpp"
+#include "timer/PlayerUpdaterEventLoop.hpp"
 
 #define MAXEVENTS 512
 
 using namespace CatchChallenger;
 
-EpollServer *server=NULL;
+EventLoopServer *server=NULL;
 bool bench_exit_after_bind=false;
 #ifndef CATCHCHALLENGER_NOXML
 TinyXMLSettings *settings=NULL;
@@ -123,7 +128,7 @@ void signal_callback_handler(int signum){
 
 #ifndef CATCHCHALLENGER_NOXML
 void send_settings(
-        EpollServer *server
+        EventLoopServer *server
         ,TinyXMLSettings *settings,
         std::string &master_host,
         uint16_t &master_port,
@@ -135,14 +140,23 @@ void send_settings(
 int main(int argc, char *argv[])
 {
     //capture wall start ASAP so the "correctly bind" log can show ms-since-start
-    EpollGenericServer::processStart=std::chrono::steady_clock::now();
+    EventLoopGenericServer::processStart=std::chrono::steady_clock::now();
     memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+#ifdef _WIN32
+    if(!cc_winsock_init())
+    {
+        std::cerr << "WSAStartup failed" << std::endl;
+        return EXIT_FAILURE;
+    }
+#endif
+#ifndef _WIN32
     /* Catch Signal Handler SIGPIPE */
     if(signal(SIGPIPE, signal_callback_handler)==SIG_ERR)
     {
         std::cerr << "signal(SIGPIPE, signal_callback_handler)==SIG_ERR, errno: " << std::to_string(errno) << std::endl;
         abort();
     }
+#endif
 
     NormalServerGlobal::displayInfo();
     if(argc<1)
@@ -189,15 +203,21 @@ int main(int argc, char *argv[])
     srand(static_cast<unsigned int>(time(NULL)));
 
     #ifdef CATCHCHALLENGER_DB_FILE
-    ::mkdir("database",0700);
-    ::mkdir("database/login",0700);
-    ::mkdir("database/common",0700);
-    ::mkdir("database/common/accounts",0700);
-    ::mkdir("database/common/characters",0700);
-    ::mkdir("database/server",0700);
-    ::mkdir("database/server/characters",0700);
-    ::mkdir("database/server/clans",0700);
-    ::mkdir("database/server/zone",0700);
+    #ifdef _WIN32
+    #define CC_MKDIR(p,m) ::_mkdir(p)
+    #else
+    #define CC_MKDIR(p,m) ::mkdir(p,m)
+    #endif
+    CC_MKDIR("database",0700);
+    CC_MKDIR("database/login",0700);
+    CC_MKDIR("database/common",0700);
+    CC_MKDIR("database/common/accounts",0700);
+    CC_MKDIR("database/common/characters",0700);
+    CC_MKDIR("database/server",0700);
+    CC_MKDIR("database/server/characters",0700);
+    CC_MKDIR("database/server/clans",0700);
+    CC_MKDIR("database/server/zone",0700);
+    #undef CC_MKDIR
     #endif
 
     #ifndef CATCHCHALLENGER_DB_BLACKHOLE
@@ -206,7 +226,7 @@ int main(int argc, char *argv[])
     #endif
     #endif
 
-    server=new EpollServer();
+    server=new EventLoopServer();
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     const bool save=argc==2 && (strcmp(argv[1],"save")==0 || strcmp(argv[1],"--save")==0 || strcmp(argv[1],"-s")==0);
@@ -246,7 +266,7 @@ int main(int argc, char *argv[])
     }
     #endif
 
-    if(!Epoll::epoll.init())
+    if(!EventLoop::loop.init())
         return EPOLLERR;
 
     //before linkToMaster->registerGameServer() to have the correct settings loaded
@@ -286,7 +306,7 @@ int main(int argc, char *argv[])
         // away. See server/game-server-alone/LinkToMaster.cpp.
         LinkToMaster::linkToMaster->sendProtocolHeader();
         LinkToMaster::linkToMaster->setConnexionSettings(master_tryInterval,master_considerDownAfterNumberOfTry);
-        const int &s = EpollSocket::make_non_blocking(linkfd);
+        const int &s = SocketUtil::make_non_blocking(linkfd);
         if(s == -1)
             std::cerr << "unable to make to socket non blocking" << std::endl;
 
@@ -444,7 +464,7 @@ int main(int argc, char *argv[])
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_login)->setMaxDbQueries(2000000000);
+            static_cast<EventLoopPostgresql *>(GlobalServerData::serverPrivateVariables.db_login)->setMaxDbQueries(2000000000);
         break;
         #endif
         default:
@@ -454,7 +474,7 @@ int main(int argc, char *argv[])
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_base)->setMaxDbQueries(2000000000);
+            static_cast<EventLoopPostgresql *>(GlobalServerData::serverPrivateVariables.db_base)->setMaxDbQueries(2000000000);
         break;
         #endif
         default:
@@ -465,7 +485,7 @@ int main(int argc, char *argv[])
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_common)->setMaxDbQueries(2000000000);
+            static_cast<EventLoopPostgresql *>(GlobalServerData::serverPrivateVariables.db_common)->setMaxDbQueries(2000000000);
         break;
         #endif
         default:
@@ -475,7 +495,7 @@ int main(int argc, char *argv[])
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_server)->setMaxDbQueries(2000000000);
+            static_cast<EventLoopPostgresql *>(GlobalServerData::serverPrivateVariables.db_server)->setMaxDbQueries(2000000000);
         break;
         #endif
         default:
@@ -573,7 +593,7 @@ int main(int argc, char *argv[])
     if(bench_exit_after_bind)
     {
         const auto endTs=std::chrono::steady_clock::now();
-        const auto totalMs=std::chrono::duration_cast<std::chrono::milliseconds>(endTs-EpollGenericServer::processStart).count();
+        const auto totalMs=std::chrono::duration_cast<std::chrono::milliseconds>(endTs-EventLoopGenericServer::processStart).count();
         std::cout << "BENCH startup_total_ms=" << totalMs << std::endl;
         server->close();
         server->unload_the_data();
@@ -581,9 +601,9 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
-    EpollClientList *epollClientList=new EpollClientList();
-    ClientList::list=epollClientList;
-    GlobalServerData::serverPrivateVariables.player_updater=new PlayerUpdaterEpoll();
+    EventLoopClientList *unixClientList=new EventLoopClientList();
+    ClientList::list=unixClientList;
+    GlobalServerData::serverPrivateVariables.player_updater=new PlayerUpdaterEventLoop();
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
     TimerPositionSync timerPositionSync;
@@ -626,7 +646,7 @@ int main(int argc, char *argv[])
     {
         if(GlobalServerData::serverSettings.sendPlayerNumber)
         {
-            if(!static_cast<PlayerUpdaterEpoll *>(GlobalServerData::serverPrivateVariables.player_updater)->start())
+            if(!static_cast<PlayerUpdaterEventLoop *>(GlobalServerData::serverPrivateVariables.player_updater)->start())
             {
                 std::cerr << "player_updater timer fail to set" << std::endl;
                 return EXIT_FAILURE;
@@ -668,7 +688,7 @@ int main(int argc, char *argv[])
     while(1)
     {
 
-        number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        number_of_events = EventLoop::loop.wait(events, MAXEVENTS);
         if(elementsToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
             if(elementsToDeleteIndex>=15)
@@ -699,7 +719,7 @@ int main(int argc, char *argv[])
             #endif
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::EpollObjectType::Server:
+                case BaseClassSwitch::EventLoopObjectType::Server:
                 {
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -724,7 +744,7 @@ int main(int argc, char *argv[])
                         {
                             /// \todo dont clean error on client into this case
                             std::cerr << "client connect when the server is not ready" << std::endl;
-                            ::close(infd);
+                            cc_close_socket(infd);
                             break;
                         }
                         if(elementsToDeleteSize>64
@@ -737,7 +757,7 @@ int main(int argc, char *argv[])
                         {
                             /// \todo dont clean error on client into this case
                             std::cerr << "server overload" << std::endl;
-                            ::close(infd);
+                            cc_close_socket(infd);
                             break;
                         }
                         if(infd == -1)
@@ -766,7 +786,7 @@ int main(int argc, char *argv[])
                             #ifdef PROTOCOLPARSINGDEBUG
                             std::cout << "numberOfConnectedClient>=GlobalServerData::serverSettings.max_players: " << infd << std::endl;
                             #endif
-                            ::close(infd);
+                            cc_close_socket(infd);
                             break;
                         }
 
@@ -774,19 +794,19 @@ int main(int argc, char *argv[])
                         list of fds to monitor. */
                         numberOfConnectedClient++;
 
-                        //const int s = EpollSocket::make_non_blocking(infd);->do problem with large datapack from interne protocol
+                        //const int s = SocketUtil::make_non_blocking(infd);->do problem with large datapack from interne protocol
                         const int s = 0;
                         if(s == -1)
                             std::cerr << "unable to make to socket non blocking" << std::endl;
-                        else if(!EpollClientList::list->haveFreeSlot())
-                            std::cerr << "!EpollClientList::haveFreeSlot()" << std::endl;
+                        else if(!EventLoopClientList::list->haveFreeSlot())
+                            std::cerr << "!EventLoopClientList::haveFreeSlot()" << std::endl;
                         else
                         {
-                            ClientWithMapEpoll &client=epollClientList->getByReference();
+                            ClientWithMapEventLoop &client=unixClientList->getByReference();
                             client.reset(infd);
                             #ifdef CATCHCHALLENGER_HARDENED
                             ++clientnumberToDebug;
-                            if(client.getType()!=BaseClassSwitch::EpollObjectType::Client)
+                            if(client.getType()!=BaseClassSwitch::EventLoopObjectType::Client)
                             {
                                 std::cerr << "Wrong post check type (abort)" << std::endl;
                                 abort();
@@ -797,7 +817,7 @@ int main(int argc, char *argv[])
                             #endif
                             //populate client.socketString so headerOutput()/normalOutput()/errorOutput()
                             //display a real "<ip>:<port>:" prefix instead of the empty string fallback.
-                            //Mirrors server/gateway/main-epoll-gateway.cpp accept path.
+                            //Mirrors server/gateway/main-unix-gateway.cpp accept path.
                             {
                                 if(client.socketString!=NULL)
                                 {
@@ -824,13 +844,13 @@ int main(int argc, char *argv[])
                             memset(&event,0,sizeof(event));
                             event.data.ptr = &client;
                             event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLRDHUP | EPOLLOUT;
-                            const int s2 = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                            const int s2 = EventLoop::loop.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s2 == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
                                 client.disconnectClient();
                                 client.setToDefault();
-                                epollClientList->remove(client);
+                                unixClientList->remove(client);
                             }
                             // SSL preamble byte removed; the server no
                             // longer writes a 0x00/0x01 sentinel — every
@@ -842,9 +862,9 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Client:
+                case BaseClassSwitch::EventLoopObjectType::Client:
                 {
-                    ClientWithMapEpoll *client=static_cast<ClientWithMapEpoll *>(events[i].data.ptr);
+                    ClientWithMapEventLoop *client=static_cast<ClientWithMapEventLoop *>(events[i].data.ptr);
                     #ifdef PROTOCOLPARSINGDEBUG
                     std::cout << "client " << events[i].data.ptr << " event: " << events[i].events << std::endl;
                     #endif
@@ -860,7 +880,7 @@ int main(int argc, char *argv[])
 
                         client->disconnectClient();
                         client->setToDefault();
-                        epollClientList->remove(*client);
+                        unixClientList->remove(*client);
 
                         continue;
                     }
@@ -876,21 +896,21 @@ int main(int argc, char *argv[])
 
                         client->disconnectClient();
                         client->setToDefault();
-                        epollClientList->remove(*client);
+                        unixClientList->remove(*client);
                     }
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Timer:
+                case BaseClassSwitch::EventLoopObjectType::Timer:
                 {
-                    static_cast<EpollTimer *>(events[i].data.ptr)->exec();
-                    static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
+                    static_cast<EventLoopTimer *>(events[i].data.ptr)->exec();
+                    static_cast<EventLoopTimer *>(events[i].data.ptr)->validateTheTimer();
                 }
                 break;
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-                case BaseClassSwitch::EpollObjectType::Database:
+                case BaseClassSwitch::EventLoopObjectType::Database:
                 {
-                    EpollDatabase * const db=static_cast<EpollDatabase *>(events[i].data.ptr);
-                    db->epollEvent(events[i].events);
+                    EventLoopDatabase * const db=static_cast<EventLoopDatabase *>(events[i].data.ptr);
+                    db->unixEvent(events[i].events);
                     if(!datapack_loaded)
                     {
                         if(db->isConnected())
@@ -916,7 +936,7 @@ int main(int argc, char *argv[])
                 #error Define what do here
                 #endif
                 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                case BaseClassSwitch::EpollObjectType::MasterLink:
+                case BaseClassSwitch::EventLoopObjectType::MasterLink:
                 {
                     LinkToMaster * const client=static_cast<LinkToMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||

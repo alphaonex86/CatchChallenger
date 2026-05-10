@@ -11,7 +11,7 @@
 * the map other player move have ACK, to drop send other update if not yet received (act as UDP)
 
 # Naming Conventions
-* Classes: PascalCase (e.g., EpollClientLoginMaster)
+* Classes: PascalCase (e.g., EventLoopClientLoginMaster)
 * Methods/Functions: camelCase
 * snake_case with a trailing underscore for member variables
 * Enum values: PascalCase
@@ -51,7 +51,7 @@ QMAKE_LFLAGS += -Os -flto -s
 * LTO flag is better due to compreansive overall code, can optimize cross-file
 
 # RAM needed
-* objdump -h catchchallenger-server-cli-epoll | grep -A 1 ".bss"
-* size catchchallenger-server-cli-epoll
-* nm -S --size-sort -r catchchallenger-server-cli-epoll | head -n 5
+* objdump -h catchchallenger-server-cli | grep -A 1 ".bss"
+* size catchchallenger-server-cli
+* nm -S --size-sort -r catchchallenger-server-cli | head -n 5
 * It needs RAM for the .data and .bss segments. Eg 10592 and 67118080

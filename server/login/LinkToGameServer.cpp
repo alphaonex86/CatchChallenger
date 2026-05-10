@@ -1,7 +1,7 @@
 #include "LinkToGameServer.hpp"
-#include "EpollClientLoginSlave.hpp"
-#include "../epoll/Epoll.hpp"
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
+#include "../cli/EventLoop.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -24,7 +24,7 @@ std::unordered_set<void *> LinkToGameServer::detectDuplicateGameLinkToDelete;
 LinkToGameServer::LinkToGameServer(
             const int &infd
         ) :
-        EpollClient(infd),
+        EventLoopClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
@@ -157,7 +157,7 @@ void LinkToGameServer::setConnexionSettings()
         memset(&event,0,sizeof(event));
         event.data.ptr = this;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
-        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
+        int s = EventLoop::loop.ctl(EPOLL_CTL_ADD, socketFd, &event);
         if(s == -1)
         {
             std::cerr << "epoll_ctl on socket (master link) error" << std::endl;
@@ -165,7 +165,7 @@ void LinkToGameServer::setConnexionSettings()
         }
     }
     {
-        if(EpollServerLoginSlave::epollServerLoginSlave->tcpCork)
+        if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpCork)
         {
             //set cork for CatchChallener because don't have real time part
             int state = 1;
@@ -175,7 +175,7 @@ void LinkToGameServer::setConnexionSettings()
                 abort();
             }
         }
-        else if(EpollServerLoginSlave::epollServerLoginSlave->tcpNodelay)
+        else if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpNodelay)
         {
             //set no delay to don't try group the packet and improve the performance
             int state = 1;
@@ -186,7 +186,7 @@ void LinkToGameServer::setConnexionSettings()
             }
         }
     }
-    /*const int s = EpollSocket::make_non_blocking(socketFd);
+    /*const int s = SocketUtil::make_non_blocking(socketFd);
     if(s == -1)
     {
         std::cerr << "unable to make to socket non blocking" << std::endl;
@@ -211,7 +211,7 @@ bool LinkToGameServer::disconnectClient()
         //break the link
         client=NULL;
     }
-    EpollClient::close();
+    EventLoopClient::close();
     messageParsingLayer("Disconnected client");
     return true;
 }
@@ -239,9 +239,9 @@ void LinkToGameServer::messageParsingLayer(const char * const message) const
     std::cout << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
-BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const
+BaseClassSwitch::EventLoopObjectType LinkToGameServer::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::GameLink;
+    return BaseClassSwitch::EventLoopObjectType::GameLink;
 }
 
 void LinkToGameServer::parseIncommingData()
@@ -249,7 +249,7 @@ void LinkToGameServer::parseIncommingData()
     lastActivity=LinkToGameServer::msFrom1970();
     // The 1-byte SSL/cleartext preamble that this used to wait on was
     // removed; sendProtocolHeader() runs as soon as the connection is
-    // established (see EpollClientLoginSlaveProtocolParsing.cpp), so
+    // established (see EventLoopClientLoginSlaveProtocolParsing.cpp), so
     // every byte read here belongs to the protocol-input stream.
     ProtocolParsingInputOutput::parseIncommingData();
 }
@@ -275,17 +275,17 @@ bool LinkToGameServer::removeFromQueryReceived(const uint8_t &queryNumber)
 ssize_t LinkToGameServer::readFromSocket(char * data, const size_t &size)
 {
     lastActivity=LinkToGameServer::msFrom1970();
-    return EpollClient::read(data,size);
+    return EventLoopClient::read(data,size);
 }
 
 ssize_t LinkToGameServer::writeToSocket(const char * const data, const size_t &size)
 {
     lastActivity=LinkToGameServer::msFrom1970();
     //do some basic check on low level protocol (message split, ...)
-    return EpollClient::write(data,size);
+    return EventLoopClient::write(data,size);
 }
 
 void LinkToGameServer::closeSocket()
 {
-    EpollClient::closeSocket();
+    EventLoopClient::closeSocket();
 }

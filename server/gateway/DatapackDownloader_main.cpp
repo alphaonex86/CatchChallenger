@@ -20,7 +20,7 @@ using namespace CatchChallenger;
 #include <string.h>
 #include "../../client/libcatchchallenger/TarDecode.hpp"
 #include "LinkToGameServer.hpp"
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include "FacilityLibGateway.hpp"
 #include "DatapackDownloaderBase.hpp"
 
@@ -149,7 +149,7 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
     if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
     {
         curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
-        curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+        curl_easy_setopt(curl, CURLOPT_PROXYPORT, EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_port);
         curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
     }
     if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
@@ -163,7 +163,7 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
         std::cerr << "Unable to set the curl url: " << url << std::endl;
         abort();
     }
-    if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
+    if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EventLoopServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
     {
         std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
         abort();
@@ -324,7 +324,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
             if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
             {
                 curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
-                curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                curl_easy_setopt(curl, CURLOPT_PROXYPORT, EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_port);
                 curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
             }
             if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
@@ -339,7 +339,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
                 std::cerr << "Unable to set the curl url: " << url << std::endl;
                 abort();
             }
-            if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
+            if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EventLoopServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
             {
                 std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
                 abort();
@@ -389,7 +389,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
         if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
         {
             curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
-            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_port);
             curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
         }
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
@@ -404,7 +404,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
             std::cerr << "Unable to set the curl url: " << url << std::endl;
             abort();
         }
-        if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
+        if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EventLoopServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
         {
             std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
             abort();
@@ -453,7 +453,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
         if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
         {
             curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
-            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_port);
             curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
         }
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
@@ -468,7 +468,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
             std::cerr << "Unable to set the curl url: " << url << std::endl;
             abort();
         }
-        if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
+        if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EventLoopServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
         {
             std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
             abort();
@@ -787,7 +787,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                                 if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
                                 {
                                     curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
-                                    curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                                    curl_easy_setopt(curl, CURLOPT_PROXYPORT, EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_port);
                                     curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
                                 }
                                 DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
@@ -829,7 +829,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                             if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
                             {
                                 curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
-                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYPORT, EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_port);
                                 curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
                             }
                             DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;

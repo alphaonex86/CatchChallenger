@@ -1,4 +1,4 @@
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include "../../general/base/cpp11addition.hpp"
 
 using namespace CatchChallenger;
@@ -11,15 +11,15 @@ using namespace CatchChallenger;
 #include <time.h>       /* time */
 #include <iostream>
 
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../base/TinyXMLSettings.hpp"
 
-EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
+EventLoopServerLoginSlave *EventLoopServerLoginSlave::unixServerLoginSlave=NULL;
 
-EpollServerLoginSlave::EpollServerLoginSlave() :
+EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
     gatewayNumber(1),
     tcpNodelay(false),
     tcpCork(false),
@@ -209,14 +209,14 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         unsigned int index=0;
         while(index<extensionAllowedTemp.size())
         {
-            EpollClientLoginSlave::compressedExtension.insert(extensionAllowedTemp.at(index));
+            EventLoopClientLoginSlave::compressedExtension.insert(extensionAllowedTemp.at(index));
             index++;
         }
     }
     DatapackDownloaderBase::extensionAllowed=DatapackDownloaderMainSub::extensionAllowed;
 }
 
-EpollServerLoginSlave::~EpollServerLoginSlave()
+EventLoopServerLoginSlave::~EventLoopServerLoginSlave()
 {
     if(server_ip!=NULL)
     {
@@ -230,7 +230,7 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
     }
 }
 
-size_t EpollServerLoginSlave::WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+size_t EventLoopServerLoginSlave::WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
   size_t realsize = size * nmemb;
   struct MemoryStruct *mem = (struct MemoryStruct *)userp;
@@ -249,7 +249,7 @@ size_t EpollServerLoginSlave::WriteMemoryCallback(void *contents, size_t size, s
   return realsize;
 }
 
-std::string EpollServerLoginSlave::httpMirrorFix(const std::string & mirrors)
+std::string EventLoopServerLoginSlave::httpMirrorFix(const std::string & mirrors)
 {
     if(mirrors.empty())
         return std::string();
@@ -277,12 +277,12 @@ std::string EpollServerLoginSlave::httpMirrorFix(const std::string & mirrors)
     return stringimplode(newMirrorList,';');
 }
 
-void EpollServerLoginSlave::close()
+void EventLoopServerLoginSlave::close()
 {
-    EpollGenericServer::close();
+    EventLoopGenericServer::close();
 }
 
-bool EpollServerLoginSlave::tryListen()
+bool EventLoopServerLoginSlave::tryListen()
 {
         const bool &returnedValue=tryListenInternal(server_ip, server_port);
 
@@ -302,7 +302,7 @@ bool EpollServerLoginSlave::tryListen()
     return returnedValue;
 }
 
-unsigned int EpollServerLoginSlave::toUTF8WithHeader(const std::string &text,char * const data)
+unsigned int EventLoopServerLoginSlave::toUTF8WithHeader(const std::string &text,char * const data)
 {
     data[0]=static_cast<uint8_t>(text.size());
     if(text.empty())

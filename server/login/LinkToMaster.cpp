@@ -1,7 +1,7 @@
 #include "LinkToMaster.hpp"
-#include "EpollClientLoginSlave.hpp"
-#include "../epoll/Epoll.hpp"
-#include "../epoll/EpollSocket.hpp"
+#include "EventLoopClientLoginSlave.hpp"
+#include "../cli/EventLoop.hpp"
+#include "../cli/SocketUtil.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "CharactersGroupForLogin.hpp"
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 
 using namespace CatchChallenger;
 
@@ -26,7 +26,7 @@ uint16_t LinkToMaster::port=0;
 LinkToMaster::LinkToMaster(
             const int &infd
         ) :
-        EpollClient(infd),
+        EventLoopClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
@@ -166,7 +166,7 @@ void LinkToMaster::setConnexionSettings()
         memset(&event,0,sizeof(event));
         event.data.ptr = LinkToMaster::linkToMaster;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
-        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToMaster::linkToMasterSocketFd, &event);
+        int s = EventLoop::loop.ctl(EPOLL_CTL_ADD, LinkToMaster::linkToMasterSocketFd, &event);
         if(s == -1)
         {
             std::cerr << "epoll_ctl on socket (master link) error" << std::endl;
@@ -174,7 +174,7 @@ void LinkToMaster::setConnexionSettings()
         }
     }
     {
-        /*const int s = EpollSocket::make_non_blocking(linkToMaster::linkToMasterSocketFd);
+        /*const int s = SocketUtil::make_non_blocking(linkToMaster::linkToMasterSocketFd);
         if(s == -1)
         {
             std::cerr << "unable to make to socket non blocking" << std::endl;
@@ -214,7 +214,7 @@ void LinkToMaster::connectInternal()
         std::cerr << "ERROR opening socket to master server at connectInternal (abort), errno: " << errno << std::endl;
         abort();
     }
-    EpollClient::reopen(LinkToMaster::linkToMasterSocketFd);
+    EventLoopClient::reopen(LinkToMaster::linkToMasterSocketFd);
 
     //resolv the dns if needed
     int connStatusType=tryConnect(host,port,1,1);
@@ -239,7 +239,7 @@ void LinkToMaster::connectInternal()
 
 bool LinkToMaster::disconnectClient()
 {
-    EpollClient::close();
+    EventLoopClient::close();
     reset();
     resetForReconnect();
     messageParsingLayer("LinkToMaster::disconnectClient()");
@@ -255,14 +255,14 @@ bool LinkToMaster::disconnectClient()
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> copyOf_selectCharacterClients=selectCharacterClients;
     for( const std::pair<const uint8_t,DataForSelectedCharacterReturn>& n : copyOf_selectCharacterClients ) {
         const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=n.second;
-        EpollClientLoginSlave * client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
+        EventLoopClientLoginSlave * client=static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client);
         if(client!=nullptr)
         {
             messageParsingLayer("LinkToMaster::disconnectClient(): connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
-            if(client->stat!=EpollClientLoginSlave::GameServerConnected)
+            if(client->stat!=EventLoopClientLoginSlave::GameServerConnected)
             {
                 client->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
-                /*selectCharacter_ReturnFailed() -> EpollClientLoginSlave::errorParsingLayer() -> disconnectClient()
+                /*selectCharacter_ReturnFailed() -> EventLoopClientLoginSlave::errorParsingLayer() -> disconnectClient()
                 if(dataForSelectedCharacterReturn.client!=NULL)
                     client->closeSocket();*/
             }
@@ -298,9 +298,9 @@ void LinkToMaster::messageParsingLayer(const char * const message) const
     std::cout << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
-BaseClassSwitch::EpollObjectType LinkToMaster::getType() const
+BaseClassSwitch::EventLoopObjectType LinkToMaster::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::MasterLink;
+    return BaseClassSwitch::EventLoopObjectType::MasterLink;
 }
 
 void LinkToMaster::parseIncommingData()
@@ -316,7 +316,7 @@ void LinkToMaster::tryReconnect()
         /// \todo abort selectCharacter() pending
     }
     stat=Stat::Unconnected;
-    EpollClientLoginSlave::maxAccountIdList.clear();
+    EventLoopClientLoginSlave::maxAccountIdList.clear();
     {
         unsigned int index=0;
         while(index<CharactersGroupForLogin::list.size())
@@ -345,7 +345,7 @@ void LinkToMaster::tryReconnect()
         }
         memset(LinkToMaster::queryNumberToCharacterGroup,0x00,sizeof(LinkToMaster::queryNumberToCharacterGroup));
     }
-    EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.clear();
+    EventLoopServerLoginSlave::unixServerLoginSlave->loginProfileList.clear();
 
     if(stat!=Stat::Unconnected)
         return;
@@ -384,13 +384,13 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
     //todo: cache the user cache to locally double lock check to minimize the master
     if(queryNumberList.empty())
     {
-        errorParsingLayer("EpollClientLoginSlave::trySelectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        errorParsingLayer("EventLoopClientLoginSlave::trySelectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         std::cerr << listTheRunningQuery() << std::endl;
         return false;
     }
     //messageParsingLayer("try select (0xBE: 190)");
     DataForSelectedCharacterReturn dataForSelectedCharacterReturn;
-    dataForSelectedCharacterReturn.client=client;// EpollClientLoginSlave *
+    dataForSelectedCharacterReturn.client=client;// EventLoopClientLoginSlave *
     dataForSelectedCharacterReturn.client_query_id=client_query_id;
     dataForSelectedCharacterReturn.serverUniqueKey=serverUniqueKey;
     dataForSelectedCharacterReturn.charactersGroupIndex=charactersGroupIndex;
@@ -406,7 +406,7 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
 
     {const uint32_t _tmp_le=(htole32(characterId));memcpy(ProtocolParsingBase::tempBigBufferForOutput+0x07,&_tmp_le,sizeof(_tmp_le));}
 
-    {const uint32_t _tmp_le=(htole32(static_cast<EpollClientLoginSlave *>(client)->account_id));memcpy(ProtocolParsingBase::tempBigBufferForOutput+0x0B,&_tmp_le,sizeof(_tmp_le));}
+    {const uint32_t _tmp_le=(htole32(static_cast<EventLoopClientLoginSlave *>(client)->account_id));memcpy(ProtocolParsingBase::tempBigBufferForOutput+0x0B,&_tmp_le,sizeof(_tmp_le));}
 
 
     queryNumberList.pop_back();
@@ -457,12 +457,12 @@ std::string LinkToMaster::listTheRunningQuery() const
 
 ssize_t LinkToMaster::readFromSocket(char * data, const size_t &size)
 {
-    return EpollClient::read(data,size);
+    return EventLoopClient::read(data,size);
 }
 
 ssize_t LinkToMaster::writeToSocket(const char * const data, const size_t &size)
 {
-    return EpollClient::write(data,size);
+    return EventLoopClient::write(data,size);
 }
 
 void LinkToMaster::closeSocket()
@@ -484,15 +484,15 @@ void LinkToMaster::detectTimeout()
         }
         else
         {
-            EpollClientLoginSlave * client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
+            EventLoopClientLoginSlave * client=static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client);
             if(dataForSelectedCharacterReturn.start<(timetemp-60))//if started than more 60s
             {
-                if(client->stat!=EpollClientLoginSlave::GameServerConnected)
+                if(client->stat!=EventLoopClientLoginSlave::GameServerConnected)
                 {
                     messageParsingLayer("LinkToMaster::detectTimeout(): connected player: account_id: "+std::to_string(client->account_id)+" (stat: "+std::to_string(client->stat)+")");
-                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                     ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
-                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                     ->closeSocket();
                 }
                 else

@@ -1,21 +1,21 @@
-#ifndef EPOLLSERVERSTATS_H
-#define EPOLLSERVERSTATS_H
+#ifndef UNIXSERVERSTATS_H
+#define UNIXSERVERSTATS_H
 
-#include "../../server/epoll/EpollUnixSocketServer.hpp"
+#include "../../server/cli/UnixSocketServer.hpp"
 #include <string>
 
 namespace CatchChallenger {
-class EpollServerStats : public EpollUnixSocketServer
+class UnixServerStats : public UnixSocketServer
 {
 public:
-    EpollServerStats();
+    UnixServerStats();
     bool tryListen(const char * const path);
     bool reopen();
 public:
-    static EpollServerStats epollServerStats;
+    static UnixServerStats unixServerStats;
 private:
     std::string path;
 };
 }
 
-#endif // EPOLLSERVERSTATS_H
+#endif // UNIXSERVERSTATS_H

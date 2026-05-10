@@ -1,10 +1,10 @@
-#ifndef EPOLL_SERVER_LOGIN_MASTER_H
-#define EPOLL_SERVER_LOGIN_MASTER_H
+#ifndef EVENTLOOP_SERVER_LOGIN_MASTER_H
+#define EVENTLOOP_SERVER_LOGIN_MASTER_H
 
-#include "../epoll/EpollGenericServer.hpp"
-#include "EpollClientLoginMaster.hpp"
+#include "../cli/EventLoopGenericServer.hpp"
+#include "EventLoopClientLoginMaster.hpp"
 #include "CharactersGroup.hpp"
-#include "../epoll/db/EpollPostgresql.hpp"
+#include "../cli/db/EventLoopPostgresql.hpp"
 #include "../base/BaseServer/BaseServerMasterLoadDictionary.hpp"
 #include "../base/BaseServer/BaseServerMasterSendDatapack.hpp"
 #include "../base/TinyXMLSettings.hpp"
@@ -16,15 +16,15 @@
 #include <vector>
 
 namespace CatchChallenger {
-class EpollServerLoginMaster : public EpollGenericServer, public BaseServerMasterLoadDictionary
+class EventLoopServerLoginMaster : public EventLoopGenericServer, public BaseServerMasterLoadDictionary
 {
 public:
-    EpollServerLoginMaster();
-    ~EpollServerLoginMaster();
+    EventLoopServerLoginMaster();
+    ~EventLoopServerLoginMaster();
     bool tryListen();
     void doTheServerList();
     void doTheReplyCache();
-    static EpollServerLoginMaster *epollServerLoginMaster;
+    static EventLoopServerLoginMaster *unixServerLoginMaster;
     static char * fixedValuesRawDictionaryCacheForGameserver;
     static int fixedValuesRawDictionaryCacheForGameserverSize;
 private:
@@ -62,4 +62,4 @@ private:
 };
 }
 
-#endif // EPOLL_SERVER_H
+#endif // EVENT_LOOP_SERVER_H

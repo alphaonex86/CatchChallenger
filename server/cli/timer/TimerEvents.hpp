@@ -1,9 +1,9 @@
 #ifndef TIMEREVENTS_H
 #define TIMEREVENTS_H
 
-#include "../EpollTimer.hpp"
+#include "../EventLoopTimer.hpp"
 
-class TimerEvents : public EpollTimer
+class TimerEvents : public EventLoopTimer
 {
 public:
     TimerEvents(const unsigned char &event,const unsigned char &value);

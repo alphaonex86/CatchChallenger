@@ -3,8 +3,8 @@
 testingstats.py — Live player-count tracking via the `stats` tool.
 
 Flow:
-  1. Compile catchchallenger-server-cli-epoll (file_db backend) and
-     the stats tool, both from server/epoll/ and tools/stats/. Compile
+  1. Compile catchchallenger-server-cli (file_db backend) and
+     the stats tool, both from server/cli/ and tools/stats/. Compile
      qtcpu800x600 as the test client.
   2. Start the file_db server UNDER VALGRIND on a fixed TCP port,
      with a shared <statclient><token> seeded into server-properties.xml.
@@ -50,15 +50,15 @@ NPROC = str(multiprocessing.cpu_count())
 DATAPACK_SRC = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
 MAINCODE     = "test"
 
-SERVER_PRO     = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
+SERVER_PRO     = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
 STATS_PRO      = os.path.join(ROOT, "tools/stats/stats.pro")
 CLIENT_CPU_PRO = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 
-SERVER_BUILD     = build_paths.build_path("server/epoll/build/testing-stats-server" + _DIAG_SUFFIX)
+SERVER_BUILD     = build_paths.build_path("server/cli/build/testing-stats-server" + _DIAG_SUFFIX)
 STATS_BUILD      = build_paths.build_path("tools/stats/build/testing-stats"        + _DIAG_SUFFIX)
 CLIENT_CPU_BUILD = build_paths.build_path("client/qtcpu800x600/build/testing-stats-cpu" + _DIAG_SUFFIX)
 
-SERVER_BIN     = "catchchallenger-server-cli-epoll"
+SERVER_BIN     = "catchchallenger-server-cli"
 STATS_BIN      = "stats"
 CLIENT_CPU_BIN = "catchchallenger"
 

@@ -1,7 +1,7 @@
 #include "LinkToMaster.hpp"
-#include "EpollClientLoginSlave.hpp"
-#include "EpollServerLoginSlave.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/CatchChallenger_Hash.hpp"
@@ -123,7 +123,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 pos++;
             }
             {
-                EpollClientLoginSlave::maxAccountIdList.reserve(EpollClientLoginSlave::maxAccountIdList.size()+CATCHCHALLENGER_SERVER_MAXIDBLOCK);
+                EventLoopClientLoginSlave::maxAccountIdList.reserve(EventLoopClientLoginSlave::maxAccountIdList.size()+CATCHCHALLENGER_SERVER_MAXIDBLOCK);
                 unsigned int index=0;
                 while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
                 {
@@ -132,19 +132,19 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         std::cerr << "reply to 08 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         return false;
                     }
-                    EpollClientLoginSlave::maxAccountIdList.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
+                    EventLoopClientLoginSlave::maxAccountIdList.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
                     pos+=4;
                     index++;
                 }
-                if(vectorHaveDuplicatesForSmallList(EpollClientLoginSlave::maxAccountIdList))
+                if(vectorHaveDuplicatesForSmallList(EventLoopClientLoginSlave::maxAccountIdList))
                 {
                     std::cerr << "reply to 08: duplicate maxAccountIdList in " << __FILE__ << ":" <<__LINE__ << ", content: ";
                     unsigned int index=0;
-                    while(index<EpollClientLoginSlave::maxAccountIdList.size())
+                    while(index<EventLoopClientLoginSlave::maxAccountIdList.size())
                     {
                         if(index>0)
                             std::cerr << ", ";
-                        std::cerr << EpollClientLoginSlave::maxAccountIdList[index];
+                        std::cerr << EventLoopClientLoginSlave::maxAccountIdList[index];
                         index++;
                     }
                     std::cerr << std::endl;
@@ -215,8 +215,8 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 }
             }
             stat=Stat::Logged;
-            if(!EpollServerLoginSlave::epollServerLoginSlave->isListening())
-                if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
+            if(!EventLoopServerLoginSlave::unixServerLoginSlave->isListening())
+                if(!EventLoopServerLoginSlave::unixServerLoginSlave->tryListen())
                     abort();
         }
         return true;
@@ -236,27 +236,27 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     {
                         if(dataForSelectedCharacterReturn.client!=NULL)
                         {
-                            if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+                            if(EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Proxy)
                             {
-                                if(static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)->stat!=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting)
+                                if(static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)->stat!=EventLoopClientLoginSlave::EventLoopClientLoginStat::CharacterSelecting)
                                 {
-                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->parseNetworkReadError("client in wrong state main ident: "+std::to_string(mainCodeType)+", reply size for 0207 wrong");
                                     return false;
                                 }
-                                //check again if the game server is not disconnected, don't check charactersGroupIndex because previously checked at EpollClientLoginSlave::selectCharacter()
-                                const uint8_t &charactersGroupIndex=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)->charactersGroupIndex;
-                                const uint32_t &serverUniqueKey=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)->serverUniqueKey;
+                                //check again if the game server is not disconnected, don't check charactersGroupIndex because previously checked at EventLoopClientLoginSlave::selectCharacter()
+                                const uint8_t &charactersGroupIndex=static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)->charactersGroupIndex;
+                                const uint32_t &serverUniqueKey=static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)->serverUniqueKey;
                                 if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
                                 {
-                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->parseNetworkReadError("client server not found to proxy it main ident: "+std::to_string(mainCodeType)+", reply size for 0207 wrong");
                                     return false;
                                 }
                                 const CharactersGroupForLogin::InternalGameServer &server=CharactersGroupForLogin::list.at(charactersGroupIndex)->getServerInformation(serverUniqueKey);
 
-                                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
-                                ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
+                                static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                ->stat=EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnecting;
                                 /// \todo do the async connect
                                 /// linkToGameServer->stat=Stat::Connecting;
                                 const std::string dest=server.host+":"+std::to_string(server.port);
@@ -264,47 +264,47 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                                 if(Q_LIKELY(socketFd>=0))
                                 {
                                     duplicateWarning.erase(dest);
-                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
-                                    ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
+                                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    ->stat=EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnected;
                                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
-                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->linkToGameServer=linkToGameServer;
                                     linkToGameServer->queryIdToReconnect=dataForSelectedCharacterReturn.client_query_id;
                                     linkToGameServer->stat=LinkToGameServer::Stat::Connected;
-                                    linkToGameServer->client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
+                                    linkToGameServer->client=static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client);
                                     memcpy(linkToGameServer->tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                                     //send the protocol header straight away —
                                     //the SSL/cleartext preamble byte was removed.
                                     linkToGameServer->setConnexionSettings();
                                     linkToGameServer->sendProtocolHeader();
                                     linkToGameServer->parseIncommingData();
-                                    /*const int &s = EpollSocket::make_non_blocking(socketFd);
+                                    /*const int &s = SocketUtil::make_non_blocking(socketFd);
                                     if(s == -1)
                                         std::cerr << "unable to make to socket non blocking" << std::endl;*/
                                 }
                                 else
                                 {
-                                    /*static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    /*static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->parseNetworkReadMessage("not able to connect on the game server as proxy, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");*/
                                     if(duplicateWarning.find(dest)==duplicateWarning.cend())
                                     {
                                         duplicateWarning.insert(dest);
                                         std::cerr << "Error to connect on " << server.host << ":" << server.port << ", errno: " << errno << std::endl;
                                     }
-                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04,"Error to connect on "+server.host+":"+std::to_string(server.port)+", errno: "+std::to_string(errno));
-                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->closeSocket();
                                     //continue to clean, return true;//if false mean the master is the fault
                                 }
                             }
                             else
                             {
-                                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
-                                ->stat=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelected;
-                                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                ->stat=EventLoopClientLoginSlave::EventLoopClientLoginStat::CharacterSelected;
+                                static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                 ->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
-                                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                 ->closeSocket();
                             }
                         }
@@ -314,9 +314,9 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         if(dataForSelectedCharacterReturn.client!=NULL)
                         {
                             std::cerr << "Error from master, size==1" << std::endl;
-                            static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                            static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                             ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
-                            static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                            static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                             ->closeSocket();
                         }
                     }
@@ -332,7 +332,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
         case 0xBF:
         {
             unsigned int pos=0;
-            EpollClientLoginSlave::maxAccountIdList.reserve(EpollClientLoginSlave::maxAccountIdList.size()+CATCHCHALLENGER_SERVER_MAXIDBLOCK);
+            EventLoopClientLoginSlave::maxAccountIdList.reserve(EventLoopClientLoginSlave::maxAccountIdList.size()+CATCHCHALLENGER_SERVER_MAXIDBLOCK);
             unsigned int index=0;
             while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
             {
@@ -341,27 +341,27 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     std::cerr << "reply to 08 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     abort();
                 }
-                EpollClientLoginSlave::maxAccountIdList.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
+                EventLoopClientLoginSlave::maxAccountIdList.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
                 pos+=4;
                 index++;
             }
-            if(vectorHaveDuplicatesForSmallList(EpollClientLoginSlave::maxAccountIdList))
+            if(vectorHaveDuplicatesForSmallList(EventLoopClientLoginSlave::maxAccountIdList))
             {
                 std::cerr << "reply to 08: duplicate maxAccountIdList in " << __FILE__ << ":" <<__LINE__ << ", content: ";
                 unsigned int index=0;
-                while(index<EpollClientLoginSlave::maxAccountIdList.size())
+                while(index<EventLoopClientLoginSlave::maxAccountIdList.size())
                 {
                     if(index>0)
                         std::cerr << ", ";
-                    std::cerr << EpollClientLoginSlave::maxAccountIdList[index];
+                    std::cerr << EventLoopClientLoginSlave::maxAccountIdList[index];
                     index++;
                 }
                 std::cerr << std::endl;
                 abort();
             }
-            EpollClientLoginSlave::maxAccountIdRequested=false;
+            EventLoopClientLoginSlave::maxAccountIdRequested=false;
             #ifdef CATCHCHALLENGER_HARDENED
-            std::cout << "Add more id to list: EpollClientLoginSlave::maxAccountIdList.size(): " << EpollClientLoginSlave::maxAccountIdList.size() << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            std::cout << "Add more id to list: EventLoopClientLoginSlave::maxAccountIdList.size(): " << EventLoopClientLoginSlave::maxAccountIdList.size() << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             #endif
         }
         return true;

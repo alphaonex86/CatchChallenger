@@ -1,10 +1,10 @@
 #ifndef CHARACTERSGROUP_H
 #define CHARACTERSGROUP_H
 
-#include "../epoll/BaseClassSwitch.hpp"
-#include "../epoll/db/EpollPostgresql.hpp"
+#include "../cli/BaseClassSwitch.hpp"
+#include "../cli/db/EventLoopPostgresql.hpp"
 #include "../base/PreparedDBQuery.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -15,7 +15,7 @@ class CharactersGroupForLogin : public BaseClassSwitch
 public:
     explicit CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const uint8_t &considerDownAfterNumberOfTry,const uint8_t &tryInterval);
     ~CharactersGroupForLogin();
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
 
     struct InternalGameServer
     {
@@ -32,7 +32,7 @@ public:
     const std::unordered_map<uint32_t,InternalGameServer> &getServerListRO() const;
     void removeServerUniqueKey(const uint32_t &serverUniqueKey);
 
-    std::vector<EpollClientLoginSlave *> clientQueryForReadReturn;
+    std::vector<EventLoopClientLoginSlave *> clientQueryForReadReturn;
     std::vector<uint32_t> maxCharacterId;
     std::vector<uint32_t> maxMonsterId;
     bool maxCharacterIdRequested;
@@ -66,19 +66,19 @@ public:
     int8_t addCharacter(void * const client,const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);
     static void addCharacterStep1_static(void *object);
     void addCharacterStep1_object();
-    void addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId);
+    void addCharacterStep1_return(EventLoopClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId);
     static void addCharacterStep2_static(void *object);
     void addCharacterStep2_object();
-    void addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId);
+    void addCharacterStep2_return(EventLoopClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId);
     bool removeCharacterLater(void * const client,const uint8_t &query_id, const uint32_t &characterId);
     static void removeCharacterLater_static(void *object);
     void removeCharacterLater_object();
-    void removeCharacterLater_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId);
+    void removeCharacterLater_return(EventLoopClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId);
 
-    void character_list(EpollClientLoginSlave * const client,const uint32_t &account_id);
+    void character_list(EventLoopClientLoginSlave * const client,const uint32_t &account_id);
     static void character_list_static(void *object);
     void character_list_object();
-    void server_list(EpollClientLoginSlave * const client,const uint32_t &account_id);
+    void server_list(EventLoopClientLoginSlave * const client,const uint32_t &account_id);
     static void server_list_static(void *object);
     void server_list_object();
     DatabaseBase::DatabaseType databaseType() const;
@@ -102,7 +102,7 @@ private:
 
     void dbQueryWriteCommon(const std::string &queryText);
 private:
-    EpollPostgresql *databaseBaseCommon;
+    EventLoopPostgresql *databaseBaseCommon;
     PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
     PreparedDBQueryCommon preparedDBQueryCommon;
     std::unordered_map<uint32_t,InternalGameServer> servers;

@@ -4,7 +4,7 @@
 // Captures std::cout / std::cerr (and printf / write(1|2) when
 // install_stdio_redirect=true) into a thread-safe ring of lines that
 // the Qt admin GUI drains into ui->textEditConsole.  Plain C++ — no Qt.
-// Gated by CATCHCHALLENGER_GUI_STATS so non-GUI binaries (epoll/login/
+// Gated by CATCHCHALLENGER_GUI_STATS so non-GUI binaries (unix/login/
 // master/headless server) compile without this code at all.
 //
 // Why streambuf-tee instead of dup2(): the engine code uses both

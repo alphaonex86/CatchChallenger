@@ -57,7 +57,7 @@ class DatabaseBase : public CatchChallenger::DatabaseFunction
         virtual bool next() = 0;
         virtual const std::string value(const int &value) const = 0;
         virtual bool isConnected() const = 0;
-        virtual bool epollEvent(const uint32_t &events) = 0;
+        virtual bool unixEvent(const uint32_t &events) = 0;
         virtual void clear();
         #endif
         //sync mode then prefer tryInterval*considerDownAfterNumberOfTry < 20s

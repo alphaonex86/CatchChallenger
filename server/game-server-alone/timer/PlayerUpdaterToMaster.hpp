@@ -3,11 +3,11 @@
 
 #ifdef CATCHCHALLENGER_SERVER
 
-#include "../epoll/EpollTimer.hpp"
+#include "../cli/EventLoopTimer.hpp"
 
 namespace CatchChallenger {
 class PlayerUpdaterToMaster
-        : public EpollTimer
+        : public EventLoopTimer
 {
 public:
     static PlayerUpdaterToMaster player_updater_to_master;

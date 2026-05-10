@@ -1,10 +1,10 @@
 
-#include "EpollServer.hpp"
+#include "EventLoopServer.hpp"
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-#include "db/EpollPostgresql.hpp"
+#include "db/EventLoopPostgresql.hpp"
 #endif
 #ifdef CATCHCHALLENGER_DB_MYSQL
-#include "db/EpollMySQL.hpp"
+#include "db/EventLoopMySQL.hpp"
 #endif
 
 
@@ -13,7 +13,7 @@
 
 using namespace CatchChallenger;
 
-EpollServer::EpollServer()
+EventLoopServer::EventLoopServer()
 {
     ready=false;
 
@@ -33,7 +33,7 @@ EpollServer::EpollServer()
     #endif
 }
 
-void EpollServer::initTheDatabase()
+void EventLoopServer::initTheDatabase()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -41,12 +41,12 @@ void EpollServer::initTheDatabase()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            GlobalServerData::serverPrivateVariables.db_login=new EpollPostgresql();
+            GlobalServerData::serverPrivateVariables.db_login=new EventLoopPostgresql();
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
         case DatabaseBase::DatabaseType::Mysql:
-            GlobalServerData::serverPrivateVariables.db_login=new EpollMySQL();
+            GlobalServerData::serverPrivateVariables.db_login=new EventLoopMySQL();
         break;
         #endif
         default:
@@ -57,12 +57,12 @@ void EpollServer::initTheDatabase()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            GlobalServerData::serverPrivateVariables.db_base=new EpollPostgresql();
+            GlobalServerData::serverPrivateVariables.db_base=new EventLoopPostgresql();
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
         case DatabaseBase::DatabaseType::Mysql:
-            GlobalServerData::serverPrivateVariables.db_base=new EpollMySQL();
+            GlobalServerData::serverPrivateVariables.db_base=new EventLoopMySQL();
         break;
         #endif
         default:
@@ -74,12 +74,12 @@ void EpollServer::initTheDatabase()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            GlobalServerData::serverPrivateVariables.db_common=new EpollPostgresql();
+            GlobalServerData::serverPrivateVariables.db_common=new EventLoopPostgresql();
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
         case DatabaseBase::DatabaseType::Mysql:
-            GlobalServerData::serverPrivateVariables.db_common=new EpollMySQL();
+            GlobalServerData::serverPrivateVariables.db_common=new EventLoopMySQL();
         break;
         #endif
         default:
@@ -90,12 +90,12 @@ void EpollServer::initTheDatabase()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            GlobalServerData::serverPrivateVariables.db_server=new EpollPostgresql();
+            GlobalServerData::serverPrivateVariables.db_server=new EventLoopPostgresql();
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
         case DatabaseBase::DatabaseType::Mysql:
-            GlobalServerData::serverPrivateVariables.db_server=new EpollMySQL();
+            GlobalServerData::serverPrivateVariables.db_server=new EventLoopMySQL();
         break;
         #endif
         default:
@@ -110,19 +110,19 @@ void EpollServer::initTheDatabase()
 }
 
 
-EpollServer::~EpollServer()
+EventLoopServer::~EventLoopServer()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            delete static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_server);
+            delete static_cast<EventLoopPostgresql *>(GlobalServerData::serverPrivateVariables.db_server);
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
         case DatabaseBase::DatabaseType::Mysql:
-            delete static_cast<EpollMySQL *>(GlobalServerData::serverPrivateVariables.db_server);
+            delete static_cast<EventLoopMySQL *>(GlobalServerData::serverPrivateVariables.db_server);
         break;
         #endif
         default:
@@ -132,12 +132,12 @@ EpollServer::~EpollServer()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            delete static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_common);
+            delete static_cast<EventLoopPostgresql *>(GlobalServerData::serverPrivateVariables.db_common);
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
         case DatabaseBase::DatabaseType::Mysql:
-            delete static_cast<EpollMySQL *>(GlobalServerData::serverPrivateVariables.db_common);
+            delete static_cast<EventLoopMySQL *>(GlobalServerData::serverPrivateVariables.db_common);
         break;
         #endif
         default:
@@ -148,12 +148,12 @@ EpollServer::~EpollServer()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            delete static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_base);
+            delete static_cast<EventLoopPostgresql *>(GlobalServerData::serverPrivateVariables.db_base);
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
         case DatabaseBase::DatabaseType::Mysql:
-            delete static_cast<EpollMySQL *>(GlobalServerData::serverPrivateVariables.db_base);
+            delete static_cast<EventLoopMySQL *>(GlobalServerData::serverPrivateVariables.db_base);
         break;
         #endif
         default:
@@ -163,12 +163,12 @@ EpollServer::~EpollServer()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            delete static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_login);
+            delete static_cast<EventLoopPostgresql *>(GlobalServerData::serverPrivateVariables.db_login);
         break;
         #endif
         #ifdef CATCHCHALLENGER_DB_MYSQL
         case DatabaseBase::DatabaseType::Mysql:
-            delete static_cast<EpollMySQL *>(GlobalServerData::serverPrivateVariables.db_login);
+            delete static_cast<EventLoopMySQL *>(GlobalServerData::serverPrivateVariables.db_login);
         break;
         #endif
         default:
@@ -182,7 +182,7 @@ EpollServer::~EpollServer()
     #endif
 }
 
-void EpollServer::preload_finish()
+void EventLoopServer::preload_finish()
 {
     BaseServer::preload_finish();
     if(!ready)
@@ -194,15 +194,15 @@ void EpollServer::preload_finish()
             abort();
     }
     else
-        std::cerr << "EpollServer::preload_finish() double event dropped" << std::endl;
+        std::cerr << "EventLoopServer::preload_finish() double event dropped" << std::endl;
 }
 
-bool EpollServer::isReady()
+bool EventLoopServer::isReady()
 {
     return ready;
 }
 
-bool EpollServer::tryListen()
+bool EventLoopServer::tryListen()
 {
     if(!normalServerSettings.server_ip.empty())
         return tryListenInternal(normalServerSettings.server_ip.c_str(),std::to_string(normalServerSettings.server_port).c_str());
@@ -210,24 +210,24 @@ bool EpollServer::tryListen()
         return tryListenInternal(NULL,std::to_string(normalServerSettings.server_port).c_str());
 }
 
-void EpollServer::quitForCriticalDatabaseQueryFailed()
+void EventLoopServer::quitForCriticalDatabaseQueryFailed()
 {
     abort();
 }
 
-void EpollServer::preload_1_the_data()
+void EventLoopServer::preload_1_the_data()
 {
     BaseServer::preload_1_the_data();
 }
 
-void EpollServer::unload_the_data()
+void EventLoopServer::unload_the_data()
 {
     close();
     ready=false;
     BaseServer::unload_the_data();
 }
 
-void EpollServer::setNormalSettings(const NormalServerSettings &settings)
+void EventLoopServer::setNormalSettings(const NormalServerSettings &settings)
 {
     normalServerSettings=settings;
     BaseServer::setNormalSettings(settings);
@@ -238,12 +238,12 @@ void EpollServer::setNormalSettings(const NormalServerSettings &settings)
         normalServerSettings.proxy.clear();
 }
 
-NormalServerSettings EpollServer::getNormalSettings() const
+NormalServerSettings EventLoopServer::getNormalSettings() const
 {
     return normalServerSettings;
 }
 
-void EpollServer::loadAndFixSettings()
+void EventLoopServer::loadAndFixSettings()
 {
     BaseServer::loadAndFixSettings();
 }

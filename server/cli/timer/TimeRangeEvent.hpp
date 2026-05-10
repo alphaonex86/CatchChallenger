@@ -4,11 +4,11 @@
 
 #ifdef CATCHCHALLENGER_SERVER
 
-#include "../epoll/EpollTimer.hpp"
+#include "../cli/EventLoopTimer.hpp"
 
 namespace CatchChallenger {
 class TimeRangeEvent
-        : public EpollTimer
+        : public EventLoopTimer
 {
 public:
     explicit TimeRangeEvent();

@@ -1,17 +1,17 @@
-#ifndef EPOLL_UNIX_SOCKET_CLIENT_FINAL_H
-#define EPOLL_UNIX_SOCKET_CLIENT_FINAL_H
+#ifndef UNIX_SOCKET_CLIENT_FINAL_H
+#define UNIX_SOCKET_CLIENT_FINAL_H
 
-#include "EpollUnixSocketClient.h"
+#include "UnixSocketClient.h"
 
 
 namespace CatchChallenger {
-class EpollUnixSocketClientFinal : public EpollUnixSocketClient
+class UnixSocketClientFinal : public UnixSocketClient
 {
 public:
-    EpollUnixSocketClientFinal(const int &infd);
-    ~EpollUnixSocketClientFinal();
+    UnixSocketClientFinal(const int &infd);
+    ~UnixSocketClientFinal();
     void parseIncommingData();
 };
 }
 
-#endif // EPOLL_UNIX_SOCKET_CLIENT_FINAL_H
+#endif // UNIX_SOCKET_CLIENT_FINAL_H

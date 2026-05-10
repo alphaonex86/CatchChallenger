@@ -1,31 +1,34 @@
-#include "EpollGenericServer.hpp"
-#include "EpollSocket.hpp"
-#include "Epoll.hpp"
+#include "EventLoopGenericServer.hpp"
+#include "SocketUtil.hpp"
+#include "EventLoop.hpp"
+#include "win32_compat.hpp"
 
 #include <iostream>
+#ifndef _WIN32
 #include <netdb.h>
 #include <unistd.h>
+#endif
 #include <string.h>
 #include <chrono>
 
 using namespace CatchChallenger;
 
-std::chrono::steady_clock::time_point EpollGenericServer::processStart=std::chrono::steady_clock::now();
+std::chrono::steady_clock::time_point EventLoopGenericServer::processStart=std::chrono::steady_clock::now();
 
-EpollGenericServer::EpollGenericServer()
+EventLoopGenericServer::EventLoopGenericServer()
 {
 }
 
-EpollGenericServer::~EpollGenericServer()
+EventLoopGenericServer::~EventLoopGenericServer()
 {
     close();
 }
 
-bool EpollGenericServer::tryListenInternal(const char* const ip,const char* const port)
+bool EventLoopGenericServer::tryListenInternal(const char* const ip,const char* const port)
 {
     if(strlen(port)==0)
     {
-        std::cout << "EpollGenericServer::tryListenInternal() port can't be empty (abort)" << std::endl;
+        std::cout << "EventLoopGenericServer::tryListenInternal() port can't be empty (abort)" << std::endl;
         abort();
     }
 
@@ -78,17 +81,20 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
         }
 
         int one=1;
-        if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
+        if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR,
+                      reinterpret_cast<const char *>(&one), sizeof one)!=0)
             std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
+#ifndef _WIN32
         one=1;
         if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
             std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
+#endif
 
         s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
         if(s!=0)
         {
             //unable to bind
-            ::close(sfd);
+            cc_close_socket(sfd);
             std::cerr
                     << "unable to bind: familly: " << rp->ai_family
                     << ", rp->ai_socktype: " << rp->ai_socktype
@@ -106,7 +112,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
                 std::cerr << "Leave without bind but s!=0" << std::endl;
                 return false;
             }
-            s = EpollSocket::make_non_blocking(sfd);
+            s = SocketUtil::make_non_blocking(sfd);
             if(s == -1)
             {
                 close();
@@ -126,7 +132,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             memset(&event,0,sizeof(event));
             event.data.ptr = this;
             event.events = EPOLLIN | EPOLLOUT | EPOLLET;
-            s = Epoll::epoll.ctl(EPOLL_CTL_ADD, sfd, &event);
+            s = EventLoop::loop.ctl(EPOLL_CTL_ADD, sfd, &event);
             if(s == -1)
             {
                 close();
@@ -137,7 +143,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
 
             const std::chrono::system_clock::time_point p1 = std::chrono::system_clock::now();
             const long long bootMs = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now()-EpollGenericServer::processStart).count();
+                std::chrono::steady_clock::now()-EventLoopGenericServer::processStart).count();
             std::cout << "[" << std::chrono::duration_cast<std::chrono::seconds>(
                    p1.time_since_epoch()).count() << "] "
                     << "correctly bind: familly: " << rp->ai_family
@@ -161,23 +167,23 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
     return bindSuccess>0;
 }
 
-void EpollGenericServer::close()
+void EventLoopGenericServer::close()
 {
     unsigned int index=0;
     while(index<sfd_list.size())
     {
-        ::close(sfd_list.at(index));
+        cc_close_socket(sfd_list.at(index));
         index++;
     }
     sfd_list.clear();
 }
 
-bool EpollGenericServer::isListening() const
+bool EventLoopGenericServer::isListening() const
 {
     return !sfd_list.empty();
 }
 
-int EpollGenericServer::accept(sockaddr *in_addr,socklen_t *in_len)
+int EventLoopGenericServer::accept(sockaddr *in_addr,socklen_t *in_len)
 {
     unsigned int index=0;
     while(index<sfd_list.size())
@@ -191,12 +197,12 @@ int EpollGenericServer::accept(sockaddr *in_addr,socklen_t *in_len)
     return -1;
 }
 
-std::vector<int> EpollGenericServer::getSfd() const
+std::vector<int> EventLoopGenericServer::getSfd() const
 {
     return sfd_list;
 }
 
-BaseClassSwitch::EpollObjectType EpollGenericServer::getType() const
+BaseClassSwitch::EventLoopObjectType EventLoopGenericServer::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Server;
+    return BaseClassSwitch::EventLoopObjectType::Server;
 }

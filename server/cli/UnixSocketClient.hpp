@@ -1,19 +1,19 @@
-#ifndef EPOLL_UNIX_SOCKET_CLIENT_H
-#define EPOLL_UNIX_SOCKET_CLIENT_H
+#ifndef UNIX_SOCKET_CLIENT_H
+#define UNIX_SOCKET_CLIENT_H
 
 #include "BaseClassSwitch.h"
 #include <sys/types.h>
 
 namespace CatchChallenger {
-class EpollUnixSocketClient : public BaseClassSwitch
+class UnixSocketClient : public BaseClassSwitch
 {
 public:
-    EpollUnixSocketClient(const int &infd);
-    ~EpollUnixSocketClient();
+    UnixSocketClient(const int &infd);
+    ~UnixSocketClient();
     void close();
     ssize_t read(char *buffer,const size_t &bufferSize);
     ssize_t write(const char *buffer,const size_t &bufferSize);
-    EpollObjectType getType() const;
+    EventLoopObjectType getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
 protected:
@@ -21,4 +21,4 @@ protected:
 };
 }
 
-#endif // EPOLL_UNIX_SOCKET_CLIENT_H
+#endif // UNIX_SOCKET_CLIENT_H

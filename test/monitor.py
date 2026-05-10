@@ -223,7 +223,7 @@ _TOOL_NAME_RE = re.compile(
 _CC_BINARY_RE = re.compile(
     r"\b("
     r"catchchallenger[\w.+-]*|"
-    r"server-filedb|server-cli-epoll|server-gui|server-master|"
+    r"server-filedb|server-cli|server-gui|server-master|"
     r"server-login|server-gateway|game-server-alone|"
     r"map2png|datapack-explorer-generator|filedb-converter|"
     r"qtcpu800x600|catchchallenger800x600"
@@ -247,7 +247,7 @@ def _build_cc_context_re():
         r"libcatchchallenger",
         r"qtopengl",
         r"qtcpu800x600",
-        r"server[/-]epoll",
+        r"server[/-]unix",
         r"server[/-]base",
         r"server[/-]gateway",
         r"server[/-]login",
@@ -356,7 +356,7 @@ def _scan_cc_processes():
         utime, stime, rss_kib, comm, state = st
         cmd = _read_cmdline(pid) or comm
         # Three independent ways a process counts as CC-related:
-        #   1. CC binary unconditionally (server-cli-epoll, etc.).
+        #   1. CC binary unconditionally (server-cli, etc.).
         #   2. testing*.py entry point.
         #   3. Generic build / SSH tooling (gcc, make, ssh) PLUS a
         #      CC-context token in the cmdline (repo path, remote

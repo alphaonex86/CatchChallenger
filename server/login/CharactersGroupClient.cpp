@@ -1,6 +1,6 @@
 #include "CharactersGroupForLogin.hpp"
 #include <cstring>
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include "VariableLoginServer.hpp"
 #include "LinkToMaster.hpp"
 #include "../base/PreparedDBQuery.hpp"
@@ -16,7 +16,7 @@ using namespace CatchChallenger;
 const std::string CharactersGroupForLogin::gender_male("1");
 const std::string CharactersGroupForLogin::gender_female("2");
 
-void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
+void CharactersGroupForLogin::character_list(EventLoopClientLoginSlave * const client,const uint32_t &account_id)
 {
     DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&CharactersGroupForLogin::character_list_static,{std::to_string(account_id)});
     if(callback==NULL)
@@ -37,7 +37,7 @@ void CharactersGroupForLogin::character_list_static(void *object)
 
 void CharactersGroupForLogin::character_list_object()
 {
-    EpollClientLoginSlave * const client=clientQueryForReadReturn.front();
+    EventLoopClientLoginSlave * const client=clientQueryForReadReturn.front();
     clientQueryForReadReturn.erase(clientQueryForReadReturn.begin());
 
     char * const tempRawData=new char[4*1024];
@@ -165,13 +165,13 @@ void CharactersGroupForLogin::character_list_object()
     tempRawData[0]=validCharaterCount;
 
     client->character_list_return(this->charactersGroupIndex,tempRawData,tempRawDataSize);
-    //delete tempRawData;//delete later to order the list, see EpollClientLoginSlave::server_list_return(), QMapIterator<uint8_t,CharacterListForReply> i(characterTempListForReply);, delete i.value().rawData;
+    //delete tempRawData;//delete later to order the list, see EventLoopClientLoginSlave::server_list_return(), QMapIterator<uint8_t,CharacterListForReply> i(characterTempListForReply);, delete i.value().rawData;
 
     //get server list
     server_list(client,client->account_id);
 }
 
-void CharactersGroupForLogin::server_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
+void CharactersGroupForLogin::server_list(EventLoopClientLoginSlave * const client,const uint32_t &account_id)
 {
     DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_select_server_time.asyncRead(this,&CharactersGroupForLogin::server_list_static,{std::to_string(account_id)});
     if(callback==NULL)
@@ -192,7 +192,7 @@ void CharactersGroupForLogin::server_list_static(void *object)
 
 void CharactersGroupForLogin::server_list_object()
 {
-    EpollClientLoginSlave * const client=clientQueryForReadReturn.front();
+    EventLoopClientLoginSlave * const client=clientQueryForReadReturn.front();
     clientQueryForReadReturn.erase(clientQueryForReadReturn.begin());
 
     char tempRawData[4*1024];
@@ -404,18 +404,18 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
     {
         std::cerr << "Skin list is empty, unable to add charaters" << std::endl;
         //char tempData[1+4]={0x02,0x00,0x00,0x00,0x00};/* not htole32 because inverted is the same */
-        //static_cast<EpollClientLoginSlave *>(client)->postReply(query_id,tempData,sizeof(tempData));
+        //static_cast<EventLoopClientLoginSlave *>(client)->postReply(query_id,tempData,sizeof(tempData));
         return 0x03;
     }
     /** \warning Need be checked in real time because can be opened on multiple login server
-     * if(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
+     * if(static_cast<EventLoopClientLoginSlave *>(client)->accountCharatersCount>=CommonSettingsCommon::commonSettingsCommon.max_character)
     {
-        qDebug() << (std::stringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(static_cast<EpollClientLoginSlave *>(client)->accountCharatersCount).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
+        qDebug() << (std::stringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(static_cast<EventLoopClientLoginSlave *>(client)->accountCharatersCount).arg(CommonSettingsCommon::commonSettingsCommon.max_character));
         return -1;
     }*/
-    if(profileIndex>=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size())
+    if(profileIndex>=EventLoopServerLoginSlave::unixServerLoginSlave->loginProfileList.size())
     {
-        std::cerr << "profile index: " << profileIndex << " out of range (profileList size: " << EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.size() << ")" << std::endl;
+        std::cerr << "profile index: " << profileIndex << " out of range (profileList size: " << EventLoopServerLoginSlave::unixServerLoginSlave->loginProfileList.size() << ")" << std::endl;
         return -1;
     }
     if(pseudo.empty())
@@ -444,7 +444,7 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
         std::cerr << "skin provided: " << skinId << " is not into skin listed" << std::endl;
         return -1;
     }
-    const EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
+    const EventLoopServerLoginSlave::LoginProfile &profile=EventLoopServerLoginSlave::unixServerLoginSlave->loginProfileList.at(profileIndex);
     if(std::find(profile.forcedskin.begin(),profile.forcedskin.end(),skinId)==profile.forcedskin.end())
     {
         std::cerr << "skin provided: " << skinId << " is not into profile " << profileIndex << " forced skin list" << std::endl;
@@ -463,7 +463,7 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
     addCharacterParam.skinId=skinId;
     addCharacterParam.client=client;
 
-    DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_get_character_count_by_account.asyncRead(this,&CharactersGroupForLogin::addCharacterStep1_static,{std::to_string(static_cast<EpollClientLoginSlave *>(client)->account_id)});
+    DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_get_character_count_by_account.asyncRead(this,&CharactersGroupForLogin::addCharacterStep1_static,{std::to_string(static_cast<EventLoopClientLoginSlave *>(client)->account_id)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << preparedDBQueryCommonForLogin.db_query_get_character_count_by_account.queryText() << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
@@ -486,11 +486,11 @@ void CharactersGroupForLogin::addCharacterStep1_object()
 {
     AddCharacterParam addCharacterParam=addCharacterParamList.front();
     addCharacterParamList.erase(addCharacterParamList.begin());
-    addCharacterStep1_return(static_cast<EpollClientLoginSlave *>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
+    addCharacterStep1_return(static_cast<EventLoopClientLoginSlave *>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
+void CharactersGroupForLogin::addCharacterStep1_return(EventLoopClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
 {
     if(!databaseBaseCommon->next())
     {
@@ -549,18 +549,18 @@ void CharactersGroupForLogin::addCharacterStep2_object()
 {
     AddCharacterParam addCharacterParam=addCharacterParamList.front();
     addCharacterParamList.erase(addCharacterParamList.begin());
-    addCharacterStep2_return(static_cast<EpollClientLoginSlave *>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
+    addCharacterStep2_return(static_cast<EventLoopClientLoginSlave *>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
+void CharactersGroupForLogin::addCharacterStep2_return(EventLoopClientLoginSlave * const client,const uint8_t &query_id,const uint8_t &profileIndex,const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
 {
     if(databaseBaseCommon->next())
     {
         client->addCharacter_ReturnFailed(query_id,0x01);
         return;
     }
-    EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
+    EventLoopServerLoginSlave::LoginProfile &profile=EventLoopServerLoginSlave::unixServerLoginSlave->loginProfileList.at(profileIndex);
 
     if(maxCharacterId.empty())
     {
@@ -619,7 +619,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     maxCharacterId.pop_back();
     int monster_position=1;
 
-    const std::vector<EpollServerLoginSlave::LoginProfile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
+    const std::vector<EventLoopServerLoginSlave::LoginProfile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
     if(profile.preparedStatementForCreationByCommon.find(databaseBaseCommon)==profile.preparedStatementForCreationByCommon.cend())
     {
         std::cerr << "At addCharacterStep2_return, prepared query not found" << std::endl;
@@ -632,7 +632,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         abort();
     }
     #endif
-    EpollServerLoginSlave::LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon.at(databaseBaseCommon);
+    EventLoopServerLoginSlave::LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon.at(databaseBaseCommon);
     #ifdef CATCHCHALLENGER_HARDENED
     if(profileIndex>=preparedStatementForCreation.type.size())
     {
@@ -640,7 +640,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         abort();
     }
     #endif
-    EpollServerLoginSlave::LoginProfile::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type.at(profileIndex);
+    EventLoopServerLoginSlave::LoginProfile::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type.at(profileIndex);
     #ifdef CATCHCHALLENGER_HARDENED
     if(monsterGroupId>=preparedStatementForCreationType.monsterGroup.size())
     {
@@ -648,7 +648,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         abort();
     }
     #endif
-    EpollServerLoginSlave::LoginProfile::PreparedStatementForCreationMonsterGroup &preparedStatementForCreationMonsterGroup=preparedStatementForCreationType.monsterGroup.at(monsterGroupId);
+    EventLoopServerLoginSlave::LoginProfile::PreparedStatementForCreationMonsterGroup &preparedStatementForCreationMonsterGroup=preparedStatementForCreationType.monsterGroup.at(monsterGroupId);
     PreparedStatementUnit &character_insert=preparedStatementForCreationMonsterGroup.character_insert;
     std::vector<PreparedStatementUnit> &monsters=preparedStatementForCreationMonsterGroup.monster_insert;
     if(!monsters.empty())
@@ -663,7 +663,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         unsigned int index=0;
         while(index<monsters.size())
         {
-            const EpollServerLoginSlave::LoginProfile::Monster &monster=monsterGroup.at(index);
+            const EventLoopServerLoginSlave::LoginProfile::Monster &monster=monsterGroup.at(index);
             PreparedStatementUnit &monsterQuery=monsters.at(index);
 
             if(maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK)
@@ -801,11 +801,11 @@ void CharactersGroupForLogin::removeCharacterLater_object()
 {
     RemoveCharacterParam removeCharacterParam=removeCharacterParamList.front();
     removeCharacterParamList.erase(removeCharacterParamList.begin());
-    removeCharacterLater_return(static_cast<EpollClientLoginSlave *>(removeCharacterParam.client),removeCharacterParam.query_id,removeCharacterParam.characterId);
+    removeCharacterLater_return(static_cast<EventLoopClientLoginSlave *>(removeCharacterParam.client),removeCharacterParam.query_id,removeCharacterParam.characterId);
     databaseBaseCommon->clear();
 }
 
-void CharactersGroupForLogin::removeCharacterLater_return(EpollClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId)
+void CharactersGroupForLogin::removeCharacterLater_return(EventLoopClientLoginSlave * const client,const uint8_t &query_id,const uint32_t &characterId)
 {
     if(!databaseBaseCommon->next())
     {

@@ -1,9 +1,9 @@
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
 
-bool EpollClientLoginSlave::sendRawBlock(const char * const data,const unsigned int &size)
+bool EventLoopClientLoginSlave::sendRawBlock(const char * const data,const unsigned int &size)
 {
     return ProtocolParsingBase::internalSendRawSmallPacket(data,size);
 }

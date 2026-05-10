@@ -3,7 +3,7 @@
 testingwebsocket.py — CatchChallenger WebSocket transport test.
 
 Pipeline:
-  1. Build catchchallenger-server-cli-epoll (file-db, IO_URING backend).
+  1. Build catchchallenger-server-cli (file-db, IO_URING backend).
   2. Build qtcpu800x600 + qtopengl with their WebSockets options ON.
   3. Start nginx (config in test/nginx-websocket.conf.in) serving the
      CatchChallenger-datapack as a static HTTP datapack mirror.
@@ -44,15 +44,15 @@ NPROC = str(multiprocessing.cpu_count())
 DATAPACK_SRC = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
 MAINCODE     = "test"
 
-SERVER_PRO     = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
+SERVER_PRO     = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
 CLIENT_CPU_PRO = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 CLIENT_GL_PRO  = os.path.join(ROOT, "client/catchchallenger.pro")
 
-SERVER_BUILD     = build_paths.build_path("server/epoll/build/testing-ws-server"  + _DIAG_SUFFIX)
+SERVER_BUILD     = build_paths.build_path("server/cli/build/testing-ws-server"  + _DIAG_SUFFIX)
 CLIENT_CPU_BUILD = build_paths.build_path("client/qtcpu800x600/build/testing-ws-cpu" + _DIAG_SUFFIX)
 CLIENT_GL_BUILD  = build_paths.build_path("client/build/testing-ws-gl"            + _DIAG_SUFFIX)
 
-SERVER_BIN = "catchchallenger-server-cli-epoll"
+SERVER_BIN = "catchchallenger-server-cli"
 CLIENT_CPU_BIN = "catchchallenger"
 CLIENT_GL_BIN  = "catchchallenger"
 

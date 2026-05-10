@@ -1,5 +1,5 @@
-#ifndef EPOLL_CLIENT_H
-#define EPOLL_CLIENT_H
+#ifndef EVENT_LOOP_CLIENT_TO_SERVER_H
+#define EVENT_LOOP_CLIENT_TO_SERVER_H
 
 #include "BaseClassSwitch.hpp"
 #include <sys/types.h>
@@ -7,16 +7,16 @@
 #define BUFFER_MAX_SIZE 4096
 
 namespace CatchChallenger {
-class EpollClientToServer : public BaseClassSwitch
+class EventLoopClientToServer : public BaseClassSwitch
 {
 public:
-    EpollClientToServer(const int &infd);
-    ~EpollClientToServer();
+    EventLoopClientToServer(const int &infd);
+    ~EventLoopClientToServer();
     void close();
     ssize_t read(char *buffer,const size_t &bufferSize);
     ssize_t write(const char *buffer,const size_t &bufferSize);
     void flush();
-    EpollObjectType getType() const;
+    EventLoopObjectType getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
 private:
@@ -24,4 +24,4 @@ private:
 };
 }
 
-#endif // EPOLL_CLIENT_H
+#endif // EVENT_LOOP_CLIENT_TO_SERVER_H

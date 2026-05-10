@@ -2,7 +2,7 @@
 #                                       + catchchallenger-serverheader.pri.
 #
 # INTERFACE libraries for the shared server game-logic sources.
-# Consumed by server/, server/epoll/, server/game-server-alone/,
+# Consumed by server/, server/cli/, server/game-server-alone/,
 # server/login/, server/master/, server/gateway/, AND single-player
 # Qt clients (qtopengl + qtcpu800x600 with SOLO).
 #
@@ -38,7 +38,7 @@ if(NOT TARGET catchchallenger_server_base)
         ${CMAKE_CURRENT_LIST_DIR}/base/BaseServer/BaseServerLoadMap.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/BaseServer/BaseServerLoadMapAfterDB.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/BaseServer/BaseServerLoadSQL.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/base/BaseServer/BaseServerLoadSQLNotEpoll.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/BaseServer/BaseServerLoadSQLNotEventLoop.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/BaseServer/BaseServerUnload.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/BaseServer/BaseServerMasterLoadDictionary.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/BaseServer/BaseServerMasterSendDatapack.cpp

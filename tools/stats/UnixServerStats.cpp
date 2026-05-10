@@ -1,25 +1,25 @@
-#include "EpollServerStats.h"
+#include "UnixServerStats.h"
 #include <iostream>
 #include <unistd.h>
 
 using namespace CatchChallenger;
 
-EpollServerStats EpollServerStats::epollServerStats;
+UnixServerStats UnixServerStats::unixServerStats;
 
-EpollServerStats::EpollServerStats()
+UnixServerStats::UnixServerStats()
 {
 }
 
-bool EpollServerStats::tryListen(const char * const path)
+bool UnixServerStats::tryListen(const char * const path)
 {
     this->path=path;
-    return EpollUnixSocketServer::tryListen(path);
+    return UnixSocketServer::tryListen(path);
 }
 
-bool EpollServerStats::reopen()
+bool UnixServerStats::reopen()
 {
-    std::cout << "EpollServerStats::reopen()" << std::endl;
+    std::cout << "UnixServerStats::reopen()" << std::endl;
     close();
     ::unlink(path.c_str());
-    return EpollUnixSocketServer::tryListen(path.c_str());
+    return UnixSocketServer::tryListen(path.c_str());
 }

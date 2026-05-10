@@ -1,6 +1,6 @@
 #include "CharactersGroup.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "EpollClientLoginMaster.hpp"
+#include "EventLoopClientLoginMaster.hpp"
 #include <iostream>
 #include <chrono>
 
@@ -16,7 +16,7 @@ uint32_t CharactersGroup::pingMSecond=60*1000;
 uint32_t CharactersGroup::checkTimeoutGameServerMSecond=1000;
 
 CharactersGroup::CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const uint8_t &considerDownAfterNumberOfTry, const uint8_t &tryInterval, const std::string &name) :
-    databaseBaseCommon(new EpollPostgresql())
+    databaseBaseCommon(new EventLoopPostgresql())
 {
     this->index=0;
     this->name=name;
@@ -204,12 +204,12 @@ void CharactersGroup::load_monsters_max_id_return()
     CharactersGroup::serverWaitedToBeReady--;
 }
 
-BaseClassSwitch::EpollObjectType CharactersGroup::getType() const
+BaseClassSwitch::EventLoopObjectType CharactersGroup::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Client;
+    return BaseClassSwitch::EventLoopObjectType::Client;
 }
 
-CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(EpollClientLoginMaster * const client, const uint32_t &uniqueKey, const std::string &host,
+CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(EventLoopClientLoginMaster * const client, const uint32_t &uniqueKey, const std::string &host,
                                                                               const uint16_t &port, const std::string &metaData, const uint32_t &logicalGroupIndex,
                                                                               const uint16_t &currentPlayer, const uint16_t &maxPlayer,const std::unordered_set<uint32_t> &lockedAccount)
 {
@@ -284,7 +284,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
                         {
                             if(j->second.lockedAccountByGameserver.find(*i)!=j->second.lockedAccountByGameserver.cend())
                             {
-                                static_cast<EpollClientLoginMaster *>(j->second.link)->disconnectForDuplicateConnexionDetected(*i);
+                                static_cast<EventLoopClientLoginMaster *>(j->second.link)->disconnectForDuplicateConnexionDetected(*i);
                                 gameServers[j->first].lockedAccountByGameserver.erase(*i);
                             }
                             ++j;
@@ -310,13 +310,13 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
     }
 
     gameServers[uniqueKey]=tempServer;
-    EpollClientLoginMaster * const clientCast=client;
+    EventLoopClientLoginMaster * const clientCast=client;
     clientCast->uniqueKey=uniqueKey;
 
     return &gameServers[uniqueKey];
 }
 
-void CharactersGroup::removeGameServerUniqueKey(EpollClientLoginMaster * const client)
+void CharactersGroup::removeGameServerUniqueKey(EventLoopClientLoginMaster * const client)
 {
     const uint32_t &uniqueKey=client->uniqueKey;
 

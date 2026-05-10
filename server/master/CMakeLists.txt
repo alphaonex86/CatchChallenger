@@ -17,24 +17,24 @@ find_package(Threads REQUIRED)
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
 
 set(_master_sources
-    main-epoll-login-master.cpp
-    EpollClientLoginMaster.cpp
-    EpollServerLoginMaster.cpp
-    EpollClientLoginMasterStaticVar.cpp
-    EpollClientLoginMasterProtocolParsing.cpp
+    main-unix-login-master.cpp
+    EventLoopClientLoginMaster.cpp
+    EventLoopServerLoginMaster.cpp
+    EventLoopClientLoginMasterStaticVar.cpp
+    EventLoopClientLoginMasterProtocolParsing.cpp
     CharactersGroup.cpp
     PlayerUpdaterToLogin.cpp
     PurgeTheLockedAccount.cpp
     CheckTimeoutGameServer.cpp
     AutomaticPingSend.cpp
     TimeRangeEvent.cpp
-    # epoll/ files
-    ../epoll/EpollTimer.cpp
-    ../epoll/Epoll.cpp
-    ../epoll/EpollGenericServer.cpp
-    ../epoll/EpollClient.cpp
-    ../epoll/EpollSocket.cpp
-    ../epoll/db/EpollPostgresql.cpp
+    # unix/ files
+    ../cli/EventLoopTimer.cpp
+    ../cli/EventLoop.cpp
+    ../cli/EventLoopGenericServer.cpp
+    ../cli/EventLoopClient.cpp
+    ../cli/SocketUtil.cpp
+    ../cli/db/EventLoopPostgresql.cpp
     # server/base subset (SQL plumbing comes via catchchallenger_server_sql).
     ../base/BaseServer/BaseServerMasterLoadDictionary.cpp
     ../base/BaseServer/BaseServerMasterSendDatapack.cpp
@@ -62,7 +62,7 @@ add_executable(catchchallenger-server-master ${_master_sources})
 
 target_include_directories(catchchallenger-server-master PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../epoll
+    ${CMAKE_CURRENT_SOURCE_DIR}/../unix
     ${CMAKE_CURRENT_SOURCE_DIR}/../base
 )
 
@@ -90,6 +90,21 @@ target_compile_definitions(catchchallenger-server-master PRIVATE
 if(EXTERNALLIBZSTD)
     target_link_libraries(catchchallenger-server-master PRIVATE ${ZSTD_LIBRARY})
 endif()
+
+# io_uring is MANDATORY for this binary. CCCommon.cmake only auto-finds
+# liburing when CATCHCHALLENGER_IO_URING=ON; mirror the lookup here so
+# this binary's dependency is independent of that user-facing toggle.
+if(NOT LIBURING_LIBRARY)
+    find_library(LIBURING_LIBRARY NAMES uring)
+    find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)
+endif()
+if(NOT LIBURING_LIBRARY)
+    message(FATAL_ERROR
+        "catchchallenger-server-master requires liburing (mandatory io_uring backend).")
+endif()
+target_compile_definitions(catchchallenger-server-master PRIVATE CATCHCHALLENGER_IO_URING)
+target_include_directories(catchchallenger-server-master PRIVATE ${LIBURING_INCLUDE_DIR})
+target_link_libraries(catchchallenger-server-master PRIVATE ${LIBURING_LIBRARY})
 
 find_program(MOLD_EXE mold)
 if(MOLD_EXE)

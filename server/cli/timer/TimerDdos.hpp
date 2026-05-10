@@ -1,9 +1,9 @@
 #ifndef TIMERDDOS_H
 #define TIMERDDOS_H
 
-#include "../EpollTimer.hpp"
+#include "../EventLoopTimer.hpp"
 
-class TimerDdos : public EpollTimer
+class TimerDdos : public EventLoopTimer
 {
 public:
     TimerDdos();

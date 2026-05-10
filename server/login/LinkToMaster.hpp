@@ -2,14 +2,14 @@
 #define LOGINLINKTOMASTER_H
 
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../epoll/EpollClient.hpp"
+#include "../cli/EventLoopClient.hpp"
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
 namespace CatchChallenger {
-class LinkToMaster : public EpollClient, public ProtocolParsingInputOutput
+class LinkToMaster : public EventLoopClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToMaster(
@@ -28,7 +28,7 @@ public:
     Stat stat;
     struct DataForSelectedCharacterReturn
     {
-        void * client;//EpollClientLoginSlave *
+        void * client;//EventLoopClientLoginSlave *
         uint8_t client_query_id;
         uint32_t serverUniqueKey;
         uint8_t charactersGroupIndex;
@@ -48,7 +48,7 @@ public:
     static unsigned char queryNumberToCharacterGroup[CATCHCHALLENGER_MAXPROTOCOLQUERY];
 
     std::vector<uint8_t> queryNumberList;
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
     void parseIncommingData();
     static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     bool trySelectCharacter(void * const client,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId);

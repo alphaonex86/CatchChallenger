@@ -4,7 +4,7 @@ testinggateway.py — CatchChallenger gateway test.
 
 Tests the catchchallenger-gateway binary under valgrind memcheck:
 
-  1. Build server-cli-epoll (file-db backend), gateway, qtcpu800x600 client
+  1. Build server-cli (file-db backend), gateway, qtcpu800x600 client
      all with -std=c++11.
   2. For each datapack in (CatchChallenger-datapack, datapack-pkmn) and
      for each maincode + subcode combination found under map/main/<mc>/sub/<sc>/:
@@ -60,15 +60,15 @@ DATAPACKS = [
     "/home/user/Desktop/CatchChallenger/datapack-pkmn",
 ]
 
-SERVER_FILEDB_PRO = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
+SERVER_FILEDB_PRO = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
 GATEWAY_PRO       = os.path.join(ROOT, "server/gateway/gateway.pro")
 CLIENT_CPU_PRO    = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 
-SERVER_BUILD  = build_paths.build_path("server/epoll/build/testing-gateway-backend" + _DIAG_SUFFIX)
+SERVER_BUILD  = build_paths.build_path("server/cli/build/testing-gateway-backend" + _DIAG_SUFFIX)
 GATEWAY_BUILD = build_paths.build_path("server/gateway/build/testing-gateway" + _DIAG_SUFFIX)
 CLIENT_BUILD  = build_paths.build_path("client/qtcpu800x600/build/testing-gateway-cpu" + _DIAG_SUFFIX)
 
-SERVER_BIN  = "catchchallenger-server-cli-epoll"
+SERVER_BIN  = "catchchallenger-server-cli"
 GATEWAY_BIN = "catchchallenger-gateway"
 CLIENT_BIN  = "catchchallenger"
 
@@ -322,7 +322,7 @@ def write_backend_settings(maincode, subcode, http_url):
 def write_gateway_settings(rewrite_base, rewrite_main_sub):
     """Gateway reads gateway.xml from FacilityLibGeneral::applicationDirPath
     (== GATEWAY_BUILD here). The rewrite URLs MUST be non-empty — gateway
-    aborts otherwise (EpollServerLoginSlave.cpp:147,162). For the
+    aborts otherwise (EventLoopServerLoginSlave.cpp:147,162). For the
     "no http via gateway" cases we therefore set unreachable placeholders
     (the client falls back to the in-protocol datapack stream)."""
     xml = os.path.join(GATEWAY_BUILD, "gateway.xml")
@@ -336,7 +336,7 @@ def write_gateway_settings(rewrite_base, rewrite_main_sub):
         '    <destination_port value="{bport}"/>\n'
         '    <destination_proxy_ip value=""/>\n'
         # Gateway aborts when destination_proxy_port is 0 OR > 65535
-        # (EpollServerLoginSlave.cpp:129-133), regardless of whether
+        # (EventLoopServerLoginSlave.cpp:129-133), regardless of whether
         # destination_proxy_ip is empty. We don't need an upstream
         # SOCKS/HTTP proxy for the test, but the validator requires a
         # syntactically-valid port, so pin to 1 (low port, won't ever

@@ -1,7 +1,7 @@
 #include "LinkToGameServer.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include <iostream>
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CompressionProtocol.hpp"
 #include "../../general/base/cpp11addition.hpp"
@@ -551,9 +551,9 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
             uint8_t previousGatewayNumber=data[pos];
             pos++;
             if(previousGatewayNumber<255 && previousGatewayNumber>0)
-                if(EpollServerLoginSlave::epollServerLoginSlave->gatewayNumber<(previousGatewayNumber+1))
+                if(EventLoopServerLoginSlave::unixServerLoginSlave->gatewayNumber<(previousGatewayNumber+1))
                 {
-                    EpollServerLoginSlave::epollServerLoginSlave->gatewayNumber=previousGatewayNumber+1;
+                    EventLoopServerLoginSlave::unixServerLoginSlave->gatewayNumber=previousGatewayNumber+1;
                     if(client!=NULL)
                     {
                         client->sendDatapackProgression(0);
@@ -847,10 +847,10 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
 
             //here the GAMESERVER is LOGINSERVER, Token to connect on game server
             int socketFd=-1;
-            if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+            if(strlen(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip)<=0)
                 socketFd=LinkToGameServer::tryConnect(selectedServer.host.c_str(),selectedServer.port,5,1);
             else
-                socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port,5,1);
+                socketFd=LinkToGameServer::tryConnect(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip,EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_port,5,1);
             if(Q_LIKELY(socketFd>=0))
             {
                 std::cout << "tryConnect() to game server finish and success, stat: " << std::to_string(stat) << ", queryIdToReconnect: " << std::to_string(queryNumber) << std::endl;
@@ -863,10 +863,10 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             else
             {
                 stat=LinkToGameServer::Stat::Unconnected;
-                /*static_cast<EpollClientLoginSlave * const>(client)
+                /*static_cast<EventLoopClientLoginSlave * const>(client)
                 ->parseNetworkReadError("not able to connect on the game server as proxy, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");*/
                 //message done by LinkToGameServer::tryConnect()
-                static_cast<EpollClientLoginSlave *>(client)->disconnectClient();
+                static_cast<EventLoopClientLoginSlave *>(client)->disconnectClient();
                 std::cout << "tryConnect() fail, stat: " << std::to_string(stat) << ", queryIdToReconnect: " << std::to_string(queryNumber) << std::endl;
             }
             selectedServer.host.clear();
@@ -1154,13 +1154,13 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         {
             switch(client->datapackStatus)
             {
-                case EpollClientLoginSlave::DatapackStatus::Base:
+                case EventLoopClientLoginSlave::DatapackStatus::Base:
                 {
                     DatapackDownloaderBase *downloader=DatapackDownloaderBase::datapackDownloaderBase;
                     downloader->datapackFileList(data,size);
                 }
                 break;
-                case EpollClientLoginSlave::DatapackStatus::Main:
+                case EventLoopClientLoginSlave::DatapackStatus::Main:
                 {
                     DatapackDownloaderMainSub *downloader=NULL;
                     if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
@@ -1171,7 +1171,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     downloader->datapackFileList(data,size);
                 }
                 break;
-                case EpollClientLoginSlave::DatapackStatus::Sub:
+                case EventLoopClientLoginSlave::DatapackStatus::Sub:
                 {
                     DatapackDownloaderMainSub *downloader=NULL;
                     if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())

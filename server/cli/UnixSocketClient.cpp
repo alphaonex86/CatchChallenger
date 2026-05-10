@@ -1,4 +1,5 @@
-#include "EpollUnixSocketClient.h"
+#ifndef _WIN32
+#include "UnixSocketClient.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -9,35 +10,35 @@
 #include <errno.h>
 #include <string.h>
 #include "../base/GlobalServerData.h"
-#include "Epoll.h"
-#include "EpollSocket.h"
+#include "EventLoop.h"
+#include "SocketUtil.h"
 
 using namespace CatchChallenger;
 
-EpollUnixSocketClient::EpollUnixSocketClient(const int &infd) :
+UnixSocketClient::UnixSocketClient(const int &infd) :
     infd(infd)
 {
 }
 
-EpollUnixSocketClient::~EpollUnixSocketClient()
+UnixSocketClient::~UnixSocketClient()
 {
     close();
 }
 
-void EpollUnixSocketClient::close()
+void UnixSocketClient::close()
 {
     if(infd!=-1)
     {
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
-        Epoll::epoll.ctl(EPOLL_CTL_DEL, infd, NULL);
+        EventLoop::loop.ctl(EPOLL_CTL_DEL, infd, NULL);
         ::close(infd);
         //std::cout << "Closed connection on descriptor " << infd << std::endl;
         infd=-1;
     }
 }
 
-ssize_t EpollUnixSocketClient::read(char *buffer,const size_t &bufferSize)
+ssize_t UnixSocketClient::read(char *buffer,const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
@@ -56,7 +57,7 @@ ssize_t EpollUnixSocketClient::read(char *buffer,const size_t &bufferSize)
     return count;
 }
 
-ssize_t EpollUnixSocketClient::write(const char *buffer, const size_t &bufferSize)
+ssize_t UnixSocketClient::write(const char *buffer, const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
@@ -79,24 +80,25 @@ ssize_t EpollUnixSocketClient::write(const char *buffer, const size_t &bufferSiz
         return size;
 }
 
-BaseClassSwitch::EpollObjectType EpollUnixSocketClient::getType() const
+BaseClassSwitch::EventLoopObjectType UnixSocketClient::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::UnixClient;
+    return BaseClassSwitch::EventLoopObjectType::EventLoopClient;
 }
 
-bool EpollUnixSocketClient::isValid() const
+bool UnixSocketClient::isValid() const
 {
     return infd!=-1;
 }
 
-long int EpollUnixSocketClient::bytesAvailable() const
+long int UnixSocketClient::bytesAvailable() const
 {
     if(infd==-1)
         return -1;
     unsigned long int nbytes;
-    // gives shorter than true amounts on Unix domain sockets.
+    // gives shorter than true amounts on EventLoop domain sockets.
     if(ioctl(infd, FIONREAD, &nbytes)>=0)
         return nbytes;
     else
         return -1;
 }
+#endif // !_WIN32

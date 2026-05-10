@@ -290,7 +290,7 @@ ssize_t ProtocolParsingBase::writeFileToSocket(int file_fd,off_t *offset,size_t 
     //into a stack buffer and ship it through the virtual writeToSocket();
     //*offset is advanced only by the bytes the socket actually accepted,
     //so the caller's loop converges identically to the sendfile(2) fast
-    //path used by the Linux/epoll override (Epoll::sendFile).
+    //path used by the Linux/unix override (EventLoop::sendFile).
     //
     //Server base stays plain C++ here — no QFile / no Qt I/O — so this
     //path also works for any future no-Qt non-Linux build.

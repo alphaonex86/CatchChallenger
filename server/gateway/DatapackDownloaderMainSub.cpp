@@ -8,7 +8,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/GeneralVariable.hpp"
 #include "LinkToGameServer.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 
 //need host + port here to have datapack base
 
@@ -257,12 +257,12 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
     if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.size()<=1)
     {
         //mDatapackMain(mDatapackBase+"map/main/"+mainDatapackCode+"/"),
-        EpollClientLoginSlave::datapack_file_main[mainDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackMain);
+        EventLoopClientLoginSlave::datapack_file_main[mainDatapackCode].datapack_file_hash_cache=EventLoopClientLoginSlave::datapack_file_list(mDatapackMain);
         if(!mDatapackSub.empty())
             //mDatapackSub=mDatapackBase+"map/main/"+mainDatapackCode+"/sub/"+subDatapackCode+"/";
-            EpollClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackSub);
+            EventLoopClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache=EventLoopClientLoginSlave::datapack_file_list(mDatapackSub);
         else
-            EpollClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache.clear();
+            EventLoopClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache.clear();
     }
 
     resetAll();
@@ -287,7 +287,7 @@ void DatapackDownloaderMainSub::sendDatapackProgressionMainSub(void * client)
         std::cerr << "DatapackDownloaderBase::sendDatapackProgressionMainSub, client is NULL" << std::endl;
         return;
     }
-    EpollClientLoginSlave * const client_real=static_cast<EpollClientLoginSlave *>(client);
+    EventLoopClientLoginSlave * const client_real=static_cast<EventLoopClientLoginSlave *>(client);
     uint8_t progression=0;//do the adaptative from curl progression
     if(clientInSuspend.empty())
         progression=0;//not specific to base client, put 0 as generic value

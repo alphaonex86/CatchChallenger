@@ -1,9 +1,9 @@
 #ifndef TIMERPurgeTokenAuthList_H
 #define TIMERPurgeTokenAuthList_H
 
-#include "../EpollTimer.hpp"
+#include "../EventLoopTimer.hpp"
 
-class TimerPurgeTokenAuthList : public EpollTimer
+class TimerPurgeTokenAuthList : public EventLoopTimer
 {
 public:
     TimerPurgeTokenAuthList();

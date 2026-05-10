@@ -2,7 +2,7 @@
 build_paths.py — shared "where do testing*.py drop their build artifacts" rule.
 
 Every testing*.py used to materialise its build / staging dirs *inside* the
-source tree (e.g. server/epoll/build/testing-filedb*, client/qtopengl/build/…,
+source tree (e.g. server/cli/build/testing-filedb*, client/qtopengl/build/…,
 tools/map2png/build/…). That polluted /home/user/Desktop/CatchChallenger/working/
 with *.o, moc_*, ui_*, qrc_*.cpp, CMakeFiles/, CMakeCache.txt, __pycache__/.
 

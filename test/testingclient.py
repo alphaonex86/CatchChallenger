@@ -70,10 +70,10 @@ NPROC      = str(multiprocessing.cpu_count())
 
 DATAPACKS       = _config["paths"]["datapacks"]
 
-SERVER_PRO      = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
-SERVER_BUILD    = build_paths.build_path("server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
-SERVER_REF_BUILD= build_paths.build_path("server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
-SERVER_BIN_NAME = "catchchallenger-server-cli-epoll"
+SERVER_PRO      = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
+SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb" + _DIAG_SUFFIX)
+SERVER_REF_BUILD= build_paths.build_path("server/cli/build/catchchallenger-server-filedb-llvm-Debug")
+SERVER_BIN_NAME = "catchchallenger-server-cli"
 
 CLIENT_CPU_PRO   = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 CLIENT_CPU_BUILD = build_paths.build_path("client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
@@ -778,7 +778,7 @@ def main():
     # it but cleans up the remote work dir afterwards, so testingclient.py
     # cannot rely on it being present.
     remote_pro_rels = [
-        "server/epoll/catchchallenger-server-filedb.pro",
+        "server/cli/catchchallenger-server-filedb.pro",
         os.path.relpath(CLIENT_CPU_PRO, ROOT),
         os.path.relpath(CLIENT_GL_PRO, ROOT),
     ]
@@ -797,7 +797,7 @@ def main():
                                   for c in failed_cases)
         if needs_remote_server:
             remote_threads, remote_results, remote_lock = start_remote_builds(
-                ["server/epoll/catchchallenger-server-filedb.pro"], diag=DIAG)
+                ["server/cli/catchchallenger-server-filedb.pro"], diag=DIAG)
             log_info("resume mode: rebuilding server-filedb on remote (needed by failing cases)")
         else:
             remote_threads, remote_results, remote_lock = [], [], None
@@ -1227,7 +1227,7 @@ def main():
         # was just built.
         _cxx_suffix = f"-{_cxx_ver[-1]}" if _cxx_ver else ""
         remote_filedb_build = f"{remote_build_root}/catchchallenger-server-filedb{_cxx_suffix}"
-        remote_filedb_bin = f"{remote_filedb_build}/catchchallenger-server-cli-epoll"
+        remote_filedb_bin = f"{remote_filedb_build}/catchchallenger-server-cli"
 
         try:
             if dp_src is None:

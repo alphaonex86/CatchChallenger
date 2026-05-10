@@ -3,12 +3,12 @@
 
 #ifdef CATCHCHALLENGER_SERVER
 
-#include "../epoll/EpollTimer.hpp"
+#include "../cli/EventLoopTimer.hpp"
 #include <stdint.h>
 
 namespace CatchChallenger {
 class CheckTimeoutGameServer
-        : public EpollTimer
+        : public EventLoopTimer
 {
 public:
     explicit CheckTimeoutGameServer(const uint32_t checkTimeoutGameServerMSecond);

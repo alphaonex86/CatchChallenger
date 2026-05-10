@@ -1,5 +1,5 @@
-#include "EpollClientLoginSlave.hpp"
-#include "EpollServerLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
+#include "EventLoopServerLoginSlave.hpp"
 #include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
@@ -7,7 +7,7 @@
 
 using namespace CatchChallenger;
 
-void EpollClientLoginSlave::doDDOSComputeAll()
+void EventLoopClientLoginSlave::doDDOSComputeAll()
 {
     unsigned int index=0;
     while(index<client_list.size())
@@ -17,14 +17,14 @@ void EpollClientLoginSlave::doDDOSComputeAll()
     }
 }
 
-void EpollClientLoginSlave::doDDOSCompute()
+void EventLoopClientLoginSlave::doDDOSCompute()
 {
     movePacketKick.flush();
     chatPacketKick.flush();
     otherPacketKick.flush();
 }
 
-bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool EventLoopClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
@@ -37,22 +37,22 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
     {
         //Protocol initialization for client
         case 0xA0:
-            if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
+            if(memcmp(data,EventLoopClientLoginSlave::protocolHeaderToMatch,sizeof(EventLoopClientLoginSlave::protocolHeaderToMatch))==0)
             {
-                stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
+                stat=EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnecting;
                 /// \todo do the async connect
                 /// linkToGameServer->stat=Stat::Connecting;
                 int socketFd=-1;
-                if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
-                    socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip.c_str(),EpollServerLoginSlave::epollServerLoginSlave->destination_server_port,5,1);
+                if(strlen(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip)<=0)
+                    socketFd=LinkToGameServer::tryConnect(EventLoopServerLoginSlave::unixServerLoginSlave->destination_server_ip.c_str(),EventLoopServerLoginSlave::unixServerLoginSlave->destination_server_port,5,1);
                 else
-                    socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port,5,1);
+                    socketFd=LinkToGameServer::tryConnect(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip,EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_port,5,1);
                 if(socketFd>=0)
                 {
-                    stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
+                    stat=EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnected;
                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
                     this->linkToGameServer=linkToGameServer;
-                    if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                    if(strlen(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip)<=0)
                         linkToGameServer->stat=LinkToGameServer::Stat::WaitingProtocolHeader;
                     else
                         linkToGameServer->stat=LinkToGameServer::Stat::WaitingProxy;
@@ -60,11 +60,11 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                     linkToGameServer->protocolQueryNumber=queryNumber;
                     //send the protocol header straight away (no SSL preamble byte)
                     linkToGameServer->setConnexionSettings();
-                    if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                    if(strlen(EventLoopServerLoginSlave::unixServerLoginSlave->destination_proxy_ip)<=0)
                         linkToGameServer->sendProtocolHeader();
                     else
-                        linkToGameServer->sendProxyRequest(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port);
-                    /*int s = EpollSocket::make_non_blocking(socketFd);
+                        linkToGameServer->sendProxyRequest(EventLoopServerLoginSlave::unixServerLoginSlave->destination_server_ip,EventLoopServerLoginSlave::unixServerLoginSlave->destination_server_port);
+                    /*int s = SocketUtil::make_non_blocking(socketFd);
                     if(s == -1)
                         std::cerr << "unable to make to socket non blocking" << std::endl;*/
                 }
@@ -92,9 +92,9 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
     return true;
 }
 
-bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
+bool EventLoopClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char * const data,const unsigned int &size)
 {
-    if(stat==EpollClientLoginStat::GameServerConnecting)
+    if(stat==EventLoopClientLoginStat::GameServerConnecting)
     {
         parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return false;
@@ -133,7 +133,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char 
             otherPacketKick.incrementLastValue();
         break;
     }
-    if(stat==EpollClientLoginStat::GameServerConnected)
+    if(stat==EventLoopClientLoginStat::GameServerConnected)
     {
         uint8_t fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
         if(fixedSize!=0xFE)
@@ -176,7 +176,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char 
 }
 
 //have query with reply
-bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool EventLoopClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
@@ -193,12 +193,12 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
 
 
 
-    if(stat==EpollClientLoginStat::GameServerConnecting)
+    if(stat==EventLoopClientLoginStat::GameServerConnecting)
     {
         parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return false;
     }
-    if(stat==EpollClientLoginStat::GameServerConnected)
+    if(stat==EventLoopClientLoginStat::GameServerConnected)
     {
         switch(mainCodeType)
         {
@@ -483,9 +483,9 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
 }
 
 //send reply
-bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool EventLoopClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    if(stat==EpollClientLoginStat::GameServerConnecting)
+    if(stat==EventLoopClientLoginStat::GameServerConnecting)
     {
         parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return false;
@@ -501,7 +501,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         parseNetworkReadError("linkToGameServer==NULL");
         return false;
     }
-    if(stat==EpollClientLoginStat::GameServerConnected)
+    if(stat==EventLoopClientLoginStat::GameServerConnected)
     {
         if(Q_LIKELY(linkToGameServer))
         {
@@ -541,7 +541,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         }
         else
         {
-            parseNetworkReadError("linkToGameServer==NULL when stat==EpollClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
+            parseNetworkReadError("linkToGameServer==NULL when stat==EventLoopClientLoginStat::GameServerConnected main ident: "+std::to_string(mainCodeType));
             return false;
         }
     }
@@ -552,7 +552,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
     return false;
 }
 
-void EpollClientLoginSlave::parseNetworkReadError(const std::string &errorString)
+void EventLoopClientLoginSlave::parseNetworkReadError(const std::string &errorString)
 {
     errorParsingLayer(errorString);
 }

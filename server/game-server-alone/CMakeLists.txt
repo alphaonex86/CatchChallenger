@@ -1,6 +1,6 @@
 # server/game-server-alone/CMakeLists.txt — catchchallenger-game-server-alone binary.
 # Self-contained, one binary. Same big source set as the cli-epoll exec
-# under server/epoll/, but compiled with CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+# under server/cli/, but compiled with CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 # + DATAPACK_ONLYBYMIRROR (instead of _ALLINONESERVER) AND adds
 # LinkToMaster + PlayerUpdaterToMaster + TimerPurgeTokenAuthList sources.
 
@@ -15,30 +15,30 @@ include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 find_package(Threads REQUIRED)
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
 
-# Inlined source list — server/epoll/ also references these, but each
+# Inlined source list — server/cli/ also references these, but each
 # binary is its own CMake project, so duplicate the list rather than
 # share a PARENT_SCOPE variable.
-set(_epoll_sources
-    ${CC_REPO_ROOT}/server/epoll/EpollSocket.cpp
-    ${CC_REPO_ROOT}/server/epoll/EpollClient.cpp
-    ${CC_REPO_ROOT}/server/epoll/EpollClientList.cpp
-    ${CC_REPO_ROOT}/server/epoll/EpollServer.cpp
-    ${CC_REPO_ROOT}/server/epoll/Epoll.cpp
-    ${CC_REPO_ROOT}/server/epoll/EpollTimer.cpp
-    ${CC_REPO_ROOT}/server/epoll/EpollGenericServer.cpp
-    ${CC_REPO_ROOT}/server/epoll/BaseServerEpoll.cpp
-    ${CC_REPO_ROOT}/server/epoll/ServerPrivateVariablesEpoll.cpp
-    ${CC_REPO_ROOT}/server/epoll/ClientWithMapEpoll.cpp
-    ${CC_REPO_ROOT}/server/epoll/main-epoll.cpp
-    ${CC_REPO_ROOT}/server/epoll/main-epoll2.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/TimerCityCapture.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/TimerSendInsertMoveRemove.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/TimerPositionSync.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/TimerDdos.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/TimerEvents.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/TimeRangeEvent.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/PlayerUpdaterEpoll.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/TimeRangeEventScan.cpp
+set(_unix_sources
+    ${CC_REPO_ROOT}/server/cli/SocketUtil.cpp
+    ${CC_REPO_ROOT}/server/cli/EventLoopClient.cpp
+    ${CC_REPO_ROOT}/server/cli/EventLoopClientList.cpp
+    ${CC_REPO_ROOT}/server/cli/EventLoopServer.cpp
+    ${CC_REPO_ROOT}/server/cli/EventLoop.cpp
+    ${CC_REPO_ROOT}/server/cli/EventLoopTimer.cpp
+    ${CC_REPO_ROOT}/server/cli/EventLoopGenericServer.cpp
+    ${CC_REPO_ROOT}/server/cli/BaseServerEventLoop.cpp
+    ${CC_REPO_ROOT}/server/cli/ServerPrivateVariablesEventLoop.cpp
+    ${CC_REPO_ROOT}/server/cli/ClientWithMapEventLoop.cpp
+    ${CC_REPO_ROOT}/server/cli/main-unix.cpp
+    ${CC_REPO_ROOT}/server/cli/main-unix2.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimerCityCapture.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimerSendInsertMoveRemove.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimerPositionSync.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimerDdos.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimerEvents.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimeRangeEvent.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/PlayerUpdaterEventLoop.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimeRangeEventScan.cpp
 )
 
 set(_extra_sources
@@ -46,19 +46,19 @@ set(_extra_sources
     LinkToMasterProtocolParsing.cpp
     LinkToMasterStaticVar.cpp
     timer/PlayerUpdaterToMaster.cpp
-    ${CC_REPO_ROOT}/server/epoll/timer/TimerPurgeTokenAuthList.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimerPurgeTokenAuthList.cpp
     # game-server-alone always uses PostgreSQL.
-    ${CC_REPO_ROOT}/server/epoll/db/EpollPostgresql.cpp
+    ${CC_REPO_ROOT}/server/cli/db/EventLoopPostgresql.cpp
 )
 
 add_executable(catchchallenger-game-server-alone
-    ${_epoll_sources}
+    ${_unix_sources}
     ${_extra_sources}
 )
 
 target_include_directories(catchchallenger-game-server-alone PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CC_REPO_ROOT}/server/epoll
+    ${CC_REPO_ROOT}/server/cli
 )
 
 target_link_libraries(catchchallenger-game-server-alone PRIVATE
@@ -83,14 +83,18 @@ if(CATCHCHALLENGER_CACHE_HPS)
     target_compile_definitions(catchchallenger-game-server-alone PRIVATE CATCHCHALLENGER_CACHE_HPS)
 endif()
 
-if(CATCHCHALLENGER_POLL)
-    target_compile_definitions(catchchallenger-game-server-alone PRIVATE CATCHCHALLENGER_POLL)
+# io_uring is MANDATORY for this binary. POLL toggle no longer applies here.
+if(NOT LIBURING_LIBRARY)
+    find_library(LIBURING_LIBRARY NAMES uring)
+    find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)
 endif()
-if(CATCHCHALLENGER_IO_URING)
-    target_compile_definitions(catchchallenger-game-server-alone PRIVATE CATCHCHALLENGER_IO_URING)
-    target_include_directories(catchchallenger-game-server-alone PRIVATE ${LIBURING_INCLUDE_DIR})
-    target_link_libraries(catchchallenger-game-server-alone PRIVATE ${LIBURING_LIBRARY})
+if(NOT LIBURING_LIBRARY)
+    message(FATAL_ERROR
+        "catchchallenger-game-server-alone requires liburing (mandatory io_uring backend).")
 endif()
+target_compile_definitions(catchchallenger-game-server-alone PRIVATE CATCHCHALLENGER_IO_URING)
+target_include_directories(catchchallenger-game-server-alone PRIVATE ${LIBURING_INCLUDE_DIR})
+target_link_libraries(catchchallenger-game-server-alone PRIVATE ${LIBURING_LIBRARY})
 
 target_link_libraries(catchchallenger-game-server-alone PRIVATE ${ZSTD_LIBRARY})
 

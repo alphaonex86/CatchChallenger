@@ -1,5 +1,5 @@
 
-#include "EpollClientToServer.hpp"
+#include "EventLoopClientToServer.hpp"
 
 #include <iostream>
 #include <unistd.h>
@@ -9,35 +9,35 @@
 #include <cstring>
 #include <errno.h>
 #include <string.h>
-#include "Epoll.hpp"
-#include "EpollSocket.hpp"
+#include "EventLoop.hpp"
+#include "SocketUtil.hpp"
 
 using namespace CatchChallenger;
 
-EpollClientToServer::EpollClientToServer(const int &infd) :
+EventLoopClientToServer::EventLoopClientToServer(const int &infd) :
     infd(infd)
 {
 }
 
-EpollClientToServer::~EpollClientToServer()
+EventLoopClientToServer::~EventLoopClientToServer()
 {
     close();
 }
 
-void EpollClientToServer::close()
+void EventLoopClientToServer::close()
 {
     if(infd!=-1)
     {
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
-        Epoll::epoll.ctl(EPOLL_CTL_DEL, infd, NULL);
+        EventLoop::loop.ctl(EPOLL_CTL_DEL, infd, NULL);
         ::close(infd);
         //std::cout << "Closed connection on descriptor " << infd << std::endl;
         infd=-1;
     }
 }
 
-ssize_t EpollClientToServer::read(char *buffer,const size_t &bufferSize)
+ssize_t EventLoopClientToServer::read(char *buffer,const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
@@ -56,7 +56,7 @@ ssize_t EpollClientToServer::read(char *buffer,const size_t &bufferSize)
     return count;
 }
 
-ssize_t EpollClientToServer::write(const char *buffer, const size_t &bufferSize)
+ssize_t EventLoopClientToServer::write(const char *buffer, const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
@@ -79,26 +79,26 @@ ssize_t EpollClientToServer::write(const char *buffer, const size_t &bufferSize)
         return size;
 }
 
-void EpollClientToServer::flush()
+void EventLoopClientToServer::flush()
 {
 }
 
-BaseClassSwitch::EpollObjectType EpollClientToServer::getType() const
+BaseClassSwitch::EventLoopObjectType EventLoopClientToServer::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Client;
+    return BaseClassSwitch::EventLoopObjectType::Client;
 }
 
-bool EpollClientToServer::isValid() const
+bool EventLoopClientToServer::isValid() const
 {
     return infd!=-1;
 }
 
-long int EpollClientToServer::bytesAvailable() const
+long int EventLoopClientToServer::bytesAvailable() const
 {
     if(infd==-1)
         return -1;
     unsigned long int nbytes;
-    // gives shorter than true amounts on Unix domain sockets.
+    // gives shorter than true amounts on EventLoop domain sockets.
     if(ioctl(infd, FIONREAD, &nbytes)>=0)
         return nbytes;
     else

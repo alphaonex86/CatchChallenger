@@ -6,7 +6,7 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "EpollServer.hpp"
+#include "EventLoopServer.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
 #endif
@@ -18,7 +18,7 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data);
 #endif
 
 void send_settings(
-    EpollServer *server
+    EventLoopServer *server
 , TinyXMLSettings *settings,
         std::string &master_host,
         uint16_t &master_port,

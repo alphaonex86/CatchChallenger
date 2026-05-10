@@ -1,5 +1,5 @@
 #include "TimerDdos.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 
 TimerDdos::TimerDdos()
 {
@@ -8,5 +8,5 @@ TimerDdos::TimerDdos()
 
 void TimerDdos::exec()
 {
-    CatchChallenger::EpollClientLoginSlave::doDDOSComputeAll();
+    CatchChallenger::EventLoopClientLoginSlave::doDDOSComputeAll();
 }

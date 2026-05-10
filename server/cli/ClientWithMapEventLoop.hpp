@@ -1,13 +1,13 @@
-#ifndef CATCHCHALLENGER_CLIENTMAPMANAGEMENTEPOLL_H
-#define CATCHCHALLENGER_CLIENTMAPMANAGEMENTEPOLL_H
+#ifndef CATCHCHALLENGER_CLIENTMAPMANAGEMENT_EVENT_LOOP_H
+#define CATCHCHALLENGER_CLIENTMAPMANAGEMENT_EVENT_LOOP_H
 
-#include "EpollClient.hpp"
+#include "EventLoopClient.hpp"
 #include "../base/MapManagement/ClientWithMap.hpp"
 
-class ClientWithMapEpoll : public CatchChallenger::EpollClient, public CatchChallenger::ClientWithMap
+class ClientWithMapEventLoop : public CatchChallenger::EventLoopClient, public CatchChallenger::ClientWithMap
 {
 public:
-    ClientWithMapEpoll(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
+    ClientWithMapEventLoop(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
     void closeSocket() override;
     bool isValid() override;
     ssize_t readFromSocket(char * data, const size_t &size) override;

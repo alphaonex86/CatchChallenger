@@ -53,8 +53,8 @@ CLIENT_GL_BUILD_WIN  = build_paths.build_path("client/qtopengl/build/testing-win
 WIN_EXE_NAME         = "catchchallenger.exe"
 
 #local server-filedb that the multi-mode wine client connects back to.
-SERVER_BUILD    = build_paths.build_path("server/epoll/build/testing-filedb")
-SERVER_BIN_NAME = "catchchallenger-server-cli-epoll"
+SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb")
+SERVER_BIN_NAME = "catchchallenger-server-cli"
 
 SERVER_HOST = _config["server_host"]
 SERVER_PORT = str(_config["server_port"])
@@ -1041,7 +1041,7 @@ def main():
             import cmake_helpers as _ch
             ensure_dir(SERVER_BUILD)
             pro = os.path.join(ROOT,
-                               "server/epoll/catchchallenger-server-filedb.pro")
+                               "server/cli/catchchallenger-server-filedb.pro")
             # testingcompilationwindows.py doesn't support sanitizer /
             # valgrind diag modes (cross-build with MXE has no clang/
             # gcc-debug toolchain wired up for them), so pass None for

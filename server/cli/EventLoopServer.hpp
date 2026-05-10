@@ -1,16 +1,16 @@
-#ifndef EPOLL_SERVER_H
-#define EPOLL_SERVER_H
+#ifndef EVENT_LOOP_SERVER_H
+#define EVENT_LOOP_SERVER_H
 
-#include "EpollGenericServer.hpp"
-#include "BaseServerEpoll.hpp"
+#include "EventLoopGenericServer.hpp"
+#include "BaseServerEventLoop.hpp"
 #include "../base/ServerStructures.hpp"
 
 namespace CatchChallenger {
-class EpollServer : public CatchChallenger::EpollGenericServer, public BaseServerEpoll
+class EventLoopServer : public CatchChallenger::EventLoopGenericServer, public BaseServerEventLoop
 {
 public:
-    EpollServer();
-    ~EpollServer();
+    EventLoopServer();
+    ~EventLoopServer();
     void initTheDatabase();
     bool tryListen();
     void preload_1_the_data();
@@ -27,4 +27,4 @@ private:
 };
 }
 
-#endif // EPOLL_SERVER_H
+#endif // EVENT_LOOP_SERVER_H

@@ -347,12 +347,12 @@ def compile_timeout_for(label):
 # targets that have a make.py companion. Each make.py accepts the same env
 # vars: EXTRA_DEFINES, COMPILER (gcc|clang), USE_MOLD, BUILD_DIR.
 SERVER_MAKE_SCRIPTS = {
-    "server/epoll/catchchallenger-server-filedb.pro":
-        "server/epoll/make-file.py",
-    "server/epoll/catchchallenger-server-cli-epoll.pro":
-        "server/epoll/make-catchchallenger-server-cli-epoll.py",
-    "server/epoll/catchchallenger-server-test.pro":
-        "server/epoll/make-test.py",
+    "server/cli/catchchallenger-server-filedb.pro":
+        "server/cli/make-file.py",
+    "server/cli/catchchallenger-server-cli.pro":
+        "server/cli/make-catchchallenger-server-cli.py",
+    "server/cli/catchchallenger-server-test.pro":
+        "server/cli/make-test.py",
     "server/login/login.pro":
         "server/login/make.py",
     "server/master/master.pro":
@@ -993,7 +993,7 @@ def collect_remote_results(threads, results_list, lock):
 # ── remote server testing (local client → remote server) ──────────────────
 
 REF_SERVER_PROPS = build_paths.build_path(
-    "server/epoll/build/testing-filedb/server-properties.xml")
+    "server/cli/build/testing-filedb/server-properties.xml")
 
 
 def _detect_maincode(datapack_src):

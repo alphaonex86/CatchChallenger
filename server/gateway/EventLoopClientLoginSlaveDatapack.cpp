@@ -1,4 +1,4 @@
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include <xxhash.h>
@@ -22,13 +22,13 @@ static const std::string text_antislash="\\";
 static const std::string text_slash="/";
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollClientLoginSlave::datapack_file_list(const std::string &path,const bool withHash)
+std::unordered_map<std::string,EventLoopClientLoginSlave::DatapackCacheFile> EventLoopClientLoginSlave::datapack_file_list(const std::string &path,const bool withHash)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(path.empty())
     {
         //mostly for listFolderNotRecursive()/listFolder() protect
-        std::cerr << "can't EpollClientLoginSlave::datapack_file_list(\"\")" << std::endl;
+        std::cerr << "can't EventLoopClientLoginSlave::datapack_file_list(\"\")" << std::endl;
         abort();
     }
     #endif
@@ -131,22 +131,22 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
 }
 
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList)
+void EventLoopClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList)
 {
     if(linkToGameServer==NULL)
     {
-        std::cerr << "EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList) linkToGameServer==NULL" << std::endl;
+        std::cerr << "EventLoopClientLoginSlave::datapackList(const uint8_t &query_id,const std::vector<std::string> &files,const std::vector<uint32_t> &partialHashList) linkToGameServer==NULL" << std::endl;
         return;
     }
     #ifdef CATCHCHALLENGER_HARDENED
-    /// \see EpollClientLoginSlave::parseFullQuery() already checked here
+    /// \see EventLoopClientLoginSlave::parseFullQuery() already checked here
     #endif
     tempDatapackListReplyArray.clear();
     tempDatapackListReplyTestCount=0;
-    EpollClientLoginSlave::rawFilesBuffer.clear();
-    EpollClientLoginSlave::compressedFilesBuffer.clear();
-    EpollClientLoginSlave::rawFilesBufferCount=0;
-    EpollClientLoginSlave::compressedFilesBufferCount=0;
+    EventLoopClientLoginSlave::rawFilesBuffer.clear();
+    EventLoopClientLoginSlave::compressedFilesBuffer.clear();
+    EventLoopClientLoginSlave::rawFilesBufferCount=0;
+    EventLoopClientLoginSlave::compressedFilesBufferCount=0;
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
     uint32_t fileToDelete=0;
@@ -238,7 +238,7 @@ void EpollClientLoginSlave::datapackList(const uint8_t &query_id,const std::vect
                 std::cerr << "start with wrong string: " << fileName << std::endl;
                 return;
             }
-            if(!regex_search(fileName,EpollClientLoginSlave::datapack_rightFileName))
+            if(!regex_search(fileName,EventLoopClientLoginSlave::datapack_rightFileName))
             {
                 std::cerr << "file name sended wrong: " << fileName << std::endl;
                 return;
@@ -358,7 +358,7 @@ bool CatchChallenger::operator<(const FileToSend &fileToSend1,const FileToSend &
     return true;
 }
 
-void EpollClientLoginSlave::addDatapackListReply(const bool &fileRemove)
+void EventLoopClientLoginSlave::addDatapackListReply(const bool &fileRemove)
 {
     tempDatapackListReplyTestCount++;
     switch(tempDatapackListReplySize)
@@ -423,7 +423,7 @@ void EpollClientLoginSlave::addDatapackListReply(const bool &fileRemove)
     }
 }
 
-void EpollClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
+void EventLoopClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
 {
     if(tempDatapackListReplySize>0)
     {
@@ -451,56 +451,56 @@ void EpollClientLoginSlave::purgeDatapackListReply(const uint8_t &query_id)
     tempDatapackListReplyArray.clear();
 }
 
-void EpollClientLoginSlave::sendFileContent()
+void EventLoopClientLoginSlave::sendFileContent()
 {
-    if(EpollClientLoginSlave::rawFilesBuffer.size()>0 && EpollClientLoginSlave::rawFilesBufferCount>0)
+    if(EventLoopClientLoginSlave::rawFilesBuffer.size()>0 && EventLoopClientLoginSlave::rawFilesBufferCount>0)
     {
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
         posOutput+=1+4;
 
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EpollClientLoginSlave::rawFilesBufferCount;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EventLoopClientLoginSlave::rawFilesBufferCount;
         posOutput+=1;
-        if(EpollClientLoginSlave::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        if(EventLoopClientLoginSlave::rawFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
         {
-            std::cerr << "EpollClientLoginSlave::sendFileContent too big to reply" << std::endl;
+            std::cerr << "EventLoopClientLoginSlave::sendFileContent too big to reply" << std::endl;
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EpollClientLoginSlave::rawFilesBuffer.data(),EpollClientLoginSlave::rawFilesBuffer.size());
-        posOutput+=EpollClientLoginSlave::rawFilesBuffer.size();
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EventLoopClientLoginSlave::rawFilesBuffer.data(),EventLoopClientLoginSlave::rawFilesBuffer.size());
+        posOutput+=EventLoopClientLoginSlave::rawFilesBuffer.size();
 
         {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-        EpollClientLoginSlave::rawFilesBuffer.clear();
-        EpollClientLoginSlave::rawFilesBufferCount=0;
+        EventLoopClientLoginSlave::rawFilesBuffer.clear();
+        EventLoopClientLoginSlave::rawFilesBufferCount=0;
     }
 }
 
 #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
-void EpollClientLoginSlave::sendCompressedFileContent()
+void EventLoopClientLoginSlave::sendCompressedFileContent()
 {
-    if(EpollClientLoginSlave::compressedFilesBuffer.size()>0 && EpollClientLoginSlave::compressedFilesBufferCount>0)
+    if(EventLoopClientLoginSlave::compressedFilesBuffer.size()>0 && EventLoopClientLoginSlave::compressedFilesBufferCount>0)
     {
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
         posOutput+=1+4;
 
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(EpollClientLoginSlave::compressedFilesBufferCount);
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(EventLoopClientLoginSlave::compressedFilesBufferCount);
         posOutput+=1;
-        if(EpollClientLoginSlave::compressedFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
+        if(EventLoopClientLoginSlave::compressedFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
         {
-            std::cerr << "EpollClientLoginSlave::sendFileContent too big to reply" << std::endl;
+            std::cerr << "EventLoopClientLoginSlave::sendFileContent too big to reply" << std::endl;
             return;
         }
 
         const uint32_t &compressedSize=CompressionProtocol::computeCompression(
-                    EpollClientLoginSlave::compressedFilesBuffer.data(),
+                    EventLoopClientLoginSlave::compressedFilesBuffer.data(),
                     ProtocolParsingBase::tempBigBufferForOutput+posOutput,
-                    static_cast<uint32_t>(EpollClientLoginSlave::compressedFilesBuffer.size()),
+                    static_cast<uint32_t>(EventLoopClientLoginSlave::compressedFilesBuffer.size()),
                     sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput,
                     CompressionProtocol::compressionTypeServer
                     );
@@ -508,13 +508,13 @@ void EpollClientLoginSlave::sendCompressedFileContent()
         {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-        EpollClientLoginSlave::compressedFilesBuffer.clear();
-        EpollClientLoginSlave::compressedFilesBufferCount=0;
+        EventLoopClientLoginSlave::compressedFilesBuffer.clear();
+        EventLoopClientLoginSlave::compressedFilesBufferCount=0;
     }
 }
 #endif
 
-bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::string &fileName)
+bool EventLoopClientLoginSlave::sendFile(const std::string &datapackPath,const std::string &fileName)
 {
     if(fileName.size()>255 || fileName.empty())
     {
@@ -536,7 +536,7 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
         const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
         #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
         if(CompressionProtocol::compressionTypeServer!=CompressionProtocol::CompressionType::None &&
-                EpollClientLoginSlave::compressedExtension.find(suffix)!=EpollClientLoginSlave::compressedExtension.cend() &&
+                EventLoopClientLoginSlave::compressedExtension.find(suffix)!=EventLoopClientLoginSlave::compressedExtension.cend() &&
                 (
                     contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
                     ||
@@ -556,14 +556,14 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
 
             posOutput+=4;
 
-            binaryAppend(EpollClientLoginSlave::compressedFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-            binaryAppend(EpollClientLoginSlave::compressedFilesBuffer,content);
-            EpollClientLoginSlave::compressedFilesBufferCount++;
+            binaryAppend(EventLoopClientLoginSlave::compressedFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            binaryAppend(EventLoopClientLoginSlave::compressedFilesBuffer,content);
+            EventLoopClientLoginSlave::compressedFilesBufferCount++;
             switch(CompressionProtocol::compressionTypeServer)
             {
                 default:
                 case CompressionProtocol::CompressionType::Zstandard:
-                if(EpollClientLoginSlave::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || EpollClientLoginSlave::compressedFilesBufferCount>=255)
+                if(EventLoopClientLoginSlave::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || EventLoopClientLoginSlave::compressedFilesBufferCount>=255)
                     sendCompressedFileContent();
                 break;
             }
@@ -629,10 +629,10 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
 
                 posOutput+=4;
 
-                binaryAppend(EpollClientLoginSlave::rawFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                binaryAppend(EpollClientLoginSlave::rawFilesBuffer,content);
-                EpollClientLoginSlave::rawFilesBufferCount++;
-                if(EpollClientLoginSlave::rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || EpollClientLoginSlave::rawFilesBufferCount>=255)
+                binaryAppend(EventLoopClientLoginSlave::rawFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                binaryAppend(EventLoopClientLoginSlave::rawFilesBuffer,content);
+                EventLoopClientLoginSlave::rawFilesBufferCount++;
+                if(EventLoopClientLoginSlave::rawFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_MAX_FILEPURGE_KB*1024 || EventLoopClientLoginSlave::rawFilesBufferCount>=255)
                     sendFileContent();
             }
         }

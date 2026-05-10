@@ -26,7 +26,7 @@
 * --port number: port number to connect (need specify the host too)
 
 # Naming Conventions
-* Classes: PascalCase (e.g., EpollClientLoginMaster)
+* Classes: PascalCase (e.g., EventLoopClientLoginMaster)
 * Methods/Functions: camelCase
 * snake_case with a trailing underscore for member variables
 * Enum values: PascalCase

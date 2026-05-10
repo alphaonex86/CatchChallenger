@@ -1,4 +1,4 @@
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
 #include "LinkToMaster.hpp"
 #include "../base/PreparedDBQuery.hpp"
@@ -17,7 +17,7 @@
 
 using namespace CatchChallenger;
 
-void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata)
+void EventLoopClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
@@ -38,7 +38,7 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_HASH_SIZE,CATCHCHALLENGER_HASH_SIZE);
 
-    DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&EpollClientLoginSlave::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)});
+    DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&EventLoopClientLoginSlave::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)});
     if(callback==NULL)
     {
         loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+PreparedDBQueryLogin::db_query_login.queryText()+", error: "+databaseBaseLogin.errorMessage());
@@ -56,7 +56,7 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     }
 }
 
-void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *rawdata)
+void EventLoopClientLoginSlave::askStatClient(const uint8_t &query_id,const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
@@ -158,7 +158,7 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
         ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x01;
         internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::serverLogicalGroupAndServerList),EpollClientLoginSlave::serverLogicalGroupAndServerListSize);
+        internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::serverLogicalGroupAndServerList),EventLoopClientLoginSlave::serverLogicalGroupAndServerListSize);
 
         {
             struct sockaddr_in6 addr;
@@ -185,13 +185,13 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
         }
 
         std::cerr << "new stat client: " << this << " (" << infd << ") stat: " << std::to_string(stat) << std::endl;
-        stat=EpollClientLoginStat::LoggedStatClient;
+        stat=EventLoopClientLoginStat::LoggedStatClient;
         //flags|=0x08;->just listen
 
         unsigned int index=0;
         while(index<client_list.size())
         {
-            const EpollClientLoginSlave * const client=client_list.at(index);
+            const EventLoopClientLoginSlave * const client=client_list.at(index);
             if(this==client)
             {
                 client_list.erase(client_list.begin()+index);
@@ -205,15 +205,15 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
     }
 }
 
-void EpollClientLoginSlave::askLogin_static(void *object)
+void EventLoopClientLoginSlave::askLogin_static(void *object)
 {
     if(object!=NULL)
-        static_cast<EpollClientLoginSlave *>(object)->askLogin_object();
+        static_cast<EventLoopClientLoginSlave *>(object)->askLogin_object();
     databaseBaseLogin.clear();
     //delete askLoginParam; -> not here because need reuse later
 }
 
-void EpollClientLoginSlave::askLogin_object()
+void EventLoopClientLoginSlave::askLogin_object()
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
@@ -231,7 +231,7 @@ void EpollClientLoginSlave::askLogin_object()
     //delete askLoginParam; -> not here because need reuse later
 }
 
-void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
+void EventLoopClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="AskLoginParam")
@@ -252,11 +252,11 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 #ifdef CATCHCHALLENGER_HARDENED
                 //removeFromQueryReceived(askLoginParam->query_id);//all list dropped at client destruction
                 #endif
-                *(EpollClientLoginSlave::loginIsWrongBufferReply+1)=(uint8_t)askLoginParam->query_id;
-                *(EpollClientLoginSlave::loginIsWrongBufferReply+1+1+4)=(uint8_t)0x07;
+                *(EventLoopClientLoginSlave::loginIsWrongBufferReply+1)=(uint8_t)askLoginParam->query_id;
+                *(EventLoopClientLoginSlave::loginIsWrongBufferReply+1+1+4)=(uint8_t)0x07;
                 removeFromQueryReceived(askLoginParam->query_id);
-                internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
-                stat=EpollClientLoginStat::ProtocolGood;
+                internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::loginIsWrongBufferReply),sizeof(EventLoopClientLoginSlave::loginIsWrongBufferReply));
+                stat=EventLoopClientLoginStat::ProtocolGood;
                 paramToPassToCallBack.pop();
                 #ifdef CATCHCHALLENGER_HARDENED
                 paramToPassToCallBackType.pop();
@@ -409,7 +409,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
     }
 }
 
-void EpollClientLoginSlave::askLogin_cancel()
+void EventLoopClientLoginSlave::askLogin_cancel()
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
@@ -429,7 +429,7 @@ void EpollClientLoginSlave::askLogin_cancel()
     askLoginParam=NULL;
 }
 
-void EpollClientLoginSlave::character_list_return(const uint8_t &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize)
+void EventLoopClientLoginSlave::character_list_return(const uint8_t &characterGroupIndex,char * const tempRawData,const int &tempRawDataSize)
 {
     characterTempListForReply[characterGroupIndex].rawData=tempRawData;
     characterTempListForReply[characterGroupIndex].rawDataSize=tempRawDataSize;
@@ -449,7 +449,7 @@ void EpollClientLoginSlave::character_list_return(const uint8_t &characterGroupI
     #endif
 }
 
-void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char * const tempRawData,const int &tempRawDataSize)
+void EventLoopClientLoginSlave::server_list_return(const uint8_t &serverCount,char * const tempRawData,const int &tempRawDataSize)
 {
     if(serverCount>0)
     {
@@ -480,10 +480,10 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         }
         #endif
 
-        unsigned int tempSize=EpollClientLoginSlave::loginGoodSize;
+        unsigned int tempSize=EventLoopClientLoginSlave::loginGoodSize;
 
         //characters group
-        EpollClientLoginSlave::loginGood[tempSize]=characterTempListForReply.size();
+        EventLoopClientLoginSlave::loginGood[tempSize]=characterTempListForReply.size();
         tempSize+=sizeof(uint8_t);
 
         {
@@ -491,7 +491,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
             while(i!=characterTempListForReply.cend())
             {
                 //copy buffer
-                memcpy(EpollClientLoginSlave::loginGood+tempSize,i->second.rawData,i->second.rawDataSize);
+                memcpy(EventLoopClientLoginSlave::loginGood+tempSize,i->second.rawData,i->second.rawDataSize);
                 tempSize+=i->second.rawDataSize;
                 //remove the old buffer
                 delete[] i->second.rawData;
@@ -502,13 +502,13 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         //Server list
         if(serverListForReplyRawData!=NULL)
         {
-            memcpy(EpollClientLoginSlave::loginGood+tempSize,serverListForReplyRawData,serverListForReplyRawDataSize);
+            memcpy(EventLoopClientLoginSlave::loginGood+tempSize,serverListForReplyRawData,serverListForReplyRawDataSize);
             tempSize+=serverListForReplyRawDataSize;
             //delete serverListForReplyRawData;//do into caller: CharactersGroupForLogin::character_list_object()
         }
         else
         {
-            EpollClientLoginSlave::loginGood[tempSize]=0;
+            EventLoopClientLoginSlave::loginGood[tempSize]=0;
             tempSize+=sizeof(uint8_t);
         }
 
@@ -526,23 +526,23 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
             abort();
         #endif
         //send C20F and C20E
-        internalSendRawSmallPacket(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupAndServerListSize);
+        internalSendRawSmallPacket(EventLoopClientLoginSlave::serverLogicalGroupAndServerList,EventLoopClientLoginSlave::serverLogicalGroupAndServerListSize);
         //send the reply
         removeFromQueryReceived(askLoginParam->query_id);
-        EpollClientLoginSlave::loginGood[0x01]=askLoginParam->query_id;
-        {const uint32_t _tmp_le=(htole32(tempSize-1-1-4));memcpy(EpollClientLoginSlave::loginGood+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-        internalSendRawSmallPacket(EpollClientLoginSlave::loginGood,tempSize);
+        EventLoopClientLoginSlave::loginGood[0x01]=askLoginParam->query_id;
+        {const uint32_t _tmp_le=(htole32(tempSize-1-1-4));memcpy(EventLoopClientLoginSlave::loginGood+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+        internalSendRawSmallPacket(EventLoopClientLoginSlave::loginGood,tempSize);
         //paramToPassToCallBack.pop();double call, look above
         #ifdef CATCHCHALLENGER_HARDENED
         paramToPassToCallBackType.pop();
         #endif
         delete askLoginParam;
         askLoginParam=NULL;
-        stat=EpollClientLoginStat::Logged;
+        stat=EventLoopClientLoginStat::Logged;
     }
 }
 
-void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *rawdata)
+void EventLoopClientLoginSlave::createAccount(const uint8_t &query_id, const char *rawdata)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(PreparedDBQueryLogin::db_query_login.empty())
@@ -572,10 +572,10 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_HASH_SIZE,CATCHCHALLENGER_HASH_SIZE);
     askLoginParam->query_id=query_id;
 
-    DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&EpollClientLoginSlave::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)});
+    DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&EventLoopClientLoginSlave::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)});
     if(callback==NULL)
     {
-        stat=EpollClientLoginStat::ProtocolGood;
+        stat=EventLoopClientLoginStat::ProtocolGood;
         loginIsWrong(askLoginParam->query_id,0x03,"Sql error for: "+PreparedDBQueryLogin::db_query_login.queryText()+", error: "+databaseBaseLogin.errorMessage());
         delete askLoginParam;
         askLoginParam=NULL;
@@ -591,14 +591,14 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
     }
 }
 
-void EpollClientLoginSlave::createAccount_static(void *object)
+void EventLoopClientLoginSlave::createAccount_static(void *object)
 {
     if(object!=NULL)
-        static_cast<EpollClientLoginSlave *>(object)->createAccount_object();
+        static_cast<EventLoopClientLoginSlave *>(object)->createAccount_object();
     databaseBaseLogin.clear();
 }
 
-void EpollClientLoginSlave::createAccount_object()
+void EventLoopClientLoginSlave::createAccount_object()
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBack.empty())
@@ -618,7 +618,7 @@ void EpollClientLoginSlave::createAccount_object()
     askLoginParam=NULL;
 }
 
-void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
+void EventLoopClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(paramToPassToCallBackType.front()!="AskLoginParam")
@@ -641,12 +641,12 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         }
         if(maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK)
         {
-            if(!EpollClientLoginSlave::maxAccountIdRequested)
+            if(!EventLoopClientLoginSlave::maxAccountIdRequested)
             {
                 #ifdef DEBUG_MESSAGE_QUERY_IDLIST
                 std::cout << "Ask more to master: maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << maxAccountIdList.size() << "<" << CATCHCHALLENGER_SERVER_MINIDBLOCK << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 #endif
-                EpollClientLoginSlave::maxAccountIdRequested=true;
+                EventLoopClientLoginSlave::maxAccountIdRequested=true;
                 if(LinkToMaster::linkToMaster->queryNumberList.empty())
                 {
                     std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
@@ -697,13 +697,13 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-        stat=EpollClientLoginStat::ProtocolGood;
+        stat=EventLoopClientLoginStat::ProtocolGood;
     }
     else
         loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE));
 }
 
-void EpollClientLoginSlave::dbQueryWriteLogin(const std::string &queryText)
+void EventLoopClientLoginSlave::dbQueryWriteLogin(const std::string &queryText)
 {
     #ifdef CATCHCHALLENGER_HARDENED
     if(queryText.empty())
@@ -718,23 +718,23 @@ void EpollClientLoginSlave::dbQueryWriteLogin(const std::string &queryText)
     databaseBaseLogin.asyncWrite(queryText);
 }
 
-void EpollClientLoginSlave::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, const std::string &debugMessage)
+void EventLoopClientLoginSlave::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, const std::string &debugMessage)
 {
     //network send
-    EpollClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
-    EpollClientLoginSlave::loginIsWrongBufferReply[1+1+4]=returnCode;
+    EventLoopClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
+    EventLoopClientLoginSlave::loginIsWrongBufferReply[1+1+4]=returnCode;
     removeFromQueryReceived(query_id);
-    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
+    internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::loginIsWrongBufferReply),sizeof(EventLoopClientLoginSlave::loginIsWrongBufferReply));
 
     //send to server to stop the connection
     errorParsingLayer(debugMessage);
 }
 
-void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId)
+void EventLoopClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId)
 {
     if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
     {
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
+        errorParsingLayer("EventLoopClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
         return;
     }
     /// \note account id verified on game server when loading the character, do here is big performance mistake
@@ -743,7 +743,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
     {
         //work around, previous disconnect do unable to send clean reply
-        std::cerr << "EpollClientLoginSlave::selectCharacter(): " << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cerr << "EventLoopClientLoginSlave::selectCharacter(): " << __FILE__ << ":" << __LINE__ << std::endl;
         disconnectClient();
         return;
 
@@ -768,7 +768,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
     {
         //work around, previous disconnect do unable to send clean reply
-        std::cerr << "EpollClientLoginSlave::selectCharacter(): " << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cerr << "EventLoopClientLoginSlave::selectCharacter(): " << __FILE__ << ":" << __LINE__ << std::endl;
         disconnectClient();
         return;
 
@@ -786,7 +786,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
         posOutput+=1;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-        /*message directly into the functionerrorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        /*message directly into the functionerrorParsingLayer("EventLoopClientLoginSlave::selectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;*/
         return;
     }
@@ -796,9 +796,9 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     this->serverUniqueKey=serverUniqueKey;
 }
 
-void EpollClientLoginSlave::selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token)
+void EventLoopClientLoginSlave::selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token)
 {
-    if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Reconnect)
+    if(EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Reconnect)
     {
         //send the network reply
         removeFromQueryReceived(query_id);
@@ -817,11 +817,11 @@ void EpollClientLoginSlave::selectCharacter_ReturnToken(const uint8_t &query_id,
     else
     {
         //connect on the game server and pass in proxy mode
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnToken() proxy mode not supported from now");
+        errorParsingLayer("EventLoopClientLoginSlave::selectCharacter_ReturnToken() proxy mode not supported from now");
     }
 }
 
-void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &customError)
+void EventLoopClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &customError)
 {
     //send the network reply
     removeFromQueryReceived(query_id);
@@ -849,23 +849,23 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id
         break;
         default:
             if(customError.empty())
-                errorParsingLayer("Master have relply: EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode)+", query_id: "+std::to_string(query_id));
+                errorParsingLayer("Master have relply: EventLoopClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode)+", query_id: "+std::to_string(query_id));
             else
                 errorParsingLayer(customError);
         break;
     }
 }
 
-void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
+void EventLoopClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId,const uint8_t &skinId)
 {
     if(characterGroupIndex>=CharactersGroupForLogin::list.size())
     {
-        errorParsingLayer("EpollClientLoginSlave::addCharacter() charactersGroupIndex is out of range");
+        errorParsingLayer("EventLoopClientLoginSlave::addCharacter() charactersGroupIndex is out of range");
         return;
     }
     if(pseudo.size()>255)
     {
-        errorParsingLayer("EpollClientLoginSlave::addCharacter() pseudo.size()>255");
+        errorParsingLayer("EventLoopClientLoginSlave::addCharacter() pseudo.size()>255");
         return;
     }
     const int8_t &addCharacter=CharactersGroupForLogin::list.at(characterGroupIndex)->addCharacter(this,query_id,profileIndex,pseudo,monsterGroupId,skinId);
@@ -874,77 +874,77 @@ void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t 
     {
         if(addCharacter>0 && addCharacter<=3)
         {
-            EpollClientLoginSlave::addCharacterIsWrongBuffer[1]=query_id;
-            EpollClientLoginSlave::addCharacterIsWrongBuffer[3]=0x03;
+            EventLoopClientLoginSlave::addCharacterIsWrongBuffer[1]=query_id;
+            EventLoopClientLoginSlave::addCharacterIsWrongBuffer[3]=0x03;
             removeFromQueryReceived(query_id);
 
-            internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterIsWrongBuffer),sizeof(EpollClientLoginSlave::addCharacterIsWrongBuffer));
+            internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::addCharacterIsWrongBuffer),sizeof(EventLoopClientLoginSlave::addCharacterIsWrongBuffer));
         }
         if(addCharacter<0)
-            errorParsingLayer("EpollClientLoginSlave::addCharacter() hack detected");
+            errorParsingLayer("EventLoopClientLoginSlave::addCharacter() hack detected");
         return;
     }
 }
 
-void EpollClientLoginSlave::removeCharacterLater(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId)
+void EventLoopClientLoginSlave::removeCharacterLater(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint32_t &characterId)
 {
     if(characterGroupIndex>=CharactersGroupForLogin::list.size())
     {
-        errorParsingLayer("EpollClientLoginSlave::removeCharacterLater() charactersGroupIndex is out of range");
+        errorParsingLayer("EventLoopClientLoginSlave::removeCharacterLater() charactersGroupIndex is out of range");
         return;
     }
     if(!CharactersGroupForLogin::list.at(characterGroupIndex)->removeCharacterLater(this,query_id,characterId))
     {
-        EpollClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
-        EpollClientLoginSlave::loginIsWrongBufferReply[1+1+4]=0x02;
+        EventLoopClientLoginSlave::loginIsWrongBufferReply[1]=query_id;
+        EventLoopClientLoginSlave::loginIsWrongBufferReply[1+1+4]=0x02;
         removeFromQueryReceived(query_id);
-        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
-        errorParsingLayer("EpollClientLoginSlave::removeCharacterLater() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::loginIsWrongBufferReply),sizeof(EventLoopClientLoginSlave::loginIsWrongBufferReply));
+        errorParsingLayer("EventLoopClientLoginSlave::removeCharacterLater() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
         return;
     }
 }
 
-void EpollClientLoginSlave::addCharacter_ReturnOk(const uint8_t &query_id,const uint32_t &characterId)
+void EventLoopClientLoginSlave::addCharacter_ReturnOk(const uint8_t &query_id,const uint32_t &characterId)
 {
-    EpollClientLoginSlave::addCharacterReply[1]=query_id;
-    EpollClientLoginSlave::addCharacterReply[2]=0x00;
+    EventLoopClientLoginSlave::addCharacterReply[1]=query_id;
+    EventLoopClientLoginSlave::addCharacterReply[2]=0x00;
     removeFromQueryReceived(query_id);
-    {const uint32_t _tmp_le=(htole32(characterId));memcpy(EpollClientLoginSlave::addCharacterReply+0x03,&_tmp_le,sizeof(_tmp_le));}
+    {const uint32_t _tmp_le=(htole32(characterId));memcpy(EventLoopClientLoginSlave::addCharacterReply+0x03,&_tmp_le,sizeof(_tmp_le));}
 
-    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterReply),sizeof(EpollClientLoginSlave::addCharacterReply));
+    internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::addCharacterReply),sizeof(EventLoopClientLoginSlave::addCharacterReply));
 }
 
-void EpollClientLoginSlave::addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode)
+void EventLoopClientLoginSlave::addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode)
 {
-    EpollClientLoginSlave::addCharacterIsWrongBuffer[1]=query_id;
-    EpollClientLoginSlave::addCharacterIsWrongBuffer[2]=errorCode;
+    EventLoopClientLoginSlave::addCharacterIsWrongBuffer[1]=query_id;
+    EventLoopClientLoginSlave::addCharacterIsWrongBuffer[2]=errorCode;
     removeFromQueryReceived(query_id);
-    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterIsWrongBuffer),sizeof(addCharacterIsWrongBuffer));
+    internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::addCharacterIsWrongBuffer),sizeof(addCharacterIsWrongBuffer));
     if(errorCode!=0x01)
     {
-        errorParsingLayer("EpollClientLoginSlave::addCharacter() in waiting to more id form master server or unknown error: "+std::to_string(errorCode)+": "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        errorParsingLayer("EventLoopClientLoginSlave::addCharacter() in waiting to more id form master server or unknown error: "+std::to_string(errorCode)+": "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
     }
 }
 
-void EpollClientLoginSlave::removeCharacter_ReturnOk(const uint8_t &query_id)
+void EventLoopClientLoginSlave::removeCharacter_ReturnOk(const uint8_t &query_id)
 {
-    EpollClientLoginSlave::removeCharacterReply[1]=query_id;
-    EpollClientLoginSlave::removeCharacterReply[3]=0x01;
+    EventLoopClientLoginSlave::removeCharacterReply[1]=query_id;
+    EventLoopClientLoginSlave::removeCharacterReply[3]=0x01;
     removeFromQueryReceived(query_id);
-    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::removeCharacterReply),sizeof(EpollClientLoginSlave::removeCharacterReply));
+    internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::removeCharacterReply),sizeof(EventLoopClientLoginSlave::removeCharacterReply));
 }
 
-void EpollClientLoginSlave::removeCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &errorString)
+void EventLoopClientLoginSlave::removeCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &errorString)
 {
-    EpollClientLoginSlave::removeCharacterReply[1]=query_id;
-    EpollClientLoginSlave::removeCharacterReply[3]=errorCode;
+    EventLoopClientLoginSlave::removeCharacterReply[1]=query_id;
+    EventLoopClientLoginSlave::removeCharacterReply[3]=errorCode;
     removeFromQueryReceived(query_id);
-    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::removeCharacterReply),sizeof(EpollClientLoginSlave::removeCharacterReply));
+    internalSendRawSmallPacket(reinterpret_cast<char *>(EventLoopClientLoginSlave::removeCharacterReply),sizeof(EventLoopClientLoginSlave::removeCharacterReply));
     if(errorString.empty())
     {
-        errorParsingLayer("EpollClientLoginSlave::removeCharacter() out of query to request the master server: "+std::to_string(errorCode)+": "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        errorParsingLayer("EventLoopClientLoginSlave::removeCharacter() out of query to request the master server: "+std::to_string(errorCode)+": "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
     }
     else

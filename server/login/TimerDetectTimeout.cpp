@@ -1,5 +1,5 @@
 #include "TimerDetectTimeout.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "LinkToMaster.hpp"
 #include "LinkToGameServer.hpp"
 
@@ -13,15 +13,15 @@ void TimerDetectTimeout::exec()
     CatchChallenger::LinkToMaster::linkToMaster->detectTimeout();
     const uint64_t timeCurrent=CatchChallenger::LinkToGameServer::msFrom1970();
 
-    if(CatchChallenger::EpollClientLoginSlave::client_list.size()>500)
+    if(CatchChallenger::EventLoopClientLoginSlave::client_list.size()>500)
     {
-        std::unordered_map<CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat,uint64_t> countByStat;
+        std::unordered_map<CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat,uint64_t> countByStat;
         std::unordered_map<CatchChallenger::LinkToGameServer::Stat,uint64_t> countLinkByStat;
         //std cout the number of client by stats
         unsigned int index=0;
-        while(index<CatchChallenger::EpollClientLoginSlave::client_list.size())
+        while(index<CatchChallenger::EventLoopClientLoginSlave::client_list.size())
         {
-            CatchChallenger::EpollClientLoginSlave * client=CatchChallenger::EpollClientLoginSlave::client_list.at(index);
+            CatchChallenger::EventLoopClientLoginSlave * client=CatchChallenger::EventLoopClientLoginSlave::client_list.at(index);
             if(countByStat.find(client->stat)!=countByStat.cend())
                 countByStat[client->stat]++;
             else
@@ -38,37 +38,37 @@ void TimerDetectTimeout::exec()
         }
         std::cout << "Overload 1): ";
         index=0;
-        for( const std::pair<CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat,uint64_t> n : countByStat )
+        for( const std::pair<CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat,uint64_t> n : countByStat )
         {
             if(index>0)
                 std::cout << ", ";
             switch(n.first)
             {
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::CharacterSelected:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::CharacterSelected:
                 std::cout << "CharacterSelected";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::CharacterSelecting:
                 std::cout << "CharacterSelecting";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnected:
                 std::cout << "GameServerConnected";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnecting:
                 std::cout << "GameServerConnecting";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::Logged:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::Logged:
                 std::cout << "Logged";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::LoggedStatClient:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::LoggedStatClient:
                 std::cout << "LoggedStatClient ERROR";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::LoginInProgress:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::LoginInProgress:
                 std::cout << "LoginInProgress";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::None:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::None:
                 std::cout << "None";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::ProtocolGood:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::ProtocolGood:
                 std::cout << "ProtocolGood";
                 break;
             default:
@@ -113,10 +113,10 @@ void TimerDetectTimeout::exec()
         std::cout << std::endl;
     }
     unsigned int index=0;
-    while(index<CatchChallenger::EpollClientLoginSlave::client_list.size())
+    while(index<CatchChallenger::EventLoopClientLoginSlave::client_list.size())
     {
-        CatchChallenger::EpollClientLoginSlave * client=CatchChallenger::EpollClientLoginSlave::client_list.at(index);
-        if(client->stat==CatchChallenger::EpollClientLoginSlave::GameServerConnected)
+        CatchChallenger::EventLoopClientLoginSlave * client=CatchChallenger::EventLoopClientLoginSlave::client_list.at(index);
+        if(client->stat==CatchChallenger::EventLoopClientLoginSlave::GameServerConnected)
         {
             if((client->get_lastActivity()+10*60*1000)<timeCurrent)
             {
@@ -155,15 +155,15 @@ void TimerDetectTimeout::exec()
     }
 
 
-    if(CatchChallenger::EpollClientLoginSlave::stat_client_list.size()>10)
+    if(CatchChallenger::EventLoopClientLoginSlave::stat_client_list.size()>10)
     {
-        std::unordered_map<CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat,uint64_t> countByStat;
+        std::unordered_map<CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat,uint64_t> countByStat;
         std::unordered_map<CatchChallenger::LinkToGameServer::Stat,uint64_t> countLinkByStat;
         //std cout the number of client by stats
         unsigned int index=0;
-        while(index<CatchChallenger::EpollClientLoginSlave::stat_client_list.size())
+        while(index<CatchChallenger::EventLoopClientLoginSlave::stat_client_list.size())
         {
-            CatchChallenger::EpollClientLoginSlave * client=CatchChallenger::EpollClientLoginSlave::stat_client_list.at(index);
+            CatchChallenger::EventLoopClientLoginSlave * client=CatchChallenger::EventLoopClientLoginSlave::stat_client_list.at(index);
             if(countByStat.find(client->stat)!=countByStat.cend())
                 countByStat[client->stat]++;
             else
@@ -180,37 +180,37 @@ void TimerDetectTimeout::exec()
         }
         std::cout << "Overload 2): ";
         index=0;
-        for( const std::pair<CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat,uint64_t> n : countByStat )
+        for( const std::pair<CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat,uint64_t> n : countByStat )
         {
             if(index>0)
                 std::cout << ", ";
             switch(n.first)
             {
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::CharacterSelected:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::CharacterSelected:
                 std::cout << "CharacterSelected ERROR";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::CharacterSelecting:
                 std::cout << "CharacterSelecting ERROR";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnected:
                 std::cout << "GameServerConnected ERROR";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::GameServerConnecting:
                 std::cout << "GameServerConnecting ERROR";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::Logged:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::Logged:
                 std::cout << "Logged ERROR";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::LoggedStatClient:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::LoggedStatClient:
                 std::cout << "LoggedStatClient";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::LoginInProgress:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::LoginInProgress:
                 std::cout << "LoginInProgress ERROR";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::None:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::None:
                 std::cout << "None ERROR";
                 break;
-            case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::ProtocolGood:
+            case CatchChallenger::EventLoopClientLoginSlave::EventLoopClientLoginStat::ProtocolGood:
                 std::cout << "ProtocolGood ERROR";
                 break;
             default:
@@ -255,10 +255,10 @@ void TimerDetectTimeout::exec()
         std::cout << std::endl;
     }
     index=0;
-    while(index<CatchChallenger::EpollClientLoginSlave::stat_client_list.size())
+    while(index<CatchChallenger::EventLoopClientLoginSlave::stat_client_list.size())
     {
-        CatchChallenger::EpollClientLoginSlave * client=CatchChallenger::EpollClientLoginSlave::stat_client_list.at(index);
-        if(client->stat==CatchChallenger::EpollClientLoginSlave::GameServerConnected)
+        CatchChallenger::EventLoopClientLoginSlave * client=CatchChallenger::EventLoopClientLoginSlave::stat_client_list.at(index);
+        if(client->stat==CatchChallenger::EventLoopClientLoginSlave::GameServerConnected)
         {
             if((client->get_lastActivity()+10*60*1000)<timeCurrent)
             {

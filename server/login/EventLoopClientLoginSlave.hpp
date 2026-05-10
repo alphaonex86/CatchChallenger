@@ -1,10 +1,10 @@
-#ifndef EPOLLCLIENTLOGINMASTER_H
-#define EPOLLCLIENTLOGINMASTER_H
+#ifndef EVENTLOOPCLIENTLOGINMASTER_H
+#define EVENTLOOPCLIENTLOGINMASTER_H
 
-#include "../epoll/EpollClient.hpp"
+#include "../cli/EventLoopClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/VariableServer.hpp"
-#include "../epoll/db/EpollPostgresql.hpp"
+#include "../cli/db/EventLoopPostgresql.hpp"
 #include "../base/DdosBuffer.hpp"
 
 #include <string>
@@ -38,13 +38,13 @@
 
 namespace CatchChallenger {
 class LinkToGameServer;
-class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOutput
+class EventLoopClientLoginSlave : public EventLoopClient, public ProtocolParsingInputOutput
 {
 public:
-    EpollClientLoginSlave(
+    EventLoopClientLoginSlave(
             const int &infd
         );
-    ~EpollClientLoginSlave();
+    ~EventLoopClientLoginSlave();
     bool disconnectClient();
     struct AddCharacterParam
     {
@@ -83,7 +83,7 @@ public:
         Proxy=0x02
     };
     static ProxyMode proxyMode;
-    enum EpollClientLoginStat : uint8_t
+    enum EventLoopClientLoginStat : uint8_t
     {
         None=0x00,
         ProtocolGood=0x01,
@@ -95,9 +95,9 @@ public:
         GameServerConnecting=0x07,
         GameServerConnected=0x08 ,
     };
-    EpollClientLoginStat stat;
+    EventLoopClientLoginStat stat;
 
-    //to delete into the event loop (main-epoll-login-slave.cpp) after unregister for epoll, into the next event loop parse
+    //to delete into the event loop (main-unix-login-slave.cpp) after unregister for epoll, into the next event loop parse
     static std::vector<void *> clientToDelete[16];
     static size_t clientToDeleteSize;
     static uint8_t clientToDeleteIndex;
@@ -141,13 +141,13 @@ public:
     static char baseDatapackSum[CATCHCHALLENGER_HASH_SIZE];
     static char loginGood[256*1024];
     static unsigned int loginGoodSize;
-    static std::vector<EpollClientLoginSlave *> stat_client_list;
-    static std::vector<EpollClientLoginSlave *> client_list;
+    static std::vector<EventLoopClientLoginSlave *> stat_client_list;
+    static std::vector<EventLoopClientLoginSlave *> client_list;
 
-    /*  [0x00]: 8Bits: do into EpollServerLoginSlave::EpollServerLoginSlave(), login server mode: 0x01 reconnect, 0x02 proxy
+    /*  [0x00]: 8Bits: do into EventLoopServerLoginSlave::EventLoopServerLoginSlave(), login server mode: 0x01 reconnect, 0x02 proxy
         [0x01]: 8Bits: serverListSize
         All is stored into little endian to resend quickly
-     *  if EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy
+     *  if EventLoopClientLoginSlave::proxyMode==EventLoopClientLoginSlave::ProxyMode::Proxy
          * Loop (server list size: [0x00]):
          *  charactersgroup (8Bits)
          *  serverUniqueKey (32Bits)
@@ -202,7 +202,7 @@ private:
     static unsigned char removeCharacterReply[3+4];
 
     static const unsigned char protocolHeaderToMatch[5];
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
 private:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
@@ -263,9 +263,9 @@ private:
     DdosBuffer<uint8_t,3> chatPacketKick;
     DdosBuffer<uint8_t,3> otherPacketKick;
 public:
-    static EpollPostgresql databaseBaseLogin;
-    static EpollPostgresql databaseBaseCommon;
+    static EventLoopPostgresql databaseBaseLogin;
+    static EventLoopPostgresql databaseBaseCommon;
 };
 }
 
-#endif // EPOLLCLIENTLOGINMASTER_H
+#endif // EVENTLOOPCLIENTLOGINMASTER_H

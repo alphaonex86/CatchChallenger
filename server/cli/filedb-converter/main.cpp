@@ -17,7 +17,7 @@ static void usage(const char *argv0) {
         << "               the binary is written at <path> with the .xml suffix removed.\n"
         << "               For directories every *.xml under <path> is converted back.\n"
         << "  help         Show this help\n\n"
-        << "The recognised layout mirrors catchchallenger-server-cli-epoll's\n"
+        << "The recognised layout mirrors catchchallenger-server-cli's\n"
         << "database/ directory (see the server's database-filedb.md)."
         << std::endl;
 }

@@ -24,7 +24,7 @@ namespace CatchChallenger {
 // Atomic + process-wide so the counters are correct across the
 // QtDatabaseThread that actually runs the queries. They're declared
 // here (header) and defined in QtDatabase.cpp; gated on the
-// CATCHCHALLENGER_CLASS_QT define so the headless epoll/io_uring
+// CATCHCHALLENGER_CLASS_QT define so the headless unix/io_uring
 // build never sees the symbols.
 extern std::atomic<uint64_t> qtDbStats_queryTotalCount;
 extern std::atomic<uint64_t> qtDbStats_replyTotalCount;
@@ -58,7 +58,7 @@ public:
     const std::string value(const int &value) const;
     bool isConnected() const;
     void receiveReply(const QSqlQuery &queryReturn);
-    bool epollEvent(const uint32_t &events);
+    bool unixEvent(const uint32_t &events);
 
     QtDatabaseThread dbThread;
 

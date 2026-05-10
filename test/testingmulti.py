@@ -43,10 +43,10 @@ NPROC      = str(multiprocessing.cpu_count())
 DATAPACK_SRC       = _config["paths"]["datapacks"][0]
 MAINCODE           = "test"
 
-SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
-SERVER_REF_BUILD   = build_paths.build_path("server/epoll/build/catchchallenger-server-filedb-llvm-Debug")
-SERVER_BUILD       = build_paths.build_path("server/epoll/build/testing-multi" + _DIAG_SUFFIX)
-SERVER_BIN_NAME    = "catchchallenger-server-cli-epoll"
+SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
+SERVER_REF_BUILD   = build_paths.build_path("server/cli/build/catchchallenger-server-filedb-llvm-Debug")
+SERVER_BUILD       = build_paths.build_path("server/cli/build/testing-multi" + _DIAG_SUFFIX)
+SERVER_BIN_NAME    = "catchchallenger-server-cli"
 
 CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 CLIENT_CPU_BUILD   = build_paths.build_path("client/qtcpu800x600/build/testing-multi-cpu" + _DIAG_SUFFIX)

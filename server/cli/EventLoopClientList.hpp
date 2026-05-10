@@ -1,10 +1,10 @@
-#ifndef CATCHCHALLENGER_EPOLLCLIENTLIST_H
-#define CATCHCHALLENGER_EPOLLCLIENTLIST_H
+#ifndef CATCHCHALLENGER_EVENT_LOOP_CLIENTLIST_H
+#define CATCHCHALLENGER_EVENT_LOOP_CLIENTLIST_H
 
-#include "ClientWithMapEpoll.hpp"
+#include "ClientWithMapEventLoop.hpp"
 #include "../base/ClientList.hpp"
 
-class EpollClientList : public CatchChallenger::ClientList
+class EventLoopClientList : public CatchChallenger::ClientList
 {
 public:
      /* list start at (max player*map id)
@@ -52,10 +52,10 @@ public:
      * store CHOOSEN index connected player imply read each player attribute
      * store id_db imply read each player attribute only for insert + store resolution id_db to Object
      */
-    EpollClientList();
-    std::vector<ClientWithMapEpoll> clients;//65535 = empty slot, else pending auth
+    EventLoopClientList();
+    std::vector<ClientWithMapEventLoop> clients;//65535 = empty slot, else pending auth
 public:
-    ClientWithMapEpoll &getByReference();
+    ClientWithMapEventLoop &getByReference();
     void remove(const CatchChallenger::Client &client);
 
     PLAYER_INDEX_FOR_CONNECTED size() const;

@@ -4,7 +4,7 @@ testingserver.py — CatchChallenger server compilation, cache, NOXML, and datap
 
 Phases:
   A. server-filedb + client connect
-  B. server-cli-epoll (PostgreSQL) + client connect
+  B. server-cli (PostgreSQL) + client connect
   For each: empty DB + no cache → generate cache → with cache (NOXML off) → NOXML on
   C. Datapack: test each datapack source and each maincode
      + XML change/add/delete detection after client connect
@@ -66,8 +66,8 @@ ROOT       = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QMAKE      = _config["qmake"]
 NPROC      = str(multiprocessing.cpu_count())
 
-SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
-SERVER_CLIEPO_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-cli-epoll.pro")
+SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
+SERVER_CLIEPO_PRO  = os.path.join(ROOT, "server/cli/catchchallenger-server-cli.pro")
 # Reference build dir whose server-properties.xml is the patch source for
 # every per-test build below. After the qmake -> CMake migration the
 # directory is `testing-filedb` (this file's filedb_build also points at
@@ -75,8 +75,8 @@ SERVER_CLIEPO_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-cli
 # qmake path silently broke setup_server_config(): src didn't exist, so
 # no XML patching happened and stale mainDatapackCode="official" leaked
 # into datapack-pkmn runs whose only maincodes are gen2/test.
-SERVER_REF_BUILD   = build_paths.build_path("server/epoll/build/testing-filedb")
-SERVER_BIN_NAME    = "catchchallenger-server-cli-epoll"
+SERVER_REF_BUILD   = build_paths.build_path("server/cli/build/testing-filedb")
+SERVER_BIN_NAME    = "catchchallenger-server-cli"
 
 CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 CLIENT_CPU_BIN     = "catchchallenger"
@@ -128,12 +128,12 @@ CXX_VERSIONS = ["c++11", "c++23"]
 #   server-gui / server-cli — relative include path resolution fails from build dir
 #       (../../general/base/cpp11addition.hpp not found)
 SERVER_TARGETS = [
-    ("server/epoll/catchchallenger-server-filedb.pro",
-     "server-filedb", "server/epoll/build",
+    ("server/cli/catchchallenger-server-filedb.pro",
+     "server-filedb", "server/cli/build",
      ["CATCHCHALLENGER_NOXML", "CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR",
       "CATCHCHALLENGER_HARDENED"]),
-    ("server/epoll/catchchallenger-server-cli-epoll.pro",
-     "server-cli-epoll", "server/epoll/build",
+    ("server/cli/catchchallenger-server-cli.pro",
+     "server-cli", "server/cli/build",
      ["CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR",
       "CATCHCHALLENGER_NOXML", "CATCHCHALLENGER_HARDENED"]),
     ("server/login/login.pro",
@@ -148,8 +148,8 @@ SERVER_TARGETS = [
     ("server/game-server-alone/game-server-alone.pro",
      "game-server-alone", "server/game-server-alone/build",
      ["CATCHCHALLENGER_HARDENED"]),
-    ("server/epoll/filedb-converter/filedb-converter.pro",
-     "filedb-converter", "server/epoll/filedb-converter/build",
+    ("server/cli/filedb-converter/filedb-converter.pro",
+     "filedb-converter", "server/cli/filedb-converter/build",
      []),
 ]
 
@@ -1687,8 +1687,8 @@ def main():
     # Phases A–D: functional tests (use default gcc builds)
     # ═══════════════════════════════════════════════════════════════
 
-    filedb_build = build_paths.build_path("server/epoll/build/testing-filedb" + _DIAG_SUFFIX)
-    cliepo_build = build_paths.build_path("server/epoll/build/testing-cli-epoll" + _DIAG_SUFFIX)
+    filedb_build = build_paths.build_path("server/cli/build/testing-filedb" + _DIAG_SUFFIX)
+    cliepo_build = build_paths.build_path("server/cli/build/testing-cli-epoll" + _DIAG_SUFFIX)
     client_build = build_paths.build_path("client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
 
     # build client once
@@ -1726,13 +1726,13 @@ def main():
 
     # ── Phase A2: server-filedb alternative IO backends ─────────────
     # Build server-filedb against each of the three IO multiplexers
-    # supported by server/epoll/Epoll.cpp:
+    # supported by server/cli/EventLoop.cpp:
     #   * select(2)  — most portable, FD_SETSIZE-bound; targets old hardware
     #   * epoll(7)   — Linux native, default backend (no flag = empty CONFIG+)
     #   * io_uring   — kernel >=5.13, async via liburing
     # Each backend gets one full client run that connects, logs in, and
     # walks onto the map. The three flags are mutually exclusive (the
-    # root CMakeLists / Epoll.hpp #error if two are set together) and
+    # root CMakeLists / EventLoop.hpp #error if two are set together) and
     # are wired via CONFIG+= in catchchallenger-server-epoll.pri (the
     # io_uring path also pulls in -luring), so we pass them through
     # extra_qmake_args. The "epoll" entry passes "" to keep the matrix
@@ -1753,7 +1753,7 @@ def main():
     while bi < len(backends):
         backend_name, qarg = backends[bi]
         backend_build = build_paths.build_path(
-            "server/epoll/build/testing-filedb-" + backend_name + _DIAG_SUFFIX)
+            "server/cli/build/testing-filedb-" + backend_name + _DIAG_SUFFIX)
         print(f"\n{C_CYAN}  -- server-filedb backend: {backend_name} --{C_RESET}\n")
         # Empty qarg (e.g. the "epoll" default backend) means no extra
         # CONFIG+= flag — the matrix entry is just "build the default
@@ -1786,7 +1786,7 @@ def main():
                 log_fail("filedb " + backend_name, "no datapack source")
         bi += 1
 
-    # ── Phase B: server-cli-epoll (PostgreSQL) ──────────────────────
+    # ── Phase B: server-cli (PostgreSQL) ──────────────────────
     # Gated on an opt-in `execute_sql` containing "PostgreSQL" somewhere
     # in remote_nodes.json — see CLAUDE.md "Database backends in
     # testing*.py — file_db only on host, SQL gated to remote_nodes.json".
@@ -1800,7 +1800,7 @@ def main():
     if not _need_postgresql:
         log_info("Phase B: skipped — no execute_sql=[PostgreSQL] opt-in "
                  "in remote_nodes.json (file-db default)")
-    elif build_project(SERVER_CLIEPO_PRO, cliepo_build, "server-cli-epoll"):
+    elif build_project(SERVER_CLIEPO_PRO, cliepo_build, "server-cli"):
         for dp_index, dp_path in enumerate(DATAPACK_SOURCES):
             dp_src, dp_name = dp_path
             setup_server_datapack(cliepo_build, dp_src, patch_db=True)
@@ -1842,7 +1842,7 @@ def main():
                                 "cli-epoll", client_build, is_filedb=False,
                                 patch_db=True)
     else:
-        log_fail("server-cli-epoll tests",
+        log_fail("server-cli tests",
                  "compilation failed (libpq may not be available)")
 
     # ── Phase C: Datapack testing ───────────────────────────────────
@@ -1893,7 +1893,7 @@ def main():
         # was just built.
         _cxx_suffix = f"-{_cxx_ver[-1]}" if _cxx_ver else ""
         remote_filedb_build = f"{remote_build_root}/catchchallenger-server-filedb{_cxx_suffix}"
-        remote_filedb_bin = f"{remote_filedb_build}/catchchallenger-server-cli-epoll"
+        remote_filedb_bin = f"{remote_filedb_build}/catchchallenger-server-cli"
 
         try:
             # setup datapack on remote

@@ -1,9 +1,9 @@
 #ifndef TimerDetectTimeoutLOGINSERVER_H
 #define TimerDetectTimeoutLOGINSERVER_H
 
-#include "../epoll/EpollTimer.hpp"
+#include "../cli/EventLoopTimer.hpp"
 
-class TimerDetectTimeout : public EpollTimer
+class TimerDetectTimeout : public EventLoopTimer
 {
 public:
     TimerDetectTimeout();

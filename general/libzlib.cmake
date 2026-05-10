@@ -3,15 +3,45 @@
 # Prefer system zlib (Linux distros, macOS Homebrew, etc.). Fall back to the
 # vendored copy under general/libzlib/ when none is found, e.g. MinGW
 # cross-compile or a bare VPS without -dev packages.
+#
+# EXTERNALLIBZLIB toggle (mirrors EXTERNALLIBZSTD pattern):
+#   ON      → require system zlib (find_package(ZLIB REQUIRED), no fallback).
+#   OFF     → use vendored copy; never call find_package(ZLIB).
+#   unset   → try system first (QUIET), fall back to vendored.
+
+# Declare the option only once. Default unset-sentinel: use a CACHE STRING with
+# empty default so we can distinguish "not set" from explicit ON/OFF.
+if(NOT DEFINED EXTERNALLIBZLIB)
+    set(EXTERNALLIBZLIB "" CACHE STRING "Force system zlib (ON), force vendored (OFF), or auto (empty)")
+    set_property(CACHE EXTERNALLIBZLIB PROPERTY STRINGS "" "ON" "OFF")
+endif()
 
 if(NOT TARGET catchchallenger_zlib)
-    find_package(ZLIB QUIET)
-    if(ZLIB_FOUND)
+    set(_cc_zlib_use_system FALSE)
+    set(_cc_zlib_use_vendored FALSE)
+    if("${EXTERNALLIBZLIB}" STREQUAL "")
+        # Auto: try system first, fall back to vendored.
+        find_package(ZLIB QUIET)
+        if(ZLIB_FOUND)
+            set(_cc_zlib_use_system TRUE)
+        else()
+            set(_cc_zlib_use_vendored TRUE)
+        endif()
+    elseif(EXTERNALLIBZLIB)
+        # Forced system: hard-require it.
+        find_package(ZLIB REQUIRED)
+        set(_cc_zlib_use_system TRUE)
+    else()
+        # Forced vendored: never look at the system copy.
+        set(_cc_zlib_use_vendored TRUE)
+    endif()
+
+    if(_cc_zlib_use_system)
         message(STATUS "zlib: using system copy (${ZLIB_LIBRARIES})")
         add_library(catchchallenger_zlib INTERFACE)
         target_link_libraries(catchchallenger_zlib INTERFACE ZLIB::ZLIB)
     else()
-        message(STATUS "zlib: system copy not found, building vendored zlib 1.3.2")
+        message(STATUS "zlib: building vendored zlib 1.3.2")
         set(ZLIB_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/libzlib)
         set(ZLIB_SOURCES
             ${ZLIB_SRC_DIR}/adler32.c

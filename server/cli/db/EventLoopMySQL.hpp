@@ -1,6 +1,6 @@
 #ifdef CATCHCHALLENGER_DB_MYSQL
-#ifndef CATCHCHALLENGER_EPOLLMYSQL_H
-#define CATCHCHALLENGER_EPOLLMYSQL_H
+#ifndef CATCHCHALLENGER_EVENT_LOOP_MYSQL_H
+#define CATCHCHALLENGER_EVENT_LOOP_MYSQL_H
 
 #include <mysql/mysql.h>
 #include <queue>
@@ -8,29 +8,29 @@
 #include <string>
 #include <chrono>
 
-#include "EpollDatabase.hpp"
+#include "EventLoopDatabase.hpp"
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
-class EpollMySQL : public EpollDatabase
+class EventLoopMySQL : public EventLoopDatabase
 {
 public:
-    EpollMySQL();
-    ~EpollMySQL();
+    EventLoopMySQL();
+    ~EventLoopMySQL();
     bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
     bool syncConnectInternal(bool infinityTry=false);
     void syncDisconnect();
     void syncReconnect();
     CatchChallenger::DatabaseBaseCallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const std::string &query);
-    bool epollEvent(const uint32_t &events);
+    bool unixEvent(const uint32_t &events);
     void clear();
     bool sendNextQuery();
     const std::string errorMessage() const;
     bool next();
     const std::string value(const int &value) const;
     bool isConnected() const;
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
 private:
     MYSQL *conn;
     MYSQL_ROW row;

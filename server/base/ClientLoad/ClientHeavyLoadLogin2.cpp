@@ -2,6 +2,7 @@
 #include "../GlobalServerData.hpp"
 #include "../DictionaryLogin.hpp"
 #include <cstring>
+#include <cstdlib>
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #endif
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
@@ -780,7 +781,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 m.egg_step=0;
                 if(monsterDatapack.ratio_gender>0 && monsterDatapack.ratio_gender<100)
                 {
-                    int8_t temp_ratio=random()%101;
+                    int8_t temp_ratio=rand()%101;
                     if(temp_ratio<monsterDatapack.ratio_gender)
                         m.gender=Gender_Male;
                     else

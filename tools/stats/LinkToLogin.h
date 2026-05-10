@@ -2,7 +2,7 @@
 #define LOGINLINKTOLOGIN_H
 
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../../server/epoll/EpollClient.hpp"
+#include "../../server/cli/EventLoopClient.hpp"
 #include <vector>
 #include <random>
 #include <netinet/in.h>
@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace CatchChallenger {
-class LinkToLogin : public EpollClient, public ProtocolParsingInputOutput
+class LinkToLogin : public EventLoopClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToLogin(
@@ -77,7 +77,7 @@ public:
     static LinkToLogin *linkToLogin;
     static bool withIndentation;
     std::vector<uint8_t> queryNumberList;
-    BaseClassSwitch::EpollObjectType getType() const;
+    BaseClassSwitch::EventLoopObjectType getType() const;
     void parseIncommingData();
     bool tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void connectInternal();

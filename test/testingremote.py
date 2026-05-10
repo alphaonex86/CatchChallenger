@@ -55,8 +55,8 @@ PRO_FILES = [
     "tools/stats/stats.pro",
     "tools/map2png/map2png.pro",
     "tools/datapack-explorer-generator-cli/datapack-explorer-generator.pro",
-    "server/epoll/catchchallenger-server-filedb.pro",
-    "server/epoll/catchchallenger-server-cli-epoll.pro",
+    "server/cli/catchchallenger-server-filedb.pro",
+    "server/cli/catchchallenger-server-cli.pro",
 ]
 
 # .pro files whose binary can be staged + run on an execution node. The
@@ -65,8 +65,8 @@ PRO_FILES = [
 # scripts), and tools like stats/map2png exit too quickly or need args
 # we can't auto-pick remotely.
 EXEC_PRO_FILES = {
-    "server/epoll/catchchallenger-server-filedb.pro",
-    "server/epoll/catchchallenger-server-cli-epoll.pro",
+    "server/cli/catchchallenger-server-filedb.pro",
+    "server/cli/catchchallenger-server-cli.pro",
 }
 
 # Map a runnable .pro to its cmake target — the binary lives at
@@ -75,10 +75,10 @@ EXEC_PRO_FILES = {
 # Kept in sync with cmake_helpers._PRO_TO_CMAKE; we only enumerate the
 # server entries here so we don't drag client/tool subdirs into exec.
 _EXEC_BIN_FOR_PRO = {
-    "server/epoll/catchchallenger-server-filedb.pro":
-        "catchchallenger-server-cli-epoll",
-    "server/epoll/catchchallenger-server-cli-epoll.pro":
-        "catchchallenger-server-cli-epoll",
+    "server/cli/catchchallenger-server-filedb.pro":
+        "catchchallenger-server-cli",
+    "server/cli/catchchallenger-server-cli.pro":
+        "catchchallenger-server-cli",
 }
 
 # Per-node remote_dir is stored in SERVERS; the constant below is kept only

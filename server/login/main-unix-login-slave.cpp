@@ -11,10 +11,10 @@
 
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/Version.hpp"
-#include "../epoll/EpollSocket.hpp"
-#include "../epoll/Epoll.hpp"
-#include "EpollServerLoginSlave.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "../cli/SocketUtil.hpp"
+#include "../cli/EventLoop.hpp"
+#include "EventLoopServerLoginSlave.hpp"
+#include "EventLoopClientLoginSlave.hpp"
 #include "LinkToMaster.hpp"
 #include "LinkToGameServer.hpp"
 #include "TimerDdos.hpp"
@@ -49,17 +49,17 @@ int main(int argc, char *argv[])
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
     ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::LoginServer);
-    if(!Epoll::epoll.init())
+    if(!EventLoop::loop.init())
         return EPOLLERR;
 
     //blocking due to db connexion
-    EpollServerLoginSlave::epollServerLoginSlave=new EpollServerLoginSlave();
+    EventLoopServerLoginSlave::unixServerLoginSlave=new EventLoopServerLoginSlave();
     #ifdef CATCHCHALLENGER_CACHE_HPS
     const bool save=argc==2 && strcmp(argv[1],"save")==0;
     if(save)
-        EpollServerLoginSlave::epollServerLoginSlave->setSave(datapackCache);
+        EventLoopServerLoginSlave::unixServerLoginSlave->setSave(datapackCache);
     else
-        EpollServerLoginSlave::epollServerLoginSlave->setLoad(datapackCache);
+        EventLoopServerLoginSlave::unixServerLoginSlave->setLoad(datapackCache);
     #endif
 
     char buf[4096];
@@ -92,29 +92,29 @@ int main(int argc, char *argv[])
     int number_of_events, i;
     while(1)
     {
-        number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
+        number_of_events = EventLoop::loop.wait(events, MAXEVENTS);
 
         //delete part
-        if(EpollClientLoginSlave::clientToDeleteSize>0 && number_of_events<MAXEVENTS)
+        if(EventLoopClientLoginSlave::clientToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
-            if(EpollClientLoginSlave::clientToDeleteIndex>=15)
-                EpollClientLoginSlave::clientToDeleteIndex=0;
+            if(EventLoopClientLoginSlave::clientToDeleteIndex>=15)
+                EventLoopClientLoginSlave::clientToDeleteIndex=0;
             else
-                ++EpollClientLoginSlave::clientToDeleteIndex;
-            const std::vector<void *> &clientToDeleteSub=EpollClientLoginSlave::clientToDelete[EpollClientLoginSlave::clientToDeleteIndex];
+                ++EventLoopClientLoginSlave::clientToDeleteIndex;
+            const std::vector<void *> &clientToDeleteSub=EventLoopClientLoginSlave::clientToDelete[EventLoopClientLoginSlave::clientToDeleteIndex];
             if(!clientToDeleteSub.empty())
             {
                 unsigned int index=0;
                 while(index<clientToDeleteSub.size())
                 {
-                    EpollClientLoginSlave *client=reinterpret_cast<EpollClientLoginSlave *>(clientToDeleteSub.at(index));
+                    EventLoopClientLoginSlave *client=reinterpret_cast<EventLoopClientLoginSlave *>(clientToDeleteSub.at(index));
                     delete client;
-                    EpollClientLoginSlave::detectDuplicateClientToDelete.erase(client);
+                    EventLoopClientLoginSlave::detectDuplicateClientToDelete.erase(client);
                     index++;
                 }
             }
-            EpollClientLoginSlave::clientToDeleteSize-=clientToDeleteSub.size();
-            EpollClientLoginSlave::clientToDelete[EpollClientLoginSlave::clientToDeleteIndex].clear();
+            EventLoopClientLoginSlave::clientToDeleteSize-=clientToDeleteSub.size();
+            EventLoopClientLoginSlave::clientToDelete[EventLoopClientLoginSlave::clientToDeleteIndex].clear();
         }
         if(LinkToGameServer::gameLinkToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::EpollObjectType::Server:
+                case BaseClassSwitch::EventLoopObjectType::Server:
                 {
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -159,8 +159,8 @@ int main(int argc, char *argv[])
                     {
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
-                        const int &infd = EpollServerLoginSlave::epollServerLoginSlave->accept(&in_addr, &in_len);
-                        if(EpollClientLoginSlave::clientToDeleteSize>64 || BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
+                        const int &infd = EventLoopServerLoginSlave::unixServerLoginSlave->accept(&in_addr, &in_len);
+                        if(EventLoopClientLoginSlave::clientToDeleteSize>64 || BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
                         {
                             /// \todo dont clean error on client into this case
                             std::cerr << "server overload" << std::endl;
@@ -193,19 +193,19 @@ int main(int argc, char *argv[])
                         list of fds to monitor. */
                         numberOfConnectedClient++;
 
-                        int s = EpollSocket::make_non_blocking(infd);
+                        int s = SocketUtil::make_non_blocking(infd);
                         if(s == -1)
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else
                         {
-                            if(EpollServerLoginSlave::epollServerLoginSlave->tcpCork)
+                            if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpCork)
                             {
                                 //set cork for CatchChallener because don't have real time part
                                 int state = 1;
                                 if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
                                     std::cerr << "Unable to apply tcp cork" << std::endl;
                             }
-                            else if(EpollServerLoginSlave::epollServerLoginSlave->tcpNodelay)
+                            else if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpNodelay)
                             {
                                 //set no delay to don't try group the packet and improve the performance
                                 int state = 1;
@@ -213,10 +213,10 @@ int main(int argc, char *argv[])
                                     std::cerr << "Unable to apply tcp no delay" << std::endl;
                             }
 
-                            EpollClientLoginSlave *client=new EpollClientLoginSlave(infd
+                            EventLoopClientLoginSlave *client=new EventLoopClientLoginSlave(infd
                                 );
                             #ifdef CATCHCHALLENGER_HARDENED
-                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
+                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EventLoopObjectType::Client)
                             {
                                 std::cerr << "Wrong post check type (abort)" << std::endl;
                                 abort();
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
                             memset(&event,0,sizeof(event));
                             event.data.ptr = client;
                             event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT;
-                            s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                            s = EventLoop::loop.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
@@ -256,14 +256,14 @@ int main(int argc, char *argv[])
                     continue;
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Client:
+                case BaseClassSwitch::EventLoopObjectType::Client:
                 {
-                    EpollClientLoginSlave * const client=static_cast<EpollClientLoginSlave *>(events[i].data.ptr);
+                    EventLoopClientLoginSlave * const client=static_cast<EventLoopClientLoginSlave *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
-                        std::cerr << "BaseClassSwitch::EpollObjectType::Client events[i].events : " << client << " (" << events[i].events  << ")" << std::endl;
+                        std::cerr << "BaseClassSwitch::EventLoopObjectType::Client events[i].events : " << client << " (" << events[i].events  << ")" << std::endl;
                         /* An error has occurred on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
@@ -286,16 +286,16 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Timer:
+                case BaseClassSwitch::EventLoopObjectType::Timer:
                 {
-                    static_cast<EpollTimer *>(events[i].data.ptr)->exec();
-                    static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
+                    static_cast<EventLoopTimer *>(events[i].data.ptr)->exec();
+                    static_cast<EventLoopTimer *>(events[i].data.ptr)->validateTheTimer();
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::Database:
+                case BaseClassSwitch::EventLoopObjectType::Database:
                 {
-                    EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
-                    db->epollEvent(events[i].events);
+                    EventLoopPostgresql * const db=static_cast<EventLoopPostgresql *>(events[i].data.ptr);
+                    db->unixEvent(events[i].events);
                     if(!db->isConnected())
                     {
                         std::cerr << "database disconnect, quit now" << std::endl;
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::MasterLink:
+                case BaseClassSwitch::EventLoopObjectType::MasterLink:
                 {
                     LinkToMaster * const client=static_cast<LinkToMaster *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
-                case BaseClassSwitch::EpollObjectType::GameLink:
+                case BaseClassSwitch::EventLoopObjectType::GameLink:
                 {
                     LinkToGameServer * const client=static_cast<LinkToGameServer *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
@@ -375,8 +375,8 @@ int main(int argc, char *argv[])
             }
         }
     }
-    EpollServerLoginSlave::epollServerLoginSlave->close();
-    delete EpollServerLoginSlave::epollServerLoginSlave;
-    EpollServerLoginSlave::epollServerLoginSlave=NULL;
+    EventLoopServerLoginSlave::unixServerLoginSlave->close();
+    delete EventLoopServerLoginSlave::unixServerLoginSlave;
+    EventLoopServerLoginSlave::unixServerLoginSlave=NULL;
     return EXIT_SUCCESS;
 }

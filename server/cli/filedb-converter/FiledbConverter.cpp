@@ -182,7 +182,7 @@ const char *kindName(FileKind k) {
 
 // ================================================================ bin I/O ==
 // All load/save below mirror the byte-for-byte format used by
-// catchchallenger-server-cli-epoll built from catchchallenger-server-filedb.pro.
+// catchchallenger-server-cli built from catchchallenger-server-filedb.pro.
 // HPS operators come from hps/hps.h; the struct serialize()/parse() methods
 // live in general/base/GeneralStructures.hpp (same header the server uses).
 

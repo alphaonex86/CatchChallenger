@@ -1,5 +1,5 @@
 #include "PlayerUpdaterToLogin.hpp"
-#include "EpollClientLoginMaster.hpp"
+#include "EventLoopClientLoginMaster.hpp"
 
 using namespace CatchChallenger;
 
@@ -12,11 +12,11 @@ PlayerUpdaterToLogin::PlayerUpdaterToLogin()
 
 void PlayerUpdaterToLogin::exec()
 {
-    EpollClientLoginMaster::sendServerChange();
-    if(!EpollClientLoginMaster::havePlayerCountChange)
+    EventLoopClientLoginMaster::sendServerChange();
+    if(!EventLoopClientLoginMaster::havePlayerCountChange)
         return;
-    EpollClientLoginMaster::havePlayerCountChange=false;
-    const int numberOfPlayer=EpollClientLoginMaster::sendCurrentPlayer();
+    EventLoopClientLoginMaster::havePlayerCountChange=false;
+    const int numberOfPlayer=EventLoopClientLoginMaster::sendCurrentPlayer();
 
     if(oldnumberOfPlayer!=numberOfPlayer)
     {

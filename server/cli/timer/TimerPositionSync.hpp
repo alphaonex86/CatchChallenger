@@ -1,9 +1,9 @@
 #ifndef TIMERPOSITIONSYNC_H
 #define TIMERPOSITIONSYNC_H
 
-#include "../EpollTimer.hpp"
+#include "../EventLoopTimer.hpp"
 
-class TimerPositionSync : public EpollTimer
+class TimerPositionSync : public EventLoopTimer
 {
 public:
     TimerPositionSync();

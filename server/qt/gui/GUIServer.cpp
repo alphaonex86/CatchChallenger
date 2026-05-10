@@ -93,7 +93,7 @@ void GUIServer::initAll()
 //////////////////////////////////////////// server starting //////////////////////////////////////
 
 // Parse one db-* group out of server-properties.xml into a Database struct.
-// Mirrors the parser in epoll/main-epoll2.cpp::send_settings(): convert the
+// Mirrors the parser in unix/main-unix2.cpp::send_settings(): convert the
 // "type" string ("sqlite" / "mysql" / "postgresql") into the DatabaseType
 // enum, then pull host/db/login/pass for SQL or file= for SQLite. Caller is
 // responsible for begin/endGroup() around the call.
@@ -152,7 +152,7 @@ void GUIServer::load_settings()
 
     // Datapack code: required for preload_6_sync_the_datapack — passing
     // an empty mainDatapackCode aborts inside CATCHCHALLENGER_HARDENED.
-    // Mirror the seed logic from epoll/main-epoll2.cpp: read mainDatapackCode
+    // Mirror the seed logic from unix/main-unix2.cpp: read mainDatapackCode
     // from <content>, fall back to "[main]" → which means "auto-pick the
     // first directory under <datapack>/map/main/". Same idea for sub.
     settings.beginGroup("content");

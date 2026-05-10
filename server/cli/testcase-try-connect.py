@@ -5,7 +5,7 @@ Uses file-based state (PID files, log files) so each invocation is stateless
 but can control persistent background processes.
 
 Commands:
-    kill              Kill all catchchallenger-server-cli-epoll processes
+    kill              Kill all catchchallenger-server-cli processes
     build-server      Build server with make -j32
     build-bot         Build bot with make clean && make -j32
     save-cache        Run server with 'save' arg to create datapack-cache.bin
@@ -32,9 +32,9 @@ import signal
 import shutil
 import filecmp
 
-SERVER_DIR = "/home/user/Desktop/CatchChallenger/working/server/epoll/build/llvm-Debug"
+SERVER_DIR = "/home/user/Desktop/CatchChallenger/working/server/cli/build/llvm-Debug"
 BOT_DIR = "/home/user/Desktop/CatchChallenger/working/tools/bot-test-connect-to-gameserver/build/llvm-Debug"
-SERVER_BIN = "catchchallenger-server-cli-epoll"
+SERVER_BIN = "catchchallenger-server-cli"
 BOT_BIN = "bot-test-connect-to-gameserver"
 
 # State files in /tmp for persistence across invocations
@@ -52,8 +52,8 @@ ALLOWED_COMMANDS = {
 }
 
 # Output files written by `testcase` for Claude Code to read
-TESTCASE_SERVER_LOG = "/home/user/Desktop/CatchChallenger/working/server/epoll/server.log"
-TESTCASE_BOT_LOG = "/home/user/Desktop/CatchChallenger/working/server/epoll/bot-tools.log"
+TESTCASE_SERVER_LOG = "/home/user/Desktop/CatchChallenger/working/server/cli/server.log"
+TESTCASE_BOT_LOG = "/home/user/Desktop/CatchChallenger/working/server/cli/bot-tools.log"
 
 
 def ensure_state_dir():
@@ -141,7 +141,7 @@ def log_size(log_file):
 # ---- Commands ----
 
 def cmd_kill():
-    """Kill all catchchallenger-server-cli-epoll processes."""
+    """Kill all catchchallenger-server-cli processes."""
     ensure_state_dir()
     # Kill tracked server
     pid = read_pid(SERVER_PID_FILE)

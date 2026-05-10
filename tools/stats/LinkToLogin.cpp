@@ -2,9 +2,9 @@
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/CatchChallenger_Hash.hpp"
-#include "../../server/epoll/Epoll.hpp"
-#include "../../server/epoll/EpollSocket.hpp"
-#include "EpollServerStats.h"
+#include "../../server/cli/EventLoop.hpp"
+#include "../../server/cli/SocketUtil.hpp"
+#include "UnixServerStats.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -25,7 +25,7 @@ uint16_t LinkToLogin::port=22222;
 
 LinkToLogin::LinkToLogin(
         ) :
-        EpollClient(-1),
+        EventLoopClient(-1),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
@@ -150,7 +150,7 @@ bool LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const
                 event.data.ptr = this;
                 event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
                 errno=0;
-                int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                int s = EventLoop::loop.ctl(EPOLL_CTL_ADD, infd, &event);
                 if(s == -1)
                 {
                     std::cerr << __FILE__ << ":" << __LINE__ << " epoll_ctl on socket (login link) error, errno: " << errno << std::endl;
@@ -180,7 +180,7 @@ bool LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const
         event.data.ptr = this;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
         errno=0;
-        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+        int s = EventLoop::loop.ctl(EPOLL_CTL_ADD, infd, &event);
         if(s == -1)
         {
             std::cerr << __FILE__ << ":" << __LINE__ << " epoll_ctl on socket (login link) error, errno: " << errno << ", infd: " << infd << std::endl;
@@ -234,7 +234,7 @@ void LinkToLogin::connectInternal()
         }
         stat=Stat::Connected;
         std::cout << "(Re)Connected to login" << std::endl;
-        if(!EpollServerStats::epollServerStats.reopen())
+        if(!UnixServerStats::unixServerStats.reopen())
             std::cout << "Reopen unix socket failed: " << errno << " " << __FILE__ << ":" << __LINE__ << std::endl;
         setConnexionSettings(this->tryInterval,this->considerDownAfterNumberOfTry);
     }
@@ -247,7 +247,7 @@ void LinkToLogin::connectInternal()
 
 bool LinkToLogin::disconnectClient()
 {
-    EpollClient::close();
+    EventLoopClient::close();
     messageParsingLayer("Disconnected login link... try connect in loop");
     return true;
 }
@@ -278,9 +278,9 @@ void LinkToLogin::messageParsingLayer(const char * const message) const
     std::cout << message << std::endl;
 }
 
-BaseClassSwitch::EpollObjectType LinkToLogin::getType() const
+BaseClassSwitch::EventLoopObjectType LinkToLogin::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Client;
+    return BaseClassSwitch::EventLoopObjectType::Client;
 }
 
 void LinkToLogin::parseIncommingData()
@@ -347,7 +347,7 @@ void LinkToLogin::tryReconnect()
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
         } while(stat!=Stat::Connected);
-        EpollSocket::make_non_blocking(infd);
+        SocketUtil::make_non_blocking(infd);
         sendProtocolHeader();
     }
 }
@@ -560,12 +560,12 @@ void LinkToLogin::writeData(const std::string &str)
 
 ssize_t LinkToLogin::readFromSocket(char * data, const size_t &size)
 {
-    return EpollClient::read(data,size);
+    return EventLoopClient::read(data,size);
 }
 
 ssize_t LinkToLogin::writeToSocket(const char * const data, const size_t &size)
 {
-    if(EpollClient::write(data,size)!=(ssize_t)size)
+    if(EventLoopClient::write(data,size)!=(ssize_t)size)
     {
         std::cerr << "error to write ProtocolParsingInputOutput::write() " << infd << " into LinkToLogin::write(): " << binarytoHexa(data,size) << std::endl;
         return -1;

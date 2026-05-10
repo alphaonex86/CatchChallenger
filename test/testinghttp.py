@@ -63,16 +63,16 @@ HTTP_DATAPACK_MIRROR = _config["httpDatapackMirror"]
 SERVER_HOST = _config["server_host"]
 SERVER_PORT = _config["server_port"]
 
-SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/epoll/catchchallenger-server-filedb.pro")
+SERVER_FILEDB_PRO  = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
 # Diagnostic builds use their own dir so they don't share .o files with the
 # regular reference build (which stays the source of server-properties.xml).
 # After the qmake -> CMake migration the reference dir produced by
 # testingserver.py is now `testing-filedb` (see testingserver.py:1256);
 # match that so the symlink + server-properties.xml lookups land on the
 # already-populated build tree.
-_SERVER_REF_BUILD  = build_paths.build_path("server/epoll/build/testing-filedb")
+_SERVER_REF_BUILD  = build_paths.build_path("server/cli/build/testing-filedb")
 SERVER_BUILD       = _SERVER_REF_BUILD if not _DIAG_SUFFIX else _SERVER_REF_BUILD + _DIAG_SUFFIX
-SERVER_BIN_NAME    = "catchchallenger-server-cli-epoll"
+SERVER_BIN_NAME    = "catchchallenger-server-cli"
 
 CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 # build dir is suffixed below once DIAG is parsed so diagnostic runs do not

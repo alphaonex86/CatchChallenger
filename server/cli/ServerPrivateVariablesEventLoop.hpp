@@ -1,18 +1,18 @@
-#ifndef CATCHCHALLENGER_SERVER_STRUCTURESEpoll_H
-#define CATCHCHALLENGER_SERVER_STRUCTURESEpoll_H
+#ifndef CATCHCHALLENGER_SERVER_STRUCTURES_EVENT_LOOP_H
+#define CATCHCHALLENGER_SERVER_STRUCTURES_EVENT_LOOP_H
 
-#include "../epoll/timer/TimerDdos.hpp"
-#include "../epoll/timer/TimerPositionSync.hpp"
-#include "../epoll/timer/TimerSendInsertMoveRemove.hpp"
-#include "../epoll/timer/TimeRangeEventScan.hpp"
+#include "../cli/timer/TimerDdos.hpp"
+#include "../cli/timer/TimerPositionSync.hpp"
+#include "../cli/timer/TimerSendInsertMoveRemove.hpp"
+#include "../cli/timer/TimeRangeEventScan.hpp"
 #include "timer/TimerEvents.hpp"
 #include <vector>
 
-class ServerPrivateVariablesEpoll
+class ServerPrivateVariablesEventLoop
 {
 public:
-    ServerPrivateVariablesEpoll();
-    static ServerPrivateVariablesEpoll serverPrivateVariablesEpoll;
+    ServerPrivateVariablesEventLoop();
+    static ServerPrivateVariablesEventLoop serverPrivateVariablesEventLoop;
 
     std::vector<TimerEvents *> timerEvents;
 

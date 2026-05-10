@@ -10,7 +10,7 @@ char CharactersGroupForLogin::tempBuffer[4096];
 CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const uint8_t &considerDownAfterNumberOfTry,const uint8_t &tryInterval) :
     maxCharacterIdRequested(false),
     maxMonsterIdRequested(false),
-    databaseBaseCommon(new EpollPostgresql())
+    databaseBaseCommon(new EventLoopPostgresql())
 {
     charactersGroupIndex=0;
     databaseBaseCommon->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;
@@ -85,9 +85,9 @@ const std::unordered_map<uint32_t,CharactersGroupForLogin::InternalGameServer> &
     return servers;
 }
 
-BaseClassSwitch::EpollObjectType CharactersGroupForLogin::getType() const
+BaseClassSwitch::EventLoopObjectType CharactersGroupForLogin::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Client;
+    return BaseClassSwitch::EventLoopObjectType::Client;
 }
 
 DatabaseBase::DatabaseType CharactersGroupForLogin::databaseType() const
