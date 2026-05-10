@@ -226,6 +226,90 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
     #endif
 }
 
+#ifdef CATCHCHALLENGER_IO_URING
+//io_uring recv_multishot fast path. Bytes were delivered to us by the
+//kernel via a provided-buffer-ring CQE; we already have them in hand.
+//Mirrors one iteration of parseIncommingData()'s while-loop body but
+//skips readFromSocket(). header_cut continuation handled the same way:
+//if a previous CQE left a partial header, prepend it; if THIS CQE
+//leaves a partial header, parseIncommingDataRaw() (via parseHeader())
+//appends to header_cut for the next CQE.
+void ProtocolParsingInputOutput::parseIncommingDataAsync(const char * const buf,const size_t &len)
+{
+    if(len==0)
+        return;
+    char tempBigBufferForInput[CATCHCHALLENGER_COMMONBUFFERSIZE];
+    #ifdef CATCHCHALLENGER_HARDENED
+    if(parseIncommingDataCount>0)
+    {
+        std::cerr << "Multiple client on same section (async)" << std::endl;
+        abort();
+    }
+    parseIncommingDataCount++;
+    #endif
+    size_t total;
+    if(!header_cut.empty())
+    {
+        if(header_cut.size()+len>CATCHCHALLENGER_COMMONBUFFERSIZE)
+        {
+            std::cerr << "parseIncommingDataAsync: header_cut(" << header_cut.size()
+                      << ")+buf(" << len << ") > common buffer size("
+                      << CATCHCHALLENGER_COMMONBUFFERSIZE << ")" << std::endl;
+            #ifdef CATCHCHALLENGER_HARDENED
+            parseIncommingDataCount--;
+            #endif
+            return;
+        }
+        memcpy(tempBigBufferForInput,header_cut.data(),header_cut.size());
+        memcpy(tempBigBufferForInput+header_cut.size(),buf,len);
+        total=header_cut.size()+len;
+        header_cut.clear();
+    }
+    else
+    {
+        if(len>CATCHCHALLENGER_COMMONBUFFERSIZE)
+        {
+            std::cerr << "parseIncommingDataAsync: buf(" << len
+                      << ") > common buffer size("
+                      << CATCHCHALLENGER_COMMONBUFFERSIZE << ")" << std::endl;
+            #ifdef CATCHCHALLENGER_HARDENED
+            parseIncommingDataCount--;
+            #endif
+            return;
+        }
+        memcpy(tempBigBufferForInput,buf,len);
+        total=len;
+    }
+    uint32_t cursor=0;
+    int8_t returnVar;
+    do
+    {
+        #ifdef CATCHCHALLENGER_HARDENED
+        const uint32_t oldcursor=cursor;
+        #endif
+        returnVar=parseIncommingDataRaw(tempBigBufferForInput,
+                                        static_cast<uint32_t>(total),cursor);
+        #ifdef CATCHCHALLENGER_HARDENED
+        if(oldcursor==cursor && returnVar==1)
+        {
+            std::cerr << "Cursor don't move but returned 1 (async)" << std::endl;
+            abort();
+        }
+        #endif
+        if(returnVar<0)
+        {
+            #ifdef CATCHCHALLENGER_HARDENED
+            parseIncommingDataCount--;
+            #endif
+            return;
+        }
+    } while(cursor<static_cast<uint32_t>(total) && returnVar==1);
+    #ifdef CATCHCHALLENGER_HARDENED
+    parseIncommingDataCount--;
+    #endif
+}
+#endif
+
 //this interface allow 0 copy method
 int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffer, const uint32_t &size, uint32_t &cursor)
 {

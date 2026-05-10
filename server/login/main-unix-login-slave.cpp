@@ -240,15 +240,29 @@ int main(int argc, char *argv[])
                                     client->socketString[client->socketStringSize-1]='\0';
                                 }
                             }
-                            epoll_event event;
-                            memset(&event,0,sizeof(event));
-                            event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT;
-                            s = EventLoop::loop.ctl(EPOLL_CTL_ADD, infd, &event);
-                            if(s == -1)
+                            #ifdef CATCHCHALLENGER_IO_URING
+                            if(EventLoop::loop.multishotEnabled())
                             {
-                                std::cerr << "epoll_ctl on socket error" << std::endl;
-                                delete client;
+                                if(!EventLoop::loop.armRecvMultishot(infd,
+                                        static_cast<BaseClassSwitch *>(client)))
+                                {
+                                    std::cerr << "armRecvMultishot failed for fd " << infd << std::endl;
+                                    delete client;
+                                }
+                            }
+                            else
+                            #endif
+                            {
+                                epoll_event event;
+                                memset(&event,0,sizeof(event));
+                                event.data.ptr = client;
+                                event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT;
+                                s = EventLoop::loop.ctl(EPOLL_CTL_ADD, infd, &event);
+                                if(s == -1)
+                                {
+                                    std::cerr << "epoll_ctl on socket error" << std::endl;
+                                    delete client;
+                                }
                             }
                             // SSL preamble byte removed; nothing to write here.
                         }

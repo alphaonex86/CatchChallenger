@@ -36,6 +36,13 @@ EventLoopClientLoginMaster::~EventLoopClientLoginMaster()
     resetToDisconnect();
 }
 
+#ifdef CATCHCHALLENGER_IO_URING
+void EventLoopClientLoginMaster::onAsyncRecv(const char *buf,size_t len)
+{
+    parseIncommingDataAsync(buf,len);
+}
+#endif
+
 void EventLoopClientLoginMaster::resetToDisconnect()
 {
     if(stat==EventLoopClientLoginMasterStat::LoginServer)

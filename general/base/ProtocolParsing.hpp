@@ -210,6 +210,13 @@ public:
 protected:
     /*virtual for void LinkToGameServer::parseIncommingData() of gateway*/
     virtual void parseIncommingData();
+    #ifdef CATCHCHALLENGER_IO_URING
+    //io_uring recv_multishot fast path: bytes already in hand from a
+    //provided-buffer-ring CQE; feed them through parseIncommingDataRaw
+    //without going through readFromSocket(). header_cut continuation
+    //is preserved.
+    void parseIncommingDataAsync(const char * const buf,const size_t &len);
+    #endif
     #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
     CompressionProtocol::CompressionType getCompressType() const override;
     #endif

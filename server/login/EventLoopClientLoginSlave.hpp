@@ -236,6 +236,9 @@ public:
     ssize_t readFromSocket(char * data, const size_t &size);
     ssize_t writeToSocket(const char * const data, const size_t &size);
     void closeSocket();
+    #ifdef CATCHCHALLENGER_IO_URING
+    void onAsyncRecv(const char *buf,size_t len) override;
+    #endif
 private:
     void deleteCharacterNow(const uint32_t &characterId);
     void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);

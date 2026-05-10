@@ -14,6 +14,13 @@ public:
     ssize_t writeToSocket(const char * const data, const size_t &size) override;
     ssize_t writeFileToSocket(int file_fd, off_t *offset, size_t len) override;
     void reset(int infd);
+#ifdef CATCHCHALLENGER_IO_URING
+    //io_uring recv_multishot delivery: bytes are already in hand from
+    //the kernel's provided-buffer-ring. Forward to the protocol parser
+    //async entry. Buffer is owned by EventLoop and recycled immediately
+    //after this returns — must consume synchronously.
+    void onAsyncRecv(const char *buf,size_t len) override;
+#endif
 };
 
 #endif // CLIENTMAPMANAGEMENT_H

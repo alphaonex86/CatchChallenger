@@ -28,6 +28,10 @@ public:
     ssize_t readFromSocket(char * data, const size_t &size);
     ssize_t writeToSocket(const char * const data, const size_t &size);
     void closeSocket();
+    #ifdef CATCHCHALLENGER_IO_URING
+    //io_uring recv_multishot delivery — see ClientWithMapEventLoop::onAsyncRecv.
+    void onAsyncRecv(const char *buf,size_t len) override;
+    #endif
 
     void selectCharacter(const uint8_t &query_id, const uint32_t &serverUniqueKey, const uint8_t &charactersGroupIndex, const uint32_t &characterId, const uint32_t &accountId);
     bool trySelectCharacterGameServer(EventLoopClientLoginMaster * const loginServer,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId, const uint32_t &accountId);

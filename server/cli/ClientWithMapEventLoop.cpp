@@ -54,3 +54,13 @@ ssize_t ClientWithMapEventLoop::writeFileToSocket(int file_fd, off_t *offset, si
         return -1;
     return EventLoop::sendFile(this->infd,file_fd,offset,len);
 }
+
+#ifdef CATCHCHALLENGER_IO_URING
+void ClientWithMapEventLoop::onAsyncRecv(const char *buf,size_t len)
+{
+    //Forward the kernel-delivered bytes through the protocol parser's
+    //async entry. Same per-packet dispatch as parseIncommingData() but
+    //without a ::recv() syscall.
+    parseIncommingDataAsync(buf,len);
+}
+#endif
