@@ -110,6 +110,7 @@ nginx_proc   = None
 SCRIPT_NAME = os.path.basename(__file__)
 from test_config import FAILED_JSON
 import failed_cases as _fc
+import phase_timer
 
 
 def load_failed_cases():
@@ -133,7 +134,7 @@ def save_failed_cases():
 
 
 def log_info(msg):
-    print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
+    print(f"{phase_timer.t()} {C_CYAN}[INFO]{C_RESET} {msg}")
 
 
 def log_pass(name, detail=""):
@@ -143,8 +144,9 @@ def log_pass(name, detail=""):
     results.append((name, True, detail, elapsed))
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
-    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} "
+    print(f"{phase_timer.t()} {C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} "
           f"{name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("pass", name, ok=True, dt=elapsed, detail=detail)
 
 
 def log_fail(name, detail=""):
@@ -154,8 +156,9 @@ def log_fail(name, detail=""):
     results.append((name, False, detail, elapsed))
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
-    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} "
+    print(f"{phase_timer.t()} {C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} "
           f"{name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
     li = 0
     _ctx = diagnostic.last_cmd_lines()
     while li < len(_ctx):
@@ -215,7 +218,16 @@ def write_nginx_conf():
 def stage_nginx_www(server_datapack):
     """Mirror the active backend datapack into NGINX_WWW so the http
     case has something to serve. Use a symlink — the datapack is read-only
-    from nginx's POV."""
+    from nginx's POV.
+
+    Always (re)create the NGINX_WWW dir first: all.sh wipes the whole
+    tmpfs root between runs, so on the first case of a fresh run the
+    directory is gone and `os.symlink(target, link)` fails with
+    ENOENT on the parent of `link`. write_nginx_conf() also creates
+    it, but that's only called *after* this function on the first
+    case (start_nginx → write_nginx_conf), so we need the mkdir
+    here too."""
+    ensure_dir(NGINX_WWW)
     link = os.path.join(NGINX_WWW, "datapack")
     if os.path.islink(link) or os.path.exists(link):
         try:
@@ -323,7 +335,13 @@ def write_gateway_settings(rewrite_base, rewrite_main_sub):
         '    <destination_ip value="{bhost}"/>\n'
         '    <destination_port value="{bport}"/>\n'
         '    <destination_proxy_ip value=""/>\n'
-        '    <destination_proxy_port value="0"/>\n'
+        # Gateway aborts when destination_proxy_port is 0 OR > 65535
+        # (EpollServerLoginSlave.cpp:129-133), regardless of whether
+        # destination_proxy_ip is empty. We don't need an upstream
+        # SOCKS/HTTP proxy for the test, but the validator requires a
+        # syntactically-valid port, so pin to 1 (low port, won't ever
+        # be reached because destination_proxy_ip is empty).
+        '    <destination_proxy_port value="1"/>\n'
         '    <httpDatapackMirrorRewriteBase value="{rb}"/>\n'
         '    <httpDatapackMirrorRewriteMainAndSub value="{rms}"/>\n'
         '    <Linux>\n'

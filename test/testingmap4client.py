@@ -89,21 +89,23 @@ _last_log_time = [time.monotonic()]
 
 
 def log_info(msg):
-    print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
+    print(f"{phase_timer.t()} {C_CYAN}[INFO]{C_RESET} {msg}")
 
 def log_pass(name, detail=""):
     now = time.monotonic()
     elapsed = now - _last_log_time[0]
     _last_log_time[0] = now
     results.append((name, True, detail, elapsed))
-    print(f"{C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"{phase_timer.t()} {C_GREEN}[PASS]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("pass", name, ok=True, dt=elapsed, detail=detail)
 
 def log_fail(name, detail=""):
     now = time.monotonic()
     elapsed = now - _last_log_time[0]
     _last_log_time[0] = now
     results.append((name, False, detail, elapsed))
-    print(f"{C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"{phase_timer.t()} {C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
     li = 0
     _ctx = diagnostic.last_cmd_lines()
     while li < len(_ctx):
@@ -112,6 +114,7 @@ def log_fail(name, detail=""):
 
 
 import failed_cases as _fc
+import phase_timer
 
 
 def load_failed_cases():
@@ -393,17 +396,20 @@ def main():
 
     failed_cases = load_failed_cases()
 
-    if should_run(SCRIPT_NAME, failed_cases):
+    # Build directory is wiped between all.sh runs (tmpfs cleanup), so
+    # a "previous run passed compile" cache entry doesn't imply the
+    # binary still exists. Re-compile when the binary is missing
+    # regardless of resume state — that's strictly cheaper than
+    # failing the script and asking the operator to re-run, and the
+    # ccache slot makes the rebuild cheap.
+    need_compile = should_run(SCRIPT_NAME, failed_cases) \
+        or not os.path.isfile(CLIENT_BIN)
+    if need_compile:
         if not test_compile():
             save_failed_cases()
             summary()
             return
         print()
-    elif not os.path.isfile(CLIENT_BIN):
-        log_fail(SCRIPT_NAME, "binary missing from previous build")
-        save_failed_cases()
-        summary()
-        return
 
     if should_run(SCRIPT_RUN_NAME, failed_cases):
         test_run()

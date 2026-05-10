@@ -90,9 +90,20 @@ WINDEPLOYQT_EXE = MXE_QT_BIN + "/windeployqt.exe"
 
 # NSIS host binary for installer generation; if absent we fall back to a
 # portable .zip so the installer step still produces a single artefact.
-MAKENSIS_BIN = (shutil.which("makensis")
-                or (MXE_HOST_BIN + "/makensis"
-                    if os.path.isfile(MXE_HOST_BIN + "/makensis") else None))
+# MXE actually ships makensis as a Linux ELF in the target/bin/ tree
+# (`<MXE>/x86_64-w64-mingw32.shared/bin/makensis`), even though the
+# directory name suggests cross output. Probe the host bin tree first
+# (some operators install a system makensis), then both MXE locations.
+def _resolve_makensis():
+    cand = shutil.which("makensis")
+    if cand:
+        return cand
+    for p in (MXE_HOST_BIN + "/makensis",
+              MXE_RT_BIN + "/makensis"):
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            return p
+    return None
+MAKENSIS_BIN = _resolve_makensis()
 
 # ── MSI tooling (self-contained, no system install) ────────────────────────
 # WiX 3.11 binaries (Windows .NET .exe) at <paths.msi_dir>/wix3/, driven
@@ -111,7 +122,14 @@ OSSLSIGNCODE   = shutil.which("osslsigncode") or "/usr/bin/osslsigncode"
 SIGN_TIMESTAMP = "http://timestamp.digicert.com"   # RFC3161 TSA; optional
 
 COMPILE_TIMEOUT      = 600
-SERVER_READY_TIMEOUT = 60
+# Cold-cache server boot on this host emits ~80–100 "Unable to open
+# the xml file" warnings (one per skill in the test datapack — see
+# CLAUDE.md "datapack/map/main/test/" intentional bugs) before the
+# bind line lands; that takes ~60s on a busy box. 60s used to be the
+# limit and we'd miss bind by a few seconds. 180s leaves ample
+# margin without making a stuck server noticeably worse — the start
+# helper kills the binary on the upper bound either way.
+SERVER_READY_TIMEOUT = 180
 WINE_TIMEOUT         = 120
 
 # ── colours ─────────────────────────────────────────────────────────────────
@@ -130,6 +148,7 @@ from test_config import FAILED_JSON
 
 
 import failed_cases as _fc
+import phase_timer
 
 
 def load_failed_cases():
@@ -153,7 +172,7 @@ def save_failed_cases():
 
 
 def log_info(msg):
-    print(f"{C_CYAN}[INFO]{C_RESET} {msg}")
+    print(f"{phase_timer.t()} {C_CYAN}[INFO]{C_RESET} {msg}")
 
 
 def log_pass(name, detail=""):
@@ -163,7 +182,8 @@ def log_pass(name, detail=""):
     results.append((name, True, detail, elapsed))
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
-    print(f"{C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"{phase_timer.t()} {C_GREEN}[PASS]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("pass", name, ok=True, dt=elapsed, detail=detail)
 
 
 def log_fail(name, detail=""):
@@ -173,7 +193,8 @@ def log_fail(name, detail=""):
     results.append((name, False, detail, elapsed))
     if len(results) > total_expected[0]:
         total_expected[0] = len(results)
-    print(f"{C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    print(f"{phase_timer.t()} {C_RED}[FAIL]{C_RESET} {len(results)}/{total_expected[0]} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
     li = 0
     _ctx = diagnostic.last_cmd_lines()
     while li < len(_ctx):
@@ -455,7 +476,37 @@ def build_mxe_client(pro_file, build_dir, label):
         # Layer the runtime DLLs on top so the .exe actually starts under wine.
         deploy_mxe_dependencies(exe)
     log_pass(name, f"-> {os.path.relpath(exe, ROOT)}")
+    _verify_exe_size(label, exe)
     return exe
+
+
+# ── shipping-artifact size guards ────────────────────────────────────
+# Each step that produces a deployable artefact (.exe / .zip / .msi)
+# checks the result against a static baseline in size_check.py:
+# regression > 25% or absolute size < 10 MiB → log_fail. This catches
+# silent breakage where the artefact builds successfully but is empty
+# (e.g. windeployqt skipped, a Qt plugin dir missed, msi without the
+# datapack). Lazy import keeps the module-load surface lean for the
+# 99% of runs where size_check isn't touched.
+def _verify_exe_size(label, exe_path):
+    import size_check
+    sk = "windows.exe." + label
+    ok, detail = size_check.verify(sk, exe_path)
+    (log_pass if ok else log_fail)(f"size {sk}", detail)
+
+
+def _verify_installer_size(label, installer_path):
+    import size_check
+    sk = "windows.installer." + label
+    ok, detail = size_check.verify(sk, installer_path)
+    (log_pass if ok else log_fail)(f"size {sk}", detail)
+
+
+def _verify_msi_size(label, msi_path):
+    import size_check
+    sk = "windows.msi." + label
+    ok, detail = size_check.verify(sk, msi_path)
+    (log_pass if ok else log_fail)(f"size {sk}", detail)
 
 
 def build_installer(exe_path, label):
@@ -494,6 +545,7 @@ def build_installer(exe_path, label):
                           out_dir, timeout=COMPILE_TIMEOUT)
         if rc == 0 and os.path.isfile(installer_exe):
             log_pass(name, f"-> {os.path.relpath(installer_exe, ROOT)}")
+            _verify_installer_size(label, installer_exe)
             return installer_exe
         log_fail(name, f"makensis failed (rc={rc}); falling back to zip")
         if out.strip():
@@ -509,6 +561,7 @@ def build_installer(exe_path, label):
         log_fail(name, f"zip failed: {e}")
         return None
     log_pass(name, f"-> {os.path.relpath(archive, ROOT)}")
+    _verify_installer_size(label, archive)
     return archive
 
 
@@ -725,6 +778,7 @@ def build_msi(exe_path, label):
             print(out[-2000:])
         return None
     log_pass(name, f"-> {os.path.relpath(msi_path, ROOT)}")
+    _verify_msi_size(label, msi_path)
 
     # 4) sign the .msi (osslsigncode handles MSI just like PE).
     sign_authenticode(msi_path, label, "msi")
@@ -976,10 +1030,83 @@ def main():
                       (gl_exe  is not None and should_run("wine run qtopengl", failed_cases)))
     if win_need_multi:
         srv = None
-        if os.path.isfile(os.path.join(SERVER_BUILD, SERVER_BIN_NAME)):
-            set_http_datapack_mirror(SERVER_BUILD, "")
+        bin_path = os.path.join(SERVER_BUILD, SERVER_BIN_NAME)
+        # The local server-filedb is normally produced by testingmulti
+        # earlier in all.sh — but with --continue (or when running
+        # this script in isolation) the build dir may not exist yet,
+        # since all.sh wipes tmpfs each invocation. Build it on
+        # demand here instead of failing; ccache makes this cheap.
+        if not os.path.isfile(bin_path):
+            log_info(f"server-filedb missing at {bin_path}; building")
+            import cmake_helpers as _ch
+            ensure_dir(SERVER_BUILD)
+            pro = os.path.join(ROOT,
+                               "server/epoll/catchchallenger-server-filedb.pro")
+            # testingcompilationwindows.py doesn't support sanitizer /
+            # valgrind diag modes (cross-build with MXE has no clang/
+            # gcc-debug toolchain wired up for them), so pass None for
+            # diag — build_project uses its default linux-g++ spec.
+            ok = _ch.build_project(
+                pro, SERVER_BUILD,
+                "server-filedb (testingcompilationwindows)",
+                root=ROOT, nproc=str(multiprocessing.cpu_count()),
+                log_info=log_info, log_pass=log_pass, log_fail=log_fail,
+                ensure_dir=ensure_dir, run_cmd=run_cmd,
+            )
+            if not ok:
+                log_fail("wine run: server start",
+                         f"failed to build {SERVER_BIN_NAME}")
+        if os.path.isfile(bin_path):
+            # Stage datapack + a minimal server-properties.xml next to
+            # the binary. testingmulti normally does this earlier in
+            # all.sh, but with --continue testingmulti may have been
+            # cached-skipped, leaving an empty build dir. Without a
+            # datapack the server prints "No datapack found into:
+            # ./datapack/" and never binds — the harness then waits
+            # the full SERVER_READY_TIMEOUT for nothing.
+            try:
+                import datapack_stage as _ds
+                src_dp = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
+                if not os.path.isdir(src_dp):
+                    src_dp = DATAPACK_SRC if "DATAPACK_SRC" in globals() else None
+                if src_dp and os.path.isdir(src_dp):
+                    staged = _ds.staged_local(src_dp)
+                    dst_dp = os.path.join(SERVER_BUILD, "datapack")
+                    if os.path.islink(dst_dp) or os.path.isfile(dst_dp):
+                        os.remove(dst_dp)
+                    elif os.path.isdir(dst_dp):
+                        shutil.rmtree(dst_dp)
+                    os.symlink(staged, dst_dp)
+                    log_info(f"staged datapack {dst_dp} -> {staged}")
+            except Exception as e:
+                log_info(f"datapack stage non-fatal: {e}")
+            # Pin server-port + mainDatapackCode so the wine clients
+            # have a stable target. server-port=61917 matches the
+            # SERVER_PORT constant used by run_wine_client.
+            xml_path = os.path.join(SERVER_BUILD, "server-properties.xml")
+            with open(xml_path, "w") as _xf:
+                _xf.write(
+                    '<?xml version="1.0"?>\n'
+                    '<configuration>\n'
+                    f'    <server-port value="{SERVER_PORT}"/>\n'
+                    '    <server-ip value=""/>\n'
+                    '    <httpDatapackMirror value=""/>\n'
+                    '    <max-players value="10"/>\n'
+                    '    <pvp value="true"/>\n'
+                    # `--autologin` makes the client tryLogin with a
+                    # synthetic account; without auto-create the
+                    # backend rejects with "Bad login" and the wine
+                    # run aborts at parseReplyData(packetCode=127,
+                    # data=02). Mirror what testingmulti seeds.
+                    '    <automatic_account_creation value="true"/>\n'
+                    '    <content>\n'
+                    '        <mainDatapackCode value="official"/>\n'
+                    '        <subDatapackCode value=""/>\n'
+                    '    </content>\n'
+                    '</configuration>\n'
+                )
             srv = start_local_server(SERVER_BUILD)
-        else:
+        elif not any(name == "wine run: server start" for name, *_ in results):
             log_fail("wine run: server start",
                      f"{SERVER_BIN_NAME} not found in {SERVER_BUILD}")
         if srv is not None:

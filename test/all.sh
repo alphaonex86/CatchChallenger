@@ -28,13 +28,15 @@ cd "$(dirname "$0")"
 # single source of truth — same module the python scripts use). Done
 # once at startup; the python helper also writes a dummy config when
 # the file is missing so a fresh checkout has something to read.
-TEST_CONFIG_OUT="$(python3 -c "import test_config as c; print(c.TMPFS_ROOT); print(c.TMPFS_BUILD_ROOT); print(c.LOCAL_CACHE_ROOT); print(c.CCACHE_ROOT); print(c.PYCACHE_DIR); print(c.FAILED_JSON)")"
+TEST_CONFIG_OUT="$(python3 -c "import test_config as c; print(c.TMPFS_ROOT); print(c.TMPFS_BUILD_ROOT); print(c.LOCAL_CACHE_ROOT); print(c.CCACHE_ROOT); print(c.PYCACHE_DIR); print(c.FAILED_JSON); print(c.TIME_JSON); print(c.MONITOR_JSON)")"
 TMPFS_ROOT="$(echo "$TEST_CONFIG_OUT"        | sed -n '1p')"
 TMPFS_BUILD_ROOT="$(echo "$TEST_CONFIG_OUT"  | sed -n '2p')"
 LOCAL_CACHE_ROOT="$(echo "$TEST_CONFIG_OUT"  | sed -n '3p')"
 CCACHE_ROOT="$(echo "$TEST_CONFIG_OUT"       | sed -n '4p')"
 PYCACHE_DIR="$(echo "$TEST_CONFIG_OUT"       | sed -n '5p')"
 FAILED_JSON="$(echo "$TEST_CONFIG_OUT"       | sed -n '6p')"
+TIME_JSON="$(echo "$TEST_CONFIG_OUT"         | sed -n '7p')"
+MONITOR_JSON="$(echo "$TEST_CONFIG_OUT"      | sed -n '8p')"
 
 # Parse args early — cleanup behaviour below depends on --continue.
 CONTINUE=0
@@ -89,24 +91,40 @@ EXTRA_KEEP=()
 if [ "$CONTINUE" = "1" ]; then
     EXTRA_KEEP+=(-not -path "$FAILED_JSON")
 fi
+# Always preserve time.json + monitor.json across the tmpfs wipe — they
+# are the run-wide phase-timing + system-load logs (JSONL). Operator
+# inspects them AFTER all.sh finishes, so neither full-run nor
+# --continue should delete them during the per-run cleanup. The
+# full-run path below truncates them explicitly so each fresh run
+# starts empty.
 find "$TMPFS_ROOT/" -mindepth 1 \
      -not -path "$LOCAL_CACHE_ROOT*" \
      -not -path "$CCACHE_ROOT*" \
+     -not -path "$TIME_JSON" \
+     -not -path "$MONITOR_JSON" \
      "${EXTRA_KEEP[@]}" \
      -type f -delete 2>/dev/null
 find "$TMPFS_ROOT/" -mindepth 1 -maxdepth 1 \
      -not -name "$(basename "$LOCAL_CACHE_ROOT")" \
      -not -name "$(basename "$CCACHE_ROOT")" \
      -not -name "$(basename "$FAILED_JSON")" \
+     -not -name "$(basename "$TIME_JSON")" \
+     -not -name "$(basename "$MONITOR_JSON")" \
      -exec rm -rf {} + 2>/dev/null
 
 if [ "$CONTINUE" = "0" ]; then
     # No --continue: force fresh full run. Wipe failed.json so every
     # testing*.py executes its full case matrix from scratch (no skip).
+    # Also truncate time.json + monitor.json so the per-phase timing
+    # and system-load logs start empty — appending to stale logs
+    # would mix records from multiple runs and confuse post-mortem
+    # analysis.
     rm -f "$FAILED_JSON"
-    echo "[all.sh] full run from scratch (no --continue): wiped $FAILED_JSON; no test will be skipped"
+    : > "$TIME_JSON"
+    : > "$MONITOR_JSON"
+    echo "[all.sh] full run from scratch (no --continue): wiped $FAILED_JSON, truncated $TIME_JSON $MONITOR_JSON; no test will be skipped"
 else
-    echo "[all.sh] resume run (--continue): preserving $FAILED_JSON; testing*.py will re-run only previously-failed cases"
+    echo "[all.sh] resume run (--continue): preserving $FAILED_JSON and appending to $TIME_JSON $MONITOR_JSON; testing*.py will re-run only previously-failed cases"
 fi
 
 # Keep the source tree clean: route .pyc bytecode the testing*.py scripts
@@ -210,6 +228,18 @@ fi
 
 FAILED=0
 
+# ── start the system+process sampler in the background ──────────────────
+# monitor.py samples /proc + cc-related pids every 60s into
+# <tmpfs>/monitor.json. Pair with time.json post-mortem to find idle
+# host stretches that warrant adding parallelism (CPU < 30% during a
+# slow phase) vs. single-core hot loops (one core pinned). EXIT trap
+# kills the sampler whether the run succeeds, fails, or is Ctrl-C'd
+# so we don't leak python3 monitor.py processes across runs.
+python3 monitor.py --out "$MONITOR_JSON" --interval 60 &
+MONITOR_PID=$!
+trap '[ -n "$MONITOR_PID" ] && kill "$MONITOR_PID" 2>/dev/null; wait "$MONITOR_PID" 2>/dev/null; true' EXIT INT TERM
+echo "[all.sh] monitor.py started pid=$MONITOR_PID writing $MONITOR_JSON"
+
 run_test() {
     echo -e "\n${CYAN}========================================${RESET}"
     if [ -n "${CC_NODE_FILTER}" ]; then
@@ -243,6 +273,7 @@ run_test testinghttp.py
 run_test testingwebsocket.py
 run_test testinggateway.py
 run_test testingmulti.py
+run_test testinggateway.py
 run_test testingbyIA.py
 run_test testingremote.py
 run_test testingcompilationwindows.py

@@ -23,6 +23,8 @@ Derived constants exported here:
   LOCAL_CACHE_ROOT   <tmpfs_root>/cc-datapack
   CCACHE_ROOT        <tmpfs_root>/ccache
   FAILED_JSON        <tmpfs_root>/failed.json
+  TIME_JSON          <tmpfs_root>/time.json
+  MONITOR_JSON       <tmpfs_root>/monitor.json
   PYCACHE_DIR        <tmpfs_root>/cc-build/__pycache__
   MAP2PNG_OUTPUT     <tmpfs_root>/catchchallenger-map2png.png
   MAP2PNG_DIFF       <tmpfs_root>/fail.png
@@ -123,6 +125,10 @@ def __getattr__(name):
         return os.path.join(_path("tmpfs_root"), "ccache")
     if name == "FAILED_JSON":
         return os.path.join(_path("tmpfs_root"), "failed.json")
+    if name == "TIME_JSON":
+        return os.path.join(_path("tmpfs_root"), "time.json")
+    if name == "MONITOR_JSON":
+        return os.path.join(_path("tmpfs_root"), "monitor.json")
     if name == "PYCACHE_DIR":
         return os.path.join(_path("tmpfs_root"), "cc-build", "__pycache__")
     if name == "MAP2PNG_OUTPUT":

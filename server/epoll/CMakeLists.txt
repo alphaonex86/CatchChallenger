@@ -89,6 +89,16 @@ if(CATCHCHALLENGER_DB_SQLITE)
     target_compile_definitions(catchchallenger-server-cli-epoll PRIVATE CATCHCHALLENGER_DB_SQLITE)
 endif()
 
+# Pull in PreparedDBQuery* / SqlFunction / DatabaseBase plumbing when
+# any SQL backend is selected. Without this the SQLite/MySQL/PG
+# build links cleanly except for these helpers (every PreparedStatement
+# call resolves as an undefined symbol — see
+# server/catchchallenger-server.cmake `catchchallenger_server_sql`).
+# DB_FILE alone does not need the SQL path; that's why it's gated.
+if(CATCHCHALLENGER_DB_POSTGRESQL OR CATCHCHALLENGER_DB_MYSQL OR CATCHCHALLENGER_DB_SQLITE)
+    target_link_libraries(catchchallenger-server-cli-epoll PRIVATE catchchallenger_server_sql)
+endif()
+
 # Backend selection — these affect Epoll.cpp only. The three options
 # are mutually exclusive (Epoll.hpp #error's if more than one is set).
 if(CATCHCHALLENGER_SELECT)
