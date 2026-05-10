@@ -7,6 +7,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <algorithm>
+#ifdef CATCHCHALLENGER_IO_URING
+#include "../../cli/EventLoop.hpp"
+#endif
 
 // MinGW/Windows lacks O_CLOEXEC (it's POSIX). Define it as 0 so the
 // `O_RDONLY|O_CLOEXEC` calls compile cleanly on the Windows cross-build.
@@ -516,6 +519,98 @@ void Client::sendFileContent()
     hdr[0]=0x76;
     {const uint32_t le=htole32(static_cast<uint32_t>(bodySize));memcpy(hdr+1,&le,sizeof(le));}
     hdr[5]=static_cast<uint8_t>(pending.size());
+
+    #ifdef CATCHCHALLENGER_IO_URING
+    //Phase 3: async datapack send via SQE chains. The chain bundles
+    //the packet header send + per-file (metadata send + splice
+    //file→pipe + splice pipe→sock + close) into one io_uring submit.
+    //Returns immediately; CQE fires when the whole transfer drains.
+    //
+    //Skip when: io_uring not active, a previous chain is still in
+    //flight (KISS: don't queue), or pipe2() fails. Falls through to
+    //the synchronous sendfile loop below in any of those cases.
+    if(EventLoop::loop.uringEnabled() && !async_send_in_progress)
+    {
+        if(splice_pipe_read<0)
+        {
+            int p[2];
+            if(pipe2(p,O_CLOEXEC)==0)
+            {
+                splice_pipe_read=p[0];
+                splice_pipe_write=p[1];
+            }
+        }
+        if(splice_pipe_read>=0)
+        {
+            //Open every pending file synchronously. Aborts on first
+            //failure since the wire-format requires all-or-nothing.
+            std::vector<int> fds;
+            std::vector<std::string> meta;
+            std::vector<std::vector<size_t> > chunks;
+            fds.reserve(pending.size());
+            meta.reserve(pending.size());
+            chunks.reserve(pending.size());
+            const size_t kPipeChunk=64*1024;//pipe2 default capacity
+            bool open_ok=true;
+            unsigned int oi=0;
+            while(oi<pending.size())
+            {
+                const BaseServerMasterSendDatapack::PendingFile &p=pending[oi];
+                const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_CLOEXEC);
+                if(fd<0)
+                {
+                    open_ok=false;
+                    break;
+                }
+                fds.push_back(fd);
+                std::string m;
+                m.reserve(1+p.name.size()+4);
+                {const char l=static_cast<char>(p.name.size());m.push_back(l);}
+                m.append(p.name);
+                {const uint32_t le=htole32(p.size);
+                 m.append(reinterpret_cast<const char *>(&le),sizeof(le));}
+                meta.push_back(m);
+                std::vector<size_t> ck;
+                size_t remaining=p.size;
+                while(remaining>0)
+                {
+                    const size_t c=remaining<kPipeChunk?remaining:kPipeChunk;
+                    ck.push_back(c);
+                    remaining-=c;
+                }
+                chunks.push_back(ck);
+                oi++;
+            }
+            const int sock_fd_for_chain=this->getEventLoopFd();
+            BaseClassSwitch * const bcs_for_chain=this->asBaseClassSwitch();
+            if(open_ok && sock_fd_for_chain>=0 && bcs_for_chain!=nullptr
+               && EventLoop::loop.submitDatapackChain(
+                    sock_fd_for_chain,
+                    splice_pipe_read,splice_pipe_write,
+                    hdr,sizeof(hdr),
+                    meta,fds,chunks,
+                    bcs_for_chain))
+            {
+                async_send_in_progress=true;
+                //pending vector ownership: chain references no pending[]
+                //memory directly (header/metadata copied into PendingSendOp;
+                //file_fds owned by chain). Safe to clear synchronously.
+                std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+                BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
+                return;
+            }
+            //Submit failed or open failed — close any opened fds and
+            //fall through to the synchronous path.
+            unsigned int ci=0;
+            while(ci<fds.size())
+            {
+                ::close(fds[ci]);
+                ci++;
+            }
+        }
+    }
+    #endif
+
     if(!sendRawBlock(hdr,sizeof(hdr)))
     {
         std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);

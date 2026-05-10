@@ -20,6 +20,14 @@ public:
     //async entry. Buffer is owned by EventLoop and recycled immediately
     //after this returns — must consume synchronously.
     void onAsyncRecv(const char *buf,size_t len) override;
+    //Phase 3 hooks for Client::sendFileContent async dispatch.
+    int getEventLoopFd() const override { return infd; }
+    ::BaseClassSwitch *asBaseClassSwitch() override { return this; }
+    //BaseClassSwitch::onAsyncSendChainComplete override forwards into the
+    //Client side of the diamond (Client doesn't itself inherit
+    //BaseClassSwitch — only the cli composite ClientWithMapEventLoop does).
+    void onAsyncSendChainComplete(bool success) override
+    { CatchChallenger::Client::onAsyncSendChainCompleteImpl(success); }
 #endif
 };
 

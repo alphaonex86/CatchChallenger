@@ -39,6 +39,11 @@ Client::Client(const uint16_t &index_connected_player) :
         PacketModeTransmission_Server
         #endif
         )
+    #if defined(CATCHCHALLENGER_SERVER) && defined(CATCHCHALLENGER_IO_URING)
+    , splice_pipe_read(-1)
+    , splice_pipe_write(-1)
+    , async_send_in_progress(false)
+    #endif
 {
     this->index_connected_player=index_connected_player;
     setToDefault();
@@ -267,10 +272,40 @@ Client::ClientStat Client::getClientStat() const
     return stat;
 }
 
+#if defined(CATCHCHALLENGER_SERVER) && defined(CATCHCHALLENGER_IO_URING)
+void Client::onAsyncSendChainCompleteImpl(bool success)
+{
+    //Phase 3: a previously-submitted datapack-send chain has fully drained.
+    //Clear the in-progress flag so subsequent sendFileContent calls can
+    //submit again. On failure, drop the link — bytes may have been only
+    //partially written.
+    async_send_in_progress=false;
+    if(!success)
+    {
+        errorOutput("async datapack send chain failed; disconnecting");
+        disconnectClient();
+    }
+}
+#endif
+
 /// \warning called in one other thread!!!
 bool Client::disconnectClient()
 {
     //closeSocket();-> done into above layer
+    #if defined(CATCHCHALLENGER_SERVER) && defined(CATCHCHALLENGER_IO_URING)
+    //Tear down the per-client splice pipe before the socket goes away.
+    //Idempotent — safe to call multiple times during teardown.
+    if(splice_pipe_read>=0)
+    {
+        ::close(splice_pipe_read);
+        splice_pipe_read=-1;
+    }
+    if(splice_pipe_write>=0)
+    {
+        ::close(splice_pipe_write);
+        splice_pipe_write=-1;
+    }
+    #endif
     if(stat==ClientStat::None)
     {
         closeSocket();

@@ -17,6 +17,12 @@ public:
     //immediately after this returns — implementations must consume or
     //copy synchronously.
     virtual void onAsyncRecv(const char * /*buf*/,size_t /*len*/) {}
+    //Phase 3 hook: a previously-submitted datapack-send SQE chain
+    //has fully drained (or aborted). success==false means at least
+    //one SQE in the chain returned an error and subsequent linked
+    //SQEs were canceled — caller should disconnect the client since
+    //bytes may have been only partially written. Default no-op.
+    virtual void onAsyncSendChainComplete(bool /*success*/) {}
 #endif
     enum EventLoopObjectType : uint8_t
     {
