@@ -29,3 +29,4 @@ BaseServer phases (preload_N_*): datapack → skins → DB → monsters/skills/b
 * remember, you have to be compatible with select/epoll/qt
 * cli (all in one) and game-server-alone server, can be compiled io_uring as opticional and maximum performance
 * master, login, gateway is io_uring only (mandatory), use sendfile() or function for performance when it need
+* have to be multi-arch, no mather if big endian or little endian, the protocol always little endian

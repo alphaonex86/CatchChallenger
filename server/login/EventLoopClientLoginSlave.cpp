@@ -46,6 +46,13 @@ EventLoopClientLoginSlave::~EventLoopClientLoginSlave()
     disconnectClient();
 }
 
+#ifdef CATCHCHALLENGER_IO_URING
+void EventLoopClientLoginSlave::onAsyncRecv(const char *buf,size_t len)
+{
+    parseIncommingDataAsync(buf,len);
+}
+#endif
+
 uint64_t EventLoopClientLoginSlave::get_lastActivity() const
 {
     return lastActivity;

@@ -47,6 +47,13 @@ EventLoopClientLoginSlave::~EventLoopClientLoginSlave()
         LinkToGameServer::compressionSet=false;
 }
 
+#ifdef CATCHCHALLENGER_IO_URING
+void EventLoopClientLoginSlave::onAsyncRecv(const char *buf,size_t len)
+{
+    parseIncommingDataAsync(buf,len);
+}
+#endif
+
 bool EventLoopClientLoginSlave::disconnectClient()
 {
     if(linkToGameServer!=NULL)
