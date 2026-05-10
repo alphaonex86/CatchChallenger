@@ -221,7 +221,7 @@ option(CATCHCHALLENGER_CACHE_HPS
        "Enable HPS binary datapack cache"
        ON)
 
-# Alternative IO backends for the epoll server (server/epoll/, server/
+# Alternative IO backends for the epoll server (server/cli/, server/
 # game-server-alone/). Mutually exclusive — the foreach below FATAL_ERRORs
 # when more than one is set. Per-platform defaults: Linux defaults to
 # epoll(7); other platforms default to select(2).
@@ -266,7 +266,8 @@ endif()
 option(EXTERNALLIBZSTD "Link against system libzstd" ${_externallibzstd_default})
 
 # zlib: server uses it for tiled map decompression (TILED_ZLIB).
-find_package(ZLIB REQUIRED)
+# Uses system zlib when available, vendored fallback otherwise.
+include(${CMAKE_CURRENT_LIST_DIR}/libzlib.cmake)
 
 if(EXTERNALLIBZSTD)
     find_library(ZSTD_LIBRARY NAMES zstd REQUIRED)
