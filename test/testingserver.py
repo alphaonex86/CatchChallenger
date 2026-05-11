@@ -17,7 +17,26 @@ import sys
 sys.dont_write_bytecode = True
 
 
-import os, sys, signal, subprocess, threading, shutil, multiprocessing, time, glob as globmod, json, re
+import os, sys, signal, subprocess, threading, shutil, multiprocessing, time, glob as globmod, json, re, faulthandler
+
+# Self-diagnostics: SIGSEGV / SIGTERM (from `timeout` in all.sh) dump
+# a Python traceback for every thread before exiting. SIGUSR1 can be
+# sent manually to get a live traceback without killing the process.
+# See test/CLAUDE.md "Per-script wall limit".
+faulthandler.enable()
+try:
+    faulthandler.register(signal.SIGUSR1)
+except (AttributeError, ValueError):
+    pass
+
+# Same 2h cap that all.sh enforces externally — register a Python-side
+# safety net that prints a traceback (without exiting) ~10s after the
+# external `timeout 2h` should have fired. Keeps the diagnostic intact
+# even if the script is run standalone (without all.sh's `timeout`).
+_WALL_LIMIT_SEC = 2 * 60 * 60
+faulthandler.dump_traceback_later(_WALL_LIMIT_SEC + 10,
+                                  repeat=False, file=sys.stdout,
+                                  exit=False)
 from remote_build import (start_remote_builds, collect_remote_results,
                           REMOTE_SERVERS, REMOTE_NODES, node_runs, get_node,
                           setup_remote_server_runtime, start_remote_server,
