@@ -811,7 +811,18 @@ bool EventLoopPostgresql::stringtobool(const std::string &string,bool *ok)
 std::vector<char> EventLoopPostgresql::hexatoBinary(const std::string &data,bool *ok)
 {
     if(data.empty())
+    {
+        //Empty input is a valid result — postgres `encode(NULL,'hex')`
+        //and `encode(''::bytea,'hex')` both return ''. Callers (e.g.
+        //ClientHeavyLoadSelectCharServer's quest/items/plants
+        //parsing) pre-declare an uninitialised `bool ok;` and only
+        //read the vector when ok is set, so forgetting to set *ok=true
+        //here makes them randomly reject empty columns and kick the
+        //character with "is not a hexa".
+        if(ok!=NULL)
+            *ok=true;
         return std::vector<char>();
+    }
     if(data.size()%2!=0)
     {
         #ifdef CATCHCHALLENGER_HARDENED
