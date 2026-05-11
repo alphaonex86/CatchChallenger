@@ -254,7 +254,13 @@ bool EventLoop::init()
     //plain init on older kernels so the binary keeps working.
     struct io_uring_params params;
     memset(&params,0,sizeof(params));
-    params.flags=IORING_SETUP_SINGLE_ISSUER|IORING_SETUP_DEFER_TASKRUN;
+    //DEFER_TASKRUN disabled: it requires every io_uring_enter() call
+    //to use IORING_ENTER_GETEVENTS, which liburing's io_uring_wait_cqe
+    //SHOULD set, but in practice CQEs for poll_multishot registered
+    //fds don't surface in time — gsa hangs at "wait database
+    //dictionary_map query" because the PG socket's CQE never arrives.
+    //SINGLE_ISSUER alone is the safe win (skips kernel SQ-side lock).
+    params.flags=IORING_SETUP_SINGLE_ISSUER;
     int qret=io_uring_queue_init_params(4096,&g_uring->ring,&params);
     if(qret<0)
     {

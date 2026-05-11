@@ -100,11 +100,15 @@ PORT_GAME_2   = 61941
 READY_TIMEOUT = 180
 
 # Test matrix.
-BACKENDS = [
+BACKENDS_FULL = [
     # (db_name, cmake_db_flag, cli_tool, sql_subdir)
     ("postgresql", "CATCHCHALLENGER_DB_POSTGRESQL", "psql",  "postgresql"),
     ("mysql",      "CATCHCHALLENGER_DB_MYSQL",      "mysql", "mysql"),
 ]
+# Allow restricting the backend matrix at the command line (defaults to
+# the full list). Useful when iterating on a single backend during
+# debugging — e.g. `python3 testingcluster.py --backends=postgresql`.
+BACKENDS = BACKENDS_FULL
 
 # Colours.
 C_GREEN  = "\033[92m"
@@ -385,7 +389,7 @@ def db_host_for(backend):
 # Hand-built XML; production deploys would derive these from
 # server/CONFIG.md. Every key the binary actually reads is set
 # explicitly so an unspecified default never silently kicks in.
-def _xml_master(db_kind):
+def _xml_master(db_kind, max_players):
     db_host = db_host_for(db_kind)
     # Master reads db-login + db-base + db-common-0 (NOT db-common —
     # the loop iterates db-common-N). Each section must explicitly
@@ -405,7 +409,7 @@ def _xml_master(db_kind):
 <configuration>
     <port value="{PORT_MASTER}"/>
     <server-ip value="127.0.0.1"/>
-    <max-players value="2000"/>
+    <max-players value="{max_players}"/>
     <max_pseudo_size value="32"/>
     <min_character value="1"/>
     <max_character value="1"/>
@@ -454,14 +458,14 @@ def _xml_master(db_kind):
 """
 
 
-def _xml_login(port, db_kind):
+def _xml_login(port, db_kind, max_players):
     db_host = db_host_for(db_kind)
     # Login expects its listen port as <port> (NOT <server-port>).
     return f"""<?xml version="1.0"?>
 <configuration>
     <port value="{port}"/>
     <server-ip value="127.0.0.1"/>
-    <max-players value="2000"/>
+    <max-players value="{max_players}"/>
     <max_pseudo_size value="32"/>
     <min_character value="1"/>
     <max_character value="1"/>
@@ -471,7 +475,7 @@ def _xml_login(port, db_kind):
     <automatic_account_creation value="true"/>
     <character_delete_time value="3600"/>
     <tolerantMode value="true"/>
-    <compression value="zstandard"/>
+    <compression value="zstd"/>
     <compressionLevel value="1"/>
     <db>
         <type value="{db_kind}"/>
@@ -517,7 +521,7 @@ def _xml_login(port, db_kind):
 """
 
 
-def _xml_gameserver(port, db_kind):
+def _xml_gameserver(port, db_kind, max_players):
     db_host = db_host_for(db_kind)
     # gsa is built with CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR so
     # httpDatapackMirror is required at startup. Point at a local
@@ -527,7 +531,7 @@ def _xml_gameserver(port, db_kind):
 <configuration>
     <server-port value="{port}"/>
     <server-ip value="127.0.0.1"/>
-    <max-players value="2000"/>
+    <max-players value="{max_players}"/>
     <mainDatapackCode value="test"/>
     <httpDatapackMirror value="http://localhost/datapack/"/>
     <pvp value="true"/>
@@ -542,7 +546,7 @@ def _xml_gameserver(port, db_kind):
     <teleportIfMapNotFoundOrOutOfMap value="true"/>
     <sendPlayerNumber value="true"/>
     <tolerantMode value="true"/>
-    <compression value="zstandard"/>
+    <compression value="zstd"/>
     <compressionLevel value="1"/>
     <db>
         <type value="{db_kind}"/>
@@ -841,10 +845,19 @@ def client_connect_via(login_port, login_name, pass_name, character,
 
 
 # ── per-backend test driver ──────────────────────────────────────────────────
+# Run each backend with two <max-players> values so the EventLoopClientList
+# constructor is exercised both at the small (50) and the realistic large
+# (2000) end of its allocation range. Helps catch ctor-time hangs that
+# only appear under high pre-allocation.
+MAX_PLAYERS_VARIANTS = (50, 2000)
+
+
 def test_one_backend(db_name, db_define, db_cli, sql_subdir):
     """Runs the per-backend test. Tracks every spawned server +
     ephemeral DB so the finally: block can guarantee teardown even
-    on exception."""
+    on exception. DB spawn + build + ldd are done once per backend;
+    the cluster startup + client tests are repeated for every
+    <max-players> variant."""
     log_info(f"--- backend: {db_name} ---")
     t_start = time.monotonic()
     spawned_servers = []
@@ -904,101 +917,137 @@ def _test_one_backend_inner(db_name, db_define, db_cli, sql_subdir,
         # behavior would be unpredictable.
         return
 
-    # 3) Start the cluster: master first, then 2 logins, then 2 gsa.
-    work_root = os.path.join(CLUSTER_RUN_ROOT, db_name)
+    # 3) Per-max-players: start cluster, run client tests, stop cluster.
+    #    DB + build are shared, so the only thing that changes per
+    #    variant is the on-disk server-properties.xml (which is
+    #    re-rendered from the templates with the variant's value).
+    for max_players in MAX_PLAYERS_VARIANTS:
+        _run_cluster_variant(db_name, base, max_players,
+                             spawned_servers, t_start)
+
+
+def _run_cluster_variant(db_name, base, max_players,
+                         spawned_servers, t_start):
+    """One run of master + 2×login + 2×game-server for the requested
+    <max-players>. Cluster servers are scoped under a per-variant
+    work_root so concurrent or stacked runs don't share state."""
+    log_info(f"  variant: max-players={max_players}")
+    work_root = os.path.join(CLUSTER_RUN_ROOT, db_name, f"mp{max_players}")
     if os.path.isdir(work_root):
         shutil.rmtree(work_root, ignore_errors=True)
     os.makedirs(work_root, exist_ok=True)
 
-    master = ServerProc(
-        "master",
-        bin_path(base, "server/master", "catchchallenger-server-master"),
-        os.path.join(work_root, "master"),
-        _xml_master(db_name)).start()
-    spawned_servers.append(master)
-    ok, detail = master.wait_ready()
-    if not ok:
-        log_fail(f"{db_name}/master-start", detail, time.monotonic() - t_start)
-        return
-    log_pass(f"{db_name}/master-start", f"port {PORT_MASTER}", 0.0)
+    tag = f"{db_name}/mp{max_players}"
+    # Each variant gets its own server set; remember where the variant
+    # started in the global spawned_servers list so we can stop only
+    # this variant's processes at the end.
+    variant_start = len(spawned_servers)
 
-    login1 = ServerProc(
-        "login1",
-        bin_path(base, "server/login", "catchchallenger-server-login"),
-        os.path.join(work_root, "login1"),
-        _xml_login(PORT_LOGIN_1, db_name)).start()
-    spawned_servers.append(login1)
-    login2 = ServerProc(
-        "login2",
-        bin_path(base, "server/login", "catchchallenger-server-login"),
-        os.path.join(work_root, "login2"),
-        _xml_login(PORT_LOGIN_2, db_name)).start()
-    spawned_servers.append(login2)
-    for ln in (login1, login2):
-        ok, detail = ln.wait_ready()
+    try:
+        master = ServerProc(
+            "master",
+            bin_path(base, "server/master", "catchchallenger-server-master"),
+            os.path.join(work_root, "master"),
+            _xml_master(db_name, max_players)).start()
+        spawned_servers.append(master)
+        ok, detail = master.wait_ready()
         if not ok:
-            log_fail(f"{db_name}/{ln.label}-start", detail, 0.0)
+            log_fail(f"{tag}/master-start", detail, time.monotonic() - t_start)
             return
-        log_pass(f"{db_name}/{ln.label}-start",
-                 f"port {PORT_LOGIN_1 if ln is login1 else PORT_LOGIN_2}", 0.0)
+        log_pass(f"{tag}/master-start", f"port {PORT_MASTER}", 0.0)
 
-    game1 = ServerProc(
-        "game1",
-        bin_path(base, "server/game-server-alone",
-                 "catchchallenger-game-server-alone"),
-        os.path.join(work_root, "game1"),
-        _xml_gameserver(PORT_GAME_1, db_name)).start()
-    spawned_servers.append(game1)
-    game2 = ServerProc(
-        "game2",
-        bin_path(base, "server/game-server-alone",
-                 "catchchallenger-game-server-alone"),
-        os.path.join(work_root, "game2"),
-        _xml_gameserver(PORT_GAME_2, db_name)).start()
-    spawned_servers.append(game2)
-    for g in (game1, game2):
-        ok, detail = g.wait_ready()
+        login1 = ServerProc(
+            "login1",
+            bin_path(base, "server/login", "catchchallenger-server-login"),
+            os.path.join(work_root, "login1"),
+            _xml_login(PORT_LOGIN_1, db_name, max_players)).start()
+        spawned_servers.append(login1)
+        login2 = ServerProc(
+            "login2",
+            bin_path(base, "server/login", "catchchallenger-server-login"),
+            os.path.join(work_root, "login2"),
+            _xml_login(PORT_LOGIN_2, db_name, max_players)).start()
+        spawned_servers.append(login2)
+        for ln in (login1, login2):
+            ok, detail = ln.wait_ready()
+            if not ok:
+                log_fail(f"{tag}/{ln.label}-start", detail, 0.0)
+                return
+            log_pass(f"{tag}/{ln.label}-start",
+                     f"port {PORT_LOGIN_1 if ln is login1 else PORT_LOGIN_2}",
+                     0.0)
+
+        # Start game1 first, wait until it's bound (which means
+        # preload_X has populated the shared dictionary_map table),
+        # THEN start game2. Two gsa instances sharing one DB race
+        # on the dictionary_map(id,map) INSERTs at startup — the
+        # loser hits "duplicate key value violates unique constraint
+        # dictionary_map_pkey" and aborts. Sequential boot lets the
+        # second gsa see the rows committed by the first via the
+        # SELECT pre-pass and skip the conflicting INSERT.
+        game1 = ServerProc(
+            "game1",
+            bin_path(base, "server/game-server-alone",
+                     "catchchallenger-game-server-alone"),
+            os.path.join(work_root, "game1"),
+            _xml_gameserver(PORT_GAME_1, db_name, max_players)).start()
+        spawned_servers.append(game1)
+        ok, detail = game1.wait_ready()
         if not ok:
-            log_fail(f"{db_name}/{g.label}-start", detail, 0.0)
+            log_fail(f"{tag}/game1-start", detail, 0.0)
             return
-        log_pass(f"{db_name}/{g.label}-start",
-                 f"port {PORT_GAME_1 if g is game1 else PORT_GAME_2}", 0.0)
+        log_pass(f"{tag}/game1-start", f"port {PORT_GAME_1}", 0.0)
 
-    # 4) First client autologin via login #1 (first attempt to first login).
-    log_info("  client #1 → login server #1")
-    cred = "cluster_pinned_user"
-    char = "Player"
-    t_c1 = time.monotonic()
-    ok1, det1 = client_connect_via(
-        PORT_LOGIN_1, cred, cred, char, "first-via-login1", timeout=120)
-    if not ok1:
-        log_fail(f"{db_name}/client1-via-login1", det1,
-                 time.monotonic() - t_c1)
-        return
-    log_pass(f"{db_name}/client1-via-login1", det1, time.monotonic() - t_c1)
+        game2 = ServerProc(
+            "game2",
+            bin_path(base, "server/game-server-alone",
+                     "catchchallenger-game-server-alone"),
+            os.path.join(work_root, "game2"),
+            _xml_gameserver(PORT_GAME_2, db_name, max_players)).start()
+        spawned_servers.append(game2)
+        ok, detail = game2.wait_ready()
+        if not ok:
+            log_fail(f"{tag}/game2-start", detail, 0.0)
+            return
+        log_pass(f"{tag}/game2-start", f"port {PORT_GAME_2}", 0.0)
 
-    # 5) Second client autologin via login #2 (last attempt to last login).
-    #    Same credentials; master must route to the same game server,
-    #    and the character must come up at the position written in step 4.
-    log_info("  client #2 → login server #2 (sticky check)")
-    t_c2 = time.monotonic()
-    ok2, det2 = client_connect_via(
-        PORT_LOGIN_2, cred, cred, char, "second-via-login2", timeout=120)
-    if not ok2:
-        log_fail(f"{db_name}/client2-via-login2", det2,
-                 time.monotonic() - t_c2)
-        return
+        # 4) First client autologin via login #1.
+        log_info("  client #1 → login server #1")
+        cred = "cluster_pinned_user"
+        char = "Player"
+        t_c1 = time.monotonic()
+        ok1, det1 = client_connect_via(
+            PORT_LOGIN_1, cred, cred, char, "first-via-login1", timeout=120)
+        if not ok1:
+            log_fail(f"{tag}/client1-via-login1", det1,
+                     time.monotonic() - t_c1)
+            return
+        log_pass(f"{tag}/client1-via-login1", det1, time.monotonic() - t_c1)
 
-    # Compare extracted (map, x, y) from both runs.
-    if det1.startswith("map=") and det2.startswith("map=") and det1 != det2:
-        log_fail(f"{db_name}/client2-via-login2",
-                 f"state divergence: c1={det1!r} c2={det2!r}",
-                 time.monotonic() - t_c2)
-    else:
-        same = "exact match" if det1 == det2 else "both reached map"
-        log_pass(f"{db_name}/client2-via-login2",
-                 f"sticky verified ({same}): {det2}",
-                 time.monotonic() - t_c2)
+        # 5) Second client autologin via login #2 (sticky check).
+        log_info("  client #2 → login server #2 (sticky check)")
+        t_c2 = time.monotonic()
+        ok2, det2 = client_connect_via(
+            PORT_LOGIN_2, cred, cred, char, "second-via-login2", timeout=120)
+        if not ok2:
+            log_fail(f"{tag}/client2-via-login2", det2,
+                     time.monotonic() - t_c2)
+            return
+
+        if det1.startswith("map=") and det2.startswith("map=") and det1 != det2:
+            log_fail(f"{tag}/client2-via-login2",
+                     f"state divergence: c1={det1!r} c2={det2!r}",
+                     time.monotonic() - t_c2)
+        else:
+            same = "exact match" if det1 == det2 else "both reached map"
+            log_pass(f"{tag}/client2-via-login2",
+                     f"sticky verified ({same}): {det2}",
+                     time.monotonic() - t_c2)
+    finally:
+        # Stop only the servers spawned by THIS variant; leave any
+        # outer setup intact for the next variant.
+        while len(spawned_servers) > variant_start:
+            spawned_servers.pop().stop()
 
 
 # ── main ─────────────────────────────────────────────────────────────────────
@@ -1006,10 +1055,21 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--continue", dest="cont", action="store_true",
                     help="ignored (kept for all.sh compatibility)")
+    ap.add_argument("--backends", default="",
+                    help="comma-separated subset of backends to run "
+                         "(postgresql, mysql); empty = all")
     args = ap.parse_args()
-    _ = args
 
-    log_info("testingcluster: io_uring × {PostgreSQL, MySQL}")
+    global BACKENDS
+    if args.backends:
+        wanted = {b.strip() for b in args.backends.split(",") if b.strip()}
+        BACKENDS = [b for b in BACKENDS_FULL if b[0] in wanted]
+        if not BACKENDS:
+            log_fail("main", f"no matching backends in '{args.backends}'")
+            sys.exit(2)
+
+    log_info("testingcluster: io_uring × {"
+             + ", ".join(b[0] for b in BACKENDS) + "}")
     log_info(f"topology: 2×login (61930/61931) + 1×master (61935) + 2×game (61940/61941)")
 
     for db_name, db_define, db_cli, sql_subdir in BACKENDS:

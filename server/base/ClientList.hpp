@@ -39,7 +39,14 @@ public:
 protected:
     //virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert() = 0;//replace by getbyRef
 
-    std::vector<SIMPLIFIED_PLAYER_ID_FOR_MAP> clients_removed_index;//garbage collector, reuse slot and only grow memory, never remove vector index and have to move whole back data
+    //Element type widened from SIMPLIFIED_PLAYER_ID_FOR_MAP (uint8_t)
+    //to PLAYER_INDEX_FOR_CONNECTED (uint16_t): the vector stores
+    //connected-player indices, every push/pop site uses
+    //PLAYER_INDEX_FOR_CONNECTED. With uint8_t the EventLoopClientList
+    //pre-fill loop never terminated when max_players>=256 (index wraps
+    //at 255) and any reusable slot above 255 was silently truncated
+    //on push.
+    std::vector<PLAYER_INDEX_FOR_CONNECTED> clients_removed_index;//garbage collector, reuse slot and only grow memory, never remove vector index and have to move whole back data
 private:
     //std::unordered_map<uint32_t,PLAYER_INDEX_FOR_CONNECTED> playerById_db;//where used?
     std::unordered_map<std::string,PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;//see ClientWithMapEventLoop.hpp or QtClientWithMap, only after character is selected

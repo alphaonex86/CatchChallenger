@@ -22,6 +22,13 @@ Implications:
 
 BaseServer phases (preload_N_*): datapack → skins → DB → monsters/skills/buffs → DDoS → events → zones → maps → profiles → visibility → players → dictionary → industries → city capture → RNG → finalize.
 
+## Player index types — never substitute
+
+Two narrow types that look similar but are NOT interchangeable:
+
+* `SIMPLIFIED_PLAYER_ID_FOR_MAP` = `uint8_t`. **Only** for `server/base/MapManagement/` insert/move/remove of the players visible on the same map. Capped at 256 visible peers per map. The 8-bit width is load-bearing: insert/move/remove are the hottest wire packets and 8 bits keeps that traffic tight. Never use as a connected-player index — `max_players` runs to 65535 and the value will wrap at 256, hanging or silently truncating (the EventLoopClientList pre-fill loop had this bug).
+* `PLAYER_INDEX_FOR_CONNECTED` = `uint16_t`. Connected-player slot index across the whole server, bounded by `PLAYER_INDEX_FOR_CONNECTED_MAX`. Use this for `ClientList::clients_removed_index`, free-slot reuse vectors, and any other "which connected client" storage.
+
 ## Datapack via http
 * server config can be httpDatapackMirror: http://catchchallenger.fw.local/datapack-[datapackhash]/
 * this path container base + all maincode/subcode and the client download selectinvelt the maincode/subcode it need

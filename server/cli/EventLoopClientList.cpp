@@ -12,7 +12,11 @@ EventLoopClientList::EventLoopClientList()
     size_t tmax=max;
     clients_removed_index.resize(tmax);
     {
-        SIMPLIFIED_PLAYER_ID_FOR_MAP index=0;
+        //Loop index must be wide enough to hold tmax. Was previously
+        //SIMPLIFIED_PLAYER_ID_FOR_MAP (uint8_t); with tmax>=256 the
+        //index wraps to 0 after 255 and the loop never terminates,
+        //hanging the gsa startup right after master auth.
+        PLAYER_INDEX_FOR_CONNECTED index=0;
         while(index<tmax)
         {
             clients_removed_index[index]=tmax-index;

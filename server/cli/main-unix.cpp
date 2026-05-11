@@ -553,6 +553,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     server->initialize_the_database_prepared_query();
+    server->preload_1_the_data();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     server->preload_1_the_data();
     #elif CATCHCHALLENGER_DB_FILE

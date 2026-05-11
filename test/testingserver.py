@@ -429,6 +429,36 @@ def set_server_port(build_dir, port):
     log_info(f'server-properties.xml server-port={port}')
 
 
+def set_max_players(build_dir, value):
+    """Flip <max-players value="..."/> in server-properties.xml.
+    Used to run the same scenario at multiple capacities — the small
+    end (50) keeps startup fast, the large end (2000) exercises the
+    EventLoopClientList pre-allocation path that owns one slot per
+    configured player. If the key is missing (very fresh seed XML),
+    insert it just before the closing </configuration> tag so the
+    XML parser still accepts it."""
+    _seed_server_properties_if_missing(build_dir)
+    xml_path = os.path.join(build_dir, "server-properties.xml")
+    if not os.path.exists(xml_path):
+        return
+    if os.path.islink(xml_path):
+        target = os.path.realpath(xml_path)
+        os.remove(xml_path)
+        shutil.copy2(target, xml_path)
+    with open(xml_path, "r") as f:
+        content = f.read()
+    if re.search(r'<max-players\s+value=', content):
+        content = re.sub(r'<max-players\s+value="[^"]*"',
+                         f'<max-players value="{value}"', content)
+    else:
+        content = content.replace(
+            "</configuration>",
+            f'    <max-players value="{value}"/>\n</configuration>')
+    with open(xml_path, "w") as f:
+        f.write(content)
+    log_info(f'server-properties.xml max-players={value}')
+
+
 def set_http_datapack_mirror(build_dir, value):
     xml_path = os.path.join(build_dir, "server-properties.xml")
     if not os.path.exists(xml_path):
@@ -901,7 +931,16 @@ def wait_for_port_free(port=SERVER_PORT, timeout=10):
 
 _server_output_lines = []
 
-def start_server(build_dir, bin_name=SERVER_BIN_NAME):
+# Default <max-players> applied to every start_server() call when no
+# override is given. Test loops that want to exercise both ends of the
+# allocation range bump it via `start_server(..., max_players=2000)`.
+DEFAULT_MAX_PLAYERS = 50
+# Variants the parametric tests iterate over. Add anything that's
+# meaningfully different (small/medium/large alloc) here.
+MAX_PLAYERS_VARIANTS = (50, 2000)
+
+def start_server(build_dir, bin_name=SERVER_BIN_NAME,
+                 max_players=DEFAULT_MAX_PLAYERS):
     wait_for_port_free()
     global server_proc, _server_output_lines
     binary = os.path.join(build_dir, bin_name)
@@ -916,6 +955,10 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     # Pin the listen port. checkSettingsFile picks a random port on
     # first run; the test infra and TCP probe expect a stable port.
     set_server_port(build_dir, SERVER_PORT)
+    # Apply requested <max-players> capacity before launch. Test loops
+    # parameterise over both 50 (fast) and 2000 (stress the ctor) to
+    # surface alloc-time regressions that small-N runs would miss.
+    set_max_players(build_dir, max_players)
     log_info(f"starting server: {binary}")
     env = os.environ.copy()
     for k, v in diagnostic.runtime_env(DIAG).items():
@@ -1773,15 +1816,24 @@ def main():
                                   if os.path.isdir(os.path.join(map_main, d))])
                     if mcs:
                         setup_server_config(backend_build, maincode=mcs[0])
-                clear_database_filedb(backend_build)
-                remove_cache(backend_build)
-                set_http_datapack_mirror(backend_build, "")
-                set_map_visibility_minimize(backend_build, "network")
-                srv = start_server(backend_build)
-                if srv:
-                    client_connect(client_build,
-                                   "filedb " + backend_name + ": client to map")
-                    stop_server()
+                # Per-IO-backend, re-run the small client trip at every
+                # <max-players> variant. The build is shared; only the
+                # XML config + server lifecycle is repeated. Catches
+                # ctor-time regressions that only show at the high end
+                # (e.g. EventLoopClientList pre-allocation hangs).
+                for mp in MAX_PLAYERS_VARIANTS:
+                    print(f"\n{C_CYAN}    -- max-players={mp} --{C_RESET}\n")
+                    clear_database_filedb(backend_build)
+                    remove_cache(backend_build)
+                    set_http_datapack_mirror(backend_build, "")
+                    set_map_visibility_minimize(backend_build, "network")
+                    srv = start_server(backend_build, max_players=mp)
+                    if srv:
+                        client_connect(
+                            client_build,
+                            "filedb " + backend_name
+                            + f" (max-players={mp}): client to map")
+                        stop_server()
             else:
                 log_fail("filedb " + backend_name, "no datapack source")
         bi += 1
