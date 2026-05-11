@@ -791,6 +791,12 @@ def _xml_master(db_kind, max_players):
     <maxWarehousePlayerMonsters value="50"/>
     <automatic_account_creation value="true"/>
     <character_delete_time value="3600"/>
+    <!-- Character cooldown after disconnect. Production default 5 s
+         (CharactersGroup::maxLockAge) + 180 s purgeLockPeriod is
+         designed to prevent rapid reconnect races; the sticky test
+         deliberately reconnects right away, so we shorten both. -->
+    <maxLockAge value="1"/>
+    <purgeLockPeriod value="2"/>
     <token value="{MASTER_AUTH_TOKEN}"/>
     <db>
         <type value="{db_kind}"/>
@@ -1360,12 +1366,23 @@ def _test_one_backend_inner(db_name, db_define, db_cli, sql_subdir,
         return
 
     # 3) Per-(max_players × mirror_mode): start cluster, run client
-    #    tests, stop cluster. DB + build are shared, so the only thing
-    #    that changes per variant is the on-disk server-properties.xml
-    #    (re-rendered from the templates) and which gsa binary is
-    #    spawned (mirror-build vs push-build).
+    #    tests, stop cluster. Build is shared, but the schema is
+    #    REPLAYED between variants — each variant tests
+    #    cold-cluster + cold-DB end-to-end, which catches more
+    #    regressions than reusing state from the previous run. The
+    #    sticky-routing check (client1 → client2 reconnect) lives
+    #    inside _run_cluster_variant() and exercises the cross-login
+    #    case within a single variant.
+    first = True
     for max_players in MAX_PLAYERS_VARIANTS:
         for mirror_label, mirror_url in MIRROR_VARIANTS:
+            if not first:
+                ok, detail = (wipe_postgresql if db_name == "postgresql"
+                              else wipe_mysql)()
+                if not ok:
+                    log_fail(f"{db_name}/db-rewipe-between-variants", detail, 0.0)
+                    return
+            first = False
             _run_cluster_variant(db_name, base, max_players,
                                  mirror_label, mirror_url,
                                  spawned_servers, t_start)
@@ -1486,6 +1503,12 @@ def _run_cluster_variant(db_name, base, max_players,
         log_pass(f"{tag}/client1-via-login1", det1, time.monotonic() - t_c1)
 
         # 5) Second client autologin via login #2 (sticky check).
+        #    Wait out the master's character-disconnect cooldown
+        #    (maxLockAge=1s in our master.xml; production default is
+        #    5s + a 180s purgeLockPeriod). 3s was flaky on the first
+        #    variant after schema-replay (master purge thread cadence
+        #    is uneven during the first second of life); 5s clears it.
+        time.sleep(5)
         log_info("  client #2 → login server #2 (sticky check)")
         t_c2 = time.monotonic()
         ok2, det2 = client_connect_via(
