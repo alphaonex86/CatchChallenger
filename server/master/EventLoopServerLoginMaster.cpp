@@ -6,6 +6,13 @@
 #include "../../general/base/cpp11addition.hpp"
 #include "../base/VariableServer.hpp"
 #include "../../general/fight/CommonFightEngineBase.hpp"
+// Concrete DB-backend header (full type for `new EventLoopDb()` and
+// `static_cast<EventLoopDb *>`).
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+#include "../cli/db/EventLoopPostgresql.hpp"
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+#include "../cli/db/EventLoopMySQL.hpp"
+#endif
 
 using namespace CatchChallenger;
 
@@ -95,13 +102,13 @@ EventLoopServerLoginMaster::~EventLoopServerLoginMaster()
     }
     if(databaseBaseLogin!=NULL)
     {
-        EventLoopPostgresql *databaseBasePg=static_cast<EventLoopPostgresql *>(databaseBaseLogin);
+        EventLoopDb *databaseBasePg=static_cast<EventLoopDb *>(databaseBaseLogin);
         delete databaseBasePg;
         databaseBaseLogin=NULL;
     }
     if(databaseBaseBase!=NULL)
     {
-        EventLoopPostgresql *databaseBasePg=static_cast<EventLoopPostgresql *>(databaseBaseBase);
+        EventLoopDb *databaseBasePg=static_cast<EventLoopDb *>(databaseBaseBase);
         delete databaseBasePg;
         databaseBaseBase=NULL;
     }
@@ -350,7 +357,7 @@ void EventLoopServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
         bool ok;
         //to load the dictionary
         {
-            databaseBaseLogin=new EventLoopPostgresql();
+            databaseBaseLogin=new EventLoopDb();
             //here to have by login server an auth
 
             databaseBaseLogin->considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
@@ -430,7 +437,7 @@ void EventLoopServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
         bool ok;
         //to load the dictionary
         {
-            databaseBaseBase=new EventLoopPostgresql();
+            databaseBaseBase=new EventLoopDb();
             //here to have by login server an auth
 
             databaseBaseBase->considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);

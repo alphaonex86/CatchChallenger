@@ -1,6 +1,14 @@
 #include "CharactersGroup.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "EventLoopClientLoginMaster.hpp"
+// Concrete DB-backend header: required because CharactersGroup.cpp
+// uses `new EventLoopDb()` and calls methods on it. EventLoopDatabase.hpp
+// only forward-declares the alias.
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+#include "../cli/db/EventLoopPostgresql.hpp"
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+#include "../cli/db/EventLoopMySQL.hpp"
+#endif
 #include <iostream>
 #include <chrono>
 
@@ -16,7 +24,7 @@ uint32_t CharactersGroup::pingMSecond=60*1000;
 uint32_t CharactersGroup::checkTimeoutGameServerMSecond=1000;
 
 CharactersGroup::CharactersGroup(const char * const db, const char * const host, const char * const login, const char * const pass, const uint8_t &considerDownAfterNumberOfTry, const uint8_t &tryInterval, const std::string &name) :
-    databaseBaseCommon(new EventLoopPostgresql())
+    databaseBaseCommon(new EventLoopDb())
 {
     this->index=0;
     this->name=name;

@@ -17,6 +17,12 @@
 #include "EventLoopServerLoginMaster.hpp"
 #include "EventLoopClientLoginMaster.hpp"
 #include "PlayerUpdaterToLogin.hpp"
+// Full DB-backend type for the static_cast in the epoll dispatch.
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+#include "../cli/db/EventLoopPostgresql.hpp"
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+#include "../cli/db/EventLoopMySQL.hpp"
+#endif
 
 #define MAXEVENTS 512
 #define MAXCLIENTSINSUSPEND 16
@@ -308,7 +314,7 @@ int main(int argc, const char *argv[])
                 break;
                 case BaseClassSwitch::EventLoopObjectType::Database:
                 {
-                    EventLoopPostgresql * const db=static_cast<EventLoopPostgresql *>(events[i].data.ptr);
+                    EventLoopDb * const db=static_cast<EventLoopDb *>(events[i].data.ptr);
                     db->unixEvent(events[i].events);
 
                     //disconnected after finish of use

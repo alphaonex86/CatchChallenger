@@ -13,9 +13,24 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
-# DB backend: PostgreSQL only. EventLoopMySQL is an abstract class in
-# this build configuration. cli supports both.
-find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
+# DB backend: PostgreSQL (default) or MySQL/MariaDB. See
+# server/master/CMakeLists.txt for the same selector logic.
+if(CATCHCHALLENGER_DB_MYSQL AND CATCHCHALLENGER_DB_POSTGRESQL)
+    message(FATAL_ERROR
+        "catchchallenger-game-server-alone: both CATCHCHALLENGER_DB_MYSQL and CATCHCHALLENGER_DB_POSTGRESQL are ON; pick one.")
+endif()
+if(NOT CATCHCHALLENGER_DB_MYSQL)
+    set(CATCHCHALLENGER_DB_POSTGRESQL ON)
+endif()
+if(CATCHCHALLENGER_DB_MYSQL)
+    find_library(_db_lib NAMES mariadb mysqlclient REQUIRED)
+    set(_db_source ${CC_REPO_ROOT}/server/cli/db/EventLoopMySQL.cpp)
+    set(_db_define CATCHCHALLENGER_DB_MYSQL)
+else()
+    find_library(_db_lib NAMES pq REQUIRED)
+    set(_db_source ${CC_REPO_ROOT}/server/cli/db/EventLoopPostgresql.cpp)
+    set(_db_define CATCHCHALLENGER_DB_POSTGRESQL)
+endif()
 
 # Inlined source list — server/cli/ also references these, but each
 # binary is its own CMake project, so duplicate the list rather than
@@ -49,7 +64,7 @@ set(_extra_sources
     LinkToMasterStaticVar.cpp
     timer/PlayerUpdaterToMaster.cpp
     ${CC_REPO_ROOT}/server/cli/timer/TimerPurgeTokenAuthList.cpp
-    ${CC_REPO_ROOT}/server/cli/db/EventLoopPostgresql.cpp
+    ${_db_source}
 )
 
 add_executable(catchchallenger-game-server-alone
@@ -69,7 +84,7 @@ target_link_libraries(catchchallenger-game-server-alone PRIVATE
     catchchallenger_server_sql
     Threads::Threads
     ZLIB::ZLIB
-    ${LIBPQ_LIBRARY}
+    ${_db_lib}
 )
 
 target_compile_definitions(catchchallenger-game-server-alone PRIVATE
@@ -77,7 +92,7 @@ target_compile_definitions(catchchallenger-game-server-alone PRIVATE
     QT_NO_EMIT
     CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    CATCHCHALLENGER_DB_POSTGRESQL
+    ${_db_define}
     CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 )
 if(CATCHCHALLENGER_CACHE_HPS)

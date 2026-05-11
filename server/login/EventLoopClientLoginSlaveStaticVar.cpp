@@ -1,5 +1,11 @@
 #include "EventLoopClientLoginSlave.hpp"
 #include "../../general/base/ProtocolVersion.hpp"
+// Full DB-backend type to instantiate the static EventLoopDb members.
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+#include "../cli/db/EventLoopPostgresql.hpp"
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+#include "../cli/db/EventLoopMySQL.hpp"
+#endif
 
 #include <iostream>
 
@@ -40,8 +46,8 @@ EventLoopClientLoginSlave::ProxyMode EventLoopClientLoginSlave::proxyMode=EventL
 
 const unsigned char EventLoopClientLoginSlave::protocolHeaderToMatch[] = PROTOCOL_HEADER_LOGIN;
 
-EventLoopPostgresql EventLoopClientLoginSlave::databaseBaseLogin;
-EventLoopPostgresql EventLoopClientLoginSlave::databaseBaseCommon;
+EventLoopDb EventLoopClientLoginSlave::databaseBaseLogin;
+EventLoopDb EventLoopClientLoginSlave::databaseBaseCommon;
 
 char EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroup[1024];
 unsigned int EventLoopClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize=0;

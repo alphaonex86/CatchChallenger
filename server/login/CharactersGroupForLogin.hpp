@@ -2,7 +2,7 @@
 #define CHARACTERSGROUP_H
 
 #include "../cli/BaseClassSwitch.hpp"
-#include "../cli/db/EventLoopPostgresql.hpp"
+#include "../cli/db/EventLoopDatabase.hpp"
 #include "../base/PreparedDBQuery.hpp"
 #include "EventLoopClientLoginSlave.hpp"
 #include <string>
@@ -102,7 +102,7 @@ private:
 
     void dbQueryWriteCommon(const std::string &queryText);
 private:
-    EventLoopPostgresql *databaseBaseCommon;
+    EventLoopDb *databaseBaseCommon;
     PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
     PreparedDBQueryCommon preparedDBQueryCommon;
     std::unordered_map<uint32_t,InternalGameServer> servers;

@@ -50,6 +50,18 @@ EventLoopMySQL::~EventLoopMySQL()
         result=NULL;
     }
     row=NULL;
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    {
+        std::unordered_map<std::string,MYSQL_STMT *>::iterator it=preparedStatementMap.begin();
+        while(it!=preparedStatementMap.end())
+        {
+            if(it->second!=NULL)
+                mysql_stmt_close(it->second);
+            ++it;
+        }
+        preparedStatementMap.clear();
+    }
+    #endif
     if(conn!=NULL)
     {
         mysql_close(conn);
@@ -151,6 +163,20 @@ bool EventLoopMySQL::syncConnectInternal(bool infinityTry)
     started=true;
     std::cout << "Protocol version:" << mysql_get_proto_info(conn) << std::endl;
     std::cout << "Server version:" << mysql_get_server_version(conn) << std::endl;
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    // Replay prepared statements registered before the connection
+    // bounce. queryPrepare with store=false avoids growing the unit
+    // list on every reconnect.
+    {
+        unsigned int index=0;
+        while(index<preparedStatementUnitList.size())
+        {
+            const PreparedStatementStore &preparedStatement=preparedStatementUnitList.at(index);
+            queryPrepare(preparedStatement.name.c_str(),preparedStatement.query.c_str(),preparedStatement.nParams,false);
+            index++;
+        }
+    }
+    #endif
     return true;
 }
 
@@ -186,6 +212,172 @@ void EventLoopMySQL::syncDisconnect()
     mysql_close(conn);
     conn=NULL;
 }
+
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+// Prepared statements on MySQL/MariaDB.
+//
+// libpq supports both the legacy text-protocol async path
+// (PQsendQuery) AND PQsendQueryPrepared on the same socket; we drain
+// both through epoll in unixEvent(). libmysqlclient (and libmariadb)
+// expose two disjoint APIs: the text path (mysql_send_query +
+// mysql_read_query_result, async-friendly) and the prepared path
+// (mysql_stmt_execute, blocking only). Mixing them on one connection
+// would force a synchronous round-trip every time we hit a prepared
+// query and would break the epoll-driven queue model used by
+// unixEvent().
+//
+// KISS: do NOT execute via mysql_stmt_*. We still call
+// mysql_stmt_prepare() in queryPrepare() as a syntax/param-count
+// validation step (and to surface the same errors PG would, early),
+// then for asyncPreparedRead/Write we inline-substitute the $1..$N
+// placeholders with mysql_real_escape_string-quoted values and ship
+// the resulting plain query through asyncRead/asyncWrite. The
+// statement-name -> MYSQL_STMT* map is held only so the validation
+// survives across reconnect (it's re-prepared in syncConnectInternal,
+// matching the PG behavior).
+
+static bool eventLoopMysqlInlineSubstitute(MYSQL *conn,const std::string &query,const std::vector<std::string> &values,std::string &out)
+{
+    out=query;
+    size_t cursor=0;
+    size_t valueIndex=0;
+    while(valueIndex<values.size())
+    {
+        const std::string placeholder=std::string("$")+std::to_string(valueIndex+1);
+        const size_t pos=out.find(placeholder,cursor);
+        if(pos==std::string::npos)
+        {
+            std::cerr << "mysql inline-substitution: placeholder " << placeholder << " not found in query: " << query << std::endl;
+            return false;
+        }
+        const std::string &raw=values.at(valueIndex);
+        char *escaped=(char *)malloc(raw.size()*2+1);
+        if(escaped==NULL)
+        {
+            std::cerr << "malloc failed for escape buffer" << std::endl;
+            return false;
+        }
+        const unsigned long escLen=mysql_real_escape_string(conn,escaped,raw.c_str(),raw.size());
+        std::string replacement=std::string("'")+std::string(escaped,escLen)+std::string("'");
+        free(escaped);
+        out.replace(pos,placeholder.size(),replacement);
+        cursor=pos+replacement.size();
+        valueIndex++;
+    }
+    return true;
+}
+
+bool EventLoopMySQL::queryPrepare(const char *stmtName,const char *query,const int &nParams,const bool &store)
+{
+    if(conn==NULL)
+    {
+        std::cerr << "mysql not connected" << std::endl;
+        return false;
+    }
+    std::string nameKey(stmtName);
+    std::unordered_map<std::string,MYSQL_STMT *>::iterator existing=preparedStatementMap.find(nameKey);
+    if(existing!=preparedStatementMap.end())
+    {
+        if(existing->second!=NULL)
+            mysql_stmt_close(existing->second);
+        preparedStatementMap.erase(existing);
+    }
+    MYSQL_STMT *stmt=mysql_stmt_init(conn);
+    if(stmt==NULL)
+    {
+        std::cerr << "mysql_stmt_init failed for " << stmtName << ": " << mysql_error(conn) << std::endl;
+        return false;
+    }
+    // Translate $1..$N placeholders to MySQL '?' for the prepare-only
+    // validation; this never runs against the wire for execution.
+    std::string mysqlQuery(query);
+    {
+        int idx=1;
+        while(idx<=nParams)
+        {
+            const std::string placeholder=std::string("$")+std::to_string(idx);
+            const size_t pos=mysqlQuery.find(placeholder);
+            if(pos==std::string::npos)
+                break;
+            mysqlQuery.replace(pos,placeholder.size(),"?");
+            idx++;
+        }
+    }
+    if(mysql_stmt_prepare(stmt,mysqlQuery.c_str(),mysqlQuery.size())!=0)
+    {
+        std::cerr << "mysql_stmt_prepare failed for " << stmtName << " (query: " << mysqlQuery << "): " << mysql_stmt_error(stmt) << std::endl;
+        mysql_stmt_close(stmt);
+        abort();
+        return false;
+    }
+    if(static_cast<int>(mysql_stmt_param_count(stmt))!=nParams)
+    {
+        std::cerr << "mysql_stmt_prepare param count mismatch for " << stmtName << ": expected " << nParams << ", got " << mysql_stmt_param_count(stmt) << std::endl;
+        mysql_stmt_close(stmt);
+        abort();
+        return false;
+    }
+    preparedStatementMap[nameKey]=stmt;
+    if(store)
+    {
+        PreparedStatementStore preparedStatementStore;
+        preparedStatementStore.name=stmtName;
+        preparedStatementStore.query=query;
+        preparedStatementStore.nParams=nParams;
+        preparedStatementUnitList.push_back(preparedStatementStore);
+    }
+    return true;
+}
+
+CatchChallenger::DatabaseBaseCallBack * EventLoopMySQL::asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
+{
+    if(conn==NULL)
+    {
+        std::cerr << "mysql not connected" << std::endl;
+        return NULL;
+    }
+    if(id==NULL)
+    {
+        std::cerr << "mysql asyncPreparedRead with NULL id, query: " << query << std::endl;
+        return NULL;
+    }
+    // Optional sanity: the statement should have been prepared.
+    const std::string nameKey(id);
+    if(preparedStatementMap.find(nameKey)==preparedStatementMap.end())
+    {
+        std::cerr << "mysql prepared statement not registered: " << id << ", query: " << query << std::endl;
+        return NULL;
+    }
+    std::string finalQuery;
+    if(!eventLoopMysqlInlineSubstitute(conn,query,values,finalQuery))
+        return NULL;
+    return asyncRead(finalQuery,returnObject,method);
+}
+
+bool EventLoopMySQL::asyncPreparedWrite(const std::string &query,char * const id,const std::vector<std::string> &values)
+{
+    if(conn==NULL)
+    {
+        std::cerr << "mysql not connected" << std::endl;
+        return false;
+    }
+    if(id==NULL)
+    {
+        std::cerr << "mysql asyncPreparedWrite with NULL id, query: " << query << std::endl;
+        return false;
+    }
+    const std::string nameKey(id);
+    if(preparedStatementMap.find(nameKey)==preparedStatementMap.end())
+    {
+        std::cerr << "mysql prepared statement not registered: " << id << ", query: " << query << std::endl;
+        return false;
+    }
+    std::string finalQuery;
+    if(!eventLoopMysqlInlineSubstitute(conn,query,values,finalQuery))
+        return false;
+    return asyncWrite(finalQuery);
+}
+#endif
 
 CatchChallenger::DatabaseBaseCallBack * EventLoopMySQL::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
 {

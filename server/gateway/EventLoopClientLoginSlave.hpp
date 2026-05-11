@@ -4,7 +4,7 @@
 #include "../cli/EventLoopClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/VariableServer.hpp"
-#include "../cli/db/EventLoopPostgresql.hpp"
+#include "../cli/db/EventLoopDatabase.hpp"
 #include "LinkToGameServer.hpp"
 #include "../base/DdosBuffer.hpp"
 

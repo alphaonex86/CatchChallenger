@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EventLoopObjectType::Database:
                 {
-                    EventLoopPostgresql * const db=static_cast<EventLoopPostgresql *>(events[i].data.ptr);
+                    EventLoopDb * const db=static_cast<EventLoopDb *>(events[i].data.ptr);
                     db->unixEvent(events[i].events);
                     if(!db->isConnected())
                     {

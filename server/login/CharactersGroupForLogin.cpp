@@ -1,4 +1,11 @@
 #include "CharactersGroupForLogin.hpp"
+// Full DB-backend type (the alias EventLoopDb in EventLoopDatabase.hpp
+// only forward-declares it).
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+#include "../cli/db/EventLoopPostgresql.hpp"
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+#include "../cli/db/EventLoopMySQL.hpp"
+#endif
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -10,7 +17,7 @@ char CharactersGroupForLogin::tempBuffer[4096];
 CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const uint8_t &considerDownAfterNumberOfTry,const uint8_t &tryInterval) :
     maxCharacterIdRequested(false),
     maxMonsterIdRequested(false),
-    databaseBaseCommon(new EventLoopPostgresql())
+    databaseBaseCommon(new EventLoopDb())
 {
     charactersGroupIndex=0;
     databaseBaseCommon->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;

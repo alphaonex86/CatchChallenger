@@ -4,7 +4,7 @@
 #include "../cli/EventLoopGenericServer.hpp"
 #include "EventLoopClientLoginMaster.hpp"
 #include "CharactersGroup.hpp"
-#include "../cli/db/EventLoopPostgresql.hpp"
+#include "../cli/db/EventLoopDatabase.hpp"
 #include "../base/BaseServer/BaseServerMasterLoadDictionary.hpp"
 #include "../base/BaseServer/BaseServerMasterSendDatapack.hpp"
 #include "../base/TinyXMLSettings.hpp"

@@ -5,6 +5,7 @@
 #include "LinkToMaster.hpp"
 #include "../base/PreparedDBQuery.hpp"
 #include "../base/DictionaryLogin.hpp"
+#include "../base/SqlFunction.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
@@ -514,7 +515,7 @@ void CharactersGroupForLogin::addCharacterStep1_return(EventLoopClientLoginSlave
     }
 
     DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.asyncRead(this,&CharactersGroupForLogin::addCharacterStep2_static,{
-                                                                                                                                      #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(CATCHCHALLENGER_SERVER)
+                                                                                                                                      #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT) && defined(CATCHCHALLENGER_SERVER)
                                                                                                                                       pseudo
                                                                                                                                       #else
                                                                                                                                       SqlFunction::quoteSqlVariable(pseudo)
@@ -738,7 +739,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EventLoopClientLoginSlave
     character_insert.asyncWrite({
                 characterIdString,
                 std::to_string(client->account_id),
-                #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(CATCHCHALLENGER_SERVER)
+                #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT) && defined(CATCHCHALLENGER_SERVER)
                 pseudo,
                 #else
                 SqlFunction::quoteSqlVariable(pseudo),

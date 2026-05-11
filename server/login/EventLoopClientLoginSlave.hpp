@@ -4,7 +4,14 @@
 #include "../cli/EventLoopClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/VariableServer.hpp"
+#include "../cli/db/EventLoopDatabase.hpp"
+// Full DB-backend definition needed because EventLoopClientLoginSlave
+// holds the static instances by value, not by pointer.
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL)
 #include "../cli/db/EventLoopPostgresql.hpp"
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+#include "../cli/db/EventLoopMySQL.hpp"
+#endif
 #include "../base/DdosBuffer.hpp"
 
 #include <string>
@@ -266,8 +273,8 @@ private:
     DdosBuffer<uint8_t,3> chatPacketKick;
     DdosBuffer<uint8_t,3> otherPacketKick;
 public:
-    static EventLoopPostgresql databaseBaseLogin;
-    static EventLoopPostgresql databaseBaseCommon;
+    static EventLoopDb databaseBaseLogin;
+    static EventLoopDb databaseBaseCommon;
 };
 }
 
