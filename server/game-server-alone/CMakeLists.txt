@@ -13,6 +13,8 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
+# DB backend: PostgreSQL only. EventLoopMySQL is an abstract class in
+# this build configuration. cli supports both.
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
 
 # Inlined source list — server/cli/ also references these, but each
@@ -47,7 +49,6 @@ set(_extra_sources
     LinkToMasterStaticVar.cpp
     timer/PlayerUpdaterToMaster.cpp
     ${CC_REPO_ROOT}/server/cli/timer/TimerPurgeTokenAuthList.cpp
-    # game-server-alone always uses PostgreSQL.
     ${CC_REPO_ROOT}/server/cli/db/EventLoopPostgresql.cpp
 )
 
@@ -83,7 +84,7 @@ if(CATCHCHALLENGER_CACHE_HPS)
     target_compile_definitions(catchchallenger-game-server-alone PRIVATE CATCHCHALLENGER_CACHE_HPS)
 endif()
 
-# io_uring is MANDATORY for this binary. POLL toggle no longer applies here.
+# io_uring is MANDATORY for this binary (per server/CLAUDE.md).
 if(NOT LIBURING_LIBRARY)
     find_library(LIBURING_LIBRARY NAMES uring)
     find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)

@@ -23,10 +23,10 @@ Implications:
 BaseServer phases (preload_N_*): datapack → skins → DB → monsters/skills/buffs → DDoS → events → zones → maps → profiles → visibility → players → dictionary → industries → city capture → RNG → finalize.
 
 ## Support
-* CLI Linux: epoll/io_uring (priority to io_uring), FILE_DB + PostgreSQL client in async with prepared query (high performance mode) + MariaDB client in async in async with prepared query (high performance mode)
-* CLI all OS: select, include windows, FILE_DB (compatibility mode)
-* GUI: All OS via QT, FILE_DB + All SQL supported by Qt (compatibility mode and simple for end user)
-* remember, you have to be compatible with select/epoll/qt
-* cli (all in one) and game-server-alone server, can be compiled io_uring as opticional and maximum performance
-* master, login, gateway is io_uring only (mandatory), use sendfile() or function for performance when it need
-* have to be multi-arch, no mather if big endian or little endian, the protocol always little endian
+* CLI Linux: epoll/io_uring (priority to io_uring), FILE_DB or PostgreSQL client in async with prepared query (high performance mode) or MariaDB client in async in async with prepared query (high performance mode), only 1 DB type at time selected at compilation via #ifdef (to have less disk size and more performance optimization oportunities)
+* CLI all OS: select, include windows, FILE_DB (compatibility mode), only 1 DB type at time selected at compilation via #ifdef (to have less disk size and more performance optimization oportunities)
+* GUI: All OS via QT, FILE_DB + All SQL supported by Qt (compatibility mode and simple for end user), DB type selected at runtime via Qt SQL
+* cli (all in one) and game-server-alone server, can be compiled io_uring (opticional) to have maximum performance
+* master, login, gateway, game-server-alone is io_uring only (mandatory), use sendfile() or function for performance when it need
+* have to be multi-arch (i686, amd64, arm, arm64, mips32r2, risc-v, ...), no mather if big endian or little endian, the protocol always little endian
+* cluster (login+master+game-server-alone): need remote and concurrent DB access for character data (planed FILE_DB for gameserver local content + a document database support), master ack as lock for common data

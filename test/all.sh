@@ -275,6 +275,7 @@ run_test testinggateway.py
 run_test testingmulti.py
 run_test testinggateway.py
 run_test testingbyIA.py
+run_test testingcluster.py
 run_test testingremote.py
 run_test testingcompilationwindows.py
 # testingcompilationmac.py disabled: host VM /Users/user/Desktop/... has

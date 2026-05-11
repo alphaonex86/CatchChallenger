@@ -122,7 +122,11 @@ PROTOCOL_VERSION_HPP = os.path.join(ROOT, "general", "base", "ProtocolVersion.hp
 BACKENDS = [
     # (id,            db_define,                  port, sql_cli, sql_subdir)
     ("file",          "CATCHCHALLENGER_DB_FILE",        61920, None,      None),
-    ("sqlite",        "CATCHCHALLENGER_DB_SQLITE",      61921, "sqlite3", "sqlite"),
+    # SQLite is intentionally absent: catchchallenger-server-cli has no
+    # EventLoopSqlite driver, only EventLoopPostgresql + EventLoopMySQL +
+    # the file-backed path. Adding SQLite here would just build a binary
+    # whose initTheDatabase() abort()s on startup. server/cli/CMakeLists.txt
+    # fail-fast'es -DCATCHCHALLENGER_DB_SQLITE=ON for the same reason.
     ("postgresql",    "CATCHCHALLENGER_DB_POSTGRESQL",  61922, "psql",    "postgresql"),
     ("mysql",         "CATCHCHALLENGER_DB_MYSQL",       61923, "mysql",   "mysql"),
 ]
