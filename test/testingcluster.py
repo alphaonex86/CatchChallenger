@@ -692,21 +692,20 @@ def _xml_master(db_kind, max_players):
 """
 
 
-def _xml_login(port, db_kind, max_players):
+def _xml_login(port, db_kind, max_players, mirror):
     db_host = db_host_for(db_kind)
     # Login expects its listen port as <port> (NOT <server-port>).
-    # httpDatapackMirror is required by EventLoopServerLoginSlave —
-    # it aborts on empty (the "not coded for now" branch). The login
-    # server uses its OWN <httpDatapackMirror> to build the protocol
-    # reply sent to clients, so this URL is what the client actually
-    # hits (NOT the value in gsa's XML). Always point at the
-    # ephemeral nginx; the test varies gsa's mirror separately.
+    # httpDatapackMirror is what the LOGIN server advertises to
+    # clients in the loginGood packet — when set it's the HTTP
+    # mirror they fetch from, when empty the client falls back to
+    # the in-protocol datapack pull served from datapack/ next to
+    # the login binary. Both modes are exercised via MIRROR_VARIANTS.
     return f"""<?xml version="1.0"?>
 <configuration>
     <port value="{port}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="{max_players}"/>
-    <httpDatapackMirror value="{NGINX_URL_BASE}"/>
+    <httpDatapackMirror value="{mirror}"/>
     <max_pseudo_size value="32"/>
     <min_character value="1"/>
     <max_character value="1"/>
@@ -1257,13 +1256,15 @@ def _run_cluster_variant(db_name, base, max_players,
             "login1",
             bin_path(base, "server/login", "catchchallenger-server-login"),
             os.path.join(work_root, "login1"),
-            _xml_login(PORT_LOGIN_1, db_name, max_players)).start()
+            _xml_login(PORT_LOGIN_1, db_name, max_players,
+                       mirror_url)).start()
         spawned_servers.append(login1)
         login2 = ServerProc(
             "login2",
             bin_path(base, "server/login", "catchchallenger-server-login"),
             os.path.join(work_root, "login2"),
-            _xml_login(PORT_LOGIN_2, db_name, max_players)).start()
+            _xml_login(PORT_LOGIN_2, db_name, max_players,
+                       mirror_url)).start()
         spawned_servers.append(login2)
         for ln in (login1, login2):
             ok, detail = ln.wait_ready()
