@@ -130,14 +130,21 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
     std::string httpDatapackMirror=settings.value("httpDatapackMirror");
     if(httpDatapackMirror.empty())
     {
-        settings.sync();
-        std::cerr << "empty mirror in the settings but not supported from now (abort)" << std::endl;
-        abort();
-
+        //Empty mirror == "no HTTP mirror; push datapack inline over
+        //the gameplay protocol". The handler at
+        //ClientNetworkReadQuery.cpp packetCode 0xA1 (compiled in
+        //because login isn't a CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+        //binary) reads from datapack_basePath, set by BaseServer2.cpp
+        //to <applicationDirPath>/datapack/, i.e. a `datapack/` dir
+        //next to the login binary. Operators wanting the push path
+        //must therefore stage the datapack at ./datapack/ relative
+        //to catchchallenger-server-login.
         #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
-        qDebug() << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input";
-        return EXIT_FAILURE;
+        std::cerr << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input (abort)" << std::endl;
+        abort();
         #endif
+        settings.sync();
+        std::cout << "httpDatapackMirror is empty: clients will pull the datapack inline over the protocol from ./datapack/ next to the login binary" << std::endl;
     }
     else
     {
@@ -432,11 +439,10 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
 
         LinkToMaster::linkToMaster->httpDatapackMirror=httpDatapackMirror;
 
-        if(LinkToMaster::linkToMaster->httpDatapackMirror.empty())
-        {
-            std::cerr << "EventLoopClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
-            abort();
-        }
+        //Empty mirror is allowed — the client receives a 0-length
+        //mirror string in the loginGood packet and falls back to
+        //the in-protocol datapack pull (Api_protocol_reply.cpp
+        //branch where mirrorSize==0). Only the >255 bound is fatal.
         if(LinkToMaster::linkToMaster->httpDatapackMirror.size()>255)
         {
             std::cerr << "LinkToMaster::linkToMaster->httpDatapackMirror size>255 (abort)" << std::endl;
@@ -471,13 +477,10 @@ void EventLoopServerLoginSlave::close()
 
 void EventLoopServerLoginSlave::SQL_common_load_finish()
 {
-    if(!LinkToMaster::linkToMaster->httpDatapackMirror.empty())
-        serverReady=true;
-    else
-    {
-        std::cerr << "!httpDatapackMirror.isEmpty() (abort)" << std::endl;
-        abort();
-    }
+    //Empty mirror means clients pull the datapack inline over the
+    //protocol; the SQL common-load finishing condition is the same
+    //either way, so just flip serverReady on.
+    serverReady=true;
 }
 
 bool EventLoopServerLoginSlave::tryListen()
@@ -585,11 +588,10 @@ void EventLoopServerLoginSlave::compose04Reply()
     memcpy(EventLoopClientLoginSlave::loginGood+EventLoopClientLoginSlave::loginGoodSize,EventLoopClientLoginSlave::baseDatapackSum,sizeof(EventLoopClientLoginSlave::baseDatapackSum));
     EventLoopClientLoginSlave::loginGoodSize+=sizeof(EventLoopClientLoginSlave::baseDatapackSum);
 
-    if(LinkToMaster::linkToMaster->httpDatapackMirror.empty())
-    {
-        std::cerr << "EventLoopClientLoginSlave::linkToMaster->httpDatapackMirror.isEmpty(), not coded for now (abort)" << std::endl;
-        abort();
-    }
+    //Empty mirror is fine: write size=0 and no body, the client
+    //(Api_protocol_reply.cpp, mirrorSize==0 branch) clears its
+    //own httpDatapackMirrorBase and switches to the in-protocol
+    //datapack-pull path served from datapack/ next to this binary.
     if(LinkToMaster::linkToMaster->httpDatapackMirror.size()>255)
     {
         std::cerr << "LinkToMaster::linkToMaster->httpDatapackMirror size>255 (abort)" << std::endl;
@@ -597,8 +599,11 @@ void EventLoopServerLoginSlave::compose04Reply()
     }
     EventLoopClientLoginSlave::loginGood[EventLoopClientLoginSlave::loginGoodSize]=(uint8_t)LinkToMaster::linkToMaster->httpDatapackMirror.size();
     EventLoopClientLoginSlave::loginGoodSize+=1;
-    memcpy(EventLoopClientLoginSlave::loginGood+EventLoopClientLoginSlave::loginGoodSize,LinkToMaster::linkToMaster->httpDatapackMirror.data(),LinkToMaster::linkToMaster->httpDatapackMirror.size());
-    EventLoopClientLoginSlave::loginGoodSize+=LinkToMaster::linkToMaster->httpDatapackMirror.size();
+    if(!LinkToMaster::linkToMaster->httpDatapackMirror.empty())
+    {
+        memcpy(EventLoopClientLoginSlave::loginGood+EventLoopClientLoginSlave::loginGoodSize,LinkToMaster::linkToMaster->httpDatapackMirror.data(),LinkToMaster::linkToMaster->httpDatapackMirror.size());
+        EventLoopClientLoginSlave::loginGoodSize+=LinkToMaster::linkToMaster->httpDatapackMirror.size();
+    }
 }
 
 void EventLoopServerLoginSlave::preload_profile()
