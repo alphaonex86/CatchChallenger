@@ -1,7 +1,7 @@
 #ifndef JL2922_HPS_FLAT_MAP_SERIALIZER_H
 #define JL2922_HPS_FLAT_MAP_SERIALIZER_H
 
-#if __cplusplus >= 202302L || defined(__cpp_lib_flat_map)
+#if (__cplusplus >= 202302L && __has_include(<flat_map>)) || defined(__cpp_lib_flat_map)
 
 #include <flat_map>
 #include <iostream>

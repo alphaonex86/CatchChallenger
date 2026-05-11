@@ -393,11 +393,26 @@ def _xml_master(db_kind):
     # falls back to a hardcoded localhost/root/catchchallenger_base
     # default and crashes at syncConnect.
     # Master expects the listen port as <port>, not <server-port>.
+    # Master serializes CommonSettingsCommon into the C211 reply's
+    # raw byte blob at offsets 0x00..0x0B (automatic_account_creation,
+    # character_delete_time, min/max_character, max_pseudo_size,
+    # maxPlayerMonsters, maxWarehousePlayerMonsters). Every one of
+    # those keys MUST also be in login.xml — otherwise master's reply
+    # bytes diverge from login's pre-computed blob and login aborts
+    # at LinkToMasterProtocolParsingMessage.cpp:503 with
+    # "C211 different CharactersGroup".
     return f"""<?xml version="1.0"?>
 <configuration>
     <port value="{PORT_MASTER}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="2000"/>
+    <max_pseudo_size value="32"/>
+    <min_character value="1"/>
+    <max_character value="1"/>
+    <maxPlayerMonsters value="6"/>
+    <maxWarehousePlayerMonsters value="50"/>
+    <automatic_account_creation value="true"/>
+    <character_delete_time value="3600"/>
     <token value="{MASTER_AUTH_TOKEN}"/>
     <db>
         <type value="{db_kind}"/>
@@ -504,12 +519,17 @@ def _xml_login(port, db_kind):
 
 def _xml_gameserver(port, db_kind):
     db_host = db_host_for(db_kind)
+    # gsa is built with CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR so
+    # httpDatapackMirror is required at startup. Point at a local
+    # placeholder URL — tests don't actually hit it; the assertion is
+    # just that gsa boots.
     return f"""<?xml version="1.0"?>
 <configuration>
     <server-port value="{port}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="2000"/>
     <mainDatapackCode value="test"/>
+    <httpDatapackMirror value="http://localhost/datapack/"/>
     <pvp value="true"/>
     <automatic_account_creation value="false"/>
     <character_delete_time value="3600"/>
@@ -546,9 +566,16 @@ def _xml_gameserver(port, db_kind):
         <db value="catchchallenger"/>
     </db-common>
     <master>
+        <!-- where master is, so gsa can connect TO master -->
+        <host value="127.0.0.1"/>
+        <port value="{PORT_MASTER}"/>
+        <tryInterval value="5"/>
+        <considerDownAfterNumberOfTry value="3"/>
+        <!-- gsa's OWN public address, advertised back to master -->
         <external-server-ip value="127.0.0.1"/>
-        <external-server-port value="{PORT_MASTER}"/>
+        <external-server-port value="{port}"/>
         <token value="{MASTER_AUTH_TOKEN}"/>
+        <charactersGroup value="default"/>
     </master>
     <rates/>
     <chat/>

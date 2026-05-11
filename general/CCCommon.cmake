@@ -72,10 +72,24 @@ get_filename_component(CC_REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 # CCACHE_DIR is honoured if the caller exports it (test/all.sh does on
 # this host); otherwise ccache defaults to ~/.ccache, which is the right
 # behaviour on remote build nodes that don't share the local cache path.
-find_program(CCACHE_PROGRAM ccache)
-if(CCACHE_PROGRAM)
-    set(CMAKE_C_COMPILER_LAUNCHER   "${CCACHE_PROGRAM}")
-    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+# Auto-pick ccache when it's on PATH. Testing (testingcompilationwindows.py,
+# all.sh) forces a specific ccache binary via -DCMAKE_<LANG>_COMPILER_LAUNCHER
+# — respect that and never overwrite it here. On deploy VPSes ccache is
+# optional: if it isn't installed, the build still works (just slower).
+#
+# Re-probe every configure: find_program caches its result, so a stale
+# CCACHE_PROGRAM-NOTFOUND from a configure run before ccache was installed
+# would otherwise stick forever even after the binary lands on PATH.
+if(NOT CMAKE_C_COMPILER_LAUNCHER AND NOT CMAKE_CXX_COMPILER_LAUNCHER)
+    unset(CCACHE_PROGRAM CACHE)
+    find_program(CCACHE_PROGRAM ccache)
+    if(CCACHE_PROGRAM)
+        set(CMAKE_C_COMPILER_LAUNCHER   "${CCACHE_PROGRAM}")
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        message(STATUS "ccache: ${CCACHE_PROGRAM} (auto-detected)")
+    endif()
+else()
+    message(STATUS "ccache: respecting caller's CMAKE_<LANG>_COMPILER_LAUNCHER override")
 endif()
 
 # AUTOMOC speed-ups. Same rationale as the qmake build.
