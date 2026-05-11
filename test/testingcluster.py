@@ -139,77 +139,246 @@ def log_fail(name, detail="", elapsed=0.0):
         print(f"[{t()}] {C_RED}[FAIL]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
 
 
-# ── DB lifecycle ─────────────────────────────────────────────────────────────
+# ── ephemeral DB instances ───────────────────────────────────────────────────
+# Each test run spins up its OWN PostgreSQL + MariaDB daemon on a
+# non-default port under /mnt/data/perso/tmpfs/cluster/db/<backend>.
+# No system services touched, no sudo, no preexisting role/db needed.
+PG_PORT       = 5433
+MARIADB_PORT  = 3307
+
+# Shared master-auth token used by master <-> login/gateway/gsa. 32
+# bytes = 64 hex chars, baked at test-startup so master.xml and the
+# login/gateway/gsa xmls all carry the same value. Without this they
+# each generate their own token and master rejects the auth with
+# "reply to 08 return code wrong too small (abort)".
+import secrets
+MASTER_AUTH_TOKEN = secrets.token_hex(32)
+# Per-backend data dirs requested by the operator:
+#   /mnt/data/perso/tmpfs/cluster/postgresql/    — postgres data + sock
+#   /mnt/data/perso/tmpfs/cluster/mysql/         — mariadb data + sock
+# The cluster server work dirs live OUTSIDE these (see CLUSTER_RUN_ROOT)
+# so wiping the DB at start/end doesn't take server logs with it.
+DB_PG_DIR        = os.path.join(TMPFS_ROOT, "cluster", "postgresql")
+DB_MARIADB_DIR   = os.path.join(TMPFS_ROOT, "cluster", "mysql")
+CLUSTER_RUN_ROOT = os.path.join(TMPFS_ROOT, "cluster", "runtime")
+
+
+def _probe_port(port, timeout=20.0):
+    """Wait until something accepts on 127.0.0.1:<port>, up to `timeout`s.
+    Returns True if the port came up, False on timeout."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.5):
+                return True
+        except OSError:
+            time.sleep(0.2)
+    return False
+
+
+# Keep handles so we can stop them in the global teardown.
+_pg_proc = None
+_mariadb_proc = None
+
+
+def start_postgresql():
+    """initdb + pg_ctl start on PG_PORT. Creates role + database
+    `catchchallenger`/`catchchallenger`. Returns (ok, detail)."""
+    global _pg_proc
+    if not shutil.which("initdb"):
+        return False, "initdb not on $PATH (postgresql server package missing)"
+    # Wipe the entire DB dir up front per operator policy.
+    if os.path.isdir(DB_PG_DIR):
+        shutil.rmtree(DB_PG_DIR, ignore_errors=True)
+    data_dir = os.path.join(DB_PG_DIR, "data")
+    sock_dir = os.path.join(DB_PG_DIR, "sock")
+    log_path = os.path.join(DB_PG_DIR, "postgres.log")
+    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(sock_dir, exist_ok=True)
+    p = subprocess.run(
+        ["initdb", "-D", data_dir, "-U", "catchchallenger",
+         "--auth-host=trust", "--auth-local=trust", "-E", "UTF8"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if p.returncode != 0:
+        return False, "initdb failed:\n" + p.stdout.decode(errors='replace')[-800:]
+    # Start postgres in the foreground (we own the process).
+    logf = open(log_path, "w")
+    _pg_proc = subprocess.Popen(
+        ["postgres", "-D", data_dir, "-p", str(PG_PORT),
+         "-k", sock_dir, "-h", "127.0.0.1"],
+        stdout=logf, stderr=subprocess.STDOUT)
+    if not _probe_port(PG_PORT, timeout=20):
+        return False, f"postgres didn't open port {PG_PORT} (log: {log_path})"
+    # createdb (the role 'catchchallenger' is already a superuser via -U on initdb).
+    p = subprocess.run(
+        ["createdb", "-h", "127.0.0.1", "-p", str(PG_PORT),
+         "-U", "catchchallenger", "catchchallenger"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if p.returncode != 0:
+        return False, "createdb failed:\n" + p.stdout.decode(errors='replace')[-800:]
+    return True, f"ephemeral postgres up on :{PG_PORT}"
+
+
+def stop_postgresql():
+    """Stop the ephemeral PG daemon and wipe the data dir
+    (DB_PG_DIR). Per operator: clean at start AND end."""
+    global _pg_proc
+    if _pg_proc is not None:
+        try:
+            _pg_proc.terminate()
+            try:
+                _pg_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                _pg_proc.kill()
+                _pg_proc.wait(timeout=5)
+        except ProcessLookupError:
+            pass
+        _pg_proc = None
+    if os.path.isdir(DB_PG_DIR):
+        shutil.rmtree(DB_PG_DIR, ignore_errors=True)
+
+
+def start_mariadb():
+    """mysql_install_db + mariadbd on MARIADB_PORT. Creates user/db
+    `catchchallenger`/`catchchallenger`. Returns (ok, detail)."""
+    global _mariadb_proc
+    if not shutil.which("mariadbd"):
+        return False, "mariadbd not on $PATH"
+    # Wipe the entire DB dir up front per operator policy.
+    if os.path.isdir(DB_MARIADB_DIR):
+        shutil.rmtree(DB_MARIADB_DIR, ignore_errors=True)
+    data_dir = os.path.join(DB_MARIADB_DIR, "data")
+    sock_path = os.path.join(DB_MARIADB_DIR, "mariadb.sock")
+    log_path = os.path.join(DB_MARIADB_DIR, "mariadb.log")
+    os.makedirs(data_dir, exist_ok=True)
+    # mysql_install_db / mariadb-install-db bootstraps the data dir.
+    installer = (shutil.which("mariadb-install-db") or
+                 shutil.which("mysql_install_db"))
+    if installer is None:
+        return False, "no mariadb-install-db / mysql_install_db on $PATH"
+    p = subprocess.run(
+        [installer, f"--datadir={data_dir}", "--auth-root-authentication-method=normal"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if p.returncode != 0:
+        return False, "mariadb-install-db failed:\n" + p.stdout.decode(errors='replace')[-1500:]
+    logf = open(log_path, "w")
+    pid_path = os.path.join(DB_MARIADB_DIR, "mariadb.pid")
+    _mariadb_proc = subprocess.Popen(
+        ["mariadbd",
+         f"--datadir={data_dir}",
+         f"--port={MARIADB_PORT}",
+         f"--socket={sock_path}",
+         f"--pid-file={pid_path}",
+         "--bind-address=127.0.0.1",
+         "--skip-networking=0",
+         "--skip-name-resolve",
+         f"--log-error={log_path}.err",
+         #--user= only allowed when running as root; unprivileged
+         #mariadbd inherits the current uid.
+        ],
+        stdout=logf, stderr=subprocess.STDOUT)
+    if not _probe_port(MARIADB_PORT, timeout=30):
+        return False, f"mariadbd didn't open port {MARIADB_PORT} (log: {log_path}, {log_path}.err)"
+    # Create role + db. Root has no password right after install_db.
+    sqls = [
+        "CREATE USER 'catchchallenger'@'localhost' IDENTIFIED BY 'catchchallenger';",
+        "CREATE USER 'catchchallenger'@'127.0.0.1' IDENTIFIED BY 'catchchallenger';",
+        "CREATE DATABASE catchchallenger;",
+        "GRANT ALL ON catchchallenger.* TO 'catchchallenger'@'localhost';",
+        "GRANT ALL ON catchchallenger.* TO 'catchchallenger'@'127.0.0.1';",
+        "FLUSH PRIVILEGES;",
+    ]
+    for q in sqls:
+        p = subprocess.run(
+            ["mariadb", "--protocol=tcp", "-h", "127.0.0.1",
+             "-P", str(MARIADB_PORT), "-u", "root", "-e", q],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if p.returncode != 0:
+            return False, f"mariadb DDL failed ({q}):\n" + p.stdout.decode(errors='replace')[-500:]
+    return True, f"ephemeral mariadb up on :{MARIADB_PORT}"
+
+
+def stop_mariadb():
+    """Stop the ephemeral MariaDB daemon and wipe the data dir
+    (DB_MARIADB_DIR). Per operator: clean at start AND end."""
+    global _mariadb_proc
+    if _mariadb_proc is not None:
+        try:
+            _mariadb_proc.terminate()
+            try:
+                _mariadb_proc.wait(timeout=8)
+            except subprocess.TimeoutExpired:
+                _mariadb_proc.kill()
+                _mariadb_proc.wait(timeout=5)
+        except ProcessLookupError:
+            pass
+        _mariadb_proc = None
+    if os.path.isdir(DB_MARIADB_DIR):
+        shutil.rmtree(DB_MARIADB_DIR, ignore_errors=True)
+
+
 def wipe_postgresql():
-    """Drop every table in db `catchchallenger` on localhost (default port)
-    and replay every .sql under server/databases/postgresql/. The exec
-    operator is responsible for installing postgres + creating an empty
-    `catchchallenger` DB."""
+    """Drop every table in the ephemeral postgres on PG_PORT and
+    replay every .sql under server/databases/postgresql/."""
     sql_dir = os.path.join(ROOT, "server", "databases", "postgresql")
     if not os.path.isdir(sql_dir):
         return False, f"sql dir missing: {sql_dir}"
-    if not shutil.which("psql"):
-        return False, "psql not on $PATH"
-    # Probe daemon reachability.
-    p = subprocess.run(
-        ["psql", "-U", "catchchallenger", "-d", "catchchallenger", "-c", "SELECT 1"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    if p.returncode != 0:
-        return False, f"psql can't connect to catchchallenger DB ({p.stderr.decode(errors='replace').strip()[:200]})"
+    base_args = ["psql", "-h", "127.0.0.1", "-p", str(PG_PORT),
+                 "-U", "catchchallenger", "-d", "catchchallenger"]
     # Drop everything.
-    subprocess.run(
-        ["psql", "-U", "catchchallenger", "-d", "catchchallenger", "-c",
-         "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    # Replay schema files in lexical order.
+    subprocess.run(base_args + ["-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for fn in sorted(os.listdir(sql_dir)):
         if not fn.endswith(".sql"):
             continue
         with open(os.path.join(sql_dir, fn), "rb") as fp:
-            p = subprocess.run(
-                ["psql", "-U", "catchchallenger", "-d", "catchchallenger"],
-                stdin=fp, stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE)
+            p = subprocess.run(base_args, stdin=fp,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         if p.returncode != 0:
-            return False, f"psql replay of {fn} failed: {p.stderr.decode(errors='replace').strip()[:200]}"
+            return False, f"psql replay of {fn} failed: {p.stderr.decode(errors='replace').strip()[:300]}"
     return True, "DB wiped + schema replayed"
 
 
 def wipe_mysql():
-    """Same as wipe_postgresql but against MySQL/MariaDB."""
+    """Wipe + replay against the ephemeral mariadb on MARIADB_PORT."""
     sql_dir = os.path.join(ROOT, "server", "databases", "mysql")
     if not os.path.isdir(sql_dir):
         return False, f"sql dir missing: {sql_dir}"
-    if not shutil.which("mysql"):
-        return False, "mysql client not on $PATH"
-    # Probe daemon reachability.
-    p = subprocess.run(
-        ["mysql", "-u", "catchchallenger", "catchchallenger", "-e", "SELECT 1"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    if p.returncode != 0:
-        return False, f"mysql can't connect to catchchallenger DB ({p.stderr.decode(errors='replace').strip()[:200]})"
+    base_args = ["mariadb", "--protocol=tcp", "-h", "127.0.0.1",
+                 "-P", str(MARIADB_PORT),
+                 "-u", "catchchallenger", "-pcatchchallenger", "catchchallenger"]
     # Drop everything.
-    drop_sql = """
-        SET FOREIGN_KEY_CHECKS=0;
-        SELECT CONCAT('DROP TABLE IF EXISTS ', table_name, ';') AS s
-          FROM information_schema.tables WHERE table_schema='catchchallenger'
-          INTO OUTFILE '/tmp/cc_drop.sql';
-    """
-    subprocess.run(
-        ["mysql", "-u", "catchchallenger", "catchchallenger"],
-        input=drop_sql.encode(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    # Replay schema files in lexical order.
+    drop_q = ("SET FOREIGN_KEY_CHECKS=0; "
+              "DROP DATABASE catchchallenger; CREATE DATABASE catchchallenger;")
+    p = subprocess.run(
+        ["mariadb", "--protocol=tcp", "-h", "127.0.0.1",
+         "-P", str(MARIADB_PORT), "-u", "root", "-e", drop_q],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if p.returncode != 0:
+        return False, "drop+recreate db failed: " + p.stdout.decode(errors='replace')[-300:]
     for fn in sorted(os.listdir(sql_dir)):
         if not fn.endswith(".sql"):
             continue
         with open(os.path.join(sql_dir, fn), "rb") as fp:
-            p = subprocess.run(
-                ["mysql", "-u", "catchchallenger", "catchchallenger"],
-                stdin=fp, stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE)
+            p = subprocess.run(base_args, stdin=fp,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         if p.returncode != 0:
-            return False, f"mysql replay of {fn} failed: {p.stderr.decode(errors='replace').strip()[:200]}"
+            return False, f"mariadb replay of {fn} failed: {p.stderr.decode(errors='replace').strip()[:300]}"
     return True, "DB wiped + schema replayed"
+
+
+def db_host_for(backend):
+    """The XML <host> value passed to the cluster servers.
+
+    PG: abuse libpq's space-separated key=value conninfo syntax —
+        setting host to '127.0.0.1 port=5433' makes EventLoopPostgresql's
+        strcat-based conninfo build resolve to a valid string targeting
+        the ephemeral instance.
+    MariaDB: EventLoopMySQL parses 'host:port' explicitly (patched in
+        with the ephemeral-port support). Emit '127.0.0.1:3307'."""
+    if backend == "postgresql":
+        return f"127.0.0.1 port={PG_PORT}"
+    return f"127.0.0.1:{MARIADB_PORT}"
 
 
 # ── server-properties.xml templates ──────────────────────────────────────────
@@ -217,34 +386,65 @@ def wipe_mysql():
 # server/CONFIG.md. Every key the binary actually reads is set
 # explicitly so an unspecified default never silently kicks in.
 def _xml_master(db_kind):
+    db_host = db_host_for(db_kind)
+    # Master reads db-login + db-base + db-common-0 (NOT db-common —
+    # the loop iterates db-common-N). Each section must explicitly
+    # point at the ephemeral DB; without any one of them the master
+    # falls back to a hardcoded localhost/root/catchchallenger_base
+    # default and crashes at syncConnect.
+    # Master expects the listen port as <port>, not <server-port>.
     return f"""<?xml version="1.0"?>
 <configuration>
-    <server-port value="{PORT_MASTER}"/>
+    <port value="{PORT_MASTER}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="2000"/>
+    <token value="{MASTER_AUTH_TOKEN}"/>
     <db>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
     </db>
-    <db-common>
+    <db-login>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
-    </db-common>
+        <considerDownAfterNumberOfTry value="3"/>
+        <tryInterval value="5"/>
+    </db-login>
+    <db-base>
+        <type value="{db_kind}"/>
+        <host value="{db_host}"/>
+        <login value="catchchallenger"/>
+        <pass value="catchchallenger"/>
+        <db value="catchchallenger"/>
+        <considerDownAfterNumberOfTry value="3"/>
+        <tryInterval value="5"/>
+    </db-base>
+    <db-common-0>
+        <type value="{db_kind}"/>
+        <host value="{db_host}"/>
+        <login value="catchchallenger"/>
+        <pass value="catchchallenger"/>
+        <db value="catchchallenger"/>
+        <considerDownAfterNumberOfTry value="3"/>
+        <tryInterval value="5"/>
+        <charactersGroup value="default"/>
+    </db-common-0>
     <chat><kick-on-flood value="false"/></chat>
 </configuration>
 """
 
 
 def _xml_login(port, db_kind):
+    db_host = db_host_for(db_kind)
+    # Login expects its listen port as <port> (NOT <server-port>).
     return f"""<?xml version="1.0"?>
 <configuration>
-    <server-port value="{port}"/>
+    <port value="{port}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="2000"/>
     <max_pseudo_size value="32"/>
@@ -260,46 +460,56 @@ def _xml_login(port, db_kind):
     <compressionLevel value="1"/>
     <db>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
     </db>
     <db-login>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
+        <considerDownAfterNumberOfTry value="3"/>
+        <tryInterval value="5"/>
     </db-login>
     <db-base>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
+        <considerDownAfterNumberOfTry value="3"/>
+        <tryInterval value="5"/>
     </db-base>
-    <db-common>
+    <db-common-0>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
-    </db-common>
+        <considerDownAfterNumberOfTry value="3"/>
+        <tryInterval value="5"/>
+        <charactersGroup value="default"/>
+    </db-common-0>
     <master>
-        <external-server-ip value="127.0.0.1"/>
-        <external-server-port value="{PORT_MASTER}"/>
+        <host value="127.0.0.1"/>
+        <port value="{PORT_MASTER}"/>
+        <token value="{MASTER_AUTH_TOKEN}"/>
     </master>
 </configuration>
 """
 
 
 def _xml_gameserver(port, db_kind):
+    db_host = db_host_for(db_kind)
     return f"""<?xml version="1.0"?>
 <configuration>
     <server-port value="{port}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="2000"/>
+    <mainDatapackCode value="test"/>
     <pvp value="true"/>
     <automatic_account_creation value="false"/>
     <character_delete_time value="3600"/>
@@ -316,21 +526,21 @@ def _xml_gameserver(port, db_kind):
     <compressionLevel value="1"/>
     <db>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
     </db>
     <db-server>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
     </db-server>
     <db-common>
         <type value="{db_kind}"/>
-        <host value="localhost"/>
+        <host value="{db_host}"/>
         <login value="catchchallenger"/>
         <pass value="catchchallenger"/>
         <db value="catchchallenger"/>
@@ -338,6 +548,7 @@ def _xml_gameserver(port, db_kind):
     <master>
         <external-server-ip value="127.0.0.1"/>
         <external-server-port value="{PORT_MASTER}"/>
+        <token value="{MASTER_AUTH_TOKEN}"/>
     </master>
     <rates/>
     <chat/>
@@ -477,7 +688,25 @@ class ServerProc:
 
     def start(self):
         os.makedirs(self.work_dir, exist_ok=True)
-        with open(os.path.join(self.work_dir, "server-properties.xml"), "w") as fp:
+        # Each binary reads its config XML from
+        # getFolderFromFile(argv[0]) — i.e. relative to the exe path.
+        # We exec via a symlink in the work_dir so argv[0] is
+        # './<exe>' and the config dir resolves to cwd (= work_dir).
+        # Each binary expects a different XML filename:
+        #     master  -> master.xml
+        #     login   -> login.xml
+        #     gateway -> gateway.xml
+        #     gsa     -> server-properties.xml
+        # (per server/{master,login,gateway,game-server-alone}/*.cpp)
+        xml_name = {
+            "master": "master.xml",
+            "login1": "login.xml",
+            "login2": "login.xml",
+            "game1":  "server-properties.xml",
+            "game2":  "server-properties.xml",
+            "gateway": "gateway.xml",
+        }.get(self.label, "server-properties.xml")
+        with open(os.path.join(self.work_dir, xml_name), "w") as fp:
             fp.write(self.xml_text)
         # Each server needs its own datapack. Symlink to avoid copying ~100 MB.
         dp_dst = os.path.join(self.work_dir, "datapack")
@@ -486,9 +715,16 @@ class ServerProc:
         # Same for database/ scratch dir (gsa expects it for FILE backend
         # diagnostics even when DB is PG/MySQL).
         os.makedirs(os.path.join(self.work_dir, "database"), exist_ok=True)
+        # Symlink the binary so argv[0] becomes './<exe>' and
+        # getFolderFromFile(argv[0]) resolves to the work_dir.
+        exe_name = os.path.basename(self.exe)
+        local_exe = os.path.join(self.work_dir, exe_name)
+        if not os.path.exists(local_exe):
+            os.symlink(self.exe, local_exe)
         logf = open(self.log_path, "w")
         self.proc = subprocess.Popen(
-            [self.exe], cwd=self.work_dir, stdout=logf, stderr=subprocess.STDOUT)
+            ["./" + exe_name], cwd=self.work_dir,
+            stdout=logf, stderr=subprocess.STDOUT)
         return self
 
     def wait_ready(self, timeout=READY_TIMEOUT):
@@ -579,18 +815,48 @@ def client_connect_via(login_port, login_name, pass_name, character,
 
 # ── per-backend test driver ──────────────────────────────────────────────────
 def test_one_backend(db_name, db_define, db_cli, sql_subdir):
+    """Runs the per-backend test. Tracks every spawned server +
+    ephemeral DB so the finally: block can guarantee teardown even
+    on exception."""
     log_info(f"--- backend: {db_name} ---")
     t_start = time.monotonic()
+    spawned_servers = []
+    try:
+        return _test_one_backend_inner(db_name, db_define, db_cli, sql_subdir,
+                                       t_start, spawned_servers)
+    finally:
+        for s in spawned_servers:
+            s.stop()
+        (stop_postgresql if db_name == "postgresql" else stop_mariadb)()
 
-    # 1) Pre-check the DB daemon. Per operator policy "no SKIP", an
-    #    unreachable daemon is reported as FAIL so the operator knows
-    #    they need to provision it.
+
+def _test_one_backend_inner(db_name, db_define, db_cli, sql_subdir,
+                             t_start, spawned_servers):
+
+    # 1a) Spin up an ephemeral DB daemon on a non-default port. No
+    #     system service touched, no sudo, no preexisting role/db
+    #     needed. The data dir lives under
+    #     /mnt/data/perso/tmpfs/cluster/db/<backend>/ and is wiped
+    #     at the start of every run.
+    log_info(f"  spawn ephemeral {db_name}")
+    t_db = time.monotonic()
+    start_fn = start_postgresql if db_name == "postgresql" else start_mariadb
+    ok, detail = start_fn()
+    if not ok:
+        log_fail(f"{db_name}/db-spawn", detail, time.monotonic() - t_db)
+        return
+    log_pass(f"{db_name}/db-spawn", detail, time.monotonic() - t_db)
+
+    # 1b) Schema replay.
     log_info(f"  wipe + reload schema ({db_name})")
+    t_wipe = time.monotonic()
     wipe_fn = wipe_postgresql if db_name == "postgresql" else wipe_mysql
     ok, detail = wipe_fn()
     if not ok:
-        log_fail(f"{db_name}/db-setup", detail, time.monotonic() - t_start)
+        log_fail(f"{db_name}/db-setup", detail, time.monotonic() - t_wipe)
+        (stop_postgresql if db_name == "postgresql" else stop_mariadb)()
         return
+    log_pass(f"{db_name}/db-setup", detail, time.monotonic() - t_wipe)
 
     # 2) Build cluster binaries.
     log_info(f"  build cluster (io_uring + {db_name})")
@@ -612,7 +878,7 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
         return
 
     # 3) Start the cluster: master first, then 2 logins, then 2 gsa.
-    work_root = os.path.join(TMPFS_ROOT, "cluster", db_name)
+    work_root = os.path.join(CLUSTER_RUN_ROOT, db_name)
     if os.path.isdir(work_root):
         shutil.rmtree(work_root, ignore_errors=True)
     os.makedirs(work_root, exist_ok=True)
@@ -622,10 +888,10 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
         bin_path(base, "server/master", "catchchallenger-server-master"),
         os.path.join(work_root, "master"),
         _xml_master(db_name)).start()
+    spawned_servers.append(master)
     ok, detail = master.wait_ready()
     if not ok:
         log_fail(f"{db_name}/master-start", detail, time.monotonic() - t_start)
-        master.stop()
         return
     log_pass(f"{db_name}/master-start", f"port {PORT_MASTER}", 0.0)
 
@@ -634,17 +900,17 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
         bin_path(base, "server/login", "catchchallenger-server-login"),
         os.path.join(work_root, "login1"),
         _xml_login(PORT_LOGIN_1, db_name)).start()
+    spawned_servers.append(login1)
     login2 = ServerProc(
         "login2",
         bin_path(base, "server/login", "catchchallenger-server-login"),
         os.path.join(work_root, "login2"),
         _xml_login(PORT_LOGIN_2, db_name)).start()
+    spawned_servers.append(login2)
     for ln in (login1, login2):
         ok, detail = ln.wait_ready()
         if not ok:
             log_fail(f"{db_name}/{ln.label}-start", detail, 0.0)
-            for s in (login1, login2, master):
-                s.stop()
             return
         log_pass(f"{db_name}/{ln.label}-start",
                  f"port {PORT_LOGIN_1 if ln is login1 else PORT_LOGIN_2}", 0.0)
@@ -655,19 +921,18 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
                  "catchchallenger-game-server-alone"),
         os.path.join(work_root, "game1"),
         _xml_gameserver(PORT_GAME_1, db_name)).start()
+    spawned_servers.append(game1)
     game2 = ServerProc(
         "game2",
         bin_path(base, "server/game-server-alone",
                  "catchchallenger-game-server-alone"),
         os.path.join(work_root, "game2"),
         _xml_gameserver(PORT_GAME_2, db_name)).start()
-    all_servers = [master, login1, login2, game1, game2]
+    spawned_servers.append(game2)
     for g in (game1, game2):
         ok, detail = g.wait_ready()
         if not ok:
             log_fail(f"{db_name}/{g.label}-start", detail, 0.0)
-            for s in all_servers:
-                s.stop()
             return
         log_pass(f"{db_name}/{g.label}-start",
                  f"port {PORT_GAME_1 if g is game1 else PORT_GAME_2}", 0.0)
@@ -682,8 +947,6 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
     if not ok1:
         log_fail(f"{db_name}/client1-via-login1", det1,
                  time.monotonic() - t_c1)
-        for s in all_servers:
-            s.stop()
         return
     log_pass(f"{db_name}/client1-via-login1", det1, time.monotonic() - t_c1)
 
@@ -697,13 +960,9 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
     if not ok2:
         log_fail(f"{db_name}/client2-via-login2", det2,
                  time.monotonic() - t_c2)
-        for s in all_servers:
-            s.stop()
         return
 
-    # Compare extracted (map, x, y) from both runs. If we couldn't
-    # parse them (older client output format), accept "both reached the
-    # map" as a weaker but still meaningful PASS.
+    # Compare extracted (map, x, y) from both runs.
     if det1.startswith("map=") and det2.startswith("map=") and det1 != det2:
         log_fail(f"{db_name}/client2-via-login2",
                  f"state divergence: c1={det1!r} c2={det2!r}",
@@ -713,10 +972,6 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
         log_pass(f"{db_name}/client2-via-login2",
                  f"sticky verified ({same}): {det2}",
                  time.monotonic() - t_c2)
-
-    # 6) Cleanup.
-    for s in all_servers:
-        s.stop()
 
 
 # ── main ─────────────────────────────────────────────────────────────────────

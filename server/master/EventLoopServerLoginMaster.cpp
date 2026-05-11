@@ -377,9 +377,15 @@ void EventLoopServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
                 abort();
             }
             type=settings.value("type");
+            #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
             if(type!="postgresql")
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+            if(type!="mysql")
+#else
+#error No DB backend
+#endif
             {
-                std::cerr << "only db type postgresql supported (abort)" << std::endl;
+                std::cerr << "db type " << type << " does not match compile-time backend (abort)" << std::endl;
                 abort();
             }
             if(!databaseBaseLogin->syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
@@ -457,9 +463,15 @@ void EventLoopServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
                 abort();
             }
             type=settings.value("type");
+            #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
             if(type!="postgresql")
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+            if(type!="mysql")
+#else
+#error No DB backend
+#endif
             {
-                std::cerr << "only db type postgresql supported (abort)" << std::endl;
+                std::cerr << "db type " << type << " does not match compile-time backend (abort)" << std::endl;
                 abort();
             }
             if(!databaseBaseBase->syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
@@ -544,9 +556,15 @@ std::vector<std::string> EventLoopServerLoginMaster::loadCharactersGroup(TinyXML
                     abort();
                 }
                 type=settings.value("type");
-                if(type!="postgresql")
-                {
-                    std::cerr << "only db type postgresql supported (abort)" << std::endl;
+                #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+            if(type!="postgresql")
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+            if(type!="mysql")
+#else
+#error No DB backend
+#endif
+            {
+                std::cerr << "db type " << type << " does not match compile-time backend (abort)" << std::endl;
                     abort();
                 }
                 CharactersGroup::hash[charactersGroup]=new CharactersGroup(db.c_str(),host.c_str(),login.c_str(),pass.c_str(),considerDownAfterNumberOfTry,tryInterval,charactersGroup);

@@ -82,11 +82,28 @@ bool EventLoopMySQL::syncConnect(const std::string &host, const std::string &dbn
         return false;
     }
 
-    strcpy(strCohost,host.c_str());
+    //"host" may carry a non-default port as "host:port". libpq has
+    //its key=value conninfo syntax for this; libmysqlclient doesn't,
+    //so we parse explicitly here. testingcluster.py runs ephemeral
+    //mariadb on a non-default port and depends on this.
+    std::string h=host;
+    portCo=3306;
+    {
+        const size_t colon=h.find(':');
+        if(colon!=std::string::npos)
+        {
+            const std::string p=h.substr(colon+1);
+            h=h.substr(0,colon);
+            const int parsed=atoi(p.c_str());
+            if(parsed>0 && parsed<65536)
+                portCo=static_cast<unsigned int>(parsed);
+        }
+    }
+    strcpy(strCohost,h.c_str());
     strcpy(strCouser,user.c_str());
     strcpy(strCodatabase,dbname.c_str());
     strcpy(strCopass,password.c_str());
-    std::cout << "Connecting to mysql: " << host << "..." << std::endl;
+    std::cout << "Connecting to mysql: " << h << ":" << portCo << "..." << std::endl;
     return syncConnectInternal();
 }
 
@@ -98,7 +115,7 @@ bool EventLoopMySQL::syncConnectInternal(bool infinityTry)
         std::cerr << "mysql unable to allocate the object" << std::endl;
         return false;
     }
-    if(!mysql_real_connect(conn,strCohost,strCouser,strCopass,strCodatabase,3306,NULL,0))
+    if(!mysql_real_connect(conn,strCohost,strCouser,strCopass,strCodatabase,portCo,NULL,0))
     {
         std::string lastErrorMessage=errorMessage();
         if(mysql_errno(conn)==ER_ACCESS_DENIED_ERROR || strcmp(mysql_sqlstate(conn),"28000")==0)

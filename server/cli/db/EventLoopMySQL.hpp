@@ -56,6 +56,7 @@ private:
     char strCouser[255];
     char strCodatabase[255];
     char strCopass[255];
+    unsigned int portCo;
 
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     // Cache stmtName -> MYSQL_STMT* prepared on `conn`. Owned here;

@@ -22,6 +22,11 @@ Implications:
 
 BaseServer phases (preload_N_*): datapack → skins → DB → monsters/skills/buffs → DDoS → events → zones → maps → profiles → visibility → players → dictionary → industries → city capture → RNG → finalize.
 
+## Datapack via http
+* server config can be httpDatapackMirror: http://catchchallenger.fw.local/datapack-[datapackhash]/
+* this path container base + all maincode/subcode and the client download selectinvelt the maincode/subcode it need
+* datapack-archive.sh -> to generate all file, generate only if not exists (or if datapack change, but the datapack should not change, or user will start datapack-archive.sh it self if change the datapack)
+
 ## Support
 * CLI Linux: epoll/io_uring (priority to io_uring), FILE_DB or PostgreSQL client in async with prepared query (high performance mode) or MariaDB client in async in async with prepared query (high performance mode), only 1 DB type at time selected at compilation via #ifdef (to have less disk size and more performance optimization oportunities)
 * CLI all OS: select, include windows, FILE_DB (compatibility mode), only 1 DB type at time selected at compilation via #ifdef (to have less disk size and more performance optimization oportunities)
