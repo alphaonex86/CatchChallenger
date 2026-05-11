@@ -91,10 +91,21 @@ target_compile_definitions(catchchallenger-game-server-alone PRIVATE
     CATCHCHALLENGER_SERVER
     QT_NO_EMIT
     CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     ${_db_define}
     CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 )
+# Hardened mode: only allow the client to fetch the datapack from
+# the operator-controlled HTTP mirror. ON by default — production
+# deploys expect this — but the test harness toggles it off when
+# exercising the in-protocol datapack push path
+# (testingcluster.py uses both modes).
+option(CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+       "Game-server-alone refuses to start without an httpDatapackMirror"
+       ON)
+if(CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR)
+    target_compile_definitions(catchchallenger-game-server-alone PRIVATE
+        CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR)
+endif()
 if(CATCHCHALLENGER_CACHE_HPS)
     target_compile_definitions(catchchallenger-game-server-alone PRIVATE CATCHCHALLENGER_CACHE_HPS)
 endif()

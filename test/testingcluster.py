@@ -166,6 +166,32 @@ DB_PG_DIR        = os.path.join(TMPFS_ROOT, "cluster", "postgresql")
 DB_MARIADB_DIR   = os.path.join(TMPFS_ROOT, "cluster", "mysql")
 CLUSTER_RUN_ROOT = os.path.join(TMPFS_ROOT, "cluster", "runtime")
 
+# Ephemeral nginx for the gsa datapack mirror. gsa is built with
+# CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR — it refuses to boot
+# without an httpDatapackMirrorBase, and the connected client
+# fetches `datapack-list/base.txt` + `pack/datapack*.tar.zst` over
+# HTTP. We stand up a tiny nginx on a non-privileged port for the
+# duration of the test run, populate /pack/ via datapack-archive.sh
+# and /datapack-list/ via datapack-list.php, then tear it down.
+#
+# The base datapack contents are served direct from the source
+# checkout via an nginx alias — no copy/symlink dance.
+NGINX_PORT       = 18231
+NGINX_ROOT       = os.path.join(TMPFS_ROOT, "cluster", "www")
+NGINX_PACK_DIR   = os.path.join(NGINX_ROOT, "pack")
+NGINX_LIST_DIR   = os.path.join(NGINX_ROOT, "datapack-list")
+NGINX_CONF       = os.path.join(NGINX_ROOT, "nginx.conf")
+NGINX_ERR_LOG    = os.path.join(NGINX_ROOT, "nginx-error.log")
+NGINX_ACC_LOG    = os.path.join(NGINX_ROOT, "nginx-access.log")
+NGINX_PID        = os.path.join(NGINX_ROOT, "nginx.pid")
+# Scripts shipped with the production deploy
+# (/home/user/Desktop/www/catchchallenger.first-world.info/) — we
+# don't redistribute them; we invoke them in place. If either is
+# missing the test FAILs early with a clear message.
+WWW_DEPLOY_DIR   = "/home/user/Desktop/www/catchchallenger.first-world.info"
+DATAPACK_ARCHIVE_SH = os.path.join(WWW_DEPLOY_DIR, "datapack-archive.sh")
+DATAPACK_LIST_PHP   = os.path.join(WWW_DEPLOY_DIR, "datapack-list.php")
+
 
 def _probe_port(port, timeout=20.0):
     """Wait until something accepts on 127.0.0.1:<port>, up to `timeout`s.
@@ -321,6 +347,214 @@ def stop_mariadb():
         shutil.rmtree(DB_MARIADB_DIR, ignore_errors=True)
 
 
+# ── ephemeral nginx datapack mirror ──────────────────────────────────────────
+_nginx_proc = None
+
+
+def _stage_nginx_root():
+    """Wipe and re-stage NGINX_ROOT with the bits nginx needs to serve.
+
+    Layout when this returns:
+        NGINX_ROOT/
+            pack/                 ← datapack-archive.sh tarballs (.tar.zst)
+            datapack-list/        ← datapack-list.php text files
+            nginx.conf            ← config we'll launch nginx against
+            nginx-error.log, nginx-access.log, nginx.pid (runtime)
+
+    The raw datapack source is NOT copied — it's served straight from
+    /home/user/Desktop/CatchChallenger/CatchChallenger-datapack/ via
+    an nginx `alias` directive in the conf written by start_nginx().
+    """
+    if os.path.isdir(NGINX_ROOT):
+        shutil.rmtree(NGINX_ROOT, ignore_errors=True)
+    os.makedirs(NGINX_PACK_DIR, exist_ok=True)
+    os.makedirs(NGINX_LIST_DIR, exist_ok=True)
+
+
+def _run_datapack_archive():
+    """Invoke datapack-archive.sh with (datapack_src, NGINX_PACK_DIR).
+    The shipped script writes datapack[*].tar.zst into the output dir."""
+    if not os.path.isfile(DATAPACK_ARCHIVE_SH):
+        return False, f"datapack-archive.sh missing: {DATAPACK_ARCHIVE_SH}"
+    p = subprocess.run(
+        ["bash", DATAPACK_ARCHIVE_SH, DATAPACK_SRC, NGINX_PACK_DIR],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        timeout=600)
+    if p.returncode != 0:
+        return False, ("datapack-archive.sh rc=%d\n" % p.returncode) + \
+                      p.stdout.decode(errors="replace")[-800:]
+    # The script generates at least datapack.tar.zst; require that to exist.
+    base_zst = os.path.join(NGINX_PACK_DIR, "datapack.tar.zst")
+    if not os.path.isfile(base_zst):
+        return False, "datapack.tar.zst not produced"
+    return True, f"{base_zst}"
+
+
+def _run_datapack_list_php():
+    """Invoke datapack-list.php once for the base list and once per
+    maincode (+ per sub). The script expects to find `datapack/` as a
+    *relative* dir in CWD — so we cwd into NGINX_ROOT after dropping
+    a temporary `datapack` symlink pointing at the source tree, run
+    the PHP, capture stdout into NGINX_LIST_DIR, then remove the
+    symlink."""
+    if not os.path.isfile(DATAPACK_LIST_PHP):
+        return False, f"datapack-list.php missing: {DATAPACK_LIST_PHP}"
+    dp_link = os.path.join(NGINX_ROOT, "datapack")
+    if os.path.islink(dp_link) or os.path.exists(dp_link):
+        os.remove(dp_link)
+    os.symlink(DATAPACK_SRC, dp_link)
+    try:
+        # base
+        p = subprocess.run(["php", DATAPACK_LIST_PHP],
+                           cwd=NGINX_ROOT,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           timeout=300)
+        if p.returncode != 0:
+            return False, "datapack-list.php base failed: " + \
+                          p.stderr.decode(errors="replace")[-300:]
+        with open(os.path.join(NGINX_LIST_DIR, "base.txt"), "wb") as f:
+            f.write(p.stdout)
+        # per maincode + per subcode
+        map_main = os.path.join(DATAPACK_SRC, "map", "main")
+        if os.path.isdir(map_main):
+            for mc in sorted(os.listdir(map_main)):
+                if not os.path.isdir(os.path.join(map_main, mc)):
+                    continue
+                p = subprocess.run(
+                    ["php", DATAPACK_LIST_PHP, f"main={mc}"],
+                    cwd=NGINX_ROOT,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    timeout=300)
+                if p.returncode == 0:
+                    with open(os.path.join(NGINX_LIST_DIR,
+                                           f"main-{mc}.txt"), "wb") as f:
+                        f.write(p.stdout)
+                sub_dir = os.path.join(map_main, mc, "sub")
+                if os.path.isdir(sub_dir):
+                    for sc in sorted(os.listdir(sub_dir)):
+                        if not os.path.isdir(os.path.join(sub_dir, sc)):
+                            continue
+                        p = subprocess.run(
+                            ["php", DATAPACK_LIST_PHP,
+                             f"main={mc}", f"sub={sc}"],
+                            cwd=NGINX_ROOT,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            timeout=300)
+                        if p.returncode == 0:
+                            out = os.path.join(NGINX_LIST_DIR,
+                                               f"sub-{mc}-{sc}.txt")
+                            with open(out, "wb") as f:
+                                f.write(p.stdout)
+    finally:
+        if os.path.islink(dp_link):
+            os.remove(dp_link)
+    return True, "base.txt + per-main/sub lists generated"
+
+
+def _write_nginx_conf():
+    """Write a minimal nginx.conf. The two `alias` directives split
+    /datapack/pack/ and /datapack/datapack-list/ off the raw
+    /datapack/ tree before nginx falls through to the upstream
+    checkout — order doesn't matter; nginx picks the longest-prefix
+    match. `daemon off` keeps the process attached to our Popen
+    handle so we can SIGTERM cleanly."""
+    conf = f"""\
+worker_processes 1;
+daemon off;
+error_log {NGINX_ERR_LOG} info;
+pid {NGINX_PID};
+
+events {{
+    worker_connections 64;
+}}
+
+http {{
+    access_log {NGINX_ACC_LOG};
+    sendfile on;
+    types_hash_max_size 1024;
+    default_type application/octet-stream;
+    types {{
+        text/plain               txt;
+        image/png                png;
+        image/jpeg               jpg jpeg;
+        image/gif                gif;
+        application/xml          xml tmx tsx;
+        audio/opus               opus;
+        application/octet-stream tar zst tar.zst;
+    }}
+
+    server {{
+        listen 127.0.0.1:{NGINX_PORT};
+        server_name localhost;
+
+        # datapack-archive.sh output (tarballs)
+        location /datapack/pack/ {{
+            alias {NGINX_PACK_DIR}/;
+            autoindex on;
+        }}
+        # datapack-list.php output (file lists)
+        location /datapack/datapack-list/ {{
+            alias {NGINX_LIST_DIR}/;
+            autoindex on;
+        }}
+        # Everything else under /datapack/ → raw source checkout.
+        location /datapack/ {{
+            alias {DATAPACK_SRC}/;
+            autoindex on;
+        }}
+    }}
+}}
+"""
+    with open(NGINX_CONF, "w") as f:
+        f.write(conf)
+
+
+def start_nginx():
+    """Stage NGINX_ROOT, run the archive + list generators, then
+    launch nginx in foreground on NGINX_PORT. Returns (ok, detail)."""
+    global _nginx_proc
+    if not shutil.which("nginx"):
+        return False, "nginx not on $PATH"
+    if not shutil.which("php"):
+        return False, "php not on $PATH (datapack-list.php needs it)"
+    if not os.path.isdir(DATAPACK_SRC):
+        return False, f"datapack source missing: {DATAPACK_SRC}"
+    _stage_nginx_root()
+    ok, detail = _run_datapack_archive()
+    if not ok:
+        return False, "datapack-archive: " + detail
+    ok, detail = _run_datapack_list_php()
+    if not ok:
+        return False, "datapack-list: " + detail
+    _write_nginx_conf()
+    logf = open(os.path.join(NGINX_ROOT, "nginx.stdout"), "w")
+    _nginx_proc = subprocess.Popen(
+        ["nginx", "-c", NGINX_CONF, "-p", NGINX_ROOT],
+        stdout=logf, stderr=subprocess.STDOUT)
+    if not _probe_port(NGINX_PORT, timeout=10):
+        return False, (f"nginx didn't open port {NGINX_PORT} "
+                       f"(see {NGINX_ERR_LOG})")
+    return True, f"nginx serving /datapack/ on :{NGINX_PORT}"
+
+
+def stop_nginx():
+    """Stop the nginx daemon and remove its on-disk staging dir."""
+    global _nginx_proc
+    if _nginx_proc is not None:
+        try:
+            _nginx_proc.terminate()
+            try:
+                _nginx_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                _nginx_proc.kill()
+                _nginx_proc.wait(timeout=5)
+        except ProcessLookupError:
+            pass
+        _nginx_proc = None
+    if os.path.isdir(NGINX_ROOT):
+        shutil.rmtree(NGINX_ROOT, ignore_errors=True)
+
+
 def wipe_postgresql():
     """Drop every table in the ephemeral postgres on PG_PORT and
     replay every .sql under server/databases/postgresql/."""
@@ -461,11 +695,18 @@ def _xml_master(db_kind, max_players):
 def _xml_login(port, db_kind, max_players):
     db_host = db_host_for(db_kind)
     # Login expects its listen port as <port> (NOT <server-port>).
+    # httpDatapackMirror is required by EventLoopServerLoginSlave —
+    # it aborts on empty (the "not coded for now" branch). The login
+    # server uses its OWN <httpDatapackMirror> to build the protocol
+    # reply sent to clients, so this URL is what the client actually
+    # hits (NOT the value in gsa's XML). Always point at the
+    # ephemeral nginx; the test varies gsa's mirror separately.
     return f"""<?xml version="1.0"?>
 <configuration>
     <port value="{port}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="{max_players}"/>
+    <httpDatapackMirror value="{NGINX_URL_BASE}"/>
     <max_pseudo_size value="32"/>
     <min_character value="1"/>
     <max_character value="1"/>
@@ -521,19 +762,22 @@ def _xml_login(port, db_kind, max_players):
 """
 
 
-def _xml_gameserver(port, db_kind, max_players):
+def _xml_gameserver(port, db_kind, max_players, mirror):
     db_host = db_host_for(db_kind)
-    # gsa is built with CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR so
-    # httpDatapackMirror is required at startup. Point at a local
-    # placeholder URL — tests don't actually hit it; the assertion is
-    # just that gsa boots.
+    # gsa is OPTIONALLY built with CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR.
+    # When ON  → mirror MUST be non-empty (gsa exits otherwise) and the
+    #            client fetches `datapack-list/base.txt` and
+    #            `pack/datapack*.tar.zst` from it.
+    # When OFF → mirror MAY be empty; gsa pushes the datapack to the
+    #            client over the gameplay protocol (in-band push path).
+    # testingcluster.py exercises both modes, see MIRROR_VARIANTS.
     return f"""<?xml version="1.0"?>
 <configuration>
     <server-port value="{port}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="{max_players}"/>
     <mainDatapackCode value="test"/>
-    <httpDatapackMirror value="http://localhost/datapack/"/>
+    <httpDatapackMirror value="{mirror}"/>
     <pvp value="true"/>
     <automatic_account_creation value="false"/>
     <character_delete_time value="3600"/>
@@ -614,18 +858,41 @@ def build_cluster(db_define):
     """Build master + login + game-server-alone with the requested DB
     backend. io_uring is mandatory in these binaries' CMakeLists so we
     don't pass -DCATCHCHALLENGER_IO_URING=ON explicitly — every build
-    here is an io_uring build by construction. Returns (ok, fail_detail)."""
-    cmake_flags = [
-        f"-D{db_define}=ON",
-    ]
-    # Build each binary into its own build dir under TMPFS_BUILD.
+    here is an io_uring build by construction.
+
+    game-server-alone is built TWICE — once with
+    CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR=ON (the production
+    default, http-mirror path) and once with =OFF (in-protocol push
+    path). testingcluster.py exercises both at runtime via
+    MIRROR_VARIANTS. Build dirs:
+        <base>/server_game-server-alone/        ← ONLYBYMIRROR=ON
+        <base>/server_game-server-alone-push/   ← ONLYBYMIRROR=OFF
+    Master and login are unaffected by this toggle.
+
+    Returns (ok, fail_detail)."""
+    cmake_flags = [f"-D{db_define}=ON"]
     base = os.path.join(TMPFS_BUILD, "cluster",
                         db_define.replace("CATCHCHALLENGER_DB_", "").lower())
-    for sub in ["server/master", "server/login", "server/game-server-alone"]:
+    # Master + login: single build each.
+    for sub in ["server/master", "server/login"]:
         bd = os.path.join(base, sub.replace("/", "_"))
         ok, detail = cmake_configure_and_build(sub, bd, cmake_flags)
         if not ok:
             return False, f"{sub}: {detail}"
+    # gsa http-mirror build (the default — ONLYBYMIRROR is ON in CMakeLists).
+    gsa_mirror_dir = os.path.join(base, "server_game-server-alone")
+    ok, detail = cmake_configure_and_build(
+        "server/game-server-alone", gsa_mirror_dir,
+        cmake_flags + ["-DCATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR=ON"])
+    if not ok:
+        return False, "server/game-server-alone (mirror): " + detail
+    # gsa in-protocol-push build (ONLYBYMIRROR off → empty mirror allowed).
+    gsa_push_dir = os.path.join(base, "server_game-server-alone-push")
+    ok, detail = cmake_configure_and_build(
+        "server/game-server-alone", gsa_push_dir,
+        cmake_flags + ["-DCATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR=OFF"])
+    if not ok:
+        return False, "server/game-server-alone (push): " + detail
     return True, base
 
 
@@ -690,9 +957,13 @@ def assert_cluster_db_exclusivity(base, db_name, label_prefix):
     build_cluster(). Reports per-binary PASS/FAIL via log_pass/log_fail."""
     expected = "pg" if db_name == "postgresql" else "mysql"
     targets = [
-        ("server/master",            "catchchallenger-server-master"),
-        ("server/login",             "catchchallenger-server-login"),
-        ("server/game-server-alone", "catchchallenger-game-server-alone"),
+        ("server/master",                 "catchchallenger-server-master"),
+        ("server/login",                  "catchchallenger-server-login"),
+        # Both gsa builds (mirror + push) must satisfy the
+        # exactly-one-DB-client rule. The build dirs share the same
+        # cmake source, only the ONLYBYMIRROR define differs.
+        ("server/game-server-alone",      "catchchallenger-game-server-alone"),
+        ("server/game-server-alone-push", "catchchallenger-game-server-alone"),
     ]
     all_ok = True
     for subdir, exe in targets:
@@ -851,6 +1122,18 @@ def client_connect_via(login_port, login_name, pass_name, character,
 # only appear under high pre-allocation.
 MAX_PLAYERS_VARIANTS = (50, 2000)
 
+# Run each backend with both datapack-delivery modes:
+#   * mirror_url == NGINX_URL_BASE → gsa built with ONLYBYMIRROR; client
+#     hits nginx at NGINX_PORT for tar.zst + file lists.
+#   * mirror_url == ""             → gsa built WITHOUT ONLYBYMIRROR;
+#     the client receives the datapack pushed inline over the
+#     gameplay socket. No HTTP needed for that variant.
+NGINX_URL_BASE = f"http://localhost:{NGINX_PORT}/datapack/"
+MIRROR_VARIANTS = (
+    ("mirror", NGINX_URL_BASE),
+    ("push",   ""),
+)
+
 
 def test_one_backend(db_name, db_define, db_cli, sql_subdir):
     """Runs the per-backend test. Tracks every spawned server +
@@ -917,27 +1200,41 @@ def _test_one_backend_inner(db_name, db_define, db_cli, sql_subdir,
         # behavior would be unpredictable.
         return
 
-    # 3) Per-max-players: start cluster, run client tests, stop cluster.
-    #    DB + build are shared, so the only thing that changes per
-    #    variant is the on-disk server-properties.xml (which is
-    #    re-rendered from the templates with the variant's value).
+    # 3) Per-(max_players × mirror_mode): start cluster, run client
+    #    tests, stop cluster. DB + build are shared, so the only thing
+    #    that changes per variant is the on-disk server-properties.xml
+    #    (re-rendered from the templates) and which gsa binary is
+    #    spawned (mirror-build vs push-build).
     for max_players in MAX_PLAYERS_VARIANTS:
-        _run_cluster_variant(db_name, base, max_players,
-                             spawned_servers, t_start)
+        for mirror_label, mirror_url in MIRROR_VARIANTS:
+            _run_cluster_variant(db_name, base, max_players,
+                                 mirror_label, mirror_url,
+                                 spawned_servers, t_start)
+
+
+def _gsa_subdir(mirror_label):
+    """The build dir suffix matches the gsa binary built in
+    build_cluster() for this mirror mode."""
+    return ("server/game-server-alone"
+            if mirror_label == "mirror"
+            else "server/game-server-alone-push")
 
 
 def _run_cluster_variant(db_name, base, max_players,
+                         mirror_label, mirror_url,
                          spawned_servers, t_start):
     """One run of master + 2×login + 2×game-server for the requested
-    <max-players>. Cluster servers are scoped under a per-variant
-    work_root so concurrent or stacked runs don't share state."""
-    log_info(f"  variant: max-players={max_players}")
-    work_root = os.path.join(CLUSTER_RUN_ROOT, db_name, f"mp{max_players}")
+    (max_players, mirror_mode). Cluster servers are scoped under a
+    per-variant work_root so concurrent or stacked runs don't share
+    state."""
+    log_info(f"  variant: max-players={max_players} mirror={mirror_label}")
+    work_root = os.path.join(CLUSTER_RUN_ROOT, db_name,
+                             f"mp{max_players}-{mirror_label}")
     if os.path.isdir(work_root):
         shutil.rmtree(work_root, ignore_errors=True)
     os.makedirs(work_root, exist_ok=True)
 
-    tag = f"{db_name}/mp{max_players}"
+    tag = f"{db_name}/mp{max_players}-{mirror_label}"
     # Each variant gets its own server set; remember where the variant
     # started in the global spawned_servers list so we can stop only
     # this variant's processes at the end.
@@ -985,12 +1282,15 @@ def _run_cluster_variant(db_name, base, max_players,
         # dictionary_map_pkey" and aborts. Sequential boot lets the
         # second gsa see the rows committed by the first via the
         # SELECT pre-pass and skip the conflicting INSERT.
+        gsa_bin_subdir = _gsa_subdir(mirror_label)
+        gsa_bin = bin_path(base, gsa_bin_subdir,
+                           "catchchallenger-game-server-alone")
         game1 = ServerProc(
             "game1",
-            bin_path(base, "server/game-server-alone",
-                     "catchchallenger-game-server-alone"),
+            gsa_bin,
             os.path.join(work_root, "game1"),
-            _xml_gameserver(PORT_GAME_1, db_name, max_players)).start()
+            _xml_gameserver(PORT_GAME_1, db_name, max_players,
+                            mirror_url)).start()
         spawned_servers.append(game1)
         ok, detail = game1.wait_ready()
         if not ok:
@@ -1000,10 +1300,10 @@ def _run_cluster_variant(db_name, base, max_players,
 
         game2 = ServerProc(
             "game2",
-            bin_path(base, "server/game-server-alone",
-                     "catchchallenger-game-server-alone"),
+            gsa_bin,
             os.path.join(work_root, "game2"),
-            _xml_gameserver(PORT_GAME_2, db_name, max_players)).start()
+            _xml_gameserver(PORT_GAME_2, db_name, max_players,
+                            mirror_url)).start()
         spawned_servers.append(game2)
         ok, detail = game2.wait_ready()
         if not ok:
@@ -1071,9 +1371,29 @@ def main():
     log_info("testingcluster: io_uring × {"
              + ", ".join(b[0] for b in BACKENDS) + "}")
     log_info(f"topology: 2×login (61930/61931) + 1×master (61935) + 2×game (61940/61941)")
+    log_info(f"nginx mirror: http://localhost:{NGINX_PORT}/datapack/ "
+             f"(staged from {DATAPACK_SRC})")
 
-    for db_name, db_define, db_cli, sql_subdir in BACKENDS:
-        test_one_backend(db_name, db_define, db_cli, sql_subdir)
+    # 0) Spin up the ephemeral nginx that fronts the datapack mirror.
+    #    The "mirror" leg of MIRROR_VARIANTS needs it; the "push" leg
+    #    doesn't, but starting it once for the whole run keeps the
+    #    teardown simple. If nginx can't start, the http leg will
+    #    correctly FAIL — we don't pretend it would have worked.
+    t_nginx = time.monotonic()
+    nginx_ok, nginx_detail = start_nginx()
+    if nginx_ok:
+        log_pass("nginx-start", nginx_detail, time.monotonic() - t_nginx)
+    else:
+        # Don't bail out — the push variant still runs without HTTP.
+        # Each mirror=mirror variant will hit a transferring error
+        # and FAIL legitimately.
+        log_fail("nginx-start", nginx_detail, time.monotonic() - t_nginx)
+
+    try:
+        for db_name, db_define, db_cli, sql_subdir in BACKENDS:
+            test_one_backend(db_name, db_define, db_cli, sql_subdir)
+    finally:
+        stop_nginx()
 
     # Summary.
     n_pass = sum(1 for _, ok, _, _ in results if ok)
