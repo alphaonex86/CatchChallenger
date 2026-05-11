@@ -3,6 +3,9 @@
 #include "ClientList.hpp"
 #include "GlobalServerData.hpp"
 #include "../base/PreparedDBQuery.hpp"
+#if defined(CATCHCHALLENGER_SERVER) && defined(CATCHCHALLENGER_IO_URING)
+#include <unistd.h>
+#endif
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
 #else
