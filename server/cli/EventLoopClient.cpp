@@ -165,6 +165,16 @@ BaseClassSwitch::EventLoopObjectType EventLoopClient::getType() const
     return BaseClassSwitch::EventLoopObjectType::Client;
 }
 
+#ifdef CATCHCHALLENGER_IO_URING
+int EventLoopClient::recvMultishotFd() const
+{
+    //Return -1 once the socket has been closed: re-arming against
+    //a stale fd would either fail with -EBADF (best case) or arm
+    //against a recycled fd belonging to a different client.
+    return infd;
+}
+#endif
+
 bool EventLoopClient::isValid() const
 {
     return infd!=-1;

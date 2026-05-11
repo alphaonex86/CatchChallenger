@@ -23,6 +23,15 @@ public:
     //SQEs were canceled — caller should disconnect the client since
     //bytes may have been only partially written. Default no-op.
     virtual void onAsyncSendChainComplete(bool /*success*/) {}
+    //Phase 2 helper: when a recv_multishot CQE clears IORING_CQE_F_MORE
+    //(the kernel dropped the persistent recv, e.g. on ENOBUFS or after
+    //a hard error), EventLoop::wait() needs to re-arm. It only has the
+    //user_data pointer (this), not the fd; subclasses with a socket
+    //expose it here so the re-arm can happen automatically instead of
+    //leaving RX stalled until the next caller-driven dispatch. Default
+    //-1 means "no fd, don't re-arm" — keeps non-socket BaseClassSwitch
+    //implementations (timers, DB handles) safe.
+    virtual int recvMultishotFd() const { return -1; }
 #endif
     enum EventLoopObjectType : uint8_t
     {

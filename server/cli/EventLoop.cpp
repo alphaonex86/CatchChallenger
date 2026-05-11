@@ -111,6 +111,7 @@ struct UringState
     unsigned int buf_size;//bytes per buffer
     bool multishot_enabled;
     unsigned long enobufs_count;//rate-limited log counter
+    unsigned long rearm_fail_count;//armRecvMultishot retry rate-limit
 };
 static UringState *g_uring=nullptr;
 
@@ -239,6 +240,7 @@ bool EventLoop::init()
     g_uring->buf_size=0;
     g_uring->multishot_enabled=false;
     g_uring->enobufs_count=0;
+    g_uring->rearm_fail_count=0;
     //Queue depth 4096 covers an MMORPG with hundreds of concurrent fds
     //(one poll-multishot SQE per fd plus splice/sendfile chains).
     //
@@ -514,22 +516,42 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
                         io_uring_buf_ring_advance(g_uring->buf_ring,1);
                     }
                 }
-                if((cqe_flags & IORING_CQE_F_MORE)==0 && obj!=nullptr)
-                    need_rearm=true;
-                if(need_rearm)
+                //Only re-arm when the SQE actually terminated AFTER a
+                //successful byte delivery (res > 0). Re-arming on
+                //res==0 (peer closed) or res<0 (hard error) would
+                //submit a new multishot against a doomed fd — the
+                //dispatcher about to receive EPOLLRDHUP/EPOLLERR will
+                //close() the socket and the re-armed SQE would either
+                //fail (-EBADF) or worse, attach to a recycled fd
+                //belonging to a future client. ENOBUFS is the one
+                //negative case that DOES want a re-arm (the fd is
+                //still live; the kernel just ran out of buffers).
+                const bool sqe_terminated=
+                    (cqe_flags & IORING_CQE_F_MORE)==0;
+                const bool rearm_eligible=
+                    sqe_terminated && obj!=nullptr
+                    && (res>0 || res==-ENOBUFS);
+                if(rearm_eligible)
                 {
-                    //We don't know the fd here without an extra map; the
-                    //ergonomic re-arm is expected from the dispatcher when
-                    //it next sees the client. For now, log once at the
-                    //first occurrence so the operator notices stalled RX.
-                    static bool warned=false;
-                    if(!warned)
+                    //Re-arm via the BaseClassSwitch fd accessor.
+                    //EventLoopClient (and every cluster client built on
+                    //it) returns the live socket fd; a closed socket
+                    //returns -1 and we skip silently. Persistent failures
+                    //are rate-limited so a wedged buffer ring still
+                    //surfaces in the log.
+                    const int rearm_fd=obj->recvMultishotFd();
+                    if(rearm_fd>=0)
                     {
-                        warned=true;
-                        std::cerr << "io_uring recv_multishot: re-arm "
-                                     "needed but fd unknown to wait(); "
-                                     "caller must armRecvMultishot() again"
-                                  << std::endl;
+                        if(!armRecvMultishot(rearm_fd,obj))
+                        {
+                            if((g_uring->rearm_fail_count++ & 0xFF)==0)
+                                std::cerr << "io_uring recv_multishot: "
+                                             "armRecvMultishot re-arm "
+                                             "failed for fd "<<rearm_fd
+                                          <<" (x"
+                                          <<g_uring->rearm_fail_count
+                                          <<")"<<std::endl;
+                        }
                     }
                 }
             }
