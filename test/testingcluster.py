@@ -66,8 +66,22 @@ NOT in scope
 import sys
 sys.dont_write_bytecode = True
 
-import argparse, json, multiprocessing, os, shutil, signal, socket
+import argparse, faulthandler, json, multiprocessing, os, shutil, signal, socket
 import subprocess, threading, time
+
+# Self-diagnostics: if the script is killed (SIGTERM from all.sh's
+# `timeout 2h`, SIGSEGV from a wild C extension, etc.), faulthandler
+# dumps a Python traceback for every thread before exiting. Lets the
+# operator see WHERE the test was stuck without having to reproduce
+# the hang.
+faulthandler.enable()
+# faulthandler.register(signal.SIGUSR1) — operators can `kill -USR1 <pid>`
+# to dump a live traceback without killing the script.
+try:
+    faulthandler.register(signal.SIGUSR1)
+except (AttributeError, ValueError):
+    # Windows or running in a thread other than main; non-fatal.
+    pass
 
 import build_paths
 import diagnostic
@@ -99,6 +113,18 @@ PORT_GAME_2   = 61941
 # in EventLoopClientList).
 READY_TIMEOUT = 180
 
+# Hard cap on a full testingcluster.py run. If a stage blocks past
+# this we want a backtrace from every still-running cluster process
+# rather than a silent hang. CI/operator expectation: any single
+# invocation finishes inside two hours.
+WALL_LIMIT_SEC = 2 * 60 * 60   # 7200 s = 2 hours
+
+# Client connect deadline used by client_connect_via(). Long enough
+# to download the datapack in the push variant (which streams every
+# file inline over the socket); short enough that a hung handshake
+# triggers the hang-detector instead of soaking the wall limit.
+CLIENT_TIMEOUT = 120
+
 # Test matrix.
 BACKENDS_FULL = [
     # (db_name, cmake_db_flag, cli_tool, sql_subdir)
@@ -124,6 +150,120 @@ _t0      = [time.monotonic()]
 
 def t():
     return f"{time.monotonic() - _t0[0]:6.1f}s"
+
+
+# ── hang diagnostics ─────────────────────────────────────────────────────────
+def gdb_backtrace(pid, timeout=20):
+    """Attach gdb non-destructively, dump every thread's backtrace,
+    detach. Returns the captured text (truncated). Skips silently if
+    the pid is already gone or gdb refuses to attach (no ptrace)."""
+    try:
+        if not os.path.exists(f"/proc/{pid}"):
+            return f"(pid {pid} no longer exists)"
+        p = subprocess.run(
+            ["gdb", "-batch", "-nx",
+             "-ex", "set pagination off",
+             "-ex", "set print thread-events off",
+             "-ex", "thread apply all bt 40",
+             "-ex", "detach", "-ex", "quit",
+             "-p", str(pid)],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            timeout=timeout)
+        out = p.stdout.decode(errors="replace")
+        # Trim — full backtraces of 6 cluster processes blow out the log.
+        if len(out) > 6000:
+            out = out[:6000] + f"\n...[truncated, total {len(out)} bytes]"
+        return out
+    except subprocess.TimeoutExpired:
+        return f"(gdb attach timed out on pid {pid})"
+    except FileNotFoundError:
+        return "(gdb not installed)"
+
+
+def dump_running_servers_backtrace(label, servers):
+    """For every ServerProc that's still alive in `servers`, print a
+    gdb thread-apply-all backtrace. Used when a stage in the test
+    blocks longer than its per-stage timeout, before we kill it.
+
+    Note: ptrace_scope must allow attaching. On stock systems with
+    YAMA set to 1 (default), only a parent can ptrace its child;
+    we spawned these processes ourselves, so we're fine."""
+    log_info(f"hang at '{label}': dumping backtraces of "
+             f"{sum(1 for s in servers if s.proc and s.proc.poll() is None)} "
+             f"running cluster process(es)")
+    for srv in servers:
+        if srv.proc is None or srv.proc.poll() is not None:
+            continue
+        pid = srv.proc.pid
+        bt = gdb_backtrace(pid)
+        with _print_lock:
+            print(f"  | ── backtrace: {srv.label} (pid {pid}) ──")
+            for line in bt.splitlines():
+                print(f"  | {line}")
+
+
+# Wall-clock watchdog. A daemon thread polls every 5 s and, when
+# the run exceeds WALL_LIMIT_SEC, asks every still-running cluster
+# process for a backtrace, prints the partial summary, then calls
+# os._exit(3) so we get a definite exit code distinct from regular
+# pass/fail.
+_wall_watchdog_started = False
+_spawned_servers_global = []   # populated by test_one_backend()
+
+
+def _wall_watchdog_thread():
+    while True:
+        time.sleep(5)
+        elapsed = time.monotonic() - _t0[0]
+        if elapsed < WALL_LIMIT_SEC:
+            continue
+        log_fail("wall-watchdog",
+                 f"WALL_LIMIT_SEC={WALL_LIMIT_SEC} exceeded "
+                 f"(elapsed={elapsed:.0f}s); collecting backtraces")
+        # 1) Python traceback for every thread of THIS process. Tells
+        #    us where Python itself is stuck (e.g. inside .wait(),
+        #    a socket recv, a subprocess.run). Cheap, no permissions
+        #    needed.
+        with _print_lock:
+            print(f"\n{C_RED}=== Python thread tracebacks ==={C_RESET}",
+                  flush=True)
+            faulthandler.dump_traceback(file=sys.stdout, all_threads=True)
+        # 2) gdb backtraces for every still-running cluster process.
+        #    Tells us where the *C++* code is stuck.
+        try:
+            dump_running_servers_backtrace("wall-limit",
+                                           _spawned_servers_global)
+        except Exception as e:
+            log_fail("wall-watchdog", f"gdb dump failed: {e}")
+        # 3) Print results-so-far and abort hard. os._exit so subprocess
+        #    children get killed by parent-death rather than dragging
+        #    the process group along.
+        with _print_lock:
+            n_pass = sum(1 for _, ok, _, _ in results if ok)
+            n_fail = sum(1 for _, ok, _, _ in results if not ok)
+            print(f"\n{C_RED}=== wall limit exceeded — "
+                  f"results so far: {n_pass} pass, {n_fail} fail{C_RESET}")
+        os._exit(3)
+
+
+def start_wall_watchdog():
+    """Arm both watchdogs:
+
+    * Threading-level watchdog: a daemon thread polls every 5s and
+      triggers Python + gdb backtraces when WALL_LIMIT_SEC is hit.
+    * faulthandler.dump_traceback_later(): a C-level safety net that
+      fires even if the GIL is held (e.g. cycle-detector blew up).
+      Set 10s longer than WALL_LIMIT_SEC so the cooperative path wins
+      under normal hang scenarios — this is the "we're so wedged the
+      thread watchdog can't run" backstop."""
+    global _wall_watchdog_started
+    if _wall_watchdog_started:
+        return
+    _wall_watchdog_started = True
+    th = threading.Thread(target=_wall_watchdog_thread, daemon=True)
+    th.start()
+    faulthandler.dump_traceback_later(
+        WALL_LIMIT_SEC + 10, repeat=False, file=sys.stdout, exit=False)
 
 
 def log_info(msg):
@@ -1029,7 +1169,13 @@ class ServerProc:
         return self
 
     def wait_ready(self, timeout=READY_TIMEOUT):
-        """Block until `correctly bind:` appears in the log."""
+        """Block until `correctly bind:` appears in the log.
+
+        On timeout, attach gdb non-destructively to the still-running
+        process and capture every thread's backtrace before returning.
+        The backtrace is printed to stdout so a CI dashboard tail can
+        see *where* the process stalled (preload phase, DB query,
+        ctor loop, …) without having to reproduce the hang."""
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             if self.proc.poll() is not None:
@@ -1041,6 +1187,14 @@ class ServerProc:
             except FileNotFoundError:
                 pass
             time.sleep(0.2)
+        # Timed out → grab a backtrace before reporting failure.
+        if self.proc.poll() is None:
+            bt = gdb_backtrace(self.proc.pid)
+            with _print_lock:
+                print(f"  | ── hang backtrace: {self.label} "
+                      f"(pid {self.proc.pid}) after {timeout}s ──")
+                for line in bt.splitlines():
+                    print(f"  | {line}")
         return False, f"{self.label} no 'correctly bind:' in {timeout}s"
 
     def stop(self):
@@ -1143,12 +1297,18 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
     log_info(f"--- backend: {db_name} ---")
     t_start = time.monotonic()
     spawned_servers = []
+    # Hand the per-backend list to the wall-watchdog: when the run
+    # blows past WALL_LIMIT_SEC, the watchdog walks this list and
+    # gdb-backtraces every still-running process.
+    global _spawned_servers_global
+    _spawned_servers_global = spawned_servers
     try:
         return _test_one_backend_inner(db_name, db_define, db_cli, sql_subdir,
                                        t_start, spawned_servers)
     finally:
         for s in spawned_servers:
             s.stop()
+        _spawned_servers_global = []
         (stop_postgresql if db_name == "postgresql" else stop_mariadb)()
 
 
@@ -1369,9 +1529,16 @@ def main():
             log_fail("main", f"no matching backends in '{args.backends}'")
             sys.exit(2)
 
+    # Arm the wall watchdog before doing anything that can block.
+    # See test/CLAUDE.md "Per-script wall limit" — each testing*.py
+    # must finish in <2h; this is the in-process backstop.
+    start_wall_watchdog()
+
     log_info("testingcluster: io_uring × {"
              + ", ".join(b[0] for b in BACKENDS) + "}")
     log_info(f"topology: 2×login (61930/61931) + 1×master (61935) + 2×game (61940/61941)")
+    log_info(f"wall cap: {WALL_LIMIT_SEC}s "
+             f"(SIGUSR1 also dumps a live Python traceback)")
     log_info(f"nginx mirror: http://localhost:{NGINX_PORT}/datapack/ "
              f"(staged from {DATAPACK_SRC})")
 

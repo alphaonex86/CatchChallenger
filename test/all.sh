@@ -240,18 +240,36 @@ MONITOR_PID=$!
 trap '[ -n "$MONITOR_PID" ] && kill "$MONITOR_PID" 2>/dev/null; wait "$MONITOR_PID" 2>/dev/null; true' EXIT INT TERM
 echo "[all.sh] monitor.py started pid=$MONITOR_PID writing $MONITOR_JSON"
 
+## Per-script wall clock cap. Every testing*.py is required (see
+## test/CLAUDE.md) to finish in under two hours. `timeout` enforces
+## the cap from the outside: on expiry, SIGTERM after PER_TEST_TIMEOUT
+## then SIGKILL 30 s later. exit code 124 distinguishes "killed by
+## timeout" from regular non-zero exits so we can flag it specifically.
+PER_TEST_TIMEOUT=2h
+PER_TEST_KILL_AFTER=30s
+
 run_test() {
     echo -e "\n${CYAN}========================================${RESET}"
     if [ -n "${CC_NODE_FILTER}" ]; then
-        echo -e "${CYAN}  Running: $1 ${DIAG_ARGS[*]} (node filter: ${CC_NODE_FILTER})${RESET}"
+        echo -e "${CYAN}  Running: $1 ${DIAG_ARGS[*]} (node filter: ${CC_NODE_FILTER}, cap ${PER_TEST_TIMEOUT})${RESET}"
     else
-        echo -e "${CYAN}  Running: $1 ${DIAG_ARGS[*]}${RESET}"
+        echo -e "${CYAN}  Running: $1 ${DIAG_ARGS[*]} (cap ${PER_TEST_TIMEOUT})${RESET}"
     fi
     echo -e "${CYAN}========================================${RESET}\n"
-    if python3 "$1" "${DIAG_ARGS[@]}"; then
+    timeout --kill-after="${PER_TEST_KILL_AFTER}" "${PER_TEST_TIMEOUT}" \
+        python3 "$1" "${DIAG_ARGS[@]}"
+    rc=$?
+    if [ "$rc" = "0" ]; then
         echo -e "\n${GREEN}[OK] $1${RESET}\n"
+    elif [ "$rc" = "124" ] || [ "$rc" = "137" ]; then
+        echo -e "\n${RED}[TIMEOUT] $1 — exceeded ${PER_TEST_TIMEOUT}${RESET}\n"
+        FAILED=1
+        if [ "$CONTINUE" = "0" ]; then
+            echo -e "${RED}Stopping. Use --continue to run all scripts regardless.${RESET}"
+            exit 1
+        fi
     else
-        echo -e "\n${RED}[FAILED] $1${RESET}\n"
+        echo -e "\n${RED}[FAILED] $1 (rc=${rc})${RESET}\n"
         FAILED=1
         if [ "$CONTINUE" = "0" ]; then
             echo -e "${RED}Stopping. Use --continue to run all scripts regardless.${RESET}"
@@ -283,6 +301,27 @@ run_test testingcompilationwindows.py
 # returns rc=127. Re-enable once the VM environment is fixed.
 #run_test testingcompilationmac.py
 run_test testingcompilationandroid.py
+
+# Publish freshly-built installers to the web VPS files dir and bump
+# updater.txt. Mac is skipped here because testingcompilationmac.py is
+# disabled above (no .dmg exists). publish_binaries.sh aborts (and
+# leaves updater.txt untouched) if any artifact is missing or <10 MiB,
+# so we never advertise a version whose downloads would 404.
+if [ "$FAILED" = "0" ]; then
+    echo -e "\n${CYAN}========================================${RESET}"
+    echo -e "${CYAN}  Publish: windows + android → web VPS${RESET}"
+    echo -e "${CYAN}========================================${RESET}\n"
+    if ./publish_binaries.sh windows android; then
+        echo -e "\n${GREEN}[OK] publish_binaries.sh${RESET}\n"
+    else
+        echo -e "\n${RED}[FAILED] publish_binaries.sh${RESET}\n"
+        FAILED=1
+        if [ "$CONTINUE" = "0" ]; then
+            echo -e "${RED}Stopping. Use --continue to run all scripts regardless.${RESET}"
+            exit 1
+        fi
+    fi
+fi
 
 if [ "$FAILED" = "1" ]; then
     echo -e "\n${RED}Some tests FAILED.${RESET}"

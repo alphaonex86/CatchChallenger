@@ -152,6 +152,21 @@ Must copy (not symlink) when destination is mutated: `setup_client_cache_partial
 
 Modules: `test/datapack_stage.py` (`staged_local`/`staged_remote`/`remote_cache_for`/`datapack_id`/`stage_all`); `test/stage_datapacks.py` (one-shot driver); `test/all.sh` wipes tmpfs except `cc-datapack/`+`ccache-catchchallenger/`.
 
+## Per-script wall limit — 2 hours, hard
+
+Every `testing*.py` MUST finish within **2 hours** wall clock. Cap is enforced two ways:
+
+* **Outside (all.sh)** — `run_test()` wraps each script in `timeout --kill-after=30s 2h python3 ...`. Exit code `124` (`timeout` SIGTERM) or `137` (SIGKILL) is reported as `[TIMEOUT]` and counted as a failure.
+* **Inside (Python)** — `faulthandler.enable()` + `faulthandler.dump_traceback_later(WALL_LIMIT_SEC+10, exit=False)` prints a thread-by-thread Python traceback right around when `timeout` is about to fire, so the console captures *where* the script was stuck before SIGTERM lands. `faulthandler.register(signal.SIGUSR1)` is also armed — operator can `kill -USR1 <pid>` for a live traceback without killing the script.
+
+When a script implements its own watchdog (testingcluster.py does), it should:
+1. Log `[FAIL] wall-watchdog WALL_LIMIT_SEC exceeded`.
+2. Dump `faulthandler.dump_traceback(file=sys.stdout, all_threads=True)` — shows where Python itself is stuck.
+3. For every live subprocess it spawned, run `gdb -batch -ex 'thread apply all bt 40' -p <pid>` — shows where the C++ side is stuck.
+4. `os._exit(3)` so the wrapper sees a distinct exit code and orphans get reaped by parent-death.
+
+When a NEW testing*.py is added, copy the import block from testingserver.py or testingcluster.py (`faulthandler.enable()` + `dump_traceback_later`); don't roll your own. If a script legitimately needs longer than 2h, FIX it — don't widen the cap.
+
 ## Diagnosing a hung process — gdb attach, then decide
 
 When stuck, NOT `pkill -9` first — `gdb -batch -p <pid> -ex "thread apply all bt 60" -ex detach -ex quit` to see what it's doing.
