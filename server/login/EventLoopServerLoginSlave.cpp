@@ -245,9 +245,15 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
             abort();
         }
         type=settings.value("type");
-        if(type!="postgresql")
-        {
-            std::cerr << "only db type postgresql supported (abort)" << std::endl;
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+            if(type!="postgresql")
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+            if(type!="mysql")
+#else
+#error No DB backend
+#endif
+            {
+                std::cerr << "db type " << type << " does not match compile-time backend (abort)" << std::endl;
             abort();
         }
         if(!EventLoopClientLoginSlave::databaseBaseLogin.syncConnect(host.c_str(),db.c_str(),login.c_str(),pass.c_str()))
@@ -324,9 +330,15 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
                     abort();
                 }
                 type=settings.value("type");
-                if(type!="postgresql")
-                {
-                    std::cerr << "only db type postgresql supported (abort)" << std::endl;
+                #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+            if(type!="postgresql")
+#elif defined(CATCHCHALLENGER_DB_MYSQL)
+            if(type!="mysql")
+#else
+#error No DB backend
+#endif
+            {
+                std::cerr << "db type " << type << " does not match compile-time backend (abort)" << std::endl;
                     abort();
                 }
                 CharactersGroupForLogin::hash[charactersGroup]=new CharactersGroupForLogin(db.c_str(),host.c_str(),login.c_str(),pass.c_str(),considerDownAfterNumberOfTry,tryInterval);
