@@ -286,11 +286,26 @@ static bool eventLoopMysqlInlineSubstitute(MYSQL *conn,const std::string &query,
 
 bool EventLoopMySQL::queryPrepare(const char *stmtName,const char *query,const int &nParams,const bool &store)
 {
+    (void)query;
+    (void)nParams;
     if(conn==NULL)
     {
         std::cerr << "mysql not connected" << std::endl;
         return false;
     }
+    //asyncPreparedRead/Write substitute $N placeholders inline and
+    //send via the existing async send_query path — they NEVER call
+    //mysql_stmt_execute. We skip mysql_stmt_prepare entirely because:
+    //  1. mysql_stmt_prepare is a sync blocking call, fighting the
+    //     "one async query per connection at a time" invariant the
+    //     send_query path holds.
+    //  2. libpq-style query strings often have $N placeholders inside
+    //     quoted UNHEX('$1') and similar, which mysql_stmt_prepare
+    //     refuses ("syntax error near '?'") — but inline substitution
+    //     handles that fine (the substituted value goes inside the
+    //     quotes).
+    //The cache map still tracks names so re-prepare on reconnect is
+    //a no-op; we just slot a NULL.
     std::string nameKey(stmtName);
     std::unordered_map<std::string,MYSQL_STMT *>::iterator existing=preparedStatementMap.find(nameKey);
     if(existing!=preparedStatementMap.end())
@@ -299,42 +314,7 @@ bool EventLoopMySQL::queryPrepare(const char *stmtName,const char *query,const i
             mysql_stmt_close(existing->second);
         preparedStatementMap.erase(existing);
     }
-    MYSQL_STMT *stmt=mysql_stmt_init(conn);
-    if(stmt==NULL)
-    {
-        std::cerr << "mysql_stmt_init failed for " << stmtName << ": " << mysql_error(conn) << std::endl;
-        return false;
-    }
-    // Translate $1..$N placeholders to MySQL '?' for the prepare-only
-    // validation; this never runs against the wire for execution.
-    std::string mysqlQuery(query);
-    {
-        int idx=1;
-        while(idx<=nParams)
-        {
-            const std::string placeholder=std::string("$")+std::to_string(idx);
-            const size_t pos=mysqlQuery.find(placeholder);
-            if(pos==std::string::npos)
-                break;
-            mysqlQuery.replace(pos,placeholder.size(),"?");
-            idx++;
-        }
-    }
-    if(mysql_stmt_prepare(stmt,mysqlQuery.c_str(),mysqlQuery.size())!=0)
-    {
-        std::cerr << "mysql_stmt_prepare failed for " << stmtName << " (query: " << mysqlQuery << "): " << mysql_stmt_error(stmt) << std::endl;
-        mysql_stmt_close(stmt);
-        abort();
-        return false;
-    }
-    if(static_cast<int>(mysql_stmt_param_count(stmt))!=nParams)
-    {
-        std::cerr << "mysql_stmt_prepare param count mismatch for " << stmtName << ": expected " << nParams << ", got " << mysql_stmt_param_count(stmt) << std::endl;
-        mysql_stmt_close(stmt);
-        abort();
-        return false;
-    }
-    preparedStatementMap[nameKey]=stmt;
+    preparedStatementMap[nameKey]=NULL;
     if(store)
     {
         PreparedStatementStore preparedStatementStore;

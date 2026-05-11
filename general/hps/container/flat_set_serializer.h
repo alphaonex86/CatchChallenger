@@ -1,7 +1,7 @@
 #ifndef JL2922_HPS_FLAT_SET_SERIALIZER_H
 #define JL2922_HPS_FLAT_SET_SERIALIZER_H
 
-#if __cplusplus >= 202302L || defined(__cpp_lib_flat_set)
+#if (__cplusplus >= 202302L && __has_include(<flat_set>)) || defined(__cpp_lib_flat_set)
 
 #include <flat_set>
 #include <utility>

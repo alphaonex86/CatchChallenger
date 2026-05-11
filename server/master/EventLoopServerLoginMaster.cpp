@@ -598,7 +598,15 @@ void EventLoopServerLoginMaster::charactersGroupListReply(std::vector<std::strin
     rawServerListForC211[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
     {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(rawServerListForC211+0x09,&_tmp_le,sizeof(_tmp_le));}
 
-    rawServerListForC211Size=0x0B;
+    //Login expects 3 reserved bytes between maxWarehousePlayerMonsters
+    //and the charactersGroup count — see
+    //server/login/LinkToMasterProtocolParsingMessage.cpp where the
+    //compare cursor jumps from 0x0B to 0x0E with nothing read in
+    //between. Zero them so the memcmp succeeds.
+    rawServerListForC211[0x0B]=0;
+    rawServerListForC211[0x0C]=0;
+    rawServerListForC211[0x0D]=0;
+    rawServerListForC211Size=0x0E;
     //do the Characters group
     rawServerListForC211[rawServerListForC211Size]=(unsigned char)charactersGroupList.size();
     rawServerListForC211Size+=sizeof(unsigned char);
