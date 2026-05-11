@@ -76,7 +76,7 @@ if(EXTERNALLIBZSTD)
     target_link_libraries(catchchallenger-gateway PRIVATE ${ZSTD_LIBRARY})
 endif()
 
-# io_uring is MANDATORY for this binary.
+# io_uring is MANDATORY for this binary (per server/CLAUDE.md).
 if(NOT LIBURING_LIBRARY)
     find_library(LIBURING_LIBRARY NAMES uring)
     find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)

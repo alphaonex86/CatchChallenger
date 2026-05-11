@@ -339,6 +339,9 @@ int main(int argc, char *argv[])
                     #ifdef CATCHCHALLENGER_DB_MYSQL
                     && formatedServerSettings.database_login.tryOpenType!=DatabaseBase::DatabaseType::Mysql
                     #endif
+                    #ifdef CATCHCHALLENGER_DB_SQLITE
+                    && formatedServerSettings.database_login.tryOpenType!=DatabaseBase::DatabaseType::SQLite
+                    #endif
                     )
             {
                 #ifndef CATCHCHALLENGER_NOXML
@@ -357,6 +360,9 @@ int main(int argc, char *argv[])
                     #endif
                     #ifdef CATCHCHALLENGER_DB_MYSQL
                     && formatedServerSettings.database_base.tryOpenType!=DatabaseBase::DatabaseType::Mysql
+                    #endif
+                    #ifdef CATCHCHALLENGER_DB_SQLITE
+                    && formatedServerSettings.database_base.tryOpenType!=DatabaseBase::DatabaseType::SQLite
                     #endif
                     )
             {
@@ -378,6 +384,9 @@ int main(int argc, char *argv[])
                     #ifdef CATCHCHALLENGER_DB_MYSQL
                     && formatedServerSettings.database_common.tryOpenType!=DatabaseBase::DatabaseType::Mysql
                     #endif
+                    #ifdef CATCHCHALLENGER_DB_SQLITE
+                    && formatedServerSettings.database_common.tryOpenType!=DatabaseBase::DatabaseType::SQLite
+                    #endif
                     )
             {
                 #ifndef CATCHCHALLENGER_NOXML
@@ -396,6 +405,9 @@ int main(int argc, char *argv[])
                     #endif
                     #ifdef CATCHCHALLENGER_DB_MYSQL
                     && formatedServerSettings.database_server.tryOpenType!=DatabaseBase::DatabaseType::Mysql
+                    #endif
+                    #ifdef CATCHCHALLENGER_DB_SQLITE
+                    && formatedServerSettings.database_server.tryOpenType!=DatabaseBase::DatabaseType::SQLite
                     #endif
                     )
             {

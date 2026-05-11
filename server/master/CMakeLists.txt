@@ -14,6 +14,9 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
+# DB backend: PostgreSQL only. The master source hardcodes
+# EventLoopPostgresql* members (CharactersGroup.hpp etc.), so MySQL
+# would need source-level surgery. cli supports both.
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
 
 set(_master_sources
@@ -91,9 +94,7 @@ if(EXTERNALLIBZSTD)
     target_link_libraries(catchchallenger-server-master PRIVATE ${ZSTD_LIBRARY})
 endif()
 
-# io_uring is MANDATORY for this binary. CCCommon.cmake only auto-finds
-# liburing when CATCHCHALLENGER_IO_URING=ON; mirror the lookup here so
-# this binary's dependency is independent of that user-facing toggle.
+# io_uring is MANDATORY for this binary (per server/CLAUDE.md).
 if(NOT LIBURING_LIBRARY)
     find_library(LIBURING_LIBRARY NAMES uring)
     find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)

@@ -81,21 +81,32 @@ if(CATCHCHALLENGER_DB_FILE)
 endif()
 if(CATCHCHALLENGER_DB_POSTGRESQL)
     target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_POSTGRESQL)
+    find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
+    target_sources(catchchallenger-server-cli PRIVATE db/EventLoopPostgresql.cpp)
+    target_link_libraries(catchchallenger-server-cli PRIVATE ${LIBPQ_LIBRARY})
 endif()
 if(CATCHCHALLENGER_DB_MYSQL)
     target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_MYSQL)
+    # Prefer MariaDB client (libmariadb) — drop-in replacement for
+    # libmysqlclient, ABI-compatible with the <mysql/mysql.h> headers
+    # EventLoopMySQL.cpp uses. Fall back to libmysqlclient if mariadb
+    # isn't installed.
+    find_library(LIBMARIADB_LIBRARY NAMES mariadb mysqlclient REQUIRED)
+    target_sources(catchchallenger-server-cli PRIVATE db/EventLoopMySQL.cpp)
+    target_link_libraries(catchchallenger-server-cli PRIVATE ${LIBMARIADB_LIBRARY})
 endif()
 if(CATCHCHALLENGER_DB_SQLITE)
-    target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_SQLITE)
+    message(FATAL_ERROR
+        "catchchallenger-server-cli has no SQLite driver — only DB_FILE, DB_POSTGRESQL, DB_MYSQL are implemented for this binary.")
 endif()
 
 # Pull in PreparedDBQuery* / SqlFunction / DatabaseBase plumbing when
-# any SQL backend is selected. Without this the SQLite/MySQL/PG
-# build links cleanly except for these helpers (every PreparedStatement
-# call resolves as an undefined symbol — see
+# any SQL backend is selected. Without this the MySQL/PG build links
+# cleanly except for these helpers (every PreparedStatement call
+# resolves as an undefined symbol — see
 # server/catchchallenger-server.cmake `catchchallenger_server_sql`).
 # DB_FILE alone does not need the SQL path; that's why it's gated.
-if(CATCHCHALLENGER_DB_POSTGRESQL OR CATCHCHALLENGER_DB_MYSQL OR CATCHCHALLENGER_DB_SQLITE)
+if(CATCHCHALLENGER_DB_POSTGRESQL OR CATCHCHALLENGER_DB_MYSQL)
     target_link_libraries(catchchallenger-server-cli PRIVATE catchchallenger_server_sql)
 endif()
 

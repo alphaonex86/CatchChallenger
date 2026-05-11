@@ -13,6 +13,8 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
+# DB backend: PostgreSQL only. The login source has PG-specific
+# references in EventLoopServerLoginSlave.cpp etc. cli supports both.
 find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
 
 set(_login_sources
@@ -83,7 +85,7 @@ if(EXTERNALLIBZSTD)
     target_link_libraries(catchchallenger-server-login PRIVATE ${ZSTD_LIBRARY})
 endif()
 
-# io_uring is MANDATORY for this binary.
+# io_uring is MANDATORY for this binary (per server/CLAUDE.md).
 if(NOT LIBURING_LIBRARY)
     find_library(LIBURING_LIBRARY NAMES uring)
     find_path(LIBURING_INCLUDE_DIR NAMES liburing.h)
