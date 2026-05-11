@@ -6,6 +6,9 @@
 #include "cpp11addition.hpp"
 #include <iostream>
 #include <cstring>
+#ifdef CATCHCHALLENGER_IO_URING
+#include <vector>
+#endif
 
 
 using namespace CatchChallenger;
@@ -238,7 +241,6 @@ void ProtocolParsingInputOutput::parseIncommingDataAsync(const char * const buf,
 {
     if(len==0)
         return;
-    char tempBigBufferForInput[CATCHCHALLENGER_COMMONBUFFERSIZE];
     #ifdef CATCHCHALLENGER_HARDENED
     if(parseIncommingDataCount>0)
     {
@@ -247,37 +249,28 @@ void ProtocolParsingInputOutput::parseIncommingDataAsync(const char * const buf,
     }
     parseIncommingDataCount++;
     #endif
+    //If header_cut is empty, parse directly out of buf — zero copy. If
+    //a previous CQE left a partial header, concatenate header_cut + buf
+    //into a heap vector. The provided-buffer-ring delivers up to its
+    //per-buffer size (4 KiB) per CQE; combined with header_cut leftover
+    //the working buffer can exceed CATCHCHALLENGER_COMMONBUFFERSIZE,
+    //so we don't constrain to the 4 KiB stack tempBigBuffer the
+    //synchronous path uses.
+    std::vector<char> combined;
+    const char *workBuf;
     size_t total;
     if(!header_cut.empty())
     {
-        if(header_cut.size()+len>CATCHCHALLENGER_COMMONBUFFERSIZE)
-        {
-            std::cerr << "parseIncommingDataAsync: header_cut(" << header_cut.size()
-                      << ")+buf(" << len << ") > common buffer size("
-                      << CATCHCHALLENGER_COMMONBUFFERSIZE << ")" << std::endl;
-            #ifdef CATCHCHALLENGER_HARDENED
-            parseIncommingDataCount--;
-            #endif
-            return;
-        }
-        memcpy(tempBigBufferForInput,header_cut.data(),header_cut.size());
-        memcpy(tempBigBufferForInput+header_cut.size(),buf,len);
-        total=header_cut.size()+len;
+        combined.resize(header_cut.size()+len);
+        memcpy(combined.data(),header_cut.data(),header_cut.size());
+        memcpy(combined.data()+header_cut.size(),buf,len);
+        workBuf=combined.data();
+        total=combined.size();
         header_cut.clear();
     }
     else
     {
-        if(len>CATCHCHALLENGER_COMMONBUFFERSIZE)
-        {
-            std::cerr << "parseIncommingDataAsync: buf(" << len
-                      << ") > common buffer size("
-                      << CATCHCHALLENGER_COMMONBUFFERSIZE << ")" << std::endl;
-            #ifdef CATCHCHALLENGER_HARDENED
-            parseIncommingDataCount--;
-            #endif
-            return;
-        }
-        memcpy(tempBigBufferForInput,buf,len);
+        workBuf=buf;
         total=len;
     }
     uint32_t cursor=0;
@@ -287,7 +280,7 @@ void ProtocolParsingInputOutput::parseIncommingDataAsync(const char * const buf,
         #ifdef CATCHCHALLENGER_HARDENED
         const uint32_t oldcursor=cursor;
         #endif
-        returnVar=parseIncommingDataRaw(tempBigBufferForInput,
+        returnVar=parseIncommingDataRaw(workBuf,
                                         static_cast<uint32_t>(total),cursor);
         #ifdef CATCHCHALLENGER_HARDENED
         if(oldcursor==cursor && returnVar==1)
