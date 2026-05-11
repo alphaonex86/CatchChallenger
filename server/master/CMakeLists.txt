@@ -14,10 +14,27 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
-# DB backend: PostgreSQL only. The master source hardcodes
-# EventLoopPostgresql* members (CharactersGroup.hpp etc.), so MySQL
-# would need source-level surgery. cli supports both.
-find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
+# DB backend: PostgreSQL (default) or MySQL/MariaDB. Cluster source
+# uses the switchable `EventLoopDb` alias from EventLoopDatabase.hpp,
+# so the only configure-time choice is which backend .cpp + client
+# library to wire in. Exactly one of CATCHCHALLENGER_DB_POSTGRESQL /
+# CATCHCHALLENGER_DB_MYSQL must be ON (PG is the default).
+if(CATCHCHALLENGER_DB_MYSQL AND CATCHCHALLENGER_DB_POSTGRESQL)
+    message(FATAL_ERROR
+        "catchchallenger-server-master: both CATCHCHALLENGER_DB_MYSQL and CATCHCHALLENGER_DB_POSTGRESQL are ON; pick one.")
+endif()
+if(NOT CATCHCHALLENGER_DB_MYSQL)
+    set(CATCHCHALLENGER_DB_POSTGRESQL ON)
+endif()
+if(CATCHCHALLENGER_DB_MYSQL)
+    find_library(_db_lib NAMES mariadb mysqlclient REQUIRED)
+    set(_db_source ../cli/db/EventLoopMySQL.cpp)
+    set(_db_define CATCHCHALLENGER_DB_MYSQL)
+else()
+    find_library(_db_lib NAMES pq REQUIRED)
+    set(_db_source ../cli/db/EventLoopPostgresql.cpp)
+    set(_db_define CATCHCHALLENGER_DB_POSTGRESQL)
+endif()
 
 set(_master_sources
     main-unix-login-master.cpp
@@ -37,7 +54,7 @@ set(_master_sources
     ../cli/EventLoopGenericServer.cpp
     ../cli/EventLoopClient.cpp
     ../cli/SocketUtil.cpp
-    ../cli/db/EventLoopPostgresql.cpp
+    ${_db_source}
     # server/base subset (SQL plumbing comes via catchchallenger_server_sql).
     ../base/BaseServer/BaseServerMasterLoadDictionary.cpp
     ../base/BaseServer/BaseServerMasterSendDatapack.cpp
@@ -75,7 +92,7 @@ target_link_libraries(catchchallenger-server-master PRIVATE
     catchchallenger_server_db_minimal
     Threads::Threads
     ZLIB::ZLIB
-    ${LIBPQ_LIBRARY}
+    ${_db_lib}
 )
 
 target_compile_definitions(catchchallenger-server-master PRIVATE
@@ -85,7 +102,7 @@ target_compile_definitions(catchchallenger-server-master PRIVATE
     # No CATCHCHALLENGER_SOLO: master coordinates the cluster but does
     # not run game logic itself.
     CATCHCHALLENGER_CLASS_MASTER
-    CATCHCHALLENGER_DB_POSTGRESQL
+    ${_db_define}
     CATCHCHALLENGER_DB_PREPAREDSTATEMENT
     CATCHCHALLENGER_DYNAMIC_MAP_LIST
 )

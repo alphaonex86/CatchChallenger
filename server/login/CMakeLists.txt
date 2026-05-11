@@ -13,9 +13,25 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
 
 find_package(Threads REQUIRED)
-# DB backend: PostgreSQL only. The login source has PG-specific
-# references in EventLoopServerLoginSlave.cpp etc. cli supports both.
-find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)
+# DB backend: PostgreSQL (default) or MySQL/MariaDB. See
+# server/master/CMakeLists.txt for the same selector logic — login
+# uses the switchable `EventLoopDb` alias from EventLoopDatabase.hpp.
+if(CATCHCHALLENGER_DB_MYSQL AND CATCHCHALLENGER_DB_POSTGRESQL)
+    message(FATAL_ERROR
+        "catchchallenger-server-login: both CATCHCHALLENGER_DB_MYSQL and CATCHCHALLENGER_DB_POSTGRESQL are ON; pick one.")
+endif()
+if(NOT CATCHCHALLENGER_DB_MYSQL)
+    set(CATCHCHALLENGER_DB_POSTGRESQL ON)
+endif()
+if(CATCHCHALLENGER_DB_MYSQL)
+    find_library(_db_lib NAMES mariadb mysqlclient REQUIRED)
+    set(_db_source ../cli/db/EventLoopMySQL.cpp)
+    set(_db_define CATCHCHALLENGER_DB_MYSQL)
+else()
+    find_library(_db_lib NAMES pq REQUIRED)
+    set(_db_source ../cli/db/EventLoopPostgresql.cpp)
+    set(_db_define CATCHCHALLENGER_DB_POSTGRESQL)
+endif()
 
 set(_login_sources
     main-unix-login-slave.cpp
@@ -42,7 +58,7 @@ set(_login_sources
     ../cli/EventLoopGenericServer.cpp
     ../cli/EventLoopClient.cpp
     ../cli/SocketUtil.cpp
-    ../cli/db/EventLoopPostgresql.cpp
+    ${_db_source}
     ../cli/EventLoopClientToServer.cpp
     ../cli/EventLoopTimer.cpp
     # Small subset of server/base/ specific to login. The SQL plumbing
@@ -69,14 +85,14 @@ target_link_libraries(catchchallenger-server-login PRIVATE
     catchchallenger_server_sql
     Threads::Threads
     ZLIB::ZLIB
-    ${LIBPQ_LIBRARY}
+    ${_db_lib}
 )
 
 target_compile_definitions(catchchallenger-server-login PRIVATE
     CATCHCHALLENGER_SERVER
     QT_NO_EMIT
     CATCHCHALLENGER_CLASS_LOGIN
-    CATCHCHALLENGER_DB_POSTGRESQL
+    ${_db_define}
     CATCHCHALLENGER_DB_PREPAREDSTATEMENT
     CATCHCHALLENGER_DYNAMIC_MAP_LIST
 )

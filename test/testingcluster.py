@@ -391,6 +391,80 @@ def bin_path(base, subdir, exe):
     return os.path.join(base, subdir.replace("/", "_"), exe)
 
 
+# ── DB-client exclusivity check (linker-level) ──────────────────────────────
+# Each cluster binary must dynamically link exactly ONE DB client
+# library — never both libpq AND libmariadb/libmysqlclient at the
+# same time. If both are loaded into the same process the PG and
+# MySQL EventLoopDb code paths would coexist at runtime and the
+# typedef'd alias would point to whichever was selected at compile
+# time, but the other library's pages would still be paged in for
+# nothing and (worse) we'd hide a CMake misconfiguration (both
+# define + both source files) behind a successful build.
+_PG_SO_NEEDLES    = ("libpq.so",)
+_MYSQL_SO_NEEDLES = ("libmariadb.so", "libmysqlclient.so")
+
+
+def linked_db_clients(exe_path):
+    """Return (has_pg, has_mysql) — True iff the binary's dynamic
+    dependencies include libpq / libmariadb-or-libmysqlclient."""
+    if not os.path.exists(exe_path):
+        return (False, False)
+    try:
+        p = subprocess.run(["ldd", exe_path],
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                           timeout=10)
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return (False, False)
+    out = p.stdout.decode(errors="replace")
+    has_pg    = any(n in out for n in _PG_SO_NEEDLES)
+    has_mysql = any(n in out for n in _MYSQL_SO_NEEDLES)
+    return (has_pg, has_mysql)
+
+
+def check_db_exclusivity(label, exe_path, expected):
+    """Verify the binary at exe_path links to exactly one of
+    {PostgreSQL, MySQL/MariaDB} — the one matching `expected` ("pg"
+    or "mysql"). Returns (ok, detail)."""
+    has_pg, has_mysql = linked_db_clients(exe_path)
+    if expected == "pg":
+        if has_pg and not has_mysql:
+            return True, "linked: libpq only"
+        if has_pg and has_mysql:
+            return False, "linked BOTH libpq AND libmariadb/libmysqlclient — CMake misconfigured"
+        if not has_pg:
+            return False, "expected libpq, got nothing"
+    elif expected == "mysql":
+        if has_mysql and not has_pg:
+            return True, "linked: libmariadb/libmysqlclient only"
+        if has_pg and has_mysql:
+            return False, "linked BOTH libpq AND libmariadb/libmysqlclient — CMake misconfigured"
+        if not has_mysql:
+            return False, "expected libmariadb/libmysqlclient, got nothing"
+    return False, f"unknown expectation {expected!r}"
+
+
+def assert_cluster_db_exclusivity(base, db_name, label_prefix):
+    """Run check_db_exclusivity on every cluster binary produced by
+    build_cluster(). Reports per-binary PASS/FAIL via log_pass/log_fail."""
+    expected = "pg" if db_name == "postgresql" else "mysql"
+    targets = [
+        ("server/master",            "catchchallenger-server-master"),
+        ("server/login",             "catchchallenger-server-login"),
+        ("server/game-server-alone", "catchchallenger-game-server-alone"),
+    ]
+    all_ok = True
+    for subdir, exe in targets:
+        exe_path = bin_path(base, subdir, exe)
+        ok, detail = check_db_exclusivity(label_prefix, exe_path, expected)
+        name = f"{label_prefix}/{exe}/db-exclusivity"
+        if ok:
+            log_pass(name, detail, 0.0)
+        else:
+            log_fail(name, detail, 0.0)
+            all_ok = False
+    return all_ok
+
+
 # ── server lifecycle ─────────────────────────────────────────────────────────
 class ServerProc:
     def __init__(self, label, exe, work_dir, xml_text):
@@ -526,6 +600,16 @@ def test_one_backend(db_name, db_define, db_cli, sql_subdir):
         log_fail(f"{db_name}/build", base, time.monotonic() - t_build)
         return
     log_pass(f"{db_name}/build", "cluster compiled", time.monotonic() - t_build)
+
+    # 2b) DB-client exclusivity: every binary must dynamically link
+    #     exactly ONE of {libpq, libmariadb/libmysqlclient}. If both
+    #     show up in ldd output the CMake selector misfired and the
+    #     binary would carry dead pages of the unused client lib.
+    log_info(f"  ldd check: exactly-one DB client per binary ({db_name})")
+    if not assert_cluster_db_exclusivity(base, db_name, db_name):
+        # Don't continue to runtime tests if the link is wrong: the
+        # behavior would be unpredictable.
+        return
 
     # 3) Start the cluster: master first, then 2 logins, then 2 gsa.
     work_root = os.path.join(TMPFS_ROOT, "cluster", db_name)

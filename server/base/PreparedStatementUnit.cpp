@@ -114,7 +114,10 @@ std::string PreparedStatementUnit::writeToPrepare(const std::string &query)
 
 bool PreparedStatementUnit::empty() const
 {
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(CATCHCHALLENGER_SERVER)
+    // Both PostgreSQL (always) and MySQL-with-PREPAREDSTATEMENT pre-
+    // register their statements by name, so the query text may legitim-
+    // ately be empty at the call site — short-circuit to non-empty.
+    #if (defined(CATCHCHALLENGER_DB_POSTGRESQL) || (defined(CATCHCHALLENGER_DB_MYSQL) && defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT))) && defined(CATCHCHALLENGER_SERVER)
     return false;
     #else
     return query.empty();

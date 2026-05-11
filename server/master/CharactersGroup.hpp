@@ -2,7 +2,7 @@
 #define CHARACTERSGROUP_H
 
 #include "../cli/BaseClassSwitch.hpp"
-#include "../cli/db/EventLoopPostgresql.hpp"
+#include "../cli/db/EventLoopDatabase.hpp"
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -90,7 +90,7 @@ private:
     void deleteToCacheLockToDelete(const uint32_t &uniqueKey);
 private:
     static uint16_t maxLockAge;
-    EventLoopPostgresql *databaseBaseCommon;
+    EventLoopDb *databaseBaseCommon;
     std::unordered_map<uint32_t/*uniqueKey*/,uint64_t/*can reconnect after this time stamps if !=0, else locked*/> lockedAccount;
     std::unordered_map<uint32_t/*uniqueKey*/,std::unordered_set<uint32_t/*lockedAccount*/> > lockedAccountByDisconnectedServer;
 
