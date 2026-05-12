@@ -198,12 +198,14 @@ EventLoop::~EventLoop()
 #elif defined(CATCHCHALLENGER_IO_URING)
     if(g_uring!=nullptr)
     {
+#ifdef CC_HAS_URING_BUF_RING
         if(g_uring->buf_ring!=nullptr)
         {
             io_uring_free_buf_ring(&g_uring->ring,g_uring->buf_ring,
                                    g_uring->buf_count,0);
             g_uring->buf_ring=nullptr;
         }
+#endif
         if(g_uring->buf_storage!=nullptr)
         {
             free(g_uring->buf_storage);
@@ -287,6 +289,11 @@ bool EventLoop::init()
     //multishot_enabled=false and fall back silently to the existing
     //poll_multishot RX path. NEVER fail server init over this — it's an
     //optimisation, not a requirement.
+    //CC_HAS_URING_BUF_RING is set by the CMake feature check in
+    //general/CCCommon.cmake; older liburing (<2.3) doesn't declare
+    //io_uring_setup_buf_ring/io_uring_free_buf_ring so the whole phase
+    //compiles out.
+#ifdef CC_HAS_URING_BUF_RING
     const unsigned int BUF_COUNT=4096;//power of two
     const unsigned int BUF_SIZE=4096;
     {
@@ -336,6 +343,7 @@ bool EventLoop::init()
                          "recv_multishot disabled" << std::endl;
         }
     }
+#endif
     {
         //Phase 5: single-line backend banner so the operator sees which
         //fast paths are live at startup.

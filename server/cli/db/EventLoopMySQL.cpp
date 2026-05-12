@@ -21,6 +21,7 @@
 #include <ctime>
 #include <thread>
 #include <mysql/mysqld_error.h>
+#include <mysql/errmsg.h>
 
 char EventLoopMySQL::emptyString[]={'\0'};
 CatchChallenger::DatabaseBaseCallBack EventLoopMySQL::emptyCallback;
@@ -167,6 +168,15 @@ bool EventLoopMySQL::syncConnectInternal(bool infinityTry)
         if(setsockopt(conn->net.fd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
             std::cerr << "Unable to apply tcp no delay" << std::endl;
     }
+    //NO_AUTO_VALUE_ON_ZERO: dictionary_map and friends store sequential ids
+    //starting at 0. MySQL/MariaDB AUTO_INCREMENT default behaviour replaces
+    //an explicit 0 with the next auto value, so INSERT(id=0) lands as id=1,
+    //then INSERT(id=1) collides with the freshly-bumped row → ER_DUP_ENTRY,
+    //the gsa preload stalls. PG schema has no AUTO_INCREMENT so the bug is
+    //MySQL-specific. NO_AUTO_VALUE_ON_ZERO tells the server to honour the
+    //literal zero.
+    if(mysql_query(conn,"SET SESSION sql_mode='NO_AUTO_VALUE_ON_ZERO'")!=0)
+        std::cerr << "Unable to set NO_AUTO_VALUE_ON_ZERO sql_mode: " << mysql_error(conn) << std::endl;
     epoll_event event;
     event.events = EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET;
     event.data.ptr = this;
@@ -411,9 +421,11 @@ CatchChallenger::DatabaseBaseCallBack * EventLoopMySQL::asyncRead(const std::str
     std::cout << "host: " << strCohost << ", database: " << strCodatabase << ", query " << query << " at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     const int &query_id=mysql_send_query(conn,query.c_str(),stringlen);
-    if(query_id<0)
+    //mysql_send_query: 0 == success, non-zero == error. PG returns the
+    //opposite (1 == success), so the upstream pattern is inverted here.
+    if(query_id!=0)
     {
-        std::cerr << "query " << query << "send failed: " << errorMessage() << std::endl;
+        std::cerr << "query " << query << " send failed: " << errorMessage() << std::endl;
         return NULL;
     }
     queue.push_back(tempCallback);
@@ -447,9 +459,10 @@ bool EventLoopMySQL::asyncWrite(const std::string &query)
     std::cout << "host: " << strCohost << ", database: " << strCodatabase << ", query " << query << " at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     const int &query_id=mysql_send_query(conn,query.c_str(),stringlen);
-    if(query_id==0)
+    //mysql_send_query: 0 == success, non-zero == error.
+    if(query_id!=0)
     {
-        std::cerr << "query send failed" << std::endl;
+        std::cerr << "asyncWrite send failed: " << errorMessage() << ", query: " << query << std::endl;
         return false;
     }
     queue.push_back(emptyCallback);
@@ -482,7 +495,65 @@ bool EventLoopMySQL::unixEvent(const uint32_t &events)
 
     if(events & EPOLLIN)
     {
-        if(0 == mysql_read_query_result(conn))
+        const int rqr=mysql_read_query_result(conn);
+        //mysql_read_query_result: 0 == success, non-zero == server-side
+        //error (e.g. ER_DUP_ENTRY, ER_NO_SUCH_TABLE). Old code only
+        //advanced the queue on success — on error the queries piled up
+        //forever and the preload chain hung silently. Now we drain the
+        //failed query off the front, surface the error, and keep going.
+        if(0 != rqr)
+        {
+            const std::string firstQuery=
+                queriesList.empty()?std::string("<empty>"):queriesList.front();
+            std::cerr << "mysql query failed: " << errorMessage()
+                      << ", query: " << firstQuery << std::endl;
+            //If the failure is server-fatal (lost connection) drop everything
+            //and let the reconnect path rebuild the queue. Otherwise just
+            //skip the offending query and continue.
+            const unsigned int errnoVal=mysql_errno(conn);
+            const bool connectionDead=(errnoVal==CR_SERVER_GONE_ERROR
+                                       || errnoVal==CR_SERVER_LOST);
+            //Even on a server-side error we must drain whatever the conn
+            //still holds, or the next mysql_store_result for the FOLLOWING
+            //query may read stale buffers and report ntuples=0 / NULL row.
+            //We've seen this manifest as the createAccount loop firing INSERT
+            //over and over when the SELECT-after-failed-INSERT genuinely
+            //returned 1 row but the row vanished from our view.
+            MYSQL_RES *errResult=mysql_store_result(conn);
+            if(errResult!=NULL)
+                mysql_free_result(errResult);
+            //Fire the callback even on failure so the application code can
+            //react (e.g. fall through to "account already exists, re-SELECT"
+            //instead of retrying the same INSERT forever). Empty result
+            //semantics (ntuples=0, next() returns false) are appropriate
+            //here — the caller couldn't have read rows from a failed
+            //statement anyway.
+            tuleIndex=-1;
+            ntuples=0;
+            nfields=0;
+            result=NULL;
+            if(!queue.empty())
+            {
+                CatchChallenger::DatabaseBaseCallBack callback=queue.front();
+                if(callback.method!=NULL)
+                    callback.method(callback.object);
+                queue.erase(queue.cbegin());
+            }
+            if(!queriesList.empty())
+                queriesList.erase(queriesList.cbegin());
+            if(connectionDead)
+            {
+                started=false;
+                syncDisconnect();
+                conn=NULL;
+                syncReconnect();
+                return true;
+            }
+            if(!queriesList.empty())
+                if(!sendNextQuery())
+                    return false;
+        }
+        else
         {
             if(result!=NULL)
                 clear();

@@ -105,6 +105,20 @@ std::string PreparedStatementUnit::writeToPrepare(const std::string &query)
                 abort();
             }
             stringreplaceAll(newQuery,"decode('$"+std::to_string(index)+"','hex')","decode($"+std::to_string(index)+",'hex')");
+            //Strip the literal quotes surrounding `'$N'` in the template
+            //(e.g. `UNHEX('%1')`, `WHERE login='%1'`). Two consumers come
+            //downstream:
+            //  * PG → PQsendQueryPrepared binds `$N` directly; quotes
+            //    around the placeholder would be parsed as a string
+            //    literal containing the two characters '$' 'N'.
+            //  * MySQL → eventLoopMysqlInlineSubstitute always wraps the
+            //    escaped value in its own pair of quotes; leaving the
+            //    template quotes in produces `''value''` which is a
+            //    syntax error (ER_PARSE 1064).
+            //Stripping here matches the established `decode('$N','hex')`
+            //handling above. Templates that used bare `$N` (numerics)
+            //are unaffected.
+            stringreplaceAll(newQuery,"'$"+std::to_string(index)+"'","$"+std::to_string(index));
             index--;
         }
     }

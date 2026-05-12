@@ -42,3 +42,10 @@ Two narrow types that look similar but are NOT interchangeable:
 * master, login, gateway, game-server-alone is io_uring only (mandatory), use sendfile() or function for performance when it need
 * have to be multi-arch (i686, amd64, arm, arm64, mips32r2, risc-v, ...), no mather if big endian or little endian, the protocol always little endian
 * cluster (login+master+game-server-alone): need remote and concurrent DB access for character data (planed FILE_DB for gameserver local content + a document database support), master ack as lock for common data
+
+## Database
+* SQLite: simple with Qt as embeded, perfect for single player Qt client, can be used with open to lan as multiplayer database, low performance because it save at each changes into DB and not designed for performance
+* FILE_DB: low overhead, 0 dependency, run anywhere, simple not have to configure a databse (0 new port open, no more process, no firewall problem), perfect for testing, good performance (have to open/read/write/close/rename tmp to definitive file to be async) because save only at disconnection the player/character whole data as block
+* MySQL/PostgreSQL: very common, low performance because it save at each changes into DB, use prepared query to minimize the CPU overhead
+* MySQL/MariaDB connection MUST run `SET SESSION sql_mode='NO_AUTO_VALUE_ON_ZERO'` immediately after connect. Several preload INSERTs send id=0 (dictionary_map etc.) and the default AUTO_INCREMENT semantics silently rewrite 0 → next-auto-value, which then collides with the explicit id=1 in the next batch. `EventLoopMySQL::syncConnectInternal` already does this; do NOT remove. PG has no AUTO_INCREMENT and behaves correctly without the directive.
+* Schema columns holding `CATCHCHALLENGER_HASH_SIZE`-byte hashes (login/password in `account`, `account_register`) must be `varbinary(32)` — `varbinary(28)` silently truncates the 32-byte hash and the subsequent SELECT-by-login returns zero rows, creating a "first INSERT succeeds, every later SELECT misses" loop in the account-creation path.

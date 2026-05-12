@@ -82,19 +82,6 @@ if [ "$CONTINUE" = "1" ]; then
     set +e
 fi
 
-# Mirror everything we print (and every child process's stdout/stderr)
-# to /mnt/data/perso/tmpfs/all.log so the full run is reproducible from
-# disk after-the-fact — useful when the terminal scroll-back has been
-# eaten by a 2 h run or the operator was AFK when something failed.
-# Truncate on every fresh run (parallels the failed.json semantics in
-# the rm above). The tee runs in a process-substitution so the script's
-# own stdout/stderr still go to the terminal in real time.
-ALL_LOG=/mnt/data/perso/tmpfs/all.log
-mkdir -p "$(dirname "$ALL_LOG")"
-: > "$ALL_LOG"
-exec > >(tee -a "$ALL_LOG") 2>&1
-echo "[all.sh] capturing console output to $ALL_LOG"
-
 # to start with fresh folder to be sure test all case.
 # EXCEPT: cc-datapack/ (datapack stage cache, see stage_datapacks.py)
 # and ccache/ (compiler cache); both are persistent benefits across
@@ -139,6 +126,20 @@ if [ "$CONTINUE" = "0" ]; then
 else
     echo "[all.sh] resume run (--continue): preserving $FAILED_JSON and appending to $TIME_JSON $MONITOR_JSON; testing*.py will re-run only previously-failed cases"
 fi
+
+# Mirror everything we print (and every child process's stdout/stderr)
+# to /mnt/data/perso/tmpfs/all.log so the full run is reproducible from
+# disk after-the-fact — useful when the terminal scroll-back has been
+# eaten by a 2 h run or the operator was AFK when something failed.
+# MUST come AFTER the tmpfs wipe above, otherwise the find -delete
+# would erase the freshly-opened all.log mid-run. The tee runs in a
+# process-substitution so the script's own stdout/stderr still go to
+# the terminal in real time.
+ALL_LOG=/mnt/data/perso/tmpfs/all.log
+mkdir -p "$(dirname "$ALL_LOG")"
+: > "$ALL_LOG"
+exec > >(tee -a "$ALL_LOG") 2>&1
+echo "[all.sh] capturing console output to $ALL_LOG"
 
 # Keep the source tree clean: route .pyc bytecode the testing*.py scripts
 # (and their imports) would normally drop into ./__pycache__/ to tmpfs.

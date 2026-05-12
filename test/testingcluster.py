@@ -284,9 +284,9 @@ BACKENDS_FULL = [
     ("postgresql", "CATCHCHALLENGER_DB_POSTGRESQL", "psql",  "postgresql"),
     ("mysql",      "CATCHCHALLENGER_DB_MYSQL",      "mysql", "mysql"),
 ]
-# Allow restricting the backend matrix at the command line (defaults to
-# the full list). Useful when iterating on a single backend during
-# debugging — e.g. `python3 testingcluster.py --backends=postgresql`.
+# Default backend list — both engines are tested. `--backends=...` on
+# the CLI narrows the matrix when iterating on a single backend.
+BACKENDS_DEFAULT = BACKENDS_FULL
 BACKENDS = BACKENDS_FULL
 
 # Colours.

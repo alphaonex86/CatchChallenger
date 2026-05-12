@@ -267,6 +267,37 @@ if(CATCHCHALLENGER_IO_URING)
     find_library(LIBURING_LIBRARY NAMES uring REQUIRED)
     find_path(LIBURING_INCLUDE_DIR NAMES liburing.h REQUIRED)
 endif()
+# Detect provided-buffer-ring helpers (added in liburing 2.3, kernel
+# 5.19). Remote build nodes on older distros (e.g. Debian-stable
+# liburing 2.1) lack these inline helpers; the buf-ring code path in
+# server/cli/EventLoop.cpp must compile out cleanly there. The cluster
+# binaries (master/login/gateway/game-server-alone) define
+# CATCHCHALLENGER_IO_URING as a per-target compile flag (not via the
+# CCCommon option above), so the check must run unconditionally
+# whenever liburing.h is on the system.
+find_path(_cc_liburing_h_for_check NAMES liburing.h)
+if(_cc_liburing_h_for_check)
+    find_library(_cc_liburing_lib_for_check NAMES uring)
+    include(CheckCXXSourceCompiles)
+    set(CMAKE_REQUIRED_INCLUDES "${_cc_liburing_h_for_check}")
+    if(_cc_liburing_lib_for_check)
+        set(CMAKE_REQUIRED_LIBRARIES "${_cc_liburing_lib_for_check}")
+    endif()
+    check_cxx_source_compiles("
+        #include <liburing.h>
+        int main(){
+            io_uring r; int err=0;
+            io_uring_buf_ring *br=io_uring_setup_buf_ring(&r,4,0,0,&err);
+            io_uring_free_buf_ring(&r,br,4,0);
+            return 0;
+        }
+    " CC_HAS_URING_BUF_RING)
+    if(CC_HAS_URING_BUF_RING)
+        add_compile_definitions(CC_HAS_URING_BUF_RING=1)
+    endif()
+    set(CMAKE_REQUIRED_INCLUDES "")
+    set(CMAKE_REQUIRED_LIBRARIES "")
+endif()
 
 # zstd: external system libzstd, or vendored static build under
 # general/libzstd. Cross-compile targets (Android NDK, MXE/mingw) almost
