@@ -152,6 +152,17 @@ Must copy (not symlink) when destination is mutated: `setup_client_cache_partial
 
 Modules: `test/datapack_stage.py` (`staged_local`/`staged_remote`/`remote_cache_for`/`datapack_id`/`stage_all`); `test/stage_datapacks.py` (one-shot driver); `test/all.sh` wipes tmpfs except `cc-datapack/`+`ccache-catchchallenger/`.
 
+## Per-child resource limits — CPU + memory
+
+Every testing*.py that spawns long-lived server binaries should set two `resource.setrlimit` caps in the child's `preexec_fn`:
+
+* **`RLIMIT_CPU = 2h soft / 2h+60s hard`** — counts CPU-seconds, not wall. An idle server in `epoll_wait`/`io_uring_wait_cqe` accrues ~zero, runs as long as the test needs. Only catches the "wedged 100% one core" pattern: tight retry loops, infinite kernel/user-space wakeup loops (missed read drain, EPOLLIN never cleared, recv_multishot re-armed under back-pressure). 14-hour orphan motivated this.
+* **`RLIMIT_AS = 2 GiB hard`** — caps total virtual memory. Catches unbounded alloc patterns (recursive buffer regrowth, leaked alloc inside retry, parser eating gigabytes on malformed input). Kernel returns `-ENOMEM` from mmap; glibc converts to `std::bad_alloc`; the unhandled exception lands a clean abort stack the wall-watchdog can collect.
+
+**Gate on `--valgrind` being absent.** Valgrind/Memcheck/Helgrind/DRD run binaries with 10-20× their normal memory footprint and 10-50× CPU. Applying these limits under valgrind kills legitimate workloads. testingcluster.py + testingbyIA.py never invoke their spawned children under valgrind so they apply both limits unconditionally. testing*.py that DO run their children under valgrind (the diagnostic-tool path via `diagnostic.runtime_wrapper(DIAG)`) must wrap the `resource.setrlimit` calls with `if DIAG.valgrind_tool is None`.
+
+If a script legitimately needs more than 2 GiB or 2 h CPU per child, raise the per-script cap explicitly — don't quietly raise the shared default. The point is bug detection, not capacity headroom.
+
 ## Event-rate tripwire — `CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE`
 
 CMake option, OFF by default. When ON, `EventLoop::wait()` aborts the process the moment it delivers more than **1000 events/s** through the dispatcher (sliding 1 s window). The wall-watchdog catches the abort via `PR_SET_PDEATHSIG`/atexit and the test rig captures a full backtrace.

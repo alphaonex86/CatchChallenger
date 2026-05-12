@@ -183,9 +183,23 @@ def _server_preexec():
     # Soft trigger fires SIGXCPU (default action: terminate); hard at
     # +60s forces SIGKILL.
     try:
-        soft = 2 * 60 * 60   # 2h CPU — matches per-script wall cap
-        hard = soft + 60
-        resource.setrlimit(resource.RLIMIT_CPU, (soft, hard))
+        cpu_soft = 2 * 60 * 60   # 2h CPU — matches per-script wall cap
+        cpu_hard = cpu_soft + 60
+        resource.setrlimit(resource.RLIMIT_CPU, (cpu_soft, cpu_hard))
+    except (ValueError, OSError):
+        pass
+    # Self-cap virtual memory. Catches infinite alloc loops (e.g. a
+    # buffer regrowth bug feeding back into itself) before the host
+    # swaps to death. testingbyIA's fuzz cases push wild input at the
+    # server which should reject without unbounded buffering; if a
+    # malformed packet causes infinite alloc, this is the safety net.
+    # Test cases deliberately stressing memory consumption (large
+    # connexion bursts, full inventory dumps, …) live in
+    # testingbots/testingmulti and must NOT enable this without
+    # raising the cap to fit the workload.
+    try:
+        mem_cap = 2 * 1024 * 1024 * 1024   # 2 GiB virtual per process
+        resource.setrlimit(resource.RLIMIT_AS, (mem_cap, mem_cap))
     except (ValueError, OSError):
         pass
 
