@@ -183,7 +183,7 @@ def _server_preexec():
     # Soft trigger fires SIGXCPU (default action: terminate); hard at
     # +60s forces SIGKILL.
     try:
-        cpu_soft = 2 * 60 * 60   # 2h CPU — matches per-script wall cap
+        cpu_soft = 15 * 60   # 15 min CPU — small enough for low-CPU VPS
         cpu_hard = cpu_soft + 60
         resource.setrlimit(resource.RLIMIT_CPU, (cpu_soft, cpu_hard))
     except (ValueError, OSError):
@@ -198,7 +198,7 @@ def _server_preexec():
     # testingbots/testingmulti and must NOT enable this without
     # raising the cap to fit the workload.
     try:
-        mem_cap = 2 * 1024 * 1024 * 1024   # 2 GiB virtual per process
+        mem_cap = 128 * 1024 * 1024   # 128 MiB virtual per process
         resource.setrlimit(resource.RLIMIT_AS, (mem_cap, mem_cap))
     except (ValueError, OSError):
         pass
