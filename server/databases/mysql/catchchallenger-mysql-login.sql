@@ -28,8 +28,8 @@ SET time_zone = "+00:00";
 
 CREATE TABLE IF NOT EXISTS `account` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `login` varbinary(28) NOT NULL,
-  `password` varbinary(28) NOT NULL COMMENT 'sha224 + 4Byte salt',
+  `login` varbinary(32) NOT NULL,
+  `password` varbinary(32) NOT NULL COMMENT 'blake3 / 32-byte hash',
   `date` bigint(20) unsigned NOT NULL,
   `email` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS `account` (
 
 CREATE TABLE IF NOT EXISTS `account_register` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `login` varbinary(28) NOT NULL,
-  `password` varbinary(28) NOT NULL COMMENT 'sha224 + 4Byte salt',
+  `login` varbinary(32) NOT NULL,
+  `password` varbinary(32) NOT NULL COMMENT 'blake3 / 32-byte hash',
   `email` text NOT NULL,
   `key` text NOT NULL,
   `date` int(11) unsigned NOT NULL,
