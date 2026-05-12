@@ -1,5 +1,7 @@
 #include "BaseServer.hpp"
 #include <iostream>
+#include <cstdlib>
+#include <sys/stat.h>
 #include "../GlobalServerData.hpp"
 #include "../DictionaryLogin.hpp"
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"
@@ -50,6 +52,29 @@ BaseServer::BaseServer() :
         abort();
     }
     GlobalServerData::serverSettings.datapack_basePath                          = FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/";
+    //Fail-fast when the datapack directory is missing. The path is
+    //hard-pinned to <applicationDirPath>/datapack/ — no XML setting
+    //overrides it — so the only recovery is to stage the directory
+    //(or symlink it) next to the binary. Without this, preload
+    //phases silently feed empty data downstream, the gsa appears
+    //to "start" but never reaches "correctly bind:", and the test
+    //rig times out at 180 s with no actionable error. Use exit()
+    //rather than abort() so the parent process sees a clean
+    //EXIT_FAILURE instead of a SIGABRT core-dump path.
+    {
+        struct stat sb;
+        if(::stat(GlobalServerData::serverSettings.datapack_basePath.c_str(),
+                  &sb)!=0
+           || !S_ISDIR(sb.st_mode))
+        {
+            std::cerr << "Datapack directory missing: "
+                      << GlobalServerData::serverSettings.datapack_basePath
+                      << " — the server expects ./datapack/ next to "
+                         "the binary (path is fixed, not configurable)."
+                      << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+    }
     GlobalServerData::serverSettings.compressionType                            = CompressionProtocol::CompressionType::Zstandard;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
