@@ -24,6 +24,15 @@ EventLoopClientLoginSlave::EventLoopClientLoginSlave(
         socketString(NULL),
         socketStringSize(0)
 {
+    //Allow dynamic-size packets from the start. The client legitimately
+    //sends 0xA1 (datapack-file-list query, packetFixedSize==0xFE) as
+    //soon as the gateway has forwarded the backend's 0xA0 reply, well
+    //before any backend-reply path can call allowDynamicSize() for us.
+    //Without this the parser rejects 0xA1 with "dynamic size blocked
+    //(header) for packet code: 161" and the client→map test fails.
+    //LinkToGameServer's ctor already does the same thing for its own
+    //direction; mirror it on the client-facing slave.
+    flags|=0x08;
     client_list.push_back(this);
 }
 
