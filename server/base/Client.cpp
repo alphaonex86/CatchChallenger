@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include <iostream>
 #include "MapManagement/ClientWithMap.hpp"
 #include "ClientList.hpp"
 #include "GlobalServerData.hpp"

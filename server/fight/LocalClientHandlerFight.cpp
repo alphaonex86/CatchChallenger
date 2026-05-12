@@ -1,4 +1,5 @@
 #include "../base/GlobalServerData.hpp"
+#include <iostream>
 #include "../base/MapServer.hpp"
 #include "../base/Client.hpp"
 #include "../base/ClientList.hpp"

@@ -1,5 +1,6 @@
 
 #include "EventLoopServer.hpp"
+#include <iostream>
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
 #include "db/EventLoopPostgresql.hpp"
 #endif
@@ -230,7 +231,13 @@ void EventLoopServer::unload_the_data()
 void EventLoopServer::setNormalSettings(const NormalServerSettings &settings)
 {
     normalServerSettings=settings;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    //BaseServer::setNormalSettings only exists when the HPS cache is
+    //compiled in — it's part of the binary-cache load/save lifecycle.
+    //Without HPS the BaseServer fields are set directly via the
+    //regular settings load path, so this call is a no-op.
     BaseServer::setNormalSettings(settings);
+    #endif
     loadAndFixSettings();
     if(normalServerSettings.server_port<=0)
         normalServerSettings.server_port=42489;

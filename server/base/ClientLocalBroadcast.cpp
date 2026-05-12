@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include <iostream>
 #include "ClientList.hpp"
 #include <string.h>
 #include "../../general/base/ProtocolParsing.hpp"

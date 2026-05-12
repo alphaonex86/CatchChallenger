@@ -1,4 +1,5 @@
 #include "BaseServer.hpp"
+#include <iostream>
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
 #ifndef CATCHCHALLENGER_NOXML

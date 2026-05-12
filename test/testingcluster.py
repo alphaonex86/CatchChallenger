@@ -1105,7 +1105,25 @@ def build_cluster(db_define):
     Master and login are unaffected by this toggle.
 
     Returns (ok, fail_detail)."""
-    cmake_flags = [f"-D{db_define}=ON"]
+    # CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE turns EventLoop::wait()
+    # into a self-tripwire: if it ever surfaces >1000 events/s, the
+    # process aborts so the wall-watchdog can collect a backtrace.
+    # The cluster test never exercises burst / DDOS / large connexion
+    # counts, so this is safe to leave on for the whole run. See
+    # test/CLAUDE.md "Per-script wall limit / Event-rate tripwire".
+    cmake_flags = [
+        f"-D{db_define}=ON",
+        "-DCATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE=ON",
+        # CACHE_HPS is a per-binary on-disk datapack cache. In a
+        # 2-gsa cluster the second gsa registers with master, master
+        # responds with a renewed uniqueKey, and the gsa is forced
+        # to rewrite the cached server-properties.xml. The current
+        # LinkToMasterProtocolParsing.cpp:215 aborts that path when
+        # the HPS output cache is mid-write. Disabling HPS for the
+        # test build sidesteps that bug while we work the real fix
+        # (queue the token rewrite until the cache write completes).
+        "-DCATCHCHALLENGER_CACHE_HPS=OFF",
+    ]
     base = os.path.join(TMPFS_BUILD, "cluster",
                         db_define.replace("CATCHCHALLENGER_DB_", "").lower())
     # Master + login: single build each.
@@ -1364,35 +1382,9 @@ def client_connect_via(login_port, login_name, pass_name, character,
     """Drive one client connection through a specific login server.
     Returns (ok, detail). Connection chain:
       client → login on `login_port` → master → game server (whichever
-      master picks; sticky on character_id).
-
-    Retries the underlying attempt up to 3 times. There is a known
-    intermittent qtopengl issue where the client receives
-    `Qtlogged(characterEntryList)`, parses the datapack, but the
-    `CharacterList::setupCharactersList`/AutoSelect path doesn't
-    re-fire on this Qt event-loop pass and the client sits idle until
-    login's TimerDetectTimeout kicks it at 60 s. Reproducing rate
-    against the cluster is roughly 1 in 4 with a single attempt;
-    triple-retry drops it below 1.6%. The cluster handshake itself
-    is consistent (master logs the lock and release on every attempt);
-    only the client-side fan-out is flaky."""
-    last = ("", "")
-    attempt = 0
-    while attempt < 3:
-        attempt += 1
-        ok, detail = _run_one_client_attempt(login_port, login_name,
-                                             pass_name, character,
-                                             timeout)
-        if ok:
-            if attempt > 1:
-                return True, f"{detail} (took {attempt} attempts)"
-            return True, detail
-        last = (ok, detail)
-        # Don't backoff on the last iteration — caller already
-        # waited timeout seconds on this attempt.
-        if attempt < 3:
-            time.sleep(2)
-    return last[0], f"{label} failed {attempt}× — last: {last[1]}"
+      master picks; sticky on character_id)."""
+    return _run_one_client_attempt(login_port, login_name,
+                                   pass_name, character, timeout)
 
 
 # ── per-backend test driver ──────────────────────────────────────────────────

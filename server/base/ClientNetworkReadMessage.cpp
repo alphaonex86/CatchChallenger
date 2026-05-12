@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include <iostream>
 #include "GlobalServerData.hpp"
 #include "GameServerVariables.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"

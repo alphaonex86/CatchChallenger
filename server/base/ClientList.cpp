@@ -1,4 +1,5 @@
 #include "ClientList.hpp"
+#include <iostream>
 #include "Client.hpp"
 
 using namespace CatchChallenger;

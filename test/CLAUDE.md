@@ -152,6 +152,26 @@ Must copy (not symlink) when destination is mutated: `setup_client_cache_partial
 
 Modules: `test/datapack_stage.py` (`staged_local`/`staged_remote`/`remote_cache_for`/`datapack_id`/`stage_all`); `test/stage_datapacks.py` (one-shot driver); `test/all.sh` wipes tmpfs except `cc-datapack/`+`ccache-catchchallenger/`.
 
+## Event-rate tripwire — `CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE`
+
+CMake option, OFF by default. When ON, `EventLoop::wait()` aborts the process the moment it delivers more than **1000 events/s** through the dispatcher (sliding 1 s window). The wall-watchdog catches the abort via `PR_SET_PDEATHSIG`/atexit and the test rig captures a full backtrace.
+
+The point is to detect tight kernel ↔ user-space wakeup loops *before* they burn a CPU core for hours — the same class of bug as the 14 h `catchchallenger-server-cli` orphan that motivated the watchdog work. Symptoms it catches:
+* EPOLLIN never cleared (missed `read()` drain)
+* `epoll_wait` returning -1/EBADF in a tight loop
+* `io_uring` multishot re-armed inside the CQE drain without backoff
+* level-triggered fd you forgot to mask after a partial read
+
+Use it in every `testing*.py` whose workload has **no** legitimate burst:
+* `testingcluster.py` — light, 2 clients per variant → safe to pin ON.
+* `testingbyIA.py` — adversarial fuzz, sends bursts on purpose → leave OFF.
+* `testingbots.py`, `testingmulti.py`, `testinghttp.py` (DDOS section) — high-volume by design → leave OFF.
+* New testing*.py → default to ON unless the workload deliberately floods.
+
+To enable: pass `-DCATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE=ON` to cmake configure for every server binary the harness builds. Wired binary-side in `server/cli/EventLoop.cpp::wait()`; threshold is hard-coded at 1000/s, change there + in this doc together.
+
+Production deploys MUST NOT define this. Leaving it OFF (the default) makes it a zero-cost no-op (compiled out, no `clock_gettime` per wait).
+
 ## Per-script wall limit — 2 hours, hard
 
 Every `testing*.py` MUST finish within **2 hours** wall clock. Cap is enforced two ways:

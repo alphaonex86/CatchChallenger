@@ -1,4 +1,5 @@
 #include "BaseServer.hpp"
+#include <iostream>
 #include "../GlobalServerData.hpp"
 
 #include "../../general/base/CommonSettingsCommon.hpp"

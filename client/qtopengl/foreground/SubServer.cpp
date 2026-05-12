@@ -1,5 +1,6 @@
 #include "SubServer.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
+#include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../FacilityLibClient.hpp"
 #include <QTreeWidgetItem>
 #include <QHeaderView>
@@ -206,10 +207,31 @@ void SubServer::logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> se
     }
     addToServerList(logicialGroup,serverList->invisibleRootItem(),current__date,fullView);
     serverList->expandAll();
-    if(serverOrdenedList.size()==1)
+    //Auto-select the first server when there's no operator at the
+    //keyboard. Pre-fix only fired on size==1; that meant clusters
+    //with multiple gsa instances (every testingcluster.py run +
+    //real production deployments behind a shared master) hung at the
+    //sub-server picker forever under --host/--server/--autosolo etc.
+    //Multi-server clusters present the same characters via the same
+    //CharactersGroup on every gsa, so for non-interactive launches
+    //"pick whichever the master listed first" is correct.
+    const bool autoPickFirst=
+            !CliClientOptions::host.isEmpty()
+            || !CliClientOptions::serverName.isEmpty()
+            || !CliClientOptions::url.isEmpty()
+            || CliClientOptions::autosolo
+            || CliClientOptions::closeWhenOnMap;
+    if(serverOrdenedList.size()==1
+       || (autoPickFirst && serverOrdenedList.size()>=1))
     {
-        serverList->itemAt(0,0)->setSelected(true);
-        server_select_clicked();
+        QTreeWidgetItem *first=serverList->itemAt(0,0);
+        if(first==nullptr && serverList->topLevelItemCount()>0)
+            first=serverList->topLevelItem(0);
+        if(first!=nullptr)
+        {
+            first->setSelected(true);
+            server_select_clicked();
+        }
     }
 }
 

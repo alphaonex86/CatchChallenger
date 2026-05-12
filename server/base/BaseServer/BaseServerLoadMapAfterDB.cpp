@@ -1,4 +1,5 @@
 #include "BaseServer.hpp"
+#include <iostream>
 #include "../DictionaryServer.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"

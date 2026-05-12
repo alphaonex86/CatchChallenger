@@ -1,0 +1,3 @@
+have to do the structural changes and all changes that's give clear performance improvements but keeping the compatiblity with epoll and select (use ifdef to not impact performance)
+keep in mind testing, to keep good stability, mostly the use send/receive small packet and use small part of their socket buffer
+single threaded server, to maximize server performance using other core/CPU for other task

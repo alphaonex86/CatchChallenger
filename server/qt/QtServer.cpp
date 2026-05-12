@@ -1,4 +1,5 @@
 #include "QtServer.hpp"
+#include <iostream>
 #include "QFakeServer.hpp"
 #include "QFakeSocket.hpp"
 #include "timer/QtPlayerUpdater.hpp"
