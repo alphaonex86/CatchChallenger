@@ -449,15 +449,18 @@ def start_backend():
 
 
 def start_gateway():
-    global gateway_proc
+    global gateway_proc, _gateway_output_dump
     binary = os.path.join(GATEWAY_BUILD, GATEWAY_BIN)
     if not os.path.isfile(binary):
         log_fail("gateway start", f"binary missing: {binary}")
         return False
-    gateway_proc, _ = _start_and_wait_bind(
+    gateway_proc, _gateway_output_dump = _start_and_wait_bind(
         "gateway start", [binary], GATEWAY_BUILD,
         SERVER_READY_TIMEOUT, wrap_with_valgrind=True)
     return gateway_proc is not None
+
+
+_gateway_output_dump = []
 
 
 def _kill(proc):
@@ -491,16 +494,35 @@ def stop_backend():
 def stop_gateway(label):
     """Stop gateway and check valgrind exit code. Valgrind exits 23 when
     it detected an error (per --error-exitcode above), which we treat as
-    a failure. SIGTERM produces a 0 exit when no leaks are found."""
+    a failure. rc=-11 means SIGSEGV under valgrind: the gateway itself
+    crashed even though valgrind didn't flag a memcheck error — treat
+    that as failure too, with the last 30 captured lines so the
+    operator can see WHERE the crash was. SIGTERM produces a 0 exit
+    when no leaks are found."""
     global gateway_proc
     if gateway_proc is None:
         return True
     _kill(gateway_proc)
     rc = gateway_proc.returncode
+    # Drain any remaining gateway stdout before we lose the proc.
+    try:
+        leftover = gateway_proc.stdout.read().decode(errors="replace")
+        if leftover:
+            for line in leftover.splitlines():
+                _gateway_output_dump.append(line)
+    except Exception:
+        pass
     gateway_proc = None
     if rc == 23:
         log_fail(f"{label}: valgrind",
                  "valgrind reported memory errors (exit 23)")
+        return False
+    if rc is not None and rc < 0 and rc != -signal.SIGTERM and rc != -signal.SIGKILL:
+        log_fail(f"{label}: valgrind",
+                 f"gateway died with signal {-rc} under valgrind "
+                 f"(rc={rc}); last gateway stdout/stderr:")
+        for line in _gateway_output_dump[-30:]:
+            print(f"  | {line}")
         return False
     log_pass(f"{label}: valgrind", f"clean (rc={rc})")
     return True

@@ -737,7 +737,17 @@ bool ConnexionInfo::operator<(const ConnexionInfo &connexionInfo) const
 void MainWindow::displayServerList()
 {
     QString unique_code;
-    if(serverConnexion.contains(selectedServer))
+    //If a caller snapshotted the selection's unique_code just before
+    //resetting mergedConnexionInfoList (HTTP reply / LAN broadcast
+    //handlers), use the snapshot — serverConnexion's ConnexionInfo*
+    //values are dangling at this point because the underlying vector
+    //was reassigned. Otherwise fall back to the live map lookup.
+    if(!pendingSelectedUniqueCode.isEmpty())
+    {
+        unique_code=pendingSelectedUniqueCode;
+        pendingSelectedUniqueCode.clear();
+    }
+    else if(serverConnexion.contains(selectedServer))
     {
         ConnexionInfo * connexionInfo=serverConnexion.value(selectedServer);
         if(connexionInfo->unique_code.isEmpty())
@@ -2077,10 +2087,22 @@ void MainWindow::httpFinished()
         }
     }
     temp_xmlConnexionInfoList=loadXmlConnexionInfoListFromData(content);
+    //Snapshot the current selection's unique_code BEFORE the merge-list
+    //rebuild. After we reassign mergedConnexionInfoList below, every
+    //pointer held inside serverConnexion becomes dangling (it pointed
+    //into the previous vector's storage), so the unique_code lookup in
+    //displayServerList() would dereference freed memory. Cache the
+    //string here; reinjectAutoArgsServer() ensures the AutoArgs entry
+    //is still in the new list with a matching unique_code, so the
+    //rebuild loop will re-link selectedServer correctly.
+    pendingSelectedUniqueCode.clear();
+    if(serverConnexion.contains(selectedServer))
+        pendingSelectedUniqueCode=serverConnexion.value(selectedServer)->unique_code;
     serverConnexion.clear();
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
+    reinjectAutoArgsServer();
     std::cout << "mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
 
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());//qSort(mergedConnexionInfoList);
@@ -2124,12 +2146,69 @@ void MainWindow::newLanServer()
             index++;
         }
     }
+    //Same snapshot trick as the HTTP reply handler — see the long
+    //comment there.
+    pendingSelectedUniqueCode.clear();
+    if(serverConnexion.contains(selectedServer))
+        pendingSelectedUniqueCode=serverConnexion.value(selectedServer)->unique_code;
     serverConnexion.clear();
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
+    reinjectAutoArgsServer();
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());//qSort(mergedConnexionInfoList);
     displayServerList();
+}
+
+void MainWindow::reinjectAutoArgsServer()
+{
+    //When --host/--port (or --url) was passed on the command line, the
+    //ctor synthesised a ConnexionInfo entry and made it the active
+    //selection. Every subsequent server-list refresh (HTTP reply,
+    //LAN broadcast) rebuilds mergedConnexionInfoList from the persistent
+    //sources (custom + xml + lan) and drops our synthetic entry. The
+    //matching loop in displayServerList() then can't find any entry
+    //whose unique_code equals "<host>-<port>", leaves selectedServer
+    //NULL, and the autologin chain stalls at state(3). Re-add the
+    //synthetic entry so the match succeeds and the auto-pick continues
+    //through the test harness's --closewhenonmap success path.
+    if(!AutoArgs::host.isEmpty() && AutoArgs::port!=0)
+    {
+        const QString want=AutoArgs::host+QStringLiteral("-")+QString::number(AutoArgs::port);
+        bool alreadyIn=false;
+        for(const ConnexionInfo &existing : mergedConnexionInfoList)
+        {
+            if(existing.unique_code==want)
+            { alreadyIn=true; break; }
+        }
+        if(!alreadyIn)
+        {
+            ConnexionInfo ci;
+            ci.host=AutoArgs::host;
+            ci.port=AutoArgs::port;
+            ci.name=AutoArgs::host+QStringLiteral(":")+QString::number(AutoArgs::port);
+            ci.unique_code=want;
+            mergedConnexionInfoList.push_back(ci);
+        }
+    }
+    if(!AutoArgs::url.isEmpty())
+    {
+        bool alreadyIn=false;
+        for(const ConnexionInfo &existing : mergedConnexionInfoList)
+        {
+            if(existing.unique_code==AutoArgs::url)
+            { alreadyIn=true; break; }
+        }
+        if(!alreadyIn)
+        {
+            ConnexionInfo ci;
+            ci.ws=AutoArgs::url;
+            ci.name=AutoArgs::url;
+            ci.unique_code=AutoArgs::url;
+            ci.port=0;
+            mergedConnexionInfoList.push_back(ci);
+        }
+    }
 }
 
 void MainWindow::on_multiplayer_clicked()

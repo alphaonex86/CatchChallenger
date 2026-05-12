@@ -109,6 +109,12 @@ private slots:
     void on_backDatapack_clicked();
     void on_deleteDatapack_clicked();
     void displayServerList();
+    //Idempotently re-add the --host/--port (or --url) synthetic
+    //server entry to mergedConnexionInfoList. Called after every
+    //rebuild from the persistent sources so the test harness's
+    //direct-connect entry survives HTTP-reply and LAN-broadcast
+    //refreshes.
+    void reinjectAutoArgsServer();
     void on_server_add_clicked();
     void server_add_finished();
     void saveConnexionInfoList();
@@ -159,6 +165,13 @@ private:
     };
     ServerMode serverMode;
     std::vector<ConnexionInfo> temp_lanConnexionInfoList,temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
+    //Snapshot of the selected server's unique_code captured at HTTP /
+    //LAN refresh time and consumed once in the next displayServerList()
+    //call. Bridges the brief window where serverConnexion's
+    //ConnexionInfo* pointers become dangling because the underlying
+    //vector has been reassigned but the per-entry ListEntryEnvolued
+    //widgets haven't been recreated yet.
+    QString pendingSelectedUniqueCode;
     QSpacerItem *spacer;
     QSpacerItem *spacerServer;
     AddOrEditServer *addServer;
