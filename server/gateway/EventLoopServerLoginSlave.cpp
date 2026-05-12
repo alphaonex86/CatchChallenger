@@ -21,8 +21,6 @@ EventLoopServerLoginSlave *EventLoopServerLoginSlave::unixServerLoginSlave=NULL;
 
 EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
     gatewayNumber(1),
-    tcpNodelay(false),
-    tcpCork(false),
     serverReady(false),
     server_ip(NULL),
     server_port(NULL)
@@ -65,13 +63,6 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
     if(!settings.contains("compressionLevel"))
         settings.setValue("compressionLevel","6");
     #endif
-    settings.beginGroup("Linux");
-    if(!settings.contains("tcpCork"))
-        settings.setValue("tcpCork",false);
-    if(!settings.contains("tcpNodelay"))
-        settings.setValue("tcpNodelay",false);
-    settings.endGroup();
-
     settings.beginGroup("commandUpdateDatapack");
     if(!settings.contains("base"))
         settings.setValue("base","");
@@ -176,11 +167,6 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
     }
     CompressionProtocol::compressionLevel          = stringtouint8(settings.value("compressionLevel"));
     #endif
-
-    settings.beginGroup("Linux");
-    tcpCork=stringtobool(settings.value("tcpCork"));
-    tcpNodelay=stringtobool(settings.value("tcpNodelay"));
-    settings.endGroup();
 
     settings.beginGroup("commandUpdateDatapack");
     DatapackDownloaderBase::commandUpdateDatapackBase=settings.value("base");

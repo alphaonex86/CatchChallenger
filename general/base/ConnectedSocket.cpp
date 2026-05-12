@@ -367,47 +367,6 @@ bool ConnectedSocket::isValid() const
     return false;
 }
 
-void ConnectedSocket::setTcpCork(const bool &cork)
-{
-    #if ! defined(__EMSCRIPTEN__) && ! defined(ANDROID_NDK) && ! defined(__ANDROID_API__)
-    #ifdef __linux__
-    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-    if(sslSocket!=nullptr)
-    {
-        #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
-        const qintptr &infd=
-        #else
-        const int32_t &infd=
-        #endif
-                sslSocket->socketDescriptor();
-        if(infd!=-1)
-        {
-            int state = cork;
-            if(setsockopt(static_cast<int>(infd), IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                std::cerr << "Unable to apply tcp cork" << std::endl;
-        }
-    }
-    if(tcpSocket!=nullptr)
-    {
-        #if ! defined(CATCHCHALLENGER_SERVER) && ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
-        const qintptr &infd=
-        #else
-        const int32_t &infd=
-        #endif
-                tcpSocket->socketDescriptor();
-        if(infd!=-1)
-        {
-            int state = cork;
-            if(setsockopt(static_cast<int>(infd), IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                std::cerr << "Unable to apply tcp cork" << std::endl;
-        }
-    }
-    #endif
-    #endif
-    #endif
-    Q_UNUSED(cork);
-}
-
 QHostAddress ConnectedSocket::localAddress() const
 {
     //deprecated form incorrect value for i2p

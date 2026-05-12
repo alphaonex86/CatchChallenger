@@ -101,8 +101,6 @@ int main(int argc, const char *argv[])
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
-    bool tcpCork=false,tcpNodelay=false;
-
     // SSL preamble byte removed; no per-connect sentinel byte is emitted.
 
     PlayerUpdaterToLogin playerUpdaterToLogin;
@@ -201,21 +199,6 @@ int main(int argc, const char *argv[])
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else*/
                         {
-                            if(tcpCork)
-                            {
-                                //set cork for CatchChallener because don't have real time part
-                                int state = 1;
-                                if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                                    std::cerr << "Unable to apply tcp cork" << std::endl;
-                            }
-                            else if(tcpNodelay)
-                            {
-                                //set no delay to don't try group the packet and improve the performance
-                                int state = 1;
-                                if(setsockopt(infd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                                    std::cerr << "Unable to apply tcp no delay" << std::endl;
-                            }
-
                             EventLoopClientLoginMaster *client=new EventLoopClientLoginMaster(infd
                                 );
                             #ifdef CATCHCHALLENGER_HARDENED

@@ -160,21 +160,6 @@ int main(int argc, char *argv[])
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else*/
                         {
-                            if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpCork)
-                            {
-                                //set cork for CatchChallener because don't have real time part
-                                int state = 1;
-                                if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                                    std::cerr << "Unable to apply tcp cork" << std::endl;
-                            }
-                            else if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpNodelay)
-                            {
-                                //set no delay to don't try group the packet and improve the performance
-                                int state = 1;
-                                if(setsockopt(infd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                                    std::cerr << "Unable to apply tcp no delay" << std::endl;
-                            }
-
                             EventLoopClientLoginSlave *client=new EventLoopClientLoginSlave(infd
                                 );
                             #ifdef CATCHCHALLENGER_HARDENED

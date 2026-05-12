@@ -77,7 +77,6 @@ public:
 
     static EventLoopServerLoginSlave *unixServerLoginSlave;
 public:
-    bool tcpNodelay,tcpCork;
     bool serverReady;
 private:
     std::string server_ip;
