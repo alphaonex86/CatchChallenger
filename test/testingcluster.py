@@ -66,8 +66,96 @@ NOT in scope
 import sys
 sys.dont_write_bytecode = True
 
-import argparse, faulthandler, json, multiprocessing, os, shutil, signal, socket
+import argparse, atexit, ctypes, faulthandler, json, multiprocessing, os, shutil, signal, socket
 import subprocess, threading, time
+
+
+# ── orphan-process safety net ────────────────────────────────────────────────
+# Background: a stale catchchallenger-server-cli left over from
+# testingbyIA spun at 100% CPU for 14 hours because the harness was
+# killed mid-run and its spawned servers were re-parented to init.
+# testingcluster.py spawns up to 5 servers per variant (master + 2
+# logins + 2 gsa) plus PG/MariaDB/nginx daemons — even more orphan
+# risk. Defense in depth:
+#  1. Module-level registry of every live process.
+#  2. atexit hook + SIGTERM/SIGINT/SIGHUP handlers walk the registry
+#     and SIGTERM-then-SIGKILL each entry.
+#  3. Child preexec: setsid (so killpg targets only this child's pgid)
+#     + prctl(PR_SET_PDEATHSIG, SIGTERM) so the kernel SIGTERMs the
+#     child the instant its parent dies — covers SIGKILL of the
+#     harness (where no Python finalizer ever runs).
+_PR_SET_PDEATHSIG = 1
+_libc_for_prctl = ctypes.CDLL("libc.so.6", use_errno=True)
+_live_procs_lock = threading.Lock()
+_live_procs = []   # type: list[subprocess.Popen]
+
+
+def _register_live_proc(proc):
+    with _live_procs_lock:
+        if proc is not None and proc not in _live_procs:
+            _live_procs.append(proc)
+
+
+def _unregister_live_proc(proc):
+    with _live_procs_lock:
+        try:
+            _live_procs.remove(proc)
+        except ValueError:
+            pass
+
+
+def _kill_proc_best_effort(proc):
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except (ProcessLookupError, PermissionError):
+            proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                proc.kill()
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                pass
+    except Exception:
+        pass
+
+
+def _kill_all_live_procs():
+    with _live_procs_lock:
+        snapshot = list(_live_procs)
+    for proc in snapshot:
+        _kill_proc_best_effort(proc)
+
+
+def _install_signal_cleanup():
+    def _handler(signum, _frame):
+        _kill_all_live_procs()
+        signal.signal(signum, signal.SIG_DFL)
+        os.kill(os.getpid(), signum)
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(sig, _handler)
+
+
+def _child_preexec():
+    """Child-side setup for every subprocess we own. Runs between
+    fork() and exec()."""
+    os.setsid()
+    try:
+        _libc_for_prctl.prctl(_PR_SET_PDEATHSIG,
+                              signal.SIGTERM, 0, 0, 0)
+    except Exception:
+        pass
+
+
+atexit.register(_kill_all_live_procs)
+_install_signal_cleanup()
 
 # Self-diagnostics: if the script is killed (SIGTERM from all.sh's
 # `timeout 2h`, SIGSEGV from a wild C extension, etc.), faulthandler
@@ -376,7 +464,9 @@ def start_postgresql():
     _pg_proc = subprocess.Popen(
         ["postgres", "-D", data_dir, "-p", str(PG_PORT),
          "-k", sock_dir, "-h", "127.0.0.1"],
-        stdout=logf, stderr=subprocess.STDOUT)
+        stdout=logf, stderr=subprocess.STDOUT,
+        preexec_fn=_child_preexec)
+    _register_live_proc(_pg_proc)
     if not _probe_port(PG_PORT, timeout=20):
         return False, f"postgres didn't open port {PG_PORT} (log: {log_path})"
     # createdb (the role 'catchchallenger' is already a superuser via -U on initdb).
@@ -394,15 +484,8 @@ def stop_postgresql():
     (DB_PG_DIR). Per operator: clean at start AND end."""
     global _pg_proc
     if _pg_proc is not None:
-        try:
-            _pg_proc.terminate()
-            try:
-                _pg_proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                _pg_proc.kill()
-                _pg_proc.wait(timeout=5)
-        except ProcessLookupError:
-            pass
+        _kill_proc_best_effort(_pg_proc)
+        _unregister_live_proc(_pg_proc)
         _pg_proc = None
     if os.path.isdir(DB_PG_DIR):
         shutil.rmtree(DB_PG_DIR, ignore_errors=True)
@@ -446,7 +529,9 @@ def start_mariadb():
          #--user= only allowed when running as root; unprivileged
          #mariadbd inherits the current uid.
         ],
-        stdout=logf, stderr=subprocess.STDOUT)
+        stdout=logf, stderr=subprocess.STDOUT,
+        preexec_fn=_child_preexec)
+    _register_live_proc(_mariadb_proc)
     if not _probe_port(MARIADB_PORT, timeout=30):
         return False, f"mariadbd didn't open port {MARIADB_PORT} (log: {log_path}, {log_path}.err)"
     # Create role + db. Root has no password right after install_db.
@@ -473,15 +558,8 @@ def stop_mariadb():
     (DB_MARIADB_DIR). Per operator: clean at start AND end."""
     global _mariadb_proc
     if _mariadb_proc is not None:
-        try:
-            _mariadb_proc.terminate()
-            try:
-                _mariadb_proc.wait(timeout=8)
-            except subprocess.TimeoutExpired:
-                _mariadb_proc.kill()
-                _mariadb_proc.wait(timeout=5)
-        except ProcessLookupError:
-            pass
+        _kill_proc_best_effort(_mariadb_proc)
+        _unregister_live_proc(_mariadb_proc)
         _mariadb_proc = None
     if os.path.isdir(DB_MARIADB_DIR):
         shutil.rmtree(DB_MARIADB_DIR, ignore_errors=True)
@@ -670,7 +748,9 @@ def start_nginx():
     logf = open(os.path.join(NGINX_ROOT, "nginx.stdout"), "w")
     _nginx_proc = subprocess.Popen(
         ["nginx", "-c", NGINX_CONF, "-p", NGINX_ROOT],
-        stdout=logf, stderr=subprocess.STDOUT)
+        stdout=logf, stderr=subprocess.STDOUT,
+        preexec_fn=_child_preexec)
+    _register_live_proc(_nginx_proc)
     if not _probe_port(NGINX_PORT, timeout=10):
         return False, (f"nginx didn't open port {NGINX_PORT} "
                        f"(see {NGINX_ERR_LOG})")
@@ -681,15 +761,8 @@ def stop_nginx():
     """Stop the nginx daemon and remove its on-disk staging dir."""
     global _nginx_proc
     if _nginx_proc is not None:
-        try:
-            _nginx_proc.terminate()
-            try:
-                _nginx_proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                _nginx_proc.kill()
-                _nginx_proc.wait(timeout=5)
-        except ProcessLookupError:
-            pass
+        _kill_proc_best_effort(_nginx_proc)
+        _unregister_live_proc(_nginx_proc)
         _nginx_proc = None
     if os.path.isdir(NGINX_ROOT):
         shutil.rmtree(NGINX_ROOT, ignore_errors=True)
@@ -1171,7 +1244,9 @@ class ServerProc:
         logf = open(self.log_path, "w")
         self.proc = subprocess.Popen(
             ["./" + exe_name], cwd=self.work_dir,
-            stdout=logf, stderr=subprocess.STDOUT)
+            stdout=logf, stderr=subprocess.STDOUT,
+            preexec_fn=_child_preexec)
+        _register_live_proc(self.proc)
         return self
 
     def wait_ready(self, timeout=READY_TIMEOUT):
@@ -1206,15 +1281,8 @@ class ServerProc:
     def stop(self):
         if self.proc is None:
             return
-        try:
-            self.proc.terminate()
-            try:
-                self.proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.proc.kill()
-                self.proc.wait(timeout=5)
-        except ProcessLookupError:
-            pass
+        _kill_proc_best_effort(self.proc)
+        _unregister_live_proc(self.proc)
         self.proc = None
 
 
@@ -1503,12 +1571,18 @@ def _run_cluster_variant(db_name, base, max_players,
         log_pass(f"{tag}/client1-via-login1", det1, time.monotonic() - t_c1)
 
         # 5) Second client autologin via login #2 (sticky check).
-        #    Wait out the master's character-disconnect cooldown
-        #    (maxLockAge=1s in our master.xml; production default is
-        #    5s + a 180s purgeLockPeriod). 3s was flaky on the first
-        #    variant after schema-replay (master purge thread cadence
-        #    is uneven during the first second of life); 5s clears it.
-        time.sleep(5)
+        #    Wait out the master's character-disconnect cooldown +
+        #    its async unlock-on-disconnect path:
+        #      * <maxLockAge value="1"/> = 1s before a lock expires
+        #      * <purgeLockPeriod value="2"/> = purge tick interval
+        #      * gsa→master "client gone" packet is async; with PG
+        #        async writes for unlock, the ack may take a couple
+        #        more seconds, particularly on the first variant
+        #        after a schema replay (cold libpq prep cache).
+        #    8s reliably clears both the cooldown and the async-ack
+        #    in the test rig; the previous 5s tripped ~50% of the
+        #    time on mp50-mirror.
+        time.sleep(8)
         log_info("  client #2 → login server #2 (sticky check)")
         t_c2 = time.monotonic()
         ok2, det2 = client_connect_via(

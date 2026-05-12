@@ -76,7 +76,9 @@ import sys
 sys.dont_write_bytecode = True
 
 import argparse
+import atexit
 import concurrent.futures
+import ctypes
 import hashlib
 import json
 import multiprocessing
@@ -89,6 +91,93 @@ import struct
 import subprocess
 import threading
 import time
+
+
+# ── orphan-process safety net ────────────────────────────────────────────────
+# Background: testingbyIA spawns one catchchallenger-server-cli per backend
+# under test. When the harness was killed mid-run (SIGTERM from all.sh's
+# `timeout 2h`, SIGKILL from the OS, or a stack trace abort), the spawned
+# servers became orphans — re-parented to init and left running. One was
+# caught spinning at 100% CPU for 14 hours because it had been built before
+# the EventLoopClientList ctor fix (commit 7cbaeceb) landed.
+#
+# Defense in depth:
+#  1. Module-level registry of every live Server instance.
+#  2. atexit hook walks the registry on normal exit / uncaught exception.
+#  3. SIGTERM / SIGINT / SIGHUP handlers do the same, then re-raise the
+#     signal so the process exits with the standard 128+sig code.
+#  4. Child preexec_fn: setsid (so killpg targets only this server's
+#     pgid) + prctl(PR_SET_PDEATHSIG, SIGTERM) (so the kernel SIGTERMs
+#     the child the instant its parent dies — works even when the parent
+#     was SIGKILLed and can't run any Python cleanup).
+_PR_SET_PDEATHSIG = 1
+_libc_for_prctl = ctypes.CDLL("libc.so.6", use_errno=True)
+_live_servers_lock = threading.Lock()
+_live_servers = []     # type: list  — Server instances with self.proc alive
+
+
+def _register_live_server(srv):
+    with _live_servers_lock:
+        if srv not in _live_servers:
+            _live_servers.append(srv)
+
+
+def _unregister_live_server(srv):
+    with _live_servers_lock:
+        try:
+            _live_servers.remove(srv)
+        except ValueError:
+            pass
+
+
+def _kill_all_live_servers():
+    """Idempotent best-effort SIGTERM-then-SIGKILL for every Server still
+    in the registry. Called from atexit and signal handlers — must not
+    raise, must not block longer than the per-server wait already in
+    Server.stop()."""
+    with _live_servers_lock:
+        snapshot = list(_live_servers)
+    for srv in snapshot:
+        try:
+            srv.stop()
+        except Exception:
+            pass
+
+
+def _install_signal_cleanup():
+    """Wire SIGTERM/SIGINT/SIGHUP to a handler that kills every spawned
+    server before re-raising the signal. Restores the default handler
+    before re-raise so the second delivery exits cleanly (matches what
+    `timeout --kill-after` expects)."""
+    def _handler(signum, _frame):
+        _kill_all_live_servers()
+        # Restore default + re-raise so we exit with 128+signum and the
+        # outer all.sh sees the canonical "killed by signal N" code.
+        signal.signal(signum, signal.SIG_DFL)
+        os.kill(os.getpid(), signum)
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(sig, _handler)
+
+
+def _server_preexec():
+    """Child-side setup inside subprocess.Popen.preexec_fn. Runs in the
+    child between fork() and exec()."""
+    os.setsid()
+    # Ask the kernel to deliver SIGTERM to us the moment our parent
+    # process dies, no matter how the parent died — covers SIGKILL of
+    # the harness (where no Python finalizer ever runs) and outright
+    # crashes. Defined in <linux/prctl.h>: prctl(PR_SET_PDEATHSIG, sig).
+    try:
+        _libc_for_prctl.prctl(_PR_SET_PDEATHSIG,
+                              signal.SIGTERM, 0, 0, 0)
+    except Exception:
+        # Best-effort; child still runs even if prctl is unavailable
+        # (e.g. when porting to non-Linux later).
+        pass
+
+
+atexit.register(_kill_all_live_servers)
+_install_signal_cleanup()
 
 import build_paths
 import diagnostic
@@ -542,8 +631,11 @@ class Server:
         self.proc = subprocess.Popen(
             [self.binary], cwd=self.build_dir,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            preexec_fn=os.setsid,
+            preexec_fn=_server_preexec,
         )
+        # Register BEFORE waiting on ready — if the wait fails or the
+        # harness dies during it, the atexit/signal hooks still find us.
+        _register_live_server(self)
         ready = threading.Event()
 
         def reader():
@@ -580,6 +672,7 @@ class Server:
             except subprocess.TimeoutExpired:
                 pass
         self.proc = None
+        _unregister_live_server(self)
 
     def is_alive(self):
         return self.proc is not None and self.proc.poll() is None
@@ -782,7 +875,7 @@ def case_db_invalid_itemid(server):
     proc = subprocess.Popen(
         [server.binary], cwd=probe_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid,
+        preexec_fn=_server_preexec,
     )
     saw_warn = False
     deadline = time.monotonic() + 30
@@ -827,7 +920,7 @@ def case_db_invalid_monsterid(server):
     proc = subprocess.Popen(
         [server.binary], cwd=probe_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid,
+        preexec_fn=_server_preexec,
     )
     saw_warn = False
     deadline = time.monotonic() + 30
