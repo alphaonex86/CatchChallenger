@@ -66,7 +66,7 @@ NOT in scope
 import sys
 sys.dont_write_bytecode = True
 
-import argparse, atexit, ctypes, faulthandler, json, multiprocessing, os, shutil, signal, socket
+import argparse, atexit, ctypes, faulthandler, json, multiprocessing, os, resource, shutil, signal, socket
 import subprocess, threading, time
 
 
@@ -151,6 +151,23 @@ def _child_preexec():
         _libc_for_prctl.prctl(_PR_SET_PDEATHSIG,
                               signal.SIGTERM, 0, 0, 0)
     except Exception:
+        pass
+    # Self-cap CPU time. A buggy server caught in a tight loop
+    # (e.g. EventLoopClientList ctor with uint8_t index overflow,
+    # commit 7cbaeceb) burns one full core forever. PR_SET_PDEATHSIG
+    # only fires when the parent dies; if the parent is healthy but
+    # the child is wedged, only this rlimit catches it. RLIMIT_CPU
+    # counts CPU seconds (not wall) so an idle server in epoll_wait
+    # accrues near-zero and runs indefinitely as intended. Soft
+    # limit triggers SIGXCPU (handler-overridable in production);
+    # hard limit at +60s forces SIGKILL.
+    try:
+        # 2h matches the per-script wall cap enforced by all.sh +
+        # the Python-level watchdog in start_wall_watchdog().
+        soft = 2 * 60 * 60
+        hard = soft + 60
+        resource.setrlimit(resource.RLIMIT_CPU, (soft, hard))
+    except (ValueError, OSError):
         pass
 
 

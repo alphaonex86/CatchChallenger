@@ -84,6 +84,7 @@ import json
 import multiprocessing
 import os
 import re
+import resource
 import shutil
 import signal
 import socket
@@ -173,6 +174,19 @@ def _server_preexec():
     except Exception:
         # Best-effort; child still runs even if prctl is unavailable
         # (e.g. when porting to non-Linux later).
+        pass
+    # Self-cap CPU time. A wedged server (e.g. EventLoopClientList ctor
+    # with uint8_t index overflow on max-players=2000 — commit 7cbaeceb)
+    # burns one full core forever; PR_SET_PDEATHSIG only helps if the
+    # parent dies. RLIMIT_CPU counts CPU seconds (not wall) so an idle
+    # server in epoll_wait accrues near-zero and runs as long as needed.
+    # Soft trigger fires SIGXCPU (default action: terminate); hard at
+    # +60s forces SIGKILL.
+    try:
+        soft = 2 * 60 * 60   # 2h CPU — matches per-script wall cap
+        hard = soft + 60
+        resource.setrlimit(resource.RLIMIT_CPU, (soft, hard))
+    except (ValueError, OSError):
         pass
 
 
