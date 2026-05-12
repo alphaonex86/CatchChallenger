@@ -68,9 +68,24 @@ target_compile_definitions(catchchallenger-gateway PRIVATE
     QT_NO_EMIT
     CATCHCHALLENGER_CLASS_GATEWAY
     CATCHCHALLENGER_DB_BLACKHOLE
-    DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    PROTOCOLPARSINGINPUTOUTPUTDEBUG
 )
+# DEBUG_PROTOCOLPARSING_RAW_NETWORK + PROTOCOLPARSINGINPUTOUTPUTDEBUG
+# spam std::cout with the raw bytes of every packet seen. Useful for
+# manual triage, but under the test harness (`testinggateway.py`) the
+# captured-PIPE stdout buffer fills up well inside one client login —
+# the gateway then blocks inside ::write(STDOUT) and the client times
+# out at "client connected then dropped before map" while the gateway
+# sits idle in flush(). Keep these off in the default build; enable
+# locally via -DCATCHCHALLENGER_GATEWAY_DEBUG_PROTOCOL=ON when
+# triaging a protocol issue.
+option(CATCHCHALLENGER_GATEWAY_DEBUG_PROTOCOL
+       "Spam stdout with raw protocol bytes (gateway-only debug)" OFF)
+if(CATCHCHALLENGER_GATEWAY_DEBUG_PROTOCOL)
+    target_compile_definitions(catchchallenger-gateway PRIVATE
+        DEBUG_PROTOCOLPARSING_RAW_NETWORK
+        PROTOCOLPARSINGINPUTOUTPUTDEBUG
+    )
+endif()
 
 if(EXTERNALLIBZSTD)
     target_link_libraries(catchchallenger-gateway PRIVATE ${ZSTD_LIBRARY})

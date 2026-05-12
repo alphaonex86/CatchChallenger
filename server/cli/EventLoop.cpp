@@ -305,6 +305,17 @@ bool EventLoop::init()
             storage=nullptr;
         if(storage!=nullptr)
         {
+            //Zero the buffer ring so valgrind sees the bytes as
+            //initialised. io_uring's recv_multishot fills these buffers
+            //from kernel-space, which valgrind's memcheck can't observe;
+            //a downstream read of (legitimately kernel-written) bytes
+            //then triggers a "Conditional jump or move depends on
+            //uninitialised value(s)" error per byte, the gateway test
+            //ends up with tens of thousands of false positives, and
+            //--errors-for-leak-kinds gets the process killed before any
+            //real protocol exchange completes. Cost of the memset is
+            //one-time at startup over 16 MiB — negligible.
+            memset(storage,0,total);
             int br_err=0;
             io_uring_buf_ring *br=io_uring_setup_buf_ring(
                         &g_uring->ring,BUF_COUNT,/*bgid=*/0,/*flags=*/0,&br_err);
