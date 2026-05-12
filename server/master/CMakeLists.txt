@@ -124,6 +124,19 @@ target_compile_definitions(catchchallenger-server-master PRIVATE CATCHCHALLENGER
 target_include_directories(catchchallenger-server-master PRIVATE ${LIBURING_INCLUDE_DIR})
 target_link_libraries(catchchallenger-server-master PRIVATE ${LIBURING_LIBRARY})
 
+# Test-only kernel/user-space wakeup-loop detector. When the harness
+# expects no traffic burst (no DDOS fuzz, no large-connexion stress,
+# no event flooding) it sets this and any process delivering >1000
+# events/s through EventLoop::wait() aborts so the wall-watchdog
+# captures a backtrace. See test/CLAUDE.md "Per-script wall limit".
+option(CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+       "Abort if EventLoop::wait() delivers >1000 events/s (testing only)"
+       OFF)
+if(CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE)
+    target_compile_definitions(catchchallenger-server-master PRIVATE
+        CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE)
+endif()
+
 find_program(MOLD_EXE mold)
 if(MOLD_EXE)
     target_link_options(catchchallenger-server-master PRIVATE -fuse-ld=mold)

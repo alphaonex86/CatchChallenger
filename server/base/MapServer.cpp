@@ -1,4 +1,5 @@
 #include "MapServer.hpp"
+#include <iostream>
 #include "GlobalServerData.hpp"
 #include "VariableServer.hpp"
 #include "Client.hpp"

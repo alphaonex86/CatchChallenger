@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <iostream>
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../GlobalServerData.hpp"
 #include "../MapServer.hpp"

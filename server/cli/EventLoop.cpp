@@ -360,6 +360,64 @@ bool EventLoop::init()
 #endif
 }
 
+#ifdef CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+//Belt-and-suspenders against infinite kernel/user-space wakeup loops
+//(missing read drain, epoll EPOLLIN never cleared, io_uring multishot
+//re-armed in a tight loop, …). Counts events delivered through
+//EventLoop::wait() in a sliding 1 s window; if the rate breaches
+//`limit_per_second`, abort() so the test rig captures the
+//backtrace via the wall-watchdog instead of the binary burning a
+//full core silently.
+//
+//Designed for testing*.py only. Not for production: legitimate
+//burst tests (testingbots, testingmulti large connexion counts,
+//DDOS fuzzing in testingbyIA) MUST omit the
+//CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE define at compile time.
+//Threshold is fixed at 1000/s in the harness contract — change
+//here AND in test/CLAUDE.md if the contract ever moves.
+namespace {
+struct EventRateLimiter
+{
+    uint64_t windowStartMs;
+    unsigned int eventsInWindow;
+    unsigned int limit_per_second;
+};
+static EventRateLimiter g_event_rate_limiter={0,0,1000};
+
+static inline uint64_t _now_ms()
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC,&ts);
+    return static_cast<uint64_t>(ts.tv_sec)*1000ULL+
+           static_cast<uint64_t>(ts.tv_nsec)/1000000ULL;
+}
+
+static inline void _event_rate_account(int produced)
+{
+    if(produced<=0)
+        return;
+    const uint64_t now=_now_ms();
+    if(now-g_event_rate_limiter.windowStartMs>=1000)
+    {
+        g_event_rate_limiter.windowStartMs=now;
+        g_event_rate_limiter.eventsInWindow=0;
+    }
+    g_event_rate_limiter.eventsInWindow+=static_cast<unsigned int>(produced);
+    if(g_event_rate_limiter.eventsInWindow>g_event_rate_limiter.limit_per_second)
+    {
+        std::cerr << "CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE: "
+                  << g_event_rate_limiter.eventsInWindow
+                  << " events in last <1s (limit "
+                  << g_event_rate_limiter.limit_per_second
+                  << "/s) — likely a tight wakeup loop; aborting "
+                     "so the test rig can capture a backtrace"
+                  << std::endl;
+        std::abort();
+    }
+}
+}
+#endif
+
 int EventLoop::wait(epoll_event *events,const int &maxevents)
 {
 #if defined(CATCHCHALLENGER_SELECT)
@@ -391,7 +449,12 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
     }
     const int n=::select(maxfd+1,&rfds,&wfds,&efds,nullptr);
     if(n<=0)
+    {
+        #ifdef CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+        _event_rate_account(n);
+        #endif
         return n;
+    }
     int produced=0;
     for(const std::pair<const int,uint32_t> &e : g_select->events)
     {
@@ -409,13 +472,21 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
             ++produced;
         }
     }
+    #ifdef CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+    _event_rate_account(produced);
+    #endif
     return produced;
 #elif defined(CATCHCHALLENGER_POLL)
     if(g_poll==nullptr || g_poll->pfds.empty())
         return 0;
     const int n=::poll(g_poll->pfds.data(),g_poll->pfds.size(),-1);
     if(n<=0)
+    {
+        #ifdef CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+        _event_rate_account(n);
+        #endif
         return n;
+    }
     int produced=0;
     size_t i=0;
     while(i<g_poll->pfds.size() && produced<maxevents)
@@ -429,6 +500,9 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
         }
         ++i;
     }
+    #ifdef CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+    _event_rate_account(produced);
+    #endif
     return produced;
 #elif defined(CATCHCHALLENGER_IO_URING)
     if(g_uring==nullptr)
@@ -612,9 +686,16 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
         if(io_uring_peek_cqe(&g_uring->ring,&cqe)<0 || cqe==nullptr)
             break;
     }
+    #ifdef CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+    _event_rate_account(produced);
+    #endif
     return produced;
 #else
-    return epoll_wait(efd, events, maxevents, -1);
+    const int produced=epoll_wait(efd, events, maxevents, -1);
+    #ifdef CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+    _event_rate_account(produced);
+    #endif
+    return produced;
 #endif
 }
 

@@ -1,4 +1,5 @@
 #include "../base/GlobalServerData.hpp"
+#include <iostream>
 #include <cstring>
 #include "../base/Client.hpp"
 #include "../base/Client.hpp"

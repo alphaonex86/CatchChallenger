@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <iostream>
 #include "../GlobalServerData.hpp"
 #include "../DictionaryLogin.hpp"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

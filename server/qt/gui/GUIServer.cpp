@@ -1,4 +1,5 @@
 #include "GUIServer.hpp"
+#include <iostream>
 #include "../base/GlobalServerData.hpp"
 #include "../base/TinyXMLSettings.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"

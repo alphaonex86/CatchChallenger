@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <iostream>
 #include <cstring>
 #include <vector>
 #include "../ClientList.hpp"

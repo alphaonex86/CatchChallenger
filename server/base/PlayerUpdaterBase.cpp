@@ -1,4 +1,5 @@
 #include "PlayerUpdaterBase.hpp"
+#include <iostream>
 #include <cstring>
 #include "GlobalServerData.hpp"
 #include "Client.hpp"

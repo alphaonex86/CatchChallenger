@@ -1,4 +1,5 @@
 #include "QtClientList.hpp"
+#include <iostream>
 #include "../base/GlobalServerData.hpp"
 
 using namespace CatchChallenger;

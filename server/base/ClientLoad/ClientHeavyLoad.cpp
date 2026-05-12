@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include <iostream>
 #include "../GlobalServerData.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include <xxhash.h>

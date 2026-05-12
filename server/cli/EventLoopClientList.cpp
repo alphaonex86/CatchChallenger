@@ -1,4 +1,5 @@
 #include "EventLoopClientList.hpp"
+#include <iostream>
 #include "../base/GlobalServerData.hpp"
 
 EventLoopClientList::EventLoopClientList()

@@ -1,4 +1,5 @@
 #include "../base/Client.hpp"
+#include <iostream>
 #include "../base/PreparedDBQuery.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/DatabaseFunction.hpp"

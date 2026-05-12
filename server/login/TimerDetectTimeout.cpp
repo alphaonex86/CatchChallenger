@@ -1,4 +1,5 @@
 #include "TimerDetectTimeout.hpp"
+#include <iostream>
 #include "EventLoopClientLoginSlave.hpp"
 #include "LinkToMaster.hpp"
 #include "LinkToGameServer.hpp"

@@ -1,5 +1,6 @@
 #ifndef CATCHCHALLENGER_NOXML
 #include <string>
+#include <iostream>
 #include "../base/ServerStructures.hpp"
 #include "../base/TinyXMLSettings.hpp"
 #include "../base/GlobalServerData.hpp"
