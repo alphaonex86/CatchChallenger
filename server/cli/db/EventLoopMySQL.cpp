@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <poll.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
