@@ -17,7 +17,7 @@ import sys
 sys.dont_write_bytecode = True
 
 
-import os, sys, signal, subprocess, threading, shutil, multiprocessing, time, glob as globmod, json, re, faulthandler
+import os, sys, signal, subprocess, threading, shutil, multiprocessing, time, glob as globmod, json, re, faulthandler, resource
 
 # Self-diagnostics: SIGSEGV / SIGTERM (from `timeout` in all.sh) dump
 # a Python traceback for every thread before exiting. SIGUSR1 can be
@@ -985,10 +985,37 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME,
     wrapper = diagnostic.runtime_wrapper(DIAG)
     srv_args = NICE_PREFIX + wrapper + [binary]
     diagnostic.record_cmd(srv_args, build_dir)
+    # rlimits to catch the runaway-CPU / runaway-alloc patterns
+    # that the harness watchdog otherwise only notices at the 2 h
+    # wall cap. Skip under valgrind/sanitizer: valgrind needs
+    # 10-50× the CPU and 10-20× the memory of a native run;
+    # asan/msan instrument the heap and triple the allocator
+    # footprint. Applying these caps under those tools kills
+    # legitimate workloads. See test/CLAUDE.md "Per-child resource
+    # limits".
+    skip_rlimits = (diagnostic.is_valgrind(DIAG)
+                    or diagnostic.is_sanitize(DIAG))
+    def _server_preexec():
+        os.setsid()
+        if skip_rlimits:
+            return
+        try:
+            cpu_soft = 2 * 60 * 60      # 2 h matches wall cap
+            cpu_hard = cpu_soft + 60
+            resource.setrlimit(resource.RLIMIT_CPU,
+                               (cpu_soft, cpu_hard))
+        except (ValueError, OSError):
+            pass
+        try:
+            mem_cap = 2 * 1024 * 1024 * 1024     # 2 GiB virtual
+            resource.setrlimit(resource.RLIMIT_AS,
+                               (mem_cap, mem_cap))
+        except (ValueError, OSError):
+            pass
     server_proc = subprocess.Popen(
         srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=_server_preexec)
     ready = threading.Event()
     _server_output_lines = []
     def reader():
