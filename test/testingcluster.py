@@ -1320,13 +1320,10 @@ CLIENT_BIN = build_paths.build_path(
     "client/qtopengl/build/testing-gl-c++23-clang-default/catchchallenger")
 
 
-def client_connect_via(login_port, login_name, pass_name, character,
-                       label, timeout=60):
-    """Drive one client connection through a specific login server.
-    Returns (ok, detail). Connection chain:
-      client → login on `login_port` → master → game server (whichever
-      master picks; sticky on character_id).
-    """
+def _run_one_client_attempt(login_port, login_name, pass_name, character,
+                            timeout):
+    """Single client connect attempt. Returns (ok, detail) — same
+    semantics as client_connect_via(), see that helper for context."""
     if not os.path.exists(CLIENT_BIN):
         return False, f"client binary missing: {CLIENT_BIN}"
     cmd = [
@@ -1344,19 +1341,58 @@ def client_connect_via(login_port, login_name, pass_name, character,
     try:
         p = subprocess.run(cmd, env=env, stdout=subprocess.PIPE,
                            stderr=subprocess.STDOUT, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return False, f"{label} timeout after {timeout}s"
-    out = p.stdout.decode(errors="replace")
+        out = p.stdout.decode(errors="replace")
+    except subprocess.TimeoutExpired as exc:
+        partial = exc.stdout if exc.stdout else b""
+        out_text = partial.decode(errors="replace")
+        return False, (f"timeout after {timeout}s "
+                       f"(last 600 bytes of client stdout):\n"
+                       + out_text[-600:])
     if "MapVisualiserPlayer::mapDisplayedSlot" in out:
-        # Try to extract map + position from the client log (it prints
-        # them around the slot trigger).
         import re
         mx = re.search(r"mapDisplayedSlot.*?map[=:]\s*(\S+).*?x[=:](\d+).*?y[=:](\d+)",
                        out, re.DOTALL)
         if mx:
             return True, f"map={mx.group(1)} x={mx.group(2)} y={mx.group(3)}"
         return True, "(map/pos not parseable, slot fired)"
-    return False, "no mapDisplayedSlot line in client output (last 400 bytes):\n" + out[-400:]
+    return False, ("no mapDisplayedSlot line in client output "
+                   "(last 400 bytes):\n" + out[-400:])
+
+
+def client_connect_via(login_port, login_name, pass_name, character,
+                       label, timeout=60):
+    """Drive one client connection through a specific login server.
+    Returns (ok, detail). Connection chain:
+      client → login on `login_port` → master → game server (whichever
+      master picks; sticky on character_id).
+
+    Retries the underlying attempt up to 3 times. There is a known
+    intermittent qtopengl issue where the client receives
+    `Qtlogged(characterEntryList)`, parses the datapack, but the
+    `CharacterList::setupCharactersList`/AutoSelect path doesn't
+    re-fire on this Qt event-loop pass and the client sits idle until
+    login's TimerDetectTimeout kicks it at 60 s. Reproducing rate
+    against the cluster is roughly 1 in 4 with a single attempt;
+    triple-retry drops it below 1.6%. The cluster handshake itself
+    is consistent (master logs the lock and release on every attempt);
+    only the client-side fan-out is flaky."""
+    last = ("", "")
+    attempt = 0
+    while attempt < 3:
+        attempt += 1
+        ok, detail = _run_one_client_attempt(login_port, login_name,
+                                             pass_name, character,
+                                             timeout)
+        if ok:
+            if attempt > 1:
+                return True, f"{detail} (took {attempt} attempts)"
+            return True, detail
+        last = (ok, detail)
+        # Don't backoff on the last iteration — caller already
+        # waited timeout seconds on this attempt.
+        if attempt < 3:
+            time.sleep(2)
+    return last[0], f"{label} failed {attempt}× — last: {last[1]}"
 
 
 # ── per-backend test driver ──────────────────────────────────────────────────
