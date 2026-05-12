@@ -1312,6 +1312,21 @@ class ServerProc:
         _register_live_proc(self.proc)
         return self
 
+    def _dump_log_tail(self, banner, max_lines=40):
+        """Print the last `max_lines` of the binary's captured
+        stdout+stderr. Surfaces the actual cause when a server
+        process exits early or hangs without 'correctly bind:'."""
+        try:
+            with open(self.log_path, "r") as fp:
+                tail = fp.readlines()[-max_lines:]
+        except FileNotFoundError:
+            tail = []
+        with _print_lock:
+            print(f"  | ── {banner}: {self.label} log "
+                  f"(last {len(tail)} lines from {self.log_path}) ──")
+            for line in tail:
+                print(f"  | {line.rstrip()}")
+
     def wait_ready(self, timeout=READY_TIMEOUT):
         """Block until `correctly bind:` appears in the log.
 
@@ -1319,11 +1334,19 @@ class ServerProc:
         process and capture every thread's backtrace before returning.
         The backtrace is printed to stdout so a CI dashboard tail can
         see *where* the process stalled (preload phase, DB query,
-        ctor loop, …) without having to reproduce the hang."""
+        ctor loop, …) without having to reproduce the hang.
+
+        On early exit, dump the binary's captured log tail so the
+        operator sees the abort/error message that caused the early
+        rc!=0 (missing datapack, bad XML, DB connect fail, etc.)
+        instead of just a 'rc=-6 before ready' summary."""
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             if self.proc.poll() is not None:
-                return False, f"{self.label} exited rc={self.proc.returncode} before ready"
+                self._dump_log_tail(
+                    f"early-exit rc={self.proc.returncode}")
+                return False, (f"{self.label} exited "
+                               f"rc={self.proc.returncode} before ready")
             try:
                 with open(self.log_path, "r") as fp:
                     if "correctly bind:" in fp.read():
@@ -1331,7 +1354,9 @@ class ServerProc:
             except FileNotFoundError:
                 pass
             time.sleep(0.2)
-        # Timed out → grab a backtrace before reporting failure.
+        # Timed out → grab a backtrace AND dump the log tail before
+        # reporting failure. Together they pinpoint *which* preload
+        # step or *which* DB query the process is stuck on.
         if self.proc.poll() is None:
             bt = gdb_backtrace(self.proc.pid)
             with _print_lock:
@@ -1339,6 +1364,7 @@ class ServerProc:
                       f"(pid {self.proc.pid}) after {timeout}s ──")
                 for line in bt.splitlines():
                     print(f"  | {line}")
+            self._dump_log_tail(f"hang after {timeout}s")
         return False, f"{self.label} no 'correctly bind:' in {timeout}s"
 
     def stop(self):
