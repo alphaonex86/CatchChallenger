@@ -26,8 +26,6 @@ using namespace CatchChallenger;
 EventLoopServerLoginSlave *EventLoopServerLoginSlave::unixServerLoginSlave=NULL;
 
 EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
-    tcpNodelay(false),
-    tcpCork(false),
     serverReady(false)
 {
     CommonSettingsCommon::commonSettingsCommon.automatic_account_creation   = false;
@@ -192,14 +190,6 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
     }
     #endif
 
-    settings.beginGroup("Linux");
-    if(!settings.contains("tcpCork"))
-        settings.setValue("tcpCork",false);
-    if(!settings.contains("tcpNodelay"))
-        settings.setValue("tcpNodelay",false);
-    tcpCork=stringtobool(settings.value("tcpCork"));
-    tcpNodelay=stringtobool(settings.value("tcpNodelay"));
-    settings.endGroup();
     settings.sync();
 
     std::string db;

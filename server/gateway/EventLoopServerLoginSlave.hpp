@@ -34,7 +34,6 @@ public:
     uint16_t destination_proxy_port;
     uint8_t gatewayNumber;
 public:
-    bool tcpNodelay,tcpCork;
     bool serverReady;
 private:
     char * server_ip;

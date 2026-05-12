@@ -164,28 +164,6 @@ void LinkToGameServer::setConnexionSettings()
             abort();
         }
     }
-    {
-        if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpCork)
-        {
-            //set cork for CatchChallener because don't have real time part
-            int state = 1;
-            if(setsockopt(socketFd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-            {
-                std::cerr << "Unable to apply tcp cork" << std::endl;
-                abort();
-            }
-        }
-        else if(EventLoopServerLoginSlave::unixServerLoginSlave->tcpNodelay)
-        {
-            //set no delay to don't try group the packet and improve the performance
-            int state = 1;
-            if(setsockopt(socketFd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-            {
-                std::cerr << "Unable to apply tcp no delay" << std::endl;
-                abort();
-            }
-        }
-    }
     /*const int s = SocketUtil::make_non_blocking(socketFd);
     if(s == -1)
     {

@@ -183,37 +183,6 @@ void LinkToMaster::setConnexionSettings(const uint8_t &tryInterval,const uint8_t
             abort();
         }
     }
-    {
-        /*const int s = SocketUtil::make_non_blocking(LoginLinkToMaster::linkToMasterSocketFd);
-        if(s == -1)
-        {
-            std::cerr << "unable to make to socket non blocking" << std::endl;
-            abort();
-        }
-        else*/
-        {
-            //if(tcpCork)
-            {
-                //set cork for CatchChallener because don't have real time part
-                int state = 1;
-                if(setsockopt(LinkToMaster::linkToMasterSocketFd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                {
-                    std::cerr << "Unable to apply tcp cork" << std::endl;
-                    abort();
-                }
-            }
-            /*else if(tcpNodelay)
-            {
-                //set no delay to don't try group the packet and improve the performance
-                int state = 1;
-                if(setsockopt(LoginLinkToMaster::linkToMasterSocketFd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                {
-                    std::cerr << "Unable to apply tcp no delay" << std::endl;
-                    abort();
-                }
-            }*/
-        }
-    }
 }
 
 void LinkToMaster::connectInternal()
