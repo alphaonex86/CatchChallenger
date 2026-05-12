@@ -145,28 +145,56 @@ def _install_signal_cleanup():
 
 def _child_preexec():
     """Child-side setup for every subprocess we own. Runs between
-    fork() and exec()."""
+    fork() and exec().
+
+    Three guard rails for child processes the harness spawns:
+
+    1. setsid + PR_SET_PDEATHSIG — kernel SIGTERMs the child when
+       the parent dies (covers SIGKILL of the harness).
+    2. RLIMIT_CPU — caps CPU-seconds, not wall. A wedged server
+       in a tight loop burns a core forever and PR_SET_PDEATHSIG
+       only helps if the parent dies; this catches the parent-OK
+       child-wedged case (e.g. infinite kernel/user-space wakeup
+       loop, missed read drain, EventLoopClientList ctor uint8_t
+       index overflow on max-players=2000 — commit 7cbaeceb).
+    3. RLIMIT_AS — caps total address space. An infinite memory
+       reservation loop (leaked alloc inside an unbounded retry,
+       buffer regrowth O(n²), …) trips this and the kernel sends
+       SIGSEGV/SIGKILL well before the host swaps to death.
+
+    The CPU + AS limits are unconditional here because
+    testingcluster.py never runs its spawned children under
+    valgrind (which would legitimately blow either cap by 10-20×).
+    Other testing*.py invoke binaries via diagnostic.runtime_wrapper;
+    they must gate these limits on `--valgrind` being absent — see
+    test/CLAUDE.md "Per-script wall limit".
+    """
     os.setsid()
     try:
         _libc_for_prctl.prctl(_PR_SET_PDEATHSIG,
                               signal.SIGTERM, 0, 0, 0)
     except Exception:
         pass
-    # Self-cap CPU time. A buggy server caught in a tight loop
-    # (e.g. EventLoopClientList ctor with uint8_t index overflow,
-    # commit 7cbaeceb) burns one full core forever. PR_SET_PDEATHSIG
-    # only fires when the parent dies; if the parent is healthy but
-    # the child is wedged, only this rlimit catches it. RLIMIT_CPU
-    # counts CPU seconds (not wall) so an idle server in epoll_wait
-    # accrues near-zero and runs indefinitely as intended. Soft
-    # limit triggers SIGXCPU (handler-overridable in production);
-    # hard limit at +60s forces SIGKILL.
     try:
-        # 2h matches the per-script wall cap enforced by all.sh +
-        # the Python-level watchdog in start_wall_watchdog().
-        soft = 2 * 60 * 60
-        hard = soft + 60
-        resource.setrlimit(resource.RLIMIT_CPU, (soft, hard))
+        # 2h CPU matches the per-script wall cap enforced by all.sh +
+        # the Python-level watchdog in start_wall_watchdog(). Soft
+        # delivers SIGXCPU (default = terminate); hard +60s forces
+        # SIGKILL even if SIGXCPU is masked.
+        cpu_soft = 2 * 60 * 60
+        cpu_hard = cpu_soft + 60
+        resource.setrlimit(resource.RLIMIT_CPU, (cpu_soft, cpu_hard))
+    except (ValueError, OSError):
+        pass
+    try:
+        # 2 GiB virtual memory per process. Each cluster binary in
+        # normal operation sits at <100 MiB; the cap catches runaway
+        # alloc patterns and stops the host from swapping itself to
+        # death. RLIMIT_AS is hard-cap only — the kernel returns
+        # -ENOMEM from mmap once the limit is hit, glibc converts
+        # that to std::bad_alloc, and the unhandled exception aborts
+        # with a clean stack the wall-watchdog can collect.
+        mem_cap = 2 * 1024 * 1024 * 1024
+        resource.setrlimit(resource.RLIMIT_AS, (mem_cap, mem_cap))
     except (ValueError, OSError):
         pass
 
