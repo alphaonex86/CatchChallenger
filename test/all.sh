@@ -82,6 +82,19 @@ if [ "$CONTINUE" = "1" ]; then
     set +e
 fi
 
+# Mirror everything we print (and every child process's stdout/stderr)
+# to /mnt/data/perso/tmpfs/all.log so the full run is reproducible from
+# disk after-the-fact — useful when the terminal scroll-back has been
+# eaten by a 2 h run or the operator was AFK when something failed.
+# Truncate on every fresh run (parallels the failed.json semantics in
+# the rm above). The tee runs in a process-substitution so the script's
+# own stdout/stderr still go to the terminal in real time.
+ALL_LOG=/mnt/data/perso/tmpfs/all.log
+mkdir -p "$(dirname "$ALL_LOG")"
+: > "$ALL_LOG"
+exec > >(tee -a "$ALL_LOG") 2>&1
+echo "[all.sh] capturing console output to $ALL_LOG"
+
 # to start with fresh folder to be sure test all case.
 # EXCEPT: cc-datapack/ (datapack stage cache, see stage_datapacks.py)
 # and ccache/ (compiler cache); both are persistent benefits across
@@ -240,36 +253,105 @@ MONITOR_PID=$!
 trap '[ -n "$MONITOR_PID" ] && kill "$MONITOR_PID" 2>/dev/null; wait "$MONITOR_PID" 2>/dev/null; true' EXIT INT TERM
 echo "[all.sh] monitor.py started pid=$MONITOR_PID writing $MONITOR_JSON"
 
-## Per-script wall clock cap. Every testing*.py is required (see
-## test/CLAUDE.md) to finish in under two hours. `timeout` enforces
-## the cap from the outside: on expiry, SIGTERM after PER_TEST_TIMEOUT
-## then SIGKILL 30 s later. exit code 124 distinguishes "killed by
-## timeout" from regular non-zero exits so we can flag it specifically.
-PER_TEST_TIMEOUT=2h
+## Per-script wall clock cap. Each testing*.py gets its own ceiling,
+## sized roughly to "twice the longest healthy observed run" so a
+## genuine bug surfaces as a [TIMEOUT] instead of soaking the build.
+## `timeout` enforces it from the outside: on expiry, SIGTERM after
+## the configured limit then SIGKILL 30s later. exit code 124
+## distinguishes "killed by timeout" from regular non-zero exits so
+## we can flag it specifically (and skip the per-test timing log
+## entry — a timed-out run has no meaningful "duration").
 PER_TEST_KILL_AFTER=30s
 
+# Per-script timeout table (script → "Xm" duration). Anything not
+# listed gets the DEFAULT_PER_TEST_TIMEOUT below. Keep this in sync
+# with the operator-supplied table; bumping a number should be a
+# deliberate one-line change, not a sneaky drift.
+declare -A PER_TEST_TIMEOUT_MAP=(
+    [testingbots.py]=15m
+    [testingbyIA.py]=30m
+    [testingclient.py]=30m
+    [testingcluster.py]=10m
+    [testingcmake.py]=30m
+    [testingcompilationandroid.py]=15m
+    [testingcompilationmac.py]=15m
+    [testingcompilationwindows.py]=15m
+    [testingfight.py]=15m
+    [testinggateway.py]=15m
+    [testinghttp.py]=15m
+    [testingmap2png.py]=15m
+    [testingmap4client.py]=30m
+    [testingmulti.py]=30m
+    [testingqtserver.py]=15m
+    [testingremote.py]=45m
+    [testingserver.py]=30m
+    [testingstats.py]=10m
+    [testingtools.py]=15m
+    [testingwebsocket.py]=30m
+)
+DEFAULT_PER_TEST_TIMEOUT=30m
+
+# Per-script wall-time log. testing*.py that complete (PASS or FAIL
+# with rc!=124/137) get an entry. Timed-out runs are deliberately
+# skipped — their "duration" would just be the cap, not a measure of
+# the test's natural runtime, and feeding that back as historical
+# data would slowly inflate every cap that touched a flaky script.
+TIMING_LOG=/mnt/data/perso/tmpfs/testing-individual-time.json
+# Truncate at the start of every fresh run so the file holds exactly
+# the timings for THIS invocation. (Resume-style `--continue` runs
+# also truncate — the operator's mental model is "one all.sh = one
+# timing log".)
+rm -f "$TIMING_LOG"
+
+_log_test_timing() {
+    # $1=script, $2=duration_s (int seconds), $3=rc
+    python3 - "$TIMING_LOG" "$1" "$2" "$3" <<'PY'
+import json, os, sys
+path, script, dur_s, rc = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4])
+entries = []
+if os.path.exists(path):
+    try:
+        with open(path) as f:
+            entries = json.load(f)
+    except Exception:
+        entries = []
+entries.append({"script": script, "duration_s": dur_s, "rc": rc})
+tmp = path + ".tmp"
+with open(tmp, "w") as f:
+    json.dump(entries, f, indent=2)
+os.replace(tmp, path)
+PY
+}
+
 run_test() {
+    local script="$1"
+    local cap="${PER_TEST_TIMEOUT_MAP[$script]:-$DEFAULT_PER_TEST_TIMEOUT}"
     echo -e "\n${CYAN}========================================${RESET}"
     if [ -n "${CC_NODE_FILTER}" ]; then
-        echo -e "${CYAN}  Running: $1 ${DIAG_ARGS[*]} (node filter: ${CC_NODE_FILTER}, cap ${PER_TEST_TIMEOUT})${RESET}"
+        echo -e "${CYAN}  Running: $script ${DIAG_ARGS[*]} (node filter: ${CC_NODE_FILTER}, cap ${cap})${RESET}"
     else
-        echo -e "${CYAN}  Running: $1 ${DIAG_ARGS[*]} (cap ${PER_TEST_TIMEOUT})${RESET}"
+        echo -e "${CYAN}  Running: $script ${DIAG_ARGS[*]} (cap ${cap})${RESET}"
     fi
     echo -e "${CYAN}========================================${RESET}\n"
-    timeout --kill-after="${PER_TEST_KILL_AFTER}" "${PER_TEST_TIMEOUT}" \
-        python3 "$1" "${DIAG_ARGS[@]}"
+    local t0=$(date +%s)
+    timeout --kill-after="${PER_TEST_KILL_AFTER}" "${cap}" \
+        python3 "$script" "${DIAG_ARGS[@]}"
     rc=$?
+    local elapsed=$(( $(date +%s) - t0 ))
     if [ "$rc" = "0" ]; then
-        echo -e "\n${GREEN}[OK] $1${RESET}\n"
+        echo -e "\n${GREEN}[OK] $script  (${elapsed}s)${RESET}\n"
+        _log_test_timing "$script" "$elapsed" "$rc"
     elif [ "$rc" = "124" ] || [ "$rc" = "137" ]; then
-        echo -e "\n${RED}[TIMEOUT] $1 — exceeded ${PER_TEST_TIMEOUT}${RESET}\n"
+        # Don't log a timing entry — see TIMING_LOG comment above.
+        echo -e "\n${RED}[TIMEOUT] $script — exceeded ${cap}${RESET}\n"
         FAILED=1
         if [ "$CONTINUE" = "0" ]; then
             echo -e "${RED}Stopping. Use --continue to run all scripts regardless.${RESET}"
             exit 1
         fi
     else
-        echo -e "\n${RED}[FAILED] $1 (rc=${rc})${RESET}\n"
+        echo -e "\n${RED}[FAILED] $script (rc=${rc}, ${elapsed}s)${RESET}\n"
+        _log_test_timing "$script" "$elapsed" "$rc"
         FAILED=1
         if [ "$CONTINUE" = "0" ]; then
             echo -e "${RED}Stopping. Use --continue to run all scripts regardless.${RESET}"

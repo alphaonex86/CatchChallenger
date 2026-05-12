@@ -183,11 +183,38 @@ To enable: pass `-DCATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE=ON` to cmake configu
 
 Production deploys MUST NOT define this. Leaving it OFF (the default) makes it a zero-cost no-op (compiled out, no `clock_gettime` per wait).
 
-## Per-script wall limit — 2 hours, hard
+## Per-script wall limit — table-driven, capped per workload
 
-Every `testing*.py` MUST finish within **2 hours** wall clock. Cap is enforced two ways:
+Each `testing*.py` has its own wall-time ceiling sized roughly to "twice the longest healthy observed run" — generous enough that the natural run never trips the cap, tight enough that a wedged bug surfaces as a `[TIMEOUT]` instead of soaking the build. all.sh enforces from outside; the script itself enforces from inside.
 
-* **Outside (all.sh)** — `run_test()` wraps each script in `timeout --kill-after=30s 2h python3 ...`. Exit code `124` (`timeout` SIGTERM) or `137` (SIGKILL) is reported as `[TIMEOUT]` and counted as a failure.
+**Caps (kept in lock-step between `test/all.sh:PER_TEST_TIMEOUT_MAP` and `_WALL_LIMIT_SEC` in the script — bumping a number is a deliberate one-line change in both):**
+
+| script                          | cap   |
+|---------------------------------|-------|
+| testingbots.py                  | 15 min |
+| testingbyIA.py                  | 30 min |
+| testingclient.py                | 30 min |
+| testingcluster.py               | 10 min |
+| testingcmake.py                 | 30 min |
+| testingcompilationandroid.py    | 15 min |
+| testingcompilationmac.py        | 15 min |
+| testingcompilationwindows.py    | 15 min |
+| testingfight.py                 | 15 min |
+| testinggateway.py               | 15 min |
+| testinghttp.py                  | 15 min |
+| testingmap2png.py               | 15 min |
+| testingmap4client.py            | 30 min |
+| testingmulti.py                 | 30 min |
+| testingqtserver.py              | 15 min |
+| testingremote.py                | 45 min |
+| testingserver.py                | 30 min |
+| testingstats.py                 | 10 min |
+| testingtools.py                 | 15 min |
+| testingwebsocket.py             | 30 min |
+
+Default for any script not listed: 30 min (set by `DEFAULT_PER_TEST_TIMEOUT` in `all.sh`).
+
+* **Outside (all.sh)** — `run_test()` wraps each script in `timeout --kill-after=30s <cap> python3 ...`. Exit code `124` (`timeout` SIGTERM) or `137` (SIGKILL after the grace) is reported as `[TIMEOUT]` and counted as a failure.
 * **Inside (Python)** — `faulthandler.enable()` + `faulthandler.dump_traceback_later(WALL_LIMIT_SEC+10, exit=False)` prints a thread-by-thread Python traceback right around when `timeout` is about to fire, so the console captures *where* the script was stuck before SIGTERM lands. `faulthandler.register(signal.SIGUSR1)` is also armed — operator can `kill -USR1 <pid>` for a live traceback without killing the script.
 
 When a script implements its own watchdog (testingcluster.py does), it should:
@@ -196,7 +223,14 @@ When a script implements its own watchdog (testingcluster.py does), it should:
 3. For every live subprocess it spawned, run `gdb -batch -ex 'thread apply all bt 40' -p <pid>` — shows where the C++ side is stuck.
 4. `os._exit(3)` so the wrapper sees a distinct exit code and orphans get reaped by parent-death.
 
-When a NEW testing*.py is added, copy the import block from testingserver.py or testingcluster.py (`faulthandler.enable()` + `dump_traceback_later`); don't roll your own. If a script legitimately needs longer than 2h, FIX it — don't widen the cap.
+When a NEW testing*.py is added, copy the import block from testingserver.py or testingcluster.py (`faulthandler.enable()` + `dump_traceback_later`); don't roll your own. If a script legitimately needs more time than its cap, FIX the bug — don't widen the cap.
+
+## Console + per-script timing logs
+
+all.sh writes two operator-facing logs every run (truncated on each fresh run, kept across `--continue`):
+
+* **`/mnt/data/perso/tmpfs/all.log`** — the full console output mirrored from the run, via `exec > >(tee -a ...)`. Lets the operator scroll back the entire run from disk after the terminal scrollback has aged out or when a 2 h run was unattended.
+* **`/mnt/data/perso/tmpfs/testing-individual-time.json`** — a JSON array of `{"script": ..., "duration_s": ..., "rc": ...}` entries, one per testing*.py that COMPLETED (PASS or FAIL with non-timeout rc). Timed-out scripts (rc 124 / 137) are deliberately omitted: their "duration" is just the cap, not a measure of the test's natural runtime, and feeding that back as historical data would slowly inflate every cap that touched a flaky script. Use this to spot caps that are now far too generous (script consistently finishes in 1/5 of its cap → tighten) or far too tight (script regularly takes 90% of its cap → widen with a separate diagnostic before raising).
 
 ## Diagnosing a hung process — gdb attach, then decide
 
