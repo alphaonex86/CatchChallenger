@@ -388,18 +388,30 @@ def _start_and_wait_bind(label, args, cwd, timeout, wrap_with_valgrind):
     if wrap_with_valgrind:
         for k, v in diagnostic.runtime_env(DIAG).items():
             env[k] = v
-        # Force memcheck regardless of --valgrind flag — gateway test is
-        # valgrind-by-design per user request. Mirrors diagnostic.runtime_wrapper
-        # output for memcheck.
-        wrapper = ["valgrind",
-                   "--error-exitcode=23",
-                   "--child-silent-after-fork=yes",
-                   "--tool=memcheck",
-                   "--leak-check=full",
-                   "--show-leak-kinds=all",
-                   "--track-origins=yes",
-                   "--errors-for-leak-kinds=definite,possible"]
-        full = NICE_PREFIX + wrapper + list(args)
+        if os.environ.get("CC_GATEWAY_GDB","")=="1":
+            # Debug path: replace valgrind with gdb -batch. On SIGSEGV
+            # the embedded gdb script dumps every thread's backtrace,
+            # then exits. Used to triage the recurring rc=-11 crash —
+            # off in CI, opt-in via CC_GATEWAY_GDB=1.
+            wrapper = ["gdb","-batch",
+                       "-ex","handle SIGTERM nostop noprint pass",
+                       "-ex","run",
+                       "-ex","thread apply all bt 60",
+                       "--args"]
+            full = wrapper + list(args)
+        else:
+            # Force memcheck regardless of --valgrind flag — gateway test is
+            # valgrind-by-design per user request. Mirrors diagnostic.runtime_wrapper
+            # output for memcheck.
+            wrapper = ["valgrind",
+                       "--error-exitcode=23",
+                       "--child-silent-after-fork=yes",
+                       "--tool=memcheck",
+                       "--leak-check=full",
+                       "--show-leak-kinds=all",
+                       "--track-origins=yes",
+                       "--errors-for-leak-kinds=definite,possible"]
+            full = NICE_PREFIX + wrapper + list(args)
         timeout = max(timeout * 10, timeout)
     else:
         full = NICE_PREFIX + list(args)
@@ -524,6 +536,16 @@ def stop_gateway(label):
         for line in _gateway_output_dump[-30:]:
             print(f"  | {line}")
         return False
+    if os.environ.get("CC_GATEWAY_DUMP","")=="1":
+        try:
+            dump_path="/tmp/gateway-output-dump.log"
+            with open(dump_path,"w") as f:
+                for line in _gateway_output_dump:
+                    f.write(line); f.write("\n")
+            print(f"  | (gateway full output: {dump_path}, "
+                  f"{len(_gateway_output_dump)} lines)")
+        except Exception as ex:
+            print(f"  | failed dump: {ex}")
     log_pass(f"{label}: valgrind", f"clean (rc={rc})")
     return True
 
