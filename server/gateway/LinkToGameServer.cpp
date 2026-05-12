@@ -526,9 +526,13 @@ ssize_t LinkToGameServer::readFromSocket(char * data, const size_t &size)
 
 ssize_t LinkToGameServer::writeToSocket(const char * const data, const size_t &size)
 {
-    //do some basic check on low level protocol (message split, ...)
-    if(ProtocolParsingInputOutput::write(data,size)<0)
-        return -1;
+    //writeToSocket is the virtual sink that ProtocolParsingInputOutput
+    //::write() dispatches to AFTER its hardened protocol-shape check.
+    //Calling ProtocolParsingInputOutput::write() from here would loop
+    //back into writeToSocket and recurse until the stack overflows
+    //(SIGSEGV the first time the gateway has to forward a 7-byte
+    //protocol header to the backend). Drop the redundant call and
+    //write directly.
     return EventLoopClient::write(data,size);
 }
 
