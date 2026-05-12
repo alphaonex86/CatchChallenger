@@ -143,11 +143,25 @@ def _install_signal_cleanup():
         signal.signal(sig, _handler)
 
 
-def _child_preexec():
-    """Child-side setup for every subprocess we own. Runs between
-    fork() and exec().
+def _daemon_preexec():
+    """Lighter preexec for third-party daemons (postgres, mariadbd,
+    nginx). They get setsid + PR_SET_PDEATHSIG so the cleanup chain
+    still reaches them, but NOT the rlimits — postgres in particular
+    refuses to start under 128 MiB RLIMIT_AS, and mariadbd's buffer
+    pool reservations dwarf the cap as well."""
+    os.setsid()
+    try:
+        _libc_for_prctl.prctl(_PR_SET_PDEATHSIG,
+                              signal.SIGTERM, 0, 0, 0)
+    except Exception:
+        pass
 
-    Three guard rails for child processes the harness spawns:
+
+def _child_preexec():
+    """Child-side setup for every CC server binary the harness owns
+    (master / login / gsa). Runs between fork() and exec().
+
+    Three guard rails:
 
     1. setsid + PR_SET_PDEATHSIG — kernel SIGTERMs the child when
        the parent dies (covers SIGKILL of the harness).
@@ -176,24 +190,30 @@ def _child_preexec():
     except Exception:
         pass
     try:
-        # 2h CPU matches the per-script wall cap enforced by all.sh +
-        # the Python-level watchdog in start_wall_watchdog(). Soft
-        # delivers SIGXCPU (default = terminate); hard +60s forces
-        # SIGKILL even if SIGXCPU is masked.
-        cpu_soft = 2 * 60 * 60
+        # 15 minutes CPU. Catches runaway tight loops well inside the
+        # per-script wall cap (2h all.sh, 7200s Python watchdog) and
+        # is small enough that a low-CPU VPS scheduling the test
+        # alongside other tenants isn't accidentally starved by a
+        # legitimate workload. Soft delivers SIGXCPU (default =
+        # terminate); hard +60s forces SIGKILL even if SIGXCPU is
+        # masked.
+        cpu_soft = 15 * 60
         cpu_hard = cpu_soft + 60
         resource.setrlimit(resource.RLIMIT_CPU, (cpu_soft, cpu_hard))
     except (ValueError, OSError):
         pass
     try:
-        # 2 GiB virtual memory per process. Each cluster binary in
-        # normal operation sits at <100 MiB; the cap catches runaway
-        # alloc patterns and stops the host from swapping itself to
-        # death. RLIMIT_AS is hard-cap only — the kernel returns
-        # -ENOMEM from mmap once the limit is hit, glibc converts
-        # that to std::bad_alloc, and the unhandled exception aborts
-        # with a clean stack the wall-watchdog can collect.
-        mem_cap = 2 * 1024 * 1024 * 1024
+        # 128 MiB virtual memory per process. Master + login each sit
+        # well under 50 MiB even at peak; gsa with max-players=2000
+        # is around 100 MiB once the datapack is mapped in. The cap
+        # catches runaway alloc patterns (recursive buffer regrowth,
+        # leak inside an unbounded retry) and keeps a small VPS
+        # alive when a buggy build tries to swap the host to death.
+        # RLIMIT_AS is hard-cap only — the kernel returns -ENOMEM
+        # from mmap once the limit is hit, glibc converts that to
+        # std::bad_alloc, and the unhandled exception aborts with a
+        # clean stack the wall-watchdog can collect.
+        mem_cap = 128 * 1024 * 1024
         resource.setrlimit(resource.RLIMIT_AS, (mem_cap, mem_cap))
     except (ValueError, OSError):
         pass
@@ -510,7 +530,7 @@ def start_postgresql():
         ["postgres", "-D", data_dir, "-p", str(PG_PORT),
          "-k", sock_dir, "-h", "127.0.0.1"],
         stdout=logf, stderr=subprocess.STDOUT,
-        preexec_fn=_child_preexec)
+        preexec_fn=_daemon_preexec)
     _register_live_proc(_pg_proc)
     if not _probe_port(PG_PORT, timeout=20):
         return False, f"postgres didn't open port {PG_PORT} (log: {log_path})"
@@ -575,7 +595,7 @@ def start_mariadb():
          #mariadbd inherits the current uid.
         ],
         stdout=logf, stderr=subprocess.STDOUT,
-        preexec_fn=_child_preexec)
+        preexec_fn=_daemon_preexec)
     _register_live_proc(_mariadb_proc)
     if not _probe_port(MARIADB_PORT, timeout=30):
         return False, f"mariadbd didn't open port {MARIADB_PORT} (log: {log_path}, {log_path}.err)"
@@ -794,7 +814,7 @@ def start_nginx():
     _nginx_proc = subprocess.Popen(
         ["nginx", "-c", NGINX_CONF, "-p", NGINX_ROOT],
         stdout=logf, stderr=subprocess.STDOUT,
-        preexec_fn=_child_preexec)
+        preexec_fn=_daemon_preexec)
     _register_live_proc(_nginx_proc)
     if not _probe_port(NGINX_PORT, timeout=10):
         return False, (f"nginx didn't open port {NGINX_PORT} "

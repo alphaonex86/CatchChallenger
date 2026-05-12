@@ -1000,14 +1000,14 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME,
         if skip_rlimits:
             return
         try:
-            cpu_soft = 2 * 60 * 60      # 2 h matches wall cap
+            cpu_soft = 15 * 60          # 15 min — low-CPU VPS safe
             cpu_hard = cpu_soft + 60
             resource.setrlimit(resource.RLIMIT_CPU,
                                (cpu_soft, cpu_hard))
         except (ValueError, OSError):
             pass
         try:
-            mem_cap = 2 * 1024 * 1024 * 1024     # 2 GiB virtual
+            mem_cap = 128 * 1024 * 1024  # 128 MiB virtual
             resource.setrlimit(resource.RLIMIT_AS,
                                (mem_cap, mem_cap))
         except (ValueError, OSError):
