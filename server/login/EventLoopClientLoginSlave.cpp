@@ -49,6 +49,12 @@ EventLoopClientLoginSlave::~EventLoopClientLoginSlave()
 #ifdef CATCHCHALLENGER_IO_URING
 void EventLoopClientLoginSlave::onAsyncRecv(const char *buf,size_t len)
 {
+    //Refresh the activity timestamp. parseIncommingData() does this
+    //on the legacy epoll path; the io_uring multishot path bypasses
+    //it and writes straight to parseIncommingDataAsync, so without
+    //this line TimerDetectTimeout would kick every new client at
+    //the 60 s idle limit even though bytes were actively arriving.
+    lastActivity=LinkToGameServer::msFrom1970();
     parseIncommingDataAsync(buf,len);
 }
 #endif
