@@ -822,12 +822,34 @@ def main():
             stop_backend()
             stop_nginx()
             continue
-        run_client(f"{case}: client→map")
+        client_ok = run_client(f"{case}: client→map")
         # Stop gateway first so valgrind's report appears in the FAIL
         # context window for THIS case, not the next one.
         stop_gateway(case)
         stop_backend()
         stop_nginx()
+        # Fail-fast: if a case timed out on `client→map`, the next 27
+        # share the same root cause and would each chew another 600 s
+        # under valgrind — easily overshooting the 15 m all.sh wrapper
+        # cap. Skip the rest and let the operator iterate via
+        # --onlyfailed once the underlying bug is patched. Skipped
+        # cases get a synthetic FAIL row so failed.json reflects the
+        # full intent.
+        if not client_ok and pi < len(plan):
+            log_info(f"fail-fast: case '{case}' failed; skipping "
+                     f"{len(plan)-pi} remaining case(s) to stay under "
+                     f"the harness cap")
+            while pi < len(plan):
+                dp2, mc2, sc2, dh2, gh2 = plan[pi]
+                pi += 1
+                case2 = (f"{os.path.basename(dp2)}/{mc2}"
+                         + (f"/{sc2}" if sc2 else "")
+                         + f" dest_http={dh2} gw_http={gh2}")
+                if not should_run(case2, failed_cases):
+                    continue
+                log_fail(f"{case2}: client→map",
+                         "skipped after fail-fast (earlier case failed)")
+            break
 
     summary()
 
