@@ -33,7 +33,7 @@ set -e
 # without re-running the whole matrix.
 find /mnt/data/perso/tmpfs/ -mindepth 1 -maxdepth 1 \
      ! -name 'ccache' \
-     ! -name 'cache' \
+     ! -name 'cc-datapack' \
      ! -name 'all.log' \
      ! -name 'failed.json' \
      ! -name 'failed.json.lock' \
@@ -453,9 +453,10 @@ else
     # Anything else (transient build trees, datapack staging, cluster
     # state, nginx config) is removed.
     if [ -n "$TMPFS_ROOT" ] && [ -d "$TMPFS_ROOT" ]; then
-        echo -e "\n${CYAN}[all.sh] sweep tmpfs root → keep artifacts + JSON + ccache${RESET}"
+        echo -e "\n${CYAN}[all.sh] sweep tmpfs root → keep artifacts + JSON + ccache + cc-datapack${RESET}"
         find "$TMPFS_ROOT/" -mindepth 1 -maxdepth 1 \
              ! -name 'ccache' \
+             ! -name 'cc-datapack' \
              ! -name 'all.log' \
              ! -name 'failed.json' \
              ! -name 'failed.json.lock' \
