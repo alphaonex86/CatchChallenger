@@ -25,6 +25,8 @@ sys.dont_write_bytecode=True
 
 import os, json, subprocess, shutil, time, multiprocessing
 import diagnostic
+import wall_cap
+wall_cap.arm()
 import build_paths
 import cleanup_helpers
 from cmd_helpers import clamp_local

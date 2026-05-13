@@ -23,6 +23,8 @@ import remote_build as _rb
 from remote_build import (REMOTE_NODES, configure_timeout_for,
                           compile_timeout_for)
 import diagnostic
+import wall_cap
+wall_cap.arm()
 from cmd_helpers import (SSH_OPTS_LIST, RSYNC_SSH_E, SSH_TIMEOUT_MARKER,
                          is_ssh_timeout, clamp_ssh, clamp_local)
 

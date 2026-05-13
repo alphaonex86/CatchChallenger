@@ -238,6 +238,8 @@ except (AttributeError, ValueError):
 
 import build_paths
 import diagnostic
+import wall_cap
+wall_cap.arm()
 import test_config
 
 build_paths.ensure_root()

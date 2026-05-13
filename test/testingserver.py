@@ -15,6 +15,8 @@ Phases:
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
 import process_helpers
+import wall_cap
+wall_cap.arm()
 import cleanup_helpers
 sys.dont_write_bytecode = True
 
