@@ -1,6 +1,12 @@
 # test/ — testing harness
 
-Combine with root CLAUDE.md.
+**Always read `../CLAUDE.md` first.** When Claude is launched with
+`test/` as the working directory, the root CLAUDE.md is NOT auto-
+loaded — open `../CLAUDE.md` before doing anything else and combine
+its rules with the ones below. The root file owns project-wide
+conventions: C++/Qt style, CMake-per-binary layout, never-search-
+from-`/`, MXE prefix, "don't ask — just continue", … and they apply
+to the testing harness too.
 
 ## Datapack `map/main/test/` — intentional bugs as fixtures
 
