@@ -379,22 +379,18 @@ run_test testingbyIA.py
 run_test testingcluster.py
 run_test testingremote.py
 run_test testingcompilationwindows.py
-# testingcompilationmac.py disabled: host VM /Users/user/Desktop/... has
-# cmake missing from the non-login ssh PATH, so every cmake-configure step
-# returns rc=127. Re-enable once the VM environment is fixed.
-#run_test testingcompilationmac.py
+run_test testingcompilationmac.py
 run_test testingcompilationandroid.py
 
 # Publish freshly-built installers to the web VPS files dir and bump
-# updater.txt. Mac is skipped here because testingcompilationmac.py is
-# disabled above (no .dmg exists). publish_binaries.sh aborts (and
-# leaves updater.txt untouched) if any artifact is missing or <10 MiB,
-# so we never advertise a version whose downloads would 404.
+# updater.txt. publish_binaries.sh aborts (and leaves updater.txt
+# untouched) if any artifact is missing or <10 MiB, so we never
+# advertise a version whose downloads would 404.
 if [ "$FAILED" = "0" ]; then
     echo -e "\n${CYAN}========================================${RESET}"
-    echo -e "${CYAN}  Publish: windows + android → web VPS${RESET}"
+    echo -e "${CYAN}  Publish: windows + mac + android → web VPS${RESET}"
     echo -e "${CYAN}========================================${RESET}\n"
-    if ./publish_binaries.sh windows android; then
+    if ./publish_binaries.sh windows mac android; then
         echo -e "\n${GREEN}[OK] publish_binaries.sh${RESET}\n"
     else
         echo -e "\n${RED}[FAILED] publish_binaries.sh${RESET}\n"
