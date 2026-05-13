@@ -227,7 +227,12 @@ def _do_teardown():
 
 
 def _signal_teardown(signo, _frame):
-    _do_teardown()
+    # A signal-driven exit (SIGTERM / SIGINT, e.g. operator hit Ctrl-C
+    # or the timeout wrapper killed the harness) is by definition NOT
+    # a success path — keep dirs around for inspection. We still
+    # re-raise the signal so the parent sees the correct exit code.
+    global _explicit_failure
+    _explicit_failure = True
     # Re-raise the original signal so the parent's exit code is
     # correct (otherwise SIGTERM becomes exit 0 and downstream
     # tooling believes the test passed when it was actually killed).
