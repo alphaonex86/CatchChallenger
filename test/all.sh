@@ -404,7 +404,35 @@ fi
 
 if [ "$FAILED" = "1" ]; then
     echo -e "\n${RED}Some tests FAILED.${RESET}"
+    # On any failure, leave the tmpfs untouched so the operator can
+    # inspect every build dir / log of every failing test. The
+    # successful tests have already torn their dirs down via the
+    # per-script atexit hook in cleanup_helpers.py.
     exit 1
 else
+    # All tests passed → final sweep so the tmpfs root holds only:
+    #   - shipping artifacts (catchchallenger-*.exe/.msi/.apk/.aab/.dmg)
+    #   - bookkeeping JSON (all.log, failed.json[.lock], time.json,
+    #     monitor.json, testing-individual-time.json)
+    #   - ccache (kept warm across runs)
+    # Anything else (transient build trees, datapack staging, cluster
+    # state, nginx config) is removed.
+    if [ -n "$TMPFS_ROOT" ] && [ -d "$TMPFS_ROOT" ]; then
+        echo -e "\n${CYAN}[all.sh] sweep tmpfs root → keep artifacts + JSON + ccache${RESET}"
+        find "$TMPFS_ROOT/" -mindepth 1 -maxdepth 1 \
+             ! -name 'ccache' \
+             ! -name 'all.log' \
+             ! -name 'failed.json' \
+             ! -name 'failed.json.lock' \
+             ! -name 'time.json' \
+             ! -name 'monitor.json' \
+             ! -name 'testing-individual-time.json' \
+             ! -name 'catchchallenger-*.exe' \
+             ! -name 'catchchallenger-*.msi' \
+             ! -name 'catchchallenger-*.dmg' \
+             ! -name 'catchchallenger-*.apk' \
+             ! -name 'catchchallenger-*.aab' \
+             -exec rm -rf {} + 2>/dev/null
+    fi
     echo -e "\n${GREEN}All tests PASSED.${RESET}"
 fi
