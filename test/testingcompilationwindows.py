@@ -522,47 +522,159 @@ _INSTALL_EXCLUDE_FILES = {
     ".ninja_deps", ".ninja_log", "build.ninja",
     "cmake_install.cmake", "CMakeCache.txt", "compile_commands.json",
 }
-# .dll allowlist — every DLL the .exe legitimately needs to start on
-# Windows (verified end-to-end with `wine64 <exe>` in this test). MXE
-# also drops a bunch of unrelated libs into the same bin/ dir (ffmpeg
-# avcodec/avdevice/avfilter/avformat/avutil, hdf5*, GLEW, glfw3,
-# ALURE32, …) that nothing in catchchallenger links against — those
-# would just bloat the installer past the 100 MiB ceiling without
-# changing behaviour. Anything not on this allowlist is excluded.
-_INSTALL_ALLOWLIST_DLLS = {
-    # MinGW runtime + the C/C++ standard libs MXE produces
-    "libgcc_s_seh-1.dll", "libstdc++-6.dll", "libwinpthread-1.dll",
-    "libssp-0.dll",
-    # Project's vendored audio codec + opus (only when audio enabled)
-    "libogg-0.dll", "libopus-0.dll", "libopusfile-0.dll",
-    # zstd is linked through general/libzstd; either vendored static or
-    # exposed via libzstd.dll depending on the MXE recipe in use
-    "libzstd.dll",
-    # zlib (vendored too but MXE may ship the shared variant)
-    "zlib1.dll",
-    # tinyxml2 — vendored static normally, but MXE ships a shared one
-    "libtinyxml2.dll", "libtinyxml2-10.dll",
-    # blake3 + xxhash — same story as tinyxml2
-    "libblake3.dll", "libxxhash.dll",
-    # OpenSSL — required for https mirror downloads
-    "libcrypto-3-x64.dll", "libcrypto-3.dll",
-    "libssl-3-x64.dll",   "libssl-3.dll",
-    # Qt6 DLLs — windeployqt would deposit the same set
-    # (allowlist by prefix below picks them up)
-}
-_INSTALL_ALLOWLIST_PREFIXES = ("Qt6",)
+
+# .dll list is computed at runtime per build (NOT hardcoded). Two passes:
+#  1) Static — PE imports of the .exe and of every recursively-needed
+#     .dll, harvested via `objdump -p`. Catches DLLs the linker put in
+#     the import directory.
+#  2) Runtime — run the .exe once under wine with WINEDEBUG=+loaddll
+#     (autosolo for the GUI client; --version for the server CLI) and
+#     parse the "load_dll" trace lines. Catches LoadLibrary'd DLLs that
+#     aren't in any PE import table (Qt plugins, GL/audio backends,
+#     etc.).
+# The union of (1) and (2) is the install allowlist for THIS build.
+
+_OBJDUMP = shutil.which("x86_64-w64-mingw32.shared-objdump") \
+        or shutil.which("x86_64-w64-mingw32-objdump") \
+        or shutil.which("objdump")
+
+
+def _pe_imports(pe_path):
+    """Return a set of lowercased DLL basenames imported by pe_path's
+    PE import directory. Empty set if objdump is missing or fails."""
+    if _OBJDUMP is None or not os.path.isfile(pe_path):
+        return set()
+    rc, out = run_cmd([_OBJDUMP, "-p", pe_path],
+                      os.path.dirname(pe_path), timeout=30)
+    if rc != 0:
+        return set()
+    deps = set()
+    li = 0
+    lines = out.splitlines()
+    while li < len(lines):
+        line = lines[li].strip()
+        li += 1
+        # objdump format:  "\tDLL Name: foo.dll"
+        if line.startswith("DLL Name:"):
+            name = line.split(":", 1)[1].strip().lower()
+            if name:
+                deps.add(name)
+    return deps
+
+
+def _pe_imports_recursive(exe_path, search_dir):
+    """Walk PE imports starting at exe_path, resolving each named DLL
+    inside search_dir, and recursing into any DLL we ship. System DLLs
+    (kernel32.dll, advapi32.dll, …) live in C:\\Windows and are never
+    bundled — they're skipped silently. Returns the closure set of
+    lowercased DLL basenames that DO live in search_dir."""
+    seen = set()
+    todo = [exe_path]
+    while todo:
+        pe = todo.pop()
+        for dep in _pe_imports(pe):
+            if dep in seen:
+                continue
+            local = os.path.join(search_dir, dep)
+            if not os.path.isfile(local):
+                # Best-effort case-insensitive match (objdump preserves
+                # the casing from the import directory; the file on disk
+                # may differ).
+                hit = None
+                try:
+                    for cand in os.listdir(search_dir):
+                        if cand.lower() == dep:
+                            hit = os.path.join(search_dir, cand); break
+                except OSError:
+                    pass
+                if hit is None:
+                    continue
+                local = hit
+                dep = os.path.basename(local).lower()
+            seen.add(dep)
+            todo.append(local)
+    return seen
+
+
+def _wine_runtime_dlls(exe_path, exe_dir, args):
+    """Run exe_path under wine64 with WINEDEBUG=+loaddll and harvest
+    the lowercased basenames of every DLL wine actually mapped during
+    that run. Used to catch LoadLibrary'd DLLs that aren't in the .exe's
+    PE imports (Qt plugins, audio/GL backends, sqldrivers). args is the
+    command-line tail (e.g. ["--version"] or ["--autosolo"]).
+    Returns an empty set if wine64 isn't available."""
+    if not WINE_BIN or not os.path.isfile(WINE_BIN):
+        return set()
+    if not os.path.isfile(exe_path):
+        return set()
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"]  = "offscreen"
+    env["WINEDEBUG"]        = "+loaddll"
+    env["WINEDLLOVERRIDES"] = "mscoree,mshtml="
+    rc, out = run_cmd([WINE_BIN, exe_path] + list(args),
+                      exe_dir, timeout=60, env=env)
+    # wine traces look like:
+    #   trace:loaddll:load_native_dll Loaded L"/.../qt6core.dll" at 0x...:
+    #   trace:module:load_builtin_dll Loaded L"C:\\windows\\system32\\..."
+    # We only want DLLs we could legitimately ship — those that live
+    # inside exe_dir's tree (the MXE-deployed runtime + Qt deps).
+    dlls = set()
+    li = 0
+    for line in out.splitlines():
+        if "Loaded" not in line:
+            continue
+        # Pick out the quoted path. Wine uses L"..." or plain "...".
+        q1 = line.find('"')
+        q2 = line.find('"', q1 + 1) if q1 >= 0 else -1
+        if q1 < 0 or q2 < 0:
+            continue
+        path = line[q1+1:q2]
+        base = os.path.basename(path).lower()
+        if base.endswith(".dll"):
+            dlls.add(base)
+    return dlls
+
+
+def _compute_dll_allowlist(exe_path, exe_dir):
+    """Combine static PE-import closure (1) with runtime wine-loaded set
+    (2). Returned set is the .dll basenames (lowercase) the installer
+    must ship. Plugins go through directory pass-through and aren't on
+    this list — only top-level .dll files alongside the .exe."""
+    static = _pe_imports_recursive(exe_path, exe_dir)
+    # Runtime pass: --version is a 1-shot path that still loads every
+    # Qt platform plugin + GL backend on the GUI client (the splash
+    # screen ctor pulls them in even when we exit early). --autosolo
+    # would be more thorough but costs ~30 s; --version captures the
+    # essential init path and finishes in <2 s.
+    runtime = _wine_runtime_dlls(exe_path, exe_dir, ["--version"])
+    # Filter the runtime set: keep only DLLs that live in exe_dir
+    # (system DLLs from C:\Windows aren't shippable and aren't ours).
+    runtime_local = set()
+    try:
+        on_disk = {n.lower() for n in os.listdir(exe_dir)}
+    except OSError:
+        on_disk = set()
+    for d in runtime:
+        if d in on_disk:
+            runtime_local.add(d)
+    return static | runtime_local
 
 
 def _stage_install_payload(src_dir):
     """Mirror src_dir to a sibling clean-install dir, dropping every
     build-system artefact (CMakeFiles, *_autogen, .ninja_*, CMakeCache,
-    compile_commands.json) and every DLL not on the allowlist. The
-    .exe, the datapack/, and every Qt plugin sub-dir are kept verbatim.
-    Returns the staging dir path."""
+    compile_commands.json) and every DLL not in the per-build allowlist.
+    The .exe, the datapack/, and every Qt plugin sub-dir are kept
+    verbatim. Returns the staging dir path."""
     stage = src_dir.rstrip(os.sep) + "-install-stage"
     if os.path.isdir(stage):
         shutil.rmtree(stage, ignore_errors=True)
     os.makedirs(stage, exist_ok=True)
+    exe_path = os.path.join(src_dir, WIN_EXE_NAME)
+    allow = _compute_dll_allowlist(exe_path, src_dir)
+    log_info(f"install allowlist: {len(allow)} DLL(s) "
+             f"({sum(1 for x in allow if x.startswith('qt6'))} Qt6, "
+             f"{sum(1 for x in allow if not x.startswith('qt6'))} runtime)")
     for entry in os.listdir(src_dir):
         s = os.path.join(src_dir, entry)
         d = os.path.join(stage, entry)
@@ -575,12 +687,8 @@ def _stage_install_payload(src_dir):
             continue
         if entry in _INSTALL_EXCLUDE_FILES:
             continue
-        if entry.endswith(".dll"):
-            if entry in _INSTALL_ALLOWLIST_DLLS:
-                pass
-            elif any(entry.startswith(p) for p in _INSTALL_ALLOWLIST_PREFIXES):
-                pass
-            else:
+        if entry.lower().endswith(".dll"):
+            if entry.lower() not in allow:
                 continue
         try:
             shutil.copy2(s, d, follow_symlinks=True)
