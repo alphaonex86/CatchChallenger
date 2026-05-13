@@ -563,6 +563,26 @@ _INSTALL_EXCLUDE_FILES = {
     ".ninja_deps", ".ninja_log", "build.ninja",
     "cmake_install.cmake", "CMakeCache.txt", "compile_commands.json",
 }
+# Build-time artefacts ALWAYS excluded by file extension, regardless of
+# their basename. Static-library archives in particular were being
+# shipped in the installer: libcatchchallenger_qt_lib.a alone is
+# 319 MiB (it contains every Qt-AUTOGEN moc/uic/rcc object the client
+# was linked from); libcatchchallenger_tiled.a adds another 112 MiB.
+# Neither is loaded at runtime by the .exe — they're inputs to the
+# linker, not inputs to the loader. Excluding them drops the
+# installer from ~125 MiB to ~30 MiB.
+_INSTALL_EXCLUDE_FILE_SUFFIXES = (
+    ".a",        # static library archive (mingw / MXE ar output)
+    ".lib",      # static lib (MS-style; rare on MXE but cheap to gate)
+    ".obj",      # bare COFF object
+    ".o",        # ELF object (shouldn't be in a MXE build dir, but…)
+    ".rsp",      # ninja link-response files
+    ".d",        # gcc dependency files
+    ".dwo",      # split-debug dwarf objects
+    ".pdb",      # MSVC-style debug info (mingw doesn't emit these,
+                 #  but harmless to gate)
+    ".manifest", # .exe.manifest sidecars (MSVC pkg metadata)
+)
 
 # .dll list is computed at runtime per build (NOT hardcoded). Two passes:
 #  1) Static — PE imports of the .exe and of every recursively-needed
@@ -737,8 +757,11 @@ def _stage_install_payload(src_dir):
             continue
         if entry in _INSTALL_EXCLUDE_FILES:
             continue
-        if entry.lower().endswith(".dll"):
-            if entry.lower() not in allow:
+        low = entry.lower()
+        if any(low.endswith(suf) for suf in _INSTALL_EXCLUDE_FILE_SUFFIXES):
+            continue
+        if low.endswith(".dll"):
+            if low not in allow:
                 continue
         try:
             shutil.copy2(s, d, follow_symlinks=True)
