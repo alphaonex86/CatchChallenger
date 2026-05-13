@@ -141,6 +141,31 @@ ScreenTransition::ScreenTransition() :
     if(!CliClientOptions::takeScreenshotPath.isEmpty())
         imageText->setVisible(false);
 
+    // --take-screenshot WITHOUT --autosolo never reaches MapDisplayed,
+    // so the on-map grab in mapDisplayedSlot() would never fire and
+    // testingcompilation*.py would get an empty/missing PNG. Schedule
+    // a fallback 2-second grab + quit so the title / connection-list
+    // screen is captured. The on-map grab still beats this when the
+    // run is --autosolo (it usually fires under ~1.5 s).
+    if(!CliClientOptions::takeScreenshotPath.isEmpty() &&
+       !CliClientOptions::autosolo)
+    {
+        QTimer::singleShot(2000,this,[this]{
+            const QString outPath=CliClientOptions::takeScreenshotPath;
+            viewport()->repaint();
+            QPixmap shot=viewport()->grab();
+            if(!shot.save(outPath))
+                std::cerr << "--take-screenshot (start-screen): failed to save "
+                          << outPath.toStdString() << std::endl;
+            else
+                std::cerr << "--take-screenshot (start-screen): saved "
+                          << outPath.toStdString() << " ("
+                          << shot.width() << "x" << shot.height() << ")"
+                          << std::endl;
+            QCoreApplication::quit();
+        });
+    }
+
     render();
     setTargetFPS(100);
 }

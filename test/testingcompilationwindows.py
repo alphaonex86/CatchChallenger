@@ -1320,6 +1320,105 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
     return ok
 
 
+def run_wine_screenshot(exe_path, label, mode, screenshot_path,
+                        timeout=8):
+    """Spawn the .exe under wine64 with --take-screenshot=PATH and
+    (for qtopengl with autosolo) --fixed so the start-screen / on-map
+    PNG is byte-stable across runs. Waits up to `timeout` s for the
+    screenshot file to appear, then kills wine.
+
+    mode == "start"    → no --autosolo; the qtopengl 2 s fallback in
+                         ScreenTransition.cpp grabs the start screen
+                         and exits. qtcpu800x600 doesn't support the
+                         flag yet so it just runs the regular UI
+                         until kill — the test will fail on missing
+                         file with a useful message instead of
+                         silently passing.
+    mode == "autosolo" → --autosolo --closewhenonmap; client enters
+                         solo game, the on-map grab in
+                         ScreenTransition.cpp:965 fires and quits.
+
+    Returns True on success (screenshot file produced)."""
+    if mode not in ("start", "autosolo"):
+        raise ValueError(f"unknown screenshot mode: {mode}")
+    # Drop a stale screenshot from the prior run so a stuck wine
+    # invocation can't false-pass by leaving the previous PNG behind.
+    if os.path.isfile(screenshot_path):
+        try:
+            os.remove(screenshot_path)
+        except OSError:
+            pass
+    args = [f"--take-screenshot={screenshot_path}"]
+    if mode == "autosolo":
+        args.append("--autosolo")
+        args.append("--closewhenonmap")
+    # --fixed is qtopengl-only (the qtcpu800x600 AutoArgs parser
+    # rejects unknown flags loudly and would abort). Only pass it
+    # when the label tells us this is the qtopengl client.
+    if "qtopengl" in label:
+        args.append("--fixed")
+    env = os.environ.copy()
+    env["WINEPATH"]         = MXE_QT_BIN + ";" + MXE_RT_BIN
+    env["WINEDEBUG"]        = "-all"
+    env["WINEDLLOVERRIDES"] = "winedbg.exe=d"
+    env["QT_QPA_PLATFORM"]  = "offscreen"
+    for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
+        env.pop(_gui_var, None)
+    win_args = [WINE_BIN, exe_path, "-platform", "offscreen"] + args
+    cwd = os.path.dirname(exe_path)
+    log_info(f"wine64 screenshot {label} ({mode}) -> "
+             f"{os.path.basename(screenshot_path)}")
+    diagnostic.record_cmd(win_args, cwd)
+    proc = subprocess.Popen(
+        win_args, cwd=cwd, stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env,
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if os.path.isfile(screenshot_path) \
+           and os.path.getsize(screenshot_path) > 100:
+            # Give the client a beat to flush the PNG header → close
+            # the file → exit. Polling .isfile alone races on a
+            # half-written file.
+            time.sleep(0.3)
+            break
+        if proc.poll() is not None:
+            break
+        time.sleep(0.2)
+    if proc.poll() is None:
+        try: os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except ProcessLookupError: pass
+        try: proc.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            try: os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except ProcessLookupError: pass
+            proc.wait(timeout=2)
+    return os.path.isfile(screenshot_path)
+
+
+def run_wine_screenshot_and_compare(exe_path, label, mode, reference_image):
+    """Take a screenshot via wine64 then diff against `reference_image`
+    using the shared image_compare helper (±10% per channel). Names
+    the test "wine screenshot {label} ({mode})"; PASS / FAIL is
+    routed through log_pass / log_fail like the rest of the harness."""
+    import image_compare as _ic
+    name = f"wine screenshot {label} ({mode})"
+    screenshot_path = os.path.join(os.path.dirname(exe_path),
+                                   f"screenshot-{label}-{mode}.png")
+    diff_path = os.path.join(os.path.dirname(exe_path),
+                             f"screenshot-{label}-{mode}-diff.png")
+    if not run_wine_screenshot(exe_path, label, mode, screenshot_path):
+        log_fail(name, "wine screenshot run produced no PNG file")
+        return False
+    ok, detail = _ic.compare_with_reference(
+        name, screenshot_path, reference_image, diff_path=diff_path)
+    if ok:
+        log_pass(name, detail)
+    else:
+        log_fail(name, detail)
+    return ok
+
+
 def set_http_datapack_mirror(build_dir, value):
     xml_path = os.path.join(build_dir, "server-properties.xml")
     if not os.path.exists(xml_path):
@@ -1435,6 +1534,31 @@ def main():
                                   win_mc, f"wine qtopengl ({win_mc})")
         run_wine_client(gl_exe, "qtopengl --autosolo",
                         ["--autosolo", "--closewhenonmap"])
+
+    # ── reference-screenshot regression (qtopengl-only) ─────────────
+    # Two captures per qtopengl run:
+    #   - start    : 2 s after .exe start, no --autosolo (title screen)
+    #   - autosolo : on-map grab inside MapVisualiserPlayer slot
+    # qtcpu800x600 doesn't expose --take-screenshot yet, so it stays
+    # at "reached map" smoke only. Both qtopengl captures pass --fixed
+    # so CCBackground's cloud / grass timers don't drift the PNG.
+    # Reference PNGs at test/screenshot-windows-qtopengl-{mode}.png;
+    # the diff-mask is dropped beside the produced PNG on failure.
+    if gl_exe is not None and should_run(
+            "wine screenshot qtopengl (start)", failed_cases):
+        ref_start = os.path.join(ROOT, "test",
+                                 "screenshot-windows-qtopengl-start.png")
+        run_wine_screenshot_and_compare(gl_exe, "qtopengl", "start",
+                                        ref_start)
+    if gl_exe is not None and should_run(
+            "wine screenshot qtopengl (autosolo)", failed_cases):
+        if win_dp_src and win_mc:
+            setup_datapack_client(os.path.dirname(gl_exe), win_dp_src,
+                                  win_mc, f"wine qtopengl ({win_mc})")
+        ref_solo = os.path.join(ROOT, "test",
+                                "screenshot-windows-qtopengl-autosolo.png")
+        run_wine_screenshot_and_compare(gl_exe, "qtopengl", "autosolo",
+                                        ref_solo)
 
     # Sign the catchchallenger.exe BEFORE bundling — both the NSIS
     # installer and the MSI then ship a signed inner binary.  Done after
