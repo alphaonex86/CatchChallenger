@@ -23,6 +23,7 @@ Sibling of testingcompilationmac.py — both used to live inside testingclient.p
 # remote_build never lands a __pycache__/ dir in the source tree.  Set
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
+import process_helpers
 sys.dont_write_bytecode = True
 
 
@@ -624,7 +625,7 @@ def start_android_emulator():
     proc = subprocess.Popen(
         emu_args,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     rc, _ = adb_cmd(["wait-for-device"], timeout=ANDROID_BOOT_TIMEOUT)
     if rc != 0:
         log_fail("android emulator start", "adb wait-for-device failed")
@@ -749,7 +750,7 @@ def start_local_server(build_dir, bin_name=SERVER_BIN_NAME):
     server_proc = subprocess.Popen(
         srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     ready = threading.Event()
     def reader():
         for raw in iter(server_proc.stdout.readline, b""):

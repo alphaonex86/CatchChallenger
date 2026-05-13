@@ -20,6 +20,7 @@ testingcompilationandroid.py — invoked separately by all.sh.
 # remote_build never lands a __pycache__/ dir in the source tree.  Set
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
+import process_helpers
 sys.dont_write_bytecode = True
 
 
@@ -442,7 +443,7 @@ def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     server_proc = subprocess.Popen(
         srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     ready = threading.Event()
     _server_output_lines = []
     def reader():
@@ -557,7 +558,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     proc = subprocess.Popen(
         NICE_PREFIX + gdb_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     output_lines = []
     done = threading.Event()
     outcome = [None]
@@ -676,7 +677,7 @@ def run_client_benchmark(build_dir, bin_name, args, label, timeout=30,
     proc = subprocess.Popen(
         bench_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
 
     found_event = threading.Event()
     elapsed_ms = [None]

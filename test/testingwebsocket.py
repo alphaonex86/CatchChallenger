@@ -18,6 +18,7 @@ edited freely; only @PREFIX@/@WWW_ROOT@/@NGINX_PORT@ are substituted at
 runtime by this script.
 """
 import sys
+import process_helpers
 sys.dont_write_bytecode = True
 
 import os, sys, signal, subprocess, threading, multiprocessing, json
@@ -347,7 +348,7 @@ def start_nginx():
     nginx_proc = subprocess.Popen(
         args, cwd=NGINX_PREFIX,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     deadline = time.monotonic() + NGINX_READY_TIMEOUT
     while time.monotonic() < deadline:
         try:
@@ -399,7 +400,7 @@ def start_websockify():
     websockify_proc = subprocess.Popen(
         args, cwd=NGINX_PREFIX,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     deadline = time.monotonic() + WS_READY_TIMEOUT
     while time.monotonic() < deadline:
         try:
@@ -498,7 +499,7 @@ def start_server():
     server_proc = subprocess.Popen(
         args, cwd=SERVER_BUILD,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     ready = threading.Event()
     output = []
 
@@ -658,7 +659,7 @@ def run_client(build_dir, bin_name, label, timeout_override=None):
     proc = subprocess.Popen(
         cmd, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     output = []
     done = threading.Event()
     outcome = [None]

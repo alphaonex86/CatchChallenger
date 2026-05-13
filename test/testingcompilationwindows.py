@@ -24,6 +24,7 @@ Sibling of testingcompilationmac.py / testingcompilationandroid.py.
 # remote_build never lands a __pycache__/ dir in the source tree.  Set
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
+import process_helpers
 sys.dont_write_bytecode = True
 
 
@@ -1081,7 +1082,7 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
         win_args,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     output_lines = []
     found = threading.Event()
 
@@ -1165,7 +1166,7 @@ def start_local_server(build_dir, bin_name=SERVER_BIN_NAME):
     server_proc = subprocess.Popen(
         srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     ready = threading.Event()
     def reader():
         for raw in iter(server_proc.stdout.readline, b""):

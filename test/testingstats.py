@@ -24,6 +24,7 @@ Flow:
      23 = memory errors).
 """
 import sys
+import process_helpers
 sys.dont_write_bytecode = True
 
 import os, sys, signal, subprocess, threading, multiprocessing, json
@@ -247,7 +248,7 @@ def start_server_under_valgrind():
     server_proc = subprocess.Popen(
         args, cwd=SERVER_BUILD,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     ready = threading.Event()
     output = []
 
@@ -364,7 +365,7 @@ def start_stats():
     stats_proc = subprocess.Popen(
         args, cwd=STATS_BUILD,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     return True
 
 
@@ -505,7 +506,7 @@ def run_client_until_on_map():
     proc = subprocess.Popen(
         cmd, cwd=CLIENT_CPU_BUILD,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     output = []
     on_map = threading.Event()
 

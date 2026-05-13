@@ -24,6 +24,7 @@ Tests the catchchallenger-gateway binary under valgrind memcheck:
          - Stop client, gateway (collect valgrind report), backend, nginx.
 """
 import sys
+import process_helpers
 sys.dont_write_bytecode = True
 
 import os, sys, signal, subprocess, threading, multiprocessing, json
@@ -253,7 +254,7 @@ def start_nginx():
     nginx_proc = subprocess.Popen(
         args, cwd=NGINX_PREFIX,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     # Probe — nginx binds within ~50ms.
     deadline = time.monotonic() + NGINX_READY_TIMEOUT
     while time.monotonic() < deadline:
@@ -419,7 +420,7 @@ def _start_and_wait_bind(label, args, cwd, timeout, wrap_with_valgrind):
     proc = subprocess.Popen(
         full, cwd=cwd,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     ready = threading.Event()
     output_lines = []
 
@@ -569,7 +570,7 @@ def run_client(label):
     proc = subprocess.Popen(
         cmd, cwd=CLIENT_BUILD,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     output = []
     done = threading.Event()
     outcome = [None]
