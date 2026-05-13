@@ -204,6 +204,43 @@ def _server_preexec():
         pass
 
 
+def _client_preexec():
+    """preexec_fn for the qtcpu800x600 catchchallenger client used by
+    the post-login probes (case_dupe_by_lag / wall_walk /
+    trade_in_combat). Same PR_SET_PDEATHSIG + setsid as
+    _server_preexec but a MUCH higher RLIMIT_AS — Qt loads Qt6Gui,
+    Qt6Widgets, every imageformats plugin, and the full datapack
+    into memory before the first map paint; 128 MiB hits the wall
+    with `terminate: std::bad_alloc` from QPixmap creation
+    (`Could not create pixmap from :/images/light-white.png`). The
+    server-side caps stay at 128 MiB because servers are tested for
+    leak-resistance under fuzz; clients are tested for "do they
+    reach the map" which is a memory-heavy operation by design."""
+    os.setsid()
+    try:
+        _libc_for_prctl.prctl(_PR_SET_PDEATHSIG,
+                              signal.SIGTERM, 0, 0, 0)
+    except Exception:
+        pass
+    # 2 GiB virtual is plenty for a Qt widgets client with the
+    # CatchChallenger-datapack loaded. The cap exists so a runaway
+    # alloc still gets terminated rather than swapping the host
+    # to death.
+    try:
+        mem_cap = 2 * 1024 * 1024 * 1024
+        resource.setrlimit(resource.RLIMIT_AS, (mem_cap, mem_cap))
+    except (ValueError, OSError):
+        pass
+    # CPU cap unchanged from the server side — 15 min is well past
+    # any legitimate map-reach path.
+    try:
+        cpu_soft = 15 * 60
+        cpu_hard = cpu_soft + 60
+        resource.setrlimit(resource.RLIMIT_CPU, (cpu_soft, cpu_hard))
+    except (ValueError, OSError):
+        pass
+
+
 atexit.register(_kill_all_live_servers)
 _install_signal_cleanup()
 
@@ -1049,7 +1086,7 @@ def _spawn_logged_in_client(server, character_name, timeout_s=25):
     proc = subprocess.Popen(
         args, cwd=os.path.dirname(bin_path),
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=_server_preexec)
+        preexec_fn=_client_preexec)
     reached = [False]
     output = []
 
