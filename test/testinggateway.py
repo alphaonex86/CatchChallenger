@@ -92,9 +92,18 @@ NGINX_CONF   = os.path.join(NGINX_PREFIX, "nginx.conf")
 NGINX_TPL    = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "nginx-gateway.conf.in")
 
+# Per-operator policy: NO individual phase inside testinggateway.py
+# should ever burn more than 30 s of wall-clock — anything longer is
+# the gateway protocol hanging in the in-protocol 0xA1 → 0x75
+# datapack-list pipeline, not a slow-but-legitimate path. The 28-case
+# plan × 30 s upper bound fits comfortably under the 15 m harness cap
+# even when every case fails.
+#
+# COMPILE_TIMEOUT stays generous (cmake configure + ninja build of
+# the gateway + client + backend) — it's NOT in the per-case loop.
 COMPILE_TIMEOUT       = 600
-SERVER_READY_TIMEOUT  = 60
-CLIENT_TIMEOUT        = 60
+SERVER_READY_TIMEOUT  = 30
+CLIENT_TIMEOUT        = 30
 NGINX_READY_TIMEOUT   = 5
 
 NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
@@ -441,7 +450,11 @@ def _start_and_wait_bind(label, args, cwd, timeout, wrap_with_valgrind):
                        "--track-origins=yes",
                        "--errors-for-leak-kinds=definite,possible"]
             full = NICE_PREFIX + wrapper + list(args)
-        timeout = max(timeout * 10, timeout)
+        # Per-operator policy: no phase in testinggateway.py exceeds
+        # 30 s. SERVER_READY_TIMEOUT is already 30 s and the valgrind
+        # wrapper adds <10 s to "correctly bind:" output; no need to
+        # multiply.
+        # (was: timeout = max(timeout * 10, timeout))
     else:
         full = NICE_PREFIX + list(args)
     diagnostic.record_cmd(full, cwd)
@@ -592,7 +605,14 @@ def run_client(label):
     log_info(f"client: {CLIENT_BIN} {' '.join(args)}")
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
-    timeout = clamp_local(CLIENT_TIMEOUT * 10)  # gateway under valgrind is slow
+    # Per-operator policy: hard 30 s cap on the client→map phase.
+    # The valgrind-wrapped gateway adds maybe 5-10 s of overhead to
+    # the protocol exchange; anything past that is a hang, not a
+    # slow path. The previous CLIENT_TIMEOUT * 10 = 600 s multiplier
+    # let every broken case chew 10 min before the harness moved on
+    # — 28 cases × 600 s = 4.7 h on a fully-broken run, well past
+    # the 15 m all.sh wrapper cap. Fail fast instead.
+    timeout = clamp_local(CLIENT_TIMEOUT)
     cmd = NICE_PREFIX + [binary] + args
     diagnostic.record_cmd(cmd, CLIENT_BUILD)
     proc = subprocess.Popen(
