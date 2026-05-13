@@ -237,7 +237,17 @@ def stage_all(srcs, exec_nodes=None, log_info=print):
         cur_sum = _src_checksum(src)
         src_sums[src] = cur_sum
         prev_sum = test_config.get_datapack_checksum(src) if cur_sum else ""
-        if cur_sum and prev_sum == cur_sum:
+        # Cached checksum is only authoritative when the staged copy
+        # actually exists on disk. If a previous all.sh wipe deleted
+        # the cache (e.g. operator nuked /mnt/data/perso/tmpfs/* by
+        # hand or the keep-list missed cc-datapack/), the checksum
+        # alone would skip the rsync and the consumer side would still
+        # be empty. Force a re-stage when the local cache dir is
+        # missing or empty, regardless of checksum.
+        local_dst = staged_local(src)
+        local_present = (os.path.isdir(local_dst)
+                         and len(os.listdir(local_dst)) > 0)
+        if (cur_sum and prev_sum == cur_sum and local_present):
             log_info(f"datapack {src}: checksum match (cached), skipping all rsyncs")
             with lock:
                 results.append((True, ""))
