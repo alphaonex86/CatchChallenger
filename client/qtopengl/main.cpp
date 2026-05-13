@@ -211,6 +211,8 @@ int main(int argc, char *argv[])
                     << "  --closewhenonmapafter=N    On map: toggle direction each 1s, quit after N seconds.\n"
                     << "  --dropsenddataafteronmap   Drop outgoing traffic after the first map is loaded.\n"
                     << "  --autosolo                 Load the first savegame and enter the game.\n"
+                    << "  --fixed                    Freeze the animated background (no parallax)\n"
+                    << "                             so --take-screenshot produces deterministic PNGs.\n"
                     << "  --take-screenshot=PATH     On map: write rendered viewport to PATH and exit\n"
                     << "                             (pins srand(42) for reproducible tile/animation rng).\n"
                     << "  --main-datapack-code=CODE  Override the autosolo maincode under\n"
@@ -252,6 +254,8 @@ int main(int argc, char *argv[])
                 CliClientOptions::dropSendDataAfterOnMap=true;
             else if(arg==QStringLiteral("--autosolo"))
                 CliClientOptions::autosolo=true;
+            else if(arg==QStringLiteral("--fixed"))
+                CliClientOptions::fixedBackground=true;
             else if(arg.startsWith(QStringLiteral("--take-screenshot=")))
                 CliClientOptions::takeScreenshotPath=arg.mid(18);
             else if(arg==QStringLiteral("--take-screenshot"))

@@ -21,6 +21,9 @@
 
 set -e
 
+# just to be sure drop the trash to prevent saturing the tmpfs
+rm -Rf /mnt/data/perso/tmpfs/*
+
 cd "$(dirname "$0")"
 
 # Resolve the operator's machine-local paths from

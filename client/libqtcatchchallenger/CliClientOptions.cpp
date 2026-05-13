@@ -12,3 +12,4 @@ bool CliClientOptions::dropSendDataAfterOnMap=false;
 bool CliClientOptions::autosolo=false;
 QString CliClientOptions::takeScreenshotPath;
 QString CliClientOptions::mainDatapackCodeOverride;
+bool CliClientOptions::fixedBackground=false;
