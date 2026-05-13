@@ -75,11 +75,17 @@ BASELINES = {
     "windows.exe.qtcpu800x600":      490_000_000,   # ~467 MiB
     "windows.exe.qtopengl":          492_000_000,   # ~469 MiB
     # NSIS installer .zip — 7z-compressed Qt6 deps + the .exe.
-    "windows.installer.qtcpu800x600": 100_000_000,   # ~95 MiB (placeholder)
-    "windows.installer.qtopengl":     100_000_000,   # ~95 MiB (placeholder)
-    # WiX 3.11 .msi — comparable to the .zip (lzx compression).
-    "windows.msi.qtcpu800x600":       100_000_000,   # ~95 MiB (placeholder)
-    "windows.msi.qtopengl":           100_000_000,   # ~95 MiB (placeholder)
+    # Post-fix sizes: previous .a/.lib inclusion + windeployqt dumped
+    # ~400 MiB into the installer; after the runtime-only filter the
+    # installer is ~40 MiB (catchchallenger.exe stripped + Qt6 DLLs +
+    # plugins + the filtered datapack).
+    "windows.installer.qtcpu800x600": 41_000_000,   # ~39 MiB
+    "windows.installer.qtopengl":     43_000_000,   # ~41 MiB
+    # WiX 3.11 .msi — lzx compression, slightly larger than the NSIS
+    # .exe because the .msi header + the file table itself add a few
+    # MiB on top of the same payload.
+    "windows.msi.qtcpu800x600":       43_000_000,   # ~41 MiB
+    "windows.msi.qtopengl":           45_000_000,   # ~43 MiB
 
     # ── macOS osxcross (Qt 6.5.3) ─────────────────────────────────────
     # Bundle .zip of the .app + datapack/. macdeployqt brings in
