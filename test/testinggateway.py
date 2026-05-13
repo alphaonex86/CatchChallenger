@@ -328,10 +328,14 @@ def write_backend_settings(maincode, subcode, http_url):
 
 def write_gateway_settings(rewrite_base, rewrite_main_sub):
     """Gateway reads gateway.xml from FacilityLibGeneral::applicationDirPath
-    (== GATEWAY_BUILD here). The rewrite URLs MUST be non-empty — gateway
-    aborts otherwise (EventLoopServerLoginSlave.cpp:147,162). For the
-    "no http via gateway" cases we therefore set unreachable placeholders
-    (the client falls back to the in-protocol datapack stream)."""
+    (== GATEWAY_BUILD here). The rewrite URLs may be empty — the abort at
+    EventLoopServerLoginSlave.cpp:141/156 only fires when the gateway is
+    built with CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR, which
+    testinggateway.py does NOT set. Passing empty strings is exactly what
+    the "no http via gateway" cases want: the 0xA1 datapack-file-list
+    parser at EventLoopClientLoginSlaveProtocolParsing.cpp:238 then
+    accepts the request and the client's in-protocol download
+    completes."""
     xml = os.path.join(GATEWAY_BUILD, "gateway.xml")
     ensure_dir(GATEWAY_BUILD)
     body = (
@@ -769,10 +773,20 @@ def main():
             gw_rewrite_base = nginx_base
             gw_rewrite_main = nginx_base
         else:
-            # Gateway aborts if rewrite is empty — provide an unreachable
-            # placeholder so the client falls back to in-protocol download.
-            gw_rewrite_base = unreachable
-            gw_rewrite_main = unreachable
+            # No HTTP path through the gateway → leave both rewrite
+            # values EMPTY. An unreachable placeholder used to be
+            # written here so the gateway wouldn't abort, but the
+            # abort only fires when CATCHCHALLENGER_SERVER_DATAPACK_
+            # ONLYBYMIRROR is defined (testinggateway.py builds the
+            # gateway WITHOUT that flag) so the placeholder isn't
+            # needed. With empty values, the gateway's 0xA1
+            # (datapack-file-list) parser at
+            # EventLoopClientLoginSlaveProtocolParsing.cpp:238 no
+            # longer hits the "Can't use because mirror is defined"
+            # rejection path, and the client's in-protocol datapack
+            # download actually completes.
+            gw_rewrite_base = ""
+            gw_rewrite_main = ""
 
         write_backend_settings(mc, sc, backend_http_url)
         write_gateway_settings(gw_rewrite_base, gw_rewrite_main)
