@@ -6,12 +6,14 @@
 # Usage: publish_binaries.sh <target> [<target> ...]
 #   target ∈ { windows | mac | android }
 #
-# Each requested target MUST exist and be >= MIN_BYTES (default 10 MiB),
-# otherwise this script aborts and updater.txt is NOT touched. Refusing
-# to publish (and refusing to bump updater.txt) is the whole point —
-# updater.txt drives download.php's per-version URLs, so bumping it
-# without artifacts on disk produces 404s for every client trying to
-# self-update.
+# Each requested target MUST exist and be within
+# [MIN_BYTES, MAX_BYTES] (default 10 MiB .. 100 MiB), otherwise this
+# script aborts and updater.txt is NOT touched. Refusing to publish
+# (and refusing to bump updater.txt) is the whole point — updater.txt
+# drives download.php's per-version URLs, so bumping it without
+# artifacts on disk produces 404s for every client trying to
+# self-update. The upper bound catches a broken build that bundled
+# debug symbols / wrong Qt / forgotten data dir.
 
 set -euo pipefail
 
@@ -19,6 +21,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GIT_ROOT="$(realpath "${HERE}/..")"
 WEB_VPS="${WEB_VPS:-root@763.vps.confiared.com}"
 MIN_BYTES="${MIN_BYTES:-$((10 * 1024 * 1024))}"
+MAX_BYTES="${MAX_BYTES:-$((100 * 1024 * 1024))}"
 
 [ $# -gt 0 ] || { echo "usage: $0 <windows|mac|android> [...]" >&2; exit 2; }
 
@@ -47,6 +50,7 @@ resolve() {
     local sz
     sz=$(stat -c%s "$src")
     [ "$sz" -ge "$MIN_BYTES" ] || die "${target}: ${src} is ${sz} bytes (< ${MIN_BYTES})"
+    [ "$sz" -le "$MAX_BYTES" ] || die "${target}: ${src} is ${sz} bytes (> ${MAX_BYTES})"
     SRC[$target]="$src"
     DST[$target]="$dst"
     say "${target}: ${src} (${sz} bytes) → ${TARGET_DIR}/${dst}"
