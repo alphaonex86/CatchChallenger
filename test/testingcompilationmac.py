@@ -489,21 +489,41 @@ def deploy_and_package(app_path, label):
         if out.strip():
             print(out[-1500:])
 
-    # Try .dmg first via macdeployqt -dmg (needs hdiutil, macOS-only).
-    # Fallback: portable zip of the .app (and its sibling datapack/) so the
-    # user can drop the archive on a Mac, double-click the .app, and run.
+    # Build a real .dmg via libdmg-hfsplus (Linux-native HFS+ DMG
+    # creator we built at /root/libdmg-hfsplus/build/dmg/dmg on the
+    # osxcross host — see commit for the install + build steps).
+    # The tool wants a STAGING DIRECTORY containing what to place on
+    # the DMG (typically the .app + a Symlink/Alias to /Applications,
+    # but we just ship the .app + sibling datapack/), produces an
+    # uncompressed HFS+ image, then converts to a UDZO-compressed .dmg.
+    # Fallback: portable .zip when /root/libdmg-hfsplus/build/dmg/dmg
+    # isn't installed (skip the dmg step gracefully).
     pkg_name = f"package {label} (.dmg or .zip)"
     parent = os.path.dirname(app_path)
     app_base = os.path.basename(app_path)
     artifact_base = f"{label}-{OSX_TARGET_TRIPLE}"
     osx_ssh(f"mkdir -p {OSX_ARTIFACT_DIR}", timeout=15)
     rc, out = osx_ssh(
-        f"if command -v hdiutil >/dev/null 2>&1; then "
-        f"  cd {shlex.quote(parent)} && "
-        f"  {OSX_MACDEPLOYQT} {shlex.quote(app_base)} -dmg -verbose=1 2>&1 && "
-        f"  mv {shlex.quote(app_base[:-4] + '.dmg')} "
-        f"     {OSX_ARTIFACT_DIR}/{shlex.quote(artifact_base + '.dmg')} && "
-        f"  echo PACKAGE_OK={OSX_ARTIFACT_DIR}/{artifact_base}.dmg; "
+        f"set -e; "
+        f"DMG_BIN=/root/libdmg-hfsplus/build/dmg/dmg; "
+        f"if [ -x \"$DMG_BIN\" ]; then "
+        # Stage the .app + datapack under a clean temp dir so the
+        # DMG's root has predictable contents.
+        f"  STAGE=$(mktemp -d /tmp/cc-dmg-stage.XXXXXX); "
+        f"  cp -a {shlex.quote(parent)}/{shlex.quote(app_base)} \"$STAGE/\"; "
+        f"  [ -d {shlex.quote(parent)}/datapack ] && "
+        f"      cp -a {shlex.quote(parent)}/datapack \"$STAGE/\"; "
+        f"  OUT={OSX_ARTIFACT_DIR}/{shlex.quote(artifact_base + '.dmg')}; "
+        # libdmg-hfsplus's `dmg create` wants a SOURCE.iso first (HFS+
+        # ISO image), then converts to compressed .dmg. genisoimage's
+        # -hfs produces the right HFS+ overlay; xorrisofs is the
+        # modern equivalent on Debian/recent.
+        f"  ISO=$(mktemp /tmp/cc-dmg.XXXXXX.iso); "
+        f"  genisoimage -V CatchChallenger -no-pad -r -hfs -hide-hfs '*.DS_Store' "
+        f"      -o \"$ISO\" \"$STAGE\" 2>&1 | tail -3; "
+        f"  \"$DMG_BIN\" build \"$ISO\" \"$OUT\" 2>&1 | tail -3; "
+        f"  rm -rf \"$STAGE\" \"$ISO\"; "
+        f"  echo PACKAGE_OK=$OUT; "
         f"else "
         f"  cd {shlex.quote(parent)} && "
         f"  zip -qry {OSX_ARTIFACT_DIR}/{shlex.quote(artifact_base + '.zip')} "
