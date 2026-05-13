@@ -509,6 +509,105 @@ def _verify_msi_size(label, msi_path):
     (log_pass if ok else log_fail)(f"size {sk}", detail)
 
 
+_INSTALL_EXCLUDE_DIRS = {
+    "CMakeFiles", ".qt", "_libzstd",
+    "catchchallenger_qfakesocket_autogen",
+    "catchchallenger_qt_lib_autogen",
+    "catchchallenger_tiled_autogen",
+    "catchchallenger800x600_autogen",
+    "catchchallenger_qtopengl_autogen",
+}
+_INSTALL_EXCLUDE_DIR_SUFFIXES = ("_autogen",)
+_INSTALL_EXCLUDE_FILES = {
+    ".ninja_deps", ".ninja_log", "build.ninja",
+    "cmake_install.cmake", "CMakeCache.txt", "compile_commands.json",
+}
+# .dll allowlist — every DLL the .exe legitimately needs to start on
+# Windows (verified end-to-end with `wine64 <exe>` in this test). MXE
+# also drops a bunch of unrelated libs into the same bin/ dir (ffmpeg
+# avcodec/avdevice/avfilter/avformat/avutil, hdf5*, GLEW, glfw3,
+# ALURE32, …) that nothing in catchchallenger links against — those
+# would just bloat the installer past the 100 MiB ceiling without
+# changing behaviour. Anything not on this allowlist is excluded.
+_INSTALL_ALLOWLIST_DLLS = {
+    # MinGW runtime + the C/C++ standard libs MXE produces
+    "libgcc_s_seh-1.dll", "libstdc++-6.dll", "libwinpthread-1.dll",
+    "libssp-0.dll",
+    # Project's vendored audio codec + opus (only when audio enabled)
+    "libogg-0.dll", "libopus-0.dll", "libopusfile-0.dll",
+    # zstd is linked through general/libzstd; either vendored static or
+    # exposed via libzstd.dll depending on the MXE recipe in use
+    "libzstd.dll",
+    # zlib (vendored too but MXE may ship the shared variant)
+    "zlib1.dll",
+    # tinyxml2 — vendored static normally, but MXE ships a shared one
+    "libtinyxml2.dll", "libtinyxml2-10.dll",
+    # blake3 + xxhash — same story as tinyxml2
+    "libblake3.dll", "libxxhash.dll",
+    # OpenSSL — required for https mirror downloads
+    "libcrypto-3-x64.dll", "libcrypto-3.dll",
+    "libssl-3-x64.dll",   "libssl-3.dll",
+    # Qt6 DLLs — windeployqt would deposit the same set
+    # (allowlist by prefix below picks them up)
+}
+_INSTALL_ALLOWLIST_PREFIXES = ("Qt6",)
+
+
+def _stage_install_payload(src_dir):
+    """Mirror src_dir to a sibling clean-install dir, dropping every
+    build-system artefact (CMakeFiles, *_autogen, .ninja_*, CMakeCache,
+    compile_commands.json) and every DLL not on the allowlist. The
+    .exe, the datapack/, and every Qt plugin sub-dir are kept verbatim.
+    Returns the staging dir path."""
+    stage = src_dir.rstrip(os.sep) + "-install-stage"
+    if os.path.isdir(stage):
+        shutil.rmtree(stage, ignore_errors=True)
+    os.makedirs(stage, exist_ok=True)
+    for entry in os.listdir(src_dir):
+        s = os.path.join(src_dir, entry)
+        d = os.path.join(stage, entry)
+        if os.path.isdir(s):
+            if entry in _INSTALL_EXCLUDE_DIRS:
+                continue
+            if any(entry.endswith(suf) for suf in _INSTALL_EXCLUDE_DIR_SUFFIXES):
+                continue
+            shutil.copytree(s, d, symlinks=True)
+            continue
+        if entry in _INSTALL_EXCLUDE_FILES:
+            continue
+        if entry.endswith(".dll"):
+            if entry in _INSTALL_ALLOWLIST_DLLS:
+                pass
+            elif any(entry.startswith(p) for p in _INSTALL_ALLOWLIST_PREFIXES):
+                pass
+            else:
+                continue
+        try:
+            shutil.copy2(s, d, follow_symlinks=True)
+        except OSError:
+            pass
+    return stage
+
+
+def _verify_staged_exe_runs(stage_dir):
+    """Run the staged .exe under wine64 with QT_QPA_PLATFORM=offscreen
+    to confirm the trimmed DLL set is still enough to start the
+    process. Returns True if wine reports rc==0 within the
+    --closewhenonmap timeout (or if wine64 isn't on the host, in
+    which case we trust the allowlist)."""
+    if not WINE_BIN or not os.path.isfile(WINE_BIN):
+        return True
+    exe = os.path.join(stage_dir, WIN_EXE_NAME)
+    if not os.path.isfile(exe):
+        return False
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    env["WINEDEBUG"]       = "-all"
+    rc, _ = run_cmd([WINE_BIN, exe, "--version"],
+                    stage_dir, timeout=30, env=env)
+    return rc == 0
+
+
 def build_installer(exe_path, label):
     """Package the deployed exe + Qt DLLs + datapack into a single
     installer artefact next to the build dir.  Prefers NSIS (real
@@ -518,11 +617,24 @@ def build_installer(exe_path, label):
     Pre-condition: deploy_mxe_dependencies() and setup_datapack_client()
     have already populated <exe_dir> with everything the installer
     should ship — Qt6*.dll, plugin/ subdirs, runtime DLLs, and
-    datapack/internal/."""
+    datapack/internal/.
+
+    The packaging step stages the exe_dir into a sibling "-install-stage"
+    directory first, dropping CMakeFiles/*_autogen/.qt/ninja-metadata and
+    any .dll that's not on the runtime allowlist. NSIS then picks up the
+    cleaned tree, so the produced installer stays under the 100 MiB
+    shipping-artefact ceiling."""
     name = f"installer {label}"
     exe_dir = os.path.dirname(exe_path)
     base    = "catchchallenger-" + label
     out_dir = os.path.dirname(exe_dir.rstrip(os.sep)) or exe_dir
+
+    stage_dir = _stage_install_payload(exe_dir)
+    if not _verify_staged_exe_runs(stage_dir):
+        log_fail(name, f"staged .exe failed wine smoke test in {stage_dir}; "
+                       f"missing a runtime .dll — adjust "
+                       f"_INSTALL_ALLOWLIST_DLLS")
+        return None
 
     if MAKENSIS_BIN is not None:
         nsi_path = os.path.join(out_dir, base + ".nsi")
@@ -533,7 +645,7 @@ def build_installer(exe_path, label):
             'RequestExecutionLevel admin\n'
             'Section "MainSection" SEC01\n'
             '  SetOutPath "$INSTDIR"\n'
-            '  File /r "' + exe_dir + os.sep + '*.*"\n'
+            '  File /r "' + stage_dir + os.sep + '*.*"\n'
             '  CreateShortCut "$DESKTOP\\CatchChallenger.lnk" '
             '"$INSTDIR\\' + WIN_EXE_NAME + '"\n'
             'SectionEnd\n'
@@ -555,8 +667,8 @@ def build_installer(exe_path, label):
     log_info(f"zip {os.path.basename(zip_base)}.zip")
     try:
         archive = shutil.make_archive(zip_base, "zip",
-                                      root_dir=os.path.dirname(exe_dir),
-                                      base_dir=os.path.basename(exe_dir))
+                                      root_dir=os.path.dirname(stage_dir),
+                                      base_dir=os.path.basename(stage_dir))
     except (OSError, shutil.Error) as e:
         log_fail(name, f"zip failed: {e}")
         return None
@@ -698,10 +810,23 @@ def build_msi(exe_path, label):
     msi_path = os.path.join(out_dir, "catchchallenger-" + label + ".msi")
     main_wxs  = os.path.join(work, "main.wxs")
     files_wxs = os.path.join(work, "files.wxs")
-    _write_main_wxs(main_wxs, label, os.path.basename(exe_dir))
+    # Harvest the cleaned install staging dir (no CMakeFiles, no
+    # *_autogen, no build-system metadata, no non-runtime DLL) — the
+    # same payload the NSIS installer ships. Without this the .msi
+    # would balloon past 100 MiB with cmake_install.cmake, .ninja_*,
+    # CMakeCache.txt, compile_commands.json, autogen MOC trees, ffmpeg
+    # / hdf5 / GLEW / glfw DLLs from the MXE bin/ dir, etc. (see
+    # _stage_install_payload doc).
+    payload_dir = _stage_install_payload(exe_dir)
+    if not _verify_staged_exe_runs(payload_dir):
+        log_fail(name, f"staged .exe failed wine smoke test in "
+                       f"{payload_dir}; missing a runtime .dll — adjust "
+                       f"_INSTALL_ALLOWLIST_DLLS")
+        return None
+    _write_main_wxs(main_wxs, label, os.path.basename(payload_dir))
     env = _wix_wine_env()
 
-    # 1) heat.exe — harvest exe_dir into a ComponentGroup fragment.
+    # 1) heat.exe — harvest payload_dir into a ComponentGroup fragment.
     # heat.exe runs as a Windows binary under wine; its CLI parser treats
     # `/` as a switch indicator, so `-out /mnt/...` looks like `-out`
     # followed by the switch `/mnt`, and heat reports HEAT0114 ("the
@@ -710,10 +835,10 @@ def build_msi(exe_path, label):
     # — there's no leading `/` for the parser to mis-interpret. Same
     # applies to the input dir; convert to a relative path against work.
     files_wxs_rel = os.path.relpath(files_wxs, work)
-    exe_dir_rel = os.path.relpath(exe_dir, work)
-    log_info(f"wine64 heat.exe dir {os.path.basename(exe_dir)} ({label})")
+    payload_dir_rel = os.path.relpath(payload_dir, work)
+    log_info(f"wine64 heat.exe dir {os.path.basename(payload_dir)} ({label})")
     rc, out = run_cmd(
-        [WINE_BIN, WIX_HEAT_EXE, "dir", exe_dir_rel,
+        [WINE_BIN, WIX_HEAT_EXE, "dir", payload_dir_rel,
          "-nologo", "-gg", "-srd", "-sreg", "-scom", "-ke", "-sfrag", "-suid",
          "-cg", "ApplicationFiles",
          "-dr", "INSTALLDIR",
@@ -737,12 +862,12 @@ def build_msi(exe_path, label):
     # next to .wxs, which is what light expects.
     main_wxs_rel = os.path.relpath(main_wxs, work)
     files_wxs_rel = os.path.relpath(files_wxs, work)
-    exe_dir_rel = os.path.relpath(exe_dir, work)
+    payload_dir_rel = os.path.relpath(payload_dir, work)
     log_info(f"wine64 candle.exe ({label})")
     rc, out = run_cmd(
         [WINE_BIN, WIX_CANDLE_EXE, "-nologo",
          "-arch", "x64",
-         "-dSourceDir=" + exe_dir_rel,
+         "-dSourceDir=" + payload_dir_rel,
          main_wxs_rel, files_wxs_rel],
         work, timeout=COMPILE_TIMEOUT, env=env)
     if rc != 0:
