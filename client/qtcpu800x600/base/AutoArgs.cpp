@@ -15,6 +15,7 @@ int AutoArgs::closeWhenOnMapAfter=0;
 bool AutoArgs::dropSendDataAfterOnMap=false;
 bool AutoArgs::autosolo=false;
 QString AutoArgs::mainDatapackCodeOverride;
+QString AutoArgs::takeScreenshotPath;
 
 void AutoArgs::printHelp(const char *progName)
 {
@@ -43,6 +44,10 @@ void AutoArgs::printHelp(const char *progName)
         << "                             timeout dump character/current map and close.\n"
         << "  --main-datapack-code=CODE  Override the autosolo maincode under\n"
         << "                             datapack/internal/map/main/ (default: first dir).\n"
+        << "  --take-screenshot=PATH     Render the first map frame (or, with no\n"
+        << "                             --autosolo, the title screen 2 s after\n"
+        << "                             launch) into PATH and exit. srand(42)\n"
+        << "                             is pinned for reproducible tile variants.\n"
         << "  quit                       Request all running instances to quit.\n";
     std::cout.flush();
 }
@@ -168,6 +173,18 @@ void AutoArgs::parse(int &argc, char *argv[])
             i++;
             continue;
         }
+        if(std::strcmp(arg,"--take-screenshot")==0 && (i+1)<argc)
+        {
+            takeScreenshotPath=QString::fromUtf8(argv[i+1]);
+            i+=2;
+            continue;
+        }
+        if(std::strncmp(arg,"--take-screenshot=",18)==0)
+        {
+            takeScreenshotPath=QString::fromUtf8(arg+18);
+            i++;
+            continue;
+        }
         argv[writeIndex++]=argv[i];
         i++;
     }
@@ -206,5 +223,7 @@ void AutoArgs::parse(int &argc, char *argv[])
               << " closeWhenOnMapAfter=" << closeWhenOnMapAfter
               << " dropSendDataAfterOnMap=" << (dropSendDataAfterOnMap?"true":"false")
               << " autosolo=" << (autosolo?"true":"false")
-              << " mainDatapackCodeOverride=\"" << mainDatapackCodeOverride.toStdString() << "\"" << std::endl;
+              << " mainDatapackCodeOverride=\"" << mainDatapackCodeOverride.toStdString() << "\""
+              << " takeScreenshotPath=\"" << takeScreenshotPath.toStdString() << "\""
+              << std::endl;
 }

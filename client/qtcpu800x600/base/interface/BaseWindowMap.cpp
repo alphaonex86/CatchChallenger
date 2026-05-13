@@ -216,6 +216,32 @@ void BaseWindow::currentMapLoaded()
 {
     qDebug() << "BaseWindow::currentMapLoaded(): map: " << mapController->currentMap()
              << " with type: " << QString::fromStdString(mapController->currentMapType());
+    // --take-screenshot WITH --autosolo: capture the freshly rendered
+    // map view, save to PATH, and exit. The 500 ms singleShot gives
+    // the QGraphicsView one paint cycle to compose every layer
+    // (tiles, doors, follower NPC) before we grab — without the
+    // beat we'd get a half-painted frame on slow VPS / wine64.
+    // Mirrors what qtopengl ScreenTransition::mapDisplayedSlot does
+    // for the qtopengl client side.
+    if(!AutoArgs::takeScreenshotPath.isEmpty())
+    {
+        const QString outPath=AutoArgs::takeScreenshotPath;
+        std::cerr << "AutoArgs: --take-screenshot=" << outPath.toStdString()
+                  << ", will save and exit in 500ms" << std::endl;
+        QTimer::singleShot(500,this,[this,outPath]{
+            repaint();
+            const QPixmap shot=grab();
+            if(!shot.save(outPath))
+                std::cerr << "--take-screenshot: failed to save "
+                          << outPath.toStdString() << std::endl;
+            else
+                std::cerr << "--take-screenshot: saved "
+                          << outPath.toStdString() << " ("
+                          << shot.width() << "x" << shot.height() << ")"
+                          << std::endl;
+            QCoreApplication::quit();
+        });
+    }
     if(AutoArgs::closeWhenOnMap)
     {
         std::cerr << "AutoArgs: --closewhenonmap, exiting in 1s" << std::endl;
