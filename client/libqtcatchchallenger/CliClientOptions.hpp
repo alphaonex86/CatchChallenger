@@ -66,6 +66,15 @@ public:
     // Empty = autosolo picks the first directory alphabetically. Used by
     // testingmap4client.py to force the "test" maincode fixture.
     static QString mainDatapackCodeOverride;
+
+    // Freeze the animated CCBackground (clouds drifting, grass swaying,
+    // tree-front / tree-back parallax cycles). The background is still
+    // drawn but every per-frame timer is stopped, so repeated runs of
+    // --take-screenshot=PATH produce byte-identical RGBA buffers (modulo
+    // PNG-compressor non-determinism). Used by testingcompilation*.py to
+    // diff against reference screenshots without flapping on a different
+    // grass / cloud animation frame each run.
+    static bool fixedBackground;
 };
 
 #endif // CLICLIENTOPTIONS_HPP

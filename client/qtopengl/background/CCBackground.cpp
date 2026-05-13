@@ -1,4 +1,5 @@
 #include "CCBackground.hpp"
+#include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include <QPainter>
 #include <QElapsedTimer>
 #include <chrono>
@@ -36,6 +37,15 @@ QRectF CCBackground::boundingRect() const
 
 void CCBackground::startAnimation()
 {
+    // --fixed (CliClientOptions::fixedBackground): skip every timer
+    // so the background stays on a single static frame. This is the
+    // sole determinism gate for the cloud / grass / tree-back /
+    // tree-front animation cycles — repeated runs of
+    // --take-screenshot=PATH then produce byte-stable PNGs (modulo
+    // PNG encoder quirks; the per-pixel-tolerance checker in
+    // testing*.py absorbs those).
+    if(CliClientOptions::fixedBackground)
+        return;
     unsigned int baseTime=20;
     grassTimer.start(baseTime);
     treefrontTimer.start(baseTime*3);
