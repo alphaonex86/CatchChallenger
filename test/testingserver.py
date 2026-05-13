@@ -14,6 +14,7 @@ Phases:
 # remote_build never lands a __pycache__/ dir in the source tree.  Set
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
+import process_helpers
 sys.dont_write_bytecode = True
 
 
@@ -1105,7 +1106,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     proc = subprocess.Popen(
         NICE_PREFIX + run_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-        preexec_fn=os.setsid)
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
     output_lines = []
     done = threading.Event()
     # `outcome` is set by the reader thread to one of:
