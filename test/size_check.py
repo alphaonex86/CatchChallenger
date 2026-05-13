@@ -74,16 +74,26 @@ BASELINES = {
     # value the testing harness actually produces.
     "windows.exe.qtcpu800x600":      490_000_000,   # ~467 MiB
     "windows.exe.qtopengl":          492_000_000,   # ~469 MiB
+    # server-gui is smaller than the clients — no Qt6Widgets game
+    # UI, no datapack-renderer code, just the admin Qt6Network +
+    # Qt6Sql stack. ~150 MiB unstripped Debug.
+    "windows.exe.server-gui":        180_000_000,   # ~172 MiB
     # NSIS installer .zip — 7z-compressed Qt6 deps + the .exe.
     # Post-fix sizes: previous .a/.lib inclusion + windeployqt dumped
     # ~400 MiB into the installer; after the runtime-only filter the
-    # installer is ~40 MiB (catchchallenger.exe stripped + Qt6 DLLs +
-    # plugins + the filtered datapack).
+    # per-client installer was ~40 MiB. The COMBINED installer ships
+    # all three binaries (qtopengl + qtcpu800x600 + server-gui) plus
+    # ONE copy of every Qt6 DLL / plugin / datapack — so it's roughly
+    # one .exe larger than the previous per-client size, in the
+    # ~50-60 MiB range.
+    "windows.installer.combined":     55_000_000,   # ~52 MiB
+    "windows.msi.combined":           57_000_000,   # ~54 MiB
+    # Per-binary baselines kept around for the in-tree iteration loop
+    # (build_installer + build_msi still exist as helpers for ad-hoc
+    # debug runs that target a single binary); the canonical run goes
+    # through "combined" and emits one .exe + one .msi.
     "windows.installer.qtcpu800x600": 41_000_000,   # ~39 MiB
     "windows.installer.qtopengl":     43_000_000,   # ~41 MiB
-    # WiX 3.11 .msi — lzx compression, slightly larger than the NSIS
-    # .exe because the .msi header + the file table itself add a few
-    # MiB on top of the same payload.
     "windows.msi.qtcpu800x600":       43_000_000,   # ~41 MiB
     "windows.msi.qtopengl":           45_000_000,   # ~43 MiB
 

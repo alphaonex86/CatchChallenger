@@ -69,27 +69,21 @@ _first_existing() {
 for t in "$@"; do
     case "$t" in
         windows)
-            # all.sh's post-success sweep wipes the per-test build dirs;
-            # the canonical post-run installer path is the promoted copy
-            # at $TMPFS_ROOT/catchchallenger-*-installer.exe (see
-            # cleanup_helpers.promote_artifact). Fall back to the in-
-            # build-tree copy when --onlyfailed / mid-run.
-            win_exe_cpu="$(_first_existing \
-                "${TMPFS_ROOT}/catchchallenger-qtcpu800x600-installer.exe" \
-                "${TMPFS_BUILD_ROOT}/client/qtcpu800x600/build/catchchallenger-qtcpu800x600-installer.exe")"
-            win_exe_gl="$(_first_existing \
-                "${TMPFS_ROOT}/catchchallenger-qtopengl-installer.exe" \
-                "${TMPFS_BUILD_ROOT}/client/qtopengl/build/catchchallenger-qtopengl-installer.exe")"
-            win_msi_cpu="$(_first_existing \
-                "${TMPFS_ROOT}/catchchallenger-qtcpu800x600.msi" \
-                "${TMPFS_BUILD_ROOT}/client/qtcpu800x600/build/catchchallenger-qtcpu800x600.msi")"
-            win_msi_gl="$(_first_existing \
-                "${TMPFS_ROOT}/catchchallenger-qtopengl.msi" \
-                "${TMPFS_BUILD_ROOT}/client/qtopengl/build/catchchallenger-qtopengl.msi")"
-            resolve windows-exe-qtcpu800x600 "$win_exe_cpu" "catchchallenger-qtcpu800x600-windows-x86-${VERSION}-setup.exe"
-            resolve windows-exe-qtopengl     "$win_exe_gl"  "catchchallenger-qtopengl-windows-x86-${VERSION}-setup.exe"
-            resolve windows-msi-qtcpu800x600 "$win_msi_cpu" "catchchallenger-qtcpu800x600-windows-x86-${VERSION}.msi"
-            resolve windows-msi-qtopengl     "$win_msi_gl"  "catchchallenger-qtopengl-windows-x86-${VERSION}.msi"
+            # Combined installer/MSI: a single .exe + single .msi that
+            # bundle all three binaries (qtopengl + qtcpu800x600 +
+            # server-gui) and three Start-Menu shortcuts, sharing the
+            # Qt6 DLLs / plugins / datapack tree. Canonical names land
+            # at the tmpfs root via cleanup_helpers.promote_artifact;
+            # fall back to the in-build-tree copy when --onlyfailed /
+            # mid-run hasn't promoted yet.
+            win_exe="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger-installer.exe" \
+                "${TMPFS_BUILD_ROOT}/client/build/combined-installer/catchchallenger-installer.exe")"
+            win_msi="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger.msi" \
+                "${TMPFS_BUILD_ROOT}/client/build/combined-msi/catchchallenger.msi")"
+            resolve windows-exe "$win_exe" "catchchallenger-windows-x86-${VERSION}-setup.exe"
+            resolve windows-msi "$win_msi" "catchchallenger-windows-x86-${VERSION}.msi"
             ;;
         mac)
             dmg="$(_first_existing \

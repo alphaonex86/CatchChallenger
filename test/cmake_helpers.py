@@ -99,6 +99,16 @@ _OPTION_MACROS = {
 # the root project's add_subdirectory calls; standalone subdirs have no such
 # gate.
 _PRO_TO_CMAKE = {
+    "server/server-gui.pro": (
+        # The Qt admin GUI server lives at server/CMakeLists.txt
+        # (per the "one binary per CMakeLists.txt" rule the root file
+        # is the project file; there's no per-target .pro). Map the
+        # virtual .pro key to that target + subdir so the cross-build
+        # harness can build it the same way as every other binary.
+        "catchchallenger-server-gui",
+        [],
+        "server",
+    ),
     "server/cli/catchchallenger-server-filedb.pro": (
         "catchchallenger-server-cli",
         ["-DCATCHCHALLENGER_DB_FILE=ON"],
