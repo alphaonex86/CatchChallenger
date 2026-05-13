@@ -339,6 +339,33 @@ def deploy_mxe_dependencies(exe_path):
              f"{plugins_copied} plugin categories")
 
 
+def _deploy_mingw_runtime(exe_path):
+    """Copy the MinGW C/C++ runtime DLLs that windeployqt does NOT
+    handle (it scopes itself to Qt). Without these the .exe fails to
+    start under wine with "DLL not found". Specifically:
+    libgcc_s_seh-1.dll, libstdc++-6.dll, libwinpthread-1.dll, plus
+    libssp-0.dll when MXE was built with -fstack-protector.
+
+    Cheaper alternative to deploy_mxe_dependencies(): we only copy this
+    small fixed set, not every .dll under MXE_QT_BIN + MXE_RT_BIN."""
+    dst_dir = os.path.dirname(exe_path)
+    runtime = ("libgcc_s_seh-1.dll", "libstdc++-6.dll",
+               "libwinpthread-1.dll", "libssp-0.dll")
+    copied = 0
+    for fn in runtime:
+        for src_root in (MXE_RT_BIN, MXE_QT_BIN):
+            src = os.path.join(src_root, fn)
+            if os.path.isfile(src):
+                try:
+                    shutil.copy2(src, os.path.join(dst_dir, fn))
+                    copied += 1
+                except (OSError, shutil.Error):
+                    pass
+                break
+    log_info(f"deployed MinGW runtime: {copied}/{len(runtime)} dll(s) "
+             f"to {dst_dir}")
+
+
 def run_windeployqt(exe_path, label):
     """Run windeployqt.exe under wine64 against the freshly built .exe.
     windeployqt copies the right Qt DLLs + plugins next to the binary.
@@ -466,14 +493,16 @@ def build_mxe_client(pro_file, build_dir, label):
     if exe is None:
         log_fail(name, f"{WIN_EXE_NAME} not produced under {build_dir}")
         return None
-    # Try windeployqt first; on failure / absence, fall back to the
-    # manual DLL copy so the wine run still has its dependencies.
-    if not run_windeployqt(exe, label):
-        deploy_mxe_dependencies(exe)
+    # Prefer windeployqt — it knows precisely which Qt6 DLLs + which
+    # plugin sub-dirs a given .exe needs and deposits ONLY those next to
+    # the binary. deploy_mxe_dependencies is the fallback: it dumps the
+    # whole MXE bin/ (Qt + ffmpeg + hdf5 + GLEW + glfw3 + ALURE32 + …),
+    # which bloats the installer past the 100 MiB shipping ceiling.
+    # When windeployqt succeeds we therefore only add the small MinGW
+    # runtime trio that windeployqt does not ship.
+    if run_windeployqt(exe, label):
+        _deploy_mingw_runtime(exe)
     else:
-        # windeployqt only ships Qt + plugins; libstdc++ / libgcc / libwinpthread
-        # come from MXE's mingw runtime and are NOT installed by windeployqt.
-        # Layer the runtime DLLs on top so the .exe actually starts under wine.
         deploy_mxe_dependencies(exe)
     log_pass(name, f"-> {os.path.relpath(exe, ROOT)}")
     _verify_exe_size(label, exe)
