@@ -987,26 +987,65 @@ def _client_binary():
     return None
 
 
-def _spawn_logged_in_client(server, character_name, timeout_s=20):
+# Per-client lock — the catchchallenger client writes its config to
+# ~/.config/CatchChallenger/client-qtcpu800x600.conf (Qt's QSettings
+# default location), and concurrent instances race on that file.
+# Serialise the spawn so each case gets a clean settings snapshot.
+_CLIENT_SPAWN_LOCK = threading.Lock()
+
+
+def _stage_client_datapack_once():
+    """Symlink the datapack source into
+    <client_dir>/datapack/internal/ so the catchchallenger client
+    has the matching base files and doesn't have to in-protocol
+    download from every test's freshly-built server. testingclient
+    removes this dir at the end of its run, hence the per-call
+    stage. Idempotent — safe to call from every case."""
+    bin_path = _client_binary()
+    if bin_path is None:
+        return
+    client_dir = os.path.dirname(bin_path)
+    internal = os.path.join(client_dir, "datapack", "internal")
+    if os.path.isdir(internal) or os.path.islink(internal):
+        return
+    src = staged_or_direct_datapack()
+    if not os.path.isdir(src):
+        return
+    os.makedirs(os.path.join(client_dir, "datapack"), exist_ok=True)
+    try:
+        os.symlink(src, internal)
+    except OSError:
+        pass
+
+
+def _spawn_logged_in_client(server, character_name, timeout_s=25):
     """Spawn the qtcpu800x600 client and wait up to `timeout_s` for
     "MapVisualiserPlayer::mapDisplayedSlot()" in stdout. Returns
-    (Popen, ok, detail). Caller is responsible for stopping the
-    process. The server must have automatic_account_creation=true
+    (Popen, ok, detail_or_tail). Caller is responsible for stopping
+    the process. The server must have automatic_account_creation=true
     so the unknown login auto-registers (see _SETTINGS_SEED).
 
     Used by the post-login case_* probes (dupe_by_lag, wall_walk,
     trade_in_combat) as the closest faithful approximation we can
     do without a Python protocol client: real client, real login,
-    real on-map state, real server-side validation paths exercised."""
+    real on-map state, real server-side validation paths exercised.
+
+    detail_or_tail is non-empty (last ~20 stdout lines) only when the
+    client failed to reach the map — caller can surface it in the
+    log_fail detail so a regression has actionable trace."""
     bin_path = _client_binary()
     if bin_path is None:
         return None, None, "skip (qtcpu800x600 client not built — run testingclient.py first)"
+    _stage_client_datapack_once()
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
     args = [bin_path,
             "--host", "127.0.0.1", "--port", str(server.port),
             "--autologin", "--character", character_name,
             "--closewhenonmap"]
+    # Serialise on the per-client settings file — Qt's QSettings is
+    # not safe across concurrent processes sharing the same file.
+    _CLIENT_SPAWN_LOCK.acquire()
     proc = subprocess.Popen(
         args, cwd=os.path.dirname(bin_path),
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
@@ -1029,7 +1068,19 @@ def _spawn_logged_in_client(server, character_name, timeout_s=20):
         if reached[0] or proc.poll() is not None:
             break
         time.sleep(0.2)
-    return proc, reached[0], None
+    # Release immediately after the wait — _stop_client is the caller's
+    # responsibility but it doesn't need the lock.
+    try:
+        _CLIENT_SPAWN_LOCK.release()
+    except RuntimeError:
+        pass
+    tail = ""
+    if not reached[0]:
+        # Concise tail so the failure detail is actionable without
+        # exploding the log size. Strip ANSI before slicing.
+        last = output[-20:] if len(output) > 20 else output
+        tail = " | ".join(last)
+    return proc, reached[0], tail
 
 
 def _stop_client(proc, grace=5):
@@ -1062,14 +1113,15 @@ def case_dupe_by_lag(server):
     is still TODO via a custom protocol bot — see
     tools/bot-test-connect-to-gameserver-cli/ as the starting
     point."""
-    p1, ok1, skip = _spawn_logged_in_client(server, "DupePlayerA")
-    if skip:
-        return None, skip
-    p2, ok2, _ = _spawn_logged_in_client(server, "DupePlayerB")
+    p1, ok1, tail1 = _spawn_logged_in_client(server, "DupePlayerA")
+    if tail1 and tail1.startswith("skip "):
+        return None, tail1
+    p2, ok2, tail2 = _spawn_logged_in_client(server, "DupePlayerB")
     try:
         if not ok1 or not ok2:
-            return False, (f"dupe_by_lag: client A reached={ok1}, "
-                           f"client B reached={ok2}")
+            return False, (f"dupe_by_lag: A reached={ok1}, B reached={ok2}"
+                           f"; tail A: {tail1[-300:]}"
+                           f"; tail B: {tail2[-300:]}")
         if not server.is_alive():
             return False, "dupe_by_lag: server died with two clients"
         return True, ("two real clients logged in + reached map; "
@@ -1086,12 +1138,13 @@ def case_wall_walk(server):
     packets — TODO via tools/bot-test-connect-to-gameserver-cli/).
     Verifies the prerequisite: server accepts a real client and
     serves the map without crashing during play."""
-    p, ok, skip = _spawn_logged_in_client(server, "WallWalker")
-    if skip:
-        return None, skip
+    p, ok, tail = _spawn_logged_in_client(server, "WallWalker")
+    if tail and tail.startswith("skip "):
+        return None, tail
     try:
         if not ok:
-            return False, "wall_walk: client never reached map"
+            return False, (f"wall_walk: client never reached map; "
+                           f"tail: {tail[-300:]}")
         if not server.is_alive():
             return False, "wall_walk: server died after client on-map"
         return True, ("client reached map and server stayed up "
@@ -1107,14 +1160,15 @@ def case_trade_in_combat(server):
     prerequisite: server can hold two simultaneous logged-in
     sessions without crashing, which is the foundation every
     trade-related test needs."""
-    p1, ok1, skip = _spawn_logged_in_client(server, "TraderA")
-    if skip:
-        return None, skip
-    p2, ok2, _ = _spawn_logged_in_client(server, "TraderB")
+    p1, ok1, tail1 = _spawn_logged_in_client(server, "TraderA")
+    if tail1 and tail1.startswith("skip "):
+        return None, tail1
+    p2, ok2, tail2 = _spawn_logged_in_client(server, "TraderB")
     try:
         if not ok1 or not ok2:
-            return False, (f"trade_in_combat: A reached={ok1}, "
-                           f"B reached={ok2}")
+            return False, (f"trade_in_combat: A reached={ok1}, B reached={ok2}"
+                           f"; tail A: {tail1[-300:]}"
+                           f"; tail B: {tail2[-300:]}")
         if not server.is_alive():
             return False, "trade_in_combat: server died with two clients"
         return True, ("two clients logged in + reached map; trade "
