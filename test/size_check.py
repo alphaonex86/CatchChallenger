@@ -9,9 +9,14 @@ which:
     1. Reads the actual file size on disk.
     2. Fails when the file does NOT exist.
     3. Fails when size < ABSOLUTE_FLOOR (10 MiB).
-    4. Fails when size < 0.75 × baseline (the artifact shrank
+    4. Fails when size > ABSOLUTE_CEILING (100 MiB) for SHIPPING
+       artifacts (Windows installer/msi, macOS dmg, Android apk/aab).
+       Operator-facing downloads should never balloon past 100 MiB; if
+       a deliberate change pushes us over, raise the ceiling explicitly
+       and document why.
+    5. Fails when size < 0.75 × baseline (the artifact shrank
        suspiciously — empty .apk, missing libs in .msi, etc.).
-    5. Passes otherwise.
+    6. Passes otherwise.
 
 The baselines are deliberately HARD-CODED. Drift is the signal: when
 a real source change shrinks a binary by >25%, an operator must
@@ -38,6 +43,20 @@ import os
 # server-only build below this is broken (no Qt deps deployed); a
 # client below this is missing the runtime libs.
 ABSOLUTE_FLOOR = 10 * 1024 * 1024  # 10 MiB
+
+# Absolute ceiling for SHIPPING artifacts (installer/msi/dmg/apk/aab).
+# 100 MiB is the largest size we ever advertise to end users; anything
+# bigger is a regression (duplicate datapack copy, undeployed strip,
+# accidentally bundled debug build, …). Raw build artifacts that are
+# NOT user-facing downloads (the unstripped Debug .exe, the macOS
+# pre-DMG .app bundle .zip) are exempt — their sizes are dominated by
+# debug symbols / unstripped frameworks.
+ABSOLUTE_CEILING = 100 * 1024 * 1024  # 100 MiB
+
+# Labels whose `<platform>.<type>.<variant>` middle token marks them
+# as user-facing shipping artifacts. ABSOLUTE_CEILING applies only
+# when verify()'s label has one of these types.
+_SHIPPING_TYPES = {"installer", "msi", "dmg", "apk", "aab"}
 
 # Static baselines, captured from a known-good build snapshot. Update
 # when a real source change shifts the size; do NOT update mechanically
@@ -85,6 +104,11 @@ def baseline_for(label):
     return BASELINES[label]
 
 
+def _is_shipping(label):
+    parts = label.split(".")
+    return len(parts) >= 3 and parts[1] in _SHIPPING_TYPES
+
+
 def verify(label, path):
     """Return (ok: bool, detail: str). NEVER raises — caller logs."""
     if not os.path.isfile(path):
@@ -98,6 +122,7 @@ def verify(label, path):
     human_size = _human(size)
     human_baseline = _human(baseline)
     human_floor = _human(floor)
+    human_ceiling = _human(ABSOLUTE_CEILING)
     if size < floor:
         # Pick the more informative reason.
         if size < ABSOLUTE_FLOOR:
@@ -106,6 +131,9 @@ def verify(label, path):
             why = (f"{human_size} < 75% of baseline {human_baseline} "
                    f"(floor {human_floor})")
         return False, f"size regression on {label}: {why}"
+    if _is_shipping(label) and size > ABSOLUTE_CEILING:
+        return False, (f"size regression on {label}: {human_size} > "
+                       f"{human_ceiling} shipping-artifact hard ceiling")
     return True, (f"{human_size} (baseline {human_baseline}, "
                   f"floor {human_floor})")
 
