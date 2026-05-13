@@ -51,26 +51,48 @@ BaseServer::BaseServer() :
         std::cerr << "FacilityLibGeneral::applicationDirPath is empty" << std::endl;
         abort();
     }
-    GlobalServerData::serverSettings.datapack_basePath                          = FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/";
-    //Fail-fast when the datapack directory is missing. The path is
-    //hard-pinned to <applicationDirPath>/datapack/ — no XML setting
-    //overrides it — so the only recovery is to stage the directory
-    //(or symlink it) next to the binary. Without this, preload
-    //phases silently feed empty data downstream, the gsa appears
-    //to "start" but never reaches "correctly bind:", and the test
-    //rig times out at 180 s with no actionable error. Use exit()
-    //rather than abort() so the parent process sees a clean
-    //EXIT_FAILURE instead of a SIGABRT core-dump path.
+    // Datapack search order at runtime:
+    //   1. <binary_dir>/datapack/internal/   — preferred, matches the
+    //      tree the client downloads (its on-disk layout is rooted at
+    //      datapack/internal/ because the client stores multiple
+    //      simultaneous datapacks side by side, one per server). The
+    //      combined-installer windows build (testingcompilationwindows
+    //      → catchchallenger-installer.exe) ships its bundled
+    //      datapack under that path.
+    //   2. <binary_dir>/datapack/            — fallback for legacy CLI
+    //      deploys that have the datapack staged flat next to the
+    //      binary (testingclient.py, testinghttp.py, the deploy.sh
+    //      server step on the 763/764/765 VPSes).
+    // The server picks whichever exists; if neither does, fail-fast
+    // with a clear "looked at A and B" message rather than silently
+    // feeding empty data through preload.
     {
-        struct stat sb;
-        if(::stat(GlobalServerData::serverSettings.datapack_basePath.c_str(),
-                  &sb)!=0
-           || !S_ISDIR(sb.st_mode))
+        const std::string bin_dir = FacilityLibGeneral::getFolderFromFile(
+                CatchChallenger::FacilityLibGeneral::applicationDirPath);
+        const std::string candidates[2] = {
+            bin_dir + "/datapack/internal/",
+            bin_dir + "/datapack/",
+        };
+        bool found = false;
+        for (int i = 0; i < 2; ++i)
+        {
+            struct stat sb;
+            if(::stat(candidates[i].c_str(), &sb) == 0
+               && S_ISDIR(sb.st_mode))
+            {
+                GlobalServerData::serverSettings.datapack_basePath =
+                        candidates[i];
+                found = true;
+                break;
+            }
+        }
+        if(!found)
         {
             std::cerr << "Datapack directory missing: "
-                      << GlobalServerData::serverSettings.datapack_basePath
-                      << " — the server expects ./datapack/ next to "
-                         "the binary (path is fixed, not configurable)."
+                      << "looked at " << candidates[0]
+                      << " and " << candidates[1]
+                      << " — the server expects one of those next to "
+                         "the binary (no XML override)."
                       << std::endl;
             std::exit(EXIT_FAILURE);
         }

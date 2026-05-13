@@ -51,22 +51,46 @@ NPROC         = str(multiprocessing.cpu_count())
 
 CLIENT_CPU_PRO = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 CLIENT_GL_PRO  = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro")
+# server-gui.pro is a virtual key — see cmake_helpers._PRO_TO_CMAKE
+# for the real CMakeLists.txt / target mapping.
+SERVER_GUI_PRO = os.path.join(ROOT, "server/server-gui.pro")
 
 CLIENT_CPU_BUILD_WIN = build_paths.build_path("client/qtcpu800x600/build/testing-wine64")
 CLIENT_GL_BUILD_WIN  = build_paths.build_path("client/qtopengl/build/testing-wine64")
+SERVER_GUI_BUILD_WIN = build_paths.build_path("server/build/testing-wine64")
 WIN_EXE_NAME         = "catchchallenger.exe"
+# Output filenames inside the combined installer payload (post-stage
+# rename — see _stage_combined_payload). qtopengl + qtcpu800x600 both
+# emit a binary literally named "catchchallenger.exe" from cmake's
+# OUTPUT_NAME override; one of them has to be renamed to avoid a
+# filesystem collision when they sit in the same install directory.
+COMBINED_BIN_CPU = "catchchallenger800x600.exe"   # qtcpu800x600
+COMBINED_BIN_GL  = "catchchallenger.exe"           # qtopengl, primary
+COMBINED_BIN_SRV = "catchchallenger-server-gui.exe"
 
 #local server-filedb that the multi-mode wine client connects back to.
 SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb")
 SERVER_BIN_NAME = "catchchallenger-server-cli"
+
+# Combined-payload + installer/MSI scratch dirs live at the parent
+# of CLIENT_GL_BUILD_WIN so the post-success sweep cleans them with
+# everything else. The actual installer + .msi land at the
+# /mnt/data/perso/tmpfs root via cleanup_helpers.promote_artifact.
+COMBINED_STAGE_DIR = build_paths.build_path("client/build/combined-install-stage")
+COMBINED_NSIS_DIR  = build_paths.build_path("client/build/combined-installer")
+COMBINED_MSI_DIR   = build_paths.build_path("client/build/combined-msi")
 
 # Register PRIVATE build dirs for atexit cleanup. SERVER_BUILD
 # (= testing-filedb) is shared with native-Linux tests and is NOT
 # registered here; the all.sh post-success sweep wipes it.
 cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD_WIN)
 cleanup_helpers.register_build_dir(CLIENT_GL_BUILD_WIN)
+cleanup_helpers.register_build_dir(SERVER_GUI_BUILD_WIN)
 cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD_WIN + "-install-stage")
-cleanup_helpers.register_build_dir(CLIENT_GL_BUILD_WIN + "-install-stage")
+cleanup_helpers.register_build_dir(CLIENT_GL_BUILD_WIN  + "-install-stage")
+cleanup_helpers.register_build_dir(COMBINED_STAGE_DIR)
+cleanup_helpers.register_build_dir(COMBINED_NSIS_DIR)
+cleanup_helpers.register_build_dir(COMBINED_MSI_DIR)
 
 SERVER_HOST = _config["server_host"]
 SERVER_PORT = str(_config["server_port"])
@@ -318,16 +342,19 @@ def mxe_available():
             and os.path.isfile(WINE_BIN))
 
 
-def find_built_exe(build_dir):
-    """Locate catchchallenger.exe inside the MXE-cmake build dir. With
+def find_built_exe(build_dir, exe_name=WIN_EXE_NAME):
+    """Locate <exe_name> inside the MXE-cmake build dir. With
     self-contained per-binary CMakeLists.txt, the .exe lands at
-    build_dir/<target>.exe directly (no nested output subdir)."""
+    build_dir/<target>.exe directly (no nested output subdir).
+    Caller can override exe_name for binaries whose target name
+    differs from `catchchallenger` (e.g. server-gui ships as
+    `catchchallenger-server-gui.exe`)."""
     candidates = [build_dir,
                   os.path.join(build_dir, "release"),
                   os.path.join(build_dir, "debug")]
     idx = 0
     while idx < len(candidates):
-        cand = os.path.join(candidates[idx], WIN_EXE_NAME)
+        cand = os.path.join(candidates[idx], exe_name)
         if os.path.isfile(cand):
             return cand
         idx += 1
@@ -543,9 +570,14 @@ def build_mxe_client(pro_file, build_dir, label):
             if out.strip():
                 print(out[-2000:])
             return None
-    exe = find_built_exe(build_dir)
+    # server-gui's CMake target name is catchchallenger-server-gui,
+    # not catchchallenger; pass the right filename to find_built_exe.
+    expected_exe = (f"{target}.exe"
+                    if target == "catchchallenger-server-gui"
+                    else WIN_EXE_NAME)
+    exe = find_built_exe(build_dir, exe_name=expected_exe)
     if exe is None:
-        log_fail(name, f"{WIN_EXE_NAME} not produced under {build_dir}")
+        log_fail(name, f"{expected_exe} not produced under {build_dir}")
         return None
     # Prefer windeployqt — it knows precisely which Qt6 DLLs + which
     # plugin sub-dirs a given .exe needs and deposits ONLY those next to
@@ -952,6 +984,267 @@ def _verify_staged_exe_runs(stage_dir):
     #            .exe is alive at the 3 s cap; LoadLibrary calls all
     #            succeeded or wine would have crashed earlier.
     return rc == 0 or rc == -1
+
+
+def _stage_combined_payload(parts):
+    """Merge the per-binary stage dirs (already built + filtered by
+    _stage_install_payload) into a single COMBINED_STAGE_DIR, with
+    each .exe renamed to its target shipped name and every other
+    file deduped by basename. Returns COMBINED_STAGE_DIR on success.
+
+    parts is a list of dicts:
+        [{"stage": <path>, "exe_src": <basename>, "exe_dst": <basename>}]
+
+    The first part is the "primary" — its shortcut becomes the
+    default in the Start Menu. All three .exe files end up next to
+    each other in the install dir, sharing one copy of every Qt6
+    DLL / plugin / datapack tree (the three stages produce the same
+    Qt6 layout because they're built against the same MXE Qt)."""
+    dst = COMBINED_STAGE_DIR
+    if os.path.isdir(dst):
+        shutil.rmtree(dst, ignore_errors=True)
+    os.makedirs(dst, exist_ok=True)
+    # Copy each part's tree onto the same dst — first one wins for
+    # any duplicated DLL/plugin path; subsequent parts overwrite
+    # only if missing (shutil.copy2 unconditionally overwrites, so
+    # we walk + skip-if-exists for non-exe entries).
+    seen = set()
+    pi = 0
+    while pi < len(parts):
+        p = parts[pi]
+        pi += 1
+        src = p["stage"]
+        if not os.path.isdir(src):
+            continue
+        for root, dirs, files in os.walk(src):
+            rel = os.path.relpath(root, src)
+            target_dir = dst if rel in (".", "") else os.path.join(dst, rel)
+            os.makedirs(target_dir, exist_ok=True)
+            fi = 0
+            while fi < len(files):
+                n = files[fi]
+                fi += 1
+                # Rename the part's primary .exe to its shipping
+                # filename (e.g. qtcpu800x600's catchchallenger.exe
+                # → catchchallenger800x600.exe).
+                if rel in (".", "") and n == p["exe_src"]:
+                    out_name = p["exe_dst"]
+                else:
+                    out_name = n
+                target = os.path.join(target_dir, out_name)
+                key = os.path.relpath(target, dst)
+                if key in seen:
+                    continue
+                seen.add(key)
+                try:
+                    shutil.copy2(os.path.join(root, n), target,
+                                 follow_symlinks=True)
+                except OSError:
+                    pass
+    return dst
+
+
+def build_combined_installer(parts):
+    """Single NSIS installer covering qtcpu800x600 + qtopengl +
+    server-gui. Output: <tmpfs_root>/catchchallenger-installer.exe.
+
+    Three Start-Menu shortcuts go into a "CatchChallenger" submenu:
+      - CatchChallenger             → catchchallenger.exe (qtopengl)
+      - CatchChallenger 800x600     → catchchallenger800x600.exe
+      - CatchChallenger Server GUI  → catchchallenger-server-gui.exe
+    The desktop shortcut points at the primary (qtopengl) only —
+    pinning every variant to the desktop would pollute it."""
+    name = "installer combined"
+    stage = _stage_combined_payload(parts)
+    if not _verify_png_support(stage):
+        log_fail(name, f"combined payload lacks PNG support — "
+                       f"Qt6Gui/libpng or imageformats/ missing in {stage}")
+        return None
+    _strip_test_only_plugins(stage)
+    _strip_debug_symbols(stage)
+
+    if MAKENSIS_BIN is None:
+        log_fail(name, f"makensis not found at {MAKENSIS_BIN}; "
+                       f"NSIS installer step skipped")
+        return None
+    out_dir = COMBINED_NSIS_DIR
+    os.makedirs(out_dir, exist_ok=True)
+    nsi_path = os.path.join(out_dir, "catchchallenger.nsi")
+    installer_exe = os.path.join(out_dir, "catchchallenger-installer.exe")
+    nsi = (
+        'OutFile "' + installer_exe + '"\n'
+        'InstallDir "$PROGRAMFILES64\\CatchChallenger"\n'
+        'RequestExecutionLevel admin\n'
+        'Section "MainSection" SEC01\n'
+        '  SetOutPath "$INSTDIR"\n'
+        '  File /r "' + stage + os.sep + '*.*"\n'
+        '  CreateDirectory "$SMPROGRAMS\\CatchChallenger"\n'
+        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger.lnk" '
+        '"$INSTDIR\\' + COMBINED_BIN_GL + '"\n'
+        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger 800x600.lnk" '
+        '"$INSTDIR\\' + COMBINED_BIN_CPU + '"\n'
+        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger Server GUI.lnk" '
+        '"$INSTDIR\\' + COMBINED_BIN_SRV + '"\n'
+        '  CreateShortCut "$DESKTOP\\CatchChallenger.lnk" '
+        '"$INSTDIR\\' + COMBINED_BIN_GL + '"\n'
+        'SectionEnd\n'
+    )
+    with open(nsi_path, "w") as f:
+        f.write(nsi)
+    log_info(f"makensis {os.path.basename(nsi_path)} (combined)")
+    rc, out = run_cmd([MAKENSIS_BIN, "-V2", nsi_path],
+                      out_dir, timeout=COMPILE_TIMEOUT)
+    if rc == 0 and os.path.isfile(installer_exe):
+        log_pass(name, f"-> {os.path.relpath(installer_exe, ROOT)}")
+        _verify_installer_size("combined", installer_exe)
+        # Promote to tmpfs root with the requested final name.
+        import cleanup_helpers as _ch
+        _ch.promote_artifact(installer_exe,
+                             "catchchallenger-installer.exe")
+        return installer_exe
+    log_fail(name, f"makensis failed (rc={rc})")
+    if out.strip():
+        print(out[-2000:])
+    return None
+
+
+def build_combined_msi(parts):
+    """Single .msi covering qtcpu800x600 + qtopengl + server-gui.
+    Output: <tmpfs_root>/catchchallenger.msi.
+
+    Same 3-shortcut Start Menu layout as build_combined_installer."""
+    name = "msi combined"
+    stage = _stage_combined_payload(parts)
+    if not _verify_png_support(stage):
+        log_fail(name, f"combined payload lacks PNG support in {stage}")
+        return None
+    _strip_test_only_plugins(stage)
+    _strip_debug_symbols(stage)
+
+    if not (os.path.isfile(WIX_CANDLE_EXE) and os.path.isfile(WIX_LIGHT_EXE)
+            and os.path.isfile(WIX_HEAT_EXE)):
+        log_fail(name, f"WiX not found under {WIX_DIR}; skipped")
+        return None
+    work = COMBINED_MSI_DIR
+    if os.path.isdir(work):
+        shutil.rmtree(work)
+    os.makedirs(work)
+    msi_path = os.path.join(work, "catchchallenger.msi")
+    main_wxs  = os.path.join(work, "main.wxs")
+    files_wxs = os.path.join(work, "files.wxs")
+    _write_combined_main_wxs(main_wxs, os.path.basename(stage))
+    env = _wix_wine_env()
+
+    # heat.exe — same incantation the per-binary build_msi uses (see
+    # the wine64-relpath comment there for why a RELATIVE input path
+    # matters): emit `$(var.SourceDir)/...` references so candle
+    # later resolves them against -dSourceDir=, instead of hard-
+    # coding the absolute stage path into files.wxs. Without
+    # `-var var.SourceDir`, light.exe fails LGHT0103 trying to read
+    # files at a build-host path that doesn't exist on the wine
+    # filesystem mapping.
+    files_wxs_rel = os.path.relpath(files_wxs, work)
+    stage_rel     = os.path.relpath(stage, work)
+    log_info(f"wine64 heat.exe dir {os.path.basename(stage)} (combined)")
+    rc, out = run_cmd([WINE_BIN, WIX_HEAT_EXE,
+                       "dir", stage_rel,
+                       "-nologo", "-gg", "-srd", "-sreg",
+                       "-scom", "-ke", "-sfrag", "-suid",
+                       "-cg", "AppPayloadGroup",
+                       "-dr", "INSTALLFOLDER",
+                       "-var", "var.SourceDir",
+                       "-out", files_wxs_rel],
+                      work, timeout=COMPILE_TIMEOUT, env=env)
+    if rc != 0:
+        log_fail(name, f"heat failed (rc={rc})")
+        if out.strip():
+            print(out[-2000:])
+        return None
+
+    log_info("wine64 candle.exe (combined)")
+    rc, out = run_cmd([WINE_BIN, WIX_CANDLE_EXE,
+                       "-nologo",
+                       "-dSourceDir=" + os.path.relpath(stage, work),
+                       os.path.relpath(main_wxs, work),
+                       os.path.relpath(files_wxs, work)],
+                      work, timeout=COMPILE_TIMEOUT, env=env)
+    if rc != 0:
+        log_fail(name, f"candle failed (rc={rc})")
+        if out.strip():
+            print(out[-2000:])
+        return None
+
+    log_info(f"wine64 light.exe -> {os.path.basename(msi_path)}")
+    rc, out = run_cmd([WINE_BIN, WIX_LIGHT_EXE,
+                       "-nologo", "-sval", "-spdb",
+                       "-sice:ICE61", "-sice:ICE69",
+                       "-out", os.path.relpath(msi_path, work),
+                       "main.wixobj", "files.wixobj"],
+                      work, timeout=COMPILE_TIMEOUT, env=env)
+    if rc != 0 or not os.path.isfile(msi_path):
+        log_fail(name, f"light failed (rc={rc})")
+        if out.strip():
+            print(out[-2000:])
+        return None
+    log_pass(name, f"-> {os.path.relpath(msi_path, ROOT)}")
+    _verify_msi_size("combined", msi_path)
+    sign_authenticode(msi_path, "combined", "msi")
+    import cleanup_helpers as _ch
+    _ch.promote_artifact(msi_path, "catchchallenger.msi")
+    return msi_path
+
+
+def _write_combined_main_wxs(out_path, source_dir_basename):
+    """Same per-product header as _write_main_wxs but with the 3
+    Start-Menu shortcuts the combined installer needs. heat.exe's
+    ComponentGroup output (files.wxs) supplies AppPayloadGroup
+    referenced from <Feature> in the main file."""
+    upgrade_code = "12345678-1111-2222-3333-444455556666"
+    wxs = (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">\n'
+        '  <Product Id="*" Name="CatchChallenger" '
+        'Language="1033" Version="4.0.0.0" '
+        'Manufacturer="CatchChallenger" '
+        'UpgradeCode="' + upgrade_code + '">\n'
+        '    <Package InstallerVersion="200" Compressed="yes" '
+        'InstallScope="perMachine"/>\n'
+        '    <Media Id="1" Cabinet="cc.cab" EmbedCab="yes"/>\n'
+        '    <Directory Id="TARGETDIR" Name="SourceDir">\n'
+        '      <Directory Id="ProgramFiles64Folder">\n'
+        '        <Directory Id="INSTALLFOLDER" Name="CatchChallenger"/>\n'
+        '      </Directory>\n'
+        '      <Directory Id="ProgramMenuFolder">\n'
+        '        <Directory Id="ApplicationProgramsFolder" Name="CatchChallenger"/>\n'
+        '      </Directory>\n'
+        '    </Directory>\n'
+        '    <DirectoryRef Id="ApplicationProgramsFolder">\n'
+        '      <Component Id="ApplicationShortcuts" Guid="*">\n'
+        '        <Shortcut Id="GLShortcut" Name="CatchChallenger" '
+        'Target="[INSTALLFOLDER]' + COMBINED_BIN_GL + '" '
+        'WorkingDirectory="INSTALLFOLDER"/>\n'
+        '        <Shortcut Id="CPUShortcut" Name="CatchChallenger 800x600" '
+        'Target="[INSTALLFOLDER]' + COMBINED_BIN_CPU + '" '
+        'WorkingDirectory="INSTALLFOLDER"/>\n'
+        '        <Shortcut Id="SRVShortcut" Name="CatchChallenger Server GUI" '
+        'Target="[INSTALLFOLDER]' + COMBINED_BIN_SRV + '" '
+        'WorkingDirectory="INSTALLFOLDER"/>\n'
+        '        <RemoveFolder Id="CleanUpShortcutFolder" '
+        'Directory="ApplicationProgramsFolder" On="uninstall"/>\n'
+        '        <RegistryValue Root="HKCU" '
+        'Key="Software\\CatchChallenger" Name="installed" Type="integer" '
+        'Value="1" KeyPath="yes"/>\n'
+        '      </Component>\n'
+        '    </DirectoryRef>\n'
+        '    <Feature Id="ProductFeature" Title="CatchChallenger" Level="1">\n'
+        '      <ComponentGroupRef Id="AppPayloadGroup"/>\n'
+        '      <ComponentRef Id="ApplicationShortcuts"/>\n'
+        '    </Feature>\n'
+        '  </Product>\n'
+        '</Wix>\n'
+    )
+    with open(out_path, "w") as f:
+        f.write(wxs)
 
 
 def build_installer(exe_path, label):
@@ -1568,8 +1861,9 @@ def main():
         summary()
         return
 
-    cpu_exe = None
-    gl_exe  = None
+    cpu_exe  = None
+    gl_exe   = None
+    srv_exe  = None
     if should_run("compile qtcpu800x600 (mxe-x86_64)", failed_cases):
         cpu_exe = build_mxe_client(CLIENT_CPU_PRO, CLIENT_CPU_BUILD_WIN,
                                    "qtcpu800x600")
@@ -1580,6 +1874,12 @@ def main():
                                   "qtopengl")
     else:
         gl_exe = find_built_exe(CLIENT_GL_BUILD_WIN)
+    if should_run("compile server-gui (mxe-x86_64)", failed_cases):
+        srv_exe = build_mxe_client(SERVER_GUI_PRO, SERVER_GUI_BUILD_WIN,
+                                   "server-gui")
+    else:
+        srv_exe = find_built_exe(SERVER_GUI_BUILD_WIN,
+                                 exe_name="catchchallenger-server-gui.exe")
 
     win_dp_src = DATAPACKS[0] if DATAPACKS else None
     win_mc = None
@@ -1635,30 +1935,52 @@ def main():
     if gl_exe is not None and should_run("sign exe qtopengl", failed_cases):
         sign_authenticode(gl_exe, "qtopengl", "exe")
 
-    # Installer step — runs after the autosolo phase so the staged
-    # <exe_dir>/ already has Qt DLLs (windeployqt + manual) AND
-    # datapack/internal/ in place.  The installer ships the whole dir.
-    cpu_installer = None
-    gl_installer  = None
-    if cpu_exe is not None and should_run("installer qtcpu800x600", failed_cases):
-        cpu_installer = build_installer(cpu_exe, "qtcpu800x600")
-    if gl_exe is not None and should_run("installer qtopengl", failed_cases):
-        gl_installer = build_installer(gl_exe, "qtopengl")
-    # Sign the NSIS .exe installer (if NSIS produced one — the .zip
-    # fallback is just an archive and isn't an Authenticode target).
-    if cpu_installer and cpu_installer.endswith(".exe") \
-       and should_run("sign installer qtcpu800x600", failed_cases):
-        sign_authenticode(cpu_installer, "qtcpu800x600", "installer")
-    if gl_installer and gl_installer.endswith(".exe") \
-       and should_run("sign installer qtopengl", failed_cases):
-        sign_authenticode(gl_installer, "qtopengl", "installer")
-
-    # MSI step — same staged exe_dir as the NSIS installer, packaged via
-    # WiX under wine64.  build_msi() signs the .msi internally.
-    if cpu_exe is not None and should_run("msi qtcpu800x600", failed_cases):
-        build_msi(cpu_exe, "qtcpu800x600")
-    if gl_exe is not None and should_run("msi qtopengl", failed_cases):
-        build_msi(gl_exe, "qtopengl")
+    # Combined installer/MSI step — merges qtcpu800x600 + qtopengl +
+    # server-gui into ONE installer that lays out three .exe files
+    # plus three Start-Menu shortcuts, sharing one copy of Qt6 DLLs /
+    # plugins / datapack. Output names (canonical, what
+    # publish_binaries.sh + deploy.sh expect):
+    #   /mnt/data/perso/tmpfs/catchchallenger-installer.exe
+    #   /mnt/data/perso/tmpfs/catchchallenger.msi
+    #
+    # The per-binary stage dirs are produced by _stage_install_payload
+    # (DLL-allowlist filtered, autogen/etc stripped) — call it once
+    # per binary, then _stage_combined_payload merges them.
+    if cpu_exe is not None and gl_exe is not None and srv_exe is not None:
+        parts = [
+            {"stage": _stage_install_payload(os.path.dirname(gl_exe)),
+             "exe_src": WIN_EXE_NAME, "exe_dst": COMBINED_BIN_GL},
+            {"stage": _stage_install_payload(os.path.dirname(cpu_exe)),
+             "exe_src": WIN_EXE_NAME, "exe_dst": COMBINED_BIN_CPU},
+            {"stage": _stage_install_payload(os.path.dirname(srv_exe)),
+             "exe_src": os.path.basename(srv_exe),
+             "exe_dst": COMBINED_BIN_SRV},
+        ]
+        combined_installer = None
+        if should_run("installer combined", failed_cases):
+            combined_installer = build_combined_installer(parts)
+        if combined_installer and combined_installer.endswith(".exe") \
+           and should_run("sign installer combined", failed_cases):
+            sign_authenticode(combined_installer, "combined", "installer")
+        if should_run("msi combined", failed_cases):
+            build_combined_msi(parts)
+    else:
+        # Missing one of the three binaries — emit a single FAIL row
+        # so failed.json reflects the gap and --onlyfailed can re-run
+        # the offending compile.
+        missing = []
+        if cpu_exe is None:
+            missing.append("qtcpu800x600")
+        if gl_exe is None:
+            missing.append("qtopengl")
+        if srv_exe is None:
+            missing.append("server-gui")
+        if should_run("installer combined", failed_cases):
+            log_fail("installer combined",
+                     f"missing binaries: {','.join(missing)}")
+        if should_run("msi combined", failed_cases):
+            log_fail("msi combined",
+                     f"missing binaries: {','.join(missing)}")
 
     win_need_multi = ((cpu_exe is not None and should_run("wine run qtcpu800x600", failed_cases)) or
                       (gl_exe  is not None and should_run("wine run qtopengl", failed_cases)))
