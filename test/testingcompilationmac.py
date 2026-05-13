@@ -186,11 +186,13 @@ def osx_host_reachable():
     return rc == 0 and "lVt75gJ4sJXjq2gWxzXd8pV8" in out
 
 
-def rsync_to_osx(src, dst):
+def rsync_to_osx(src, dst, extra_args=None):
     args = ["rsync", "-art", "--delete",
             "-e", RSYNC_SSH_E,
-            "--exclude=build/", "--exclude=build-*/", "--exclude=.git/",
-            src + "/", f"{OSX_USER}@{OSX_HOST}:{dst}/"]
+            "--exclude=build/", "--exclude=build-*/", "--exclude=.git/"]
+    if extra_args:
+        args += list(extra_args)
+    args += [src + "/", f"{OSX_USER}@{OSX_HOST}:{dst}/"]
     diagnostic.record_cmd(args, None)
     timeout = clamp_local(RSYNC_TIMEOUT)
     try:
@@ -216,11 +218,33 @@ def rsync_sources():
     return False
 
 
+# Datapack file-extension whitelist for installer / .dmg / .apk:
+# only files the client actually loads at runtime end up shipped.
+_DATAPACK_KEEP_EXT = ("tmx", "xml", "tsx", "js",
+                      "png", "jpg", "gif",
+                      "ogg", "opus")
+
+
 def rsync_datapack(src):
+    """rsync the datapack to osxcross — filtered to keep only runtime-
+    relevant extensions (.tmx / .xml / .tsx / .js / .png / .jpg / .gif
+    / .ogg / .opus). README.md / .po / .ts / build leftovers are
+    excluded so the eventual .dmg stays under the shipping ceiling."""
     name = "rsync datapack to osxcross"
-    log_info(f"{name}: {src} -> {OSX_USER}@{OSX_HOST}:{OSX_DATAPACK_DIR}")
+    log_info(f"{name}: {src} -> {OSX_USER}@{OSX_HOST}:{OSX_DATAPACK_DIR} "
+             f"(ext whitelist: {','.join(_DATAPACK_KEEP_EXT)})")
     osx_ssh(f"mkdir -p {OSX_DATAPACK_DIR}", timeout=15)
-    ok, err = rsync_to_osx(src, OSX_DATAPACK_DIR)
+    # rsync --include rules MUST appear before --exclude='*' for the
+    # ordering to walk top-down: keep directories, keep allowed
+    # extensions, exclude everything else. .git is dropped via the
+    # parent --exclude=.git/ already in rsync_to_osx.
+    filters = ["--include=*/"]
+    ei = 0
+    while ei < len(_DATAPACK_KEEP_EXT):
+        filters.append(f"--include=*.{_DATAPACK_KEEP_EXT[ei]}")
+        ei += 1
+    filters.append("--exclude=*")
+    ok, err = rsync_to_osx(src, OSX_DATAPACK_DIR, extra_args=filters)
     if ok:
         log_pass(name)
         return True

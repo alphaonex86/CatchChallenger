@@ -245,16 +245,56 @@ def detect_maincodes(datapack_src):
     return out
 
 
+# Datapack file-extension whitelist for cross-build installers.
+# Operator policy: the windows installer / macOS .dmg / android .apk
+# all ship a *minimal* datapack — only files the client actually
+# loads at runtime. README.md / *.po / *.ts / *.git / build-script
+# leftovers are excluded.
+_DATAPACK_KEEP_EXT = {
+    "tmx", "xml", "tsx", "js",
+    "png", "jpg", "gif",
+    "ogg", "opus",
+}
+
+
+def _datapack_ignore(src, names):
+    """shutil.copytree(ignore=…) callable that keeps only files with
+    extensions in _DATAPACK_KEEP_EXT. Directories ALWAYS pass through
+    (otherwise the whole subtree gets dropped). .git is always
+    excluded regardless of extension."""
+    out = []
+    ni = 0
+    while ni < len(names):
+        n = names[ni]
+        ni += 1
+        full = os.path.join(src, n)
+        if os.path.isdir(full):
+            if n == ".git":
+                out.append(n)
+            continue
+        if n == ".git":
+            out.append(n)
+            continue
+        # Strip leading dot from extension; lower-case for the lookup.
+        ext = os.path.splitext(n)[1].lower().lstrip(".")
+        if ext not in _DATAPACK_KEEP_EXT:
+            out.append(n)
+    return out
+
+
 def setup_datapack_client(build_dir, datapack_src, maincode, label):
-    """Copy datapack to <build_dir>/datapack/internal/, keep only maincode in map/main/."""
+    """Copy datapack to <build_dir>/datapack/internal/, keep only maincode in map/main/.
+    Filters by file extension via _datapack_ignore — installer-bound
+    datapacks drop README.md, .po, .ts and other non-runtime files."""
     dst = os.path.join(build_dir, "datapack", "internal")
     if os.path.exists(dst):
         shutil.rmtree(dst)
     if not os.path.isdir(datapack_src):
         log_fail(f"datapack {label}", f"source not found: {datapack_src}")
         return False
-    log_info(f"copying datapack to {dst}")
-    shutil.copytree(datapack_src, dst, ignore=shutil.ignore_patterns(".git"))
+    log_info(f"copying datapack to {dst} (ext whitelist: "
+             f"{','.join(sorted(_DATAPACK_KEEP_EXT))})")
+    shutil.copytree(datapack_src, dst, ignore=_datapack_ignore)
     map_main = os.path.join(dst, "map", "main")
     if os.path.isdir(map_main):
         for entry in os.listdir(map_main):
