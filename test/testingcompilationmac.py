@@ -423,11 +423,38 @@ def deploy_and_package(app_path, label):
     deploy failure (packaging failure is non-fatal — the bundled .app
     is still useful)."""
     deploy_name = f"macdeployqt {label}"
-    log_info(f"{deploy_name}: {OSX_MACDEPLOYQT} {app_path} -verbose=1")
-    # macdeployqt resolves frameworks via OSX_QT/lib so DYLD_FRAMEWORK_PATH
-    # is irrelevant here; we just need the binary on the remote.
+    # Qt's macdeployqt is a Mach-O binary that won't run on the Linux
+    # osxcross host. Use the Linux-native equivalent we ship at
+    # test/macdeployqt_linux.py — it walks the .app's binary deps via
+    # the osxcross otool/install_name_tool wrappers (Linux ELF), copies
+    # the needed Qt6 frameworks + plugins into the bundle, and rewrites
+    # install_names so the .app finds them via
+    # @executable_path/../Frameworks/. Drop the script onto the
+    # osxcross host on each run so the local edits land immediately.
+    script_local  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 "macdeployqt_linux.py")
+    script_remote = f"{OSX_WORK_DIR}/macdeployqt_linux.py"
+    # Push the script with a small rsync — same RSYNC_SSH_E used
+    # everywhere so ConnectTimeout / BatchMode policy applies.
+    push = subprocess.run(
+        ["rsync", "-art",
+         "-e", RSYNC_SSH_E,
+         script_local,
+         f"{OSX_USER}@[{OSX_HOST}]:{script_remote}"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        timeout=clamp_local(30))
+    if push.returncode != 0:
+        log_fail(deploy_name, f"rsync of macdeployqt_linux.py failed "
+                              f"(rc={push.returncode})")
+        sys.stdout.write(push.stdout.decode(errors='replace')[-1500:])
+        return None
+    log_info(f"{deploy_name}: macdeployqt_linux.py {app_path}")
     rc, out = osx_ssh(
-        f"{OSX_MACDEPLOYQT} {shlex.quote(app_path)} -verbose=1 2>&1",
+        f"python3 {script_remote} "
+        f"--app {shlex.quote(app_path)} "
+        f"--qt {shlex.quote(OSX_QT)} "
+        f"--osxcross-bin /root/osxcross/target/bin "
+        f"--triple {OSX_TARGET_TRIPLE} 2>&1",
         timeout=DEPLOY_TIMEOUT)
     if rc != 0:
         log_fail(deploy_name, f"rc={rc}")
