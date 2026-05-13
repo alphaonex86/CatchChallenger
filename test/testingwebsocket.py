@@ -19,6 +19,7 @@ runtime by this script.
 """
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 import os, sys, signal, subprocess, threading, multiprocessing, json
@@ -52,6 +53,10 @@ CLIENT_GL_PRO  = os.path.join(ROOT, "client/catchchallenger.pro")
 SERVER_BUILD     = build_paths.build_path("server/cli/build/testing-ws-server"  + _DIAG_SUFFIX)
 CLIENT_CPU_BUILD = build_paths.build_path("client/qtcpu800x600/build/testing-ws-cpu" + _DIAG_SUFFIX)
 CLIENT_GL_BUILD  = build_paths.build_path("client/build/testing-ws-gl"            + _DIAG_SUFFIX)
+
+cleanup_helpers.register_build_dir(SERVER_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_GL_BUILD)
 
 SERVER_BIN = "catchchallenger-server-cli"
 CLIENT_CPU_BIN = "catchchallenger"

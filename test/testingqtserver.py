@@ -26,6 +26,7 @@ sys.dont_write_bytecode=True
 import os, json, subprocess, shutil, time, multiprocessing
 import diagnostic
 import build_paths
+import cleanup_helpers
 from cmd_helpers import clamp_local
 
 build_paths.ensure_root()
@@ -39,6 +40,7 @@ NPROC = str(multiprocessing.cpu_count())
 BUILD_DIR = build_paths.build_path("server", "qt", "build",
                                    "testing-qtserver" + diagnostic.build_dir_suffix(DIAG))
 SERVER_BIN = os.path.join(BUILD_DIR, "catchchallenger-server-gui")
+cleanup_helpers.register_build_dir(BUILD_DIR)
 
 DATAPACK_SRC = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
 MAINCODE = "test"

@@ -35,6 +35,7 @@ sys.dont_write_bytecode = True
 import os, sys, subprocess, json, time, shutil, multiprocessing, signal, threading
 import diagnostic
 import build_paths
+import cleanup_helpers
 from cmd_helpers import clamp_local
 
 build_paths.ensure_root()
@@ -55,6 +56,7 @@ CLIENT_SRC_DIR = os.path.join(ROOT, "client", "qtopengl")
 BUILD_DIR = build_paths.build_path("client", "qtopengl", "build",
                                    "testing-screenshot" + diagnostic.build_dir_suffix(DIAG))
 CLIENT_BIN = os.path.join(BUILD_DIR, "catchchallenger")
+cleanup_helpers.register_build_dir(BUILD_DIR)
 
 DATAPACK_SRC = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
 MAINCODE = "test"

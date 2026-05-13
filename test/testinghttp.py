@@ -16,6 +16,7 @@ Steps:
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
@@ -80,6 +81,13 @@ CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 # collide with the regular build's object files.
 CLIENT_CPU_BUILD   = build_paths.build_path("client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
 CLIENT_CPU_BIN     = "catchchallenger"
+
+# SERVER_BUILD is a ref to testingclient.py's testing-filedb tree;
+# register it so we wipe it too at end (testingclient registers it as
+# well — register_build_dir is idempotent). Don't register the alias
+# variable name itself (_SERVER_REF_BUILD == SERVER_BUILD).
+cleanup_helpers.register_build_dir(SERVER_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD)
 
 CLIENT_DATAPACK_CACHE = os.path.expanduser(_config["paths"]["client_datapack_cache"])
 CLIENT_CACHE_DIR      = os.path.join(CLIENT_DATAPACK_CACHE, f"argument-{_config['server_host']}-{_config['server_port']}")

@@ -25,6 +25,7 @@ Flow:
 """
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 import os, sys, signal, subprocess, threading, multiprocessing, json
@@ -58,6 +59,10 @@ CLIENT_CPU_PRO = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 SERVER_BUILD     = build_paths.build_path("server/cli/build/testing-stats-server" + _DIAG_SUFFIX)
 STATS_BUILD      = build_paths.build_path("tools/stats/build/testing-stats"        + _DIAG_SUFFIX)
 CLIENT_CPU_BUILD = build_paths.build_path("client/qtcpu800x600/build/testing-stats-cpu" + _DIAG_SUFFIX)
+
+cleanup_helpers.register_build_dir(SERVER_BUILD)
+cleanup_helpers.register_build_dir(STATS_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD)
 
 SERVER_BIN     = "catchchallenger-server-cli"
 STATS_BIN      = "stats"

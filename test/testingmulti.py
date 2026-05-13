@@ -16,6 +16,7 @@ Steps:
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
@@ -56,6 +57,11 @@ CLIENT_CPU_BIN     = "catchchallenger"
 CLIENT_GL_PRO      = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro")
 CLIENT_GL_BUILD    = build_paths.build_path("client/qtopengl/build/testing-multi-gl" + _DIAG_SUFFIX)
 CLIENT_GL_BIN      = "catchchallenger"
+
+# Tear down owned build dirs at script exit (see cleanup_helpers).
+cleanup_helpers.register_build_dir(SERVER_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_GL_BUILD)
 
 SERVER_HOST = _config["server_host"]
 SERVER_PORT = str(_config["server_port"])

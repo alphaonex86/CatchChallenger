@@ -12,6 +12,7 @@ Sections:
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
@@ -66,6 +67,11 @@ SERVER_BIN_NAME = "catchchallenger-server-cli"
 BOT_PRO         = os.path.join(ROOT, "tools/bot-actions/bot-actions.pro")
 BOT_BUILD       = build_paths.build_path("tools/bot-actions/build/testing" + _DIAG_SUFFIX)
 BOT_BIN         = "bot-actions"
+
+# Tear down owned build dirs at script exit so the tmpfs holds only
+# the currently-running testing*.py's build artefacts.
+cleanup_helpers.register_build_dir(SERVER_BUILD)
+cleanup_helpers.register_build_dir(BOT_BUILD)
 
 SERVER_HOST  = _config["server_host"]
 SERVER_PORT  = str(_config["server_port"])

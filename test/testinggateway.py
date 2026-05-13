@@ -25,6 +25,7 @@ Tests the catchchallenger-gateway binary under valgrind memcheck:
 """
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 import os, sys, signal, subprocess, threading, multiprocessing, json
@@ -68,6 +69,11 @@ CLIENT_CPU_PRO    = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 SERVER_BUILD  = build_paths.build_path("server/cli/build/testing-gateway-backend" + _DIAG_SUFFIX)
 GATEWAY_BUILD = build_paths.build_path("server/gateway/build/testing-gateway" + _DIAG_SUFFIX)
 CLIENT_BUILD  = build_paths.build_path("client/qtcpu800x600/build/testing-gateway-cpu" + _DIAG_SUFFIX)
+
+# Tear down owned build dirs at script exit (see cleanup_helpers).
+cleanup_helpers.register_build_dir(SERVER_BUILD)
+cleanup_helpers.register_build_dir(GATEWAY_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_BUILD)
 
 SERVER_BIN  = "catchchallenger-server-cli"
 GATEWAY_BIN = "catchchallenger-gateway"

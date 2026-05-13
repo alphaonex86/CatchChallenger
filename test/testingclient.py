@@ -21,6 +21,7 @@ testingcompilationandroid.py — invoked separately by all.sh.
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
@@ -83,6 +84,13 @@ CLIENT_CPU_BIN   = "catchchallenger"
 CLIENT_GL_PRO    = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro")
 CLIENT_GL_BUILD  = build_paths.build_path("client/qtopengl/build/testing-gl" + _DIAG_SUFFIX)
 CLIENT_GL_BIN    = "catchchallenger"
+
+# Tear down every build dir we own at script exit (normal exit OR
+# SIGTERM/SIGINT). Goal: only one testing*.py's build dir lives on
+# the tmpfs at a time; the next test rebuilds via ccache (fast).
+cleanup_helpers.register_build_dir(SERVER_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD)
+cleanup_helpers.register_build_dir(CLIENT_GL_BUILD)
 
 SAVEGAME_CPU = os.path.expanduser(_config["paths"]["savegame_cpu"])
 SAVEGAME_GL  = os.path.expanduser(_config["paths"]["savegame_gl"])

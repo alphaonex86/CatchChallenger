@@ -24,6 +24,7 @@ Sibling of testingcompilationmac.py — both used to live inside testingclient.p
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
@@ -50,6 +51,11 @@ CLIENT_GL_PRO = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro
 #local server-filedb that the multi-mode emulator client connects back to.
 SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb")
 SERVER_BIN_NAME = "catchchallenger-server-cli"
+
+# Tear down the local server-filedb build dir we built at script exit.
+# The androiddeployqt output lives under ANDROID_BUILD_DIR (outside
+# tmpfs); only the tmpfs-resident server build is registered here.
+cleanup_helpers.register_build_dir(SERVER_BUILD)
 
 # Android emulator's NAT maps 10.0.2.2 to the HOST's loopback
 # (https://developer.android.com/studio/run/emulator-networking).
@@ -583,6 +589,13 @@ def build_android_apk(pro_file, build_dir, label):
     ensure_dir(ANDROID_AAB_DIR)
     aab_dst_path = os.path.join(ANDROID_AAB_DIR, label + ".aab")
     shutil.copy2(aab_src, aab_dst_path)
+    # Promote both shipping artifacts to the tmpfs root so the
+    # operator sees them sitting next to the windows installers /
+    # macOS .dmg after all.sh teardown.
+    cleanup_helpers.promote_artifact(apk_dst_path,
+                                     f"catchchallenger-{label}.apk")
+    cleanup_helpers.promote_artifact(aab_dst_path,
+                                     f"catchchallenger-{label}.aab")
     log_pass(name, f"-> {os.path.relpath(apk_dst_path, ROOT)} + "
                    f"{os.path.relpath(aab_dst_path, ROOT)}")
     # Static-baseline size guard. A .apk / .aab that shrinks below 75%
