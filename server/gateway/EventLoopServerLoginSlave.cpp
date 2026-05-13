@@ -134,12 +134,14 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
                     )
                 );
 
+    #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     if(LinkToGameServer::httpDatapackMirrorRewriteBase.empty())
     {
         settings.sync();
-        std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() error, disable CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR (abort)" << std::endl;
+        std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() error with CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR (abort)" << std::endl;
         abort();
     }
+    #endif
     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.resize(256+1);
     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.resize(
                 toUTF8WithHeader(
@@ -147,12 +149,14 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
                     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.data()
                     )
                 );
+    #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.empty())
     {
         settings.sync();
-        std::cerr << "httpDatapackMirrorRewriteMainAndSub.isEmpty() error, disable CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR (abort)" << std::endl;
+        std::cerr << "httpDatapackMirrorRewriteMainAndSub.isEmpty() error with CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR (abort)" << std::endl;
         abort();
     }
+    #endif
 
     //connection
     #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
