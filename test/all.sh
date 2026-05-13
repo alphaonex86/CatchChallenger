@@ -5,6 +5,17 @@
 # Remote compilations run in parallel with local builds inside each
 # script.
 #
+# Resume mode:
+#   --onlyfailed                   re-run ONLY testing*.py scripts that
+#                                  had a non-empty entry in failed.json
+#                                  from the previous run. Each
+#                                  testing*.py also reads failed.json
+#                                  internally and re-runs only its
+#                                  previously-failed cases. Skips the
+#                                  failed.json wipe and the time.json /
+#                                  monitor.json truncation so the
+#                                  cumulative log keeps growing.
+#
 # Diagnostic-tool runs:
 #   --sanitize asan|lsan|msan      forwarded to each testing*.py
 #   --valgrind memcheck|helgrind|drd  forwarded to each testing*.py
@@ -73,11 +84,22 @@ MONITOR_JSON="$(echo "$TEST_CONFIG_OUT"      | sed -n '8p')"
 # Parse args early.
 DIAG_ARGS=()
 NODE_LABELS=()
+ONLY_FAILED=0
 ARGS=("$@")
 i=0
 while [ $i -lt ${#ARGS[@]} ]; do
     a="${ARGS[$i]}"
     case "$a" in
+        --onlyfailed)
+            # Re-run only the testing*.py scripts that had a non-empty
+            # failed.json entry from the previous run. Each testing*.py
+            # also reads failed.json internally and only re-runs its
+            # previously-failed cases (driven by failed_cases.py). Lets
+            # the operator iterate on a single failing test without
+            # paying the full matrix's runtime.
+            ONLY_FAILED=1
+            i=$((i+1))
+            ;;
         --sanitize|--valgrind)
             n="${ARGS[$((i+1))]}"
             if [ -z "$n" ]; then
@@ -103,33 +125,50 @@ while [ $i -lt ${#ARGS[@]} ]; do
     esac
 done
 
-# Fresh-run cleanup: drop every transient build artefact, force a
-# full case matrix from every testing*.py. cc-datapack/ and ccache/
-# stay (datapack stage cache + compiler cache — both expensive to
-# rebuild and there's nothing run-specific in them).
-# time.json + monitor.json are preserved across the wipe so the
-# monitor.py background can keep appending; truncated explicitly
-# below so each new run starts with empty timing / load logs.
+if [ "$ONLY_FAILED" = "1" ] && [ ! -f "$FAILED_JSON" ]; then
+    echo "[all.sh] --onlyfailed: $FAILED_JSON missing — nothing to re-run; exit 0"
+    exit 0
+fi
+
+# Pre-run cleanup: drop transient build artefacts but keep cc-datapack/
+# and ccache/ (both expensive to rebuild, nothing run-specific in them).
+# time.json + monitor.json are preserved across the wipe; truncated
+# explicitly below unless --onlyfailed (where we append).
+# Under --onlyfailed we also preserve failed.json — testing*.py reads
+# it to know which cases to re-run.
+EXTRA_KEEP=()
+if [ "$ONLY_FAILED" = "1" ]; then
+    EXTRA_KEEP+=(-not -path "$FAILED_JSON")
+fi
 find "$TMPFS_ROOT/" -mindepth 1 \
      -not -path "$LOCAL_CACHE_ROOT*" \
      -not -path "$CCACHE_ROOT*" \
      -not -path "$TIME_JSON" \
      -not -path "$MONITOR_JSON" \
+     "${EXTRA_KEEP[@]}" \
      -type f -delete 2>/dev/null
+EXTRA_KEEP_NAME=()
+if [ "$ONLY_FAILED" = "1" ]; then
+    EXTRA_KEEP_NAME+=(-not -name "$(basename "$FAILED_JSON")")
+fi
 find "$TMPFS_ROOT/" -mindepth 1 -maxdepth 1 \
      -not -name "$(basename "$LOCAL_CACHE_ROOT")" \
      -not -name "$(basename "$CCACHE_ROOT")" \
      -not -name "$(basename "$TIME_JSON")" \
      -not -name "$(basename "$MONITOR_JSON")" \
+     "${EXTRA_KEEP_NAME[@]}" \
      -exec rm -rf {} + 2>/dev/null
 
-# Wipe failed.json so every testing*.py executes its full case matrix
-# from scratch — no per-script "resume only the previously-failed
-# cases" mode (that was --continue's job and has been dropped).
-rm -f "$FAILED_JSON"
-: > "$TIME_JSON"
-: > "$MONITOR_JSON"
-echo "[all.sh] full run from scratch: wiped $FAILED_JSON, truncated $TIME_JSON $MONITOR_JSON; no test will be skipped"
+if [ "$ONLY_FAILED" = "0" ]; then
+    # Full run: wipe failed.json so every testing*.py executes its
+    # full case matrix from scratch — no per-script resume.
+    rm -f "$FAILED_JSON"
+    : > "$TIME_JSON"
+    : > "$MONITOR_JSON"
+    echo "[all.sh] full run from scratch: wiped $FAILED_JSON, truncated $TIME_JSON $MONITOR_JSON; no test will be skipped"
+else
+    echo "[all.sh] --onlyfailed: preserving $FAILED_JSON, appending to $TIME_JSON $MONITOR_JSON; only previously-failed testing*.py scripts (and their previously-failed cases) will run"
+fi
 
 # Pre-seed empty placeholder JSON files so the operator always sees
 # *something* at the tmpfs root, even when a testing*.py segfaults
@@ -338,6 +377,24 @@ PY
 run_test() {
     local script="$1"
     local cap="${PER_TEST_TIMEOUT_MAP[$script]:-$DEFAULT_PER_TEST_TIMEOUT}"
+    # --onlyfailed gate: skip scripts whose failed.json entry is
+    # absent or empty (== last run passed every case). Python parse
+    # because bash + JSON is fragile.
+    if [ "$ONLY_FAILED" = "1" ]; then
+        local has_failed
+        has_failed=$(python3 -c "
+import json, sys
+try:
+    with open('$FAILED_JSON') as f: j = json.load(f)
+except Exception: print('0'); sys.exit(0)
+e = j.get('$script')
+print('1' if isinstance(e, dict) and len(e) > 0 else '0')
+")
+        if [ "$has_failed" != "1" ]; then
+            echo -e "${CYAN}[all.sh --onlyfailed] skipping $script (no failed case in $FAILED_JSON)${RESET}"
+            return
+        fi
+    fi
     echo -e "\n${CYAN}========================================${RESET}"
     if [ -n "${CC_NODE_FILTER}" ]; then
         echo -e "${CYAN}  Running: $script ${DIAG_ARGS[*]} (node filter: ${CC_NODE_FILTER}, cap ${cap})${RESET}"
