@@ -234,11 +234,15 @@ def rsync_datapack(src):
     log_info(f"{name}: {src} -> {OSX_USER}@{OSX_HOST}:{OSX_DATAPACK_DIR} "
              f"(ext whitelist: {','.join(_DATAPACK_KEEP_EXT)})")
     osx_ssh(f"mkdir -p {OSX_DATAPACK_DIR}", timeout=15)
-    # rsync --include rules MUST appear before --exclude='*' for the
-    # ordering to walk top-down: keep directories, keep allowed
-    # extensions, exclude everything else. .git is dropped via the
-    # parent --exclude=.git/ already in rsync_to_osx.
-    filters = ["--include=*/"]
+    # rsync filter order matters — rules are evaluated top-down for
+    # each path. We want:
+    #   1. EXCLUDE every dot-prefixed entry first (.git, .qt,
+    #      .DS_Store, .gitignore, …) regardless of file vs dir.
+    #   2. INCLUDE every surviving directory so the recurse keeps
+    #      going.
+    #   3. INCLUDE files with one of the allow-listed extensions.
+    #   4. EXCLUDE everything else.
+    filters = ["--exclude=.*", "--include=*/"]
     ei = 0
     while ei < len(_DATAPACK_KEEP_EXT):
         filters.append(f"--include=*.{_DATAPACK_KEEP_EXT[ei]}")
