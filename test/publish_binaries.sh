@@ -31,6 +31,7 @@ VERSION="$(grep -F 'CATCHCHALLENGER_VERSION_PRIVATE' \
 [ -n "$VERSION" ] || { echo "[publish] cannot parse version from VersionPrivate.hpp" >&2; exit 1; }
 
 TMPFS_BUILD_ROOT="$(python3 -c "import sys; sys.path.insert(0,'${HERE}'); import test_config as c; print(c.TMPFS_BUILD_ROOT)")"
+TMPFS_ROOT="$(python3 -c "import sys; sys.path.insert(0,'${HERE}'); import test_config as c; print(c.TMPFS_ROOT)")"
 ANDROID_WS="$(python3 -c "import sys; sys.path.insert(0,'${HERE}'); import test_config as c; print(c.ANDROID_WORKSPACE)")"
 MAC_DIR="${TMPFS_BUILD_ROOT}/client/qtopengl/build/testing-mac"
 
@@ -56,26 +57,61 @@ resolve() {
     say "${target}: ${src} (${sz} bytes) → ${TARGET_DIR}/${dst}"
 }
 
+_first_existing() {
+    # Echo the first path that exists; empty string if none do.
+    local p
+    for p in "$@"; do
+        [ -f "$p" ] && { printf '%s\n' "$p"; return; }
+    done
+    printf ''
+}
+
 for t in "$@"; do
     case "$t" in
         windows)
-            win_exe="$(find "${TMPFS_BUILD_ROOT}/client/qtopengl/build/testing-wine64" \
-                -maxdepth 3 -name '*-installer.exe' 2>/dev/null | head -1 || true)"
-            win_zip="$(find "${TMPFS_BUILD_ROOT}/client/qtopengl/build/testing-wine64" \
-                -maxdepth 3 -name '*-installer.zip' 2>/dev/null | head -1 || true)"
-            resolve windows-exe "$win_exe" "catchchallenger-qtcpu800x600-windows-x86-${VERSION}-setup.exe"
-            resolve windows-zip "$win_zip" "catchchallenger-qtcpu800x600-windows-x86-${VERSION}.zip"
+            # all.sh's post-success sweep wipes the per-test build dirs;
+            # the canonical post-run installer path is the promoted copy
+            # at $TMPFS_ROOT/catchchallenger-*-installer.exe (see
+            # cleanup_helpers.promote_artifact). Fall back to the in-
+            # build-tree copy when --onlyfailed / mid-run.
+            win_exe_cpu="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger-qtcpu800x600-installer.exe" \
+                "${TMPFS_BUILD_ROOT}/client/qtcpu800x600/build/catchchallenger-qtcpu800x600-installer.exe")"
+            win_exe_gl="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger-qtopengl-installer.exe" \
+                "${TMPFS_BUILD_ROOT}/client/qtopengl/build/catchchallenger-qtopengl-installer.exe")"
+            win_msi_cpu="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger-qtcpu800x600.msi" \
+                "${TMPFS_BUILD_ROOT}/client/qtcpu800x600/build/catchchallenger-qtcpu800x600.msi")"
+            win_msi_gl="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger-qtopengl.msi" \
+                "${TMPFS_BUILD_ROOT}/client/qtopengl/build/catchchallenger-qtopengl.msi")"
+            resolve windows-exe-qtcpu800x600 "$win_exe_cpu" "catchchallenger-qtcpu800x600-windows-x86-${VERSION}-setup.exe"
+            resolve windows-exe-qtopengl     "$win_exe_gl"  "catchchallenger-qtopengl-windows-x86-${VERSION}-setup.exe"
+            resolve windows-msi-qtcpu800x600 "$win_msi_cpu" "catchchallenger-qtcpu800x600-windows-x86-${VERSION}.msi"
+            resolve windows-msi-qtopengl     "$win_msi_gl"  "catchchallenger-qtopengl-windows-x86-${VERSION}.msi"
             ;;
         mac)
-            dmg=""
-            for d in /root/catchchallenger-mac-artifacts "$MAC_DIR"; do
-                dmg="$(find "$d" -maxdepth 2 -name '*.dmg' 2>/dev/null | head -1 || true)"
-                [ -n "$dmg" ] && break
-            done
+            dmg="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger-qtopengl.dmg" \
+                "${TMPFS_ROOT}/catchchallenger-qtcpu800x600.dmg")"
+            if [ -z "$dmg" ]; then
+                for d in /root/catchchallenger-mac-artifacts "$MAC_DIR"; do
+                    dmg="$(find "$d" -maxdepth 2 -name '*.dmg' 2>/dev/null | head -1 || true)"
+                    [ -n "$dmg" ] && break
+                done
+            fi
             resolve mac "$dmg" "catchchallenger-mac-os-x-${VERSION}.dmg"
             ;;
         android)
-            resolve android "${ANDROID_WS}/apk/qtopengl.apk" "catchchallenger-android-${VERSION}.apk"
+            apk="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger-qtopengl.apk" \
+                "${ANDROID_WS}/apk/qtopengl.apk")"
+            aab="$(_first_existing \
+                "${TMPFS_ROOT}/catchchallenger-qtopengl.aab" \
+                "${ANDROID_WS}/aab/qtopengl.aab")"
+            resolve android-apk "$apk" "catchchallenger-android-${VERSION}.apk"
+            resolve android-aab "$aab" "catchchallenger-android-${VERSION}.aab"
             ;;
         *)
             die "unknown target: $t (expected: windows|mac|android)"
