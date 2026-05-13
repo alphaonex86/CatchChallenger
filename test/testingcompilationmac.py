@@ -521,7 +521,9 @@ def deploy_and_package(app_path, label):
         f"  ISO=$(mktemp /tmp/cc-dmg.XXXXXX.iso); "
         f"  genisoimage -V CatchChallenger -no-pad -r -hfs -hide-hfs '*.DS_Store' "
         f"      -o \"$ISO\" \"$STAGE\" 2>&1 | tail -3; "
-        f"  \"$DMG_BIN\" build \"$ISO\" \"$OUT\" 2>&1 | tail -3; "
+        # libdmg-hfsplus 'dmg' usage: `dmg <input.iso> <output.dmg>`
+        # — positional only, no subcommand.
+        f"  \"$DMG_BIN\" \"$ISO\" \"$OUT\" 2>&1 | tail -3; "
         f"  rm -rf \"$STAGE\" \"$ISO\"; "
         f"  echo PACKAGE_OK=$OUT; "
         f"else "
@@ -544,6 +546,28 @@ def deploy_and_package(app_path, label):
             print(out[-2000:])
         return app_path
     log_pass(pkg_name, f"-> {artifact}")
+    # Promote the artifact: scp from the osxcross host back to the
+    # local tmpfs root so publish_binaries / deploy.sh sees it at
+    # the canonical path. Mirrors what testingcompilation{windows,
+    # android}.py do via cleanup_helpers.promote_artifact() — but
+    # there the artifact starts local so a copy is enough; here the
+    # artifact is on a remote host so we need scp.
+    promote_name = f"promote mac artifact {label}"
+    ext = ".dmg" if artifact.endswith(".dmg") else ".zip"
+    local_dst = f"/mnt/data/perso/tmpfs/catchchallenger-{label}{ext}"
+    scp_args = ["scp"] + SSH_OPTS_LIST + [
+        f"{OSX_USER}@[{OSX_HOST}]:{artifact}",
+        local_dst,
+    ]
+    p = subprocess.run(scp_args, stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT,
+                       timeout=clamp_local(60))
+    if p.returncode != 0 or not os.path.isfile(local_dst):
+        log_fail(promote_name, f"scp rc={p.returncode}")
+        sys.stdout.write(p.stdout.decode(errors="replace")[-1500:])
+    else:
+        log_pass(promote_name, f"-> {local_dst} "
+                               f"({os.path.getsize(local_dst)} bytes)")
     return artifact
 
 
