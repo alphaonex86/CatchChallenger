@@ -735,28 +735,40 @@ def run_android_apk(apk_path, label, args=None, timeout=ANDROID_RUN_TIMEOUT,
     return False
 
 
-def run_android_screenshot_and_compare(apk_path, label, reference_image,
+def run_android_screenshot_and_compare(apk_path, label, mode,
+                                       reference_image,
                                        timeout=ANDROID_RUN_TIMEOUT):
-    """Install + launch the APK with --autosolo + --fixed, wait for
-    MapVisualiserPlayer::mapDisplayedSlot in logcat (so the map has
-    actually rendered), then capture the device framebuffer via
-    `adb shell screencap -p`, pull the PNG locally, and diff it
+    """Install + launch the APK then capture the device framebuffer
+    via `adb shell screencap -p`, pull the PNG locally, and diff it
     against `reference_image` using image_compare (±10% per channel).
 
+    mode == "start"    → launch WITHOUT --autosolo, wait 2 s after
+                         `am start` returns (matches the qtopengl
+                         ScreenTransition fallback), screencap the
+                         title / connection-list / loading screen
+                         BEFORE any map loads. --take-screenshot is
+                         deliberately NOT used here — the qtopengl
+                         in-process grab only fires after the on-map
+                         slot, which never reaches under this mode.
+    mode == "autosolo" → launch with --autosolo --fixed, wait for
+                         MapVisualiserPlayer::mapDisplayedSlot() in
+                         logcat (map fully rendered), screencap.
+
     Using adb screencap (rather than the apk's own --take-screenshot=
-    flag) keeps the path-handling simple — no device-side filesystem
-    permissions to wrangle, no Qt apk → Android `/data/...` write
-    quirks. Tradeoff: the captured image includes the system status
-    bar; the reference PNG is captured the same way so the diff
-    still works.
+    flag) keeps path handling simple — no device-side `/data/...`
+    permissions, no Qt apk → /sdcard write quirks. The captured PNG
+    includes the system status bar; the reference is captured the
+    same way so the diff still aligns.
 
     Returns True on success."""
+    if mode not in ("start", "autosolo"):
+        raise ValueError(f"unknown screenshot mode: {mode}")
     import image_compare as _ic
-    name = f"android screenshot {label}"
+    name = f"android screenshot {label} ({mode})"
     local_screenshot = build_paths.build_path("android-screenshot",
-                                              f"{label}.png")
+                                              f"{label}-{mode}.png")
     local_diff = build_paths.build_path("android-screenshot",
-                                        f"{label}-diff.png")
+                                        f"{label}-{mode}-diff.png")
     try:
         os.makedirs(os.path.dirname(local_screenshot), exist_ok=True)
     except OSError:
@@ -776,16 +788,20 @@ def run_android_screenshot_and_compare(apk_path, label, reference_image,
         return False
     adb_cmd(["logcat", "-c"], timeout=10)
 
-    # Launch with --autosolo + --fixed; --closewhenonmap would race
-    # the screencap below so we deliberately omit it and force-stop
-    # afterwards. --fixed freezes CCBackground's cloud / grass timers
-    # so the captured PNG matches the reference byte-for-byte (modulo
-    # the ±10% per-channel tolerance the comparator allows).
-    joined = "--autosolo --fixed".replace("'", "'\\''")
+    # Build the per-mode applicationArguments. `--closewhenonmap` is
+    # deliberately omitted from both modes — it would race the
+    # screencap below. We force-stop after the capture instead. The
+    # `--fixed` flag freezes CCBackground's cloud / grass timers so
+    # the captured PNG aligns with the reference frame.
+    if mode == "autosolo":
+        app_args = "--autosolo --fixed"
+    else:
+        app_args = "--fixed"
+    joined = app_args.replace("'", "'\\''")
     am_args = ["shell", "am", "start", "-W", "-n",
                f"{ANDROID_PACKAGE}/{ANDROID_ACTIVITY}",
                "--es", "applicationArguments", f"'{joined}'"]
-    log_info(f"am start {ANDROID_PACKAGE}/{ANDROID_ACTIVITY} --autosolo --fixed")
+    log_info(f"am start {ANDROID_PACKAGE}/{ANDROID_ACTIVITY} {app_args}")
     rc, out = adb_cmd(am_args, timeout=30)
     if rc != 0:
         log_fail(name, f"am start failed (rc={rc})")
@@ -793,24 +809,30 @@ def run_android_screenshot_and_compare(apk_path, label, reference_image,
             print(out[-1500:])
         return False
 
-    success_marker = "MapVisualiserPlayer::mapDisplayedSlot()"
-    deadline = time.monotonic() + timeout
-    reached = False
-    while time.monotonic() < deadline:
-        rc, out = adb_cmd(["logcat", "-d"], timeout=10)
-        if rc == 0 and success_marker in out:
-            reached = True
-            break
+    if mode == "autosolo":
+        success_marker = "MapVisualiserPlayer::mapDisplayedSlot()"
+        deadline = time.monotonic() + timeout
+        reached = False
+        while time.monotonic() < deadline:
+            rc, out = adb_cmd(["logcat", "-d"], timeout=10)
+            if rc == 0 and success_marker in out:
+                reached = True
+                break
+            time.sleep(2.0)
+        if not reached:
+            log_fail(name, f"timeout {timeout}s without {success_marker}")
+            adb_cmd(["shell", "am", "force-stop", ANDROID_PACKAGE], timeout=10)
+            return False
+        # Give the renderer one extra second to flush the first paint
+        # cycle so the screencap captures the map, not the loading
+        # screen mid-transition.
+        time.sleep(1.0)
+    else:
+        # "start" mode: no logcat marker exists — the title screen is
+        # painted within ~1 s of `am start`. Wait 2 s (matches the
+        # qtopengl ScreenTransition.cpp QTimer::singleShot(2000) used
+        # for the wine equivalent), then screencap.
         time.sleep(2.0)
-    if not reached:
-        log_fail(name, f"timeout {timeout}s without {success_marker}")
-        adb_cmd(["shell", "am", "force-stop", ANDROID_PACKAGE], timeout=10)
-        return False
-
-    # Give the renderer one extra second to flush the first paint
-    # cycle so the screencap captures the map, not the loading
-    # screen mid-transition.
-    time.sleep(1.0)
 
     device_path = "/sdcard/cc-screenshot.png"
     rc, out = adb_cmd(["shell", "screencap", "-p", device_path], timeout=20)
@@ -939,10 +961,11 @@ def main():
             gl_apk = cached_apk
             log_info(f"resume mode: reusing cached APK {cached_apk}")
 
-    android_need_solo  = (gl_apk is not None and should_run("android run qtopengl --autosolo", failed_cases))
-    android_need_multi = (gl_apk is not None and should_run("android run qtopengl", failed_cases))
-    android_need_shot  = (gl_apk is not None and should_run("android screenshot qtopengl", failed_cases))
-    if android_need_solo or android_need_multi or android_need_shot:
+    android_need_solo       = (gl_apk is not None and should_run("android run qtopengl --autosolo", failed_cases))
+    android_need_multi      = (gl_apk is not None and should_run("android run qtopengl", failed_cases))
+    android_need_shot_start = (gl_apk is not None and should_run("android screenshot qtopengl (start)", failed_cases))
+    android_need_shot_solo  = (gl_apk is not None and should_run("android screenshot qtopengl (autosolo)", failed_cases))
+    if android_need_solo or android_need_multi or android_need_shot_start or android_need_shot_solo:
         # ABI sanity-check before booting the emulator.  When the only
         # installed Qt-for-Android kit is arm64-v8a (the typical Qt
         # binary release) but the AVD's abi.type is x86_64, every
@@ -961,12 +984,15 @@ def main():
                 log_pass("android run qtopengl --autosolo", f"skipped: {msg}")
             if android_need_multi:
                 log_pass("android run qtopengl", f"skipped: {msg}")
-            if android_need_shot:
-                log_pass("android screenshot qtopengl", f"skipped: {msg}")
+            if android_need_shot_start:
+                log_pass("android screenshot qtopengl (start)", f"skipped: {msg}")
+            if android_need_shot_solo:
+                log_pass("android screenshot qtopengl (autosolo)", f"skipped: {msg}")
             android_need_solo = False
             android_need_multi = False
-            android_need_shot = False
-    if android_need_solo or android_need_multi or android_need_shot:
+            android_need_shot_start = False
+            android_need_shot_solo = False
+    if android_need_solo or android_need_multi or android_need_shot_start or android_need_shot_solo:
         emu = start_android_emulator()
         if emu is not None:
             if android_need_solo:
@@ -987,17 +1013,28 @@ def main():
                                           "--autologin", "--character", "AndroidGL",
                                           "--closewhenonmap"])
                     stop_local_server()
-            # ── reference-screenshot diff (qtopengl) ─────────────────
-            # One capture for android: --autosolo + --fixed, grabbed
-            # via `adb shell screencap -p` once mapDisplayedSlot fires
-            # in logcat. Reference PNG at
-            # test/screenshot-android-qtopengl-autosolo.png; missing
-            # reference yields a "bless this" message instead of a
-            # silent pass.
-            if android_need_shot:
+            # ── reference-screenshot diffs (qtopengl) ────────────────
+            # Two captures per android run, mirroring the wine flow:
+            #   - start    : 2 s after `am start`, BEFORE any map
+            #                loads. Captures the title / connection-
+            #                list screen. --take-screenshot is useless
+            #                here (only fires after map loading), so
+            #                we go through `adb shell screencap`.
+            #   - autosolo : --autosolo --fixed, screencap once
+            #                MapVisualiserPlayer::mapDisplayedSlot()
+            #                appears in logcat.
+            # References at test/screenshot-android-qtopengl-{mode}.png;
+            # missing reference yields a "bless this" message.
+            if android_need_shot_start:
+                ref = os.path.join(ROOT, "test",
+                                   "screenshot-android-qtopengl-start.png")
+                run_android_screenshot_and_compare(gl_apk, "qtopengl",
+                                                   "start", ref)
+            if android_need_shot_solo:
                 ref = os.path.join(ROOT, "test",
                                    "screenshot-android-qtopengl-autosolo.png")
-                run_android_screenshot_and_compare(gl_apk, "qtopengl", ref)
+                run_android_screenshot_and_compare(gl_apk, "qtopengl",
+                                                   "autosolo", ref)
             stop_android_emulator(emu)
 
     save_failed_cases()
