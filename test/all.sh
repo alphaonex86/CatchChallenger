@@ -1,7 +1,9 @@
 #!/bin/bash
-# Run all testing*.py scripts sequentially.
-# Remote compilations run in parallel with local builds inside each script.
-# Exit on first script failure unless --continue is passed.
+# Run all testing*.py scripts sequentially. ALWAYS walks the full list
+# even when a script fails — the exit code reflects whether any test
+# failed, but the run still produces a complete result table.
+# Remote compilations run in parallel with local builds inside each
+# script.
 #
 # Diagnostic-tool runs:
 #   --sanitize asan|lsan|msan      forwarded to each testing*.py
@@ -19,7 +21,11 @@
 #                                  Implemented as the CC_NODE_FILTER env
 #                                  var, exported below.
 
-set -e
+# Walk the full test list regardless of individual failures — `set -e`
+# would otherwise abort at the first FAIL and hide the rest of the
+# matrix from the operator. Each `run_test` invocation still records
+# a non-zero rc per-script; FAILED=1 is set and propagated at the end.
+set +e
 
 # Pre-run cleanup: drop the previous run's transient build trees + cluster
 # state to keep the tmpfs from saturating, BUT preserve the JSON
@@ -64,8 +70,7 @@ FAILED_JSON="$(echo "$TEST_CONFIG_OUT"       | sed -n '6p')"
 TIME_JSON="$(echo "$TEST_CONFIG_OUT"         | sed -n '7p')"
 MONITOR_JSON="$(echo "$TEST_CONFIG_OUT"      | sed -n '8p')"
 
-# Parse args early — cleanup behaviour below depends on --continue.
-CONTINUE=0
+# Parse args early.
 DIAG_ARGS=()
 NODE_LABELS=()
 ARGS=("$@")
@@ -73,10 +78,6 @@ i=0
 while [ $i -lt ${#ARGS[@]} ]; do
     a="${ARGS[$i]}"
     case "$a" in
-        --continue)
-            CONTINUE=1
-            i=$((i+1))
-            ;;
         --sanitize|--valgrind)
             n="${ARGS[$((i+1))]}"
             if [ -z "$n" ]; then
@@ -102,56 +103,33 @@ while [ $i -lt ${#ARGS[@]} ]; do
     esac
 done
 
-if [ "$CONTINUE" = "1" ]; then
-    # --continue mode: keep failed.json so each testing*.py only re-runs
-    # its previously-failed cases. set +e so we walk the whole list.
-    set +e
-fi
-
-# to start with fresh folder to be sure test all case.
-# EXCEPT: cc-datapack/ (datapack stage cache, see stage_datapacks.py)
-# and ccache/ (compiler cache); both are persistent benefits across
-# runs and rebuilding them every time would defeat the caching.
-# AND failed.json under --continue (it drives per-script resume).
-EXTRA_KEEP=()
-if [ "$CONTINUE" = "1" ]; then
-    EXTRA_KEEP+=(-not -path "$FAILED_JSON")
-fi
-# Always preserve time.json + monitor.json across the tmpfs wipe — they
-# are the run-wide phase-timing + system-load logs (JSONL). Operator
-# inspects them AFTER all.sh finishes, so neither full-run nor
-# --continue should delete them during the per-run cleanup. The
-# full-run path below truncates them explicitly so each fresh run
-# starts empty.
+# Fresh-run cleanup: drop every transient build artefact, force a
+# full case matrix from every testing*.py. cc-datapack/ and ccache/
+# stay (datapack stage cache + compiler cache — both expensive to
+# rebuild and there's nothing run-specific in them).
+# time.json + monitor.json are preserved across the wipe so the
+# monitor.py background can keep appending; truncated explicitly
+# below so each new run starts with empty timing / load logs.
 find "$TMPFS_ROOT/" -mindepth 1 \
      -not -path "$LOCAL_CACHE_ROOT*" \
      -not -path "$CCACHE_ROOT*" \
      -not -path "$TIME_JSON" \
      -not -path "$MONITOR_JSON" \
-     "${EXTRA_KEEP[@]}" \
      -type f -delete 2>/dev/null
 find "$TMPFS_ROOT/" -mindepth 1 -maxdepth 1 \
      -not -name "$(basename "$LOCAL_CACHE_ROOT")" \
      -not -name "$(basename "$CCACHE_ROOT")" \
-     -not -name "$(basename "$FAILED_JSON")" \
      -not -name "$(basename "$TIME_JSON")" \
      -not -name "$(basename "$MONITOR_JSON")" \
      -exec rm -rf {} + 2>/dev/null
 
-if [ "$CONTINUE" = "0" ]; then
-    # No --continue: force fresh full run. Wipe failed.json so every
-    # testing*.py executes its full case matrix from scratch (no skip).
-    # Also truncate time.json + monitor.json so the per-phase timing
-    # and system-load logs start empty — appending to stale logs
-    # would mix records from multiple runs and confuse post-mortem
-    # analysis.
-    rm -f "$FAILED_JSON"
-    : > "$TIME_JSON"
-    : > "$MONITOR_JSON"
-    echo "[all.sh] full run from scratch (no --continue): wiped $FAILED_JSON, truncated $TIME_JSON $MONITOR_JSON; no test will be skipped"
-else
-    echo "[all.sh] resume run (--continue): preserving $FAILED_JSON and appending to $TIME_JSON $MONITOR_JSON; testing*.py will re-run only previously-failed cases"
-fi
+# Wipe failed.json so every testing*.py executes its full case matrix
+# from scratch — no per-script "resume only the previously-failed
+# cases" mode (that was --continue's job and has been dropped).
+rm -f "$FAILED_JSON"
+: > "$TIME_JSON"
+: > "$MONITOR_JSON"
+echo "[all.sh] full run from scratch: wiped $FAILED_JSON, truncated $TIME_JSON $MONITOR_JSON; no test will be skipped"
 
 # Pre-seed empty placeholder JSON files so the operator always sees
 # *something* at the tmpfs root, even when a testing*.py segfaults
@@ -334,9 +312,7 @@ DEFAULT_PER_TEST_TIMEOUT=30m
 # data would slowly inflate every cap that touched a flaky script.
 TIMING_LOG=/mnt/data/perso/tmpfs/testing-individual-time.json
 # Truncate at the start of every fresh run so the file holds exactly
-# the timings for THIS invocation. (Resume-style `--continue` runs
-# also truncate — the operator's mental model is "one all.sh = one
-# timing log".)
+# the timings for THIS invocation — one all.sh = one timing log.
 rm -f "$TIMING_LOG"
 
 _log_test_timing() {
@@ -381,18 +357,10 @@ run_test() {
         # Don't log a timing entry — see TIMING_LOG comment above.
         echo -e "\n${RED}[TIMEOUT] $script — exceeded ${cap}${RESET}\n"
         FAILED=1
-        if [ "$CONTINUE" = "0" ]; then
-            echo -e "${RED}Stopping. Use --continue to run all scripts regardless.${RESET}"
-            exit 1
-        fi
     else
         echo -e "\n${RED}[FAILED] $script (rc=${rc}, ${elapsed}s)${RESET}\n"
         _log_test_timing "$script" "$elapsed" "$rc"
         FAILED=1
-        if [ "$CONTINUE" = "0" ]; then
-            echo -e "${RED}Stopping. Use --continue to run all scripts regardless.${RESET}"
-            exit 1
-        fi
     fi
 }
 
@@ -430,10 +398,6 @@ if [ "$FAILED" = "0" ]; then
     else
         echo -e "\n${RED}[FAILED] publish_binaries.sh${RESET}\n"
         FAILED=1
-        if [ "$CONTINUE" = "0" ]; then
-            echo -e "${RED}Stopping. Use --continue to run all scripts regardless.${RESET}"
-            exit 1
-        fi
     fi
 fi
 
