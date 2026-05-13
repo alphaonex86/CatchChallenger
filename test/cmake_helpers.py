@@ -549,5 +549,16 @@ def build_project(pro_file, build_dir, label, *,
     # which == build_dir). bin_filename respects OUTPUT_NAME (e.g.
     # qtcpu800x600's target is "catchchallenger800x600" but the produced
     # binary is "catchchallenger").
+    #
+    # Build succeeded — prune *.o/.d/.rsp scratch from build_dir to keep
+    # tmpfs RAM footprint low. CMake state (CMakeCache.txt,
+    # CMakeFiles tree, build.ninja) AND the produced binary are kept,
+    # so re-building incrementally is still cheap (ccache covers the
+    # per-TU recompile cost). See test/cleanup_helpers.py docstring.
+    try:
+        import cleanup_helpers as _ch
+        _ch.prune_intermediate_build_artifacts(build_dir)
+    except ImportError:
+        pass
     log_pass(name)
     return True

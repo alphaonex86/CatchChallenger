@@ -31,6 +31,7 @@ import shutil, time
 
 import diagnostic
 import build_paths
+import cleanup_helpers
 from cmd_helpers import clamp_local
 
 
@@ -66,6 +67,7 @@ for fallback in (
 
 PRO        = os.path.join(ROOT, "test/fight/testfightengine.pro")  # virtual
 BUILD_DIR  = build_paths.build_path("test/fight/build/testing-fight" + _DIAG_SUFFIX)
+cleanup_helpers.register_build_dir(BUILD_DIR)
 BIN_NAME   = "testfightengine"
 
 COMPILE_TIMEOUT = 600

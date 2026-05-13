@@ -15,6 +15,7 @@ Phases:
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
@@ -100,6 +101,17 @@ SERVER_BIN_NAME    = "catchchallenger-server-cli"
 
 CLIENT_CPU_PRO     = os.path.join(ROOT, "client/qtcpu800x600/qtcpu800x600.pro")
 CLIENT_CPU_BIN     = "catchchallenger"
+
+# Note: testingserver.py builds a matrix of server variants under
+# server/{cli,master,login,gateway,game-server-alone}/build/testing-*.
+# The compile_helpers post-build hook prunes *.o / *.d intermediates
+# from each, which knocks ~95% of the disk bulk off. We deliberately
+# do NOT register a parent-build dir for wholesale cleanup at script
+# exit because the same parent dir is shared with downstream tests
+# (testingmulti, testinggateway, testingstats) whose dirs sit
+# alongside ours — wiping the parent would torch their work too. So
+# we rely on per-dir prune (cleanup after each compile) plus the
+# downstream tests' own cleanup hooks.
 
 PG_DB       = _config["postgresql"]["database"]
 PG_USER     = _config["postgresql"]["user"]
@@ -1684,6 +1696,11 @@ def main():
         pro_rel, target_name, build_base_rel, opt_flags = SERVER_TARGETS[ti]
         pro_path = os.path.join(ROOT, pro_rel)
         build_base = build_paths.build_path(build_base_rel)
+        # Register this matrix's build root for end-of-script teardown.
+        # Per-TU .o files are already pruned after each successful
+        # compile (see cmake_helpers.build_project); this top-up makes
+        # sure the binaries + cmake state vanish too at exit.
+        cleanup_helpers.register_build_dir(build_base)
         combos = flag_combinations(opt_flags)
         n_combos = len(CXX_VERSIONS) * len(COMPILERS) * len(combos)
         log_info(f"{target_name}: {n_combos} combinations "
@@ -1780,6 +1797,9 @@ def main():
     filedb_build = build_paths.build_path("server/cli/build/testing-filedb" + _DIAG_SUFFIX)
     cliepo_build = build_paths.build_path("server/cli/build/testing-cli-epoll" + _DIAG_SUFFIX)
     client_build = build_paths.build_path("client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
+    cleanup_helpers.register_build_dir(filedb_build)
+    cleanup_helpers.register_build_dir(cliepo_build)
+    cleanup_helpers.register_build_dir(client_build)
 
     # build client once
     if not build_project(CLIENT_CPU_PRO, client_build, "qtcpu800x600"):
@@ -1844,6 +1864,7 @@ def main():
         backend_name, qarg = backends[bi]
         backend_build = build_paths.build_path(
             "server/cli/build/testing-filedb-" + backend_name + _DIAG_SUFFIX)
+        cleanup_helpers.register_build_dir(backend_build)
         print(f"\n{C_CYAN}  -- server-filedb backend: {backend_name} --{C_RESET}\n")
         # Empty qarg (e.g. the "epoll" default backend) means no extra
         # CONFIG+= flag — the matrix entry is just "build the default

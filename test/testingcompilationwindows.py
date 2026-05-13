@@ -25,6 +25,7 @@ Sibling of testingcompilationmac.py / testingcompilationandroid.py.
 # before the first LOCAL import; stdlib bytecode is unaffected.
 import sys
 import process_helpers
+import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
@@ -56,6 +57,16 @@ WIN_EXE_NAME         = "catchchallenger.exe"
 #local server-filedb that the multi-mode wine client connects back to.
 SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb")
 SERVER_BIN_NAME = "catchchallenger-server-cli"
+
+# Tear down everything we built (or extended) at script exit. The
+# install-stage / msi work dirs are siblings of the build dirs, so
+# their removal happens transitively via remove_build_dir's parent
+# walk — but register them explicitly for clarity.
+cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD_WIN)
+cleanup_helpers.register_build_dir(CLIENT_GL_BUILD_WIN)
+cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD_WIN + "-install-stage")
+cleanup_helpers.register_build_dir(CLIENT_GL_BUILD_WIN + "-install-stage")
+cleanup_helpers.register_build_dir(SERVER_BUILD)
 
 SERVER_HOST = _config["server_host"]
 SERVER_PORT = str(_config["server_port"])
@@ -736,6 +747,52 @@ def _stage_install_payload(src_dir):
     return stage
 
 
+_MXE_STRIP = MXE_BIN + "/" + MXE_TARGET + "-strip"
+
+
+def _strip_debug_symbols(stage_dir):
+    """Run MXE's mingw strip on every .exe and .dll in stage_dir. The
+    test build is Debug to keep compile cycles short and to keep debug
+    symbols available for the wine smoke test crash diagnostics, but
+    the Debug .exe is ~470 MiB unstripped — well past the 100 MiB
+    shipping-artifact ceiling. Stripping the staged payload right
+    before packaging drops the .exe to ~15-20 MiB and the DLLs to a
+    few MiB each, comfortably under the ceiling without changing the
+    build configuration.
+
+    Called AFTER the wine smoke test (which needs the symbols to
+    produce useful traces) and AFTER _strip_test_only_plugins, but
+    BEFORE NSIS / WiX / zip packaging."""
+    if not os.path.isfile(_MXE_STRIP):
+        log_info(f"strip skipped: {_MXE_STRIP} not found")
+        return
+    targets = []
+    for root, _, files in os.walk(stage_dir):
+        for name in files:
+            low = name.lower()
+            if low.endswith(".exe") or low.endswith(".dll"):
+                targets.append(os.path.join(root, name))
+    if not targets:
+        return
+    # `--strip-unneeded` keeps the export table intact (otherwise other
+    # DLLs that import from Qt6Core.dll lose their resolution at load
+    # time) while dropping every DWARF section. `-x` drops local
+    # symbols too; combined with --strip-unneeded this matches what
+    # MXE's release builds ship.
+    stripped = 0
+    for path in targets:
+        try:
+            before = os.path.getsize(path)
+            subprocess.run([_MXE_STRIP, "--strip-unneeded", "-x", path],
+                           check=False, capture_output=True, timeout=60)
+            after = os.path.getsize(path)
+            if after < before:
+                stripped += 1
+        except (OSError, subprocess.SubprocessError):
+            pass
+    log_info(f"stripped debug symbols from {stripped}/{len(targets)} binaries in stage")
+
+
 def _verify_png_support(stage_dir):
     """Confirm the staged payload still has PNG decode/encode support.
 
@@ -867,6 +924,11 @@ def build_installer(exe_path, label):
     # plugins so the installer that ships to end users doesn't carry
     # them. Real Windows targets use the windows platform plugin.
     _strip_test_only_plugins(stage_dir)
+    # The build is Debug (kept that way to speed test cycles and to
+    # give the wine smoke test useful symbols on crash); strip debug
+    # symbols off every .exe/.dll just before packaging to fit under
+    # the 100 MiB shipping-artifact ceiling.
+    _strip_debug_symbols(stage_dir)
 
     if MAKENSIS_BIN is not None:
         nsi_path = os.path.join(out_dir, base + ".nsi")
@@ -890,6 +952,10 @@ def build_installer(exe_path, label):
         if rc == 0 and os.path.isfile(installer_exe):
             log_pass(name, f"-> {os.path.relpath(installer_exe, ROOT)}")
             _verify_installer_size(label, installer_exe)
+            # Promote to tmpfs root so it survives build-dir teardown.
+            import cleanup_helpers as _ch
+            _ch.promote_artifact(installer_exe,
+                                 f"catchchallenger-{label}-installer.exe")
             return installer_exe
         log_fail(name, f"makensis failed (rc={rc}); falling back to zip")
         if out.strip():
@@ -1063,6 +1129,7 @@ def build_msi(exe_path, label):
     # plugins so the .msi we ship doesn't carry them. Same reason as
     # build_installer.
     _strip_test_only_plugins(payload_dir)
+    _strip_debug_symbols(payload_dir)
     _write_main_wxs(main_wxs, label, os.path.basename(payload_dir))
     env = _wix_wine_env()
 
@@ -1147,6 +1214,9 @@ def build_msi(exe_path, label):
 
     # 4) sign the .msi (osslsigncode handles MSI just like PE).
     sign_authenticode(msi_path, label, "msi")
+    # Promote to tmpfs root so the .msi survives build-dir teardown.
+    import cleanup_helpers as _ch
+    _ch.promote_artifact(msi_path, f"catchchallenger-{label}.msi")
     return msi_path
 
 
@@ -1179,9 +1249,19 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
     for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
         env.pop(_gui_var, None)
     win_args = [WINE_BIN, exe_path] + list(args)
-    diagnostic.record_cmd(win_args, None)
+    # Wine inherits Linux CWD as the Windows-side CWD (mapped via Z:\).
+    # The in-process server (--autosolo) loads the datapack from a
+    # *relative* path "./datapack/"; setup_datapack_client() already
+    # staged that tree under os.path.dirname(exe_path). Without cwd
+    # pinned to exe's dir the server resolves "./datapack/" against
+    # whatever the python script's CWD was (test/), the path is
+    # missing, and the .exe exits with rc=1 emitting "Datapack
+    # directory missing: /datapack/".
+    cwd = os.path.dirname(exe_path)
+    diagnostic.record_cmd(win_args, cwd)
     proc = subprocess.Popen(
         win_args,
+        cwd=cwd,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
         preexec_fn=process_helpers.setsid_and_pdeathsig)

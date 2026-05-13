@@ -340,11 +340,16 @@ std::string FacilityLibGeneral::getSuffixAndValidatePathFromFS(const std::string
 
 std::string FacilityLibGeneral::getFolderFromFile(const std::string& fileName)
 {
-    const std::string::size_type &pos=fileName.find_last_of('/');
+    //Accept BOTH '/' and '\' as path separators. Under wine, argv[0]
+    //arrives as a Windows-style backslash path (e.g.
+    //"Z:\\mnt\\data\\catchchallenger.exe") and find_last_of('/') alone
+    //returns npos — the caller then gets an empty applicationDirPath
+    //and "./datapack/" resolves to "/datapack/", failing the
+    //BaseServer2 datapack-existence guard.
+    const std::string::size_type pos = fileName.find_last_of("/\\");
     if(pos==std::string::npos)
         return std::string();
-    else
-        return fileName.substr(0,pos);
+    return fileName.substr(0,pos);
 }
 
 /*std::string FacilityLibGeneral::secondsToString(const uint64_t &seconds)
