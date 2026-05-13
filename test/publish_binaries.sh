@@ -119,13 +119,22 @@ for t in "$@"; do
     esac
 done
 
+# Same connect-timeout policy as deploy.sh: fast fail on stuck TCP /
+# bad route, never prompt for a password. WEB_VPS is local-network so
+# a 3-second connect cap is plenty.
+SSH_OPTS=(-o ConnectTimeout=3
+          -o ServerAliveInterval=15
+          -o ServerAliveCountMax=3
+          -o BatchMode=yes)
+RSYNC_SSH_E=(-e "ssh -o ConnectTimeout=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o BatchMode=yes")
+
 say "uploading to ${WEB_VPS}:${TARGET_DIR}"
-ssh "$WEB_VPS" "mkdir -p ${TARGET_DIR}"
+ssh "${SSH_OPTS[@]}" "$WEB_VPS" "mkdir -p ${TARGET_DIR}"
 for t in "${!SRC[@]}"; do
-    rsync -avrt --progress "${SRC[$t]}" "${WEB_VPS}:${TARGET_DIR}/${DST[$t]}"
+    rsync "${RSYNC_SSH_E[@]}" -avrt --progress "${SRC[$t]}" "${WEB_VPS}:${TARGET_DIR}/${DST[$t]}"
 done
 
-ssh "$WEB_VPS" "chown -R www-data:www-data ${TARGET_DIR} \
+ssh "${SSH_OPTS[@]}" "$WEB_VPS" "chown -R www-data:www-data ${TARGET_DIR} \
     && printf '%s' '${VERSION}' > /home/first-world.info/catchchallenger/updater.txt \
     && chown www-data:www-data /home/first-world.info/catchchallenger/updater.txt"
 say "updater.txt → ${VERSION}"
