@@ -380,6 +380,24 @@ def stage_backend_datapack(datapack_src):
     os.symlink(datapack_src, link)
 
 
+def stage_gateway_datapack(datapack_src):
+    """Replace GATEWAY_BUILD/datapack with a symlink to `datapack_src`.
+    The gateway loads its OWN datapack at startup
+    (main-unix-gateway.cpp:53 → mDatapackBase = applicationDirPath +
+    "/datapack/") and responds to client 0xA1 (datapack-file-list)
+    queries directly from this local copy, WITHOUT forwarding to the
+    backend. Skip this and the gateway reports `datapckFileNumber=0`
+    in its 0x75 reply (no files to send), the client never gets the
+    update it asked for and hangs at 600 s in run_client()."""
+    link = os.path.join(GATEWAY_BUILD, "datapack")
+    if os.path.islink(link) or os.path.exists(link):
+        try:
+            os.remove(link)
+        except OSError:
+            shutil.rmtree(link, ignore_errors=True)
+    os.symlink(datapack_src, link)
+
+
 def reset_backend_state():
     """Drop file-db state + datapack-cache.bin between cases so a stale
     cache from the previous (datapack, maincode) doesn't leak in."""
@@ -755,6 +773,11 @@ def main():
 
         # Stage datapack into backend's build/datapack.
         stage_backend_datapack(dp)
+        # Stage the SAME datapack into gateway's build/datapack so
+        # the gateway's 0xA1 → 0x75 response carries the actual file
+        # list. Without this, the gateway reports "0 files" and the
+        # client hangs waiting for content that never arrives.
+        stage_gateway_datapack(dp)
         reset_backend_state()
 
         # nginx www = symlink to the active datapack.
