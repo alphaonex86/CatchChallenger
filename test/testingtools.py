@@ -19,6 +19,8 @@ import os, sys, subprocess, multiprocessing, json, time
 from remote_build import (start_remote_builds, collect_remote_results,
                           count_remote_tests)
 import diagnostic
+import wall_cap
+wall_cap.arm()
 import build_paths
 from cmd_helpers import clamp_local
 

@@ -209,6 +209,8 @@ _install_signal_cleanup()
 
 import build_paths
 import diagnostic
+import wall_cap
+wall_cap.arm()
 from cmd_helpers import assert_port_or_fail
 import phase_timer
 

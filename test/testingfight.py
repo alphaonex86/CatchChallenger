@@ -30,6 +30,8 @@ import os, sys, signal, subprocess, threading, multiprocessing, json
 import shutil, time
 
 import diagnostic
+import wall_cap
+wall_cap.arm()
 import build_paths
 import cleanup_helpers
 from cmd_helpers import clamp_local

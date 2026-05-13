@@ -25,6 +25,8 @@ Tests the catchchallenger-gateway binary under valgrind memcheck:
 """
 import sys
 import process_helpers
+import wall_cap
+wall_cap.arm()
 import cleanup_helpers
 sys.dont_write_bytecode = True
 

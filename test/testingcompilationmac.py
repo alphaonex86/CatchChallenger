@@ -58,6 +58,8 @@ sys.dont_write_bytecode = True
 import os, sys, signal, subprocess, json, time, shlex
 import build_paths
 import diagnostic
+import wall_cap
+wall_cap.arm()
 from cmd_helpers import (SSH_OPTS_LIST, RSYNC_SSH_E, SSH_TIMEOUT_MARKER,
                          is_ssh_timeout, clamp_ssh, clamp_local)
 
