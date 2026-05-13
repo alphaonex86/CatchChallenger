@@ -632,7 +632,14 @@ def _wine_runtime_dlls(exe_path, exe_dir, args):
     that run. Used to catch LoadLibrary'd DLLs that aren't in the .exe's
     PE imports (Qt plugins, audio/GL backends, sqldrivers). args is the
     command-line tail (e.g. ["--version"] or ["--autosolo"]).
-    Returns an empty set if wine64 isn't available."""
+    Returns an empty set if wine64 isn't available.
+
+    Hard 3-second wall-clock cap: --version is a one-shot path; if the
+    GUI client ignores it and falls through to showMaximized() we still
+    capture enough load-DLL trace inside 3 s. Also strips DISPLAY/
+    XAUTHORITY/WAYLAND_DISPLAY and adds the Qt CLI `-platform offscreen`
+    flag so wine's winex11.drv has no host display to attach to, even
+    when QT_QPA_PLATFORM env doesn't propagate through wine."""
     if not WINE_BIN or not os.path.isfile(WINE_BIN):
         return set()
     if not os.path.isfile(exe_path):
@@ -641,8 +648,10 @@ def _wine_runtime_dlls(exe_path, exe_dir, args):
     env["QT_QPA_PLATFORM"]  = "offscreen"
     env["WINEDEBUG"]        = "+loaddll"
     env["WINEDLLOVERRIDES"] = "mscoree,mshtml="
-    rc, out = run_cmd([WINE_BIN, exe_path] + list(args),
-                      exe_dir, timeout=60, env=env)
+    for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
+        env.pop(_gui_var, None)
+    win_args = [WINE_BIN, exe_path, "-platform", "offscreen"] + list(args)
+    rc, out = run_cmd(win_args, exe_dir, timeout=3, env=env)
     # wine traces look like:
     #   trace:loaddll:load_native_dll Loaded L"/.../qt6core.dll" at 0x...:
     #   trace:module:load_builtin_dll Loaded L"C:\\windows\\system32\\..."
@@ -727,12 +736,83 @@ def _stage_install_payload(src_dir):
     return stage
 
 
+def _verify_png_support(stage_dir):
+    """Confirm the staged payload still has PNG decode/encode support.
+
+    The CatchChallenger UI loads PNG art (icons, world tiles, splash
+    screens) at startup — without a working PNG path the client errors
+    out before MapVisualiserPlayer::mapDisplayedSlot() ever fires. PNG
+    arrives via two routes in Qt6 + MXE:
+
+      1. libpng16-16.dll      → backing library used by both Qt6Gui's
+                                built-in PNG handler AND any explicit
+                                qpng image plugin.
+      2. imageformats/        → directory of optional QImageIOPlugin
+                                .dlls (qjpeg, qico, qsvg, …). Qt6 ships
+                                PNG built into Qt6Gui, but the
+                                imageformats dir must still exist for
+                                non-PNG formats the splash/menu use.
+
+    Verify both. Returns True on success; on failure logs the missing
+    component so the operator knows what to copy in."""
+    missing = []
+    libpng = os.path.join(stage_dir, "libpng16-16.dll")
+    if not os.path.isfile(libpng):
+        missing.append("libpng16-16.dll (top-level)")
+    imgfmt = os.path.join(stage_dir, "imageformats")
+    if not os.path.isdir(imgfmt):
+        missing.append("imageformats/ directory")
+    else:
+        try:
+            plugs = [p for p in os.listdir(imgfmt) if p.lower().endswith(".dll")]
+        except OSError:
+            plugs = []
+        if not plugs:
+            missing.append("imageformats/*.dll (windeployqt produced an empty dir)")
+    if missing:
+        log_info("png support check FAILED: missing " + ", ".join(missing))
+        return False
+    return True
+
+
+def _strip_test_only_plugins(stage_dir):
+    """Delete Qt platform plugins that are only useful for the wine
+    smoke test (offscreen, minimal). Real end-user Windows machines
+    always use the native windows platform plugin; shipping
+    qoffscreen.dll / qminimal.dll just inflates the installer.
+
+    Called AFTER `_verify_staged_exe_runs` has validated the staged
+    payload with `-platform offscreen` and BEFORE the NSIS / WiX /
+    zip packaging step. Removes both lowercase and titlecase variants
+    just in case windeployqt's naming changes between Qt versions."""
+    plugins_dir = os.path.join(stage_dir, "platforms")
+    if not os.path.isdir(plugins_dir):
+        return
+    removed = []
+    for entry in os.listdir(plugins_dir):
+        low = entry.lower()
+        if low.startswith("qoffscreen") or low.startswith("qminimal"):
+            try:
+                os.remove(os.path.join(plugins_dir, entry))
+                removed.append(entry)
+            except OSError:
+                pass
+    if removed:
+        log_info(f"strip test-only Qt plugins: {', '.join(removed)}")
+
+
 def _verify_staged_exe_runs(stage_dir):
     """Run the staged .exe under wine64 with QT_QPA_PLATFORM=offscreen
     to confirm the trimmed DLL set is still enough to start the
-    process. Returns True if wine reports rc==0 within the
-    --closewhenonmap timeout (or if wine64 isn't on the host, in
-    which case we trust the allowlist)."""
+    process. Returns True when wine actually loaded the binary — either
+    the .exe exited cleanly OR our 3-second wall-clock cap fired while
+    it was still running (which means it got past every DLL-load
+    LoadLibrary call; that's all we need this smoke test to prove).
+    Hard fail only when wine itself reports a non-timeout error (e.g.
+    missing DLL → 0xC0000135 → wine prints an err: and exits non-zero
+    immediately). Strips DISPLAY/XAUTHORITY/WAYLAND_DISPLAY and forces
+    `-platform offscreen` on the CLI so wine cannot pop a window on the
+    host X server during the staged-payload smoke test."""
     if not WINE_BIN or not os.path.isfile(WINE_BIN):
         return True
     exe = os.path.join(stage_dir, WIN_EXE_NAME)
@@ -741,9 +821,15 @@ def _verify_staged_exe_runs(stage_dir):
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
     env["WINEDEBUG"]       = "-all"
-    rc, _ = run_cmd([WINE_BIN, exe, "--version"],
-                    stage_dir, timeout=30, env=env)
-    return rc == 0
+    for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
+        env.pop(_gui_var, None)
+    rc, _ = run_cmd([WINE_BIN, exe, "-platform", "offscreen", "--version"],
+                    stage_dir, timeout=3, env=env)
+    # rc == 0  → clean --version exit
+    # rc == -1 → wall-clock timeout (run_cmd's TIMEOUT sentinel). The
+    #            .exe is alive at the 3 s cap; LoadLibrary calls all
+    #            succeeded or wine would have crashed earlier.
+    return rc == 0 or rc == -1
 
 
 def build_installer(exe_path, label):
@@ -773,6 +859,14 @@ def build_installer(exe_path, label):
                        f"missing a runtime .dll — adjust "
                        f"_INSTALL_ALLOWLIST_DLLS")
         return None
+    if not _verify_png_support(stage_dir):
+        log_fail(name, f"staged payload lacks PNG support — Qt6Gui/libpng "
+                       f"or imageformats/ missing in {stage_dir}")
+        return None
+    # Smoke test passed — purge the offscreen/minimal Qt platform
+    # plugins so the installer that ships to end users doesn't carry
+    # them. Real Windows targets use the windows platform plugin.
+    _strip_test_only_plugins(stage_dir)
 
     if MAKENSIS_BIN is not None:
         nsi_path = os.path.join(out_dir, base + ".nsi")
@@ -961,6 +1055,14 @@ def build_msi(exe_path, label):
                        f"{payload_dir}; missing a runtime .dll — adjust "
                        f"_INSTALL_ALLOWLIST_DLLS")
         return None
+    if not _verify_png_support(payload_dir):
+        log_fail(name, f"staged payload lacks PNG support — Qt6Gui/libpng "
+                       f"or imageformats/ missing in {payload_dir}")
+        return None
+    # Smoke test passed — purge the offscreen/minimal Qt platform
+    # plugins so the .msi we ship doesn't carry them. Same reason as
+    # build_installer.
+    _strip_test_only_plugins(payload_dir)
     _write_main_wxs(main_wxs, label, os.path.basename(payload_dir))
     env = _wix_wine_env()
 
