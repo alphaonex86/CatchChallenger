@@ -258,24 +258,26 @@ _DATAPACK_KEEP_EXT = {
 
 
 def _datapack_ignore(src, names):
-    """shutil.copytree(ignore=…) callable that keeps only files with
-    extensions in _DATAPACK_KEEP_EXT. Directories ALWAYS pass through
-    (otherwise the whole subtree gets dropped). .git is always
-    excluded regardless of extension."""
+    """shutil.copytree(ignore=…) callable. Rules, in order:
+      1. Any entry starting with `.` (unix-hidden) → EXCLUDED. This
+         covers .git, .gitignore, .qt, .ninja_*, .DS_Store, …
+         regardless of whether it's a file or a directory.
+      2. Directories that survive (1) → KEPT (recurse). Without
+         passing dirs through, the whole subtree disappears.
+      3. Regular files → kept only when the extension is in
+         _DATAPACK_KEEP_EXT (lower-cased, leading dot stripped).
+         Everything else is EXCLUDED."""
     out = []
     ni = 0
     while ni < len(names):
         n = names[ni]
         ni += 1
-        full = os.path.join(src, n)
-        if os.path.isdir(full):
-            if n == ".git":
-                out.append(n)
-            continue
-        if n == ".git":
+        if n.startswith("."):
             out.append(n)
             continue
-        # Strip leading dot from extension; lower-case for the lookup.
+        full = os.path.join(src, n)
+        if os.path.isdir(full):
+            continue
         ext = os.path.splitext(n)[1].lower().lstrip(".")
         if ext not in _DATAPACK_KEEP_EXT:
             out.append(n)
