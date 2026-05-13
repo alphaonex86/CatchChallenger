@@ -441,7 +441,15 @@ def _ssh_cmd(host, port, command, timeout=COMPILE_TIMEOUT, control_path=None):
     """Run `command` over SSH. ConnectTimeout=5 forced; per-call timeout
     clamped to SSH_MAX_TIMEOUT (1200s). On TimeoutExpired returns
     (-1, "<SSH_TIMEOUT_MARKER>: Ns") so callers can use
-    cmd_helpers.is_ssh_timeout() to surface "TIMEOUT" in log_fail."""
+    cmd_helpers.is_ssh_timeout() to surface "TIMEOUT" in log_fail.
+
+    Transient signal-kill retry: when the ssh subprocess exits with a
+    negative returncode (signal-killed — typically SIGHUP because a
+    ControlMaster connection closed under it mid-command, OR SIGPIPE
+    from an early connection drop), retry the command ONCE with a
+    fresh non-multiplexed connection. This absorbs the flaky
+    "configure rc=-1" failures the operator saw on x86-lxc where a
+    long-running cmake configure raced an SSH master close."""
     timeout = _ch.clamp_ssh(timeout)
     ssh_args = ["ssh"] + _ch.SSH_OPTS_LIST
     if control_path is not None:
@@ -450,9 +458,23 @@ def _ssh_cmd(host, port, command, timeout=COMPILE_TIMEOUT, control_path=None):
     try:
         p = subprocess.run(ssh_args, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        return p.returncode, p.stdout.decode(errors="replace")
+        rc = p.returncode
+        out = p.stdout.decode(errors="replace")
     except subprocess.TimeoutExpired:
         return -1, f"{_ch.SSH_TIMEOUT_MARKER}: {timeout}s"
+    if rc < 0:
+        # Negative rc → process killed by signal (-1 SIGHUP, -13
+        # SIGPIPE, …). Retry once without the ControlMaster path so a
+        # stale shared socket doesn't take the retry down with it.
+        retry_args = ["ssh"] + _ch.SSH_OPTS_LIST + ["-p", str(port), host, command]
+        try:
+            p2 = subprocess.run(retry_args, timeout=timeout,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+            return p2.returncode, p2.stdout.decode(errors="replace")
+        except subprocess.TimeoutExpired:
+            return -1, f"{_ch.SSH_TIMEOUT_MARKER}: {timeout}s"
+    return rc, out
 
 
 def _rsync_host(host):
