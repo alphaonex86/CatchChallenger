@@ -85,12 +85,14 @@ CLIENT_GL_PRO    = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.
 CLIENT_GL_BUILD  = build_paths.build_path("client/qtopengl/build/testing-gl" + _DIAG_SUFFIX)
 CLIENT_GL_BIN    = "catchchallenger"
 
-# Tear down every build dir we own at script exit (normal exit OR
-# SIGTERM/SIGINT). Goal: only one testing*.py's build dir lives on
-# the tmpfs at a time; the next test rebuilds via ccache (fast).
-cleanup_helpers.register_build_dir(SERVER_BUILD)
-cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD)
-cleanup_helpers.register_build_dir(CLIENT_GL_BUILD)
+# Build dirs intentionally NOT registered for atexit cleanup —
+# testing-filedb / testing-cpu / testing-gl are SHARED with
+# testingbots.py, testinghttp.py, testingserver.py,
+# testingcompilation{windows,android}.py and testingmulti.py. Each
+# downstream test expects these dirs to still exist when it starts.
+# The per-build *.o prune (cmake_helpers.build_project) plus the
+# end-of-all.sh sweep on success take care of disk-space hygiene
+# without forcing every consumer to rebuild from scratch.
 
 SAVEGAME_CPU = os.path.expanduser(_config["paths"]["savegame_cpu"])
 SAVEGAME_GL  = os.path.expanduser(_config["paths"]["savegame_gl"])

@@ -1696,11 +1696,13 @@ def main():
         pro_rel, target_name, build_base_rel, opt_flags = SERVER_TARGETS[ti]
         pro_path = os.path.join(ROOT, pro_rel)
         build_base = build_paths.build_path(build_base_rel)
-        # Register this matrix's build root for end-of-script teardown.
-        # Per-TU .o files are already pruned after each successful
-        # compile (see cmake_helpers.build_project); this top-up makes
-        # sure the binaries + cmake state vanish too at exit.
-        cleanup_helpers.register_build_dir(build_base)
+        # NOTE: build_base is the SHARED parent dir (e.g.
+        # server/cli/build) — registering it for atexit cleanup would
+        # wipe testing-filedb, testing-cpu and every sibling that
+        # downstream tests rely on. Per-TU *.o prune in
+        # cmake_helpers.build_project keeps disk use down during the
+        # run; the all.sh post-success sweep wipes the parent at the
+        # very end.
         combos = flag_combinations(opt_flags)
         n_combos = len(CXX_VERSIONS) * len(COMPILERS) * len(combos)
         log_info(f"{target_name}: {n_combos} combinations "
@@ -1797,9 +1799,12 @@ def main():
     filedb_build = build_paths.build_path("server/cli/build/testing-filedb" + _DIAG_SUFFIX)
     cliepo_build = build_paths.build_path("server/cli/build/testing-cli-epoll" + _DIAG_SUFFIX)
     client_build = build_paths.build_path("client/qtcpu800x600/build/testing-cpu" + _DIAG_SUFFIX)
-    cleanup_helpers.register_build_dir(filedb_build)
-    cleanup_helpers.register_build_dir(cliepo_build)
-    cleanup_helpers.register_build_dir(client_build)
+    # filedb_build and client_build are SHARED with other tests
+    # (testingclient, testingbots, testinghttp, testingcompilation*);
+    # do NOT register them for atexit cleanup. Only cliepo_build is
+    # private to testingserver — but it's a sibling that the post-
+    # success sweep will reach anyway, so skip registering it too to
+    # keep behaviour consistent across the matrix.
 
     # build client once
     if not build_project(CLIENT_CPU_PRO, client_build, "qtcpu800x600"):
@@ -1864,7 +1869,10 @@ def main():
         backend_name, qarg = backends[bi]
         backend_build = build_paths.build_path(
             "server/cli/build/testing-filedb-" + backend_name + _DIAG_SUFFIX)
-        cleanup_helpers.register_build_dir(backend_build)
+        # backend_build (testing-filedb-epoll, -iouring, -poll, -select)
+        # is private to testingserver but lives alongside the shared
+        # testing-filedb. The all.sh post-success sweep removes it; we
+        # do NOT register it here so a per-script wipe doesn't fire.
         print(f"\n{C_CYAN}  -- server-filedb backend: {backend_name} --{C_RESET}\n")
         # Empty qarg (e.g. the "epoll" default backend) means no extra
         # CONFIG+= flag — the matrix entry is just "build the default

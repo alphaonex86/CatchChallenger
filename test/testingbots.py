@@ -68,9 +68,10 @@ BOT_PRO         = os.path.join(ROOT, "tools/bot-actions/bot-actions.pro")
 BOT_BUILD       = build_paths.build_path("tools/bot-actions/build/testing" + _DIAG_SUFFIX)
 BOT_BIN         = "bot-actions"
 
-# Tear down owned build dirs at script exit so the tmpfs holds only
-# the currently-running testing*.py's build artefacts.
-cleanup_helpers.register_build_dir(SERVER_BUILD)
+# Only register the bot binary's PRIVATE build dir; SERVER_BUILD is
+# the shared testing-filedb tree (also used by testingclient,
+# testinghttp, testingserver, testingcompilation{windows,android})
+# and must persist until the all.sh post-success sweep.
 cleanup_helpers.register_build_dir(BOT_BUILD)
 
 SERVER_HOST  = _config["server_host"]
