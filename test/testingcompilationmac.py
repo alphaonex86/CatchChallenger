@@ -187,12 +187,28 @@ def osx_host_reachable():
 
 
 def rsync_to_osx(src, dst, extra_args=None):
+    # Anchor every "build" exclude to the project ROOT (leading `/`),
+    # otherwise rsync also drops vendored build/ subdirs like
+    # general/libzstd/build/{cmake,meson,…} which the project's
+    # CMakeLists.txt depends on (add_subdirectory(general/libzstd/
+    # build/cmake)). Without the anchor, the osxcross-side cmake
+    # configure fails with:
+    #   add_subdirectory given source "general/libzstd/build/cmake"
+    #   which is not an existing directory.
     args = ["rsync", "-art", "--delete",
             "-e", RSYNC_SSH_E,
-            "--exclude=build/", "--exclude=build-*/", "--exclude=.git/"]
+            "--exclude=/build/", "--exclude=/build-*/",
+            "--exclude=.git/"]
     if extra_args:
         args += list(extra_args)
-    args += [src + "/", f"{OSX_USER}@{OSX_HOST}:{dst}/"]
+    # rsync needs IPv6 hosts in [brackets]; otherwise it parses
+    # `2803:1920::2:ff08:/path` as user@host:port:host:port…:path,
+    # truncates the actual address to `2803`, asks DNS to resolve
+    # that, gets a bogus IPv4 (`0.0.10.243` in practice), and times
+    # out trying to connect to it. With brackets the whole IPv6
+    # literal stays a single token.
+    host = f"[{OSX_HOST}]" if ":" in OSX_HOST else OSX_HOST
+    args += [src + "/", f"{OSX_USER}@{host}:{dst}/"]
     diagnostic.record_cmd(args, None)
     timeout = clamp_local(RSYNC_TIMEOUT)
     try:
@@ -280,7 +296,42 @@ def build_target(pro_rel, label):
         f"-G Ninja "
         f"-DCMAKE_BUILD_TYPE=Release "
         f"-DCMAKE_CXX_STANDARD=17 "
-        f"-DCMAKE_PREFIX_PATH={OSX_QT} "
+        # The osxcross toolchain sets
+        # CMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY which restricts every
+        # find_package() to look only inside CMAKE_FIND_ROOT_PATH
+        # (toolchain default: the macOS SDK + macports). The Qt6
+        # install at /root/qt6-macos/... isn't inside either, so
+        # find_package(Qt6) fails even when -DCMAKE_PREFIX_PATH points
+        # at it. Two fixes layered for robustness:
+        #   1. Switch the find-root policy to BOTH so CMAKE_PREFIX_PATH
+        #      is consulted alongside CMAKE_FIND_ROOT_PATH.
+        #   2. ADD the Qt install root to CMAKE_FIND_ROOT_PATH itself.
+        #      This makes the Qt6 sub-component find_package() calls
+        #      (Qt6Core, Qt6Gui, Qt6Network, ...) resolve via the
+        #      same path-search as the parent Qt6 find_package().
+        # Pin Qt6_DIR explicitly so the top-level find_package(Qt6)
+        # skips the search entirely.
+        f"-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH "
+        # The `;` in CMAKE_FIND_ROOT_PATH / CMAKE_PREFIX_PATH lists
+        # is cmake's list separator but ALSO bash's statement
+        # terminator — single-quote the value so the inner ssh shell
+        # passes the whole string to cmake intact.
+        f"'-DCMAKE_FIND_ROOT_PATH={OSX_QT};/usr/lib/x86_64-linux-gnu/cmake' "
+        f"'-DCMAKE_PREFIX_PATH={OSX_QT};/usr' "
+        f"-DQt6_DIR={OSX_QT}/lib/cmake/Qt6 "
+        # Cross-compile needs HOST-native moc/uic/rcc; the target Qt
+        # at OSX_QT ships Mach-O binaries that don't run on Linux.
+        # Debian's qt6-base-dev-tools installs:
+        #   /usr/lib/qt6/libexec/{moc,uic,rcc,…}                (Linux ELF)
+        #   /usr/lib/x86_64-linux-gnu/cmake/Qt6CoreTools/       (cmake config)
+        # Pin each `*Tools` cmake-config dir explicitly so Qt's
+        # cross-compile find logic (Qt6Config.cmake → for module
+        # matching `Tools$`) picks up the host tools from /usr instead
+        # of trying to run the Mach-O binaries.
+        f"-DQt6CoreTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6CoreTools "
+        f"-DQt6GuiTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6GuiTools "
+        f"-DQt6WidgetsTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6WidgetsTools "
+        f"-DQt6DBusTools_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6DBusTools "
         f"-DCMAKE_MACOSX_BUNDLE=ON "
         f"-DCMAKE_C_COMPILER_LAUNCHER=ccache "
         f"-DCMAKE_CXX_COMPILER_LAUNCHER=ccache "
@@ -290,9 +341,14 @@ def build_target(pro_rel, label):
         f"-DCMAKE_EXE_LINKER_FLAGS='-fuse-ld=lld -fno-lto' "
         f"-DCMAKE_SHARED_LINKER_FLAGS='-fuse-ld=lld -fno-lto' "
         f"-DCMAKE_MODULE_LINKER_FLAGS='-fuse-ld=lld -fno-lto' "
-        f"-DCATCHCHALLENGER_NO_WEBSOCKET=ON "
-        f"-DCATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS=OFF "
-        f"-DCATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS=OFF "
+        # Audio + websockets are re-enabled on the osxcross Qt6 install
+        # (Qt6Multimedia + Qt6WebSockets are present alongside Qt6Core).
+        # If a fresh osxcross host is missing either module, install
+        # them with:
+        #   aqt install-qt mac desktop 6.5.3 clang_64 -O /root/qt6-macos \
+        #       -m qtmultimedia qtwebsockets qtcharts
+        # (or rsync them over from a host with IPv4 reachable to
+        # download.qt.io if the osxcross host is IPv6-only).
         f"{flag_args} 2>&1",
         timeout=COMPILE_TIMEOUT)
     if rc != 0:

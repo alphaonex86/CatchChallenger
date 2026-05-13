@@ -31,6 +31,22 @@
         #define htole32(x) (x)
         #define htole64(x) (x)
     #endif
+#elif defined(__APPLE__)
+    // macOS doesn't ship a Linux-style <endian.h>; it has
+    // <libkern/OSByteOrder.h> with OSSwap* helpers and CPU_LITTLE_ENDIAN
+    // / CPU_BIG_ENDIAN macros. Map the Linux names onto OSSwap so the
+    // rest of this file (and every caller) compiles unchanged. macOS
+    // is little-endian on every supported target (x86_64, arm64),
+    // hence the noop branch.
+    #include <libkern/OSByteOrder.h>
+    #ifndef le16toh
+        #define le16toh(x) OSSwapLittleToHostInt16(x)
+        #define le32toh(x) OSSwapLittleToHostInt32(x)
+        #define le64toh(x) OSSwapLittleToHostInt64(x)
+        #define htole16(x) OSSwapHostToLittleInt16(x)
+        #define htole32(x) OSSwapHostToLittleInt32(x)
+        #define htole64(x) OSSwapHostToLittleInt64(x)
+    #endif
 #else
     #include <endian.h>
 #endif
