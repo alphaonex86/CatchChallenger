@@ -21,8 +21,31 @@
 
 set -e
 
-# just to be sure drop the trash to prevent saturing the tmpfs
-rm -Rf /mnt/data/perso/tmpfs/*
+# Pre-run cleanup: drop the previous run's transient build trees + cluster
+# state to keep the tmpfs from saturating, BUT preserve the JSON
+# bookkeeping (all.log, failed.json[.lock], time.json, monitor.json,
+# testing-individual-time.json), the ccache store, the local cache root,
+# and the previous run's shipping artifacts (catchchallenger-*.exe / .msi
+# / .dmg / .apk / .aab) so the tmpfs root always shows the operator at
+# least the last run's outcome. The per-script atexit hook in
+# test/cleanup_helpers.py also tears down on successful exit, but doing
+# the sweep here too lets the operator skip a stale post-mortem run
+# without re-running the whole matrix.
+find /mnt/data/perso/tmpfs/ -mindepth 1 -maxdepth 1 \
+     ! -name 'ccache' \
+     ! -name 'cache' \
+     ! -name 'all.log' \
+     ! -name 'failed.json' \
+     ! -name 'failed.json.lock' \
+     ! -name 'time.json' \
+     ! -name 'monitor.json' \
+     ! -name 'testing-individual-time.json' \
+     ! -name 'catchchallenger-*.exe' \
+     ! -name 'catchchallenger-*.msi' \
+     ! -name 'catchchallenger-*.dmg' \
+     ! -name 'catchchallenger-*.apk' \
+     ! -name 'catchchallenger-*.aab' \
+     -exec rm -rf {} + 2>/dev/null || true
 
 cd "$(dirname "$0")"
 
@@ -129,6 +152,15 @@ if [ "$CONTINUE" = "0" ]; then
 else
     echo "[all.sh] resume run (--continue): preserving $FAILED_JSON and appending to $TIME_JSON $MONITOR_JSON; testing*.py will re-run only previously-failed cases"
 fi
+
+# Pre-seed empty placeholder JSON files so the operator always sees
+# *something* at the tmpfs root, even when a testing*.py segfaults
+# before reaching its summary() / save_failed_cases() call. testing*.py
+# writes overwrite these placeholders as soon as a real result lands.
+mkdir -p "$(dirname "$FAILED_JSON")"
+[ -f "$FAILED_JSON" ] || echo '{}' > "$FAILED_JSON"
+TESTING_TIMING_JSON="$TMPFS_ROOT/testing-individual-time.json"
+[ -f "$TESTING_TIMING_JSON" ] || echo '{}' > "$TESTING_TIMING_JSON"
 
 # Mirror everything we print (and every child process's stdout/stderr)
 # to /mnt/data/perso/tmpfs/all.log so the full run is reproducible from
