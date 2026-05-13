@@ -5,11 +5,21 @@
 #include "../../libqtcatchchallenger/LocalListener.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include <iostream>
+#include <cstdlib>
 #include <QFontDatabase>
 
 int main(int argc, char *argv[])
 {
     AutoArgs::parse(argc,argv);
+    // --take-screenshot wants reproducible PNGs: tile-variant
+    // selectors (lava, plant cycles, follower-NPC offsets) all
+    // call std::rand(), so pin the seed before any of them runs.
+    // Mirrors the same srand(42) qtopengl/main.cpp:344 does for
+    // the same reason — the per-pixel-tolerance diff in
+    // testingcompilationwindows otherwise flaps on every
+    // random-frame draw.
+    if(!AutoArgs::takeScreenshotPath.isEmpty())
+        std::srand(42);
     QApplication a(argc, argv);
     a.setApplicationName("client-qtcpu800x600");
     a.setOrganizationName("CatchChallenger");

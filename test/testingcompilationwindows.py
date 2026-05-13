@@ -1710,9 +1710,18 @@ def run_wine_screenshot(exe_path, label, mode, screenshot_path,
     if mode == "autosolo":
         args.append("--autosolo")
         args.append("--closewhenonmap")
-    # --fixed is qtopengl-only (the qtcpu800x600 AutoArgs parser
-    # rejects unknown flags loudly and would abort). Only pass it
-    # when the label tells us this is the qtopengl client.
+        # Pin the autosolo maincode to "test" — the dedicated
+        # tiny-map fixture under
+        # datapack/map/main/test/ is what the reference PNG was
+        # captured from. Without this the in-process server picks
+        # the first directory alphabetically (typically "official"),
+        # which renders a completely different scene and breaks the
+        # per-pixel diff against the blessed reference.
+        args.append("--main-datapack-code=test")
+    # --fixed pins CCBackground's animation timers — qtopengl only.
+    # qtcpu800x600's UI has no animated background (no parallax, no
+    # cloud/grass cycles) so the flag doesn't exist there; the
+    # AutoArgs parser would reject an unknown arg.
     if "qtopengl" in label:
         args.append("--fixed")
     env = os.environ.copy()
@@ -1900,15 +1909,21 @@ def main():
         run_wine_client(gl_exe, "qtopengl --autosolo",
                         ["--autosolo", "--closewhenonmap"])
 
-    # ── reference-screenshot regression (qtopengl-only) ─────────────
-    # Two captures per qtopengl run:
+    # ── reference-screenshot regression (both clients) ──────────────
+    # Two captures per client (qtopengl + qtcpu800x600), four total:
     #   - start    : 2 s after .exe start, no --autosolo (title screen)
     #   - autosolo : on-map grab inside MapVisualiserPlayer slot
-    # qtcpu800x600 doesn't expose --take-screenshot yet, so it stays
-    # at "reached map" smoke only. Both qtopengl captures pass --fixed
-    # so CCBackground's cloud / grass timers don't drift the PNG.
-    # Reference PNGs at test/screenshot-windows-qtopengl-{mode}.png;
-    # the diff-mask is dropped beside the produced PNG on failure.
+    # qtopengl screenshots pass --fixed so CCBackground's cloud /
+    # grass / tree-parallax timers don't drift the PNG. qtcpu800x600
+    # has no animated background — its AutoArgs doesn't even accept
+    # --fixed — so run_wine_screenshot skips the flag there.
+    # Autosolo runs use maincode="test" (the dedicated small-map
+    # fixture under datapack/map/main/test/) so the rendered scene
+    # matches the blessed reference; without an explicit maincode
+    # the in-process server picks the first dir alphabetically
+    # ("official") and the screenshot diff fails on every pixel.
+    # References at test/screenshot-windows-<client>-{start,autosolo}.png;
+    # the diff mask drops beside the produced PNG on failure.
     if gl_exe is not None and should_run(
             "wine screenshot qtopengl (start)", failed_cases):
         ref_start = os.path.join(ROOT, "test",
@@ -1917,12 +1932,27 @@ def main():
                                         ref_start)
     if gl_exe is not None and should_run(
             "wine screenshot qtopengl (autosolo)", failed_cases):
-        if win_dp_src and win_mc:
+        if win_dp_src:
             setup_datapack_client(os.path.dirname(gl_exe), win_dp_src,
-                                  win_mc, f"wine qtopengl ({win_mc})")
+                                  "test", "wine qtopengl (test)")
         ref_solo = os.path.join(ROOT, "test",
                                 "screenshot-windows-qtopengl-autosolo.png")
         run_wine_screenshot_and_compare(gl_exe, "qtopengl", "autosolo",
+                                        ref_solo)
+    if cpu_exe is not None and should_run(
+            "wine screenshot qtcpu800x600 (start)", failed_cases):
+        ref_start = os.path.join(ROOT, "test",
+                                 "screenshot-windows-qtcpu800x600-start.png")
+        run_wine_screenshot_and_compare(cpu_exe, "qtcpu800x600", "start",
+                                        ref_start)
+    if cpu_exe is not None and should_run(
+            "wine screenshot qtcpu800x600 (autosolo)", failed_cases):
+        if win_dp_src:
+            setup_datapack_client(os.path.dirname(cpu_exe), win_dp_src,
+                                  "test", "wine qtcpu800x600 (test)")
+        ref_solo = os.path.join(ROOT, "test",
+                                "screenshot-windows-qtcpu800x600-autosolo.png")
+        run_wine_screenshot_and_compare(cpu_exe, "qtcpu800x600", "autosolo",
                                         ref_solo)
 
     # Sign the catchchallenger.exe BEFORE bundling — both the NSIS

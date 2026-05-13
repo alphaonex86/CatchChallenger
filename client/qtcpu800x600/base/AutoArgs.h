@@ -23,6 +23,20 @@ public:
     static bool dropSendDataAfterOnMap;
     static bool autosolo;
     static QString mainDatapackCodeOverride;
+    // --take-screenshot=PATH: render the first frame after the map
+    // is reached (or, on a no-autosolo run, 2 s after launch — the
+    // title screen) into the named PNG and exit. Used by
+    // testingcompilationwindows.py's wine screenshot regression to
+    // diff against a blessed reference; pinning srand(42) when the
+    // flag is set keeps random tile-variant selections deterministic.
+    static QString takeScreenshotPath;
+    // Note: qtopengl has a --fixed flag that freezes its animated
+    // CCBackground. qtcpu800x600's UI is static — no parallax, no
+    // cloud/grass timers — so the equivalent flag is intentionally
+    // NOT mirrored here; the AutoArgs parser would reject an
+    // unknown flag and the harness has to know which client it's
+    // talking to (testingcompilationwindows.py drops --fixed from
+    // the qtcpu800x600 invocation for this reason).
 
     static void parse(int &argc, char *argv[]);
     static void printHelp(const char *progName);

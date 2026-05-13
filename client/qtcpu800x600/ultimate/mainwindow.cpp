@@ -202,6 +202,32 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->UltimateKey->hide();
     }
 
+    // --take-screenshot WITHOUT --autosolo never reaches
+    // currentMapLoaded, so the BaseWindowMap.cpp on-map grab would
+    // never fire and testingcompilationwindows.py would time out
+    // waiting for the title-screen PNG. Schedule a fallback 2-second
+    // grab + quit so the start screen IS captured. The on-map grab
+    // still wins for --autosolo runs (it fires after the map paints,
+    // typically <1.5 s after launch). Mirrors qtopengl's
+    // ScreenTransition::ScreenTransition() fallback.
+    if(!AutoArgs::takeScreenshotPath.isEmpty() && !AutoArgs::autosolo)
+    {
+        QTimer::singleShot(2000,this,[this](){
+            const QString outPath=AutoArgs::takeScreenshotPath;
+            repaint();
+            const QPixmap shot=grab();
+            if(!shot.save(outPath))
+                std::cerr << "--take-screenshot (start-screen): failed to save "
+                          << outPath.toStdString() << std::endl;
+            else
+                std::cerr << "--take-screenshot (start-screen): saved "
+                          << outPath.toStdString() << " ("
+                          << shot.width() << "x" << shot.height() << ")"
+                          << std::endl;
+            QCoreApplication::quit();
+        });
+    }
+
     #if defined(CATCHCHALLENGER_SOLO)
     if(AutoArgs::autosolo)
     {
