@@ -58,15 +58,13 @@ WIN_EXE_NAME         = "catchchallenger.exe"
 SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb")
 SERVER_BIN_NAME = "catchchallenger-server-cli"
 
-# Tear down everything we built (or extended) at script exit. The
-# install-stage / msi work dirs are siblings of the build dirs, so
-# their removal happens transitively via remove_build_dir's parent
-# walk — but register them explicitly for clarity.
+# Register PRIVATE build dirs for atexit cleanup. SERVER_BUILD
+# (= testing-filedb) is shared with native-Linux tests and is NOT
+# registered here; the all.sh post-success sweep wipes it.
 cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD_WIN)
 cleanup_helpers.register_build_dir(CLIENT_GL_BUILD_WIN)
 cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD_WIN + "-install-stage")
 cleanup_helpers.register_build_dir(CLIENT_GL_BUILD_WIN + "-install-stage")
-cleanup_helpers.register_build_dir(SERVER_BUILD)
 
 SERVER_HOST = _config["server_host"]
 SERVER_PORT = str(_config["server_port"])

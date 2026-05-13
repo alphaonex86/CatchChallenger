@@ -52,10 +52,10 @@ CLIENT_GL_PRO = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.pro
 SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb")
 SERVER_BIN_NAME = "catchchallenger-server-cli"
 
-# Tear down the local server-filedb build dir we built at script exit.
-# The androiddeployqt output lives under ANDROID_BUILD_DIR (outside
-# tmpfs); only the tmpfs-resident server build is registered here.
-cleanup_helpers.register_build_dir(SERVER_BUILD)
+# SERVER_BUILD (= testing-filedb) is shared with native-Linux tests;
+# do NOT register it for atexit cleanup. The all.sh post-success
+# sweep wipes it. androiddeployqt's output lives under
+# ANDROID_BUILD_DIR (outside tmpfs) and is owned by Android tooling.
 
 # Android emulator's NAT maps 10.0.2.2 to the HOST's loopback
 # (https://developer.android.com/studio/run/emulator-networking).
