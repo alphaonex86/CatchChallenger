@@ -64,8 +64,8 @@ WIN_EXE_NAME         = "catchchallenger.exe"
 # emit a binary literally named "catchchallenger.exe" from cmake's
 # OUTPUT_NAME override; one of them has to be renamed to avoid a
 # filesystem collision when they sit in the same install directory.
-COMBINED_BIN_CPU = "catchchallenger800x600.exe"   # qtcpu800x600
-COMBINED_BIN_GL  = "catchchallenger.exe"           # qtopengl, primary
+COMBINED_BIN_CPU = "catchchallengercpu800x600.exe"   # qtcpu800x600
+COMBINED_BIN_GL  = "catchchallenger.exe"             # qtopengl, primary
 COMBINED_BIN_SRV = "catchchallenger-server-gui.exe"
 
 #local server-filedb that the multi-mode wine client connects back to.
@@ -309,10 +309,17 @@ def _datapack_ignore(src, names):
 
 
 def setup_datapack_client(build_dir, datapack_src, maincode, label):
-    """Copy datapack to <build_dir>/datapack/internal/, keep only maincode in map/main/.
+    """Copy datapack to <build_dir>/datapack/, keep only maincode in map/main/.
     Filters by file extension via _datapack_ignore — installer-bound
-    datapacks drop README.md, .po, .ts and other non-runtime files."""
-    dst = os.path.join(build_dir, "datapack", "internal")
+    datapacks drop README.md, .po, .ts and other non-runtime files.
+
+    Shipped layout in the installer is `<install>/datapack/` (no
+    `internal/` level). The server-gui binary searches
+    `<bin_dir>/datapack/internal/` then `<bin_dir>/datapack/` and
+    picks whichever exists — so the installer-flat layout is the
+    fallback. The client (autosolo) reads from
+    `applicationDirPath()/datapack/` directly."""
+    dst = os.path.join(build_dir, "datapack")
     if os.path.exists(dst):
         shutil.rmtree(dst)
     if not os.path.isdir(datapack_src):
@@ -503,7 +510,7 @@ def build_mxe_client(pro_file, build_dir, label):
              + (", lld" if LLD_BIN else "")
              + ")")
     args = [MXE_CMAKE, "-S", cmake_source, "-B", build_dir,
-            "-DCMAKE_BUILD_TYPE=Debug",
+            "-DCMAKE_BUILD_TYPE=Release",
             "-DCATCHCHALLENGER_NOAUDIO=ON",
             "-DCATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS=ON",
             "-DCATCHCHALLENGER_BUILD_QTCPU800X600_WEBSOCKETS=ON",
@@ -834,6 +841,12 @@ def _stage_install_payload(src_dir):
         low = entry.lower()
         if any(low.endswith(suf) for suf in _INSTALL_EXCLUDE_FILE_SUFFIXES):
             continue
+        # screenshot-*.png are wine-smoke-test artefacts produced by
+        # the QT_QPA_PLATFORM=offscreen runs (see run_wine_screenshot).
+        # They live next to the binary in the build dir but must NOT
+        # ship inside the installer / .msi.
+        if low.startswith("screenshot-") and low.endswith(".png"):
+            continue
         if low.endswith(".dll"):
             if low not in allow:
                 continue
@@ -844,25 +857,42 @@ def _stage_install_payload(src_dir):
     return stage
 
 
-_MXE_STRIP = MXE_BIN + "/" + MXE_TARGET + "-strip"
+_MXE_STRIP   = MXE_BIN + "/" + MXE_TARGET + "-strip"
+_MXE_OBJCOPY = MXE_BIN + "/" + MXE_TARGET + "-objcopy"
 
 
 def _strip_debug_symbols(stage_dir):
-    """Run MXE's mingw strip on every .exe and .dll in stage_dir. The
-    test build is Debug to keep compile cycles short and to keep debug
-    symbols available for the wine smoke test crash diagnostics, but
-    the Debug .exe is ~470 MiB unstripped — well past the 100 MiB
-    shipping-artifact ceiling. Stripping the staged payload right
-    before packaging drops the .exe to ~15-20 MiB and the DLLs to a
-    few MiB each, comfortably under the ceiling without changing the
-    build configuration.
+    """Split debug info out of every .exe / .dll in stage_dir before
+    packaging:
 
-    Called AFTER the wine smoke test (which needs the symbols to
-    produce useful traces) and AFTER _strip_test_only_plugins, but
-    BEFORE NSIS / WiX / zip packaging."""
+      1. `objcopy --only-keep-debug <bin> <bin>.debug` → captures
+         every DWARF section in a sibling file located OUTSIDE the
+         stage tree (under `<stage_dir>-debug/<relpath>.debug`), so
+         the installer never sees it.
+      2. `strip --strip-unneeded -x <bin>` → removes the same DWARF
+         + local symbols from <bin>. `--strip-unneeded` keeps the
+         export table intact (other DLLs that import from
+         Qt6Core.dll keep resolving at load time); `-x` drops
+         locals.
+      3. `objcopy --add-gnu-debuglink=<bin>.debug <bin>` → embeds a
+         pointer + CRC into the now-stripped <bin> so gdb finds the
+         sidecar when looking up symbols.
+
+    Called AFTER the wine smoke test (which still has full symbols
+    in the un-staged build dir for crash diagnostics) and AFTER
+    `_strip_test_only_plugins`, but BEFORE NSIS / WiX / zip
+    packaging. The sibling `<stage_dir>-debug/` tree is left on
+    disk so operators can collect it for post-mortem analysis;
+    test/all.sh's tmpfs sweep wipes it after the run."""
     if not os.path.isfile(_MXE_STRIP):
         log_info(f"strip skipped: {_MXE_STRIP} not found")
         return
+    has_objcopy = os.path.isfile(_MXE_OBJCOPY)
+    debug_root  = stage_dir.rstrip(os.sep) + "-debug"
+    if has_objcopy:
+        if os.path.isdir(debug_root):
+            shutil.rmtree(debug_root, ignore_errors=True)
+        os.makedirs(debug_root, exist_ok=True)
     targets = []
     for root, _, files in os.walk(stage_dir):
         for name in files:
@@ -871,23 +901,41 @@ def _strip_debug_symbols(stage_dir):
                 targets.append(os.path.join(root, name))
     if not targets:
         return
-    # `--strip-unneeded` keeps the export table intact (otherwise other
-    # DLLs that import from Qt6Core.dll lose their resolution at load
-    # time) while dropping every DWARF section. `-x` drops local
-    # symbols too; combined with --strip-unneeded this matches what
-    # MXE's release builds ship.
     stripped = 0
+    split = 0
     for path in targets:
         try:
             before = os.path.getsize(path)
+            if has_objcopy:
+                rel = os.path.relpath(path, stage_dir)
+                dbg = os.path.join(debug_root, rel + ".debug")
+                os.makedirs(os.path.dirname(dbg), exist_ok=True)
+                rc = subprocess.run(
+                    [_MXE_OBJCOPY, "--only-keep-debug", path, dbg],
+                    check=False, capture_output=True, timeout=60).returncode
+                if rc == 0 and os.path.isfile(dbg):
+                    split += 1
             subprocess.run([_MXE_STRIP, "--strip-unneeded", "-x", path],
                            check=False, capture_output=True, timeout=60)
+            if has_objcopy and os.path.isfile(dbg):
+                # debug-link references the basename, so gdb/objdump
+                # look for the sidecar next to the binary OR under a
+                # `/.debug/` subdir OR under `--debug-file-directory`.
+                # The installer ships only <bin>; the sidecar stays in
+                # <stage_dir>-debug/.
+                subprocess.run(
+                    [_MXE_OBJCOPY,
+                     "--add-gnu-debuglink=" + dbg, path],
+                    check=False, capture_output=True, timeout=60)
             after = os.path.getsize(path)
             if after < before:
                 stripped += 1
         except (OSError, subprocess.SubprocessError):
             pass
-    log_info(f"stripped debug symbols from {stripped}/{len(targets)} binaries in stage")
+    log_info(f"stripped debug symbols from {stripped}/{len(targets)} binaries in stage; "
+             f"sidecars in {os.path.relpath(debug_root, ROOT)} "
+             f"({split} .debug files)" if has_objcopy
+             else f"stripped debug symbols from {stripped}/{len(targets)} binaries in stage")
 
 
 def _verify_png_support(stage_dir):
@@ -1041,6 +1089,19 @@ def _stage_combined_payload(parts):
                                  follow_symlinks=True)
                 except OSError:
                     pass
+    # Drop a minimal qt.conf at the install root so Qt6 resolves
+    # plugin paths relative to applicationDirPath() instead of the
+    # MXE compile-time path (which on a user's machine doesn't
+    # exist, so imageformats/qjpeg.dll never registers and JPEG
+    # decoding via QPixmap silently fails — "Could not create
+    # pixmap from :/images/background.jpg"). windeployqt doesn't
+    # always emit qt.conf for cross builds; write it ourselves so
+    # the shipped installer never depends on a host-only path.
+    try:
+        with open(os.path.join(dst, "qt.conf"), "w") as f:
+            f.write("[Paths]\nPlugins = .\n")
+    except OSError:
+        pass
     return dst
 
 
@@ -1081,9 +1142,9 @@ def build_combined_installer(parts):
         '  CreateDirectory "$SMPROGRAMS\\CatchChallenger"\n'
         '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger.lnk" '
         '"$INSTDIR\\' + COMBINED_BIN_GL + '"\n'
-        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger 800x600.lnk" '
+        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger CPU 800x600.lnk" '
         '"$INSTDIR\\' + COMBINED_BIN_CPU + '"\n'
-        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger Server GUI.lnk" '
+        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger Server.lnk" '
         '"$INSTDIR\\' + COMBINED_BIN_SRV + '"\n'
         '  CreateShortCut "$DESKTOP\\CatchChallenger.lnk" '
         '"$INSTDIR\\' + COMBINED_BIN_GL + '"\n'
@@ -1223,10 +1284,10 @@ def _write_combined_main_wxs(out_path, source_dir_basename):
         '        <Shortcut Id="GLShortcut" Name="CatchChallenger" '
         'Target="[INSTALLFOLDER]' + COMBINED_BIN_GL + '" '
         'WorkingDirectory="INSTALLFOLDER"/>\n'
-        '        <Shortcut Id="CPUShortcut" Name="CatchChallenger 800x600" '
+        '        <Shortcut Id="CPUShortcut" Name="CatchChallenger CPU 800x600" '
         'Target="[INSTALLFOLDER]' + COMBINED_BIN_CPU + '" '
         'WorkingDirectory="INSTALLFOLDER"/>\n'
-        '        <Shortcut Id="SRVShortcut" Name="CatchChallenger Server GUI" '
+        '        <Shortcut Id="SRVShortcut" Name="CatchChallenger Server" '
         'Target="[INSTALLFOLDER]' + COMBINED_BIN_SRV + '" '
         'WorkingDirectory="INSTALLFOLDER"/>\n'
         '        <RemoveFolder Id="CleanUpShortcutFolder" '
@@ -1678,6 +1739,145 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
     return ok
 
 
+_DLL_FAIL_PATTERNS = (
+    "could not load the qt platform plugin",
+    "qt: could not initialize",
+    "this application failed to start",
+    "the procedure entry point",
+)
+# Wine emits `warn:module:load_dll Failed to load module L"winemac.drv"`
+# (and winex11.drv, winewayland.drv) on every Linux wine startup
+# while probing the available display drivers — that is normal, not
+# a failure, so the smoke check only counts `err:module:` /
+# `err:dll:` traces, which are the channels wine reserves for the
+# actually-broken load paths.
+_DLL_FAIL_TRACE_TAGS = ("err:module:", "err:dll:")
+
+
+def run_wine_server_smoke(exe_path, label, wait_seconds=5):
+    """Launch a staged server-gui.exe under wine64 for ~5 s with
+    `WINEDEBUG=+loaddll,+module` so wine emits every LoadLibraryEx
+    attempt + every dependency-resolution failure on stderr. The
+    harness scans the captured output for the standard "missing DLL"
+    patterns (see _DLL_FAIL_PATTERNS) and the server's own
+    "correctly bind:" success marker.
+
+    PASS iff
+      - the process is still alive when `wait_seconds` elapses AND
+        `correctly bind:` was emitted; OR
+      - the process exits with rc=0 within `wait_seconds` (rare for
+        a daemon, but possible if a CLI subcommand short-circuits).
+
+    FAIL otherwise (timeout without bind, non-zero rc, missing-DLL
+    pattern in output). The full last 60 lines are echoed on FAIL so
+    operators see the offending wine trace without having to re-run
+    locally."""
+    name = f"wine server smoke {label}"
+    log_info(f"wine64 {os.path.basename(exe_path)} (smoke, {wait_seconds}s)")
+    env = os.environ.copy()
+    env["WINEPATH"]         = MXE_QT_BIN + ";" + MXE_RT_BIN
+    # +loaddll : every LoadLibraryEx call, success or failure.
+    # +module  : module resolution + dep walking — catches the case
+    #            where a transitive dep is missing.
+    # Keep -all on the other channels so the trace stays readable.
+    env["WINEDEBUG"]        = "+loaddll,+module,-all"
+    env["WINEDLLOVERRIDES"] = "winedbg.exe=d"
+    env["QT_QPA_PLATFORM"]  = "offscreen"
+    for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
+        env.pop(_gui_var, None)
+    cwd = os.path.dirname(exe_path)
+    win_args = [WINE_BIN, exe_path]
+    diagnostic.record_cmd(win_args, cwd)
+    proc = subprocess.Popen(
+        win_args, cwd=cwd, stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
+    output_lines = []
+    bound = threading.Event()
+
+    def reader():
+        while True:
+            raw = proc.stdout.readline()
+            if not raw:
+                break
+            line = raw.decode(errors="replace").rstrip("\n")
+            output_lines.append(line)
+            if "correctly bind:" in line:
+                bound.set()
+
+    threading.Thread(target=reader, daemon=True).start()
+    elapsed = 0.0
+    step = 0.25
+    while elapsed < wait_seconds:
+        if proc.poll() is not None:
+            break
+        time.sleep(step)
+        elapsed += step
+
+    rc = proc.poll()
+    if rc is None:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait(timeout=3)
+
+    joined = "\n".join(output_lines)
+    low = joined.lower()
+    dll_hits = []
+    for pat in _DLL_FAIL_PATTERNS:
+        if pat in low:
+            dll_hits.append(pat)
+    for tag in _DLL_FAIL_TRACE_TAGS:
+        if tag in low:
+            dll_hits.append(tag)
+
+    ok = False
+    detail = ""
+    if dll_hits:
+        detail = (f"DLL-load failure pattern(s) hit: "
+                  f"{', '.join(dll_hits)}")
+    elif bound.is_set():
+        ok = True
+        detail = f"bound within {elapsed:.1f}s"
+    elif rc is None:
+        # server-gui is a Qt Widgets application; it does NOT auto-
+        # bind on startup (the operator presses "Start" in the UI to
+        # begin listening). Reaching the 5s wait WITHOUT crashing is
+        # therefore the success condition for the smoke check — it
+        # means every DLL + Qt plugin + datapack loaded cleanly and
+        # the main window message loop is running.
+        ok = True
+        detail = f"alive after {wait_seconds:.1f}s, no DLL-load errors"
+    elif rc == 0:
+        ok = True
+        detail = f"exited rc=0 within {elapsed:.1f}s"
+    else:
+        detail = f"exited rc={rc} within {elapsed:.1f}s"
+        if process_helpers.is_sigabrt(rc):
+            if process_helpers.looks_like_protocol_parse_failure(joined):
+                detail += " (looks like protocol-parse abort)"
+            else:
+                detail += " (SIGABRT)"
+
+    if ok:
+        log_pass(name, detail)
+    else:
+        log_fail(name, detail)
+        li = max(0, len(output_lines) - 60)
+        while li < len(output_lines):
+            print(f"  | {output_lines[li]}")
+            li += 1
+    return ok
+
+
 def run_wine_screenshot(exe_path, label, mode, screenshot_path,
                         timeout=8):
     """Spawn the .exe under wine64 with --take-screenshot=PATH and
@@ -1934,6 +2134,22 @@ def main():
         mcs = detect_maincodes(win_dp_src)
         if mcs:
             win_mc = mcs[0]
+    # ── server-gui startup smoke ────────────────────────────────────
+    # Stage a fresh datapack next to the freshly-built server-gui.exe
+    # and launch it under wine64 for 5 seconds with
+    # WINEDEBUG=+loaddll,+module — surfaces missing DLL / Qt-plugin
+    # dependency before the installer step packages a broken binary.
+    # Distinct from the wine_run_client tests: those exercise a
+    # CLIENT against an external Linux server-filedb (testingmulti
+    # convention), whereas this directly tests the SERVER-side
+    # binary that ships in the installer.
+    if srv_exe is not None and should_run(
+            "wine server smoke server-gui", failed_cases):
+        if win_dp_src and win_mc:
+            setup_datapack_client(os.path.dirname(srv_exe), win_dp_src,
+                                  win_mc, f"wine server-gui ({win_mc})")
+        run_wine_server_smoke(srv_exe, "server-gui", wait_seconds=5)
+
     if cpu_exe is not None and should_run("wine run qtcpu800x600 --autosolo", failed_cases):
         if win_dp_src and win_mc:
             setup_datapack_client(os.path.dirname(cpu_exe), win_dp_src,
@@ -2024,14 +2240,84 @@ def main():
              "exe_src": os.path.basename(srv_exe),
              "exe_dst": COMBINED_BIN_SRV},
         ]
-        combined_installer = None
-        if should_run("installer combined", failed_cases):
-            combined_installer = build_combined_installer(parts)
-        if combined_installer and combined_installer.endswith(".exe") \
-           and should_run("sign installer combined", failed_cases):
-            sign_authenticode(combined_installer, "combined", "installer")
-        if should_run("msi combined", failed_cases):
-            build_combined_msi(parts)
+        # Pre-installer .exe guard — walk every .exe that will land
+        # inside the NSIS installer / .msi and fail when ANY of them
+        # is >= 80 MiB. A release-mode mingw .exe of the qt clients is
+        # ~30-50 MiB; >= 80 MiB almost always means a Debug build
+        # leaked -g symbols through. Aborting before the packaging
+        # step keeps the bad payload out of the shipped artefacts and
+        # surfaces the root cause (wrong CMAKE_BUILD_TYPE).
+        oversized = []
+        debug_syms = []
+        # A Release mingw .exe still carries a small (~100 KiB)
+        # .debug_info section originating from the statically-linked
+        # MXE runtime libs (libgcc / libstdc++ / libwinpthread shipped
+        # by MXE with DWARF retained). A genuine `-g` build of the
+        # CatchChallenger sources produces a .debug_info of tens to
+        # hundreds of MiB. 1 MiB sits well above the runtime-static
+        # floor and well below any plausible `-g`-compiled output, so
+        # use it as the discriminator: > 1 MiB ⇒ compiled with -g.
+        _DEBUG_INFO_BYTES_MAX = 1 * 1024 * 1024
+        for p in parts:
+            stage = p["stage"]
+            if not stage or not os.path.isdir(stage):
+                continue
+            for root_dir, _dirs, files in os.walk(stage):
+                for fn in files:
+                    if not fn.lower().endswith(".exe"):
+                        continue
+                    fp = os.path.join(root_dir, fn)
+                    try:
+                        sz = os.path.getsize(fp)
+                    except OSError:
+                        continue
+                    if sz >= 80 * 1024 * 1024:
+                        oversized.append((fp, sz))
+                    if _OBJDUMP:
+                        try:
+                            res = subprocess.run(
+                                [_OBJDUMP, "-h", fp],
+                                capture_output=True, text=True,
+                                timeout=30)
+                        except (OSError, subprocess.SubprocessError):
+                            continue
+                        debug_info_size = 0
+                        # objdump -h header line format:
+                        #   "  <idx> <name> <size-hex> <vma> <lma> <fileoff> <align>"
+                        for line in res.stdout.splitlines():
+                            cols = line.split()
+                            if len(cols) < 4:
+                                continue
+                            if cols[1] == ".debug_info":
+                                try:
+                                    debug_info_size = int(cols[2], 16)
+                                except ValueError:
+                                    debug_info_size = 0
+                                break
+                        if debug_info_size > _DEBUG_INFO_BYTES_MAX:
+                            debug_syms.append((fp, debug_info_size))
+        if oversized or debug_syms:
+            details = []
+            if oversized:
+                details.append("oversized .exe (>=80 MiB): " + "; ".join(
+                    f"{os.path.relpath(fp, ROOT)} = {sz/(1024*1024):.1f} MiB"
+                    for fp, sz in oversized))
+            if debug_syms:
+                details.append("debug symbols (compiled with -g): " + "; ".join(
+                    f"{os.path.relpath(fp, ROOT)} .debug_info={dsz/(1024*1024):.1f} MiB"
+                    for fp, dsz in debug_syms))
+            detail = " | ".join(details) + " — rebuild Release"
+            log_fail("installer combined", detail)
+            log_fail("msi combined", detail)
+        else:
+            combined_installer = None
+            if should_run("installer combined", failed_cases):
+                combined_installer = build_combined_installer(parts)
+            if combined_installer and combined_installer.endswith(".exe") \
+               and should_run("sign installer combined", failed_cases):
+                sign_authenticode(combined_installer, "combined", "installer")
+            if should_run("msi combined", failed_cases):
+                build_combined_msi(parts)
     else:
         # Missing one of the three binaries — emit a single FAIL row
         # so failed.json reflects the gap and --onlyfailed can re-run

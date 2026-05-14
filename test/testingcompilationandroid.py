@@ -335,7 +335,7 @@ def android_env():
     env["ANDROID_NDK_PLATFORM"]     = "android-" + ANDROID_NATIVE_API
     env["ANDROID_SDK_BUILD_TOOLS"]  = ANDROID_BUILD_TOOLS
     env["QT_ANDROID_BUILD_ALL_ABIS"] = "FALSE"
-    env["CMAKE_BUILD_TYPE"]         = "Debug"
+    env["CMAKE_BUILD_TYPE"]         = "Release"
 
     # Gradle needs a JDK (with javac), not a JRE. The host's default
     # java often points at a JRE-only install (gentoo's
@@ -476,7 +476,7 @@ def build_android_apk(pro_file, build_dir, label):
 
     log_info(f"android qt-cmake configure {label}")
     args = [qt_cmake, "-S", cmake_source, "-B", build_dir,
-            "-DCMAKE_BUILD_TYPE=Debug",
+            "-DCMAKE_BUILD_TYPE=Release",
             # -fno-lto everywhere on test builds: keeps the link path
             # predictable and avoids lto-wrapper fanout (see cmake_helpers.py).
             "-DCMAKE_C_FLAGS_INIT=-fno-lto",

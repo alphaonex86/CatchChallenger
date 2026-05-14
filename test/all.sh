@@ -488,11 +488,11 @@ else
              ! -name 'time.json' \
              ! -name 'monitor.json' \
              ! -name 'testing-individual-time.json' \
-             ! -name 'catchchallenger-*.exe' \
-             ! -name 'catchchallenger-*.msi' \
-             ! -name 'catchchallenger-*.dmg' \
-             ! -name 'catchchallenger-*.apk' \
-             ! -name 'catchchallenger-*.aab' \
+             ! -name 'catchchallenger*.exe' \
+             ! -name 'catchchallenger*.msi' \
+             ! -name 'catchchallenger*.dmg' \
+             ! -name 'catchchallenger*.apk' \
+             ! -name 'catchchallenger*.aab' \
              -exec rm -rf {} + 2>/dev/null
     fi
     echo -e "\n${GREEN}All tests PASSED.${RESET}"

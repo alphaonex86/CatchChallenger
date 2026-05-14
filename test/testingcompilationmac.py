@@ -391,12 +391,14 @@ def build_target(pro_rel, label):
 
 # ── stage datapack next to the .app ─────────────────────────────────────────
 def stage_datapack(app_path):
-    """Copy CatchChallenger-datapack/ to <parent-of-.app>/datapack/internal/.
+    """Copy CatchChallenger-datapack/ to <parent-of-.app>/datapack/.
     The parent dir mirrors the runtime layout: an .app at /root/foo.app
-    expects its datapack at /root/datapack/internal/."""
+    expects its datapack at /root/datapack/. The server-gui binary
+    falls back to this plain `datapack/` location when
+    `datapack/internal/` is missing (see BaseServer2.cpp)."""
     name = f"stage datapack near {os.path.basename(app_path)}"
     parent = os.path.dirname(app_path)
-    target = parent + "/datapack/internal"
+    target = parent + "/datapack"
     log_info(f"{name}: {OSX_DATAPACK_DIR} -> {target}")
     rc, out = osx_ssh(
         f"rm -rf {parent}/datapack && mkdir -p {target} && "

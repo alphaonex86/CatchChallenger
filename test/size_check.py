@@ -39,10 +39,13 @@ Why 75% (not 50%, not 90%)?
 
 import os
 
-# Absolute floor — every shipping artifact must clear 10 MiB. A
-# server-only build below this is broken (no Qt deps deployed); a
-# client below this is missing the runtime libs.
-ABSOLUTE_FLOOR = 10 * 1024 * 1024  # 10 MiB
+# Absolute floor — sanity ceiling against "empty artefact" failures
+# (an .exe that linked against no objects, an installer payload that
+# packaged 0 files). Release-mode mingw binaries can legitimately be
+# ~5 MiB (server-gui has no Qt6Widgets game UI), so the floor sits
+# below that. Qt6 DLLs travel alongside the .exe via windeployqt;
+# the .exe itself is the small piece.
+ABSOLUTE_FLOOR = 3 * 1024 * 1024  # 3 MiB
 
 # Absolute ceiling for SHIPPING artifacts (installer/msi/dmg/apk/aab).
 # 100 MiB is the largest size we ever advertise to end users; anything
@@ -68,16 +71,17 @@ BASELINES = {
     "android.apk.qtopengl":   32_000_000,   # ~30.7 MiB
     "android.aab.qtopengl":   19_000_000,   # ~18.3 MiB
 
-    # ── Windows MXE x86_64 (Qt 6.8 Debug) ─────────────────────────────
-    # The .exe is the unstripped Debug binary — symbols dominate the
-    # size; release would be 5–10× smaller. Baseline matches the Debug
-    # value the testing harness actually produces.
-    "windows.exe.qtcpu800x600":      490_000_000,   # ~467 MiB
-    "windows.exe.qtopengl":          492_000_000,   # ~469 MiB
+    # ── Windows MXE x86_64 (Qt 6.8 Release) ───────────────────────────
+    # The .exe is the Release binary (-O3 -DNDEBUG, no -g). MXE's
+    # statically-linked runtime libs carry a small (~100 KiB)
+    # .debug_info section that survives the link, but the binary
+    # itself is otherwise stripped of source-level debug info.
+    "windows.exe.qtcpu800x600":       12_500_000,   # ~11.9 MiB
+    "windows.exe.qtopengl":           13_700_000,   # ~13.1 MiB
     # server-gui is smaller than the clients — no Qt6Widgets game
     # UI, no datapack-renderer code, just the admin Qt6Network +
-    # Qt6Sql stack. ~150 MiB unstripped Debug.
-    "windows.exe.server-gui":        180_000_000,   # ~172 MiB
+    # Qt6Sql stack.
+    "windows.exe.server-gui":          5_200_000,   # ~4.9 MiB
     # NSIS installer .zip — 7z-compressed Qt6 deps + the .exe.
     # Post-fix sizes: previous .a/.lib inclusion + windeployqt dumped
     # ~400 MiB into the installer; after the runtime-only filter the

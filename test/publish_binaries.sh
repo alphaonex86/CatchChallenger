@@ -82,8 +82,8 @@ for t in "$@"; do
             win_msi="$(_first_existing \
                 "${TMPFS_ROOT}/catchchallenger.msi" \
                 "${TMPFS_BUILD_ROOT}/client/build/combined-msi/catchchallenger.msi")"
-            resolve windows-exe "$win_exe" "catchchallenger-windows-x86-${VERSION}-setup.exe"
-            resolve windows-msi "$win_msi" "catchchallenger-windows-x86-${VERSION}.msi"
+            resolve windows-exe "$win_exe" "catchchallenger-windows-${VERSION}-setup.exe"
+            resolve windows-msi "$win_msi" "catchchallenger-windows-${VERSION}.msi"
             ;;
         mac)
             dmg="$(_first_existing \

@@ -160,6 +160,14 @@ if(CATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER)
     )
 endif()
 
+# Windows-only resource script: embeds icon.ico into the .exe via
+# windres. CMake handles the .rc -> .res step automatically once the
+# source is added to the target.
+if(WIN32)
+    list(APPEND _qtopengl_sources
+        ${_qtopengl_dir}/resources/resources-windows.rc)
+endif()
+
 # Use Qt's executable wrapper when available — on Android it produces a
 # shared library + a -deployment-settings.json suitable for androiddeployqt.
 # On host platforms it behaves the same as add_executable.
@@ -167,6 +175,13 @@ if(COMMAND qt_add_executable)
     qt_add_executable(catchchallenger ${_qtopengl_sources} ${_qtopengl_resources})
 else()
     add_executable(catchchallenger ${_qtopengl_sources} ${_qtopengl_resources})
+endif()
+
+# WIN32_EXECUTABLE → linker `-mwindows`, so launching the .exe does
+# NOT open a console window alongside the Qt GUI.
+if(WIN32)
+    set_target_properties(catchchallenger PROPERTIES
+        WIN32_EXECUTABLE TRUE)
 endif()
 
 target_compile_definitions(catchchallenger PRIVATE

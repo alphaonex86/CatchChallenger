@@ -625,7 +625,16 @@ void ScreenTransition::openSolo()
 
     {
         //std::string datapackPathBase=client->datapackPathBase();
-        std::string datapackPathBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/internal/";
+        // Prefer <app>/datapack/internal/ (the per-server cache layout
+        // populated when the client downloads a datapack online); fall
+        // back to <app>/datapack/ for installer-bundled deploys where
+        // the datapack ships flat at the top level (see
+        // testingcompilationwindows.py setup_datapack_client + the
+        // matching macOS/Android staging).
+        const std::string appDir=QCoreApplication::applicationDirPath().toStdString();
+        std::string datapackPathBase=appDir+"/datapack/internal/";
+        if(!QDir(QString::fromStdString(datapackPathBase)).exists())
+            datapackPathBase=appDir+"/datapack/";
         CatchChallenger::GameServerSettings formatedServerSettings=internalServer->getSettings();
 
         CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=0;
