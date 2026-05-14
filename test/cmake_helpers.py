@@ -440,6 +440,18 @@ def build_project(pro_file, build_dir, label, *,
         "-DCMAKE_MODULE_LINKER_FLAGS=-fno-lto",
         "-DCMAKE_C_FLAGS_INIT=-fno-lto",
         "-DCMAKE_CXX_FLAGS_INIT=-fno-lto",
+        # ALWAYS on for any binary built by a testing*.py. CMake
+        # default is OFF (production deploys must not turn invariant
+        # breaches into SIGABRT for live players) — the test harness
+        # is the opt-in path. HARDENED turns `#ifdef
+        # CATCHCHALLENGER_HARDENED` blocks (across server/general
+        # code) into abort()-on-invariant-violation, including a
+        # SIGABRT with packetCode + queryNumber + hex dump on stderr
+        # when parseReplyData/parseMessage/parseQuery return false
+        # (see ProtocolParsingInput.cpp). Surfaces protocol-formula
+        # drift as a SIGABRT instead of a silent disconnect that the
+        # parent-side wall watchdog reports as a generic timeout.
+        "-DCATCHCHALLENGER_HARDENED=ON",
     ]
     cmake_args.extend(configure_flags)
     cmake_args.extend(cmake_extra_args(extra_defines))

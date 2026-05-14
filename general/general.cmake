@@ -79,6 +79,19 @@ if(NOT TARGET catchchallenger_general_minimal)
     if(EXTERNALLIBZSTD)
         target_compile_definitions(catchchallenger_general_minimal INTERFACE EXTERNALLIBZSTD)
     endif()
+    if(CATCHCHALLENGER_HARDENED)
+        # Propagated as an INTERFACE define so every binary that links
+        # catchchallenger_general_minimal (server-cli, gateway, login,
+        # master, clients) picks up the abort-on-invariant and
+        # abort-on-parse-fail guards in ProtocolParsingInput.cpp and
+        # the server/general code. Without this, the option was only
+        # propagated by catchchallenger-server.cmake (server-only),
+        # so client/library callers of the parse* helpers silently
+        # skipped the guard — defeating the point of HARDENED for
+        # the parse layer specifically.
+        target_compile_definitions(catchchallenger_general_minimal INTERFACE
+            CATCHCHALLENGER_HARDENED)
+    endif()
     # Propagate zstd + zlib link deps to all consumers regardless of source —
     # the general sources call ZSTD_*/inflate/deflate from CompressionProtocol.cpp
     # and the tiled-style map decoder. ${ZSTD_LIBRARY} is set by

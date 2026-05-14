@@ -226,11 +226,26 @@ option(CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
        "Disable in-server datapack send (mirror-only)"
        OFF)
 # Merged from former CATCHCHALLENGER_EXTRA_CHECK + CATCHCHALLENGER_HARDENED
-# (both behaved as "extra defensive runtime checks"); now a single ON
-# default toggles abort()-on-invariant in server + general code.
+# (both behaved as "extra defensive runtime checks").
+#
+# **Default OFF** — opt-in via -DCATCHCHALLENGER_HARDENED=ON. Production
+# deploys (deploy.sh, Qt Creator) leave it off so a live server never
+# turns an invariant breach into a SIGABRT that drops every connected
+# player; production prefers the graceful-disconnect path. The
+# testing*.py harness opts in unconditionally via
+# test/cmake_helpers.py:build_cmake_command(), so every CI build has
+# the abort()s wired and protocol-formula drift / invariant breaks
+# surface as SIGABRT instead of silent disconnect + parent-side
+# wall timeout. Toggles:
+#   1. Existing `#ifdef CATCHCHALLENGER_HARDENED` invariant blocks
+#      across server/general code → abort() instead of best-effort.
+#   2. parseReplyData/parseMessage/parseQuery returning false in
+#      general/base/ProtocolParsingInput.cpp → abort() with
+#      "error: the protocol parsing was wrong, start under gdb and
+#      catch the backtrace" + packetCode + queryNumber + hex dump.
 option(CATCHCHALLENGER_HARDENED
-       "Enable extra defensive checks (abort on internal invariant violations)"
-       ON)
+       "Enable extra defensive checks (abort on internal invariant violations) — off by default; opt-in for tests"
+       OFF)
 option(CATCHCHALLENGER_CACHE_HPS
        "Enable HPS binary datapack cache"
        ON)

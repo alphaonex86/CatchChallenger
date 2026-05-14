@@ -189,6 +189,58 @@ To enable: pass `-DCATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE=ON` to cmake configu
 
 Production deploys MUST NOT define this. Leaving it OFF (the default) makes it a zero-cost no-op (compiled out, no `clock_gettime` per wait).
 
+## `CATCHCHALLENGER_HARDENED` — testing-only, parse-fail abort
+
+CMake default is **OFF** (production / deploy.sh / Qt Creator leave
+it off — a live server must NOT turn an invariant breach into a
+SIGABRT that drops every connected player; production prefers the
+graceful-disconnect path). **Every testing*.py build opts in
+unconditionally** via `cmake_helpers.py:build_cmake_command()`'s
+`-DCATCHCHALLENGER_HARDENED=ON`.
+
+The flag does two things across server/general code:
+1. Existing `#ifdef CATCHCHALLENGER_HARDENED` invariant checks
+   `abort()` instead of silently disconnecting.
+2. **`parseReplyData()` / `parseMessage()` / `parseQuery()`** (and
+   transitively `parseInputBeforeLogin()`) returning `false` in
+   `general/base/ProtocolParsingInput.cpp` triggers an immediate
+   `abort()` with stderr:
+
+```
+error: the protocol parsing was wrong, start under gdb and catch the backtrace
+ — parseReplyData() packetCode=N queryNumber=N size=N data=<hex>
+```
+
+In production this would silently disconnect. In CI that hid bugs
+like the gateway 0xA8/0xAC pos-formula drift that ate
+testinggateway.py's entire wall cap as a generic timeout. With
+HARDENED on, the same bug surfaces as a SIGABRT and the failing
+packet's hex dump.
+
+**When a spawned binary aborts, re-run it under gdb to capture the
+backtrace.** `test/process_helpers.py` ships the helpers; standard
+recipe:
+
+```python
+import process_helpers
+proc = subprocess.Popen([binary, ...args], ...)
+out, _ = proc.communicate(timeout=...)
+if process_helpers.is_sigabrt(proc.returncode):
+    if process_helpers.looks_like_protocol_parse_failure(out.decode()):
+        bt = process_helpers.rerun_under_gdb([binary, ...args],
+                                             cwd=..., env=env, timeout=120)
+        log_fail(case, f"PROTOCOL-PARSE-FAILURE\n{bt[-4000:]}")
+```
+
+The re-run is deterministic for parse-fail aborts (same packet →
+same parser branch → same abort), and preferred over attaching gdb
+live because (a) attaching slows valgrind/asan 10-50× and shifts
+timing-dependent bugs out of reproducibility, (b) abort() partially
+unwinds the stack before the signal handler lands.
+
+To verify a binary was test-flagged: `strings <bin> | grep
+"protocol parsing was wrong"` matches when HARDENED was ON.
+
 ## Per-script wall limit — table-driven, capped per workload
 
 Each `testing*.py` has its own wall-time ceiling sized roughly to "twice the longest healthy observed run" — generous enough that the natural run never trips the cap, tight enough that a wedged bug surfaces as a `[TIMEOUT]` instead of soaking the build. all.sh enforces from outside; the script itself enforces from inside.
