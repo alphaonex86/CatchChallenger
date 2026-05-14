@@ -262,6 +262,7 @@ Each `testing*.py` has its own wall-time ceiling sized roughly to "twice the lon
 | testinghttp.py                  | 15 min |
 | testingmap2png.py               | 15 min |
 | testingmap4client.py            | 30 min |
+| testingmapmanagement.py         | 10 min |
 | testingmulti.py                 | 30 min |
 | testingqtserver.py              | 15 min |
 | testingremote.py                | 45 min |

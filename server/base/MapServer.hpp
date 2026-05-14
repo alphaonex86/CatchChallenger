@@ -30,6 +30,11 @@ public:
     bool parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step);
     #endif
     static unsigned int playerToFullInsert(const Client &player, char * const bufferForOutput);
+    #ifdef CATCHCHALLENGER_TESTING
+    //Coordinate range check helper used by MapVisibilityAlgorithm under
+    //the testing flag. Aborts with [XY-OOR] when x>=width or y>=height.
+    void assertXYInRange(const uint8_t x,const uint8_t y,const char *who) const;
+    #endif
 
     uint8_t localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     uint8_t localChatDropTotalCache;
