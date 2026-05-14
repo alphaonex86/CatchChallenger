@@ -222,12 +222,21 @@ def _client_preexec():
                               signal.SIGTERM, 0, 0, 0)
     except Exception:
         pass
-    # 2 GiB virtual is plenty for a Qt widgets client with the
-    # CatchChallenger-datapack loaded. The cap exists so a runaway
-    # alloc still gets terminated rather than swapping the host
-    # to death.
+    # 8 GiB virtual — Qt6 widgets + datapack typically settle around
+    # 1.5 GiB resident, but VIRTUAL address space climbs much higher:
+    # each pthread reserves an 8 MiB stack and the client spawns
+    # ~30 worker threads (network, imageformats, datapack parse,
+    # map render). 2 GiB was tight enough that pthread_create()
+    # returned EAGAIN ("Resource temporarily unavailable") for the
+    # last threads, leaving the client mid-handshake and never
+    # reaching the map — visible as 25-30× repeated
+    # "QThread::start: Thread creation error" lines just before
+    # haveTheDatapack(). The cap still exists so a runaway alloc
+    # gets terminated rather than swapping the host to death;
+    # 8 GiB is enough headroom for legitimate use and we abort
+    # everything else well before that bound.
     try:
-        mem_cap = 2 * 1024 * 1024 * 1024
+        mem_cap = 8 * 1024 * 1024 * 1024
         resource.setrlimit(resource.RLIMIT_AS, (mem_cap, mem_cap))
     except (ValueError, OSError):
         pass
@@ -1074,6 +1083,22 @@ def _spawn_logged_in_client(server, character_name, timeout_s=25):
     if bin_path is None:
         return None, None, "skip (qtcpu800x600 client not built — run testingclient.py first)"
     _stage_client_datapack_once()
+    # Clean QSettings between spawns. Qt's QSettings caches the last
+    # used `login=` per server (see [Xml-IP-PORT] section). qtcpu800x600
+    # mainwindow.cpp:1133-1145 only honours --character as the LOGIN
+    # when lineEditLogin is empty; a cached login causes subsequent
+    # spawns to log in as the PREVIOUS character's account, where
+    # the new --character name is missing from the character list,
+    # and the auto-create path (BaseWindowLoad.cpp:786) only fires
+    # for an empty list — so the client stalls on the character-
+    # select screen and never reaches the map. Wiping the
+    # per-server section before each spawn forces a fresh login.
+    qsettings = "/home/user/.config/CatchChallenger/client-qtcpu800x600.conf"
+    try:
+        if os.path.isfile(qsettings):
+            os.unlink(qsettings)
+    except OSError:
+        pass
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
     args = [bin_path,
@@ -1405,14 +1430,25 @@ def main():
         log_fail("server-startup", "no server reached 'correctly bind:'")
         return 1
 
-    # 3. fan out test cases against every (server, case) pair.
-    raw_cases = [
+    # 3. fan out test cases. Two passes:
+    #    a) Fuzz pass — TCP-level malformed/raw packets + DB-invalid +
+    #       flood_login can all run concurrently against the same
+    #       server; they don't need a working multi-step protocol.
+    #    b) Real-client pass — dupe_by_lag / wall_walk /
+    #       trade_in_combat spawn the qtcpu800x600 client serially.
+    #       Each spawn also wipes ~/.config/CatchChallenger/...
+    #       (see _spawn_logged_in_client) so the cached login from
+    #       the previous spawn doesn't pin the next client to the
+    #       wrong account.
+    fuzz_cases = [
         ("flood_login",          case_flood_login),
         ("malformed_huge",       case_malformed_huge_packet),
         ("partial_header",       case_partial_protocol_header),
         ("wrong_header",         case_wrong_protocol_header),
         ("db_invalid_itemid",    case_db_invalid_itemid),
         ("db_invalid_monsterid", case_db_invalid_monsterid),
+    ]
+    real_client_cases = [
         ("dupe_by_lag",          case_dupe_by_lag),
         ("wall_walk",            case_wall_walk),
         ("trade_in_combat",      case_trade_in_combat),
@@ -1427,7 +1463,7 @@ def main():
                 max_workers=args.parallel) as pool:
             futs = []
             for srv in servers:
-                for name, fn in raw_cases:
+                for name, fn in fuzz_cases:
                     futs.append(pool.submit(run_one, name, srv, fn))
                 for method, bad_kind, bad_param in proto_jobs:
                     name = f"proto:{method}/{bad_kind}"
@@ -1436,6 +1472,14 @@ def main():
                         case_proto_invalid, method, bad_kind, bad_param))
             for f in concurrent.futures.as_completed(futs):
                 f.result()
+        # Real-client cases run SERIALLY per-server — they spawn the
+        # full qtcpu800x600 client (datapack parse + Qt6 widgets) and
+        # parallelism here costs more than it gains. Same server,
+        # same DB state: the fuzz pass completes in <1 s and the
+        # server has plenty of headroom for the real-client probe.
+        for srv in servers:
+            for name, fn in real_client_cases:
+                run_one(name, srv, fn)
     finally:
         for srv in servers:
             srv.stop()
