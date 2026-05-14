@@ -560,12 +560,12 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 coord=std::pair<uint16_t,uint16_t>(tempPoint.x,tempPoint.y);
                 if(tempMap.pathToGo.find(coord)==tempMap.pathToGo.cend())
                 {
-                    #ifdef CATCHCHALLENGER_HARDENED
-                    extraControlOnData(pathToGo.left,Orientation_left);
-                    extraControlOnData(pathToGo.right,Orientation_right);
-                    extraControlOnData(pathToGo.top,Orientation_top);
-                    extraControlOnData(pathToGo.bottom,Orientation_bottom);
-                    #endif
+                    // extraControlOnData() calls used to live here under
+                    // CATCHCHALLENGER_HARDENED, but the function was never
+                    // defined — dead code that compiled only because the
+                    // HARDENED guard was off by default on non-test builds
+                    // and accidentally became reachable when testing*.py
+                    // started forcing HARDENED=ON.
                     tempMap.pathToGo[coord]=pathToGo;
                 }
                 if(haveCityEntry(citiesCoordToIndex,tempPoint.x,tempPoint.y) && (tempPoint.x!=city.x || tempPoint.y!=city.y))

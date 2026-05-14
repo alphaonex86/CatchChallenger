@@ -160,11 +160,16 @@ DatabaseBaseCallBack *PreparedStatementUnit::asyncRead(void * returnObject,CallB
         return NULL;
     }
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-        #ifdef CATCHCHALLENGER_HARDENED
-            return database->asyncPreparedRead(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,returnObject,method,values);
-        #else
-            return database->asyncPreparedRead("",uniqueName,returnObject,method,values);
-        #endif
+        // Always pass the query template. PostgreSQL doesn't strictly
+        // need it (PQsendQueryPrepared looks the statement up by name
+        // and binds $N via the wire protocol) but MySQL's
+        // asyncPreparedRead does — it inline-substitutes $1..$N with
+        // mysql_real_escape_string-quoted values (see
+        // EventLoopMySQL.cpp:267). Pre-fix this branched on HARDENED,
+        // passing "" when off; mysql then failed with "placeholder
+        // $1 not found in query: " and every login returned a 1-byte
+        // 0x04 (SQL error) before the query ever reached the DB.
+        return database->asyncPreparedRead(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,returnObject,method,values);
     #else
         return database->asyncRead(query.compose(values),returnObject,method);
     #endif
@@ -185,11 +190,9 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
         return false;
     }
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-        #ifdef CATCHCHALLENGER_HARDENED
-            return database->asyncPreparedWrite(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,values);
-        #else
-            return database->asyncPreparedWrite("",uniqueName,values);
-        #endif
+        // See asyncRead above — always pass the query template so
+        // MySQL's inline-substitute step has something to operate on.
+        return database->asyncPreparedWrite(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,values);
     #else
         return database->asyncWrite(query.compose(values));
     #endif

@@ -1173,6 +1173,21 @@ def build_cluster(db_define):
         # test build sidesteps that bug while we work the real fix
         # (queue the token rewrite until the cache write completes).
         "-DCATCHCHALLENGER_CACHE_HPS=OFF",
+        # HARDENED used to default ON via an unconditional
+        # `#define CATCHCHALLENGER_HARDENED` in GeneralVariable.hpp;
+        # since that auto-define is gone (production deploys MUST
+        # stay graceful-disconnect rather than abort()), every
+        # testing*.py opts in explicitly. testingcluster doesn't go
+        # through cmake_helpers.build_cmake_command (it has its own
+        # cmake_configure_and_build) so the flag is added here.
+        # Required for the mysql backend: PreparedStatementUnit's
+        # asyncRead path branches on HARDENED — with it OFF the
+        # mysql prepared-statement call passes an empty query
+        # template and the inline-substitute step fails with
+        # "placeholder $1 not found in query: ", and the login
+        # query never reaches the DB. PostgreSQL works either way
+        # (libpq binds $N natively).
+        "-DCATCHCHALLENGER_HARDENED=ON",
     ]
     base = os.path.join(TMPFS_BUILD, "cluster",
                         db_define.replace("CATCHCHALLENGER_DB_", "").lower())

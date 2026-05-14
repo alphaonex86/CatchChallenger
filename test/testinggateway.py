@@ -138,7 +138,24 @@ def load_failed_cases():
 def should_run(test_name, failed_cases):
     if failed_cases is None:
         return True
-    return test_name in failed_cases
+    # Exact-match for compile rows / start rows.
+    if test_name in failed_cases:
+        return True
+    # Case rows are logged as `f"{case}: client→map"` / `f"{case}: valgrind"`,
+    # but the iterator only knows `case` itself. Match by prefix so a
+    # resume-mode invocation reruns the full case when any of its
+    # sub-check rows previously failed. Without this, the test in
+    # resume mode skipped every case (name mismatch), reached
+    # summary() with an empty results list, and save_failed_cases()
+    # wiped the populated failures from failed.json to `{}` — making
+    # the operator think nothing failed when 20 cases actually had.
+    fi = 0
+    failed_list = list(failed_cases) if failed_cases is not None else []
+    while fi < len(failed_list):
+        if failed_list[fi].startswith(test_name + ":"):
+            return True
+        fi += 1
+    return False
 
 
 def save_failed_cases():
