@@ -1,3 +1,9 @@
+#ifdef CATCHCHALLENGER_TESTING
+//testingmapmanagement.py uses -DCATCHCHALLENGER_TESTING + Stubs.hpp to
+//bypass the heavy server-side includes that follow; branch traces gated
+//on the same define vanish in production.
+#include "../../test/testingmapmanagement/Stubs.hpp"
+#endif
 #include "MapServer.hpp"
 #include <iostream>
 #include "GlobalServerData.hpp"
@@ -31,7 +37,31 @@ MapServer::MapServer() :
     id_db=0;
     zone=0;
     memset(localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
+#ifdef CATCHCHALLENGER_TESTING
+    //stub map size for the x,y range check below; production overwrites
+    //width/height from CommonMap when the .tmx is loaded.
+    width=128;
+    height=128;
+#endif
 }
+
+#ifdef CATCHCHALLENGER_TESTING
+//Range-check helper for the [XY-OOR] guard in playerToFullInsert and
+//MapVisibilityAlgorithm. Coordinates must be < map width/height; out-of-
+//range writes corrupt 0x6B/0x66 packets on the wire and were the class
+//of bug testingmapmanagement is meant to catch.
+void MapServer::assertXYInRange(const uint8_t x,const uint8_t y,const char *who) const
+{
+    if(x>=width || y>=height)
+    {
+        std::cerr << "[XY-OOR] " << who << " x=" << std::to_string(x)
+                  << " y=" << std::to_string(y)
+                  << " width=" << std::to_string(width)
+                  << " height=" << std::to_string(height) << std::endl;
+        std::abort();
+    }
+}
+#endif
 
 //return index into map list
 PLAYER_INDEX_FOR_CONNECTED MapServer::insertOnMap(const PLAYER_INDEX_FOR_CONNECTED &index_global)
@@ -124,39 +154,73 @@ void MapServer::doDDOSLocalChat()
 
 unsigned int MapServer::playerToFullInsert(const Client& client, char * const bufferForOutput)
 {
+    //Note: playerToFullInsert is static — it can't reach a MapServer
+    //instance to check width/height. The x,y range check is performed
+    //in MapVisibilityAlgorithm (the caller) BEFORE invoking this so the
+    //packet writer here trusts its inputs.
     unsigned int posOutput=0;
     bufferForOutput[posOutput]=client.getX();
     posOutput+=1;
     bufferForOutput[posOutput]=client.getY();
     posOutput+=1;
     if(GlobalServerData::serverSettings.dontSendPlayerType)
+    {
+        #ifdef CATCHCHALLENGER_TESTING
+        std::cout << "[BRANCH] pfi_no_player_type" << std::endl;
+        #endif
         bufferForOutput[posOutput]=((uint8_t)client.getLastDirection() | (uint8_t)Player_type_normal);
+    }
     else
+    {
+        #ifdef CATCHCHALLENGER_TESTING
+        std::cout << "[BRANCH] pfi_with_player_type" << std::endl;
+        #endif
         bufferForOutput[posOutput]=((uint8_t)client.getLastDirection() | (uint8_t)client.public_and_private_informations.public_informations.type);
+    }
     posOutput+=1;
     //pseudo
     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
     {
+        #ifdef CATCHCHALLENGER_TESTING
+        std::cout << "[BRANCH] pfi_with_pseudo" << std::endl;
+        #endif
         const std::string &text=client.public_and_private_informations.public_informations.pseudo;
         bufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(bufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
+    #ifdef CATCHCHALLENGER_TESTING
+    else
+        std::cout << "[BRANCH] pfi_no_pseudo" << std::endl;
+    #endif
     //skin
     bufferForOutput[posOutput]=client.public_and_private_informations.public_informations.skinId;
     posOutput+=1;
     //the following monster id to show
     if(client.public_and_private_informations.monsters.empty())
+    {
+        #ifdef CATCHCHALLENGER_TESTING
+        std::cout << "[BRANCH] pfi_no_monsters" << std::endl;
+        #endif
         {const uint16_t _tmp_le=(0);memcpy(bufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
-
+    }
     else
+    {
+        #ifdef CATCHCHALLENGER_TESTING
+        std::cout << "[BRANCH] pfi_with_monsters" << std::endl;
+        #endif
         {const uint16_t _tmp_le=(htole16(client.public_and_private_informations.monsters.front().monster));memcpy(bufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+    }
 
     posOutput+=2;
     return posOutput;
 }
 
+#ifndef CATCHCHALLENGER_TESTING
+//testingmapmanagement excludes these — they reference CommonMap-side
+//state (rescue/heal/zoneCapture/etc. with pairhash) that the test
+//stubs intentionally don't carry.
 bool MapServer::parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text)
 {
     (void)property_text;
@@ -177,8 +241,11 @@ bool MapServer::parseUnknownObject(std::string type,uint32_t object_x,uint32_t o
     (void)property_text;
     return false;
 }
+#endif
 
-#ifndef CATCHCHALLENGER_NOXML
+#if !defined(CATCHCHALLENGER_NOXML) && !defined(CATCHCHALLENGER_TESTING)
+// testingmapmanagement Stubs.hpp doesn't carry the rescue/heal/...
+// CommonMap-side members this references.
 bool MapServer::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step)
 {
     if(strcmp(step->Attribute("type"),"text")==0)

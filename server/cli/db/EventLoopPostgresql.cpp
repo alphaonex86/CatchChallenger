@@ -41,7 +41,8 @@ EventLoopPostgresql::EventLoopPostgresql() :
     tuleIndex(-1),
     ntuples(0),
     result(NULL),
-    started(false)
+    started(false),
+    lastAsyncErrorRepeatCount(0)
 {
     memset(strCoPG,0,sizeof(strCoPG));
     emptyCallback.object=NULL;
@@ -629,18 +630,48 @@ bool EventLoopPostgresql::unixEvent(const uint32_t &events)
             result=PQgetResult(conn);
             if(result==NULL)
             {
-                std::cerr << "[" << (time(NULL)-startTime) << "] ";
+                // PQgetResult==NULL only means "no more results pending"
+                // for the LAST query. With nothing in flight (queriesList
+                // empty) this is benign — the socket can still readyRead
+                // for NOTIFY frames, keepalives, or libpq's end-of-batch
+                // marker. Only log when a query was actually pending,
+                // and dedupe identical consecutive lines (the pool-wedge
+                // case used to spam dozens/second).
                 if(!queriesList.empty())
-                    std::cerr << queriesList.front().query << ", ";
-                std::cerr << strCoPG << " query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
-                time_t secs=time(0);
-                tm *t=localtime(&secs);
-                printf("%04d-%02d-%02d %02d:%02d:%02d\n",
-                    t->tm_year+1900,t->tm_mon+1,t->tm_mday,
-                    t->tm_hour,t->tm_min,t->tm_sec);
+                {
+                    std::string line;
+                    line.reserve(256);
+                    line += "[";
+                    line += std::to_string(time(NULL)-startTime);
+                    line += "] ";
+                    line += queriesList.front().query;
+                    line += ", ";
+                    line += strCoPG;
+                    line += " query async send failed: ";
+                    line += errorMessage();
+                    line += ", PQgetResult(conn) have returned NULL";
+                    if(line==lastAsyncErrorLine)
+                        lastAsyncErrorRepeatCount++;
+                    else
+                    {
+                        if(lastAsyncErrorRepeatCount>0)
+                            std::cerr << "(previous line repeated " << lastAsyncErrorRepeatCount << " times)" << std::endl;
+                        std::cerr << line << std::endl;
+                        lastAsyncErrorLine=line;
+                        lastAsyncErrorRepeatCount=0;
+                    }
+                }
             }
             else
             {
+                // Successful result — flush any pending dedupe counter
+                // so the recovery is visible in the log.
+                if(lastAsyncErrorRepeatCount>0)
+                {
+                    std::cerr << "(previous line repeated " << lastAsyncErrorRepeatCount << " times)" << std::endl;
+                    lastAsyncErrorRepeatCount=0;
+                    lastAsyncErrorLine.clear();
+                }
                 std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double, std::milli> elapsed = end-start;
                 const uint32_t &ms=elapsed.count();
@@ -702,7 +733,7 @@ bool EventLoopPostgresql::unixEvent(const uint32_t &events)
     if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
     {
         std::cerr << strCoPG << "Database disconnected, events: " << events << std::endl;
-        if(events | EPOLLRDHUP)
+        if(events & EPOLLRDHUP)
         {
             started=false;//if set this, try reconnect
             std::cerr << strCoPG << "Database disconnected, try reconnect: " << errorMessage() << std::endl;

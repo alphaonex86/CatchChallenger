@@ -207,6 +207,14 @@ _PRO_TO_CMAKE = {
         [],
         "test/fight",
     ),
+    # test/testingmapmanagement/ — MapVisibilityAlgorithm + playerToFullInsert
+    # branch-coverage tests. Stubs out Client/ClientList/etc via
+    # Stubs.hpp; no datapack, no network.
+    "test/testingmapmanagement/testmapvisibility.pro": (
+        "testmapvisibility",
+        [],
+        "test/testingmapmanagement",
+    ),
     # qtopengl moved up to client/CMakeLists.txt; client/qtopengl/ is now
     # source-only (no CMakeLists.txt). Both legacy .pro paths point at
     # the new client/ project.

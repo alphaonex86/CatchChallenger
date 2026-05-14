@@ -197,8 +197,40 @@ def _rsync_remote(exec_node, src, log_info):
         return False, f"remote rsync TIMEOUT after {_RSYNC_REMOTE_TIMEOUT}s for {label}"
     if p.returncode == 0:
         return True, ""
+    # rsync rc=23 = partial transfer. The pkmn datapack ships files whose
+    # XXH32-hash-as-mtime sits in the year-2081–2106 range, which 32-bit
+    # time_t receivers (mips-lxc, older LXC images) can't fully represent
+    # — rsync emits "Time value of <path> truncated on receiver" warnings
+    # and exits 23 even though every file's bytes did transfer. Treat
+    # that one-warning case as success so the staging step doesn't abort
+    # the entire all.sh; the truncated mtime won't help the gateway's
+    # hash-cache shortcut on the remote node but the datapack content is
+    # still correct.
+    out = p.stdout.decode(errors="replace")
+    if p.returncode == 23 and "truncated on receiver" in out:
+        non_trunc_errors = []
+        oi = 0
+        lines = out.splitlines()
+        while oi < len(lines):
+            ln = lines[oi]
+            oi += 1
+            stripped = ln.strip()
+            if not stripped:
+                continue
+            if "truncated on receiver" in stripped:
+                continue
+            if stripped.startswith("rsync warning: some files vanished"):
+                continue
+            if stripped.startswith("rsync error: some files/attrs were not transferred"):
+                # The umbrella summary line that rsync appends when the
+                # only individual error was a time-truncation warning.
+                continue
+            non_trunc_errors.append(stripped)
+        if not non_trunc_errors:
+            log_info(f"remote rsync {label}: ignoring rc=23 (mtime truncation only)")
+            return True, ""
     return False, (f"remote rsync rc={p.returncode} for {label}: " +
-                   p.stdout.decode(errors="replace").strip()[-300:])
+                   out.strip()[-300:])
 
 
 def stage_all(srcs, exec_nodes=None, log_info=print):

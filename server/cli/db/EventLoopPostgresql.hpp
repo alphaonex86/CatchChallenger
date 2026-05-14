@@ -85,6 +85,14 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
     static bool informationDisplayed;
     unsigned int maxDbQueries;
+    // Suppresses the dozens-per-second spam of "query async send failed:
+    // ..., PQgetResult(conn) have returned NULL" when the async pool
+    // wedges. We keep the previous error string + a counter; identical
+    // consecutive errors are dropped, then a single
+    // "(previous line repeated N times)" is emitted when the stream
+    // changes or a query finally succeeds.
+    std::string lastAsyncErrorLine;
+    unsigned int lastAsyncErrorRepeatCount;
 };
 
 #endif

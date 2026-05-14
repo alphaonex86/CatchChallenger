@@ -986,7 +986,7 @@ tools-only when references concentrate in one of those subtrees.
 
 ### `CATCHCHALLENGER_HARDENED`
 - **Scope:** global (client + server + tools) — server: base,epoll,fight,game-server-alone,gateway,login,master,qt; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: bot-actions,libbot,map-procedural-generation
-- **Description:** Adds extra runtime checks (auto-defined unless RELEASE).
+- **Description:** Adds extra runtime checks. **Never enable in production.** Aborts on any error, including bad data from clients. Purpose is to surface silent errors that would otherwise be ignored during testing.
 - **Used in:**
   - `general/fight/CommonFightEngineSkill.cpp`
   - `general/fight/CommonFightEngineEnd.cpp`
@@ -997,22 +997,6 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/Map_loader.cpp`
   - `general/base/GeneralVariable.hpp`
   - *(…and 118 more)*
-
-### `CATCHCHALLENGER_HARDENED`
-- **Scope:** server-only — server: epoll
-- **Description:** Extra security checks/protections.
-- **Used in:**
-  - `server/cli/catchchallenger-server-filedb.pro`
-  - `server/cli/catchchallenger-server-cli.pro`
-
-### `CATCHCHALLENGER_SERVER_EXTRA_CHECK`
-- **Scope:** server-only (+ general/) — server: base,fight
-- **Description:** Server-only extra assertions.
-- **Used in:**
-  - `general/fight/CommonFightEngineTurn.cpp`
-  - `server/fight/LocalClientHandlerFight.cpp`
-  - `server/base/MapManagement/MapBasicMove.cpp`
-  - `server/base/VariableServer.hpp`
 
 ## Library export markers
 
