@@ -358,7 +358,13 @@ void ProtocolParsingInputOutput::resetForReconnect()
 void ProtocolParsingInputOutput::setMaxPlayers(const uint16_t &maxPlayers)
 {
     ProtocolParsing::setMaxPlayers(maxPlayers);
+    // protocolParsingCheck only exists under HARDENED (see ProtocolParsing.hpp:224).
+    // Without this guard, server-login and server-gateway fail to compile when
+    // HARDENED is off (default since the option flipped) because the member
+    // isn't declared in non-HARDENED builds.
+    #ifdef CATCHCHALLENGER_HARDENED
     protocolParsingCheck->setMaxPlayers(maxPlayers);
+    #endif
 }
 #endif
 

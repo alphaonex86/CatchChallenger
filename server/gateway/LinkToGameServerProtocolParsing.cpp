@@ -669,9 +669,16 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     /* intercept part here */
     if(mainCodeType==0xA8)//Get first data and send the login
     {
-        if(size>(40+CATCHCHALLENGER_HASH_SIZE) && data[0x00]==0x01)//all is good, change the reply
+        // 0xA8 reply layout: 1+4+1+1+1+1+2 bytes pre-hash + 32 hash +
+        // 1 stringSize + N mirror URL.  Pre-fix the formula had
+        // pos=14 (1+4+1+1+1+1+2+1+2) with 3 phantom bytes that don't
+        // exist in the protocol, and threshold=40+32=72; minimal
+        // success reply is 71 bytes so `size>72` rejected it, leaving
+        // stat at WaitingLogin and the next 0xAC tripped the state
+        // guard. See backend BaseServer/BaseServerLoadOther.cpp:138.
+        if(size>(sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+CATCHCHALLENGER_HASH_SIZE+1) && data[0x00]==0x01)//all is good, change the reply
         {
-            unsigned int pos=sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint8_t)+sizeof(uint16_t);
+            unsigned int pos=sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t);
             if(replySelectListInWait!=NULL)
             {
                 parseNetworkReadError("another reply04inWait in suspend");
@@ -874,8 +881,15 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         else
         {
             std::cout << "!(gameServerMode==GameServerMode::Reconnect && stat==Stat::WaitingToken), stat: " << std::to_string(stat) << ", queryIdToReconnect: " << std::to_string(queryNumber) << std::endl;
+            // 0xAC reply layout (backend writes in BaseServerLoadOther.cpp
+            // characterIsRightFinalStepHeader prefix). Pre-fix had 3
+            // phantom sizeof(uint8_t) terms between dontSendPseudo and
+            // rates_xp; offsetToMainTypeCode came out to 38 but the
+            // backend writes mainDatapackCode stringSize at offset 35.
+            // Parser read "ficial" instead of the length-byte and the
+            // regex_search rejected "main datapack code wrong".
             const unsigned int offsetToMainTypeCode=sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint32_t)+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint8_t)+
-                    sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t)+sizeof(uint32_t)+sizeof(uint32_t)+
+                    sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t)+sizeof(uint32_t)+sizeof(uint32_t)+
                     sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t);
             switch(gameServerMode)
             {
@@ -888,8 +902,21 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 break;
                 case GameServerMode::Reconnect:
                 break;
+                case GameServerMode::None:
+                // Direct passthrough: single all-in-one backend (no
+                // login/master/gateway/game-server cluster split).
+                // The gateway never receives a 0x40 (server-list)
+                // packet with `data[0]==0x02` from a stand-alone
+                // backend, so gameServerMode stays at the
+                // initialization default `None`. Treat it like a
+                // pass-through and let the parsing fall through —
+                // the gateway forwards the reply unchanged. Used by
+                // testinggateway.py and any other test that points
+                // the gateway at a single server-cli rather than a
+                // real cluster.
+                break;
                 default:
-                    std::cerr << "Unknown game server mode or not set: " << std::to_string(gameServerMode) << std::endl;
+                    std::cerr << "Unknown game server mode: " << std::to_string(gameServerMode) << std::endl;
                 abort();
             }
             if(stat!=Stat::WaitingCharacterSelection)

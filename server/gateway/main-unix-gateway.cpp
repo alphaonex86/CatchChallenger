@@ -62,6 +62,78 @@ int main(int argc, char *argv[])
     //blocking due to db connexion
     EventLoopServerLoginSlave::unixServerLoginSlave=new EventLoopServerLoginSlave();
 
+    // Pre-index the on-disk datapack so the 0xA1 (datapack-file-list)
+    // handler — which reads from datapack_file_base.datapack_file_hash_cache
+    // synchronously and doesn't suspend — has real files to answer
+    // with. Without this, the cache is empty until the gateway's own
+    // download-from-backend completes (DatapackDownloaderBase::
+    // haveTheDatapack), so an early 0xA1 from the client gets a 0x75
+    // reply with datapckFileNumber=0 and the client hangs waiting for
+    // file content that never arrives.
+    //
+    // Must run AFTER `new EventLoopServerLoginSlave()` — that ctor
+    // populates DatapackDownloaderBase::extensionAllowed; running
+    // before would silently filter every file (all files miss the
+    // empty allowlist) and the cache would still be empty.
+    EventLoopClientLoginSlave::datapack_file_base.datapack_file_hash_cache=
+        EventLoopClientLoginSlave::datapack_file_list(LinkToGameServer::mDatapackBase);
+
+    // Also pre-index every maincode + subcode found on disk so the
+    // Main/Sub 0xA1 handler paths have a populated cache too. Without
+    // this, the Main case in datapackList() (line ~178) hits
+    // datapack_file_main.find(linkToGameServer->main) == cend()
+    // and silently returns, leaving the client waiting forever for
+    // the main-datapack content. testinggateway.py's
+    // datapack-pkmn/gen2 case fails on exactly this — the base
+    // download works (cache pre-indexed above) but the followup
+    // main-datapack request hangs.
+    //
+    // Walks <datapack>/map/main/<mc>/ and <datapack>/map/main/<mc>/sub/<sc>/.
+    {
+        const std::string mainBaseDir=LinkToGameServer::mDatapackBase+"map/main/";
+        if(FacilityLibGeneral::isDir(mainBaseDir))
+        {
+            const std::vector<FacilityLibGeneral::InodeDescriptor> &mainCodes=
+                FacilityLibGeneral::listFolderNotRecursive(mainBaseDir,
+                    FacilityLibGeneral::ListFolder::Dirs);
+            unsigned int mi=0;
+            while(mi<mainCodes.size())
+            {
+                const FacilityLibGeneral::InodeDescriptor &mcEntry=mainCodes.at(mi);
+                const std::string &mainCode=mcEntry.name;
+                if(mcEntry.type==FacilityLibGeneral::InodeDescriptor::Dir
+                   && !mainCode.empty() && mainCode.at(0)!='.')
+                {
+                    const std::string mainDir=mainBaseDir+mainCode+"/";
+                    EventLoopClientLoginSlave::datapack_file_main[mainCode].datapack_file_hash_cache=
+                        EventLoopClientLoginSlave::datapack_file_list(mainDir);
+                    const std::string subBaseDir=mainDir+"sub/";
+                    if(FacilityLibGeneral::isDir(subBaseDir))
+                    {
+                        const std::vector<FacilityLibGeneral::InodeDescriptor> &subCodes=
+                            FacilityLibGeneral::listFolderNotRecursive(subBaseDir,
+                                FacilityLibGeneral::ListFolder::Dirs);
+                        unsigned int si=0;
+                        while(si<subCodes.size())
+                        {
+                            const FacilityLibGeneral::InodeDescriptor &scEntry=subCodes.at(si);
+                            const std::string &subCode=scEntry.name;
+                            if(scEntry.type==FacilityLibGeneral::InodeDescriptor::Dir
+                               && !subCode.empty() && subCode.at(0)!='.')
+                            {
+                                const std::string subDir=subBaseDir+subCode+"/";
+                                EventLoopClientLoginSlave::datapack_file_sub[mainCode][subCode].datapack_file_hash_cache=
+                                    EventLoopClientLoginSlave::datapack_file_list(subDir);
+                            }
+                            si++;
+                        }
+                    }
+                }
+                mi++;
+            }
+        }
+    }
+
     char buf[4096];
     memset(buf,0,4096);
     /* Buffer where events are returned */
