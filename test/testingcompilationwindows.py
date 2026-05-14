@@ -112,6 +112,29 @@ MXE_CMAKE   = MXE_PREFIX + "/bin/" + MXE_TARGET + "-cmake"
 MXE_NINJA   = MXE_PREFIX + "/" + MXE_HOST + "/bin/ninja"
 MXE_HOST_BIN = MXE_PREFIX + "/" + MXE_HOST + "/bin"
 WINE_BIN    = shutil.which("wine64") or "/etc/eselect/wine/bin/wine64"
+
+# Standard WINEDLLOVERRIDES applied to every wine64 launch performed
+# by this script. Three categories rolled into one string:
+#   - winedbg.exe=d   : disable wine's interactive crash dialog so an
+#                       unhandled exception lands as a non-zero exit
+#                       code instead of blocking the harness on a GUI
+#                       prompt that no operator is there to dismiss.
+#   - mmdevapi=d      : Multimedia Device API. Disabling it makes wine
+#                       enumerate zero audio endpoints, so QAudioOutput
+#                       / DirectSound / WASAPI initialisation returns
+#                       cleanly without binding any host backend.
+#   - winealsa.drv,winepulse.drv,wineoss.drv,winecoreaudio.drv=d :
+#                       belt-and-braces — even with mmdevapi gone, the
+#                       wine driver DLLs can be probed at startup and
+#                       emit ALSA / PulseAudio errors on the host's
+#                       sound stack. Disabling them silences those.
+# Segments separated by `;`; each segment is `<comma-list>=<mode>`.
+# `mode=d` means "do not load this module at all".
+WINE_DLLOVERRIDES_BASE = (
+    "winedbg.exe=d;"
+    "mmdevapi=d;"
+    "winealsa.drv,winepulse.drv,wineoss.drv,winecoreaudio.drv=d"
+)
 CCACHE_BIN  = shutil.which("ccache")
 # mingw gcc rejects -fuse-ld=mold ("unrecognized command-line option") because
 # mold's PE/COFF backend is still experimental and the mingw driver hasn't
@@ -467,7 +490,7 @@ def run_windeployqt(exe_path, label):
     env = os.environ.copy()
     env["WINEPATH"]         = MXE_QT_BIN + ";" + MXE_RT_BIN
     env["WINEDEBUG"]        = "-all"
-    env["WINEDLLOVERRIDES"] = "winedbg.exe=d"
+    env["WINEDLLOVERRIDES"] = WINE_DLLOVERRIDES_BASE
     args = [WINE_BIN, WINDEPLOYQT_EXE,
             "--no-translations", "--no-system-d3d-compiler",
             "--no-opengl-sw", "--compiler-runtime",
@@ -759,7 +782,7 @@ def _wine_runtime_dlls(exe_path, exe_dir, args):
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"]  = "offscreen"
     env["WINEDEBUG"]        = "+loaddll"
-    env["WINEDLLOVERRIDES"] = "mscoree,mshtml="
+    env["WINEDLLOVERRIDES"] = "mscoree,mshtml=d;" + WINE_DLLOVERRIDES_BASE
     for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
         env.pop(_gui_var, None)
     win_args = [WINE_BIN, exe_path, "-platform", "offscreen"] + list(args)
@@ -1021,8 +1044,9 @@ def _verify_staged_exe_runs(stage_dir):
     if not os.path.isfile(exe):
         return False
     env = os.environ.copy()
-    env["QT_QPA_PLATFORM"] = "offscreen"
-    env["WINEDEBUG"]       = "-all"
+    env["QT_QPA_PLATFORM"]  = "offscreen"
+    env["WINEDEBUG"]        = "-all"
+    env["WINEDLLOVERRIDES"] = WINE_DLLOVERRIDES_BASE
     for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
         env.pop(_gui_var, None)
     rc, _ = run_cmd([WINE_BIN, exe, "-platform", "offscreen", "--version"],
@@ -1452,7 +1476,7 @@ def _wix_wine_env():
     Qt DLLs unreachable so WiX itself doesn't accidentally pick them up."""
     env = os.environ.copy()
     env["WINEDEBUG"]        = "-all"
-    env["WINEDLLOVERRIDES"] = "winedbg.exe=d"
+    env["WINEDLLOVERRIDES"] = WINE_DLLOVERRIDES_BASE
     env.pop("WINEPATH", None)
     return env
 
@@ -1655,7 +1679,7 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
     # block this harness until manually dismissed).  With winedbg gone
     # wine returns a non-zero exit code as soon as the unhandled
     # exception fires, which is exactly the signal the harness needs.
-    env["WINEDLLOVERRIDES"] = "winedbg.exe=d"
+    env["WINEDLLOVERRIDES"] = WINE_DLLOVERRIDES_BASE
     env["QT_QPA_PLATFORM"]  = "offscreen"
     # Even with QT_QPA_PLATFORM=offscreen, wine's winex11.drv attaches to
     # the host X server when DISPLAY is set, so Qt's offscreen platform
@@ -1781,7 +1805,7 @@ def run_wine_server_smoke(exe_path, label, wait_seconds=5):
     #            where a transitive dep is missing.
     # Keep -all on the other channels so the trace stays readable.
     env["WINEDEBUG"]        = "+loaddll,+module,-all"
-    env["WINEDLLOVERRIDES"] = "winedbg.exe=d"
+    env["WINEDLLOVERRIDES"] = WINE_DLLOVERRIDES_BASE
     env["QT_QPA_PLATFORM"]  = "offscreen"
     for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
         env.pop(_gui_var, None)
@@ -1927,7 +1951,7 @@ def run_wine_screenshot(exe_path, label, mode, screenshot_path,
     env = os.environ.copy()
     env["WINEPATH"]         = MXE_QT_BIN + ";" + MXE_RT_BIN
     env["WINEDEBUG"]        = "-all"
-    env["WINEDLLOVERRIDES"] = "winedbg.exe=d"
+    env["WINEDLLOVERRIDES"] = WINE_DLLOVERRIDES_BASE
     env["QT_QPA_PLATFORM"]  = "offscreen"
     for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
         env.pop(_gui_var, None)
