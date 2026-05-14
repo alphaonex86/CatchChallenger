@@ -316,8 +316,16 @@ def android_env():
     conflicting paths from the user's shell. Only minimal locale/identity
     vars are forwarded."""
     env = {}
+    # DISPLAY / XAUTHORITY / WAYLAND_DISPLAY deliberately NOT forwarded:
+    # the emulator launches with `-no-window -no-audio` (see
+    # start_android_emulator), so it never wants a host display, and
+    # androiddeployqt / gradle / qmake-android are pure CLI tools.
+    # Stripping the variables also prevents any Qt-host-side tooling
+    # invoked along the way (qmake's qrc/moc, lupdate, etc.) from
+    # attaching to the host X server — matching what
+    # testingcompilationwindows.py does for wine64.
     forward = ("HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "LC_CTYPE",
-               "TERM", "TMPDIR", "TZ", "DISPLAY", "XAUTHORITY",
+               "TERM", "TMPDIR", "TZ",
                "SHELL", "MAIL", "PWD")
     fi = 0
     while fi < len(forward):
