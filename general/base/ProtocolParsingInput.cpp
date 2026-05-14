@@ -721,8 +721,26 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     std::to_string(queryNumber)+(", packetCode: ")+std::to_string(packetCode)+", replyTo: "+std::to_string(replyTo));
         #endif
         #ifdef CATCHCHALLENGER_HARDENED
+        // A false return from parseReplyData() in production silently
+        // disconnects the client (errorParsingLayer just logs + breaks
+        // the socket). HARDENED escalates it to an abort() so a
+        // protocol-drift bug — parser offset out of sync with sender
+        // layout, the class of bug that took down testinggateway.py
+        // for the entire wall cap — surfaces immediately with a
+        // packetCode/queryNumber/hex dump on stderr instead of
+        // hiding in the parent-side wall timeout. SIGABRT (exit code
+        // 134) is recognised by test/process_helpers.py:
+        // is_sigabrt() → rerun_under_gdb() captures the backtrace.
         if(!returnValue)
+        {
             errorParsingLayer("parseReplyData(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
+            std::cerr << "error: the protocol parsing was wrong, start under gdb and catch the backtrace"
+                      << " — parseReplyData() packetCode=" << std::to_string(packetCode)
+                      << " queryNumber=" << std::to_string(queryNumber)
+                      << " size=" << size
+                      << " data=" << binarytoHexa(data,size>200?200:size) << std::endl;
+            abort();
+        }
         #endif
         return returnValue;
     }
@@ -737,8 +755,16 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         #endif
         const bool &returnValue=parseMessage(packetCode,data,size);
         #ifdef CATCHCHALLENGER_HARDENED
+        // See parseReplyData branch above — same rationale, same abort.
         if(!returnValue)
+        {
             errorParsingLayer("parseMessage(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
+            std::cerr << "error: the protocol parsing was wrong, start under gdb and catch the backtrace"
+                      << " — parseMessage() packetCode=" << std::to_string(packetCode)
+                      << " size=" << size
+                      << " data=" << binarytoHexa(data,size>200?200:size) << std::endl;
+            abort();
+        }
         #endif
         return returnValue;
     }
@@ -755,8 +781,20 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         storeInputQuery(packetCode,queryNumber);
         const bool &returnValue=parseQuery(packetCode,queryNumber,data,size);
         #ifdef CATCHCHALLENGER_HARDENED
+        // See parseReplyData branch above — same rationale, same abort.
+        // parseInputBeforeLogin is also covered here because parseQuery
+        // calls `return parseInputBeforeLogin(...)` as its fallthrough;
+        // a false return propagates up and trips this guard.
         if(!returnValue)
+        {
             errorParsingLayer("parseQuery(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
+            std::cerr << "error: the protocol parsing was wrong, start under gdb and catch the backtrace"
+                      << " — parseQuery() packetCode=" << std::to_string(packetCode)
+                      << " queryNumber=" << std::to_string(queryNumber)
+                      << " size=" << size
+                      << " data=" << binarytoHexa(data,size>200?200:size) << std::endl;
+            abort();
+        }
         #endif
         return returnValue;
     }

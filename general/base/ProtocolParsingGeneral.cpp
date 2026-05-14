@@ -371,9 +371,9 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         packetModeTransmission
         #endif
-        ),
+        )
       #ifdef CATCHCHALLENGER_HARDENED
-      parseIncommingDataCount(0)
+      , parseIncommingDataCount(0)
       #endif
 {
     #ifdef CATCHCHALLENGER_HARDENED

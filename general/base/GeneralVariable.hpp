@@ -3,11 +3,14 @@
 
 #include "CatchChallenger_Hash.hpp"
 
-#ifndef CATCHCHALLENGER_RELEASE
-#ifndef CATCHCHALLENGER_HARDENED
-#define CATCHCHALLENGER_HARDENED
-#endif
-#endif
+// CATCHCHALLENGER_HARDENED was force-#define'd here unless
+// CATCHCHALLENGER_RELEASE was set, which made every non-release
+// build (including production deploys without the flag) inherit
+// the HARDENED abort()-on-invariant behaviour. Now driven entirely
+// by the CMake option (default OFF in general/CCCommon.cmake;
+// testing*.py opts in via test/cmake_helpers.py). Production must
+// stay OFF — a live server cannot turn an invariant breach into
+// SIGABRT that drops every connected player.
 
 /*
 #define PROTOCOLPARSINGDEBUG
