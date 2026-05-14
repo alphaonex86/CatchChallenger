@@ -5,8 +5,12 @@
 loaded — open `../CLAUDE.md` before doing anything else and combine its
 rules with the ones below. The root file owns project-wide conventions
 (C++/Qt, CMake-per-binary layout, multi-arch support down to i486/MIPS2/
-RISC-V, never-search-from-`/`, "don't ask — just continue") and they
-apply here too.
+RISC-V, never-search-from-`/`) and they apply here too.
+one command target: the IA not start every command, have to package in the corresponding benchmarkXXXXXX.py
+* do you edit to optimise specific part
+* just run this command without arguement with 1h timeout (fix the problem if timeout, you can't edit remote_nodes.json, escalate if needed), wait the finish of the command
+* compare the results
+Generate helper to put in common the code it will mostly used by the majority
 
 ## Purpose
 
@@ -22,11 +26,12 @@ each metric against the current champion's record for that target:
 
 | metric outcome (across all benchmarks × all nodes) | action |
 |---|---|
-| at least one strictly better AND none worse (rest equal-within-noise) | **KEEP** — promote to new champion |
-| at least one strictly worse AND none better (rest equal-within-noise) | **DISCARD** — revert, do not commit |
+| at least one strictly better of 30% AND none worse (rest equal-within-noise) | **KEEP** — promote to new champion |
+| at least one strictly worse of 20% AND none better (rest equal-within-noise) | **DISCARD** — revert, do not commit |
+| if each values is ±10% than current champion's | **DISCARD** — revert, do not commit |
 | any other mix (some up, some down) | **ESCALATE** — leave artifacts in place, surface a summary, wait for human |
 
-"Equal-within-noise" = within ±1 stddev across the warmup-dropped
+"Equal-within-noise" = within ±10 stddev across the warmup-dropped
 samples on the same node. A single-run difference inside the noise
 band IS NOT a metric movement. Don't tune for noise.
 
@@ -35,6 +40,7 @@ band IS NOT a metric movement. Don't tune for noise.
 Every benchmark runs on:
 
 * The current workstation (host) — compiled here, run here.
+* remote_nodes.json (not execution_nodes) compiled here — , execution_nodes run here.
 * Every `execution_nodes[]` entry in
   `/home/user/Desktop/CatchChallenger/remote_nodes.json` whose
   `benchmark: true` flag is set AND whose **runtime load average (1
@@ -42,8 +48,8 @@ Every benchmark runs on:
 
 The combination set is **dynamic**: built right before each benchmark
 batch, not precomputed at startup. A node that was idle when the
-harness launched can become busy ten minutes later — re-check load
-on every node, every batch.
+harness launched can become busy ten minutes later — not re-check load
+on every node.
 
 ### Compile path — via the matching compile node, NOT locally
 
@@ -189,6 +195,7 @@ Two hard rules:
    amd64-v1 → amd64-v4 / armv7 → arm-sve / riscv-rv64gc → riscv-rvv,
    and downstream packagers don't have to ship N binaries.
 
+SIMD have to be detected at runtime at startup and not impact performance of generic code path.
 SIMD is architecture-specific: x86 has SSE2/SSSE3/SSE4.1/AVX/AVX2/
 AVX-512; arm has NEON/SVE/SVE2; mips has MSA (mips32r5+); riscv has
 the V extension. A candidate that adds x86 AVX2 says nothing about
@@ -209,6 +216,9 @@ out of that batch's matrix, its parent compile node still builds
 the variant for *other* exec nodes downstream. A candidate is
 "kept" only if it passes the decision matrix across the entire
 realised product, not on the host's preferred row.
+
+### compilation
+* Fix util it compile on all arch (then generic code path always have to work), if you put SSE intrasic into ARM/MIPS it fail compile, then you have to #ifdef x86 the SSE code
 
 ### Progress display — mandatory live counter
 
@@ -259,32 +269,6 @@ Every benchmark source file MUST carry a leading comment block stating:
   better — so the comparator doesn't have to infer.
 * Whether the benchmark is deterministic (same input → same output)
   or sampled (noise band given explicitly).
-
-## Reproducibility — pin the variables we can pin
-
-Run-to-run noise on a shared VPS easily dwarfs a 5 % optimisation.
-Before measuring anything:
-
-* **CPU affinity** — pin the benchmark process to one physical core
-  (`taskset -c <N>`). Stops the scheduler from migrating it mid-run.
-* **CPU governor** — set `performance` on the pinned core for the
-  duration of the run, restore afterwards. Without this `ondemand`
-  ramps the frequency mid-sample and adds 10 %+ noise.
-* **Disable turbo** for stricter runs (echo `1` into
-  `/sys/devices/system/cpu/intel_pstate/no_turbo`). Optional — turbo
-  on is what production sees, turbo off gives lower-noise numbers.
-  Record the setting in the artifact.
-* **Warm-up** — discard the first N iterations (default 3) before
-  starting measurement. Cold caches, lazy-loaded shared libs, JIT'd
-  Qt resources all inflate the first samples.
-* **Repeat** — run each measurement R times (default 10), report
-  median + stddev, not the single best. The "best of 10" is
-  misleading; the noise floor is what matters for "did the change
-  move things".
-
-These knobs live in the per-benchmark config so a particular workload
-(say, a 500 ms Qt paint) can override them when sane defaults don't
-fit.
 
 ## Champion baseline + history
 
@@ -350,8 +334,7 @@ throughput.
 
 ## Auto-revert on REGRESSION
 
-When the decision matrix says DISCARD, the harness MUST `git
-restore` (or revert the patch) so the next iteration starts from
+When the decision matrix says DISCARD, revert the patch (then each changes have to be small, under 200 lines). so the next iteration starts from
 the champion again. Otherwise small regressions stack up across
 iterations and the agent ends up "optimising" away from where it
 started without anyone noticing. ESCALATE leaves the patch in
@@ -359,7 +342,7 @@ place since the human is going to look at it.
 
 ## Don't optimise into the noise floor
 
-If the median delta is within ±1 stddev of the noise band on every
+If the median delta is within ±10 stddev of the noise band on every
 node, the change is statistically meaningless. The decision matrix
 treats it as "all equal" — neither KEEP nor DISCARD on its own
 merits. If the change is otherwise neutral (code clarity, smaller
@@ -373,6 +356,3 @@ the normal commit path, not via the benchmark champion mechanism.
 * Production code that happens to be perf-sensitive. The benchmark
   workspace exists to *measure* prod code from outside; it doesn't
   ship.
-* One-off perf scratch — those belong in a personal worktree, not
-  the tracked tree. Only land benchmarks that exist to validate a
-  recurring metric.
