@@ -75,6 +75,14 @@ _REQUIRED_EXEC_NODE_KEYS = (
     # tooling will surface a clear failure instead of silently
     # skipping.
     "sanitizer_gcc", "sanitizer_clang",
+    # Per-exec-node opt-in for the benchmark/ harness (CPU/memory
+    # profiling, AI-driven optimisation candidates — see
+    # benchmark/CLAUDE.md). Defaults to false on a freshly-added
+    # node; flip to true after confirming the box is quiet enough
+    # for stable measurements. Independent of sanitizer_*: a node
+    # can verify correctness every commit and still be too noisy
+    # to host benchmarks.
+    "benchmark",
 )
 
 
