@@ -77,6 +77,38 @@ Bracket IPv6 hosts for rsync (`user@[2803:1920::2:ff04]:`); plain ssh accepts un
 * Kill hung processes via SSH (`ssh root@<lxc-ip> kill <pid-inside-container>`), not from host (cross-ns kill privileged).
 * Monitor cc1plus across BOTH host and LXC payload cgroups.
 
+## Cross-compile build type — Release on windows / mac / android
+
+All three cross-compile scripts pin `CMAKE_BUILD_TYPE=Release`
+(`testingcompilationwindows.py`, `testingcompilationmac.py`,
+`testingcompilationandroid.py` — env var AND the cmake arg).
+Shipping artefacts (installer / msi / dmg / apk / aab) must NEVER
+bundle a Debug build. Release produces ~12-13 MiB mingw client
+.exes, ~5 MiB server-gui .exe; Debug is ~470 MiB. The size-baseline
+table in `test/size_check.py` is calibrated against Release sizes.
+
+### Pre-installer .exe guards (testingcompilationwindows.py)
+
+Before `build_combined_installer` / `build_combined_msi` are
+invoked, every `.exe` in the staged payload is checked:
+
+1. **Size cap** — any `.exe ≥ 80 MiB` aborts both packaging steps
+   with `log_fail("installer combined" / "msi combined",
+   "oversized .exe (>=80 MiB, likely Debug build): … — rebuild
+   Release")`. The cap sits well above a Release client (12-13 MiB
+   + Qt runtime DLLs alongside, not inside the .exe) and well below
+   any plausible Debug build.
+2. **`.debug_info` section cap** — `objdump -h <exe>` parsed; the
+   `.debug_info` section size must be < 1 MiB. Release mingw .exes
+   ship ~100 KiB of `.debug_info` from MXE's statically-linked
+   runtime libs (libgcc / libstdc++ / libwinpthread, retained by
+   MXE); a `-g` build of CatchChallenger sources produces tens to
+   hundreds of MiB. 1 MiB is the discriminator.
+
+Both guards fail-fast before NSIS / WiX runs, so a Debug-by-accident
+build never reaches the shipping artefact name and never gets
+uploaded by `publish_binaries.sh`.
+
 ## Cross-platform client phases (testingclient.py)
 
 Three optional client phases at end of `testingclient.py`, all use **local Linux `server-filedb`**. Server/tools NOT cross-compiled.

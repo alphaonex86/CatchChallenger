@@ -107,8 +107,12 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
         qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
     #if defined(CATCHCHALLENGER_SOLO)
-    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
-                              "/datapack/internal/",
+    // Prefer <app>/datapack/internal/ (per-server runtime cache),
+    // fall back to <app>/datapack/ (installer-bundled flat layout).
+    std::string soloDatapackPath=QCoreApplication::applicationDirPath().toStdString()+"/datapack/internal/";
+    if(!QDir(QString::fromStdString(soloDatapackPath)).exists())
+        soloDatapackPath=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
+    solowindow=new SoloWindow(this,soloDatapackPath,
                               QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString()+
                               "/savegames/",false);
     if(!connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back))
@@ -2252,7 +2256,11 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
 {
     resetAll();
 
-    const QString &datapackPath=QCoreApplication::applicationDirPath()+"/datapack/internal/";
+    // Prefer <app>/datapack/internal/ (per-server runtime cache),
+    // fall back to <app>/datapack/ (installer-bundled flat layout).
+    QString datapackPath=QCoreApplication::applicationDirPath()+"/datapack/internal/";
+    if(!QDir(datapackPath).exists())
+        datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
 
     if(socket!=NULL)
     {

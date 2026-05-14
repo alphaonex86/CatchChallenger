@@ -98,6 +98,11 @@ set(_server_gui_sources
 # wrapper to expose the binary in its Project tree as a "Qt Application"
 # (deployment / icon / Run-config working dir all light up).  Falls back
 # to add_executable on older Qt or non-Qt cmake.
+if(WIN32)
+    list(APPEND _server_gui_sources
+        ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources-windows.rc)
+endif()
+
 if(COMMAND qt_add_executable)
     qt_add_executable(catchchallenger-server-gui ${_server_gui_sources})
 else()
@@ -109,6 +114,14 @@ set_target_properties(catchchallenger-server-gui PROPERTIES
     AUTOUIC ON
     AUTORCC ON
 )
+
+# WIN32_EXECUTABLE → mingw linker `-mwindows`. The server-gui IS a
+# Qt Widgets application; without the WINDOWS subsystem, Windows opens
+# a console window every time the operator launches it.
+if(WIN32)
+    set_target_properties(catchchallenger-server-gui PROPERTIES
+        WIN32_EXECUTABLE TRUE)
+endif()
 
 target_compile_definitions(catchchallenger-server-gui PRIVATE
     # Light up the live-stats / log-capture surfaces in

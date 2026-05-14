@@ -105,7 +105,25 @@ if(CATCHCHALLENGER_BUILD_QTCPU800X600_SINGLEPLAYER)
     )
 endif()
 
+# Windows-only resource script: embeds icon.ico into the .exe so the
+# Explorer / taskbar icon comes from the bundled .ico (resolved by
+# the linker via mingw's windres). The .rc file is added as a normal
+# source — CMake's RC language wires up windres on MinGW automatically
+# once the source has the .rc extension.
+if(WIN32)
+    list(APPEND _qtcpu_sources
+        ${CMAKE_CURRENT_SOURCE_DIR}/base/resources/resources-windows.rc)
+endif()
+
 add_executable(catchchallenger800x600 ${_qtcpu_sources} ${_qtcpu_resources})
+
+# WIN32_EXECUTABLE picks the WINDOWS subsystem instead of CONSOLE for
+# the mingw linker (`-mwindows`). Without it, double-clicking the
+# .exe on Windows spawns a console window alongside the Qt GUI.
+if(WIN32)
+    set_target_properties(catchchallenger800x600 PROPERTIES
+        WIN32_EXECUTABLE TRUE)
+endif()
 
 # Match the qmake-era output filename so tests / configs that exec
 # `<build>/catchchallenger` keep working after the qmake -> CMake migration.

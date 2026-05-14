@@ -528,7 +528,10 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     # leftover server from another test (false PASS) or fail spuriously.
     # Local-only — see CLAUDE.md "Network …": exec_nodes can't NEW-
     # dial back to the test box; the multi clients run here anyway.
-    if "--autosolo" not in args:
+    # --server / --url select a server-list entry (live remote); --host
+    # is absent so the localhost probe would always fail. Skip the probe
+    # in those cases — connectivity is verified by the client itself.
+    if "--autosolo" not in args and "--server" not in args and "--url" not in args:
         host, port = _host_port_from_args(args)
         if not assert_port_or_fail(host, port, log_fail, label):
             # Show what the server emitted between "correctly bind:"
@@ -1336,6 +1339,36 @@ def main():
                     log_fail(name, detail)
                 ri += 1
             ni += 1
+
+    # ═══════════════════════════════════════════════════════════════
+    # 7. LIVE — qtopengl → "Official CatchChallenger server"
+    # Pulls the server entry from the embedded default_server_list.xml,
+    # so no --host/--port: --server selects it by name. PASS = client
+    # gets all the way to MapVisualiserPlayer::mapDisplayedSlot().
+    # Skipped (not failed) when the live host isn't reachable — this
+    # test depends on the public internet, not on the local build.
+    # ═══════════════════════════════════════════════════════════════
+    live_label = "qtopengl -> Official CatchChallenger server"
+    if gl_ok and should_run(live_label, failed_cases):
+        print(f"\n{C_CYAN}--- Live: {live_label} ---{C_RESET}\n")
+        import socket as _socket
+        live_host = "cc-server.herman-brule.com"
+        live_port = 42489
+        reachable = False
+        try:
+            with _socket.create_connection((live_host, live_port), timeout=5):
+                reachable = True
+        except OSError as exc:
+            log_info(f"skipping {live_label}: {live_host}:{live_port} unreachable ({exc})")
+        if reachable:
+            run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                       ["--server", "Official CatchChallenger server",
+                        "--autologin",
+                        "--character", "TestPlayerLive",
+                        "--closewhenonmap"],
+                       live_label,
+                       timeout=60,
+                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
 
     # ═══════════════════════════════════════════════════════════════
     # WINDOWS / macOS / ANDROID cross-compile + run phases used to live

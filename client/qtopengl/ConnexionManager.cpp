@@ -346,7 +346,13 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
     #if defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_SOLO)
     QDir datapack;
     if(fakeSocket!=nullptr)
+    {
+        // Prefer <app>/datapack/internal/ (per-server runtime cache);
+        // fall back to <app>/datapack/ (installer-bundled flat layout).
         datapack=QDir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"));
+        if(!datapack.exists())
+            datapack=QDir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
+    }
     else
         datapack=QDir(serverToDatapachPath(connexionInfo));
     #else
