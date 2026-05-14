@@ -3,6 +3,7 @@
 #include "../base/LanguagesSelect.h"
 #include "../base/AutoArgs.h"
 #include "../../libqtcatchchallenger/LocalListener.hpp"
+#include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include <iostream>
 #include <cstdlib>
@@ -19,7 +20,21 @@ int main(int argc, char *argv[])
     // testingcompilationwindows otherwise flaps on every
     // random-frame draw.
     if(!AutoArgs::takeScreenshotPath.isEmpty())
+    {
         std::srand(42);
+        // Mirror AutoArgs::takeScreenshotPath into the shared-lib's
+        // CliClientOptions::takeScreenshotPath. The shared
+        // MapVisualiser/MapController code only knows about
+        // CliClientOptions, so without this the follower-NPC
+        // animation timers in MapVisualiser-map.cpp:258 still get
+        // created and tile-cycle the sprite between paint() and
+        // grab(), producing a ~0.83 % per-pixel drift at the player
+        // sprite + follower NPC coords (x=172..243, y=226..315) on
+        // every run. Same gate also forces bot lookAt
+        // "random"/"loop"/"move" to "bottom" in MapController.cpp:281
+        // for deterministic facing.
+        CliClientOptions::takeScreenshotPath=AutoArgs::takeScreenshotPath;
+    }
     QApplication a(argc, argv);
     a.setApplicationName("client-qtcpu800x600");
     a.setOrganizationName("CatchChallenger");

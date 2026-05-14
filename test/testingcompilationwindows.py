@@ -1873,17 +1873,55 @@ def main():
     cpu_exe  = None
     gl_exe   = None
     srv_exe  = None
-    if should_run("compile qtcpu800x600 (mxe-x86_64)", failed_cases):
+    # Transitive compile: --onlyfailed may queue a downstream test
+    # (wine run, screenshot, installer) without queuing the compile
+    # row itself. The previous run's post-success sweep wipes
+    # /mnt/data/perso/tmpfs/cc-build/, so find_built_exe() then
+    # returns None and every dependent test silently no-ops with
+    # "0 passed, 0 failed". Force the compile when any downstream
+    # case for that binary is queued.
+    def _needs_compile(binary, failed_cases):
+        if failed_cases is None:
+            return True
+        dependents = {
+            "qtcpu800x600": ["compile qtcpu800x600 (mxe-x86_64)",
+                             "wine run qtcpu800x600 --autosolo",
+                             "wine run qtcpu800x600",
+                             "wine screenshot qtcpu800x600 (start)",
+                             "wine screenshot qtcpu800x600 (autosolo)",
+                             "sign exe qtcpu800x600",
+                             "installer combined", "msi combined",
+                             "sign installer combined"],
+            "qtopengl":     ["compile qtopengl (mxe-x86_64)",
+                             "wine run qtopengl --autosolo",
+                             "wine run qtopengl",
+                             "wine screenshot qtopengl (start)",
+                             "wine screenshot qtopengl (autosolo)",
+                             "sign exe qtopengl",
+                             "installer combined", "msi combined",
+                             "sign installer combined"],
+            "server-gui":   ["compile server-gui (mxe-x86_64)",
+                             "installer combined", "msi combined",
+                             "sign installer combined"],
+        }
+        idx = 0
+        names = dependents[binary]
+        while idx < len(names):
+            if names[idx] in failed_cases:
+                return True
+            idx += 1
+        return False
+    if _needs_compile("qtcpu800x600", failed_cases):
         cpu_exe = build_mxe_client(CLIENT_CPU_PRO, CLIENT_CPU_BUILD_WIN,
                                    "qtcpu800x600")
     else:
         cpu_exe = find_built_exe(CLIENT_CPU_BUILD_WIN)
-    if should_run("compile qtopengl (mxe-x86_64)", failed_cases):
+    if _needs_compile("qtopengl", failed_cases):
         gl_exe = build_mxe_client(CLIENT_GL_PRO, CLIENT_GL_BUILD_WIN,
                                   "qtopengl")
     else:
         gl_exe = find_built_exe(CLIENT_GL_BUILD_WIN)
-    if should_run("compile server-gui (mxe-x86_64)", failed_cases):
+    if _needs_compile("server-gui", failed_cases):
         srv_exe = build_mxe_client(SERVER_GUI_PRO, SERVER_GUI_BUILD_WIN,
                                    "server-gui")
     else:
