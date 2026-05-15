@@ -427,14 +427,20 @@ def _parse_wall(s):
 def measure_perf_stat(cmd, env=None, timeout=None):
     """perf stat -e cycles,instructions,branch-misses,cache-misses
     -> dict; None when perf is unavailable or kernel.perf_event_paranoid
-    blocks the user-space counters."""
+    blocks the user-space counters.
+
+    Note: when the wrapped command exits non-zero (e.g. `timeout 30 X`
+    that timed-out returns 124, or a Qt app that exits on SIGINT
+    returns 128+SIGINT=130), perf STILL writes the counter lines to
+    stderr before propagating the rc. The early-return on rc!=0 was
+    therefore discarding good data on every `timeout`-wrapped run --
+    parse the events regardless and only fail when stderr was empty
+    or unparseable."""
     if not have_tool("perf"):
         return None
     full = ["perf", "stat", "-x", ",", "-e",
             "cycles,instructions,branch-misses,cache-misses"] + list(cmd)
     rc, _, err, _ = run_capture(full, env=env, timeout=timeout)
-    if rc != 0:
-        return None
     out = {}
     for line in err.splitlines():
         f = line.split(",")
