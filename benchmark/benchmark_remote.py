@@ -291,12 +291,15 @@ def remote_time_v(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
 def remote_perf_stat(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
     """Run `perf stat -x , -e <events> <cmd>` on the exec node, parse
     the CSV output. Returns event->value dict or None when perf is
-    unavailable / kernel.perf_event_paranoid blocks the user."""
+    unavailable / kernel.perf_event_paranoid blocks the user.
+
+    Mirrors measure_perf_stat() in benchmark_helpers: a non-zero rc
+    from the wrapped command (timeout 124, SIGINT-exit 130) does not
+    invalidate the counters perf already wrote to stderr -- parse
+    them regardless and fail only on empty / unparseable output."""
     full = ("perf stat -x , "
             "-e cycles,instructions,branch-misses,cache-misses " + cmd_str)
     rc, _sout, serr = run_remote_cmd(exec_node, full, timeout=timeout)
-    if rc != 0:
-        return None
     out = {}
     for line in serr.splitlines():
         f = line.split(",")
