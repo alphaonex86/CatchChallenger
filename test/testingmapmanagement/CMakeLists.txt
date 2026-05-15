@@ -70,11 +70,11 @@ target_include_directories(testmapvisibility PRIVATE
     ${CC_REPO_ROOT}
 )
 
-# CATCHCHALLENGER_TESTING enables (a) Stubs.hpp injection at the top of
-# the production server-side .cpp files we compile, AND (b) the
-# [BRANCH] trace prints inside those .cpp files that
-# testingmapmanagement.py harvests from stdout. Production never sets
-# the flag — branches are gone.
+# CATCHCHALLENGER_TESTING enables Stubs.hpp injection at the top of
+# the production server-side .cpp files we compile here, plus a
+# handful of assertXYInRange() coordinate sanity checks scattered
+# through MapVisibilityAlgorithm.cpp. Production never sets the
+# flag — those checks are compiled out entirely.
 #
 # CATCHCHALLENGER_HARDENED matches the test/all.sh contract: every
 # testing*.py binary compiles with HARDENED ON.

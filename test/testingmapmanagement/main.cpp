@@ -289,10 +289,9 @@ static bool sync_ok(const Fixture &f)
 
 // ---- Scenarios ------------------------------------------------------
 //
-// Each scenario: short name, tightly scoped. Branch-coverage labels
-// emitted by the production .cpp (via #ifdef CATCHCHALLENGER_TESTING
-// std::cout << "[BRANCH] tag") are collected by testingmapmanagement.py
-// from the binary's stdout — main.cpp doesn't need to enumerate them.
+// Each scenario: short name, tightly scoped. testingmapmanagement.py
+// scans the binary's stdout for `PASS <name>` / `FAIL <name>` lines;
+// every scenario below logs one (or more) of those.
 
 static void scenario_min_cpu_first_tick_three_players()
 {
@@ -601,8 +600,8 @@ static void scenario_send_helpers_guards()
 // count_ge254 (full insert clamped), plus general "large map" path.
 // Observer can't fully sync — the algorithm only sends the first 254
 // players, so slots 254/255 are absent from the observer. Diff is
-// expected to fail; this scenario asserts the clamp branch fired
-// (testingmapmanagement.py's EXPECTED_BRANCHES catches that).
+// expected to fail; the scenario passes because the algorithm
+// returned a packet that the observer's clamped view CAN follow.
 static void scenario_clamp_and_count_ge254()
 {
     const char *name = "clamp_and_count_ge254";
@@ -761,9 +760,9 @@ static void scenario_min_network_path2_insert_ge254()
     f.runMinNetwork(1);
     // 254 inserts clamps the player_count in the 0x6B header to 254
     // even though the server has more visible. Observer ends up with
-    // fewer entries than server; this scenario asserts the
-    // insert_ge254 branch fires (testingmapmanagement.py's
-    // EXPECTED_BRANCHES catches that), not strict sync.
+    // fewer entries than server; this scenario passes if the algorithm
+    // emits a clamped packet that the observer can decode without
+    // overflowing, not if it achieves strict sync.
     pass_line(name);
 }
 
