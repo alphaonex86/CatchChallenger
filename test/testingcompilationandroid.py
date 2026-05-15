@@ -642,7 +642,17 @@ def start_android_emulator():
     log_info(f"starting emulator: {ANDROID_EMULATOR_BIN} -avd {avd_name}")
     env = android_env()
     emu_args = [ANDROID_EMULATOR_BIN, "-avd", avd_name,
+                # -no-window  : no host display (already off in
+                #               android_env's forward list anyway)
+                # -no-audio   : the guest sees no audio device, so Qt
+                #               audio init silently fails without
+                #               touching the host sound stack
+                # -no-snapshot: ignore any cached state; every run is
+                #               cold-boot, deterministic
+                # -no-boot-anim: skip the Android boot animation (saves
+                #               ~10-20 s of cold-boot wall time)
                 "-no-window", "-no-audio", "-no-snapshot",
+                "-no-boot-anim",
                 "-gpu", "swiftshader_indirect"]
     diagnostic.record_cmd(emu_args, None)
     proc = subprocess.Popen(

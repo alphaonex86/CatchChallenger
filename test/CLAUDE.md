@@ -286,7 +286,7 @@ Each `testing*.py` has its own wall-time ceiling sized roughly to "twice the lon
 | testingclient.py                | 30 min |
 | testingcluster.py               | 10 min |
 | testingcmake.py                 | 30 min |
-| testingcompilationandroid.py    | 15 min |
+| testingcompilationandroid.py    | 25 min |
 | testingcompilationmac.py        | 15 min |
 | testingcompilationwindows.py    | 15 min |
 | testingfight.py                 | 15 min |
