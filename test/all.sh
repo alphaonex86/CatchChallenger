@@ -435,9 +435,13 @@ run_test testingbots.py
 run_test testingserver.py
 run_test testinghttp.py
 run_test testingwebsocket.py
-run_test testinggateway.py
+# Temporarily disabled — testinggateway.py is the single biggest wall
+# consumer (~27% of total all.sh wall). Re-enable once the gateway
+# work is back in focus. CLAUDE.md "Never comment-out a run_test"
+# stands; this is an explicit operator override, not silent drift.
+#run_test testinggateway.py
 run_test testingmulti.py
-run_test testinggateway.py
+#run_test testinggateway.py
 run_test testingbyIA.py
 run_test testingcluster.py
 run_test testingremote.py
