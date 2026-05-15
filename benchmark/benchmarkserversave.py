@@ -109,8 +109,10 @@ def setup_run_dir(bin_path):
     # datapack symlink (symlinks here are runtime artefacts in tmpfs --
     # NOT in the source repo, so the "no symlinks in repo" rule is fine).
     os.symlink(DATAPACK_PATH, os.path.join(RUN_DIR, "datapack"))
-    # Minimal server-properties.xml. mainDatapackCode + subDatapackCode
-    # match the upstream defaults shipped in CatchChallenger-datapack.
+    # Pick a maincode that actually exists in the datapack (server's
+    # CommonSettingsServer regex requires ^[a-z0-9]+$ — brackets break
+    # it). Prefer "test" when present (small map set, fastest parse).
+    maincode = _detect_maincode(DATAPACK_PATH)
     xml = os.path.join(RUN_DIR, "server-properties.xml")
     with open(xml, "w") as f:
         f.write(
@@ -124,12 +126,29 @@ def setup_run_dir(bin_path):
             '        <external-server-port value="61920"/>\n'
             '    </master>\n'
             '    <content>\n'
-            '        <mainDatapackCode value="[main]"/>\n'
-            '        <subDatapackCode value="[main]"/>\n'
+            f'        <mainDatapackCode value="{maincode}"/>\n'
+            '        <subDatapackCode value=""/>\n'
             '    </content>\n'
             '</configuration>\n'
         )
     return dst_bin
+
+
+def _detect_maincode(datapack_src):
+    """Pick a maincode from `datapack/map/main/`. Prefer "test" (small
+    map set) for benchmark speed; fall back to the first alphabetical
+    maincode otherwise. Mirrors test/remote_build.py:_detect_maincode."""
+    map_main = os.path.join(datapack_src, "map", "main")
+    if not os.path.isdir(map_main):
+        return "test"
+    entries = sorted(os.listdir(map_main))
+    for e in entries:
+        if e == "test" and os.path.isdir(os.path.join(map_main, e)):
+            return "test"
+    for e in entries:
+        if os.path.isdir(os.path.join(map_main, e)):
+            return e
+    return "test"
 
 
 def cleanup_save_artifacts():
@@ -161,9 +180,12 @@ def cell_run(bin_path_in_runfir, profiler):
             if t["max_rss_kb"] is not None: rss_samples.append(t["max_rss_kb"])
             if t["user_s"]    is not None: user_samples.append(t["user_s"])
             if t["sys_s"]     is not None: sys_samples.append(t["sys_s"])
-            cache = os.path.join(os.path.dirname(bin_path_in_runfir), "datapack-cache.bin.tmp")
-            if os.path.isfile(cache):
-                cache_size = os.path.getsize(cache)
+            cache_dir = os.path.dirname(bin_path_in_runfir)
+            for name in ("datapack-cache.bin.tmp", "datapack-cache.bin"):
+                p = os.path.join(cache_dir, name)
+                if os.path.isfile(p):
+                    cache_size = os.path.getsize(p)
+                    break
         for name, samples in (("wall_s", wall_samples), ("user_s", user_samples),
                               ("sys_s", sys_samples), ("max_rss_kb", rss_samples)):
             med, std = bh.stats_of(samples)
@@ -227,13 +249,19 @@ def main():
 
     arch = bh.host_arch()
     nodes = [{"label": "local", "arch": arch}] + bh.benchmark_exec_nodes()
-    profilers = ["rusage", "binary-size"]
-    if bh.have_tool("perf"):
-        profilers.append("perf-stat")
-    if bh.have_tool("valgrind") and bh.have_tool("callgrind_annotate"):
-        profilers.append("callgrind")
+    all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
 
-    total = len(nodes) * len(profilers)
+    # Pre-resolve per-node profiler availability against the persisted
+    # benchmark_disabled_tools list + a live runtime probe. Missing tools
+    # may prompt the operator once (and the answer is persisted).
+    node_profilers = {}
+    node_skips     = {}
+    for node in nodes:
+        avail, skips = bh.profilers_runnable_on(node, all_profilers)
+        node_profilers[node["label"]] = avail
+        node_skips[node["label"]]     = skips
+
+    total = sum(len(all_profilers) for _ in nodes)
     progress = bh.Progress(total)
 
     batch_id    = hr.new_batch_id()
@@ -245,22 +273,29 @@ def main():
     flat_local = {}
     per_tool   = {}    # node_label -> { tool -> {status, metrics} }
     for node in nodes:
-        if node["label"] != "local":
-            for prof in profilers:
-                progress.emit(prof, "no", node["label"], status="SKIP",
+        label = node["label"]
+        per_tool[label] = {}
+        if label != "local":
+            for prof in all_profilers:
+                progress.emit(prof, "no", label, status="SKIP",
                               extra="remote-dispatch-not-wired")
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
             continue
-        per_tool[node["label"]] = {}
-        for prof in profilers:
+        for prof in all_profilers:
+            if prof not in node_profilers[label]:
+                reason = node_skips[label].get(prof, "tool-missing")
+                progress.emit(prof, "no", label, status="SKIP", extra=reason)
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+                continue
             cell = cell_run(run_bin, prof)
             if cell is None:
-                progress.emit(prof, "no", node["label"], status="FAIL")
-                per_tool[node["label"]][prof] = {"status": "FAIL", "metrics": {}}
+                progress.emit(prof, "no", label, status="FAIL")
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
                 continue
             flat_local.update(cell)
-            progress.emit(prof, "no", node["label"], status="PASS")
-            per_tool[node["label"]][prof] = {"status": "PASS",
-                                             "metrics": _flat_to_metric_block(cell)}
+            progress.emit(prof, "no", label, status="PASS")
+            per_tool[label][prof] = {"status": "PASS",
+                                     "metrics": _flat_to_metric_block(cell)}
 
     sha = bh.git_sha()
     rec = {

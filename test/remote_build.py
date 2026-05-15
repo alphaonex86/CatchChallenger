@@ -83,6 +83,11 @@ _REQUIRED_EXEC_NODE_KEYS = (
     # can verify correctness every commit and still be too noisy
     # to host benchmarks.
     "benchmark",
+    # Per-exec-node "tool blacklist" for the benchmark harness:
+    # missing tools detected interactively get appended here so the
+    # next batch skips the matching cells without re-prompting.
+    # Default []. See benchmark/CLAUDE.md "Runtime tool detection".
+    "benchmark_disabled_tools",
 )
 
 
