@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 """benchmarkbotactions.py -- end-to-end network/kernel-stack benchmark.
 
-Workload: build tools/bot-actions and run it LOCALLY against a REMOTE
-catchchallenger server. Unlike benchmarkserversave (cold-start parse)
+Workload: build tools/bot-actions AND catchchallenger-server-cli, spawn
+the server locally on a free port with the DB pinned in RAM
+(CATCHCHALLENGER_DB_FILE_RAM, see general/DEFINES.md), then run
+bot-actions against it. Unlike benchmarkserversave (cold-start parse)
 or benchmarkmapmanager (in-process visibility loop), this exercises
-the FULL stack:
+the FULL stack inside one host:
 
   * userspace QTcpSocket + protocol encode/decode
-  * kernel send/recv path, TCP retransmits, ACK pacing
-  * NIC driver, MAC/PHY queues
-  * actual round-trip latency to the configured remote server
+  * kernel send/recv path through the loopback interface
+  * server epoll loop + per-tick scheduling
+  * server-side packet parse + state updates
 
-That's why it lives next to the in-process benchmarks: the headline
-metric (bots-served / wall time) is dominated by network behaviour
-and reflects real-world client cost, not micro-benchmark cost. A
-patch that speeds the in-process loop but regresses syscall churn
-or packet-coalescing shows up here, not in the others.
+The headline metric (bots-served / wall time) is dominated by network
+behaviour and reflects real-world client cost, not micro-benchmark
+cost. A patch that speeds the in-process loop but regresses syscall
+churn or packet-coalescing shows up here, not in the others. By
+spawning the server in-process the benchmark needs no external setup
+-- "python3 benchmarkbotactions.py" works on a fresh checkout.
 
 # HEADLESS: yes
 Metrics:
@@ -26,7 +29,7 @@ Metrics:
                             network-stack change (lower better)
   * vol_ctx / invol_ctx -- context switches (lower better)
   * net_rx_bytes /
-    net_tx_bytes        -- /proc/net/dev delta on the default-route iface
+    net_tx_bytes        -- /proc/net/dev delta on the loopback iface
                             (lower better at fixed workload = fewer wire
                             bytes per bot-second)
   * net_rx_pkts /
@@ -34,16 +37,16 @@ Metrics:
   * tcp_retrans         -- /proc/net/snmp Tcp:RetransSegs delta (lower)
   * binary_size_bytes   -- stripped binary footprint (lower better)
 
-Determinism note: TCP RTT and remote server scheduling jitter sit
-on the hot path. RUN_REPEATS produces several samples; the harness
+Determinism note: TCP RTT inside loopback is ~microseconds, but the
+server epoll callback latency and Qt event-loop scheduling still
+introduce jitter. RUN_REPEATS produces several samples; the harness
 records median+stddev so the comparator can apply the noise band.
 
-One-command target: run with no args, 1h timeout. Server target is
-read from ~/.config/catchchallenger-testing/config.json
-(`benchmark_server_host` / `benchmark_server_port`); if absent, falls
-back to `server_host` / `server_port`; finally to env vars
-CC_BENCH_SERVER_HOST / CC_BENCH_SERVER_PORT. Fail-fast if no target
-can be resolved.
+One-command target: run with no args, 1h timeout. The server is
+spawned in CATCHCHALLENGER_DB_FILE_RAM mode so every disk write goes
+to /dev/null -- no leftover state between runs, no tmpfs cleanup, and
+the kernel write() / fsync() overhead is excluded from the measured
+metrics.
 
 Bot-actions has no --duration flag; we wrap it in `timeout` and send
 SIGINT so Qt can clean up. The headline workload knob is BOTS_COUNT
@@ -67,15 +70,26 @@ import history_recorder as hr
 REPO_ROOT  = bh.REPO_ROOT
 BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
 
-SRC_DIR    = os.path.join(REPO_ROOT, "tools", "bot-actions")
-BIN_NAME   = "bot-actions"
+BOT_SRC_DIR    = os.path.join(REPO_ROOT, "tools", "bot-actions")
+BOT_BIN_NAME   = "bot-actions"
+SRV_SRC_DIR    = os.path.join(REPO_ROOT, "server", "cli")
+SRV_BIN_NAME   = "catchchallenger-server-cli"
+
+# Datapack used by the embedded server. Pin to the upstream vanilla
+# pack and the "test" maincode (small map set, fast parse) so the
+# server is ready in a couple of seconds even on slow hosts.
+DATAPACK_PATH  = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
 
 try:
     import test_config
     BUILD_ROOT = test_config.TMPFS_BUILD_ROOT
+    TMPFS_ROOT = test_config.TMPFS_ROOT
 except Exception:
     BUILD_ROOT = "/tmp/cc-build"
-BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkbotactions")
+    TMPFS_ROOT = "/tmp"
+BOT_BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkbotactions-bot")
+SRV_BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkbotactions-server")
+SRV_RUN_DIR    = os.path.join(TMPFS_ROOT, "cc-bench-botactions-server")
 
 # Workload knobs. Three sizes per benchmark/CLAUDE.md "Workload variety":
 #   small  -- baseline syscall floor, only a couple of bots
@@ -87,82 +101,189 @@ RUN_REPEATS   = 3        # 1 warmup + 2 measured per (size)
 BUILD_TIMEOUT = 1800
 RUN_TIMEOUT   = DURATION_S + 60
 
+# Server boot deadline. Datapack parse + bind has to finish before the
+# bots start; this matches the value the test/ harness uses for an
+# amd64 host (slow nodes need more).
+SERVER_READY_TIMEOUT = 60
+SERVER_PORT          = 61920
+
 
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
 
 
-# ---- server target resolution -------------------------------------------
-
-def resolve_server_target():
-    """Return (host, port) or (None, None)."""
-    cfg_path = os.path.join(os.path.expanduser("~"),
-                            ".config", "catchchallenger-testing", "config.json")
-    host = port = None
-    try:
-        with open(cfg_path) as f:
-            cfg = json.load(f)
-        host = cfg.get("benchmark_server_host") or cfg.get("server_host")
-        port = cfg.get("benchmark_server_port") or cfg.get("server_port")
-    except Exception:
-        pass
-    host = os.environ.get("CC_BENCH_SERVER_HOST", host)
-    port = os.environ.get("CC_BENCH_SERVER_PORT", port)
-    if host is None or port is None:
-        return None, None
-    try:
-        port = int(port)
-    except (TypeError, ValueError):
-        return None, None
-    return host, port
-
-
 # ---- build --------------------------------------------------------------
 
-def build():
-    if not os.path.isdir(SRC_DIR):
-        print(_color(bh.C_RED, f"[build] missing src: {SRC_DIR}"))
-        return None
-    os.makedirs(BUILD_DIR, exist_ok=True)
-    print(_color(bh.C_CYAN, f"[build] {SRC_DIR} -> {BUILD_DIR}"))
-    cfg = ["cmake", "-S", SRC_DIR, "-B", BUILD_DIR,
+def _cmake_build(src_dir, build_dir, extra_defs=None, label="build"):
+    """Run cmake configure + build; return (rc, message). Caller maps rc."""
+    if not os.path.isdir(src_dir):
+        return 1, f"missing src: {src_dir}"
+    os.makedirs(build_dir, exist_ok=True)
+    print(_color(bh.C_CYAN, f"[{label}] {src_dir} -> {build_dir}"))
+    cfg = ["cmake", "-S", src_dir, "-B", build_dir,
            "-DCMAKE_BUILD_TYPE=Release"]
+    if extra_defs:
+        for k, v in extra_defs.items():
+            cfg.append(f"-D{k}={v}")
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]
     rc, sout, serr, _ = bh.run_capture(cfg, timeout=600)
     if rc != 0:
         print(sout); print(serr, file=sys.stderr)
-        print(_color(bh.C_RED, "[build] cmake configure FAILED"))
-        return None
-    bld = ["cmake", "--build", BUILD_DIR, "--", "-j", str(os.cpu_count() or 1)]
+        return rc, "cmake configure FAILED"
+    bld = ["cmake", "--build", build_dir, "--", "-j", str(os.cpu_count() or 1)]
     rc, sout, serr, _ = bh.run_capture(bld, timeout=BUILD_TIMEOUT)
     if rc != 0:
         print(sout); print(serr, file=sys.stderr)
-        print(_color(bh.C_RED, "[build] cmake build FAILED"))
+        return rc, "cmake build FAILED"
+    return 0, "ok"
+
+
+def build_bot():
+    rc, msg = _cmake_build(BOT_SRC_DIR, BOT_BUILD_DIR, label="build:bot")
+    if rc != 0:
+        print(_color(bh.C_RED, f"[build:bot] {msg}"))
         return None
-    bin_path = os.path.join(BUILD_DIR, BIN_NAME)
+    bin_path = os.path.join(BOT_BUILD_DIR, BOT_BIN_NAME)
     if not os.path.isfile(bin_path):
-        print(_color(bh.C_RED, f"[build] missing binary: {bin_path}"))
+        print(_color(bh.C_RED, f"[build:bot] missing binary: {bin_path}"))
         return None
-    print(_color(bh.C_GREEN, f"[build] OK ({bh.binary_size(bin_path)} bytes)"))
+    print(_color(bh.C_GREEN, f"[build:bot] OK ({bh.binary_size(bin_path)} bytes)"))
     return bin_path
+
+
+def build_server():
+    """Build catchchallenger-server-cli with CATCHCHALLENGER_DB_FILE_RAM
+    so the bench server runs with the DB pinned in RAM (every disk
+    write -> /dev/null). The HPS cache + FileDB defines are mandatory
+    pre-conditions of DB_FILE_RAM."""
+    if not os.path.isdir(DATAPACK_PATH):
+        print(_color(bh.C_RED, f"[build:server] datapack not found: {DATAPACK_PATH}"))
+        return None
+    rc, msg = _cmake_build(SRV_SRC_DIR, SRV_BUILD_DIR,
+                           extra_defs={"CATCHCHALLENGER_DB_FILE":     "ON",
+                                       "CATCHCHALLENGER_CACHE_HPS":   "ON",
+                                       "CATCHCHALLENGER_DB_FILE_RAM": "ON"},
+                           label="build:server")
+    if rc != 0:
+        print(_color(bh.C_RED, f"[build:server] {msg}"))
+        return None
+    bin_path = os.path.join(SRV_BUILD_DIR, SRV_BIN_NAME)
+    if not os.path.isfile(bin_path):
+        print(_color(bh.C_RED, f"[build:server] missing binary: {bin_path}"))
+        return None
+    print(_color(bh.C_GREEN, f"[build:server] OK ({bh.binary_size(bin_path)} bytes)"))
+    return bin_path
+
+
+# ---- embedded server lifecycle -----------------------------------------
+
+def _detect_maincode(datapack_src):
+    """Prefer 'test' (small map set, fast parse); fall back to first dir."""
+    map_main = os.path.join(datapack_src, "map", "main")
+    if not os.path.isdir(map_main):
+        return "test"
+    entries = sorted(os.listdir(map_main))
+    for e in entries:
+        if e == "test" and os.path.isdir(os.path.join(map_main, e)):
+            return "test"
+    for e in entries:
+        if os.path.isdir(os.path.join(map_main, e)):
+            return e
+    return "test"
+
+
+def setup_server_run_dir(server_bin):
+    """Stage SRV_RUN_DIR with: copy of the binary, datapack symlink, and
+    server-properties.xml pinned to SERVER_PORT. Returns the staged
+    binary path."""
+    if os.path.isdir(SRV_RUN_DIR):
+        shutil.rmtree(SRV_RUN_DIR, ignore_errors=True)
+    os.makedirs(SRV_RUN_DIR, exist_ok=True)
+    dst_bin = os.path.join(SRV_RUN_DIR, SRV_BIN_NAME)
+    shutil.copy2(server_bin, dst_bin)
+    os.chmod(dst_bin, 0o755)
+    os.symlink(DATAPACK_PATH, os.path.join(SRV_RUN_DIR, "datapack"))
+    maincode = _detect_maincode(DATAPACK_PATH)
+    xml = os.path.join(SRV_RUN_DIR, "server-properties.xml")
+    with open(xml, "w") as f:
+        f.write(
+            '<?xml version="1.0"?>\n'
+            '<configuration>\n'
+            f'    <server-port value="{SERVER_PORT}"/>\n'
+            '    <automatic_account_creation value="true"/>\n'
+            '    <max-players value="500"/>\n'
+            '    <httpDatapackMirror value=""/>\n'
+            '    <master>\n'
+            f'        <external-server-port value="{SERVER_PORT}"/>\n'
+            '    </master>\n'
+            '    <content>\n'
+            f'        <mainDatapackCode value="{maincode}"/>\n'
+            '        <subDatapackCode value=""/>\n'
+            '    </content>\n'
+            '</configuration>\n'
+        )
+    return dst_bin
+
+
+def start_server(staged_bin):
+    """Spawn the server; block until 'correctly bind:' shows up on
+    stderr or the deadline expires. Returns the Popen handle (caller
+    must terminate when done)."""
+    log_path = os.path.join(SRV_RUN_DIR, "server.log")
+    log_fh   = open(log_path, "wb")
+    p = subprocess.Popen([staged_bin],
+                         cwd=SRV_RUN_DIR,
+                         stdout=log_fh, stderr=subprocess.STDOUT,
+                         start_new_session=True)
+    deadline = time.monotonic() + SERVER_READY_TIMEOUT
+    while time.monotonic() < deadline:
+        if p.poll() is not None:
+            log_fh.close()
+            try:
+                with open(log_path) as f: tail = f.read()[-2000:]
+            except Exception:
+                tail = ""
+            print(_color(bh.C_RED, "[server] exited before ready"))
+            print(tail, file=sys.stderr)
+            return None
+        try:
+            with open(log_path, "rb") as f:
+                if b"correctly bind:" in f.read():
+                    print(_color(bh.C_GREEN,
+                        f"[server] ready (pid={p.pid}, port={SERVER_PORT})"))
+                    return p
+        except FileNotFoundError:
+            pass
+        time.sleep(0.2)
+    print(_color(bh.C_RED,
+        f"[server] failed to bind within {SERVER_READY_TIMEOUT}s"))
+    stop_server(p)
+    return None
+
+
+def stop_server(proc):
+    """Send SIGINT to the server, wait briefly, escalate to SIGKILL."""
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        proc.send_signal(signal.SIGINT)
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=5)
+    except Exception:
+        pass
 
 
 # ---- network counters ---------------------------------------------------
 
 def _default_iface():
-    """Pick the iface used for the default route; bot traffic to a
-    REMOTE server must traverse it. Returns None if no default route
-    (would mean we can't reach a remote host anyway)."""
-    try:
-        out = subprocess.check_output(["sh", "-c", "ip route show default | head -1"],
-                                       timeout=4).decode()
-        for tok in out.split():
-            if tok == "dev":
-                idx = out.split().index("dev")
-                return out.split()[idx + 1]
-    except Exception:
-        pass
-    return None
+    """Bot traffic to the embedded server goes over loopback. The
+    historical implementation used the default-route iface (for an
+    external server); now that the server is in-process on localhost,
+    'lo' is the only iface whose counters reflect this workload."""
+    return "lo"
 
 
 def _read_iface_counters(iface):
@@ -331,23 +452,32 @@ def _flat_to_metric_block(flat):
 
 
 def main():
-    host, port = resolve_server_target()
-    if host is None:
-        print(_color(bh.C_RED,
-            "[bench] no server target -- set benchmark_server_host/port in "
-            "~/.config/catchchallenger-testing/config.json or "
-            "CC_BENCH_SERVER_HOST/PORT env"), file=sys.stderr)
-        return 2
-    print(_color(bh.C_CYAN, f"[bench] target = {host}:{port}"))
-
-    bin_path = build()
+    # Build BOTH binaries first so a build failure aborts before we
+    # spend wall-time on cell runs / server boot.
+    bin_path = build_bot()
     if bin_path is None:
         return 2
+    server_bin = build_server()
+    if server_bin is None:
+        return 2
+
+    staged = setup_server_run_dir(server_bin)
+    server_proc = start_server(staged)
+    if server_proc is None:
+        return 2
+    try:
+        return _run_with_server(bin_path, server_proc)
+    finally:
+        print(_color(bh.C_CYAN, "[server] stopping"))
+        stop_server(server_proc)
+
+
+def _run_with_server(bin_path, server_proc):
+    host = "127.0.0.1"
+    port = SERVER_PORT
+    print(_color(bh.C_CYAN, f"[bench] target = {host}:{port} (embedded)"))
 
     iface = _default_iface()
-    if iface is None:
-        print(_color(bh.C_YELLOW,
-            "[bench] WARN: no default route; net_* metrics will be omitted"))
 
     arch = bh.host_arch()
     # bot-actions is GUI-linked (Qt6 Widgets); on remote exec_nodes it

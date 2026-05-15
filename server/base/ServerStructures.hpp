@@ -20,6 +20,35 @@
         #error for CATCHCHALLENGER_DB_BLACKHOLE you need disable: CATCHCHALLENGER_DB_MYSQL, CATCHCHALLENGER_DB_POSTGRESQL, CATCHCHALLENGER_DB_SQLITE, CATCHCHALLENGER_DB_FILE
     #endif
 #endif
+// Benchmark / test toggle: CATCHCHALLENGER_DB_FILE_RAM is an extension of
+// CATCHCHALLENGER_DB_FILE that redirects every FileDB path -- both reads
+// AND writes, plus mkdir/stat/opendir -- to a process-scoped tmpfs
+// prefix `/dev/shm/cc-server-<pid>/`. This keeps the disk untouched
+// (tmpfs is RAM-backed) while still letting the server read back data
+// it wrote a moment earlier, so a player can disconnect and reconnect
+// inside the same process and find their character/account intact. The
+// prefix is created at server startup (see main-unix.cpp under
+// CATCHCHALLENGER_DB_FILE_RAM) and recursively removed at shutdown via
+// atexit() so re-runs never see leftover state. Requires
+// CATCHCHALLENGER_DB_FILE (compile-time error otherwise). The macro is
+// the identity passthrough `(p)` in production builds -- zero overhead
+// when the flag is off. See general/DEFINES.md.
+#ifdef CATCHCHALLENGER_DB_FILE_RAM
+    #ifndef CATCHCHALLENGER_DB_FILE
+        #error CATCHCHALLENGER_DB_FILE_RAM requires CATCHCHALLENGER_DB_FILE
+    #endif
+    #include <string>
+    namespace CatchChallenger {
+        // Set once at server startup by DbFileRam::init() to
+        // "/dev/shm/cc-server-<pid>". Empty string before init.
+        extern std::string dbFileRamPrefix;
+        inline std::string dbFileRamPath(const std::string &p)
+        { return dbFileRamPrefix + "/" + p; }
+    }
+    #define CATCHCHALLENGER_DB_FILE_PATH(p) CatchChallenger::dbFileRamPath(p)
+#else
+    #define CATCHCHALLENGER_DB_FILE_PATH(p) (p)
+#endif
 
 #include <vector>
 #include <string>

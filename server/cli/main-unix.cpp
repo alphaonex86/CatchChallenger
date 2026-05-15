@@ -15,6 +15,9 @@
 //dictionary_serialBuffer and server_serialBuffer now open as DB
 #endif
 #include "../base/ServerStructures.hpp"
+#ifdef CATCHCHALLENGER_DB_FILE_RAM
+#include "../base/DbFileRam.hpp"
+#endif
 #ifndef CATCHCHALLENGER_NOXML
 #include "../base/TinyXMLSettings.hpp"
 #endif
@@ -203,6 +206,15 @@ int main(int argc, char *argv[])
     srand(static_cast<unsigned int>(time(NULL)));
 
     #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_DB_FILE_RAM
+    // RAM-only mode: route the entire database tree through a
+    // process-scoped tmpfs prefix (/dev/shm/cc-server-<pid>/). All the
+    // mkdir + read + write call sites use CATCHCHALLENGER_DB_FILE_PATH
+    // which prepends this prefix, so we don't need to mkdir the
+    // canonical "database/..." dirs in the cwd. init() builds the
+    // prefix tree; atexit cleanup removes it.
+    CatchChallenger::DbFileRam::init();
+    #else
     #ifdef _WIN32
     #define CC_MKDIR(p,m) ::_mkdir(p)
     #else
@@ -218,6 +230,7 @@ int main(int argc, char *argv[])
     CC_MKDIR("database/server/clans",0700);
     CC_MKDIR("database/server/zone",0700);
     #undef CC_MKDIR
+    #endif
     #endif
 
     #ifndef CATCHCHALLENGER_DB_BLACKHOLE
@@ -559,9 +572,9 @@ int main(int argc, char *argv[])
     #elif CATCHCHALLENGER_DB_FILE
     {
         struct stat sb;
-        if(::stat("database/server/dictionary_map",&sb)==0)
+        if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/dictionary_map")).c_str(),&sb)==0)
         {
-            BaseServer::dictionary_in_file=new std::ifstream("database/server/dictionary_map", std::ifstream::binary);
+            BaseServer::dictionary_in_file=new std::ifstream(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/dictionary_map")), std::ifstream::binary);
             if(BaseServer::dictionary_in_file->good() && BaseServer::dictionary_in_file->is_open())
                 BaseServer::dictionary_serialBuffer=new hps::StreamInputBuffer(*BaseServer::dictionary_in_file);
             else
@@ -570,27 +583,27 @@ int main(int argc, char *argv[])
                 BaseServer::dictionary_in_file=nullptr;
             }
         }
-        if(::stat("database/common/dictionary_reputation",&sb)==0)
+        if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_reputation")).c_str(),&sb)==0)
         {
-            BaseServer::dictionary_reputation_in_file=new std::ifstream("database/common/dictionary_reputation", std::ifstream::binary);
+            BaseServer::dictionary_reputation_in_file=new std::ifstream(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_reputation")), std::ifstream::binary);
             if(!BaseServer::dictionary_reputation_in_file->good() || !BaseServer::dictionary_reputation_in_file->is_open())
             {
                 delete BaseServer::dictionary_reputation_in_file;
                 BaseServer::dictionary_reputation_in_file=nullptr;
             }
         }
-        if(::stat("database/common/dictionary_skin",&sb)==0)
+        if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_skin")).c_str(),&sb)==0)
         {
-            BaseServer::dictionary_skin_in_file=new std::ifstream("database/common/dictionary_skin", std::ifstream::binary);
+            BaseServer::dictionary_skin_in_file=new std::ifstream(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_skin")), std::ifstream::binary);
             if(!BaseServer::dictionary_skin_in_file->good() || !BaseServer::dictionary_skin_in_file->is_open())
             {
                 delete BaseServer::dictionary_skin_in_file;
                 BaseServer::dictionary_skin_in_file=nullptr;
             }
         }
-        if(::stat("database/common/dictionary_starter",&sb)==0)
+        if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_starter")).c_str(),&sb)==0)
         {
-            BaseServer::dictionary_starter_in_file=new std::ifstream("database/common/dictionary_starter", std::ifstream::binary);
+            BaseServer::dictionary_starter_in_file=new std::ifstream(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_starter")), std::ifstream::binary);
             if(!BaseServer::dictionary_starter_in_file->good() || !BaseServer::dictionary_starter_in_file->is_open())
             {
                 delete BaseServer::dictionary_starter_in_file;

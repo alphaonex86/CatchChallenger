@@ -420,7 +420,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     {
         {
             #ifdef CATCHCHALLENGER_DB_FILE
-            std::ifstream in_file("database/server/server", std::ifstream::binary);
+            std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ifstream::binary);
             if(!in_file.good() || !in_file.is_open())
             {
                 GlobalServerData::serverPrivateVariables.maxClanId=0;
@@ -439,7 +439,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
             #endif
         }
         {
-            std::ofstream out_file("database/server/server", std::ofstream::binary);
+            std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
             if(!out_file.good() || !out_file.is_open())
             {
                 std::cerr << "Unable to open data base file " << "database/server/server (abort)" << std::endl;
