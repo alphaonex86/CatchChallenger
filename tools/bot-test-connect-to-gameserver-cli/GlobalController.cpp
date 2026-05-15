@@ -1,16 +1,12 @@
 #include "GlobalController.h"
 #include "../../general/base/CommonSettingsCommon.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
 
 #include <iostream>
-#include <stdlib.h>
 
 GlobalController::GlobalController(const std::string &config, QObject *parent) :
     QObject(parent),
     settings(QString::fromStdString(config),QSettings::NativeFormat)
 {
-    srand(time(NULL));
-
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
     qRegisterMetaType<std::vector<char> >("std::vector<char>");
@@ -199,23 +195,6 @@ void GlobalController::logged(CatchChallenger::Api_client_real *senderObject,
         }
 
         std::vector<CatchChallenger::CharacterEntry> characterEntryListNew=characterEntryList.at(charactersGroupIndex);
-        //delete char to test
-        if(rand()%100<20)
-        {
-            std::cout << "\e[1mdelete character triggered\e[0m" << std::endl;
-            unsigned int index=0;
-            while(index<characterEntryListNew.size())
-            {
-                const CatchChallenger::CharacterEntry &characterEntry=characterEntryListNew.at(index);
-                if(!(characterEntry.pseudo==character.toStdString() && characterEntry.charactersGroupIndex==charactersGroupIndex) && characterEntry.delete_time_left==0)
-                {
-                    std::cerr << "delete character: \"" << characterEntry.pseudo << "\"!=\"" << character.toStdString() << "\", charactersGroupIndex: " << std::to_string(characterEntry.charactersGroupIndex) << "!=" << std::to_string(charactersGroupIndex) << std::endl;
-                    api->removeCharacter(charactersGroupIndex,characterEntry.character_id);
-                    break;
-                }
-                index++;
-            }
-        }
         //select char
         unsigned int index=0;
         while(index<characterEntryListNew.size())
@@ -431,52 +410,6 @@ void GlobalController::datapackIsReady()
         }
     }
 
-    //add extra char to test (random 20%)
-    if(rand()%100<20)
-    {
-        if(char_count<CommonSettingsCommon::commonSettingsCommon.max_character)
-        {
-            CatchChallenger::Api_client_real * api=NULL;
-            QHashIterator<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> i(multipleBotConnexion.apiToCatchChallengerClient);
-            if(i.hasNext())
-            {
-                i.next();
-                api=i.value()->api;
-            }
-            else
-            {
-                qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): BUG: no api";
-                return;
-            }
-
-            if(!CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())
-                std::cerr << "CatchChallenger::CommonDatapack::commonDatapack.isParsedContent() then unable to create character" << std::endl;
-            else if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
-                std::cerr << "Profile list is empty" << std::endl;
-            else
-            {
-                std::cout << "\e[1madd character triggered\e[0m" << std::endl;
-                QFileInfoList skinsList;
-                {
-                    CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
-                    QDir dir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/skin/fighter/"));
-                    skinsList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
-                }
-
-                qDebug() << "create new character";
-                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size();
-                QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
-                uint8_t skinId;
-                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
-                if(!profile.forcedskin.empty())
-                    skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
-                else
-                    skinId=rand()%skinsList.size();
-                uint8_t monstergroupId=rand()%profile.monstergroup.size();
-                api->addCharacter(charactersGroupIndex,profileIndex,pseudo.toStdString(),monstergroupId,skinId);
-            }
-        }
-    }
 }
 
 void GlobalController::datapackMainSubIsReady()
