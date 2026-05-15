@@ -299,6 +299,156 @@ decision (KEEP / DISCARD / ESCALATE) + per-metric deltas back to
 candidate file is git-ignored except for the rare ESCALATE case the
 operator wants to preserve for discussion.
 
+## Per-run history — append-only, one JSON per run
+
+In addition to `champion.json` (which only tracks the current winner),
+every `benchmark*.py` (or the shared helper they all call) MUST drop a
+full snapshot of each run under:
+
+```
+benchmark/history/<benchmark-name>/<ISO-8601-timestamp>-<cpu-model-slug>.json
+```
+
+* `<ISO-8601-timestamp>` — UTC, second resolution, `:` replaced with
+  `-` so the path is portable (e.g. `2026-05-14T13-42-07Z`).
+* `<cpu-model-slug>` — `/proc/cpuinfo` `model name` (or arch-specific
+  equivalent) lower-cased, non-alphanum → `-`, collapsed.
+
+**One file per (benchmark, run, platform)** — each execution_node
+exercised in a batch gets its own JSON file. Never overwritten,
+never rotated. History grows append-only; the directory IS the
+timeline.
+
+A single batch that touches N platforms drops N files into
+`benchmark/history/<benchmark-name>/` — same timestamp prefix,
+different `<cpu-model-slug>` suffix. Don't bundle platforms into
+one file: it forces readers to parse the whole batch to inspect a
+single arch, and makes per-platform diffs (`git log -p <file>`)
+useless.
+
+### Mandatory JSON fields (human-readable: 2-space indent, sorted keys)
+
+Schema (one platform per file):
+
+```
+{
+  "benchmark":   "<benchmark-name>",
+  "commit":      "<git sha, full 40-char>",
+  "commit_short":"<7-char>",
+  "started_utc": "<ISO-8601>",
+  "ended_utc":   "<ISO-8601>",
+  "harness_version": "<git sha of benchmark/ helper at run time>",
+  "batch_id":    "<shared across every per-platform file of the same run>",
+  "node":       "<execution_node label from remote_nodes.json>",
+  "arch":       "<x86_64 | aarch64 | mips | riscv64 | i686 | ...>",
+  "cpu_model":  "<verbatim /proc/cpuinfo model name>",
+  "cpu_cores":  <int>,
+  "cpu_mhz":    <float>,
+  "ram_total_mb": <int>,
+  "ram_type":   "<DDR3-1600 | LPDDR4-3200 | unknown>",
+  "disk_root":  "<vendor + model of the device backing /, from lsblk/smartctl>",
+  "disk_kind":  "<nvme | ssd-sata | hdd | emmc | sd | tmpfs>",
+  "net_card":   "<lspci/lshw model string for the primary NIC>",
+  "kernel":     "<uname -r>",
+  "libc":       "<glibc 2.39 | musl 1.2.5 | ...>",
+  "compiler":   "<gcc 13.2 | clang 18 | ...>",
+  "compile_flags": ["-O3", "-DCATCHCHALLENGER_EPOLL", "-DCATCHCHALLENGER_IO_URING", "..."],
+  "simd_tier":  "<generic | sse4.2 | avx2 | neon | sve | msa | rvv | ...>",
+  "loadavg_1min_at_start": <float>,
+  "results": {
+    "<profiler-or-tool-name>": {
+      "metrics": { "<metric>": { "value": <n>, "unit": "<u>",
+                                 "better": "lower" | "higher",
+                                 "samples": [<n>, <n>, ...],
+                                 "median": <n>, "stddev": <n> } },
+      "artifact": "<relative path under benchmark/history/.../artifacts/ if any>",
+      "status":   "PASS | SKIP | FAIL",
+      "skip_reason": "<only if status==SKIP, e.g. 'load=1.7'>"
+    }
+  }
+}
+```
+
+`batch_id` (e.g. a UUID or the run's start-timestamp) is the only
+way to re-stitch per-platform files back into a single batch view —
+required because the filename alone can't disambiguate two batches
+that hit the same node in the same second on different commits.
+
+Every profiler / tool that ran on that platform gets its own entry
+under `results` (`perf-stat`, `perf-record`, `callgrind`,
+`cachegrind`, `heaptrack`, `time-v`, `rusage`, `binary-size`, …).
+Missing fields are written as `null`, not omitted — readers should
+not have to guess between "unknown" and "the harness forgot".
+
+Writers MUST emit with `json.dumps(..., indent=2, sort_keys=True)`
+(or equivalent) so a human can diff two runs by eye and `git diff`
+stays line-oriented.
+
+### Helper, not copy-paste
+
+This collection logic lives in **one shared helper** under
+`benchmark/` (e.g. `benchmark/history_recorder.py`) imported by every
+`benchmark*.py`. The list of fields above is long enough that
+duplicating it per benchmark guarantees drift — and a missing field
+in one file silently breaks any future analysis script that joins
+across the timeline. Add new fields to the helper, not the benchmark.
+
+## Progression charts — one per (benchmark, platform, cpu)
+
+After each batch, the harness MUST regenerate a chart per
+`(benchmark-name, execution_node, cpu_model)` tuple plotting every
+metric over commits (x-axis = commit date or commit index in
+chronological order, y-axis = metric value, one line per metric, dual
+axis when units differ). Source data is the append-only per-run JSONs
+under `benchmark/history/<benchmark-name>/`; group by `node` +
+`cpu_model` so a single box that changes kernel/libc still rolls up
+into one timeline, and two different boxes of the same arch stay on
+separate charts.
+
+Output path:
+
+```
+benchmark/charts/<benchmark-name>/<cpu-model-slug>-<node-label>.svg
+```
+
+Rules:
+* SVG only (text, diff-able, no binary churn in git). PNG is forbidden.
+* Regenerate from scratch each batch — never append to an existing
+  SVG. The history JSONs are the source of truth; charts are derived.
+* Annotate the current champion commit with a marker so a reviewer can
+  see at a glance which point is the baseline.
+* Mark KEEP / DISCARD / ESCALATE decisions on the corresponding commit
+  with distinct glyphs (green ▲ / red ▼ / yellow ◆).
+* Chart generation lives in the shared helper (next to
+  `history_recorder.py`), not duplicated per `benchmark*.py`.
+* No external chart service — render locally (matplotlib SVG backend
+  or hand-rolled SVG). Don't add a new pip dep without asking.
+* `benchmark/charts/` is **git-ignored** (top-level `.gitignore`). The
+  history JSONs are the source of truth — charts are derived
+  artefacts, regenerable on demand.
+
+### Generating charts manually
+
+After a run, charts are regenerated automatically by every
+`benchmark*.py`. To rebuild them out-of-band (e.g. after pulling new
+history JSONs from another machine, or after editing
+`chart_generator.py` itself), invoke the helper directly:
+
+```
+# every benchmark that has history JSONs
+python3 benchmark/chart_generator.py
+
+# one specific benchmark (matches benchmark/history/<name>/)
+python3 benchmark/chart_generator.py benchmarkmapmanager
+
+# multiple benchmarks in one call
+python3 benchmark/chart_generator.py benchmarkmapmanager benchmarkserversave
+```
+
+Exits non-zero only when no history was found at all — a benchmark
+with an empty history dir is silently skipped (a future run will
+populate it).
+
 ## Workload variety — small / medium / large
 
 A single workload size hides allocation-pattern regressions. Each

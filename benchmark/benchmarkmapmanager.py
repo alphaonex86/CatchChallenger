@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import history_recorder as hr
 
 REPO_ROOT  = bh.REPO_ROOT
 BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
@@ -157,6 +158,29 @@ def cell_run(bin_path, profiler, label_node):
     return None
 
 
+def _metric_unit_better(metric_name):
+    better = "lower"
+    unit = "ns" if metric_name.endswith("_ns") else \
+           "bytes" if metric_name.endswith("_bytes") or metric_name == "bytes_sent" or metric_name == "binary_size_bytes" else \
+           "kb" if metric_name.endswith("_kb") else \
+           "s" if metric_name.endswith("_s") else \
+           "count"
+    return unit, better
+
+
+def _cell_to_metric_block(per_cell):
+    """Convert the {(player, metric): value} cell dict into the per-tool
+    `metrics` block expected by history_recorder.PlatformRecord."""
+    out = {}
+    for (player, metric_name), value in per_cell.items():
+        if value is None: continue
+        key = metric_name if player == 0 else f"p{player}_{metric_name}"
+        unit, better = _metric_unit_better(metric_name)
+        out[key] = {"value": value, "unit": unit, "better": better,
+                    "samples": [value], "median": value, "stddev": 0.0}
+    return out
+
+
 def aggregate_metrics(per_cell):
     """Flatten nested {(player,metric): value} into a single
     metric-name -> {median, stddev, unit, better} dict suitable for
@@ -194,7 +218,12 @@ def main():
     total = len(nodes) * len(profilers)
     progress = bh.Progress(total)
 
+    batch_id    = hr.new_batch_id()
+    started_utc = hr.iso_now()
+    compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release"]
+
     all_metrics = {}     # node_label -> {flat metric dict}
+    per_tool    = {}     # node_label -> { tool -> {status, metrics, ...} }
     for node in nodes:
         if node["label"] != "local":
             # Remote dispatch is the responsibility of test/remote_build.py.
@@ -207,13 +236,17 @@ def main():
                               extra="remote-dispatch-not-wired")
             continue
         flat = {}
+        per_tool[node["label"]] = {}
         for prof in profilers:
             cell = cell_run(bin_path, prof, node["label"])
             if cell is None:
                 progress.emit(prof, "no", node["label"], status="FAIL")
+                per_tool[node["label"]][prof] = {"status": "FAIL", "metrics": {}}
                 continue
             flat.update(cell)
             progress.emit(prof, "no", node["label"], status="PASS")
+            per_tool[node["label"]][prof] = {"status": "PASS",
+                                             "metrics": _cell_to_metric_block(cell)}
         all_metrics[node["label"]] = aggregate_metrics(flat)
 
     # Persist + decide for the host arch only (others are SKIP today).
@@ -229,6 +262,30 @@ def main():
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
+    # Per-platform history -- one JSON per (benchmark, run, platform).
+    # Per benchmark/CLAUDE.md the file is append-only; never overwritten.
+    ended_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    for node in nodes:
+        if node["label"] not in per_tool:
+            continue
+        if node["label"] == "local":
+            runner = hr.local_runner
+        else:
+            runner = hr.make_ssh_runner(node.get("ssh_host"),
+                                        node.get("ssh_user"),
+                                        node.get("ssh_port", 22))
+        pr = hr.PlatformRecord("benchmarkmapmanager", batch_id,
+                               node["label"], runner=runner,
+                               arch_hint=node.get("arch")).collect()
+        for tool, blk in per_tool[node["label"]].items():
+            pr.add_result(tool, blk["metrics"], status=blk["status"])
+        out_p = pr.write(commit=sha, started_utc=started_utc,
+                         ended_utc=ended_utc,
+                         compile_flags=compile_flags,
+                         simd_tier="generic",
+                         harness_version=hr.harness_version())
+        print(_color(bh.C_CYAN, f"[history] {out_p}"))
+
     champ = bh.load_champion("benchmarkmapmanager", arch)
     decision, summary = bh.decide(champ, rec)
     bh.print_decision("benchmarkmapmanager", arch, decision, summary)
@@ -237,6 +294,11 @@ def main():
         ch_p = bh.champion_path("benchmarkmapmanager", arch)
         bh.write_record(ch_p, rec)
         print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
+
+    hr.attach_decision("benchmarkmapmanager", batch_id, decision)
+    import chart_generator
+    for cp in chart_generator.regenerate("benchmarkmapmanager"):
+        print(_color(bh.C_CYAN, f"[chart] {cp}"))
 
     return 0
 

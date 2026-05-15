@@ -200,3 +200,6 @@ test/remote_build.py.local
 *.core
 core
 core.*
+
+# ── Benchmark progression charts (regenerated from history/*.json) ─────────
+benchmark/charts/

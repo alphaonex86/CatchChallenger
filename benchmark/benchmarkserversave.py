@@ -33,6 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import history_recorder as hr
 
 REPO_ROOT  = bh.REPO_ROOT
 BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
@@ -195,6 +196,19 @@ def cell_run(bin_path_in_runfir, profiler):
     return None
 
 
+def _flat_to_metric_block(flat):
+    """Convert {name -> (median, stddev)} to history-recorder schema."""
+    out = {}
+    for name, (med, std) in flat.items():
+        unit = "s" if name.endswith("_s") else \
+               "kb" if name.endswith("_kb") else \
+               "bytes" if name.endswith("_bytes") or name == "cache_bytes" else \
+               "count"
+        out[name] = {"value": med, "median": med, "stddev": std,
+                     "unit": unit, "better": "lower", "samples": None}
+    return out
+
+
 def to_record_metrics(flat):
     out = {}
     for name, (med, std) in flat.items():
@@ -222,20 +236,31 @@ def main():
     total = len(nodes) * len(profilers)
     progress = bh.Progress(total)
 
+    batch_id    = hr.new_batch_id()
+    started_utc = hr.iso_now()
+    compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release",
+                     "-DCATCHCHALLENGER_DB_FILE=ON",
+                     "-DCATCHCHALLENGER_CACHE_HPS=ON"]
+
     flat_local = {}
+    per_tool   = {}    # node_label -> { tool -> {status, metrics} }
     for node in nodes:
         if node["label"] != "local":
             for prof in profilers:
                 progress.emit(prof, "no", node["label"], status="SKIP",
                               extra="remote-dispatch-not-wired")
             continue
+        per_tool[node["label"]] = {}
         for prof in profilers:
             cell = cell_run(run_bin, prof)
             if cell is None:
                 progress.emit(prof, "no", node["label"], status="FAIL")
+                per_tool[node["label"]][prof] = {"status": "FAIL", "metrics": {}}
                 continue
             flat_local.update(cell)
             progress.emit(prof, "no", node["label"], status="PASS")
+            per_tool[node["label"]][prof] = {"status": "PASS",
+                                             "metrics": _flat_to_metric_block(cell)}
 
     sha = bh.git_sha()
     rec = {
@@ -249,6 +274,29 @@ def main():
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
+    # Per-platform history -- one JSON per (benchmark, run, platform).
+    ended_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    for node in nodes:
+        if node["label"] not in per_tool:
+            continue
+        if node["label"] == "local":
+            runner = hr.local_runner
+        else:
+            runner = hr.make_ssh_runner(node.get("ssh_host"),
+                                        node.get("ssh_user"),
+                                        node.get("ssh_port", 22))
+        pr = hr.PlatformRecord("benchmarkserversave", batch_id,
+                               node["label"], runner=runner,
+                               arch_hint=node.get("arch")).collect()
+        for tool, blk in per_tool[node["label"]].items():
+            pr.add_result(tool, blk["metrics"], status=blk["status"])
+        out_p = pr.write(commit=sha, started_utc=started_utc,
+                         ended_utc=ended_utc,
+                         compile_flags=compile_flags,
+                         simd_tier="generic",
+                         harness_version=hr.harness_version())
+        print(_color(bh.C_CYAN, f"[history] {out_p}"))
+
     champ = bh.load_champion("benchmarkserversave", arch)
     decision, summary = bh.decide(champ, rec)
     bh.print_decision("benchmarkserversave", arch, decision, summary)
@@ -257,6 +305,11 @@ def main():
         ch_p = bh.champion_path("benchmarkserversave", arch)
         bh.write_record(ch_p, rec)
         print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
+
+    hr.attach_decision("benchmarkserversave", batch_id, decision)
+    import chart_generator
+    for cp in chart_generator.regenerate("benchmarkserversave"):
+        print(_color(bh.C_CYAN, f"[chart] {cp}"))
 
     return 0
 
