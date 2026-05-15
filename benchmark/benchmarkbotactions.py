@@ -43,10 +43,11 @@ introduce jitter. RUN_REPEATS produces several samples; the harness
 records median+stddev so the comparator can apply the noise band.
 
 One-command target: run with no args, 1h timeout. The server is
-spawned in CATCHCHALLENGER_DB_FILE_RAM mode so every disk write goes
-to /dev/null -- no leftover state between runs, no tmpfs cleanup, and
-the kernel write() / fsync() overhead is excluded from the measured
-metrics.
+spawned in CATCHCHALLENGER_DB_FILE_RAM mode so the entire database
+tree lives under /dev/shm/cc-server-<pid>/ (tmpfs, RAM-backed) for
+the lifetime of the process and is removed on exit by an atexit()
+hook. Reconnects within the same run see their state; no disk
+writes ever happen.
 
 Bot-actions has no --duration flag; we wrap it in `timeout` and send
 SIGINT so Qt can clean up. The headline workload knob is BOTS_COUNT
@@ -153,9 +154,12 @@ def build_bot():
 
 def build_server():
     """Build catchchallenger-server-cli with CATCHCHALLENGER_DB_FILE_RAM
-    so the bench server runs with the DB pinned in RAM (every disk
-    write -> /dev/null). The HPS cache + FileDB defines are mandatory
-    pre-conditions of DB_FILE_RAM."""
+    so the bench server runs with the DB pinned in RAM
+    (/dev/shm/cc-server-<pid>/database/...). Reads + writes stay
+    coherent so a bot can disconnect and reconnect within the same
+    server process and find their account/character intact; nothing
+    touches the disk. The HPS cache + FileDB defines are mandatory
+    pre-conditions of DB_FILE_RAM (CMake fails fast otherwise)."""
     if not os.path.isdir(DATAPACK_PATH):
         print(_color(bh.C_RED, f"[build:server] datapack not found: {DATAPACK_PATH}"))
         return None
