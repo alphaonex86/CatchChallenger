@@ -68,8 +68,8 @@ _SHIPPING_TYPES = {"installer", "msi", "dmg", "apk", "aab"}
 # Sizes are expressed in bytes for clarity at the call site.
 BASELINES = {
     # ── Android (qt-for-android arm64-v8a, Qt 6.8) ────────────────────
-    "android.apk.qtopengl":   32_000_000,   # ~30.7 MiB
-    "android.aab.qtopengl":   19_000_000,   # ~18.3 MiB
+    "android.apk.qtopengl":   21_500_000,   # ~20.5 MiB
+    "android.aab.qtopengl":   17_000_000,   # ~16.2 MiB
 
     # ── Windows MXE x86_64 (Qt 6.8 Release) ───────────────────────────
     # The .exe is the Release binary (-O3 -DNDEBUG, no -g). MXE's
