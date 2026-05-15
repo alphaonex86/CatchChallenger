@@ -326,7 +326,15 @@ def android_env():
     # testingcompilationwindows.py does for wine64.
     forward = ("HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "LC_CTYPE",
                "TERM", "TMPDIR", "TZ",
-               "SHELL", "MAIL", "PWD")
+               "SHELL", "MAIL", "PWD",
+               # ccache slot shared with the rest of the harness
+               # (all.sh exports CCACHE_DIR=<tmpfs_root>/ccache). Without
+               # forwarding, the NDK toolchain compile path runs ccache
+               # against the user default ~/.ccache (or nothing at all
+               # when CCACHE_*_LAUNCHER is wired below but CCACHE_DIR is
+               # absent), missing every cache entry built by the other
+               # testing*.py.
+               "CCACHE_DIR")
     fi = 0
     while fi < len(forward):
         v = os.environ.get(forward[fi])
@@ -344,6 +352,17 @@ def android_env():
     env["ANDROID_SDK_BUILD_TOOLS"]  = ANDROID_BUILD_TOOLS
     env["QT_ANDROID_BUILD_ALL_ABIS"] = "FALSE"
     env["CMAKE_BUILD_TYPE"]         = "Release"
+
+    # When CCACHE_DIR is not already in the parent env (running this
+    # script standalone, not via all.sh), fall back to the shared
+    # tmpfs slot so the NDK build still hits the cache populated by
+    # the other testing*.py.
+    if "CCACHE_DIR" not in env:
+        try:
+            import test_config as _tc
+            env["CCACHE_DIR"] = _tc.CCACHE_ROOT
+        except Exception:
+            pass
 
     # Gradle needs a JDK (with javac), not a JRE. The host's default
     # java often points at a JRE-only install (gentoo's
@@ -501,6 +520,20 @@ def build_android_apk(pro_file, build_dir, label):
             # plus the <algorithm> includes for std::sort are what let
             # this compile cleanly for Android Qt.
             "-DCATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER=ON"]
+    # ccache as compiler launcher: qt-cmake pins CMAKE_C/CXX_COMPILER
+    # to the NDK clang absolute path, so the Gentoo /usr/lib/ccache
+    # PATH masquerade can't intercept anything. Wire ccache explicitly
+    # via CMAKE_<LANG>_COMPILER_LAUNCHER instead.
+    ccache_bin = shutil.which("ccache")
+    if ccache_bin:
+        args.append("-DCMAKE_C_COMPILER_LAUNCHER=" + ccache_bin)
+        args.append("-DCMAKE_CXX_COMPILER_LAUNCHER=" + ccache_bin)
+    # Prefer Ninja so `cmake --build -j N` actually fans out instead of
+    # falling back to a serialised Make recipe on some Qt-for-Android
+    # versions whose default generator is "Unix Makefiles".
+    if os.path.exists("/usr/bin/ninja"):
+        args.extend(["-G", "Ninja",
+                     "-DCMAKE_MAKE_PROGRAM=/usr/bin/ninja"])
     args.extend(configure_flags)
     rc, out = run_cmd(args, build_dir, env=env)
     if rc != 0:
