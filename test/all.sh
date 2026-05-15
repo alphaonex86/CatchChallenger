@@ -57,6 +57,7 @@ find /mnt/data/perso/tmpfs/ -mindepth 1 -maxdepth 1 \
      ! -name 'time.json' \
      ! -name 'monitor.json' \
      ! -name 'testing-individual-time.json' \
+     ! -name 'testing-time-donut.svg' \
      ! -name 'catchchallenger-*.exe' \
      ! -name 'catchchallenger-*.msi' \
      ! -name 'catchchallenger-*.dmg' \
@@ -462,6 +463,15 @@ if [ "$FAILED" = "0" ] && [ "$ONLY_FAILED" = "0" ]; then
     fi
 fi
 
+# Donut chart of per-script wall time: produces
+# <tmpfs_root>/testing-time-donut.svg from testing-individual-time.json.
+# Only meaningful after a full run (--onlyfailed reuses an old timing
+# JSON that doesn't reflect the current run, so skip there).
+if [ "$ONLY_FAILED" = "0" ] && [ -f "$TESTING_TIMING_JSON" ]; then
+    echo -e "\n${CYAN}[all.sh] rendering wall-time donut chart${RESET}"
+    python3 testing_time_chart.py || true
+fi
+
 if [ "$FAILED" = "1" ]; then
     echo -e "\n${RED}Some tests FAILED.${RESET}"
     # On any failure, leave the tmpfs untouched so the operator can
@@ -488,6 +498,7 @@ else
              ! -name 'time.json' \
              ! -name 'monitor.json' \
              ! -name 'testing-individual-time.json' \
+             ! -name 'testing-time-donut.svg' \
              ! -name 'catchchallenger*.exe' \
              ! -name 'catchchallenger*.msi' \
              ! -name 'catchchallenger*.dmg' \
