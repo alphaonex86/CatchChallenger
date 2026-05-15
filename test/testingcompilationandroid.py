@@ -498,6 +498,14 @@ def build_android_apk(pro_file, build_dir, label):
         if (f"CMAKE_HOME_DIRECTORY:INTERNAL={cmake_source}" not in _cache_txt
                 and "CMAKE_HOME_DIRECTORY:INTERNAL=" in _cache_txt):
             shutil.rmtree(build_dir, ignore_errors=True)
+        # Generator switch (Unix Makefiles ↔ Ninja) — CMake refuses to
+        # re-use the cache with "generator does not match" and aborts
+        # configure rc=1. Wipe instead of failing the run.
+        else:
+            want_ninja = os.path.exists("/usr/bin/ninja")
+            has_ninja_cache = ("CMAKE_GENERATOR:INTERNAL=Ninja" in _cache_txt)
+            if want_ninja != has_ninja_cache:
+                shutil.rmtree(build_dir, ignore_errors=True)
     ensure_dir(build_dir)
     env = android_env()
 
