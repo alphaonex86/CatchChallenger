@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import benchmark_remote as br
 import history_recorder as hr
 
 REPO_ROOT  = bh.REPO_ROOT
@@ -202,6 +203,105 @@ def aggregate_metrics(per_cell):
     return out
 
 
+def _runtime_cmd_string():
+    """Build the bench binary's argv as a single shell-quoted string for
+    use on the exec node. The binary lives in the exec node's work_dir
+    after push_binary_to_exec; we invoke it as ./BIN_NAME so cwd is the
+    work_dir."""
+    parts = [f"./{BIN_NAME}", "--ticks", str(TICKS_PER_RUN),
+             "--seed", str(SEED), "--insrem-pct", str(INSREM_PCT)]
+    return " ".join(parts)
+
+
+def run_remote_cells(node, avail_profilers, skips, all_profilers,
+                     progress, per_tool, all_metrics):
+    """Dispatch the benchmark to a remote exec node: build on the paired
+    compile node, rsync binary to exec node, run each profiler. Updates
+    `per_tool[label]` and `all_metrics[label]` in place, and emits a
+    progress line per profiler.
+    """
+    label = node["label"]
+    compile_node = node.get("compile_node")
+    if compile_node is None:
+        for prof in all_profilers:
+            progress.emit(prof, "no", label, status="SKIP",
+                          extra="no-compile-node")
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+        return
+
+    # exec_node dict matching the remote_nodes.json shape that
+    # benchmark_remote expects (uses keys: user, host, port, work_dir).
+    exec_node = {"label": label,
+                 "user":  node.get("ssh_user"),
+                 "host":  node.get("ssh_host"),
+                 "port":  node.get("ssh_port", 22),
+                 "work_dir": node.get("work_dir") or "/tmp/cc-bench-run"}
+
+    # Only run the profilers that passed the tool check. Pre-emit SKIPs
+    # so the progress counter stays in lock-step with all_profilers.
+    runnable = [p for p in all_profilers if p in avail_profilers]
+    for prof in all_profilers:
+        if prof not in runnable:
+            reason = skips.get(prof, "tool-missing")
+            progress.emit(prof, "no", label, status="SKIP", extra=reason)
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+
+    if not runnable:
+        return
+
+    out, msg = br.run_benchmark_on_exec(
+        compile_node=compile_node,
+        exec_node=exec_node,
+        cmake_src_subdir="benchmark/benchmarkmapmanager",
+        build_subdir=f"benchmarkmapmanager-{label}",
+        bin_name=BIN_NAME,
+        runtime_cmd=_runtime_cmd_string(),
+        profilers=runnable,
+        cmake_defs={"CMAKE_BUILD_TYPE": "Release"},
+        verbose=True,
+    )
+    flat = {}
+    for prof in runnable:
+        res = out.get(prof)
+        if res is None or (isinstance(res, dict) and res.get("rc") not in (None, 0)):
+            progress.emit(prof, "no", label, status="FAIL", extra=msg if msg != "ok" else "")
+            per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+            continue
+        # parse per-profiler structure into metric blocks
+        if prof == "rusage":
+            cell = {}
+            if res.get("max_rss_kb") is not None:
+                cell[(0, "max_rss_kb")] = res["max_rss_kb"]
+            if res.get("wall_s") is not None:
+                cell[(0, "wall_s")] = res["wall_s"]
+            if not cell:
+                progress.emit(prof, "no", label, status="FAIL", extra="no-data")
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+                continue
+            flat.update(cell)
+            per_tool[label][prof] = {"status": "PASS",
+                                     "metrics": _cell_to_metric_block(cell)}
+        elif prof == "perf-stat":
+            cell = {(0, f"perf_{k}"): v for k, v in res.items()}
+            flat.update(cell)
+            per_tool[label][prof] = {"status": "PASS",
+                                     "metrics": _cell_to_metric_block(cell)}
+        elif prof == "callgrind":
+            cell = {(0, "callgrind_ir"): res}
+            flat.update(cell)
+            per_tool[label][prof] = {"status": "PASS",
+                                     "metrics": _cell_to_metric_block(cell)}
+        elif prof == "binary-size":
+            cell = {(0, "binary_size_bytes"): res}
+            flat.update(cell)
+            per_tool[label][prof] = {"status": "PASS",
+                                     "metrics": _cell_to_metric_block(cell)}
+        else:
+            per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+        progress.emit(prof, "no", label, status="PASS")
+    all_metrics[label] = aggregate_metrics(flat)
+
+
 def main():
     bin_path = build()
     if bin_path is None:
@@ -209,13 +309,20 @@ def main():
 
     arch = bh.host_arch()
     nodes = [{"label": "local", "arch": arch}] + bh.benchmark_exec_nodes()
-    profilers = ["rusage", "binary-size"]
-    if bh.have_tool("perf"):
-        profilers.append("perf-stat")
-    if bh.have_tool("valgrind") and bh.have_tool("callgrind_annotate"):
-        profilers.append("callgrind")
+    all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
 
-    total = len(nodes) * len(profilers)
+    # Pre-resolve per-node profiler availability. profilers_runnable_on()
+    # honours benchmark_disabled_tools (persisted skips) and probes the
+    # node interactively for tools we haven't classified yet; the answer
+    # is persisted so we never re-prompt for the same (node,tool).
+    node_profilers = {}
+    node_skips     = {}
+    for node in nodes:
+        avail, skips = bh.profilers_runnable_on(node, all_profilers)
+        node_profilers[node["label"]] = avail
+        node_skips[node["label"]]     = skips
+
+    total = sum(len(all_profilers) for _ in nodes)
     progress = bh.Progress(total)
 
     batch_id    = hr.new_batch_id()
@@ -225,29 +332,29 @@ def main():
     all_metrics = {}     # node_label -> {flat metric dict}
     per_tool    = {}     # node_label -> { tool -> {status, metrics, ...} }
     for node in nodes:
-        if node["label"] != "local":
-            # Remote dispatch is the responsibility of test/remote_build.py.
-            # Until any execution_node opts in via benchmark:true, we have
-            # no remote runs; emit SKIP and continue. The wiring is the
-            # single source of truth for the build/exec hand-off; per
-            # CLAUDE.md we don't ship a parallel implementation here.
-            for prof in profilers:
-                progress.emit(prof, "no", node["label"], status="SKIP",
-                              extra="remote-dispatch-not-wired")
+        label = node["label"]
+        per_tool[label] = {}
+        if label != "local":
+            run_remote_cells(node, node_profilers[label], node_skips[label],
+                             all_profilers, progress, per_tool, all_metrics)
             continue
         flat = {}
-        per_tool[node["label"]] = {}
-        for prof in profilers:
-            cell = cell_run(bin_path, prof, node["label"])
+        for prof in all_profilers:
+            if prof not in node_profilers[label]:
+                reason = node_skips[label].get(prof, "tool-missing")
+                progress.emit(prof, "no", label, status="SKIP", extra=reason)
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+                continue
+            cell = cell_run(bin_path, prof, label)
             if cell is None:
-                progress.emit(prof, "no", node["label"], status="FAIL")
-                per_tool[node["label"]][prof] = {"status": "FAIL", "metrics": {}}
+                progress.emit(prof, "no", label, status="FAIL")
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
                 continue
             flat.update(cell)
-            progress.emit(prof, "no", node["label"], status="PASS")
-            per_tool[node["label"]][prof] = {"status": "PASS",
-                                             "metrics": _cell_to_metric_block(cell)}
-        all_metrics[node["label"]] = aggregate_metrics(flat)
+            progress.emit(prof, "no", label, status="PASS")
+            per_tool[label][prof] = {"status": "PASS",
+                                     "metrics": _cell_to_metric_block(cell)}
+        all_metrics[label] = aggregate_metrics(flat)
 
     # Persist + decide for the host arch only (others are SKIP today).
     sha = bh.git_sha()

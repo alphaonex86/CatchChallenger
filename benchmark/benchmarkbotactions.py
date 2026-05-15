@@ -356,11 +356,18 @@ def main():
     # block flips. The remote dispatch is not wired in this benchmark
     # so we emit SKIP for every remote node.
     nodes = [{"label": "local", "arch": arch}] + bh.benchmark_exec_nodes()
-    profilers = ["rusage", "binary-size"]
-    if bh.have_tool("perf"):
-        profilers.append("perf-stat")
+    all_profilers = ["rusage", "binary-size", "perf-stat"]
 
-    total = len(nodes) * (len(BOT_COUNTS) + len(profilers) - 1)  # rusage covers bot-counts
+    # Pre-resolve per-node profiler availability against the persisted
+    # benchmark_disabled_tools list + a live probe.
+    node_profilers = {}
+    node_skips     = {}
+    for node in nodes:
+        avail, skips = bh.profilers_runnable_on(node, all_profilers)
+        node_profilers[node["label"]] = avail
+        node_skips[node["label"]]     = skips
+
+    total = sum(len(all_profilers) + max(len(BOT_COUNTS) - 1, 0) for _ in nodes)
     progress = bh.Progress(total)
 
     batch_id    = hr.new_batch_id()
@@ -369,49 +376,66 @@ def main():
 
     per_tool = {}     # node_label -> { tool -> {status, metrics} }
     for node in nodes:
-        if node["label"] != "local":
-            for prof in profilers:
-                progress.emit(prof, "no", node["label"], status="SKIP",
+        label = node["label"]
+        per_tool[label] = {}
+        if label != "local":
+            for prof in all_profilers:
+                progress.emit(prof, "no", label, status="SKIP",
+                              extra="remote-dispatch-not-wired")
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+            # account for the extra BOT_COUNTS-1 emits the local rusage path makes
+            for _ in range(max(len(BOT_COUNTS) - 1, 0)):
+                progress.emit("rusage", "no", label, status="SKIP",
                               extra="remote-dispatch-not-wired")
             continue
-        per_tool[node["label"]] = {}
 
         # rusage cell: one record per BOT_COUNTS size; metrics keyed
         # with b<count>_ prefix so the schema stays one-flat-dict.
-        all_metrics = {}
-        rusage_status = "PASS"
-        for bots in BOT_COUNTS:
-            cell = cell_run(bin_path, host, port, bots, iface)
-            if cell is None:
-                progress.emit("rusage", "no", node["label"], status="FAIL",
+        if "rusage" in node_profilers[label]:
+            all_metrics = {}
+            rusage_status = "PASS"
+            for bots in BOT_COUNTS:
+                cell = cell_run(bin_path, host, port, bots, iface)
+                if cell is None:
+                    progress.emit("rusage", "no", label, status="FAIL",
+                                  extra=f"bots={bots}")
+                    rusage_status = "FAIL"
+                    continue
+                for name, (med, std) in cell.items():
+                    all_metrics[f"b{bots}_{name}"] = (med, std)
+                progress.emit("rusage", "no", label, status="PASS",
                               extra=f"bots={bots}")
-                rusage_status = "FAIL"
-                continue
-            for name, (med, std) in cell.items():
-                all_metrics[f"b{bots}_{name}"] = (med, std)
-            progress.emit("rusage", "no", node["label"], status="PASS",
-                          extra=f"bots={bots}")
-        per_tool[node["label"]]["rusage"] = {
-            "status":  rusage_status,
-            "metrics": _flat_to_metric_block(all_metrics),
-        }
+            per_tool[label]["rusage"] = {
+                "status":  rusage_status,
+                "metrics": _flat_to_metric_block(all_metrics),
+            }
+        else:
+            for bots in BOT_COUNTS:
+                progress.emit("rusage", "no", label, status="SKIP",
+                              extra=node_skips[label].get("rusage", "tool-missing"))
+            per_tool[label]["rusage"] = {"status": "SKIP", "metrics": {}}
 
         # binary-size cell (deterministic, single value)
-        sz = bh.binary_size(bin_path)
-        if sz is not None:
-            per_tool[node["label"]]["binary-size"] = {
-                "status":  "PASS",
-                "metrics": _flat_to_metric_block({"binary_size_bytes": (sz, 0.0)}),
-            }
-            progress.emit("binary-size", "no", node["label"], status="PASS")
+        if "binary-size" in node_profilers[label]:
+            sz = bh.binary_size(bin_path)
+            if sz is not None:
+                per_tool[label]["binary-size"] = {
+                    "status":  "PASS",
+                    "metrics": _flat_to_metric_block({"binary_size_bytes": (sz, 0.0)}),
+                }
+                progress.emit("binary-size", "no", label, status="PASS")
+            else:
+                per_tool[label]["binary-size"] = {"status": "FAIL", "metrics": {}}
+                progress.emit("binary-size", "no", label, status="FAIL")
         else:
-            per_tool[node["label"]]["binary-size"] = {"status": "FAIL", "metrics": {}}
-            progress.emit("binary-size", "no", node["label"], status="FAIL")
+            progress.emit("binary-size", "no", label, status="SKIP",
+                          extra=node_skips[label].get("binary-size", "tool-missing"))
+            per_tool[label]["binary-size"] = {"status": "SKIP", "metrics": {}}
 
         # perf-stat cell: medium workload only (small=noise floor,
         # large=multi-process scheduler effects make perf counters
         # noisy). Single run, no aggregation -- perf is deterministic.
-        if "perf-stat" in profilers:
+        if "perf-stat" in node_profilers[label]:
             env = os.environ.copy()
             env["QT_QPA_PLATFORM"] = "offscreen"
             cmd = ["timeout", "--signal=INT", str(DURATION_S)] + \
@@ -421,14 +445,18 @@ def main():
                 m = {}
                 for evt, val in out.items():
                     m[f"perf_{evt}"] = (val, 0.0)
-                per_tool[node["label"]]["perf-stat"] = {
+                per_tool[label]["perf-stat"] = {
                     "status":  "PASS",
                     "metrics": _flat_to_metric_block(m),
                 }
-                progress.emit("perf-stat", "no", node["label"], status="PASS")
+                progress.emit("perf-stat", "no", label, status="PASS")
             else:
-                per_tool[node["label"]]["perf-stat"] = {"status": "FAIL", "metrics": {}}
-                progress.emit("perf-stat", "no", node["label"], status="FAIL")
+                per_tool[label]["perf-stat"] = {"status": "FAIL", "metrics": {}}
+                progress.emit("perf-stat", "no", label, status="FAIL")
+        else:
+            progress.emit("perf-stat", "no", label, status="SKIP",
+                          extra=node_skips[label].get("perf-stat", "tool-missing"))
+            per_tool[label]["perf-stat"] = {"status": "SKIP", "metrics": {}}
 
     # Persist + champion compare (host arch only; remote skipped).
     sha = bh.git_sha()

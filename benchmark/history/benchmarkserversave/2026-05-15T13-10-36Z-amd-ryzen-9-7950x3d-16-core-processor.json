@@ -1,0 +1,149 @@
+{
+  "arch": "amd64",
+  "batch_id": "44925877fd554023803c5b9954f4a75f",
+  "benchmark": "benchmarkserversave",
+  "commit": "c0c18c4edc60be07e05e1ca55ea8fd96309cc5aa",
+  "commit_short": "c0c18c4",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_FILE=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "compiler": "cc (Gentoo 15.2.1_p20260214 p5) 15.2.1 20260214",
+  "cpu_cores": 32,
+  "cpu_mhz": 4166.146,
+  "cpu_model": "AMD Ryzen 9 7950X3D 16-Core Processor",
+  "decision": "KEEP",
+  "disk_kind": "nvme",
+  "disk_root": "Samsung SSD 980 PRO 2TB",
+  "ended_utc": "2026-05-15T13:10:37Z",
+  "harness_version": "363bee59fe0279b019fefc584da0a1c0bbb6940d",
+  "kernel": "6.18.26-gentoo-dist",
+  "libc": "ldd (Gentoo 2.42-r5 (patchset 7)) 2.42",
+  "loadavg_1min_at_start": 1.24,
+  "net_card": "br0",
+  "node": "local",
+  "ram_total_mb": 127894,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 3170336,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 3170336
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS"
+    },
+    "callgrind": {
+      "artifact": null,
+      "metrics": {
+        "callgrind_ir": {
+          "better": "lower",
+          "median": 54564827,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 54564827
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS"
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "perf_branch-misses:u": {
+          "better": "lower",
+          "median": 165733,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 165733
+        },
+        "perf_cache-misses:u": {
+          "better": "lower",
+          "median": 70760,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 70760
+        },
+        "perf_cycles:u": {
+          "better": "lower",
+          "median": 22122078,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 22122078
+        },
+        "perf_instructions:u": {
+          "better": "lower",
+          "median": 49747900,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 49747900
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS"
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "cache_bytes": {
+          "better": "lower",
+          "median": 51256,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 51256
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8050.0,
+          "samples": null,
+          "stddev": 374.61847258243955,
+          "unit": "kb",
+          "value": 8050.0
+        },
+        "sys_s": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.0
+        },
+        "user_s": {
+          "better": "lower",
+          "median": 0.005,
+          "samples": null,
+          "stddev": 0.005,
+          "unit": "s",
+          "value": 0.005
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.01,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.01
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS"
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-15T13:10:36Z"
+}

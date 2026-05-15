@@ -203,3 +203,9 @@ core.*
 
 # ── Benchmark progression charts (regenerated from history/*.json) ─────────
 benchmark/charts/
+
+# ── Benchmark candidate records (transient; champion.json is the kept one)
+benchmark/results/*/*/candidate-*.json
+
+# ── Valgrind core dumps (e.g. valgrind --tool=callgrind crash)
+vgcore.*

@@ -25,6 +25,29 @@ BENCH_ROOT = os.path.join(REPO_ROOT, "benchmark")
 RESULTS    = os.path.join(BENCH_ROOT, "results")
 REMOTE_NODES_JSON = os.path.join(os.path.dirname(REPO_ROOT), "remote_nodes.json")
 
+# Sidecar file for the "local" host (no entry in remote_nodes.json). Same
+# semantics as the per-execution_node benchmark_disabled_tools field; lives
+# under ~/.cache so it survives but doesn't pollute the repo.
+LOCAL_DISABLED_TOOLS_JSON = os.path.join(
+    os.path.expanduser("~"),
+    ".cache", "catchchallenger-benchmark", "local_disabled_tools.json",
+)
+
+# Map profiler name (as used inside benchmark*.py) -> list of CLI tools
+# that must be present on the runtime for that profiler to function. A
+# profiler is considered "available" when EVERY required tool resolves.
+# Keep this in sync with the documented benchmark_disabled_tools values
+# in remote_nodes.json's _doc block.
+PROFILER_REQUIRED_TOOLS = {
+    "rusage":      ["/usr/bin/time"],
+    "perf-stat":   ["perf"],
+    "perf-record": ["perf"],
+    "callgrind":   ["valgrind", "callgrind_annotate"],
+    "cachegrind":  ["valgrind", "cg_annotate"],
+    "heaptrack":   ["heaptrack"],
+    "binary-size": [],   # always available (just os.path.getsize)
+}
+
 C_GREEN  = "\033[92m"
 C_YELLOW = "\033[93m"
 C_RED    = "\033[91m"
@@ -68,7 +91,8 @@ def benchmark_exec_nodes():
     1-min loadavg is < 1.0 right now. Built per call, never cached.
 
     Each entry: {"label","ssh_host","ssh_user","ssh_port","work_dir",
-                 "arch","compile_node","has_gui","client_run_mode"}
+                 "arch","compile_node","has_gui","client_run_mode",
+                 "disabled_tools"}
     """
     cfg = load_remote_nodes()
     out = []
@@ -94,8 +118,199 @@ def benchmark_exec_nodes():
                 "compile_node":   node,
                 "has_gui":        ex.get("has_gui", False),
                 "client_run_mode": ex.get("client_run_mode", "none"),
+                "disabled_tools": list(ex.get("benchmark_disabled_tools", [])),
             })
     return out
+
+
+# ---- runtime tool detection ---------------------------------------------
+
+def _local_disabled_tools_load():
+    p = LOCAL_DISABLED_TOOLS_JSON
+    if not os.path.isfile(p):
+        return []
+    try:
+        with open(p) as f:
+            return list(json.load(f) or [])
+    except Exception:
+        return []
+
+
+def _local_disabled_tools_save(tools):
+    p = LOCAL_DISABLED_TOOLS_JSON
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    with open(p, "w") as f:
+        json.dump(sorted(set(tools)), f, indent=2, sort_keys=True)
+
+
+def _remote_have_tool(ssh_host, ssh_user, ssh_port, tool):
+    """Return True/False/None when SSH unreachable. Uses `command -v`
+    rather than `which` because the latter is missing on some minimal
+    Alpine/musl exec nodes."""
+    try:
+        argv = ["ssh", "-o", "ConnectTimeout=4", "-o", "BatchMode=yes",
+                "-p", str(ssh_port), f"{ssh_user}@{ssh_host}",
+                f"command -v {tool} >/dev/null 2>&1 && echo Y || echo N"]
+        out = subprocess.check_output(argv, timeout=10).decode().strip()
+        return out == "Y"
+    except Exception:
+        return None
+
+
+def _local_have_tool(tool):
+    if tool.startswith("/"):
+        return os.path.exists(tool) and os.access(tool, os.X_OK)
+    return shutil.which(tool) is not None
+
+
+def _ask_install(node_label, tool, profiler):
+    """Interactive prompt: 'have you installed <tool> on <node>?'.
+
+    Returns True when the user confirms (y/yes), False otherwise. When
+    stdin is not a TTY we treat the answer as 'no' so unattended runs
+    don't hang. The caller persists the 'no' answer into the appropriate
+    benchmark_disabled_tools list so we never re-prompt for it."""
+    sys.stdout.flush()
+    prompt = (f"[bench] node={node_label!r} missing tool {tool!r} "
+              f"(needed by profiler {profiler!r}).\n"
+              f"        Install it now, then answer y. "
+              f"Answer n to skip profiler {profiler!r} permanently on this node.\n"
+              f"        Have you installed it? [y/N] ")
+    if not sys.stdin or not sys.stdin.isatty():
+        print(prompt + "n  (non-interactive)", file=sys.stderr)
+        return False
+    try:
+        ans = input(prompt).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print("n  (interrupted)", file=sys.stderr)
+        return False
+    return ans in ("y", "yes")
+
+
+def _persist_disabled_tool_local(tool):
+    cur = set(_local_disabled_tools_load())
+    cur.add(tool)
+    _local_disabled_tools_save(sorted(cur))
+
+
+def _persist_disabled_tool_remote(node_label, tool):
+    """Append `tool` to the named exec node's benchmark_disabled_tools list
+    in remote_nodes.json. Idempotent. Preserves the file's key ordering
+    by doing an in-place dict mutation + json.dump."""
+    if not os.path.isfile(REMOTE_NODES_JSON):
+        return
+    try:
+        with open(REMOTE_NODES_JSON) as f:
+            cfg = json.load(f)
+    except Exception as e:
+        print(f"[bench] WARN: cannot persist disabled_tool to {REMOTE_NODES_JSON}: {e}",
+              file=sys.stderr)
+        return
+    changed = False
+    for node in cfg.get("nodes", []):
+        for ex in node.get("execution_nodes", []):
+            if ex.get("label") != node_label:
+                continue
+            cur = list(ex.get("benchmark_disabled_tools", []))
+            if tool in cur:
+                continue
+            cur.append(tool)
+            cur.sort()
+            ex["benchmark_disabled_tools"] = cur
+            changed = True
+    if not changed:
+        return
+    with open(REMOTE_NODES_JSON, "w") as f:
+        json.dump(cfg, f, indent=2, sort_keys=False)
+        f.write("\n")
+
+
+def disabled_tools_for_node(node):
+    """node is either an entry from benchmark_exec_nodes() or the local
+    sentinel {"label": "local", ...}. Returns the list of TOOL names
+    (not profiler names) currently disabled for that node."""
+    if node.get("label") == "local":
+        return _local_disabled_tools_load()
+    return list(node.get("disabled_tools", []))
+
+
+def profilers_runnable_on(node, all_profilers):
+    """Filter `all_profilers` against the node's runtime tool availability:
+
+      1. honour the persisted benchmark_disabled_tools list (no prompt).
+      2. for any tool still unknown, probe (local or via ssh).
+      3. when a probe says missing → ask the operator once; on 'n',
+         persist the tool name back into the right storage (local sidecar
+         or remote_nodes.json) so the next batch skips silently.
+
+    Returns (available_profilers, skip_reasons_by_profiler).
+    """
+    disabled  = set(disabled_tools_for_node(node))
+    available = []
+    skips     = {}   # profiler -> "missing tool: X"
+    is_local  = (node.get("label") == "local")
+    for prof in all_profilers:
+        need = PROFILER_REQUIRED_TOOLS.get(prof, [])
+        # 1) explicitly disabled in remote_nodes.json / sidecar
+        if any(t in disabled for t in need):
+            missing = [t for t in need if t in disabled]
+            skips[prof] = f"tool-disabled:{','.join(missing)}"
+            continue
+        # 2) runtime probe
+        missing_runtime = []
+        for tool in need:
+            if is_local:
+                ok = _local_have_tool(tool)
+            else:
+                ok = _remote_have_tool(node.get("ssh_host"),
+                                       node.get("ssh_user"),
+                                       node.get("ssh_port", 22), tool)
+                if ok is None:
+                    # SSH unreachable -> conservative: skip everything
+                    skips[prof] = "ssh-unreachable"
+                    missing_runtime = [tool]   # short-circuit out of the for
+                    break
+            if not ok:
+                missing_runtime.append(tool)
+        if not missing_runtime:
+            available.append(prof)
+            continue
+        if skips.get(prof) == "ssh-unreachable":
+            continue
+        # 3) prompt the operator
+        unresolved = []
+        for tool in missing_runtime:
+            if _ask_install(node.get("label", "?"), tool, prof):
+                # operator says installed -> re-probe
+                if is_local:
+                    ok = _local_have_tool(tool)
+                else:
+                    ok = _remote_have_tool(node.get("ssh_host"),
+                                           node.get("ssh_user"),
+                                           node.get("ssh_port", 22), tool)
+                if not ok:
+                    print(f"[bench] still missing after operator confirmed install: {tool!r} "
+                          f"on {node.get('label')!r}; recording as disabled.",
+                          file=sys.stderr)
+                    unresolved.append(tool)
+                    if is_local:
+                        _persist_disabled_tool_local(tool)
+                    else:
+                        _persist_disabled_tool_remote(node.get("label"), tool)
+                    disabled.add(tool)
+            else:
+                # operator answered 'n' -> persist + skip
+                unresolved.append(tool)
+                if is_local:
+                    _persist_disabled_tool_local(tool)
+                else:
+                    _persist_disabled_tool_remote(node.get("label"), tool)
+                disabled.add(tool)
+        if unresolved:
+            skips[prof] = f"missing-tool:{','.join(unresolved)}"
+        else:
+            available.append(prof)
+    return available, skips
 
 
 def _ssh_loadavg(ex):
