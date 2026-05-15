@@ -211,7 +211,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     }
     if(BaseServer::dictionary_reputation_haveChange)
     {
-        std::ofstream dict_out("database/common/dictionary_reputation", std::ofstream::binary|std::ofstream::app);
+        std::ofstream dict_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_reputation")), std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
             unsigned int newCount=0;
@@ -407,7 +407,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     }
     if(BaseServer::dictionary_skin_haveChange)
     {
-        std::ofstream dict_out("database/common/dictionary_skin", std::ofstream::binary|std::ofstream::app);
+        std::ofstream dict_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_skin")), std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
             unsigned int newCount=0;
@@ -613,7 +613,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     }
     if(BaseServer::dictionary_starter_haveChange)
     {
-        std::ofstream dict_out("database/common/dictionary_starter", std::ofstream::binary|std::ofstream::app);
+        std::ofstream dict_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_starter")), std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
             unsigned int newCount=0;

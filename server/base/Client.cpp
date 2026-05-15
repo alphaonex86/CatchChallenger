@@ -1146,7 +1146,7 @@ void Client::saveCharacterFiles() const {
         public_and_private_informations.public_informations.pseudo.c_str(),
         public_and_private_informations.public_informations.pseudo.size());
     {
-        std::ofstream out_file("database/common/characters/"+hexa, std::ofstream::binary|std::ofstream::trunc);
+        std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa), std::ofstream::binary|std::ofstream::trunc);
         if(!out_file.good() || !out_file.is_open())
         {
             std::cerr << "unable to open database/common/characters/"+hexa+" for write " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -1155,7 +1155,7 @@ void Client::saveCharacterFiles() const {
         hps::to_stream(*this, out_file);
     }
     {
-        std::ofstream out_file("database/server/characters/"+hexa, std::ofstream::binary|std::ofstream::trunc);
+        std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/characters/")+hexa), std::ofstream::binary|std::ofstream::trunc);
         if(!out_file.good() || !out_file.is_open())
         {
             std::cerr << "unable to open database/server/characters/"+hexa+" for write " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -1176,7 +1176,7 @@ bool Client::loadCharacterServerFile() {
     const std::string hexa=binarytoHexa(
         public_and_private_informations.public_informations.pseudo.c_str(),
         public_and_private_informations.public_informations.pseudo.size());
-    std::ifstream in_file("database/server/characters/"+hexa, std::ifstream::binary);
+    std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/characters/")+hexa), std::ifstream::binary);
     if(!in_file.good() || !in_file.is_open())
         return false;
     //Empty file → treat as "no per-map state yet". Without this check,

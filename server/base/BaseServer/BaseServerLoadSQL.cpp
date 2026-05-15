@@ -225,7 +225,7 @@ void BaseServer::preload_dictionary_map_return()
     // Append new map dictionary entries to disk if changed
     if(dictionary_haveChange)
     {
-        std::ofstream dict_out("database/server/dictionary_map", std::ofstream::binary|std::ofstream::app);
+        std::ofstream dict_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/dictionary_map")), std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
             unsigned int newCount=0;

@@ -1,0 +1,371 @@
+{
+  "arch": "amd64",
+  "batch_id": "c7ed1afb709c4b6d855e1654d9c2c2ae",
+  "benchmark": "benchmarkbotactions",
+  "commit": "525a8ba370ae82cd485861014bf756e55b5561a9",
+  "commit_short": "525a8ba",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Gentoo 15.2.1_p20260214 p5) 15.2.1 20260214",
+  "cpu_cores": 32,
+  "cpu_mhz": 3791.661,
+  "cpu_model": "AMD Ryzen 9 7950X3D 16-Core Processor",
+  "decision": "KEEP",
+  "disk_kind": "nvme",
+  "disk_root": "Samsung SSD 980 PRO 2TB",
+  "ended_utc": "2026-05-15T14:18:04Z",
+  "harness_version": "525a8ba370ae82cd485861014bf756e55b5561a9",
+  "kernel": "6.18.26-gentoo-dist",
+  "libc": "ldd (Gentoo 2.42-r5 (patchset 7)) 2.42",
+  "loadavg_1min_at_start": 0.16,
+  "net_card": "br0",
+  "node": "local",
+  "ram_total_mb": 127894,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 7344864,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 7344864
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS"
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL"
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "b128_invol_ctx": {
+          "better": "lower",
+          "median": 37.5,
+          "samples": null,
+          "stddev": 1.5,
+          "unit": "count",
+          "value": 37.5
+        },
+        "b128_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b128_max_rss_kb": {
+          "better": "lower",
+          "median": 110424.0,
+          "samples": null,
+          "stddev": 1244.0,
+          "unit": "kb",
+          "value": 110424.0
+        },
+        "b128_minor_pf": {
+          "better": "lower",
+          "median": 20162.5,
+          "samples": null,
+          "stddev": 439.5,
+          "unit": "count",
+          "value": 20162.5
+        },
+        "b128_net_rx_bytes": {
+          "better": "lower",
+          "median": 507336.5,
+          "samples": null,
+          "stddev": 252.5,
+          "unit": "bytes",
+          "value": 507336.5
+        },
+        "b128_net_rx_pkts": {
+          "better": "lower",
+          "median": 5948.0,
+          "samples": null,
+          "stddev": 8.0,
+          "unit": "count",
+          "value": 5948.0
+        },
+        "b128_net_tx_bytes": {
+          "better": "lower",
+          "median": 507336.5,
+          "samples": null,
+          "stddev": 252.5,
+          "unit": "bytes",
+          "value": 507336.5
+        },
+        "b128_net_tx_pkts": {
+          "better": "lower",
+          "median": 5948.0,
+          "samples": null,
+          "stddev": 8.0,
+          "unit": "count",
+          "value": 5948.0
+        },
+        "b128_sys_s": {
+          "better": "lower",
+          "median": 0.21000000000000002,
+          "samples": null,
+          "stddev": 0.020000000000000004,
+          "unit": "s",
+          "value": 0.21000000000000002
+        },
+        "b128_tcp_retrans": {
+          "better": "lower",
+          "median": 2.5,
+          "samples": null,
+          "stddev": 2.5,
+          "unit": "count",
+          "value": 2.5
+        },
+        "b128_user_s": {
+          "better": "lower",
+          "median": 0.41500000000000004,
+          "samples": null,
+          "stddev": 0.014999999999999986,
+          "unit": "s",
+          "value": 0.41500000000000004
+        },
+        "b128_vol_ctx": {
+          "better": "lower",
+          "median": 3364.5,
+          "samples": null,
+          "stddev": 19.5,
+          "unit": "count",
+          "value": 3364.5
+        },
+        "b128_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "b32_invol_ctx": {
+          "better": "lower",
+          "median": 17.5,
+          "samples": null,
+          "stddev": 0.5,
+          "unit": "count",
+          "value": 17.5
+        },
+        "b32_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b32_max_rss_kb": {
+          "better": "lower",
+          "median": 94340.0,
+          "samples": null,
+          "stddev": 264.0,
+          "unit": "kb",
+          "value": 94340.0
+        },
+        "b32_minor_pf": {
+          "better": "lower",
+          "median": 16054.0,
+          "samples": null,
+          "stddev": 2.0,
+          "unit": "count",
+          "value": 16054.0
+        },
+        "b32_net_rx_bytes": {
+          "better": "lower",
+          "median": 165740.5,
+          "samples": null,
+          "stddev": 981.5,
+          "unit": "bytes",
+          "value": 165740.5
+        },
+        "b32_net_rx_pkts": {
+          "better": "lower",
+          "median": 1979.5,
+          "samples": null,
+          "stddev": 18.5,
+          "unit": "count",
+          "value": 1979.5
+        },
+        "b32_net_tx_bytes": {
+          "better": "lower",
+          "median": 165740.5,
+          "samples": null,
+          "stddev": 981.5,
+          "unit": "bytes",
+          "value": 165740.5
+        },
+        "b32_net_tx_pkts": {
+          "better": "lower",
+          "median": 1979.5,
+          "samples": null,
+          "stddev": 18.5,
+          "unit": "count",
+          "value": 1979.5
+        },
+        "b32_sys_s": {
+          "better": "lower",
+          "median": 0.08499999999999999,
+          "samples": null,
+          "stddev": 0.0049999999999999975,
+          "unit": "s",
+          "value": 0.08499999999999999
+        },
+        "b32_tcp_retrans": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b32_user_s": {
+          "better": "lower",
+          "median": 0.195,
+          "samples": null,
+          "stddev": 0.0050000000000000044,
+          "unit": "s",
+          "value": 0.195
+        },
+        "b32_vol_ctx": {
+          "better": "lower",
+          "median": 1887.5,
+          "samples": null,
+          "stddev": 22.5,
+          "unit": "count",
+          "value": 1887.5
+        },
+        "b32_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "b4_invol_ctx": {
+          "better": "lower",
+          "median": 20.5,
+          "samples": null,
+          "stddev": 3.5,
+          "unit": "count",
+          "value": 20.5
+        },
+        "b4_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b4_max_rss_kb": {
+          "better": "lower",
+          "median": 90630.0,
+          "samples": null,
+          "stddev": 322.0,
+          "unit": "kb",
+          "value": 90630.0
+        },
+        "b4_minor_pf": {
+          "better": "lower",
+          "median": 15314.0,
+          "samples": null,
+          "stddev": 2.0,
+          "unit": "count",
+          "value": 15314.0
+        },
+        "b4_net_rx_bytes": {
+          "better": "lower",
+          "median": 10171.5,
+          "samples": null,
+          "stddev": 156.5,
+          "unit": "bytes",
+          "value": 10171.5
+        },
+        "b4_net_rx_pkts": {
+          "better": "lower",
+          "median": 104.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 104.0
+        },
+        "b4_net_tx_bytes": {
+          "better": "lower",
+          "median": 10171.5,
+          "samples": null,
+          "stddev": 156.5,
+          "unit": "bytes",
+          "value": 10171.5
+        },
+        "b4_net_tx_pkts": {
+          "better": "lower",
+          "median": 104.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 104.0
+        },
+        "b4_sys_s": {
+          "better": "lower",
+          "median": 0.055,
+          "samples": null,
+          "stddev": 0.0049999999999999975,
+          "unit": "s",
+          "value": 0.055
+        },
+        "b4_tcp_retrans": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b4_user_s": {
+          "better": "lower",
+          "median": 0.13,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.13
+        },
+        "b4_vol_ctx": {
+          "better": "lower",
+          "median": 1473.5,
+          "samples": null,
+          "stddev": 24.5,
+          "unit": "count",
+          "value": 1473.5
+        },
+        "b4_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS"
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-15T14:13:04Z"
+}

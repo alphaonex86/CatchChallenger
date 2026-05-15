@@ -509,7 +509,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     }
     {
         struct stat sb;
-        if(::stat(("database/common/characters/"+hexa).c_str(),&sb)==0)
+        if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa).c_str(),&sb)==0)
         {
             std::cerr << "Client::addCharacter_return() character already exist " << hexa << " then return error " << __FILE__ << " " << __LINE__ << std::endl;
 
@@ -540,7 +540,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
     #ifdef CATCHCHALLENGER_DB_FILE
     {
-        std::ofstream out_file("database/server/server", std::ofstream::binary);
+        std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
         if(!out_file.good() || !out_file.is_open())
         {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
@@ -654,7 +654,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             std::vector<CharacterEntry> characterEntryList;
 
             {
-                std::ifstream in_file("database/common/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
+                std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ifstream::binary);
                 if(!in_file.good() || !in_file.is_open())
                 {
                     std::cerr << "Unable to open data base file " << "database/common/accounts/" << account_id_db << " (abort)" << std::endl;
@@ -676,7 +676,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             characterEntryList.push_back(newChar);
 
             {
-                std::ofstream out_file("database/common/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
+                std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
                     std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;

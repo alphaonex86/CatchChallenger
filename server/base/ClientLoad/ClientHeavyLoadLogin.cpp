@@ -148,7 +148,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         struct stat sb;
-        if(::stat(("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)).c_str(),&sb)!=0)
+        if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)).c_str(),&sb)!=0)
         #else
         #error Define what do here
         #endif
@@ -182,7 +182,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         else
         {
             #ifdef CATCHCHALLENGER_DB_FILE
-            std::ifstream in_file("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE), std::ifstream::binary);
+            std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)), std::ifstream::binary);
             if(!in_file.good() || !in_file.is_open())
             {
                 std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " (abort)" << std::endl;
@@ -301,7 +301,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
 
                 std::vector<CharacterEntry> characterEntryList;
                 {
-                    std::ifstream in_file("database/common/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
+                    std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ifstream::binary);
                     if(!in_file.good() || !in_file.is_open())
                     {
                         std::cerr << "Unable to open data base file database/common/accounts/" << account_id_db << " (abort)" << std::endl;
@@ -567,7 +567,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         {
-            std::ofstream out_file("database/server/server", std::ofstream::binary);
+            std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
             if(!out_file.good() || !out_file.is_open())
             {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
@@ -577,7 +577,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         }
         {
             {
-                std::ofstream out_file("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE), std::ofstream::binary);
+                std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
                     std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " (abort)" << std::endl;
@@ -597,7 +597,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 hps::to_stream(account_id_db, out_file);
             }
             {
-                std::ofstream out_file("database/common/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
+                std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
                     std::cerr << "Unable to open data base file database/common/accounts/" << account_id_db << " (abort)" << std::endl;

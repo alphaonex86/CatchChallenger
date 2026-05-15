@@ -565,7 +565,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                         #elif CATCHCHALLENGER_DB_FILE
                         {
                             const std::string &zoneName=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.captureCityInProgress);
-                            FILE *fp=fopen(("database/server/zone/"+zoneName).c_str(),"wb");
+                            FILE *fp=fopen(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/zone/")+zoneName).c_str(),"wb");
                             if(fp!=NULL)
                             {
                                 fwrite(&clanId,sizeof(clanId),1,fp);
@@ -587,7 +587,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                         #elif CATCHCHALLENGER_DB_FILE
                         {
                             const std::string &zoneName=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.captureCityInProgress);
-                            FILE *fp=fopen(("database/server/zone/"+zoneName).c_str(),"wb");
+                            FILE *fp=fopen(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/zone/")+zoneName).c_str(),"wb");
                             if(fp!=NULL)
                             {
                                 fwrite(&clanId,sizeof(clanId),1,fp);

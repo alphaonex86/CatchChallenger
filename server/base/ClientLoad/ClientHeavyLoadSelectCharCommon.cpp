@@ -148,7 +148,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     std::string hexa,pseudo;
     {
-        std::ifstream in_file("database/common/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
+        std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
@@ -185,7 +185,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         abort();
     }
     struct stat sb;
-    if(::stat(("database/common/characters/"+hexa).c_str(),&sb)!=0)
+    if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa).c_str(),&sb)!=0)
     #else
     #error Define what do here
     #endif
@@ -588,7 +588,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     {
-        std::ifstream in_file("database/common/characters/"+hexa, std::ifstream::binary);
+        std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa), std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
@@ -631,7 +631,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     {
         if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         {
-            std::ifstream clan_file("database/server/clans/"+std::to_string(public_and_private_informations.clan), std::ifstream::binary);
+            std::ifstream clan_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/clans/")+std::to_string(public_and_private_informations.clan)), std::ifstream::binary);
             if(clan_file.good() && clan_file.is_open())
             {
                 std::string clanName;

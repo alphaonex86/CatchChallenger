@@ -79,6 +79,20 @@ endif()
 if(CATCHCHALLENGER_DB_FILE)
     target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_FILE)
 endif()
+# RAM-only sub-mode for the FileDB backend: every disk write is rewritten
+# to "/dev/null" at the call site (via CATCHCHALLENGER_DB_FILE_PATH macro
+# in server/base/ServerStructures.hpp). Intended for benchmarks / tests
+# that want to measure the FileDB code path without the kernel write() /
+# fsync() overhead even on tmpfs. See general/DEFINES.md.
+if(CATCHCHALLENGER_DB_FILE_RAM)
+    if(NOT CATCHCHALLENGER_DB_FILE)
+        message(FATAL_ERROR
+            "CATCHCHALLENGER_DB_FILE_RAM requires CATCHCHALLENGER_DB_FILE")
+    endif()
+    target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_FILE_RAM)
+    target_sources(catchchallenger-server-cli PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/../base/DbFileRam.cpp)
+endif()
 if(CATCHCHALLENGER_DB_POSTGRESQL)
     target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_POSTGRESQL)
     find_library(LIBPQ_LIBRARY NAMES pq REQUIRED)

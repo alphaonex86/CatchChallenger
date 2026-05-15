@@ -209,3 +209,6 @@ benchmark/results/*/*/candidate-*.json
 
 # ── Valgrind core dumps (e.g. valgrind --tool=callgrind crash)
 vgcore.*
+
+# ── bot-actions QSettings sidecar (created in cwd by DatabaseBot::init())
+benchmark/config.db
