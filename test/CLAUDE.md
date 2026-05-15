@@ -322,6 +322,7 @@ all.sh writes two operator-facing logs every run (truncated on each fresh run, k
 
 * **`/mnt/data/perso/tmpfs/all.log`** — the full console output mirrored from the run, via `exec > >(tee -a ...)`. Lets the operator scroll back the entire run from disk after the terminal scrollback has aged out or when a 2 h run was unattended.
 * **`/mnt/data/perso/tmpfs/testing-individual-time.json`** — a JSON array of `{"script": ..., "duration_s": ..., "rc": ...}` entries, one per testing*.py that COMPLETED (PASS or FAIL with non-timeout rc). Timed-out scripts (rc 124 / 137) are deliberately omitted: their "duration" is just the cap, not a measure of the test's natural runtime, and feeding that back as historical data would slowly inflate every cap that touched a flaky script. Use this to spot caps that are now far too generous (script consistently finishes in 1/5 of its cap → tighten) or far too tight (script regularly takes 90% of its cap → widen with a separate diagnostic before raising).
+* **`/mnt/data/perso/tmpfs/testing-time-donut.svg`** — donut chart of the same per-script wall, rendered by `test/testing_time_chart.py` at the tail of every full `all.sh` (skipped under `--onlyfailed`, which would reuse a stale timing JSON). Hand-rolled SVG (no matplotlib dep); open in any browser. Largest slice first; sub-1% scripts fold into a single "other" wedge.
 
 ## Diagnosing a hung process — gdb attach, then decide
 
