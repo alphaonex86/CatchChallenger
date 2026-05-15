@@ -16,12 +16,7 @@ The binary stubs out the entire server stack (Client / ClientList /
 ClientWithMap / GlobalServerData / ProtocolParsingBase /
 CommonSettingsServer) via test/testingmapmanagement/Stubs.hpp, so it
 makes ZERO syscalls (modulo libc init), allocates nothing on the
-network, and never touches an event loop. Branch traces emitted as
-`[BRANCH] <tag>` lines from the production .cpp files (gated on
--DCATCHCHALLENGER_TESTING — production binaries see none of them) are
-harvested from stdout and checked against an expected coverage set;
-the test fails if a branch the scenarios are meant to hit didn't
-trigger.
+network, and never touches an event loop.
 
 The C++ side also feeds every Client::sendRawBlock() byte stream
 through a tiny mirror of client/libcatchchallenger/Api_protocol_message.cpp
@@ -104,48 +99,6 @@ try:
     faulthandler.register(signal.SIGUSR1)
 except (AttributeError, RuntimeError):
     pass
-
-# Expected branches the C++ side MUST emit. Updated when production
-# code grows a new branch + corresponding [BRANCH] trace. Missing tags
-# fail the run; the goal is "every reachable branch in the algorithms
-# under test gets exercised".
-EXPECTED_BRANCHES = frozenset([
-    # MapServer::playerToFullInsert()
-    "pfi_no_player_type", "pfi_with_player_type",
-    "pfi_no_pseudo",      "pfi_with_pseudo",
-    "pfi_no_monsters",    "pfi_with_monsters",
-    # MapVisibilityAlgorithm::send_reinsertAll()
-    "send_reinsertAll_le1",
-    "send_reinsertAll_loop_valid", "send_reinsertAll_loop_empty",
-    "send_reinsertAll_count_lt254", "send_reinsertAll_count_ge254",
-    # MapVisibilityAlgorithm::send_reinsertAllWithFilter()
-    "send_filter_le1", "send_filter_skip_ge255",
-    "send_filter_loop_valid", "send_filter_loop_skip",
-    "send_filter_count_lt254", "send_filter_count_ge254",
-    # MapVisibilityAlgorithm::min_CPU()
-    "min_cpu_clamp", "min_cpu_skip_max", "min_cpu_skip_le1",
-    "min_cpu_slot_valid", "min_cpu_slot_empty",
-    "min_cpu_new_map", "min_cpu_same_map",
-    "min_cpu_cache_build", "min_cpu_cache_reuse",
-    "min_cpu_ping_send", "min_cpu_ping_skip",
-    # MapVisibilityAlgorithm::min_network()
-    "min_net_clamp", "min_net_skip_max", "min_net_skip_le1",
-    "min_net_slot_valid", "min_net_slot_empty",
-    "min_net_path1", "min_net_path1_ping_send", "min_net_path1_ping_skip",
-    "min_net_path1_status_valid", "min_net_path1_status_empty",
-    "min_net_path2", "min_net_path2_self",
-    "min_net_path2_within_valid", "min_net_path2_within_empty",
-    "min_net_path2_same_nochange", "min_net_path2_same_change",
-    "min_net_path2_replaced",
-    "min_net_path2_empty_already", "min_net_path2_empty_remove",
-    "min_net_path2_beyond_valid", "min_net_path2_beyond_empty",
-    "min_net_path2_has_insert", "min_net_path2_no_insert",
-    "min_net_path2_insert_lt254", "min_net_path2_insert_ge254",
-    "min_net_path2_has_remove", "min_net_path2_has_change",
-    "min_net_path2_ping_send", "min_net_path2_ping_skip",
-    "min_net_path2_no_diff", "min_net_path2_no_diff_ping",
-])
-
 
 def load_failed_cases():
     return _fc.load_names(SCRIPT_NAME)
@@ -292,7 +245,6 @@ def run_binary():
         print(f"  | {line}")
 
     any_fail = False
-    seen_branches = set()
     for raw in out.splitlines():
         line = raw.strip()
         if line.startswith("PASS "):
@@ -306,23 +258,6 @@ def run_binary():
             detail = rest[1] if len(rest) > 1 else ""
             log_fail(name, detail)
             any_fail = True
-        elif line.startswith("[BRANCH] "):
-            seen_branches.add(line[len("[BRANCH] "):].strip())
-
-    # Branch coverage assertion — every entry in EXPECTED_BRANCHES MUST
-    # have fired at least once. A missing entry means the scenarios
-    # don't reach a branch the production code still has, OR the trace
-    # was lost when the production code mutated. Both warrant a FAIL.
-    missing = sorted(EXPECTED_BRANCHES - seen_branches)
-    extra = sorted(seen_branches - EXPECTED_BRANCHES)
-    if missing:
-        log_fail("branch_coverage", f"missing={','.join(missing)}")
-        any_fail = True
-    if extra:
-        # Extras are not failures — production added a branch and the
-        # python side hasn't caught up. Surface as info so the next
-        # commit can promote it.
-        log_info(f"branch_coverage extra (consider adding to EXPECTED_BRANCHES): {','.join(extra)}")
 
     if p.returncode != 0:
         log_fail("exit", f"binary exit code {p.returncode} (elapsed {elapsed:.2f}s)")

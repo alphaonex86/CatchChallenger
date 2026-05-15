@@ -143,12 +143,11 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         b.addPlayer(1000u + i, x, y, dir_of(rng.next()));
     }
 
-    // Silence stdout during the timed loop. The production
-    // MapVisibilityAlgorithm.cpp emits one `[BRANCH] tag\n` line per
-    // branch when CATCHCHALLENGER_TESTING is defined (the same flag
-    // we need to inject Stubs.hpp). With ~10 branches per slot per
-    // tick * 300 slots * 2000 ticks that's millions of writes that
-    // would dominate the timing -- setstate(badbit) makes every
+    // Silence stdout during the timed loop. Even though the [BRANCH]
+    // traces are gone, MapVisibilityAlgorithm.cpp still has plenty of
+    // std::cerr/std::cout debug prints (slot-by-slot state) under
+    // CATCHCHALLENGER_TESTING — at ~300 slots * 2000 ticks the volume
+    // would dominate the timing. setstate(badbit) makes every
     // operator<< a no-op without changing the algorithm.
     std::cout.setstate(std::ios_base::badbit);
 

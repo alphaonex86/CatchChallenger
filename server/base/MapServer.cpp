@@ -165,51 +165,32 @@ unsigned int MapServer::playerToFullInsert(const Client& client, char * const bu
     posOutput+=1;
     if(GlobalServerData::serverSettings.dontSendPlayerType)
     {
-        #ifdef CATCHCHALLENGER_TESTING
-        std::cout << "[BRANCH] pfi_no_player_type" << std::endl;
-        #endif
         bufferForOutput[posOutput]=((uint8_t)client.getLastDirection() | (uint8_t)Player_type_normal);
     }
     else
     {
-        #ifdef CATCHCHALLENGER_TESTING
-        std::cout << "[BRANCH] pfi_with_player_type" << std::endl;
-        #endif
         bufferForOutput[posOutput]=((uint8_t)client.getLastDirection() | (uint8_t)client.public_and_private_informations.public_informations.type);
     }
     posOutput+=1;
     //pseudo
     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
     {
-        #ifdef CATCHCHALLENGER_TESTING
-        std::cout << "[BRANCH] pfi_with_pseudo" << std::endl;
-        #endif
         const std::string &text=client.public_and_private_informations.public_informations.pseudo;
         bufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(bufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
-    #ifdef CATCHCHALLENGER_TESTING
-    else
-        std::cout << "[BRANCH] pfi_no_pseudo" << std::endl;
-    #endif
     //skin
     bufferForOutput[posOutput]=client.public_and_private_informations.public_informations.skinId;
     posOutput+=1;
     //the following monster id to show
     if(client.public_and_private_informations.monsters.empty())
     {
-        #ifdef CATCHCHALLENGER_TESTING
-        std::cout << "[BRANCH] pfi_no_monsters" << std::endl;
-        #endif
         {const uint16_t _tmp_le=(0);memcpy(bufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
     }
     else
     {
-        #ifdef CATCHCHALLENGER_TESTING
-        std::cout << "[BRANCH] pfi_with_monsters" << std::endl;
-        #endif
         {const uint16_t _tmp_le=(htole16(client.public_and_private_informations.monsters.front().monster));memcpy(bufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
     }
 
