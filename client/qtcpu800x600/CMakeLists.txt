@@ -10,6 +10,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(catchchallenger_qtcpu800x600 LANGUAGES C CXX)
 
+# Explicit LANGUAGES list omits RC, so CMake would silently skip
+# resources-windows.rc and ship an icon-less .exe. Enable RC on Windows
+# targets (MXE toolchain supplies windres) so icon.ico is embedded.
+if(WIN32)
+    enable_language(RC)
+endif()
+
 include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Gui Network Widgets OpenGL Xml REQUIRED)
@@ -106,13 +113,22 @@ if(CATCHCHALLENGER_BUILD_QTCPU800X600_SINGLEPLAYER)
 endif()
 
 # Windows-only resource script: embeds icon.ico into the .exe so the
-# Explorer / taskbar icon comes from the bundled .ico (resolved by
-# the linker via mingw's windres). The .rc file is added as a normal
-# source — CMake's RC language wires up windres on MinGW automatically
-# once the source has the .rc extension.
+# Explorer / taskbar icon comes from the bundled .ico (RC language
+# enabled above; windres does the .rc -> .res step).
+#
+# The .rc references "../../icon.ico". SINGLEPLAYER puts git/server on
+# the target's include path, and server/icon.ico would otherwise
+# shadow it (windres searches -I dirs for resource data files) — the
+# client would embed the server icon. Scoping base/resources/ as a
+# source-level RC include dir makes CMake emit it as the FIRST -I, so
+# "../../icon.ico" resolves to client/qtcpu800x600/icon.ico.
 if(WIN32)
     list(APPEND _qtcpu_sources
         ${CMAKE_CURRENT_SOURCE_DIR}/base/resources/resources-windows.rc)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/base/resources/resources-windows.rc
+        PROPERTIES INCLUDE_DIRECTORIES
+        ${CMAKE_CURRENT_SOURCE_DIR}/base/resources)
 endif()
 
 add_executable(catchchallenger800x600 ${_qtcpu_sources} ${_qtcpu_resources})

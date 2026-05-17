@@ -18,6 +18,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(catchchallenger_server_gui LANGUAGES C CXX)
 
+# Explicit LANGUAGES list omits RC, so CMake would silently skip
+# resources-windows.rc and ship an icon-less .exe. Enable RC on Windows
+# targets (MXE toolchain supplies windres) so icon.ico is embedded.
+if(WIN32)
+    enable_language(RC)
+endif()
+
 # Default to ${CMAKE_BINARY_DIR} as the binary's location so Qt
 # Creator's Run config can pick a Working Directory next to the produced
 # binary — the server aborts in main.cpp when <cwd>/datapack/
@@ -98,9 +105,16 @@ set(_server_gui_sources
 # wrapper to expose the binary in its Project tree as a "Qt Application"
 # (deployment / icon / Run-config working dir all light up).  Falls back
 # to add_executable on older Qt or non-Qt cmake.
+# Windows-only resource script: embeds icon.ico (RC language enabled
+# above). The .rc references "../icon.ico"; scope qt/ as a source-level
+# RC include dir so windres resolves it to server/icon.ico as the
+# FIRST -I, before any other icon.ico on the target include path.
 if(WIN32)
     list(APPEND _server_gui_sources
         ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources-windows.rc)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources-windows.rc
+        PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/qt)
 endif()
 
 if(COMMAND qt_add_executable)
