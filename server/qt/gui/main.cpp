@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <cstdlib>
 #include "MainWindow.hpp"
 #include "../base/NormalServerGlobal.hpp"
 #include "../base/GlobalServerData.hpp"
@@ -16,6 +17,38 @@
 // general/base/ so any non-Qt server binary could also opt in (gated
 // on CATCHCHALLENGER_GUI_STATS, defined only for this binary).
 #include "../../general/base/CCGuiLog.hpp"
+
+// Qt aborts (qFatal → default handler → abort() → SIGABRT + core
+// dump) when no QPA platform plugin can be initialised — typical on
+// a headless box with no DISPLAY and QT_QPA_PLATFORM pointing at a
+// missing plugin.  A server admin tool must not core-dump on that;
+// it should print one plain line and exit non-zero.  We install our
+// own message handler BEFORE constructing QApplication: for the
+// platform-plugin fatal we print and std::exit() (a handler that
+// returns on a fatal makes Qt abort anyway, so we must not return);
+// every other message is delegated to whatever handler Qt had so
+// CATCHCHALLENGER_HARDENED's direct abort() path is untouched (it
+// uses abort(), not qFatal, so it never reaches here).
+static QtMessageHandler g_previousMessageHandler=NULL;
+
+static void guiMessageHandler(QtMsgType type,const QMessageLogContext &context,const QString &msg)
+{
+    if(type==QtFatalMsg && msg.contains(QStringLiteral("platform plugin")))
+    {
+        std::cerr << "CatchChallenger server-gui: no usable Qt platform plugin "
+                     "(headless? run with QT_QPA_PLATFORM=offscreen). Detail: "
+                  << msg.toStdString() << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    if(g_previousMessageHandler!=NULL)
+        g_previousMessageHandler(type,context,msg);
+    else
+    {
+        std::cerr << msg.toStdString() << std::endl;
+        if(type==QtFatalMsg)
+            std::abort();
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -29,6 +62,10 @@ int main(int argc, char *argv[])
     CatchChallenger::gui_log::install(/*install_stdio_redirect=*/false);
 
     NormalServerGlobal::displayInfo();
+
+    // Must be armed before the QApplication ctor: the platform-plugin
+    // probe/abort happens inside it.
+    g_previousMessageHandler=qInstallMessageHandler(guiMessageHandler);
 
     QApplication a(argc, argv);
     a.setStyle(QStringLiteral("Fusion"));
