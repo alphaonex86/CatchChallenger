@@ -157,7 +157,16 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.setHeadless(headless);
     w.resize(initialWidth, initialHeight);
-    w.show();
+    // Pure --autostart (no --screenshot) is the headless server/CI
+    // path: nothing renders the window and no operator looks at it, so
+    // popping a visible MainWindow is just noise (and on a real
+    // display it steals focus / lingers). The Qt event loop, the
+    // queued autostart() and the TCP server all run fine without
+    // show(). Screenshot mode still shows: w.grab() needs the widget
+    // tree laid out and painted.
+    const bool showWindow = !(wantAutostart && screenshotPath.isEmpty());
+    if (showWindow)
+        w.show();
 
     if (!screenshotPath.isEmpty()) {
         QTimer::singleShot(screenshotDelayMs, &w, [&w, screenshotPath]() {

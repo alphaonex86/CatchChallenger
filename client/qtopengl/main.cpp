@@ -360,13 +360,28 @@ int main(int argc, char *argv[])
     QIcon icon;
     icon.addFile(":/CC/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
-    if(!CliClientOptions::host.isEmpty() || !CliClientOptions::serverName.isEmpty() ||
+    if(!CliClientOptions::takeScreenshotPath.isEmpty())
+    {
+        //Screenshot regression: the window MUST be shown — w.grab()
+        //needs the GL surface exposed and painted.
+        s.show();
+    }
+    else if(!CliClientOptions::host.isEmpty() || !CliClientOptions::serverName.isEmpty() ||
        !CliClientOptions::url.isEmpty() ||
        CliClientOptions::closeWhenOnMap || CliClientOptions::dropSendDataAfterOnMap ||
-       CliClientOptions::autosolo || !CliClientOptions::takeScreenshotPath.isEmpty())
+       CliClientOptions::autosolo)
     {
-        //s.setWindowFlags(s.windowFlags() | Qt::WindowStaysOnBottomHint);
-        s.show();
+        //Automated connect / autosolo / closeWhenOnMap (the test &
+        //CI path): no operator is watching and the run self-terminates
+        //on the map marker, so popping a visible window is just noise
+        //and on a real display steals focus. Show it off-screen-
+        //equivalent (showMinimized) instead of show(): the GL surface
+        //is still created, exposed and painted — so the scene reaches
+        //MapVisualiserPlayer::mapDisplayedSlot() exactly as before —
+        //but no window lands in front of the user. (Full hide /
+        //never-show would leave the QOpenGLWidget without an expose
+        //and the map marker would never fire.)
+        s.showMinimized();
     }
     else
     {

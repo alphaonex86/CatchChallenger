@@ -659,13 +659,24 @@ void Client::sendFileContent()
         }
         off_t off=0;
         size_t remaining=p.size;
+        //sent==0 must NOT be treated as EOF here: the per-file size was
+        //taken from stat() and the fd is O_BINARY, so the file really
+        //has `remaining` more bytes. A transient 0 comes from the
+        //socket back-pressure path (the Qt server buffers into
+        //QTcpSocket and writeToSocket can momentarily accept nothing).
+        //Silently break-ing here shipped FEWER bytes than the
+        //[filesize_le32] header already announced, so the client read
+        //the next file's bytes as this file's tail, lost framing, and
+        //aborted with "packet size too big" (Api_protocol.cpp:132).
+        //Retry instead; only give up — and then DROP THE LINK, never
+        //desync the stream — if the socket makes no progress for a
+        //long stretch (genuinely stuck peer).
+        unsigned int zeroProgress=0;
         while(remaining>0)
         {
             const ssize_t sent=writeFileToSocket(fd,&off,remaining);
-            if(sent<=0)
+            if(sent<0)
             {
-                if(sent==0)
-                    break;//EOF; file shorter than fstat? caller error
                 errorOutput("sendFileContent: writeFileToSocket() failed");
                 ::close(fd);
                 disconnectClient();
@@ -673,7 +684,26 @@ void Client::sendFileContent()
                 BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
                 return;
             }
-            remaining-=static_cast<size_t>(sent);
+            if(sent==0)
+            {
+                zeroProgress++;
+                if(zeroProgress>100000)
+                {
+                    //Stuck socket: dropping the link is the only safe
+                    //exit — proceeding would desync the client.
+                    errorOutput("sendFileContent: socket stuck, dropping link");
+                    ::close(fd);
+                    disconnectClient();
+                    pending.clear();
+                    BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
+                    return;
+                }
+            }
+            else
+            {
+                zeroProgress=0;
+                remaining-=static_cast<size_t>(sent);
+            }
         }
         ::close(fd);
         i++;
