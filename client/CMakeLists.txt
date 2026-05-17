@@ -276,4 +276,40 @@ if(ANDROID)
         LIBRARY DESTINATION "libs/${CMAKE_ANDROID_ARCH_ABI}"
         RUNTIME DESTINATION "libs/${CMAKE_ANDROID_ARCH_ABI}"
     )
+
+    # Branding + behaviour for the .apk: a custom package source dir
+    # carrying our AndroidManifest.xml (label "CatchChallenger", landscape
+    # lock) and res/drawable-*/icon.png. androiddeployqt overlays this on
+    # top of the stock Qt template, so anything we don't ship here
+    # (qtprovider_paths.xml, libs.xml, gradle bits) still comes from Qt.
+    set_property(TARGET catchchallenger PROPERTY
+        QT_ANDROID_PACKAGE_SOURCE_DIR
+        "${CMAKE_CURRENT_SOURCE_DIR}/qtopengl/resources/android-package-source")
+    # Belt-and-suspenders: even though the manifest hard-codes the label,
+    # set the app-name property so any gradle/strings.xml path agrees.
+    set_property(TARGET catchchallenger PROPERTY QT_ANDROID_APP_NAME "CatchChallenger")
+
+    # Optional OpenSSL runtime libs for Qt-for-Android.  Qt ships only the
+    # openssl TLS *backend plugin* (libplugins_tls_qopensslbackend) — not
+    # libssl_3.so / libcrypto_3.so — so without these every QSslSocket /
+    # https:// (server-list, updater, wss) fails with
+    # "TLS initialization failed".  We bundle KDAB's prebuilt arm64 libs
+    # via QT_ANDROID_EXTRA_LIBS when the helper is available, and fall back
+    # silently to a TLS-less build otherwise so the tree still configures
+    # out-of-the-box on a host without it (same policy as ninja/mold/etc.).
+    set(CATCHCHALLENGER_ANDROID_OPENSSL_DIR "" CACHE PATH
+        "Path to a KDAB android_openssl checkout (contains android_openssl.cmake)")
+    set(_cc_openssl_dir "${CATCHCHALLENGER_ANDROID_OPENSSL_DIR}")
+    if(_cc_openssl_dir STREQUAL "" AND DEFINED ENV{CC_ANDROID_OPENSSL_DIR})
+        set(_cc_openssl_dir "$ENV{CC_ANDROID_OPENSSL_DIR}")
+    endif()
+    if(NOT _cc_openssl_dir STREQUAL ""
+       AND EXISTS "${_cc_openssl_dir}/android_openssl.cmake")
+        include("${_cc_openssl_dir}/android_openssl.cmake")
+        add_android_openssl_libraries(catchchallenger)
+        message(STATUS "CatchChallenger: bundling Android OpenSSL from ${_cc_openssl_dir}")
+    else()
+        message(STATUS "CatchChallenger: no Android OpenSSL dir — APK built "
+                       "without TLS (set CATCHCHALLENGER_ANDROID_OPENSSL_DIR)")
+    endif()
 endif()
