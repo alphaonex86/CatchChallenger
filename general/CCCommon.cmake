@@ -174,16 +174,43 @@ target_compile_definitions(catchchallenger_common_flags INTERFACE
 # either tool. The CACHE-stamped CC_LINKER variable lets a binary's
 # CMakeLists.txt override (e.g. force lld even on Linux) without
 # editing this file.
+# Presence on PATH is necessary but NOT sufficient: a linker can be
+# installed yet have no backend for the target architecture. mold has
+# no MIPS backend at all (it dies with
+#   mold: fatal: unknown -m argument: elf32btsmip
+# when asked to link a big-endian MIPS object), and ld.lld's MIPS
+# support is partial. So after picking a candidate by availability, we
+# actually test-link a trivial program with -fuse-ld=<candidate> for
+# THIS target and fall back mold -> lld -> bfd on failure. That keeps
+# the "accelerator picked up when present, working fallback otherwise"
+# contract on exotic targets (MIPS, RISC-V variants, …) without
+# hard-coding per-host knowledge.
+function(_cc_linker_works _drv _outvar)
+    include(CheckCXXSourceCompiles)
+    set(CMAKE_REQUIRED_LINK_OPTIONS "-fuse-ld=${_drv}")
+    # Distinct cache key per driver so a previous probe is not reused.
+    check_cxx_source_compiles("int main(){return 0;}" _cc_ld_ok_${_drv})
+    set(${_outvar} "${_cc_ld_ok_${_drv}}" PARENT_SCOPE)
+endfunction()
 if(NOT DEFINED CC_LINKER)
     find_program(_cc_mold_exe mold)
     find_program(_cc_lld_exe NAMES ld.lld lld)
+    set(_cc_chosen "")
     if(_cc_mold_exe AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_CROSSCOMPILING)
-        set(CC_LINKER "mold" CACHE STRING "Linker driver flag picked by CCCommon.cmake")
-    elseif(_cc_lld_exe)
-        set(CC_LINKER "lld" CACHE STRING "Linker driver flag picked by CCCommon.cmake")
-    else()
-        set(CC_LINKER "" CACHE STRING "Linker driver flag picked by CCCommon.cmake")
+        _cc_linker_works(mold _cc_mold_ok)
+        if(_cc_mold_ok)
+            set(_cc_chosen "mold")
+        endif()
     endif()
+    if(NOT _cc_chosen AND _cc_lld_exe)
+        _cc_linker_works(lld _cc_lld_ok)
+        if(_cc_lld_ok)
+            set(_cc_chosen "lld")
+        endif()
+    endif()
+    # _cc_chosen == "" -> default GNU bfd ld (always present, always
+    # links the native target).
+    set(CC_LINKER "${_cc_chosen}" CACHE STRING "Linker driver flag picked by CCCommon.cmake")
 endif()
 if(CC_LINKER)
     target_link_options(catchchallenger_common_flags INTERFACE -fuse-ld=${CC_LINKER})

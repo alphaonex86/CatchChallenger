@@ -167,10 +167,12 @@ else()
     target_link_libraries(catchchallenger-server-cli PRIVATE ${ZSTD_LIBRARY})
 endif()
 
-# Use mold if available — same default as the qmake-driven build.
-find_program(MOLD_EXE mold)
-if(MOLD_EXE)
-    target_link_options(catchchallenger-server-cli PRIVATE -fuse-ld=mold)
+# Linker driver: use the test-link-verified accelerator that
+# CCCommon.cmake picked for THIS target (mold on native ELF,
+# lld/bfd where mold has no backend, e.g. MIPS). Never hard-code
+# a specific linker here — CCCommon is the single source of truth.
+if(CC_LINKER)
+    target_link_options(catchchallenger-server-cli PRIVATE -fuse-ld=${CC_LINKER})
 endif()
 
 # Test-only kernel/user-space wakeup-loop detector. When the harness

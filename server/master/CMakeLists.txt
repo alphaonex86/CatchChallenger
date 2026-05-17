@@ -137,7 +137,10 @@ if(CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE)
         CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE)
 endif()
 
-find_program(MOLD_EXE mold)
-if(MOLD_EXE)
-    target_link_options(catchchallenger-server-master PRIVATE -fuse-ld=mold)
+# Linker driver: use the test-link-verified accelerator that
+# CCCommon.cmake picked for THIS target (mold on native ELF,
+# lld/bfd where mold has no backend, e.g. MIPS). Never hard-code
+# a specific linker here — CCCommon is the single source of truth.
+if(CC_LINKER)
+    target_link_options(catchchallenger-server-master PRIVATE -fuse-ld=${CC_LINKER})
 endif()

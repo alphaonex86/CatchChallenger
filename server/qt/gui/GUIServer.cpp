@@ -4,6 +4,7 @@
 #include "../base/TinyXMLSettings.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include <QCoreApplication>
 #include <QTcpSocket>
 #include <QTcpSocket>
@@ -203,6 +204,33 @@ void GUIServer::load_settings()
     }
     settings.endGroup();
     settings.sync();
+
+    // Root-level network + account settings. These live at the XML root
+    // (game-server schema — NOT inside a group; see server/CLAUDE.md and
+    // server/cli/main-unix2.cpp which reads the same keys). Without this
+    // the GUI server ignored server-properties.xml entirely and always
+    // bound the ctor default port (42489) with automatic_account_creation
+    // stuck at the BaseServer ctor default (false) — so a configured
+    // server-port was silently dropped and --autologin could never
+    // auto-create its account. Guard with contains() so an absent key
+    // keeps the sane in-code default instead of binding port 0.
+    if(settings.contains("server-port"))
+    {
+        const uint16_t p=stringtouint16(settings.value("server-port"));
+        if(p>0)
+            normalServerSettings.server_port=p;
+    }
+    if(settings.contains("server-ip"))
+        normalServerSettings.server_ip=settings.value("server-ip");
+    if(settings.contains("automatic_account_creation"))
+        GlobalServerData::serverSettings.automatic_account_creation=
+            stringtobool(settings.value("automatic_account_creation"));
+    if(settings.contains("max-players"))
+    {
+        const uint16_t mp=stringtouint16(settings.value("max-players"));
+        if(mp>0)
+            GlobalServerData::serverSettings.max_players=mp;
+    }
 
     // Load DB settings from server-properties.xml. Without this the
     // database_*.tryOpenType fields stay at DatabaseType::Unknown and the
