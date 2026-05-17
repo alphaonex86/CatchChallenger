@@ -1,4 +1,5 @@
 #include "QtClient.hpp"
+#include <QAbstractSocket>
 
 #ifdef CATCHCHALLENGER_CLASS_QT
 #include <atomic>
@@ -69,6 +70,26 @@ ssize_t QtClient::write(const char * const data, const size_t &size)
     // pressure; counting the return value matches what the kernel /
     // QSslSocket actually accepted.
     const ssize_t put = socket->write(data, size);
+    // Bulk paths (datapack file streaming via sendFileContent /
+    // sendCompressedFileContent) run synchronously inside the protocol
+    // handler without returning to the Qt event loop, so QTcpSocket
+    // would otherwise buffer the WHOLE datapack (many MiB) in RAM and
+    // only push it to the OS socket once the loop resumes. flush()
+    // forces the already-queued bytes out now: it bounds memory, lets
+    // the client consume incrementally, and keeps the wire bytes in
+    // exact order (flush never reorders/drops — it only advances the
+    // same byte stream), which is what the [filesize_le32] framing the
+    // client parses depends on.
+    // socket is a generic QIODevice* (real QTcpSocket/QSslSocket OR an
+    // in-memory QFakeSocket for solo). flush() exists only on
+    // QAbstractSocket; qobject_cast yields nullptr for QFakeSocket,
+    // where flushing is a no-op anyway (delivery is synchronous).
+    if (put > 0)
+    {
+        QAbstractSocket * const as = qobject_cast<QAbstractSocket *>(socket);
+        if (as != nullptr)
+            as->flush();
+    }
     #ifdef CATCHCHALLENGER_GUI_STATS
     if (put > 0)
         CatchChallenger::gui_stats::net_bytes_sent.fetch_add(

@@ -65,7 +65,21 @@ int main(int argc, char *argv[])
     MainWindow w;
     if(w.toQuit)
         return 523;
-    w.show();
+    if(!AutoArgs::takeScreenshotPath.isEmpty())
+        //Screenshot regression needs the window painted before grab().
+        w.show();
+    else if(!AutoArgs::host.isEmpty() || !AutoArgs::server.isEmpty() ||
+            !AutoArgs::url.isEmpty() || AutoArgs::closeWhenOnMap ||
+            AutoArgs::dropSendDataAfterOnMap || AutoArgs::autosolo)
+        //Automated connect / autosolo / closeWhenOnMap (test & CI
+        //path): self-terminates on the map marker, no operator — keep
+        //the window off the user's screen. showMinimized() still
+        //creates+exposes+paints the widget so the scene reaches
+        //MapVisualiserPlayer::mapDisplayedSlot() exactly as before; a
+        //full hide would suppress the expose and the marker.
+        w.showMinimized();
+    else
+        w.show();
     const int returnCode=a.exec();
     if(w.toQuit)
         return 523;
