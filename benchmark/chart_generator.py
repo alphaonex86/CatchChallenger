@@ -82,10 +82,11 @@ def _extract_series(records):
     """Return ({metric_label -> [(idx, value, commit_short, decision)]},
               [commit_short...], better_map).
 
-    metric_label = "<tool>.<metric>" so two tools that emit the same
-    metric name (e.g. perf-stat wall vs time-v wall) stay on distinct
-    lines. better_map[label] = "lower"|"higher" so the y-axis annotation
-    can tell the operator which direction is good."""
+    metric_label is either "<tool>.<metric>" (aggregate metrics) or
+    "<tool>.<slice>.<metric>" (per-sub-benchmark slice metrics, e.g.
+    "rusage.10-players.cpu_percent"). Sub-benchmark series are the
+    only place cpu_percent lives, so per-CLAUDE.md saturation
+    detection has to walk both."""
     series = {}
     commits = []
     better_map = {}
@@ -110,6 +111,27 @@ def _extract_series(records):
                 series.setdefault(label, []).append((idx, v, commits[-1], decision))
                 if label not in better_map and m.get("better"):
                     better_map[label] = m["better"]
+            subs = blk.get("subbenchmarks") or {}
+            for slice_label, smetrics in subs.items():
+                if not isinstance(smetrics, dict):
+                    continue
+                for mname, m in smetrics.items():
+                    if not isinstance(m, dict):
+                        continue
+                    v = m.get("median")
+                    if v is None:
+                        v = m.get("value")
+                    if v is None:
+                        continue
+                    try:
+                        v = float(v)
+                    except (TypeError, ValueError):
+                        continue
+                    label = f"{tool}.{slice_label}.{mname}"
+                    series.setdefault(label, []).append(
+                        (idx, v, commits[-1], decision))
+                    if label not in better_map and m.get("better"):
+                        better_map[label] = m["better"]
     return series, commits, better_map
 
 
@@ -136,10 +158,17 @@ def _decision_glyph(cx, cy, decision, size=5):
             f'stroke-width="0.5"/>')
 
 
+CPU_SATURATION_THRESHOLD = 90.0
+
+
 def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
-                champion_idx, title):
+                champion_idx, title, panel_metric=None):
     """Render one metric panel. `points_by_label` -> [(idx,val,commit,dec)].
-    Returns SVG string."""
+
+    `panel_metric` is the bare metric name (e.g. "cpu_percent"); when it
+    equals "cpu_percent" we overlay a dashed 90% threshold line and
+    paint a red halo around every point at or above it (per
+    benchmark/CLAUDE.md "mark where the cpu was at 90% or more")."""
     parts = []
     parts.append(f'<g transform="translate({x0},{y0})">')
     # axes box
@@ -159,6 +188,15 @@ def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
     pad = (ymax - ymin) * 0.08
     ymin -= pad; ymax += pad
 
+    is_cpu_panel = (panel_metric == "cpu_percent")
+    if is_cpu_panel:
+        # Force the y-range to span [0, 100] (with a hair of headroom)
+        # so the 90% threshold is in the same visual place across every
+        # chart -- otherwise a run that maxed out at 40% would put the
+        # threshold off-screen above ymax.
+        ymin = min(ymin, 0.0)
+        ymax = max(ymax, 100.0) + 2.0
+
     n = max(len(commits), 1)
     def xpos(idx):
         if n == 1:
@@ -172,6 +210,16 @@ def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
                  f'font-family="sans-serif">{ymax:.3g}</text>')
     parts.append(f'<text x="2" y="{h-2}" font-size="8" fill="#444" '
                  f'font-family="sans-serif">{ymin:.3g}</text>')
+
+    # 90% saturation reference line (only on the cpu_percent panel)
+    if is_cpu_panel:
+        ty = ypos(CPU_SATURATION_THRESHOLD)
+        parts.append(f'<line x1="0" y1="{ty:.2f}" x2="{w}" y2="{ty:.2f}" '
+                     f'stroke="#d62728" stroke-width="0.7" '
+                     f'stroke-dasharray="4,3" opacity="0.7"/>')
+        parts.append(f'<text x="{w-4}" y="{ty-2:.2f}" font-size="8" '
+                     f'fill="#d62728" text-anchor="end" '
+                     f'font-family="sans-serif">90% saturation</text>')
 
     # champion vertical line
     if 0 <= champion_idx < n:
@@ -187,9 +235,16 @@ def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
         parts.append(f'<polyline points="{pts_str}" fill="none" '
                      f'stroke="{col}" stroke-width="1.2"/>')
         for i, v, _commit, dec in pts:
-            parts.append(f'<circle cx="{xpos(i):.1f}" cy="{ypos(v):.2f}" '
+            cxp = xpos(i); cyp = ypos(v)
+            # Saturation halo (drawn before the data dot so the dot
+            # stays on top). Triggered on the cpu_percent panel only.
+            if is_cpu_panel and v >= CPU_SATURATION_THRESHOLD:
+                parts.append(f'<circle cx="{cxp:.1f}" cy="{cyp:.2f}" '
+                             f'r="5" fill="none" stroke="#d62728" '
+                             f'stroke-width="1.5"/>')
+            parts.append(f'<circle cx="{cxp:.1f}" cy="{cyp:.2f}" '
                          f'r="2" fill="{col}"/>')
-            parts.append(_decision_glyph(xpos(i), ypos(v) - 8, dec))
+            parts.append(_decision_glyph(cxp, cyp - 8, dec))
         # legend
         bet = better_map.get(label)
         legend = label + (f" ({bet}=better)" if bet else "")
@@ -265,12 +320,14 @@ def _render_group(benchmark, cpu_slug, node, records):
     if not series:
         return None
 
-    # group series by metric name (so one panel = one metric, all tools)
-    # tool.metric -> panel key = metric (last segment after first dot)
+    # group series by bare metric name (so one panel = one metric, all
+    # tools and all sub-bench slices). For "<tool>.<metric>" the bare
+    # name is the last segment; for "<tool>.<slice>.<metric>" we want
+    # the trailing "<metric>" so every per-slice cpu_percent lands on
+    # the cpu_percent panel.
     panels = {}
     for label, pts in series.items():
-        # everything after the first "." is the bare metric name
-        bare = label.split(".", 1)[1] if "." in label else label
+        bare = label.rsplit(".", 1)[1] if "." in label else label
         panels.setdefault(bare, {})[label] = pts
 
     arch = records[0].get("arch") or "unknown"
@@ -288,10 +345,14 @@ def _render_group(benchmark, cpu_slug, node, records):
                 f'{_esc(benchmark)} -- {_esc(node)} ({_esc(cpu_slug)}, '
                 f'{_esc(arch)}, n={len(records)})</text>')
     y = TOP_MARGIN
-    for pname in sorted(panels.keys()):
+    # Sort so cpu_percent (if present) sits at the top -- it's the
+    # saturation tell-tale and the first thing reviewers look for.
+    pkeys = sorted(panels.keys(), key=lambda k: (k != "cpu_percent", k))
+    for pname in pkeys:
         body.append(_plot_panel(LEFT_MARGIN, y, PANEL_W, PANEL_H,
                                 panels[pname], better_map, commits,
-                                champion_idx, pname))
+                                champion_idx, pname,
+                                panel_metric=pname))
         y += PANEL_H + PANEL_GAP
     body.append(_x_axis_labels(LEFT_MARGIN, y, PANEL_W, commits, champion_idx))
     # decision legend (bottom-right)

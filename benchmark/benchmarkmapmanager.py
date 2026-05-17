@@ -159,12 +159,40 @@ def cell_run(bin_path, profiler, label_node):
     return None
 
 
+def probe_cpu_percent_per_player(bin_path):
+    """Run the bench binary once per PLAYER_COUNTS entry (single value
+    via --players N) and derive cpu_percent = (user+sys)/wall*100 from
+    /usr/bin/time -v. Returns {N -> cpu_percent}.
+
+    The main sweep runs all player counts in a single process so we
+    can't tease apart per-count CPU there. The probe is a few seconds
+    per count (TICKS_PER_RUN ticks for a single player count is
+    cheap relative to the sweep + callgrind cells)."""
+    out = {}
+    for p in PLAYER_COUNTS:
+        cmd = run_one(bin_path, players_arg=[p])
+        t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT)
+        if t.get("rc") != 0:
+            continue
+        wall = t.get("wall_s") or 0.0
+        u    = t.get("user_s")
+        sv   = t.get("sys_s")
+        if wall <= 0 or u is None or sv is None:
+            continue
+        pct = (u + sv) / wall * 100.0
+        # Single-threaded binary -> bounded at 100. >100 implies the
+        # binary briefly spawned a worker (or scheduler jitter); clamp.
+        out[p] = min(100.0, pct)
+    return out
+
+
 def _metric_unit_better(metric_name):
     better = "lower"
     unit = "ns" if metric_name.endswith("_ns") else \
            "bytes" if metric_name.endswith("_bytes") or metric_name == "bytes_sent" or metric_name == "binary_size_bytes" else \
            "kb" if metric_name.endswith("_kb") else \
            "s" if metric_name.endswith("_s") else \
+           "%" if metric_name == "cpu_percent" or metric_name.endswith("_cpu_percent") else \
            "count"
     return unit, better
 
@@ -329,11 +357,13 @@ def main():
     started_utc = hr.iso_now()
     compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release"]
 
-    all_metrics = {}     # node_label -> {flat metric dict}
-    per_tool    = {}     # node_label -> { tool -> {status, metrics, ...} }
+    all_metrics  = {}     # node_label -> {flat metric dict}
+    per_tool     = {}     # node_label -> { tool -> {status, metrics, ...} }
+    per_subbench = {}     # node_label -> { tool -> { slice_label -> metric_block } }
     for node in nodes:
         label = node["label"]
         per_tool[label] = {}
+        per_subbench[label] = {}
         if label != "local":
             run_remote_cells(node, node_profilers[label], node_skips[label],
                              all_profilers, progress, per_tool, all_metrics)
@@ -355,6 +385,33 @@ def main():
             per_tool[label][prof] = {"status": "PASS",
                                      "metrics": _cell_to_metric_block(cell)}
         all_metrics[label] = aggregate_metrics(flat)
+
+        # Per-CLAUDE.md "CPU% per sub-benchmark": for the rusage profile
+        # only (perf/callgrind/binary-size are deterministic single
+        # values and have no workload axis), probe each PLAYER_COUNTS
+        # value individually and emit one sub-bench slice per count
+        # carrying cpu_percent + the parsed BENCH tick metrics.
+        if per_tool[label].get("rusage", {}).get("status") == "PASS":
+            cpu_per_p = probe_cpu_percent_per_player(bin_path)
+            slices = {}
+            cell_metrics = per_tool[label]["rusage"]["metrics"]
+            for p in PLAYER_COUNTS:
+                slice_metrics = {}
+                # pull parsed tick/byte values out of the existing flat
+                # metric dict (keys are p<count>_<metric_name>).
+                prefix = f"p{p}_"
+                for key, blk in cell_metrics.items():
+                    if key.startswith(prefix):
+                        slice_metrics[key[len(prefix):]] = blk
+                if p in cpu_per_p:
+                    slice_metrics["cpu_percent"] = {
+                        "value": cpu_per_p[p], "median": cpu_per_p[p],
+                        "stddev": 0.0, "unit": "%", "better": "lower",
+                        "samples": [cpu_per_p[p]],
+                    }
+                if slice_metrics:
+                    slices[f"{p}-players"] = slice_metrics
+            per_subbench[label]["rusage"] = slices
 
     # Persist + decide for the host arch only (others are SKIP today).
     sha = bh.git_sha()
@@ -386,6 +443,9 @@ def main():
                                arch_hint=node.get("arch")).collect()
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
+        for tool, slices in per_subbench.get(node["label"], {}).items():
+            for slabel, smetrics in slices.items():
+                pr.add_subbenchmark(tool, slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
                          compile_flags=compile_flags,
