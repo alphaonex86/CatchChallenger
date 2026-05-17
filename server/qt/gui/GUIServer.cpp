@@ -292,6 +292,27 @@ void GUIServer::start_internal_server()
 
     if(!initialize_the_database())
     {
+        // Make the failure visible. The dominant real-world cause is a
+        // missing Qt SQL driver plugin (sqldrivers/qsqlite.dll not
+        // shipped next to the .exe → "Driver not loaded"); without an
+        // error() emit the GUI just silently stays "Running" and the
+        // operator reports it as a crash. Prefer the concrete DB error
+        // message, append the actionable hint.
+        std::string dbMsg;
+        if(GlobalServerData::serverPrivateVariables.db_common!=NULL)
+            dbMsg=GlobalServerData::serverPrivateVariables.db_common->errorMessage();
+        if(dbMsg.empty() && GlobalServerData::serverPrivateVariables.db_server!=NULL)
+            dbMsg=GlobalServerData::serverPrivateVariables.db_server->errorMessage();
+        std::string full="Database initialization failed";
+        if(!dbMsg.empty())
+            full+=": "+dbMsg;
+        if(dbMsg.find("river not loaded")!=std::string::npos ||
+           dbMsg.find("river not available")!=std::string::npos)
+            full+=" — the Qt SQL driver plugin is missing "
+                  "(reinstall; sqldrivers/qsqlite.dll must sit next to "
+                  "the executable).";
+        std::cerr << full << std::endl;
+        error(full);
         sslServer->close();
         stat=Down;
         is_started(false);

@@ -94,6 +94,13 @@ private slots:
     void onMapVisibilityChanged(int index);
     void onEventAwake();
     void onEventAboutToBlock();
+    // GUIServer::is_started(false) / GUIServer::error() feedback. Without
+    // these the "Start" click flips the UI to "Running" and a failed
+    // boot (e.g. the SQLite driver plugin missing → "Driver not loaded")
+    // is swallowed: the operator stares at a server that says Running
+    // but never bound — indistinguishable from a freeze/crash.
+    void onServerStartStateChanged(const bool &started);
+    void onServerError(const std::string &message);
 };
 
 #endif // CATCHCHALLENGER_MAINWINDOW_H
