@@ -228,6 +228,222 @@ def collect_net(run):
     return iface
 
 
+def _default_iface(run):
+    rc, route = run(["sh", "-c", "ip route show default | head -1"])
+    if rc != 0:
+        return None
+    m = re.search(r"\bdev\s+(\S+)", route)
+    return m.group(1) if m else None
+
+
+def _wifi_standard_from_flags(flags):
+    """Map `iw link` capability tokens to a wifi generation label.
+    EHT > HE > VHT > HT > legacy. Tokens come from `iw dev <iface> link`
+    output ("RX: ... MCS N", "VHT-MCS N", "HE-MCS N", "EHT-MCS N")."""
+    f = flags.upper()
+    if "EHT" in f:
+        return "wifi-7"
+    if "HE" in f:
+        return "wifi-6"
+    if "VHT" in f:
+        return "wifi-5"
+    if "HT" in f:
+        return "wifi-4"
+    return None
+
+
+def _wifi_band_from_freq(freq_mhz):
+    if freq_mhz is None:
+        return None
+    if 2400 <= freq_mhz <= 2500:
+        return "2.4GHz"
+    if 5000 <= freq_mhz <= 5895:
+        return "5GHz"
+    if 5925 <= freq_mhz <= 7125:
+        return "6GHz"
+    return None
+
+
+_ARPHRD = {
+    1:   "wired",       # ETHER
+    512: "ppp",
+    256: "slip",
+    257: "cslip",
+    258: "slip6",
+    259: "cslip6",
+    772: "loopback",
+    768: "tunnel",      # IPIP
+    769: "tunnel6",
+    773: "sit",
+    776: "ipgre",
+    778: "gre",
+    823: "ieee802154",
+}
+
+
+def _classify_link_kind(run, iface):
+    """Return (net_link, net_link_detail) for `iface`.
+
+    net_link is the coarse bucket: wired / wifi / ppp / slip / tunnel /
+    vpn / serial / loopback / bridge / virtual / unknown.
+    net_link_detail is the driver-level kind when known (wireguard,
+    openvpn, gre, vxlan, ppp0, tun0, ser2net, ...).
+    """
+    detail = None
+    # `ip -d link show <iface>` exposes the rtnl `kind` token on a line
+    # like "    tun  ..." or "    wireguard ..." for virtual links.
+    rc, ipd = run(["sh", "-c", f"ip -d link show {shlex.quote(iface)} 2>/dev/null"])
+    kinds = ("wireguard", "openvpn", "tun", "tap", "ppp", "vti", "vti6",
+             "gre", "gretap", "ip6gre", "ip6gretap", "sit", "ipip",
+             "vxlan", "geneve", "bond", "team", "bridge", "veth",
+             "macvlan", "macvtap", "ipvlan", "vlan", "dummy")
+    if rc == 0 and ipd.strip():
+        for k in kinds:
+            if re.search(rf"^\s+{k}\b", ipd, re.M):
+                detail = k
+                break
+    # /sys/class/net/<iface>/type is the ARPHRD numeric.
+    arphrd = None
+    rc, t = run(["cat", f"/sys/class/net/{iface}/type"])
+    if rc == 0:
+        try: arphrd = int(t.strip())
+        except Exception: pass
+    # Wifi takes precedence (caller already handled it, but be safe).
+    rc, _ = run(["test", "-d", f"/sys/class/net/{iface}/wireless"])
+    if rc == 0:
+        return "wifi", detail or iface
+    # ser2net / serial tunnels: the iface is usually slipN/pppN over a
+    # serial line. Detect ser2net by checking whether the route's gateway
+    # is reachable via a /dev/tty* line owner — best effort.
+    if detail in ("wireguard", "openvpn", "vti", "vti6", "gre", "gretap",
+                  "ip6gre", "ip6gretap", "sit", "ipip", "vxlan", "geneve",
+                  "tun", "tap"):
+        # tun/tap is generic — could be VPN. wireguard/openvpn are VPN
+        # explicitly; gre/sit/ipip/vxlan/geneve are tunnels.
+        if detail in ("wireguard", "openvpn"):
+            return "vpn", detail
+        if detail in ("tun", "tap"):
+            # OpenVPN/WireGuard often present as tun; try to disambiguate
+            # by looking at which userspace process owns the iface.
+            rc, who = run(["sh", "-c",
+                           f"ss -tulpnH 2>/dev/null | grep -E '(openvpn|wireguard|wg-)' | head -1"])
+            if rc == 0 and who.strip():
+                if "openvpn" in who: return "vpn", "openvpn"
+                if "wireguard" in who or "wg-" in who: return "vpn", "wireguard"
+            return "tunnel", detail
+        return "tunnel", detail
+    if detail in ("bridge", "bond", "team", "veth", "macvlan", "macvtap",
+                  "ipvlan", "vlan", "dummy"):
+        return "virtual", detail
+    if arphrd is not None:
+        bucket = _ARPHRD.get(arphrd)
+        if bucket:
+            return bucket, detail
+    # ser2net heuristic: name pattern slN / sl0
+    if re.match(r"^sl\d+$", iface):
+        return "slip", detail or iface
+    if re.match(r"^ppp\d+$", iface):
+        return "ppp", detail or iface
+    return "unknown", detail or iface
+
+
+def collect_net_link(run, iface=None):
+    """Network link classification + per-kind detail.
+
+    Coarse bucket goes in `net_link`; the driver/protocol name goes in
+    `net_link_detail`. Wifi-specific and wired-specific fields are
+    populated when applicable; otherwise they stay None."""
+    out = {
+        "net_link":         None,
+        "net_link_detail":  None,
+        "wifi_ssid":        None,
+        "wifi_standard":    None,
+        "wifi_band":        None,
+        "wifi_link_mbps":   None,
+        "eth_link_mbps":    None,
+    }
+    if iface is None:
+        iface = _default_iface(run)
+    if not iface:
+        return out
+    kind, detail = _classify_link_kind(run, iface)
+    out["net_link"]        = kind
+    out["net_link_detail"] = detail
+    is_wifi = (kind == "wifi")
+    if kind == "wired":
+        # /sys/class/net/<iface>/speed is the kernel-reported negotiated
+        # rate in Mbps. Returns -1 / fails when link is down or driver
+        # doesn't publish it; fall back to ethtool's "Speed:" line.
+        rc, sp = run(["cat", f"/sys/class/net/{iface}/speed"])
+        if rc == 0:
+            try:
+                v = int(sp.strip())
+                if v > 0:
+                    out["eth_link_mbps"] = v
+            except Exception:
+                pass
+        if out["eth_link_mbps"] is None:
+            rc, et = run(["sh", "-c",
+                          f"ethtool {shlex.quote(iface)} 2>/dev/null | grep -i '^\\s*Speed:'"])
+            if rc == 0 and et.strip():
+                m = re.search(r"Speed:\s*([\d\.]+)\s*([GM])b/s", et, re.I)
+                if m:
+                    try:
+                        v = float(m.group(1))
+                        if m.group(2).upper() == "G":
+                            v *= 1000
+                        out["eth_link_mbps"] = int(v)
+                    except Exception:
+                        pass
+        return out
+    if not is_wifi:
+        return out
+    # SSID + freq + bitrate from `iw dev <iface> link`
+    rc, link = run(["iw", "dev", iface, "link"])
+    freq_mhz = None
+    flags = ""
+    if rc == 0 and link.strip() and "Not connected" not in link:
+        for line in link.splitlines():
+            s = line.strip()
+            if s.startswith("SSID:"):
+                out["wifi_ssid"] = s.split(":", 1)[1].strip() or None
+            elif s.startswith("freq:"):
+                try: freq_mhz = int(float(s.split(":", 1)[1].strip()))
+                except Exception: pass
+            elif s.startswith("tx bitrate:"):
+                v = s.split(":", 1)[1].strip()
+                m = re.match(r"([\d\.]+)\s*MBit/s(.*)$", v)
+                if m:
+                    try: out["wifi_link_mbps"] = int(float(m.group(1)))
+                    except Exception: pass
+                    flags += " " + m.group(2)
+    # nmcli fallback for SSID + rate if iw didn't yield them (no root etc.)
+    if out["wifi_ssid"] is None:
+        rc, nm = run(["sh", "-c",
+                      "nmcli -t -f ACTIVE,SSID,FREQ,RATE dev wifi 2>/dev/null"
+                      " | awk -F: '$1==\"yes\"{print; exit}'"])
+        if rc == 0 and nm.strip():
+            parts = nm.strip().split(":")
+            if len(parts) >= 4:
+                out["wifi_ssid"] = parts[1] or None
+                try:
+                    fz = parts[2].replace(" MHz", "").strip()
+                    if fz: freq_mhz = int(float(fz))
+                except Exception: pass
+                m = re.match(r"([\d\.]+)\s*MBit/s", parts[3].strip())
+                if m and out["wifi_link_mbps"] is None:
+                    try: out["wifi_link_mbps"] = int(float(m.group(1)))
+                    except Exception: pass
+    # Standard: pull capability tokens from `iw dev <iface> station dump`
+    # (the bitrate line carries VHT/HE/EHT-MCS tags) before falling back.
+    rc, sta = run(["sh", "-c", f"iw dev {shlex.quote(iface)} station dump 2>/dev/null"])
+    if rc == 0 and sta.strip():
+        flags += " " + sta
+    out["wifi_standard"] = _wifi_standard_from_flags(flags)
+    out["wifi_band"] = _wifi_band_from_freq(freq_mhz)
+    return out
+
+
 def collect_kernel(run):
     rc, out = run(["uname", "-r"])
     return out.strip() if rc == 0 else None
@@ -251,6 +467,103 @@ def collect_compiler(run):
         if rc == 0 and out.strip():
             return out.strip()
     return None
+
+
+def collect_virt(run):
+    """Detect bare-metal vs container vs VM, plus arch-emulation.
+
+    Returns dict:
+      virt_kind     : "bare-metal" | "container" | "vm"
+      virt_type     : "none" | "lxc" | "docker" | "podman" |
+                      "systemd-nspawn" | "openvz" | "qemu" | "kvm" |
+                      "vmware" | "virtualbox" | "xen" | "microsoft" |
+                      "wsl" | "unknown"
+      arch_emulated : bool   (uname -m differs from underlying CPU arch,
+                              e.g. qemu-user-static binfmt)
+      host_arch     : best-effort underlying CPU arch when emulated
+    """
+    out = {"virt_kind": None, "virt_type": None,
+           "arch_emulated": None, "host_arch": None}
+
+    # systemd-detect-virt is the canonical answer when present.
+    rc, c = run("systemd-detect-virt --container 2>/dev/null")
+    c = c.strip() if rc == 0 else ""
+    rc, v = run("systemd-detect-virt --vm 2>/dev/null")
+    v = v.strip() if rc == 0 else ""
+    if c and c != "none":
+        out["virt_kind"] = "container"; out["virt_type"] = c
+    elif v and v != "none":
+        out["virt_kind"] = "vm"; out["virt_type"] = v
+    elif c == "none" and v == "none":
+        out["virt_kind"] = "bare-metal"; out["virt_type"] = "none"
+    else:
+        # Heuristic fallbacks when systemd-detect-virt isn't installed.
+        rc, cg = run(["cat", "/proc/1/cgroup"])
+        if rc == 0:
+            if "/lxc/" in cg or cg.strip().startswith("0::/lxc"):
+                out["virt_kind"] = "container"; out["virt_type"] = "lxc"
+            elif "/docker/" in cg or "docker-" in cg:
+                out["virt_kind"] = "container"; out["virt_type"] = "docker"
+            elif "/kubepods" in cg:
+                out["virt_kind"] = "container"; out["virt_type"] = "kubernetes"
+        if out["virt_kind"] is None:
+            rc, _ = run(["test", "-e", "/.dockerenv"])
+            if rc == 0:
+                out["virt_kind"] = "container"; out["virt_type"] = "docker"
+        if out["virt_kind"] is None:
+            # WSL leaves a marker in /proc/sys/kernel/osrelease.
+            rc, osr = run(["cat", "/proc/sys/kernel/osrelease"])
+            if rc == 0 and ("microsoft" in osr.lower() or "wsl" in osr.lower()):
+                out["virt_kind"] = "vm"; out["virt_type"] = "wsl"
+        if out["virt_kind"] is None:
+            rc, cpuinfo = run(["cat", "/proc/cpuinfo"])
+            if rc == 0 and re.search(r"^flags\s*:.*\bhypervisor\b", cpuinfo, re.M):
+                out["virt_kind"] = "vm"; out["virt_type"] = "unknown"
+        if out["virt_kind"] is None:
+            out["virt_kind"] = "bare-metal"; out["virt_type"] = "none"
+
+    # Arch emulation: compare uname -m with the arch implied by
+    # /proc/cpuinfo. qemu-user-static makes uname report the emulated
+    # arch while /proc/cpuinfo still surfaces the host CPU (procfs is
+    # not virtualized by user-mode emulation).
+    rc, um = run(["uname", "-m"])
+    uname_arch = um.strip() if rc == 0 else None
+    rc, cpuinfo = run(["cat", "/proc/cpuinfo"])
+    host_arch = None
+    if rc == 0 and cpuinfo:
+        # x86 has "vendor_id" / "model name : Intel|AMD"; arm reports
+        # "CPU implementer" / "CPU architecture"; mips: "cpu model :";
+        # riscv: "isa : rv64..."; ppc: "cpu : POWER...". We only need
+        # to know if the family disagrees with uname.
+        if re.search(r"^vendor_id\s*:\s*(GenuineIntel|AuthenticAMD|HygonGenuine|CentaurHauls)",
+                     cpuinfo, re.M) or re.search(r"^model name\s*:.*(Intel|AMD)",
+                     cpuinfo, re.M):
+            host_arch = "x86_64"
+        elif re.search(r"^CPU implementer\s*:", cpuinfo, re.M):
+            host_arch = "aarch64"  # could be armv7 too; family-level only
+        elif re.search(r"^cpu model\s*:.*MIPS", cpuinfo, re.M):
+            host_arch = "mips"
+        elif re.search(r"^isa\s*:\s*rv", cpuinfo, re.M):
+            host_arch = "riscv64"
+        elif re.search(r"^cpu\s*:\s*(POWER|PPC)", cpuinfo, re.M):
+            host_arch = "ppc64"
+    def _fam(a):
+        if not a: return None
+        a = a.lower()
+        if a in ("x86_64", "amd64", "i386", "i486", "i586", "i686"): return "x86"
+        if a.startswith("aarch64") or a.startswith("arm"): return "arm"
+        if a.startswith("mips"): return "mips"
+        if a.startswith("riscv") or a.startswith("rv"): return "riscv"
+        if a.startswith("ppc") or a.startswith("powerpc"): return "ppc"
+        return a
+    if uname_arch and host_arch:
+        emulated = (_fam(uname_arch) != _fam(host_arch))
+        out["arch_emulated"] = emulated
+        if emulated:
+            out["host_arch"] = host_arch
+    else:
+        out["arch_emulated"] = False
+    return out
 
 
 def collect_loadavg(run):
@@ -291,6 +604,17 @@ class PlatformRecord:
             "disk_root":     None,
             "disk_kind":     None,
             "net_card":      None,
+            "net_link":      None,
+            "net_link_detail": None,
+            "wifi_ssid":     None,
+            "wifi_standard": None,
+            "wifi_band":     None,
+            "wifi_link_mbps": None,
+            "eth_link_mbps": None,
+            "virt_kind":     None,
+            "virt_type":     None,
+            "arch_emulated": None,
+            "host_arch":     None,
             "kernel":        None,
             "libc":          None,
             "compiler":      None,
@@ -315,22 +639,24 @@ class PlatformRecord:
         self.platform["disk_root"] = disk["disk_root"]
         self.platform["disk_kind"] = disk["disk_kind"]
         self.platform["net_card"]  = collect_net(self.runner)
+        link = collect_net_link(self.runner)
+        for k in ("net_link", "net_link_detail", "wifi_ssid", "wifi_standard",
+                  "wifi_band", "wifi_link_mbps", "eth_link_mbps"):
+            self.platform[k] = link.get(k)
+        virt = collect_virt(self.runner)
+        for k in ("virt_kind", "virt_type", "arch_emulated", "host_arch"):
+            self.platform[k] = virt.get(k)
         self.platform["kernel"]    = collect_kernel(self.runner)
         self.platform["libc"]      = collect_libc(self.runner)
         self.platform["compiler"]  = collect_compiler(self.runner)
         self.platform["loadavg_1min_at_start"] = collect_loadavg(self.runner)
         return self
 
-    def add_result(self, tool, metrics=None, status="PASS",
-                   skip_reason=None, artifact=None):
-        """Record one profiler/tool block.
-
-        `metrics` is a dict {name -> {value, unit, better, samples?, median?,
-        stddev?}}. Missing optional fields are filled with None so the JSON
-        is self-describing across tools."""
+    @staticmethod
+    def _norm_metrics(metrics):
         norm = {}
         for name, m in (metrics or {}).items():
-            entry = {
+            norm[name] = {
                 "value":   m.get("value", m.get("median")),
                 "unit":    m.get("unit"),
                 "better":  m.get("better"),
@@ -338,13 +664,50 @@ class PlatformRecord:
                 "median":  m.get("median", m.get("value")),
                 "stddev":  m.get("stddev"),
             }
-            norm[name] = entry
+        return norm
+
+    def add_result(self, tool, metrics=None, status="PASS",
+                   skip_reason=None, artifact=None):
+        """Record one profiler/tool block.
+
+        `metrics` is a dict {name -> {value, unit, better, samples?, median?,
+        stddev?}}. Missing optional fields are filled with None so the JSON
+        is self-describing across tools.
+
+        Sub-benchmarks (per-workload slices, e.g. 10/50/200 players) are
+        added separately via `add_subbenchmark()` and land under
+        `results[tool]["subbenchmarks"][label]`."""
+        existing = self.results.get(tool, {})
         self.results[tool] = {
-            "metrics":     norm,
-            "artifact":    artifact,
-            "status":      status,
-            "skip_reason": skip_reason,
+            "metrics":       self._norm_metrics(metrics),
+            "subbenchmarks": existing.get("subbenchmarks", {}),
+            "artifact":      artifact,
+            "status":        status,
+            "skip_reason":   skip_reason,
         }
+        return self
+
+    def add_subbenchmark(self, tool, label, metrics):
+        """Record one workload slice under `tool` (e.g. label="10-players").
+
+        Each slice MUST include a `cpu_percent` metric (unit "%",
+        better="lower") so reviewers can see whether throughput gains
+        came from less CPU or just from using more of it.
+
+        Convention: the server is intentionally single-threaded
+        (epoll event loop), so cpu_percent is bounded at 100 %.
+        100 % means one core saturated. A value > 100 % means the
+        wrong process was timed (probably the bot-client tree) --
+        treat as a measurement bug, not as multi-core usage.
+
+        The helper does not synthesize cpu_percent -- capture it from
+        `/usr/bin/time -v` ("Percent of CPU this job got") or from
+        rusage (utime+stime)/wall_time."""
+        entry = self.results.setdefault(tool, {
+            "metrics": {}, "subbenchmarks": {},
+            "artifact": None, "status": "PASS", "skip_reason": None,
+        })
+        entry.setdefault("subbenchmarks", {})[label] = self._norm_metrics(metrics)
         return self
 
     def write(self, *, commit, started_utc, ended_utc,
@@ -445,6 +808,11 @@ if __name__ == "__main__":
     rec.add_result("rusage", {
         "wall_s": {"value": 1.23, "unit": "s", "better": "lower"},
     })
+    for n, cpu in ((10, 18.4), (50, 62.1), (200, 188.7)):
+        rec.add_subbenchmark("rusage", f"{n}-players", {
+            "cpu_percent": {"value": cpu, "unit": "%", "better": "lower"},
+            "wall_s":      {"value": 0.05 * n, "unit": "s", "better": "lower"},
+        })
     t = iso_now()
     p = rec.write(commit="0"*40, started_utc=t, ended_utc=t,
                   compile_flags=["-O3"], simd_tier="generic",

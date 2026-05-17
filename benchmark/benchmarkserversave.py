@@ -193,6 +193,19 @@ def cell_run(bin_path_in_runfir, profiler):
                 metrics[name] = (med, std)
         if cache_size is not None:
             metrics["cache_bytes"] = (cache_size, 0.0)
+        # cpu_percent per CLAUDE.md "CPU% per sub-benchmark". This binary
+        # is single-shot save (no workload axis), so we derive one
+        # aggregate value from the (user+sys)/wall medians across the
+        # measured passes. Server is single-threaded -> clamp at 100.
+        pct_samples = []
+        for u, sv, w in zip(user_samples, sys_samples, wall_samples):
+            if w and w > 0:
+                p = (u + sv) / w * 100.0
+                pct_samples.append(min(100.0, p))
+        if pct_samples:
+            pmed, pstd = bh.stats_of(pct_samples)
+            if pmed is not None:
+                metrics["cpu_percent"] = (pmed, pstd)
         return metrics
 
     if profiler == "perf-stat":
@@ -225,6 +238,7 @@ def _flat_to_metric_block(flat):
         unit = "s" if name.endswith("_s") else \
                "kb" if name.endswith("_kb") else \
                "bytes" if name.endswith("_bytes") or name == "cache_bytes" else \
+               "%" if name == "cpu_percent" else \
                "count"
         out[name] = {"value": med, "median": med, "stddev": std,
                      "unit": unit, "better": "lower", "samples": None}
@@ -237,6 +251,7 @@ def to_record_metrics(flat):
         unit = "s" if name.endswith("_s") else \
                "kb" if name.endswith("_kb") else \
                "bytes" if name.endswith("_bytes") or name == "cache_bytes" else \
+               "%" if name == "cpu_percent" else \
                "count"
         out[name] = {"median": med, "stddev": std, "unit": unit, "better": "lower"}
     return out
@@ -325,6 +340,16 @@ def main():
                                arch_hint=node.get("arch")).collect()
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
+            # Single-workload benchmark -> emit one "default" slice
+            # carrying cpu_percent so the per-CLAUDE.md mandatory
+            # field is present in the JSON.
+            if tool == "rusage" and blk["status"] == "PASS":
+                slice_keys = ("cpu_percent", "wall_s", "user_s", "sys_s",
+                              "max_rss_kb", "cache_bytes")
+                slice_metrics = {k: blk["metrics"][k]
+                                 for k in slice_keys if k in blk["metrics"]}
+                if slice_metrics:
+                    pr.add_subbenchmark(tool, "default", slice_metrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
                          compile_flags=compile_flags,

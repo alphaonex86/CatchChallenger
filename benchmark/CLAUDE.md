@@ -107,6 +107,62 @@ with an exponential decay tuned to 60 s / 5 min / 15 min, so a
 shorter wait reads partially-decayed pre-rsync state and the
 threshold loses meaning.
 
+### Record the network link too
+
+For every exec node, capture the link type used to reach it and any
+characteristics that affect timing. Numbers measured over a wifi or
+tunnelled link are NOT comparable to numbers measured over a 10 GbE
+wired link; numbers from a qemu-emulated mips guest on an x86 host
+are NOT comparable to numbers from a real mips board. Without these
+fields in the JSON the operator has no way to spot that the
+"regression" is just a different transport.
+
+* **wired** → `eth_link_mbps` negotiated speed (`/sys/class/net/<i>/speed`,
+  fallback `ethtool <i>`). A 100 Mbit port on an otherwise modern box
+  silently caps throughput; the field exposes that.
+* **wifi** → SSID, standard (wifi-4/5/6/6e/7), band (2.4/5/6 GHz),
+  link rate (`iw dev <i> link` / `iw dev <i> station dump`, fallback
+  `nmcli -t -f ACTIVE,SSID,FREQ,RATE dev wifi`).
+* **ppp / slip / serial / ser2net** → `net_link` bucket + driver in
+  `net_link_detail` (e.g. `ppp0`, `sl0`).
+* **tunnel** (gre, ipip, sit, vxlan, geneve, bare tun/tap not owned by
+  a VPN daemon) → `net_link: "tunnel"`, kind in `net_link_detail`.
+* **vpn** (wireguard, openvpn, or tun/tap owned by a VPN process per
+  `ss -tulpn`) → `net_link: "vpn"`, daemon in `net_link_detail`.
+* **virtual** (bridge, bond, veth, vlan, macvlan, ipvlan, dummy) →
+  `net_link: "virtual"`, kind in `net_link_detail`. Underlying physical
+  speed is intentionally null — walk bridge members manually if needed.
+
+Wifi and tunnels add jitter a wired link doesn't, so a wifi/VPN node
+should not be the sole signal for KEEP/DISCARD on latency metrics —
+escalate when only wifi/VPN/tunnel nodes show movement.
+
+### Record bare-metal / container / VM and arch emulation
+
+For every exec node, also capture:
+
+* `virt_kind` — `bare-metal` / `container` / `vm`.
+* `virt_type` — `none` / `lxc` / `docker` / `podman` / `systemd-nspawn`
+  / `kubernetes` / `qemu` / `kvm` / `vmware` / `virtualbox` / `xen` /
+  `wsl` / `unknown`. Read via `systemd-detect-virt --container` and
+  `systemd-detect-virt --vm`; fall back to `/proc/1/cgroup`,
+  `/.dockerenv`, `/proc/sys/kernel/osrelease` (WSL marker) and the
+  `hypervisor` CPU flag.
+* `arch_emulated` — `true` when `uname -m` disagrees with the CPU
+  family implied by `/proc/cpuinfo`. qemu-user-static (e.g. an x86
+  host running a `mips`-rootfs LXC container via binfmt_misc) returns
+  the emulated arch from `uname -m` while `/proc/cpuinfo` still
+  surfaces the host CPU — that mismatch IS the signal. An emulated
+  arch is typically 5×–50× slower than native silicon; a benchmark
+  unaware of this will conclude "MIPS is glacial" when in reality
+  it's measuring qemu-user overhead.
+* `host_arch` — the underlying CPU arch when `arch_emulated` is true,
+  else null.
+
+These fields are MANDATORY in every per-run JSON. The shared helper
+`history_recorder.collect_virt()` writes them; benchmarks do not need
+to (and must not) reimplement detection.
+
 ### Why every arch, every time
 
 Local-only is never enough. An optimisation that helps amd64 but
@@ -349,6 +405,17 @@ Schema (one platform per file):
   "disk_root":  "<vendor + model of the device backing /, from lsblk/smartctl>",
   "disk_kind":  "<nvme | ssd-sata | hdd | emmc | sd | tmpfs>",
   "net_card":   "<lspci/lshw model string for the primary NIC>",
+  "net_link":   "<wired | wifi | ppp | slip | tunnel | vpn | serial | virtual | loopback | unknown>",
+  "net_link_detail": "<driver/protocol token: wireguard | openvpn | gre | vxlan | tun | tap | bridge | ppp0 | ser2net | ... | null>",
+  "wifi_ssid":  "<SSID if net_link==wifi, else null>",
+  "wifi_standard": "<wifi-4 (802.11n) | wifi-5 (802.11ac) | wifi-6 (802.11ax) | wifi-6e | wifi-7 (802.11be) | null>",
+  "wifi_band":  "<2.4GHz | 5GHz | 6GHz | null>",
+  "wifi_link_mbps": <int negotiated link rate, or null>,
+  "eth_link_mbps": <int negotiated wired link rate Mbps (100/1000/2500/10000/...), or null>,
+  "virt_kind":  "<bare-metal | container | vm>",
+  "virt_type":  "<none | lxc | docker | podman | systemd-nspawn | openvz | kubernetes | qemu | kvm | vmware | virtualbox | xen | microsoft | wsl | unknown>",
+  "arch_emulated": <bool — true when uname -m disagrees with /proc/cpuinfo (qemu-user-static binfmt, etc.)>,
+  "host_arch":  "<underlying CPU arch when arch_emulated==true (e.g. 'x86_64' inside a mips-emulated container), else null>",
   "kernel":     "<uname -r>",
   "libc":       "<glibc 2.39 | musl 1.2.5 | ...>",
   "compiler":   "<gcc 13.2 | clang 18 | ...>",
@@ -361,6 +428,14 @@ Schema (one platform per file):
                                  "better": "lower" | "higher",
                                  "samples": [<n>, <n>, ...],
                                  "median": <n>, "stddev": <n> } },
+      "subbenchmarks": {
+        "<label e.g. '10-players' | '50-players' | '200-players' | 'small' | 'medium' | 'large'>": {
+          "cpu_percent": { "value": <float, 0..100 — server is single-threaded, 100 = one core saturated>,
+                           "unit": "%", "better": "lower",
+                           "samples": [<n>,...], "median": <n>, "stddev": <n> },
+          "<other-metric>": { ... same shape ... }
+        }
+      },
       "artifact": "<relative path under benchmark/history/.../artifacts/ if any>",
       "status":   "PASS | SKIP | FAIL",
       "skip_reason": "<only if status==SKIP, e.g. 'load=1.7'>"
@@ -383,6 +458,47 @@ not have to guess between "unknown" and "the harness forgot".
 Writers MUST emit with `json.dumps(..., indent=2, sort_keys=True)`
 (or equivalent) so a human can diff two runs by eye and `git diff`
 stays line-oriented.
+
+### CPU% per sub-benchmark — MANDATORY
+
+When a benchmark sweeps a workload axis (player count 10/50/200, map
+size small/medium/large, packet rate 1k/10k/100k, …), every slice
+MUST record a `cpu_percent` metric (unit `%`, `better: "lower"`)
+alongside its primary metric inside that slice's `subbenchmarks`
+entry. Without it, a throughput "win" is ambiguous: did the patch
+do more work per cycle, or did it just burn more CPU to push the
+same packets? The constrained targets care about both — a 30 %
+throughput gain that takes the i486 from 70 %→95 % CPU is NOT a
+win; it eats the headroom that keeps tick latency stable.
+
+**The CatchChallenger server is intentionally single-threaded
+(epoll event loop, simple + cache-friendly + portable to i486
+class hardware), so the server's `cpu_percent` is bounded at
+100 %.** 100 % means one core fully saturated — the server cannot
+go faster on that node, only on a faster core. A reading above
+100 % indicates the metric was taken from the *wrong* process
+(measurement bug: probably timed the whole bot-client tree
+including N worker bots instead of the single server PID) — treat
+it as FAIL, not as "uses more cores". Capture from
+`getrusage((ru_utime+ru_stime)/wall)*100` of the server PID, or
+`/usr/bin/time -v` wrapping ONLY the server binary, not the bot
+fleet. Reaching 100 % at the largest workload is the expected
+saturation signal — that's the point where added load starts
+costing latency.
+
+Capture CPU% from:
+* `/usr/bin/time -v` → "Percent of CPU this job got: 99%" — easiest,
+  no extra dependency, works on every node.
+* `getrusage(RUSAGE_SELF)` at end of the binary → `(ru_utime +
+  ru_stime) / wall_clock * 100` — when the binary is benchmark-aware
+  and already prints rusage.
+* `pidstat -p <pid> 1` for long-running servers — sample throughout
+  the slice, record median + p95.
+
+Don't synthesize the field from aggregate rusage — every slice gets
+its own measurement, not a divided global. The helper provides
+`PlatformRecord.add_subbenchmark(tool, label, metrics)` exactly for
+this; benchmark scripts call it once per workload point.
 
 ### Helper, not copy-paste
 

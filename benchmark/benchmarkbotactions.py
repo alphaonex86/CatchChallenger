@@ -336,6 +336,26 @@ def _read_tcp_retrans():
 
 # ---- run one cell -------------------------------------------------------
 
+_CLK_TCK = os.sysconf("SC_CLK_TCK") if hasattr(os, "sysconf") else 100
+
+def _server_cpu_ticks(pid):
+    """Return (utime + stime) for `pid` in clock ticks, or None if the
+    process is gone. Reads /proc/<pid>/stat fields 14 (utime) and 15
+    (stime). The comm field at index 2 can contain spaces and parens,
+    so we slice from the last ')' before splitting."""
+    try:
+        with open(f"/proc/{pid}/stat", "rb") as f:
+            raw = f.read().decode("ascii", errors="replace")
+        rp = raw.rfind(")")
+        if rp < 0:
+            return None
+        rest = raw[rp + 1:].split()
+        # rest[0] is field 3 (state); utime is field 14 -> rest[11].
+        return int(rest[11]) + int(rest[12])
+    except (FileNotFoundError, ProcessLookupError, ValueError, IndexError):
+        return None
+
+
 def _bot_cmd(bin_path, host, port, bots):
     return [bin_path,
             "--host",  str(host),
@@ -345,16 +365,23 @@ def _bot_cmd(bin_path, host, port, bots):
             "--pass",  "bench_%NUMBER%"]
 
 
-def _run_once(bin_path, host, port, bots, iface):
+def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     """Run bot-actions for DURATION_S seconds, return sample dict or
     None on failure. Uses `timeout --signal=INT` so Qt can clean up
     sockets gracefully -- a hard SIGKILL leaves TIME_WAIT churn that
-    pollutes the NEXT iteration's counters."""
+    pollutes the NEXT iteration's counters.
+
+    When `server_pid` is given, sample the server's /proc/<pid>/stat
+    cpu ticks pre/post and derive its single-thread CPU% over the run.
+    The server is intentionally single-threaded (epoll), so the value
+    is bounded at 100 % -- a reading above that means a wrong PID
+    was timed (clamp + log, don't pretend it's multi-core)."""
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
 
     pre_iface = _read_iface_counters(iface) if iface else None
     pre_retrans = _read_tcp_retrans()
+    pre_srv_ticks = _server_cpu_ticks(server_pid) if server_pid else None
 
     cmd = ["timeout", "--signal=INT", str(DURATION_S)] + \
           _bot_cmd(bin_path, host, port, bots)
@@ -371,6 +398,7 @@ def _run_once(bin_path, host, port, bots, iface):
 
     post_iface = _read_iface_counters(iface) if iface else None
     post_retrans = _read_tcp_retrans()
+    post_srv_ticks = _server_cpu_ticks(server_pid) if server_pid else None
 
     sample = {"wall_s": wall, "user_s": None, "sys_s": None,
               "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
@@ -410,15 +438,29 @@ def _run_once(bin_path, host, port, bots, iface):
     if pre_retrans is not None and post_retrans is not None:
         sample["tcp_retrans"] = post_retrans - pre_retrans
 
+    if (pre_srv_ticks is not None and post_srv_ticks is not None
+            and wall > 0 and _CLK_TCK > 0):
+        srv_cpu_s = (post_srv_ticks - pre_srv_ticks) / float(_CLK_TCK)
+        pct = (srv_cpu_s / wall) * 100.0
+        if pct > 100.0:
+            # Server is single-threaded; >100% means our PID points at
+            # the wrong process. Surface the bug instead of pretending.
+            print(_color(bh.C_YELLOW,
+                f"[warn] server cpu_percent={pct:.1f} >100 — wrong PID? "
+                f"(pid={server_pid}, ticks={post_srv_ticks - pre_srv_ticks}, "
+                f"wall={wall:.2f}s)"), file=sys.stderr)
+            pct = 100.0
+        sample["cpu_percent"] = pct
+
     return sample
 
 
-def cell_run(bin_path, host, port, bots, iface):
+def cell_run(bin_path, host, port, bots, iface, server_pid=None):
     """RUN_REPEATS passes (drop first as warmup). Returns per-metric
     {name -> (median, stddev)} for one (bots) cell."""
     samples = []
     for i in range(RUN_REPEATS):
-        s = _run_once(bin_path, host, port, bots, iface)
+        s = _run_once(bin_path, host, port, bots, iface, server_pid=server_pid)
         if s is None:
             return None
         if i == 0:
@@ -439,10 +481,11 @@ def cell_run(bin_path, host, port, bots, iface):
 
 
 def _unit_for(name):
-    if name.endswith("_s"):     return "s"
-    if name.endswith("_kb"):    return "kb"
-    if name.endswith("_bytes"): return "bytes"
-    if name.endswith("_pkts"):  return "count"
+    if name.endswith("_s"):       return "s"
+    if name.endswith("_kb"):      return "kb"
+    if name.endswith("_bytes"):   return "bytes"
+    if name.endswith("_pkts"):    return "count"
+    if name == "cpu_percent" or name.endswith("_cpu_percent"): return "%"
     return "count"
 
 
@@ -509,9 +552,11 @@ def _run_with_server(bin_path, server_proc):
     compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release"]
 
     per_tool = {}     # node_label -> { tool -> {status, metrics} }
+    per_subbench = {} # node_label -> { tool -> { label -> {metric -> {value,unit,better,...}} } }
     for node in nodes:
         label = node["label"]
         per_tool[label] = {}
+        per_subbench[label] = {}
         if label != "local":
             for prof in all_profilers:
                 progress.emit(prof, "no", label, status="SKIP",
@@ -528,21 +573,31 @@ def _run_with_server(bin_path, server_proc):
         if "rusage" in node_profilers[label]:
             all_metrics = {}
             rusage_status = "PASS"
+            sub = {}  # sub-bench label -> per-metric block
             for bots in BOT_COUNTS:
-                cell = cell_run(bin_path, host, port, bots, iface)
+                cell = cell_run(bin_path, host, port, bots, iface,
+                                server_pid=server_proc.pid)
                 if cell is None:
                     progress.emit("rusage", "no", label, status="FAIL",
                                   extra=f"bots={bots}")
                     rusage_status = "FAIL"
                     continue
+                # 1. flatten into the legacy b<count>_<name> dict for the
+                #    champion-compare path (unchanged behaviour).
+                # 2. drop a per-workload sub-bench record carrying CPU%
+                #    plus the other rusage fields, keyed by "<n>-bots".
+                slice_flat = {}
                 for name, (med, std) in cell.items():
                     all_metrics[f"b{bots}_{name}"] = (med, std)
+                    slice_flat[name] = (med, std)
+                sub[f"{bots}-bots"] = _flat_to_metric_block(slice_flat)
                 progress.emit("rusage", "no", label, status="PASS",
                               extra=f"bots={bots}")
             per_tool[label]["rusage"] = {
                 "status":  rusage_status,
                 "metrics": _flat_to_metric_block(all_metrics),
             }
+            per_subbench[label]["rusage"] = sub
         else:
             for bots in BOT_COUNTS:
                 progress.emit("rusage", "no", label, status="SKIP",
@@ -639,6 +694,10 @@ def _run_with_server(bin_path, server_proc):
                                arch_hint=node.get("arch")).collect()
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
+        # Per-workload sub-benchmark slices (cpu_percent + wall_s + ...).
+        for tool, slices in per_subbench.get(node["label"], {}).items():
+            for slabel, smetrics in slices.items():
+                pr.add_subbenchmark(tool, slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
                          compile_flags=compile_flags,
