@@ -73,6 +73,95 @@ def ssh_run(user, host, port, cmd, timeout=120):
         return -1, "", f"ssh timeout after {timeout}s"
 
 
+# ---- diskless NFS-LXC exec node bring-up --------------------------------
+# Self-contained (benchmark_remote intentionally does not import
+# test/remote_build). Inert for every ordinary exec node: a node whose
+# lxc_nfs block is absent or has enabled=false returns immediately, so
+# these are safe to call unconditionally around every benchmark.
+
+def _lxc_nfs_cfg(exec_node):
+    blk = exec_node.get("lxc_nfs")
+    if not isinstance(blk, dict) or not bool(blk.get("enabled", False)):
+        return None
+    return blk
+
+
+# Container is always this fixed name (no lxc_name field).
+NFS_LXC_CONTAINER_NAME = "catchchallenger"
+
+
+def _nfs_lxc_script(cfg, host_addr, action):
+    """action: 'up' = stop-all/mount/chroot/lxc-start; 'down' =
+    lxc-stop + umount. `host_addr` is the exec node's own top-level
+    host (bridge-side address). Empty host_addr / guest_* stay
+    UNCONFIGURED (never assigned)."""
+    q = shlex.quote
+    nm = cfg["nfs_mount"]
+    name = NFS_LXC_CONTAINER_NAME
+    if action == "down":
+        return "\n".join([
+            f"chroot {q(nm)} /bin/bash -c "
+            f"{q(f'lxc-stop -n {q(name)} -k 2>/dev/null || true')} "
+            f"2>/dev/null || true",
+            f"umount {q(nm)} 2>/dev/null || true",
+        ])
+    bridge = cfg["bridge"]
+    addr = []
+    if bridge:
+        addr.append(f"ip link set {q(bridge)} up 2>/dev/null || true")
+        if host_addr:
+            addr.append(f"ip addr add {q(host_addr)} dev {q(bridge)} 2>/dev/null || true")
+    inner = ["set -e", *addr,
+             f"lxc-start -n {q(name)} -d",
+             f"lxc-wait -n {q(name)} -s RUNNING -t 60 2>/dev/null || true"]
+    if cfg.get("guest_ipv4"):
+        inner.append(f"lxc-attach -n {q(name)} -- ip -4 addr add {q(cfg['guest_ipv4'])} dev eth0 2>/dev/null || true")
+    if cfg.get("guest_ipv6"):
+        inner.append(f"lxc-attach -n {q(name)} -- ip -6 addr add {q(cfg['guest_ipv6'])} dev eth0 2>/dev/null || true")
+    return "\n".join([
+        "set -e",
+        "lxc container stop -k all 2>/dev/null || lxc-stop -a -k 2>/dev/null || true",
+        f"mkdir -p {q(nm)}",
+        f"umount {q(nm)} 2>/dev/null || true",
+        f"mount -t nfs4 {q(cfg['nfs'])}:/ {q(nm)}",
+        f"chroot {q(nm)} /bin/bash -c {q(chr(10).join(inner))}",
+    ])
+
+
+def _exec_ssh(exec_node):
+    """(user, host, port, host_addr) for the exec node's OWN pre-chroot
+    SSH (key auth). host_addr == host is the bridge-side address."""
+    return (exec_node["user"], exec_node["host"],
+            int(exec_node.get("port", 22)), exec_node["host"])
+
+
+def nfs_lxc_bring_up(exec_node, verbose=False):
+    cfg = _lxc_nfs_cfg(exec_node)
+    if cfg is None:
+        return True
+    if not cfg.get("nfs") or not cfg.get("nfs_mount"):
+        if verbose:
+            print(f"[remote] {exec_node.get('label','?')}: lxc_nfs enabled "
+                  f"but nfs/nfs_mount unset — skipping bring-up")
+        return True
+    u, h, p, ha = _exec_ssh(exec_node)
+    rc, _o, e = ssh_run(u, h, p, _nfs_lxc_script(cfg, ha, "up"), timeout=300)
+    if rc != 0 and verbose:
+        print(f"[remote] {exec_node.get('label','?')}: nfs-lxc bring-up "
+              f"rc={rc}: {e.strip()[-300:]}")
+    return rc == 0
+
+
+def nfs_lxc_teardown(exec_node, verbose=False):
+    cfg = _lxc_nfs_cfg(exec_node)
+    if cfg is None:
+        return
+    if not cfg.get("nfs") or not cfg.get("nfs_mount"):
+        return
+    u, h, p, ha = _exec_ssh(exec_node)
+    ssh_run(u, h, p, _nfs_lxc_script(cfg, ha, "down"), timeout=120)
+
+
 def rsync_to(user, host, port, src, dst, timeout=RSYNC_TIMEOUT,
              extra_args=None):
     """rsync local `src` -> remote `dst` (path on host). When `src` ends
@@ -360,6 +449,26 @@ def remote_binary_size(exec_node, bin_path):
 # ---- the high-level "run a benchmark binary on a remote exec node" -------
 
 def run_benchmark_on_exec(compile_node, exec_node, cmake_src_subdir,
+                          build_subdir, bin_name, runtime_cmd,
+                          profilers, cmake_defs=None, extras=None,
+                          run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False):
+    """Diskless NFS-LXC wrapper: bring the exec node's container up
+    before the benchmark and guarantee teardown after (try/finally),
+    even on early-return failures. Both calls are no-ops for ordinary
+    exec nodes, so this is inert unless lxc_nfs.enabled was flipped on."""
+    if not nfs_lxc_bring_up(exec_node, verbose=verbose):
+        return ({p: None for p in profilers},
+                "nfs-lxc bring-up failed")
+    try:
+        return _run_benchmark_on_exec_inner(
+            compile_node, exec_node, cmake_src_subdir, build_subdir,
+            bin_name, runtime_cmd, profilers, cmake_defs=cmake_defs,
+            extras=extras, run_timeout=run_timeout, verbose=verbose)
+    finally:
+        nfs_lxc_teardown(exec_node, verbose=verbose)
+
+
+def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
                           build_subdir, bin_name, runtime_cmd,
                           profilers, cmake_defs=None, extras=None,
                           run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False):

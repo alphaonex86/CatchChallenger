@@ -44,6 +44,8 @@ When adding new validation, add a matching broken fixture. Absence of message (o
 
 Every key in `_doc` MUST exist on every node/execution_node. No defaults — `remote_build.py` validates at load. Required: `_REQUIRED_NODE_KEYS`, `_REQUIRED_EXEC_NODE_KEYS`. Adding a field: update `_doc` + `_REQUIRED_…` tuple + **every** existing entry. Empty != missing — write `compile_sql=[]` explicitly.
 
+`lxc_nfs` is a mandatory exec-node object `{enabled,nfs,nfs_mount,bridge,guest_ipv4,guest_ipv6}` (diskless NFS-rooted LXC bring-up). Pre-chroot SSH = the exec node's OWN top-level `user@host:port` (key auth, no `mgmt` block); the bridge-side address = that same top-level `host`. Sequence: `lxc container stop -k all` → mount test-box `/` over NFS → chroot → `lxc-start` the fixed-name container **`catchchallenger`** (no `lxc_name` field); teardown `lxc-stop` + `umount`. Inert form `{"enabled":false,...empties...}` on every ordinary node (whole block ignored). Empty `host`(top-level)/`guest_*` stay UNCONFIGURED. Driven by `remote_build.nfs_lxc_bring_up()/teardown()` (also self-contained in `benchmark/benchmark_remote.py`), hooked in `testingremote.run_exec_phase`/`cleanup_exec_node` and `run_benchmark_on_exec`. Ship NFS-LXC nodes `enabled:false` — they share an IP with a host-side LXC node and the bring-up's stop-all kills it.
+
 ## Database backends in testing*.py — file_db on host, SQL gated to remote_nodes.json
 
 **testing*.py never opens an SQL DB connection.** Host runs only file-db (`CATCHCHALLENGER_DB_FILE`); no remote/exec node has SQL pre-configured. Direct `psycopg2.connect`/`mysql.connector.connect` forbidden. State wiping for SQL = let server binary do it.
