@@ -6,6 +6,7 @@
 #include "../../libqtcatchchallenger/Settings.hpp"
 #include "../../libqtcatchchallenger/Ultimate.hpp"
 #include <QWidget>
+#include <QFont>
 #include "../../libqtcatchchallenger/Language.hpp"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
@@ -165,7 +166,32 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
     options->setPos(widget->width()/2-facebook->width()/2-horizontalMargin-options->width(),verticalMargin);
     facebook->setPos(widget->width()/2-facebook->width()/2,verticalMargin);
     website->setPos(widget->width()/2+facebook->width()/2+horizontalMargin,verticalMargin);
-    warning->setPos(widget->width()/2-warning->boundingRect().width()/2,5);
+    if(warning->isVisible())
+    {
+        // Auto-wrap: constrain the text to the visible width so long
+        // error messages break onto several lines instead of bleeding
+        // off both screen edges (was unbounded => only the middle of a
+        // long datapack/proxy error was readable).
+        const int warningMargin=10;
+        const qreal availWidth=widget->width()-warningMargin*2;
+        warning->setTextWidth(availWidth);
+        // Auto-adapt the font size to the text length: keep it big for
+        // short messages, shrink down (to a readable floor) for long
+        // ones so the wrapped block never eats more than a third of the
+        // screen height.
+        const qreal maxHeight=widget->height()/3.0;
+        QFont warningFont=warning->font();
+        int pixelSize=(widget->width()<600 || widget->height()<600)?16:24;
+        warningFont.setPixelSize(pixelSize);
+        warning->setFont(warningFont);
+        while(pixelSize>9 && warning->boundingRect().height()>maxHeight)
+        {
+            pixelSize--;
+            warningFont.setPixelSize(pixelSize);
+            warning->setFont(warningFont);
+        }
+        warning->setPos(widget->width()/2-warning->boundingRect().width()/2,5);
+    }
 
     if(widget->height()<280)
     {

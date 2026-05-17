@@ -303,6 +303,21 @@ if(ANDROID)
     if(_cc_openssl_dir STREQUAL "" AND DEFINED ENV{CC_ANDROID_OPENSSL_DIR})
         set(_cc_openssl_dir "$ENV{CC_ANDROID_OPENSSL_DIR}")
     endif()
+    # Auto-pick a KDAB android_openssl checkout from well-known host
+    # locations (same "use it when present, fall back silently"
+    # policy as ninja/mold/MXE) so the APK ships TLS out-of-the-box
+    # without every builder having to pass -DCATCHCHALLENGER_ANDROID_OPENSSL_DIR.
+    if(_cc_openssl_dir STREQUAL "")
+        foreach(_cc_openssl_guess
+                "/mnt/data/perso/progs/CatchChallenger-android/android_openssl"
+                "$ENV{HOME}/android_openssl"
+                "$ENV{HOME}/Android/android_openssl")
+            if(EXISTS "${_cc_openssl_guess}/android_openssl.cmake")
+                set(_cc_openssl_dir "${_cc_openssl_guess}")
+                break()
+            endif()
+        endforeach()
+    endif()
     if(NOT _cc_openssl_dir STREQUAL ""
        AND EXISTS "${_cc_openssl_dir}/android_openssl.cmake")
         include("${_cc_openssl_dir}/android_openssl.cmake")
