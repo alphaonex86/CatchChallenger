@@ -2100,6 +2100,15 @@ def _spawn_installed_server_gui(server_exe):
     out_lines = []
     listening = threading.Event()
     db_failed = threading.Event()
+    # "connected to sqlite" fires mid-init (DB just opened) — the socket
+    # is bound but the server is still synchronously loading the
+    # datapack + maps (hundreds of log lines, several seconds) and
+    # CANNOT serve a game client yet. preload_finish() prints "Waiting
+    # connection on port N" only once it is truly ready. name4 (no-
+    # crash smoke) is happy with the early signal; name5 (client must
+    # reach the map) MUST wait for this one, else the client connects
+    # into a server still blocked in its load and the sync stalls.
+    serving = threading.Event()
 
     def reader():
         while True:
@@ -2116,12 +2125,14 @@ def _spawn_installed_server_gui(server_exe):
             if "connected to sqlite" in low \
                     or "waiting connection on port" in low:
                 listening.set()
+            if "waiting connection on port" in low:
+                serving.set()
             if "driver not loaded" in low \
                     or ("unable to connect to the database" in low):
                 db_failed.set()
 
     threading.Thread(target=reader, daemon=True).start()
-    return proc, out_lines, listening, db_failed
+    return proc, out_lines, listening, db_failed, serving
 
 
 def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
@@ -2234,7 +2245,7 @@ def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
     else:
         srv_exe_inst = os.path.join(install_dir, COMBINED_BIN_SRV)
         _write_server_gui_properties(install_dir, win_mc)
-        srv_proc, srv_out, srv_listen, srv_dberr = \
+        srv_proc, srv_out, srv_listen, srv_dberr, srv_serving = \
             _spawn_installed_server_gui(srv_exe_inst)
         waited = 0.0
         while waited < 60.0:
@@ -2275,6 +2286,56 @@ def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
     if not server_started:
         log_fail(name5, "server-gui not running; client step skipped")
     else:
+        # Deterministic start: wipe the client's per-server *synced*
+        # datapack cache. It lives in the wine prefix user profile
+        # (…/AppData/Local/CatchChallenger/<client>/datapack/argument-…),
+        # NOT in install_dir, so a fresh `wine install` does NOT reset
+        # it — it persists across every all.sh run. A previous run that
+        # timed out mid datapack-sync leaves a *partial* cache there;
+        # the next run's client then sees a partial/mismatched base
+        # datapack, re-syncs, and stalls again → name5 fails forever
+        # even though a genuinely fresh user (clean cache) reaches the
+        # map in seconds. Matches the "behave as if from a fresh
+        # post-restart shell" rule in test/CLAUDE.md.
+        import glob as _glob
+        _users_glob = os.path.join(_wine_prefix(), "drive_c", "users", "*",
+                                   "AppData", "Local", "CatchChallenger")
+        _wiped = 0
+        for _cc in _glob.glob(_users_glob):
+            for _client in ("client-qtcpu800x600", "client", "client-qtopengl"):
+                _dp = os.path.join(_cc, _client, "datapack")
+                if os.path.isdir(_dp):
+                    shutil.rmtree(_dp, ignore_errors=True)
+                    _wiped += 1
+        if _wiped:
+            log_info(f"wiped {_wiped} stale client datapack cache dir(s) "
+                     f"for a deterministic sync")
+        # name4 passed on the early "connected to sqlite" signal, but
+        # the server-gui then spends several more seconds synchronously
+        # loading the datapack + maps before preload_finish() prints
+        # "Waiting connection on port" and it can actually serve a game
+        # client. Launching the client before that → it connects into a
+        # server still blocked in its load, the datapack sync never
+        # completes and name5 times out at 120s (while a manual run
+        # that waits for true-ready reaches the map in seconds). Block
+        # until the real serving marker, bounded so a genuinely stuck
+        # server still fails fast with a clear reason.
+        _sw = 0.0
+        while _sw < 90.0 and not srv_serving.is_set():
+            if srv_proc.poll() is not None:
+                break
+            time.sleep(0.5)
+            _sw += 0.5
+        if not srv_serving.is_set():
+            log_fail(name5, "server-gui never reached 'Waiting connection "
+                            "on port' (datapack/map load stuck) — see "
+                            "server console below")
+            li = max(0, len(srv_out) - 50)
+            while li < len(srv_out):
+                print(f"  | {srv_out[li]}")
+                li += 1
+            _kill_proc(srv_proc)
+            return
         cpu_exe_inst = os.path.join(install_dir, COMBINED_BIN_CPU)
         env = _wine_env()
         win_args = [WINE_BIN, cpu_exe_inst,
