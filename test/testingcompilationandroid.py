@@ -81,6 +81,17 @@ ANDROID_APK_DIR       = os.path.join(CC_ANDROID_HOME, "apk")
 ANDROID_AAB_DIR       = os.path.join(CC_ANDROID_HOME, "aab")
 ANDROID_BUILD_DIR     = os.path.join(CC_ANDROID_HOME, "build")
 ANDROID_QT_DIR        = os.path.join(CC_ANDROID_HOME, "qt")
+# KDAB android_openssl checkout (prebuilt libssl_3.so / libcrypto_3.so).
+# When present, client/CMakeLists.txt bundles it via QT_ANDROID_EXTRA_LIBS
+# so QSslSocket / https:// (server-list, updater, wss) actually work
+# instead of "TLS initialization failed". Absent → APK still builds,
+# TLS-less (the official-server-connect / tls phases then surface it).
+ANDROID_OPENSSL_DIR   = os.path.join(CC_ANDROID_HOME, "android_openssl")
+# Official CatchChallenger server (from client/libcatchchallenger/
+# ClientVariable.hpp's server list). Used by the IPv4-only / IPv6-only
+# reachability phases — resolved fresh at run time, never hard-coded IPs.
+OFFICIAL_HOST         = "cc-server.first-world.info"
+OFFICIAL_PORT         = "42489"
 ANDROID_ADB           = os.path.join(ANDROID_SDK, "platform-tools", "adb")
 ANDROID_EMULATOR_BIN  = os.path.join(ANDROID_SDK, "emulator", "emulator")
 ANDROID_QT_ABI        = "android_arm64_v8a"
@@ -528,6 +539,13 @@ def build_android_apk(pro_file, build_dir, label):
             # plus the <algorithm> includes for std::sort are what let
             # this compile cleanly for Android Qt.
             "-DCATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER=ON"]
+    # Bundle OpenSSL into the .apk when the KDAB checkout is present so
+    # TLS works on-device. Optional: a host without it still configures
+    # (matches the ninja/mold "picked up when present" policy).
+    if os.path.isfile(os.path.join(ANDROID_OPENSSL_DIR,
+                                   "android_openssl.cmake")):
+        args.append("-DCATCHCHALLENGER_ANDROID_OPENSSL_DIR=" +
+                     ANDROID_OPENSSL_DIR)
     # ccache as compiler launcher: qt-cmake pins CMAKE_C/CXX_COMPILER
     # to the NDK clang absolute path, so the Gentoo /usr/lib/ccache
     # PATH masquerade can't intercept anything. Wire ccache explicitly
@@ -921,6 +939,220 @@ def run_android_screenshot_and_compare(apk_path, label, mode,
     return ok
 
 
+# ── TLS / official-server reachability ───────────────────────────────────────
+TLS_INIT_FAIL_MARKER = "TLS initialization failed"
+
+
+def logcat_dump():
+    """Return the current logcat buffer as text (best-effort, '' on error)."""
+    rc, out = adb_cmd(["logcat", "-d"], timeout=15)
+    return out if rc == 0 else ""
+
+
+def assert_no_tls_init_failure(label, logtext=None):
+    """A PASS/FAIL case asserting Qt did NOT print 'TLS initialization
+    failed' in logcat. That message means Qt's openssl TLS backend
+    plugin loaded but couldn't dlopen libssl_3/libcrypto_3 — i.e. the
+    KDAB OpenSSL libs weren't bundled into the .apk (broken https
+    server-list / updater / wss). Pass `logtext` to reuse an already
+    captured buffer instead of dumping again."""
+    name = f"android tls-backend {label}"
+    text = logtext if logtext is not None else logcat_dump()
+    if TLS_INIT_FAIL_MARKER in text:
+        log_fail(name, f"'{TLS_INIT_FAIL_MARKER}' in logcat — OpenSSL not "
+                        f"bundled; check CATCHCHALLENGER_ANDROID_OPENSSL_DIR / "
+                        f"{ANDROID_OPENSSL_DIR}")
+        lines = [l for l in text.splitlines()
+                 if TLS_INIT_FAIL_MARKER in l or "ssl" in l.lower()]
+        li = max(0, len(lines) - 12)
+        while li < len(lines):
+            print(f"  | {lines[li]}")
+            li += 1
+        return False
+    log_pass(name, "no TLS-init failure in logcat")
+    return True
+
+
+def official_ip(family):
+    """Resolve OFFICIAL_HOST to a single literal address of the given
+    family ('v4' -> A, 'v6' -> AAAA). Returns None when the family has
+    no record / resolution fails."""
+    import socket
+    af = socket.AF_INET if family == "v4" else socket.AF_INET6
+    try:
+        infos = socket.getaddrinfo(OFFICIAL_HOST, int(OFFICIAL_PORT),
+                                   af, socket.SOCK_STREAM)
+    except (socket.gaierror, OSError):
+        return None
+    i = 0
+    while i < len(infos):
+        addr = infos[i][4][0]
+        if addr:
+            return addr
+        i += 1
+    return None
+
+
+def host_can_reach(ip, family):
+    """True iff THIS host can open a TCP connection to ip:OFFICIAL_PORT.
+    Used as a pre-flight: if the host itself can't reach the official
+    server over `family` (DNS down, no IPv6 egress on the CI box, server
+    offline) that's an environment fact, not a code regression — the
+    caller skips-as-pass with a clear reason instead of a false FAIL."""
+    import socket
+    af = socket.AF_INET if family == "v4" else socket.AF_INET6
+    s = None
+    try:
+        s = socket.socket(af, socket.SOCK_STREAM)
+        s.settimeout(8)
+        s.connect((ip, int(OFFICIAL_PORT)))
+        return True
+    except OSError:
+        return False
+    finally:
+        if s is not None:
+            try:
+                s.close()
+            except OSError:
+                pass
+
+
+def run_android_official_connect(apk_path, family):
+    """Install + launch the qtopengl APK pointed straight at the official
+    server over a single address family (literal IPv4 or IPv6 via
+    `--host`, which forces that family — no happy-eyeballs fallback).
+
+    Success = the CatchChallenger protocol handshake completed. Without
+    an account the client stops at the login screen but still prints
+    'Api_protocol::protocol_is_good(), login is empty, normal for login
+    without creation' once the server has spoken the protocol — that is
+    a deterministic 'TCP connected + protocol negotiated over <family>'
+    signal. Also asserts no TLS-init failure from the same logcat."""
+    name = f"android official-connect {family}"
+    ip = official_ip(family)
+    if ip is None:
+        log_pass(name, f"skipped: {OFFICIAL_HOST} has no {family} record")
+        return True
+    if not host_can_reach(ip, family):
+        log_pass(name, f"skipped: host can't reach [{ip}]:{OFFICIAL_PORT} "
+                        f"over {family} (env, not a regression)")
+        return True
+
+    log_info(f"adb install -r {apk_path}")
+    rc, out = adb_cmd(["install", "-r", apk_path], timeout=120)
+    if rc != 0:
+        log_fail(name, f"adb install failed (rc={rc})")
+        if out.strip():
+            print(out[-1500:])
+        return False
+    adb_cmd(["logcat", "-c"], timeout=10)
+    app_args = f"--host {ip} --port {OFFICIAL_PORT} --closewhenonmap"
+    joined = app_args.replace("'", "'\\''")
+    am_args = ["shell", "am", "start", "-W", "-n",
+               f"{ANDROID_PACKAGE}/{ANDROID_ACTIVITY}",
+               "--es", "applicationArguments", f"'{joined}'"]
+    log_info(f"am start {ANDROID_PACKAGE} --host {ip} --port {OFFICIAL_PORT}")
+    rc, out = adb_cmd(am_args, timeout=30)
+    if rc != 0:
+        log_fail(name, f"am start failed (rc={rc})")
+        if out.strip():
+            print(out[-1500:])
+        return False
+    success_marker = ("Api_protocol::protocol_is_good(), login is empty, "
+                      "normal for login without creation")
+    deadline = time.monotonic() + ANDROID_RUN_TIMEOUT
+    last = ""
+    while time.monotonic() < deadline:
+        last = logcat_dump()
+        if success_marker in last:
+            log_pass(name, f"protocol handshake OK over {family} ([{ip}])")
+            assert_no_tls_init_failure(f"official-connect {family}", last)
+            adb_cmd(["shell", "am", "force-stop", ANDROID_PACKAGE], timeout=10)
+            return True
+        if TLS_INIT_FAIL_MARKER in last:
+            break
+        time.sleep(2.0)
+    log_fail(name, f"no protocol handshake over {family} within "
+                   f"{ANDROID_RUN_TIMEOUT}s ([{ip}]:{OFFICIAL_PORT})")
+    lines = last.splitlines()
+    li = max(0, len(lines) - 25)
+    while li < len(lines):
+        print(f"  | {lines[li]}")
+        li += 1
+    assert_no_tls_init_failure(f"official-connect {family}", last)
+    adb_cmd(["shell", "am", "force-stop", ANDROID_PACKAGE], timeout=10)
+    return False
+
+
+def run_android_tls_check(apk_path):
+    """Dedicated TLS phase: launch qtopengl with NO server args so it
+    goes through the default flow that fetches the server list over
+    https://catchchallenger.herman-brule.com — this forces Qt to bring
+    up its OpenSSL TLS backend. Then assert logcat has no
+    'TLS initialization failed'. Self-skips (PASS) when this host can't
+    reach the https endpoint (offline CI box — env, not a regression)."""
+    name = "android tls-backend qtopengl"
+    import socket
+    reachable = False
+    try:
+        infos = socket.getaddrinfo("catchchallenger.herman-brule.com", 443,
+                                   0, socket.SOCK_STREAM)
+        ii = 0
+        while ii < len(infos) and not reachable:
+            fam, _t, _p, _c, sa = infos[ii]
+            ii += 1
+            s = None
+            try:
+                s = socket.socket(fam, socket.SOCK_STREAM)
+                s.settimeout(8)
+                s.connect(sa)
+                reachable = True
+            except OSError:
+                pass
+            finally:
+                if s is not None:
+                    try:
+                        s.close()
+                    except OSError:
+                        pass
+    except (socket.gaierror, OSError):
+        reachable = False
+    if not reachable:
+        log_pass(name, "skipped: host can't reach "
+                       "catchchallenger.herman-brule.com:443 (env)")
+        return True
+
+    log_info(f"adb install -r {apk_path}")
+    rc, out = adb_cmd(["install", "-r", apk_path], timeout=120)
+    if rc != 0:
+        log_fail(name, f"adb install failed (rc={rc})")
+        if out.strip():
+            print(out[-1500:])
+        return False
+    adb_cmd(["logcat", "-c"], timeout=10)
+    am_args = ["shell", "am", "start", "-W", "-n",
+               f"{ANDROID_PACKAGE}/{ANDROID_ACTIVITY}"]
+    log_info(f"am start {ANDROID_PACKAGE} (default flow → https server list)")
+    rc, out = adb_cmd(am_args, timeout=30)
+    if rc != 0:
+        log_fail(name, f"am start failed (rc={rc})")
+        if out.strip():
+            print(out[-1500:])
+        return False
+    # Watch the buffer up to ANDROID_RUN_TIMEOUT: bail early the moment
+    # the marker shows, otherwise fall through to a final clean buffer.
+    deadline = time.monotonic() + ANDROID_RUN_TIMEOUT
+    last = ""
+    while time.monotonic() < deadline:
+        last = logcat_dump()
+        if TLS_INIT_FAIL_MARKER in last:
+            break
+        time.sleep(3.0)
+    ok = assert_no_tls_init_failure("qtopengl", last)
+    adb_cmd(["shell", "am", "force-stop", ANDROID_PACKAGE], timeout=10)
+    return ok
+
+
 def set_http_datapack_mirror(build_dir, value):
     xml_path = os.path.join(build_dir, "server-properties.xml")
     if not os.path.exists(xml_path):
@@ -1026,7 +1258,14 @@ def main():
     android_need_multi      = (gl_apk is not None and should_run("android run qtopengl", failed_cases))
     android_need_shot_start = (gl_apk is not None and should_run("android screenshot qtopengl (start)", failed_cases))
     android_need_shot_solo  = (gl_apk is not None and should_run("android screenshot qtopengl (autosolo)", failed_cases))
-    if android_need_solo or android_need_multi or android_need_shot_start or android_need_shot_solo:
+    android_need_tls        = (gl_apk is not None and should_run("android tls-backend qtopengl", failed_cases))
+    android_need_off_v4     = (gl_apk is not None and should_run("android official-connect v4", failed_cases))
+    android_need_off_v6     = (gl_apk is not None and should_run("android official-connect v6", failed_cases))
+    _android_any = (android_need_solo or android_need_multi
+                    or android_need_shot_start or android_need_shot_solo
+                    or android_need_tls or android_need_off_v4
+                    or android_need_off_v6)
+    if _android_any:
         # ABI sanity-check before booting the emulator.  When the only
         # installed Qt-for-Android kit is arm64-v8a (the typical Qt
         # binary release) but the AVD's abi.type is x86_64, every
@@ -1049,11 +1288,21 @@ def main():
                 log_pass("android screenshot qtopengl (start)", f"skipped: {msg}")
             if android_need_shot_solo:
                 log_pass("android screenshot qtopengl (autosolo)", f"skipped: {msg}")
+            if android_need_tls:
+                log_pass("android tls-backend qtopengl", f"skipped: {msg}")
+            if android_need_off_v4:
+                log_pass("android official-connect v4", f"skipped: {msg}")
+            if android_need_off_v6:
+                log_pass("android official-connect v6", f"skipped: {msg}")
             android_need_solo = False
             android_need_multi = False
             android_need_shot_start = False
             android_need_shot_solo = False
-    if android_need_solo or android_need_multi or android_need_shot_start or android_need_shot_solo:
+            android_need_tls = False
+            android_need_off_v4 = False
+            android_need_off_v6 = False
+            _android_any = False
+    if _android_any:
         emu = start_android_emulator()
         if emu is not None:
             if android_need_solo:
@@ -1096,6 +1345,16 @@ def main():
                                    "screenshot-android-qtopengl-autosolo.png")
                 run_android_screenshot_and_compare(gl_apk, "qtopengl",
                                                    "autosolo", ref)
+            # ── TLS backend + official-server reachability ───────────
+            # These exercise the network path the operator reported
+            # broken on-device ("TLS initialization failed") and the
+            # IPv4-only / IPv6-only connectivity to the official server.
+            if android_need_tls:
+                run_android_tls_check(gl_apk)
+            if android_need_off_v4:
+                run_android_official_connect(gl_apk, "v4")
+            if android_need_off_v6:
+                run_android_official_connect(gl_apk, "v6")
             stop_android_emulator(emu)
 
     save_failed_cases()

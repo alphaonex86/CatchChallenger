@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!-- Custom Qt-for-Android package source for the qtopengl `catchchallenger`
+     binary.  Differs from the stock Qt template in three ways:
+       * android:label is the fixed branded name "CatchChallenger"
+         (the stock %%INSERT_APP_NAME%% would resolve to the lowercase
+         CMake target name "catchchallenger").
+       * android:icon points at @drawable/icon (res/drawable-*/icon.png
+         shipped beside this file) instead of the default Qt logo.
+       * the launcher activity is locked to landscape — the qtopengl UI
+         is a horizontal game screen.
+     All the %%INSERT_*%% / <!-- %%INSERT_* --> markers are LEFT INTACT:
+     androiddeployqt still fills versionCode/versionName, the native
+     lib name, the launch arguments, and the permission/feature blocks. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.qtproject.example.catchchallenger"
+    android:installLocation="auto"
+    android:versionCode="-- %%INSERT_VERSION_CODE%% --"
+    android:versionName="-- %%INSERT_VERSION_NAME%% --">
+    <!-- %%INSERT_PERMISSIONS -->
+    <!-- %%INSERT_FEATURES -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="true" />
+    <application
+        android:name="org.qtproject.qt.android.bindings.QtApplication"
+        android:hardwareAccelerated="true"
+        android:label="CatchChallenger"
+        android:icon="@drawable/icon"
+        android:requestLegacyExternalStorage="true"
+        android:allowBackup="true"
+        android:fullBackupOnly="false">
+        <activity
+            android:name="org.qtproject.qt.android.bindings.QtActivity"
+            android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
+            android:label="CatchChallenger"
+            android:launchMode="singleTop"
+            android:screenOrientation="landscape"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+          <meta-data
+                android:name="android.app.lib_name"
+                android:value="-- %%INSERT_APP_LIB_NAME%% --" />
+
+          <meta-data
+                android:name="android.app.arguments"
+                android:value="-- %%INSERT_APP_ARGUMENTS%% --" />
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.qtprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/qtprovider_paths"/>
+        </provider>
+    </application>
+</manifest>

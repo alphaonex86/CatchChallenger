@@ -130,7 +130,7 @@ Reference: `android_env()` in `test/testingclient.py`.
 
 * **macOS** — osxcross container `root@2803:1920::2:ff08`, target `darwin20.4`, Qt 6.5.3 at `/root/qt6-macos/6.5.3/macos`. Setup: `/mnt/data/perso/lxc/osxcross.txt`. Sources rsynced to `/root/catchchallenger-test/`. cmake wrapper + ninja+ccache+lld (no mold for Mach-O). Then `macdeployqt`, datapack sibling of `.app`, ad-hoc `--sign -`. Portable `.zip`. Self-skips on ssh timeout. Compile+package only — no runtime/multi.
 
-* **Android** — local Qt-for-Android cross-compile + local emulator. **Only `client/qtopengl`**. Tooling: `/mnt/data/perso/progs/CatchChallenger-android/{sdk,avd,apk,build}/`. Self-skips when VPS unreachable or SDK/adb/emulator/AVD missing.
+* **Android** — local Qt-for-Android cross-compile + local emulator. **Only `client/qtopengl`**. Tooling: `/mnt/data/perso/progs/CatchChallenger-android/{sdk,avd,apk,build}/`. Self-skips when VPS unreachable or SDK/adb/emulator/AVD missing. Branding (label "CatchChallenger", landscape lock, icon) lives in `client/qtopengl/resources/android-package-source/` wired via target prop `QT_ANDROID_PACKAGE_SOURCE_DIR`. Qt ships only the openssl TLS *plugin*, not libssl/libcrypto — KDAB android_openssl checkout at `<android_workspace>/android_openssl` bundled via `-DCATCHCHALLENGER_ANDROID_OPENSSL_DIR` (optional; absent → TLS-less apk). Phases `android tls-backend qtopengl`, `android official-connect v4/v6` (literal-IP `--host` forces family; protocol-good marker = connected; host-unreachable → skip-as-pass).
 
 ## Diagnostic-tool runs — clang+sanitizer **and** gcc+valgrind
 

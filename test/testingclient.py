@@ -1387,6 +1387,78 @@ def main():
                        soft_timeout=True)
 
     # ═══════════════════════════════════════════════════════════════
+    # 7b. LIVE — official server, IPv4-only then IPv6-only, BOTH native
+    # clients (qtopengl and qtcpu800x600). Same live host as above but
+    # reached through a *literal* address via --host/--port, which pins
+    # the address family (no happy-eyeballs fallback): the v4 case can
+    # only use IPv4, the v6 case only IPv6. Native Linux clients
+    # (offscreen) — far easier to debug a family-specific connectivity /
+    # TLS problem here than inside the Android emulator. DNS resolved
+    # fresh every run (never hard-coded IPs), once per family, then
+    # reused for every available client. Skipped (not failed) when the
+    # host has no record for that family or can't reach it — depends on
+    # the public internet, not the build.
+    # ═══════════════════════════════════════════════════════════════
+    live_clients = []
+    if gl_ok:
+        live_clients.append(("qtopengl", CLIENT_GL_BUILD, CLIENT_GL_BIN))
+    if cpu_ok:
+        live_clients.append(("qtcpu800x600", CLIENT_CPU_BUILD, CLIENT_CPU_BIN))
+    if live_clients:
+        import socket as _socket
+        live_host = "cc-server.herman-brule.com"
+        live_port = 42489
+        fam_specs = (("IPv4", _socket.AF_INET), ("IPv6", _socket.AF_INET6))
+        fsi = 0
+        while fsi < len(fam_specs):
+            fam_name, fam_af = fam_specs[fsi]
+            fsi += 1
+            # Resolve + probe ONCE per family, then drive every client.
+            ip = None
+            try:
+                ai = _socket.getaddrinfo(live_host, live_port, fam_af,
+                                         _socket.SOCK_STREAM)
+                aii = 0
+                while aii < len(ai):
+                    cand = ai[aii][4][0]
+                    aii += 1
+                    if cand:
+                        ip = cand
+                        break
+            except (_socket.gaierror, OSError) as exc:
+                log_info(f"skipping Official server {fam_name}-only: no "
+                         f"{fam_name} record for {live_host} ({exc})")
+            reachable = False
+            if ip is not None:
+                try:
+                    with _socket.socket(fam_af, _socket.SOCK_STREAM) as _s:
+                        _s.settimeout(5)
+                        _s.connect((ip, live_port))
+                        reachable = True
+                except OSError as exc:
+                    log_info(f"skipping Official server {fam_name}-only: "
+                             f"[{ip}]:{live_port} unreachable over "
+                             f"{fam_name} ({exc})")
+            lci = 0
+            while lci < len(live_clients):
+                client_tag, client_build, client_bin = live_clients[lci]
+                lci += 1
+                fam_label = (f"{client_tag} -> Official server "
+                             f"{fam_name}-only")
+                if should_run(fam_label, failed_cases):
+                    print(f"\n{C_CYAN}--- Live: {fam_label} ---{C_RESET}\n")
+                    if reachable:
+                        run_client(client_build, client_bin,
+                                   ["--host", ip, "--port", str(live_port),
+                                    "--autologin",
+                                    "--character", "TestPlayerLive",
+                                    "--closewhenonmap"],
+                                   fam_label,
+                                   timeout=60,
+                                   success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
+                                   soft_timeout=True)
+
+    # ═══════════════════════════════════════════════════════════════
     # WINDOWS / macOS / ANDROID cross-compile + run phases used to live
     # here. They are now standalone scripts (testingcompilationwindows.py,
     # testingcompilationmac.py, testingcompilationandroid.py) so they can
