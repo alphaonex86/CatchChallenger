@@ -25,6 +25,7 @@ sys.dont_write_bytecode=True
 
 import os, json, subprocess, shutil, time, multiprocessing
 import diagnostic
+import process_helpers
 import wall_cap
 wall_cap.arm()
 import build_paths
@@ -62,6 +63,7 @@ C_RESET  = "\033[0m"
 
 SCRIPT_COMPILE_NAME = "compile catchchallenger-server-gui"
 SCRIPT_RUN_NAME = "run server-gui --autostart"
+SCRIPT_NOPLUGIN_NAME = "run server-gui no Qt platform plugin (graceful exit, no SIGABRT)"
 from test_config import FAILED_JSON
 
 results = []
@@ -328,6 +330,58 @@ def test_run():
     return False
 
 
+def test_run_no_platform_plugin():
+    # Headless box, QT_QPA_PLATFORM points at a plugin that does not
+    # exist: Qt used to qFatal → abort() → SIGABRT + core dump inside
+    # the QApplication ctor. main.cpp now installs a message handler
+    # that turns that one fatal into a plain stderr line + clean
+    # EXIT_FAILURE. Assert: process exits non-zero, is NOT a crash
+    # (no SIGABRT/SIGSEGV), and prints the simple error.
+    name = SCRIPT_NOPLUGIN_NAME
+    if not os.path.isfile(SERVER_BIN):
+        log_info(f"binary missing: {SERVER_BIN} — rebuilding")
+        if not test_compile():
+            log_fail(name, f"binary missing and rebuild failed: {SERVER_BIN}")
+            return False
+    env = os.environ.copy()
+    for var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
+        env.pop(var, None)
+    # Deliberately bogus: no such platform plugin exists.
+    env["QT_QPA_PLATFORM"] = "definitely-not-a-real-qpa-plugin"
+    args = ["timeout", "--signal=KILL", str(RUN_TIMEOUT + 5),
+            SERVER_BIN, "--autostart"]
+    log_info(f"running: {os.path.basename(SERVER_BIN)} --autostart "
+             f"with QT_QPA_PLATFORM={env['QT_QPA_PLATFORM']}")
+    diagnostic.record_cmd(args, os.path.dirname(SERVER_BIN))
+    try:
+        p = subprocess.run(
+            args, cwd=os.path.dirname(SERVER_BIN), env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            timeout=RUN_TIMEOUT + 8, start_new_session=True)
+        rc = p.returncode
+        out = p.stdout.decode(errors="replace")
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout.decode(errors="replace") if e.stdout else ""
+        log_fail(name, f"binary hung instead of exiting on missing QPA plugin\n{out[-2000:]}")
+        return False
+    crashed = process_helpers.is_crash(rc)
+    graceful_msg = "no usable Qt platform plugin" in out
+    if crashed:
+        log_fail(name,
+                 f"crashed (rc={rc}, SIGABRT/SIGSEGV) instead of clean error exit\n{out[-2000:]}")
+        return False
+    if rc == 0:
+        log_fail(name,
+                 f"exited 0 with no usable platform plugin — should fail non-zero\n{out[-2000:]}")
+        return False
+    if not graceful_msg:
+        log_fail(name,
+                 f"no-crash but missing the simple error line (rc={rc})\n{out[-2000:]}")
+        return False
+    log_pass(name, f"clean non-zero exit (rc={rc}) with simple error, no SIGABRT")
+    return True
+
+
 # ── main ───────────────────────────────────────────────────────────────────
 def main():
     print(f"\n{C_CYAN}{'='*60}")
@@ -344,6 +398,8 @@ def main():
         compile_ok = test_compile()
     if compile_ok and should_run(SCRIPT_RUN_NAME, failed):
         test_run()
+    if compile_ok and should_run(SCRIPT_NOPLUGIN_NAME, failed):
+        test_run_no_platform_plugin()
 
     # summary
     print(f"\n{C_CYAN}{'='*60}")
