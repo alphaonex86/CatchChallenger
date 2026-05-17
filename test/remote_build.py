@@ -88,6 +88,17 @@ _REQUIRED_EXEC_NODE_KEYS = (
     # next batch skips the matching cells without re-prompting.
     # Default []. See benchmark/CLAUDE.md "Runtime tool detection".
     "benchmark_disabled_tools",
+    # Diskless NFS-rooted LXC bring-up descriptor (object). On an
+    # ordinary exec node it is the inert form
+    #   {"enabled": false, ...empties...}
+    # and is completely ignored. When enabled, the exec node is a real
+    # embedded box that keeps nothing on its own disk: the harness
+    # SSHes its pre-chroot management shell, stops every container,
+    # (re)mounts the test box rootfs over NFS, chroots in, and
+    # lxc-starts a pre-defined container so it appears at this exec
+    # node's `host`. See remote_nodes.json _doc "lxc_nfs" for the full
+    # sub-field contract and nfs_lxc_bring_up()/nfs_lxc_teardown().
+    "lxc_nfs",
 )
 
 
@@ -269,6 +280,158 @@ def all_enabled_exec_nodes(diag=None):
                 continue
             out.append(ent)
     return out
+
+
+# The NFS-LXC container is always this fixed name (no per-node
+# lxc_name field): the harness lxc-starts `catchchallenger` inside the
+# chroot and stops it on teardown.
+NFS_LXC_CONTAINER_NAME = "catchchallenger"
+
+
+def _lxc_nfs_cfg(exec_node):
+    """Return the exec node's lxc_nfs dict, or None when this node is an
+    ordinary (non-NFS-LXC) exec node. A node is "ordinary" when the
+    block is absent or its `enabled` flag is false — the inert form
+    every existing entry ships. Keeps every call site a one-liner:
+        cfg = _lxc_nfs_cfg(en)
+        if cfg is not None: ...bring-up...
+    """
+    blk = exec_node.get("lxc_nfs")
+    if not isinstance(blk, dict):
+        return None
+    if not bool(blk.get("enabled", False)):
+        return None
+    return blk
+
+
+def _nfs_lxc_remote_script(cfg, host_addr):
+    """Build the device-side bring-up shell script from an lxc_nfs cfg.
+
+    Runs in the RTL9607C-class box's pre-chroot shell as root (reached
+    over the exec node's OWN user@host:port — same box before vs after
+    the chroot/lxc-start). Everything is hot — the only mount is the
+    NFS root, nothing is written to the device's own disk. `host_addr`
+    is the exec node's top-level `host` (the device/bridge-side
+    address); empty `host_addr` / empty guest_* entries are left
+    UNCONFIGURED — only non-empty ones get an `ip addr add`.
+    """
+    import shlex
+    nfs        = cfg["nfs"]
+    nfs_mount  = cfg["nfs_mount"]
+    bridge     = cfg["bridge"]
+    lxc_name   = NFS_LXC_CONTAINER_NAME
+    guest_v4   = cfg.get("guest_ipv4", "")
+    guest_v6   = cfg.get("guest_ipv6", "")
+    q = shlex.quote
+    addr_lines = []
+    if bridge:
+        addr_lines.append(f"ip link set {q(bridge)} up 2>/dev/null || true")
+        # Single host/bridge-side address; `ip addr add` auto-detects
+        # the family. Empty = leave the bridge unconfigured.
+        if host_addr:
+            addr_lines.append(
+                f"ip addr add {q(host_addr)} dev {q(bridge)} 2>/dev/null || true")
+    inner = [
+        "set -e",
+        *addr_lines,
+        # Pre-defined container already on the NFS root — just start it.
+        f"lxc-start -n {q(lxc_name)} -d",
+        f"lxc-wait -n {q(lxc_name)} -s RUNNING -t 60 2>/dev/null || true",
+    ]
+    # Guest addressing: only the configured families, best-effort, on
+    # the container's conventional first interface (eth0).
+    if guest_v4:
+        inner.append(
+            f"lxc-attach -n {q(lxc_name)} -- ip -4 addr add {q(guest_v4)} "
+            f"dev eth0 2>/dev/null || true")
+    if guest_v6:
+        inner.append(
+            f"lxc-attach -n {q(lxc_name)} -- ip -6 addr add {q(guest_v6)} "
+            f"dev eth0 2>/dev/null || true")
+    inner_script = "\n".join(inner)
+    # Device's busybox has no /bin/ash here (operator showed
+    # `chroot /mnt/` failing), so explicitly invoke /bin/bash from the
+    # NFS root, which also gives us IPv6/IPv4-capable tooling.
+    return "\n".join([
+        "set -e",
+        # 1. stop every running container (operator's exact command,
+        #    with classic-LXC fallbacks so it works on either stack).
+        "lxc container stop -k all 2>/dev/null || "
+        "lxc-stop -a -k 2>/dev/null || true",
+        # 2. (re)mount the test box rootfs over NFS — hot, no disk write.
+        f"mkdir -p {q(nfs_mount)}",
+        f"umount {q(nfs_mount)} 2>/dev/null || true",
+        f"mount -t nfs4 {q(nfs)}:/ {q(nfs_mount)}",
+        # 3. chroot in and lxc-start the pre-defined container.
+        f"chroot {q(nfs_mount)} /bin/bash -c {q(inner_script)}",
+    ])
+
+
+def _exec_ssh_dest(exec_node):
+    """Pre-chroot SSH endpoint for an NFS-LXC node = the exec node's
+    OWN top-level user@host:port (key auth). Same physical box, reached
+    before the chroot/lxc-start; after lxc-start the `catchchallenger`
+    container answers on guest_ipv6/guest_ipv4."""
+    return (f"{exec_node['user']}@{exec_node['host']}",
+            int(exec_node.get("port", 22)),
+            exec_node["host"])
+
+
+def nfs_lxc_bring_up(exec_node, timeout=300):
+    """Diskless NFS-rooted LXC bring-up for an exec node, when it opted
+    in via lxc_nfs.enabled. No-op (returns (True, reason)) for every
+    ordinary exec node, so callers can invoke it unconditionally.
+
+    SSH target is the exec node's own user@host:port (no separate mgmt
+    block); the container is always `catchchallenger` (no lxc_name
+    field). An enabled-but-incomplete block (nfs / nfs_mount unset)
+    returns (True, "skipped: …") rather than a hard failure — the node
+    ships enabled=false anyway.
+    """
+    cfg = _lxc_nfs_cfg(exec_node)
+    if cfg is None:
+        return True, "lxc_nfs disabled — ordinary exec node"
+    if not cfg.get("nfs") or not cfg.get("nfs_mount"):
+        return True, ("skipped: lxc_nfs.enabled but nfs / nfs_mount unset "
+                      "— fill remote_nodes.json before enabling")
+    dest, port, host_addr = _exec_ssh_dest(exec_node)
+    script = _nfs_lxc_remote_script(cfg, host_addr)
+    rc, out = _ssh_cmd(dest, port, script, timeout=timeout)
+    if rc != 0:
+        return False, (f"nfs-lxc bring-up failed on {dest} (rc={rc}): "
+                       f"{out.strip()[-600:]}")
+    return True, (f"nfs-lxc container {NFS_LXC_CONTAINER_NAME!r} "
+                  f"started via {dest}")
+
+
+def nfs_lxc_teardown(exec_node, timeout=120):
+    """Stop the `catchchallenger` container and drop the NFS mount,
+    leaving the device exactly as found (hot, nothing persisted).
+    No-op for ordinary exec nodes. Best-effort: failures are reported
+    but never raise — a leaked mount on a diskless box clears on its
+    next reboot.
+    """
+    cfg = _lxc_nfs_cfg(exec_node)
+    if cfg is None:
+        return True, "lxc_nfs disabled — ordinary exec node"
+    if not cfg.get("nfs") or not cfg.get("nfs_mount"):
+        return True, "skipped: lxc_nfs incomplete"
+    import shlex
+    q = shlex.quote
+    dest, port, _ = _exec_ssh_dest(exec_node)
+    nfs_mount = cfg["nfs_mount"]
+    name = NFS_LXC_CONTAINER_NAME
+    script = "\n".join([
+        f"chroot {q(nfs_mount)} /bin/bash -c "
+        f"{q(f'lxc-stop -n {q(name)} -k 2>/dev/null || true')} "
+        f"2>/dev/null || true",
+        f"umount {q(nfs_mount)} 2>/dev/null || true",
+    ])
+    rc, out = _ssh_cmd(dest, port, script, timeout=timeout)
+    if rc != 0:
+        return False, (f"nfs-lxc teardown rc={rc} on {dest}: "
+                       f"{out.strip()[-400:]}")
+    return True, "nfs-lxc torn down"
 
 
 def node_runs(label, test_name):

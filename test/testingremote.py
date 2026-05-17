@@ -785,6 +785,25 @@ def run_exec_phase(compile_label, compile_host, compile_port,
     so the failed.json resume list isn't polluted with disabled nodes."""
     if not exec_nodes:
         return
+    # Diskless NFS-LXC exec nodes (e.g. rtl9607c) must be brought up
+    # ONCE before any binary is staged/run on them: SSH the device's
+    # pre-chroot shell, stop all containers, NFS-mount the test box
+    # rootfs, chroot, lxc-start the pre-defined container so it appears
+    # at exec_node['host']. No-op for every ordinary exec node, so this
+    # loop is inert unless an operator flipped lxc_nfs.enabled on.
+    bi = 0
+    while bi < len(exec_nodes):
+        _en = exec_nodes[bi]
+        bi += 1
+        if not _exec_node_enabled(_en):
+            continue
+        if _rb._lxc_nfs_cfg(_en) is not None:
+            _bl = _en.get("label", _en.get("host", "?"))
+            log_info(f"nfs-lxc bring-up: {_bl}")
+            _ok, _d = _rb.nfs_lxc_bring_up(_en)
+            (log_info if _ok else log_fail)(
+                f"nfs-lxc bring-up {_bl}" if not _ok else f"nfs-lxc {_bl}: {_d}",
+                _d if not _ok else "")
     pi = 0
     while pi < len(PRO_FILES):
         pro_rel = PRO_FILES[pi]
@@ -825,6 +844,12 @@ def cleanup_exec_node(exec_node):
     cmd = (f"find {work} -mindepth 1 -maxdepth 1 -not -name ccache "
            f"-exec rm -rf {{}} + 2>/dev/null; true")
     ssh_cmd(f"{user}@{host}", port, cmd, timeout=60)
+    # Symmetric teardown of a diskless NFS-LXC exec node: stop the
+    # container + drop the NFS mount so the box is left as found.
+    # No-op for ordinary exec nodes (inert lxc_nfs).
+    if _rb._lxc_nfs_cfg(exec_node) is not None:
+        _ok, _d = _rb.nfs_lxc_teardown(exec_node)
+        log_info(f"nfs-lxc teardown {exec_node.get('label', host)}: {_d}")
 
 
 def test_server(label, host, port, use_mold, remote_dir, failed_cases=None,
