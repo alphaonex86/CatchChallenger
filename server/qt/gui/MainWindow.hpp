@@ -28,6 +28,12 @@ public:
     // headlessly without a UI click. Invokes onStartStopClicked() once.
     void autostart();
 
+    // Headless mode (driven by --autostart / --screenshot from the test
+    // harness): no operator is present, so a boot error must NOT pop a
+    // blocking modal — it would freeze the event loop forever and the
+    // real cause never reaches the console. Set before show().
+    void setHeadless(const bool &headless);
+
 protected:
     void changeEvent(QEvent *e) override;
     void closeEvent(QCloseEvent *event) override;
@@ -41,6 +47,7 @@ private:
     // seeded with the same defaults the headless server would write.
     TinyXMLSettings *xmlSettings_;
     bool serverRunning;
+    bool headless_;
     QDateTime serverStartTime;
     QTimer *updateTimer;
     QTimer *chartTimer;

@@ -120,15 +120,32 @@ int main(int argc, char *argv[])
         CatchChallenger::FacilityLibGeneral::getFolderFromFile(
             CatchChallenger::FacilityLibGeneral::applicationDirPath) + "/datapack/";
 
+    // Headless when driven by --autostart or --screenshot=… (the test
+    // harness / CI path): there is no operator to dismiss a modal, so a
+    // blocking QMessageBox::critical here would freeze the process
+    // forever (the wall-watchdog then reports a useless 60s "Start
+    // hung" instead of the real "no datapack" cause). Only raise the
+    // modal in genuine interactive use; headless always logs the
+    // concrete reason and exits non-zero fast.
+    const bool headless = wantAutostart || !screenshotPath.isEmpty();
+
     QFileInfo datapackFolder(QCoreApplication::applicationDirPath()
                              + QStringLiteral("/datapack/informations.xml"));
     if (!datapackFolder.isFile()) {
-        // QMessageBox parented to nullptr → uses system theme so the
-        // text isn't white-on-white when the MainWindow's dark QSS
-        // would otherwise leak in.
-        QMessageBox::critical(nullptr, "Critical error",
-            QString("No datapack found, look at file: ") + datapackFolder.absoluteFilePath());
-        qDebug() << "No datapack found, look at file: " << datapackFolder.absoluteFilePath();
+        if (!headless) {
+            // QMessageBox parented to nullptr → uses system theme so the
+            // text isn't white-on-white when the MainWindow's dark QSS
+            // would otherwise leak in.
+            QMessageBox::critical(nullptr, "Critical error",
+                QString("No datapack found, look at file: ") + datapackFolder.absoluteFilePath());
+        }
+        // std::cerr (not qCritical): under the MXE GUI-subsystem build
+        // the default Qt handler routes qCritical to OutputDebugString,
+        // which is invisible under wine/CI — only std::cerr/std::cout
+        // reach the captured console (same channel as the banner).
+        std::cerr << "No datapack found, look at file: "
+                  << datapackFolder.absoluteFilePath().toStdString()
+                  << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -138,6 +155,7 @@ int main(int argc, char *argv[])
     // tray-app project doesn't silently flip it.
     a.setQuitOnLastWindowClosed(true);
     MainWindow w;
+    w.setHeadless(headless);
     w.resize(initialWidth, initialHeight);
     w.show();
 

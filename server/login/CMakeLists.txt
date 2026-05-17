@@ -114,9 +114,12 @@ target_compile_definitions(catchchallenger-server-login PRIVATE CATCHCHALLENGER_
 target_include_directories(catchchallenger-server-login PRIVATE ${LIBURING_INCLUDE_DIR})
 target_link_libraries(catchchallenger-server-login PRIVATE ${LIBURING_LIBRARY})
 
-find_program(MOLD_EXE mold)
-if(MOLD_EXE)
-    target_link_options(catchchallenger-server-login PRIVATE -fuse-ld=mold)
+# Linker driver: use the test-link-verified accelerator that
+# CCCommon.cmake picked for THIS target (mold on native ELF,
+# lld/bfd where mold has no backend, e.g. MIPS). Never hard-code
+# a specific linker here — CCCommon is the single source of truth.
+if(CC_LINKER)
+    target_link_options(catchchallenger-server-login PRIVATE -fuse-ld=${CC_LINKER})
 endif()
 
 # Test-only kernel/user-space wakeup-loop detector. When the harness

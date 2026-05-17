@@ -206,10 +206,10 @@ if(CATCHCHALLENGER_BUILD_QTCPU800X600_SINGLEPLAYER)
     )
 endif()
 
-find_program(MOLD_EXE mold)
-# mold doesn't have a PE/COFF backend yet, so MinGW cross-compiles must
-# fall back to lld (or the default linker). Only opt into mold when the
-# target system is Linux.
-if(MOLD_EXE AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_options(catchchallenger800x600 PRIVATE -fuse-ld=mold)
+# Linker driver: use the test-link-verified accelerator that
+# CCCommon.cmake picked for THIS target (mold on native ELF,
+# lld/bfd where mold has no backend, e.g. MIPS). Never hard-code
+# a specific linker here — CCCommon is the single source of truth.
+if(CC_LINKER)
+    target_link_options(catchchallenger800x600 PRIVATE -fuse-ld=${CC_LINKER})
 endif()

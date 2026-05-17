@@ -2265,7 +2265,7 @@ def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
             log_fail(name4, "timeout: never opened DB nor errored "
                             "(Start hung)")
         if not server_started:
-            li = max(0, len(srv_out) - 30)
+            li = max(0, len(srv_out) - 50)
             while li < len(srv_out):
                 print(f"  | {srv_out[li]}")
                 li += 1
@@ -2318,7 +2318,7 @@ def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
             log_fail(name5, f"client exit rc={cproc.returncode} "
                             f"before map")
         if not on_map.is_set():
-            li = max(0, len(cli_out) - 30)
+            li = max(0, len(cli_out) - 50)
             while li < len(cli_out):
                 print(f"  | {cli_out[li]}")
                 li += 1

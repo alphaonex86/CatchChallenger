@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     serverRunning(false),
+    headless_(false),
     dbQueryCount(0),
     maxDbQuerySinceStart(20),
     currentPlayers(0),
@@ -268,7 +269,23 @@ void MainWindow::onServerError(const std::string &message)
     // the in-app console AND raise a modal so it cannot be missed.
     const QString qmsg = QString::fromStdString(message);
     addConsoleLine(QString("ERROR: ") + qmsg, true);
-    QMessageBox::critical(this, "Server error", qmsg);
+    // Always echo to stderr so the cause lands in the test harness
+    // console even when no modal is shown. std::cerr (not qCritical):
+    // the MXE GUI-subsystem build's default Qt handler sends qCritical
+    // to OutputDebugString (invisible under wine/CI); only std::cerr
+    // reaches the captured console.
+    std::cerr << "Server error: " << message << std::endl;
+    // Headless (--autostart / --screenshot): a modal would block the
+    // event loop forever with no operator to dismiss it — the test rig
+    // then only sees a generic "Start hung" timeout, never the real
+    // reason. Skip the modal; the console line + stderr above carry it.
+    if (!headless_)
+        QMessageBox::critical(this, "Server error", qmsg);
+}
+
+void MainWindow::setHeadless(const bool &headless)
+{
+    headless_ = headless;
 }
 
 void MainWindow::onTimerTick()
