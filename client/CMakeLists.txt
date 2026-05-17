@@ -24,6 +24,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(catchchallenger LANGUAGES C CXX)
 
+# Explicit LANGUAGES list omits RC, so CMake would silently skip
+# resources-windows.rc and ship an icon-less .exe. Enable RC on Windows
+# targets (MXE toolchain supplies windres) so icon.ico is embedded.
+if(WIN32)
+    enable_language(RC)
+endif()
+
 include(${CMAKE_CURRENT_LIST_DIR}/../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Gui Network Widgets OpenGL OpenGLWidgets Xml REQUIRED)
@@ -162,10 +169,20 @@ endif()
 
 # Windows-only resource script: embeds icon.ico into the .exe via
 # windres. CMake handles the .rc -> .res step automatically once the
-# source is added to the target.
+# source is added to the target (RC language enabled above).
+#
+# The .rc references "icon.ico" relatively. SINGLEPLAYER puts
+# git/server on the target's include path, and server/icon.ico would
+# otherwise shadow it (windres searches -I dirs for resource data
+# files) — every client would embed the server icon. Scoping the .rc's
+# own resources/ dir as a source-level RC include dir makes CMake emit
+# it as the FIRST -I, so the intended qtopengl icon wins.
 if(WIN32)
     list(APPEND _qtopengl_sources
         ${_qtopengl_dir}/resources/resources-windows.rc)
+    set_source_files_properties(
+        ${_qtopengl_dir}/resources/resources-windows.rc
+        PROPERTIES INCLUDE_DIRECTORIES ${_qtopengl_dir}/resources)
 endif()
 
 # Use Qt's executable wrapper when available — on Android it produces a
