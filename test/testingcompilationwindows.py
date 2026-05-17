@@ -1902,6 +1902,433 @@ def run_wine_server_smoke(exe_path, label, wait_seconds=5):
     return ok
 
 
+# ── installed-payload end-to-end (real NSIS install under wine) ─────────────
+# The wine smoke / screenshot tests above all run the *staged* build
+# dir directly. They never exercise what the end user actually gets:
+# the NSIS installer writing into C:\Program Files\CatchChallenger and
+# the .exe then loading Qt plugins (platforms, sqldrivers, …) from that
+# laid-down tree. The server-gui "Start" path — which opens the bundled
+# SQLite driver plugin — is completely unexercised by
+# run_wine_server_smoke (server-gui does NOT auto-bind; the operator
+# presses Start), so a missing/broken sqldrivers plugin ships green and
+# the operator gets a server that binds then silently fails with
+# "Driver not loaded". These five steps close that gap.
+
+E2E_PORT = "61918"   # distinct from SERVER_PORT (linux multi server)
+
+# The 5 case names run_installed_payload_e2e emits, in order. Kept as a
+# module constant so main()'s should_run() gating + the missing-binary
+# FAIL fan-out + _needs_compile() stay in lockstep with the function.
+_E2E_CASE_NAMES = (
+    "wine uninstall pre-clean",
+    "wine install combined installer",
+    "windows installed exe icons distinct",
+    "wine installed server-gui start (no crash)",
+    "wine installed qtcpu800x600 to map",
+)
+
+
+def _wine_prefix():
+    """Resolve the wine prefix the same way wine64 itself does:
+    $WINEPREFIX when set, else ~/.wine. The harness never sets
+    WINEPREFIX, so this is ~/.wine in practice."""
+    return os.environ.get("WINEPREFIX") or os.path.expanduser("~/.wine")
+
+
+def _wine_install_dirs():
+    """Candidate on-disk paths for the NSIS InstallDir
+    ($PROGRAMFILES64\\CatchChallenger). A win64 prefix exposes it as
+    "Program Files"; list the (x86) sibling too so a 32-bit prefix or
+    an installer that fell back to PROGRAMFILES still resolves."""
+    dc = os.path.join(_wine_prefix(), "drive_c")
+    return [os.path.join(dc, "Program Files", "CatchChallenger"),
+            os.path.join(dc, "Program Files (x86)", "CatchChallenger")]
+
+
+def _wine_env(extra_qt_path=True):
+    """The standard headless-wine environment shared by the e2e steps
+    (mirrors run_wine_client's setup): no debug channels, winedbg
+    disabled so a crash returns a non-zero rc instead of popping the
+    interactive debugger, offscreen QPA, and no host display."""
+    env = os.environ.copy()
+    if extra_qt_path:
+        env["WINEPATH"] = MXE_QT_BIN + ";" + MXE_RT_BIN
+    env["WINEDEBUG"]        = "-all"
+    env["WINEDLLOVERRIDES"] = WINE_DLLOVERRIDES_BASE
+    env["QT_QPA_PLATFORM"]  = "offscreen"
+    for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
+        env.pop(_gui_var, None)
+    return env
+
+
+def _pe_icon_digest(path):
+    """Return a sha256 hex digest of every RT_ICON (resource type 3)
+    image blob embedded in the PE at `path`, or None when the file has
+    no parseable icon resource. Pure-stdlib PE walk — no pefile /
+    icoutils dependency (project policy: 0 extra deps). Two .exe with
+    the same digest carry the *same* embedded icon."""
+    import struct, hashlib
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+    except OSError:
+        return None
+    if len(data) < 0x40 or data[:2] != b"MZ":
+        return None
+    e_lfanew = struct.unpack_from("<I", data, 0x3C)[0]
+    if data[e_lfanew:e_lfanew + 4] != b"PE\0\0":
+        return None
+    coff = e_lfanew + 4
+    num_sections = struct.unpack_from("<H", data, coff + 2)[0]
+    opt_size = struct.unpack_from("<H", data, coff + 16)[0]
+    sect_tbl = coff + 20 + opt_size
+    rsrc = None
+    si = 0
+    while si < num_sections:
+        base = sect_tbl + si * 40
+        sname = data[base:base + 8].rstrip(b"\0")
+        if sname == b".rsrc":
+            rsrc = (struct.unpack_from("<I", data, base + 12)[0],   # VA
+                    struct.unpack_from("<I", data, base + 20)[0])   # raw ptr
+            break
+        si += 1
+    if rsrc is None:
+        return None
+    rsrc_va, rsrc_ptr = rsrc
+    blobs = []
+
+    def walk(dir_off, level, in_icon):
+        # Resource directory: 16-byte header then 8-byte entries.
+        hdr = rsrc_ptr + dir_off
+        n_named = struct.unpack_from("<H", data, hdr + 12)[0]
+        n_id    = struct.unpack_from("<H", data, hdr + 14)[0]
+        ei = 0
+        total = n_named + n_id
+        while ei < total:
+            ent = hdr + 16 + ei * 8
+            ei += 1
+            name_id = struct.unpack_from("<I", data, ent)[0]
+            off     = struct.unpack_from("<I", data, ent + 4)[0]
+            if level == 0:
+                # Type level: keep only RT_ICON (id 3). The high bit is
+                # the "name (not id)" flag — never set for RT_ICON.
+                if (name_id & 0x80000000) or name_id != 3:
+                    continue
+                child_icon = True
+            else:
+                child_icon = in_icon
+            if off & 0x80000000:
+                walk(off & 0x7FFFFFFF, level + 1, child_icon)
+            elif in_icon or child_icon:
+                de = rsrc_ptr + off
+                d_rva = struct.unpack_from("<I", data, de)[0]
+                d_sz  = struct.unpack_from("<I", data, de + 4)[0]
+                d_ptr = d_rva - rsrc_va + rsrc_ptr
+                if 0 <= d_ptr <= len(data) - d_sz:
+                    blobs.append(data[d_ptr:d_ptr + d_sz])
+
+    try:
+        walk(0, 0, False)
+    except (struct.error, IndexError):
+        return None
+    if not blobs:
+        return None
+    blobs.sort()
+    h = hashlib.sha256()
+    bi = 0
+    while bi < len(blobs):
+        h.update(blobs[bi])
+        bi += 1
+    return h.hexdigest()
+
+
+def _write_server_gui_properties(install_dir, maincode):
+    """Pin server-gui's runtime config inside the installed tree so
+    --autostart binds a known port and auto-creates accounts. Keys live
+    at the XML root (game-server schema — NOT inside <general>; see
+    server/CLAUDE.md). DB left unset → loadOneDbGroup defaults to
+    SQLite (database.sqlite), schema auto-created from the embedded
+    resource on first open."""
+    xml_path = os.path.join(install_dir, "server-properties.xml")
+    with open(xml_path, "w") as xf:
+        xf.write(
+            '<?xml version="1.0"?>\n'
+            '<configuration>\n'
+            f'    <server-port value="{E2E_PORT}"/>\n'
+            '    <server-ip value=""/>\n'
+            '    <httpDatapackMirror value=""/>\n'
+            '    <max-players value="10"/>\n'
+            '    <pvp value="true"/>\n'
+            '    <automatic_account_creation value="true"/>\n'
+            '    <content>\n'
+            f'        <mainDatapackCode value="{maincode}"/>\n'
+            '        <subDatapackCode value=""/>\n'
+            '    </content>\n'
+            '</configuration>\n'
+        )
+
+
+def _kill_proc(proc):
+    if proc.poll() is None:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait(timeout=5)
+
+
+def _spawn_installed_server_gui(server_exe):
+    """Launch the installed server-gui.exe under wine with --autostart
+    (programmatically clicks Start, exercising the DB / sqldrivers
+    plugin path). Returns (proc, out_lines, listen_evt, dberr_evt).
+    Caller waits then terminates proc."""
+    env = _wine_env()
+    cwd = os.path.dirname(server_exe)
+    win_args = [WINE_BIN, server_exe, "--autostart"]
+    diagnostic.record_cmd(win_args, cwd)
+    proc = subprocess.Popen(
+        win_args, cwd=cwd, stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
+    out_lines = []
+    listening = threading.Event()
+    db_failed = threading.Event()
+
+    def reader():
+        while True:
+            raw = proc.stdout.readline()
+            if not raw:
+                break
+            line = raw.decode(errors="replace").rstrip("\n")
+            out_lines.append(line)
+            low = line.lower()
+            # "Connected to SQLite" is emitted by
+            # BaseServer::initialize_the_database AFTER the sqldrivers
+            # plugin opened the DB — that, not the earlier socket
+            # "Listen", is the real "Start did not crash" signal.
+            if "connected to sqlite" in low \
+                    or "waiting connection on port" in low:
+                listening.set()
+            if "driver not loaded" in low \
+                    or ("unable to connect to the database" in low):
+                db_failed.set()
+
+    threading.Thread(target=reader, daemon=True).start()
+    return proc, out_lines, listening, db_failed
+
+
+def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
+    """Five sequential steps against the REAL installed payload:
+
+      1. wine: remove a prior C:\\Program Files\\CatchChallenger
+      2. wine: silent-install from the combined NSIS installer
+      3. the 3 installed .exe carry distinct embedded icons
+      4. installed server-gui.exe --autostart opens the DB without
+         crashing (the sqldrivers-plugin regression the user hit)
+      5. installed qtcpu800x600.exe reaches the map against (4)
+
+    Each step emits its own PASS/FAIL row so the total test count is
+    fixed and a regression in any one is isolated. Dependent steps
+    FAIL (never silently skip) when a prerequisite failed."""
+
+    # ── 1. uninstall / pre-clean ────────────────────────────────────
+    name1 = "wine uninstall pre-clean"
+    log_info("removing prior C:\\Program Files\\CatchChallenger")
+    rm_err = None
+    for d in _wine_install_dirs():
+        if os.path.isdir(d):
+            try:
+                shutil.rmtree(d)
+            except OSError as e:
+                rm_err = f"{d}: {e}"
+                break
+    still = [d for d in _wine_install_dirs() if os.path.isdir(d)]
+    if rm_err is not None:
+        log_fail(name1, f"could not remove {rm_err}")
+    elif still:
+        log_fail(name1, f"still present after rmtree: {still}")
+    else:
+        log_pass(name1, "no stale install dir")
+
+    # ── 2. install from the combined installer ──────────────────────
+    name2 = "wine install combined installer"
+    install_dir = None
+    if installer_exe is None or not os.path.isfile(installer_exe):
+        log_fail(name2, "combined installer .exe not built")
+    else:
+        env = _wine_env(extra_qt_path=False)
+        # NSIS /S = silent (sections run, no UI). Default InstallDir
+        # ($PROGRAMFILES64\CatchChallenger) is what an end user gets,
+        # so don't override with /D — we WANT to test that path.
+        win_args = [WINE_BIN, installer_exe, "/S"]
+        diagnostic.record_cmd(win_args, os.path.dirname(installer_exe))
+        log_info(f"wine64 {os.path.basename(installer_exe)} /S")
+        proc = subprocess.Popen(
+            win_args, cwd=os.path.dirname(installer_exe),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+            preexec_fn=process_helpers.setsid_and_pdeathsig)
+        try:
+            proc.communicate(timeout=COMPILE_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            _kill_proc(proc)
+        # NSIS silent installers can return before the child finishes
+        # laying files down — poll for the three exes to materialise.
+        waited = 0.0
+        while waited < 60.0:
+            for d in _wine_install_dirs():
+                if (os.path.isfile(os.path.join(d, COMBINED_BIN_SRV))
+                        and os.path.isfile(os.path.join(d, COMBINED_BIN_CPU))
+                        and os.path.isfile(os.path.join(d, COMBINED_BIN_GL))):
+                    install_dir = d
+                    break
+            if install_dir is not None:
+                break
+            time.sleep(1.0)
+            waited += 1.0
+        if install_dir is not None:
+            log_pass(name2, f"installed -> {install_dir}")
+        else:
+            log_fail(name2, "3 exes not found under Program Files "
+                            "after silent install")
+
+    # ── 3. the 3 .exe must have distinct icons ──────────────────────
+    name3 = "windows installed exe icons distinct"
+    if install_dir is None:
+        log_fail(name3, "install failed; cannot check icons")
+    else:
+        digs = {}
+        none_for = []
+        for fn in (COMBINED_BIN_GL, COMBINED_BIN_CPU, COMBINED_BIN_SRV):
+            dg = _pe_icon_digest(os.path.join(install_dir, fn))
+            if dg is None:
+                none_for.append(fn)
+            digs[fn] = dg
+        if none_for:
+            log_fail(name3, f"no embedded RT_ICON in: "
+                            f"{', '.join(none_for)}")
+        elif len(set(digs.values())) == 3:
+            log_pass(name3, "3 distinct embedded icons")
+        else:
+            same = {}
+            for fn, dg in digs.items():
+                same.setdefault(dg, []).append(fn)
+            dup = [v for v in same.values() if len(v) > 1]
+            log_fail(name3, f"shared icon between: {dup}")
+
+    # ── 4. installed server-gui opens the DB without crashing ───────
+    name4 = "wine installed server-gui start (no crash)"
+    srv_proc = None
+    server_started = False
+    if install_dir is None:
+        log_fail(name4, "install failed; server-gui not run")
+    elif not win_mc:
+        log_fail(name4, "no datapack maincode to seed server-properties")
+    else:
+        srv_exe_inst = os.path.join(install_dir, COMBINED_BIN_SRV)
+        _write_server_gui_properties(install_dir, win_mc)
+        srv_proc, srv_out, srv_listen, srv_dberr = \
+            _spawn_installed_server_gui(srv_exe_inst)
+        waited = 0.0
+        while waited < 60.0:
+            if srv_proc.poll() is not None:
+                break
+            if srv_listen.is_set() or srv_dberr.is_set():
+                break
+            time.sleep(0.5)
+            waited += 0.5
+        rc = srv_proc.poll()
+        crashed = rc is not None and rc != 0 \
+            and process_helpers.is_sigabrt(rc)
+        if srv_listen.is_set() and not srv_dberr.is_set():
+            server_started = True
+            log_pass(name4, "DB opened, server bound (Start OK)")
+        elif srv_dberr.is_set():
+            # The exact failure the user reported: socket binds, then
+            # "Unable to connect to the database: Driver not loaded"
+            # because sqldrivers/qsqlite.dll is missing from the
+            # installed tree.
+            log_fail(name4, "DB driver not loaded — installer is "
+                            "missing sqldrivers/qsqlite.dll")
+        elif crashed:
+            log_fail(name4, f"SIGABRT on Start (rc={rc})")
+        elif rc is not None:
+            log_fail(name4, f"exited rc={rc} before opening DB")
+        else:
+            log_fail(name4, "timeout: never opened DB nor errored "
+                            "(Start hung)")
+        if not server_started:
+            li = max(0, len(srv_out) - 30)
+            while li < len(srv_out):
+                print(f"  | {srv_out[li]}")
+                li += 1
+
+    # ── 5. installed qtcpu800x600 reaches the map vs (4) ────────────
+    name5 = "wine installed qtcpu800x600 to map"
+    if not server_started:
+        log_fail(name5, "server-gui not running; client step skipped")
+    else:
+        cpu_exe_inst = os.path.join(install_dir, COMBINED_BIN_CPU)
+        env = _wine_env()
+        win_args = [WINE_BIN, cpu_exe_inst,
+                    "--host", "127.0.0.1", "--port", E2E_PORT,
+                    "--autologin", "--character", "WineE2E",
+                    "--closewhenonmap"]
+        diagnostic.record_cmd(win_args, install_dir)
+        log_info(f"wine64 {COMBINED_BIN_CPU} --host 127.0.0.1 "
+                 f"--port {E2E_PORT}")
+        cproc = subprocess.Popen(
+            win_args, cwd=install_dir, stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+            preexec_fn=process_helpers.setsid_and_pdeathsig)
+        cli_out = []
+        on_map = threading.Event()
+
+        def creader():
+            while True:
+                raw = cproc.stdout.readline()
+                if not raw:
+                    break
+                line = raw.decode(errors="replace").rstrip("\n")
+                cli_out.append(line)
+                if "MapVisualiserPlayer::mapDisplayedSlot()" in line:
+                    on_map.set()
+
+        threading.Thread(target=creader, daemon=True).start()
+        elapsed = 0.0
+        while elapsed < WINE_TIMEOUT:
+            if cproc.poll() is not None:
+                break
+            if on_map.is_set():
+                break
+            time.sleep(0.5)
+            elapsed += 0.5
+        if on_map.is_set():
+            log_pass(name5, "reached map vs installed server-gui")
+        elif cproc.poll() is None:
+            log_fail(name5, f"timeout {WINE_TIMEOUT}s, never on map")
+        else:
+            log_fail(name5, f"client exit rc={cproc.returncode} "
+                            f"before map")
+        if not on_map.is_set():
+            li = max(0, len(cli_out) - 30)
+            while li < len(cli_out):
+                print(f"  | {cli_out[li]}")
+                li += 1
+        _kill_proc(cproc)
+
+    # Tear the server down regardless of how the client fared.
+    if srv_proc is not None:
+        _kill_proc(srv_proc)
+
+
 def run_wine_screenshot(exe_path, label, mode, screenshot_path,
                         timeout=8):
     """Spawn the .exe under wine64 with --take-screenshot=PATH and
@@ -2115,7 +2542,8 @@ def main():
                              "wine screenshot qtcpu800x600 (autosolo)",
                              "sign exe qtcpu800x600",
                              "installer combined", "msi combined",
-                             "sign installer combined"],
+                             "sign installer combined"]
+                            + list(_E2E_CASE_NAMES),
             "qtopengl":     ["compile qtopengl (mxe-x86_64)",
                              "wine run qtopengl --autosolo",
                              "wine run qtopengl",
@@ -2123,10 +2551,14 @@ def main():
                              "wine screenshot qtopengl (autosolo)",
                              "sign exe qtopengl",
                              "installer combined", "msi combined",
-                             "sign installer combined"],
+                             "sign installer combined"]
+                            + list(_E2E_CASE_NAMES),
+            # The e2e steps install + run all three binaries, so a
+            # queued e2e case must force a server-gui recompile too.
             "server-gui":   ["compile server-gui (mxe-x86_64)",
                              "installer combined", "msi combined",
-                             "sign installer combined"],
+                             "sign installer combined"]
+                            + list(_E2E_CASE_NAMES),
         }
         idx = 0
         names = dependents[binary]
@@ -2342,6 +2774,16 @@ def main():
                 sign_authenticode(combined_installer, "combined", "installer")
             if should_run("msi combined", failed_cases):
                 build_combined_msi(parts)
+            # Installed-payload end-to-end. On a normal full run the
+            # installer was just built above; on a --onlyfailed re-run
+            # that queues only an e2e case (but not "installer
+            # combined") combined_installer is still None — rebuild it
+            # here so the 5 steps have something to install.
+            if any(should_run(n, failed_cases) for n in _E2E_CASE_NAMES):
+                if combined_installer is None:
+                    combined_installer = build_combined_installer(parts)
+                run_installed_payload_e2e(combined_installer,
+                                          win_dp_src, win_mc)
     else:
         # Missing one of the three binaries — emit a single FAIL row
         # so failed.json reflects the gap and --onlyfailed can re-run
@@ -2359,6 +2801,12 @@ def main():
         if should_run("msi combined", failed_cases):
             log_fail("msi combined",
                      f"missing binaries: {','.join(missing)}")
+        # Keep the total test count fixed: the 5 installed-payload
+        # steps still report (as FAIL) when a binary is missing rather
+        # than vanishing from the run.
+        for _n in _E2E_CASE_NAMES:
+            if should_run(_n, failed_cases):
+                log_fail(_n, f"missing binaries: {','.join(missing)}")
 
     win_need_multi = ((cpu_exe is not None and should_run("wine run qtcpu800x600", failed_cases)) or
                       (gl_exe  is not None and should_run("wine run qtopengl", failed_cases)))

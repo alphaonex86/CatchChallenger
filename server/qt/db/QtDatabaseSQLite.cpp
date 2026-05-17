@@ -97,6 +97,20 @@ bool QtDatabaseSQLite::syncConnect(const std::string &host, const std::string &d
         databaseTypeVar=DatabaseBase::DatabaseType::SQLite;
         return true;
     }
+    // Fail early with an actionable message when the QSQLITE driver
+    // plugin is absent. Otherwise addDatabase() returns an invalid
+    // handle and open() reports the opaque "Driver not loaded: Driver
+    // not loaded" — useless to an operator whose real problem is that
+    // sqldrivers/qsqlite.dll was not shipped next to the executable.
+    if(!QSqlDatabase::isDriverAvailable("QSQLITE"))
+    {
+        lastErrorMessage="QSQLITE driver not loaded — the Qt SQL driver "
+            "plugin is missing (sqldrivers/qsqlite.dll must sit next to "
+            "the executable). Available drivers: "
+            +QSqlDatabase::drivers().join(QStringLiteral(",")).toStdString();
+        std::cerr << "QtDatabaseSQLite: " << lastErrorMessage << std::endl;
+        return false;
+    }
     conn = new QSqlDatabase();
     *conn = QSqlDatabase::addDatabase("QSQLITE","server"+QString::number(QtDatabase::establishedConnexionCount));
     conn->setDatabaseName(file.c_str());

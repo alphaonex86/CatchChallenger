@@ -165,6 +165,15 @@ void MainWindow::setupConnections()
 {
     connect(ui->navList, &QListWidget::currentRowChanged, this, &MainWindow::onNavClicked);
     connect(ui->startStopButton, &QPushButton::clicked, this, &MainWindow::onStartStopClicked);
+    // Surface the server's own boot result. is_started(false) means the
+    // queued start_internal_server() failed (bad port, datapack, or —
+    // the case the operator hits most — the Qt SQL driver plugin not
+    // loaded), so the UI must fall back out of the optimistic "Running"
+    // state instead of lying. error() carries the human-readable reason.
+    connect(&server_, &QtServer::is_started,
+            this, &MainWindow::onServerStartStateChanged);
+    connect(&server_, &QtServer::error,
+            this, &MainWindow::onServerError);
     connect(ui->compressionLevel, &QSlider::valueChanged, this, &MainWindow::onCompressionLevelChanged);
     connect(ui->dbType, QOverload<const QString &>::of(&QComboBox::currentTextChanged), this, &MainWindow::onDbTypeChanged);
     connect(ui->eventAddBtn, &QPushButton::clicked, this, &MainWindow::onEventAdd);
@@ -228,6 +237,38 @@ void MainWindow::onStartStopClicked()
         addAnalyticsLine("Server stopped", true);
     }
     updateDashboard();
+}
+
+void MainWindow::onServerStartStateChanged(const bool &started)
+{
+    // The optimistic onStartStopClicked() already painted "Running".
+    // Only act on the failure edge: the server told us it could NOT
+    // start (DB driver missing, port busy, datapack absent, …). Roll
+    // the UI back so the operator doesn't trust a dead server.
+    if (!started && serverRunning) {
+        serverRunning = false;
+        memoryBaselineBytes_ = -1;
+        ui->valueMainServer->setText("Not Running");
+        ui->valueMainServer->setStyleSheet("color: #d94a4a;");
+        ui->startStopButton->setText("Start");
+        ui->startStopButton->setObjectName("startStopButton");
+        ui->startStopButton->setStyleSheet("");
+        addConsoleLine("Server failed to start", true);
+        addAnalyticsLine("Server failed to start", true);
+        updateDashboard();
+    }
+}
+
+void MainWindow::onServerError(const std::string &message)
+{
+    // Without this the boot error (e.g. "Unable to connect to the
+    // database: Driver not loaded" when sqldrivers/qsqlite.dll is not
+    // shipped) went only to a std::cerr nobody reads in a windowed
+    // build — the operator just saw a frozen-looking GUI. Echo it to
+    // the in-app console AND raise a modal so it cannot be missed.
+    const QString qmsg = QString::fromStdString(message);
+    addConsoleLine(QString("ERROR: ") + qmsg, true);
+    QMessageBox::critical(this, "Server error", qmsg);
 }
 
 void MainWindow::onTimerTick()
