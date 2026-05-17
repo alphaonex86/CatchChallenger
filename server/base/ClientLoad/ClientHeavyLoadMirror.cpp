@@ -19,6 +19,16 @@
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0
 #endif
+// MinGW/Windows opens files in TEXT mode by default: ::read() then
+// translates CRLF→LF and returns FEWER bytes than the on-disk size we
+// took from stat() (p.size). The fixed-size read loop below then hits
+// premature EOF with remaining>0 and aborts with "read() short",
+// kicking the client mid datapack-sync. Datapack payloads (xml/png/
+// opus) are binary and must never be newline-translated, so force
+// O_BINARY. It's a no-op (0) on POSIX where it isn't defined.
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 #ifndef CATCHCHALLENGER_SERVER_NO_COMPRESSION
 #include <zstd.h>
 #endif
@@ -557,7 +567,7 @@ void Client::sendFileContent()
             while(oi<pending.size())
             {
                 const BaseServerMasterSendDatapack::PendingFile &p=pending[oi];
-                const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_CLOEXEC);
+                const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_BINARY|O_CLOEXEC);
                 if(fd<0)
                 {
                     open_ok=false;
@@ -638,7 +648,7 @@ void Client::sendFileContent()
 
         //Open + sendfile + close. fopen/fclose are not needed; raw fd is
         //all we want for sendfile(2).
-        const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_CLOEXEC);
+        const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_BINARY|O_CLOEXEC);
         if(fd<0)
         {
             //We've already committed bytes for the next file's content
@@ -761,7 +771,7 @@ void Client::sendCompressedFileContent()
 
             //File content, chunked. Open + read + close per file; never
             //hold more than one fd or one chunk at a time.
-            const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_CLOEXEC);
+            const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_BINARY|O_CLOEXEC);
             if(fd<0)
             {
                 errorOutput("sendCompressedFileContent: open() failed for "+p.fullPath);
