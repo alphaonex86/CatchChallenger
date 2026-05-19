@@ -14,6 +14,8 @@ benchmarkXXX.py keeps its workload-specific bits (build, run, parse).
 """
 import json
 import os
+import random
+import re
 import shutil
 import statistics
 import subprocess
@@ -31,6 +33,15 @@ REMOTE_NODES_JSON = os.path.join(os.path.dirname(REPO_ROOT), "remote_nodes.json"
 LOCAL_DISABLED_TOOLS_JSON = os.path.join(
     os.path.expanduser("~"),
     ".cache", "catchchallenger-benchmark", "local_disabled_tools.json",
+)
+
+# Lab storage: persistent {container-key -> MAC} so a started LXC guest
+# keeps the SAME MAC across every run (stable ARP/NDP, no DHCP churn).
+# Same ~/.cache convention -- survives, never pollutes the repo, never
+# touches remote_nodes.json.
+LAB_MACS_JSON = os.path.join(
+    os.path.expanduser("~"),
+    ".cache", "catchchallenger-benchmark", "lab_macs.json",
 )
 
 # Map profiler name (as used inside benchmark*.py) -> list of CLI tools
@@ -123,6 +134,154 @@ def benchmark_exec_nodes():
     return out
 
 
+# ---- ssh failure classification -----------------------------------------
+# A dead node (port closed / unreachable) and a node that is UP but
+# rejects our key look identical to a naive caller -- both just "ssh
+# failed" -> node silently skipped. The second case is an operator
+# misconfig the benchmark MUST shout about, not hide.
+
+_SSH_DOWN_SIGNS = (
+    "connection refused", "no route to host", "network is unreachable",
+    "connection timed out", "operation timed out", "ssh timeout after",
+    "could not resolve hostname", "name or service not known",
+    "temporary failure in name resolution",
+)
+_SSH_AUTHKEY_SIGNS = (
+    "permission denied (publickey", "permission denied (",
+    "permission denied,", "permission denied.",
+    "too many authentication failures", "host key verification failed",
+    "remote host identification has changed", "no mutual signature algorithm",
+    "no matching host key type", "authentication failed",
+    "userauth", "connection closed by ",
+)
+
+_ssh_warned = set()   # dedupe: one banner per node per process
+
+
+def classify_ssh_error(rc, stderr):
+    """'ok' (rc==0) | 'down' (host/port unreachable -- a genuinely
+    offline node) | 'authkey' (sshd IS up and the port IS open but our
+    SSH key/auth could not be used -- the fixable case) | 'unknown'."""
+    if rc == 0:
+        return "ok"
+    s = (stderr or "").lower()
+    if any(x in s for x in _SSH_DOWN_SIGNS):
+        return "down"
+    if any(x in s for x in _SSH_AUTHKEY_SIGNS):
+        return "authkey"
+    return "unknown"
+
+
+def warn_ssh_key_failure(node_label, host, stderr):
+    """Big, hard-to-miss banner: ssh reachable but the KEY/auth is the
+    problem. Deduped per node so the many probes (loadavg, tool checks,
+    collect) don't spam it. Returns True when it classified as authkey
+    (so callers can branch)."""
+    key = str(node_label or host)
+    if key in _ssh_warned:
+        return True
+    _ssh_warned.add(key)
+    tail = " | ".join(l.strip() for l in (stderr or "").splitlines()
+                      if l.strip())[:300] or "(no stderr captured)"
+    bar = "=" * 74
+    print(f"\n{C_RED}{bar}\n"
+          f"  !!! SSH KEY / AUTH FAILURE  --  node {node_label!r} ({host})\n"
+          f"  sshd IS running and port IS open, but the SSH key could NOT\n"
+          f"  be used (publickey denied / host-key changed / key not in\n"
+          f"  authorized_keys / agent not forwarded). This is NOT a dead\n"
+          f"  node -- it is a fixable misconfig. The node is SKIPPED and\n"
+          f"  its benchmark data is MISSING from this batch until fixed.\n"
+          f"  ssh said: {tail}\n"
+          f"{bar}{C_RESET}", file=sys.stderr, flush=True)
+    return True
+
+
+def note_ssh_failure(node_label, host, rc, stderr):
+    """Classify an ssh result and fire the banner on the authkey case.
+    Call from every ssh wrapper's failure path. No-op when rc==0 or the
+    node is merely down."""
+    if classify_ssh_error(rc, stderr) == "authkey":
+        warn_ssh_key_failure(node_label, host, stderr)
+
+
+# ---- lab storage: stable per-container MAC ------------------------------
+# When an LXC guest is (re)started and no MAC is saved for it, mint a
+# "half-random" MAC -- fixed 00:16:3e LXC half + 3 random octets --
+# loop until it collides with NOTHING the orchestrator already knows
+# (IPv4 ARP + IPv6 NDP neighbour caches, local link MACs, and other
+# MACs already in lab storage), then persist it. Every later start of
+# that container reuses the SAME MAC.
+
+_MAC_OUI = "00:16:3e"            # the conventional LXC half
+
+
+def _lab_macs_load():
+    try:
+        with open(LAB_MACS_JSON) as f:
+            d = json.load(f)
+            return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _lab_macs_save(d):
+    os.makedirs(os.path.dirname(LAB_MACS_JSON), exist_ok=True)
+    tmp = LAB_MACS_JSON + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(d, f, indent=2, sort_keys=True)
+    os.replace(tmp, LAB_MACS_JSON)
+
+
+_MAC_RE = re.compile(r"([0-9a-f]{2}(?::[0-9a-f]{2}){5})", re.I)
+
+
+def known_macs_local():
+    """Every MAC the orchestrator host can see: IPv4 ARP + IPv6 NDP
+    neighbour caches plus local link addresses. Used so a freshly
+    minted guest MAC can't clash with anything already on the lab
+    network. Best-effort -- missing `ip` just yields a smaller set."""
+    seen = set()
+    for cmd in (["ip", "-4", "neigh", "show"],
+                ["ip", "-6", "neigh", "show"],
+                ["ip", "link", "show"]):
+        try:
+            out = subprocess.run(cmd, capture_output=True, text=True,
+                                  timeout=5).stdout
+        except Exception:
+            continue
+        for m in _MAC_RE.findall(out):
+            seen.add(m.lower())
+    return seen
+
+
+def lab_mac_for(key):
+    """Return the persisted MAC for `key` (an LXC container / exec-node
+    label), minting + saving a fresh collision-free one the first time.
+    Stable forever after: same key -> same MAC across every run."""
+    store = _lab_macs_load()
+    cur = store.get(key)
+    if cur:
+        return cur
+    taken = known_macs_local() | {v.lower() for v in store.values()}
+    mac = None
+    for _ in range(10000):
+        cand = "%s:%02x:%02x:%02x" % (_MAC_OUI, random.randint(0, 255),
+                                      random.randint(0, 255),
+                                      random.randint(0, 255))
+        if cand.lower() not in taken:
+            mac = cand
+            break
+    if mac is None:                       # 2^24 space exhausted -> absurd
+        mac = "%s:%02x:%02x:%02x" % (_MAC_OUI, random.randint(0, 255),
+                                     random.randint(0, 255),
+                                     random.randint(0, 255))
+    store[key] = mac
+    _lab_macs_save(store)
+    print(f"[lab] minted stable MAC {mac} for container {key!r} "
+          f"-> {LAB_MACS_JSON}", file=sys.stderr)
+    return mac
+
+
 # ---- runtime tool detection ---------------------------------------------
 
 def _local_disabled_tools_load():
@@ -151,8 +310,11 @@ def _remote_have_tool(ssh_host, ssh_user, ssh_port, tool):
         argv = ["ssh", "-o", "ConnectTimeout=4", "-o", "BatchMode=yes",
                 "-p", str(ssh_port), f"{ssh_user}@{ssh_host}",
                 f"command -v {tool} >/dev/null 2>&1 && echo Y || echo N"]
-        out = subprocess.check_output(argv, timeout=10).decode().strip()
-        return out == "Y"
+        p = subprocess.run(argv, capture_output=True, text=True, timeout=10)
+        if p.returncode != 0:
+            note_ssh_failure(ssh_host, ssh_host, p.returncode, p.stderr)
+            return None
+        return p.stdout.strip() == "Y"
     except Exception:
         return None
 
@@ -161,30 +323,6 @@ def _local_have_tool(tool):
     if tool.startswith("/"):
         return os.path.exists(tool) and os.access(tool, os.X_OK)
     return shutil.which(tool) is not None
-
-
-def _ask_install(node_label, tool, profiler):
-    """Interactive prompt: 'have you installed <tool> on <node>?'.
-
-    Returns True when the user confirms (y/yes), False otherwise. When
-    stdin is not a TTY we treat the answer as 'no' so unattended runs
-    don't hang. The caller persists the 'no' answer into the appropriate
-    benchmark_disabled_tools list so we never re-prompt for it."""
-    sys.stdout.flush()
-    prompt = (f"[bench] node={node_label!r} missing tool {tool!r} "
-              f"(needed by profiler {profiler!r}).\n"
-              f"        Install it now, then answer y. "
-              f"Answer n to skip profiler {profiler!r} permanently on this node.\n"
-              f"        Have you installed it? [y/N] ")
-    if not sys.stdin or not sys.stdin.isatty():
-        print(prompt + "n  (non-interactive)", file=sys.stderr)
-        return False
-    try:
-        ans = input(prompt).strip().lower()
-    except (EOFError, KeyboardInterrupt):
-        print("n  (interrupted)", file=sys.stderr)
-        return False
-    return ans in ("y", "yes")
 
 
 def _persist_disabled_tool_local(tool):
@@ -277,35 +415,24 @@ def profilers_runnable_on(node, all_profilers):
             continue
         if skips.get(prof) == "ssh-unreachable":
             continue
-        # 3) prompt the operator
-        unresolved = []
+        # 3) genuinely missing -> SKIP (never block the batch on stdin).
+        #    Provisioning is setup.py's job, not the harness's: a
+        #    benchmark*.py must "just run without argument, 1h timeout"
+        #    unattended (benchmark/CLAUDE.md), so we never prompt. Persist
+        #    the tool into the right benchmark_disabled_tools store so the
+        #    next batch is silent, and point the operator at setup.py.
+        unresolved = list(missing_runtime)
         for tool in missing_runtime:
-            if _ask_install(node.get("label", "?"), tool, prof):
-                # operator says installed -> re-probe
-                if is_local:
-                    ok = _local_have_tool(tool)
-                else:
-                    ok = _remote_have_tool(node.get("ssh_host"),
-                                           node.get("ssh_user"),
-                                           node.get("ssh_port", 22), tool)
-                if not ok:
-                    print(f"[bench] still missing after operator confirmed install: {tool!r} "
-                          f"on {node.get('label')!r}; recording as disabled.",
-                          file=sys.stderr)
-                    unresolved.append(tool)
-                    if is_local:
-                        _persist_disabled_tool_local(tool)
-                    else:
-                        _persist_disabled_tool_remote(node.get("label"), tool)
-                    disabled.add(tool)
+            if is_local:
+                _persist_disabled_tool_local(tool)
             else:
-                # operator answered 'n' -> persist + skip
-                unresolved.append(tool)
-                if is_local:
-                    _persist_disabled_tool_local(tool)
-                else:
-                    _persist_disabled_tool_remote(node.get("label"), tool)
-                disabled.add(tool)
+                _persist_disabled_tool_remote(node.get("label"), tool)
+            disabled.add(tool)
+        print(f"[bench] node={node.get('label','?')!r} missing "
+              f"{','.join(unresolved)} (needed by profiler {prof!r}); "
+              f"profiler SKIPPED for this node. Run "
+              f"`python3 benchmark/setup.py exec --node {node.get('label','?')}` "
+              f"to provision it, then re-run the batch.", file=sys.stderr)
         if unresolved:
             skips[prof] = f"missing-tool:{','.join(unresolved)}"
         else:
@@ -324,8 +451,13 @@ def _ssh_loadavg(ex):
         # responsible for the post-rsync 60s sleep + recheck.
         cmd = ["ssh", "-o", "ConnectTimeout=4", "-o", "BatchMode=yes",
                "-p", str(port), f"{user}@{host}", "cat /proc/loadavg"]
-        out = subprocess.check_output(cmd, timeout=10).decode().strip().split()
-        return float(out[0])
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        if p.returncode != 0:
+            # Key/auth failure here is the worst: the node would be
+            # silently dropped from benchmark_exec_nodes() as if busy.
+            note_ssh_failure(ex.get("label"), host, p.returncode, p.stderr)
+            return None
+        return float(p.stdout.strip().split()[0])
     except Exception:
         return None
 
@@ -354,34 +486,163 @@ class Progress:
         print(msg, flush=True)
 
 
+class FleetDeadline:
+    """Hard wall-clock ceiling for a whole benchmark batch -- the same
+    class of bug fixed in setup.py: the {profiler}x{simd}x{arch}x
+    {workload}x{node} matrix is unbounded (a slow/qemu-emulated node, a
+    callgrind run at ~30x, a wedged remote ssh) so without a global cap
+    `benchmark*.py` can run far past the 1h the operator expects
+    (benchmark/CLAUDE.md: 'just run this command without argument with
+    1h timeout'). Checked cooperatively at each node boundary; remaining
+    cells are emitted SKIP(deadline) so the progress counter and the
+    per-platform history JSON stay honest (a skipped cell is recorded,
+    never silently dropped). Default 3600s; override with env
+    CATCHCHALLENGER_BENCH_DEADLINE_S (0 or negative disables the cap)."""
+
+    def __init__(self, default_s=3600):
+        budget = default_s
+        env = os.environ.get("CATCHCHALLENGER_BENCH_DEADLINE_S")
+        if env is not None:
+            try:
+                budget = int(env)
+            except ValueError:
+                pass
+        # (label, profiler, t_start) of the cell currently in flight, so a
+        # timeout / hard hang can report WHERE it was stuck instead of
+        # dying mute. Updated by note() before every cell.
+        self.current = None
+        if budget and budget > 0:
+            self.budget   = budget
+            self.deadline = time.monotonic() + budget
+            print(f"{C_CYAN}[deadline]{C_RESET} whole-fleet ceiling = "
+                  f"{budget}s; nodes not reached by then are skipped",
+                  flush=True)
+        else:
+            self.budget   = None
+            self.deadline = None
+
+    def reached(self):
+        return self.deadline is not None and time.monotonic() >= self.deadline
+
+    def remaining(self):
+        """Seconds left in the budget; a large sentinel when uncapped so
+        callers can `min(per_cmd_timeout, deadline.remaining())` blindly."""
+        if self.deadline is None:
+            return 1 << 30
+        return max(0, int(self.deadline - time.monotonic()))
+
+    def note(self, label, profiler):
+        """Breadcrumb printed BEFORE a cell starts. Two jobs: (1) if the
+        cell wedges with no output, the operator still sees the last
+        '-> running ...' line and knows exactly where it hung; (2)
+        records self.current so where_stuck() can name it on timeout."""
+        self.current = (label, profiler, time.monotonic())
+        print(f"{C_CYAN}[bench]{C_RESET} -> running profiler={profiler} "
+              f"node={label} (deadline in {self.remaining()}s)", flush=True)
+
+    def where_stuck(self):
+        """Human string naming the in-flight cell + how long it had been
+        running. Call this from any timeout / deadline branch so the
+        console always says WHAT was happening when the clock ran out."""
+        if self.current is None:
+            return "no cell in flight (timed out between cells)"
+        label, profiler, t0 = self.current
+        return (f"profiler={profiler} node={label}, "
+                f"in-flight {int(time.monotonic() - t0)}s when the "
+                f"{'deadline' if self.reached() else 'timeout'} fired")
+
+    def skip_node(self, label, profilers, progress, reason="deadline"):
+        """Emit a SKIP cell per profiler for a node we ran out of time to
+        reach, and return the per_tool sub-dict the caller splices in so
+        the history JSON records every cell as SKIP(deadline). Prints the
+        in-flight breadcrumb so the operator sees where the budget went."""
+        print(f"{C_YELLOW}[deadline]{C_RESET} budget exhausted -- "
+              f"{self.where_stuck()}; skipping node {label} "
+              f"(+ any nodes after it)", flush=True)
+        blocks = {}
+        for prof in profilers:
+            progress.emit(prof, "no", label, status="SKIP", extra=reason)
+            blocks[prof] = {"status": "SKIP", "metrics": {}}
+        return blocks
+
+
 # ---- profiler wrappers ---------------------------------------------------
 
 def have_tool(name):
     return shutil.which(name) is not None
 
 
-def run_capture(cmd, env=None, timeout=None):
-    """Run a subprocess; return (rc, stdout, stderr, wall_seconds)."""
+def cmake_accel_defs():
+    """Optional build accelerators, picked up ONLY when present (project
+    rule: accelerators never hard-coded, fallback otherwise). Returns a
+    list of extra `cmake` -D args.
+
+    Without the ccache compiler-launcher every benchmark cold build --
+    a fresh node, /tmp tmpfs wiped on reboot, a changed flag, and in
+    particular the per-test fresh rsync onto a remote compile node --
+    recompiles the whole tree from scratch with plain g++. On a slow or
+    qemu-emulated compile node that single cold build can itself blow
+    the build timeout / eat the whole FleetDeadline budget. Wiring
+    ccache when it exists turns the 2nd+ build into a near-instant
+    cache replay; absent ccache the list is empty and cmake behaves
+    exactly as before. ccache output is bit-identical to a plain
+    compile, so no benchmark metric is affected -- only build wall
+    time."""
+    defs = []
+    if shutil.which("ccache"):
+        defs += ["-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+                 "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"]
+    return defs
+
+
+def _drop_core_rlimit():
+    """preexec_fn: set RLIMIT_CORE=0 in the child before exec. A
+    benchmarked binary that dies on a signal (the harness SIGINT/timeout
+    that stops the server, or a genuine crash) must NOT litter a core in
+    the cwd -- and under valgrind that core is a `vgcore.<pid>` written
+    next to the checked-in benchmark sources. We already detect the
+    failure via rc; the dump has zero diagnostic value here and is pure
+    source-tree pollution (CLAUDE.md: fix the tool, never .gitignore the
+    artefact). Wrapped so a platform without RLIMIT_CORE can't break the
+    run."""
+    try:
+        import resource
+        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    except Exception:
+        pass
+
+
+def run_capture(cmd, env=None, timeout=None, cwd=None, preexec_fn=None):
+    """Run a subprocess; return (rc, stdout, stderr, wall_seconds). cwd
+    lets callers pin the child to a tmpfs scratch dir so anything it
+    drops (status files, valgrind vgcore, callgrind.out) never lands in
+    the source tree; both new args default to None => behaviour
+    unchanged for every existing caller."""
     t0 = time.monotonic()
     p  = subprocess.run(cmd, env=env, timeout=timeout,
-                        capture_output=True, text=True)
+                        capture_output=True, text=True,
+                        cwd=cwd, preexec_fn=preexec_fn)
     dt = time.monotonic() - t0
     return p.returncode, p.stdout, p.stderr, dt
 
 
-def measure_time_v(cmd, env=None, timeout=None):
+def measure_time_v(cmd, env=None, timeout=None, cwd=None):
     """`/usr/bin/time -v` -> dict with {wall_s, user_s, sys_s, max_rss_kb,
     voluntary_ctx_switches, involuntary_ctx_switches, page_faults}.
-    Falls back to wall-only measurement when /usr/bin/time is missing."""
+    Falls back to wall-only measurement when /usr/bin/time is missing.
+    cwd pins the child to a scratch dir; core dumps are disabled so a
+    killed/crashed child never drops a core in the source tree."""
     out = {"wall_s": None, "user_s": None, "sys_s": None,
            "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
            "minor_pf": None, "major_pf": None, "rc": None}
     if not os.path.exists("/usr/bin/time"):
-        rc, _, _, dt = run_capture(cmd, env=env, timeout=timeout)
+        rc, _, _, dt = run_capture(cmd, env=env, timeout=timeout,
+                                   cwd=cwd, preexec_fn=_drop_core_rlimit)
         out["wall_s"] = dt; out["rc"] = rc
         return out
     full = ["/usr/bin/time", "-v"] + list(cmd)
-    rc, _, err, _ = run_capture(full, env=env, timeout=timeout)
+    rc, _, err, _ = run_capture(full, env=env, timeout=timeout,
+                                cwd=cwd, preexec_fn=_drop_core_rlimit)
     out["rc"] = rc
     for line in err.splitlines():
         s = line.strip()
@@ -424,7 +685,7 @@ def _parse_wall(s):
         return None
 
 
-def measure_perf_stat(cmd, env=None, timeout=None):
+def measure_perf_stat(cmd, env=None, timeout=None, cwd=None):
     """perf stat -e cycles,instructions,branch-misses,cache-misses
     -> dict; None when perf is unavailable or kernel.perf_event_paranoid
     blocks the user-space counters.
@@ -440,7 +701,8 @@ def measure_perf_stat(cmd, env=None, timeout=None):
         return None
     full = ["perf", "stat", "-x", ",", "-e",
             "cycles,instructions,branch-misses,cache-misses"] + list(cmd)
-    rc, _, err, _ = run_capture(full, env=env, timeout=timeout)
+    rc, _, err, _ = run_capture(full, env=env, timeout=timeout,
+                                cwd=cwd, preexec_fn=_drop_core_rlimit)
     out = {}
     for line in err.splitlines():
         f = line.split(",")
@@ -460,7 +722,16 @@ def measure_perf_stat(cmd, env=None, timeout=None):
 
 def measure_callgrind(cmd, env=None, timeout=None, outdir=None):
     """valgrind --tool=callgrind. Returns instruction count when
-    callgrind_annotate succeeds, else None."""
+    callgrind_annotate succeeds, else None.
+
+    valgrind dumps `vgcore.<pid>` into the *process cwd* (NOT
+    --callgrind-out-file's dir) whenever the guest is killed by a
+    core-dumping signal -- which is exactly what the harness does to
+    stop the server (SIGINT / timeout). Run valgrind WITH cwd=outdir
+    (a tmpfs scratch dir) AND RLIMIT_CORE=0 so a vgcore is never
+    written, and if anything is, it lands in scratch -- never next to
+    the checked-in benchmark sources (CLAUDE.md: fix the tool, don't
+    .gitignore the artefact)."""
     if not have_tool("valgrind") or not have_tool("callgrind_annotate"):
         return None
     if outdir is None:
@@ -472,7 +743,8 @@ def measure_callgrind(cmd, env=None, timeout=None, outdir=None):
         pass
     full = ["valgrind", "--tool=callgrind", "--callgrind-out-file=" + out_file,
             "--quiet"] + list(cmd)
-    rc, _, _, _ = run_capture(full, env=env, timeout=timeout)
+    rc, _, _, _ = run_capture(full, env=env, timeout=timeout,
+                              cwd=outdir, preexec_fn=_drop_core_rlimit)
     if rc != 0 or not os.path.isfile(out_file):
         return None
     rc2, sout, _, _ = run_capture(["callgrind_annotate", out_file], timeout=60)
@@ -509,22 +781,67 @@ def stats_of(samples):
 
 # ---- champion compare ----------------------------------------------------
 
-def champion_path(bench_name, arch):
-    return os.path.join(RESULTS, bench_name, arch, "champion.json")
+def node_path_parts(node_label):
+    """Map a node label to the (compile_label, exec_label) pair that
+    keys the on-disk history/results layout:
+
+        history/<bench>/<compile_label>/<exec_label>/<stamp>.json
+        results/<bench>/<compile_label>/<exec_label>/{champion,candidate-*}.json
+
+    * 'local' / None  -> ('local','local')  (the workstation is both the
+      amd64 compile node and the amd64 baseline exec node).
+    * a remote execution_nodes[].label -> (parent nodes[].label, label)
+      e.g. 'rtl9607c' -> ('mips-lxc','rtl9607c').
+    * an unknown label -> (label, label) so a record is NEVER dropped on
+      the floor just because remote_nodes.json drifted."""
+    if not node_label or node_label == "local":
+        return ("local", "local")
+    cfg = load_remote_nodes()
+    for node in cfg.get("nodes", []):
+        for ex in node.get("execution_nodes", []):
+            if ex.get("label") == node_label:
+                return (node.get("label") or node_label, node_label)
+    return (node_label, node_label)
 
 
-def candidate_path(bench_name, arch, sha):
-    return os.path.join(RESULTS, bench_name, arch, f"candidate-{sha}.json")
+def champion_path(bench_name, node_label):
+    c, e = node_path_parts(node_label)
+    return os.path.join(RESULTS, bench_name, c, e, "champion.json")
 
 
-def load_champion(bench_name, arch):
-    p = champion_path(bench_name, arch)
+def candidate_path(bench_name, node_label, stamp):
+    """stamp = the run's started_utc with ':' -> '-' (path-portable).
+    Filename is candidate-<stamp>.json (not -<sha>): the commit is
+    already inside the JSON, and one run == one timestamp per node."""
+    c, e = node_path_parts(node_label)
+    return os.path.join(RESULTS, bench_name, c, e, f"candidate-{stamp}.json")
+
+
+def load_champion(bench_name, node_label):
+    p = champion_path(bench_name, node_label)
     if not os.path.isfile(p):
         return None
     try:
         with open(p) as f: return json.load(f)
     except Exception:
         return None
+
+
+def parse_bench_args(argv=None):
+    """Common CLI for every benchmark*.py. The benchmarks otherwise take
+    no args (they run unattended); the only flag is --comment, a
+    free-text tag persisted into this run's candidate / champion /
+    per-platform-history JSON so a score can be attributed to the change
+    under test, e.g. --comment="Invert loop". Empty string when omitted
+    (the field is still written, as "")."""
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="CatchChallenger benchmark (run with no args; "
+                    "--comment tags the recorded score).")
+    ap.add_argument("--comment", default="",
+                    help='free-text tag stored in every result/history '
+                         'JSON for this run (e.g. "Invert loop")')
+    return ap.parse_args(argv)
 
 
 def write_record(path, record):

@@ -77,6 +77,7 @@ def build():
            "-DCATCHCHALLENGER_CACHE_HPS=ON"]
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]
+    cfg += bh.cmake_accel_defs()
     rc, sout, serr, _ = bh.run_capture(cfg, timeout=300)
     if rc != 0:
         print(sout); print(serr, file=sys.stderr)
@@ -167,14 +168,16 @@ def cell_run(bin_path_in_runfir, profiler):
     metrics = {}
 
     if profiler == "rusage":
-        # warmup pass (cold pagecache)
+        # warmup pass (cold pagecache). cwd=RUN_DIR (tmpfs) so the
+        # server's own status/marker files + any core never land in
+        # the checked-in benchmark/ tree.
         cleanup_save_artifacts()
-        bh.measure_time_v(cmd, timeout=RUN_TIMEOUT)
+        bh.measure_time_v(cmd, timeout=RUN_TIMEOUT, cwd=RUN_DIR)
         wall_samples, rss_samples, user_samples, sys_samples = [], [], [], []
         cache_size = None
         for _ in range(RUN_REPEATS - 1):
             cleanup_save_artifacts()
-            t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT)
+            t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT, cwd=RUN_DIR)
             if t["rc"] != 0: return None
             if t["wall_s"]    is not None: wall_samples.append(t["wall_s"])
             if t["max_rss_kb"] is not None: rss_samples.append(t["max_rss_kb"])
@@ -210,7 +213,7 @@ def cell_run(bin_path_in_runfir, profiler):
 
     if profiler == "perf-stat":
         cleanup_save_artifacts()
-        out = bh.measure_perf_stat(cmd, timeout=RUN_TIMEOUT)
+        out = bh.measure_perf_stat(cmd, timeout=RUN_TIMEOUT, cwd=RUN_DIR)
         if not out: return None
         for k, v in out.items():
             metrics[f"perf_{k}"] = (v, 0.0)
@@ -258,6 +261,8 @@ def to_record_metrics(flat):
 
 
 def main():
+    args = bh.parse_bench_args()
+    comment = args.comment
     bin_path = build()
     if bin_path is None: return 2
     run_bin = setup_run_dir(bin_path)
@@ -278,6 +283,7 @@ def main():
 
     total = sum(len(all_profilers) for _ in nodes)
     progress = bh.Progress(total)
+    deadline = bh.FleetDeadline()
 
     batch_id    = hr.new_batch_id()
     started_utc = hr.iso_now()
@@ -290,6 +296,10 @@ def main():
     for node in nodes:
         label = node["label"]
         per_tool[label] = {}
+        if deadline.reached():
+            per_tool[label] = deadline.skip_node(label, all_profilers,
+                                                 progress)
+            continue
         if label != "local":
             for prof in all_profilers:
                 progress.emit(prof, "no", label, status="SKIP",
@@ -302,6 +312,7 @@ def main():
                 progress.emit(prof, "no", label, status="SKIP", extra=reason)
                 per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
                 continue
+            deadline.note(label, prof)
             cell = cell_run(run_bin, prof)
             if cell is None:
                 progress.emit(prof, "no", label, status="FAIL")
@@ -315,12 +326,14 @@ def main():
     sha = bh.git_sha()
     rec = {
         "commit": sha,
+        "comment": comment,
         "date":   time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "node":   "local",
         "metrics": to_record_metrics(flat_local),
         "profilers": {"binary-size": run_bin},
     }
-    cand_p = bh.candidate_path("benchmarkserversave", arch, sha)
+    cand_stamp = started_utc.replace(":", "-")
+    cand_p = bh.candidate_path("benchmarkserversave", "local", cand_stamp)
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
@@ -354,21 +367,22 @@ def main():
                          ended_utc=ended_utc,
                          compile_flags=compile_flags,
                          simd_tier="generic",
-                         harness_version=hr.harness_version())
+                         harness_version=hr.harness_version(),
+                         comment=comment)
         print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
-    champ = bh.load_champion("benchmarkserversave", arch)
+    champ = bh.load_champion("benchmarkserversave", "local")
     decision, summary = bh.decide(champ, rec)
     bh.print_decision("benchmarkserversave", arch, decision, summary)
 
     if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkserversave", arch)
+        ch_p = bh.champion_path("benchmarkserversave", "local")
         bh.write_record(ch_p, rec)
         print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
     hr.attach_decision("benchmarkserversave", batch_id, decision)
     import chart_generator
-    for cp in chart_generator.regenerate("benchmarkserversave"):
+    for cp in chart_generator.regenerate("benchmarkserversave", cand_stamp):
         print(_color(bh.C_CYAN, f"[chart] {cp}"))
 
     return 0

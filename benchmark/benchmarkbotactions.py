@@ -127,6 +127,7 @@ def _cmake_build(src_dir, build_dir, extra_defs=None, label="build"):
             cfg.append(f"-D{k}={v}")
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]
+    cfg += bh.cmake_accel_defs()
     rc, sout, serr, _ = bh.run_capture(cfg, timeout=600)
     if rc != 0:
         print(sout); print(serr, file=sys.stderr)
@@ -499,6 +500,8 @@ def _flat_to_metric_block(flat):
 
 
 def main():
+    args = bh.parse_bench_args()
+    comment = args.comment
     # Build BOTH binaries first so a build failure aborts before we
     # spend wall-time on cell runs / server boot.
     bin_path = build_bot()
@@ -546,6 +549,7 @@ def _run_with_server(bin_path, server_proc):
 
     total = sum(len(all_profilers) + max(len(BOT_COUNTS) - 1, 0) for _ in nodes)
     progress = bh.Progress(total)
+    deadline = bh.FleetDeadline()
 
     batch_id    = hr.new_batch_id()
     started_utc = hr.iso_now()
@@ -557,6 +561,15 @@ def _run_with_server(bin_path, server_proc):
         label = node["label"]
         per_tool[label] = {}
         per_subbench[label] = {}
+        if deadline.reached():
+            per_tool[label] = deadline.skip_node(label, all_profilers,
+                                                 progress)
+            # mirror the remote path's extra BOT_COUNTS-1 rusage emits so
+            # the progress counter total still reconciles.
+            for _ in range(max(len(BOT_COUNTS) - 1, 0)):
+                progress.emit("rusage", "no", label, status="SKIP",
+                              extra="deadline")
+            continue
         if label != "local":
             for prof in all_profilers:
                 progress.emit(prof, "no", label, status="SKIP",
@@ -574,6 +587,7 @@ def _run_with_server(bin_path, server_proc):
             all_metrics = {}
             rusage_status = "PASS"
             sub = {}  # sub-bench label -> per-metric block
+            deadline.note(label, "rusage")
             for bots in BOT_COUNTS:
                 cell = cell_run(bin_path, host, port, bots, iface,
                                 server_pid=server_proc.pid)
@@ -629,6 +643,7 @@ def _run_with_server(bin_path, server_proc):
             env["QT_QPA_PLATFORM"] = "offscreen"
             cmd = ["timeout", "--signal=INT", str(DURATION_S)] + \
                   _bot_cmd(bin_path, host, port, BOT_COUNTS[len(BOT_COUNTS) // 2])
+            deadline.note(label, "perf-stat")
             out = bh.measure_perf_stat(cmd, env=env, timeout=RUN_TIMEOUT)
             if out:
                 m = {}
@@ -660,21 +675,23 @@ def _run_with_server(bin_path, server_proc):
             }
     rec = {
         "commit":   sha,
+        "comment":  comment,
         "date":     time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "node":     "local",
         "metrics":  flat_record_metrics,
         "profilers": {"binary-size": bin_path},
     }
-    cand_p = bh.candidate_path("benchmarkbotactions", arch, sha)
+    cand_stamp = started_utc.replace(":", "-")
+    cand_p = bh.candidate_path("benchmarkbotactions", "local", cand_stamp)
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
-    champ = bh.load_champion("benchmarkbotactions", arch)
+    champ = bh.load_champion("benchmarkbotactions", "local")
     decision, summary = bh.decide(champ, rec)
     bh.print_decision("benchmarkbotactions", arch, decision, summary)
 
     if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkbotactions", arch)
+        ch_p = bh.champion_path("benchmarkbotactions", "local")
         bh.write_record(ch_p, rec)
         print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
@@ -702,12 +719,13 @@ def _run_with_server(bin_path, server_proc):
                          ended_utc=ended_utc,
                          compile_flags=compile_flags,
                          simd_tier="generic",
-                         harness_version=hr.harness_version())
+                         harness_version=hr.harness_version(),
+                         comment=comment)
         print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
     hr.attach_decision("benchmarkbotactions", batch_id, decision)
     import chart_generator
-    for cp in chart_generator.regenerate("benchmarkbotactions"):
+    for cp in chart_generator.regenerate("benchmarkbotactions", cand_stamp):
         print(_color(bh.C_CYAN, f"[chart] {cp}"))
 
     return 0

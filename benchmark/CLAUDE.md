@@ -9,6 +9,13 @@ RISC-V, never-search-from-`/`) and they apply here too.
 one command target: the IA not start every command, have to package in the corresponding benchmarkXXXXXX.py
 * do you edit to optimise specific part
 * just run this command without arguement with 1h timeout (fix the problem if timeout, you can't edit remote_nodes.json, escalate if needed), wait the finish of the command
+* `--comment="..."` is the only flag every `benchmark*.py` takes. It is
+  stored verbatim in this run's candidate / champion / per-platform
+  history JSON (`comment` field) so a score is attributable to the
+  change under test. When measuring an optimisation, pass the SAME
+  comment to every benchmark, e.g. testing an "Invert loop" change →
+  run all benchmarks with `--comment="Invert loop"` so every recorded
+  score is tagged "Invert loop".
 * compare the results
 Generate helper to put in common the code it will mostly used by the majority
 
@@ -328,8 +335,12 @@ Every benchmark source file MUST carry a leading comment block stating:
 
 ## Champion baseline + history
 
-Each benchmark target keeps a **per-arch champion record** under
-`benchmark/results/<benchmark-name>/<arch>/champion.json`. Schema:
+Each benchmark target keeps a **per-(compile,exec)-node champion
+record** under
+`benchmark/results/<benchmark-name>/<compile-node>/<exec-node>/champion.json`
+(`<compile-node>`/`<exec-node>` = the `nodes[].label` /
+`execution_nodes[].label` pair from remote_nodes.json; the local host
+is `local/local`). Schema:
 
 ```
 {
@@ -351,9 +362,10 @@ Don't keep a parallel JSON list — it desync's.
 When proposing an optimisation, the agent reads each champion.json,
 compares the candidate's run against every metric, and writes the
 decision (KEEP / DISCARD / ESCALATE) + per-metric deltas back to
-`benchmark/results/<benchmark-name>/<arch>/candidate-<sha>.json`. The
-candidate file is git-ignored except for the rare ESCALATE case the
-operator wants to preserve for discussion.
+`benchmark/results/<benchmark-name>/<compile-node>/<exec-node>/candidate-<stamp>.json`
+(`<stamp>` = the run's started_utc, `:`→`-`). The candidate file is
+git-ignored except for the rare ESCALATE case the operator wants to
+preserve for discussion.
 
 ## Per-run history — append-only, one JSON per run
 
@@ -362,22 +374,24 @@ every `benchmark*.py` (or the shared helper they all call) MUST drop a
 full snapshot of each run under:
 
 ```
-benchmark/history/<benchmark-name>/<ISO-8601-timestamp>-<cpu-model-slug>.json
+benchmark/history/<benchmark-name>/<compile-node>/<exec-node>/<ISO-8601-timestamp>.json
 ```
 
+* `<compile-node>`/`<exec-node>` — the `nodes[].label` /
+  `execution_nodes[].label` pair from remote_nodes.json (local host =
+  `local/local`). The cpu-model-slug is no longer in the path — it is
+  inside the JSON; the node pair is the stable identity.
 * `<ISO-8601-timestamp>` — UTC, second resolution, `:` replaced with
   `-` so the path is portable (e.g. `2026-05-14T13-42-07Z`).
-* `<cpu-model-slug>` — `/proc/cpuinfo` `model name` (or arch-specific
-  equivalent) lower-cased, non-alphanum → `-`, collapsed.
 
 **One file per (benchmark, run, platform)** — each execution_node
 exercised in a batch gets its own JSON file. Never overwritten,
 never rotated. History grows append-only; the directory IS the
 timeline.
 
-A single batch that touches N platforms drops N files into
-`benchmark/history/<benchmark-name>/` — same timestamp prefix,
-different `<cpu-model-slug>` suffix. Don't bundle platforms into
+A single batch that touches N platforms drops N files under
+`benchmark/history/<benchmark-name>/` — same timestamp, different
+`<compile-node>/<exec-node>` dir. Don't bundle platforms into
 one file: it forces readers to parse the whole batch to inspect a
 single arch, and makes per-platform diffs (`git log -p <file>`)
 useless.
@@ -509,23 +523,27 @@ duplicating it per benchmark guarantees drift — and a missing field
 in one file silently breaks any future analysis script that joins
 across the timeline. Add new fields to the helper, not the benchmark.
 
-## Progression charts — one per (benchmark, platform, cpu)
+## Progression charts — one per (benchmark, compile, exec)
 
 After each batch, the harness MUST regenerate a chart per
-`(benchmark-name, execution_node, cpu_model)` tuple plotting every
+`(benchmark-name, compile-node, exec-node)` tuple plotting every
 metric over commits (x-axis = commit date or commit index in
 chronological order, y-axis = metric value, one line per metric, dual
 axis when units differ). Source data is the append-only per-run JSONs
-under `benchmark/history/<benchmark-name>/`; group by `node` +
-`cpu_model` so a single box that changes kernel/libc still rolls up
-into one timeline, and two different boxes of the same arch stay on
-separate charts.
+under `benchmark/history/<benchmark-name>/<compile>/<exec>/`; group by
+the `<compile>/<exec>` node pair (remote nodes included, not just the
+local host).
 
-Output path:
+Output path — the chart lives NEXT TO the result JSONs it describes:
 
 ```
-benchmark/charts/<benchmark-name>/<cpu-model-slug>-<node-label>.svg
+benchmark/results/<benchmark-name>/<compile>/<exec>/champion.svg
+benchmark/results/<benchmark-name>/<compile>/<exec>/candidate-<stamp>.svg
 ```
+
+`champion.svg` is the always-current progression chart; a benchmark
+run also freezes the same chart as `candidate-<stamp>.svg` next to its
+`candidate-<stamp>.json` (`<stamp>` = run started_utc, `:`→`-`).
 
 Rules:
 * SVG only (text, diff-able, no binary churn in git). PNG is forbidden.
@@ -539,9 +557,10 @@ Rules:
   `history_recorder.py`), not duplicated per `benchmark*.py`.
 * No external chart service — render locally (matplotlib SVG backend
   or hand-rolled SVG). Don't add a new pip dep without asking.
-* `benchmark/charts/` is **git-ignored** (top-level `.gitignore`). The
-  history JSONs are the source of truth — charts are derived
-  artefacts, regenerable on demand.
+* `champion.svg` is git-tracked (it travels with `champion.json`).
+  `candidate-<stamp>.svg` is git-ignored like `candidate-<stamp>.json`
+  (transient; regenerable from the history JSONs, which remain the
+  source of truth).
 
 ### Generating charts manually
 

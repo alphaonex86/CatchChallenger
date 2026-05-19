@@ -68,6 +68,8 @@ def ssh_run(user, host, port, cmd, timeout=120):
     try:
         p = subprocess.run(argv, capture_output=True, text=True,
                            timeout=timeout)
+        if p.returncode != 0:
+            bh.note_ssh_failure(host, host, p.returncode, p.stderr)
         return p.returncode, p.stdout, p.stderr
     except subprocess.TimeoutExpired:
         return -1, "", f"ssh timeout after {timeout}s"
@@ -90,7 +92,7 @@ def _lxc_nfs_cfg(exec_node):
 NFS_LXC_CONTAINER_NAME = "catchchallenger"
 
 
-def _nfs_lxc_script(cfg, host_addr, action):
+def _nfs_lxc_script(cfg, host_addr, action, mac=None):
     """action: 'up' = stop-all/mount/chroot/lxc-start; 'down' =
     lxc-stop + umount. `host_addr` is the exec node's own top-level
     host (bridge-side address). Empty host_addr / guest_* stay
@@ -114,6 +116,14 @@ def _nfs_lxc_script(cfg, host_addr, action):
     inner = ["set -e", *addr,
              f"lxc-start -n {q(name)} -d",
              f"lxc-wait -n {q(name)} -s RUNNING -t 60 2>/dev/null || true"]
+    if mac:
+        # Pin the persisted stable MAC on the guest eth0 (down/set/up)
+        # so ARP/NDP stay constant across every start.
+        set_mac = (f"ip link set dev eth0 down 2>/dev/null; "
+                   f"ip link set dev eth0 address {q(mac)} 2>/dev/null; "
+                   f"ip link set dev eth0 up 2>/dev/null")
+        inner.append(f"lxc-attach -n {q(name)} -- sh -c {q(set_mac)} "
+                     f"2>/dev/null || true")
     if cfg.get("guest_ipv4"):
         inner.append(f"lxc-attach -n {q(name)} -- ip -4 addr add {q(cfg['guest_ipv4'])} dev eth0 2>/dev/null || true")
     if cfg.get("guest_ipv6"):
@@ -145,7 +155,12 @@ def nfs_lxc_bring_up(exec_node, verbose=False):
                   f"but nfs/nfs_mount unset — skipping bring-up")
         return True
     u, h, p, ha = _exec_ssh(exec_node)
-    rc, _o, e = ssh_run(u, h, p, _nfs_lxc_script(cfg, ha, "up"), timeout=300)
+    # Stable per-container MAC from lab storage (minted once, reused
+    # forever). Key on the exec-node label so each lxc_nfs box keeps
+    # its own MAC even though the container name is shared.
+    mac = bh.lab_mac_for(exec_node.get("label") or exec_node.get("host"))
+    rc, _o, e = ssh_run(u, h, p, _nfs_lxc_script(cfg, ha, "up", mac=mac),
+                        timeout=300)
     if rc != 0 and verbose:
         print(f"[remote] {exec_node.get('label','?')}: nfs-lxc bring-up "
               f"rc={rc}: {e.strip()[-300:]}")
@@ -246,6 +261,15 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
         for k, v in cmake_defs.items():
             defs.append(f"-D{k}={v}")
     ninja = "-G Ninja" if _have_remote_tool(user, host, port, "ninja") else ""
+    # ccache when the compile node has it (project rule: accelerators
+    # picked up when present, fallback otherwise). This path rsyncs a
+    # fresh source tree per test, so WITHOUT ccache every remote build
+    # is a full cold compile -- on the qemu-mips compile node that is
+    # the exact tarpit that blew CMAKE_BUILD_TIMEOUT. ccache is
+    # bit-identical to a plain compile so no measured metric changes.
+    if _have_remote_tool(user, host, port, "ccache"):
+        defs.append("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
+        defs.append("-DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
 
     cfg_cmd = (f"mkdir -p {shlex.quote(bld)} && "
                f"cmake -S {shlex.quote(src)} -B {shlex.quote(bld)} "
