@@ -65,6 +65,12 @@ def make_ssh_runner(host, user, port=22):
                 "-p", str(port), f"{user}@{host}", remote]
         try:
             p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+            if p.returncode != 0:
+                try:
+                    import benchmark_helpers as bh
+                    bh.note_ssh_failure(host, host, p.returncode, p.stderr)
+                except Exception:
+                    pass
             return p.returncode, p.stdout
         except Exception:
             return 1, ""
@@ -712,7 +718,7 @@ class PlatformRecord:
 
     def write(self, *, commit, started_utc, ended_utc,
               compile_flags=None, simd_tier=None,
-              harness_version=None, decision=None):
+              harness_version=None, decision=None, comment=""):
         if compile_flags is not None:
             self.platform["compile_flags"] = list(compile_flags)
         if simd_tier is not None:
@@ -721,6 +727,7 @@ class PlatformRecord:
             "benchmark":       self.benchmark,
             "commit":          commit,
             "commit_short":    (commit or "")[:7] or None,
+            "comment":         comment or "",
             "started_utc":     started_utc,
             "ended_utc":       ended_utc,
             "harness_version": harness_version,
@@ -729,17 +736,23 @@ class PlatformRecord:
             "results":         self.results,
         }
         doc.update(self.platform)
-        slug = cpu_model_slug(self.platform["cpu_model"])
+        # Layout: history/<bench>/<compile_label>/<exec_label>/<stamp>.json
+        # (the cpu-model-slug is no longer in the path/name -- it is
+        # already inside the JSON, and the compile/exec node pair is the
+        # stable identity; one box that swaps kernel/libc still rolls up
+        # under the same dir, two boxes stay separate).
+        import benchmark_helpers as bh
+        comp, exe = bh.node_path_parts(self.node_label)
         stamp = started_utc.replace(":", "-")
-        outdir = os.path.join(HISTORY_ROOT, self.benchmark)
+        outdir = os.path.join(HISTORY_ROOT, self.benchmark, comp, exe)
         os.makedirs(outdir, exist_ok=True)
-        path = os.path.join(outdir, f"{stamp}-{slug}.json")
-        # Never overwrite -- append a short suffix if the (very unlikely)
-        # collision happens (same node, same second, same CPU slug).
+        path = os.path.join(outdir, f"{stamp}.json")
+        # Never overwrite -- append a short suffix on the (unlikely)
+        # same-node/same-second collision.
         n = 1
         final = path
         while os.path.exists(final):
-            final = os.path.join(outdir, f"{stamp}-{slug}-{n}.json")
+            final = os.path.join(outdir, f"{stamp}-{n}.json")
             n += 1
         with open(final, "w") as f:
             json.dump(doc, f, indent=2, sort_keys=True)
@@ -759,24 +772,27 @@ def attach_decision(benchmark, batch_id, decision):
     if not os.path.isdir(outdir):
         return 0
     n = 0
-    for name in os.listdir(outdir):
-        if not name.endswith(".json"):
-            continue
-        p = os.path.join(outdir, name)
-        try:
-            with open(p) as f:
-                doc = json.load(f)
-        except Exception:
-            continue
-        if doc.get("batch_id") != batch_id:
-            continue
-        if doc.get("decision") is not None:
-            continue
-        doc["decision"] = decision
-        with open(p, "w") as f:
-            json.dump(doc, f, indent=2, sort_keys=True)
-            f.write("\n")
-        n += 1
+    # Layout is now nested (<compile>/<exec>/), so walk the whole subtree
+    # instead of a single flat listdir.
+    for root, _dirs, files in os.walk(outdir):
+        for name in files:
+            if not name.endswith(".json"):
+                continue
+            p = os.path.join(root, name)
+            try:
+                with open(p) as f:
+                    doc = json.load(f)
+            except Exception:
+                continue
+            if doc.get("batch_id") != batch_id:
+                continue
+            if doc.get("decision") is not None:
+                continue
+            doc["decision"] = decision
+            with open(p, "w") as f:
+                json.dump(doc, f, indent=2, sort_keys=True)
+                f.write("\n")
+            n += 1
     return n
 
 

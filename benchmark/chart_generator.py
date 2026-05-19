@@ -1,13 +1,16 @@
-"""chart_generator.py -- per-(benchmark, platform, cpu) SVG timeline.
+"""chart_generator.py -- per-(benchmark, compile, exec) SVG timeline.
 
-Per benchmark/CLAUDE.md "Progression charts":
-  benchmark/charts/<benchmark-name>/<cpu-model-slug>-<node-label>.svg
+Charts live next to the result JSONs they describe:
+  benchmark/results/<bench>/<compile>/<exec>/champion.svg
+  benchmark/results/<bench>/<compile>/<exec>/candidate-<stamp>.svg
 
 The source data is the append-only per-run JSONs dumped by
-history_recorder.PlatformRecord under benchmark/history/<bench>/. We
-group those records by (cpu_model_slug, node_label) -- one SVG per
-group, one stacked sub-plot per metric, one line per (tool, metric)
-combination so different units don't get crammed onto one axis.
+history_recorder.PlatformRecord under
+benchmark/history/<bench>/<compile>/<exec>/. We group those records by
+(compile_label, exec_label) -- one progression SVG per node pair
+(remote nodes included, not just the local host), one stacked sub-plot
+per metric, one line per (tool, metric) combination so different units
+don't get crammed onto one axis.
 
 Champion = the latest history record whose decision is "KEEP" (or, when
 no history record carries that flag yet, the entry in champion.json on
@@ -22,10 +25,8 @@ import json
 import os
 import re
 
+import benchmark_helpers as bh
 from history_recorder import HISTORY_ROOT, cpu_model_slug
-
-
-CHART_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "charts")
 
 # Decision -> (glyph, fill colour). Glyphs are tiny SVG <polygon>s.
 _DECISION_STYLE = {
@@ -54,27 +55,31 @@ def _load_history(benchmark):
     if not os.path.isdir(bdir):
         return []
     out = []
-    for name in os.listdir(bdir):
-        if not name.endswith(".json"):
-            continue
-        p = os.path.join(bdir, name)
-        try:
-            with open(p) as f:
-                doc = json.load(f)
-        except Exception:
-            continue
-        out.append((doc, p))
+    # Layout is nested now: <bench>/<compile>/<exec>/<stamp>.json -- walk
+    # the whole subtree (was a flat listdir).
+    for root, _dirs, files in os.walk(bdir):
+        for name in files:
+            if not name.endswith(".json"):
+                continue
+            p = os.path.join(root, name)
+            try:
+                with open(p) as f:
+                    doc = json.load(f)
+            except Exception:
+                continue
+            out.append((doc, p))
     out.sort(key=lambda r: r[0].get("started_utc", ""))
     return out
 
 
 def _group_records(records):
-    """{ (cpu_slug, node_label): [records...] } in chronological order."""
+    """{ (compile_label, exec_label): [records...] } chronological.
+    One chart per compile/exec node pair -- remote nodes included, not
+    just the local host."""
     groups = {}
     for doc, _p in records:
-        slug = cpu_model_slug(doc.get("cpu_model"))
-        node = doc.get("node") or "unknown"
-        groups.setdefault((slug, node), []).append(doc)
+        comp, exe = bh.node_path_parts(doc.get("node"))
+        groups.setdefault((comp, exe), []).append(doc)
     return groups
 
 
@@ -275,10 +280,13 @@ def _x_axis_labels(x0, y0, w, commits, champion_idx):
 
 # ---- champion lookup -----------------------------------------------------
 
-def _champion_commit(benchmark, arch):
-    """Read champion.json for an arch; return the commit short sha or None."""
-    p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                     "results", benchmark, arch, "champion.json")
+def _champion_commit(benchmark, node_label):
+    """Read champion.json for a node; return the commit short sha or
+    None. champion.json now lives at
+    results/<bench>/<compile>/<exec>/champion.json (only the local node
+    has one today -- remote groups simply get None and fall back to the
+    last KEEP)."""
+    p = bh.champion_path(benchmark, node_label)
     if not os.path.isfile(p):
         return None
     try:
@@ -289,10 +297,10 @@ def _champion_commit(benchmark, arch):
         return None
 
 
-def _find_champion_idx(records, arch):
+def _find_champion_idx(records, node_label):
     """Index of the champion commit inside the ordered records list.
     Prefer champion.json on disk; fallback to last KEEP decision."""
-    short = _champion_commit(records[0].get("benchmark", ""), arch) if records else None
+    short = _champion_commit(records[0].get("benchmark", ""), node_label) if records else None
     if short:
         for i, doc in enumerate(records):
             if (doc.get("commit_short") or (doc.get("commit") or "")[:7]) == short:
@@ -315,10 +323,12 @@ TOP_MARGIN = 28
 X_AXIS_H = 50
 
 
-def _render_group(benchmark, cpu_slug, node, records):
+def _render_group(benchmark, comp, exe, records):
     series, commits, better_map = _extract_series(records)
     if not series:
         return None
+    cpu_slug = cpu_model_slug(records[0].get("cpu_model")) if records else "unknown"
+    node = records[0].get("node") or exe
 
     # group series by bare metric name (so one panel = one metric, all
     # tools and all sub-bench slices). For "<tool>.<metric>" the bare
@@ -331,7 +341,7 @@ def _render_group(benchmark, cpu_slug, node, records):
         panels.setdefault(bare, {})[label] = pts
 
     arch = records[0].get("arch") or "unknown"
-    champion_idx = _find_champion_idx(records, arch)
+    champion_idx = _find_champion_idx(records, node)
 
     npanels = len(panels)
     height = TOP_MARGIN + npanels * (PANEL_H + PANEL_GAP) + X_AXIS_H
@@ -342,8 +352,8 @@ def _render_group(benchmark, cpu_slug, node, records):
     body = []
     body.append(f'<text x="{LEFT_MARGIN}" y="18" font-size="13" '
                 f'font-family="sans-serif" font-weight="bold">'
-                f'{_esc(benchmark)} -- {_esc(node)} ({_esc(cpu_slug)}, '
-                f'{_esc(arch)}, n={len(records)})</text>')
+                f'{_esc(benchmark)} -- {_esc(comp)}/{_esc(exe)} '
+                f'({_esc(cpu_slug)}, {_esc(arch)}, n={len(records)})</text>')
     y = TOP_MARGIN
     # Sort so cpu_percent (if present) sits at the top -- it's the
     # saturation tell-tale and the first thing reviewers look for.
@@ -370,31 +380,47 @@ def _render_group(benchmark, cpu_slug, node, records):
     return head + "".join(body) + "</svg>\n"
 
 
-def regenerate(benchmark):
-    """Regenerate every chart for `benchmark` from history JSONs. Returns
-    list of written paths."""
+def regenerate(benchmark, stamp=None):
+    """Regenerate every chart for `benchmark` from history JSONs.
+
+    Charts live alongside the result JSONs they describe -- one
+    progression SVG per (compile,exec) node pair:
+
+        results/<bench>/<compile>/<exec>/champion.svg
+        results/<bench>/<compile>/<exec>/candidate-<stamp>.svg
+
+    `champion.svg` is the always-current progression chart (champion
+    commit marked). When `stamp` is given (a benchmark run passes its
+    cand_stamp) the same chart is also frozen as
+    `candidate-<stamp>.svg` so the chart at the moment of that run is
+    preserved next to its candidate-<stamp>.json. Returns written
+    paths."""
     records = _load_history(benchmark)
     if not records:
         return []
     groups = _group_records(records)
-    outdir = os.path.join(CHART_ROOT, benchmark)
-    os.makedirs(outdir, exist_ok=True)
     written = []
-    for (cpu_slug, node), recs in groups.items():
-        svg = _render_group(benchmark, cpu_slug, node, recs)
+    for (comp, exe), recs in groups.items():
+        svg = _render_group(benchmark, comp, exe, recs)
         if svg is None:
             continue
-        name = f"{_slug(cpu_slug)}-{_slug(node)}.svg"
-        path = os.path.join(outdir, name)
-        with open(path, "w") as f:
+        outdir = os.path.join(bh.RESULTS, benchmark, comp, exe)
+        os.makedirs(outdir, exist_ok=True)
+        champ_p = os.path.join(outdir, "champion.svg")
+        with open(champ_p, "w") as f:
             f.write(svg)
-        written.append(path)
+        written.append(champ_p)
+        if stamp:
+            cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
+            with open(cand_p, "w") as f:
+                f.write(svg)
+            written.append(cand_p)
     return written
 
 
 # ---- self-test -----------------------------------------------------------
 
-def regenerate_all():
+def regenerate_all(stamp=None):
     """Regenerate every benchmark's charts. Returns {bench: [paths]}.
     A benchmark with no history under benchmark/history/<bench>/ is
     silently skipped -- the harness may have created the dir but not
@@ -406,7 +432,7 @@ def regenerate_all():
         bdir = os.path.join(HISTORY_ROOT, name)
         if not os.path.isdir(bdir):
             continue
-        out[name] = regenerate(name)
+        out[name] = regenerate(name, stamp=stamp)
     return out
 
 

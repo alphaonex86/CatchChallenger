@@ -64,6 +64,7 @@ def build():
     cfg = ["cmake", "-S", SRC_DIR, "-B", BUILD_DIR, "-DCMAKE_BUILD_TYPE=Release"]
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]
+    cfg += bh.cmake_accel_defs()
     rc, sout, serr, _ = bh.run_capture(cfg, timeout=300)
     if rc != 0:
         print(sout); print(serr, file=sys.stderr)
@@ -113,24 +114,30 @@ def cell_run(bin_path, profiler, label_node):
     """Run a single (profiler, players=*) cell on the local host, return
     a dict of metrics: {(player, metric_name) -> value}."""
     cmd = run_one(bin_path)
+    # Pin every profiled child to the binary's own (tmpfs) dir so a
+    # status file it drops, or a valgrind vgcore, never lands next to
+    # the checked-in benchmark sources.
+    run_cwd = os.path.dirname(bin_path)
     metrics = {}
     if profiler == "rusage":
         # Several timed reps; aggregate the harness's own median tick
         # numbers across reps.
         per_rep = []
         for _ in range(RUN_REPEATS):
-            t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT)
+            t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT, cwd=run_cwd)
             if t["rc"] != 0:
                 return None
             # The harness only prints to stdout; measure_time_v
             # discarded stdout to keep memory low. Re-run once
             # plain to harvest the BENCH lines (bytes/median).
-        rc, sout, serr, dt = bh.run_capture(cmd, timeout=RUN_TIMEOUT)
+        rc, sout, serr, dt = bh.run_capture(cmd, timeout=RUN_TIMEOUT,
+                                            cwd=run_cwd,
+                                            preexec_fn=bh._drop_core_rlimit)
         if rc != 0:
             return None
         bench = parse_bench_lines(sout)
         # Add max RSS from one fresh /usr/bin/time -v pass.
-        t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT)
+        t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT, cwd=run_cwd)
         for p, fields in bench.items():
             metrics[(p, "median_tick_ns")] = fields.get("median_tick_ns")
             metrics[(p, "p95_tick_ns")]    = fields.get("p95_tick_ns")
@@ -141,7 +148,7 @@ def cell_run(bin_path, profiler, label_node):
             metrics[(0, "wall_s")] = t["wall_s"]
         return metrics
     if profiler == "perf-stat":
-        out = bh.measure_perf_stat(cmd, timeout=RUN_TIMEOUT)
+        out = bh.measure_perf_stat(cmd, timeout=RUN_TIMEOUT, cwd=run_cwd)
         if not out: return None
         for evt, val in out.items():
             metrics[(0, f"perf_{evt}")] = val
@@ -331,6 +338,8 @@ def run_remote_cells(node, avail_profilers, skips, all_profilers,
 
 
 def main():
+    args = bh.parse_bench_args()
+    comment = args.comment
     bin_path = build()
     if bin_path is None:
         return 2
@@ -352,6 +361,7 @@ def main():
 
     total = sum(len(all_profilers) for _ in nodes)
     progress = bh.Progress(total)
+    deadline = bh.FleetDeadline()
 
     batch_id    = hr.new_batch_id()
     started_utc = hr.iso_now()
@@ -364,6 +374,11 @@ def main():
         label = node["label"]
         per_tool[label] = {}
         per_subbench[label] = {}
+        if deadline.reached():
+            per_tool[label] = deadline.skip_node(label, all_profilers,
+                                                 progress)
+            all_metrics[label] = aggregate_metrics({})
+            continue
         if label != "local":
             run_remote_cells(node, node_profilers[label], node_skips[label],
                              all_profilers, progress, per_tool, all_metrics)
@@ -375,6 +390,7 @@ def main():
                 progress.emit(prof, "no", label, status="SKIP", extra=reason)
                 per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
                 continue
+            deadline.note(label, prof)
             cell = cell_run(bin_path, prof, label)
             if cell is None:
                 progress.emit(prof, "no", label, status="FAIL")
@@ -417,12 +433,14 @@ def main():
     sha = bh.git_sha()
     rec = {
         "commit": sha,
+        "comment": comment,
         "date":   time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "node":   "local",
         "metrics": all_metrics.get("local", {}),
         "profilers": {"binary-size": bin_path},
     }
-    cand_p = bh.candidate_path("benchmarkmapmanager", arch, sha)
+    cand_stamp = started_utc.replace(":", "-")
+    cand_p = bh.candidate_path("benchmarkmapmanager", "local", cand_stamp)
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
@@ -450,21 +468,22 @@ def main():
                          ended_utc=ended_utc,
                          compile_flags=compile_flags,
                          simd_tier="generic",
-                         harness_version=hr.harness_version())
+                         harness_version=hr.harness_version(),
+                         comment=comment)
         print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
-    champ = bh.load_champion("benchmarkmapmanager", arch)
+    champ = bh.load_champion("benchmarkmapmanager", "local")
     decision, summary = bh.decide(champ, rec)
     bh.print_decision("benchmarkmapmanager", arch, decision, summary)
 
     if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkmapmanager", arch)
+        ch_p = bh.champion_path("benchmarkmapmanager", "local")
         bh.write_record(ch_p, rec)
         print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
     hr.attach_decision("benchmarkmapmanager", batch_id, decision)
     import chart_generator
-    for cp in chart_generator.regenerate("benchmarkmapmanager"):
+    for cp in chart_generator.regenerate("benchmarkmapmanager", cand_stamp):
         print(_color(bh.C_CYAN, f"[chart] {cp}"))
 
     return 0
