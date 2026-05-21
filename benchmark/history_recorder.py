@@ -719,6 +719,10 @@ class PlatformRecord:
     def write(self, *, commit, started_utc, ended_utc,
               compile_flags=None, simd_tier=None,
               harness_version=None, decision=None, comment=""):
+        # All results SKIP → nothing to record; return None silently.
+        if self.results and all(
+                v.get("status") == "SKIP" for v in self.results.values()):
+            return None
         if compile_flags is not None:
             self.platform["compile_flags"] = list(compile_flags)
         if simd_tier is not None:

@@ -55,6 +55,7 @@ SIGINT so Qt can clean up. The headline workload knob is BOTS_COUNT
 CPU, dominates the wall clock.
 """
 import os
+import shlex
 import sys
 import json
 import shutil
@@ -67,9 +68,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 import benchmark_helpers as bh
 import history_recorder as hr
+import benchmark_remote as br
 
 REPO_ROOT  = bh.REPO_ROOT
 BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
+
+# Concurrency marker (read by main() + any orchestrator). True = this
+# benchmark binds a fixed server port and drives the NIC/loopback, so it
+# must run SERIALLY against every other network benchmark (it waits on the
+# shared cc-bench-network.lock). False = pure in-process / no network, safe
+# to run in parallel with anything.
+NETWORK_EXCLUSIVE = True
 
 BOT_SRC_DIR    = os.path.join(REPO_ROOT, "tools", "bot-actions")
 BOT_BIN_NAME   = "bot-actions"
@@ -88,7 +97,7 @@ try:
 except Exception:
     BUILD_ROOT = "/tmp/cc-build"
     TMPFS_ROOT = "/tmp"
-BOT_BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkbotactions-bot")
+BOT_BUILD_DIR  = "/mnt/data/perso/tmpfs/bot-actions"
 SRV_BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkbotactions-server")
 SRV_RUN_DIR    = os.path.join(TMPFS_ROOT, "cc-bench-botactions-server")
 
@@ -106,7 +115,44 @@ RUN_TIMEOUT   = DURATION_S + 60
 # bots start; this matches the value the test/ harness uses for an
 # amd64 host (slow nodes need more).
 SERVER_READY_TIMEOUT = 60
+# Cold boot (no cache -> full XML parse) on a constrained MIPS/ARM box can
+# take minutes; give the boot-time benchmark a generous ceiling so the
+# no-cache slice is actually captured rather than recorded as a timeout.
+SERVER_BOOT_TIMEOUT  = 300
 SERVER_PORT          = 61920
+
+# DB defines shared by EVERY botactions server build (local, remote, and
+# the io_uring variants). DB_FILE_RAM is ALWAYS on so the whole DB tree
+# lives in /dev/shm (RAM) and NEVER touches the exec node's microSD/eMMC --
+# the embedded boards (rpi-zero-w, rtl9607c, ...) would otherwise burn flash
+# write cycles every run. DB_FILE is its MANDATORY base (DB_FILE_RAM #errors
+# without it, server/base/ServerStructures.hpp), so it stays on but the
+# RAM variant redirects all writes off disk. CACHE_HPS lets the
+# pre-generated datapack cache load. Single source so no build path can
+# drift back to disk-backed DB_FILE.
+SERVER_RAM_DB_DEFS = {
+    "CATCHCHALLENGER_DB_FILE":     "ON",
+    "CATCHCHALLENGER_CACHE_HPS":   "ON",
+    "CATCHCHALLENGER_DB_FILE_RAM": "ON",
+}
+
+# io_uring tuning variants compared on the LOCAL host (the controlled
+# bench box; SQPOLL/IOPOLL behaviour is kernel/CPU specific and only
+# reproducible there). "with and without" each sub-option => baseline
+# io_uring vs +SQPOLL vs +IOPOLL, all on top of the RAM-DB defines.
+# liburing-dev required; a variant whose build fails (no liburing) is
+# skipped, not failed.
+IO_URING_BASE_DEFS = dict(SERVER_RAM_DB_DEFS, CATCHCHALLENGER_IO_URING="ON")
+IO_URING_VARIANTS = [
+    ("iouring",              {}),
+    ("iouring-sqpoll",       {"CATCHCHALLENGER_IO_URING_SQPOLL": "ON"}),
+    ("iouring-iopoll",       {"CATCHCHALLENGER_IO_URING_IOPOLL": "ON"}),
+    ("iouring-coop-taskrun", {"CATCHCHALLENGER_IO_URING_COOP_TASKRUN": "ON"}),
+    # TASKRUN_FLAG has no effect without COOP_TASKRUN, so enable both.
+    ("iouring-taskrun-flag", {"CATCHCHALLENGER_IO_URING_COOP_TASKRUN": "ON",
+                              "CATCHCHALLENGER_IO_URING_TASKRUN_FLAG": "ON"}),
+    ("iouring-no-sqarray",   {"CATCHCHALLENGER_IO_URING_NO_SQARRAY": "ON"}),
+]
 
 
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
@@ -165,9 +211,7 @@ def build_server():
         print(_color(bh.C_RED, f"[build:server] datapack not found: {DATAPACK_PATH}"))
         return None
     rc, msg = _cmake_build(SRV_SRC_DIR, SRV_BUILD_DIR,
-                           extra_defs={"CATCHCHALLENGER_DB_FILE":     "ON",
-                                       "CATCHCHALLENGER_CACHE_HPS":   "ON",
-                                       "CATCHCHALLENGER_DB_FILE_RAM": "ON"},
+                           extra_defs=dict(SERVER_RAM_DB_DEFS),
                            label="build:server")
     if rc != 0:
         print(_color(bh.C_RED, f"[build:server] {msg}"))
@@ -279,6 +323,184 @@ def stop_server(proc):
             proc.wait(timeout=5)
     except Exception:
         pass
+
+
+def _time_local_boot(staged_bin):
+    """Start the local server, time wall-seconds to 'correctly bind:',
+    then stop it. Returns boot_s or None (crash / timeout)."""
+    run_dir  = os.path.dirname(staged_bin)
+    log_path = os.path.join(run_dir, "server.log")
+    try: os.remove(log_path)
+    except FileNotFoundError: pass
+    t0 = time.monotonic()
+    log_fh = open(log_path, "wb")
+    p = subprocess.Popen([staged_bin], cwd=run_dir, stdout=log_fh,
+                         stderr=subprocess.STDOUT, start_new_session=True)
+    boot = None
+    deadline = t0 + SERVER_BOOT_TIMEOUT
+    while time.monotonic() < deadline:
+        if p.poll() is not None:
+            break
+        try:
+            with open(log_path, "rb") as f:
+                if b"correctly bind:" in f.read():
+                    boot = time.monotonic() - t0
+                    break
+        except FileNotFoundError:
+            pass
+        # 20ms poll: the local fast-host boot can be <100ms, so a coarser
+        # cadence would floor cold and warm at the same value and hide the
+        # cache delta. (Remote nodes use a 0.5s cadence -- their boots are
+        # seconds, and ssh round-trip dominates anyway.)
+        time.sleep(0.02)
+    log_fh.close()
+    stop_server(p)
+    return boot
+
+
+def _start_server_in(staged_bin, ready_timeout=SERVER_BOOT_TIMEOUT):
+    """Start a server whose run dir is the dir holding `staged_bin`; block
+    until 'correctly bind:' or it exits/times out. Returns the Popen or
+    None. (start_server() is hard-wired to SRV_RUN_DIR; this variant works
+    for the per-io_uring-variant run dirs.)"""
+    run_dir  = os.path.dirname(staged_bin)
+    log_path = os.path.join(run_dir, "server.log")
+    try: os.remove(log_path)
+    except FileNotFoundError: pass
+    log_fh = open(log_path, "wb")
+    p = subprocess.Popen([staged_bin], cwd=run_dir, stdout=log_fh,
+                         stderr=subprocess.STDOUT, start_new_session=True)
+    deadline = time.monotonic() + ready_timeout
+    while time.monotonic() < deadline:
+        if p.poll() is not None:
+            log_fh.close()
+            return None
+        try:
+            with open(log_path, "rb") as f:
+                if b"correctly bind:" in f.read():
+                    return p
+        except FileNotFoundError:
+            pass
+        time.sleep(0.1)
+    stop_server(p)
+    return None
+
+
+def _stage_variant_run_dir(server_bin, run_dir, port):
+    """Stage a run dir (binary copy + datapack symlink + server-properties
+    on `port`) for an io_uring variant server."""
+    if os.path.isdir(run_dir):
+        shutil.rmtree(run_dir, ignore_errors=True)
+    os.makedirs(run_dir, exist_ok=True)
+    dst = os.path.join(run_dir, SRV_BIN_NAME)
+    shutil.copy2(server_bin, dst)
+    os.chmod(dst, 0o755)
+    os.symlink(DATAPACK_PATH, os.path.join(run_dir, "datapack"))
+    maincode = _detect_maincode(DATAPACK_PATH)
+    with open(os.path.join(run_dir, "server-properties.xml"), "w") as f:
+        f.write(
+            '<?xml version="1.0"?>\n<configuration>\n'
+            f'    <server-port value="{port}"/>\n'
+            '    <automatic_account_creation value="true"/>\n'
+            '    <max-players value="500"/>\n'
+            '    <httpDatapackMirror value=""/>\n'
+            f'    <master>\n        <external-server-port value="{port}"/>\n    </master>\n'
+            f'    <content>\n        <mainDatapackCode value="{maincode}"/>\n'
+            '        <subDatapackCode value=""/>\n    </content>\n</configuration>\n')
+    return dst
+
+
+def _run_iouring_variants(bot_bin, iface):
+    """LOCAL io_uring variant comparison: build the server for each
+    (baseline io_uring / +SQPOLL / +IOPOLL), run ONE medium bot workload
+    against it, record wall/sys/user/RSS + server CPU%. Returns
+    (boot_flat {name:(med,std)}, slices {variant: metric_block}). A
+    variant whose build fails (no liburing) or whose server won't bind is
+    skipped with a note -- never a hard failure."""
+    flat, slices = {}, {}
+    medium = BOT_COUNTS[len(BOT_COUNTS) // 2]
+    for i, (vlabel, extra) in enumerate(IO_URING_VARIANTS):
+        defs = dict(IO_URING_BASE_DEFS)
+        defs.update(extra)
+        bdir = os.path.join(BUILD_ROOT, "benchmark", f"botactions-{vlabel}")
+        rc, msg = _cmake_build(SRV_SRC_DIR, bdir, extra_defs=defs,
+                               label=f"build:{vlabel}")
+        if rc != 0:
+            print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: build failed "
+                  f"({msg}); skipping (liburing-dev missing?)"))
+            continue
+        sbin = os.path.join(bdir, SRV_BIN_NAME)
+        if not os.path.isfile(sbin):
+            print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: binary missing; skip"))
+            continue
+        port = SERVER_PORT + 10 + i
+        rdir = os.path.join(TMPFS_ROOT, f"cc-bench-botactions-{vlabel}")
+        staged = _stage_variant_run_dir(sbin, rdir, port)
+        # pre-generate the cache so the variant server boots fast
+        bh.run_capture([staged, "save"], timeout=RUN_TIMEOUT, cwd=rdir,
+                       preexec_fn=bh._drop_core_rlimit)
+        proc = _start_server_in(staged)
+        if proc is None:
+            print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: server not ready; skip"))
+            continue
+        try:
+            sample = _run_once(bot_bin, "127.0.0.1", port, medium, iface,
+                               server_pid=proc.pid)
+        finally:
+            stop_server(proc)
+        if sample is None:
+            print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: bot run failed; skip"))
+            continue
+        sm = {}
+        for k in ("wall_s", "sys_s", "user_s", "max_rss_kb"):
+            v = sample.get(k)
+            if v is not None:
+                flat[f"{vlabel}_{k}"] = (v, 0.0)
+                sm[k] = {"value": v, "median": v, "stddev": 0.0,
+                         "unit": "kb" if k.endswith("_kb") else "s",
+                         "better": "lower", "samples": [v]}
+        cpu = sample.get("cpu_percent")
+        if cpu is not None:
+            flat[f"{vlabel}_cpu_percent"] = (cpu, 0.0)
+            sm["cpu_percent"] = {"value": cpu, "median": cpu, "stddev": 0.0,
+                                 "unit": "%", "better": "lower", "samples": [cpu]}
+        if sm:
+            slices[vlabel] = sm
+        print(_color(bh.C_GREEN, f"[iouring] {vlabel}: wall={sample.get('wall_s')}s "
+              f"sys={sample.get('sys_s')}s cpu={cpu}%"))
+    return flat, slices
+
+
+def _measure_local_boot(staged_bin):
+    """Local server boot-time benchmark: time-to-'correctly bind:' cold
+    (no datapack cache -> XML parse) and warm (cache present). `save`
+    generates the cache AND sets its mtime to match server-properties.xml
+    so the warm boot actually loads it. Leaves a valid cache in place so
+    the subsequent persistent server boot is fast. Returns
+    (boot_flat {name:(median,std)}, boot_slices)."""
+    run_dir = os.path.dirname(staged_bin)
+    def _rm_cache():
+        for n in ("datapack-cache.bin", "datapack-cache.bin.tmp"):
+            try: os.remove(os.path.join(run_dir, n))
+            except FileNotFoundError: pass
+    def _slice(v):
+        return {"boot_to_bind_s": {"value": v, "median": v, "stddev": 0.0,
+                                   "unit": "s", "better": "lower",
+                                   "samples": [v]}}
+    boot_flat, boot_slices = {}, {}
+    _rm_cache()
+    cold = _time_local_boot(staged_bin)
+    if cold is not None:
+        boot_flat["boot_no_cache_s"] = (cold, 0.0)
+        boot_slices["no-cache"] = _slice(cold)
+    _rm_cache()
+    bh.run_capture([staged_bin, "save"], timeout=RUN_TIMEOUT, cwd=run_dir,
+                   preexec_fn=bh._drop_core_rlimit)
+    warm = _time_local_boot(staged_bin)
+    if warm is not None:
+        boot_flat["boot_with_cache_s"] = (warm, 0.0)
+        boot_slices["with-cache"] = _slice(warm)
+    return boot_flat, boot_slices
 
 
 # ---- network counters ---------------------------------------------------
@@ -499,8 +721,288 @@ def _flat_to_metric_block(flat):
     return out
 
 
+def _run_remote_cells_botactions(node, avail_profilers, skips, all_profilers,
+                                 extra_rusage_count, progress, per_tool,
+                                 per_subbench, compile_flags, local_bot_bin):
+    """Remote dispatch for benchmarkbotactions on one exec node.
+
+    The server is built on the compile node and runs on the exec node.
+    bot-actions is always run LOCALLY (compiled into /mnt/data/perso/tmpfs/
+    bot-actions/) and connects to the exec node over the LAN — no Qt6
+    required on the compile node.
+
+    `extra_rusage_count` = max(len(BOT_COUNTS)-1, 0): number of extra progress
+    ticks the local rusage path emits for additional BOT_COUNT slices so the
+    total counter stays in sync."""
+    label        = node["label"]
+    compile_node = node.get("compile_node")
+    if compile_node is None:
+        for prof in all_profilers:
+            progress.emit(prof, "no", label, status="SKIP", extra="no-compile-node")
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+        for _ in range(extra_rusage_count):
+            progress.emit("rusage", "no", label, status="SKIP", extra="no-compile-node")
+        return
+
+    exec_node = {"label": label,
+                 "user":  node.get("ssh_user"),
+                 "host":  node.get("ssh_host"),
+                 "port":  node.get("ssh_port", 22),
+                 "work_dir": node.get("work_dir") or "/tmp/cc-bench-botactions",
+                 "lxc_nfs": node.get("lxc_nfs")}
+
+    runnable = [p for p in all_profilers if p in avail_profilers]
+    for prof in all_profilers:
+        if prof not in runnable:
+            reason = skips.get(prof, "tool-missing")
+            progress.emit(prof, "no", label, status="SKIP", extra=reason)
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+    rusage_skip_reason = skips.get("rusage", "tool-missing")
+    for _ in range(extra_rusage_count):
+        if "rusage" not in runnable:
+            progress.emit("rusage", "no", label, status="SKIP", extra=rusage_skip_reason)
+    if not runnable:
+        return
+
+    def _finish_all(status, reason):
+        for prof in runnable:
+            if per_tool[label].get(prof) is None:
+                progress.emit(prof, "no", label, status=status, extra=reason)
+                per_tool[label][prof] = {"status": status, "metrics": {}}
+        for _ in range(extra_rusage_count):
+            progress.emit("rusage", "no", label, status=status, extra=reason)
+
+    def _fail_all(reason):
+        _finish_all("FAIL", reason)
+
+    # NFS-LXC bring-up (no-op for ordinary nodes) BEFORE any exec-node I/O.
+    orig_exec_node = exec_node
+    rt_node, prep_msg = br.nfs_lxc_prepare(orig_exec_node, verbose=True)
+    if rt_node is None:
+        _fail_all(prep_msg)
+        br.nfs_lxc_teardown(orig_exec_node, verbose=True)
+        return
+    try:
+        _botactions_remote_body(rt_node, compile_node, label, runnable,
+                                extra_rusage_count, progress, per_tool,
+                                per_subbench, _fail_all, local_bot_bin)
+    finally:
+        br.nfs_lxc_teardown(orig_exec_node, verbose=True)
+
+
+def _botactions_remote_body(exec_node, compile_node, label, runnable,
+                            extra_rusage_count, progress, per_tool,
+                            per_subbench, _fail_all, local_bot_bin):
+    eu  = exec_node["user"]
+    eh  = exec_node["host"]
+    ep  = exec_node.get("port", 22)
+    ewd = exec_node["work_dir"]
+
+    # 1. rsync datapack to exec node
+    if os.path.isdir(DATAPACK_PATH):
+        rc_dp, msg_dp = br.rsync_datapack_to_exec(exec_node, DATAPACK_PATH,
+                                                   remote_subdir="datapack",
+                                                   timeout=600)
+        if rc_dp != 0:
+            _fail_all(f"datapack-rsync-failed: {msg_dp[:80]}")
+            return
+
+    maincode = _detect_maincode(DATAPACK_PATH)
+    br.write_server_properties_on_exec(exec_node, maincode, port=SERVER_PORT,
+                                       run_subdir=ewd)
+
+    # 2. Build server-cli on compile node. DB_FILE_RAM keeps the DB in
+    # /dev/shm so embedded boards never burn flash write cycles.
+    rc_srv, msg_srv, remote_srv_bld = br.build_on_compile_node(
+        compile_node,
+        cmake_src_subdir="server/cli",
+        build_subdir=f"benchmarkbotactions-srv-{label}",
+        cmake_defs=dict(SERVER_RAM_DB_DEFS, CMAKE_BUILD_TYPE="Release"),
+        verbose=True,
+    )
+    if rc_srv != 0:
+        _fail_all(f"server-build-failed: {msg_srv[:100]}")
+        return
+
+    # 3. Push server binary to exec node.
+    rc_ps, exec_srv_bin, msg_ps = br.push_binary_to_exec(
+        compile_node, exec_node, remote_srv_bld, SRV_BIN_NAME, verbose=True)
+    if rc_ps != 0:
+        _fail_all(f"push-server-failed: {msg_ps[:80]}")
+        return
+
+    # 3b. Pre-generate the datapack HPS cache on the compile node so the
+    # embedded exec node boots from cache, not raw XML.
+    rc_cg, remote_cache, msg_cg = br.pregenerate_datapack_cache(
+        compile_node, remote_srv_bld, SRV_BIN_NAME, DATAPACK_PATH,
+        maincode, server_port=SERVER_PORT, verbose=True)
+
+    # 3c. Server boot-time benchmark (cold vs warm).
+    # Cache is always staged for the main benchmark run (step 4); the cold-boot
+    # measurement temporarily removes it and re-stages it afterward.
+    boot_slices = {}
+    boot_flat   = {}
+    cache_staged = False
+    if rc_cg == 0 and remote_cache:
+        # Cold boot: remove cache so server parses XML.
+        br.ssh_run(eu, eh, ep,
+                   f"rm -f {shlex.quote(ewd + '/datapack-cache.bin')} "
+                   f"{shlex.quote(ewd + '/datapack-cache.bin.tmp')}", timeout=15)
+        cold_s, cold_msg = br.measure_remote_server_boot(
+            exec_node, SRV_BIN_NAME, ready_timeout=SERVER_BOOT_TIMEOUT,
+            verbose=True)
+        if cold_s is not None:
+            boot_flat["boot_no_cache_s"] = (cold_s, 0.0)
+            boot_slices["no-cache"] = {"boot_to_bind_s": {
+                "value": cold_s, "median": cold_s, "stddev": 0.0,
+                "unit": "s", "better": "lower", "samples": [cold_s]}}
+        else:
+            print(_color(bh.C_YELLOW,
+                  f"[server-boot] {label}: cold boot not measured ({cold_msg})"))
+        # Warm boot: stage cache from compile node, then boot.
+        rc_sc, msg_sc = br.stage_cache_on_exec(
+            compile_node, exec_node, remote_cache, verbose=True)
+        if rc_sc == 0:
+            cache_staged = True
+            warm_s, warm_msg = br.measure_remote_server_boot(
+                exec_node, SRV_BIN_NAME, ready_timeout=SERVER_BOOT_TIMEOUT,
+                verbose=True)
+            if warm_s is not None:
+                boot_flat["boot_with_cache_s"] = (warm_s, 0.0)
+                boot_slices["with-cache"] = {"boot_to_bind_s": {
+                    "value": warm_s, "median": warm_s, "stddev": 0.0,
+                    "unit": "s", "better": "lower", "samples": [warm_s]}}
+            else:
+                print(_color(bh.C_YELLOW, f"[server-boot] {label}: warm boot "
+                      f"not measured ({warm_msg})"))
+        else:
+            print(_color(bh.C_YELLOW, f"[server] {label}: cache stage failed "
+                  f"({msg_sc})"))
+    else:
+        print(_color(bh.C_YELLOW, f"[server] {label}: cache pre-gen skipped "
+              f"({msg_cg})"))
+    if boot_flat:
+        per_tool[label]["server-boot"] = {
+            "status": "PASS", "metrics": _flat_to_metric_block(boot_flat)}
+        per_subbench.setdefault(label, {})["server-boot"] = boot_slices
+
+    # Ensure the cache is staged for the main benchmark run even if warm-boot
+    # measurement was skipped or staging above failed.
+    if not cache_staged:
+        if rc_cg == 0 and remote_cache:
+            rc_sc2, msg_sc2 = br.stage_cache_on_exec(
+                compile_node, exec_node, remote_cache, verbose=True)
+            if rc_sc2 != 0:
+                _fail_all(f"cache-stage-failed: {msg_sc2[:80]}")
+                return
+        else:
+            _fail_all(f"no-datapack-cache: {msg_cg[:80]}")
+            return
+
+    # 4. Start server on exec node; wait for ready.
+    # Python holds a dedicated SSH Popen for the server (foreground on remote).
+    # No exec/setsid/nohup needed — the connection lifetime is managed here.
+    srv_ssh_proc, srv_pid = br.start_server_popen(exec_node, SRV_BIN_NAME)
+    if srv_ssh_proc is None:
+        _fail_all("server-start-failed rc=-1")
+        return
+
+    log_q = shlex.quote(ewd + "/server.log")
+    ready = False
+    deadline_t = time.monotonic() + SERVER_READY_TIMEOUT
+    while time.monotonic() < deadline_t:
+        time.sleep(1)
+        rc_chk, st, _ = br.ssh_run(eu, eh, ep,
+            f"if grep -q 'correctly bind:' {log_q} 2>/dev/null; then echo BIND; "
+            f"elif kill -0 {srv_pid} 2>/dev/null; then echo WAIT; "
+            f"else echo DEAD; fi", timeout=10)
+        state = st.strip() if rc_chk == 0 else ""
+        if state == "BIND":
+            ready = True
+            break
+        if state == "DEAD":
+            _, tail, _ = br.ssh_run(
+                eu, eh, ep, f"tail -n 3 {log_q} 2>/dev/null | tr '\\n' '|'",
+                timeout=10)
+            reason = (tail.strip().strip("|") or "no server.log")[:160]
+            br.stop_server_popen(srv_ssh_proc, exec_node, srv_pid)
+            _fail_all(f"server-died-before-bind: {reason}")
+            return
+    if not ready:
+        br.stop_server_popen(srv_ssh_proc, exec_node, srv_pid)
+        _fail_all(f"server-not-ready-in-{SERVER_READY_TIMEOUT}s")
+        return
+
+    # 5. Run bot-actions LOCALLY against exec node's server over the LAN.
+    try:
+        if "rusage" in runnable:
+            all_metrics_flat = {}
+            rusage_status    = "PASS"
+            for i, bots in enumerate(BOT_COUNTS):
+                cell = cell_run(local_bot_bin, eh, SERVER_PORT, bots,
+                                iface=None, server_pid=None)
+                if cell is None:
+                    rusage_status = "FAIL"
+                    progress.emit("rusage", "no", label, status="FAIL",
+                                  extra=f"bots={bots}")
+                    per_tool[label]["rusage"] = {"status": "FAIL", "metrics": {}}
+                    continue
+                for name, (med, std) in cell.items():
+                    all_metrics_flat[f"b{bots}_{name}"] = (med, std)
+                progress.emit("rusage", "no", label, status="PASS",
+                              extra=f"bots={bots}")
+            if rusage_status == "PASS":
+                per_tool[label]["rusage"] = {
+                    "status": "PASS",
+                    "metrics": _flat_to_metric_block(all_metrics_flat)}
+
+        if "binary-size" in runnable:
+            sz = bh.binary_size(local_bot_bin)
+            if sz is not None:
+                progress.emit("binary-size", "no", label, status="PASS")
+                per_tool[label]["binary-size"] = {
+                    "status": "PASS",
+                    "metrics": _flat_to_metric_block(
+                        {"binary_size_bytes": (sz, 0.0)})}
+            else:
+                progress.emit("binary-size", "no", label, status="FAIL",
+                              extra="binary-size-failed")
+                per_tool[label]["binary-size"] = {"status": "FAIL", "metrics": {}}
+
+        if "perf-stat" in runnable:
+            bots = BOT_COUNTS[len(BOT_COUNTS) // 2]
+            env  = os.environ.copy()
+            env["QT_QPA_PLATFORM"] = "offscreen"
+            cmd  = (["timeout", "--signal=INT", str(DURATION_S)] +
+                    _bot_cmd(local_bot_bin, eh, SERVER_PORT, bots))
+            out  = bh.measure_perf_stat(cmd, env=env, timeout=RUN_TIMEOUT)
+            if out:
+                progress.emit("perf-stat", "no", label, status="PASS")
+                per_tool[label]["perf-stat"] = {
+                    "status": "PASS",
+                    "metrics": _flat_to_metric_block(
+                        {f"perf_{k}": (v, 0.0) for k, v in out.items()
+                         if isinstance(v, (int, float))})}
+            else:
+                reason = bh.perf_no_hw_skip("local")
+                progress.emit("perf-stat", "no", label, status="SKIP",
+                              extra=reason)
+                per_tool[label]["perf-stat"] = {"status": "SKIP", "metrics": {}}
+    finally:
+        br.stop_server_popen(srv_ssh_proc, exec_node, srv_pid)
+
+
 def main():
     args = bh.parse_bench_args()
+    if bh.acquire_singleton_lock("benchmarkbotactions") is None:
+        return 3
+    br.set_benchmark_label("benchmarkbotactions")
+    # Network benchmark: binds a fixed server port + drives the NIC/loopback,
+    # so it must run serially against every other network benchmark (waits
+    # its turn on the shared lock). Non-network benchmarks skip this.
+    if NETWORK_EXCLUSIVE:
+        if bh.acquire_network_lock("benchmarkbotactions") is None:
+            return 3
     comment = args.comment
     # Build BOTH binaries first so a build failure aborts before we
     # spend wall-time on cell runs / server boot.
@@ -512,17 +1014,23 @@ def main():
         return 2
 
     staged = setup_server_run_dir(server_bin)
+    # Boot-time benchmark BEFORE the persistent server start: cold (no
+    # cache) vs warm (cache via `save`). Leaves a valid cache behind so
+    # the persistent start_server() below boots warm/fast.
+    local_boot_flat, local_boot_slices = _measure_local_boot(staged)
     server_proc = start_server(staged)
     if server_proc is None:
         return 2
     try:
-        return _run_with_server(bin_path, server_proc)
+        return _run_with_server(bin_path, server_proc, comment,
+                                local_boot_flat, local_boot_slices)
     finally:
         print(_color(bh.C_CYAN, "[server] stopping"))
         stop_server(server_proc)
 
 
-def _run_with_server(bin_path, server_proc):
+def _run_with_server(bin_path, server_proc, comment,
+                     local_boot_flat=None, local_boot_slices=None):
     host = "127.0.0.1"
     port = SERVER_PORT
     print(_color(bh.C_CYAN, f"[bench] target = {host}:{port} (embedded)"))
@@ -540,15 +1048,31 @@ def _run_with_server(bin_path, server_proc):
 
     # Pre-resolve per-node profiler availability against the persisted
     # benchmark_disabled_tools list + a live probe.
+    # For botactions, the 'rusage' profiler always runs the bot-actions binary
+    # LOCALLY (only the server is remote). For remote nodes, skip the remote
+    # probe for /usr/bin/time entirely and check only the local machine.
+    local_has_time = (os.path.isfile("/usr/bin/time") and
+                      os.access("/usr/bin/time", os.X_OK))
     node_profilers = {}
     node_skips     = {}
     for node in nodes:
-        avail, skips = bh.profilers_runnable_on(node, all_profilers)
+        if node["label"] == "local":
+            avail, skips = bh.profilers_runnable_on(node, all_profilers)
+        else:
+            # Don't probe /usr/bin/time on the remote exec node — rusage runs
+            # the bot locally, so only the local /usr/bin/time matters.
+            remote_profilers = [p for p in all_profilers if p != "rusage"]
+            avail, skips = bh.profilers_runnable_on(node, remote_profilers)
+            if local_has_time:
+                avail.append("rusage")
+            else:
+                skips["rusage"] = "missing-tool:/usr/bin/time"
         node_profilers[node["label"]] = avail
         node_skips[node["label"]]     = skips
 
-    total = sum(len(all_profilers) + max(len(BOT_COUNTS) - 1, 0) for _ in nodes)
-    progress = bh.Progress(total)
+    total = sum(len(node_profilers[node["label"]]) + max(len(BOT_COUNTS) - 1, 0)
+                for node in nodes)
+    progress = bh.Progress(total, "benchmarkbotactions")
     deadline = bh.FleetDeadline()
 
     batch_id    = hr.new_batch_id()
@@ -561,6 +1085,15 @@ def _run_with_server(bin_path, server_proc):
         label = node["label"]
         per_tool[label] = {}
         per_subbench[label] = {}
+        # Inject the local boot-time benchmark (measured in main() before
+        # the persistent server started). Remote nodes record their own
+        # server-boot inside _run_remote_cells_botactions.
+        if label == "local" and local_boot_flat:
+            per_tool[label]["server-boot"] = {
+                "status": "PASS",
+                "metrics": _flat_to_metric_block(local_boot_flat)}
+            if local_boot_slices:
+                per_subbench[label]["server-boot"] = local_boot_slices
         if deadline.reached():
             per_tool[label] = deadline.skip_node(label, all_profilers,
                                                  progress)
@@ -571,14 +1104,14 @@ def _run_with_server(bin_path, server_proc):
                               extra="deadline")
             continue
         if label != "local":
-            for prof in all_profilers:
-                progress.emit(prof, "no", label, status="SKIP",
-                              extra="remote-dispatch-not-wired")
-                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
-            # account for the extra BOT_COUNTS-1 emits the local rusage path makes
-            for _ in range(max(len(BOT_COUNTS) - 1, 0)):
-                progress.emit("rusage", "no", label, status="SKIP",
-                              extra="remote-dispatch-not-wired")
+            _run_remote_cells_botactions(
+                node, node_profilers[label], node_skips[label],
+                all_profilers,
+                extra_rusage_count=max(len(BOT_COUNTS) - 1, 0),
+                progress=progress, per_tool=per_tool,
+                per_subbench=per_subbench,
+                compile_flags=compile_flags,
+                local_bot_bin=bin_path)
             continue
 
         # rusage cell: one record per BOT_COUNTS size; metrics keyed
@@ -655,43 +1188,61 @@ def _run_with_server(bin_path, server_proc):
                 }
                 progress.emit("perf-stat", "no", label, status="PASS")
             else:
-                per_tool[label]["perf-stat"] = {"status": "FAIL", "metrics": {}}
-                progress.emit("perf-stat", "no", label, status="FAIL")
+                reason = bh.perf_no_hw_skip("local")
+                per_tool[label]["perf-stat"] = {"status": "SKIP", "metrics": {}}
+                progress.emit("perf-stat", "no", label, status="SKIP", extra=reason)
         else:
             progress.emit("perf-stat", "no", label, status="SKIP",
                           extra=node_skips[label].get("perf-stat", "tool-missing"))
             per_tool[label]["perf-stat"] = {"status": "SKIP", "metrics": {}}
 
-    # Persist + champion compare (host arch only; remote skipped).
+        # io_uring tuning sweep (LOCAL only): baseline io_uring vs +SQPOLL
+        # vs +IOPOLL, each measured under one medium bot workload. Recorded
+        # as the "server-iouring" tool + per-variant sub-benchmark slices.
+        iou_flat, iou_slices = _run_iouring_variants(bin_path, iface)
+        if iou_flat:
+            per_tool[label]["server-iouring"] = {
+                "status": "PASS", "metrics": _flat_to_metric_block(iou_flat)}
+            per_subbench.setdefault(label, {})["server-iouring"] = iou_slices
+
+    # Cross-platform candidate record.
     sha = bh.git_sha()
-    local_tools = per_tool.get("local", {})
-    # Flatten every tool's metrics into one record for champion compare.
-    flat_record_metrics = {}
-    for tool, blk in local_tools.items():
-        for name, m in blk["metrics"].items():
-            flat_record_metrics[name] = {
-                "median": m["median"], "stddev": m["stddev"] or 0.0,
-                "unit":   m["unit"],   "better": m["better"],
-            }
+    cand_stamp = started_utc.replace(":", "-")
     rec = {
         "commit":   sha,
         "comment":  comment,
         "date":     time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "node":     "local",
-        "metrics":  flat_record_metrics,
-        "profilers": {"binary-size": bin_path},
+        "batch_id": batch_id,
+        "benchmark": "benchmarkbotactions",
+        "nodes":    {},
     }
-    cand_stamp = started_utc.replace(":", "-")
-    cand_p = bh.candidate_path("benchmarkbotactions", "local", cand_stamp)
+    for node in nodes:
+        label = node["label"]
+        tools = per_tool.get(label)
+        if not tools:
+            continue
+        m = {}
+        for tool, blk in tools.items():
+            for k, v in blk.get("metrics", {}).items():
+                m[k] = {"median": v.get("median", v.get("value")),
+                        "stddev": v.get("stddev", 0.0),
+                        "unit":   v.get("unit"),
+                        "better": v.get("better", "lower")}
+        if m:
+            rec["nodes"][label] = {"arch": node.get("arch", "?"),
+                                    "metrics": m}
+
+    cand_p = bh.candidate_path("benchmarkbotactions", cand_stamp)
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
-    champ = bh.load_champion("benchmarkbotactions", "local")
-    decision, summary = bh.decide(champ, rec)
-    bh.print_decision("benchmarkbotactions", arch, decision, summary)
+    # Cross-platform champion compare.
+    champ = bh.load_champion("benchmarkbotactions")
+    decision, summary = bh.decide_multi_node(champ, rec)
+    bh.print_decision("benchmarkbotactions", decision, summary)
 
     if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkbotactions", "local")
+        ch_p = bh.champion_path("benchmarkbotactions")
         bh.write_record(ch_p, rec)
         print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
@@ -721,7 +1272,8 @@ def _run_with_server(bin_path, server_proc):
                          simd_tier="generic",
                          harness_version=hr.harness_version(),
                          comment=comment)
-        print(_color(bh.C_CYAN, f"[history] {out_p}"))
+        if out_p is not None:
+            print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
     hr.attach_decision("benchmarkbotactions", batch_id, decision)
     import chart_generator

@@ -1,0 +1,73 @@
+{
+  "arch": "mips2r2",
+  "arch_emulated": false,
+  "batch_id": "c5ae6d90a39842f9983c35a5e60c6abb",
+  "benchmark": "benchmarkserversave",
+  "comment": "",
+  "commit": "3d5154eddc4408d8033a067633f418a1eeda5a78",
+  "commit_short": "3d5154e",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_FILE=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "compiler": null,
+  "cpu_cores": null,
+  "cpu_mhz": null,
+  "cpu_model": null,
+  "decision": "ESCALATE",
+  "disk_kind": null,
+  "disk_root": null,
+  "ended_utc": "2026-05-21T17:40:18Z",
+  "eth_link_mbps": null,
+  "harness_version": "fdb966809e98ff678ec20642b7e1fb6ae7d67d14",
+  "host_arch": null,
+  "kernel": null,
+  "libc": null,
+  "loadavg_1min_at_start": null,
+  "net_card": null,
+  "net_link": null,
+  "net_link_detail": null,
+  "node": "rtl9607c",
+  "ram_total_mb": null,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "callgrind": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "SKIP",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "SKIP",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "SKIP",
+      "subbenchmarks": {}
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-21T17:36:07Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

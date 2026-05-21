@@ -1,0 +1,215 @@
+{
+  "arch": "amd64",
+  "arch_emulated": false,
+  "batch_id": "12f357ae06524e799cb7b517d2afb7ae",
+  "benchmark": "benchmarkserversave",
+  "comment": "",
+  "commit": "3d5154eddc4408d8033a067633f418a1eeda5a78",
+  "commit_short": "3d5154e",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_FILE=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "compiler": "cc (Gentoo 15.2.1_p20260214 p5) 15.2.1 20260214",
+  "cpu_cores": 32,
+  "cpu_mhz": 4165.963,
+  "cpu_model": "AMD Ryzen 9 7950X3D 16-Core Processor",
+  "decision": null,
+  "disk_kind": "nvme",
+  "disk_root": "Samsung SSD 980 PRO 2TB",
+  "ended_utc": "2026-05-21T14:22:13Z",
+  "eth_link_mbps": null,
+  "harness_version": "fdb966809e98ff678ec20642b7e1fb6ae7d67d14",
+  "host_arch": null,
+  "kernel": "6.18.31-gentoo-dist",
+  "libc": "ldd (Gentoo 2.42-r7 (patchset 9)) 2.42",
+  "loadavg_1min_at_start": 6.33,
+  "net_card": "br0",
+  "net_link": "virtual",
+  "net_link_detail": "bridge",
+  "node": "local",
+  "ram_total_mb": 127894,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 3165656,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 3165656
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "callgrind": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "SKIP",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "perf_branch-misses:u": {
+          "better": "lower",
+          "median": 161405,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 161405
+        },
+        "perf_cache-misses:u": {
+          "better": "lower",
+          "median": 69131,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 69131
+        },
+        "perf_cycles:u": {
+          "better": "lower",
+          "median": 23268118,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 23268118
+        },
+        "perf_instructions:u": {
+          "better": "lower",
+          "median": 49649236,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 49649236
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "cache_bytes": {
+          "better": "lower",
+          "median": 51252,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 51252
+        },
+        "cpu_percent": {
+          "better": "lower",
+          "median": 50.0,
+          "samples": null,
+          "stddev": 50.0,
+          "unit": "%",
+          "value": 50.0
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8286.0,
+          "samples": null,
+          "stddev": 197.6942083117257,
+          "unit": "kb",
+          "value": 8286.0
+        },
+        "sys_s": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.004330127018922193,
+          "unit": "s",
+          "value": 0.0
+        },
+        "user_s": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.004330127018922193,
+          "unit": "s",
+          "value": 0.0
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.01,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.01
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "default": {
+          "cache_bytes": {
+            "better": "lower",
+            "median": 51252,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 51252
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 50.0,
+            "samples": null,
+            "stddev": 50.0,
+            "unit": "%",
+            "value": 50.0
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 8286.0,
+            "samples": null,
+            "stddev": 197.6942083117257,
+            "unit": "kb",
+            "value": 8286.0
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.0,
+            "samples": null,
+            "stddev": 0.004330127018922193,
+            "unit": "s",
+            "value": 0.0
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.0,
+            "samples": null,
+            "stddev": 0.004330127018922193,
+            "unit": "s",
+            "value": 0.0
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 0.01,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.01
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-21T14:12:29Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

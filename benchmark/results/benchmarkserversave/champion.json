@@ -1,0 +1,395 @@
+{
+  "batch_id": "aba0786269ab42cd9e7431823ff40b59",
+  "benchmark": "benchmarkserversave",
+  "comment": "",
+  "commit": "3d5154eddc4408d8033a067633f418a1eeda5a78",
+  "date": "2026-05-21T14:52:29Z",
+  "nodes": {
+    "atom-n455": {
+      "arch": "x86_64",
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8032,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.16,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "cb2": {
+      "arch": "armv7",
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 2085728,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 504544,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 242177923,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 117885177,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 5304,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.75,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "laptopHB": {
+      "arch": "x86_64",
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 221598,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 178732,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 52146611,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 101846750,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8204,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.03,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "local": {
+      "arch": "amd64",
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 3165656,
+          "stddev": 0.0,
+          "unit": "bytes"
+        },
+        "cache_bytes": {
+          "better": "lower",
+          "median": 51293,
+          "stddev": 0.0,
+          "unit": "bytes"
+        },
+        "cpu_percent": {
+          "better": "lower",
+          "median": 50.0,
+          "stddev": 50.0,
+          "unit": "%"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8196.0,
+          "stddev": 207.41263220932325,
+          "unit": "kb"
+        },
+        "perf_branch-misses:u": {
+          "better": "lower",
+          "median": 161438,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "perf_cache-misses:u": {
+          "better": "lower",
+          "median": 69299,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "perf_cycles:u": {
+          "better": "lower",
+          "median": 23341711,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "perf_instructions:u": {
+          "better": "lower",
+          "median": 49646854,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "sys_s": {
+          "better": "lower",
+          "median": 0.0,
+          "stddev": 0.004330127018922193,
+          "unit": "s"
+        },
+        "user_s": {
+          "better": "lower",
+          "median": 0.0,
+          "stddev": 0.004330127018922193,
+          "unit": "s"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.01,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "odroid-c2": {
+      "arch": "aarch64",
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 819121,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 351636,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 145623949,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 96272105,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7740,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.11,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "odroid-n2": {
+      "arch": "aarch64",
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7716,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.57,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "pentium-m": {
+      "arch": "i686",
+      "metrics": {
+        "branch-misses:u": {
+          "better": "lower",
+          "median": 240193,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses:u": {
+          "better": "lower",
+          "median": 46001,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles:u": {
+          "better": "lower",
+          "median": 70456229,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions:u": {
+          "better": "lower",
+          "median": 88142450,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7828,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.09,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "rpi-zero-w": {
+      "arch": "armv6",
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 1369734,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 385217200,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 105020911,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 6616,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.47,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "rpi3": {
+      "arch": "aarch64",
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 807352,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 347037,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 131050336,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 93584635,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7188,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.1,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "rpi4": {
+      "arch": "aarch64",
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 405020,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 363474,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 85500522,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 93001921,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7240,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.06,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    }
+  }
+}

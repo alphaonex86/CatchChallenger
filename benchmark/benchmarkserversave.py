@@ -24,6 +24,7 @@ benchmark/results/benchmarkserversave/<arch>/. If a champion.json
 exists, applies the KEEP/DISCARD/ESCALATE matrix.
 """
 import os
+import shlex
 import sys
 import shutil
 import subprocess
@@ -34,9 +35,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 import benchmark_helpers as bh
 import history_recorder as hr
+import benchmark_remote as br
 
 REPO_ROOT  = bh.REPO_ROOT
 BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
+
+# Concurrency marker: `server save` parses the datapack and writes the HPS
+# cache, then exits -- it binds no port and uses no network, so it is safe
+# to run in parallel with other benchmarks. (See benchmarkbotactions for
+# the network-exclusive case.)
+NETWORK_EXCLUSIVE = False
 
 # Single pinned datapack path. CatchChallenger-datapack is the upstream
 # vanilla data; pkmn would skew bytes-parsed across operators with /
@@ -163,7 +171,9 @@ def cleanup_save_artifacts():
 
 
 def cell_run(bin_path_in_runfir, profiler):
-    """Run one (profiler) cell. Returns flat metric dict."""
+    """Run one (profiler) cell. Returns (flat_metric_dict, skip_reason).
+    On success: (metrics, None). On skip: (None, 'SKIP:reason').
+    On failure: (None, None)."""
     cmd = [bin_path_in_runfir, "save"]
     metrics = {}
 
@@ -178,7 +188,7 @@ def cell_run(bin_path_in_runfir, profiler):
         for _ in range(RUN_REPEATS - 1):
             cleanup_save_artifacts()
             t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT, cwd=RUN_DIR)
-            if t["rc"] != 0: return None
+            if t["rc"] != 0: return None, None
             if t["wall_s"]    is not None: wall_samples.append(t["wall_s"])
             if t["max_rss_kb"] is not None: rss_samples.append(t["max_rss_kb"])
             if t["user_s"]    is not None: user_samples.append(t["user_s"])
@@ -209,29 +219,30 @@ def cell_run(bin_path_in_runfir, profiler):
             pmed, pstd = bh.stats_of(pct_samples)
             if pmed is not None:
                 metrics["cpu_percent"] = (pmed, pstd)
-        return metrics
+        return metrics, None
 
     if profiler == "perf-stat":
         cleanup_save_artifacts()
         out = bh.measure_perf_stat(cmd, timeout=RUN_TIMEOUT, cwd=RUN_DIR)
-        if not out: return None
+        if not out:
+            return None, "SKIP:" + bh.perf_no_hw_skip("local")
         for k, v in out.items():
             metrics[f"perf_{k}"] = (v, 0.0)
-        return metrics
+        return metrics, None
 
     if profiler == "callgrind":
         cleanup_save_artifacts()
         ic = bh.measure_callgrind(cmd, timeout=RUN_TIMEOUT * 30, outdir=RUN_DIR)
-        if ic is None: return None
+        if ic is None: return None, None
         metrics["callgrind_ir"] = (ic, 0.0)
-        return metrics
+        return metrics, None
 
     if profiler == "binary-size":
         sz = bh.binary_size(bin_path_in_runfir)
-        if sz is None: return None
+        if sz is None: return None, None
         metrics["binary_size_bytes"] = (sz, 0.0)
-        return metrics
-    return None
+        return metrics, None
+    return None, None
 
 
 def _flat_to_metric_block(flat):
@@ -260,8 +271,141 @@ def to_record_metrics(flat):
     return out
 
 
+def _run_remote_cells_serversave(node, avail_profilers, skips, all_profilers,
+                                 progress, per_tool, compile_flags):
+    """Remote dispatch for one exec node: build on compile node, rsync datapack,
+    write server-properties.xml, run `./catchchallenger-server-cli save` under
+    each available profiler. Updates per_tool[label] in place."""
+    label        = node["label"]
+    compile_node = node.get("compile_node")
+    if compile_node is None:
+        for prof in all_profilers:
+            progress.emit(prof, "no", label, status="SKIP", extra="no-compile-node")
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+        return
+
+    exec_node = {"label": label,
+                 "user":  node.get("ssh_user"),
+                 "host":  node.get("ssh_host"),
+                 "port":  node.get("ssh_port", 22),
+                 "work_dir": node.get("work_dir") or "/tmp/cc-bench-serversave",
+                 "lxc_nfs": node.get("lxc_nfs")}
+
+    runnable = [p for p in all_profilers if p in avail_profilers]
+    for prof in all_profilers:
+        if prof not in runnable:
+            reason = skips.get(prof, "tool-missing")
+            progress.emit(prof, "no", label, status="SKIP", extra=reason)
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+    if not runnable:
+        return
+
+    # NFS-LXC bring-up (no-op for ordinary nodes) BEFORE any exec-node I/O:
+    # the datapack rsync + xml write below must target the guest container,
+    # not the device pre-chroot host. teardown in finally.
+    orig_exec_node = exec_node
+    rt_node, prep_msg = br.nfs_lxc_prepare(orig_exec_node, verbose=True)
+    if rt_node is None:
+        for prof in runnable:
+            progress.emit(prof, "no", label, status="FAIL", extra=prep_msg)
+            per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+        br.nfs_lxc_teardown(orig_exec_node, verbose=True)
+        return
+    exec_node = rt_node
+    try:
+        _serversave_remote_body(node, exec_node, compile_node, label,
+                                runnable, progress, per_tool)
+    finally:
+        br.nfs_lxc_teardown(orig_exec_node, verbose=True)
+
+
+def _serversave_remote_body(node, exec_node, compile_node, label,
+                            runnable, progress, per_tool):
+    # Rsync the datapack to exec node before building — it's needed at runtime.
+    if os.path.isdir(DATAPACK_PATH):
+        rc_dp, msg_dp = br.rsync_datapack_to_exec(exec_node, DATAPACK_PATH,
+                                                   remote_subdir="datapack",
+                                                   timeout=600)
+        if rc_dp != 0:
+            for prof in runnable:
+                progress.emit(prof, "no", label, status="FAIL",
+                              extra=f"datapack-rsync-failed: {msg_dp[:80]}")
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+            return
+
+    # Detect maincode from the local datapack (same logic as setup_run_dir).
+    maincode = _detect_maincode(DATAPACK_PATH)
+    ewd = exec_node["work_dir"]
+    br.write_server_properties_on_exec(exec_node, maincode, port=61921,
+                                       run_subdir=ewd)
+
+    cmake_defs = {"CMAKE_BUILD_TYPE": "Release",
+                  "CATCHCHALLENGER_DB_FILE": "ON",
+                  "CATCHCHALLENGER_CACHE_HPS": "ON"}
+    # runtime_cmd: wipe the cache file before each `save` so every invocation
+    # does the full parse. The binary and datapack are both in work_dir.
+    runtime_cmd = (f"rm -f {shlex.quote(ewd)}/datapack-cache.bin.tmp "
+                   f"{shlex.quote(ewd)}/datapack-cache.bin && "
+                   f"./{BIN_NAME} save")
+
+    out, msg = br.run_benchmark_on_exec(
+        compile_node=compile_node,
+        exec_node=exec_node,
+        cmake_src_subdir="server/cli",
+        build_subdir=f"benchmarkserversave-{label}",
+        bin_name=BIN_NAME,
+        runtime_cmd=runtime_cmd,
+        profilers=runnable,
+        cmake_defs=cmake_defs,
+        run_timeout=RUN_TIMEOUT,
+        verbose=True,
+    )
+
+    for prof in runnable:
+        res = out.get(prof)
+        if isinstance(res, dict) and res.get("rc") not in (None, 0):
+            err_msg = res.get("error", f"exit code {res.get('rc')}")
+            progress.emit(prof, "no", label, status="FAIL", extra=err_msg)
+            per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err_msg}
+            continue
+        if res is None:
+            if prof == "perf-stat" and msg == "ok":
+                reason = bh.perf_no_hw_skip(label)
+                progress.emit(prof, "no", label, status="SKIP", extra=reason)
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+            else:
+                progress.emit(prof, "no", label, status="FAIL",
+                              extra=msg if msg != "ok" else "no-data")
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+            continue
+        if prof == "rusage":
+            cell = {}
+            if res.get("wall_s") is not None:
+                cell["wall_s"] = res["wall_s"]
+            if res.get("max_rss_kb") is not None:
+                cell["max_rss_kb"] = res["max_rss_kb"]
+            per_tool[label][prof] = {"status": "PASS",
+                                     "metrics": _flat_to_metric_block(
+                                         {k: (v, 0.0) for k, v in cell.items()})}
+        elif prof in ("perf-stat", "callgrind", "binary-size"):
+            per_tool[label][prof] = {"status": "PASS",
+                                     "metrics": _flat_to_metric_block(
+                                         {str(k): (v, 0.0)
+                                          for k, v in (res if isinstance(res, dict) else {}).items()
+                                          if isinstance(v, (int, float))})}
+        else:
+            per_tool[label][prof] = {"status": "PASS", "metrics": {}}
+        progress.emit(prof, "no", label, status="PASS")
+
+
 def main():
     args = bh.parse_bench_args()
+    if bh.acquire_singleton_lock("benchmarkserversave") is None:
+        return 3
+    br.set_benchmark_label("benchmarkserversave")
+    if NETWORK_EXCLUSIVE:
+        if bh.acquire_network_lock("benchmarkserversave") is None:
+            return 3
     comment = args.comment
     bin_path = build()
     if bin_path is None: return 2
@@ -281,8 +425,8 @@ def main():
         node_profilers[node["label"]] = avail
         node_skips[node["label"]]     = skips
 
-    total = sum(len(all_profilers) for _ in nodes)
-    progress = bh.Progress(total)
+    total = sum(len(node_profilers[node["label"]]) for node in nodes)
+    progress = bh.Progress(total, "benchmarkserversave")
     deadline = bh.FleetDeadline()
 
     batch_id    = hr.new_batch_id()
@@ -301,10 +445,9 @@ def main():
                                                  progress)
             continue
         if label != "local":
-            for prof in all_profilers:
-                progress.emit(prof, "no", label, status="SKIP",
-                              extra="remote-dispatch-not-wired")
-                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+            _run_remote_cells_serversave(
+                node, node_profilers[label], node_skips[label],
+                all_profilers, progress, per_tool, compile_flags)
             continue
         for prof in all_profilers:
             if prof not in node_profilers[label]:
@@ -313,10 +456,15 @@ def main():
                 per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
                 continue
             deadline.note(label, prof)
-            cell = cell_run(run_bin, prof)
+            cell, skip = cell_run(run_bin, prof)
             if cell is None:
-                progress.emit(prof, "no", label, status="FAIL")
-                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+                if skip and skip.startswith("SKIP:"):
+                    reason = skip[5:]
+                    progress.emit(prof, "no", label, status="SKIP", extra=reason)
+                    per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+                else:
+                    progress.emit(prof, "no", label, status="FAIL")
+                    per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
                 continue
             flat_local.update(cell)
             progress.emit(prof, "no", label, status="PASS")
@@ -324,16 +472,35 @@ def main():
                                      "metrics": _flat_to_metric_block(cell)}
 
     sha = bh.git_sha()
+    cand_stamp = started_utc.replace(":", "-")
+
     rec = {
         "commit": sha,
         "comment": comment,
         "date":   time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "node":   "local",
-        "metrics": to_record_metrics(flat_local),
-        "profilers": {"binary-size": run_bin},
+        "batch_id": batch_id,
+        "benchmark": "benchmarkserversave",
+        "nodes": {},
     }
-    cand_stamp = started_utc.replace(":", "-")
-    cand_p = bh.candidate_path("benchmarkserversave", "local", cand_stamp)
+    for node in nodes:
+        label = node["label"]
+        if label == "local" and flat_local:
+            rec["nodes"][label] = {
+                "arch": node.get("arch", "?"),
+                "metrics": to_record_metrics(flat_local),
+            }
+        elif label != "local" and label in per_tool:
+            m = {}
+            for tool, blk in per_tool[label].items():
+                for k, v in blk.get("metrics", {}).items():
+                    m[k] = {"median": v.get("median", v.get("value")),
+                            "stddev": v.get("stddev", 0.0),
+                            "unit":   v.get("unit"),
+                            "better": v.get("better", "lower")}
+            if m:
+                rec["nodes"][label] = {"arch": node.get("arch", "?"),
+                                        "metrics": m}
+    cand_p = bh.candidate_path("benchmarkserversave", cand_stamp)
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
@@ -369,14 +536,16 @@ def main():
                          simd_tier="generic",
                          harness_version=hr.harness_version(),
                          comment=comment)
-        print(_color(bh.C_CYAN, f"[history] {out_p}"))
+        if out_p is not None:
+            print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
-    champ = bh.load_champion("benchmarkserversave", "local")
-    decision, summary = bh.decide(champ, rec)
-    bh.print_decision("benchmarkserversave", arch, decision, summary)
+    # Cross-platform champion compare
+    champ = bh.load_champion("benchmarkserversave")
+    decision, summary = bh.decide_multi_node(champ, rec)
+    bh.print_decision("benchmarkserversave", decision, summary)
 
     if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkserversave", "local")
+        ch_p = bh.champion_path("benchmarkserversave")
         bh.write_record(ch_p, rec)
         print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 

@@ -20,6 +20,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CC_REPO_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 
+# Force vendored static zlib so the binary has no runtime dep on the
+# compile node's system libz.so — exec nodes may carry a different
+# version and the benchmark must run unmodified across the fleet.
+set(EXTERNALLIBZLIB OFF CACHE BOOL "" FORCE)
+
 include(${CC_REPO_ROOT}/general/CCCommon.cmake)
 include(${CC_REPO_ROOT}/general/general.cmake)
 
@@ -53,7 +58,9 @@ target_compile_definitions(benchmark_min_network PRIVATE
 target_compile_options(benchmark_min_network PRIVATE
     -Wall -Wextra -Wno-unused-parameter
     -O2 -DNDEBUG
-    -include cstring
+)
+target_compile_options(benchmark_min_network PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>:-include cstring>
 )
 
 target_link_libraries(benchmark_min_network PRIVATE

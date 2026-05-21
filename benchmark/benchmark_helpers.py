@@ -12,6 +12,7 @@ Per benchmark/CLAUDE.md the harness must:
 This module groups the bits every benchmark Python script reuses; each
 benchmarkXXX.py keeps its workload-specific bits (build, run, parse).
 """
+import fcntl
 import json
 import os
 import random
@@ -20,6 +21,7 @@ import shutil
 import statistics
 import subprocess
 import sys
+import tempfile
 import time
 
 REPO_ROOT  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,7 +52,7 @@ LAB_MACS_JSON = os.path.join(
 # Keep this in sync with the documented benchmark_disabled_tools values
 # in remote_nodes.json's _doc block.
 PROFILER_REQUIRED_TOOLS = {
-    "rusage":      ["/usr/bin/time"],
+    "rusage":      [],   # bash is always available; /usr/bin/time is preferred but optional
     "perf-stat":   ["perf"],
     "perf-record": ["perf"],
     "callgrind":   ["valgrind", "callgrind_annotate"],
@@ -103,7 +105,7 @@ def benchmark_exec_nodes():
 
     Each entry: {"label","ssh_host","ssh_user","ssh_port","work_dir",
                  "arch","compile_node","has_gui","client_run_mode",
-                 "disabled_tools"}
+                 "disabled_tools","ninja"}
     """
     cfg = load_remote_nodes()
     out = []
@@ -115,10 +117,17 @@ def benchmark_exec_nodes():
                 continue
             if not ex.get("benchmark", False):
                 continue
-            la = _ssh_loadavg(ex)
-            if la is None or la >= 1.0:
-                print(f"[bench] skip exec_node={ex.get('label')} loadavg={la}", file=sys.stderr)
-                continue
+            check_la = ex.get("checkloadaverage", True)
+            if check_la:
+                la = _ssh_loadavg(ex)
+                if la is None:
+                    print(f"[bench] skip exec_node={ex.get('label')} -- loadavg unreachable"
+                          f" (checkloadaverage=true, threshold<1.0)", file=sys.stderr)
+                    continue
+                if la >= 1.0:
+                    print(f"[bench] skip exec_node={ex.get('label')} -- loadavg={la:.2f}"
+                          f" >= 1.0 threshold (checkloadaverage=true)", file=sys.stderr)
+                    continue
             out.append({
                 "label":          ex.get("label"),
                 "ssh_host":       ex.get("host"),
@@ -130,6 +139,12 @@ def benchmark_exec_nodes():
                 "has_gui":        ex.get("has_gui", False),
                 "client_run_mode": ex.get("client_run_mode", "none"),
                 "disabled_tools": list(ex.get("benchmark_disabled_tools", [])),
+                "ninja":          ex.get("ninja"),  # None -> auto-detect, True/False -> override
+                # lxc_nfs (diskless NFS-LXC bring-up) must reach the
+                # benchmark's exec_node dict so the harness can stop/mount/
+                # lxc-start the container and then swap rsync/ssh to the
+                # guest address. Absent on ordinary nodes -> stays None.
+                "lxc_nfs":        ex.get("lxc_nfs"),
             })
     return out
 
@@ -200,6 +215,8 @@ def note_ssh_failure(node_label, host, rc, stderr):
     """Classify an ssh result and fire the banner on the authkey case.
     Call from every ssh wrapper's failure path. No-op when rc==0 or the
     node is merely down."""
+    if stderr and "Host key verification failed" in stderr:
+        return  # StrictHostKeyChecking=no is set everywhere; this is harmless noise
     if classify_ssh_error(rc, stderr) == "authkey":
         warn_ssh_key_failure(node_label, host, stderr)
 
@@ -308,6 +325,8 @@ def _remote_have_tool(ssh_host, ssh_user, ssh_port, tool):
     Alpine/musl exec nodes."""
     try:
         argv = ["ssh", "-o", "ConnectTimeout=4", "-o", "BatchMode=yes",
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
                 "-p", str(ssh_port), f"{ssh_user}@{ssh_host}",
                 f"command -v {tool} >/dev/null 2>&1 && echo Y || echo N"]
         p = subprocess.run(argv, capture_output=True, text=True, timeout=10)
@@ -450,6 +469,8 @@ def _ssh_loadavg(ex):
         # spike that polluted the 1-min window doesn't apply yet. Caller is
         # responsible for the post-rsync 60s sleep + recheck.
         cmd = ["ssh", "-o", "ConnectTimeout=4", "-o", "BatchMode=yes",
+               "-o", "StrictHostKeyChecking=no",
+               "-o", "UserKnownHostsFile=/dev/null",
                "-p", str(port), f"{user}@{host}", "cat /proc/loadavg"]
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         if p.returncode != 0:
@@ -465,11 +486,14 @@ def _ssh_loadavg(ex):
 # ---- progress display ----------------------------------------------------
 
 class Progress:
-    def __init__(self, total):
+    def __init__(self, total, bench_name="benchmark"):
         self.total = total
         self.done  = 0
+        self.bench_name = bench_name
 
     def emit(self, profiler, simd, node, status="OK", extra=""):
+        if status == "SKIP" and extra.startswith("tool-disabled:"):
+            return  # silenced: tool explicitly disabled for this node
         self.done += 1
         if status == "PASS" or status == "OK":
             colour = C_GREEN
@@ -478,7 +502,9 @@ class Progress:
         else:
             colour = C_RED
         prefix = f"{colour}[bench]{C_RESET}"
-        msg = f"{prefix} {self.done}/{self.total} done -- profiler: {profiler}, SIMD: {simd}, execution_node: {node}"
+        msg = (f"{prefix} {self.done}/{self.total} done -- "
+               f"benchmark: {self.bench_name}, "
+               f"profiler: {profiler}, SIMD: {simd}, execution_node: {node}")
         if status != "OK" and status != "PASS":
             msg += f"  [{status}{(' '+extra) if extra else ''}]"
         elif extra:
@@ -567,6 +593,134 @@ class FleetDeadline:
 
 
 # ---- profiler wrappers ---------------------------------------------------
+
+def tmpfs_scratch_dir(name="cc-callgrind-scratch"):
+    """A scratch dir under the project's tmpfs root for transient tool
+    output (callgrind.out, a stray valgrind vgcore on guest SIGILL, ...).
+    NEVER the source tree: a vgcore dropped next to the checked-in
+    benchmark sources is exactly the artefact-pollution CLAUDE.md forbids
+    ('separate compilation artifacts'; 'fix the tool, don't .gitignore').
+    Falls back to /tmp when test_config / its tmpfs path is unavailable."""
+    root = None
+    try:
+        test_dir = os.path.join(REPO_ROOT, "test")
+        if test_dir not in sys.path:
+            sys.path.insert(0, test_dir)
+        import test_config
+        root = test_config.TMPFS_ROOT
+    except Exception:
+        root = os.environ.get("CATCHCHALLENGER_TMPFS_ROOT") or "/tmp"
+    d = os.path.join(root, name)
+    try:
+        os.makedirs(d, exist_ok=True)
+    except Exception:
+        d = os.path.join("/tmp", name)
+        os.makedirs(d, exist_ok=True)
+    return d
+
+
+_HELD_LOCKS = []   # keep lock fds alive for the whole process lifetime
+
+
+def acquire_singleton_lock(bench_name):
+    """Prevent two concurrent runs of the SAME benchmark. Takes an
+    advisory exclusive flock on a per-benchmark lockfile in tmpfs (NOT
+    the repo). Returns the open fd on success (recorded so it stays open
+    until process exit -- the lock is held for the whole run); returns
+    None when another instance already holds it, after printing a clear
+    message naming the holder pid.
+
+    flock is released automatically by the kernel when the process dies
+    (normal exit, crash, or kill -9), so there is never a stale lock to
+    clean up -- no pidfile races, no manual unlock."""
+    lock_dir = tmpfs_scratch_dir("cc-bench-locks")
+    path = os.path.join(lock_dir, f"{bench_name}.lock")
+    fd = open(path, "a+")
+    try:
+        fcntl.flock(fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        holder = ""
+        try:
+            fd.seek(0)
+            holder = fd.read().strip()
+        except Exception:
+            pass
+        print(f"{C_RED}[lock]{C_RESET} another {bench_name} instance is "
+              f"already running"
+              + (f" (pid {holder})" if holder else "")
+              + f" -- lock {path}. Aborting this run.",
+              file=sys.stderr, flush=True)
+        fd.close()
+        return None
+    try:
+        fd.seek(0)
+        fd.truncate()
+        fd.write(f"{os.getpid()}\n")
+        fd.flush()
+    except Exception:
+        pass
+    _HELD_LOCKS.append(fd)
+    return fd
+
+
+def acquire_network_lock(bench_name, timeout=None, poll=2.0):
+    """Serialize EVERY network-using benchmark against EACH OTHER. Such a
+    benchmark (NETWORK_EXCLUSIVE=True -- e.g. benchmarkbotactions, which
+    binds a fixed server port and drives the NIC/loopback) must never run
+    concurrently with another network benchmark: they'd collide on ports
+    and contend for the link, poisoning the measurement. Non-network
+    benchmarks don't call this and run in parallel.
+
+    Unlike acquire_singleton_lock (which ABORTS on contention), this WAITS
+    its turn: it polls a single shared exclusive flock until free, so the
+    network benchmarks form a serial queue rather than failing. Returns the
+    held fd (kept alive for the process lifetime) or None on timeout.
+    flock auto-releases on process death, so a crashed benchmark never
+    wedges the queue. timeout=None waits indefinitely (the per-batch
+    FleetDeadline still bounds total runtime)."""
+    lock_dir = tmpfs_scratch_dir("cc-bench-locks")
+    path = os.path.join(lock_dir, "cc-bench-network.lock")
+    fd = open(path, "a+")
+    start = time.monotonic()
+    announced = False
+    while True:
+        try:
+            fcntl.flock(fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except OSError:
+            if not announced:
+                holder = ""
+                try:
+                    fd.seek(0)
+                    holder = fd.read().strip()
+                except Exception:
+                    pass
+                print(f"{C_CYAN}[netlock]{C_RESET} {bench_name}: another "
+                      f"network benchmark is running"
+                      + (f" ({holder})" if holder else "")
+                      + "; waiting for the serial turn...",
+                      file=sys.stderr, flush=True)
+                announced = True
+            if timeout is not None and time.monotonic() - start >= timeout:
+                print(f"{C_RED}[netlock]{C_RESET} {bench_name}: timed out after "
+                      f"{timeout}s waiting for the network lock. Aborting.",
+                      file=sys.stderr, flush=True)
+                fd.close()
+                return None
+            time.sleep(poll)
+    try:
+        fd.seek(0)
+        fd.truncate()
+        fd.write(f"{bench_name} pid {os.getpid()}\n")
+        fd.flush()
+    except Exception:
+        pass
+    _HELD_LOCKS.append(fd)
+    if announced:
+        print(f"{C_GREEN}[netlock]{C_RESET} {bench_name}: acquired the network "
+              f"lock, proceeding.", file=sys.stderr, flush=True)
+    return fd
+
 
 def have_tool(name):
     return shutil.which(name) is not None
@@ -685,6 +839,18 @@ def _parse_wall(s):
         return None
 
 
+def perf_no_hw_skip(node_label=None):
+    """Call when perf stat ran but returned no data (all hardware counters
+    <not supported>/<not counted>). Persists 'perf' into the node's
+    disabled-tool list so the next batch skips immediately without probing.
+    Returns the skip-reason string 'no-hw-counters'."""
+    if node_label is None or node_label == "local":
+        _persist_disabled_tool_local("perf")
+    else:
+        _persist_disabled_tool_remote(node_label, "perf")
+    return "no-hw-counters"
+
+
 def measure_perf_stat(cmd, env=None, timeout=None, cwd=None):
     """perf stat -e cycles,instructions,branch-misses,cache-misses
     -> dict; None when perf is unavailable or kernel.perf_event_paranoid
@@ -731,21 +897,93 @@ def measure_callgrind(cmd, env=None, timeout=None, outdir=None):
     (a tmpfs scratch dir) AND RLIMIT_CORE=0 so a vgcore is never
     written, and if anything is, it lands in scratch -- never next to
     the checked-in benchmark sources (CLAUDE.md: fix the tool, don't
-    .gitignore the artefact)."""
+    .gitignore the artefact).
+
+    AVX-512 workaround: modern glibc IFUNC-dispatches memset/memcpy to
+    AVX-512 variants at startup on capable CPUs (zmm regs, EVEX prefix).
+    valgrind <= 3.26 chokes on those with SIGILL inside _dl_aux_init,
+    BEFORE main() runs -- the resulting callgrind.out only captures the
+    crash prologue (~400 IR, useless). Set GLIBC_TUNABLES to mask out
+    AVX-512 hwcaps so glibc picks AVX2/SSE variants under valgrind.
+    Same trick used by Fedora/Debian valgrind packaging."""
     if not have_tool("valgrind") or not have_tool("callgrind_annotate"):
         return None
     if outdir is None:
-        outdir = os.getcwd()
+        # NEVER default to os.getcwd(): if the harness is launched from the
+        # repo, a guest-SIGILL vgcore would land next to the checked-in
+        # sources. Use a tmpfs scratch dir instead.
+        outdir = tmpfs_scratch_dir()
     out_file = os.path.join(outdir, "callgrind.out")
     try:
         os.remove(out_file)
     except FileNotFoundError:
         pass
-    full = ["valgrind", "--tool=callgrind", "--callgrind-out-file=" + out_file,
-            "--quiet"] + list(cmd)
-    rc, _, _, _ = run_capture(full, env=env, timeout=timeout,
-                              cwd=outdir, preexec_fn=_drop_core_rlimit)
-    if rc != 0 or not os.path.isfile(out_file):
+    run_env = dict(env or os.environ)
+    # Append to any caller-provided tunables instead of clobbering.
+    mask = ("glibc.cpu.hwcaps=-AVX512F,-AVX512VL,-AVX512BW,"
+            "-AVX512DQ,-AVX512CD,-AVX512_VBMI,-AVX512_VBMI2,"
+            "-AVX512_BITALG,-AVX512_VPOPCNTDQ,-AVX512_VNNI,"
+            "-AVX512_BF16,-AVX512_FP16")
+    prev = run_env.get("GLIBC_TUNABLES", "")
+    run_env["GLIBC_TUNABLES"] = (prev + ":" + mask) if prev else mask
+    # Drop --quiet so we capture valgrind's diagnostics on stderr; we
+    # only print them when something goes wrong.
+    full = ["valgrind", "--tool=callgrind", "--callgrind-out-file=" + out_file
+            ] + list(cmd)
+    rc, _, verr, _ = run_capture(full, env=run_env, timeout=timeout,
+                                 cwd=outdir, preexec_fn=_drop_core_rlimit)
+    # Accept the run when callgrind.out was written even though the
+    # child exited non-zero (e.g. the harness sent SIGINT to stop a
+    # server). Reject only if the file is missing or so tiny it can't
+    # have captured anything past startup -- that's the AVX-512-SIGILL
+    # / unsupported-insn / very-early-crash signature.
+    if not os.path.isfile(out_file):
+        return None
+    lowered = (verr or "").lower()
+    # valgrind couldn't decode a host instruction: typically AVX-512
+    # baked into the system ld-linux / glibc (gentoo, custom builds)
+    # combined with a valgrind that doesn't yet support every EVEX
+    # variant. Surface a precise, actionable message AND persist
+    # `valgrind` into the local disabled-tools sidecar so subsequent
+    # batches skip this profiler without dragging the operator back.
+    if ("unhandled instruction bytes" in lowered or
+            "unrecognised instruction" in lowered):
+        bar = "=" * 74
+        snippet = "\n".join(l for l in (verr or "").splitlines()
+                            if ("unhandled instruction" in l.lower()
+                                or "unrecognised instruction" in l.lower()
+                                or "at 0x" in l.lower()))[:600]
+        print(f"\n{C_RED}{bar}\n"
+              f"  callgrind unusable on this host: valgrind cannot decode an\n"
+              f"  instruction the system ld-linux/glibc uses (typically an\n"
+              f"  AVX-512 EVEX store baked into ld-linux's _dl_start).\n"
+              f"  Auto-disabling 'valgrind' for the local node so the batch\n"
+              f"  can continue.\n"
+              f"  Two ways to actually re-enable callgrind on this host:\n"
+              f"    1. Wait for / install a valgrind release that decodes\n"
+              f"       this EVEX variant. As of 3.28 some AVX-512BW store\n"
+              f"       forms still SIGILL inside ld-linux.\n"
+              f"    2. Hide AVX-512 from userspace at the kernel level: add\n"
+              f"         clearcpuid=304\n"
+              f"       (=AVX512F) to the kernel cmdline, regenerate the\n"
+              f"       bootloader config, reboot. glibc's IFUNC dispatcher\n"
+              f"       then picks AVX2/SSE paths and valgrind is happy.\n"
+              f"       Trade-off: every process on the box loses AVX-512.\n"
+              f"  Then remove 'valgrind' from\n"
+              f"    {LOCAL_DISABLED_TOOLS_JSON}\n"
+              f"  valgrind said:\n{snippet}\n"
+              f"{bar}{C_RESET}", file=sys.stderr)
+        _persist_disabled_tool_local("valgrind")
+        return None
+    try:
+        if os.path.getsize(out_file) < 4096:
+            tail = "\n".join((verr or "").splitlines()[-8:])
+            if tail:
+                print(f"[callgrind] output too small "
+                      f"({os.path.getsize(out_file)} B) -- valgrind said:\n"
+                      f"{tail}", file=sys.stderr)
+            return None
+    except OSError:
         return None
     rc2, sout, _, _ = run_capture(["callgrind_annotate", out_file], timeout=60)
     if rc2 != 0:
@@ -804,21 +1042,22 @@ def node_path_parts(node_label):
     return (node_label, node_label)
 
 
-def champion_path(bench_name, node_label):
-    c, e = node_path_parts(node_label)
-    return os.path.join(RESULTS, bench_name, c, e, "champion.json")
+def champion_path(bench_name):
+    """Per-benchmark champion — stores metrics from ALL platforms so the
+    decision is whether a change is better for the whole fleet, not just
+    one arch (benchmark/CLAUDE.md decision matrix)."""
+    return os.path.join(RESULTS, bench_name, "champion.json")
 
 
-def candidate_path(bench_name, node_label, stamp):
-    """stamp = the run's started_utc with ':' -> '-' (path-portable).
-    Filename is candidate-<stamp>.json (not -<sha>): the commit is
-    already inside the JSON, and one run == one timestamp per node."""
-    c, e = node_path_parts(node_label)
-    return os.path.join(RESULTS, bench_name, c, e, f"candidate-{stamp}.json")
+def candidate_path(bench_name, stamp):
+    """Per-benchmark candidate — one JSON per run containing every
+    platform's metrics. <stamp> is the run's started_utc with ':'
+    replaced by '-' (path-portable)."""
+    return os.path.join(RESULTS, bench_name, f"candidate-{stamp}.json")
 
 
-def load_champion(bench_name, node_label):
-    p = champion_path(bench_name, node_label)
+def load_champion(bench_name):
+    p = champion_path(bench_name)
     if not os.path.isfile(p):
         return None
     try:
@@ -856,6 +1095,93 @@ def git_sha():
         return out or "nogit"
     except Exception:
         return "nogit"
+
+
+def decide_multi_node(champion, candidate, *, keep_threshold=0.30,
+                      discard_threshold=0.20, noise_band=0.10):
+    """Cross-platform KEEP/DISCARD/ESCALATE decision.
+
+    Compares EVERY node's metrics between champion and candidate. A
+    single metric improvement on one node can trigger KEEP, and a
+    regression on any node can trigger DISCARD — per the decision
+    matrix in benchmark/CLAUDE.md.
+
+    champion / candidate schema:
+        { "commit": "<sha>", "nodes": { "<label>": { "arch": "<arch>",
+            "metrics": { "<name>": {"median": n, "stddev": n,
+                        "unit": "...", "better": "lower|higher"} }
+        } } }
+
+    Returns (decision, [per_metric_summary]).
+    """
+    if champion is None:
+        return "KEEP", [("first-run", None, None, "no champion to compare")]
+
+    ch_nodes = champion.get("nodes", {})
+    ca_nodes = candidate.get("nodes", {})
+
+    summary = []
+    any_better = False
+    any_worse  = False
+    all_within_noise = True
+
+    all_node_labels = sorted(set(list(ch_nodes.keys()) + list(ca_nodes.keys())))
+    for label in all_node_labels:
+        ch_metrics = (ch_nodes.get(label) or {}).get("metrics", {})
+        ca_metrics = (ca_nodes.get(label) or {}).get("metrics", {})
+        if not ch_metrics and not ca_metrics:
+            continue
+        arch = (ch_nodes.get(label) or ca_nodes.get(label) or {}).get("arch", "?")
+        all_metric_names = sorted(set(list(ch_metrics.keys()) +
+                                       list(ca_metrics.keys())))
+        for name in all_metric_names:
+            ch = ch_metrics.get(name)
+            ca = ca_metrics.get(name)
+            key = f"{label}({arch})/{name}"
+            if ch is None and ca is None:
+                continue
+            if ch is None:
+                summary.append((key, None, ca.get("median"),
+                                "new metric (not in champion)"))
+                continue
+            if ca is None:
+                summary.append((key, ch.get("median"), None,
+                                "missing in candidate"))
+                continue
+            chm = ch.get("median")
+            cm  = ca.get("median")
+            if chm is None or cm is None:
+                continue
+            better = ch.get("better", "lower")
+            if chm == 0:
+                delta = 0.0
+            else:
+                delta = (cm - chm) / chm
+            if better == "lower":
+                improved = -delta
+            else:
+                improved = delta
+            within_noise = abs(delta) <= noise_band
+            if not within_noise:
+                all_within_noise = False
+            if improved >= keep_threshold:
+                any_better = True
+            if improved <= -discard_threshold:
+                any_worse = True
+            tag = ("better" if improved > 0 else "worse" if improved < 0
+                   else "flat")
+            summary.append((key, chm, cm,
+                            f"delta={delta:+.2%} ({tag})"))
+
+    if all_within_noise:
+        decision = "DISCARD"
+    elif any_better and not any_worse:
+        decision = "KEEP"
+    elif any_worse and not any_better:
+        decision = "DISCARD"
+    else:
+        decision = "ESCALATE"
+    return decision, summary
 
 
 def decide(champion, candidate, *, keep_threshold=0.30, discard_threshold=0.20,
@@ -905,8 +1231,7 @@ def decide(champion, candidate, *, keep_threshold=0.30, discard_threshold=0.20,
     return decision, summary
 
 
-def print_decision(bench_name, arch, decision, summary):
+def print_decision(bench_name, decision, summary, arch_hint=None):
     colour = {"KEEP": C_GREEN, "DISCARD": C_YELLOW, "ESCALATE": C_RED}.get(decision, "")
-    print(f"\n{colour}[{bench_name}@{arch}] DECISION: {decision}{C_RESET}")
-    for name, ch, cm, note in summary:
-        print(f"  - {name}: champion={ch} candidate={cm}  {note}")
+    tag = f"{bench_name}@{arch_hint}" if arch_hint else bench_name
+    print(f"\n{colour}[{tag}] DECISION: {decision}{C_RESET}")

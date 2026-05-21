@@ -1,23 +1,23 @@
-"""chart_generator.py -- per-(benchmark, compile, exec) SVG timeline.
+"""chart_generator.py — per-node + cross-node session SVG charts.
 
-Charts live next to the result JSONs they describe:
-  benchmark/results/<bench>/<compile>/<exec>/champion.svg
-  benchmark/results/<bench>/<compile>/<exec>/candidate-<stamp>.svg
+Two chart levels are generated for each benchmark:
 
-The source data is the append-only per-run JSONs dumped by
-history_recorder.PlatformRecord under
-benchmark/history/<bench>/<compile>/<exec>/. We group those records by
-(compile_label, exec_label) -- one progression SVG per node pair
-(remote nodes included, not just the local host), one stacked sub-plot
-per metric, one line per (tool, metric) combination so different units
-don't get crammed onto one axis.
+  1. Per-node progression (results/<bench>/<compile>/<exec>/):
+     One SVG per (compile, exec) node pair, plotting that node's metrics
+     over commit history. Source: append-only history JSONs under
+     benchmark/history/<bench>/<compile>/<exec>/.
 
-Champion = the latest history record whose decision is "KEEP" (or, when
-no history record carries that flag yet, the entry in champion.json on
-disk matched by commit sha). Decision glyphs: green up-triangle for
+  2. Cross-node session chart (results/<bench>/):
+     A single SVG that groups data by batch_id (one benchmark run across
+     ALL platforms = one session). Each metric panel shows one line per
+     node, so you can see at a glance whether an optimisation helps or
+     hurts every platform.
+
+Champion commit is read from the per-benchmark champion.json
+(results/<bench>/champion.json). Decision glyphs: green up-triangle for
 KEEP, red down-triangle for DISCARD, yellow diamond for ESCALATE.
 
-No external dependency -- the SVG is hand-rolled so the harness keeps
+No external dependency — the SVG is hand-rolled so the harness keeps
 working on minimal-rootfs nodes (matplotlib + numpy are not installed
 on every exec target, and the CLAUDE.md "no pip installs" rule blocks
 us from pulling them in)."""
@@ -81,6 +81,93 @@ def _group_records(records):
         comp, exe = bh.node_path_parts(doc.get("node"))
         groups.setdefault((comp, exe), []).append(doc)
     return groups
+
+
+def _group_by_batch(records):
+    """Group history records by batch_id (== one benchmark session across
+    all execution nodes). Returns a list of (batch_id, started_utc,
+    commit_short, records_in_batch) sorted by time.
+
+    Each batch contains one record per node that produced data. Groups
+    with no records are skipped."""
+    batches = {}  # batch_id -> (started_utc, commit_short, [docs])
+    for doc, _p in records:
+        bid = doc.get("batch_id")
+        if not bid:
+            continue
+        if bid not in batches:
+            batches[bid] = (doc.get("started_utc", ""),
+                            doc.get("commit_short") or (doc.get("commit") or "")[:7],
+                            [])
+        batches[bid][2].append(doc)
+    out = sorted(batches.values(), key=lambda x: x[0])
+    return [(b[0], b[1], b[2]) for b in out]  # (started_utc, commit_short, docs)
+
+
+def _extract_session_series(batches, champion_commit_short):
+    """Cross-node session series: one data point per (batch, node, metric).
+
+    Returns ({metric_label -> [(idx, value, commit_short, decision)]},
+             [commit_short...], better_map).
+
+    metric_label = "<node>.<tool>.<metric>" (or
+    "<node>.<tool>.<slice>.<metric>" for sub-benchmarks) so each node's
+    line is distinct. X-axis is batch index (chronological)."""
+    series = {}
+    commits = []
+    better_map = {}
+    for idx, (_ts, commit_short, docs) in enumerate(batches):
+        commits.append(commit_short or "")
+        # Collect a single decision for this batch: prefer the champion
+        # commit if it matches, else pick any non-null decision.
+        batch_decision = None
+        for d in docs:
+            if (d.get("commit_short") or (d.get("commit") or "")[:7]) == champion_commit_short:
+                batch_decision = "KEEP"
+                break
+        if batch_decision is None:
+            for d in docs:
+                dec = d.get("decision")
+                if dec:
+                    batch_decision = dec
+                    break
+        for d in docs:
+            node = d.get("node") or "unknown"
+            for tool, blk in (d.get("results") or {}).items():
+                if not isinstance(blk, dict):
+                    continue
+                for mname, m in (blk.get("metrics") or {}).items():
+                    v = m.get("median") if m.get("median") is not None else m.get("value")
+                    if v is None:
+                        continue
+                    try:
+                        v = float(v)
+                    except (TypeError, ValueError):
+                        continue
+                    label = f"{node}.{tool}.{mname}"
+                    series.setdefault(label, []).append(
+                        (idx, v, commit_short, batch_decision))
+                    if label not in better_map and m.get("better"):
+                        better_map[label] = m["better"]
+                for slice_label, smetrics in (blk.get("subbenchmarks") or {}).items():
+                    if not isinstance(smetrics, dict):
+                        continue
+                    for mname, m in smetrics.items():
+                        if not isinstance(m, dict):
+                            continue
+                        v = m.get("median") if m.get("median") is not None else m.get("value")
+                        if v is None:
+                            continue
+                        try:
+                            v = float(v)
+                        except (TypeError, ValueError):
+                            continue
+                        label = f"{node}.{tool}.{slice_label}.{mname}"
+                        series.setdefault(label, []).append(
+                            (idx, v, commit_short, batch_decision))
+                        if label not in better_map and m.get("better"):
+                            better_map[label] = m["better"]
+    return series, commits, better_map
 
 
 def _extract_series(records):
@@ -280,13 +367,11 @@ def _x_axis_labels(x0, y0, w, commits, champion_idx):
 
 # ---- champion lookup -----------------------------------------------------
 
-def _champion_commit(benchmark, node_label):
-    """Read champion.json for a node; return the commit short sha or
-    None. champion.json now lives at
-    results/<bench>/<compile>/<exec>/champion.json (only the local node
-    has one today -- remote groups simply get None and fall back to the
-    last KEEP)."""
-    p = bh.champion_path(benchmark, node_label)
+def _champion_commit(benchmark):
+    """Read the per-benchmark champion.json; return the commit short sha
+    or None. The champion is per-benchmark (not per-node), so all charts
+    share the same champion commit."""
+    p = bh.champion_path(benchmark)
     if not os.path.isfile(p):
         return None
     try:
@@ -299,8 +384,8 @@ def _champion_commit(benchmark, node_label):
 
 def _find_champion_idx(records, node_label):
     """Index of the champion commit inside the ordered records list.
-    Prefer champion.json on disk; fallback to last KEEP decision."""
-    short = _champion_commit(records[0].get("benchmark", ""), node_label) if records else None
+    Prefer the per-benchmark champion.json; fallback to last KEEP decision."""
+    short = _champion_commit(records[0].get("benchmark", "")) if records else None
     if short:
         for i, doc in enumerate(records):
             if (doc.get("commit_short") or (doc.get("commit") or "")[:7]) == short:
@@ -380,14 +465,79 @@ def _render_group(benchmark, comp, exe, records):
     return head + "".join(body) + "</svg>\n"
 
 
+def _render_session_chart(benchmark, batches):
+    """Cross-node session chart: plots every node's metrics per batch.
+
+    Returns SVG string or None when no data. Champion commit is read
+    from the per-benchmark champion.json."""
+    if not batches:
+        return None
+    champ_short = _champion_commit(benchmark)
+    series, commits, better_map = _extract_session_series(batches, champ_short)
+    if not series:
+        return None
+
+    # Group series by bare metric name (last segment) so related metrics
+    # share a panel.
+    panels = {}
+    for label, pts in series.items():
+        bare = label.rsplit(".", 1)[1] if "." in label else label
+        panels.setdefault(bare, {})[label] = pts
+
+    # champion index: which batch has the champion commit
+    champion_idx = -1
+    if champ_short:
+        for i, c in enumerate(commits):
+            if c == champ_short:
+                champion_idx = i
+                break
+
+    nbatches = len(batches)
+    npanels = len(panels)
+    height = TOP_MARGIN + npanels * (PANEL_H + PANEL_GAP) + X_AXIS_H
+    width  = LEFT_MARGIN + PANEL_W + 20
+    head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+            f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+    body = []
+    body.append(f'<text x="{LEFT_MARGIN}" y="18" font-size="13" '
+                f'font-family="sans-serif" font-weight="bold">'
+                f'{_esc(benchmark)} -- cross-node session chart '
+                f'({nbatches} batches, {len(series)} series)</text>')
+    y = TOP_MARGIN
+    pkeys = sorted(panels.keys(), key=lambda k: (k != "cpu_percent", k))
+    for pname in pkeys:
+        body.append(_plot_panel(LEFT_MARGIN, y, PANEL_W, PANEL_H,
+                                panels[pname], better_map, commits,
+                                champion_idx, pname,
+                                panel_metric=pname))
+        y += PANEL_H + PANEL_GAP
+    body.append(_x_axis_labels(LEFT_MARGIN, y, PANEL_W, commits, champion_idx))
+    # decision legend
+    body.append(f'<g transform="translate({LEFT_MARGIN + PANEL_W - 220},'
+                f'{height - 14})">')
+    body.append('<text x="0" y="0" font-size="9" font-family="sans-serif">'
+                'decisions:</text>')
+    x = 60
+    for decision in ("KEEP", "DISCARD", "ESCALATE"):
+        body.append(_decision_glyph(x, -4, decision))
+        body.append(f'<text x="{x+8}" y="0" font-size="9" '
+                    f'font-family="sans-serif">{decision}</text>')
+        x += 65
+    body.append('</g>')
+    return head + "".join(body) + "</svg>\n"
+
+
 def regenerate(benchmark, stamp=None):
     """Regenerate every chart for `benchmark` from history JSONs.
 
-    Charts live alongside the result JSONs they describe -- one
-    progression SVG per (compile,exec) node pair:
-
-        results/<bench>/<compile>/<exec>/champion.svg
-        results/<bench>/<compile>/<exec>/candidate-<stamp>.svg
+    Two chart levels are generated:
+      1. Per-node progression charts:
+           results/<bench>/<compile>/<exec>/champion.svg
+           results/<bench>/<compile>/<exec>/candidate-<stamp>.svg
+      2. Cross-node session chart (all platforms grouped by batch):
+           results/<bench>/champion.svg
+           results/<bench>/candidate-<stamp>.svg
 
     `champion.svg` is the always-current progression chart (champion
     commit marked). When `stamp` is given (a benchmark run passes its
@@ -398,8 +548,10 @@ def regenerate(benchmark, stamp=None):
     records = _load_history(benchmark)
     if not records:
         return []
-    groups = _group_records(records)
     written = []
+
+    # 1) per-node charts (unchanged behaviour)
+    groups = _group_records(records)
     for (comp, exe), recs in groups.items():
         svg = _render_group(benchmark, comp, exe, recs)
         if svg is None:
@@ -415,6 +567,23 @@ def regenerate(benchmark, stamp=None):
             with open(cand_p, "w") as f:
                 f.write(svg)
             written.append(cand_p)
+
+    # 2) cross-node session chart (one chart, all platforms)
+    batches = _group_by_batch(records)
+    svg = _render_session_chart(benchmark, batches)
+    if svg:
+        outdir = os.path.join(bh.RESULTS, benchmark)
+        os.makedirs(outdir, exist_ok=True)
+        champ_p = os.path.join(outdir, "champion.svg")
+        with open(champ_p, "w") as f:
+            f.write(svg)
+        written.append(champ_p)
+        if stamp:
+            cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
+            with open(cand_p, "w") as f:
+                f.write(svg)
+            written.append(cand_p)
+
     return written
 
 
