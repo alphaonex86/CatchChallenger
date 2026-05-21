@@ -280,6 +280,14 @@ bool EventLoop::init()
 #ifdef CATCHCHALLENGER_IO_URING_IOPOLL
     params.flags|=IORING_SETUP_IOPOLL;
 #endif
+    //CATCHCHALLENGER_IO_URING_COOP_TASKRUN: kernel never signals userspace
+    //to run task work; work drains only on the next io_uring_enter() call.
+    //Lighter than DEFER_TASKRUN (no mandatory IORING_ENTER_GETEVENTS),
+    //safe on single-core.  Requires kernel >= 5.19; falls back gracefully
+    //via the existing EINVAL retry path below.
+#ifdef CATCHCHALLENGER_IO_URING_COOP_TASKRUN
+    params.flags|=IORING_SETUP_COOP_TASKRUN;
+#endif
     int qret=io_uring_queue_init_params(4096,&g_uring->ring,&params);
     if(qret<0)
     {
