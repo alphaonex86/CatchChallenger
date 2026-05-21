@@ -134,14 +134,13 @@ Reference: `android_env()` in `test/testingclient.py`.
 
 * **Android** — local Qt-for-Android cross-compile + local emulator. **Only `client/qtopengl`**. Tooling: `/mnt/data/perso/progs/CatchChallenger-android/{sdk,avd,apk,build}/`. Self-skips when VPS unreachable or SDK/adb/emulator/AVD missing. Branding (label "CatchChallenger", landscape lock, icon) lives in `client/qtopengl/resources/android-package-source/` wired via target prop `QT_ANDROID_PACKAGE_SOURCE_DIR`. Qt ships only the openssl TLS *plugin*, not libssl/libcrypto — KDAB android_openssl checkout at `<android_workspace>/android_openssl` bundled via `-DCATCHCHALLENGER_ANDROID_OPENSSL_DIR` (optional; absent → TLS-less apk). Phases `android tls-backend qtopengl`, `android official-connect v4/v6` (literal-IP `--host` forces family; protocol-good marker = connected; host-unreachable → skip-as-pass).
 
-## Diagnostic-tool runs — clang+sanitizer **and** gcc+valgrind
+## Diagnostic-tool runs — clang+sanitizer, gcc+valgrind, profile
 
-Two mutually-exclusive modes. Both wired into every `testing*.py` and `all.sh`, propagated to remote nodes.
+Three mutually-exclusive modes. All wired into every `testing*.py` and `all.sh` via the `test/diagnostic.py` shared helper (sanitizer/valgrind propagate to remote nodes; profile is local-only).
 
 1. **Clang + sanitizer** — `--sanitize asan|lsan|msan` — clang-built. ~2x slowdown.
 2. **Gcc + valgrind** — `--valgrind memcheck|helgrind|drd` — gcc debug under valgrind. 10-50x slowdown.
-
-`test/diagnostic.py` shared helper.
+3. **Profile** — `--profile [callgrind|massif|perf]` (default callgrind) — wraps each launched binary; artefacts (`callgrind.out.*` / `massif.out.*` / `perf.data.*`) land under `/mnt/data/perso/tmpfs/profile/` (preserved across runs, unique filenames). Local only (`exec_node_supports`→false). Timeouts scaled callgrind 30x / massif 20x / perf 2x. Build dir `build-profile/` (shared across tools; reuses the regular `-g` symbols). Diagnoses *where* a test is slow — benchmarks tell you *whether* it regressed.
 
 ### Clang + sanitizer
 * `asan` — `-fsanitize=address,undefined`. Default-and-broadest.
@@ -155,7 +154,7 @@ All add `-fno-omit-frame-pointer -fno-sanitize-recover=all -O1`. Env: `*_OPTIONS
 * `helgrind` — lock-ordering. EventLoop server is single-threaded so should be no-op.
 * `drd` — alternative race detector.
 
-Scales every timeout by **10x**. `--sanitize` and `--valgrind` mutually exclusive.
+Scales every timeout by **10x**. `--sanitize`, `--valgrind` and `--profile` mutually exclusive.
 
 ### Remote nodes
 Two opt-in layers:
