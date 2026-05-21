@@ -125,6 +125,11 @@ public:
 
     //temp
     const std::vector<MonstersCollision> &get_monstersCollision() const;//never more than 255
+    #ifdef CATCHCHALLENGER_TESTING
+    //testingpathfinding.py injects a controlled item-gated zone table
+    //without parsing a full datapack; production never compiles this in.
+    void testing_setMonstersCollision(const std::vector<MonstersCollision> &v);
+    #endif
     const std::vector<MonstersCollisionTemp> &get_monstersCollisionTemp() const;//never more than 255
     const std::vector<Type> &get_types() const;
     #endif

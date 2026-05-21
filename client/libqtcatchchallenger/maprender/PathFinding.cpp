@@ -3,6 +3,8 @@
 #include <QTime>
 #include <QElapsedTimer>
 #include <iostream>
+#include "../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/CommonDatapack.hpp"
 
 PathFinding::PathFinding() :
     tryCancel(false)
@@ -60,6 +62,56 @@ void PathFinding::searchPath(const std::vector<CatchChallenger::CommonMap> &mapL
         simplifiedMap.height=map.height;
         simplifiedMap.simplifiedMap=new uint8_t[simplifiedMap.width*simplifiedMap.height];
         memcpy(simplifiedMap.simplifiedMap,map.flat_simplified_map.data(),simplifiedMap.width*simplifiedMap.height);
+        // Mask out item-gated zones the player can't enter, mirroring the
+        // client-side MapVisualiserPlayerWithFight::canGoTo() check that
+        // otherwise rejects movement with "You can't enter to this zone
+        // without the correct item" AFTER the path was already computed.
+        // Without this, internalSearchPath() routes straight through a
+        // walkOn zone whose required item is missing (it used to
+        // Q_UNUSED(items)). A tile the player physically cannot traverse
+        // must not appear in a returned path, so block it (254) here.
+        // When no datapack is loaded get_monstersCollision() is empty and
+        // this loop is a no-op, so existing behaviour is unchanged.
+        {
+            const std::vector<CatchChallenger::MonstersCollision> &monstersCollision=
+                    CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision();
+            if(!monstersCollision.empty())
+            {
+                COORD_TYPE my=0;
+                while(my<simplifiedMap.height)
+                {
+                    COORD_TYPE mx=0;
+                    while(mx<simplifiedMap.width)
+                    {
+                        const CatchChallenger::MonstersCollisionValue zone=
+                                CatchChallenger::MoveOnTheMap::getZoneCollision(map,mx,my);
+                        if(!zone.walkOn.empty())
+                        {
+                            bool enterable=false;
+                            unsigned int wi=0;
+                            while(wi<zone.walkOn.size())
+                            {
+                                const uint8_t &mcIndex=zone.walkOn.at(wi);
+                                if(mcIndex<monstersCollision.size())
+                                {
+                                    const CatchChallenger::MonstersCollision &mc=monstersCollision.at(mcIndex);
+                                    if(mc.item==0 || items.find(mc.item)!=items.cend())
+                                    {
+                                        enterable=true;
+                                        break;
+                                    }
+                                }
+                                wi++;
+                            }
+                            if(!enterable)
+                                simplifiedMap.simplifiedMap[mx+my*simplifiedMap.width]=254;
+                        }
+                        mx++;
+                    }
+                    my++;
+                }
+            }
+        }
         simplifiedMapList[mapIndex]=simplifiedMap;
     }
     //resolv the border
