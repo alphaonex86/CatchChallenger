@@ -295,6 +295,13 @@ bool EventLoop::init()
 #ifdef CATCHCHALLENGER_IO_URING_TASKRUN_FLAG
     params.flags|=IORING_SETUP_TASKRUN_FLAG;
 #endif
+    //CATCHCHALLENGER_IO_URING_NO_SQARRAY: drop the SQ indirection array
+    //(kernel >= 6.6).  CC's loop submits SQEs sequentially so the array
+    //is never reordered; removing it saves memory and a cache line per
+    //submit.  Safe on single-core, standalone flag (no companion required).
+#ifdef CATCHCHALLENGER_IO_URING_NO_SQARRAY
+    params.flags|=IORING_SETUP_NO_SQARRAY;
+#endif
     int qret=io_uring_queue_init_params(4096,&g_uring->ring,&params);
     if(qret<0)
     {
