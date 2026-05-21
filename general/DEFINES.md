@@ -1308,6 +1308,12 @@ build (gated mutually-exclusive in `general/CCCommon.cmake`).
 - **Used in:**
   - `server/cli/EventLoop.cpp`
 
+### `CATCHCHALLENGER_IO_URING_NO_SQARRAY`
+- **Scope:** server-only — server: cli
+- **Description:** Opt-in flag to add `IORING_SETUP_NO_SQARRAY` (kernel >= 6.6). Removes the SQ indirection array that normally maps ring positions to SQE indices. CatchChallenger's single-threaded loop always submits SQEs in order so the indirection is never used; dropping it saves a small allocation and one cache line per submit. Standalone flag — no companion required. Safe on single-core. Off by default.
+- **Used in:**
+  - `server/cli/EventLoop.cpp`
+
 
 ## Qt build options
 
