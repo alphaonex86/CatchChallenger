@@ -55,7 +55,7 @@ import sys
 sys.dont_write_bytecode = True
 
 
-import os, sys, signal, subprocess, json, time, shlex
+import os, sys, signal, subprocess, json, time, shlex, shutil
 import build_paths
 import diagnostic
 import wall_cap
@@ -570,6 +570,19 @@ def deploy_and_package(app_path, label):
     else:
         log_pass(promote_name, f"-> {local_dst} "
                                f"({os.path.getsize(local_dst)} bytes)")
+        # Publish the .dmg to the world-readable drop the website's upload
+        # pipeline picks up (mirrors testingcompilation{windows,android}.py).
+        # Only for the real .dmg, not the .zip fallback. Best-effort: a
+        # missing /mnt/data/world must not fail the build.
+        if ext == ".dmg":
+            world_dmg = "/mnt/data/world/catchchallenger-mac-os-x.dmg"
+            try:
+                os.makedirs(os.path.dirname(world_dmg), exist_ok=True)
+                shutil.copy2(local_dst, world_dmg)
+                log_info(f"published dmg -> {world_dmg}")
+            except OSError as world_exc:
+                log_info(f"WARNING: could not publish dmg to "
+                         f"{world_dmg}: {world_exc}")
     return artifact
 
 

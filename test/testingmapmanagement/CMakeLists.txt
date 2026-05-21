@@ -96,8 +96,8 @@ target_compile_options(testmapvisibility PRIVATE
     # strcmp without #include <cstring>; they get it transitively in
     # a normal build via the heavy server-side chain we exclude here.
     # Force-include cstring so the test build doesn't fail because of
-    # missing transitive includes.
-    -include cstring
+    # missing transitive includes. CXX-only (cstring is C++-only).
+    $<$<COMPILE_LANGUAGE:CXX>:-include cstring>
 )
 
 target_link_libraries(testmapvisibility PRIVATE
