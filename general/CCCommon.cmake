@@ -357,7 +357,18 @@ option(EXTERNALLIBZSTD "Link against system libzstd" ${_externallibzstd_default}
 include(${CMAKE_CURRENT_LIST_DIR}/libzlib.cmake)
 
 if(EXTERNALLIBZSTD)
-    find_library(ZSTD_LIBRARY NAMES zstd REQUIRED)
+    find_library(ZSTD_LIBRARY NAMES zstd)
+    if(NOT ZSTD_LIBRARY)
+        message(STATUS "system libzstd not found, falling back to vendored build")
+        set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+        set(ZSTD_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+        set(ZSTD_BUILD_SHARED   OFF CACHE BOOL "" FORCE)
+        set(ZSTD_BUILD_STATIC   ON  CACHE BOOL "" FORCE)
+        set(ZSTD_LEGACY_SUPPORT OFF CACHE BOOL "" FORCE)
+        add_subdirectory(${CC_REPO_ROOT}/general/libzstd/build/cmake
+                         ${CMAKE_BINARY_DIR}/_libzstd EXCLUDE_FROM_ALL)
+        set(ZSTD_LIBRARY libzstd_static)
+    endif()
 else()
     # Suppress libzstd's own programs/tests; we only consume libzstd_static.
     set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)

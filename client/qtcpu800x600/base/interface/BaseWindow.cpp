@@ -206,12 +206,18 @@ BaseWindow::BaseWindow() :
 
     {
         const QList<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
+        std::string fmtList;
         int index=0;
         while(index<supportedImageFormats.size())
         {
-            this->supportedImageFormats.insert(QString(supportedImageFormats.at(index)).toStdString());
+            const std::string fmt=QString(supportedImageFormats.at(index)).toStdString();
+            this->supportedImageFormats.insert(fmt);
+            if(!fmtList.empty())
+                fmtList+=",";
+            fmtList+=fmt;
             index++;
         }
+        std::cout << "ImageFormats:" << fmtList << std::endl;
     }
 
     checkQueryTime.start(200);

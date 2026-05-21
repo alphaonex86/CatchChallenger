@@ -665,6 +665,17 @@ def build_android_apk(pro_file, build_dir, label):
                                      f"catchchallenger-{label}.apk")
     cleanup_helpers.promote_artifact(aab_dst_path,
                                      f"catchchallenger-{label}.aab")
+    # Publish the freshly-built .apk to the world-readable drop the
+    # website's upload pipeline picks up (mirrors the windows installer
+    # publish in testingcompilationwindows.py). Best-effort: a missing
+    # /mnt/data/world must not fail the build.
+    world_apk = "/mnt/data/world/catchchallenger-android.apk"
+    try:
+        os.makedirs(os.path.dirname(world_apk), exist_ok=True)
+        shutil.copy2(apk_dst_path, world_apk)
+        log_info(f"published apk -> {world_apk}")
+    except OSError as world_exc:
+        log_info(f"WARNING: could not publish apk to {world_apk}: {world_exc}")
     log_pass(name, f"-> {os.path.relpath(apk_dst_path, ROOT)} + "
                    f"{os.path.relpath(aab_dst_path, ROOT)}")
     # Static-baseline size guard. A .apk / .aab that shrinks below 75%

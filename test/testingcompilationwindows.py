@@ -31,7 +31,7 @@ import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
-import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time
+import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time, base64, tempfile
 import build_paths
 import diagnostic
 from cmd_helpers import clamp_local
@@ -809,12 +809,50 @@ def _wine_runtime_dlls(exe_path, exe_dir, args):
     return dlls
 
 
+_PLUGIN_SUBDIRS = ("platforms", "imageformats", "iconengines", "styles",
+                   "tls", "multimedia", "audio", "mediaservice",
+                   "networkinformation", "sqldrivers", "generic")
+
+
+def _plugin_dep_closure(exe_dir):
+    """Top-level DLLs that the shipped PLUGINS (platforms/qoffscreen.dll,
+    sqldrivers/qsqlite.dll, …) depend on.
+
+    Plugins are loaded at runtime via QPluginLoader, so they never appear
+    in the .exe's PE import table — but their own dependencies must still
+    ship next to the .exe or the plugin fails to load. The concrete bug
+    this closes: sqldrivers/qsqlite.dll imports libsqlite3-0.dll; without
+    it the SQLite driver reports "Driver not loaded" and the server's DB
+    init fails. Walk every plugin DLL's import closure against exe_dir and
+    return the deps that live there."""
+    deps = set()
+    si = 0
+    while si < len(_PLUGIN_SUBDIRS):
+        sub = os.path.join(exe_dir, _PLUGIN_SUBDIRS[si])
+        si += 1
+        if not os.path.isdir(sub):
+            continue
+        try:
+            entries = os.listdir(sub)
+        except OSError:
+            entries = []
+        ei = 0
+        while ei < len(entries):
+            pe = entries[ei]
+            ei += 1
+            if pe.lower().endswith(".dll"):
+                deps |= _pe_imports_recursive(os.path.join(sub, pe), exe_dir)
+    return deps
+
+
 def _compute_dll_allowlist(exe_path, exe_dir):
     """Combine static PE-import closure (1) with runtime wine-loaded set
-    (2). Returned set is the .dll basenames (lowercase) the installer
-    must ship. Plugins go through directory pass-through and aren't on
-    this list — only top-level .dll files alongside the .exe."""
+    (2) and the plugin dependency closure (3). Returned set is the .dll
+    basenames (lowercase) the installer must ship. Plugins themselves go
+    through directory pass-through and aren't on this list — only the
+    top-level .dll files alongside the .exe."""
     static = _pe_imports_recursive(exe_path, exe_dir)
+    static |= _plugin_dep_closure(exe_dir)
     # Runtime pass: --version is a 1-shot path that still loads every
     # Qt platform plugin + GL backend on the GUI client (the splash
     # screen ctor pulls them in even when we exit early). --autosolo
@@ -834,49 +872,80 @@ def _compute_dll_allowlist(exe_path, exe_dir):
     return static | runtime_local
 
 
-def _stage_install_payload(src_dir):
+def _stage_install_payload(src_dir, exe_name=WIN_EXE_NAME):
     """Mirror src_dir to a sibling clean-install dir, dropping every
     build-system artefact (CMakeFiles, *_autogen, .ninja_*, CMakeCache,
     compile_commands.json) and every DLL not in the per-build allowlist.
     The .exe, the datapack/, and every Qt plugin sub-dir are kept
-    verbatim. Returns the staging dir path."""
+    verbatim. Returns the staging dir path.
+
+    exe_name is the binary whose import closure seeds the allowlist; it
+    defaults to the client (WIN_EXE_NAME) but MUST be passed for the
+    server-gui part (catchchallenger-server-gui.exe) — otherwise the
+    allowlist is computed against a non-existent catchchallenger.exe,
+    comes back empty, and the server's unique DLLs (e.g. libsqlite3-0.dll)
+    never ship."""
+    # Source build dir can legitimately be gone before/while we stage: it's
+    # registered for cleanup-on-exit, and a concurrent run (or all.sh) that
+    # finishes can sweep the shared tmpfs dir mid-package. Return None
+    # instead of letting an unhandled FileNotFoundError abort the whole
+    # script; the caller treats None as "couldn't stage this part".
+    if not os.path.isdir(src_dir):
+        log_info(f"install stage: source build dir missing ({src_dir}) — "
+                 "cannot stage this part")
+        return None
     stage = src_dir.rstrip(os.sep) + "-install-stage"
     if os.path.isdir(stage):
         shutil.rmtree(stage, ignore_errors=True)
     os.makedirs(stage, exist_ok=True)
-    exe_path = os.path.join(src_dir, WIN_EXE_NAME)
+    exe_path = os.path.join(src_dir, exe_name)
     allow = _compute_dll_allowlist(exe_path, src_dir)
     log_info(f"install allowlist: {len(allow)} DLL(s) "
              f"({sum(1 for x in allow if x.startswith('qt6'))} Qt6, "
              f"{sum(1 for x in allow if not x.startswith('qt6'))} runtime)")
-    for entry in os.listdir(src_dir):
+    try:
+        entries = os.listdir(src_dir)
+    except FileNotFoundError:
+        log_info(f"install stage: {src_dir} vanished mid-stage — failing part")
+        return None
+    for entry in entries:
         s = os.path.join(src_dir, entry)
         d = os.path.join(stage, entry)
-        if os.path.isdir(s):
-            if entry in _INSTALL_EXCLUDE_DIRS:
-                continue
-            if any(entry.endswith(suf) for suf in _INSTALL_EXCLUDE_DIR_SUFFIXES):
-                continue
-            shutil.copytree(s, d, symlinks=True)
-            continue
-        if entry in _INSTALL_EXCLUDE_FILES:
-            continue
-        low = entry.lower()
-        if any(low.endswith(suf) for suf in _INSTALL_EXCLUDE_FILE_SUFFIXES):
-            continue
-        # screenshot-*.png are wine-smoke-test artefacts produced by
-        # the QT_QPA_PLATFORM=offscreen runs (see run_wine_screenshot).
-        # They live next to the binary in the build dir but must NOT
-        # ship inside the installer / .msi.
-        if low.startswith("screenshot-") and low.endswith(".png"):
-            continue
-        if low.endswith(".dll"):
-            if low not in allow:
-                continue
         try:
+            if os.path.isdir(s):
+                if entry in _INSTALL_EXCLUDE_DIRS:
+                    continue
+                if any(entry.endswith(suf) for suf in _INSTALL_EXCLUDE_DIR_SUFFIXES):
+                    continue
+                shutil.copytree(s, d, symlinks=True)
+                continue
+            if entry in _INSTALL_EXCLUDE_FILES:
+                continue
+            low = entry.lower()
+            if any(low.endswith(suf) for suf in _INSTALL_EXCLUDE_FILE_SUFFIXES):
+                continue
+            # screenshot-*.png are wine-smoke-test artefacts produced by
+            # the QT_QPA_PLATFORM=offscreen runs (see run_wine_screenshot).
+            # They live next to the binary in the build dir but must NOT
+            # ship inside the installer / .msi.
+            if low.startswith("screenshot-") and low.endswith(".png"):
+                continue
+            if low.endswith(".dll"):
+                if low not in allow:
+                    continue
             shutil.copy2(s, d, follow_symlinks=True)
-        except OSError:
+        except (OSError, shutil.Error):
+            # entry vanished mid-copy (concurrent cleanup) or unreadable —
+            # skip it; a fully-vanished src is caught by the exe post-check.
             pass
+    # If the primary .exe didn't make it into the stage the payload is
+    # unusable (src was being wiped while we copied) — signal failure so
+    # the caller skips the combined installer rather than shipping a
+    # half-empty one.
+    if not os.path.isfile(os.path.join(stage, exe_name)):
+        log_info(f"install stage: {exe_name} missing from stage "
+                 f"({src_dir} incomplete) — failing part")
+        return None
     return stage
 
 
@@ -1129,6 +1198,33 @@ def _stage_combined_payload(parts):
     return dst
 
 
+def _stage_combined_part(exe, pro_file, build_dir, label, exe_name, exe_dst):
+    """Stage one binary for the combined installer, rebuilding it once if
+    its build dir was swept.
+
+    The Windows build dirs live in tmpfs and are registered for
+    cleanup-on-exit; a concurrent testing run (or all.sh) finishing can
+    rmtree the shared dir between this script's compile and packaging
+    phases, which previously surfaced as an unhandled FileNotFoundError
+    that aborted the whole script. Rebuild on demand (ccache makes it
+    cheap) and return None only if it still can't be produced — the caller
+    then skips the combined installer with a clean FAIL instead of
+    crashing."""
+    src = os.path.dirname(exe) if exe else build_dir
+    if not (src and os.path.isdir(src)
+            and os.path.isfile(os.path.join(src, exe_name))):
+        log_info(f"combined stage: {label} build dir/exe missing — rebuilding")
+        rebuilt = build_mxe_client(pro_file, build_dir, label)
+        if rebuilt is None:
+            return None
+        src = os.path.dirname(rebuilt)
+        exe_name = os.path.basename(rebuilt)
+    stage = _stage_install_payload(src, exe_name)
+    if stage is None:
+        return None
+    return {"stage": stage, "exe_src": exe_name, "exe_dst": exe_dst}
+
+
 def build_combined_installer(parts):
     """Single NSIS installer covering qtcpu800x600 + qtopengl +
     server-gui. Output: <tmpfs_root>/catchchallenger-installer.exe.
@@ -1182,10 +1278,58 @@ def build_combined_installer(parts):
     if rc == 0 and os.path.isfile(installer_exe):
         log_pass(name, f"-> {os.path.relpath(installer_exe, ROOT)}")
         _verify_installer_size("combined", installer_exe)
-        # Promote to tmpfs root with the requested final name.
-        import cleanup_helpers as _ch
-        _ch.promote_artifact(installer_exe,
-                             "catchchallenger-installer.exe")
+        return installer_exe
+    log_fail(name, f"makensis failed (rc={rc})")
+    if out.strip():
+        print(out[-2000:])
+    return None
+
+
+def build_combined_installer_user(parts):
+    """User-level NSIS installer for the real-Windows test node (non-admin).
+
+    Identical payload to build_combined_installer() but installs to
+    $LOCALAPPDATA\\CatchChallenger with RequestExecutionLevel user so it
+    runs without UAC elevation. Used only by run_on_real_windows()."""
+    name = "installer combined (user)"
+    stage = _stage_combined_payload(parts)
+    if not _verify_png_support(stage):
+        log_fail(name, f"combined payload lacks PNG support")
+        return None
+    _strip_test_only_plugins(stage)
+    _strip_debug_symbols(stage)
+    if MAKENSIS_BIN is None:
+        log_fail(name, "makensis not found; user installer skipped")
+        return None
+    out_dir = COMBINED_NSIS_DIR
+    os.makedirs(out_dir, exist_ok=True)
+    nsi_path      = os.path.join(out_dir, "catchchallenger-user.nsi")
+    installer_exe = os.path.join(out_dir, "catchchallenger-installer-user.exe")
+    nsi = (
+        'OutFile "' + installer_exe + '"\n'
+        'InstallDir "$LOCALAPPDATA\\CatchChallenger"\n'
+        'RequestExecutionLevel user\n'
+        'Section "MainSection" SEC01\n'
+        '  SetOutPath "$INSTDIR"\n'
+        '  File /r "' + stage + os.sep + '*.*"\n'
+        '  CreateDirectory "$SMPROGRAMS\\CatchChallenger"\n'
+        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger.lnk" '
+        '"$INSTDIR\\' + COMBINED_BIN_GL + '"\n'
+        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger CPU 800x600.lnk" '
+        '"$INSTDIR\\' + COMBINED_BIN_CPU + '"\n'
+        '  CreateShortCut "$SMPROGRAMS\\CatchChallenger\\CatchChallenger Server.lnk" '
+        '"$INSTDIR\\' + COMBINED_BIN_SRV + '"\n'
+        '  CreateShortCut "$DESKTOP\\CatchChallenger.lnk" '
+        '"$INSTDIR\\' + COMBINED_BIN_GL + '"\n'
+        'SectionEnd\n'
+    )
+    with open(nsi_path, "w") as f:
+        f.write(nsi)
+    log_info(f"makensis {os.path.basename(nsi_path)} (combined user-level)")
+    rc, out = run_cmd([MAKENSIS_BIN, "-V2", nsi_path],
+                      out_dir, timeout=COMPILE_TIMEOUT)
+    if rc == 0 and os.path.isfile(installer_exe):
+        log_pass(name, f"-> {os.path.relpath(installer_exe, ROOT)}")
         return installer_exe
     log_fail(name, f"makensis failed (rc={rc})")
     if out.strip():
@@ -2528,9 +2672,11 @@ def start_local_server(build_dir, bin_name=SERVER_BIN_NAME):
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         preexec_fn=process_helpers.setsid_and_pdeathsig)
     ready = threading.Event()
+    srv_lines = []
     def reader():
         for raw in iter(server_proc.stdout.readline, b""):
             line = raw.decode(errors="replace").rstrip("\n")
+            srv_lines.append(line)
             if "correctly bind:" in line:
                 ready.set()
     t = threading.Thread(target=reader, daemon=True)
@@ -2538,6 +2684,8 @@ def start_local_server(build_dir, bin_name=SERVER_BIN_NAME):
     if ready.wait(timeout=SERVER_READY_TIMEOUT):
         return server_proc
     log_fail("server start", "timeout waiting for 'correctly bind:'")
+    for l in srv_lines[-30:]:
+        print(f"  | {l}")
     stop_local_server()
     return None
 
@@ -2554,6 +2702,480 @@ def stop_local_server():
         except ProcessLookupError: pass
         server_proc.wait(timeout=5)
     server_proc = None
+
+
+# ── real Windows laptop (non-admin, user-level install) ─────────────────────
+WIN_REAL_HOST      = "192.168.158.110"
+WIN_REAL_USER      = "ASUS"
+WIN_REAL_PORT      = 22
+WIN_REAL_WORK_DIR  = "C:/cc-test"        # forward slashes work in PowerShell
+WIN_REAL_SERVER_PORT = "61920"           # distinct from E2E_PORT / SERVER_PORT
+
+_WIN_REAL_CASE_NAMES = (
+    "real-win uninstall pre-clean",
+    "real-win install user installer",
+    "real-win server-gui start",
+    "real-win qtopengl --autosolo",
+    "real-win qtcpu800x600 --autosolo",
+)
+
+_SSH_WIN = ["ssh",
+            "-o", "StrictHostKeyChecking=no",
+            "-o", "BatchMode=yes",
+            "-o", "ConnectTimeout=10",
+            # LogLevel=ERROR silences the OpenSSH post-quantum "store now,
+            # decrypt later" advisory the newer client prints to stderr
+            # against the node's older sshd — pure noise that otherwise
+            # pollutes every captured command output / failure detail.
+            "-o", "LogLevel=ERROR",
+            "-p", str(WIN_REAL_PORT),
+            f"{WIN_REAL_USER}@{WIN_REAL_HOST}"]
+
+
+def _ps_encoded(ps_cmd):
+    """argv tail to run ps_cmd via `powershell -EncodedCommand`.
+
+    The Windows node's default ssh shell is cmd.exe, which parses the
+    remote command line BEFORE PowerShell sees it — so any cmd metachar in
+    the script ('|', '(', ')', '&', '<', '>', '^', ';') is mangled or
+    eaten. Base64(UTF-16LE) contains only [A-Za-z0-9+/=], so cmd passes it
+    through verbatim and PowerShell decodes the original script intact."""
+    enc = base64.b64encode(ps_cmd.encode("utf-16-le")).decode("ascii")
+    return ["powershell", "-NonInteractive", "-EncodedCommand", enc]
+
+def _win_real_reachable():
+    """Return True when the real Windows node answers SSH within 10 s."""
+    try:
+        p = subprocess.run(
+            _SSH_WIN + ["echo ok"],
+            capture_output=True, timeout=15)
+        return p.returncode == 0 and b"ok" in p.stdout
+    except Exception:
+        return False
+
+
+def _win_ssh(ps_cmd, timeout=60):
+    """Run a PowerShell one-liner on the real Windows node via SSH.
+
+    Returns (rc, output_str). Wraps the command in powershell -Command
+    so the remote shell is PowerShell regardless of the sshd DefaultShell
+    setting."""
+    # $ProgressPreference=SilentlyContinue suppresses the "Preparando
+    # módulos para el primer uso" progress records PowerShell otherwise
+    # serialises as #< CLIXML noise onto stderr, polluting every captured
+    # output and failure detail.
+    args = _SSH_WIN + _ps_encoded(
+        "$ProgressPreference='SilentlyContinue'; " + ps_cmd)
+    try:
+        p = subprocess.run(args, capture_output=True, timeout=timeout)
+        out = p.stdout.decode(errors="replace") + p.stderr.decode(errors="replace")
+        return p.returncode, out
+    except subprocess.TimeoutExpired:
+        return -1, "TIMEOUT"
+    except Exception as exc:
+        return -1, str(exc)
+
+
+def _win_rsync(src, dst_rel, timeout=300):
+    """Copy a local file/dir to WIN_REAL_WORK_DIR/<dst_rel> on the Windows
+    node via scp.
+
+    rsync-over-ssh fails here because the stock Windows OpenSSH server has
+    no rsync.exe on PATH — the remote `rsync --server` exec dies with the
+    Windows "program or batch file not found" error and the client sees a
+    code-12 protocol abort. scp ships with OpenSSH itself (the same daemon
+    that already answered the SSH probe), so it always resolves.
+
+    dst_rel uses forward slashes (e.g. 'catchchallenger-installer-user.exe').
+    For a directory source the destination is wiped first so scp -r recreates
+    it from src's CONTENTS (cp -r semantics when the target does not pre-exist),
+    matching the old rsync 'src/ -> dst/' behaviour rather than nesting
+    src under dst/."""
+    src = src.rstrip("/")
+    dst_rel = dst_rel.rstrip("/")
+    remote_root = WIN_REAL_WORK_DIR.replace("\\", "/")          # C:/cc-test
+    remote_path = f"{remote_root}/{dst_rel}"
+    is_dir = os.path.isdir(src)
+    # Ensure the work dir exists; for a dir target wipe any stale copy so
+    # scp -r lands src's contents AS the target instead of inside it.
+    win_root = remote_root.replace("/", "\\")
+    win_dst = remote_path.replace("/", "\\")
+    # NOTE: the Windows node's default ssh shell is cmd.exe, and _win_ssh
+    # passes the PowerShell command unquoted, so any '|' is grabbed by cmd
+    # (which has no Out-Null) before PowerShell sees it. Use [void](...) to
+    # discard New-Item's output without a pipe.
+    prep = f"[void](New-Item -ItemType Directory -Force -Path '{win_root}')"
+    if is_dir:
+        prep += (f"; if (Test-Path '{win_dst}') "
+                 f"{{ Remove-Item -Recurse -Force '{win_dst}' }}")
+    rc_prep, out_prep = _win_ssh(prep, timeout=60)
+    if rc_prep != 0:
+        return rc_prep, "prep mkdir/rm failed: " + out_prep
+    args = ["scp", "-q",
+            "-o", "StrictHostKeyChecking=no",
+            "-o", "BatchMode=yes",
+            "-o", "ConnectTimeout=10",
+            "-o", "LogLevel=ERROR",
+            "-P", str(WIN_REAL_PORT)]
+    if is_dir:
+        args.append("-r")
+    args += [src, f"{WIN_REAL_USER}@{WIN_REAL_HOST}:{remote_path}"]
+    try:
+        p = subprocess.run(args, capture_output=True, timeout=timeout)
+        out = p.stdout.decode(errors="replace") + p.stderr.decode(errors="replace")
+        return p.returncode, out
+    except subprocess.TimeoutExpired:
+        return -1, "TIMEOUT"
+    except Exception as exc:
+        return -1, str(exc)
+
+
+_WIN_OFFSCREEN_DLL = (MXE_PREFIX + "/" + MXE_TARGET
+                      + "/qt6/plugins/platforms/qoffscreen.dll")
+
+
+def _win_upload_bat(name, body):
+    """Write a cmd batch `body` (CRLF) to C:\\cc-test\\<name> on the node.
+    Returns (rc, remote_win_path, out)."""
+    local = os.path.join(tempfile.gettempdir(), name)
+    with open(local, "w", newline="\r\n") as f:
+        f.write(body)
+    rc, out = _win_rsync(local, name, timeout=60)
+    win_path = (WIN_REAL_WORK_DIR + "/" + name).replace("/", "\\")
+    return rc, win_path, out
+
+
+def _win_read_remote(win_path):
+    """Return the full text of a remote file via SSH ('' if absent). The
+    path is literal (no $env), so single quotes are safe.
+
+    Opens with FileShare.ReadWrite so a file still held open by a writing
+    process (cmd '>' redirect of a running server) can still be read —
+    plain Get-Content -Raw fails with a sharing violation and returns ''."""
+    _rc, out = _win_ssh(
+        f"if (Test-Path '{win_path}') {{ "
+        f"$fs=[System.IO.File]::Open('{win_path}','Open','Read','ReadWrite'); "
+        "$sr=New-Object System.IO.StreamReader($fs); "
+        "Write-Output $sr.ReadToEnd(); $sr.Close(); $fs.Close() }",
+        timeout=30)
+    return out
+
+
+def _win_server_state(port, procname):
+    """One round-trip probe of a server launched on the node: returns
+    'OPEN' (TCP port accepts a local connection — bound & listening),
+    'ALIVE' (process running but port not yet open) or 'DEAD' (process
+    gone). Local 127.0.0.1 connect sidesteps the inbound firewall AND the
+    cmd '>' log-file write lock that blocks reading the log mid-run."""
+    _rc, out = _win_ssh(
+        "$open=$false; try { $c=New-Object Net.Sockets.TcpClient; "
+        f"$c.Connect('127.0.0.1',{port}); $open=$c.Connected; $c.Close() }} catch {{ }}; "
+        "if($open){ 'OPEN' } "
+        f"elseif(Get-Process {procname} -ErrorAction SilentlyContinue){{ 'ALIVE' }} "
+        "else { 'DEAD' }",
+        timeout=20)
+    if "OPEN" in out:
+        return "OPEN"
+    if "DEAD" in out:
+        return "DEAD"
+    return "ALIVE"
+
+
+def _win_gui_capture_bat(exe_basename, args, log_basename):
+    """Build a cmd batch that runs an installed GUI .exe with output
+    redirected to a file.
+
+    Why a batch + redirect (not Start-Process -RedirectStandardOutput or a
+    piped Popen): the MXE Qt binaries are GUI-subsystem (Subsystem 2). Over
+    a non-interactive SSH session their std::cout/std::cerr is NOT delivered
+    to a .NET/PowerShell-created pipe (0 bytes — wine bridged this, native
+    Windows does not). cmd's '>' redirection sets the child's std handles to
+    the file via STARTUPINFO, which the GUI child DOES inherit and write to.
+    QT_QPA_PLATFORM=offscreen + '-platform offscreen' because the SSH session
+    has no interactive desktop and the installer strips the offscreen plugin
+    (re-added next to the exe by the caller for the test)."""
+    arg_str = " ".join(args)
+    return (
+        "@echo off\r\n"
+        "set QT_QPA_PLATFORM=offscreen\r\n"
+        "cd /d \"%LOCALAPPDATA%\\CatchChallenger\"\r\n"
+        f"\"%LOCALAPPDATA%\\CatchChallenger\\{exe_basename}\" "
+        f"-platform offscreen {arg_str} > \"C:\\cc-test\\{log_basename}\" 2>&1\r\n"
+        f"echo EXITCODE=%ERRORLEVEL% >> \"C:\\cc-test\\{log_basename}\"\r\n"
+    )
+
+
+def run_on_real_windows(user_installer_exe, win_dp_src):
+    """Five sequential steps against a real Windows 10 laptop (non-admin).
+
+    Requires the real-Windows node reachable at WIN_REAL_HOST over SSH.
+    Skips all five steps (with SKIP log) when the node is not reachable.
+
+    Steps:
+      1. Wipe %LOCALAPPDATA%\\CatchChallenger and %APPDATA%\\CatchChallenger
+      2. rsync user-level installer + datapack, install silently (/S)
+      3. server-gui.exe --autostart on Windows, Linux client connects
+      4. catchchallenger.exe --autosolo (qtopengl) on Windows
+      5. catchchallengercpu800x600.exe --autosolo on Windows"""
+
+    skip_reason = None
+    if user_installer_exe is None or not os.path.isfile(user_installer_exe):
+        skip_reason = "user installer not built"
+    elif not _win_real_reachable():
+        skip_reason = f"node {WIN_REAL_HOST} not reachable"
+
+    if skip_reason is not None:
+        for n in _WIN_REAL_CASE_NAMES:
+            log_info(f"[SKIP] {n}: {skip_reason}")
+        return
+
+    # ── 1. uninstall / pre-clean ─────────────────────────────────────────────
+    name1 = _WIN_REAL_CASE_NAMES[0]
+    rc1, out1 = _win_ssh(
+        "Remove-Item -Recurse -Force "
+        "$env:LOCALAPPDATA\\CatchChallenger,"
+        "$env:APPDATA\\CatchChallenger "
+        "-ErrorAction SilentlyContinue; "
+        "if (Test-Path $env:LOCALAPPDATA\\CatchChallenger) "
+        "{ Write-Error 'still present'; exit 1 } else { exit 0 }",
+        timeout=30)
+    if rc1 == 0:
+        log_pass(name1)
+    else:
+        log_fail(name1, f"rc={rc1} {out1.strip()[-300:]}")
+
+    # ── 2. install from user-level NSIS installer ─────────────────────────────
+    name2 = _WIN_REAL_CASE_NAMES[1]
+    installer_basename = os.path.basename(user_installer_exe)
+    rc_sync, sync_out = _win_rsync(user_installer_exe, installer_basename,
+                                   timeout=120)
+    if rc_sync != 0:
+        log_fail(name2, f"rsync failed rc={rc_sync} {sync_out.strip()[-200:]}")
+        for n in _WIN_REAL_CASE_NAMES[2:]:
+            log_fail(n, "install failed; step skipped")
+        return
+
+    # Stage the datapack to C:\cc-test\datapack (scp), then it's copied
+    # NEXT TO THE EXE below — both the server-gui and the --autosolo solo
+    # clients require datapack/informations.xml beside the binary
+    # (server-gui ignores --datapack-dir; the installer ships no datapack).
+    if win_dp_src and os.path.isdir(win_dp_src):
+        _win_rsync(win_dp_src + "/", "datapack/", timeout=300)
+    # Offscreen platform plugin: the installer strips qoffscreen.dll for
+    # shipping, but the headless SSH session has no interactive desktop, so
+    # re-supply it next to the exe for the test (same plugin the wine path
+    # uses). Staged to C:\cc-test, copied into platforms\ during setup.
+    if os.path.isfile(_WIN_OFFSCREEN_DLL):
+        _win_rsync(_WIN_OFFSCREEN_DLL, "qoffscreen.dll", timeout=60)
+
+    win_work = WIN_REAL_WORK_DIR.replace("/", "\\")
+    # Start-Process -Wait so we block until the NSIS installer FINISHES
+    # extracting. The old `& installer /S` + poll-for-one-file pattern
+    # returned the instant catchchallenger.exe appeared — but NSIS is a
+    # GUI-subsystem process that `&` does NOT wait for, so extraction was
+    # still in flight and ~50 of the 70 staged DLLs (libgcc/libstdc++/
+    # libsqlite3/…) had not landed yet → the server then died at load
+    # with STATUS_DLL_NOT_FOUND (0xC0000135).
+    rc2, out2 = _win_ssh(
+        f"$p = Start-Process -FilePath '{win_work}\\{installer_basename}' "
+        "-ArgumentList '/S' -Wait -PassThru; "
+        "if (Test-Path $env:LOCALAPPDATA\\CatchChallenger\\" + COMBINED_BIN_GL + ") "
+        "{ Write-Output 'installed' } "
+        "else { Write-Error 'install incomplete (exe missing)'; exit 1 }",
+        timeout=180)
+    if rc2 == 0 and "installed" in out2:
+        log_pass(name2)
+    else:
+        log_fail(name2, f"rc={rc2} {out2.strip()[-400:]}")
+        for n in _WIN_REAL_CASE_NAMES[2:]:
+            log_fail(n, "install failed; step skipped")
+        return
+
+    # ── post-install setup: datapack + server-properties.xml + offscreen ──────
+    # All three land in the install dir so the server-gui (applicationDirPath
+    # lookup) and the solo clients (datapack beside exe) work headlessly.
+    srv_props = (
+        '<?xml version="1.0"?>\n'
+        '<configuration>\n'
+        f'    <server-port value="{WIN_REAL_SERVER_PORT}"/>\n'
+        '    <server-ip value=""/>\n'
+        '    <httpDatapackMirror value=""/>\n'
+        '    <max-players value="10"/>\n'
+        '    <pvp value="true"/>\n'
+        '    <automatic_account_creation value="true"/>\n'
+        '    <content>\n'
+        '        <mainDatapackCode value="official"/>\n'
+        '        <subDatapackCode value=""/>\n'
+        '    </content>\n'
+        '</configuration>\n'
+    )
+    setup_ps = (
+        "$d = \"$env:LOCALAPPDATA\\CatchChallenger\"\n"
+        "if (Test-Path 'C:\\cc-test\\datapack') { if (-not (Test-Path \"$d\\datapack\")) "
+        "{ Copy-Item -Recurse 'C:\\cc-test\\datapack' \"$d\\datapack\" } }\n"
+        "[void](New-Item -ItemType Directory -Force -Path \"$d\\platforms\")\n"
+        "if (Test-Path 'C:\\cc-test\\qoffscreen.dll') "
+        "{ Copy-Item 'C:\\cc-test\\qoffscreen.dll' \"$d\\platforms\\qoffscreen.dll\" -Force }\n"
+        "Set-Content -LiteralPath \"$d\\server-properties.xml\" -Encoding UTF8 -Value @'\n"
+        + srv_props +
+        "'@\n"
+        "Write-Output (\"datapack-ok=\" + (Test-Path \"$d\\datapack\\informations.xml\"))\n"
+    )
+    rc_setup, out_setup = _win_ssh(setup_ps, timeout=120)
+    if "datapack-ok=True" not in out_setup:
+        log_fail(_WIN_REAL_CASE_NAMES[2],
+                 f"post-install setup failed (datapack not staged): "
+                 f"{out_setup.strip()[-200:]}")
+        for n in _WIN_REAL_CASE_NAMES[3:]:
+            log_fail(n, "setup failed; step skipped")
+        return
+
+    # ── 3. server-gui --autostart binds its TCP port ─────────────────────────
+    # GUI-subsystem stdout is only capturable through a cmd '>' redirect (see
+    # _win_gui_capture_bat); the marker "Waiting connection on port" is the
+    # GUIServer DB-OK + listen-ready signal.
+    name3 = _WIN_REAL_CASE_NAMES[2]
+    srv_log = "srv-real.log"
+    _rc_b, srv_bat, _o = _win_upload_bat(
+        "run-srv-real.bat",
+        _win_gui_capture_bat(COMBINED_BIN_SRV, ["--autostart"], srv_log))
+    # Launch via WMI Win32_Process.Create, NOT Start-Process: Windows
+    # OpenSSH kills the whole process tree spawned by an SSH session when
+    # the channel closes, so a Start-Process'd server dies the instant this
+    # _win_ssh returns — before the first cross-session poll. Win32_Process
+    # .Create spawns a process owned by the WMI service, detached from the
+    # session, so it survives until we explicitly Stop-Process it by name.
+    _win_ssh("Get-Process catchchallenger-server-gui -ErrorAction "
+             "SilentlyContinue | Stop-Process -Force; "
+             f"Remove-Item 'C:\\cc-test\\{srv_log}' -ErrorAction SilentlyContinue; "
+             "[void](Invoke-CimMethod -ClassName Win32_Process -MethodName Create "
+             f"-Arguments @{{CommandLine='cmd /c {srv_bat}'}})",
+             timeout=30)
+    # Poll the captured log (read with FileShare.ReadWrite so the live
+    # cmd '>' write-lock doesn't block us). "Waiting connection on port" is
+    # emitted by GUIServer ONLY after the SQL backend connected AND the
+    # server datapack loaded — so it is positive proof that the SQLite
+    # plugin (sqldrivers/qsqlite.dll + libsqlite3-0.dll) actually ATTACHED,
+    # not merely that the TCP port bound (the bare "Listen *:port" line is
+    # printed BEFORE DB init and would pass a naive port probe even when the
+    # DB driver is missing).
+    srv_ready = False
+    srv_fail = False
+    srv_dead = False
+    srv_out = ""
+    deadline = time.time() + SERVER_READY_TIMEOUT
+    while time.time() < deadline:
+        srv_out = _win_read_remote(f"C:\\cc-test\\{srv_log}")
+        low = srv_out.lower()
+        if "waiting connection on port" in low:
+            srv_ready = True
+            break
+        if "driver not loaded" in low or "database initialization failed" in low:
+            srv_fail = True
+            break
+        if "exitcode=" in low:   # .bat appends this only after the exe exits
+            srv_dead = True
+            break
+        time.sleep(3)
+
+    def _stop_win_server():
+        _win_ssh("Get-Process catchchallenger-server-gui -ErrorAction "
+                 "SilentlyContinue | Stop-Process -Force", timeout=30)
+
+    if not srv_ready:
+        _stop_win_server()
+        if srv_fail:
+            sql_line = next((l for l in srv_out.splitlines()
+                             if "driver not loaded" in l.lower()
+                             or "database initialization failed" in l.lower()), "")
+            log_fail(name3, f"SQL plugin NOT attached: {sql_line.strip()}")
+        elif srv_dead:
+            log_fail(name3, "server-gui exited before it began listening")
+        else:
+            log_fail(name3, "server-gui never printed 'Waiting connection "
+                            "on port' within timeout")
+        for l in srv_out.splitlines()[-20:]:
+            print(f"  | {l}")
+        for n in _WIN_REAL_CASE_NAMES[3:]:
+            log_fail(n, "server not running; step skipped")
+        return
+
+    # SQL is proven attached by the ready marker; also confirm the TCP port
+    # actually accepts a local connection, and surface the concrete SQL line.
+    port_ok = (_win_server_state(WIN_REAL_SERVER_PORT,
+                                 "catchchallenger-server-gui") == "OPEN")
+    sql_evidence = next((l.strip() for l in srv_out.splitlines()
+                         if "connected to sqlite" in l.lower()
+                         or "loaded the server sql datapack" in l.lower()), "")
+    # The server is no longer needed for the solo-client steps (--autosolo
+    # runs its own embedded server); stop it so it can't hold the port.
+    _stop_win_server()
+    if not port_ok:
+        log_fail(name3, "SQL plugin attached but TCP port not accepting")
+        for n in _WIN_REAL_CASE_NAMES[3:]:
+            log_fail(n, "server not listening; step skipped")
+        return
+    log_pass(name3, f"SQL plugin attached + listening on "
+                    f"127.0.0.1:{WIN_REAL_SERVER_PORT}"
+                    + (f" — {sql_evidence}" if sql_evidence else ""))
+
+    def _check_jpeg(out, label):
+        """Return (jpeg_ok, detail) by parsing 'ImageFormats:...' from output.
+
+        BaseWindow.cpp prints 'ImageFormats:<comma-list>' at startup.
+        If the line is absent the plugin loading step ran but the binary
+        predates the print — treat as unknown (warn, don't fail)."""
+        for line in out.splitlines():
+            if line.startswith("ImageFormats:"):
+                fmts = line[len("ImageFormats:"):].lower().split(",")
+                if "jpeg" in fmts or "jpg" in fmts:
+                    return True, "jpeg in " + ",".join(fmts)
+                return False, "jpeg MISSING from " + ",".join(fmts)
+        return None, "ImageFormats line not found in output (old binary?)"
+
+    # ── 4 & 5. solo clients (--autosolo) on Windows ──────────────────────────
+    # Each runs its own embedded server; success = the map-displayed marker
+    # reaches the cmd-redirected log within the timeout. Output capture uses
+    # the same GUI-subsystem cmd '>' redirect as the server (a piped Popen /
+    # PowerShell redirect gets 0 bytes from a GUI-subsystem .exe over SSH).
+    def _run_solo_client(case_name, exe_basename, log_basename):
+        body = _win_gui_capture_bat(
+            exe_basename,
+            ["--autosolo", "--closewhenonmap", "--maincode", "test"],
+            log_basename)
+        _rc, bat_path, _o = _win_upload_bat(
+            "run-" + log_basename.replace(".log", "") + ".bat", body)
+        timeout_ms = WINE_TIMEOUT * 2 * 1000
+        _win_ssh(
+            f"Remove-Item 'C:\\cc-test\\{log_basename}' -ErrorAction SilentlyContinue; "
+            f"$p = Start-Process -FilePath '{bat_path}' -WindowStyle Hidden -PassThru; "
+            f"if (-not $p.WaitForExit({timeout_ms})) {{ "
+            "  Get-Process catchchallenger,catchchallengercpu800x600 -ErrorAction "
+            "SilentlyContinue | Stop-Process -Force; "
+            f"  Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }}",
+            timeout=WINE_TIMEOUT * 2 + 60)
+        return _win_read_remote(f"C:\\cc-test\\{log_basename}")
+
+    name4 = _WIN_REAL_CASE_NAMES[3]
+    out4 = _run_solo_client(name4, COMBINED_BIN_GL, "cli-gl.log")
+    on_map4 = "MapVisualiserPlayer::mapDisplayedSlot()" in out4
+    if on_map4:
+        log_pass(name4)
+    else:
+        log_fail(name4, f"on_map={on_map4} {out4.strip()[-400:]}")
+
+    name5 = _WIN_REAL_CASE_NAMES[4]
+    out5 = _run_solo_client(name5, COMBINED_BIN_CPU, "cli-cpu.log")
+    on_map5 = "MapVisualiserPlayer::mapDisplayedSlot()" in out5
+    jpeg_ok, jpeg_detail = _check_jpeg(out5, "qtcpu800x600")
+    if on_map5 and jpeg_ok is not False:
+        detail5 = jpeg_detail if jpeg_ok else f"WARN: {jpeg_detail}"
+        log_pass(name5, detail5)
+    elif on_map5 and jpeg_ok is False:
+        log_fail(name5, f"reached map but JPEG plugin missing: {jpeg_detail}")
+    else:
+        log_fail(name5, f"on_map={on_map5} jpeg={jpeg_detail} "
+                        f"{out5.strip()[-400:]}")
 
 
 def cleanup(*_args):
@@ -2604,7 +3226,8 @@ def main():
                              "sign exe qtcpu800x600",
                              "installer combined", "msi combined",
                              "sign installer combined"]
-                            + list(_E2E_CASE_NAMES),
+                            + list(_E2E_CASE_NAMES)
+                            + list(_WIN_REAL_CASE_NAMES),
             "qtopengl":     ["compile qtopengl (mxe-x86_64)",
                              "wine run qtopengl --autosolo",
                              "wine run qtopengl",
@@ -2613,13 +3236,15 @@ def main():
                              "sign exe qtopengl",
                              "installer combined", "msi combined",
                              "sign installer combined"]
-                            + list(_E2E_CASE_NAMES),
+                            + list(_E2E_CASE_NAMES)
+                            + list(_WIN_REAL_CASE_NAMES),
             # The e2e steps install + run all three binaries, so a
             # queued e2e case must force a server-gui recompile too.
             "server-gui":   ["compile server-gui (mxe-x86_64)",
                              "installer combined", "msi combined",
                              "sign installer combined"]
-                            + list(_E2E_CASE_NAMES),
+                            + list(_E2E_CASE_NAMES)
+                            + list(_WIN_REAL_CASE_NAMES),
         }
         idx = 0
         names = dependents[binary]
@@ -2748,103 +3373,139 @@ def main():
     # (DLL-allowlist filtered, autogen/etc stripped) — call it once
     # per binary, then _stage_combined_payload merges them.
     if cpu_exe is not None and gl_exe is not None and srv_exe is not None:
+        # _stage_combined_part rebuilds a binary whose tmpfs build dir was
+        # swept by a concurrent run's cleanup-on-exit, and returns None only
+        # if it still can't be produced — so a vanished dir no longer aborts
+        # the whole script with an unhandled FileNotFoundError.
         parts = [
-            {"stage": _stage_install_payload(os.path.dirname(gl_exe)),
-             "exe_src": WIN_EXE_NAME, "exe_dst": COMBINED_BIN_GL},
-            {"stage": _stage_install_payload(os.path.dirname(cpu_exe)),
-             "exe_src": WIN_EXE_NAME, "exe_dst": COMBINED_BIN_CPU},
-            {"stage": _stage_install_payload(os.path.dirname(srv_exe)),
-             "exe_src": os.path.basename(srv_exe),
-             "exe_dst": COMBINED_BIN_SRV},
+            _stage_combined_part(gl_exe, CLIENT_GL_PRO, CLIENT_GL_BUILD_WIN,
+                                 "qtopengl", WIN_EXE_NAME, COMBINED_BIN_GL),
+            _stage_combined_part(cpu_exe, CLIENT_CPU_PRO, CLIENT_CPU_BUILD_WIN,
+                                 "qtcpu800x600", WIN_EXE_NAME, COMBINED_BIN_CPU),
+            _stage_combined_part(srv_exe, SERVER_GUI_PRO, SERVER_GUI_BUILD_WIN,
+                                 "server-gui", os.path.basename(srv_exe),
+                                 COMBINED_BIN_SRV),
         ]
-        # Pre-installer .exe guard — walk every .exe that will land
-        # inside the NSIS installer / .msi and fail when ANY of them
-        # is >= 80 MiB. A release-mode mingw .exe of the qt clients is
-        # ~30-50 MiB; >= 80 MiB almost always means a Debug build
-        # leaked -g symbols through. Aborting before the packaging
-        # step keeps the bad payload out of the shipped artefacts and
-        # surfaces the root cause (wrong CMAKE_BUILD_TYPE).
-        oversized = []
-        debug_syms = []
-        # A Release mingw .exe still carries a small (~100 KiB)
-        # .debug_info section originating from the statically-linked
-        # MXE runtime libs (libgcc / libstdc++ / libwinpthread shipped
-        # by MXE with DWARF retained). A genuine `-g` build of the
-        # CatchChallenger sources produces a .debug_info of tens to
-        # hundreds of MiB. 1 MiB sits well above the runtime-static
-        # floor and well below any plausible `-g`-compiled output, so
-        # use it as the discriminator: > 1 MiB ⇒ compiled with -g.
-        _DEBUG_INFO_BYTES_MAX = 1 * 1024 * 1024
-        for p in parts:
-            stage = p["stage"]
-            if not stage or not os.path.isdir(stage):
-                continue
-            for root_dir, _dirs, files in os.walk(stage):
-                for fn in files:
-                    if not fn.lower().endswith(".exe"):
-                        continue
-                    fp = os.path.join(root_dir, fn)
-                    try:
-                        sz = os.path.getsize(fp)
-                    except OSError:
-                        continue
-                    if sz >= 80 * 1024 * 1024:
-                        oversized.append((fp, sz))
-                    if _OBJDUMP:
-                        try:
-                            res = subprocess.run(
-                                [_OBJDUMP, "-h", fp],
-                                capture_output=True, text=True,
-                                timeout=30)
-                        except (OSError, subprocess.SubprocessError):
-                            continue
-                        debug_info_size = 0
-                        # objdump -h header line format:
-                        #   "  <idx> <name> <size-hex> <vma> <lma> <fileoff> <align>"
-                        for line in res.stdout.splitlines():
-                            cols = line.split()
-                            if len(cols) < 4:
-                                continue
-                            if cols[1] == ".debug_info":
-                                try:
-                                    debug_info_size = int(cols[2], 16)
-                                except ValueError:
-                                    debug_info_size = 0
-                                break
-                        if debug_info_size > _DEBUG_INFO_BYTES_MAX:
-                            debug_syms.append((fp, debug_info_size))
-        if oversized or debug_syms:
-            details = []
-            if oversized:
-                details.append("oversized .exe (>=80 MiB): " + "; ".join(
-                    f"{os.path.relpath(fp, ROOT)} = {sz/(1024*1024):.1f} MiB"
-                    for fp, sz in oversized))
-            if debug_syms:
-                details.append("debug symbols (compiled with -g): " + "; ".join(
-                    f"{os.path.relpath(fp, ROOT)} .debug_info={dsz/(1024*1024):.1f} MiB"
-                    for fp, dsz in debug_syms))
-            detail = " | ".join(details) + " — rebuild Release"
+        if any(p is None for p in parts):
+            detail = ("a Windows binary build dir was missing/incomplete at "
+                      "packaging time and could not be rebuilt (concurrent "
+                      "cleanup of the shared tmpfs build dir?) — re-run")
             log_fail("installer combined", detail)
             log_fail("msi combined", detail)
+            for _n in list(_E2E_CASE_NAMES) + list(_WIN_REAL_CASE_NAMES):
+                if should_run(_n, failed_cases):
+                    log_fail(_n, "combined payload unavailable; step skipped")
         else:
-            combined_installer = None
-            if should_run("installer combined", failed_cases):
-                combined_installer = build_combined_installer(parts)
-            if combined_installer and combined_installer.endswith(".exe") \
-               and should_run("sign installer combined", failed_cases):
-                sign_authenticode(combined_installer, "combined", "installer")
-            if should_run("msi combined", failed_cases):
-                build_combined_msi(parts)
-            # Installed-payload end-to-end. On a normal full run the
-            # installer was just built above; on a --onlyfailed re-run
-            # that queues only an e2e case (but not "installer
-            # combined") combined_installer is still None — rebuild it
-            # here so the 5 steps have something to install.
-            if any(should_run(n, failed_cases) for n in _E2E_CASE_NAMES):
-                if combined_installer is None:
+            # Pre-installer .exe guard — walk every .exe that will land
+            # inside the NSIS installer / .msi and fail when ANY of them
+            # is >= 80 MiB. A release-mode mingw .exe of the qt clients is
+            # ~30-50 MiB; >= 80 MiB almost always means a Debug build
+            # leaked -g symbols through. Aborting before the packaging
+            # step keeps the bad payload out of the shipped artefacts and
+            # surfaces the root cause (wrong CMAKE_BUILD_TYPE).
+            oversized = []
+            debug_syms = []
+            # A Release mingw .exe still carries a small (~100 KiB)
+            # .debug_info section originating from the statically-linked
+            # MXE runtime libs (libgcc / libstdc++ / libwinpthread shipped
+            # by MXE with DWARF retained). A genuine `-g` build of the
+            # CatchChallenger sources produces a .debug_info of tens to
+            # hundreds of MiB. 1 MiB sits well above the runtime-static
+            # floor and well below any plausible `-g`-compiled output, so
+            # use it as the discriminator: > 1 MiB ⇒ compiled with -g.
+            _DEBUG_INFO_BYTES_MAX = 1 * 1024 * 1024
+            for p in parts:
+                stage = p["stage"]
+                if not stage or not os.path.isdir(stage):
+                    continue
+                for root_dir, _dirs, files in os.walk(stage):
+                    for fn in files:
+                        if not fn.lower().endswith(".exe"):
+                            continue
+                        fp = os.path.join(root_dir, fn)
+                        try:
+                            sz = os.path.getsize(fp)
+                        except OSError:
+                            continue
+                        if sz >= 80 * 1024 * 1024:
+                            oversized.append((fp, sz))
+                        if _OBJDUMP:
+                            try:
+                                res = subprocess.run(
+                                    [_OBJDUMP, "-h", fp],
+                                    capture_output=True, text=True,
+                                    timeout=30)
+                            except (OSError, subprocess.SubprocessError):
+                                continue
+                            debug_info_size = 0
+                            # objdump -h header line format:
+                            #   "  <idx> <name> <size-hex> <vma> <lma> <fileoff> <align>"
+                            for line in res.stdout.splitlines():
+                                cols = line.split()
+                                if len(cols) < 4:
+                                    continue
+                                if cols[1] == ".debug_info":
+                                    try:
+                                        debug_info_size = int(cols[2], 16)
+                                    except ValueError:
+                                        debug_info_size = 0
+                                    break
+                            if debug_info_size > _DEBUG_INFO_BYTES_MAX:
+                                debug_syms.append((fp, debug_info_size))
+            if oversized or debug_syms:
+                details = []
+                if oversized:
+                    details.append("oversized .exe (>=80 MiB): " + "; ".join(
+                        f"{os.path.relpath(fp, ROOT)} = {sz/(1024*1024):.1f} MiB"
+                        for fp, sz in oversized))
+                if debug_syms:
+                    details.append("debug symbols (compiled with -g): " + "; ".join(
+                        f"{os.path.relpath(fp, ROOT)} .debug_info={dsz/(1024*1024):.1f} MiB"
+                        for fp, dsz in debug_syms))
+                detail = " | ".join(details) + " — rebuild Release"
+                log_fail("installer combined", detail)
+                log_fail("msi combined", detail)
+            else:
+                combined_installer = None
+                if should_run("installer combined", failed_cases):
                     combined_installer = build_combined_installer(parts)
-                run_installed_payload_e2e(combined_installer,
-                                          win_dp_src, win_mc)
+                if combined_installer and combined_installer.endswith(".exe") \
+                   and should_run("sign installer combined", failed_cases):
+                    sign_authenticode(combined_installer, "combined", "installer")
+                    cleanup_helpers.promote_artifact(combined_installer,
+                                                     "catchchallenger-installer.exe")
+                # Publish the freshly-built (and, when signing ran, signed)
+                # combined installer to the world-readable drop the website's
+                # upload pipeline picks up. Done after sign so the published
+                # .exe carries the Authenticode blob. Best-effort: a missing
+                # /mnt/data/world must not fail the build.
+                if combined_installer and os.path.isfile(combined_installer):
+                    world_installer = "/mnt/data/world/catchchallenger-installer.exe"
+                    try:
+                        os.makedirs(os.path.dirname(world_installer), exist_ok=True)
+                        shutil.copy2(combined_installer, world_installer)
+                        log_info(f"published installer -> {world_installer}")
+                    except OSError as _world_exc:
+                        log_info(f"WARNING: could not publish installer to "
+                                 f"{world_installer}: {_world_exc}")
+                if should_run("msi combined", failed_cases):
+                    build_combined_msi(parts)
+                # Installed-payload end-to-end. On a normal full run the
+                # installer was just built above; on a --onlyfailed re-run
+                # that queues only an e2e case (but not "installer
+                # combined") combined_installer is still None — rebuild it
+                # here so the 5 steps have something to install.
+                if any(should_run(n, failed_cases) for n in _E2E_CASE_NAMES):
+                    if combined_installer is None:
+                        combined_installer = build_combined_installer(parts)
+                    run_installed_payload_e2e(combined_installer,
+                                              win_dp_src, win_mc)
+                # Real Windows laptop (non-admin, user-level install).
+                # build_combined_installer_user() reuses the same staged
+                # payload so it adds only the NSIS pass (~seconds).
+                if any(should_run(n, failed_cases) for n in _WIN_REAL_CASE_NAMES):
+                    user_installer = build_combined_installer_user(parts)
+                    run_on_real_windows(user_installer, win_dp_src)
     else:
         # Missing one of the three binaries — emit a single FAIL row
         # so failed.json reflects the gap and --onlyfailed can re-run
@@ -2866,6 +3527,9 @@ def main():
         # steps still report (as FAIL) when a binary is missing rather
         # than vanishing from the run.
         for _n in _E2E_CASE_NAMES:
+            if should_run(_n, failed_cases):
+                log_fail(_n, f"missing binaries: {','.join(missing)}")
+        for _n in _WIN_REAL_CASE_NAMES:
             if should_run(_n, failed_cases):
                 log_fail(_n, f"missing binaries: {','.join(missing)}")
 
@@ -2914,13 +3578,26 @@ def main():
                     src_dp = DATAPACK_SRC if "DATAPACK_SRC" in globals() else None
                 if src_dp and os.path.isdir(src_dp):
                     staged = _ds.staged_local(src_dp)
+                    # stage_datapacks.py stages once at all.sh startup, but
+                    # when this script runs in isolation (or the tmpfs cache
+                    # was wiped) the staged dir is missing and the symlink
+                    # would dangle — the server then can't find ./datapack/,
+                    # never binds, and burns the full SERVER_READY_TIMEOUT.
+                    # Stage on demand (local only); fall back to the source.
+                    if not (os.path.isdir(staged) and os.listdir(staged)):
+                        log_info(f"staged datapack missing at {staged}; "
+                                 "staging on demand")
+                        _ds.stage_all([src_dp], exec_nodes=None,
+                                      log_info=log_info)
+                    target_dp = staged if (os.path.isdir(staged)
+                                           and os.listdir(staged)) else src_dp
                     dst_dp = os.path.join(SERVER_BUILD, "datapack")
                     if os.path.islink(dst_dp) or os.path.isfile(dst_dp):
                         os.remove(dst_dp)
                     elif os.path.isdir(dst_dp):
                         shutil.rmtree(dst_dp)
-                    os.symlink(staged, dst_dp)
-                    log_info(f"staged datapack {dst_dp} -> {staged}")
+                    os.symlink(target_dp, dst_dp)
+                    log_info(f"staged datapack {dst_dp} -> {target_dp}")
             except Exception as e:
                 log_info(f"datapack stage non-fatal: {e}")
             # Pin server-port + mainDatapackCode so the wine clients

@@ -20,7 +20,15 @@
 #   --sanitize asan|lsan|msan      forwarded to each testing*.py
 #   --valgrind memcheck|helgrind|drd  forwarded to each testing*.py
 #                                  (per-test timeouts are scaled 10x there)
-# --sanitize and --valgrind are mutually exclusive.
+#   --profile [callgrind|massif|perf]  run every test under a profiler
+#                                  (default callgrind). Each launched
+#                                  binary is wrapped; callgrind.out.* /
+#                                  massif.out.* / perf.data.* land under
+#                                  /mnt/data/perso/tmpfs/profile/ and are
+#                                  preserved across runs. Local only;
+#                                  per-test timeouts scaled (callgrind 30x,
+#                                  massif 20x, perf 2x).
+# --sanitize, --valgrind and --profile are mutually exclusive.
 #
 # Remote-node filter:
 #   --node <label>                 only run remote tests on the named node;
@@ -110,6 +118,17 @@ while [ $i -lt ${#ARGS[@]} ]; do
             DIAG_ARGS+=("$a" "$n")
             i=$((i+2))
             ;;
+        --profile)
+            # Optional value (callgrind|massif|perf); defaults to callgrind.
+            # Drops profile artefacts under /mnt/data/perso/tmpfs/profile/.
+            n="${ARGS[$((i+1))]}"
+            case "$n" in
+                callgrind|massif|perf)
+                    DIAG_ARGS+=("--profile" "$n"); i=$((i+2)) ;;
+                *)
+                    DIAG_ARGS+=("--profile" "callgrind"); i=$((i+1)) ;;
+            esac
+            ;;
         --node)
             n="${ARGS[$((i+1))]}"
             if [ -z "$n" ]; then
@@ -146,17 +165,22 @@ find "$TMPFS_ROOT/" -mindepth 1 \
      -not -path "$CCACHE_ROOT*" \
      -not -path "$TIME_JSON" \
      -not -path "$MONITOR_JSON" \
+     -not -path "$TMPFS_ROOT/profile*" \
      "${EXTRA_KEEP[@]}" \
      -type f -delete 2>/dev/null
 EXTRA_KEEP_NAME=()
 if [ "$ONLY_FAILED" = "1" ]; then
     EXTRA_KEEP_NAME+=(-not -name "$(basename "$FAILED_JSON")")
 fi
+# Keep profile/ across runs too: --profile artefacts (callgrind.out.* /
+# massif.out.* / perf.data.*) accumulate there with unique names, so the
+# operator can still inspect a prior profile run after a later plain run.
 find "$TMPFS_ROOT/" -mindepth 1 -maxdepth 1 \
      -not -name "$(basename "$LOCAL_CACHE_ROOT")" \
      -not -name "$(basename "$CCACHE_ROOT")" \
      -not -name "$(basename "$TIME_JSON")" \
      -not -name "$(basename "$MONITOR_JSON")" \
+     -not -name "profile" \
      "${EXTRA_KEEP_NAME[@]}" \
      -exec rm -rf {} + 2>/dev/null
 
@@ -266,12 +290,14 @@ fi
 # friendly preflight for the orchestrator.
 SAW_S=0
 SAW_V=0
+SAW_P=0
 for a in "${DIAG_ARGS[@]}"; do
     [ "$a" = "--sanitize" ] && SAW_S=1
     [ "$a" = "--valgrind" ] && SAW_V=1
+    [ "$a" = "--profile" ] && SAW_P=1
 done
-if [ "$SAW_S" = "1" ] && [ "$SAW_V" = "1" ]; then
-    echo "error: --sanitize and --valgrind are mutually exclusive" >&2
+if [ $((SAW_S + SAW_V + SAW_P)) -gt 1 ]; then
+    echo "error: --sanitize / --valgrind / --profile are mutually exclusive" >&2
     exit 2
 fi
 
@@ -336,6 +362,7 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingmap2png.py]=15m
     [testingmap4client.py]=30m
     [testingmapmanagement.py]=10m
+    [testingpathfinding.py]=10m
     [testingmulti.py]=30m
     [testingqtserver.py]=15m
     [testingremote.py]=45m
@@ -430,6 +457,7 @@ run_test testingmap4client.py
 run_test testingqtserver.py
 run_test testingfight.py
 run_test testingmapmanagement.py
+run_test testingpathfinding.py
 run_test testingclient.py
 run_test testingbots.py
 run_test testingserver.py
