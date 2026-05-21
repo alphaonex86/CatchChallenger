@@ -1284,6 +1284,18 @@ build (gated mutually-exclusive in `general/CCCommon.cmake`).
   - `general/CCCommon.cmake`
   - `server/cli/EventLoop.cpp`
 
+### `CATCHCHALLENGER_IO_URING_SQPOLL`
+- **Scope:** server-only — server: cli
+- **Description:** Opt-in flag to add `IORING_SETUP_SQPOLL` to the io_uring ring (`sq_thread_idle=2000 ms`). The kernel spawns a dedicated poll thread that spins on the submission queue, eliminating syscalls on the submit path. **Do NOT enable on single-core CPUs** (i486, Geode LX800, Pentium III Tualatin, MIPS2, any single-core RISC-V …): the kernel SQPOLL thread and the server thread fight for the single core, destroying the L2 cache on every context switch and degrading throughput. Only profitable on multi-core hosts where the poll thread can be pinned to an idle core. Off by default.
+- **Used in:**
+  - `server/cli/EventLoop.cpp`
+
+### `CATCHCHALLENGER_IO_URING_IOPOLL`
+- **Scope:** server-only — server: cli
+- **Description:** Opt-in flag to add `IORING_SETUP_IOPOLL` to the io_uring ring. In IOPOLL mode the kernel busy-polls hardware completion queues instead of waiting for interrupts, which removes the per-operation interrupt cost on storage paths (O_DIRECT + NVMe / fast block device). Safe on single-core CPUs: no extra thread is spawned. Network sockets are always interrupt-driven regardless of this flag; the gain is on FILE_DB or log-write paths that use `O_DIRECT`. Off by default.
+- **Used in:**
+  - `server/cli/EventLoop.cpp`
+
 
 ## Qt build options
 

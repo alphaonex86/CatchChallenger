@@ -265,6 +265,21 @@ bool EventLoop::init()
     //dictionary_map query" because the PG socket's CQE never arrives.
     //SINGLE_ISSUER alone is the safe win (skips kernel SQ-side lock).
     params.flags=IORING_SETUP_SINGLE_ISSUER;
+    //CATCHCHALLENGER_IO_URING_SQPOLL: opt-in only — SQPOLL spins a kernel
+    //thread that competes with the server thread on a single CPU core
+    //(i486, Geode, Pentium III Tualatin, MIPS2 …).  Multi-core hosts only.
+#ifdef CATCHCHALLENGER_IO_URING_SQPOLL
+    params.flags|=IORING_SETUP_SQPOLL;
+    params.sq_thread_idle=2000;
+#endif
+    //CATCHCHALLENGER_IO_URING_IOPOLL: kernel busy-polls CQEs instead of
+    //waiting for interrupts.  Reduces per-packet interrupt cost on storage
+    //paths (O_DIRECT, NVMe); safe on single-core (no extra thread spawned).
+    //Effective only when O_DIRECT file ops go through the ring; network
+    //sockets ignore it silently.
+#ifdef CATCHCHALLENGER_IO_URING_IOPOLL
+    params.flags|=IORING_SETUP_IOPOLL;
+#endif
     int qret=io_uring_queue_init_params(4096,&g_uring->ring,&params);
     if(qret<0)
     {
