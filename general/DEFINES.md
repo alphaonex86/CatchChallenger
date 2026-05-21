@@ -1296,6 +1296,12 @@ build (gated mutually-exclusive in `general/CCCommon.cmake`).
 - **Used in:**
   - `server/cli/EventLoop.cpp`
 
+### `CATCHCHALLENGER_IO_URING_COOP_TASKRUN`
+- **Scope:** server-only — server: cli
+- **Description:** Opt-in flag to add `IORING_SETUP_COOP_TASKRUN` to the io_uring ring (kernel >= 5.19). Prevents the kernel from sending a signal to interrupt userspace when task work is pending; instead task work drains only on the next `io_uring_enter()` call. Lighter than `IORING_SETUP_DEFER_TASKRUN` (does not require `IORING_ENTER_GETEVENTS` on every enter, so it avoids the CQE-not-surfacing hang that forced DEFER_TASKRUN off). Safe on single-core CPUs: no extra thread is spawned. Unsupported kernels fall back gracefully via the existing `EINVAL` retry in `EventLoop::init`. Off by default.
+- **Used in:**
+  - `server/cli/EventLoop.cpp`
+
 
 ## Qt build options
 
