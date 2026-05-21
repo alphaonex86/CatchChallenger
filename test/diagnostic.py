@@ -36,14 +36,24 @@ Public API used by testing*.py:
 import argparse
 import os
 import sys
+import time
 
 
 SANITIZE_TOOLS = ("asan", "lsan", "msan")
 VALGRIND_TOOLS = ("memcheck", "helgrind", "drd")
+PROFILE_TOOLS = ("callgrind", "massif", "perf")
+
+# Where --profile drops callgrind.out.* / massif.out.* / perf.data.* files.
+# Lives on tmpfs so the artefacts survive the run; all.sh preserves this dir
+# from its pre-run wipe so the operator can inspect the previous profile run.
+PROFILE_DIR = "/mnt/data/perso/tmpfs/profile"
+
+_profile_seq = 0
 
 
 def parse_diag_args(argv=None):
-    """Parse --sanitize / --valgrind from argv and return a config dict.
+    """Parse --sanitize / --valgrind / --profile from argv and return a
+    config dict.
 
     Returns {} for the regular (non-diagnostic) run. Calls sys.exit on
     invalid combinations / values, mirroring argparse behaviour.
@@ -53,21 +63,29 @@ def parse_diag_args(argv=None):
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--sanitize", choices=SANITIZE_TOOLS, default=None)
     parser.add_argument("--valgrind", choices=VALGRIND_TOOLS, default=None)
+    parser.add_argument("--profile", choices=PROFILE_TOOLS, nargs="?",
+                        const="callgrind", default=None)
     args, _rest = parser.parse_known_args(argv)
-    if args.sanitize and args.valgrind:
+    chosen = [m for m in ((args.sanitize and "sanitize"),
+                          (args.valgrind and "valgrind"),
+                          (args.profile and "profile")) if m]
+    if len(chosen) > 1:
         sys.stderr.write(
-            "error: --sanitize and --valgrind are mutually exclusive "
-            "(sanitizer instruments the binary; valgrind virtualises it)\n")
+            "error: --sanitize / --valgrind / --profile are mutually "
+            "exclusive (sanitizer instruments the binary; valgrind "
+            "virtualises it; profile measures the unmodified binary)\n")
         sys.exit(2)
     if args.sanitize:
         return {"mode": "sanitize", "tool": args.sanitize}
     if args.valgrind:
         return {"mode": "valgrind", "tool": args.valgrind}
+    if args.profile:
+        return {"mode": "profile", "tool": args.profile}
     return {}
 
 
 def is_active(diag):
-    return bool(diag) and diag.get("mode") in ("sanitize", "valgrind")
+    return bool(diag) and diag.get("mode") in ("sanitize", "valgrind", "profile")
 
 
 def is_sanitize(diag):
@@ -78,10 +96,23 @@ def is_valgrind(diag):
     return bool(diag) and diag.get("mode") == "valgrind"
 
 
+def is_profile(diag):
+    return bool(diag) and diag.get("mode") == "profile"
+
+
 def timeout_mult(diag):
-    """Valgrind imposes 10-50x slowdown — scale every per-test timeout 10x."""
+    """Slowdown factor used to scale every per-test timeout.
+    Valgrind/callgrind virtualise the CPU (10-50x); massif is allocator-
+    instrumented (~20x); perf samples with minimal overhead (~2x)."""
     if is_valgrind(diag):
         return 10
+    if is_profile(diag):
+        tool = diag.get("tool")
+        if tool == "callgrind":
+            return 30
+        if tool == "massif":
+            return 20
+        return 2  # perf
     return 1
 
 
@@ -98,6 +129,11 @@ def build_dir_suffix(diag):
         return "-sanitize-" + diag["tool"]
     if is_valgrind(diag):
         return "-valgrind-" + diag["tool"]
+    if is_profile(diag):
+        # One build shared across all profile tools — they only need the
+        # -g symbols already present in the regular debug build, so the
+        # suffix is tool-independent to avoid 3 rebuilds for 3 tools.
+        return "-profile"
     return ""
 
 
@@ -108,6 +144,8 @@ def compiler_name(diag):
     if is_sanitize(diag):
         return "clang"
     if is_valgrind(diag):
+        return "gcc"
+    if is_profile(diag):
         return "gcc"
     return None
 
@@ -203,15 +241,49 @@ def runtime_env(diag):
     return env
 
 
+def _profile_outfile(tool, ext):
+    """Unique path under PROFILE_DIR for one profiled launch. perf can't
+    expand a pid template in -o, so the uniqueness is minted here from a
+    monotonic sequence + millisecond clock; callgrind/massif use valgrind's
+    own %p pid expansion appended to this stem."""
+    global _profile_seq
+    _profile_seq += 1
+    os.makedirs(PROFILE_DIR, exist_ok=True)
+    stamp = int(time.time() * 1000)
+    return os.path.join(PROFILE_DIR, f"{ext}.{stamp}.{_profile_seq}")
+
+
 def runtime_wrapper(diag):
-    """Argv prefix to wrap a binary with valgrind. [] when not in valgrind
-    mode (sanitizer-instrumented binaries run unwrapped)."""
+    """Argv prefix to wrap a binary with valgrind (diagnostic) or a profiler
+    (--profile). [] when not in a wrapping mode (sanitizer-instrumented
+    binaries run unwrapped), or when the required tool is missing."""
+    from cmd_helpers import find_tool as _find_tool
+    if is_profile(diag):
+        tool = diag["tool"]
+        if tool in ("callgrind", "massif"):
+            if _find_tool("valgrind",
+                          purpose=f"profile:{tool} (needs valgrind)") is None:
+                return []
+            if tool == "callgrind":
+                out = _profile_outfile(tool, "callgrind.out")
+                return ["valgrind", "--tool=callgrind",
+                        "--callgrind-out-file=" + out + ".%p",
+                        "--dump-instr=yes", "--collect-jumps=yes"]
+            out = _profile_outfile(tool, "massif.out")
+            return ["valgrind", "--tool=massif",
+                    "--massif-out-file=" + out + ".%p"]
+        if tool == "perf":
+            if _find_tool("perf", purpose="profile:perf (needs perf)") is None:
+                return []
+            out = _profile_outfile(tool, "perf.data")
+            return ["perf", "record", "-g", "--call-graph", "dwarf",
+                    "-o", out, "--"]
+        return []
     if not is_valgrind(diag):
         return []
     # Probe valgrind once and emit a clear warning if it's missing — otherwise
     # the harness silently falls back to running the binary unwrapped, which
     # defeats the whole point of --valgrind.
-    from cmd_helpers import find_tool as _find_tool
     if _find_tool("valgrind",
                   purpose=f"valgrind:{diag.get('tool', '?')} diagnostic mode") is None:
         return []
@@ -241,6 +313,8 @@ def label_suffix(diag):
         return " [sanitize:" + diag["tool"] + "]"
     if is_valgrind(diag):
         return " [valgrind:" + diag["tool"] + "]"
+    if is_profile(diag):
+        return " [profile:" + diag["tool"] + "]"
     return ""
 
 
@@ -295,6 +369,11 @@ def exec_node_supports(exec_node, diag, parent_compile_node=None):
         if parent_compile_node is not None:
             return node_supports(parent_compile_node, diag)
         return True
+    if is_profile(diag):
+        # Profiling is a local deep-dive only: the profiler tool may be
+        # absent on the exec node and pulling callgrind/massif/perf output
+        # back over SSH is out of scope. Skip exec-node profiling.
+        return False
     return True
 
 
@@ -305,6 +384,8 @@ def forward_args(diag):
         return ["--sanitize", diag["tool"]]
     if is_valgrind(diag):
         return ["--valgrind", diag["tool"]]
+    if is_profile(diag):
+        return ["--profile", diag["tool"]]
     return []
 
 
@@ -314,6 +395,10 @@ def describe(diag):
         return "clang + sanitizer (" + diag["tool"] + ")"
     if is_valgrind(diag):
         return "gcc + valgrind (" + diag["tool"] + "), per-test timeouts x10"
+    if is_profile(diag):
+        return ("gcc + profile (" + diag["tool"] + "), artefacts under "
+                + PROFILE_DIR + ", per-test timeouts x"
+                + str(timeout_mult(diag)))
     return "regular run"
 
 
