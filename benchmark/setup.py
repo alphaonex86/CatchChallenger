@@ -64,10 +64,27 @@ Usage:
 import argparse
 import json
 import os
+import select
 import shlex
+import signal
 import subprocess
 import sys
 import time
+
+# A remote command silent for this many seconds is presumed wedged
+# (hung apt mirror, qemu-mips compile stall, dead ssh channel) and
+# killed -- distinct from the per-command/global deadline. The command
+# is reported so the operator sees exactly what stalled.
+#
+# Two tiers: 120s for fast probes (os-release / id -u / tool probe
+# should answer in < 1s; 120s = wedged), and a much longer window for
+# package install/refresh -- dpkg's "Processing triggers for man-db"
+# step on slow ARM boards can sit genuinely silent for several minutes
+# (man-db rebuilds its index without printing). 120s killed installs
+# that were actually progressing on the far side, so the host reported
+# FAIL on a package the remote did finish installing.
+REMOTE_IDLE_TIMEOUT         = 120
+REMOTE_INSTALL_IDLE_TIMEOUT = 600
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(HERE)
@@ -96,6 +113,38 @@ except Exception:                                            # pragma: no cover
 
 C_GREEN, C_YELLOW, C_RED, C_CYAN, C_RESET = (
     "\033[92m", "\033[93m", "\033[91m", "\033[96m", "\033[0m")
+
+
+def _disabled_tools_for_label(label):
+    """benchmark_disabled_tools from remote_nodes.json for a node label.
+
+    Same field the benchmark harness honours -- setup.py now reads it
+    too so a tool can be turned off purely by config (e.g. valgrind on
+    the mips boxes: no ~mips portage keyword => emerge-from-source under
+    qemu = the mips-lxc disaster). Matched by label across BOTH
+    execution_nodes[] and the parent nodes[] compile entry that shares
+    the label (the mips-lxc box is both); union so either placement of
+    the field works."""
+    if not label or label == "local":
+        return set()
+    out = set()
+    try:
+        cfg = load_remote_nodes()
+    except Exception:
+        return out
+    for node in cfg.get("nodes", []):
+        node_lbl = node.get("label")
+        execs = node.get("execution_nodes", []) or []
+        if node_lbl == label:
+            out.update(node.get("benchmark_disabled_tools", []) or [])
+            for ex in execs:
+                if ex.get("label") == label:
+                    out.update(ex.get("benchmark_disabled_tools", []) or [])
+        else:
+            for ex in execs:
+                if ex.get("label") == label:
+                    out.update(ex.get("benchmark_disabled_tools", []) or [])
+    return out
 
 # ---------------------------------------------------------------------------
 # Logical tools the benchmark workspace needs.
@@ -227,11 +276,24 @@ PKG_MAP = {
     },
 }
 
+# Build-time library dependencies (headers + .pc/.so) for compiling the
+# benchmark binaries. Installed unconditionally on every provisioned node.
+BUILD_DEPS = {
+    "apt":    ["zlib1g-dev", "libzstd-dev"],
+    "dnf":    ["zlib-devel", "libzstd-devel"],
+    "zypper": ["zlib-devel", "libzstd-devel"],
+    "pacman": ["zlib", "zstd"],
+    "apk":    ["zlib-dev", "zstd-dev"],
+    "emerge": ["sys-libs/zlib", "app-arch/zstd"],
+    "xbps":   ["zlib-devel", "libzstd-devel"],
+}
+
 # Metadata refresh run ONCE per node before any install (None = the
 # package manager refreshes implicitly / a sync would be too costly,
 # e.g. `emerge --sync` rebuilds the whole portage tree).
 REFRESH_CMD = {
-    "apt":    "export DEBIAN_FRONTEND=noninteractive; apt-get update -qq",
+    "apt":    "export DEBIAN_FRONTEND=noninteractive; "
+              "apt-get update -o DPkg::Lock::Timeout=0",
     "dnf":    None,
     "zypper": "zypper --non-interactive refresh",
     "pacman": "pacman -Sy --noconfirm",
@@ -245,7 +307,8 @@ REFRESH_CMD = {
 # mips2r2) must NOT block the installable ones (time/perf/heaptrack).
 INSTALL_ONE_CMD = {
     "apt":    "export DEBIAN_FRONTEND=noninteractive; "
-              "apt-get install -y --no-install-recommends {pkg}",
+              "apt-get install -y --no-install-recommends "
+              "-o DPkg::Lock::Timeout=0 {pkg}",
     "dnf":    "dnf install -y {pkg}",
     "zypper": "zypper --non-interactive install -y {pkg}",
     "pacman": "pacman -S --noconfirm --needed {pkg}",
@@ -289,7 +352,7 @@ def family_from_os_release(osr):
 class Target:
     """A provisioning target: either the local host or an ssh node."""
 
-    def __init__(self, label, ssh=None, deadline=None):
+    def __init__(self, label, ssh=None, deadline=None, lxc_node=None):
         self.label = label
         self.ssh = ssh            # None => local; else (user, host, port)
         # Absolute time.monotonic() past which NO command may run. None =>
@@ -298,12 +361,23 @@ class Target:
         # from source) can never push the whole fleet sweep past the
         # global --deadline the operator set.
         self.deadline = deadline
+        # For exec nodes whose `lxc_nfs.enabled` is true (e.g. rtl9607c):
+        # the FULL execution_nodes dict from remote_nodes.json. provision()
+        # uses it to drive nfs_lxc_bring_up before any probe -- the outer
+        # box is an OpenWrt router with no useful pkg manager; setup must
+        # happen INSIDE the container, so `ssh` already points at
+        # lxc_nfs.guest_ipv6 (collect_targets does that retargeting).
+        self.lxc_node = lxc_node
 
-    def run(self, cmd, timeout):
+    def run(self, cmd, timeout, idle_timeout=None):
         """Run a shell command; return (rc, combined_output). The
         per-command timeout is clamped to whatever is left of the global
         deadline; once the deadline has passed the command is refused
-        outright instead of started and timed out."""
+        outright instead of started and timed out. `idle_timeout`
+        (remote only, default REMOTE_IDLE_TIMEOUT) kills the command
+        early when it produces NO output for that many seconds -- pass
+        REMOTE_INSTALL_IDLE_TIMEOUT for package install/refresh, whose
+        dpkg/emerge phases can be silent for minutes on slow ARM."""
         if self.deadline is not None:
             remaining = self.deadline - time.monotonic()
             if remaining <= 1:
@@ -343,19 +417,84 @@ class Target:
                     "-o", "StrictHostKeyChecking=accept-new",
                     "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3",
                     "-p", str(p), "%s@%s" % (u, h), remote]
+        # Host-side backstop = remote budget + 30s slack so the remote
+        # watchdog (TERM then KILL-after-10s) is the primary killer and
+        # we still collect its output; the host cap only trips if ssh
+        # itself wedged. On top of that, a REMOTE command that produces
+        # no output for REMOTE_IDLE_TIMEOUT is presumed hung and killed
+        # early -- a stalled apt mirror / qemu compile can sit silent
+        # for the full budget otherwise. Stream the output so we can
+        # measure inter-output gaps; kill the whole local process-group
+        # (start_new_session) on idle/total, and report the command.
+        host_to = timeout if self.ssh is None else timeout + 30
+        if self.ssh is None:
+            idle = None
+        else:
+            idle = idle_timeout if idle_timeout is not None else REMOTE_IDLE_TIMEOUT
         try:
-            # Host-side backstop = remote budget + 30s slack so the
-            # remote watchdog (TERM then KILL-after-10s) is the primary
-            # killer and we still collect its output; the host timeout
-            # only trips if ssh itself wedged.
-            host_to = timeout if self.ssh is None else timeout + 30
-            cp = subprocess.run(argv, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, timeout=host_to)
-            return cp.returncode, cp.stdout.decode("utf-8", "replace")
-        except subprocess.TimeoutExpired:
-            return 124, "[timeout after %ss]" % timeout
+            p = subprocess.Popen(argv, stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT,
+                                  start_new_session=True)
         except Exception as e:                               # pragma: no cover
             return 255, "[exec error: %s]" % e
+        buf = []
+        fd = p.stdout.fileno()
+        start = time.monotonic()
+        last = start
+        killed = None                       # None | "idle" | "total"
+        while True:
+            now = time.monotonic()
+            if now - start >= host_to:
+                killed = "total"
+                break
+            waits = [host_to - (now - start)]
+            if idle is not None:
+                waits.append(idle - (now - last))
+            r, _, _ = select.select([fd], [], [], max(0.5, min(waits)))
+            if r:
+                try:
+                    chunk = os.read(fd, 65536)
+                except OSError:
+                    chunk = b""
+                if not chunk:
+                    break                   # EOF -> process done writing
+                buf.append(chunk)
+                last = time.monotonic()
+            elif idle is not None and time.monotonic() - last >= idle:
+                killed = "idle"
+                break
+            elif time.monotonic() - start >= host_to:
+                killed = "total"
+                break
+        if killed:
+            # SIGTERM then SIGKILL the whole local group (ssh + kids);
+            # the remote setsid watchdog cleans the remote tree itself.
+            for sig in (signal.SIGTERM, signal.SIGKILL):
+                try:
+                    os.killpg(p.pid, sig)
+                except Exception:
+                    pass
+                try:
+                    p.wait(timeout=5)
+                    break
+                except Exception:
+                    continue
+            out = b"".join(buf).decode("utf-8", "replace")
+            if killed == "idle":
+                msg = ("[KILLED: no output for %ds on %s -- command: %s]"
+                       % (idle, self.label, cmd))
+                print("  %s%s%s" % (C_RED, msg, C_RESET),
+                      file=sys.stderr, flush=True)
+                return 124, (out + "\n" + msg).strip()
+            return 124, (out + "\n[timeout after %ss]" % timeout).strip()
+        try:
+            rest = p.stdout.read()
+            if rest:
+                buf.append(rest)
+        except Exception:
+            pass
+        p.wait()
+        return p.returncode, b"".join(buf).decode("utf-8", "replace")
 
 
 def parse_os_release(text):
@@ -369,18 +508,102 @@ def parse_os_release(text):
     return osr
 
 
-def have_tool_probe(tool):
+def have_tool_probe(tool, world_pkg=None):
     """Shell snippet that prints Y/N for one tool. /usr/bin/time is a
-    file (the shell builtin `time` is NOT GNU time and has no -v)."""
+    file (the shell builtin `time` is NOT GNU time and has no -v).
+
+    On Gentoo a tool can be installed yet `command -v` still miss it:
+    clang/lld land in /usr/lib/llvm/*/bin and the unversioned name is
+    an eselect-managed symlink that may be unset, so `command -v clang`
+    fails even though llvm-core/clang IS emerged -> setup.py wrongly
+    re-emerges it every run (the "not detected but exists" case). When
+    an emerge package atom is known, ALSO accept the tool as present if
+    that atom is recorded in /var/lib/portage/world."""
     if tool.startswith("/"):
-        return '[ -x %s ] && echo Y || echo N' % tool
-    return 'command -v %s >/dev/null 2>&1 && echo Y || echo N' % tool
+        base = '[ -x %s ]' % tool
+    else:
+        base = 'command -v %s >/dev/null 2>&1' % tool
+    if world_pkg:
+        base = ('%s || grep -qF -- %s /var/lib/portage/world 2>/dev/null'
+                % (base, shlex.quote(world_pkg)))
+    return 'if %s; then echo Y; else echo N; fi' % base
+
+
+def _priv_cmd(cmd):
+    """Wrap a full shell pipeline so the WHOLE thing runs under one
+    `sh -c` (the old `sudo -n EXPORT; apt-get` only sudo'd the export,
+    so apt-get ran unprivileged -> dpkg-lock failure) and strictly
+    non-interactive (`</dev/null` => any tool that still reads stdin
+    gets immediate EOF, never hangs).
+
+    No `sudo`: setup.py installs packages ONLY when it is already root.
+    A non-root node with missing packages is failed up-front by the
+    caller with the exact root command to run by hand -- setup.py never
+    escalates privilege itself (project rule: never auto-install;
+    request it from the operator)."""
+    return "sh -c %s </dev/null" % shlex.quote(cmd)
+
+
+def _install_many(family, pkgs):
+    """ONE command installing ALL pkgs in a single invocation (not
+    one-per-package). Every INSTALL_ONE_CMD template ends with the
+    package argument, so a space-joined list just works. emerge gets
+    --keep-going so one masked/unbuildable atom can't abort the whole
+    batch -- the rest still install and the bench harness SKIPs an
+    absent optional profiler on its own."""
+    tmpl = INSTALL_ONE_CMD[family]
+    if family == "emerge":
+        # --keep-going: one bad atom doesn't abort the batch.
+        # --noreplace: skip atoms already installed / up to date (don't
+        # rebuild them) -- idempotent re-runs stay fast.
+        for flag in ("--keep-going", "--noreplace"):
+            if flag not in tmpl:
+                tmpl = tmpl.replace("emerge ", "emerge %s " % flag, 1)
+    return tmpl.format(pkg=" ".join(pkgs))
 
 
 # ---------------------------------------------------------------------------
 # Provision one target.
 # ---------------------------------------------------------------------------
 def provision(tgt, dry_run, conn_timeout, install_timeout):
+    """Public entry point. For lxc_nfs nodes (e.g. rtl9607c) the outer
+    box is an OpenWrt router with no useful pkg manager; setup MUST run
+    INSIDE the container. Bring up the LXC (mount NFS + lxc-start --
+    defensively stop+umount first, then mount+start), provision the
+    GUEST, then tear down (best-effort). All ssh-to-guest work flows
+    through the existing pipeline because collect_targets already
+    retargeted tgt.ssh to lxc_nfs.guest_ipv6."""
+    if tgt.lxc_node is not None:
+        try:
+            import benchmark_remote as br
+        except Exception as e:
+            print("%s=== %s ===%s" % (C_CYAN, tgt.label, C_RESET))
+            print("  %s[SKIP]%s lxc_nfs node but benchmark_remote "
+                  "unavailable: %s" % (C_YELLOW, C_RESET, e))
+            return "skip"
+        print("%s[lxc_nfs %s]%s bring-up: stop/umount -> mount NFS -> "
+              "lxc-start (defensive remount of catchchallenger guest) ..."
+              % (C_CYAN, tgt.label, C_RESET))
+        _ok, _tail = br.nfs_lxc_bring_up(tgt.lxc_node, verbose=True)
+        if not _ok:
+            print("%s[lxc_nfs %s]%s bring-up FAILED -- not provisioning"
+                  % (C_YELLOW, tgt.label, C_RESET))
+            return "unreachable"
+    try:
+        return _provision_inner(tgt, dry_run, conn_timeout, install_timeout)
+    finally:
+        if tgt.lxc_node is not None:
+            try:
+                import benchmark_remote as br
+                br.nfs_lxc_teardown(tgt.lxc_node, verbose=True)
+                print("%s[lxc_nfs %s]%s stopped + unmounted (host clean)"
+                      % (C_CYAN, tgt.label, C_RESET))
+            except Exception as e:
+                print("%s[lxc_nfs %s]%s teardown failed (best-effort): %s"
+                      % (C_YELLOW, tgt.label, C_RESET, e))
+
+
+def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
     print("%s=== %s ===%s" % (C_CYAN, tgt.label, C_RESET))
 
     if tgt.deadline is not None and time.monotonic() >= tgt.deadline:
@@ -413,29 +636,36 @@ def provision(tgt, dry_run, conn_timeout, install_timeout):
                                    osr.get("ID"), osr.get("ID_LIKE")))
         return "skip"
 
-    # Are we root? If not, prefix sudo (non-interactive).
+    # Are we root? setup.py never sudos: root installs directly, a
+    # non-root node with missing packages is failed with the exact
+    # AS-ROOT commands for the operator to run by hand.
     rc, who = tgt.run("id -u", conn_timeout)
     is_root = who.strip() == "0"
-    sudo = "" if is_root else "sudo -n "
 
     print("  distro=%s  pkg-manager=%s  root=%s"
-          % (distro, family, "yes" if is_root else "no(sudo)"))
+          % (distro, family, "yes" if is_root else "no"))
 
-    # Gentoo: many profiling tools (valgrind/perf/heaptrack) carry only a
-    # ~ARCH (testing) keyword on the constrained arches (mips2r2, ...).
-    # Grab the node's own portage ARCH so a missing-keyword failure can be
-    # retried once with ACCEPT_KEYWORDS="~<arch>" -- a real install
-    # attempt, scoped to the single package, not a global unmask.
-    portage_arch = None
-    if family == "emerge":
-        rc, pa = tgt.run("portageq envvar ARCH 2>/dev/null", conn_timeout)
-        portage_arch = pa.strip().split("\n")[-1].strip() or None
+
+    # Config-driven tool disable: a node's benchmark_disabled_tools list
+    # in remote_nodes.json (matched by node label) is honoured here too,
+    # so e.g. valgrind on the mips boxes is skipped purely by config --
+    # never emerge-from-source under qemu (the mips-lxc disaster), no
+    # arch logic hard-coded in Python.
+    node_disabled = _disabled_tools_for_label(tgt.label)
 
     # One round-trip: probe every tool we care about. CORE_TOOLS,
     # PROFILER_TOOLS and OPTIONAL_TOOLS are disjoint by construction.
     probe_tools = CORE_TOOLS + PROFILER_TOOLS + OPTIONAL_TOOLS
+
+    def _world_pkg(t):
+        # only emerge has /var/lib/portage/world; map tool -> atom
+        if family != "emerge":
+            return None
+        return PKG_MAP["emerge"].get(TOOL_TO_PKG.get(t, ""), "") or None
+
     probe = " ; ".join('printf "%%s " %s ; %s'
-                        % (t, have_tool_probe(t)) for t in probe_tools)
+                        % (t, have_tool_probe(t, _world_pkg(t)))
+                        for t in probe_tools)
     rc, out = tgt.run(probe, conn_timeout)
     present = {}
     for line in out.splitlines():
@@ -457,7 +687,11 @@ def provision(tgt, dry_run, conn_timeout, install_timeout):
     # Profilers + accelerators are best-effort: a FAIL here only marks
     # the node "partial" (see _install_pkg), never "fail" -- the bench
     # harness SKIPs an absent profiler on its own.
+    skipped_cfg = []
     for t in PROFILER_TOOLS + OPTIONAL_TOOLS:
+        if t in node_disabled:
+            skipped_cfg.append(t)           # benchmark_disabled_tools config
+            continue
         if present.get(t, False):
             have.append(t)
         else:
@@ -465,6 +699,17 @@ def provision(tgt, dry_run, conn_timeout, install_timeout):
             pkg = pmap.get(TOOL_TO_PKG.get(t, ""), "")
             if pkg and pkg not in opt_missing_pkgs:
                 opt_missing_pkgs.append(pkg)
+    if skipped_cfg:
+        print("  %s[SKIP]%s benchmark_disabled_tools (remote_nodes.json): %s"
+              % (C_YELLOW, C_RESET, ", ".join(sorted(skipped_cfg))))
+
+    # Build-time library deps for compiling benchmark binaries.
+    # Installed unconditionally (no probe). The package manager is
+    # idempotent, so installed packages are silently skipped.
+    build_deps = BUILD_DEPS.get(family, [])
+    for pkg in build_deps:
+        if pkg not in req_missing_pkgs:
+            req_missing_pkgs.append(pkg)
 
     print("  present : %s" % (", ".join(sorted(have)) or "(none)"))
     print("  missing : %s" % (", ".join(sorted(missing)) or "(none -- all set)"))
@@ -474,100 +719,84 @@ def provision(tgt, dry_run, conn_timeout, install_timeout):
         print("  %s[NOTHING TO DO]%s" % (C_GREEN, C_RESET))
         return status
 
+    # ONE combined command installs EVERY missing package in a single
+    # invocation -- same for every package manager (apt/dnf/zypper/
+    # pacman/apk/emerge/xbps), required atoms first. emerge gets
+    # --keep-going so one masked atom can't abort the batch.
+    all_pkgs    = list(dict.fromkeys(req_missing_pkgs + opt_missing_pkgs))
+    refresh     = REFRESH_CMD.get(family)
+    install_raw = _install_many(family, all_pkgs)
+    fail_status = "fail" if req_missing_pkgs else "partial"
+
+    # No sudo, ever. Not root + packages missing => do NOT escalate;
+    # hand the operator the ONE command to run AS ROOT (project rule:
+    # never auto-install -- request it). Required missing => fail;
+    # optional-only => partial (harness SKIPs an absent optional one).
+    if not is_root:
+        print("  %s[NEEDS ROOT]%s not root and packages are missing; "
+              "setup.py does not sudo. Run AS ROOT on %s:"
+              % (C_RED, C_RESET, tgt.label))
+        if refresh:
+            print("    %s" % refresh)
+        print("    %s" % install_raw)
+        return fail_status
+
     # Metadata refresh ONCE (apt-get update / pacman -Sy / ...).
-    refresh = REFRESH_CMD.get(family)
     if refresh:
-        cmd = sudo + refresh
+        cmd = _priv_cmd(refresh)
         if dry_run:
             print("  %s[DRY-RUN refresh]%s %s" % (C_YELLOW, C_RESET, cmd))
         else:
             print("  %srefreshing package metadata%s" % (C_CYAN, C_RESET))
-            rrc, rout = tgt.run(cmd, install_timeout)
+            rrc, rout = tgt.run(cmd, install_timeout,
+                                idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
             if rrc != 0:
-                # Non-fatal: install-one may still work from a warm cache.
-                print("  %s[WARN refresh rc=%s]%s %s"
+                print("  %s[WARN refresh rc=%s]%s %s\n    $ %s"
                       % (C_YELLOW, rrc, C_RESET,
-                         (rout.strip().splitlines() or [""])[-1][:160]))
+                         (rout.strip().splitlines() or [""])[-1][:160], cmd))
 
-    def _install_pkg(pkg, kind):
-        nonlocal status
-        cmd = sudo + INSTALL_ONE_CMD[family].format(pkg=pkg)
-        if dry_run:
-            print("  %s[DRY-RUN %s]%s %s" % (C_YELLOW, kind, C_RESET, cmd))
-            return
-        # Breadcrumb BEFORE the call: if the install wedges or the
-        # timeout/deadline fires, the console still shows exactly what was
-        # running on which node (the operator asked: a timeout must say
-        # where it was stuck, not die mute).
-        budget_left = ("" if tgt.deadline is None
-                       else " (budget %ds left)"
-                            % max(0, int(tgt.deadline - time.monotonic())))
-        print("  %s-> installing %s on %s%s ...%s"
-              % (C_CYAN, pkg, tgt.label, budget_left, C_RESET))
-        t0 = time.monotonic()
-        rc, out = tgt.run(cmd, install_timeout)
-        # Gentoo "masked by: missing keyword" => the ebuild carries no
-        # keyword for this arch *at all* (valgrind/perf/heaptrack on
-        # mips2r2 were never keyworded upstream), so an inline
-        # ACCEPT_KEYWORDS="~mips" can't lift it (no ~mips keyword to
-        # accept) and would also be dropped by `sudo -n`'s env reset.
-        # Lift it the canonical way: write the atom into
-        # /etc/portage/package.accept_keywords/<slug> as root via a
-        # file, then retry a plain emerge. Two bounded steps: first the
-        # node's own ~ARCH (covers ebuilds that ARE ~arch-keyworded but
-        # stable-masked), then "**" which accepts an entirely
-        # un-keyworded ebuild -- the only way to even try compiling it
-        # on an arch upstream never marked. The "zz-benchmark-setup-"
-        # file persists on purpose: next run the atom is already
-        # accepted, so emerge isn't masked again (idempotent).
-        if family == "emerge" and portage_arch:
-            akw = "/etc/portage/package.accept_keywords"
-            slug = "zz-benchmark-setup-" + pkg.replace("/", "_")
-            for kw in ("~%s" % portage_arch, "**"):
-                if rc == 0 or "missing keyword" not in out.lower():
-                    break
-                entry = "%s %s" % (pkg, kw)
-                # package.accept_keywords is a dir on modern profiles;
-                # fall back to appending to the single-file form so an
-                # operator's existing file is never clobbered.
-                write = ('if [ -d %s ]; then printf "%%s\\n" "%s" > %s/%s; '
-                         'else printf "%%s\\n" "%s" >> %s; fi'
-                         % (akw, entry, akw, slug, entry, akw))
-                print("  %sretry %s via %s/%s (%s)%s"
-                      % (C_YELLOW, pkg, akw, slug, kw, C_RESET))
-                wrc, wout = tgt.run("%ssh -c %s"
-                                    % (sudo, shlex.quote(write)),
-                                    conn_timeout)
-                if wrc != 0:
-                    print("  %s[WARN keyword-file rc=%s]%s %s"
-                          % (C_YELLOW, wrc, C_RESET,
-                             (wout.strip().splitlines() or [""])[-1][:160]))
-                rc, out = tgt.run(cmd, install_timeout)
-        if rc == 0:
-            print("  %s[OK %s]%s %s" % (C_GREEN, kind, C_RESET, pkg))
-        else:
-            tail = "\n".join("    " + l
-                             for l in out.strip().splitlines()[-6:])
-            if rc == 124:
-                # timeout / global-deadline: say WHERE it was stuck.
-                print("  %s[STUCK %s]%s was installing %s on %s -- gave up "
-                      "after %ds (per-cmd/deadline budget)\n%s"
-                      % (C_RED, kind, C_RESET, pkg, tgt.label,
-                         int(time.monotonic() - t0), tail))
-            else:
-                print("  %s[FAIL %s rc=%s]%s %s\n%s"
-                      % (C_RED, kind, rc, C_RESET, pkg, tail))
-            if kind == "required":
-                status = "fail"
-            elif status == "ok":
-                status = "partial"
+    cmd = _priv_cmd(install_raw)
+    if dry_run:
+        print("  %s[DRY-RUN install]%s %s" % (C_YELLOW, C_RESET, cmd))
+        return status
+    budget_left = ("" if tgt.deadline is None
+                   else " (budget %ds left)"
+                        % max(0, int(tgt.deadline - time.monotonic())))
+    print("  %s-> installing %d package(s) on %s%s ...%s"
+          % (C_CYAN, len(all_pkgs), tgt.label, budget_left, C_RESET))
+    t0 = time.monotonic()
+    rc, out = tgt.run(cmd, install_timeout,
+                      idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
+    low = out.lower()
 
-    # Per-package: one masked/unavailable tool never blocks the rest.
-    for pkg in req_missing_pkgs:
-        _install_pkg(pkg, "required")
-    for pkg in opt_missing_pkgs:
-        _install_pkg(pkg, "optional")
-    return status
+    # dpkg frontend lock held by another apt/dpkg -> apt was told not to
+    # wait (-o DPkg::Lock::Timeout=0) so it errored fast; do NOT wait or
+    # retry, FAIL this node now and report the command.
+    if family == "apt" and ("could not get lock" in low
+                            or "unable to acquire the dpkg frontend lock"
+                            in low):
+        print("  %s[FAIL install]%s dpkg frontend lock held by another "
+              "process on %s -- not waiting/retrying\n    $ %s"
+              % (C_RED, C_RESET, tgt.label, cmd))
+        return fail_status
+
+    if rc == 0:
+        print("  %s[OK install]%s %d package(s): %s"
+              % (C_GREEN, C_RESET, len(all_pkgs), " ".join(all_pkgs)))
+        return status
+
+    tail = "\n".join("    " + l for l in out.strip().splitlines()[-8:])
+    if rc == 124:
+        print("  %s[STUCK install]%s %d package(s) on %s -- gave up after "
+              "%ds (idle/deadline budget)\n%s\n    $ %s"
+              % (C_RED, C_RESET, len(all_pkgs), tgt.label,
+                 int(time.monotonic() - t0), tail, cmd))
+    else:
+        # Show the exact command so the operator can reproduce / see it
+        # was a lock/keyword/network issue, not a hang.
+        print("  %s[FAIL install rc=%s]%s %d package(s)\n%s\n    $ %s"
+              % (C_RED, rc, C_RESET, len(all_pkgs), tail, cmd))
+    return fail_status
 
 
 # ---------------------------------------------------------------------------
@@ -575,12 +804,12 @@ def collect_targets(args):
     targets = []
     seen = set()        # dedupe by ssh tuple; the local host is its own key
 
-    def _add(label, ssh):
+    def _add(label, ssh, lxc_node=None):
         key = ssh if ssh is not None else ("__local__",)
         if key in seen:
             return
         seen.add(key)
-        targets.append(Target(label, ssh=ssh))
+        targets.append(Target(label, ssh=ssh, lxc_node=lxc_node))
 
     # The local host is simultaneously the amd64 compile node and the
     # amd64 baseline execution node (benchmark/CLAUDE.md) -- it belongs to
@@ -619,8 +848,20 @@ def collect_targets(args):
                 if not args.include_disabled and not ex.get("enabled", False):
                     _skip(lbl)
                     continue
-                _add(lbl, (ex.get("user"), ex.get("host"),
-                           ex.get("port", 22)))
+                # lxc_nfs node? Provision the GUEST, not the outer box
+                # (the outer is e.g. an OpenWrt router with no pkg
+                # manager we map). Retarget ssh to lxc_nfs.guest_ipv6
+                # and stash the exec dict so provision() can drive
+                # nfs_lxc_bring_up / nfs_lxc_teardown around the work.
+                lxc = (ex.get("lxc_nfs") or {}) if isinstance(
+                    ex.get("lxc_nfs"), dict) else {}
+                if lxc.get("enabled") and lxc.get("guest_ipv6"):
+                    _add(lbl, (ex.get("user"), lxc["guest_ipv6"],
+                               ex.get("port", 22)),
+                         lxc_node=ex)
+                else:
+                    _add(lbl, (ex.get("user"), ex.get("host"),
+                               ex.get("port", 22)))
     return targets
 
 

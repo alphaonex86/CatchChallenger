@@ -1,0 +1,109 @@
+{
+  "arch": "aarch64",
+  "arch_emulated": false,
+  "batch_id": "c5ae6d90a39842f9983c35a5e60c6abb",
+  "benchmark": "benchmarkserversave",
+  "comment": "",
+  "commit": "3d5154eddc4408d8033a067633f418a1eeda5a78",
+  "commit_short": "3d5154e",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_FILE=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cores": 6,
+  "cpu_mhz": null,
+  "cpu_model": "ARMv8 Processor rev 4 (v8l)",
+  "decision": "ESCALATE",
+  "disk_kind": "emmc",
+  "disk_root": "/dev/mmcblk0p1",
+  "ended_utc": "2026-05-21T17:40:18Z",
+  "eth_link_mbps": null,
+  "harness_version": "fdb966809e98ff678ec20642b7e1fb6ae7d67d14",
+  "host_arch": null,
+  "kernel": "6.18.8-current-meson64",
+  "libc": "glibc 2.41",
+  "loadavg_1min_at_start": 0.01,
+  "net_card": null,
+  "net_link": null,
+  "net_link_detail": null,
+  "node": "odroid-n2",
+  "ram_total_mb": 3768,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "callgrind": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "SKIP",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7788,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 7788
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.04,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.04
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "default": {
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 7788,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 7788
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 0.04,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.04
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-21T17:36:07Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

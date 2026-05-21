@@ -26,6 +26,24 @@ against a defined workload, compares metrics against the previous
 champion, and decides keep / discard / escalate. The goal is to make
 forward progress on perf without ever silently shipping a regression.
 
+## Benchmarks detect regressions; profile to find the cause
+
+`benchmark*.py` give only a coarse before/after regression signal —
+*whether* a change is faster/slower across the fleet, not *where* the
+time goes. To know where to optimise, profile the SAME command the
+target benchmark runs:
+
+* `--profile` on any `benchmark*.py` runs that benchmark's command once
+  under a profiler, writes the profile under `/mnt/data/perso/tmpfs/`,
+  and prints its path. Open that path and work the hot spots. Reach for
+  perf / callgrind / heaptrack / whatever gives more CPU/memory detail
+  than the benchmark itself records.
+* Run WITHOUT `--profile` for the actual before/after numbers — the
+  profiling build perturbs timing and must not be the regression datum.
+* "more performance" with no qualifier means CPU.
+* If the benchmark's own recorded metrics already pinpoint the cause,
+  don't do the extra profiling pass.
+
 ## Accept / reject / escalate — strict decision matrix
 
 After a candidate run completes on **every benchmark target**, compare
@@ -333,25 +351,32 @@ Every benchmark source file MUST carry a leading comment block stating:
 * Whether the benchmark is deterministic (same input → same output)
   or sampled (noise band given explicitly).
 
-## Champion baseline + history
+## Champion baseline + history — per-benchmark, not per-node
 
-Each benchmark target keeps a **per-(compile,exec)-node champion
-record** under
-`benchmark/results/<benchmark-name>/<compile-node>/<exec-node>/champion.json`
-(`<compile-node>`/`<exec-node>` = the `nodes[].label` /
-`execution_nodes[].label` pair from remote_nodes.json; the local host
-is `local/local`). Schema:
+The champion is **per-benchmark**, not per execution node. The decision
+is whether a change is better for the whole fleet — a regression on any
+platform triggers DISCARD, an improvement on any platform can trigger
+KEEP (per the decision matrix above). One champion per benchmark lives
+at `benchmark/results/<benchmark-name>/champion.json`. Schema:
 
 ```
 {
-  "commit": "<sha>",
-  "date":   "<ISO-8601>",
-  "node":   "<execution_node label>",
-  "metrics": {
-    "<metric-name>": { "median": <n>, "stddev": <n>, "unit": "<u>",
-                       "better": "lower" | "higher" }
-  },
-  "profilers": { "<profiler-name>": "<artifact path>" }
+  "commit":  "<sha>",
+  "comment": "...",
+  "date":    "<ISO-8601>",
+  "batch_id": "...",
+  "benchmark": "<benchmark-name>",
+  "nodes": {
+    "<execution_node label>": {
+      "arch":    "<x86_64 | armv6 | mips | ...>",
+      "metrics": {
+        "<metric-name>": { "median": <n>, "stddev": <n>, "unit": "<u>",
+                           "better": "lower" | "higher" }
+      }
+    },
+    "rpi-zero-w": { "arch": "armv6", "metrics": { ... } },
+    ...
+  }
 }
 ```
 
@@ -359,10 +384,11 @@ History is git-tracked; champion.json is overwritten in-place when a
 new champion is promoted (the `git log` of the file IS the history).
 Don't keep a parallel JSON list — it desync's.
 
-When proposing an optimisation, the agent reads each champion.json,
-compares the candidate's run against every metric, and writes the
-decision (KEEP / DISCARD / ESCALATE) + per-metric deltas back to
-`benchmark/results/<benchmark-name>/<compile-node>/<exec-node>/candidate-<stamp>.json`
+When proposing an optimisation, the agent reads the per-benchmark
+champion.json, compares the candidate's metrics from **every** node
+against the champion's records for those nodes, and writes the decision
+(KEEP / DISCARD / ESCALATE) + per-metric deltas back to
+`benchmark/results/<benchmark-name>/candidate-<stamp>.json`
 (`<stamp>` = the run's started_utc, `:`→`-`). The candidate file is
 git-ignored except for the rare ESCALATE case the operator wants to
 preserve for discussion.
@@ -523,7 +549,7 @@ duplicating it per benchmark guarantees drift — and a missing field
 in one file silently breaks any future analysis script that joins
 across the timeline. Add new fields to the helper, not the benchmark.
 
-## Progression charts — one per (benchmark, compile, exec)
+## Progression charts — per-node visualisations of per-benchmark history
 
 After each batch, the harness MUST regenerate a chart per
 `(benchmark-name, compile-node, exec-node)` tuple plotting every
@@ -532,35 +558,51 @@ chronological order, y-axis = metric value, one line per metric, dual
 axis when units differ). Source data is the append-only per-run JSONs
 under `benchmark/history/<benchmark-name>/<compile>/<exec>/`; group by
 the `<compile>/<exec>` node pair (remote nodes included, not just the
-local host).
+local host). The champion commit marker comes from the per-benchmark
+`champion.json` at `benchmark/results/<benchmark-name>/champion.json`.
 
-Output path — the chart lives NEXT TO the result JSONs it describes:
+Output path — charts live per-node (they visualise per-node history):
 
 ```
 benchmark/results/<benchmark-name>/<compile>/<exec>/champion.svg
 benchmark/results/<benchmark-name>/<compile>/<exec>/candidate-<stamp>.svg
 ```
 
+In addition to per-node charts, the harness also generates a
+**cross-node session chart** that groups data by `batch_id` (one
+benchmark run across all platforms = one session), showing one line
+per node within each metric panel:
+
+```
+benchmark/results/<benchmark-name>/champion.svg
+benchmark/results/<benchmark-name>/candidate-<stamp>.svg
+```
+
+This lets the reviewer see at a glance whether an optimisation helps or
+regresses every platform in a single chart, without flipping through
+per-node SVGs.
+
 `champion.svg` is the always-current progression chart; a benchmark
-run also freezes the same chart as `candidate-<stamp>.svg` next to its
-`candidate-<stamp>.json` (`<stamp>` = run started_utc, `:`→`-`).
+run also freezes the same chart as `candidate-<stamp>.svg`
+(`<stamp>` = run started_utc, `:`→`-`).
 
 Rules:
 * SVG only (text, diff-able, no binary churn in git). PNG is forbidden.
 * Regenerate from scratch each batch — never append to an existing
   SVG. The history JSONs are the source of truth; charts are derived.
 * Annotate the current champion commit with a marker so a reviewer can
-  see at a glance which point is the baseline.
+  see at a glance which point is the baseline. The champion commit is
+  read from the per-benchmark `champion.json` (same across all nodes).
 * Mark KEEP / DISCARD / ESCALATE decisions on the corresponding commit
   with distinct glyphs (green ▲ / red ▼ / yellow ◆).
 * Chart generation lives in the shared helper (next to
   `history_recorder.py`), not duplicated per `benchmark*.py`.
 * No external chart service — render locally (matplotlib SVG backend
   or hand-rolled SVG). Don't add a new pip dep without asking.
-* `champion.svg` is git-tracked (it travels with `champion.json`).
-  `candidate-<stamp>.svg` is git-ignored like `candidate-<stamp>.json`
-  (transient; regenerable from the history JSONs, which remain the
-  source of truth).
+* `champion.svg` is git-tracked.
+  `candidate-<stamp>.svg` is git-ignored like
+  `candidate-<stamp>.json` (transient; regenerable from the history
+  JSONs, which remain the source of truth).
 
 ### Generating charts manually
 
@@ -616,6 +658,26 @@ Both are first-class metrics. Don't collapse to "ms/op".
 Most network/server hot paths care more about p99 tail than mean
 throughput. Most preload/once-per-boot paths care only about
 throughput.
+
+## Fixed-time, not fixed-iteration
+
+Every benchmark runs for a fixed wall-clock budget (e.g. 10 min) and
+reports the work done in that window (iterations/ops completed,
+higher-is-better) — NEVER a fixed iteration count timed to completion.
+A fixed 1000-iteration loop just takes longer on a slow arch (same
+count), hiding throughput regressions and making cross-arch numbers
+incomparable; the time budget makes "ops in 10 min" directly comparable
+across i486 → amd64 and surfaces a regression as fewer ops.
+
+The per-cell/per-run TIMEOUT is DERIVED from that budget, not picked
+independently: `timeout = budget + margin` (margin covers startup +
+teardown + the final in-flight iteration). The workload itself stops at
+the budget (the binary self-times, or the harness sends SIGTERM/SIGINT
+at the budget and counts completed iterations) — the timeout is only the
+hard backstop for a hung run, so it must always exceed the budget. A
+profiler that inflates wall-time (callgrind ~30×) scales its budget AND
+its timeout by the same factor so it still measures the same amount of
+work.
 
 ## Auto-revert on REGRESSION
 

@@ -26,6 +26,7 @@ import os
 import shlex
 import subprocess
 import sys
+import threading
 import time
 
 import benchmark_helpers as bh
@@ -41,6 +42,26 @@ RSYNC_TIMEOUT          = 1800
 CMAKE_CONFIGURE_TIMEOUT = 900
 CMAKE_BUILD_TIMEOUT     = 3600
 RUN_TIMEOUT_DEFAULT     = 1200
+
+
+# Which benchmark's remote work these [remote] lines belong to. Set once by
+# each benchmark*.py (set_benchmark_label) so every remote-dispatch line is
+# attributable when several benchmarks share a logfile / a batch run. One
+# benchmark per process, so a module global is unambiguous.
+_BENCH_LABEL = ""
+
+
+def set_benchmark_label(name):
+    global _BENCH_LABEL
+    _BENCH_LABEL = name or ""
+
+
+def _rlog(msg, err=False):
+    """Print a remote-dispatch line tagged with the current benchmark, e.g.
+    `[remote:benchmarkmapmanager] 'pentium-m': pushing binary`. Falls back
+    to a bare `[remote]` tag when no benchmark label was set."""
+    tag = f"[remote:{_BENCH_LABEL}]" if _BENCH_LABEL else "[remote]"
+    print(f"{tag} {msg}", file=sys.stderr if err else sys.stdout, flush=True)
 
 
 # ---- ssh / rsync primitives ---------------------------------------------
@@ -64,14 +85,19 @@ def ssh_run(user, host, port, cmd, timeout=120):
     """
     argv = ["ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes",
             "-o", "ServerAliveInterval=30",
+            "-o", "StrictHostKeyChecking=no",
+            "-o", "UserKnownHostsFile=/dev/null",
             "-p", str(port), _ssh_host(user, host), cmd]
+    proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True)
     try:
-        p = subprocess.run(argv, capture_output=True, text=True,
-                           timeout=timeout)
-        if p.returncode != 0:
-            bh.note_ssh_failure(host, host, p.returncode, p.stderr)
-        return p.returncode, p.stdout, p.stderr
+        stdout, stderr = proc.communicate(timeout=timeout)
+        if proc.returncode != 0:
+            bh.note_ssh_failure(host, host, proc.returncode, stderr)
+        return proc.returncode, stdout, stderr
     except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
         return -1, "", f"ssh timeout after {timeout}s"
 
 
@@ -99,22 +125,53 @@ def _nfs_lxc_script(cfg, host_addr, action, mac=None):
     UNCONFIGURED (never assigned)."""
     q = shlex.quote
     nm = cfg["nfs_mount"]
+    export_path = cfg.get("nfs_export", "/")
     name = NFS_LXC_CONTAINER_NAME
+    # Where the runtime-generated container config is bind-mounted inside
+    # the chroot (a device tmpfs is bound here; see prep_conf below).
+    conf_mnt = nm.rstrip("/") + "/run/lxc-cc"
+    conf_path = "/run/lxc-cc/" + name + ".conf"   # path AS SEEN in the chroot
     if action == "down":
-        return "\n".join([
+        parts = [
             f"chroot {q(nm)} /bin/bash -c "
             f"{q(f'lxc-stop -n {q(name)} -k 2>/dev/null || true')} "
             f"2>/dev/null || true",
-            f"umount {q(nm)} 2>/dev/null || true",
-        ])
+            # release the tmpfs config bind first
+            f"umount {q(conf_mnt)} 2>/dev/null || true",
+        ]
+        # unmount the nested host binds (reverse order) so the final umount
+        # of the rootfs isn't blocked by busy submounts. Lazy (-l) fallback:
+        # a plain umount can report EBUSY on a bind whose source is still in
+        # use on the device (e.g. /proc, /sys); lazy detach always succeeds
+        # and the bind is reaped once free -- the device's real /proc, /sys,
+        # /dev are untouched (only the <nm>/* view is detached).
+        for p in ("/sys/fs/cgroup", "/dev/shm", "/dev/pts", "/dev",
+                  "/sys", "/proc"):
+            parts.append(f"umount {q(nm + p)} 2>/dev/null || "
+                         f"umount -l {q(nm + p)} 2>/dev/null || true")
+        # recursive umount when available (coreutils), else plain, else lazy
+        parts.append(f"umount -R {q(nm)} 2>/dev/null || "
+                     f"umount {q(nm)} 2>/dev/null || "
+                     f"umount -l {q(nm)} 2>/dev/null || true")
+        return "\n".join(parts)
     bridge = cfg["bridge"]
+    # Container rootfs inside the mounted test-box rootfs. Overridable via
+    # the lxc_nfs.lxc_rootfs field; defaults to the conventional location.
+    lxc_rootfs = cfg.get("lxc_rootfs", "/var/lib/lxc/rootfs")
     addr = []
     if bridge:
         addr.append(f"ip link set {q(bridge)} up 2>/dev/null || true")
         if host_addr:
             addr.append(f"ip addr add {q(host_addr)} dev {q(bridge)} 2>/dev/null || true")
+    # lxc-start with an EXPLICIT config file (-f) generated at runtime in
+    # tmpfs -- no pre-baked /var/lib/lxc/<name>/config needed in the rootfs,
+    # and nothing is written to the NFS rootfs / device flash. The chroot's
+    # /proc, /sys, /dev are bind-mounted from the device BEFORE the chroot
+    # (see host_binds in the up script) -- lxc-start as the container
+    # monitor needs a working /proc (lxc_check_inherited reads
+    # /proc/self/fd) and a functional /dev (ptmx/null).
     inner = ["set -e", *addr,
-             f"lxc-start -n {q(name)} -d",
+             f"lxc-start -n {q(name)} -f {q(conf_path)} -d",
              f"lxc-wait -n {q(name)} -s RUNNING -t 60 2>/dev/null || true"]
     if mac:
         # Pin the persisted stable MAC on the guest eth0 (down/set/up)
@@ -128,12 +185,121 @@ def _nfs_lxc_script(cfg, host_addr, action, mac=None):
         inner.append(f"lxc-attach -n {q(name)} -- ip -4 addr add {q(cfg['guest_ipv4'])} dev eth0 2>/dev/null || true")
     if cfg.get("guest_ipv6"):
         inner.append(f"lxc-attach -n {q(name)} -- ip -6 addr add {q(cfg['guest_ipv6'])} dev eth0 2>/dev/null || true")
+    # Try NFSv4 first; fall back to NFSv3 if the server denies access
+    # (older OpenWrt or custom NFS configs may not export / via v4).
+    # The nfs_export field defaults to "/" when unset.
+    #
+    # IPv6 server literals MUST be bracketed for mount ([addr]:/path) --
+    # an unbracketed "2803:1920::2:10:/" is ambiguous (the colons run into
+    # the path) and mount rejects it. IPv4 / hostnames pass through. This
+    # matters because the export ACL may grant only the box's IPv6: mount
+    # the server's IPv4 and the connection comes from a non-granted source,
+    # so the server returns "access denied".
+    srv = cfg["nfs"]
+    if ":" in srv and not srv.startswith("["):
+        srv = "[" + srv + "]"
+    nfs_export = q(srv + ":" + export_path)
+    # nolock on the v3 fallback: embedded boxes frequently run no rpc.statd,
+    # and NLM locking then fails the mount with "rpc.statd is not running
+    # but is required for remote locking".
+    mount_attempts = " || ".join([
+        f"mount -t nfs4 {nfs_export} {q(nm)}",
+        f"mount -t nfs -o vers=3,nolock {nfs_export} {q(nm)}",
+    ])
+    # Container config built at runtime. The lxc.net.0 block is appended at
+    # runtime (see net_append) because the right link type depends on what
+    # `bridge` actually is on the device. rootfs points at the prepared dir
+    # in the test-box rootfs (override with lxc_nfs.lxc_rootfs).
+    conf_lines = [
+        "lxc.uts.name = " + name,
+        "lxc.rootfs.path = dir:" + lxc_rootfs,
+        # Headless container started inside a chrooted NFS rootfs that has
+        # no controlling tty and no devpts: disable console + pty allocation,
+        # otherwise lxc-start aborts at "Failed to allocate terminal" /
+        # "Failed to open terminal multiplexer device".
+        "lxc.console.path = none",
+        "lxc.pty.max = 0",
+        # The chroot host has no /proc, /sys, or cgroup mounts set up; let
+        # lxc auto-mount them into the container's namespace.
+        "lxc.mount.auto = proc:mixed sys:ro cgroup:mixed",
+    ]
+    # Operator-supplied raw lxc config lines from remote_nodes.json
+    # (lxc_nfs.lxc_extra_config: a list of strings). Appended VERBATIM so
+    # the box's specifics are encoded without a code change -- e.g. a
+    # populated rootfs (`lxc.rootfs.path = ...` overriding the default),
+    # auto-mounting proc/sys/cgroup for the container
+    # (`lxc.mount.auto = proc:mixed sys:ro cgroup:mixed`), cgroup limits,
+    # idmaps, etc. Each entry becomes one config line.
+    extra = cfg.get("lxc_extra_config", [])
+    if isinstance(extra, str):
+        extra = [extra]
+    for line in extra:
+        conf_lines.append(str(line))
+    conf_text = "\n".join(conf_lines) + "\n"
+    # Pick the tmpfs mount with the MOST free space on the device, write the
+    # config there, and bind-mount it under <nm>/run/lxc-cc so the chrooted
+    # lxc-start sees it at conf_path. Pure RAM: never touches the NFS rootfs
+    # or the device flash. df -k / awk are busybox-portable; fall back to
+    # /tmp when no tmpfs is mounted.
+    # Network block, appended at runtime with link-type AUTO-DETECTION:
+    # attaching a veth to `bridge` only works when it is a real bridge
+    # device. A plain NIC or a VLAN sub-interface (e.g. eth0.5) is NOT a
+    # bridge -- veth attach fails with "Operation not permitted". For those
+    # we use macvlan (bridge mode), which attaches a container NIC directly
+    # to the interface without needing a Linux bridge. Detection: a real
+    # bridge has /sys/class/net/<if>/bridge. Guest MAC/IPs are still pinned
+    # via lxc-attach after start.
+    conf_file = '"$T/lxc-cc/' + name + '.conf"'
+    mac_echo = ('  echo "lxc.net.0.hwaddr = ' + mac + '"\n') if mac else ""
+    net_append = (
+        f"B={q(bridge)}\n"
+        "{\n"
+        '  if [ -d "/sys/class/net/$B/bridge" ]; then\n'
+        '    echo "lxc.net.0.type = veth"\n'
+        "  else\n"
+        '    echo "lxc.net.0.type = macvlan"\n'
+        '    echo "lxc.net.0.macvlan.mode = bridge"\n'
+        "  fi\n"
+        '  echo "lxc.net.0.link = $B"\n'
+        '  echo "lxc.net.0.flags = up"\n'
+        '  echo "lxc.net.0.name = eth0"\n'
+        f"{mac_echo}"
+        f"}} >> {conf_file}"
+    )
+    prep_conf = "\n".join([
+        "T=$(awk '$3==\"tmpfs\"{print $2}' /proc/mounts 2>/dev/null | "
+        "while read m; do a=$(df -k \"$m\" 2>/dev/null | "
+        "awk 'NR==2{print $4+0}'); [ -n \"$a\" ] && echo \"$a $m\"; done | "
+        "sort -rn | head -1 | awk '{print $2}')",
+        '[ -z "$T" ] && T=/tmp',
+        'mkdir -p "$T/lxc-cc"',
+        f"printf '%s' {q(conf_text)} > \"$T/lxc-cc/{name}.conf\"",
+        net_append,
+        f"mkdir -p {q(conf_mnt)}",
+        f'mount --bind "$T/lxc-cc" {q(conf_mnt)}',
+    ])
+    # Bind the device's ALREADY-WORKING /proc, /sys, /dev (incl. a
+    # functional /dev/null, /dev/ptmx) and the cgroup hierarchy into the
+    # freshly-mounted rootfs BEFORE chroot. Bind (not a fresh devtmpfs/proc
+    # mount inside the chroot) because mounting a new devtmpfs over /dev
+    # leaves /dev/null non-functional and breaks every `2>/dev/null` in the
+    # chroot. lxc-start (container monitor) needs these to enumerate fds and
+    # place the container cgroup.
+    host_binds = "\n".join([
+        f"mount --bind /proc {q(nm + '/proc')} 2>/dev/null || true",
+        f"mount --bind /sys {q(nm + '/sys')} 2>/dev/null || true",
+        f"mount --bind /dev {q(nm + '/dev')} 2>/dev/null || true",
+        f"mount --bind /sys/fs/cgroup {q(nm + '/sys/fs/cgroup')} "
+        f"2>/dev/null || true",
+    ])
     return "\n".join([
         "set -e",
         "lxc container stop -k all 2>/dev/null || lxc-stop -a -k 2>/dev/null || true",
         f"mkdir -p {q(nm)}",
         f"umount {q(nm)} 2>/dev/null || true",
-        f"mount -t nfs4 {q(cfg['nfs'])}:/ {q(nm)}",
+        f"({mount_attempts})",
+        host_binds,
+        prep_conf,
         f"chroot {q(nm)} /bin/bash -c {q(chr(10).join(inner))}",
     ])
 
@@ -145,15 +311,60 @@ def _exec_ssh(exec_node):
             int(exec_node.get("port", 22)), exec_node["host"])
 
 
-def nfs_lxc_bring_up(exec_node, verbose=False):
+def _runtime_exec_node(exec_node):
+    """Return the exec_node dict the BENCHMARK should ssh/rsync to once
+    the NFS-LXC bring-up has finished. For an ordinary exec node this
+    is exec_node unchanged. For an lxc_nfs node, the device's pre-chroot
+    `host` is swapped for the container's `guest_ipv6` (or guest_ipv4
+    when ipv6 is empty) -- that's where the rootfs and work_dir live;
+    the pre-chroot address only owns the bring-up/teardown SSH.
+    `user`, `port`, `work_dir` are kept (by convention the container
+    accepts the same login as the device's management shell)."""
     cfg = _lxc_nfs_cfg(exec_node)
     if cfg is None:
-        return True
+        return exec_node
+    guest = cfg.get("guest_ipv6") or cfg.get("guest_ipv4")
+    if not guest:
+        return exec_node
+    runtime = dict(exec_node)
+    runtime["host"] = guest
+    runtime["lxc_nfs"] = None  # downstream code must not re-bring-up
+    return runtime
+
+
+def wait_for_ssh(user, host, port, attempts=20, delay=2.0, verbose=False):
+    """Poll the host with a cheap `ssh ... true` until it answers, or
+    `attempts` is exhausted. Returns True on success, False otherwise.
+    `lxc-start` returns immediately after the container PID exists but
+    well before sshd inside is accepting connections -- without this
+    poll the first rsync after bring-up races and fails."""
+    for i in range(1, attempts + 1):
+        rc, _o, _e = ssh_run(user, host, port, "true", timeout=5)
+        if rc == 0:
+            if verbose and i > 1:
+                _rlog(f"ssh to {user}@{host}:{port} ready after "
+                      f"{i} attempt(s)")
+            return True
+        time.sleep(delay)
+    if verbose:
+        _rlog(f"ssh to {user}@{host}:{port} NOT ready after "
+              f"{attempts} attempts", err=True)
+    return False
+
+
+def nfs_lxc_bring_up(exec_node, verbose=False):
+    """Return (ok, tail). `tail` is the last lines of the bring-up stderr
+    on failure (empty otherwise). Every return path is a 2-tuple so callers
+    can unpack unconditionally -- the no-op cases (ordinary node / lxc_nfs
+    misconfigured) return (True, "")."""
+    cfg = _lxc_nfs_cfg(exec_node)
+    if cfg is None:
+        return True, ""
     if not cfg.get("nfs") or not cfg.get("nfs_mount"):
         if verbose:
-            print(f"[remote] {exec_node.get('label','?')}: lxc_nfs enabled "
+            _rlog(f"{exec_node.get('label','?')}: lxc_nfs enabled "
                   f"but nfs/nfs_mount unset — skipping bring-up")
-        return True
+        return True, ""
     u, h, p, ha = _exec_ssh(exec_node)
     # Stable per-container MAC from lab storage (minted once, reused
     # forever). Key on the exec-node label so each lxc_nfs box keeps
@@ -161,10 +372,40 @@ def nfs_lxc_bring_up(exec_node, verbose=False):
     mac = bh.lab_mac_for(exec_node.get("label") or exec_node.get("host"))
     rc, _o, e = ssh_run(u, h, p, _nfs_lxc_script(cfg, ha, "up", mac=mac),
                         timeout=300)
+    tail = "\n".join(e.splitlines()[-20:]) if e.strip() else ""
     if rc != 0 and verbose:
-        print(f"[remote] {exec_node.get('label','?')}: nfs-lxc bring-up "
-              f"rc={rc}: {e.strip()[-300:]}")
-    return rc == 0
+        _rlog(f"{exec_node.get('label','?')}: nfs-lxc bring-up "
+              f"rc={rc}: {tail}")
+    return rc == 0, tail
+
+
+def nfs_lxc_prepare(exec_node, verbose=False):
+    """Bring up the NFS-LXC container (no-op for ordinary nodes) and
+    return (runtime_node, msg). `runtime_node` targets the guest address
+    with its lxc_nfs block cleared, so any later run_benchmark_on_exec
+    won't try to re-bring-up. On an ordinary node runtime_node IS
+    exec_node. On failure returns (None, msg).
+
+    Caller MUST call nfs_lxc_teardown(<ORIGINAL exec_node>) in a finally
+    block -- teardown needs the device pre-chroot address + lxc_nfs that
+    only the original node carries."""
+    ok, tail = nfs_lxc_bring_up(exec_node, verbose=verbose)
+    if not ok:
+        msg = "nfs-lxc bring-up failed"
+        if tail:
+            msg += "\n" + tail
+        return None, msg
+    rt = _runtime_exec_node(exec_node)
+    if rt is not exec_node:
+        if verbose:
+            _rlog(f"{exec_node.get('label','?')}: lxc_nfs guest is "
+                  f"{rt['user']}@{rt['host']}:{rt.get('port',22)} -- "
+                  f"switching downstream rsync/ssh to the container")
+        if not wait_for_ssh(rt["user"], rt["host"], int(rt.get("port", 22)),
+                            verbose=verbose):
+            return None, (f"nfs-lxc guest ssh not reachable at "
+                          f"{rt['user']}@{rt['host']}")
+    return rt, "ok"
 
 
 def nfs_lxc_teardown(exec_node, verbose=False):
@@ -178,15 +419,24 @@ def nfs_lxc_teardown(exec_node, verbose=False):
 
 
 def rsync_to(user, host, port, src, dst, timeout=RSYNC_TIMEOUT,
-             extra_args=None):
+             extra_args=None, delete=True):
     """rsync local `src` -> remote `dst` (path on host). When `src` ends
     with '/', the contents are copied; otherwise the dir is created at
-    dst. Returns (rc, stderr_message)."""
-    args = ["rsync", "-art", "--delete",
-            "--exclude=.git", "--exclude=build/", "--exclude=*.o",
+    dst. Returns (rc, stderr_message).
+
+    `delete` (default True) mirrors src->dst with --delete so removals
+    propagate -- correct for the datapack tree. MUST be False when
+    pushing a single binary into a shared work_dir that already holds
+    sibling files (datapack/, server-properties.xml): --delete would
+    wipe everything not in the (binary-only) source and the server then
+    can't find its datapack."""
+    args = ["rsync", "-art"]
+    if delete:
+        args.append("--delete")
+    args += ["--exclude=.git", "--exclude=/build/", "--exclude=*.o",
             "--exclude=moc_*", "--exclude=Makefile",
             "--exclude=__pycache__/", "--exclude=.qtcreator/",
-            "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes"]
+            "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"]
     if extra_args:
         args.extend(extra_args)
     args += [src, f"{_rsync_host(user, host)}:{dst}"]
@@ -201,7 +451,7 @@ def rsync_to(user, host, port, src, dst, timeout=RSYNC_TIMEOUT,
 def rsync_from(user, host, port, src, dst, timeout=RSYNC_TIMEOUT):
     """rsync remote `src` -> local `dst`."""
     args = ["rsync", "-art",
-            "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes",
+            "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
             f"{_rsync_host(user, host)}:{src}", dst]
     try:
         p = subprocess.run(args, capture_output=True, text=True,
@@ -209,6 +459,44 @@ def rsync_from(user, host, port, src, dst, timeout=RSYNC_TIMEOUT):
         return p.returncode, (p.stdout + p.stderr)
     except subprocess.TimeoutExpired:
         return -1, f"rsync timeout after {timeout}s"
+
+
+# ---- time sync ------------------------------------------------------------
+
+def sync_remote_time(user, host, port, timeout=15):
+    """Check the remote node's clock; if it differs from local by >5 s,
+    set it via `sudo date -s`.  Silent on match, logs on set.
+
+    Returns True if time was acceptable (or was fixed), False if we
+    couldn't check/set."""
+    try:
+        local_ts = int(time.time())
+    except Exception:
+        return False
+    rc, sout, _serr = ssh_run(user, host, port, "date +%s", timeout=timeout)
+    if rc != 0:
+        return False
+    try:
+        remote_ts = int(sout.strip())
+    except (ValueError, TypeError):
+        return False
+    diff = abs(local_ts - remote_ts)
+    if diff <= 5:
+        return True
+    # time skew beyond threshold -- fix it
+    set_cmd = f"sudo -n date -s '@{local_ts}' >/dev/null 2>&1"
+    rc, _so, _se = ssh_run(user, host, port, set_cmd, timeout=timeout)
+    if rc != 0:
+        # try without sudo (e.g. already root or container with CAP_SYS_TIME)
+        set_cmd = f"date -s '@{local_ts}' >/dev/null 2>&1"
+        rc, _so, _se = ssh_run(user, host, port, set_cmd, timeout=timeout)
+    if rc == 0:
+        print(f"[tsync] {user}@{host}:{port} clock was {diff}s off, "
+              f"corrected to {local_ts}", file=sys.stderr)
+        return True
+    print(f"[tsync] {user}@{host}:{port} clock is {diff}s off but "
+          f"could not set time (rc={rc})", file=sys.stderr)
+    return False
 
 
 # ---- compile-node build --------------------------------------------------
@@ -238,21 +526,33 @@ def stage_source_on_compile_node(compile_node, repo_root=REPO_ROOT,
     rc, msg = rsync_to(user, host, port, repo_root + "/",
                        f"{work}/sources/")
     if verbose:
-        print(f"[remote] rsync {compile_node['label']!r}: rc={rc}")
+        _rlog(f"rsync {compile_node['label']!r}: rc={rc}")
         if rc != 0:
             print(msg, file=sys.stderr)
     return rc, msg
 
 
 def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
-                          cmake_defs=None, target=None, verbose=False):
+                          cmake_defs=None, target=None, verbose=False,
+                          use_ninja=None):
     """cmake -S <work>/sources/<src_subdir> -B <work>/build-bench/<build_subdir>
     then cmake --build. Returns (rc, message, remote_bin_dir).
+
+    Before building, syncs the remote clock (ninja refuses to build
+    when system time is wrong -- 'manifest still dirty after 100
+    tries'). A 5 s tolerance avoids pointless tsync spam.
+
+    `use_ninja`:
+      * None  (default) — auto-detect: use Ninja if it exists on the
+        compile node, else fall back to Make.
+      * True            — force Ninja (cmake -G Ninja).
+      * False           — skip Ninja even when installed (use Make).
     """
     user = compile_node["ssh"]["user"]
     host = compile_node["ssh"]["host"]
     port = compile_node["ssh"].get("port", 22)
     work = compile_node["work_dir"]
+    sync_remote_time(user, host, port)
     src  = f"{work}/sources/{cmake_src_subdir}"
     bld  = f"{work}/build-bench/{build_subdir}"
 
@@ -260,7 +560,12 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     if cmake_defs:
         for k, v in cmake_defs.items():
             defs.append(f"-D{k}={v}")
-    ninja = "-G Ninja" if _have_remote_tool(user, host, port, "ninja") else ""
+    if use_ninja is None:
+        ninja = "-G Ninja" if _have_remote_tool(user, host, port, "ninja") else ""
+    elif use_ninja:
+        ninja = "-G Ninja"
+    else:
+        ninja = ""
     # ccache when the compile node has it (project rule: accelerators
     # picked up when present, fallback otherwise). This path rsyncs a
     # fresh source tree per test, so WITHOUT ccache every remote build
@@ -277,7 +582,7 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     rc, sout, serr = ssh_run(user, host, port, cfg_cmd,
                              timeout=CMAKE_CONFIGURE_TIMEOUT)
     if verbose:
-        print(f"[remote] cmake configure {compile_node['label']!r}: rc={rc}")
+        _rlog(f"cmake configure {compile_node['label']!r}: rc={rc}")
     if rc != 0:
         return rc, f"cmake configure failed:\n{sout}\n{serr}", bld
 
@@ -287,7 +592,7 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     rc, sout, serr = ssh_run(user, host, port, build_cmd,
                              timeout=CMAKE_BUILD_TIMEOUT)
     if verbose:
-        print(f"[remote] cmake build {compile_node['label']!r}: rc={rc}")
+        _rlog(f"cmake build {compile_node['label']!r}: rc={rc}")
     if rc != 0:
         return rc, f"cmake build failed:\n{sout}\n{serr}", bld
     return 0, "ok", bld
@@ -300,7 +605,217 @@ def _have_remote_tool(user, host, port, tool):
     return rc == 0 and sout.strip() == "Y"
 
 
+_QT6_PROBE_MEMO = {}   # compile_node label -> bool
+
+
+def compile_node_has_qt6(compile_node):
+    """True when the compile node can satisfy find_package(Qt6) -- a
+    prerequisite for the GUI-linked benchmarks (bot-actions is Qt6
+    Widgets). Probes for a qmake6/qmake binary OR a Qt6Config.cmake
+    anywhere under the usual prefixes. Memoized per compile node.
+
+    Some nodes carry has_gui=true in remote_nodes.json but no actual
+    Qt6 dev files (it was uninstalled, or the flag is aspirational);
+    a benchmark that needs Qt6 must SKIP there, not FAIL -- a missing
+    toolchain is not a perf regression."""
+    label = compile_node.get("label")
+    if label in _QT6_PROBE_MEMO:
+        return _QT6_PROBE_MEMO[label]
+    user = compile_node["ssh"]["user"]
+    host = compile_node["ssh"]["host"]
+    port = compile_node["ssh"].get("port", 22)
+    probe = ("command -v qmake6 >/dev/null 2>&1 && echo Y && exit 0; "
+             "command -v qmake >/dev/null 2>&1 && echo Y && exit 0; "
+             "for d in /usr/lib/*/cmake/Qt6 /usr/lib/cmake/Qt6 "
+             "/usr/local/lib/cmake/Qt6 /opt/*/lib/*/cmake/Qt6 "
+             "/opt/*/lib/cmake/Qt6; do "
+             "test -f \"$d/Qt6Config.cmake\" && echo Y && exit 0; done; "
+             "echo N")
+    rc, sout, _ = ssh_run(user, host, port, probe, timeout=15)
+    have = (rc == 0 and "Y" in sout.split())
+    _QT6_PROBE_MEMO[label] = have
+    return have
+
+
 # ---- exec-node staging ---------------------------------------------------
+
+def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
+                           timeout=600):
+    """rsync a local datapack directory to exec_node's work_dir/<remote_subdir>.
+
+    Used by benchmarks that need the datapack on the exec node (serversave,
+    botactions). Returns (rc, message)."""
+    eu  = exec_node["user"]
+    eh  = exec_node["host"]
+    ep  = exec_node.get("port", 22)
+    ewd = exec_node["work_dir"]
+    ssh_run(eu, eh, ep, f"mkdir -p {shlex.quote(ewd)}", timeout=15)
+    dst = f"{ewd}/{remote_subdir}"
+    return rsync_to(eu, eh, ep, local_datapack.rstrip("/") + "/", dst + "/",
+                    timeout=timeout)
+
+
+def _server_properties_xml(maincode, port, max_players=200):
+    """The minimal server-properties.xml used by every server-running
+    benchmark. Single source so the cache-gen copy (compile node) and
+    the runtime copy (exec node) are byte-identical -- a difference in
+    maincode would invalidate a pre-generated datapack cache."""
+    return (
+        '<?xml version="1.0"?>\n'
+        '<configuration>\n'
+        f'    <server-port value="{port}"/>\n'
+        '    <automatic_account_creation value="true"/>\n'
+        f'    <max-players value="{max_players}"/>\n'
+        '    <httpDatapackMirror value=""/>\n'
+        '    <master>\n'
+        f'        <external-server-port value="{port}"/>\n'
+        '    </master>\n'
+        '    <content>\n'
+        f'        <mainDatapackCode value="{maincode}"/>\n'
+        '        <subDatapackCode value=""/>\n'
+        '    </content>\n'
+        '</configuration>\n'
+    )
+
+
+def write_server_properties_on_exec(exec_node, maincode, port, run_subdir=None,
+                                    max_players=200):
+    """Write a minimal server-properties.xml on the exec node.
+
+    `run_subdir` defaults to exec_node['work_dir']."""
+    eu  = exec_node["user"]
+    eh  = exec_node["host"]
+    ep  = exec_node.get("port", 22)
+    ewd = run_subdir or exec_node["work_dir"]
+    xml_content = _server_properties_xml(maincode, port, max_players)
+    escaped = xml_content.replace("'", "'\\''")
+    rc, _so, _se = ssh_run(eu, eh, ep,
+                           f"mkdir -p {shlex.quote(ewd)} && "
+                           f"printf '%s' '{escaped}' > "
+                           f"{shlex.quote(ewd + '/server-properties.xml')}",
+                           timeout=15)
+    return rc
+
+
+# ---- pre-generated datapack HPS cache ------------------------------------
+# `<server> save` parses the XML datapack and writes datapack-cache.bin
+# (HPS binary). On a normal boot the server only *loads* that cache when
+# its mtime matches server-properties.xml (freshness check in
+# server/cli/main-unix.cpp); otherwise it re-parses the XML -- minutes on
+# a constrained MIPS/ARM box. Generate the cache ONCE on the compile node
+# (same arch+libc as all its child exec nodes, so the binary cache is
+# byte-valid on each) and ship it next to the binary: every exec node's
+# server boot becomes an instant cache load instead of a full parse.
+
+_CACHE_GEN_MEMO = {}   # compile_node label -> (rc, remote_cache_path, msg)
+
+
+def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
+                               local_datapack, maincode, server_port=61920,
+                               timeout=1800, verbose=False):
+    """Run `<server> save` on the compile node, return (rc,
+    remote_cache_path, msg). Memoized per compile node: the 2nd+ exec
+    node sharing this compile node reuses the already-generated cache.
+
+    The cache lands in a stable <work_dir>/cache-gen/ dir (NOT the
+    per-exec build dir) so it is generated once and reused. Caller ships
+    it to each exec node with stage_cache_on_exec()."""
+    label = compile_node.get("label")
+    if label in _CACHE_GEN_MEMO:
+        return _CACHE_GEN_MEMO[label]
+    user = compile_node["ssh"]["user"]
+    host = compile_node["ssh"]["host"]
+    port = compile_node["ssh"].get("port", 22)
+    work = compile_node["work_dir"]
+    gen  = f"{work}/cache-gen"
+    cache_path = f"{gen}/datapack-cache.bin"
+
+    if not local_datapack or not os.path.isdir(local_datapack):
+        res = (1, None, f"local datapack missing: {local_datapack}")
+        _CACHE_GEN_MEMO[label] = res
+        return res
+
+    ssh_run(user, host, port, f"mkdir -p {shlex.quote(gen)}", timeout=30)
+    rc, msg = rsync_to(user, host, port, local_datapack.rstrip("/") + "/",
+                       f"{gen}/datapack/", timeout=timeout)
+    if rc != 0:
+        res = (rc, None, f"cache-gen datapack rsync failed: {msg[:120]}")
+        _CACHE_GEN_MEMO[label] = res
+        return res
+
+    xml = _server_properties_xml(maincode, server_port)
+    escaped = xml.replace("'", "'\\''")
+    setup = (f"cp -f {shlex.quote(bin_remote_dir + '/' + bin_name)} "
+             f"{shlex.quote(gen + '/' + bin_name)} && "
+             f"chmod +x {shlex.quote(gen + '/' + bin_name)} && "
+             f"printf '%s' '{escaped}' > {shlex.quote(gen + '/server-properties.xml')} && "
+             f"rm -f {shlex.quote(cache_path)} {shlex.quote(cache_path + '.tmp')}")
+    rc, _o, e = ssh_run(user, host, port, setup, timeout=120)
+    if rc != 0:
+        res = (rc, None, f"cache-gen setup failed: {e[:120]}")
+        _CACHE_GEN_MEMO[label] = res
+        return res
+
+    save_cmd = f"cd {shlex.quote(gen)} && ./{bin_name} save"
+    rc, _o, e = ssh_run(user, host, port, save_cmd, timeout=timeout)
+    # save writes datapack-cache.bin.tmp then renames to .bin; tolerate
+    # either in case the rename path differs by build.
+    rc_chk, sout, _ = ssh_run(
+        user, host, port,
+        f"if test -f {shlex.quote(cache_path)}; then echo Y; "
+        f"elif test -f {shlex.quote(cache_path + '.tmp')}; then "
+        f"mv {shlex.quote(cache_path + '.tmp')} {shlex.quote(cache_path)} && echo Y; "
+        f"else echo N; fi", timeout=30)
+    if sout.strip() != "Y":
+        res = (1, None, f"cache-gen save produced no cache (rc={rc}): {e[:160]}")
+        _CACHE_GEN_MEMO[label] = res
+        return res
+    if verbose:
+        _rlog(f"datapack cache pre-generated on {label!r}: {cache_path}")
+    res = (0, cache_path, "ok")
+    _CACHE_GEN_MEMO[label] = res
+    return res
+
+
+def stage_cache_on_exec(compile_node, exec_node, remote_cache_path,
+                        verbose=False):
+    """Pull the pre-generated datapack-cache.bin from the compile node and
+    push it next to the binary in the exec node's work_dir, then set its
+    mtime to match server-properties.xml so the server's freshness check
+    accepts it (main-unix.cpp loads the cache only when cache.mtime ==
+    xml.mtime). Returns (rc, msg). server-properties.xml MUST already be
+    written on the exec node (write_server_properties_on_exec)."""
+    staging = os.path.join("/tmp",
+                           f"cc-bench-cache-{exec_node['label']}-{int(time.time())}")
+    os.makedirs(staging, exist_ok=True)
+    cu = compile_node["ssh"]["user"]
+    ch = compile_node["ssh"]["host"]
+    cp = compile_node["ssh"].get("port", 22)
+    rc, msg = rsync_from(cu, ch, cp, remote_cache_path, staging + "/")
+    if rc != 0:
+        return rc, f"cache pull from compile node failed: {msg[:120]}"
+
+    eu  = exec_node["user"]
+    eh  = exec_node["host"]
+    ep  = exec_node.get("port", 22)
+    ewd = exec_node["work_dir"]
+    local_cache = os.path.join(staging, "datapack-cache.bin")
+    if not os.path.isfile(local_cache):
+        return 1, "cache file absent after pull"
+    rc, msg = rsync_to(eu, eh, ep, local_cache, f"{ewd}/datapack-cache.bin")
+    if rc != 0:
+        return rc, f"cache push to exec node failed: {msg[:120]}"
+    rc, _o, e = ssh_run(
+        eu, eh, ep,
+        f"touch -r {shlex.quote(ewd + '/server-properties.xml')} "
+        f"{shlex.quote(ewd + '/datapack-cache.bin')}", timeout=15)
+    if rc != 0:
+        return rc, f"cache mtime match failed: {e[:120]}"
+    if verbose:
+        _rlog(f"{exec_node['label']!r}: staged pre-generated cache "
+              f"+ matched mtime to server-properties.xml")
+    return 0, "ok"
+
 
 def push_binary_to_exec(compile_node, exec_node, remote_build_dir, bin_name,
                         extras=None, verbose=False):
@@ -329,7 +844,7 @@ def push_binary_to_exec(compile_node, exec_node, remote_build_dir, bin_name,
             rc, msg = rsync_from(cu, ch, cp, f"{remote_build_dir}/{e}",
                                   staging + "/")
             if rc != 0 and verbose:
-                print(f"[remote] WARN: extra {e!r} pull rc={rc}: {msg}", file=sys.stderr)
+                _rlog(f"WARN: extra {e!r} pull rc={rc}: {msg}", err=True)
 
     # 2) push to exec node work_dir
     eu = exec_node["user"]
@@ -339,7 +854,10 @@ def push_binary_to_exec(compile_node, exec_node, remote_build_dir, bin_name,
     ssh_run(eu, eh, ep,
             f"mkdir -p {shlex.quote(ewd)}",
             timeout=30)
-    rc, msg = rsync_to(eu, eh, ep, staging + "/", f"{ewd}/")
+    # delete=False: work_dir already holds the datapack + server-properties.xml
+    # staged by earlier steps; a mirroring --delete here would wipe them and
+    # the server would fail with "Datapack directory missing".
+    rc, msg = rsync_to(eu, eh, ep, staging + "/", f"{ewd}/", delete=False)
     if rc != 0:
         return rc, None, f"push to exec node failed: {msg}"
     return 0, f"{ewd}/{bin_name}", "ok"
@@ -362,43 +880,96 @@ def run_remote_cmd(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT,
 
 
 def remote_time_v(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
-    """Run `/usr/bin/time -v <cmd>` on the exec node and parse rusage.
+    """Run timed `cmd_str` on the exec node and parse rusage.
 
-    Returns the same dict shape as bh.measure_time_v(). When /usr/bin/time
-    is missing the harness should not call this -- profilers_runnable_on()
-    is the gate."""
+    Prefers `/usr/bin/time -v` (GNU time, gives RSS + ctx-switches).
+    Falls back to bash TIMEFORMAT when the binary is absent — only
+    wall/user/sys are available in that case; RSS fields remain None.
+    Returns the same dict shape as bh.measure_time_v()."""
     out = {"wall_s": None, "user_s": None, "sys_s": None,
            "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
-           "minor_pf": None, "major_pf": None, "rc": None}
-    full = f"/usr/bin/time -v {cmd_str}"
-    rc, _sout, serr = run_remote_cmd(exec_node, full, timeout=timeout)
-    out["rc"] = rc
-    for line in serr.splitlines():
-        s = line.strip()
-        if s.startswith("Elapsed (wall clock) time"):
-            out["wall_s"] = bh._parse_wall(s.split(": ", 1)[1])
-        elif s.startswith("User time (seconds):"):
-            try: out["user_s"] = float(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("System time (seconds):"):
-            try: out["sys_s"] = float(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Maximum resident set size (kbytes):"):
-            try: out["max_rss_kb"] = int(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Voluntary context switches:"):
-            try: out["vol_ctx"] = int(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Involuntary context switches:"):
-            try: out["invol_ctx"] = int(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Minor (reclaiming a frame) page faults:"):
-            try: out["minor_pf"] = int(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Major (requiring I/O) page faults:"):
-            try: out["major_pf"] = int(s.split(":", 1)[1])
-            except: pass
+           "minor_pf": None, "major_pf": None, "rc": None, "error": None,
+           "stdout": None}
+
+    # Detect /usr/bin/time on the remote node once per call (cheap SSH).
+    have_time_v = _remote_have_tool_cached(exec_node, "/usr/bin/time")
+
+    if have_time_v:
+        full = f"/usr/bin/time -v sh -c {shlex.quote(cmd_str)}"
+        rc, _sout, serr = run_remote_cmd(exec_node, full, timeout=timeout)
+        out["rc"] = rc
+        out["stdout"] = _sout
+        if rc != 0:
+            out["error"] = serr.strip()[:500] if serr else f"exit code {rc}"
+        for line in serr.splitlines():
+            s = line.strip()
+            if s.startswith("Elapsed (wall clock) time"):
+                out["wall_s"] = bh._parse_wall(s.split(": ", 1)[1])
+            elif s.startswith("User time (seconds):"):
+                try: out["user_s"] = float(s.split(":", 1)[1])
+                except: pass
+            elif s.startswith("System time (seconds):"):
+                try: out["sys_s"] = float(s.split(":", 1)[1])
+                except: pass
+            elif s.startswith("Maximum resident set size (kbytes):"):
+                try: out["max_rss_kb"] = int(s.split(":", 1)[1])
+                except: pass
+            elif s.startswith("Voluntary context switches:"):
+                try: out["vol_ctx"] = int(s.split(":", 1)[1])
+                except: pass
+            elif s.startswith("Involuntary context switches:"):
+                try: out["invol_ctx"] = int(s.split(":", 1)[1])
+                except: pass
+            elif s.startswith("Minor (reclaiming a frame) page faults:"):
+                try: out["minor_pf"] = int(s.split(":", 1)[1])
+                except: pass
+            elif s.startswith("Major (requiring I/O) page faults:"):
+                try: out["major_pf"] = int(s.split(":", 1)[1])
+                except: pass
+    else:
+        # Fallback: bash TIMEFORMAT gives wall/user/sys; RSS not available.
+        # TIMEFORMAT uses %R=real %U=user %S=sys in seconds with decimals.
+        marker = "BASHTIME:"
+        bash_cmd = (f'TIMEFORMAT="{marker}%R %U %S"; '
+                    f'{{ time sh -c {shlex.quote(cmd_str)}; }} 2>&1')
+        rc, combined, _ = run_remote_cmd(exec_node, bash_cmd, timeout=timeout)
+        out["rc"] = rc
+        lines = combined.splitlines()
+        stdout_lines = []
+        for line in lines:
+            if line.startswith(marker):
+                parts = line[len(marker):].split()
+                if len(parts) >= 3:
+                    try: out["wall_s"] = float(parts[0])
+                    except: pass
+                    try: out["user_s"] = float(parts[1])
+                    except: pass
+                    try: out["sys_s"] = float(parts[2])
+                    except: pass
+            else:
+                stdout_lines.append(line)
+        out["stdout"] = "\n".join(stdout_lines)
+        if rc != 0:
+            out["error"] = f"exit code {rc}"
     return out
+
+
+# Cache for per-exec-node /usr/bin/time probe so remote_time_v doesn't
+# add a round-trip on every call within a batch.
+_remote_time_v_cache = {}
+
+
+def _remote_have_tool_cached(exec_node, tool):
+    key = (exec_node.get("host"), exec_node.get("port", 22), tool)
+    if key not in _remote_time_v_cache:
+        eu = exec_node["user"]
+        eh = exec_node["host"]
+        ep = exec_node.get("port", 22)
+        rc, sout, _ = ssh_run(eu, eh, ep,
+                               f"command -v {shlex.quote(tool)} >/dev/null 2>&1 "
+                               f"&& echo Y || echo N", timeout=10)
+        _remote_time_v_cache[key] = (rc == 0 and sout.strip() == "Y")
+    return _remote_time_v_cache[key]
 
 
 def remote_perf_stat(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
@@ -409,9 +980,11 @@ def remote_perf_stat(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
     Mirrors measure_perf_stat() in benchmark_helpers: a non-zero rc
     from the wrapped command (timeout 124, SIGINT-exit 130) does not
     invalidate the counters perf already wrote to stderr -- parse
-    them regardless and fail only on empty / unparseable output."""
+    them regardless and fail only on empty / unparseable output.
+    Wrap cmd_str in a shell so the cd; chmod; ./bin chaining works."""
     full = ("perf stat -x , "
-            "-e cycles,instructions,branch-misses,cache-misses " + cmd_str)
+            "-e cycles,instructions,branch-misses,cache-misses "
+            f"sh -c {shlex.quote(cmd_str)}")
     rc, _sout, serr = run_remote_cmd(exec_node, full, timeout=timeout)
     out = {}
     for line in serr.splitlines():
@@ -433,18 +1006,20 @@ def remote_callgrind(exec_node, cmd_str, work_dir, timeout=None):
     """Run callgrind on the exec node and return instruction count.
     The output file lives in <work_dir>/callgrind.out -- it is parsed
     in-band on the remote with callgrind_annotate to avoid pulling the
-    profile back."""
+    profile back. On failure returns dict with rc and error fields."""
     if timeout is None:
         timeout = RUN_TIMEOUT_DEFAULT * 30   # callgrind is ~30x slower
     out_file = f"{work_dir}/callgrind.out"
+    # Wrap cmd_str in a shell so the cd; chmod; ./bin chaining works
     full = (f"rm -f {shlex.quote(out_file)} && "
             f"valgrind --tool=callgrind --quiet "
-            f"--callgrind-out-file={shlex.quote(out_file)} {cmd_str} && "
+            f"--callgrind-out-file={shlex.quote(out_file)} "
+            f"sh -c {shlex.quote(cmd_str)} && "
             f"callgrind_annotate {shlex.quote(out_file)} | "
             f"awk '/PROGRAM TOTALS/ {{gsub(\",\",\"\",$1); print $1; exit}}'")
-    rc, sout, _serr = run_remote_cmd(exec_node, full, timeout=timeout)
+    rc, sout, serr = run_remote_cmd(exec_node, full, timeout=timeout)
     if rc != 0:
-        return None
+        return {"rc": rc, "error": serr.strip()[:500] if serr else f"exit code {rc}"}
     for line in sout.splitlines():
         s = line.strip()
         if not s:
@@ -454,6 +1029,116 @@ def remote_callgrind(exec_node, cmd_str, work_dir, timeout=None):
         except ValueError:
             pass
     return None
+
+
+def start_server_popen(exec_node, bin_name):
+    """Launch the server on the exec node in the FOREGROUND over a dedicated
+    SSH Popen.  Python holds the connection open; no shell job-control, no
+    exec/setsid/nohup required on the remote.
+
+    Returns (ssh_proc, pid_str) where ssh_proc is the live Popen and
+    pid_str is the remote server PID (obtained via a second SSH call).
+    On failure returns (None, None).  Caller must eventually call
+    stop_server_popen(ssh_proc, exec_node, pid_str)."""
+    eu  = exec_node["user"]
+    eh  = exec_node["host"]
+    ep  = exec_node.get("port", 22)
+    ewd = exec_node["work_dir"]
+
+    # Kill any port-conflict leftovers from a previous run.
+    ssh_run(eu, eh, ep,
+            f"pkill -x {shlex.quote(bin_name)} 2>/dev/null; true", timeout=10)
+
+    # Connection 1: run server in foreground — stdin /dev/null, output to
+    # server.log.  Python keeps this Popen alive; closing it sends a
+    # disconnect to sshd which delivers SIGHUP to the remote process.
+    argv = ["ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes",
+            "-o", "ServerAliveInterval=30",
+            "-o", "StrictHostKeyChecking=no",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "-p", str(ep), _ssh_host(eu, eh),
+            f"cd {shlex.quote(ewd)} && chmod +x {shlex.quote(bin_name)} && "
+            f"rm -f server.log && "
+            f"./{bin_name} </dev/null >server.log 2>&1"]
+    proc = subprocess.Popen(argv, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
+
+    # Connection 2: get the PID — give the remote process a moment to start.
+    time.sleep(0.5)
+    rc, sout, _ = ssh_run(eu, eh, ep,
+                          f"pgrep -x {shlex.quote(bin_name)} | head -1",
+                          timeout=10)
+    pid = sout.strip() if rc == 0 else None
+    if not pid or not pid.isdigit():
+        proc.terminate()
+        proc.wait()
+        return None, None
+    return proc, pid
+
+
+def stop_server_popen(ssh_proc, exec_node, pid):
+    """Kill the remote server started by start_server_popen and close the
+    SSH connection."""
+    if pid:
+        eu  = exec_node["user"]
+        eh  = exec_node["host"]
+        ep  = exec_node.get("port", 22)
+        ssh_run(eu, eh, ep, f"kill {pid} 2>/dev/null; true", timeout=10)
+    if ssh_proc and ssh_proc.poll() is None:
+        ssh_proc.terminate()
+        try:
+            ssh_proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            ssh_proc.kill()
+            ssh_proc.wait()
+
+
+def measure_remote_server_boot(exec_node, bin_name, ready_timeout=120,
+                               poll_s=0.5, verbose=False):
+    """Start the server on the exec node, time wall-seconds from launch
+    until 'correctly bind:' appears in server.log, then stop it. Returns
+    (boot_s | None, msg).
+
+    Uses start_server_popen: no exec/setsid/nohup needed on the remote.
+    boot_s is None on crash-before-bind or timeout."""
+    eu  = exec_node["user"]
+    eh  = exec_node["host"]
+    ep  = exec_node.get("port", 22)
+    ewd = exec_node["work_dir"]
+
+    t0 = time.monotonic()
+    ssh_proc, pid = start_server_popen(exec_node, bin_name)
+    if ssh_proc is None:
+        return None, "server-start-failed rc=-1"
+    boot_s = None
+    try:
+        deadline = time.monotonic() + ready_timeout
+        while time.monotonic() < deadline:
+            time.sleep(poll_s)
+            rc, out, _ = ssh_run(
+                eu, eh, ep,
+                f"grep -q 'correctly bind:' {shlex.quote(ewd + '/server.log')} "
+                f"2>/dev/null && echo Y || echo N", timeout=10)
+            if rc == 0 and out.strip() == "Y":
+                boot_s = time.monotonic() - t0
+                break
+            rc2, alive, _ = ssh_run(
+                eu, eh, ep,
+                f"kill -0 {pid} 2>/dev/null && echo Y || echo N", timeout=10)
+            if rc2 == 0 and alive.strip() == "N":
+                _, tail, _ = ssh_run(
+                    eu, eh, ep,
+                    f"tail -n 3 {shlex.quote(ewd + '/server.log')} 2>/dev/null "
+                    f"| tr '\\n' '|'", timeout=10)
+                reason = (tail.strip().strip("|") or "no server.log")[:160]
+                return None, f"server-exited-before-bind: {reason}"
+    finally:
+        stop_server_popen(ssh_proc, exec_node, pid)
+    if boot_s is None:
+        return None, f"not-ready-in-{ready_timeout}s"
+    if verbose:
+        _rlog(f"{exec_node.get('label','?')}: server bound in {boot_s:.2f}s")
+    return boot_s, "ok"
 
 
 def remote_binary_size(exec_node, bin_path):
@@ -470,6 +1155,194 @@ def remote_binary_size(exec_node, bin_path):
         return None
 
 
+# ---- memory fragmentation / interrupt metrics ----------------------------
+
+def remote_sys_snapshot(exec_node):
+    """Capture a one-shot system snapshot from the exec node.
+
+    Returns a dict with keys:
+      buddyinfo    -- raw text of /proc/buddyinfo (str or None)
+      pagetypeinfo -- raw text of /proc/pagetypeinfo (str or None)
+      interrupts   -- dict {irq_label: int count} parsed from /proc/interrupts
+                      (summed across all CPUs; None on failure)
+
+    This is cheap (read-only procfs), call it before and after a run to
+    compute interrupt deltas.
+    """
+    out = {"buddyinfo": None, "pagetypeinfo": None, "interrupts": None}
+    # buddyinfo + pagetypeinfo in one SSH call
+    rc, sout, _ = run_remote_cmd(
+        exec_node,
+        "echo '===buddyinfo==='; cat /proc/buddyinfo 2>/dev/null; "
+        "echo '===pagetypeinfo==='; cat /proc/pagetypeinfo 2>/dev/null",
+        timeout=10)
+    if rc == 0:
+        buddy_lines = []
+        page_lines = []
+        section = None
+        for line in sout.splitlines():
+            if line == "===buddyinfo===":
+                section = "buddy"
+            elif line == "===pagetypeinfo===":
+                section = "page"
+            elif section == "buddy":
+                buddy_lines.append(line)
+            elif section == "page":
+                page_lines.append(line)
+        if buddy_lines:
+            out["buddyinfo"] = "\n".join(buddy_lines)
+        if page_lines:
+            out["pagetypeinfo"] = "\n".join(page_lines)
+    # /proc/interrupts — sum all CPU columns per row, key on the IRQ label
+    rc2, sout2, _ = run_remote_cmd(
+        exec_node, "cat /proc/interrupts 2>/dev/null", timeout=10)
+    if rc2 == 0:
+        irq_map = {}
+        lines = sout2.splitlines()
+        ncpus = 1
+        if lines:
+            # header: "           CPU0  CPU1 ..."
+            ncpus = len(lines[0].split())
+        for line in lines[1:]:
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+            # IRQ number/name is first field (strip trailing colon)
+            irq_key = parts[0].rstrip(":")
+            # sum numeric fields (CPU columns)
+            total = 0
+            for col in parts[1:1 + ncpus]:
+                try:
+                    total += int(col)
+                except ValueError:
+                    break
+            # label comes after the CPU columns and optional chip/type fields;
+            # for readability keep the raw key (number or name)
+            irq_map[irq_key] = total
+        out["interrupts"] = irq_map
+    return out
+
+
+def interrupts_delta(before, after):
+    """Compute per-IRQ delta between two interrupts dicts (from
+    remote_sys_snapshot). Returns {irq: delta} for IRQs that changed.
+    Either argument may be None (returns empty dict)."""
+    if not before or not after:
+        return {}
+    delta = {}
+    for k, v in after.items():
+        prev = before.get(k, 0)
+        if v != prev:
+            delta[k] = v - prev
+    return delta
+
+
+def remote_vm_sample(exec_node, pid):
+    """Read one sample of Vm* fields from /proc/<pid>/status.
+
+    Returns a dict {field_name: int_kb} for all 'Vm...' lines, or None
+    when the process no longer exists (normal: the process exited between
+    the sample and the read).
+    """
+    rc, sout, _ = run_remote_cmd(
+        exec_node,
+        f"grep '^Vm' /proc/{int(pid)}/status 2>/dev/null",
+        timeout=5)
+    if rc != 0 or not sout.strip():
+        return None
+    sample = {}
+    for line in sout.splitlines():
+        # format: "VmRSS:   1234 kB"
+        parts = line.split()
+        if len(parts) >= 2:
+            key = parts[0].rstrip(":")
+            try:
+                sample[key] = int(parts[1])
+            except ValueError:
+                pass
+    return sample if sample else None
+
+
+def vm_samples_stats(samples):
+    """Reduce a list of {field: int_kb} dicts (from remote_vm_sample) to
+    {field: {min, max, median, avg}} dicts.  Fields missing in some
+    samples are ignored for those samples only.
+
+    Returns {} when samples is empty.
+    """
+    if not samples:
+        return {}
+    # gather per-field lists
+    per_field = {}
+    for s in samples:
+        if s is None:
+            continue
+        for k, v in s.items():
+            if k not in per_field:
+                per_field[k] = []
+            per_field[k].append(v)
+    result = {}
+    for k, vals in per_field.items():
+        if not vals:
+            continue
+        vals_sorted = sorted(vals)
+        n = len(vals_sorted)
+        mid = n // 2
+        median = (vals_sorted[mid] if n % 2 == 1
+                  else (vals_sorted[mid - 1] + vals_sorted[mid]) / 2.0)
+        result[k] = {
+            "min": vals_sorted[0],
+            "max": vals_sorted[-1],
+            "median": median,
+            "avg": sum(vals) / n,
+            "unit": "kB",
+            "n_samples": n,
+        }
+    return result
+
+
+class VmSampler:
+    """Background thread that polls /proc/<pid>/status Vm* fields on a
+    remote exec node every `interval` seconds.
+
+    Usage:
+        sampler = VmSampler(exec_node, pid, interval=1.0)
+        sampler.start()
+        # ... run workload ...
+        sampler.stop()
+        stats = sampler.stats()   # {field: {min, max, median, avg, unit, n_samples}}
+    """
+
+    def __init__(self, exec_node, pid, interval=1.0):
+        self._exec_node = exec_node
+        self._pid = int(pid)
+        self._interval = float(interval)
+        self._samples = []
+        self._stop_event = threading.Event()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+
+    def start(self):
+        self._stop_event.clear()
+        self._thread.start()
+
+    def stop(self):
+        self._stop_event.set()
+        self._thread.join(timeout=self._interval * 3 + 5)
+
+    def _run(self):
+        while not self._stop_event.is_set():
+            s = remote_vm_sample(self._exec_node, self._pid)
+            if s is not None:
+                self._samples.append(s)
+            self._stop_event.wait(self._interval)
+
+    def stats(self):
+        return vm_samples_stats(self._samples)
+
+    def raw_samples(self):
+        return list(self._samples)
+
+
 # ---- the high-level "run a benchmark binary on a remote exec node" -------
 
 def run_benchmark_on_exec(compile_node, exec_node, cmake_src_subdir,
@@ -480,22 +1353,171 @@ def run_benchmark_on_exec(compile_node, exec_node, cmake_src_subdir,
     before the benchmark and guarantee teardown after (try/finally),
     even on early-return failures. Both calls are no-ops for ordinary
     exec nodes, so this is inert unless lxc_nfs.enabled was flipped on."""
-    if not nfs_lxc_bring_up(exec_node, verbose=verbose):
-        return ({p: None for p in profilers},
-                "nfs-lxc bring-up failed")
+    runtime_node, msg = nfs_lxc_prepare(exec_node, verbose=verbose)
+    if runtime_node is None:
+        nfs_lxc_teardown(exec_node, verbose=verbose)
+        return ({p: None for p in profilers}, msg)
+    use_ninja = exec_node.get("ninja")  # None -> auto, True/False -> override
     try:
         return _run_benchmark_on_exec_inner(
-            compile_node, exec_node, cmake_src_subdir, build_subdir,
+            compile_node, runtime_node, cmake_src_subdir, build_subdir,
             bin_name, runtime_cmd, profilers, cmake_defs=cmake_defs,
-            extras=extras, run_timeout=run_timeout, verbose=verbose)
+            extras=extras, run_timeout=run_timeout, verbose=verbose,
+            use_ninja=use_ninja)
     finally:
         nfs_lxc_teardown(exec_node, verbose=verbose)
+
+
+def build_for_fleet(compile_node, cmake_src_subdir, build_subdir,
+                    cmake_defs=None, use_ninja=None, verbose=False):
+    """Phase-1 build: stage source + cmake build on ONE compile node.
+    Returns (rc, msg, remote_build_dir). Meant to be run once per compile
+    node (its exec nodes share arch, so one binary serves them all)."""
+    if verbose:
+        _rlog(f"{compile_node['label']!r}: staging source")
+    rc, msg = stage_source_on_compile_node(compile_node, verbose=verbose)
+    if rc != 0:
+        return rc, f"stage failed: {msg}", None
+    if verbose:
+        _rlog(f"{compile_node['label']!r}: building {build_subdir}")
+    return build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
+                                 cmake_defs=cmake_defs, verbose=verbose,
+                                 use_ninja=use_ninja)
+
+
+def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
+                           runtime_cmd, profilers, extras=None,
+                           run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False):
+    """Phase-2 run on ONE exec node (already-built `remote_bld`):
+    nfs-lxc bring-up + push binary/extras + run each profiler + teardown.
+    Returns (out_dict, msg). Safe to call from a worker thread -- it only
+    touches its own exec node (ssh/rsync), no shared state.
+
+    `runtime_cmd` is either a single command STRING (same for every
+    profiler) or a {profiler -> command-string} DICT -- the latter lets a
+    benchmark use a different workload mode per profiler (e.g. fixed-time
+    --ms for rusage/perf-stat but fixed-iteration --ticks for callgrind)."""
+    runtime_node, msg = nfs_lxc_prepare(exec_node, verbose=verbose)
+    if runtime_node is None:
+        nfs_lxc_teardown(exec_node, verbose=verbose)
+        return {p: None for p in profilers}, msg
+    try:
+        if verbose:
+            _rlog(f"{exec_node['label']!r}: pushing binary")
+        rc, exec_bin, msg = push_binary_to_exec(
+            compile_node, runtime_node, remote_bld, bin_name,
+            extras=extras, verbose=verbose)
+        if rc != 0:
+            return {p: None for p in profilers}, msg
+        ewd = runtime_node["work_dir"]
+
+        def _cmd(prof):
+            rc_str = (runtime_cmd.get(prof) or runtime_cmd.get("rusage")
+                      if isinstance(runtime_cmd, dict) else runtime_cmd)
+            return (f"cd {shlex.quote(ewd)} && "
+                    f"chmod +x {shlex.quote(bin_name)} && {rc_str}")
+
+        snap_before = remote_sys_snapshot(runtime_node)
+        out = {}
+        for p in profilers:
+            if p == "rusage":
+                out[p] = remote_time_v(runtime_node, _cmd(p), timeout=run_timeout)
+            elif p == "perf-stat":
+                out[p] = remote_perf_stat(runtime_node, _cmd(p), timeout=run_timeout)
+            elif p == "callgrind":
+                out[p] = remote_callgrind(runtime_node, _cmd(p), ewd,
+                                          timeout=run_timeout * 30)
+            elif p == "binary-size":
+                out[p] = remote_binary_size(runtime_node, exec_bin)
+            else:
+                out[p] = None
+        snap_after = remote_sys_snapshot(runtime_node)
+        out["sys_mem_frag"] = {
+            "buddyinfo_before":    snap_before.get("buddyinfo"),
+            "buddyinfo_after":     snap_after.get("buddyinfo"),
+            "pagetypeinfo_before": snap_before.get("pagetypeinfo"),
+            "pagetypeinfo_after":  snap_after.get("pagetypeinfo"),
+            "interrupts_delta":    interrupts_delta(
+                snap_before.get("interrupts"), snap_after.get("interrupts")),
+        }
+        return out, "ok"
+    finally:
+        nfs_lxc_teardown(exec_node, verbose=verbose)
+
+
+def run_profiler_fleet(specs, verbose=False, max_workers=8):
+    """Two-phase PARALLEL fleet runner for profiler-based benchmarks.
+
+    `specs` -- one dict per exec node, each with:
+        exec_node, compile_node, cmake_src_subdir, build_subdir_base,
+        bin_name, runtime_cmd, profilers   (+ optional cmake_defs, extras,
+        run_timeout)
+
+    Phase 1: every UNIQUE compile node builds in parallel (one build dir
+             `<build_subdir_base>-<compile_label>` shared by its exec
+             nodes). Blocks until ALL builds finish -- "firstly all remote
+             nodes do compilation".
+    Phase 2: every exec node whose compile build succeeded runs in parallel
+             -- bring-up + push binary/cache + profilers on the exec node
+             corresponding to its compile node.
+
+    Returns {exec_label: (out_dict, msg)}. Recording/progress is left to
+    the caller (done serially after this returns, so Progress needs no
+    lock)."""
+    import concurrent.futures as cf
+    by_cn = {}
+    for s in specs:
+        by_cn.setdefault(s["compile_node"]["label"], []).append(s)
+
+    # ---- Phase 1: parallel build, one per compile node ------------------
+    builds = {}   # compile_label -> (rc, msg, build_dir)
+
+    def _build(cl):
+        s = by_cn[cl][0]
+        sub = f"{s['build_subdir_base']}-{cl}"
+        use_ninja = s["exec_node"].get("ninja")
+        return cl, build_for_fleet(
+            s["compile_node"], s["cmake_src_subdir"], sub,
+            cmake_defs=s.get("cmake_defs"), use_ninja=use_ninja,
+            verbose=verbose)
+
+    keys = list(by_cn.keys())
+    if keys:
+        with cf.ThreadPoolExecutor(max_workers=min(max_workers, len(keys))) as ex:
+            for cl, res in ex.map(_build, keys):
+                builds[cl] = res
+
+    # ---- Phase 2: parallel push+run per exec node -----------------------
+    results = {}
+    lock = threading.Lock()
+
+    def _run(s):
+        cl = s["compile_node"]["label"]
+        label = s["exec_node"]["label"]
+        rc, msg, bld = builds.get(cl, (1, "no build result", None))
+        if rc != 0:
+            with lock:
+                results[label] = ({p: None for p in s["profilers"]}, msg)
+            return
+        out, m = push_and_run_profilers(
+            s["compile_node"], s["exec_node"], bld, s["bin_name"],
+            s["runtime_cmd"], s["profilers"], extras=s.get("extras"),
+            run_timeout=s.get("run_timeout", RUN_TIMEOUT_DEFAULT),
+            verbose=verbose)
+        with lock:
+            results[label] = (out, m)
+
+    if specs:
+        with cf.ThreadPoolExecutor(max_workers=min(max_workers, len(specs))) as ex:
+            list(ex.map(_run, specs))
+    return results
 
 
 def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
                           build_subdir, bin_name, runtime_cmd,
                           profilers, cmake_defs=None, extras=None,
-                          run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False):
+                          run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False,
+                          use_ninja=None):
     """Full flow for one benchmark, one exec node:
       1. stage source on compile node
       2. cmake configure+build on compile node
@@ -506,26 +1528,29 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
     exec_node's work_dir; if it includes the binary, use a relative
     path like './bin --foo 1'.
 
+    `use_ninja` — forwarded to build_on_compile_node; None = auto-detect,
+    True = force Ninja, False = use Make.
+
     Returns a dict { profiler -> result } where result is either
     parsed metrics or None on failure. `binary-size` reads the file
     size on the exec node (the binary may be stripped differently per
     arch)."""
     out = {}
     if verbose:
-        print(f"[remote] {exec_node['label']!r}: staging source on "
+        _rlog(f"{exec_node['label']!r}: staging source on "
               f"{compile_node['label']!r}")
     rc, msg = stage_source_on_compile_node(compile_node, verbose=verbose)
     if rc != 0:
         return {p: None for p in profilers}, f"stage failed: {msg}"
     if verbose:
-        print(f"[remote] {exec_node['label']!r}: building")
+        _rlog(f"{exec_node['label']!r}: building")
     rc, msg, remote_bld = build_on_compile_node(
         compile_node, cmake_src_subdir, build_subdir,
-        cmake_defs=cmake_defs, verbose=verbose)
+        cmake_defs=cmake_defs, verbose=verbose, use_ninja=use_ninja)
     if rc != 0:
         return {p: None for p in profilers}, msg
     if verbose:
-        print(f"[remote] {exec_node['label']!r}: pushing binary")
+        _rlog(f"{exec_node['label']!r}: pushing binary")
     rc, exec_bin, msg = push_binary_to_exec(
         compile_node, exec_node, remote_bld, bin_name,
         extras=extras, verbose=verbose)
@@ -535,6 +1560,7 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
     # work_dir as cwd so the relative path resolves.
     ewd = exec_node["work_dir"]
     cmd_in_work = f"cd {shlex.quote(ewd)} && chmod +x {shlex.quote(bin_name)} && {runtime_cmd}"
+    snap_before = remote_sys_snapshot(exec_node)
     for p in profilers:
         if p == "rusage":
             out[p] = remote_time_v(exec_node, cmd_in_work, timeout=run_timeout)
@@ -547,4 +1573,13 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
             out[p] = remote_binary_size(exec_node, exec_bin)
         else:
             out[p] = None
+    snap_after = remote_sys_snapshot(exec_node)
+    out["sys_mem_frag"] = {
+        "buddyinfo_before":    snap_before.get("buddyinfo"),
+        "buddyinfo_after":     snap_after.get("buddyinfo"),
+        "pagetypeinfo_before": snap_before.get("pagetypeinfo"),
+        "pagetypeinfo_after":  snap_after.get("pagetypeinfo"),
+        "interrupts_delta":    interrupts_delta(
+            snap_before.get("interrupts"), snap_after.get("interrupts")),
+    }
     return out, "ok"

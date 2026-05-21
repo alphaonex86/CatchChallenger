@@ -39,6 +39,10 @@ BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR    = os.path.join(BENCH_DIR, "benchmarkmapmanager")
 BIN_NAME   = "benchmark_min_network"
 
+# Concurrency marker: pure in-process visibility loop, no port bind / no
+# network (the binary name is historical). Safe to run in parallel.
+NETWORK_EXCLUSIVE = False
+
 # Build dir lives outside the source tree (root CLAUDE.md).
 try:
     import test_config
@@ -48,11 +52,29 @@ except Exception:
 BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkmapmanager")
 
 PLAYER_COUNTS = [5, 10, 20, 50, 100, 200, 300]
-TICKS_PER_RUN = 2000
 SEED          = 0x5EED
 INSREM_PCT    = 5
 RUN_REPEATS   = 3        # warmup + 3 measured wall passes per cell
-RUN_TIMEOUT   = 600
+
+# Fixed-TIME model (benchmark/CLAUDE.md): the wall-time / throughput
+# profilers (rusage, perf-stat) run each player-count for a fixed budget
+# and report ticks completed (higher-is-better) -- NOT a fixed tick count
+# timed to completion. Per-player-count budget in ms; total binary wall =
+# MAP_BENCH_MS * len(PLAYER_COUNTS).
+MAP_BENCH_MS  = 2000
+# Callgrind's metric is a DETERMINISTIC instruction count, which a wall
+# budget would make vary run-to-run, so callgrind alone stays fixed-
+# iteration with a small tick count.
+MAP_CALLGRIND_TICKS = 200
+
+# Timeout DERIVED from the budget (timeout = budget + margin), not picked
+# independently. The binary self-stops at the budget; the timeout is only
+# the hard backstop for a hung run, so it must exceed total budget wall.
+_BUDGET_WALL_S = (MAP_BENCH_MS / 1000.0) * len(PLAYER_COUNTS)
+RUN_TIMEOUT    = int(_BUDGET_WALL_S * 3) + 120   # margin: warmup+startup+repeats
+# Callgrind inflates wall ~30x; scale its timeout by the same factor so it
+# measures the same WORK (its tick count is fixed, see MAP_CALLGRIND_TICKS).
+RUN_TIMEOUT_CALLGRIND = RUN_TIMEOUT * 30
 
 
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
@@ -101,8 +123,17 @@ def parse_bench_lines(stdout):
     return out
 
 
-def run_one(bin_path, players_arg=None):
-    cmd = [bin_path, "--ticks", str(TICKS_PER_RUN),
+def _mode_args(profiler):
+    """Per-profiler workload-size args. Throughput profilers use the
+    fixed-TIME budget (--ms); callgrind uses a fixed deterministic tick
+    count (--ticks)."""
+    if profiler == "callgrind":
+        return ["--ticks", str(MAP_CALLGRIND_TICKS)]
+    return ["--ms", str(MAP_BENCH_MS)]
+
+
+def run_one(bin_path, profiler="rusage", players_arg=None):
+    cmd = [bin_path, *_mode_args(profiler),
            "--seed", str(SEED), "--insrem-pct", str(INSREM_PCT)]
     if players_arg is not None:
         for p in players_arg:
@@ -111,34 +142,30 @@ def run_one(bin_path, players_arg=None):
 
 
 def cell_run(bin_path, profiler, label_node):
-    """Run a single (profiler, players=*) cell on the local host, return
-    a dict of metrics: {(player, metric_name) -> value}."""
-    cmd = run_one(bin_path)
-    # Pin every profiled child to the binary's own (tmpfs) dir so a
-    # status file it drops, or a valgrind vgcore, never lands next to
-    # the checked-in benchmark sources.
+    """Run a single (profiler, players=*) cell on the local host.
+    Returns (metrics_dict, error_msg) where metrics_dict is None on failure
+    and error_msg contains the failure reason."""
+    cmd = run_one(bin_path, profiler)
     run_cwd = os.path.dirname(bin_path)
+    timeout = RUN_TIMEOUT_CALLGRIND if profiler == "callgrind" else RUN_TIMEOUT
     metrics = {}
     if profiler == "rusage":
-        # Several timed reps; aggregate the harness's own median tick
-        # numbers across reps.
-        per_rep = []
         for _ in range(RUN_REPEATS):
-            t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT, cwd=run_cwd)
+            t = bh.measure_time_v(cmd, timeout=timeout, cwd=run_cwd)
             if t["rc"] != 0:
-                return None
-            # The harness only prints to stdout; measure_time_v
-            # discarded stdout to keep memory low. Re-run once
-            # plain to harvest the BENCH lines (bytes/median).
-        rc, sout, serr, dt = bh.run_capture(cmd, timeout=RUN_TIMEOUT,
+                return None, t.get("error") or f"time -v exited with code {t['rc']}"
+        rc, sout, serr, dt = bh.run_capture(cmd, timeout=timeout,
                                             cwd=run_cwd,
                                             preexec_fn=bh._drop_core_rlimit)
         if rc != 0:
-            return None
+            return None, f"benchmark binary exited with code {rc}"
         bench = parse_bench_lines(sout)
-        # Add max RSS from one fresh /usr/bin/time -v pass.
-        t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT, cwd=run_cwd)
+        t = bh.measure_time_v(cmd, timeout=timeout, cwd=run_cwd)
         for p, fields in bench.items():
+            # Fixed-time headline: throughput (ticks/s, higher-is-better)
+            # + the work done (ticks completed). Latency stays per-tick.
+            metrics[(p, "ticks_per_s")]    = fields.get("ticks_per_s")
+            metrics[(p, "ticks")]          = fields.get("ticks")
             metrics[(p, "median_tick_ns")] = fields.get("median_tick_ns")
             metrics[(p, "p95_tick_ns")]    = fields.get("p95_tick_ns")
             metrics[(p, "bytes_sent")]     = fields.get("bytes_sent")
@@ -146,24 +173,36 @@ def cell_run(bin_path, profiler, label_node):
             metrics[(0, "max_rss_kb")] = t["max_rss_kb"]
         if t["wall_s"] is not None:
             metrics[(0, "wall_s")] = t["wall_s"]
-        return metrics
+        if not metrics:
+            return None, "no metrics captured"
+        return metrics, None
     if profiler == "perf-stat":
-        out = bh.measure_perf_stat(cmd, timeout=RUN_TIMEOUT, cwd=run_cwd)
-        if not out: return None
+        out = bh.measure_perf_stat(cmd, timeout=timeout, cwd=run_cwd)
+        if not out:
+            return None, "SKIP:" + bh.perf_no_hw_skip("local")
         for evt, val in out.items():
             metrics[(0, f"perf_{evt}")] = val
-        return metrics
+        return metrics, None
     if profiler == "callgrind":
-        ic = bh.measure_callgrind(cmd, timeout=RUN_TIMEOUT * 30, outdir=BUILD_DIR)
-        if ic is None: return None
+        ic = bh.measure_callgrind(cmd, timeout=timeout, outdir=BUILD_DIR)
+        if ic is None:
+            # measure_callgrind already printed the diagnostic banner
+            # (AVX-512/unhandled-insn case) and may have auto-disabled
+            # the tool. The terse FAIL summary still goes into the
+            # per-cell history so the operator can grep for it.
+            return None, ("callgrind captured no data "
+                          "(see stderr for valgrind diagnostics; common "
+                          "cause: host ld-linux uses AVX-512 EVEX "
+                          "valgrind cannot decode)")
         metrics[(0, "callgrind_ir")] = ic
-        return metrics
+        return metrics, None
     if profiler == "binary-size":
         sz = bh.binary_size(bin_path)
-        if sz is None: return None
+        if sz is None:
+            return None, "binary-size failed"
         metrics[(0, "binary_size_bytes")] = sz
-        return metrics
-    return None
+        return metrics, None
+    return None, f"unknown profiler: {profiler}"
 
 
 def probe_cpu_percent_per_player(bin_path):
@@ -172,9 +211,8 @@ def probe_cpu_percent_per_player(bin_path):
     /usr/bin/time -v. Returns {N -> cpu_percent}.
 
     The main sweep runs all player counts in a single process so we
-    can't tease apart per-count CPU there. The probe is a few seconds
-    per count (TICKS_PER_RUN ticks for a single player count is
-    cheap relative to the sweep + callgrind cells)."""
+    can't tease apart per-count CPU there. The probe is MAP_BENCH_MS per
+    count (fixed-time), cheap relative to the sweep + callgrind cells."""
     out = {}
     for p in PLAYER_COUNTS:
         cmd = run_one(bin_path, players_arg=[p])
@@ -194,8 +232,10 @@ def probe_cpu_percent_per_player(bin_path):
 
 
 def _metric_unit_better(metric_name):
-    better = "lower"
-    unit = "ns" if metric_name.endswith("_ns") else \
+    # Throughput is higher-is-better; everything else lower-is-better.
+    better = "higher" if metric_name in ("ticks_per_s", "ticks") else "lower"
+    unit = "ticks/s" if metric_name == "ticks_per_s" else \
+           "ns" if metric_name.endswith("_ns") else \
            "bytes" if metric_name.endswith("_bytes") or metric_name == "bytes_sent" or metric_name == "binary_size_bytes" else \
            "kb" if metric_name.endswith("_kb") else \
            "s" if metric_name.endswith("_s") else \
@@ -226,35 +266,28 @@ def aggregate_metrics(per_cell):
     for (player, metric_name), value in per_cell.items():
         if value is None: continue
         key = metric_name if player == 0 else f"p{player}_{metric_name}"
-        better = "lower"
-        if metric_name in ("perf_instructions", "perf_cycles"):
-            better = "lower"
-        unit = "ns" if metric_name.endswith("_ns") else \
-               "bytes" if metric_name.endswith("_bytes") or metric_name == "bytes_sent" or metric_name == "binary_size_bytes" else \
-               "kb" if metric_name.endswith("_kb") else \
-               "s" if metric_name.endswith("_s") else \
-               "count"
+        unit, better = _metric_unit_better(metric_name)
         out[key] = {"median": value, "stddev": 0.0, "unit": unit, "better": better}
     return out
 
 
-def _runtime_cmd_string():
+def _runtime_cmd_string(profiler="rusage"):
     """Build the bench binary's argv as a single shell-quoted string for
     use on the exec node. The binary lives in the exec node's work_dir
     after push_binary_to_exec; we invoke it as ./BIN_NAME so cwd is the
-    work_dir."""
-    parts = [f"./{BIN_NAME}", "--ticks", str(TICKS_PER_RUN),
+    work_dir. Per-profiler workload mode: fixed-time (--ms) for throughput
+    profilers, fixed-iteration (--ticks) for callgrind."""
+    parts = [f"./{BIN_NAME}", *_mode_args(profiler),
              "--seed", str(SEED), "--insrem-pct", str(INSREM_PCT)]
     return " ".join(parts)
 
 
-def run_remote_cells(node, avail_profilers, skips, all_profilers,
-                     progress, per_tool, all_metrics):
-    """Dispatch the benchmark to a remote exec node: build on the paired
-    compile node, rsync binary to exec node, run each profiler. Updates
-    `per_tool[label]` and `all_metrics[label]` in place, and emits a
-    progress line per profiler.
-    """
+def _remote_spec(node, avail_profilers, skips, all_profilers,
+                 progress, per_tool):
+    """Build the run_profiler_fleet spec for one remote exec node. Emits
+    the SKIP progress lines (no-compile-node / tool-missing) up front so
+    the counter stays in lock-step, then returns the spec dict -- or None
+    when there's nothing to run (no compile node / no runnable profiler)."""
     label = node["label"]
     compile_node = node.get("compile_node")
     if compile_node is None:
@@ -262,43 +295,52 @@ def run_remote_cells(node, avail_profilers, skips, all_profilers,
             progress.emit(prof, "no", label, status="SKIP",
                           extra="no-compile-node")
             per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
-        return
-
-    # exec_node dict matching the remote_nodes.json shape that
-    # benchmark_remote expects (uses keys: user, host, port, work_dir).
+        return None
     exec_node = {"label": label,
                  "user":  node.get("ssh_user"),
                  "host":  node.get("ssh_host"),
                  "port":  node.get("ssh_port", 22),
-                 "work_dir": node.get("work_dir") or "/tmp/cc-bench-run"}
-
-    # Only run the profilers that passed the tool check. Pre-emit SKIPs
-    # so the progress counter stays in lock-step with all_profilers.
+                 "work_dir": node.get("work_dir") or "/tmp/cc-bench-run",
+                 "lxc_nfs": node.get("lxc_nfs"),
+                 "ninja":  node.get("ninja")}
     runnable = [p for p in all_profilers if p in avail_profilers]
     for prof in all_profilers:
         if prof not in runnable:
             reason = skips.get(prof, "tool-missing")
             progress.emit(prof, "no", label, status="SKIP", extra=reason)
             per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
-
     if not runnable:
-        return
+        return None
+    return {
+        "exec_node":         exec_node,
+        "compile_node":      compile_node,
+        "cmake_src_subdir":  "benchmark/benchmarkmapmanager",
+        "build_subdir_base": "benchmarkmapmanager",
+        "bin_name":          BIN_NAME,
+        # Per-profiler workload mode: fixed-time (--ms) for rusage/perf-stat,
+        # fixed-iteration (--ticks) for callgrind.
+        "runtime_cmd":       {p: _runtime_cmd_string(p) for p in runnable},
+        "profilers":         runnable,
+        "cmake_defs":        {"CMAKE_BUILD_TYPE": "Release"},
+        "run_timeout":       RUN_TIMEOUT,
+    }
 
-    out, msg = br.run_benchmark_on_exec(
-        compile_node=compile_node,
-        exec_node=exec_node,
-        cmake_src_subdir="benchmark/benchmarkmapmanager",
-        build_subdir=f"benchmarkmapmanager-{label}",
-        bin_name=BIN_NAME,
-        runtime_cmd=_runtime_cmd_string(),
-        profilers=runnable,
-        cmake_defs={"CMAKE_BUILD_TYPE": "Release"},
-        verbose=True,
-    )
+
+def _record_remote_result(label, runnable, out, msg,
+                          progress, per_tool, all_metrics):
+    """Parse one exec node's run_profiler_fleet result (out, msg) into
+    per_tool/all_metrics + emit per-profiler progress. Run serially after
+    the parallel fleet returns, so Progress needs no lock."""
     flat = {}
     for prof in runnable:
         res = out.get(prof)
-        if res is None or (isinstance(res, dict) and res.get("rc") not in (None, 0)):
+        # Check for explicit failure with error message
+        if isinstance(res, dict) and res.get("rc") not in (None, 0):
+            err_msg = res.get("error", f"exit code {res.get('rc')}")
+            progress.emit(prof, "no", label, status="FAIL", extra=err_msg)
+            per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err_msg}
+            continue
+        if res is None:
             progress.emit(prof, "no", label, status="FAIL", extra=msg if msg != "ok" else "")
             per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
             continue
@@ -309,24 +351,47 @@ def run_remote_cells(node, avail_profilers, skips, all_profilers,
                 cell[(0, "max_rss_kb")] = res["max_rss_kb"]
             if res.get("wall_s") is not None:
                 cell[(0, "wall_s")] = res["wall_s"]
+            # Per-player throughput/latency from the binary's BENCH stdout
+            # (captured by remote_time_v as res["stdout"]).
+            for p, fields in parse_bench_lines(res.get("stdout") or "").items():
+                cell[(p, "ticks_per_s")]    = fields.get("ticks_per_s")
+                cell[(p, "ticks")]          = fields.get("ticks")
+                cell[(p, "median_tick_ns")] = fields.get("median_tick_ns")
+                cell[(p, "p95_tick_ns")]    = fields.get("p95_tick_ns")
+                cell[(p, "bytes_sent")]     = fields.get("bytes_sent")
             if not cell:
-                progress.emit(prof, "no", label, status="FAIL", extra="no-data")
-                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+                err_msg = res.get("error", "no-data")
+                progress.emit(prof, "no", label, status="FAIL", extra=err_msg)
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err_msg}
                 continue
             flat.update(cell)
             per_tool[label][prof] = {"status": "PASS",
                                      "metrics": _cell_to_metric_block(cell)}
         elif prof == "perf-stat":
+            if not res:
+                reason = bh.perf_no_hw_skip(label)
+                progress.emit(prof, "no", label, status="SKIP", extra=reason)
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+                continue
             cell = {(0, f"perf_{k}"): v for k, v in res.items()}
             flat.update(cell)
             per_tool[label][prof] = {"status": "PASS",
                                      "metrics": _cell_to_metric_block(cell)}
         elif prof == "callgrind":
-            cell = {(0, "callgrind_ir"): res}
-            flat.update(cell)
-            per_tool[label][prof] = {"status": "PASS",
-                                     "metrics": _cell_to_metric_block(cell)}
+            if isinstance(res, int):
+                cell = {(0, "callgrind_ir"): res}
+                flat.update(cell)
+                per_tool[label][prof] = {"status": "PASS",
+                                         "metrics": _cell_to_metric_block(cell)}
+            else:
+                err_msg = res.get("error", "callgrind failed") if isinstance(res, dict) else "callgrind failed"
+                progress.emit(prof, "no", label, status="FAIL", extra=err_msg)
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err_msg}
         elif prof == "binary-size":
+            if res is None:
+                progress.emit(prof, "no", label, status="FAIL", extra="no-data")
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+                continue
             cell = {(0, "binary_size_bytes"): res}
             flat.update(cell)
             per_tool[label][prof] = {"status": "PASS",
@@ -339,6 +404,12 @@ def run_remote_cells(node, avail_profilers, skips, all_profilers,
 
 def main():
     args = bh.parse_bench_args()
+    if bh.acquire_singleton_lock("benchmarkmapmanager") is None:
+        return 3
+    br.set_benchmark_label("benchmarkmapmanager")
+    if NETWORK_EXCLUSIVE:
+        if bh.acquire_network_lock("benchmarkmapmanager") is None:
+            return 3
     comment = args.comment
     bin_path = build()
     if bin_path is None:
@@ -359,8 +430,8 @@ def main():
         node_profilers[node["label"]] = avail
         node_skips[node["label"]]     = skips
 
-    total = sum(len(all_profilers) for _ in nodes)
-    progress = bh.Progress(total)
+    total = sum(len(node_profilers[node["label"]]) for node in nodes)
+    progress = bh.Progress(total, "benchmarkmapmanager")
     deadline = bh.FleetDeadline()
 
     batch_id    = hr.new_batch_id()
@@ -370,6 +441,7 @@ def main():
     all_metrics  = {}     # node_label -> {flat metric dict}
     per_tool     = {}     # node_label -> { tool -> {status, metrics, ...} }
     per_subbench = {}     # node_label -> { tool -> { slice_label -> metric_block } }
+    remote_specs = []     # built serially below, run in parallel after
     for node in nodes:
         label = node["label"]
         per_tool[label] = {}
@@ -380,8 +452,15 @@ def main():
             all_metrics[label] = aggregate_metrics({})
             continue
         if label != "local":
-            run_remote_cells(node, node_profilers[label], node_skips[label],
-                             all_profilers, progress, per_tool, all_metrics)
+            # Collect the spec now (emits SKIPs); the actual build+run is
+            # done in parallel by run_profiler_fleet after this loop.
+            spec = _remote_spec(node, node_profilers[label],
+                                node_skips[label], all_profilers,
+                                progress, per_tool)
+            if spec is not None:
+                remote_specs.append(spec)
+            else:
+                all_metrics[label] = aggregate_metrics({})
             continue
         flat = {}
         for prof in all_profilers:
@@ -391,10 +470,15 @@ def main():
                 per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
                 continue
             deadline.note(label, prof)
-            cell = cell_run(bin_path, prof, label)
+            cell, err = cell_run(bin_path, prof, label)
             if cell is None:
-                progress.emit(prof, "no", label, status="FAIL")
-                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+                if err and err.startswith("SKIP:"):
+                    reason = err[5:]
+                    progress.emit(prof, "no", label, status="SKIP", extra=reason)
+                    per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+                else:
+                    progress.emit(prof, "no", label, status="FAIL", extra=err or "profiler failed")
+                    per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err or "profiler failed"}
                 continue
             flat.update(cell)
             progress.emit(prof, "no", label, status="PASS")
@@ -429,18 +513,44 @@ def main():
                     slices[f"{p}-players"] = slice_metrics
             per_subbench[label]["rusage"] = slices
 
-    # Persist + decide for the host arch only (others are SKIP today).
+    # Remote fleet, in PARALLEL: phase 1 builds every unique compile node
+    # at once; phase 2 pushes the binary + runs the profilers on each exec
+    # node (corresponding to its compile node) concurrently. Results are
+    # recorded serially here afterwards so Progress stays single-threaded.
+    if remote_specs:
+        print(_color(bh.C_CYAN,
+              f"[bench] remote fleet: building "
+              f"{len({s['compile_node']['label'] for s in remote_specs})} "
+              f"compile node(s) in parallel, then running "
+              f"{len(remote_specs)} exec node(s)"))
+        fleet = br.run_profiler_fleet(remote_specs, verbose=True)
+        for spec in remote_specs:
+            label = spec["exec_node"]["label"]
+            out, msg = fleet.get(label, ({}, "no fleet result"))
+            _record_remote_result(label, spec["profilers"], out, msg,
+                                  progress, per_tool, all_metrics)
+
     sha = bh.git_sha()
+    cand_stamp = started_utc.replace(":", "-")
+
+    # Cross-platform candidate record — metrics from every node that
+    # produced data, so the decision reflects the whole fleet.
     rec = {
         "commit": sha,
         "comment": comment,
         "date":   time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "node":   "local",
-        "metrics": all_metrics.get("local", {}),
-        "profilers": {"binary-size": bin_path},
+        "batch_id": batch_id,
+        "benchmark": "benchmarkmapmanager",
+        "nodes": {},
     }
-    cand_stamp = started_utc.replace(":", "-")
-    cand_p = bh.candidate_path("benchmarkmapmanager", "local", cand_stamp)
+    for node in nodes:
+        label = node["label"]
+        if label in all_metrics and all_metrics[label]:
+            rec["nodes"][label] = {
+                "arch": node.get("arch", "?"),
+                "metrics": all_metrics[label],
+            }
+    cand_p = bh.candidate_path("benchmarkmapmanager", cand_stamp)
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
@@ -470,14 +580,17 @@ def main():
                          simd_tier="generic",
                          harness_version=hr.harness_version(),
                          comment=comment)
-        print(_color(bh.C_CYAN, f"[history] {out_p}"))
+        if out_p is not None:
+            print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
-    champ = bh.load_champion("benchmarkmapmanager", "local")
-    decision, summary = bh.decide(champ, rec)
-    bh.print_decision("benchmarkmapmanager", arch, decision, summary)
+    # Cross-platform champion compare — aggregates every node's metrics,
+    # not just the local host.
+    champ = bh.load_champion("benchmarkmapmanager")
+    decision, summary = bh.decide_multi_node(champ, rec)
+    bh.print_decision("benchmarkmapmanager", decision, summary)
 
     if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkmapmanager", "local")
+        ch_p = bh.champion_path("benchmarkmapmanager")
         bh.write_record(ch_p, rec)
         print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
