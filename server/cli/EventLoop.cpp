@@ -288,6 +288,13 @@ bool EventLoop::init()
 #ifdef CATCHCHALLENGER_IO_URING_COOP_TASKRUN
     params.flags|=IORING_SETUP_COOP_TASKRUN;
 #endif
+    //CATCHCHALLENGER_IO_URING_TASKRUN_FLAG: companion to COOP_TASKRUN —
+    //kernel sets IORING_SQ_TASKRUN in sq.kflags when task work is pending,
+    //so the event loop can check the flag instead of calling io_uring_enter
+    //blindly.  Requires COOP_TASKRUN + kernel >= 5.19.
+#ifdef CATCHCHALLENGER_IO_URING_TASKRUN_FLAG
+    params.flags|=IORING_SETUP_TASKRUN_FLAG;
+#endif
     int qret=io_uring_queue_init_params(4096,&g_uring->ring,&params);
     if(qret<0)
     {

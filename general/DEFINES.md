@@ -1302,6 +1302,12 @@ build (gated mutually-exclusive in `general/CCCommon.cmake`).
 - **Used in:**
   - `server/cli/EventLoop.cpp`
 
+### `CATCHCHALLENGER_IO_URING_TASKRUN_FLAG`
+- **Scope:** server-only — server: cli
+- **Description:** Opt-in companion to `CATCHCHALLENGER_IO_URING_COOP_TASKRUN`. Adds `IORING_SETUP_TASKRUN_FLAG` (kernel >= 5.19): the kernel sets the `IORING_SQ_TASKRUN` bit in `sq.kflags` whenever task work is pending, so the event loop can test that flag and call `io_uring_enter()` only when needed, instead of calling it blindly on every iteration. Has no effect without `IORING_SETUP_COOP_TASKRUN`. Safe on single-core. Off by default.
+- **Used in:**
+  - `server/cli/EventLoop.cpp`
+
 
 ## Qt build options
 
