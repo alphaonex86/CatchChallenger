@@ -345,6 +345,9 @@ void CommonDatapack::set_monsterRateApplied(const bool &v) { monsterRateApplied=
 
 //temp
 const std::vector<MonstersCollision> &CommonDatapack::get_monstersCollision() const { return monstersCollision; }
+#ifdef CATCHCHALLENGER_TESTING
+void CommonDatapack::testing_setMonstersCollision(const std::vector<MonstersCollision> &v) { monstersCollision=v; }
+#endif
 const std::vector<MonstersCollisionTemp> &CommonDatapack::get_monstersCollisionTemp() const { return monstersCollisionTemp; }
 const std::vector<Type> &CommonDatapack::get_types() const { return types; }
 

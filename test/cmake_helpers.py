@@ -215,6 +215,13 @@ _PRO_TO_CMAKE = {
         [],
         "test/testingmapmanagement",
     ),
+    # test/testingpathfinding/ — PathFinding.cpp item-gated-zone routing.
+    # Loads city.tmx into a fixed MapServer; no network/DB/event loop.
+    "test/testingpathfinding/testpathfinding.pro": (
+        "testpathfinding",
+        [],
+        "test/testingpathfinding",
+    ),
     # qtopengl moved up to client/CMakeLists.txt; client/qtopengl/ is now
     # source-only (no CMakeLists.txt). Both legacy .pro paths point at
     # the new client/ project.
