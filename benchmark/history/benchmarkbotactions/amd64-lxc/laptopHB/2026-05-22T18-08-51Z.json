@@ -1,0 +1,64 @@
+{
+  "arch": "x86_64",
+  "arch_emulated": false,
+  "batch_id": "aa8302497cb14fbd83cf3494797ff652",
+  "benchmark": "benchmarkbotactions",
+  "comment": "",
+  "commit": "edca85f6a217e44b244ae2937b24f86ea61f3a68",
+  "commit_short": "edca85f",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cores": 8,
+  "cpu_mhz": 1245.292,
+  "cpu_model": "11th Gen Intel(R) Core(TM) i7-11370H @ 3.30GHz",
+  "decision": "KEEP",
+  "disk_kind": "nvme",
+  "disk_root": "INTEL SSDPEKNU512GZ",
+  "ended_utc": "2026-05-22T18:28:31Z",
+  "eth_link_mbps": null,
+  "harness_version": "edca85f6a217e44b244ae2937b24f86ea61f3a68",
+  "host_arch": null,
+  "kernel": "6.12.33+deb13-amd64",
+  "libc": "glibc 2.41",
+  "loadavg_1min_at_start": 0.04,
+  "net_card": "Advanced Micro Devices, Inc. [AMD] FCH LPC Bridge",
+  "net_link": "wifi",
+  "net_link_detail": "wlo1",
+  "node": "laptopHB",
+  "ram_total_mb": 15691,
+  "ram_type": "DDR4-3200MT/s",
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-22T18:08:51Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": "2.4GHz",
+  "wifi_link_mbps": 286,
+  "wifi_ssid": "Confiared",
+  "wifi_standard": "wifi-6"
+}

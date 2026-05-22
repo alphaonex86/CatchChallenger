@@ -83,7 +83,13 @@ def _color(c, s): return f"{c}{s}{bh.C_RESET}"
 def build():
     os.makedirs(BUILD_DIR, exist_ok=True)
     print(_color(bh.C_CYAN, f"[build] {SRC_DIR} -> {BUILD_DIR}"))
-    cfg = ["cmake", "-S", SRC_DIR, "-B", BUILD_DIR, "-DCMAKE_BUILD_TYPE=Release"]
+    cfg = ["cmake", "-S", SRC_DIR, "-B", BUILD_DIR, "-DCMAKE_BUILD_TYPE=Release",
+           # Enable the CALLGRIND_TOGGLE_COLLECT markers so callgrind (cell +
+           # --profile) measures the work loop, not startup. CMake auto-probes
+           # the valgrind header, so this is a no-op build-wise where the
+           # header is absent. Negligible at runtime off-callgrind (2 marker
+           # nops per run).
+           "-DCATCHCHALLENGER_BENCH_CALLGRIND=ON"]
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]
     cfg += bh.cmake_accel_defs()
@@ -184,7 +190,11 @@ def cell_run(bin_path, profiler, label_node):
             metrics[(0, f"perf_{evt}")] = val
         return metrics, None
     if profiler == "callgrind":
-        ic = bh.measure_callgrind(cmd, timeout=timeout, outdir=BUILD_DIR)
+        # collect_atstart=False: the binary's CALLGRIND_TOGGLE_COLLECT
+        # markers bound the timed loop, so the IR count excludes process
+        # startup (dynamic linking dominates an otherwise-tiny run).
+        ic = bh.measure_callgrind(cmd, timeout=timeout, outdir=BUILD_DIR,
+                                  collect_atstart=False)
         if ic is None:
             # measure_callgrind already printed the diagnostic banner
             # (AVX-512/unhandled-insn case) and may have auto-disabled
@@ -321,7 +331,12 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
         # fixed-iteration (--ticks) for callgrind.
         "runtime_cmd":       {p: _runtime_cmd_string(p) for p in runnable},
         "profilers":         runnable,
-        "cmake_defs":        {"CMAKE_BUILD_TYPE": "Release"},
+        "cmake_defs":        {"CMAKE_BUILD_TYPE": "Release",
+                              "CATCHCHALLENGER_BENCH_CALLGRIND": "ON"},
+        # The remote binary carries the CALLGRIND_TOGGLE_COLLECT markers,
+        # so remote callgrind must run with --collect-atstart=no or the
+        # toggle inverts (collects everything-but-the-loop).
+        "callgrind_collect_atstart": False,
         "run_timeout":       RUN_TIMEOUT,
     }
 
@@ -421,7 +436,9 @@ def main():
             "cmake_src_subdir": "benchmark/benchmarkmapmanager",
             "build_subdir_base": "benchmarkmapmanager",
             "bin_name": BIN_NAME,
-            "cmake_defs": {"CMAKE_BUILD_TYPE": "Release"},
+            "cmake_defs": {"CMAKE_BUILD_TYPE": "Release",
+                           "CATCHCHALLENGER_BENCH_CALLGRIND": "ON"},
+            "callgrind_collect_atstart": False,
             "runtime_cmd": {t: _runtime_cmd_string(t) for t in tools},
         }
         # local: profile each tool with its own workload-mode argv.
@@ -430,7 +447,8 @@ def main():
             tmo = RUN_TIMEOUT_CALLGRIND if t == "callgrind" else RUN_TIMEOUT * scale
             bh.profile_once(run_one(bin_path, t), t,
                             cwd=os.path.dirname(bin_path), timeout=tmo,
-                            node_label="local", cpu_cores=os.cpu_count())
+                            node_label="local", cpu_cores=os.cpu_count(),
+                            collect_atstart=False)
         # remote: build+push+run+pull per exec node (local_cmd=None: already
         # done the per-tool local runs above).
         br.profile_fleet("benchmarkmapmanager", tools, None, None, None,

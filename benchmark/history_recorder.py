@@ -28,6 +28,7 @@ import os
 import re
 import shlex
 import shutil
+import sys
 import subprocess
 import sys
 import time
@@ -617,6 +618,7 @@ class PlatformRecord:
             "wifi_band":     None,
             "wifi_link_mbps": None,
             "eth_link_mbps": None,
+            "cpu_metrics_reliable": None,
             "virt_kind":     None,
             "virt_type":     None,
             "arch_emulated": None,
@@ -649,6 +651,15 @@ class PlatformRecord:
         for k in ("net_link", "net_link_detail", "wifi_ssid", "wifi_standard",
                   "wifi_band", "wifi_link_mbps", "eth_link_mbps"):
             self.platform[k] = link.get(k)
+        # Derived reliability flag: wifi/vpn/tunnel links inject jitter +
+        # driver-interrupt CPU (e.g. brcmfmac wifi on rpi-zero-w showed up
+        # as 41% of a perf capture), so CPU/latency numbers from such a
+        # node are contention-prone. The comparator/operator uses this to
+        # avoid treating a wifi-only movement as a KEEP/DISCARD signal
+        # (benchmark/CLAUDE.md: escalate when only wifi/VPN/tunnel nodes
+        # move). Wired/virtual/loopback are considered clean.
+        self.platform["cpu_metrics_reliable"] = (
+            link.get("net_link") not in ("wifi", "vpn", "tunnel"))
         virt = collect_virt(self.runner)
         for k in ("virt_kind", "virt_type", "arch_emulated", "host_arch"):
             self.platform[k] = virt.get(k)
@@ -727,6 +738,15 @@ class PlatformRecord:
             self.platform["compile_flags"] = list(compile_flags)
         if simd_tier is not None:
             self.platform["simd_tier"] = simd_tier
+        # Surface contention-prone links so a wifi/VPN/tunnel node's CPU%
+        # / latency numbers aren't read as a clean KEEP/DISCARD signal.
+        if self.platform.get("cpu_metrics_reliable") is False:
+            link = self.platform.get("net_link")
+            detail = self.platform.get("net_link_detail")
+            sys.stderr.write(
+                f"[history] WARN {self.node_label}: link={link}"
+                f"{('/' + str(detail)) if detail else ''} — CPU%/latency "
+                f"contention-prone; don't treat as sole KEEP/DISCARD signal\n")
         doc = {
             "benchmark":       self.benchmark,
             "commit":          commit,

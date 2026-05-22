@@ -160,6 +160,22 @@ IO_URING_VARIANTS = [
     ("iouring-no-sqarray",   {"CATCHCHALLENGER_IO_URING_NO_SQARRAY": "ON"}),
 ]
 
+# Compression sweep (LOCAL): protocol Zstandard at level 6 vs OFF, set at
+# RUNTIME via server-properties.xml `compression` (one BENCHMARK-enabled
+# build, re-run per variant — no rebuild). Only the character-load packet
+# is compressed (ClientHeavyLoadSelectCharFinal.cpp), so the headline is
+# the CPU vs bytes-on-wire tradeoff: "none" should cut server CPU but
+# raise tx bytes. The bytes-on-wire metric (net_tx_bytes on lo) is what
+# makes that tradeoff legible — without it "none uses less CPU" is the
+# meaningless conclusion CLAUDE.md warns against. Swept across all three
+# BOT_COUNTS workload sizes because the threshold/CPU tradeoff differs by
+# load. (value, level) — level ignored for "none".
+COMPRESSION_VARIANTS = [
+    ("zstd6", "zstd", 6),
+    ("none",  "none", 6),
+]
+COMPRESSION_BASE_DEFS = dict(SERVER_RAM_DB_DEFS, CATCHCHALLENGER_BENCHMARK="ON")
+
 
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
 
@@ -460,9 +476,16 @@ def _start_server_in(staged_bin, ready_timeout=SERVER_BOOT_TIMEOUT):
     return None
 
 
-def _stage_variant_run_dir(server_bin, run_dir, port):
+def _stage_variant_run_dir(server_bin, run_dir, port,
+                           compression=None, compression_level=6):
     """Stage a run dir (binary copy + datapack symlink + server-properties
-    on `port`) for an io_uring variant server."""
+    on `port`) for an io_uring / compression variant server.
+
+    compression: None -> omit the key (server default = zstd). "zstd" or
+    "none" -> write the key so the compression sweep can toggle protocol
+    compression at runtime. main-unix2.cpp reads it and loadAndFixSettings()
+    applies it to CompressionProtocol::compressionTypeServer AFTER the
+    BaseServer2 ctor default, so the setting actually sticks."""
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir, ignore_errors=True)
     os.makedirs(run_dir, exist_ok=True)
@@ -471,6 +494,11 @@ def _stage_variant_run_dir(server_bin, run_dir, port):
     os.chmod(dst, 0o755)
     os.symlink(DATAPACK_PATH, os.path.join(run_dir, "datapack"))
     maincode = _detect_maincode(DATAPACK_PATH)
+    compression_xml = ""
+    if compression is not None:
+        compression_xml = (
+            f'    <compression value="{compression}"/>\n'
+            f'    <compressionLevel value="{compression_level}"/>\n')
     with open(os.path.join(run_dir, "server-properties.xml"), "w") as f:
         f.write(
             '<?xml version="1.0"?>\n<configuration>\n'
@@ -478,6 +506,7 @@ def _stage_variant_run_dir(server_bin, run_dir, port):
             '    <automatic_account_creation value="true"/>\n'
             '    <max-players value="500"/>\n'
             '    <httpDatapackMirror value=""/>\n'
+            f'{compression_xml}'
             f'    <master>\n        <external-server-port value="{port}"/>\n    </master>\n'
             f'    <content>\n        <mainDatapackCode value="{maincode}"/>\n'
             '        <subDatapackCode value=""/>\n    </content>\n</configuration>\n')
@@ -645,6 +674,107 @@ def _run_iouring_variants(bot_bin, iface):
                  if p99 is not None else "")
         print(_color(bh.C_GREEN, f"[iouring] {vlabel}: wall={sample.get('wall_s')}s "
               f"sys={sample.get('sys_s')}s cpu={cpu}% {rps_s}{lat_s}"))
+    return flat, slices
+
+
+_SIZE_LABELS = ["small", "medium", "large"]
+
+
+def _size_label(i):
+    """Map a BOT_COUNTS index to small/medium/large; fall back to the
+    raw count when there are more than three sizes."""
+    if i < len(_SIZE_LABELS) and len(BOT_COUNTS) <= len(_SIZE_LABELS):
+        return _SIZE_LABELS[i]
+    return f"{BOT_COUNTS[i]}-bots"
+
+
+def _run_compression_variants(bot_bin, iface):
+    """LOCAL compression sweep: zstd-6 vs none, set at RUNTIME (one
+    BENCHMARK-enabled build, re-staged per variant). Sweeps every
+    BOT_COUNTS workload size. Per (variant, size) records the work metric
+    (requests/s) + its resource cost (server cpu_percent) + the latency
+    tail (p50/p95/p99) + bytes-on-wire (net_tx_bytes) so the CPU/bandwidth
+    tradeoff is legible. Returns (flat {name:(med,std)}, slices
+    {"<variant>-<size>": metric_block}). A build/boot failure is skipped
+    with a note, never a hard failure (mirrors _run_iouring_variants)."""
+    flat, slices = {}, {}
+    # One benchmark-enabled build, default compression; runtime config
+    # selects zstd/none per run.
+    bdir = os.path.join(BUILD_ROOT, "benchmark", "botactions-compression")
+    rc, msg = _cmake_build(SRV_SRC_DIR, bdir, extra_defs=dict(COMPRESSION_BASE_DEFS),
+                           label="build:compression")
+    if rc != 0:
+        print(_color(bh.C_YELLOW, f"[compression] build failed ({msg}); skip sweep"))
+        return flat, slices
+    sbin = os.path.join(bdir, SRV_BIN_NAME)
+    if not os.path.isfile(sbin):
+        print(_color(bh.C_YELLOW, "[compression] binary missing; skip sweep"))
+        return flat, slices
+    port_base = SERVER_PORT + 40
+    pidx = 0
+    for vi, (vlabel, comp, level) in enumerate(COMPRESSION_VARIANTS):
+        for si, bots in enumerate(BOT_COUNTS):
+            size = _size_label(si)
+            slabel = f"{vlabel}-{size}"
+            port = port_base + pidx
+            pidx += 1
+            rdir = os.path.join(TMPFS_ROOT, f"cc-bench-botactions-comp-{vlabel}-{size}")
+            staged = _stage_variant_run_dir(sbin, rdir, port,
+                                            compression=comp, compression_level=level)
+            # warm the HPS cache so boot is fast and the run isn't polluted
+            # by cold XML parse (benchmark/CLAUDE.md: profile a WARM boot).
+            bh.run_capture([staged, "save"], timeout=RUN_TIMEOUT, cwd=rdir,
+                           preexec_fn=bh._drop_core_rlimit)
+            proc = _start_server_in(staged)
+            if proc is None:
+                print(_color(bh.C_YELLOW, f"[compression] {slabel}: server not ready; skip"))
+                continue
+            try:
+                sample = _run_once(bot_bin, "127.0.0.1", port, bots, iface,
+                                   server_pid=proc.pid)
+            finally:
+                stop_server(proc)
+            if sample is None:
+                print(_color(bh.C_YELLOW, f"[compression] {slabel}: bot run failed; skip"))
+                continue
+            sm = {}
+            # server CPU% (the resource cost)
+            cpu = sample.get("cpu_percent")
+            if cpu is not None:
+                flat[f"{slabel}_cpu_percent"] = (cpu, 0.0)
+                sm["cpu_percent"] = {"value": cpu, "median": cpu, "stddev": 0.0,
+                                     "unit": "%", "better": "lower", "samples": [cpu]}
+            # bytes-on-wire (server tx): the bandwidth side of the tradeoff.
+            tx = sample.get("net_tx_bytes")
+            if tx is not None:
+                flat[f"{slabel}_net_tx_bytes"] = (tx, 0.0)
+                sm["net_tx_bytes"] = {"value": tx, "median": tx, "stddev": 0.0,
+                                      "unit": "bytes", "better": "lower",
+                                      "samples": [tx]}
+            # work metric: requests/s (CPU% is meaningless without it).
+            rps = None
+            packets = _read_bench_packets_in(rdir)
+            wall = sample.get("wall_s")
+            if packets is not None and wall and wall > 0:
+                rps = packets / wall
+                flat[f"{slabel}_requests_per_s"] = (rps, 0.0)
+                sm["requests_per_s"] = {"value": rps, "median": rps, "stddev": 0.0,
+                                        "unit": "req/s", "better": "higher",
+                                        "samples": [rps]}
+            # latency tail (p50/p95/p99 ride with throughput).
+            lat = _read_bench_latency(rdir)
+            for k, v in lat.items():
+                flat[f"{slabel}_{k}"] = (v, 0.0)
+                sm[k] = {"value": v, "median": v, "stddev": 0.0, "unit": "ns",
+                         "better": "lower", "samples": [v]}
+            if sm:
+                slices[slabel] = sm
+            rps_s = f"{rps:.0f}req/s" if rps is not None else "req/s=?"
+            tx_s = f" tx={tx}B" if tx is not None else ""
+            p99 = lat.get("latency_p99_ns")
+            p99_s = f" p99={p99:.0f}ns" if p99 is not None else ""
+            print(_color(bh.C_GREEN, f"[compression] {slabel}: cpu={cpu}% "
+                  f"{rps_s}{tx_s}{p99_s}"))
     return flat, slices
 
 
@@ -1197,6 +1327,15 @@ def main():
         # kernel/CPU specific and the remote dispatch isn't wired), so
         # --profile stays on the host; artefacts are still node/core-tagged.
         tools = bh.profile_tools(args.profile)
+        # Warm the HPS datapack cache BEFORE profiling. Without this the
+        # server boots cold and re-parses the whole XML datapack, so
+        # tinyXML2 / isalpha / isspace dominate the profile (~10% Ir) and
+        # drown the steady-state hot path this benchmark exists to
+        # optimise. `save` writes datapack-cache.bin so the profiled boot
+        # loads the binary cache instead. Mirrors _measure_local_boot's
+        # warm step on the non-profile path.
+        bh.run_capture([staged, "save"], timeout=RUN_TIMEOUT, cwd=SRV_RUN_DIR,
+                       preexec_fn=bh._drop_core_rlimit)
         rc = 0
         for t in tools:
             if profile_server(staged, bin_path, t) != 0:
@@ -1394,6 +1533,16 @@ def _run_with_server(bin_path, server_proc, comment,
             per_tool[label]["server-iouring"] = {
                 "status": "PASS", "metrics": _flat_to_metric_block(iou_flat)}
             per_subbench.setdefault(label, {})["server-iouring"] = iou_slices
+
+        # Compression sweep (LOCAL only): zstd-6 vs none across all workload
+        # sizes. Recorded as the "server-compression" tool + per-(variant,
+        # size) sub-benchmark slices carrying req/s + cpu% + bytes-on-wire +
+        # latency tail, so the CPU/bandwidth tradeoff is reviewable.
+        comp_flat, comp_slices = _run_compression_variants(bin_path, iface)
+        if comp_flat:
+            per_tool[label]["server-compression"] = {
+                "status": "PASS", "metrics": _flat_to_metric_block(comp_flat)}
+            per_subbench.setdefault(label, {})["server-compression"] = comp_slices
 
     # Cross-platform candidate record.
     sha = bh.git_sha()

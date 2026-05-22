@@ -235,6 +235,24 @@ if(CC_LINKER)
     message(STATUS "linker: -fuse-ld=${CC_LINKER} (threads=${_cc_link_jobs})")
 endif()
 
+# Opt-in performance link flags. Default OFF so production / Qt Creator /
+# packaged builds are untouched. Enable with -DCATCHCHALLENGER_PERF_LINK=ON
+# when building from git for max speed (the benchmark harness sets it).
+#   -Wl,-z,now      resolve every PLT entry at load instead of lazily on
+#                   first call — kills the per-call do_lookup_x /
+#                   _dl_lookup_symbol_x trampoline cost the profile showed
+#                   (~3% Ir into ld-linux symbol resolution).
+#   -Wl,-Bsymbolic  bind intra-image references to local definitions.
+# ELF-only: skip on the MinGW/PE cross target where these are rejected.
+option(CATCHCHALLENGER_PERF_LINK
+       "Eager symbol binding for faster steady-state (-z now -Bsymbolic); off by default, opt-in for perf builds"
+       OFF)
+if(CATCHCHALLENGER_PERF_LINK AND NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_link_options(catchchallenger_common_flags INTERFACE
+        "LINKER:-z,now" "LINKER:-Bsymbolic")
+    message(STATUS "perf link: -Wl,-z,now -Wl,-Bsymbolic")
+endif()
+
 # Top-level toggles. Mirror qmake CONFIG+= switches. These are options
 # (not cache vars), so callers can override via -D on the cmake line.
 # Server-only / client-only options live in the binary CMakeLists.txt

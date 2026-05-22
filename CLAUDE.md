@@ -165,7 +165,7 @@ If `git status` shows build dirs / `.qtcreator/` / `__pycache__/` / `.claude/` /
 
 # Network Protocol
 * Packet: header byte, with/without reply, both directions
-* Compression: Zstandard (level 1-9)
+* Compression: Zstandard (level 1-9), optional — applied to a small set of packets only (the client character-load protocol), not the hot per-tick packets. Hard-disable via `#ifdef CATCHCHALLENGER_SERVER_NO_COMPRESSION`; runtime off via server-properties `compression=none`.
 * 4 separate DBs: login (accounts), common (shared, characters), server (server-specific)
 
 # Game Features

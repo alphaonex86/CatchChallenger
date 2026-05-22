@@ -748,6 +748,14 @@ def cmake_accel_defs():
     if shutil.which("ccache"):
         defs += ["-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                  "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"]
+    # Eager symbol binding (-Wl,-z,now -Wl,-Bsymbolic). Unlike ccache this
+    # DOES change runtime behaviour -- that is the point: it removes the
+    # lazy do_lookup_x / _dl_lookup_symbol_x per-call trampoline cost the
+    # profile attributed ~3% Ir to. The flag is opt-in in CCCommon.cmake
+    # (default OFF for production); the benchmark always builds the perf
+    # variant so the champion history tracks it. ELF-only -- the CMake
+    # side skips it on the MinGW/PE target.
+    defs += ["-DCATCHCHALLENGER_PERF_LINK=ON"]
     return defs
 
 
@@ -888,9 +896,18 @@ def measure_perf_stat(cmd, env=None, timeout=None, cwd=None):
     return out or None
 
 
-def measure_callgrind(cmd, env=None, timeout=None, outdir=None):
+def measure_callgrind(cmd, env=None, timeout=None, outdir=None,
+                      collect_atstart=True):
     """valgrind --tool=callgrind. Returns instruction count when
     callgrind_annotate succeeds, else None.
+
+    collect_atstart=False adds `--collect-atstart=no` so collection is
+    driven by CALLGRIND_TOGGLE_COLLECT markers in the guest (the binary
+    must be built to emit them, e.g. benchmarkmapmanager with
+    -DCATCHCHALLENGER_BENCH_CALLGRIND). This excludes one-time startup
+    (dynamic linking) from the instruction count so the profile reflects
+    the steady-state work loop. Pass True (default) for binaries WITHOUT
+    the markers — otherwise nothing is collected.
 
     valgrind dumps `vgcore.<pid>` into the *process cwd* (NOT
     --callgrind-out-file's dir) whenever the guest is killed by a
@@ -930,8 +947,10 @@ def measure_callgrind(cmd, env=None, timeout=None, outdir=None):
     run_env["GLIBC_TUNABLES"] = (prev + ":" + mask) if prev else mask
     # Drop --quiet so we capture valgrind's diagnostics on stderr; we
     # only print them when something goes wrong.
-    full = ["valgrind", "--tool=callgrind", "--callgrind-out-file=" + out_file
-            ] + list(cmd)
+    full = ["valgrind", "--tool=callgrind", "--callgrind-out-file=" + out_file]
+    if not collect_atstart:
+        full.append("--collect-atstart=no")
+    full += list(cmd)
     rc, _, verr, _ = run_capture(full, env=run_env, timeout=timeout,
                                  cwd=outdir, preexec_fn=_drop_core_rlimit)
     # Accept the run when callgrind.out was written even though the
@@ -1132,7 +1151,8 @@ def profile_node_tag(node_label, cpu_cores):
     return f"{safe}-CPU-{cores}"
 
 
-def profiler_wrap(cmd, tool, env=None, node_label="local", cpu_cores=None):
+def profiler_wrap(cmd, tool, env=None, node_label="local", cpu_cores=None,
+                  collect_atstart=True):
     """Build the (full_argv, out_path, env) tuple to run `cmd` under
     `tool` (callgrind | massif | perf). Returns (None, None, None) when
     the underlying tool isn't installed. The artefact path lives under
@@ -1152,9 +1172,16 @@ def profiler_wrap(cmd, tool, env=None, node_label="local", cpu_cores=None):
                   f"--profile {tool}{C_RESET}", file=sys.stderr)
             return None, None, None
         out = os.path.join(outdir, f"{tool}.out.{tag}.{stamp}")
-        full = ["valgrind", f"--tool={tool}",
-                (f"--callgrind-out-file={out}" if tool == "callgrind"
-                 else f"--massif-out-file={out}")] + list(cmd)
+        valgrind_opts = ["valgrind", f"--tool={tool}",
+                         (f"--callgrind-out-file={out}" if tool == "callgrind"
+                          else f"--massif-out-file={out}")]
+        # collect_atstart=False -> collection driven by the guest's
+        # CALLGRIND_TOGGLE_COLLECT markers (e.g. benchmarkmapmanager built
+        # with -DCATCHCHALLENGER_BENCH_CALLGRIND): excludes startup so the
+        # profile is the steady-state loop, not the dynamic loader.
+        if tool == "callgrind" and not collect_atstart:
+            valgrind_opts.append("--collect-atstart=no")
+        full = valgrind_opts + list(cmd)
         # Same AVX-512 hwcap mask measure_callgrind() uses so valgrind
         # doesn't SIGILL in ld-linux before main() on modern glibc.
         run_env = dict(env or os.environ)
@@ -1171,7 +1198,12 @@ def profiler_wrap(cmd, tool, env=None, node_label="local", cpu_cores=None):
                   f"--profile perf{C_RESET}", file=sys.stderr)
             return None, None, None
         out = os.path.join(outdir, f"perf.data.{tag}.{stamp}")
-        full = ["perf", "record", "-g", "-o", out] + list(cmd)
+        # --call-graph=dwarf (not -g/frame-pointer): DWARF CFI unwinding
+        # resolves stacks even when the binary omits frame pointers, which
+        # is the default on i386/armv6 Release builds (where -g produced
+        # the broken [unknown] 0x0 stacks). No -fno-omit-frame-pointer
+        # rebuild needed, so the measurement build stays unperturbed.
+        full = ["perf", "record", "--call-graph=dwarf", "-o", out] + list(cmd)
         return full, out, (env or dict(os.environ))
     print(f"{C_RED}[profile] unknown tool {tool}{C_RESET}", file=sys.stderr)
     return None, None, None
@@ -1188,7 +1220,7 @@ def profile_artefact_hint(tool, out):
 
 
 def profile_once(cmd, tool, cwd=None, timeout=None, env=None,
-                 node_label="local", cpu_cores=None):
+                 node_label="local", cpu_cores=None, collect_atstart=True):
     """--profile implementation for one-shot commands (run to completion):
     run `cmd` once under `tool`, drop the artefact under the tmpfs profile
     scratch dir (filename tagged '<node>-CPU-<cores>'), print + return its
@@ -1197,7 +1229,8 @@ def profile_once(cmd, tool, cwd=None, timeout=None, env=None,
     to open, we don't reduce it to a single metric."""
     full, out, run_env = profiler_wrap(cmd, tool, env=env,
                                        node_label=node_label,
-                                       cpu_cores=cpu_cores)
+                                       cpu_cores=cpu_cores,
+                                       collect_atstart=collect_atstart)
     if full is None:
         return None
     run_capture(full, env=run_env, timeout=timeout, cwd=cwd or os.path.dirname(out),

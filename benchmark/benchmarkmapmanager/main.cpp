@@ -17,6 +17,22 @@
 #include "../../test/testingmapmanagement/Stubs.hpp"
 #include "../../server/base/MapManagement/MapVisibilityAlgorithm.hpp"
 
+// Callgrind start/stop collection around the timed work loop so the
+// instruction count reflects the steady-state min_network() path, NOT
+// one-time process startup (dynamic linking: do_lookup_x / strcmp /
+// _dl_relocate_object can be ~70% of a tiny single-core run). Inert
+// unless built with -DCATCHCHALLENGER_BENCH_CALLGRIND AND run under
+// `valgrind --tool=callgrind --collect-atstart=no` — the harness pairs
+// the two; the toggle MUST NOT ship alone (with collect-atstart=yes it
+// would invert collection). Default build expands these to nothing, so
+// zero impact on the normal benchmark (benchmark/CLAUDE.md: long-lived
+// server is the target; startup is noise).
+#ifdef CATCHCHALLENGER_BENCH_CALLGRIND
+#include <valgrind/callgrind.h>
+#else
+#define CALLGRIND_TOGGLE_COLLECT do {} while(0)
+#endif
+
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -218,6 +234,10 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         // FIXED-ITERATION: time every tick. The metric is a deterministic
         // instruction count (callgrind), where the wall clock is emulated
         // and irrelevant -- per-tick timing is free of distortion concerns.
+        // Collect ONLY this loop under callgrind (startup/datapack/warmup
+        // excluded) so the i386/armv6 profile is the min_network() path,
+        // not the dynamic loader.
+        CALLGRIND_TOGGLE_COLLECT;
         while(t < ticks)
         {
             prepare_tick(b, rng, insrem_pct, inserts_total, removes_total);
@@ -228,6 +248,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
             bytes_total += b.totalBytesAndClear();
             t++;
         }
+        CALLGRIND_TOGGLE_COLLECT;
     }
     else
     {
