@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
+#include <memory>
 #include "../ClientList.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
@@ -217,15 +218,22 @@ void Client::characterIsRightSendData()
         //Per-callsite scratch (replaces former 16 MB static
         //CompressionProtocol::tempBigBufferForCompressedOutput).
         //Heap-backed; only allocated when compression is enabled, and
-        //freed on scope exit.
-        std::vector<uint8_t> compressScratch;
+        //freed on scope exit (unique_ptr -> RAII frees on every exit
+        //path, including the early errorOutput returns below).
+        //new char[N] is used instead of std::vector::resize() on
+        //purpose: resize() value-initialises (zero-fills) all 16 MB on
+        //every character-select, but only the posOutputTemp bytes we
+        //write are ever read (and then compressed). That zero-fill was
+        //the dominant server-side cost under load; new char[N] leaves
+        //the buffer uninitialised so only the touched pages fault in.
+        std::unique_ptr<char[]> compressScratch;
         char *buffer;
         if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
             buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput+4;
         else
         {
-            compressScratch.resize(CATCHCHALLENGER_COMPRESSBUFFERSIZE);
-            buffer=reinterpret_cast<char *>(compressScratch.data());
+            compressScratch.reset(new char[CATCHCHALLENGER_COMPRESSBUFFERSIZE]);
+            buffer=compressScratch.get();
         }
         uint32_t posOutputTemp=0;
 
