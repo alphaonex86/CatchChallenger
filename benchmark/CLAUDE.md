@@ -713,6 +713,32 @@ profiler that inflates wall-time (callgrind ~30×) scales its budget AND
 its timeout by the same factor so it still measures the same amount of
 work.
 
+## Target the long-lived server, not startup
+
+The CatchChallenger server runs for hours/days; the metric that matters
+is steady-state per-tick cost, NOT one-time process startup. Profiles
+must reflect that:
+
+* **Exclude startup from the profile.** A short callgrind cell (small
+  `--ticks`) is swamped by dynamic linking — `do_lookup_x`, `strcmp`
+  on symbol names, `_dl_relocate_object`, `_dl_lookup_symbol_x` can be
+  ~70% of a single-core i386/armv6 run. That is the loader, not the
+  server. Use `--collect-atstart=no` + `CALLGRIND_TOGGLE_COLLECT`
+  around the work loop (or warm/long enough that startup amortises to
+  noise) so the numbers are the tick path. The same applies to the
+  HPS-cache warm-up: profile a WARM boot, never cold XML parse.
+* **One-time costs are not regressions.** Startup dynamic-linking,
+  datapack load, relocation are paid once over a multi-hour run —
+  weight them ~0 in KEEP/DISCARD. A change that adds startup work but
+  cuts per-tick cost is a WIN for the long-lived server even though a
+  startup-dominated micro-profile shows it "slower". `-Wl,-z,now`
+  (CATCHCHALLENGER_PERF_LINK) is exactly this: front-loads relocation
+  to load time to make every later call a direct GOT hit.
+* Steady-state hot paths (e.g. `MapVisibilityAlgorithm::min_network`,
+  packet parse) are the optimisation target; boot-path symbols
+  (tinyXML2 parse, `listFolderNotRecursive`, dl-* loader) are noise
+  unless the benchmark is explicitly a boot-time benchmark.
+
 ## Auto-revert on REGRESSION
 
 When the decision matrix says DISCARD, revert the patch (then each changes have to be small, under 200 lines). so the next iteration starts from

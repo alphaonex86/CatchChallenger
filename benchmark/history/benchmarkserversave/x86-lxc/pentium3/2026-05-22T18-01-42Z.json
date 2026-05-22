@@ -1,0 +1,142 @@
+{
+  "arch": "i686",
+  "arch_emulated": false,
+  "batch_id": "cb9ac1efe7c445bc988f912096177597",
+  "benchmark": "benchmarkserversave",
+  "comment": "",
+  "commit": "edca85f6a217e44b244ae2937b24f86ea61f3a68",
+  "commit_short": "edca85f",
+  "compile_flags": [
+    "-O2",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "compiler": "cc (Debian 12.2.0-14+deb12u1) 12.2.0",
+  "cpu_cores": 1,
+  "cpu_mhz": 1102.52,
+  "cpu_model": "Intel(R) Celeron(TM) CPU                1100MHz",
+  "decision": "KEEP",
+  "disk_kind": "ssd-sata",
+  "disk_root": "ATA Samsung SSD 870",
+  "ended_utc": "2026-05-22T18:06:05Z",
+  "eth_link_mbps": 100,
+  "harness_version": "edca85f6a217e44b244ae2937b24f86ea61f3a68",
+  "host_arch": null,
+  "kernel": "6.1.0-40-686-pae",
+  "libc": "glibc 2.36",
+  "loadavg_1min_at_start": 0.15,
+  "net_card": "eth0",
+  "net_link": "wired",
+  "net_link_detail": null,
+  "node": "pentium3",
+  "ram_total_mb": 229,
+  "ram_type": "DIMM SDRAM",
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "callgrind": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 1150006,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1150006
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 912822,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 912822
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 329484917,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 329484917
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 132364692,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 132364692
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7744,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 7744
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.35,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.35
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "default": {
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 7744,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 7744
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 0.35,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.35
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-22T18:01:42Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

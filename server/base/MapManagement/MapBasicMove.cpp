@@ -24,25 +24,7 @@ MapBasicMove::~MapBasicMove()
 {
 }
 
-Direction MapBasicMove::getLastDirection() const
-{
-    return last_direction;
-}
-
-CATCHCHALLENGER_TYPE_MAPID MapBasicMove::getMapId() const
-{
-    return mapIndex;
-}
-
-COORD_TYPE MapBasicMove::getX() const
-{
-    return x;
-}
-
-COORD_TYPE MapBasicMove::getY() const
-{
-    return y;
-}
+// getLastDirection / getMapId / getX / getY are now inlined in the header.
 
 void MapBasicMove::errorOutput(const std::string &)
 {

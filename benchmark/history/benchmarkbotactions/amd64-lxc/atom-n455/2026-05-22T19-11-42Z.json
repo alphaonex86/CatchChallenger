@@ -1,0 +1,65 @@
+{
+  "arch": "x86_64",
+  "arch_emulated": false,
+  "batch_id": "7c9af0c2055f4e45b5a2996f221ffe1d",
+  "benchmark": "benchmarkbotactions",
+  "comment": "inline getters + perf-link + compression sweep",
+  "commit": "edca85f6a217e44b244ae2937b24f86ea61f3a68",
+  "commit_short": "edca85f",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cores": 2,
+  "cpu_metrics_reliable": false,
+  "cpu_mhz": 1314.837,
+  "cpu_model": "Intel(R) Atom(TM) CPU N455   @ 1.66GHz",
+  "decision": "ESCALATE",
+  "disk_kind": "ssd-sata",
+  "disk_root": "ATA CT1000BX500SSD1",
+  "ended_utc": "2026-05-22T19:27:27Z",
+  "eth_link_mbps": null,
+  "harness_version": "edca85f6a217e44b244ae2937b24f86ea61f3a68",
+  "host_arch": null,
+  "kernel": "6.12.74+deb13+1-amd64",
+  "libc": "glibc 2.41",
+  "loadavg_1min_at_start": 0.26,
+  "net_card": "wlp2s0b1",
+  "net_link": "wifi",
+  "net_link_detail": "wlp2s0b1",
+  "node": "atom-n455",
+  "ram_total_mb": 1963,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "SKIP",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-22T19:11:42Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": "2.4GHz",
+  "wifi_link_mbps": null,
+  "wifi_ssid": "Confiared",
+  "wifi_standard": null
+}

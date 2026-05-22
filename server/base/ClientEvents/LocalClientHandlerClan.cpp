@@ -557,12 +557,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     insertIntoAClan(clanId);
 }
 
-uint32_t Client::getPlayerId() const
-{
-    if(stat==ClientStat::CharacterSelected)
-        return character_id_db;
-    return 0;
-}
+// Client::getPlayerId is now inlined in Client.hpp.
 
 void Client::haveClanInfo(const uint32_t &clanId,const std::string &clanName,const uint64_t &cash)
 {

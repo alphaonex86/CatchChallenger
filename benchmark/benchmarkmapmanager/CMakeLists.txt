@@ -55,6 +55,25 @@ target_compile_definitions(benchmark_min_network PRIVATE
     CATCHCHALLENGER_DB_FILE
 )
 
+# Opt-in: wrap the timed loop in CALLGRIND_TOGGLE_COLLECT so a callgrind
+# profile excludes process startup (dynamic linking dominates an
+# otherwise-tiny single-core run). Needs <valgrind/callgrind.h>; the
+# harness pairs this with `valgrind --collect-atstart=no`. Off by default
+# => macros expand to nothing, default benchmark build unchanged. The
+# header is auto-probed so passing the flag on a node WITHOUT valgrind
+# headers degrades gracefully (markers stay no-ops) instead of failing
+# the build -- the harness builds one binary for all profilers.
+if(CATCHCHALLENGER_BENCH_CALLGRIND)
+    include(CheckIncludeFileCXX)
+    check_include_file_cxx("valgrind/callgrind.h" CC_HAS_CALLGRIND_H)
+    if(CC_HAS_CALLGRIND_H)
+        target_compile_definitions(benchmark_min_network PRIVATE CATCHCHALLENGER_BENCH_CALLGRIND)
+    else()
+        message(STATUS "benchmark_min_network: valgrind/callgrind.h absent, "
+                "CALLGRIND_TOGGLE_COLLECT markers stay inert")
+    endif()
+endif()
+
 target_compile_options(benchmark_min_network PRIVATE
     -Wall -Wextra -Wno-unused-parameter
     -O2 -DNDEBUG

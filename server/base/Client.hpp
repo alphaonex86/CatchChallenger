@@ -106,7 +106,15 @@ public:
     static void purgeTokenAuthList();
     #endif
     static void timeRangeEvent(const uint64_t &timestamps);
-    uint32_t getPlayerId() const;
+    // Inlined: hot in MapVisibilityAlgorithm::min_network (profiled ~1% Ir
+    // as an out-of-line call). In-class body sees all members regardless of
+    // declaration order.
+    inline uint32_t getPlayerId() const
+    {
+        if(stat==ClientStat::CharacterSelected)
+            return character_id_db;
+        return 0;
+    }
     uint32_t getMaxClanId() const;
     bool haveAClan() const;
 

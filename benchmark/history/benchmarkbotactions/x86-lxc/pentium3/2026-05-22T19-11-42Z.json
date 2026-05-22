@@ -1,0 +1,65 @@
+{
+  "arch": "i686",
+  "arch_emulated": false,
+  "batch_id": "7c9af0c2055f4e45b5a2996f221ffe1d",
+  "benchmark": "benchmarkbotactions",
+  "comment": "inline getters + perf-link + compression sweep",
+  "commit": "edca85f6a217e44b244ae2937b24f86ea61f3a68",
+  "commit_short": "edca85f",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 12.2.0-14+deb12u1) 12.2.0",
+  "cpu_cores": 1,
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 1102.52,
+  "cpu_model": "Intel(R) Celeron(TM) CPU                1100MHz",
+  "decision": "ESCALATE",
+  "disk_kind": "ssd-sata",
+  "disk_root": "ATA Samsung SSD 870",
+  "ended_utc": "2026-05-22T19:27:27Z",
+  "eth_link_mbps": 100,
+  "harness_version": "edca85f6a217e44b244ae2937b24f86ea61f3a68",
+  "host_arch": null,
+  "kernel": "6.1.0-40-686-pae",
+  "libc": "glibc 2.36",
+  "loadavg_1min_at_start": 0.15,
+  "net_card": "eth0",
+  "net_link": "wired",
+  "net_link_detail": null,
+  "node": "pentium3",
+  "ram_total_mb": 229,
+  "ram_type": "DIMM SDRAM",
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-22T19:11:42Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

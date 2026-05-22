@@ -1037,17 +1037,23 @@ def remote_perf_stat(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
     return out or None
 
 
-def remote_callgrind(exec_node, cmd_str, work_dir, timeout=None):
+def remote_callgrind(exec_node, cmd_str, work_dir, timeout=None,
+                     collect_atstart=True):
     """Run callgrind on the exec node and return instruction count.
     The output file lives in <work_dir>/callgrind.out -- it is parsed
     in-band on the remote with callgrind_annotate to avoid pulling the
-    profile back. On failure returns dict with rc and error fields."""
+    profile back. On failure returns dict with rc and error fields.
+
+    collect_atstart=False adds --collect-atstart=no so collection is
+    driven by the guest's CALLGRIND_TOGGLE_COLLECT markers (binary built
+    with -DCATCHCHALLENGER_BENCH_CALLGRIND), excluding process startup."""
     if timeout is None:
         timeout = RUN_TIMEOUT_DEFAULT * 30   # callgrind is ~30x slower
     out_file = f"{work_dir}/callgrind.out"
+    atstart = "" if collect_atstart else "--collect-atstart=no "
     # Wrap cmd_str in a shell so the cd; chmod; ./bin chaining works
     full = (f"rm -f {shlex.quote(out_file)} && "
-            f"valgrind --tool=callgrind --quiet "
+            f"valgrind --tool=callgrind --quiet {atstart}"
             f"--callgrind-out-file={shlex.quote(out_file)} "
             f"sh -c {shlex.quote(cmd_str)} && "
             f"callgrind_annotate {shlex.quote(out_file)} | "
@@ -1095,7 +1101,7 @@ def profile_on_exec(compile_node, exec_node, cmake_src_subdir, build_subdir,
                     bin_name, runtime_cmd, tools, bench_name,
                     cmake_defs=None, extras=None, local_dest_dir=None,
                     stage_fn=None, run_timeout=RUN_TIMEOUT_DEFAULT,
-                    verbose=False):
+                    verbose=False, callgrind_collect_atstart=True):
     """--profile on ONE exec node: build on its compile node, push the
     binary, optionally stage runtime fixtures (`stage_fn(runtime_node)` —
     e.g. rsync datapack + write server-properties.xml), run each profiler
@@ -1144,8 +1150,9 @@ def profile_on_exec(compile_node, exec_node, cmake_src_subdir, build_subdir,
                     results.append((t, None, "SKIP: valgrind missing on node"))
                     continue
                 rfile = f"{ewd}/callgrind.out"
+                atstart = "" if callgrind_collect_atstart else "--collect-atstart=no "
                 full = base + (f"rm -f {shlex.quote(rfile)} && "
-                               f"valgrind --tool=callgrind --quiet "
+                               f"valgrind --tool=callgrind --quiet {atstart}"
                                f"--callgrind-out-file={shlex.quote(rfile)} "
                                f"sh -c {shlex.quote(cmd_str)}")
                 tmo = run_timeout * 30
@@ -1248,7 +1255,9 @@ def profile_fleet(bench_name, tools, local_cmd, local_cwd, local_timeouts,
             remote_spec["bin_name"], remote_spec["runtime_cmd"], tools,
             bench_name, cmake_defs=remote_spec.get("cmake_defs"),
             extras=remote_spec.get("extras"),
-            stage_fn=remote_spec.get("stage_fn"), verbose=verbose)
+            stage_fn=remote_spec.get("stage_fn"), verbose=verbose,
+            callgrind_collect_atstart=remote_spec.get(
+                "callgrind_collect_atstart", True))
         for (t, path, msg) in res:
             out.append((label, t, path, msg))
             if path:
@@ -1272,13 +1281,20 @@ def start_server_popen(exec_node, bin_name):
     ep  = exec_node.get("port", 22)
     ewd = exec_node["work_dir"]
 
-    # Kill any port-conflict leftovers from a previous run.
+    # Kill any port-conflict leftovers from a previous run.  Match on the
+    # full command line (-f), NOT -x: the binary name is 26 chars and the
+    # kernel truncates the process comm to 15 (TASK_COMM_LEN), so an -x
+    # exact-comm match never fires for it.
     ssh_run(eu, eh, ep,
-            f"pkill -x {shlex.quote(bin_name)} 2>/dev/null; true", timeout=10)
+            f"pkill -f {shlex.quote('./' + bin_name)} 2>/dev/null; true",
+            timeout=10)
 
-    # Connection 1: run server in foreground — stdin /dev/null, output to
-    # server.log.  Python keeps this Popen alive; closing it sends a
-    # disconnect to sshd which delivers SIGHUP to the remote process.
+    # Connection 1: run server — stdin /dev/null, output to server.log.  The
+    # remote shell backgrounds the server, records its PID to server.pid, then
+    # `wait`s on it, so the SSH connection lifetime tracks the server.  Python
+    # keeps this Popen alive; closing it disconnects sshd which SIGHUPs the
+    # remote shell.  We read the PID from server.pid (reliable regardless of
+    # the binary's comm-name length, unlike pgrep -x).
     argv = ["ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes",
             "-o", "ServerAliveInterval=30",
             "-o", "StrictHostKeyChecking=no",
@@ -1286,17 +1302,25 @@ def start_server_popen(exec_node, bin_name):
             "-o", "LogLevel=ERROR",
             "-p", str(ep), _ssh_host(eu, eh),
             f"cd {shlex.quote(ewd)} && chmod +x {shlex.quote(bin_name)} && "
-            f"rm -f server.log && "
-            f"./{bin_name} </dev/null >server.log 2>&1"]
+            f"rm -f server.log server.pid && "
+            f"./{bin_name} </dev/null >server.log 2>&1 & "
+            f"echo $! >server.pid; wait"]
     proc = subprocess.Popen(argv, stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL)
 
-    # Connection 2: get the PID — give the remote process a moment to start.
-    time.sleep(0.5)
-    rc, sout, _ = ssh_run(eu, eh, ep,
-                          f"pgrep -x {shlex.quote(bin_name)} | head -1",
-                          timeout=10)
-    pid = sout.strip() if rc == 0 else None
+    # Connection 2: read the PID written by the launch shell — give the remote
+    # a moment to start and create server.pid.
+    pid = None
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        time.sleep(0.5)
+        rc, sout, _ = ssh_run(
+            eu, eh, ep,
+            f"cat {shlex.quote(ewd + '/server.pid')} 2>/dev/null", timeout=10)
+        cand = sout.strip() if rc == 0 else ""
+        if cand.isdigit():
+            pid = cand
+            break
     if not pid or not pid.isdigit():
         proc.terminate()
         proc.wait()
@@ -1576,7 +1600,8 @@ class VmSampler:
 def run_benchmark_on_exec(compile_node, exec_node, cmake_src_subdir,
                           build_subdir, bin_name, runtime_cmd,
                           profilers, cmake_defs=None, extras=None,
-                          run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False):
+                          run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False,
+                          callgrind_collect_atstart=True):
     """Diskless NFS-LXC wrapper: bring the exec node's container up
     before the benchmark and guarantee teardown after (try/finally),
     even on early-return failures. Both calls are no-ops for ordinary
@@ -1591,7 +1616,8 @@ def run_benchmark_on_exec(compile_node, exec_node, cmake_src_subdir,
             compile_node, runtime_node, cmake_src_subdir, build_subdir,
             bin_name, runtime_cmd, profilers, cmake_defs=cmake_defs,
             extras=extras, run_timeout=run_timeout, verbose=verbose,
-            use_ninja=use_ninja)
+            use_ninja=use_ninja,
+            callgrind_collect_atstart=callgrind_collect_atstart)
     finally:
         nfs_lxc_teardown(exec_node, verbose=verbose)
 
@@ -1615,7 +1641,8 @@ def build_for_fleet(compile_node, cmake_src_subdir, build_subdir,
 
 def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
                            runtime_cmd, profilers, extras=None,
-                           run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False):
+                           run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False,
+                           callgrind_collect_atstart=True):
     """Phase-2 run on ONE exec node (already-built `remote_bld`):
     nfs-lxc bring-up + push binary/extras + run each profiler + teardown.
     Returns (out_dict, msg). Safe to call from a worker thread -- it only
@@ -1654,7 +1681,8 @@ def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
                 out[p] = remote_perf_stat(runtime_node, _cmd(p), timeout=run_timeout)
             elif p == "callgrind":
                 out[p] = remote_callgrind(runtime_node, _cmd(p), ewd,
-                                          timeout=run_timeout * 30)
+                                          timeout=run_timeout * 30,
+                                          collect_atstart=callgrind_collect_atstart)
             elif p == "binary-size":
                 out[p] = remote_binary_size(runtime_node, exec_bin)
             else:
@@ -1731,7 +1759,8 @@ def run_profiler_fleet(specs, verbose=False, max_workers=8):
             s["compile_node"], s["exec_node"], bld, s["bin_name"],
             s["runtime_cmd"], s["profilers"], extras=s.get("extras"),
             run_timeout=s.get("run_timeout", RUN_TIMEOUT_DEFAULT),
-            verbose=verbose)
+            verbose=verbose,
+            callgrind_collect_atstart=s.get("callgrind_collect_atstart", True))
         with lock:
             results[label] = (out, m)
 
@@ -1745,7 +1774,7 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
                           build_subdir, bin_name, runtime_cmd,
                           profilers, cmake_defs=None, extras=None,
                           run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False,
-                          use_ninja=None):
+                          use_ninja=None, callgrind_collect_atstart=True):
     """Full flow for one benchmark, one exec node:
       1. stage source on compile node
       2. cmake configure+build on compile node
@@ -1796,7 +1825,8 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
             out[p] = remote_perf_stat(exec_node, cmd_in_work, timeout=run_timeout)
         elif p == "callgrind":
             out[p] = remote_callgrind(exec_node, cmd_in_work, ewd,
-                                      timeout=run_timeout * 30)
+                                      timeout=run_timeout * 30,
+                                      collect_atstart=callgrind_collect_atstart)
         elif p == "binary-size":
             out[p] = remote_binary_size(exec_node, exec_bin)
         else:
