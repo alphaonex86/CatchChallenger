@@ -565,12 +565,16 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                         #elif CATCHCHALLENGER_DB_FILE
                         {
                             const std::string &zoneName=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.captureCityInProgress);
+                            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                            CatchChallenger::dbInternalVarsStore[std::string("database/server/zone/")+zoneName]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(&clanId),reinterpret_cast<const uint8_t *>(&clanId)+sizeof(clanId));
+                            #else
                             FILE *fp=fopen(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/zone/")+zoneName).c_str(),"wb");
                             if(fp!=NULL)
                             {
                                 fwrite(&clanId,sizeof(clanId),1,fp);
                                 fclose(fp);
                             }
+                            #endif
                         }
                         #else
                         #error Define what do here
@@ -587,12 +591,16 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                         #elif CATCHCHALLENGER_DB_FILE
                         {
                             const std::string &zoneName=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.captureCityInProgress);
+                            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                            CatchChallenger::dbInternalVarsStore[std::string("database/server/zone/")+zoneName]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(&clanId),reinterpret_cast<const uint8_t *>(&clanId)+sizeof(clanId));
+                            #else
                             FILE *fp=fopen(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/zone/")+zoneName).c_str(),"wb");
                             if(fp!=NULL)
                             {
                                 fwrite(&clanId,sizeof(clanId),1,fp);
                                 fclose(fp);
                             }
+                            #endif
                         }
                         #else
                         #error Define what do here

@@ -384,6 +384,25 @@ void Client::selectClan_return()
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     {
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        const std::string _kclan=std::string("database/server/clans/")+std::to_string(public_and_private_informations.clan);
+        if(CatchChallenger::dbInternalVarsStore.count(_kclan)>0)
+        {
+            const std::vector<uint8_t> &_dclan=CatchChallenger::dbInternalVarsStore.at(_kclan);
+            std::istringstream clan_file(std::string(reinterpret_cast<const char *>(_dclan.data()),_dclan.size()));
+            std::string clanName;
+            uint64_t cash=0;
+            hps::StreamInputBuffer cs(clan_file);
+            cs >> clanName;
+            cs >> cash;
+            haveClanInfo(public_and_private_informations.clan,clanName,cash);
+        }
+        else
+        {
+            public_and_private_informations.clan=0;
+            normalOutput("Warning: clan not found");
+        }
+        #else
         std::ifstream clan_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/clans/")+std::to_string(public_and_private_informations.clan)), std::ifstream::binary);
         if(clan_file.good() && clan_file.is_open())
         {
@@ -399,6 +418,7 @@ void Client::selectClan_return()
             public_and_private_informations.clan=0;
             normalOutput("Warning: clan file not found on disk");
         }
+        #endif
     }
     #else
     #error Define what do here

@@ -185,7 +185,7 @@ tools-only when references concentrate in one of those subtrees.
   - `server/crafting/ClientLocalBroadcastCrafting.cpp`
   - *(…and 43 more)*
 
-### `CATCHCHALLENGER_DB_FILE_RAM`
+### `CATCHCHALLENGER_DB_INTERNAL_VARS`
 - **Scope:** server-only — server: base,cli
 - **Description:** RAM-only extension of `CATCHCHALLENGER_DB_FILE` for benchmarks/tests. Every FileDB disk write is rewritten to `/dev/null` at the call site via the `CATCHCHALLENGER_DB_FILE_PATH(p)` macro in `server/base/ServerStructures.hpp`; the kernel `write()`/`fsync()` syscalls become a no-op sink. In-memory state (login/character/clan/account caches) stays live for the lifetime of the process. Read paths are untouched and continue to target the real `database/…` filenames — when those files don't exist (RAM-only mode never writes them), the FileDB code naturally falls through the existing "no saved state" branches. Requires `CATCHCHALLENGER_DB_FILE` (CMake errors out otherwise). The build flag is gated in `server/cli/CMakeLists.txt`; the macro itself is the single switch — production builds compile to the identity passthrough `(p)`, so there's zero overhead when the flag is off. Designed for `benchmarkbotactions` and similar harnesses that spawn a local server purely to measure CPU + network behaviour, without contaminating the metrics with disk I/O even on a tmpfs.
 - **Used in:**

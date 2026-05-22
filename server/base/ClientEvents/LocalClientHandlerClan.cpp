@@ -422,6 +422,24 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
         }
         if(!duplicateFound)
         {
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            {
+                const std::string _kpre=std::string("database/server/clans/");
+                std::unordered_map<std::string, std::vector<uint8_t> >::const_iterator _it=CatchChallenger::dbInternalVarsStore.cbegin();
+                while(_it!=CatchChallenger::dbInternalVarsStore.cend())
+                {
+                    if(_it->first.size()>_kpre.size() && _it->first.compare(0,_kpre.size(),_kpre)==0)
+                    {
+                        std::istringstream f(std::string(reinterpret_cast<const char *>(_it->second.data()),_it->second.size()));
+                        std::string existingName;
+                        hps::StreamInputBuffer sb(f);
+                        sb >> existingName;
+                        if(existingName==text) { duplicateFound=true; break; }
+                    }
+                    ++_it;
+                }
+            }
+            #else
             DIR *dir=opendir(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/clans")).c_str());
             if(dir!=nullptr)
             {
@@ -440,6 +458,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
                 }
                 closedir(dir);
             }
+            #endif
         }
         if(duplicateFound)
         {
@@ -493,6 +512,25 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     {
+        // Save clan
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        {
+            std::ostringstream clan_out;
+            hps::to_stream(text, clan_out);
+            hps::to_stream((uint64_t)0, clan_out);
+            const std::string _s=clan_out.str();
+            CatchChallenger::dbInternalVarsStore[std::string("database/server/clans/")+std::to_string(clanId)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+        }
+        {
+            std::ostringstream srv_file;
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, srv_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, srv_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, srv_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, srv_file);
+            const std::string _s=srv_file.str();
+            CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+        }
+        #else
         // Save clan to disk
         std::ofstream clan_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/clans/")+std::to_string(clanId)), std::ofstream::binary);
         if(clan_out.good() && clan_out.is_open())
@@ -511,6 +549,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
                 hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, srv_file);
             }
         }
+        #endif
     }
     #else
     #error Define what do here

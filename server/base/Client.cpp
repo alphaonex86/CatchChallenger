@@ -1146,6 +1146,14 @@ void Client::saveCharacterFiles() const {
         public_and_private_informations.public_informations.pseudo.c_str(),
         public_and_private_informations.public_informations.pseudo.size());
     {
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        std::ostringstream out_file;
+        hps::to_stream(*this, out_file);
+        const std::string _s=out_file.str();
+        CatchChallenger::dbInternalVarsStore[std::string("database/common/characters/")+hexa]=
+            std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),
+                                 reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+#else
         std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa), std::ofstream::binary|std::ofstream::trunc);
         if(!out_file.good() || !out_file.is_open())
         {
@@ -1153,8 +1161,19 @@ void Client::saveCharacterFiles() const {
             return;
         }
         hps::to_stream(*this, out_file);
+#endif
     }
     {
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        std::ostringstream out_file;
+        hps::StreamOutputBuffer s(out_file);
+        serializeServerPart(s);
+        s.flush();
+        const std::string _s=out_file.str();
+        CatchChallenger::dbInternalVarsStore[std::string("database/server/characters/")+hexa]=
+            std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),
+                                 reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+#else
         std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/characters/")+hexa), std::ofstream::binary|std::ofstream::trunc);
         if(!out_file.good() || !out_file.is_open())
         {
@@ -1164,6 +1183,7 @@ void Client::saveCharacterFiles() const {
         hps::StreamOutputBuffer s(out_file);
         serializeServerPart(s);
         s.flush();
+#endif
     }
 }
 
@@ -1176,6 +1196,19 @@ bool Client::loadCharacterServerFile() {
     const std::string hexa=binarytoHexa(
         public_and_private_informations.public_informations.pseudo.c_str(),
         public_and_private_informations.public_informations.pseudo.size());
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+    if(CatchChallenger::dbInternalVarsStore.count(std::string("database/server/characters/")+hexa)==0)
+        return false;
+    const std::vector<uint8_t> &_d=CatchChallenger::dbInternalVarsStore.at(std::string("database/server/characters/")+hexa);
+    //Empty record → treat as "no per-map state yet" (same guard as the
+    //empty-file check on the disk path below).
+    if(_d.empty())
+        return false;
+    std::istringstream in_file(std::string(reinterpret_cast<const char *>(_d.data()),_d.size()));
+    hps::StreamInputBuffer s(in_file);
+    parseServerPart(s);
+    return true;
+#else
     std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/characters/")+hexa), std::ifstream::binary);
     if(!in_file.good() || !in_file.is_open())
         return false;
@@ -1189,6 +1222,7 @@ bool Client::loadCharacterServerFile() {
     hps::StreamInputBuffer s(in_file);
     parseServerPart(s);
     return true;
+#endif
 }
 #endif
 #endif

@@ -147,8 +147,12 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         if(!GlobalServerData::serverPrivateVariables.db_login->next())
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        if(CatchChallenger::dbInternalVarsStore.count(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE))==0)
+        #else
         struct stat sb;
         if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)).c_str(),&sb)!=0)
+        #endif
         #else
         #error Define what do here
         #endif
@@ -182,6 +186,18 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         else
         {
             #ifdef CATCHCHALLENGER_DB_FILE
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            const std::string _klogin=std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE);
+            if(CatchChallenger::dbInternalVarsStore.count(_klogin)==0)
+            {
+                std::cerr << "Unable to open data base file " << _klogin << " (abort)" << std::endl;
+                abort();
+                return;
+            }
+            const std::vector<uint8_t> &_dlogin=CatchChallenger::dbInternalVarsStore.at(_klogin);
+            std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dlogin.data()),_dlogin.size()));
+            hps::StreamInputBuffer s(in_file);
+            #else
             std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)), std::ifstream::binary);
             if(!in_file.good() || !in_file.is_open())
             {
@@ -190,6 +206,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 return;
             }
             hps::StreamInputBuffer s(in_file);
+            #endif
             #endif
 
             #ifndef CATCHCHALLENGER_DB_FILE
@@ -301,6 +318,18 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
 
                 std::vector<CharacterEntry> characterEntryList;
                 {
+                    #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                    const std::string _kacc=std::string("database/common/accounts/")+std::to_string(account_id_db);
+                    if(CatchChallenger::dbInternalVarsStore.count(_kacc)==0)
+                    {
+                        std::cerr << "Unable to open data base file database/common/accounts/" << account_id_db << " (abort)" << std::endl;
+                        abort();
+                        return;
+                    }
+                    const std::vector<uint8_t> &_dacc=CatchChallenger::dbInternalVarsStore.at(_kacc);
+                    std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dacc.data()),_dacc.size()));
+                    hps::StreamInputBuffer s(in_file);
+                    #else
                     std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ifstream::binary);
                     if(!in_file.good() || !in_file.is_open())
                     {
@@ -309,6 +338,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         return;
                     }
                     hps::StreamInputBuffer s(in_file);
+                    #endif
                     s >> characterEntryList;
                     if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
                     {
@@ -567,16 +597,26 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         {
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            std::ostringstream out_file;
+            #else
             std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
             if(!out_file.good() || !out_file.is_open())
             {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
+            #endif
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+            #endif
         }
         {
             {
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                std::ostringstream out_file;
+                #else
                 std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
@@ -584,6 +624,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                     abort();
                     return;
                 }
+                #endif
 
                 std::vector<char> secretTokenBinary;
                 secretTokenBinary.resize(CATCHCHALLENGER_HASH_SIZE);
@@ -595,8 +636,14 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 }
                 hps::to_stream(secretTokenBinary, out_file);
                 hps::to_stream(account_id_db, out_file);
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+                #endif
             }
             {
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                std::ostringstream out_file;
+                #else
                 std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
@@ -604,9 +651,13 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                     abort();
                     return;
                 }
+                #endif
 
                 std::vector<CharacterEntry> characterEntryList;
                 hps::to_stream(characterEntryList, out_file);
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/common/accounts/")+std::to_string(account_id_db)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+                #endif
             }
         }
         #else
