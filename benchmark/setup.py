@@ -425,14 +425,28 @@ class Target:
             # rootfs) => fall back to the bare command (rare; those
             # nodes have no emerge-from-source tarpit anyway).
             qcmd = "'" + cmd.replace("'", "'\\''") + "'"
+            # The watchdog ALSO runs under its own setsid session with its
+            # fds sent to /dev/null. Two reasons, both learned the hard way:
+            #  (1) A plain `( sleep N; kill ... ) &` subshell inherits ssh's
+            #      stdout, and `kill $W` kills only the subshell -- its
+            #      `sleep` child is orphaned and KEEPS the ssh channel's
+            #      stdout open, so the client never sees EOF and blocks for
+            #      the full idle-timeout even though the real command already
+            #      finished (observed as a "stuck doing nothing" install of
+            #      an unavailable package that errored out instantly).
+            #  (2) setsid makes W a process-group leader, so `kill -TERM -$W`
+            #      reaps the whole watchdog group (the `sleep` included), not
+            #      just the leader. /dev/null redirection guarantees that
+            #      even a stray survivor can't hold the channel open.
             remote = (
                 'if command -v setsid >/dev/null 2>&1; then '
                 'O=$(mktemp 2>/dev/null || echo /tmp/.cc_setup.$$); '
                 'setsid sh -c %s >"$O" 2>&1 & P=$!; '
-                '( sleep %d; kill -TERM -$P 2>/dev/null; sleep 10; '
-                'kill -KILL -$P 2>/dev/null ) & W=$!; '
+                'setsid sh -c "sleep %d; kill -TERM -$P 2>/dev/null; '
+                'sleep 10; kill -KILL -$P 2>/dev/null" >/dev/null 2>&1 '
+                '</dev/null & W=$!; '
                 'wait $P 2>/dev/null; RC=$?; '
-                'kill $W 2>/dev/null; wait $W 2>/dev/null; '
+                'kill -TERM -$W 2>/dev/null; '
                 'cat "$O" 2>/dev/null; rm -f "$O"; exit $RC; '
                 'else sh -c %s 2>&1; fi'
             ) % (qcmd, int(timeout), qcmd)
@@ -790,72 +804,121 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
         print("  %s[NOTHING TO DO]%s" % (C_GREEN, C_RESET))
         return status
 
-    # ONE combined command installs EVERY missing package in a single
-    # invocation -- same for every package manager (apt/dnf/zypper/
-    # pacman/apk/emerge/xbps), required atoms first. emerge gets
-    # --keep-going so one masked atom can't abort the batch.
+    # Install each missing package on ITS OWN, never as one batch. A single
+    # unavailable atom must not abort the installable ones -- e.g.
+    # libblake3-dev exists on Debian 13 but NOT Debian 12, and a batched
+    # `apt-get install libblake3-dev libtinyxml2-dev` aborts on the missing
+    # one so neither lands. Per-package: the unavailable best-effort lib is
+    # SKIPPED (the in-tree vendored copy is used) and the installable ones
+    # still go in. Required (core-tool) failures fail the node; optional
+    # (best-effort lib) failures only degrade it to "partial".
+    req_set     = set(req_missing_pkgs)
     all_pkgs    = list(dict.fromkeys(req_missing_pkgs + opt_missing_pkgs))
-    install_raw = _install_many(family, all_pkgs)
     fail_status = "fail" if req_missing_pkgs else "partial"
 
-    # No sudo, ever. Not root + packages missing => do NOT escalate;
-    # hand the operator the ONE command to run AS ROOT (project rule:
-    # never auto-install -- request it). Required missing => fail;
-    # optional-only => partial (harness SKIPs an absent optional one).
+    # No sudo, ever. Not root + packages missing => do NOT escalate; hand
+    # the operator the per-package commands to run AS ROOT (project rule:
+    # never auto-install -- request it).
     if not is_root:
         print("  %s[NEEDS ROOT]%s not root and packages are missing; "
               "setup.py does not sudo. Run AS ROOT on %s:"
               % (C_RED, C_RESET, tgt.label))
-        print("    %s" % install_raw)
+        pi = 0
+        while pi < len(all_pkgs):
+            print("    %s" % _install_many(family, [all_pkgs[pi]]))
+            pi += 1
         return fail_status
 
-    # No metadata refresh: install runs against the index already on the
-    # node (see the "NEVER refreshes package metadata" note above) --
-    # never apt-get update / pacman -Sy / emerge --sync, which stall on
-    # the network.
-    cmd = _priv_cmd(install_raw)
     if dry_run:
-        print("  %s[DRY-RUN install]%s %s" % (C_YELLOW, C_RESET, cmd))
+        pi = 0
+        while pi < len(all_pkgs):
+            print("  %s[DRY-RUN install]%s %s"
+                  % (C_YELLOW, C_RESET,
+                     _priv_cmd(_install_many(family, [all_pkgs[pi]]))))
+            pi += 1
         return status
-    budget_left = ("" if tgt.deadline is None
-                   else " (budget %ds left)"
-                        % max(0, int(tgt.deadline - time.monotonic())))
-    print("  %s-> installing %d package(s) on %s%s ...%s"
-          % (C_CYAN, len(all_pkgs), tgt.label, budget_left, C_RESET))
-    print("    $ %s" % install_raw)
-    t0 = time.monotonic()
-    rc, out = tgt.run(cmd, install_timeout,
-                      idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
-    low = out.lower()
 
-    # dpkg frontend lock held by another apt/dpkg -> apt was told not to
-    # wait (-o DPkg::Lock::Timeout=0) so it errored fast; do NOT wait or
-    # retry, FAIL this node now and report the command.
-    if family == "apt" and ("could not get lock" in low
-                            or "unable to acquire the dpkg frontend lock"
-                            in low):
-        print("  %s[FAIL install]%s dpkg frontend lock held by another "
-              "process on %s -- not waiting/retrying\n    $ %s"
-              % (C_RED, C_RESET, tgt.label, cmd))
-        return fail_status
+    # "package not available on this OS / OS version" sentinels, per family.
+    # An optional lib that trips one of these is skipped to vendored, not
+    # treated as a hard error (no network refresh masked a fresh package --
+    # the index simply has no such atom on this release).
+    unavail_sigs = ("unable to locate package", "no match for argument",
+                    "no candidate version", "unable to find a match",
+                    "target not found", "no such package",
+                    "no package", "not found in the repositories",
+                    "couldn't find any package")
 
-    if rc == 0:
+    ok_pkgs, skipped_opt, failed_req = [], [], []
+    # No metadata refresh: each install runs against the index already on
+    # the node (see the "NEVER refreshes package metadata" note above).
+    pi = 0
+    while pi < len(all_pkgs):
+        pkg = all_pkgs[pi]
+        pi += 1
+        required    = pkg in req_set
+        install_raw = _install_many(family, [pkg])
+        cmd         = _priv_cmd(install_raw)
+        budget_left = ("" if tgt.deadline is None
+                       else " (budget %ds left)"
+                            % max(0, int(tgt.deadline - time.monotonic())))
+        print("  %s-> installing %s on %s%s ...%s"
+              % (C_CYAN, pkg, tgt.label, budget_left, C_RESET))
+        print("    $ %s" % install_raw)
+        t0 = time.monotonic()
+        rc, out = tgt.run(cmd, install_timeout,
+                          idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
+        low = out.lower()
+
+        if rc == 0:
+            print("  %s[OK install]%s %s" % (C_GREEN, C_RESET, pkg))
+            ok_pkgs.append(pkg)
+        else:
+            # dpkg frontend lock held by another apt/dpkg -> fatal for the
+            # whole node, do NOT keep trying the rest.
+            if family == "apt" and ("could not get lock" in low
+                                    or "unable to acquire the dpkg frontend "
+                                       "lock" in low):
+                print("  %s[FAIL install]%s dpkg frontend lock held by another"
+                      " process on %s -- not waiting/retrying\n    $ %s"
+                      % (C_RED, C_RESET, tgt.label, cmd))
+                return fail_status
+
+            tail = "\n".join("    " + l
+                             for l in out.strip().splitlines()[-8:])
+            if required:
+                if rc == 124:
+                    print("  %s[STUCK install]%s required %s on %s -- gave up "
+                          "after %ds\n%s\n    $ %s"
+                          % (C_RED, C_RESET, pkg, tgt.label,
+                             int(time.monotonic() - t0), tail, cmd))
+                else:
+                    print("  %s[FAIL install rc=%s]%s required %s\n%s\n    $ %s"
+                          % (C_RED, rc, C_RESET, pkg, tail, cmd))
+                failed_req.append(pkg)
+            else:
+                if any(s in low for s in unavail_sigs):
+                    print("  %s[SKIP install]%s %s not available on this OS "
+                          "version -> in-tree vendored copy used"
+                          % (C_YELLOW, C_RESET, pkg))
+                elif rc == 124:
+                    print("  %s[STUCK install]%s optional %s on %s -- gave up "
+                          "after %ds -> vendored copy used\n%s\n    $ %s"
+                          % (C_YELLOW, C_RESET, pkg, tgt.label,
+                             int(time.monotonic() - t0), tail, cmd))
+                else:
+                    print("  %s[WARN install rc=%s]%s optional %s failed -> "
+                          "vendored copy used\n%s\n    $ %s"
+                          % (C_YELLOW, rc, C_RESET, pkg, tail, cmd))
+                skipped_opt.append(pkg)
+
+    if ok_pkgs:
         print("  %s[OK install]%s %d package(s): %s"
-              % (C_GREEN, C_RESET, len(all_pkgs), " ".join(all_pkgs)))
-        return status
-
-    tail = "\n".join("    " + l for l in out.strip().splitlines()[-8:])
-    if rc == 124:
-        print("  %s[STUCK install]%s %d package(s) on %s -- gave up after "
-              "%ds (idle/deadline budget)\n%s\n    $ %s"
-              % (C_RED, C_RESET, len(all_pkgs), tgt.label,
-                 int(time.monotonic() - t0), tail, cmd))
-    else:
-        # Show the exact command so the operator can reproduce / see it
-        # was a lock/keyword/network issue, not a hang.
-        print("  %s[FAIL install rc=%s]%s %d package(s)\n%s\n    $ %s"
-              % (C_RED, rc, C_RESET, len(all_pkgs), tail, cmd))
-    return fail_status
+              % (C_GREEN, C_RESET, len(ok_pkgs), " ".join(ok_pkgs)))
+    if failed_req:
+        return "fail"
+    if skipped_opt:
+        return "partial"
+    return status
 
 
 # ---------------------------------------------------------------------------
