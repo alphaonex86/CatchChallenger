@@ -17,6 +17,14 @@ one command target: the IA not start every command, have to package in the corre
   run all benchmarks with `--comment="Invert loop"` so every recorded
   score is tagged "Invert loop".
 * compare the results
+* **Every benchmark*.py that builds the server uses the RAM DB**
+  (`-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON`): the file-DB tree lives in
+  /dev/shm (tmpfs), never disk, so no score is polluted by real disk I/O.
+  DB_INTERNAL_VARS implies DB_FILE in CMake — pass only DB_INTERNAL_VARS,
+  not DB_FILE. `CATCHCHALLENGER_DB_FILE` only governs player/character
+  persistence; the datapack HPS cache path is independent of it, so the
+  serversave datapack-cache measurement is unaffected by the DB backend.
+  serversave builds at -O2 (not the Release default -O3).
 Generate helper to put in common the code it will mostly used by the majority
 
 ## Purpose
@@ -33,11 +41,18 @@ forward progress on perf without ever silently shipping a regression.
 time goes. To know where to optimise, profile the SAME command the
 target benchmark runs:
 
-* `--profile` on any `benchmark*.py` runs that benchmark's command once
-  under a profiler, writes the profile under `/mnt/data/perso/tmpfs/`,
-  and prints its path. Open that path and work the hot spots. Reach for
-  perf / callgrind / heaptrack / whatever gives more CPU/memory detail
-  than the benchmark itself records.
+* `--profile` on any `benchmark*.py` runs that benchmark's command under
+  a profiler on the LOCAL host AND on every benchmark exec node
+  (`benchmark: true`, loadavg<1.0 — built on the matching compile node,
+  artefact rsync'd back). Bare `--profile` (= `--profile all`) runs BOTH
+  callgrind and perf; pass a single tool to narrow. Each artefact is
+  written under `/mnt/data/perso/tmpfs/cc-bench-profile/` and filename-
+  tagged `<node>-CPU-<cores>` (e.g. `perf.data.rpi-zero-w-CPU-4.<stamp>`)
+  so per-node profiles never collide. A node missing the profiler tool
+  is SKIPped, not failed. Server+bot benchmarks whose remote dispatch
+  isn't wired (botactions) profile local-only and say so. Open the path
+  and work the hot spots; reach for heaptrack/cachegrind for more detail
+  than the benchmark records.
 * Run WITHOUT `--profile` for the actual before/after numbers — the
   profiling build perturbs timing and must not be the regression datum.
 * "more performance" with no qualifier means CPU.
@@ -658,6 +673,25 @@ Both are first-class metrics. Don't collapse to "ms/op".
 Most network/server hot paths care more about p99 tail than mean
 throughput. Most preload/once-per-boot paths care only about
 throughput.
+
+## CPU%/RSS are never a conclusion on their own
+
+A CPU% or memory delta is meaningless without the work-done metric it
+rode on. Always contrast resource usage against the throughput/latency
+result for the SAME slice — requests/s, time to process X players, time
+to save, ticks/s, ops in the budget. "Variant X uses less CPU" says
+nothing until paired with "…at the same or better requests/s"; less CPU
+because it did less work is a regression, not a win. Every conclusion
+states both: the work metric AND its resource cost.
+
+The server-side work + tail metrics come from the `CATCHCHALLENGER_BENCHMARK`
+build (server/cli, `-DCATCHCHALLENGER_BENCHMARK=ON`): a per-read-event
+counter + log2-ns latency histogram dumped as `BENCH <k>=<v>` lines on
+SIGINT (async-signal-safe writes). benchmark*.py derives requests/s,
+p50/p95/p99/p999 and jitter from it. The whole block is `#ifdef`'d out
+of production — zero cost when the define is off. Never report req/s
+without its latency tail + jitter: a throughput win that inflates p99 or
+jitter is a tick-stability regression on the constrained targets.
 
 ## Fixed-time, not fixed-iteration
 

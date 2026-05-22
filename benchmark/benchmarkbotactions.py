@@ -3,7 +3,7 @@
 
 Workload: build tools/bot-actions AND catchchallenger-server-cli, spawn
 the server locally on a free port with the DB pinned in RAM
-(CATCHCHALLENGER_DB_FILE_RAM, see general/DEFINES.md), then run
+(CATCHCHALLENGER_DB_INTERNAL_VARS, see general/DEFINES.md), then run
 bot-actions against it. Unlike benchmarkserversave (cold-start parse)
 or benchmarkmapmanager (in-process visibility loop), this exercises
 the FULL stack inside one host:
@@ -43,7 +43,7 @@ introduce jitter. RUN_REPEATS produces several samples; the harness
 records median+stddev so the comparator can apply the noise band.
 
 One-command target: run with no args, 1h timeout. The server is
-spawned in CATCHCHALLENGER_DB_FILE_RAM mode so the entire database
+spawned in CATCHCHALLENGER_DB_INTERNAL_VARS mode so the entire database
 tree lives under /dev/shm/cc-server-<pid>/ (tmpfs, RAM-backed) for
 the lifetime of the process and is removed on exit by an atexit()
 hook. Reconnects within the same run see their state; no disk
@@ -133,7 +133,7 @@ SERVER_PORT          = 61920
 SERVER_RAM_DB_DEFS = {
     "CATCHCHALLENGER_DB_FILE":     "ON",
     "CATCHCHALLENGER_CACHE_HPS":   "ON",
-    "CATCHCHALLENGER_DB_FILE_RAM": "ON",
+    "CATCHCHALLENGER_DB_INTERNAL_VARS": "ON",
 }
 
 # io_uring tuning variants compared on the LOCAL host (the controlled
@@ -142,7 +142,13 @@ SERVER_RAM_DB_DEFS = {
 # io_uring vs +SQPOLL vs +IOPOLL, all on top of the RAM-DB defines.
 # liburing-dev required; a variant whose build fails (no liburing) is
 # skipped, not failed.
-IO_URING_BASE_DEFS = dict(SERVER_RAM_DB_DEFS, CATCHCHALLENGER_IO_URING="ON")
+# CATCHCHALLENGER_BENCHMARK enables the server-side throughput counter
+# (a "BENCH packets_in=<N>" line dumped on SIGINT) so each variant gets a
+# work-done metric (requests/s) to contrast against its CPU%/RSS, not a
+# bare resource number. The define is benchmark-only — compiled out of
+# every production build (server/cli/CMakeLists.txt).
+IO_URING_BASE_DEFS = dict(SERVER_RAM_DB_DEFS, CATCHCHALLENGER_IO_URING="ON",
+                          CATCHCHALLENGER_BENCHMARK="ON")
 IO_URING_VARIANTS = [
     ("iouring",              {}),
     ("iouring-sqpoll",       {"CATCHCHALLENGER_IO_URING_SQPOLL": "ON"}),
@@ -200,7 +206,7 @@ def build_bot():
 
 
 def build_server():
-    """Build catchchallenger-server-cli with CATCHCHALLENGER_DB_FILE_RAM
+    """Build catchchallenger-server-cli with CATCHCHALLENGER_DB_INTERNAL_VARS
     so the bench server runs with the DB pinned in RAM
     (/dev/shm/cc-server-<pid>/database/...). Reads + writes stay
     coherent so a bot can disconnect and reconnect within the same
@@ -325,6 +331,74 @@ def stop_server(proc):
         pass
 
 
+def profile_server(staged_bin, bot_bin, tool):
+    """--profile path: profile the SERVER (the single-threaded hot path
+    this benchmark exists to optimise) under bot load. Launch the server
+    wrapped in `tool`, wait until it binds, drive the largest bot count
+    against it for DURATION_S, then SIGINT so the profiler dumps. Returns
+    0 on success, 2 on failure. perf has ~2x overhead, callgrind ~30x,
+    so callgrind/massif need a much longer ready+run budget."""
+    full, out, run_env = bh.profiler_wrap([staged_bin], tool)
+    if full is None:
+        return 2
+    slow = 30 if tool == "callgrind" else (20 if tool == "massif" else 2)
+    log_path = os.path.join(SRV_RUN_DIR, "server.log")
+    try: os.remove(log_path)
+    except FileNotFoundError: pass
+    log_fh = open(log_path, "wb")
+    srv = subprocess.Popen(full, cwd=SRV_RUN_DIR, env=run_env,
+                           stdout=log_fh, stderr=subprocess.STDOUT,
+                           start_new_session=True)
+    deadline = time.monotonic() + SERVER_READY_TIMEOUT * slow
+    ready = False
+    while time.monotonic() < deadline:
+        if srv.poll() is not None:
+            break
+        try:
+            with open(log_path, "rb") as f:
+                if b"correctly bind:" in f.read():
+                    ready = True
+                    break
+        except FileNotFoundError:
+            pass
+        time.sleep(0.5)
+    if not ready:
+        print(_color(bh.C_RED,
+            f"[profile] server failed to bind under {tool}"))
+        stop_server(srv)
+        return 2
+    print(_color(bh.C_GREEN,
+        f"[profile] server bound under {tool} (pid={srv.pid}); "
+        f"driving {BOT_COUNTS[-1]} bots for {DURATION_S}s"))
+    cmd = ["timeout", "--signal=INT", str(DURATION_S)] + \
+          _bot_cmd(bot_bin, "127.0.0.1", SERVER_PORT, BOT_COUNTS[-1])
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    # The Qt bot client is extremely chatty (Api_protocol / datapack-parse /
+    # per-character DEBUG lines). Under --profile that flood drowns the
+    # harness output and adds nothing — redirect it to a log file in the run
+    # dir so the terminal stays quiet (path printed only if the bot fails).
+    bot_log = os.path.join(SRV_RUN_DIR, "bot-actions.log")
+    bot_fh = open(bot_log, "wb")
+    try:
+        subprocess.run(cmd, env=env, timeout=RUN_TIMEOUT * slow,
+                       stdout=bot_fh, stderr=subprocess.STDOUT)
+    except subprocess.TimeoutExpired:
+        pass
+    finally:
+        bot_fh.close()
+    # SIGINT the server so valgrind/perf flush their artefact, then wait
+    # long enough for callgrind to write the (large) out file.
+    stop_server(srv)
+    log_fh.close()
+    if not os.path.isfile(out):
+        print(_color(bh.C_RED,
+            f"[profile] {tool} produced no artefact (expected {out})"))
+        return 2
+    bh.profile_artefact_hint(tool, out)
+    return 0
+
+
 def _time_local_boot(staged_bin):
     """Start the local server, time wall-seconds to 'correctly bind:',
     then stop it. Returns boot_s or None (crash / timeout)."""
@@ -410,6 +484,80 @@ def _stage_variant_run_dir(server_bin, run_dir, port):
     return dst
 
 
+def _read_bench_packets_in(run_dir):
+    """Parse the server-side 'BENCH packets_in=<N>' line the
+    CATCHCHALLENGER_BENCHMARK build dumps on SIGINT (read-events the
+    server processed). Returns the int, or None if absent (e.g. server
+    built without the define, or killed before it could dump)."""
+    log_path = os.path.join(run_dir, "server.log")
+    try:
+        with open(log_path, "rb") as f:
+            data = f.read()
+    except FileNotFoundError:
+        return None
+    marker = b"BENCH packets_in="
+    pos = data.rfind(marker)
+    if pos < 0:
+        return None
+    tail = data[pos + len(marker):]
+    digits = bytearray()
+    for b in tail:
+        if 48 <= b <= 57:
+            digits.append(b)
+        else:
+            break
+    if not digits:
+        return None
+    try:
+        return int(digits.decode("ascii"))
+    except ValueError:
+        return None
+
+
+def _read_bench_latency(run_dir):
+    """Reconstruct the per-read-event processing-latency distribution from
+    the server's 'BENCH lat_hist_<i>=<count>' lines (log2 ns buckets:
+    bucket i = [2^i, 2^(i+1)) ns). Returns a dict of metric -> value in ns:
+    p50/p95/p99/p999 (latency tail) + jitter (stddev). {} when no
+    histogram was dumped (server built without CATCHCHALLENGER_BENCHMARK,
+    or killed before it could dump). Uses each bucket's geometric midpoint
+    (2^i * sqrt(2)) as the representative latency for that bucket."""
+    log_path = os.path.join(run_dir, "server.log")
+    try:
+        with open(log_path, "r", errors="replace") as f:
+            text = f.read()
+    except FileNotFoundError:
+        return {}
+    import re, math
+    buckets = {}
+    for m in re.finditer(r"BENCH lat_hist_(\d+)=(\d+)", text):
+        buckets[int(m.group(1))] = int(m.group(2))
+    total = sum(buckets.values())
+    if total == 0:
+        return {}
+    # representative ns per bucket index (geometric midpoint)
+    def rep(i):
+        return (2.0 ** i) * math.sqrt(2.0)
+    ordered = sorted(buckets.items())
+    # mean + stddev (jitter) over the bucketed distribution
+    mean = sum(rep(i) * c for i, c in ordered) / total
+    var = sum(c * (rep(i) - mean) ** 2 for i, c in ordered) / total
+    out = {"latency_jitter_ns": math.sqrt(var)}
+    def percentile(p):
+        target = p * total
+        cum = 0
+        for i, c in ordered:
+            cum += c
+            if cum >= target:
+                return rep(i)
+        return rep(ordered[-1][0])
+    out["latency_p50_ns"]  = percentile(0.50)
+    out["latency_p95_ns"]  = percentile(0.95)
+    out["latency_p99_ns"]  = percentile(0.99)
+    out["latency_p999_ns"] = percentile(0.999)
+    return out
+
+
 def _run_iouring_variants(bot_bin, iface):
     """LOCAL io_uring variant comparison: build the server for each
     (baseline io_uring / +SQPOLL / +IOPOLL), run ONE medium bot workload
@@ -464,10 +612,39 @@ def _run_iouring_variants(bot_bin, iface):
             flat[f"{vlabel}_cpu_percent"] = (cpu, 0.0)
             sm["cpu_percent"] = {"value": cpu, "median": cpu, "stddev": 0.0,
                                  "unit": "%", "better": "lower", "samples": [cpu]}
+        # Work-done metric: server read-events processed (BENCH counter)
+        # divided by the run's wall time => requests/s. This is the number
+        # CPU%/RSS must be contrasted against — less CPU at a LOWER
+        # requests/s is a regression, not a win (benchmark/CLAUDE.md:
+        # "CPU%/RSS are never a conclusion on their own").
+        rps = None
+        packets = _read_bench_packets_in(rdir)
+        wall = sample.get("wall_s")
+        if packets is not None and wall and wall > 0:
+            rps = packets / wall
+            flat[f"{vlabel}_requests_per_s"] = (rps, 0.0)
+            sm["requests_per_s"] = {"value": rps, "median": rps,
+                                    "stddev": 0.0, "unit": "req/s",
+                                    "better": "higher", "samples": [rps]}
+        # Latency tail + jitter from the server's processing-time histogram.
+        # The throughput headline (req/s) MUST ride with its latency/jitter:
+        # a req/s win that inflates p99 or jitter is a tick-stability
+        # regression on the constrained targets (benchmark/CLAUDE.md
+        # "Latency vs throughput").
+        lat = _read_bench_latency(rdir)
+        for k, v in lat.items():
+            flat[f"{vlabel}_{k}"] = (v, 0.0)
+            sm[k] = {"value": v, "median": v, "stddev": 0.0, "unit": "ns",
+                     "better": "lower", "samples": [v]}
         if sm:
             slices[vlabel] = sm
+        rps_s = f"{rps:.0f}req/s" if rps is not None else "req/s=?"
+        p99 = lat.get("latency_p99_ns")
+        jit = lat.get("latency_jitter_ns")
+        lat_s = (f" p99={p99:.0f}ns jitter={jit:.0f}ns"
+                 if p99 is not None else "")
         print(_color(bh.C_GREEN, f"[iouring] {vlabel}: wall={sample.get('wall_s')}s "
-              f"sys={sample.get('sys_s')}s cpu={cpu}%"))
+              f"sys={sample.get('sys_s')}s cpu={cpu}% {rps_s}{lat_s}"))
     return flat, slices
 
 
@@ -1014,6 +1191,19 @@ def main():
         return 2
 
     staged = setup_server_run_dir(server_bin)
+    if args.profile:
+        # Profile the server under bot load for each requested tool. This
+        # benchmark's server+bot workload is local-only (SQPOLL/IOPOLL is
+        # kernel/CPU specific and the remote dispatch isn't wired), so
+        # --profile stays on the host; artefacts are still node/core-tagged.
+        tools = bh.profile_tools(args.profile)
+        rc = 0
+        for t in tools:
+            if profile_server(staged, bin_path, t) != 0:
+                rc = 2
+        print(_color(bh.C_YELLOW, "[profile] benchmarkbotactions: server+bot "
+              "workload is local-only — remote exec nodes not profiled"))
+        return rc
     # Boot-time benchmark BEFORE the persistent server start: cold (no
     # cache) vs warm (cache via `save`). Leaves a valid cache behind so
     # the persistent start_server() below boots warm/fast.

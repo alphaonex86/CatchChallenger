@@ -87,6 +87,10 @@ def ssh_run(user, host, port, cmd, timeout=120):
             "-o", "ServerAliveInterval=30",
             "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null",
+            # LogLevel=ERROR drops the per-connection "Warning: Permanently
+            # added '<host>' to the list of known hosts." line that
+            # UserKnownHostsFile=/dev/null otherwise emits on every ssh.
+            "-o", "LogLevel=ERROR",
             "-p", str(port), _ssh_host(user, host), cmd]
     proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             text=True)
@@ -436,7 +440,7 @@ def rsync_to(user, host, port, src, dst, timeout=RSYNC_TIMEOUT,
     args += ["--exclude=.git", "--exclude=/build/", "--exclude=*.o",
             "--exclude=moc_*", "--exclude=Makefile",
             "--exclude=__pycache__/", "--exclude=.qtcreator/",
-            "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"]
+            "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"]
     if extra_args:
         args.extend(extra_args)
     args += [src, f"{_rsync_host(user, host)}:{dst}"]
@@ -451,7 +455,7 @@ def rsync_to(user, host, port, src, dst, timeout=RSYNC_TIMEOUT,
 def rsync_from(user, host, port, src, dst, timeout=RSYNC_TIMEOUT):
     """rsync remote `src` -> local `dst`."""
     args = ["rsync", "-art",
-            "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
+            "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR",
             f"{_rsync_host(user, host)}:{src}", dst]
     try:
         p = subprocess.run(args, capture_output=True, text=True,
@@ -559,7 +563,13 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     defs = []
     if cmake_defs:
         for k, v in cmake_defs.items():
-            defs.append(f"-D{k}={v}")
+            # shlex.quote the whole -Dkey=value: values like
+            # "-O2 -DNDEBUG" contain a space, and defs is later joined
+            # with ' ' into a remote shell string -- without quoting the
+            # remote shell splits it into two argv tokens and cmake reads
+            # the "-DNDEBUG" half as a malformed cache-var define
+            # ("Parse error in command line argument: NDEBUG").
+            defs.append(shlex.quote(f"-D{k}={v}"))
     if use_ninja is None:
         ninja = "-G Ninja" if _have_remote_tool(user, host, port, "ninja") else ""
     elif use_ninja:
@@ -972,6 +982,31 @@ def _remote_have_tool_cached(exec_node, tool):
     return _remote_time_v_cache[key]
 
 
+def _perf_no_hw_sampling(serr):
+    """True when perf's stderr signals the node's PMU can't sample
+    hardware events -- sys_perf_event_open EINVAL on a counter-only PMU
+    (no IRQ), as on the armv6_1176 (RPi Zero W). Used both to trigger the
+    cpu-clock software-event fallback and to downgrade a final failure to
+    SKIP (node limitation) instead of FAIL (regression)."""
+    s = (serr or "").lower()
+    return ("sys_perf_event_open" in s
+            or "returned with 22" in s
+            or "sampling events not supported" in s
+            or "no irqs for pmu" in s)
+
+
+def _perf_paranoid_blocked(serr):
+    """True when perf's stderr signals kernel.perf_event_paranoid (or a
+    missing CAP_PERFMON) denies the user access -- e.g. the atom-n455
+    'Access to performance monitoring and observability operations is
+    limited.' message. We don't own these nodes, so we won't sysctl
+    them: such a run is SKIPped (missing datum), not FAILed."""
+    s = (serr or "").lower()
+    return ("perf_event_paranoid" in s
+            or "access to performance monitoring" in s
+            or "permission denied" in s and "perf" in s)
+
+
 def remote_perf_stat(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
     """Run `perf stat -x , -e <events> <cmd>` on the exec node, parse
     the CSV output. Returns event->value dict or None when perf is
@@ -1031,6 +1066,198 @@ def remote_callgrind(exec_node, cmd_str, work_dir, timeout=None):
     return None
 
 
+def remote_nproc(exec_node):
+    """Core count of the exec node (`nproc`), or None. Feeds the
+    '<node>-CPU-<cores>' tag in profile artefact filenames."""
+    rc, sout, _ = run_remote_cmd(exec_node, "nproc", timeout=30)
+    if rc == 0 and sout:
+        try:
+            return int(sout.strip().splitlines()[0])
+        except (ValueError, IndexError):
+            return None
+    return None
+
+
+def exec_node_dict(node):
+    """Normalise a bh.benchmark_exec_nodes() entry (ssh_user/ssh_host/...)
+    into the {label,user,host,port,work_dir,lxc_nfs,ninja} shape the
+    remote helpers (push_binary_to_exec, nfs_lxc_prepare, ...) expect."""
+    return {"label":    node["label"],
+            "user":     node.get("ssh_user"),
+            "host":     node.get("ssh_host"),
+            "port":     node.get("ssh_port", 22),
+            "work_dir": node.get("work_dir") or f"/tmp/cc-bench-{node['label']}",
+            "lxc_nfs":  node.get("lxc_nfs"),
+            "ninja":    node.get("ninja")}
+
+
+def profile_on_exec(compile_node, exec_node, cmake_src_subdir, build_subdir,
+                    bin_name, runtime_cmd, tools, bench_name,
+                    cmake_defs=None, extras=None, local_dest_dir=None,
+                    stage_fn=None, run_timeout=RUN_TIMEOUT_DEFAULT,
+                    verbose=False):
+    """--profile on ONE exec node: build on its compile node, push the
+    binary, optionally stage runtime fixtures (`stage_fn(runtime_node)` —
+    e.g. rsync datapack + write server-properties.xml), run each profiler
+    in `tools` ('callgrind' / 'perf') there, and rsync each artefact back
+    to local_dest_dir named '<tool-base>.<bench>-<exec_label>-CPU-<cores>
+    .<stamp>'. A node missing the profiler tool is SKIPped (not failed).
+    Returns a list of (tool, local_artefact_path_or_None, status_msg)."""
+    import datetime
+    if local_dest_dir is None:
+        local_dest_dir = bh.tmpfs_scratch_dir("cc-bench-profile")
+    rc, msg, bld = build_for_fleet(compile_node, cmake_src_subdir, build_subdir,
+                                   cmake_defs=cmake_defs,
+                                   use_ninja=exec_node.get("ninja"),
+                                   verbose=verbose)
+    if rc != 0:
+        return [(t, None, f"build failed: {msg}") for t in tools]
+    runtime_node, msg = nfs_lxc_prepare(exec_node, verbose=verbose)
+    if runtime_node is None:
+        nfs_lxc_teardown(exec_node, verbose=verbose)
+        return [(t, None, f"bring-up failed: {msg}") for t in tools]
+    results = []
+    try:
+        if stage_fn is not None:
+            ok, smsg = stage_fn(runtime_node)
+            if not ok:
+                return [(t, None, f"stage failed: {smsg}") for t in tools]
+        rc, exec_bin, msg = push_binary_to_exec(
+            compile_node, runtime_node, bld, bin_name, extras=extras,
+            verbose=verbose)
+        if rc != 0:
+            return [(t, None, f"push failed: {msg}") for t in tools]
+        ewd = runtime_node["work_dir"]
+        cores = remote_nproc(runtime_node)
+        tag = bh.profile_node_tag(exec_node["label"], cores)
+        eu = runtime_node["user"]
+        eh = runtime_node["host"]
+        ep = runtime_node.get("port", 22)
+        base = (f"cd {shlex.quote(ewd)} && "
+                f"chmod +x {shlex.quote(bin_name)} && ")
+        for t in tools:
+            stamp = datetime.datetime.utcnow().strftime("%Y%m%dT%H-%M-%SZ")
+            cmd_str = (runtime_cmd.get(t) or runtime_cmd.get("rusage")
+                       if isinstance(runtime_cmd, dict) else runtime_cmd)
+            if t == "callgrind":
+                if not _remote_have_tool_cached(runtime_node, "valgrind"):
+                    results.append((t, None, "SKIP: valgrind missing on node"))
+                    continue
+                rfile = f"{ewd}/callgrind.out"
+                full = base + (f"rm -f {shlex.quote(rfile)} && "
+                               f"valgrind --tool=callgrind --quiet "
+                               f"--callgrind-out-file={shlex.quote(rfile)} "
+                               f"sh -c {shlex.quote(cmd_str)}")
+                tmo = run_timeout * 30
+                local_name = f"callgrind.out.{bench_name}-{tag}.{stamp}"
+            else:  # perf
+                if not _remote_have_tool_cached(runtime_node, "perf"):
+                    results.append((t, None, "SKIP: perf missing on node"))
+                    continue
+                rfile = f"{ewd}/perf.data"
+                full = base + (f"rm -f {shlex.quote(rfile)} && "
+                               f"perf record -g -o {shlex.quote(rfile)} "
+                               f"sh -c {shlex.quote(cmd_str)}")
+                tmo = run_timeout * 2
+                local_name = f"perf.data.{bench_name}-{tag}.{stamp}"
+            rc, _sout, serr = run_remote_cmd(runtime_node, full, timeout=tmo)
+            if rc != 0 and t == "perf" and _perf_no_hw_sampling(serr):
+                # Some PMUs (e.g. armv6_1176 on the RPi Zero W) count but
+                # raise no IRQ, so perf's default hardware 'cycles' event
+                # can't sample: sys_perf_event_open returns EINVAL (22).
+                # Retry with the software 'cpu-clock' event (hrtimer-based,
+                # needs no PMU interrupt) so we still get a usable profile.
+                full = base + (f"rm -f {shlex.quote(rfile)} && "
+                               f"perf record -g -e cpu-clock "
+                               f"-o {shlex.quote(rfile)} "
+                               f"sh -c {shlex.quote(cmd_str)}")
+                rc, _sout, serr = run_remote_cmd(runtime_node, full,
+                                                 timeout=tmo)
+            if rc != 0:
+                if t == "perf" and _perf_no_hw_sampling(serr):
+                    # No hardware sampling and the software-event fallback
+                    # also failed -- a node limitation, not a regression.
+                    results.append((t, None,
+                                    "SKIP: perf hw sampling unsupported on node"))
+                elif t == "perf" and _perf_paranoid_blocked(serr):
+                    # kernel.perf_event_paranoid too high for this user and
+                    # we won't sysctl a node we don't own -- missing datum,
+                    # not a regression.
+                    results.append((t, None,
+                                    "SKIP: perf_event_paranoid blocks access on node"))
+                else:
+                    results.append((t, None,
+                                    f"run rc={rc}: {(serr or '').strip()[:200]}"))
+                continue
+            local_path = os.path.join(local_dest_dir, local_name)
+            rc2, m2 = rsync_from(eu, eh, ep, rfile, local_path)
+            if rc2 != 0:
+                results.append((t, None, f"pull failed: {m2}"))
+            else:
+                results.append((t, local_path, "ok"))
+        return results
+    finally:
+        nfs_lxc_teardown(exec_node, verbose=verbose)
+
+
+def profile_fleet(bench_name, tools, local_cmd, local_cwd, local_timeouts,
+                  remote_spec=None, verbose=True):
+    """Drive --profile across the WHOLE fleet: the local host AND every
+    benchmark exec node (benchmark=true, loadavg<1.0). One artefact per
+    (node, tool), filename-tagged '<node>-CPU-<cores>' so nothing collides.
+
+    local_cmd       argv for the local one-shot profile (None to skip local).
+    local_timeouts  {tool: seconds} for the local run.
+    remote_spec     None  => remote skipped (e.g. botactions: its server+bot
+                            workload isn't remote-wired, local-only by design).
+                    dict  => {cmake_src_subdir, build_subdir_base, bin_name,
+                            runtime_cmd, cmake_defs?, extras?, stage_fn?}.
+                    stage_fn(runtime_node) -> (ok, msg) stages per-benchmark
+                            runtime fixtures on the exec node before the run.
+
+    Returns list of (node_label, tool, artefact_path_or_None, msg)."""
+    out = []
+    if local_cmd is not None:
+        for t in tools:
+            p = bh.profile_once(local_cmd, t, cwd=local_cwd,
+                                timeout=(local_timeouts or {}).get(t),
+                                node_label="local", cpu_cores=os.cpu_count())
+            out.append(("local", t, p, "ok" if p else "fail/missing-tool"))
+    if remote_spec is None:
+        print(f"{bh.C_YELLOW}[profile] {bench_name}: remote nodes not wired "
+              f"for this benchmark — local only{bh.C_RESET}")
+        return out
+    nodes = bh.benchmark_exec_nodes()
+    if not nodes:
+        print(f"{bh.C_YELLOW}[profile] {bench_name}: no benchmark exec node "
+              f"available (benchmark=true AND loadavg<1.0){bh.C_RESET}")
+        return out
+    for node in nodes:
+        label = node["label"]
+        cn = node.get("compile_node")
+        if cn is None:
+            print(f"{bh.C_YELLOW}[profile] {label}: no compile node; "
+                  f"skip{bh.C_RESET}")
+            for t in tools:
+                out.append((label, t, None, "no compile node"))
+            continue
+        en = exec_node_dict(node)
+        sub = f"{remote_spec['build_subdir_base']}-profile-{cn.get('label', 'cn')}"
+        res = profile_on_exec(
+            cn, en, remote_spec["cmake_src_subdir"], sub,
+            remote_spec["bin_name"], remote_spec["runtime_cmd"], tools,
+            bench_name, cmake_defs=remote_spec.get("cmake_defs"),
+            extras=remote_spec.get("extras"),
+            stage_fn=remote_spec.get("stage_fn"), verbose=verbose)
+        for (t, path, msg) in res:
+            out.append((label, t, path, msg))
+            if path:
+                print(f"{bh.C_GREEN}[profile] {label} {t}: {path}{bh.C_RESET}")
+            else:
+                print(f"{bh.C_YELLOW}[profile] {label} {t}: {msg}{bh.C_RESET}")
+    return out
+
+
 def start_server_popen(exec_node, bin_name):
     """Launch the server on the exec node in the FOREGROUND over a dedicated
     SSH Popen.  Python holds the connection open; no shell job-control, no
@@ -1056,6 +1283,7 @@ def start_server_popen(exec_node, bin_name):
             "-o", "ServerAliveInterval=30",
             "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null",
+            "-o", "LogLevel=ERROR",
             "-p", str(ep), _ssh_host(eu, eh),
             f"cd {shlex.quote(ewd)} && chmod +x {shlex.quote(bin_name)} && "
             f"rm -f server.log && "

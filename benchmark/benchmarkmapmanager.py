@@ -415,6 +415,28 @@ def main():
     if bin_path is None:
         return 2
 
+    if args.profile:
+        tools = bh.profile_tools(args.profile)
+        remote_spec = {
+            "cmake_src_subdir": "benchmark/benchmarkmapmanager",
+            "build_subdir_base": "benchmarkmapmanager",
+            "bin_name": BIN_NAME,
+            "cmake_defs": {"CMAKE_BUILD_TYPE": "Release"},
+            "runtime_cmd": {t: _runtime_cmd_string(t) for t in tools},
+        }
+        # local: profile each tool with its own workload-mode argv.
+        for t in tools:
+            scale = (30 if t == "callgrind" else 20 if t == "massif" else 2)
+            tmo = RUN_TIMEOUT_CALLGRIND if t == "callgrind" else RUN_TIMEOUT * scale
+            bh.profile_once(run_one(bin_path, t), t,
+                            cwd=os.path.dirname(bin_path), timeout=tmo,
+                            node_label="local", cpu_cores=os.cpu_count())
+        # remote: build+push+run+pull per exec node (local_cmd=None: already
+        # done the per-tool local runs above).
+        br.profile_fleet("benchmarkmapmanager", tools, None, None, None,
+                         remote_spec=remote_spec)
+        return 0
+
     arch = bh.host_arch()
     nodes = [{"label": "local", "arch": arch}] + bh.benchmark_exec_nodes()
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
