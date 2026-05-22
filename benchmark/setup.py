@@ -186,6 +186,15 @@ PROFILER_TOOLS = sorted(_profiler_tool_set())
 OPTIONAL_TOOLS = ["ninja", "ccache", "mold", "ld.lld", "clang",
                   "gdb", "sensors"]
 
+# Per-package-manager-family tool exclusions: tools that simply do not
+# exist for that distro and must not be probed, listed as "missing", or
+# install-requested. heaptrack has no ebuild in the Gentoo tree, so on
+# every emerge (Gentoo) node it is excluded outright -- the bench harness
+# falls back to callgrind/massif there.
+FAMILY_EXCLUDED_TOOLS = {
+    "emerge": {"heaptrack"},
+}
+
 # Map a probe binary -> the logical package key used in PKG_MAP below.
 TOOL_TO_PKG = {
     "/usr/bin/time": "time",
@@ -718,7 +727,11 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
 
     # One round-trip: probe every tool we care about. CORE_TOOLS,
     # PROFILER_TOOLS and OPTIONAL_TOOLS are disjoint by construction.
-    probe_tools = CORE_TOOLS + PROFILER_TOOLS + OPTIONAL_TOOLS
+    # Drop tools this distro family doesn't package (e.g. heaptrack on
+    # Gentoo) so they are never probed, listed, or install-requested.
+    family_excluded = FAMILY_EXCLUDED_TOOLS.get(family, set())
+    probe_tools = [t for t in (CORE_TOOLS + PROFILER_TOOLS + OPTIONAL_TOOLS)
+                   if t not in family_excluded]
 
     def _world_pkg(t):
         # only emerge has /var/lib/portage/world; map tool -> atom
@@ -760,6 +773,8 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
     # harness SKIPs an absent profiler on its own.
     skipped_cfg = []
     for t in PROFILER_TOOLS + OPTIONAL_TOOLS:
+        if t in family_excluded:
+            continue                        # unpackaged on this distro family
         if t in node_disabled:
             skipped_cfg.append(t)           # benchmark_disabled_tools config
             continue
