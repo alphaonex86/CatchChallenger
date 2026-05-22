@@ -116,7 +116,6 @@ unsigned int MapVisibilityAlgorithm::send_reinsertAll(const CATCHCHALLENGER_TYPE
     {
         output[1+4+1+2]=static_cast<uint8_t>(254);//player count
     }
-    std::cerr << "send_reinsertAll() map=" << mapIndex << " players=" << count << " bytes=" << posOutput << std::endl;
     return posOutput;
 }
 
@@ -168,7 +167,6 @@ unsigned int MapVisibilityAlgorithm::send_reinsertAllWithFilter(const CATCHCHALL
     {
         output[1+4+1+2]=static_cast<uint8_t>(254);//player count
     }
-    std::cerr << "send_reinsertAllWithFilter() map=" << mapIndex << " players=" << count << " skipped_slot=" << skipped_id << " bytes=" << posOutput << std::endl;
     return posOutput;
 }
 
@@ -194,15 +192,12 @@ void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
     clients_size-=map_removed_index.size();
     if(clients_size>=GlobalServerData::serverSettings.mapVisibility.simple.max)
     {
-        std::cerr << "min_CPU() map=" << mapIndex << " SKIP clients_size=" << clients_size << " >= max=" << GlobalServerData::serverSettings.mapVisibility.simple.max << std::endl;
         return;
     }
     if(clients_size<=1)
     {
         return;
     }
-
-    std::cerr << "min_CPU() map=" << mapIndex << " clients_size=" << clients_size << " map_clients_id.size()=" << map_clients_id.size() << std::endl;
 
     unsigned int index_client=0;
     while(index_client<map_clients_id.size())
@@ -220,7 +215,6 @@ void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
                     //first time on this map: prepend 0x6C header with self slot index
                     if(clientWithMap.sendedMap!=client.mapIndex)//async multiple map change to more performance
                     {
-                        std::cerr << "min_CPU() slot=" << index_client << " globalId=" << map_c_idP << " player=" << client.getPseudo() << " NEW_MAP sendedMap=" << clientWithMap.sendedMap << " mapIndex=" << client.mapIndex << " -> send 0x6C+0x65+0x6B" << std::endl;
                         clientWithMap.sendedMap=client.mapIndex;
                         posOutput=0;
                         baseOutput=0;
@@ -232,7 +226,6 @@ void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
                     }
                     else
                     {
-                        std::cerr << "min_CPU() slot=" << index_client << " globalId=" << map_c_idP << " player=" << client.getPseudo() << " SAME_MAP -> send 0x65+0x6B" << std::endl;
                         //same map as last tick: skip the 0x6C header (positions [0..1])
                         posOutput=2;
                         baseOutput=2;
@@ -241,7 +234,6 @@ void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
                     if(cached==false)
                     {
                         cached=true;
-                        std::cerr << "min_CPU() slot=" << index_client << " building cached 0x65+0x6B block" << std::endl;
 
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
                         posOutput+=1;//drop all
@@ -258,13 +250,7 @@ void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
                     if(client.pingCountInProgress()<=0)
                     {
                         posOutput+=client.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
-                        std::cerr << "min_CPU() slot=" << index_client << " player=" << client.getPseudo() << " +ping" << std::endl;
                     }
-                    else
-                    {
-                        std::cerr << "min_CPU() slot=" << index_client << " player=" << client.getPseudo() << " skip_ping pingInProgress=" << std::to_string(client.pingCountInProgress()) << std::endl;
-                    }
-                    std::cerr << "min_CPU() slot=" << index_client << " player=" << client.getPseudo() << " SEND bytes=" << (posOutput-baseOutput) << std::endl;
                     client.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput+baseOutput,posOutput-baseOutput);
                 }
             }
@@ -299,7 +285,6 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
     clients_size-=map_removed_index.size();
     if(clients_size>=GlobalServerData::serverSettings.mapVisibility.simple.max)
     {
-        std::cerr << "min_network() map=" << mapIndex << " SKIP clients_size=" << clients_size << " >= max=" << GlobalServerData::serverSettings.mapVisibility.simple.max << std::endl;
         return;
     }
     //Same guard as min_CPU(): nothing to broadcast with 0 or 1 client on the
@@ -330,8 +315,6 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                     /// Sends: [0x65][0x6B filtered_insert][0xE3 ping?]
                     if(clientWithMap.sendedMap!=clientWithMap.mapIndex)//async multiple map change to more performance
                     {
-                        std::cerr << "min_network() PATH1 slot=" << index_client << " globalId=" << map_c_idP << " player=" << clientWithMap.getPseudo()
-                                  << " NEW_MAP sendedMap=" << clientWithMap.sendedMap << " mapIndex=" << clientWithMap.mapIndex << " -> send 0x65+0x6B" << std::endl;
                         clientWithMap.sendedMap=clientWithMap.mapIndex;
                         uint32_t posOutput=0;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
@@ -341,13 +324,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                         if(clientWithMap.pingCountInProgress()<=0)
                         {
                             posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
-                            std::cerr << "min_network() PATH1 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " +ping" << std::endl;
                         }
-                        else
-                        {
-                            std::cerr << "min_network() PATH1 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " skip_ping pingInProgress=" << std::to_string(clientWithMap.pingCountInProgress()) << std::endl;
-                        }
-                        std::cerr << "min_network() PATH1 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " SEND bytes=" << posOutput << std::endl;
                         clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                         //populate sendedStatus with current state of all visible players
                         clientWithMap.sendedStatus.resize(std::min(map_clients_id.size(),static_cast<size_t>(255)));
@@ -410,9 +387,6 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                         }//no change, nothing to send
                                         else
                                         {
-                                            std::cerr << "min_network() PATH2 slot=" << index_client << " scan other_slot=" << index << " other=" << other_client.getPseudo()
-                                                      << " CHANGE old_x=" << std::to_string(c_stat.x) << " old_y=" << std::to_string(c_stat.y) << " old_dir=" << std::to_string(c_stat.direction)
-                                                      << " new_x=" << std::to_string(other_client.getX()) << " new_y=" << std::to_string(other_client.getY()) << " new_dir=" << std::to_string(other_client.getLastDirection()) << std::endl;
                                             //position or direction changed -> send 0x66 change entry
                                             {
                                                 #ifdef CATCHCHALLENGER_TESTING
@@ -430,8 +404,6 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                     //different character now occupies this slot -> re-insert
                                     else
                                     {
-                                        std::cerr << "min_network() PATH2 slot=" << index_client << " scan other_slot=" << index << " other=" << other_client.getPseudo()
-                                                  << " REPLACED old_charId=" << c_stat.characterId_db << " new_charId=" << other_client.getPlayerId() << " -> insert" << std::endl;
                                         //full insert other player on map (another player replaced the old one)
                                         {
                                             #ifdef CATCHCHALLENGER_TESTING
@@ -447,18 +419,13 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                 //slot is now empty but was occupied -> remove
                                 else
                                 {
-                                    if(c_stat.characterId_db==0xffffffff)
+                                    //characterId_db==0xffffffff => already deleted in a
+                                    //previous tick, nothing to do. Otherwise the player
+                                    //left this slot -> send 0x69 remove entry.
+                                    if(c_stat.characterId_db!=0xffffffff)
                                     {
-                                        std::cerr << "min_network() PATH2 slot=" << index_client << " scan other_slot=" << index << " EMPTY_ALREADY" << std::endl;
-                                    }//donothing, already deleted in previous tick
-                                    else
-                                    {
-                                        std::cerr << "min_network() PATH2 slot=" << index_client << " scan other_slot=" << index << " REMOVE old_charId=" << c_stat.characterId_db << std::endl;
-                                        //player left this slot -> send 0x69 remove entry
-                                        {
-                                            MapVisibilityAlgorithm::tempBigBufferForRemove[1+4+1+removeCount]=static_cast<uint8_t>(index);
-                                            removeCount++;
-                                        }
+                                        MapVisibilityAlgorithm::tempBigBufferForRemove[1+4+1+removeCount]=static_cast<uint8_t>(index);
+                                        removeCount++;
                                     }
                                 }
                             }
@@ -468,8 +435,6 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                 const PLAYER_INDEX_FOR_CONNECTED &other_client_id=map_clients_id.at(index);
                                 if(other_client_id!=PLAYER_INDEX_FOR_CONNECTED_MAX)
                                 {
-                                    std::cerr << "min_network() PATH2 slot=" << index_client << " scan other_slot=" << index << " NEW_SLOT globalId=" << other_client_id
-                                              << " other=" << ClientList::list->at(other_client_id).getPseudo() << " -> insert" << std::endl;
                                     //new player in a slot we haven't seen before -> full insert
                                     {
                                         #ifdef CATCHCHALLENGER_TESTING
@@ -482,10 +447,6 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                         insertCount++;
                                     }
                                 }
-                                else
-                                {
-                                    std::cerr << "min_network() PATH2 slot=" << index_client << " scan other_slot=" << index << " NEW_SLOT_EMPTY" << std::endl;
-                                }
                             }
                             index++;
                         }
@@ -493,11 +454,8 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                         //flush the buffer: compose and send all detected differences
                         if(changesCount>0 || removeCount>0 || insertCount>0)
                         {
-                            std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo()
-                                      << " SENDING inserts=" << std::to_string(insertCount) << " removes=" << std::to_string(removeCount) << " changes=" << std::to_string(changesCount) << std::endl;
                             if(insertCount>0)
                             {
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " +0x6B insert_bytes=" << posOutput << std::endl;
                                 //fill the reserved 0x6B header at [0..8] now that we know insert data size
                                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x6B;//full Insert player on map
                                 {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size (data bytes after code+size)
@@ -514,14 +472,12 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             }
                             else
                             {
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " no_inserts reset posOutput=0" << std::endl;
                                 posOutput=0;//no inserts: reset to 0, don't send the unused reserved 0x6B header space
                             }
 
                             //append 0x69 remove packet (if any) after the insert data (or at position 0 if no inserts)
                             if(removeCount>0)
                             {
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " +0x69 remove count=" << std::to_string(removeCount) << " at_pos=" << posOutput << std::endl;
                                 MapVisibilityAlgorithm::tempBigBufferForRemove[1+4]=static_cast<uint8_t>(removeCount);//player count
                                 {const uint32_t _tmp_le=(htole32(1+removeCount));memcpy(MapVisibilityAlgorithm::tempBigBufferForRemove+1,&_tmp_le,sizeof(_tmp_le));}//dynamic size = count_byte + indices
                                 //copy the pre-built remove buffer [0x69][size4][count1][indices...] into main output
@@ -531,7 +487,6 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             //append 0x66 changes packet (if any) after removes
                             if(changesCount>0)
                             {
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " +0x66 changes count=" << std::to_string(changesCount) << " at_pos=" << posOutput << std::endl;
                                 MapVisibilityAlgorithm::tempBigBufferForChanges[1+4]=static_cast<uint8_t>(changesCount);//player count
                                 {const uint32_t _tmp_le=(htole32(1+changesCount*(1+1+1+1)));memcpy(MapVisibilityAlgorithm::tempBigBufferForChanges+1,&_tmp_le,sizeof(_tmp_le));}//dynamic size = count_byte + count * 4 bytes per entry
                                 //copy the pre-built changes buffer [0x66][size4][count1][entries...] into main output
@@ -542,14 +497,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             if(clientWithMap.pingCountInProgress()<=0)
                             {
                                 posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " +ping" << std::endl;
                             }
-                            else
-                            {
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " skip_ping pingInProgress=" << std::to_string(clientWithMap.pingCountInProgress()) << std::endl;
-                            }
-                            std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " SEND total_bytes=" << posOutput
-                                      << " first_byte=0x" << std::hex << std::to_string((uint8_t)ProtocolParsingBase::tempBigBufferForOutput[0]) << std::dec << std::endl;
                             clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                             //update sendedStatus with current state after send so next tick can detect differences
                             clientWithMap.sendedStatus.resize(std::min(map_clients_id.size(),static_cast<size_t>(255)));
@@ -569,13 +517,6 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                 }
                                 else
                                     clientWithMap.sendedStatus[ss].characterId_db=0xffffffff;
-                            }
-                        }
-                        else
-                        {
-                            if(clientWithMap.pingCountInProgress()>0)
-                            {
-                                std::cerr << "min_network() PATH2 slot=" << index_client << " player=" << clientWithMap.getPseudo() << " NO_DIFF but pingCountInProgress=" << std::to_string(clientWithMap.pingCountInProgress()) << std::endl;
                             }
                         }
                     }

@@ -111,7 +111,11 @@ const CatchChallenger::Client &EventLoopClientList::at(const PLAYER_INDEX_FOR_CO
         abort();
     }
     #endif
-    return clients.at(index);
+    //operator[] not .at(): the HARDENED block above already bounds-checks,
+    //and rw()/rwWithMap() return clients[index] too -- the redundant
+    //std::vector::at() bounds check on this hot visibility read path is
+    //pure overhead in the production (non-HARDENED) build.
+    return clients[index];
 }
 
 //abort if index is not valid
