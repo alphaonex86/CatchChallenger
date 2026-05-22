@@ -316,19 +316,14 @@ BUILD_DEP_LIBS = [
              "xbps": "tinyxml2-devel"}},
 ]
 
-# Metadata refresh run ONCE per node before any install (None = the
-# package manager refreshes implicitly / a sync would be too costly,
-# e.g. `emerge --sync` rebuilds the whole portage tree).
-REFRESH_CMD = {
-    "apt":    "export DEBIAN_FRONTEND=noninteractive; "
-              "apt-get update -o DPkg::Lock::Timeout=0",
-    "dnf":    None,
-    "zypper": "zypper --non-interactive refresh",
-    "pacman": "pacman -Sy --noconfirm",
-    "apk":    "apk update",
-    "emerge": None,
-    "xbps":   None,
-}
+# NOTE: setup.py NEVER refreshes package metadata. No `apt-get update`,
+# `pacman -Sy`, `apk update`, `zypper refresh`, `emerge --sync` -- these
+# hit the network to rebuild the index (and `emerge --sync` rebuilds the
+# whole portage tree). The install commands run against the index already
+# present on the node; a stale index simply means a package is skipped
+# (best-effort libs fall back to the in-tree vendored copy). Keeping the
+# whole flow offline-as-possible avoids the long network stalls seen on
+# slow / firewalled boxes.
 
 # Install ONE package ({pkg}). Per-package, never batched: a single
 # masked/unavailable tool (e.g. dev-debug/valgrind has no keyword on
@@ -800,7 +795,6 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
     # pacman/apk/emerge/xbps), required atoms first. emerge gets
     # --keep-going so one masked atom can't abort the batch.
     all_pkgs    = list(dict.fromkeys(req_missing_pkgs + opt_missing_pkgs))
-    refresh     = REFRESH_CMD.get(family)
     install_raw = _install_many(family, all_pkgs)
     fail_status = "fail" if req_missing_pkgs else "partial"
 
@@ -812,25 +806,13 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
         print("  %s[NEEDS ROOT]%s not root and packages are missing; "
               "setup.py does not sudo. Run AS ROOT on %s:"
               % (C_RED, C_RESET, tgt.label))
-        if refresh:
-            print("    %s" % refresh)
         print("    %s" % install_raw)
         return fail_status
 
-    # Metadata refresh ONCE (apt-get update / pacman -Sy / ...).
-    if refresh:
-        cmd = _priv_cmd(refresh)
-        if dry_run:
-            print("  %s[DRY-RUN refresh]%s %s" % (C_YELLOW, C_RESET, cmd))
-        else:
-            print("  %srefreshing package metadata%s" % (C_CYAN, C_RESET))
-            rrc, rout = tgt.run(cmd, install_timeout,
-                                idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
-            if rrc != 0:
-                print("  %s[WARN refresh rc=%s]%s %s\n    $ %s"
-                      % (C_YELLOW, rrc, C_RESET,
-                         (rout.strip().splitlines() or [""])[-1][:160], cmd))
-
+    # No metadata refresh: install runs against the index already on the
+    # node (see the "NEVER refreshes package metadata" note above) --
+    # never apt-get update / pacman -Sy / emerge --sync, which stall on
+    # the network.
     cmd = _priv_cmd(install_raw)
     if dry_run:
         print("  %s[DRY-RUN install]%s %s" % (C_YELLOW, C_RESET, cmd))
