@@ -1,0 +1,65 @@
+{
+  "arch": "aarch64",
+  "arch_emulated": false,
+  "batch_id": "8eca49b5fd504eb1a94a35a4fad15cbc",
+  "benchmark": "benchmarkbotactions",
+  "comment": "",
+  "commit": "90ce69ca69f28a13c55b8438b2531c4d37d0931e",
+  "commit_short": "90ce69c",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cores": 4,
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": null,
+  "cpu_model": "ARMv8 Processor rev 4 (v8l)",
+  "decision": "ESCALATE",
+  "disk_kind": "emmc",
+  "disk_root": "/dev/mmcblk0p1",
+  "ended_utc": "2026-05-22T20:13:12Z",
+  "eth_link_mbps": null,
+  "harness_version": "90ce69ca69f28a13c55b8438b2531c4d37d0931e",
+  "host_arch": null,
+  "kernel": "6.18.15-current-meson64",
+  "libc": "glibc 2.41",
+  "loadavg_1min_at_start": 0.0,
+  "net_card": null,
+  "net_link": null,
+  "net_link_detail": null,
+  "node": "odroid-c2",
+  "ram_total_mb": 1917,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-22T19:56:39Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}
