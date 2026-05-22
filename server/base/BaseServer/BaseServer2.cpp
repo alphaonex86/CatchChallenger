@@ -419,7 +419,25 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     #elif CATCHCHALLENGER_DB_FILE
     {
         {
-            #ifdef CATCHCHALLENGER_DB_FILE
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            if(CatchChallenger::dbInternalVarsStore.count(std::string("database/server/server"))==0)
+            {
+                GlobalServerData::serverPrivateVariables.maxClanId=0;
+                GlobalServerData::serverPrivateVariables.maxAccountId=0;
+                GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+                GlobalServerData::serverPrivateVariables.maxCity=0;
+            }
+            else
+            {
+                const std::vector<uint8_t> &_d=CatchChallenger::dbInternalVarsStore.at(std::string("database/server/server"));
+                std::istringstream in_file(std::string(reinterpret_cast<const char *>(_d.data()),_d.size()));
+                hps::StreamInputBuffer s(in_file);
+                s >> GlobalServerData::serverPrivateVariables.maxClanId;
+                s >> GlobalServerData::serverPrivateVariables.maxAccountId;
+                s >> GlobalServerData::serverPrivateVariables.maxCharacterId;
+                s >> GlobalServerData::serverPrivateVariables.maxCity;
+            }
+            #else
             std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ifstream::binary);
             if(!in_file.good() || !in_file.is_open())
             {
@@ -439,6 +457,9 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
             #endif
         }
         {
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            std::ostringstream out_file;
+            #else
             std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
             if(!out_file.good() || !out_file.is_open())
             {
@@ -446,10 +467,14 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
                 abort();
                 return;
             }
+            #endif
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+            #endif
         }
     }
     #else

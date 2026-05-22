@@ -211,6 +211,30 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     }
     if(BaseServer::dictionary_reputation_haveChange)
     {
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        {
+            const std::string _kdict=std::string("database/common/dictionary_reputation");
+            std::ostringstream dict_out(std::ios_base::out|std::ios_base::binary);
+            if(CatchChallenger::dbInternalVarsStore.count(_kdict)>0)
+            {const std::vector<uint8_t> &_d=CatchChallenger::dbInternalVarsStore.at(_kdict);dict_out.write(reinterpret_cast<const char *>(_d.data()),_d.size());}
+            unsigned int newCount=0;
+            for(uint8_t i=0;i<CommonDatapack::commonDatapack.get_reputation().size();i++)
+            {
+                if(foundReputation.find(CommonDatapack::commonDatapack.get_reputation().at(i).name)==foundReputation.end())
+                {
+                    const std::string &name=CommonDatapack::commonDatapack.get_reputation().at(i).name;
+                    const uint8_t len=static_cast<uint8_t>(name.size());
+                    dict_out.write(reinterpret_cast<const char*>(&len),1);
+                    dict_out.write(name.data(),len);
+                    newCount++;
+                }
+            }
+            if(newCount>0)
+                std::cout << newCount << " new reputation dictionary entries appended to database/common/dictionary_reputation" << std::endl;
+            const std::string _s=dict_out.str();
+            CatchChallenger::dbInternalVarsStore[_kdict]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+        }
+        #else
         std::ofstream dict_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_reputation")), std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
@@ -231,6 +255,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
         }
         else
             std::cerr << "Unable to open database/common/dictionary_reputation for writing" << std::endl;
+        #endif
         BaseServer::dictionary_reputation_haveChange=false;
     }
     #endif
@@ -407,6 +432,30 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     }
     if(BaseServer::dictionary_skin_haveChange)
     {
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        {
+            const std::string _kdict=std::string("database/common/dictionary_skin");
+            std::ostringstream dict_out(std::ios_base::out|std::ios_base::binary);
+            if(CatchChallenger::dbInternalVarsStore.count(_kdict)>0)
+            {const std::vector<uint8_t> &_d=CatchChallenger::dbInternalVarsStore.at(_kdict);dict_out.write(reinterpret_cast<const char *>(_d.data()),_d.size());}
+            unsigned int newCount=0;
+            for(const std::pair<const std::string,uint8_t> &entry : BaseServerMasterSendDatapack::skinList)
+            {
+                if(foundSkin.find(entry.first)==foundSkin.end())
+                {
+                    const std::string &name=entry.first;
+                    const uint8_t len=static_cast<uint8_t>(name.size());
+                    dict_out.write(reinterpret_cast<const char*>(&len),1);
+                    dict_out.write(name.data(),len);
+                    newCount++;
+                }
+            }
+            if(newCount>0)
+                std::cout << newCount << " new skin dictionary entries appended to database/common/dictionary_skin" << std::endl;
+            const std::string _s=dict_out.str();
+            CatchChallenger::dbInternalVarsStore[_kdict]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+        }
+        #else
         std::ofstream dict_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_skin")), std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
@@ -427,6 +476,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
         }
         else
             std::cerr << "Unable to open database/common/dictionary_skin for writing" << std::endl;
+        #endif
         BaseServer::dictionary_skin_haveChange=false;
     }
     #endif
@@ -613,6 +663,31 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     }
     if(BaseServer::dictionary_starter_haveChange)
     {
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        {
+            const std::string _kdict=std::string("database/common/dictionary_starter");
+            std::ostringstream dict_out(std::ios_base::out|std::ios_base::binary);
+            if(CatchChallenger::dbInternalVarsStore.count(_kdict)>0)
+            {const std::vector<uint8_t> &_d=CatchChallenger::dbInternalVarsStore.at(_kdict);dict_out.write(reinterpret_cast<const char *>(_d.data()),_d.size());}
+            unsigned int newCount=0;
+            for(unsigned int i=0;i<CommonDatapack::commonDatapack.get_profileList().size();i++)
+            {
+                const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(i);
+                if(foundstarter.find(profile.databaseId)==foundstarter.end())
+                {
+                    const std::string &name=profile.databaseId;
+                    const uint8_t len=static_cast<uint8_t>(name.size());
+                    dict_out.write(reinterpret_cast<const char*>(&len),1);
+                    dict_out.write(name.data(),len);
+                    newCount++;
+                }
+            }
+            if(newCount>0)
+                std::cout << newCount << " new starter dictionary entries appended to database/common/dictionary_starter" << std::endl;
+            const std::string _s=dict_out.str();
+            CatchChallenger::dbInternalVarsStore[_kdict]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+        }
+        #else
         std::ofstream dict_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/dictionary_starter")), std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
@@ -634,6 +709,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
         }
         else
             std::cerr << "Unable to open database/common/dictionary_starter for writing" << std::endl;
+        #endif
         BaseServer::dictionary_starter_haveChange=false;
     }
     #endif

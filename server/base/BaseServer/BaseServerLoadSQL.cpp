@@ -225,6 +225,29 @@ void BaseServer::preload_dictionary_map_return()
     // Append new map dictionary entries to disk if changed
     if(dictionary_haveChange)
     {
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        {
+            const std::string _kdict=std::string("database/server/dictionary_map");
+            std::ostringstream dict_out(std::ios_base::out|std::ios_base::binary);
+            if(CatchChallenger::dbInternalVarsStore.count(_kdict)>0)
+            {const std::vector<uint8_t> &_d=CatchChallenger::dbInternalVarsStore.at(_kdict);dict_out.write(reinterpret_cast<const char *>(_d.data()),_d.size());}
+            unsigned int newCount=0;
+            for(const std::string &mapName : map_list_flat)
+            {
+                if(foundMap.find(mapName)==foundMap.end())
+                {
+                    const uint8_t len=static_cast<uint8_t>(mapName.size());
+                    dict_out.write(reinterpret_cast<const char*>(&len),1);
+                    dict_out.write(mapName.data(),len);
+                    newCount++;
+                }
+            }
+            if(newCount>0)
+                std::cout << newCount << " new map dictionary entries appended to database/server/dictionary_map" << std::endl;
+            const std::string _s=dict_out.str();
+            CatchChallenger::dbInternalVarsStore[_kdict]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+        }
+        #else
         std::ofstream dict_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/dictionary_map")), std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
@@ -244,6 +267,7 @@ void BaseServer::preload_dictionary_map_return()
         }
         else
             std::cerr << "Unable to open database/server/dictionary_map for writing" << std::endl;
+        #endif
         dictionary_haveChange=false;
     }
     #endif

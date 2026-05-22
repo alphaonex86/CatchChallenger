@@ -69,6 +69,14 @@ endif()
 # server/base headers (PreparedDBQuery.hpp, ServerStructures.hpp) `#error`
 # if no DB mode is picked. Standalone open in Qt Creator with no -D flags
 # should still produce a compilable binary; pin DB_FILE as the default.
+# CATCHCHALLENGER_DB_INTERNAL_VARS currently reuses the FileDB record logic,
+# so enabling it implies CATCHCHALLENGER_DB_FILE. (Making it a fully
+# independent backend that compiles NO file I/O requires teaching the ~165
+# DB-backend #elif chains about it + converting the ~33 file-I/O sites to
+# the in-memory map -- see the note surfaced to the operator.)
+if(CATCHCHALLENGER_DB_INTERNAL_VARS)
+    set(CATCHCHALLENGER_DB_FILE ON)
+endif()
 if(NOT CATCHCHALLENGER_DB_FILE
    AND NOT CATCHCHALLENGER_DB_POSTGRESQL
    AND NOT CATCHCHALLENGER_DB_MYSQL
@@ -79,19 +87,17 @@ endif()
 if(CATCHCHALLENGER_DB_FILE)
     target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_FILE)
 endif()
-# RAM-only sub-mode for the FileDB backend: every disk write is rewritten
-# to "/dev/null" at the call site (via CATCHCHALLENGER_DB_FILE_PATH macro
-# in server/base/ServerStructures.hpp). Intended for benchmarks / tests
-# that want to measure the FileDB code path without the kernel write() /
-# fsync() overhead even on tmpfs. See general/DEFINES.md.
-if(CATCHCHALLENGER_DB_FILE_RAM)
-    if(NOT CATCHCHALLENGER_DB_FILE)
-        message(FATAL_ERROR
-            "CATCHCHALLENGER_DB_FILE_RAM requires CATCHCHALLENGER_DB_FILE")
-    endif()
-    target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_FILE_RAM)
+# In-memory FileDB backend: keeps every DB record in a
+# std::unordered_map<path,bytes> instead of real files -- no disk, no
+# open/read/write/close syscall (even on tmpfs). Reuses the whole FileDB
+# record logic (DB_FILE, implied above); only the stream type differs
+# (CatchChallenger::dbifstream/dbofstream). For benchmarks / tests that
+# must measure the FileDB code path without the kernel file overhead.
+# See general/DEFINES.md.
+if(CATCHCHALLENGER_DB_INTERNAL_VARS)
+    target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_INTERNAL_VARS)
     target_sources(catchchallenger-server-cli PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/../base/DbFileRam.cpp)
+        ${CMAKE_CURRENT_LIST_DIR}/../base/DbInternalVars.cpp)
 endif()
 if(CATCHCHALLENGER_DB_POSTGRESQL)
     target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_POSTGRESQL)
@@ -206,4 +212,17 @@ option(CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
 if(CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE)
     target_compile_definitions(catchchallenger-server-cli PRIVATE
         CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE)
+endif()
+
+# Benchmark-only: enables the server-side throughput counter + the
+# SIGINT/SIGTERM "BENCH packets_in=<N>" dump used by benchmark*.py to
+# derive requests/s. OFF in every production / correctness build (the
+# guarded code compiles to nothing), see benchmark/CLAUDE.md "Zero impact
+# on production binaries".
+option(CATCHCHALLENGER_BENCHMARK
+       "Server-side throughput counter for benchmark*.py (benchmark only)"
+       OFF)
+if(CATCHCHALLENGER_BENCHMARK)
+    target_compile_definitions(catchchallenger-server-cli PRIVATE
+        CATCHCHALLENGER_BENCHMARK)
 endif()

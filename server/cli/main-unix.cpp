@@ -2,6 +2,9 @@
 #include <fstream>
 #include <chrono>
 #include <signal.h>
+#ifdef CATCHCHALLENGER_BENCHMARK
+#include <time.h>
+#endif
 #include "win32_compat.hpp"
 #ifndef _WIN32
 #include <unistd.h>
@@ -15,8 +18,8 @@
 //dictionary_serialBuffer and server_serialBuffer now open as DB
 #endif
 #include "../base/ServerStructures.hpp"
-#ifdef CATCHCHALLENGER_DB_FILE_RAM
-#include "../base/DbFileRam.hpp"
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+#include "../base/DbInternalVars.hpp"
 #endif
 #ifndef CATCHCHALLENGER_NOXML
 #include "../base/TinyXMLSettings.hpp"
@@ -107,6 +110,70 @@ void signal_callback_handler(int signum){
         printf("Caught signal SIGPIPE %d\n",signum);
 }
 
+#ifdef CATCHCHALLENGER_BENCHMARK
+//Benchmark-only counters. Compiled out of production builds entirely
+//(no counters, no per-event clock read, no handler, zero cost), see
+//benchmark/CLAUDE.md "Zero impact on production binaries".
+//
+// * bench_packets_in   -- client read-events processed (one per
+//                         parseIncommingData()); /wall => requests/s.
+// * bench_lat_hist[i]   -- log2 histogram of per-read-event processing
+//                         time in ns (bucket i = [2^i, 2^(i+1)) ns).
+//                         benchmark*.py reconstructs p50/p95/p99/p999
+//                         (latency) and stddev (jitter) from the buckets.
+//
+//On SIGINT/SIGTERM the handler dumps everything as "BENCH <k>=<v>" lines
+//(async-signal-safe integer writes only) so the requests/s headline is
+//always paired with its latency tail + jitter, never reported alone.
+#define BENCH_LAT_BUCKETS 48
+volatile unsigned long bench_packets_in=0;
+volatile unsigned long bench_lat_hist[BENCH_LAT_BUCKETS];
+
+static void bench_write_kv(const char *key,unsigned long v)
+{
+    //async-signal-safe: hand-format "<key>=<v>\n" and write() it; printf /
+    //std::cout are NOT safe to call from a signal handler.
+    char buf[96];
+    int p=0;
+    while(*key!='\0'){buf[p++]=*key;key++;}
+    buf[p++]='=';
+    char num[20];
+    int n=0;
+    if(v==0)
+        num[n++]='0';
+    while(v>0){num[n++]=static_cast<char>('0'+(v%10));v/=10;}
+    while(n>0){buf[p++]=num[--n];}
+    buf[p++]='\n';
+    const ssize_t w=::write(STDOUT_FILENO,buf,static_cast<size_t>(p));
+    (void)w;
+}
+
+static void bench_signal_dump_and_exit(int)
+{
+    bench_write_kv("BENCH packets_in",bench_packets_in);
+    int i=0;
+    while(i<BENCH_LAT_BUCKETS)
+    {
+        const unsigned long c=bench_lat_hist[i];
+        if(c>0)
+        {
+            //"BENCH lat_hist_<i>" -- build the key inline (no snprintf).
+            char key[24];
+            int k=0;
+            const char pre[]="BENCH lat_hist_";
+            while(pre[k]!='\0'){key[k]=pre[k];k++;}
+            if(i>=10)
+                key[k++]=static_cast<char>('0'+(i/10));
+            key[k++]=static_cast<char>('0'+(i%10));
+            key[k]='\0';
+            bench_write_kv(key,c);
+        }
+        i++;
+    }
+    _exit(0);
+}
+#endif
+
 /*void CatchChallenger::recordDisconnectByServer(void * client)
 {
     unsigned int mainIndex=0;
@@ -159,6 +226,12 @@ int main(int argc, char *argv[])
         std::cerr << "signal(SIGPIPE, signal_callback_handler)==SIG_ERR, errno: " << std::to_string(errno) << std::endl;
         abort();
     }
+#ifdef CATCHCHALLENGER_BENCHMARK
+    //benchmark build: SIGINT/SIGTERM dump the throughput counter then
+    //exit cleanly so benchmark*.py can read "BENCH packets_in=<N>".
+    signal(SIGINT, bench_signal_dump_and_exit);
+    signal(SIGTERM, bench_signal_dump_and_exit);
+#endif
 #endif
 
     NormalServerGlobal::displayInfo();
@@ -206,14 +279,11 @@ int main(int argc, char *argv[])
     srand(static_cast<unsigned int>(time(NULL)));
 
     #ifdef CATCHCHALLENGER_DB_FILE
-    #ifdef CATCHCHALLENGER_DB_FILE_RAM
-    // RAM-only mode: route the entire database tree through a
-    // process-scoped tmpfs prefix (/dev/shm/cc-server-<pid>/). All the
-    // mkdir + read + write call sites use CATCHCHALLENGER_DB_FILE_PATH
-    // which prepends this prefix, so we don't need to mkdir the
-    // canonical "database/..." dirs in the cwd. init() builds the
-    // prefix tree; atexit cleanup removes it.
-    CatchChallenger::DbFileRam::init();
+    #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+    // In-memory mode: every DB record is a key in a std::unordered_map
+    // (no files, no directories, no syscall). init() just starts from an
+    // empty store; the "database/..." paths are map keys, not real dirs.
+    CatchChallenger::DbInternalVars::init();
     #else
     #ifdef _WIN32
     #define CC_MKDIR(p,m) ::_mkdir(p)
@@ -929,7 +999,27 @@ int main(int argc, char *argv[])
                     //ready to read
                     if(events[i].events & EPOLLIN)
                     {
+                        #ifdef CATCHCHALLENGER_BENCHMARK
+                        struct timespec benchT0;
+                        clock_gettime(CLOCK_MONOTONIC,&benchT0);
+                        #endif
                         client->parseIncommingData();
+                        #ifdef CATCHCHALLENGER_BENCHMARK
+                        struct timespec benchT1;
+                        clock_gettime(CLOCK_MONOTONIC,&benchT1);
+                        //plain assignment (not ++) so a C++20+ build
+                        //doesn't warn -Wvolatile on a volatile RMW.
+                        bench_packets_in = bench_packets_in + 1;
+                        unsigned long long benchNs=
+                            static_cast<unsigned long long>(benchT1.tv_sec-benchT0.tv_sec)*1000000000ULL
+                            +static_cast<unsigned long long>(benchT1.tv_nsec-benchT0.tv_nsec);
+                        int benchBucket=0;
+                        if(benchNs>0)
+                            benchBucket=63-__builtin_clzll(benchNs);
+                        if(benchBucket>=BENCH_LAT_BUCKETS)
+                            benchBucket=BENCH_LAT_BUCKETS-1;
+                        bench_lat_hist[benchBucket]=bench_lat_hist[benchBucket]+1;
+                        #endif
                     }
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
                     {

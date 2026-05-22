@@ -148,6 +148,23 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     std::string hexa,pseudo;
     {
+        std::vector<CharacterEntry> characterEntryList;
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        const std::string _kacc=std::string("database/common/accounts/")+std::to_string(account_id_db);
+        if(CatchChallenger::dbInternalVarsStore.count(_kacc)==0)
+        {
+            std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
+            character_id_db=0;
+            characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
+            return;
+        }
+        const std::vector<uint8_t> &_dacc=CatchChallenger::dbInternalVarsStore.at(_kacc);
+        std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dacc.data()),_dacc.size()));
+        {
+            hps::StreamInputBuffer s(in_file);
+            s >> characterEntryList;
+        }
+        #else
         std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
         {
@@ -156,9 +173,9 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }
-        std::vector<CharacterEntry> characterEntryList;
         hps::StreamInputBuffer s(in_file);
         s >> characterEntryList;
+        #endif
         unsigned int index=0;
         while(index<characterEntryList.size())
         {
@@ -184,8 +201,12 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         std::cerr << "Client::selectCharacter_return() hexa.empty() can't be empty at this point " << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
+    #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+    if(CatchChallenger::dbInternalVarsStore.count(std::string("database/common/characters/")+hexa)==0)
+    #else
     struct stat sb;
     if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa).c_str(),&sb)!=0)
+    #endif
     #else
     #error Define what do here
     #endif
@@ -588,6 +609,20 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     {
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        const std::string _kchar=std::string("database/common/characters/")+hexa;
+        if(CatchChallenger::dbInternalVarsStore.count(_kchar)==0)
+        {
+            std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
+            character_id_db=0;
+            characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
+            return;
+        }
+        const std::vector<uint8_t> &_dchar=CatchChallenger::dbInternalVarsStore.at(_kchar);
+        std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dchar.data()),_dchar.size()));
+        hps::StreamInputBuffer s(in_file);
+        s >> *this;
+        #else
         std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa), std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
         {
@@ -598,6 +633,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         }
         hps::StreamInputBuffer s(in_file);
         s >> *this;
+        #endif
         public_and_private_informations.public_informations.pseudo=pseudo;
         //Map-linked character data (mapData, quests) lives in a separate file.
         if(!loadCharacterServerFile())
@@ -631,6 +667,25 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     {
         if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         {
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            const std::string _kclan=std::string("database/server/clans/")+std::to_string(public_and_private_informations.clan);
+            if(CatchChallenger::dbInternalVarsStore.count(_kclan)>0)
+            {
+                const std::vector<uint8_t> &_dclan=CatchChallenger::dbInternalVarsStore.at(_kclan);
+                std::istringstream clan_file(std::string(reinterpret_cast<const char *>(_dclan.data()),_dclan.size()));
+                std::string clanName;
+                uint64_t cash=0;
+                hps::StreamInputBuffer cs(clan_file);
+                cs >> clanName;
+                cs >> cash;
+                haveClanInfo(public_and_private_informations.clan,clanName,cash);
+            }
+            else
+            {
+                normalOutput("Warning: clan "+std::to_string(public_and_private_informations.clan)+" not found, resetting to 0");
+                public_and_private_informations.clan=0;
+            }
+            #else
             std::ifstream clan_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/clans/")+std::to_string(public_and_private_informations.clan)), std::ifstream::binary);
             if(clan_file.good() && clan_file.is_open())
             {
@@ -646,6 +701,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 normalOutput("Warning: clan "+std::to_string(public_and_private_informations.clan)+" not found on disk, resetting to 0");
                 public_and_private_informations.clan=0;
             }
+            #endif
         }
     }
     characterIsRightSendData();

@@ -61,6 +61,26 @@ void BaseServer::preload_zone_return()
         {
             std::string zoneCodeName=entryListZone.at(index).name;
             stringreplaceOne(zoneCodeName,".xml","");
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            const std::string _kzone=std::string("database/server/zone/")+zoneCodeName;
+            if(CatchChallenger::dbInternalVarsStore.count(_kzone)>0)
+            {
+                const std::vector<uint8_t> &_d=CatchChallenger::dbInternalVarsStore.at(_kzone);
+                if(_d.size()>=sizeof(uint32_t))
+                {
+                    uint32_t clanId=0;
+                    memcpy(&clanId,_d.data(),sizeof(clanId));
+                    if(CommonDatapackServerSpec::commonDatapackServerSpec.has_zoneToId(zoneCodeName))
+                    {
+                        const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId(zoneCodeName);
+                        GlobalServerData::serverPrivateVariables.cityStatusList[zoneId].clan=clanId;
+                        GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneId;
+                    }
+                    else
+                        std::cerr << "preload_zone_return() zone not found: " << zoneCodeName << std::endl;
+                }
+            }
+            #else
             struct stat sb;
             if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/zone/")+zoneCodeName).c_str(),&sb)==0)
             {
@@ -82,6 +102,7 @@ void BaseServer::preload_zone_return()
                     fclose(fp);
                 }
             }
+            #endif
             index++;
         }
     }

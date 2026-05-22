@@ -508,8 +508,12 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         abort();
     }
     {
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        if(CatchChallenger::dbInternalVarsStore.count(std::string("database/common/characters/")+hexa)>0)
+        #else
         struct stat sb;
         if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa).c_str(),&sb)==0)
+        #endif
         {
             std::cerr << "Client::addCharacter_return() character already exist " << hexa << " then return error " << __FILE__ << " " << __LINE__ << std::endl;
 
@@ -540,13 +544,20 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
     #ifdef CATCHCHALLENGER_DB_FILE
     {
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        std::ostringstream out_file;
+        #else
         std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
         if(!out_file.good() || !out_file.is_open())
         {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
+        #endif
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
+        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+        #endif
     }
     #endif
     const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
@@ -654,6 +665,18 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             std::vector<CharacterEntry> characterEntryList;
 
             {
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                const std::string _kacc=std::string("database/common/accounts/")+std::to_string(account_id_db);
+                if(CatchChallenger::dbInternalVarsStore.count(_kacc)==0)
+                {
+                    std::cerr << "Unable to open data base file " << "database/common/accounts/" << account_id_db << " (abort)" << std::endl;
+                    abort();
+                    return;
+                }
+                const std::vector<uint8_t> &_dacc=CatchChallenger::dbInternalVarsStore.at(_kacc);
+                std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dacc.data()),_dacc.size()));
+                hps::StreamInputBuffer s(in_file);
+                #else
                 std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ifstream::binary);
                 if(!in_file.good() || !in_file.is_open())
                 {
@@ -662,6 +685,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                     return;
                 }
                 hps::StreamInputBuffer s(in_file);
+                #endif
                 s >> characterEntryList;
             }
 
@@ -676,6 +700,9 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             characterEntryList.push_back(newChar);
 
             {
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                std::ostringstream out_file;
+                #else
                 std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
@@ -683,7 +710,11 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                     abort();
                     return;
                 }
+                #endif
                 hps::to_stream(characterEntryList, out_file);
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/common/accounts/")+std::to_string(account_id_db)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+                #endif
             }
         }
 
