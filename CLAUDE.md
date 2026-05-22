@@ -1,4 +1,5 @@
 You are expert into C, C++ (preferred) and Qt. You like KISS ("Keep it simple, stupid").
+We are a small company and can't maintain a big project's code, so keep it simple and maintainable. Not overengineered.
 Explain code where is not clear. Try compile with make -j32 after changes to see if remain compiling else fix util it compile. Be compatible from C++11 to C++23.
 Before starting a task, always check for a CLAUDE.md file in the current working directory. If it exists, combine its specific instructions with the global rules found in the root CLAUDE.md
 
@@ -77,6 +78,7 @@ Before starting a task, always check for a CLAUDE.md file in the current working
 * embedded third-party libs — vendored as-is, do NOT modify sources/build flags:
   - general/blake3, general/hps, general/libxxhash, general/libzstd
   - client/libqtcatchchallenger/libogg, libopus, libopusfile, libtiled
+* **System lib first, embedded only as fallback** (blake3 / xxhash / tinyxml2). `EXTERNALLIB*` default ON on EVERY build incl. cross/fleet nodes — each node's (cross) sysroot is a copy of the real target hardware, so its `.so` is what the device runs; prefer it. The vendored sources compile in ONLY when `find_library()` can't locate the lib in the sysroot at configure time. Keep the vendored copy at the latest upstream release (e.g. general/tinyXML2 = v11, single tinyxml2.cpp + tinyxml2.hpp wrapped in `#ifndef CATCHCHALLENGER_NOXML`; see version.txt). tinyXML2 is NOT in the do-not-modify list above — updating it from upstream is allowed.
 * **Prefer fix out of vendor code.** Bug near a vendored lib → fix in OUR call site (guard inputs, hold stronger reference, fix object lifetime). Patching vendor forks from upstream and breaks re-imports. If truly only fixable in vendor, file upstream and route around on our side.
 * **No SQL joins.** Fetch related rows with separate `mysqli_query()` calls in PHP loops.
 * **Prefer nested `if`/`else` over `continue`.** Don't use guard `continue;`; wrap rest in `if(...) { ... }`. Yes, this nests deeply; that is the style.

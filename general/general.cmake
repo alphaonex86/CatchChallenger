@@ -68,8 +68,6 @@ if(NOT TARGET catchchallenger_general_minimal)
         else()
             target_sources(catchchallenger_general_minimal INTERFACE
                 ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2b.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2c.cpp
             )
         endif()
     endif()
@@ -163,8 +161,6 @@ if(NOT TARGET catchchallenger_general)
         if(NOT CC_USE_SYSTEM_TINYXML2)
             target_sources(catchchallenger_general INTERFACE
                 ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2b.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/tinyXML2/tinyxml2c.cpp
             )
         endif()
     endif()
