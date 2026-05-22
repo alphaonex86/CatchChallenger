@@ -1037,12 +1037,22 @@ def remote_perf_stat(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
     return out or None
 
 
-def remote_callgrind(exec_node, cmd_str, work_dir, timeout=None,
-                     toggle_collect=None):
+def remote_callgrind(exec_node, bin_cmd, work_dir, timeout=None,
+                     toggle_collect=None, setup_prefix=None):
     """Run callgrind on the exec node and return instruction count.
     The output file lives in <work_dir>/callgrind.out -- it is parsed
     in-band on the remote with callgrind_annotate to avoid pulling the
     profile back. On failure returns dict with rc and error fields.
+
+    bin_cmd is the bare binary invocation (e.g. './benchmark_min_network
+    --ticks 200 ...') run DIRECTLY under valgrind -- NOT wrapped in
+    `sh -c`. Wrapping in sh -c made valgrind profile the shell, which then
+    fork-exec'd the real binary as an untraced child (default
+    --trace-children=no): the profile captured only sh's loader (~hundreds
+    of KB of dynamic-linking) and the toggle never fired -> empty -> FAIL.
+    setup_prefix (e.g. 'cd <wd> && chmod +x <bin>') runs in the ssh shell
+    BEFORE valgrind so cwd/relative-datapack resolve, but valgrind itself
+    execs the binary directly (same PID, traced).
 
     toggle_collect: a function-name glob (e.g. '*min_network*'). When set,
     adds --collect-atstart=no --toggle-collect=<glob> so only that function
@@ -1052,27 +1062,60 @@ def remote_callgrind(exec_node, cmd_str, work_dir, timeout=None,
     if timeout is None:
         timeout = RUN_TIMEOUT_DEFAULT * 30   # callgrind is ~30x slower
     out_file = f"{work_dir}/callgrind.out"
+    err_file = f"{work_dir}/callgrind.vgerr"
+    prefix = (setup_prefix + " && ") if setup_prefix else ""
     toggle = ("" if not toggle_collect
               else f"--collect-atstart=no --toggle-collect={shlex.quote(toggle_collect)} ")
-    # Wrap cmd_str in a shell so the cd; chmod; ./bin chaining works
-    full = (f"rm -f {shlex.quote(out_file)} && "
-            f"valgrind --tool=callgrind --quiet {toggle}"
-            f"--callgrind-out-file={shlex.quote(out_file)} "
-            f"sh -c {shlex.quote(cmd_str)} && "
-            f"callgrind_annotate {shlex.quote(out_file)} | "
-            f"awk '/PROGRAM TOTALS/ {{gsub(\",\",\"\",$1); print $1; exit}}'")
+    # Drop --quiet so valgrind's own diagnostics (missing tool, unhandled
+    # instruction, "Collected: 0") land in err_file and can be surfaced on
+    # failure — a bare [FAIL] with no reason is undebuggable. valgrind's
+    # exit status is captured separately so an empty/short profile reports
+    # WHY rather than vanishing into a generic failure.
+    full = (
+        f"command -v valgrind >/dev/null 2>&1 || {{ echo CC_NO_VALGRIND; exit 0; }}; "
+        f"rm -f {shlex.quote(out_file)} {shlex.quote(err_file)}; "
+        f"{prefix}"
+        f"valgrind --tool=callgrind {toggle}"
+        f"--callgrind-out-file={shlex.quote(out_file)} "
+        f"{bin_cmd} 2>{shlex.quote(err_file)}; "
+        f"echo CC_VGRC=$?; "
+        f"callgrind_annotate {shlex.quote(out_file)} 2>>{shlex.quote(err_file)} "
+        f"| grep 'PROGRAM TOTALS'; "
+        f"echo CC_VGERR_TAIL:; tail -6 {shlex.quote(err_file)} 2>/dev/null")
     rc, sout, serr = run_remote_cmd(exec_node, full, timeout=timeout)
+    if "CC_NO_VALGRIND" in (sout or ""):
+        return {"rc": 127, "error": "valgrind not installed on node "
+                "(setup.py should install it; node may have failed that step)"}
     if rc != 0:
-        return {"rc": rc, "error": serr.strip()[:500] if serr else f"exit code {rc}"}
-    for line in sout.splitlines():
+        tail = (serr or sout or "").strip()[:500]
+        return {"rc": rc, "error": tail or f"exit code {rc}"}
+    ir = None
+    vgrc = None
+    vgerr_lines = []
+    in_tail = False
+    for line in (sout or "").splitlines():
         s = line.strip()
-        if not s:
-            continue
-        try:
-            return int(s)
-        except ValueError:
-            pass
-    return None
+        if s.startswith("CC_VGRC="):
+            try: vgrc = int(s.split("=", 1)[1])
+            except ValueError: pass
+        elif s == "CC_VGERR_TAIL:":
+            in_tail = True
+        elif in_tail:
+            if s: vgerr_lines.append(s)
+        elif "PROGRAM TOTALS" in s:
+            try: ir = int(s.split()[0].replace(",", ""))
+            except (ValueError, IndexError): ir = None
+    # ~hundreds of Ir = crash-prologue-only / nothing collected; a real
+    # workload is millions. Surface the valgrind diagnostic on failure.
+    if ir is not None and ir >= 100000:
+        return ir
+    reason = " | ".join(vgerr_lines[-3:]) or "no PROGRAM TOTALS in annotate output"
+    hint = ""
+    if (ir is None or ir == 0) and toggle_collect:
+        hint = (" — collected ~0 Ir; --toggle-collect glob may match no symbol "
+                "in this binary (stripped? inlined?)")
+    return {"rc": vgrc if vgrc is not None else 0,
+            "error": f"callgrind Ir={ir}: {reason}{hint}"[:500]}
 
 
 def remote_nproc(exec_node):
@@ -1155,10 +1198,15 @@ def profile_on_exec(compile_node, exec_node, cmake_src_subdir, build_subdir,
                 rfile = f"{ewd}/callgrind.out"
                 toggle = ("" if not callgrind_toggle
                           else f"--collect-atstart=no --toggle-collect={shlex.quote(callgrind_toggle)} ")
+                # Run the binary DIRECTLY under valgrind (cd already done by
+                # `base`). NOT via `sh -c {cmd}`: that profiles the shell,
+                # which fork-exec's the binary as an untraced child, so the
+                # profile captures only sh's loader and the toggle never
+                # fires -> empty artefact.
                 full = base + (f"rm -f {shlex.quote(rfile)} && "
                                f"valgrind --tool=callgrind --quiet {toggle}"
                                f"--callgrind-out-file={shlex.quote(rfile)} "
-                               f"sh -c {shlex.quote(cmd_str)}")
+                               f"{cmd_str}")
                 tmo = run_timeout * 30
                 local_name = f"callgrind.out.{bench_name}-{tag}.{stamp}"
             else:  # perf
@@ -1166,9 +1214,11 @@ def profile_on_exec(compile_node, exec_node, cmake_src_subdir, build_subdir,
                     results.append((t, None, "SKIP: perf missing on node"))
                     continue
                 rfile = f"{ewd}/perf.data"
+                # DWARF call graph (not -g/frame-pointer) so stacks resolve
+                # on i386/armv6; binary run directly (no sh -c frame noise).
                 full = base + (f"rm -f {shlex.quote(rfile)} && "
-                               f"perf record -g -o {shlex.quote(rfile)} "
-                               f"sh -c {shlex.quote(cmd_str)}")
+                               f"perf record --call-graph=dwarf -o {shlex.quote(rfile)} "
+                               f"{cmd_str}")
                 tmo = run_timeout * 2
                 local_name = f"perf.data.{bench_name}-{tag}.{stamp}"
             rc, _sout, serr = run_remote_cmd(runtime_node, full, timeout=tmo)
@@ -1669,11 +1719,14 @@ def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
             return {p: None for p in profilers}, msg
         ewd = runtime_node["work_dir"]
 
+        def _rc_str(prof):
+            return (runtime_cmd.get(prof) or runtime_cmd.get("rusage")
+                    if isinstance(runtime_cmd, dict) else runtime_cmd)
+
+        _setup = f"cd {shlex.quote(ewd)} && chmod +x {shlex.quote(bin_name)}"
+
         def _cmd(prof):
-            rc_str = (runtime_cmd.get(prof) or runtime_cmd.get("rusage")
-                      if isinstance(runtime_cmd, dict) else runtime_cmd)
-            return (f"cd {shlex.quote(ewd)} && "
-                    f"chmod +x {shlex.quote(bin_name)} && {rc_str}")
+            return f"{_setup} && {_rc_str(prof)}"
 
         snap_before = remote_sys_snapshot(runtime_node)
         out = {}
@@ -1683,9 +1736,12 @@ def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
             elif p == "perf-stat":
                 out[p] = remote_perf_stat(runtime_node, _cmd(p), timeout=run_timeout)
             elif p == "callgrind":
-                out[p] = remote_callgrind(runtime_node, _cmd(p), ewd,
+                # binary run DIRECTLY under valgrind (not via sh -c); setup
+                # prefix does cd/chmod first.
+                out[p] = remote_callgrind(runtime_node, _rc_str(p), ewd,
                                           timeout=run_timeout * 30,
-                                          toggle_collect=callgrind_toggle)
+                                          toggle_collect=callgrind_toggle,
+                                          setup_prefix=_setup)
             elif p == "binary-size":
                 out[p] = remote_binary_size(runtime_node, exec_bin)
             else:
@@ -1819,7 +1875,8 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
     # The runtime_cmd may embed ./<bin_name>; make sure we run with
     # work_dir as cwd so the relative path resolves.
     ewd = exec_node["work_dir"]
-    cmd_in_work = f"cd {shlex.quote(ewd)} && chmod +x {shlex.quote(bin_name)} && {runtime_cmd}"
+    _setup = f"cd {shlex.quote(ewd)} && chmod +x {shlex.quote(bin_name)}"
+    cmd_in_work = f"{_setup} && {runtime_cmd}"
     snap_before = remote_sys_snapshot(exec_node)
     for p in profilers:
         if p == "rusage":
@@ -1827,9 +1884,11 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
         elif p == "perf-stat":
             out[p] = remote_perf_stat(exec_node, cmd_in_work, timeout=run_timeout)
         elif p == "callgrind":
-            out[p] = remote_callgrind(exec_node, cmd_in_work, ewd,
+            # binary run DIRECTLY under valgrind (not via sh -c).
+            out[p] = remote_callgrind(exec_node, runtime_cmd, ewd,
                                       timeout=run_timeout * 30,
-                                      toggle_collect=callgrind_toggle)
+                                      toggle_collect=callgrind_toggle,
+                                      setup_prefix=_setup)
         elif p == "binary-size":
             out[p] = remote_binary_size(exec_node, exec_bin)
         else:
