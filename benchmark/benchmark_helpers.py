@@ -897,17 +897,17 @@ def measure_perf_stat(cmd, env=None, timeout=None, cwd=None):
 
 
 def measure_callgrind(cmd, env=None, timeout=None, outdir=None,
-                      collect_atstart=True):
+                      toggle_collect=None):
     """valgrind --tool=callgrind. Returns instruction count when
     callgrind_annotate succeeds, else None.
 
-    collect_atstart=False adds `--collect-atstart=no` so collection is
-    driven by CALLGRIND_TOGGLE_COLLECT markers in the guest (the binary
-    must be built to emit them, e.g. benchmarkmapmanager with
-    -DCATCHCHALLENGER_BENCH_CALLGRIND). This excludes one-time startup
-    (dynamic linking) from the instruction count so the profile reflects
-    the steady-state work loop. Pass True (default) for binaries WITHOUT
-    the markers — otherwise nothing is collected.
+    toggle_collect: a function-name glob (e.g. '*min_network*'). When set,
+    runs with `--collect-atstart=no --toggle-collect=<glob>` so only the
+    matched function (and its callees) is counted — excludes one-time
+    startup (dynamic linking) from the IR. Header-free and needs no source
+    markers: valgrind resolves the glob against the binary's symbols at
+    runtime, so it works on every node regardless of cross-sysroot headers.
+    None (default) = collect everything (whole-program IR).
 
     valgrind dumps `vgcore.<pid>` into the *process cwd* (NOT
     --callgrind-out-file's dir) whenever the guest is killed by a
@@ -948,8 +948,8 @@ def measure_callgrind(cmd, env=None, timeout=None, outdir=None,
     # Drop --quiet so we capture valgrind's diagnostics on stderr; we
     # only print them when something goes wrong.
     full = ["valgrind", "--tool=callgrind", "--callgrind-out-file=" + out_file]
-    if not collect_atstart:
-        full.append("--collect-atstart=no")
+    if toggle_collect:
+        full += ["--collect-atstart=no", f"--toggle-collect={toggle_collect}"]
     full += list(cmd)
     rc, _, verr, _ = run_capture(full, env=run_env, timeout=timeout,
                                  cwd=outdir, preexec_fn=_drop_core_rlimit)
@@ -996,27 +996,34 @@ def measure_callgrind(cmd, env=None, timeout=None, outdir=None,
               f"{bar}{C_RESET}", file=sys.stderr)
         _persist_disabled_tool_local("valgrind")
         return None
-    try:
-        if os.path.getsize(out_file) < 4096:
-            tail = "\n".join((verr or "").splitlines()[-8:])
-            if tail:
-                print(f"[callgrind] output too small "
-                      f"({os.path.getsize(out_file)} B) -- valgrind said:\n"
-                      f"{tail}", file=sys.stderr)
-            return None
-    except OSError:
+    # Judge validity on the PARSED instruction count, not the file's byte
+    # size: with --toggle-collect only the matched function is recorded, so
+    # a perfectly valid run produces a SMALL file (~3 KB) holding a huge Ir
+    # total. The failure signatures we must reject are the AVX-512-SIGILL /
+    # very-early-crash cases, which collect only the startup prologue
+    # (~hundreds of Ir). A floor on the Ir total separates the two cleanly.
+    if not os.path.isfile(out_file):
         return None
     rc2, sout, _, _ = run_capture(["callgrind_annotate", out_file], timeout=60)
     if rc2 != 0:
         return None
+    ir = None
     for line in sout.splitlines():
         s = line.strip()
         if s.endswith("PROGRAM TOTALS"):
             try:
-                return int(s.split()[0].replace(",", ""))
+                ir = int(s.split()[0].replace(",", ""))
             except Exception:
-                return None
-    return None
+                ir = None
+            break
+    # ~hundreds of Ir = crash-prologue-only (SIGILL before main / nothing
+    # collected); a real workload is orders of magnitude larger.
+    if ir is None or ir < 100000:
+        tail = "\n".join((verr or "").splitlines()[-8:])
+        print(f"[callgrind] no usable data (Ir={ir}) -- valgrind said:\n"
+              f"{tail}", file=sys.stderr)
+        return None
+    return ir
 
 
 def binary_size(path):
@@ -1152,7 +1159,7 @@ def profile_node_tag(node_label, cpu_cores):
 
 
 def profiler_wrap(cmd, tool, env=None, node_label="local", cpu_cores=None,
-                  collect_atstart=True):
+                  toggle_collect=None):
     """Build the (full_argv, out_path, env) tuple to run `cmd` under
     `tool` (callgrind | massif | perf). Returns (None, None, None) when
     the underlying tool isn't installed. The artefact path lives under
@@ -1175,12 +1182,13 @@ def profiler_wrap(cmd, tool, env=None, node_label="local", cpu_cores=None,
         valgrind_opts = ["valgrind", f"--tool={tool}",
                          (f"--callgrind-out-file={out}" if tool == "callgrind"
                           else f"--massif-out-file={out}")]
-        # collect_atstart=False -> collection driven by the guest's
-        # CALLGRIND_TOGGLE_COLLECT markers (e.g. benchmarkmapmanager built
-        # with -DCATCHCHALLENGER_BENCH_CALLGRIND): excludes startup so the
-        # profile is the steady-state loop, not the dynamic loader.
-        if tool == "callgrind" and not collect_atstart:
-            valgrind_opts.append("--collect-atstart=no")
+        # toggle_collect glob -> count only that function (+ callees),
+        # excluding startup (dynamic linking) from the profile. Header-free:
+        # valgrind resolves the glob against the binary's symbols, so it
+        # works on every node regardless of cross-sysroot valgrind headers.
+        if tool == "callgrind" and toggle_collect:
+            valgrind_opts += ["--collect-atstart=no",
+                              f"--toggle-collect={toggle_collect}"]
         full = valgrind_opts + list(cmd)
         # Same AVX-512 hwcap mask measure_callgrind() uses so valgrind
         # doesn't SIGILL in ld-linux before main() on modern glibc.
@@ -1220,7 +1228,7 @@ def profile_artefact_hint(tool, out):
 
 
 def profile_once(cmd, tool, cwd=None, timeout=None, env=None,
-                 node_label="local", cpu_cores=None, collect_atstart=True):
+                 node_label="local", cpu_cores=None, toggle_collect=None):
     """--profile implementation for one-shot commands (run to completion):
     run `cmd` once under `tool`, drop the artefact under the tmpfs profile
     scratch dir (filename tagged '<node>-CPU-<cores>'), print + return its
@@ -1230,7 +1238,7 @@ def profile_once(cmd, tool, cwd=None, timeout=None, env=None,
     full, out, run_env = profiler_wrap(cmd, tool, env=env,
                                        node_label=node_label,
                                        cpu_cores=cpu_cores,
-                                       collect_atstart=collect_atstart)
+                                       toggle_collect=toggle_collect)
     if full is None:
         return None
     run_capture(full, env=run_env, timeout=timeout, cwd=cwd or os.path.dirname(out),
