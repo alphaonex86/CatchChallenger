@@ -16,8 +16,9 @@ Determinism:
   * Output written to a tmpfs run dir so disk IO doesn't dominate.
 
 One-command target. Per benchmark/CLAUDE.md, run with no args, 1h
-timeout. Builds catchchallenger-server-cli with CATCHCHALLENGER_DB_FILE
-+ CATCHCHALLENGER_CACHE_HPS, runs every available profiler against
+timeout. Builds catchchallenger-server-cli at -O2 with
+CATCHCHALLENGER_DB_INTERNAL_VARS (RAM DB, implies DB_FILE) +
+CATCHCHALLENGER_CACHE_HPS, runs every available profiler against
 each measured invocation, prints a one-line progress update per cell,
 writes candidate-<sha>.json under
 benchmark/results/benchmarkserversave/<arch>/. If a champion.json
@@ -81,7 +82,17 @@ def build():
     print(_color(bh.C_CYAN, f"[build] {SRC_SUBDIR} -> {BUILD_DIR}"))
     cfg = ["cmake", "-S", SRC_SUBDIR, "-B", BUILD_DIR,
            "-DCMAKE_BUILD_TYPE=Release",
-           "-DCATCHCHALLENGER_DB_FILE=ON",
+           # -O2 (not the Release default -O3): serversave measures the
+           # one-shot datapack-cache build; -O2 is the optimisation level
+           # production boots actually ship and -O3 only inflates the
+           # binary here without a reproducible speed-up.
+           "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -DNDEBUG",
+           # RAM DB only: DB_INTERNAL_VARS keeps the file-DB tree in
+           # /dev/shm (tmpfs), never disk, and implies DB_FILE in CMake --
+           # so we don't pass DB_FILE here. (DB_FILE only governs
+           # player/character persistence; the datapack-cache path this
+           # benchmark measures is independent of the DB backend.)
+           "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
            "-DCATCHCHALLENGER_CACHE_HPS=ON"]
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]
@@ -340,7 +351,8 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
                                        run_subdir=ewd)
 
     cmake_defs = {"CMAKE_BUILD_TYPE": "Release",
-                  "CATCHCHALLENGER_DB_FILE": "ON",
+                  "CMAKE_CXX_FLAGS_RELEASE": "-O2 -DNDEBUG",  # -O2, not Release -O3
+                  "CATCHCHALLENGER_DB_INTERNAL_VARS": "ON",  # RAM DB (tmpfs); implies DB_FILE
                   "CATCHCHALLENGER_CACHE_HPS": "ON"}
     # runtime_cmd: wipe the cache file before each `save` so every invocation
     # does the full parse. The binary and datapack are both in work_dir.
@@ -411,6 +423,41 @@ def main():
     if bin_path is None: return 2
     run_bin = setup_run_dir(bin_path)
 
+    if args.profile:
+        cleanup_save_artifacts()
+        tools = bh.profile_tools(args.profile)
+        local_timeouts = {t: RUN_TIMEOUT * {"callgrind": 30, "massif": 20,
+                                            "perf": 2}.get(t, 1) for t in tools}
+        maincode = _detect_maincode(DATAPACK_PATH)
+
+        def _stage_serversave(runtime_node):
+            if os.path.isdir(DATAPACK_PATH):
+                rc_dp, msg_dp = br.rsync_datapack_to_exec(
+                    runtime_node, DATAPACK_PATH, remote_subdir="datapack",
+                    timeout=600)
+                if rc_dp != 0:
+                    return False, f"datapack-rsync: {msg_dp[:80]}"
+            br.write_server_properties_on_exec(runtime_node, maincode,
+                                               port=61921,
+                                               run_subdir=runtime_node["work_dir"])
+            return True, "ok"
+
+        remote_spec = {
+            "cmake_src_subdir": "server/cli",
+            "build_subdir_base": "benchmarkserversave",
+            "bin_name": BIN_NAME,
+            "cmake_defs": {"CMAKE_BUILD_TYPE": "Release",
+                           "CMAKE_CXX_FLAGS_RELEASE": "-O2 -DNDEBUG",
+                           "CATCHCHALLENGER_DB_INTERNAL_VARS": "ON",  # RAM DB; implies DB_FILE
+                           "CATCHCHALLENGER_CACHE_HPS": "ON"},
+            "runtime_cmd": (f"rm -f datapack-cache.bin.tmp datapack-cache.bin "
+                            f"&& ./{BIN_NAME} save"),
+            "stage_fn": _stage_serversave,
+        }
+        br.profile_fleet("benchmarkserversave", tools, [run_bin, "save"],
+                         RUN_DIR, local_timeouts, remote_spec=remote_spec)
+        return 0
+
     arch = bh.host_arch()
     nodes = [{"label": "local", "arch": arch}] + bh.benchmark_exec_nodes()
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
@@ -431,8 +478,8 @@ def main():
 
     batch_id    = hr.new_batch_id()
     started_utc = hr.iso_now()
-    compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release",
-                     "-DCATCHCHALLENGER_DB_FILE=ON",
+    compile_flags = ["-O2", "-DCMAKE_BUILD_TYPE=Release",
+                     "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
                      "-DCATCHCHALLENGER_CACHE_HPS=ON"]
 
     flat_local = {}

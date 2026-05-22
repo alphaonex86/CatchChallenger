@@ -327,6 +327,7 @@ def _remote_have_tool(ssh_host, ssh_user, ssh_port, tool):
         argv = ["ssh", "-o", "ConnectTimeout=4", "-o", "BatchMode=yes",
                 "-o", "StrictHostKeyChecking=no",
                 "-o", "UserKnownHostsFile=/dev/null",
+                "-o", "LogLevel=ERROR",
                 "-p", str(ssh_port), f"{ssh_user}@{ssh_host}",
                 f"command -v {tool} >/dev/null 2>&1 && echo Y || echo N"]
         p = subprocess.run(argv, capture_output=True, text=True, timeout=10)
@@ -471,6 +472,7 @@ def _ssh_loadavg(ex):
         cmd = ["ssh", "-o", "ConnectTimeout=4", "-o", "BatchMode=yes",
                "-o", "StrictHostKeyChecking=no",
                "-o", "UserKnownHostsFile=/dev/null",
+               "-o", "LogLevel=ERROR",
                "-p", str(port), f"{user}@{host}", "cat /proc/loadavg"]
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         if p.returncode != 0:
@@ -1066,21 +1068,146 @@ def load_champion(bench_name):
         return None
 
 
+PROFILE_TOOLS = ("callgrind", "massif", "perf")
+
+
 def parse_bench_args(argv=None):
     """Common CLI for every benchmark*.py. The benchmarks otherwise take
-    no args (they run unattended); the only flag is --comment, a
-    free-text tag persisted into this run's candidate / champion /
-    per-platform-history JSON so a score can be attributed to the change
-    under test, e.g. --comment="Invert loop". Empty string when omitted
-    (the field is still written, as "")."""
+    no args (they run unattended). Two flags:
+
+    --comment   a free-text tag persisted into this run's candidate /
+                champion / per-platform-history JSON so a score can be
+                attributed to the change under test, e.g.
+                --comment="Invert loop". Empty string when omitted (the
+                field is still written, as "").
+
+    --profile [TOOL]
+                deep-dive mode: instead of the full regression batch,
+                run the benchmark's command ONCE under TOOL
+                (callgrind | massif | perf; default callgrind), drop the
+                profiler artefact under the tmpfs profile dir and print
+                its path. Local-only — profiling perturbs timing, so it
+                is never the before/after datum (run without --profile
+                for the numbers)."""
     import argparse
     ap = argparse.ArgumentParser(
-        description="CatchChallenger benchmark (run with no args; "
-                    "--comment tags the recorded score).")
+        description="CatchChallenger benchmark (run with no args for the "
+                    "regression batch; --comment tags the recorded score; "
+                    "--profile [tool] does a one-shot local profile).")
     ap.add_argument("--comment", default="",
                     help='free-text tag stored in every result/history '
                          'JSON for this run (e.g. "Invert loop")')
+    ap.add_argument("--profile", choices=PROFILE_TOOLS + ("all",), nargs="?",
+                    const="all", default=None,
+                    help="profile mode: run the benchmark's command under a "
+                         "profiler on the LOCAL host AND every benchmark "
+                         "exec node, writing one artefact per (node,tool) to "
+                         "the tmpfs profile dir. Bare --profile (or "
+                         "--profile all) runs BOTH callgrind and perf; pass a "
+                         "single tool to narrow.")
     return ap.parse_args(argv)
+
+
+def profile_tools(arg):
+    """Resolve the --profile argument to the list of profilers to run.
+    'all' (or the bare-flag default) => both callgrind and perf, which the
+    operator always wants together (callgrind = instruction-accurate,
+    noise-free; perf = real sampled cycles/cache). A specific tool name
+    narrows to just that one."""
+    if arg in (None,):
+        return []
+    if arg == "all":
+        return ["callgrind", "perf"]
+    return [arg]
+
+
+def profile_node_tag(node_label, cpu_cores):
+    """Filename-safe '<node>-CPU-<cores>' tag embedded in every profile
+    artefact so an operator can tell at a glance which exec node and core
+    count produced it (e.g. 'rpi-zero-w-CPU-4', 'local-CPU-32'). cpu_cores
+    None => 'CPU-NA'."""
+    safe = "".join(c if (c.isalnum() or c in "-_") else "_"
+                   for c in str(node_label))
+    cores = str(cpu_cores) if cpu_cores else "NA"
+    return f"{safe}-CPU-{cores}"
+
+
+def profiler_wrap(cmd, tool, env=None, node_label="local", cpu_cores=None):
+    """Build the (full_argv, out_path, env) tuple to run `cmd` under
+    `tool` (callgrind | massif | perf). Returns (None, None, None) when
+    the underlying tool isn't installed. The artefact path lives under
+    the tmpfs profile scratch dir and embeds the '<node>-CPU-<cores>' tag
+    so artefacts from different exec nodes never collide. Shared by
+    profile_once() (one-shot commands) and benchmarks that drive a
+    long-running server process they wrap themselves (botactions)."""
+    import datetime
+    outdir = tmpfs_scratch_dir("cc-bench-profile")
+    if cpu_cores is None and node_label == "local":
+        cpu_cores = os.cpu_count()
+    tag = profile_node_tag(node_label, cpu_cores)
+    stamp = datetime.datetime.utcnow().strftime("%Y%m%dT%H-%M-%SZ")
+    if tool in ("callgrind", "massif"):
+        if not have_tool("valgrind"):
+            print(f"{C_RED}[profile] valgrind not found — cannot run "
+                  f"--profile {tool}{C_RESET}", file=sys.stderr)
+            return None, None, None
+        out = os.path.join(outdir, f"{tool}.out.{tag}.{stamp}")
+        full = ["valgrind", f"--tool={tool}",
+                (f"--callgrind-out-file={out}" if tool == "callgrind"
+                 else f"--massif-out-file={out}")] + list(cmd)
+        # Same AVX-512 hwcap mask measure_callgrind() uses so valgrind
+        # doesn't SIGILL in ld-linux before main() on modern glibc.
+        run_env = dict(env or os.environ)
+        mask = ("glibc.cpu.hwcaps=-AVX512F,-AVX512VL,-AVX512BW,"
+                "-AVX512DQ,-AVX512CD,-AVX512_VBMI,-AVX512_VBMI2,"
+                "-AVX512_BITALG,-AVX512_VPOPCNTDQ,-AVX512_VNNI,"
+                "-AVX512_BF16,-AVX512_FP16")
+        prev = run_env.get("GLIBC_TUNABLES", "")
+        run_env["GLIBC_TUNABLES"] = (prev + ":" + mask) if prev else mask
+        return full, out, run_env
+    if tool == "perf":
+        if not have_tool("perf"):
+            print(f"{C_RED}[profile] perf not found — cannot run "
+                  f"--profile perf{C_RESET}", file=sys.stderr)
+            return None, None, None
+        out = os.path.join(outdir, f"perf.data.{tag}.{stamp}")
+        full = ["perf", "record", "-g", "-o", out] + list(cmd)
+        return full, out, (env or dict(os.environ))
+    print(f"{C_RED}[profile] unknown tool {tool}{C_RESET}", file=sys.stderr)
+    return None, None, None
+
+
+def profile_artefact_hint(tool, out):
+    """One-line 'open with: …' hint + the GREEN artefact banner, shared so
+    every benchmark prints the same thing for --profile."""
+    hint = {"callgrind": f"callgrind_annotate {out}",
+            "massif":    f"ms_print {out}",
+            "perf":      f"perf report -i {out}"}.get(tool, "")
+    print(f"{C_GREEN}[profile] {tool} artefact: {out}{C_RESET}\n"
+          f"          open with: {hint}")
+
+
+def profile_once(cmd, tool, cwd=None, timeout=None, env=None,
+                 node_label="local", cpu_cores=None):
+    """--profile implementation for one-shot commands (run to completion):
+    run `cmd` once under `tool`, drop the artefact under the tmpfs profile
+    scratch dir (filename tagged '<node>-CPU-<cores>'), print + return its
+    path (None on failure / missing tool). Lower-level than
+    measure_callgrind(): we keep the raw profiler output for the operator
+    to open, we don't reduce it to a single metric."""
+    full, out, run_env = profiler_wrap(cmd, tool, env=env,
+                                       node_label=node_label,
+                                       cpu_cores=cpu_cores)
+    if full is None:
+        return None
+    run_capture(full, env=run_env, timeout=timeout, cwd=cwd or os.path.dirname(out),
+                preexec_fn=_drop_core_rlimit)
+    if not os.path.isfile(out):
+        print(f"{C_RED}[profile] {tool} produced no artefact "
+              f"(expected {out}){C_RESET}", file=sys.stderr)
+        return None
+    profile_artefact_hint(tool, out)
+    return out
 
 
 def write_record(path, record):
