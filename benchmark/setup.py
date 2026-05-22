@@ -349,6 +349,22 @@ INSTALL_ONE_CMD = {
     "xbps":   "xbps-install -Sy {pkg}",
 }
 
+# "Is {pkg} available in the index already on this node?" -- prints nothing,
+# exit 0 = available. Queries the LOCAL package metadata only (no network /
+# no refresh, matching the no-refresh install policy). Used to skip a
+# best-effort lib that simply isn't packaged on this OS *version* (e.g.
+# libblake3-dev exists on Debian 13 but not 12) so it is never listed as a
+# missing install -- the in-tree vendored copy is used instead. A family
+# with no entry here (or emerge, whose atoms we trust) is assumed available.
+PKG_AVAILABLE_CMD = {
+    "apt":    "apt-cache show {pkg} 2>/dev/null | grep -q '^Package:'",
+    "dnf":    "dnf -C -q list {pkg} >/dev/null 2>&1",
+    "zypper": "zypper -C -n info {pkg} >/dev/null 2>&1",
+    "pacman": "pacman -Si {pkg} >/dev/null 2>&1",
+    "apk":    "apk list {pkg} 2>/dev/null | grep -q .",
+    "xbps":   "xbps-query -R {pkg} >/dev/null 2>&1",
+}
+
 # os-release ID / ID_LIKE token  ->  package manager family.
 ID_TO_FAMILY = {
     "debian": "apt", "ubuntu": "apt", "linuxmint": "apt", "raspbian": "apt",
@@ -743,12 +759,21 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
                    % (t, have_tool_probe(t, _world_pkg(t)))
                    for t in probe_tools]
     # Same round-trip: probe each build-time lib so an already-installed
-    # one is detected and dropped from the install request below.
+    # one is detected and dropped from the install request below; AND probe
+    # whether its package is available in this node's index so a lib not
+    # packaged on this OS version is skipped, not install-requested.
+    avail_tmpl = PKG_AVAILABLE_CMD.get(family)
     for lib in BUILD_DEP_LIBS:
         wpkg = lib["pkg"].get("emerge") if family == "emerge" else None
         probe_parts.append(
             'printf "%%s " lib_%s ; %s'
             % (lib["name"], have_lib_probe(lib["pc"], lib["hdr"], wpkg)))
+        pkg = lib["pkg"].get(family)
+        if pkg and avail_tmpl:
+            chk = avail_tmpl.format(pkg=shlex.quote(pkg))
+            probe_parts.append(
+                'printf "%%s " avail_%s ; if %s; then echo Y; else echo N; fi'
+                % (lib["name"], chk))
     probe = " ; ".join(probe_parts)
     rc, out = tgt.run(probe, conn_timeout)
     present = {}
@@ -796,20 +821,27 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
     # opt_missing_pkgs => an uninstallable lib degrades the node to
     # "partial", never hard-fails the fleet sweep. The package manager is
     # idempotent, so already-present packages are silently skipped.
-    lib_have, lib_missing = [], []
+    lib_have, lib_missing, lib_unavail = [], [], []
     for lib in BUILD_DEP_LIBS:
         pkg = lib["pkg"].get(family)
         if pkg is None:
             continue                        # not packaged here -> vendored copy
         if present.get("lib_" + lib["name"], False):
             lib_have.append(lib["name"])    # already installed -> don't re-request
+        elif avail_tmpl and not present.get("avail_" + lib["name"], True):
+            # missing AND not in the index on this OS version (e.g.
+            # libblake3-dev on Debian 12) -> use the vendored copy, never
+            # request an install that would just error "Unable to locate".
+            lib_unavail.append(lib["name"])
         else:
             lib_missing.append(lib["name"])
             if pkg not in opt_missing_pkgs and pkg not in req_missing_pkgs:
                 opt_missing_pkgs.append(pkg)
-    print("  libs    : present %s | missing %s"
+    print("  libs    : present %s | missing %s%s"
           % (", ".join(lib_have) or "(none)",
-             ", ".join(lib_missing) or "(none)"))
+             ", ".join(lib_missing) or "(none)",
+             (" | not-packaged-here " + ", ".join(lib_unavail))
+             if lib_unavail else ""))
 
     print("  present : %s" % (", ".join(sorted(have)) or "(none)"))
     print("  missing : %s" % (", ".join(sorted(missing)) or "(none -- all set)"))
