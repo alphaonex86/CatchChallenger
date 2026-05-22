@@ -277,16 +277,44 @@ PKG_MAP = {
 }
 
 # Build-time library dependencies (headers + .pc/.so) for compiling the
-# benchmark binaries. Installed unconditionally on every provisioned node.
-BUILD_DEPS = {
-    "apt":    ["zlib1g-dev", "libzstd-dev"],
-    "dnf":    ["zlib-devel", "libzstd-devel"],
-    "zypper": ["zlib-devel", "libzstd-devel"],
-    "pacman": ["zlib", "zstd"],
-    "apk":    ["zlib-dev", "zstd-dev"],
-    "emerge": ["sys-libs/zlib", "app-arch/zstd"],
-    "xbps":   ["zlib-devel", "libzstd-devel"],
-}
+# server / benchmark binaries: blake3, xxhash, zlib, zstd, tinyxml2.
+# These are BEST-EFFORT (added to opt_missing_pkgs, not required): the
+# build prefers the system .so but falls back to the in-tree vendored
+# copy when find_library() can't locate it (general/CCCommon.cmake
+# system-first/embed-fallback). So a node missing libblake3-dev simply
+# compiles general/blake3 instead -- it never fails the fleet sweep.
+# hps is NOT listed: it is header-only and vendored-only (general/hps),
+# upstream ships no system package.
+# `None` entry => that lib isn't packaged on the distro (e.g. no official
+# libblake3 on Arch/Alpine) -> skipped, vendored copy used.
+# One descriptor per build-time lib. `pc`/`hdr` drive a presence probe
+# (pkg-config name(s) + header(s)) so an already-installed lib is NEVER
+# re-requested -- only genuinely-absent libs reach the install command.
+# `pkg` maps the package-manager family to its atom; None => that lib is
+# not packaged on the distro (e.g. no official libblake3 on Arch/Alpine/
+# Void) -> skipped, the in-tree vendored copy is used.
+BUILD_DEP_LIBS = [
+    {"name": "zlib", "pc": ["zlib"], "hdr": ["zlib.h"],
+     "pkg": {"apt": "zlib1g-dev", "dnf": "zlib-devel", "zypper": "zlib-devel",
+             "pacman": "zlib", "apk": "zlib-dev", "emerge": "sys-libs/zlib",
+             "xbps": "zlib-devel"}},
+    {"name": "zstd", "pc": ["libzstd"], "hdr": ["zstd.h"],
+     "pkg": {"apt": "libzstd-dev", "dnf": "libzstd-devel", "zypper": "libzstd-devel",
+             "pacman": "zstd", "apk": "zstd-dev", "emerge": "app-arch/zstd",
+             "xbps": "libzstd-devel"}},
+    {"name": "blake3", "pc": ["libblake3"], "hdr": ["blake3.h"],
+     "pkg": {"apt": "libblake3-dev", "dnf": "libblake3-devel", "zypper": "libblake3-devel",
+             "pacman": None, "apk": None, "emerge": "dev-libs/blake3",
+             "xbps": None}},
+    {"name": "xxhash", "pc": ["libxxhash"], "hdr": ["xxhash.h"],
+     "pkg": {"apt": "libxxhash-dev", "dnf": "xxhash-devel", "zypper": "xxhash-devel",
+             "pacman": "xxhash", "apk": "xxhash-dev", "emerge": "dev-libs/xxhash",
+             "xbps": "xxhash-devel"}},
+    {"name": "tinyxml2", "pc": ["tinyxml2"], "hdr": ["tinyxml2.h"],
+     "pkg": {"apt": "libtinyxml2-dev", "dnf": "tinyxml2-devel", "zypper": "tinyxml2-devel",
+             "pacman": "tinyxml2", "apk": "tinyxml2-dev", "emerge": "dev-libs/tinyxml2",
+             "xbps": "tinyxml2-devel"}},
+]
 
 # Metadata refresh run ONCE per node before any install (None = the
 # package manager refreshes implicitly / a sync would be too costly,
@@ -529,6 +557,32 @@ def have_tool_probe(tool, world_pkg=None):
     return 'if %s; then echo Y; else echo N; fi' % base
 
 
+def have_lib_probe(pcs, hdrs, world_pkg=None):
+    """Shell snippet that prints Y/N for one build-time library. A lib is
+    "present" if pkg-config knows it OR its header is on the include path
+    (covers distros that ship the .so+headers without a .pc, and headers
+    dropped under /usr/include/<triplet>/). On Gentoo also accept the
+    atom recorded in /var/lib/portage/world. Mirrors have_tool_probe so
+    an already-installed lib is detected and never re-requested."""
+    checks = []
+    pi = 0
+    while pi < len(pcs):
+        checks.append('pkg-config --exists %s 2>/dev/null' % shlex.quote(pcs[pi]))
+        pi += 1
+    hi = 0
+    while hi < len(hdrs):
+        h = hdrs[hi]
+        checks.append('ls /usr/include/%s /usr/local/include/%s '
+                      '/usr/include/*/%s 2>/dev/null | grep -q .'
+                      % (h, h, h))
+        hi += 1
+    base = ' || '.join('{ %s ; }' % c for c in checks)
+    if world_pkg:
+        base = ('%s || grep -qF -- %s /var/lib/portage/world 2>/dev/null'
+                % (base, shlex.quote(world_pkg)))
+    return 'if %s; then echo Y; else echo N; fi' % base
+
+
 def _priv_cmd(cmd):
     """Wrap a full shell pipeline so the WHOLE thing runs under one
     `sh -c` (the old `sudo -n EXPORT; apt-get` only sudo'd the export,
@@ -663,9 +717,17 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
             return None
         return PKG_MAP["emerge"].get(TOOL_TO_PKG.get(t, ""), "") or None
 
-    probe = " ; ".join('printf "%%s " %s ; %s'
-                        % (t, have_tool_probe(t, _world_pkg(t)))
-                        for t in probe_tools)
+    probe_parts = ['printf "%%s " %s ; %s'
+                   % (t, have_tool_probe(t, _world_pkg(t)))
+                   for t in probe_tools]
+    # Same round-trip: probe each build-time lib so an already-installed
+    # one is detected and dropped from the install request below.
+    for lib in BUILD_DEP_LIBS:
+        wpkg = lib["pkg"].get("emerge") if family == "emerge" else None
+        probe_parts.append(
+            'printf "%%s " lib_%s ; %s'
+            % (lib["name"], have_lib_probe(lib["pc"], lib["hdr"], wpkg)))
+    probe = " ; ".join(probe_parts)
     rc, out = tgt.run(probe, conn_timeout)
     present = {}
     for line in out.splitlines():
@@ -703,13 +765,27 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
         print("  %s[SKIP]%s benchmark_disabled_tools (remote_nodes.json): %s"
               % (C_YELLOW, C_RESET, ", ".join(sorted(skipped_cfg))))
 
-    # Build-time library deps for compiling benchmark binaries.
-    # Installed unconditionally (no probe). The package manager is
-    # idempotent, so installed packages are silently skipped.
-    build_deps = BUILD_DEPS.get(family, [])
-    for pkg in build_deps:
-        if pkg not in req_missing_pkgs:
-            req_missing_pkgs.append(pkg)
+    # Build-time library deps (blake3/xxhash/zlib/zstd/tinyxml2) for
+    # compiling the server. BEST-EFFORT, not required: every one has an
+    # in-tree vendored fallback (general/*), so a node that can't install
+    # the system dev package just compiles the embedded copy. Added to
+    # opt_missing_pkgs => an uninstallable lib degrades the node to
+    # "partial", never hard-fails the fleet sweep. The package manager is
+    # idempotent, so already-present packages are silently skipped.
+    lib_have, lib_missing = [], []
+    for lib in BUILD_DEP_LIBS:
+        pkg = lib["pkg"].get(family)
+        if pkg is None:
+            continue                        # not packaged here -> vendored copy
+        if present.get("lib_" + lib["name"], False):
+            lib_have.append(lib["name"])    # already installed -> don't re-request
+        else:
+            lib_missing.append(lib["name"])
+            if pkg not in opt_missing_pkgs and pkg not in req_missing_pkgs:
+                opt_missing_pkgs.append(pkg)
+    print("  libs    : present %s | missing %s"
+          % (", ".join(lib_have) or "(none)",
+             ", ".join(lib_missing) or "(none)"))
 
     print("  present : %s" % (", ".join(sorted(have)) or "(none)"))
     print("  missing : %s" % (", ".join(sorted(missing)) or "(none -- all set)"))
@@ -764,6 +840,7 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
                         % max(0, int(tgt.deadline - time.monotonic())))
     print("  %s-> installing %d package(s) on %s%s ...%s"
           % (C_CYAN, len(all_pkgs), tgt.label, budget_left, C_RESET))
+    print("    $ %s" % install_raw)
     t0 = time.monotonic()
     rc, out = tgt.run(cmd, install_timeout,
                       idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
