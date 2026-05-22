@@ -88,17 +88,13 @@ _REQUIRED_EXEC_NODE_KEYS = (
     # next batch skips the matching cells without re-prompting.
     # Default []. See benchmark/CLAUDE.md "Runtime tool detection".
     "benchmark_disabled_tools",
-    # Diskless NFS-rooted LXC bring-up descriptor (object). On an
-    # ordinary exec node it is the inert form
-    #   {"enabled": false, ...empties...}
-    # and is completely ignored. When enabled, the exec node is a real
-    # embedded box that keeps nothing on its own disk: the harness
-    # SSHes its pre-chroot management shell, stops every container,
-    # (re)mounts the test box rootfs over NFS, chroots in, and
-    # lxc-starts a pre-defined container so it appears at this exec
-    # node's `host`. See remote_nodes.json _doc "lxc_nfs" for the full
-    # sub-field contract and nfs_lxc_bring_up()/nfs_lxc_teardown().
-    "lxc_nfs",
+    # NOTE: "lxc_nfs" is intentionally NOT in this list — it is the one
+    # OPTIONAL exec-node key. A missing lxc_nfs means an ordinary exec
+    # node (same as the inert {"enabled": false, ...empties...} form);
+    # only NFS-LXC boxes carry the full descriptor. See remote_nodes.json
+    # _doc "lxc_nfs" for the sub-field contract and
+    # nfs_lxc_bring_up()/nfs_lxc_teardown(); when present it is validated
+    # lazily by _lxc_nfs_cfg() at use time, not here.
 )
 
 
