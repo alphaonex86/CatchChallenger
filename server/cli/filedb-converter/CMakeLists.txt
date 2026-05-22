@@ -23,8 +23,6 @@ if(CC_USE_SYSTEM_TINYXML2)
 else()
     target_sources(filedb-converter PRIVATE
         ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2.cpp
-        ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2b.cpp
-        ${CC_REPO_ROOT}/general/tinyXML2/tinyxml2c.cpp
     )
 endif()
 

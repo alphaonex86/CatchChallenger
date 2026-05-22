@@ -413,12 +413,14 @@ function(_cc_check_system_header HEADER_PATH VERSION_DEFINE MIN_VERSION OUT_VAR)
 endfunction()
 
 # Force-toggle hooks for distros / CI nodes that need to pin behaviour.
-# Default: try system on a normal host build; force vendored on cross.
-if(ANDROID OR CMAKE_CROSSCOMPILING)
-    set(_system_default OFF)
-else()
-    set(_system_default ON)
-endif()
+# Default: try the system shared lib everywhere -- including cross builds.
+# Each cross/fleet node's sysroot is a copy of the real target hardware's
+# system, so its .so is the one the device actually runs; prefer it. The
+# embedded/vendored sources are compiled in ONLY as the fallback, when
+# find_library() can't locate the system lib in the (cross) sysroot at
+# configure time. (find_library honours CMAKE_FIND_ROOT_PATH, so on a
+# cross build it searches the target sysroot, never the host's libs.)
+set(_system_default ON)
 option(EXTERNALLIBBLAKE3   "Use system libblake3 if found"   ${_system_default})
 option(EXTERNALLIBXXHASH   "Use system libxxhash if found"   ${_system_default})
 option(EXTERNALLIBTINYXML2 "Use system libtinyxml2 if found" ${_system_default})
@@ -458,11 +460,10 @@ if(EXTERNALLIBXXHASH)
     endif()
 endif()
 
-# tinyxml2 — vendored is the 2016 v3 fork. The system-side header switched
-# to <tinyxml2.h> with the same tinyxml2:: namespace and the call sites we
-# use (XMLDocument, LoadFile, FirstChildElement, IntAttribute, …) are
-# stable from v6 onwards. Require >= 9.0.0 to stay safely above the minor
-# API renames in 5.x.
+# tinyxml2 — vendored is now upstream v11 (see general/tinyXML2/version.txt).
+# The call sites we use (XMLDocument, LoadFile, FirstChildElement,
+# IntAttribute, ErrorStr, …) are stable from v6 onwards. Require >= 9.0.0
+# from the system lib to stay safely above the minor API renames in 5.x.
 set(CC_USE_SYSTEM_TINYXML2 OFF)
 if(EXTERNALLIBTINYXML2)
     find_path(TINYXML2_INCLUDE_DIR NAMES tinyxml2.h)
