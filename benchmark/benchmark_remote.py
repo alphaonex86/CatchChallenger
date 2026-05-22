@@ -1229,9 +1229,9 @@ def profile_on_exec(compile_node, exec_node, cmake_src_subdir, build_subdir,
                 # Retry with the software 'cpu-clock' event (hrtimer-based,
                 # needs no PMU interrupt) so we still get a usable profile.
                 full = base + (f"rm -f {shlex.quote(rfile)} && "
-                               f"perf record -g -e cpu-clock "
+                               f"perf record --call-graph=dwarf -e cpu-clock "
                                f"-o {shlex.quote(rfile)} "
-                               f"sh -c {shlex.quote(cmd_str)}")
+                               f"{cmd_str}")
                 rc, _sout, serr = run_remote_cmd(runtime_node, full,
                                                  timeout=tmo)
             if rc != 0:
