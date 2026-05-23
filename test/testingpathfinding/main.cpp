@@ -210,6 +210,17 @@ int main(int argc,char *argv[])
     }
     ok("load_city_tmx",std::to_string(mapServer.width)+"x"+std::to_string(mapServer.height));
 
+    // city.tmx carries border links (its edges resolve back to map index 0
+    // once the lone map is loaded), so PathFinding's edge-wrap would route
+    // around the deterministic wall via the top/bottom/left/right edge —
+    // defeating the "the gated gap is the ONLY crossing" premise of this
+    // fixture. Sever every border so the wall genuinely isolates the two
+    // halves; 65535 == "no neighbouring map" (see Map_Border.hpp).
+    mapServer.border.top.mapIndex=65535;
+    mapServer.border.bottom.mapIndex=65535;
+    mapServer.border.left.mapIndex=65535;
+    mapServer.border.right.mapIndex=65535;
+
     const int W=mapServer.width;
     const int H=mapServer.height;
     const int wallRow=H/2;

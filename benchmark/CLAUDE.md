@@ -455,6 +455,7 @@ Schema (one platform per file):
   "cpu_model":  "<verbatim /proc/cpuinfo model name>",
   "cpu_cores":  <int>,
   "cpu_mhz":    <float>,
+  "cpu_flags":  "<first /proc/cpuinfo flags (x86) / Features (arm,riscv) line>",
   "ram_total_mb": <int>,
   "ram_type":   "<DDR3-1600 | LPDDR4-3200 | unknown>",
   "disk_root":  "<vendor + model of the device backing /, from lsblk/smartctl>",
@@ -476,6 +477,7 @@ Schema (one platform per file):
   "compiler":   "<gcc 13.2 | clang 18 | ...>",
   "compile_flags": ["-O3", "-DCATCHCHALLENGER_EPOLL", "-DCATCHCHALLENGER_IO_URING", "..."],
   "simd_tier":  "<generic | sse4.2 | avx2 | neon | sve | msa | rvv | ...>",
+  "libs":       {"zlib|zstd|blake3|xxhash|tinyxml2": {"source": "system | vendored", "version": "<x.y.z | null>"}},
   "loadavg_1min_at_start": <float>,
   "results": {
     "<profiler-or-tool-name>": {

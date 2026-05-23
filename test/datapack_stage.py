@@ -180,10 +180,28 @@ def _rsync_remote(exec_node, src, log_info):
         m = subprocess.run(mkdir_args, timeout=30,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except subprocess.TimeoutExpired:
-        return False, f"ssh mkdir TIMEOUT for {label}:{dst}"
+        # ssh hung trying to reach the box — treat as unreachable, not a
+        # hard staging error (see rc==255 note below).
+        log_info(f"datapack stage SKIP {label}: ssh mkdir TIMEOUT (node unreachable)")
+        return None, f"ssh mkdir TIMEOUT for {label}:{dst} (node unreachable, skipped)"
     if m.returncode != 0:
+        out = m.stdout.decode(errors="replace").strip()
+        # rc==255 is ssh's OWN failure code (couldn't connect): "No route
+        # to host", "Connection refused", "Connection timed out", "Could
+        # not resolve hostname". A mkdir failing on a REACHABLE box returns
+        # the remote command's rc (e.g. 1), never 255. An offline exec node
+        # — typically an NFS-LXC box that is only brought up later during
+        # its own test phase — must NOT abort the whole all.sh: skip it
+        # here (return None) and let that node's own test phase surface a
+        # FAIL/SKIP if it is actually needed. A genuine error on a
+        # reachable node still returns False and aborts.
+        if m.returncode == 255:
+            log_info(f"datapack stage SKIP {label}: ssh unreachable "
+                     f"(rc=255): {out[-160:]}")
+            return None, (f"ssh unreachable rc=255 for {label}:{dst} "
+                          f"(skipped): {out[-160:]}")
         return False, (f"ssh mkdir rc={m.returncode} for {label}:{dst}: " +
-                       m.stdout.decode(errors="replace").strip()[-200:])
+                       out[-200:])
     rsync_args = [
         "rsync", "-art", "--delete",
         "-e", f"{RSYNC_SSH_E} -p {port}",
@@ -236,7 +254,10 @@ def _rsync_remote(exec_node, src, log_info):
 def stage_all(srcs, exec_nodes=None, log_info=print):
     """Run every (src) and (src, exec_node) rsync in parallel. Blocks
     until every thread is done. Returns (ok_total, errors) where errors
-    is a list of strings — empty on full success.
+    is a list of strings — empty on full success. A per-worker status of
+    None means "skipped" (an exec node was unreachable, e.g. an offline
+    NFS-LXC box brought up only during its own test phase); skips are
+    logged but never abort the run.
 
     `srcs` is a list of source datapack paths.
     `exec_nodes` is the flattened list from
@@ -314,11 +335,17 @@ def stage_all(srcs, exec_nodes=None, log_info=print):
         if not cur_sum:
             continue
         rs = per_src_results.get(src, [])
-        if rs and all(r[0] for r in rs):
+        # A None status (unreachable node, skipped) is not a failure: a
+        # genuine failure is ok is False. Persist the checksum as long as
+        # nothing actually failed.
+        if rs and all(r[0] is not False for r in rs):
             try:
                 test_config.set_datapack_checksum(src, cur_sum)
             except (OSError, ValueError):
                 pass  # non-fatal; the optimisation just doesn't kick in next run
 
-    errors = [d for ok, d in results if not ok]
+    # ok is False  -> genuine error (aborts the run)
+    # ok is None   -> skipped (unreachable node), logged but non-fatal
+    # ok is True    -> success
+    errors = [d for ok, d in results if ok is False]
     return (len(errors) == 0), errors

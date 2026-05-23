@@ -595,6 +595,15 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
         _rlog(f"cmake configure {compile_node['label']!r}: rc={rc}")
     if rc != 0:
         return rc, f"cmake configure failed:\n{sout}\n{serr}", bld
+    # Record which libs (system .so vs vendored copy) + version this
+    # compile node's build resolved, parsed from the configure log. The
+    # system-version probe (pkg-config) must run ON the compile node, so
+    # pass an ssh shell rather than the local default. Keyed by
+    # compile-node label; the caller aliases it onto the exec node.
+    def _compile_shell(cmd, timeout=15):
+        _rc, _out, _err = ssh_run(user, host, port, cmd, timeout=timeout)
+        return _out
+    bh.record_libs(compile_node["label"], sout, shell=_compile_shell)
 
     build_cmd = f"cmake --build {shlex.quote(bld)} -j$(nproc)"
     if target:
@@ -1865,6 +1874,9 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
         cmake_defs=cmake_defs, verbose=verbose, use_ninja=use_ninja)
     if rc != 0:
         return {p: None for p in profilers}, msg
+    # Carry the compile node's system-vs-vendored verdict onto this exec
+    # node so its history record stamps the libs it actually ran.
+    bh.alias_libs(compile_node["label"], exec_node["label"])
     if verbose:
         _rlog(f"{exec_node['label']!r}: pushing binary")
     rc, exec_bin, msg = push_binary_to_exec(
