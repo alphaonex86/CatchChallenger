@@ -21,7 +21,7 @@ import os, sys, subprocess, json, time, threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import remote_build as _rb
 from remote_build import (REMOTE_NODES, configure_timeout_for,
-                          compile_timeout_for)
+                          compile_timeout_for, GUI_PRO_FILES)
 import diagnostic
 import wall_cap
 wall_cap.arm()
@@ -438,7 +438,13 @@ def build_pro_remote(host, port, cmake, pro_rel, label, use_mold, remote_dir):
 
     log_info(f"building {target} on {label} (timeout {bld_t}s)")
     build_cmd = (
-        f"{_ccache_env}"
+        # linker_path_prefix MUST be here too, not just on configure: the
+        # real link step runs `ld.lld`, which on Gentoo/Debian lives under
+        # a versioned /usr/lib/llvm*/bin not on $PATH. Without it the build
+        # fails with `collect2: fatal error: cannot find 'ld'` even though
+        # configure (which had the prefix) succeeded — exactly the mips-lxc
+        # server-cli/filedb/stats link failures.
+        f"{linker_path_prefix}{_ccache_env}"
         f"{cmake} --build {build_dir} --target {target} -j$(nproc) 2>&1"
     )
     rc, out = ssh_cmd(host, port, build_cmd, timeout=bld_t)
@@ -853,10 +859,20 @@ def cleanup_exec_node(exec_node):
 
 
 def test_server(label, host, port, use_mold, remote_dir, failed_cases=None,
-                exec_nodes=None):
+                exec_nodes=None, has_gui=True):
     """Run all compilation tests on a single remote server then clean up.
     If exec_nodes is non-empty, after compile each runnable server target
-    is pushed to those exec nodes and started — see EXEC_PRO_FILES."""
+    is pushed to those exec nodes and started — see EXEC_PRO_FILES.
+
+    `has_gui` mirrors the per-node remote_nodes.json flag. On a
+    has_gui:false node the GUI .pro files (GUI_PRO_FILES — qtopengl,
+    qtcpu800x600, map2png, …) are NOT built: that node has no display
+    and isn't expected to carry the Qt6 GUI component stack (OpenGL /
+    Widgets / WebSockets). This matches how testingtools.py /
+    testingbots.py already gate GUI builds, so testingremote stays
+    consistent and a constrained cross node doesn't fail every GUI
+    configure for a missing Qt6 component. The non-GUI server binaries
+    (which do not find_package(Qt6)) are still built there."""
     print(f"\n{C_CYAN}{'='*60}")
     print(f"  Testing on: {label} ({host}:{port})")
     print(f"{'='*60}{C_RESET}\n")
@@ -881,23 +897,41 @@ def test_server(label, host, port, use_mold, remote_dir, failed_cases=None,
         if cmake is None:
             return
 
-        # Without Qt6 every CC binary's CMakeLists.txt fails the
+        # On a has_gui:false node, drop the GUI .pro files: that node has
+        # no display and isn't expected to carry the Qt6 GUI component
+        # stack. The remaining non-GUI server binaries don't
+        # find_package(Qt6), so the Qt6 gate below is irrelevant for them.
+        pi = 0
+        pro_files = []
+        while pi < len(PRO_FILES):
+            pro_rel = PRO_FILES[pi]
+            pi += 1
+            if (not has_gui) and pro_rel in GUI_PRO_FILES:
+                log_info(f"skipping GUI build {pro_rel} on {label} "
+                         f"(has_gui:false — no display / no Qt6 GUI stack)")
+            else:
+                pro_files.append(pro_rel)
+
+        # Without Qt6 every GUI binary's CMakeLists.txt fails the
         # find_package(Qt6 REQUIRED ...) call with cmake rc=1, which
         # then logs N identical [FAIL] lines (one per PRO_FILE) — a
         # noise storm that hides the real cause. Detect once, log_info
         # the skip, and short-circuit. The operator must install Qt6
         # on the node (we never auto-install per CLAUDE.md). Resume
         # mode (--continue) won't loop on these because we don't write
-        # any failure record for the skipped node.
-        if not detect_qt6(host, port):
+        # any failure record for the skipped node. Only relevant when a
+        # GUI build actually remains (a has_gui:false node builds only
+        # non-GUI binaries, which don't need Qt6).
+        gui_remaining = any(p in GUI_PRO_FILES for p in pro_files)
+        if gui_remaining and not detect_qt6(host, port):
             log_info(f"skipping {label}: Qt6 not installed on remote "
                      f"(install dev-qt/qtbase or equivalent and re-run)")
             return
 
         idx = 0
-        while idx < len(PRO_FILES):
-            if should_run(f"compile {PRO_FILES[idx]} ({label})", failed_cases):
-                build_pro_remote(host, port, cmake, PRO_FILES[idx], label,
+        while idx < len(pro_files):
+            if should_run(f"compile {pro_files[idx]} ({label})", failed_cases):
+                build_pro_remote(host, port, cmake, pro_files[idx], label,
                                  use_mold, remote_dir)
             idx += 1
 
@@ -954,7 +988,9 @@ def main():
             idx += 1
             continue
         exec_nodes = node.get("execution_nodes", []) if node else []
-        work.append((label, host, port, use_mold, remote_dir, exec_nodes))
+        has_gui = bool(node.get("has_gui", True)) if node else True
+        work.append((label, host, port, use_mold, remote_dir, exec_nodes,
+                     has_gui))
         idx += 1
 
     # max_workers = len(work) so every selected node gets its own
@@ -968,11 +1004,12 @@ def main():
             futures = []
             wi = 0
             while wi < len(work):
-                label, host, port, use_mold, remote_dir, exec_nodes = work[wi]
+                label, host, port, use_mold, remote_dir, exec_nodes, has_gui = work[wi]
                 futures.append(pool.submit(test_server, label, host, port,
                                            use_mold, remote_dir,
                                            failed_cases,
-                                           exec_nodes=exec_nodes))
+                                           exec_nodes=exec_nodes,
+                                           has_gui=has_gui))
                 wi += 1
             # Drain completions; re-raise any worker exception so a
             # crashed node fails the whole run rather than silently

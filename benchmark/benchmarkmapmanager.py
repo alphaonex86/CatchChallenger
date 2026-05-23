@@ -98,6 +98,9 @@ def build():
     if rc != 0:
         print(sout); print(serr, file=sys.stderr)
         print(_color(bh.C_RED, "[build] cmake configure FAILED")); return None
+    # Record which libs (system vs vendored) the local build linked, for
+    # the "local" node's history record.
+    bh.record_libs("local", sout)
     bld = ["cmake", "--build", BUILD_DIR, "--", "-j", str(os.cpu_count() or 1)]
     rc, sout, serr, _ = bh.run_capture(bld, timeout=900)
     if rc != 0:
@@ -587,6 +590,7 @@ def main():
         if label in all_metrics and all_metrics[label]:
             rec["nodes"][label] = {
                 "arch": node.get("arch", "?"),
+                "libs": bh.LIBS_BY_NODE.get(label, {}),
                 "metrics": all_metrics[label],
             }
     cand_p = bh.candidate_path("benchmarkmapmanager", cand_stamp)

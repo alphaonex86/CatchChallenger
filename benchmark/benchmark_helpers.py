@@ -759,6 +759,125 @@ def cmake_accel_defs():
     return defs
 
 
+# ── system-vs-vendored library choice ─────────────────────────────────
+# Which of the switchable libs (system .so vs in-tree vendored copy) the
+# server binary was actually linked against. CCCommon.cmake decides this
+# per build from find_library() against the (cross) sysroot and prints a
+# parseable STATUS line; we parse the configure log rather than the binary
+# so the answer is exact. Populated at configure time keyed by node label
+# (the local host = "local", every remote node by its execution_nodes
+# label), and read back by history_recorder.PlatformRecord.write() to
+# stamp each per-run history JSON. Keyed per-node because a system lib is
+# the node's own (a cross sysroot's .so), so two arches can legitimately
+# differ (one system, one vendored).
+LIBS_BY_NODE = {}
+
+# The five libs CCCommon.cmake / libzlib.cmake switch system<->vendored.
+# zlib prints BOTH branches; the leaf libs print "<name>: system" only
+# when the system copy is accepted (silent => vendored fallback); zstd
+# prints the fallback line only when vendored (silent => system).
+_SWITCHABLE_LIBS = ("zlib", "zstd", "blake3", "xxhash", "tinyxml2")
+
+# lib -> pkg-config module name, for the exact system-version probe.
+_LIB_PC_NAME = {"zlib": "zlib", "zstd": "libzstd", "blake3": "libblake3",
+                "xxhash": "libxxhash", "tinyxml2": "tinyxml2"}
+
+
+def _lib_version_from_log(name, text):
+    """Pull the version a CCCommon.cmake STATUS line advertises for `name`,
+    or None. Covers the leaf libs' "<name>: system <hdr> v<ver>" and the
+    "building vendored zlib <ver>" line. Returns the raw token (may be a
+    partial like '0.8.x' / '11.x' — the exact pkg-config probe refines a
+    system lib later)."""
+    import re
+    if name == "zlib":
+        m = re.search(r"building vendored zlib ([0-9][0-9.]*)", text)
+        return m.group(1) if m else None
+    m = re.search(name + r": system \S+ v([0-9][0-9.xX]*)", text)
+    return m.group(1) if m else None
+
+
+def detect_libs(configure_stdout):
+    """Parse a `cmake -S … -B …` configure log and return
+    {lib: {"source": 'system'|'vendored', "version": <str|None>}} for the
+    switchable libraries. Returns {} when the log isn't a CatchChallenger
+    lib-stack configure (no zlib line) so a non-CC / truncated log never
+    yields bogus verdicts. The zlib line is the anchor: when present,
+    CCCommon.cmake's full discovery (zstd/blake3/xxhash/tinyxml2) has also
+    run, so a missing 'system' line for a leaf lib means the vendored
+    fallback was compiled in. Versions here are best-effort from the log;
+    record_libs() refines a system lib's version with pkg-config."""
+    text = configure_stdout or ""
+    if "zlib: using system copy" in text:
+        zlib_src = "system"
+    elif "building vendored zlib" in text:
+        zlib_src = "vendored"
+    else:
+        return {}   # not a CC lib-stack configure log -> unknown
+    src = {"zlib": zlib_src}
+    # zstd: only the vendored branch prints a line; system path is silent.
+    src["zstd"] = ("vendored" if "falling back to vendored build" in text
+                   else "system")
+    # leaf libs: "<name>: system <path> v…" printed iff system accepted.
+    for name in ("blake3", "xxhash", "tinyxml2"):
+        src[name] = "system" if (name + ": system") in text else "vendored"
+    libs = {}
+    for name in _SWITCHABLE_LIBS:
+        libs[name] = {"source": src[name],
+                      "version": _lib_version_from_log(name, text)}
+    return libs
+
+
+def _local_shell(cmd, timeout=10):
+    """Run `cmd` in a shell on the local host; return stdout ('' on error).
+    The default `shell` for record_libs (remote builds pass an ssh one)."""
+    try:
+        return subprocess.run(cmd, shell=True, capture_output=True,
+                              text=True, timeout=timeout).stdout
+    except Exception:
+        return ""
+
+
+def _pkgconfig_version(pc_name, shell):
+    """Exact installed version of a system lib via `pkg-config
+    --modversion`, run through `shell` (local or ssh). None when
+    pkg-config can't answer (absent / no .pc)."""
+    out = (shell("pkg-config --modversion %s 2>/dev/null" % pc_name) or "")
+    for line in out.splitlines():
+        line = line.strip()
+        if line:
+            return line
+    return None
+
+
+def record_libs(node_label, configure_stdout, shell=None):
+    """Detect the system-vs-vendored lib choice + version from a configure
+    log and stash it under `node_label` in LIBS_BY_NODE. For each lib
+    resolved to the SYSTEM copy, refine the version with an exact
+    `pkg-config --modversion` run through `shell` (defaults to the local
+    host; remote builds pass an ssh runner so the version is the compile
+    node's, not the host's). No-op (keeps any prior value) when the log
+    yields nothing parseable. Returns the dict."""
+    libs = detect_libs(configure_stdout)
+    if not libs:
+        return {}
+    sh = shell or _local_shell
+    for name, info in libs.items():
+        if info["source"] == "system":
+            exact = _pkgconfig_version(_LIB_PC_NAME[name], sh)
+            if exact:
+                info["version"] = exact
+    LIBS_BY_NODE[node_label] = libs
+    return libs
+
+
+def alias_libs(from_label, to_label):
+    """Copy a recorded lib map from one node label to another (used to
+    carry a compile node's verdict onto each exec node it built for)."""
+    if from_label in LIBS_BY_NODE:
+        LIBS_BY_NODE[to_label] = LIBS_BY_NODE[from_label]
+
+
 def _drop_core_rlimit():
     """preexec_fn: set RLIMIT_CORE=0 in the child before exec. A
     benchmarked binary that dies on a signal (the harness SIGINT/timeout

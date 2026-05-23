@@ -200,6 +200,9 @@ def _cmake_build(src_dir, build_dir, extra_defs=None, label="build"):
     if rc != 0:
         print(sout); print(serr, file=sys.stderr)
         return rc, "cmake configure FAILED"
+    # Record which libs (system vs vendored) the local build linked, for
+    # the "local" node's history record (no-op on a non-CC configure log).
+    bh.record_libs("local", sout)
     bld = ["cmake", "--build", build_dir, "--", "-j", str(os.cpu_count() or 1)]
     rc, sout, serr, _ = bh.run_capture(bld, timeout=BUILD_TIMEOUT)
     if rc != 0:
@@ -1130,6 +1133,9 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
     if rc_srv != 0:
         _fail_all(f"server-build-failed: {msg_srv[:100]}")
         return
+    # Carry this compile node's system-vs-vendored verdict onto the exec
+    # node so its history record stamps the libs it actually ran.
+    bh.alias_libs(compile_node["label"], label)
 
     # 3. Push server binary to exec node.
     rc_ps, exec_srv_bin, msg_ps = br.push_binary_to_exec(
@@ -1569,6 +1575,7 @@ def _run_with_server(bin_path, server_proc, comment,
                         "better": v.get("better", "lower")}
         if m:
             rec["nodes"][label] = {"arch": node.get("arch", "?"),
+                                    "libs": bh.LIBS_BY_NODE.get(label, {}),
                                     "metrics": m}
 
     cand_p = bh.candidate_path("benchmarkbotactions", cand_stamp)

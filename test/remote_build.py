@@ -1668,6 +1668,12 @@ def _run_remote_autosolo(host, ssh_port, bin_path, build_dir, x11_config,
     """Launch one client binary with --autosolo on the remote node.
 
     client_run_mode='x11'       → run on the node with DISPLAY from x11_config
+    client_run_mode='xvfb'      → run on the node against a virtual framebuffer
+                                  (Xvfb). The persistent xvfb.service holds the
+                                  display; if it's down we start a throwaway
+                                  Xvfb on the same display as a fallback. Lets a
+                                  headless container (no real X) still render the
+                                  qtopengl client.
     client_run_mode='offscreen' → run on the node with QT_QPA_PLATFORM=offscreen
     Anything else returns a clear "skipped" detail.
 
@@ -1714,6 +1720,21 @@ def _run_remote_autosolo(host, ssh_port, bin_path, build_dir, x11_config,
                       f"XDG_RUNTIME_DIR=/tmp/runtime-autosolo "
                       f"mkdir -p /tmp/runtime-autosolo 2>/dev/null; "
                       f"DISPLAY={x11_config['display']} {diag_env_prefix}")
+    elif client_run_mode == "xvfb":
+        # Virtual framebuffer. Display from x11_config, else :99 (matches
+        # the persistent xvfb.service). The persistent service normally
+        # already holds the display; the `[ -S socket ] ||` guard starts a
+        # throwaway Xvfb only when it's absent and reuses it next time, so
+        # at most one Xvfb per display ever runs (no accumulation).
+        disp = (x11_config or {}).get("display") or ":99"
+        socknum = disp.lstrip(":").split(".")[0]
+        env_prefix = (
+            f"export XDG_RUNTIME_DIR=/tmp/runtime-autosolo; "
+            f"mkdir -p /tmp/runtime-autosolo 2>/dev/null; "
+            f"([ -S /tmp/.X11-unix/X{socknum} ] || "
+            f"(Xvfb {disp} -screen 0 1280x1024x24 -nolisten tcp "
+            f">/dev/null 2>&1 & sleep 2)); "
+            f"DISPLAY={disp} {diag_env_prefix}")
     elif client_run_mode == "offscreen":
         qpa = os.environ.get("CC_QPA", "offscreen")
         env_prefix = f"QT_QPA_PLATFORM={qpa} {diag_env_prefix}"
@@ -1889,17 +1910,33 @@ def run_remote_autosolo_phase(node, datapack_src, maincode=None, diag=None):
     # Compile-side has_gui still gates whether the Qt GUI .pro files are
     # buildable here (find_package(Qt6 REQUIRED) needs the headers).
     compile_has_gui = node.get("has_gui", True)
-    # Runtime flags moved to execution_nodes — pick the first enabled
-    # entry. Fall back to None when nothing is enabled, which causes the
-    # `client_run_mode == "none"` branch below to skip the phase.
+    # Runtime flags moved to execution_nodes. The client is BUILT AND RUN
+    # on the compile node (host below), so its display config must describe
+    # THAT host — prefer the enabled exec node whose host matches the
+    # compile node's ssh host (and that actually runs a client, i.e.
+    # client_run_mode != 'none'). Only when no such same-host runner exists
+    # do we fall back to the first enabled entry (legacy behaviour). This
+    # is what lets x86-lxc run --autosolo against its own Xvfb (:99) instead
+    # of inheriting a different box's real X display (pentium-m :0), which
+    # failed with "could not connect to display :0".
     runtime_node = None
     enodes = node.get("execution_nodes", []) or []
+    compile_host = node.get("ssh", {}).get("host")
     eidx = 0
     while eidx < len(enodes):
-        if enodes[eidx].get("enabled", True):
-            runtime_node = enodes[eidx]
+        ent = enodes[eidx]
+        if (ent.get("enabled", True) and ent.get("host") == compile_host
+                and ent.get("client_run_mode", "none") != "none"):
+            runtime_node = ent
             break
         eidx += 1
+    if runtime_node is None:
+        eidx = 0
+        while eidx < len(enodes):
+            if enodes[eidx].get("enabled", True):
+                runtime_node = enodes[eidx]
+                break
+            eidx += 1
     if runtime_node is None:
         run_has_gui = False
         client_run_mode = "none"

@@ -99,7 +99,8 @@ def _read(run, path):
 
 
 def collect_cpu(run):
-    out = {"cpu_model": None, "cpu_cores": None, "cpu_mhz": None, "arch": None}
+    out = {"cpu_model": None, "cpu_cores": None, "cpu_mhz": None,
+           "arch": None, "cpu_flags": None}
     txt = _read(run, "/proc/cpuinfo")
     if not txt:
         return out
@@ -122,6 +123,11 @@ def collect_cpu(run):
             out["cpu_model"] = v
         elif k == "uarch" and out["cpu_model"] is None:
             out["cpu_model"] = v
+        # CPU capability line: x86 calls it "flags"; arm/riscv call it
+        # "Features". First occurrence only (mirrors `grep … | head -n1`),
+        # so the SIMD tier a result was measured at is auditable.
+        elif k in ("flags", "Features") and out["cpu_flags"] is None:
+            out["cpu_flags"] = v
     if cores:
         out["cpu_cores"] = cores
     if mhz_vals:
@@ -606,6 +612,9 @@ class PlatformRecord:
             "cpu_model":     None,
             "cpu_cores":     None,
             "cpu_mhz":       None,
+            # first /proc/cpuinfo capability line (x86 "flags" / arm-riscv
+            # "Features") — the CPU's SIMD/feature set the run measured on.
+            "cpu_flags":     None,
             "ram_total_mb":  None,
             "ram_type":      None,
             "disk_root":     None,
@@ -628,6 +637,12 @@ class PlatformRecord:
             "compiler":      None,
             "compile_flags": [],
             "simd_tier":     "generic",
+            # {lib: "system"|"vendored"} for the switchable libs (zlib,
+            # zstd, blake3, xxhash, tinyxml2): whether this node's binary
+            # linked the system .so or the in-tree vendored copy. Filled
+            # at write() time from benchmark_helpers.LIBS_BY_NODE, which
+            # the build step populates from the cmake configure log.
+            "libs":          {},
             "loadavg_1min_at_start": None,
         }
         self.results = {}
@@ -638,6 +653,7 @@ class PlatformRecord:
         self.platform["cpu_model"] = cpu["cpu_model"]
         self.platform["cpu_cores"] = cpu["cpu_cores"]
         self.platform["cpu_mhz"]   = cpu["cpu_mhz"]
+        self.platform["cpu_flags"] = cpu["cpu_flags"]
         if self.platform["arch"] is None and cpu["arch"]:
             self.platform["arch"] = cpu["arch"]
         ram = collect_ram(self.runner)
@@ -728,7 +744,7 @@ class PlatformRecord:
         return self
 
     def write(self, *, commit, started_utc, ended_utc,
-              compile_flags=None, simd_tier=None,
+              compile_flags=None, simd_tier=None, libs=None,
               harness_version=None, decision=None, comment=""):
         # All results SKIP → nothing to record; return None silently.
         if self.results and all(
@@ -738,6 +754,18 @@ class PlatformRecord:
             self.platform["compile_flags"] = list(compile_flags)
         if simd_tier is not None:
             self.platform["simd_tier"] = simd_tier
+        # system-vs-vendored lib choice for this node's binary. Explicit
+        # `libs=` wins; otherwise pull what the build step recorded for
+        # this node label in benchmark_helpers.LIBS_BY_NODE.
+        if libs is not None:
+            self.platform["libs"] = dict(libs)
+        elif not self.platform.get("libs"):
+            try:
+                import benchmark_helpers as _bh
+                self.platform["libs"] = dict(
+                    _bh.LIBS_BY_NODE.get(self.node_label, {}))
+            except Exception:
+                pass
         # Surface contention-prone links so a wifi/VPN/tunnel node's CPU%
         # / latency numbers aren't read as a clean KEEP/DISCARD signal.
         if self.platform.get("cpu_metrics_reliable") is False:

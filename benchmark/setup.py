@@ -323,6 +323,35 @@ BUILD_DEP_LIBS = [
      "pkg": {"apt": "libtinyxml2-dev", "dnf": "tinyxml2-devel", "zypper": "tinyxml2-devel",
              "pacman": "tinyxml2", "apk": "tinyxml2-dev", "emerge": "dev-libs/tinyxml2",
              "xbps": "tinyxml2-devel"}},
+    # libcurl -- server/gateway (find_library(... curl REQUIRED)). No
+    # vendored fallback; absent on a node => that node can't build the
+    # gateway. apt's `libcurl-dev` is a virtual package (apt refuses a
+    # bare virtual), so the concrete OpenSSL flavour is named here.
+    {"name": "curl", "pc": ["libcurl"], "hdr": ["curl/curl.h"],
+     "pkg": {"apt": "libcurl4-openssl-dev", "dnf": "libcurl-devel", "zypper": "libcurl-devel",
+             "pacman": "curl", "apk": "curl-dev", "emerge": "net-misc/curl",
+             "xbps": "libcurl-devel"}},
+    # liburing -- mandatory io_uring backend for the cluster servers
+    # (server/{login,master,gateway,game-server-alone}).
+    {"name": "liburing", "pc": ["liburing"], "hdr": ["liburing.h"],
+     "pkg": {"apt": "liburing-dev", "dnf": "liburing-devel", "zypper": "liburing-devel",
+             "pacman": "liburing", "apk": "liburing-dev", "emerge": "sys-libs/liburing",
+             "xbps": "liburing-devel"}},
+    # libpq (PostgreSQL client) -- default DB backend of the cluster
+    # servers. Debian drops libpq-fe.h under /usr/include/postgresql/,
+    # which the probe's /usr/include/*/<hdr> glob still finds. Gentoo
+    # ships libpq inside dev-db/postgresql (no standalone atom).
+    {"name": "libpq", "pc": ["libpq"], "hdr": ["libpq-fe.h"],
+     "pkg": {"apt": "libpq-dev", "dnf": "libpq-devel", "zypper": "postgresql-devel",
+             "pacman": "postgresql-libs", "apk": "libpq-dev", "emerge": "dev-db/postgresql",
+             "xbps": "postgresql-libs-devel"}},
+    # MariaDB/MySQL connector -- alternate DB backend selector for the
+    # cluster servers (find_library(NAMES mariadb mysqlclient REQUIRED)).
+    {"name": "mariadb", "pc": ["libmariadb"], "hdr": ["mariadb/mysql.h"],
+     "pkg": {"apt": "libmariadb-dev", "dnf": "mariadb-connector-c-devel",
+             "zypper": "libmariadb-devel", "pacman": "mariadb-libs",
+             "apk": "mariadb-connector-c-dev", "emerge": "dev-db/mariadb-connector-c",
+             "xbps": "libmariadbclient-devel"}},
 ]
 
 # NOTE: setup.py NEVER refreshes package metadata. No `apt-get update`,
