@@ -46,6 +46,50 @@
 # a non-zero rc per-script; FAILED=1 is set and propagated at the end.
 set +e
 
+usage() {
+    cat <<'EOF'
+Usage: all.sh [options]
+
+Run every testing*.py sequentially (the full matrix), walking the whole
+list even when a script fails. Exit code is non-zero if any test failed.
+
+Options:
+  -h, --help            Show this help and exit (no tmpfs cleanup is done).
+
+  --onlyfailed          Re-run ONLY the testing*.py scripts (and, inside
+                        each, only the cases) that failed in the previous
+                        run, per failed.json. Preserves failed.json and
+                        appends to time.json / monitor.json.
+
+  --maxtime=<minutes>   Soak-mode wall-time budget (default 120 min). The
+  --maxtime <minutes>   full matrix runs in a LOOP; after EACH complete
+                        pass the cumulative elapsed time is checked and the
+                        loop exits once it reaches <minutes>. At least one
+                        full pass always runs (budget checked AFTER a pass),
+                        so --maxtime=0 means "exactly one pass".
+
+  --sanitize <asan|lsan|msan>        Forward a sanitizer to each testing*.py.
+  --valgrind <memcheck|helgrind|drd> Forward valgrind (per-test timeouts x10).
+  --profile [callgrind|massif|perf]  Run every test under a profiler
+                                     (default callgrind); artefacts under
+                                     /mnt/data/perso/tmpfs/profile/.
+                        --sanitize / --valgrind / --profile are mutually
+                        exclusive.
+
+  --node <label>        Only run remote tests on the named node; repeatable.
+                        Bypasses the per-node `enabled` flag in
+                        remote_nodes.json (CC_NODE_FILTER).
+EOF
+}
+
+# Honour --help / -h BEFORE the destructive tmpfs cleanup below, so asking
+# for usage never wipes the previous run's artefacts.
+for _a in "$@"; do
+    case "$_a" in
+        -h|--help) usage; exit 0 ;;
+    esac
+done
+
 # Pre-run cleanup: drop the previous run's transient build trees + cluster
 # state to keep the tmpfs from saturating, BUT preserve the JSON
 # bookkeeping (all.log, failed.json[.lock], time.json, monitor.json,
@@ -94,11 +138,27 @@ MONITOR_JSON="$(echo "$TEST_CONFIG_OUT"      | sed -n '8p')"
 DIAG_ARGS=()
 NODE_LABELS=()
 ONLY_FAILED=0
+MAXTIME_MIN=120          # soak budget in minutes; loop exits once reached
 ARGS=("$@")
 i=0
 while [ $i -lt ${#ARGS[@]} ]; do
     a="${ARGS[$i]}"
     case "$a" in
+        -h|--help)
+            usage; exit 0
+            ;;
+        --maxtime=*)
+            MAXTIME_MIN="${a#*=}"
+            i=$((i+1))
+            ;;
+        --maxtime)
+            MAXTIME_MIN="${ARGS[$((i+1))]}"
+            if [ -z "$MAXTIME_MIN" ]; then
+                echo "--maxtime requires a value in minutes (e.g. --maxtime=120)" >&2
+                exit 2
+            fi
+            i=$((i+2))
+            ;;
         --onlyfailed)
             # Re-run only the testing*.py scripts that had a non-empty
             # failed.json entry from the previous run. Each testing*.py
@@ -144,6 +204,11 @@ while [ $i -lt ${#ARGS[@]} ]; do
             ;;
     esac
 done
+
+if ! [[ "$MAXTIME_MIN" =~ ^[0-9]+$ ]]; then
+    echo "--maxtime must be a non-negative integer number of minutes; got: '$MAXTIME_MIN'" >&2
+    exit 2
+fi
 
 if [ "$ONLY_FAILED" = "1" ] && [ ! -f "$FAILED_JSON" ]; then
     echo "[all.sh] --onlyfailed: $FAILED_JSON missing — nothing to re-run; exit 0"
@@ -450,6 +515,26 @@ print('1' if isinstance(e, dict) and len(e) > 0 else '0')
     fi
 }
 
+# ── full-pass soak loop ─────────────────────────────────────────────────
+# Run the entire matrix in a loop; after each COMPLETE pass, exit once the
+# cumulative elapsed time reaches --maxtime minutes. At least one full pass
+# always runs (budget checked after a pass). Loop body indentation is left
+# flat on purpose (bash ignores it) to keep the run_test list a clean diff.
+RUN_START_TS=$(date +%s)
+PASS_NUM=0
+LAST_RC=0
+while true; do
+PASS_NUM=$((PASS_NUM+1))
+echo -e "\n${CYAN}######## all.sh full pass #${PASS_NUM} (maxtime ${MAXTIME_MIN}m) ########${RESET}"
+# Fresh full pass: reset the failure flag and (full-run only) wipe
+# failed.json so every script re-runs its whole case matrix. Under
+# --onlyfailed we preserve failed.json so the resume gate still works.
+FAILED=0
+if [ "$ONLY_FAILED" = "0" ]; then
+    rm -f "$FAILED_JSON"; echo '{}' > "$FAILED_JSON"
+fi
+rm -f "$TIMING_LOG"
+
 run_test testingcmake.py
 run_test testingtools.py
 run_test testingmap2png.py
@@ -483,7 +568,12 @@ run_test testingcompilationandroid.py
 # advertise a version whose downloads would 404. Skipped under
 # --onlyfailed since the testing*.py scripts that produce the
 # installers haven't necessarily run.
-if [ "$FAILED" = "0" ] && [ "$ONLY_FAILED" = "0" ]; then
+# Soak guard: publish AT MOST ONCE per all.sh invocation. In --maxtime
+# loop mode the matrix re-runs every pass, but the artifacts are the same
+# commit — re-uploading to the production VPS + re-bumping updater.txt on
+# every green pass would just spam an outward-facing service.
+if [ "$FAILED" = "0" ] && [ "$ONLY_FAILED" = "0" ] && [ "${PUBLISHED:-0}" = "0" ]; then
+    PUBLISHED=1
     echo -e "\n${CYAN}========================================${RESET}"
     echo -e "${CYAN}  Publish: windows + mac + android → web VPS${RESET}"
     echo -e "${CYAN}========================================${RESET}\n"
@@ -510,7 +600,7 @@ if [ "$FAILED" = "1" ]; then
     # inspect every build dir / log of every failing test. The
     # successful tests have already torn their dirs down via the
     # per-script atexit hook in cleanup_helpers.py.
-    exit 1
+    LAST_RC=1
 else
     # All tests passed → final sweep so the tmpfs root holds only:
     #   - shipping artifacts (catchchallenger-*.exe/.msi/.apk/.aab/.dmg)
@@ -539,4 +629,16 @@ else
              -exec rm -rf {} + 2>/dev/null
     fi
     echo -e "\n${GREEN}All tests PASSED.${RESET}"
+    LAST_RC=0
 fi
+
+# ── end of full pass: enforce the wall-time budget ──────────────────────
+# Stop once cumulative elapsed time has reached --maxtime; otherwise run
+# another full pass (soak). The exit code is the most recent pass's result.
+ELAPSED_MIN=$(( ( $(date +%s) - RUN_START_TS ) / 60 ))
+if [ "$ELAPSED_MIN" -ge "$MAXTIME_MIN" ]; then
+    echo -e "\n${CYAN}[all.sh] elapsed ${ELAPSED_MIN}m >= maxtime ${MAXTIME_MIN}m after pass #${PASS_NUM} -> exit ${LAST_RC}${RESET}"
+    exit "$LAST_RC"
+fi
+echo -e "\n${CYAN}[all.sh] elapsed ${ELAPSED_MIN}m < maxtime ${MAXTIME_MIN}m -> starting another full pass${RESET}"
+done
