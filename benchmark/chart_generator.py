@@ -313,6 +313,103 @@ def _cluster_values(values, tol=VALUE_CLUSTER_TOL):
     return out
 
 
+def _num(x):
+    """Format a mantissa without scientific notation: 1010, 95.5, 8.5, 0.13."""
+    a = abs(x)
+    if a >= 100:
+        return f"{x:.0f}"
+    if a >= 10:
+        return f"{x:.1f}".rstrip("0").rstrip(".")
+    return f"{x:.2f}".rstrip("0").rstrip(".")
+
+
+def _fmt_bytes(b):
+    for thr, suf in ((1024**4, "TB"), (1024**3, "GB"), (1024**2, "MB"),
+                     (1024, "KB")):
+        if abs(b) >= thr:
+            return f"{_num(b/thr)}{suf}"
+    return f"{_num(b)}B"
+
+
+def _fmt_time(s):
+    """Human time from a value in SECONDS (ns/µs/ms/s/min/h)."""
+    a = abs(s)
+    if a == 0:
+        return "0s"
+    if a < 1e-6:
+        return f"{_num(s*1e9)}ns"
+    if a < 1e-3:
+        return f"{_num(s*1e6)}us"
+    if a < 1:
+        return f"{_num(s*1e3)}ms"
+    if a < 120:
+        return f"{_num(s)}s"
+    if a < 7200:
+        return f"{_num(s/60)}min"
+    return f"{_num(s/3600)}h"
+
+
+def _fmt_si(n):
+    """Human plain count: 1, 56K, 1.2M, 3.4G (no unit)."""
+    a = abs(n)
+    for thr, suf in ((1e12, "T"), (1e9, "G"), (1e6, "M"), (1e3, "K")):
+        if a >= thr:
+            return f"{_num(n/thr)}{suf}"
+    if n == int(n):
+        return str(int(n))
+    return _num(n)
+
+
+def _unit_from_name(name):
+    """Infer a value's unit from its metric name suffix (the chart doesn't
+    carry the JSON unit field through). Order matters: '_per_s' before '_s'."""
+    n = (name or "").lower()
+    if "percent" in n:
+        return "%"
+    if n.endswith("_kb"):
+        return "kb"
+    if "bytes" in n:
+        return "bytes"
+    if n.endswith("_ns"):
+        return "ns"
+    if n.endswith("_us") or n.endswith("_µs"):
+        return "us"
+    if n.endswith("_ms"):
+        return "ms"
+    if n.endswith("_per_s") or n.endswith("per_s"):
+        return "/s"
+    if n.endswith("_s"):
+        return "s"
+    return ""
+
+
+def _humanize(v, unit):
+    """Human-readable value+unit: 8.5KB, 9MB, 20ms, 82s, 7.5min, 56K, 1."""
+    unit = (unit or "").lower()
+    if unit == "%":
+        return f"{_num(v)}%"
+    if unit == "bytes":
+        return _fmt_bytes(v)
+    if unit == "kb":
+        return _fmt_bytes(v * 1024)
+    if unit == "ns":
+        return _fmt_time(v / 1e9)
+    if unit == "us":
+        return _fmt_time(v / 1e6)
+    if unit == "ms":
+        return _fmt_time(v / 1e3)
+    if unit == "s":
+        return _fmt_time(v)
+    if unit == "/s":
+        return _fmt_si(v) + "/s"
+    return _fmt_si(v)
+
+
+def _humanize_name(v, name):
+    """_humanize using the unit inferred from a metric name."""
+    return _humanize(v, _unit_from_name(name))
+
+
 def _quantile(sorted_vals, q):
     """Linear-interpolated quantile of an already-sorted non-empty list."""
     if len(sorted_vals) == 1:
@@ -377,11 +474,11 @@ def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
     def ypos(v):
         return h - ((v - ymin) / (ymax - ymin)) * (h - 10) - 5
 
-    # y-axis tick labels (just min/max)
+    # y-axis tick labels (just min/max), human-readable units
     parts.append(f'<text x="2" y="10" font-size="8" fill="#444" '
-                 f'font-family="sans-serif">{ymax:.3g}</text>')
+                 f'font-family="sans-serif">{_esc(_humanize_name(ymax, panel_metric))}</text>')
     parts.append(f'<text x="2" y="{h-2}" font-size="8" fill="#444" '
-                 f'font-family="sans-serif">{ymin:.3g}</text>')
+                 f'font-family="sans-serif">{_esc(_humanize_name(ymin, panel_metric))}</text>')
 
     # 90% saturation reference line (only on the cpu_percent panel)
     if is_cpu_panel:
@@ -771,9 +868,9 @@ def _plot_by_node_panel(x0, y0, w, h, node_vals, title, better):
             return bot - ((v - lo) / (hi - lo)) * (bot - top)
     # y range labels
     parts.append(f'<text x="2" y="{top+4}" font-size="8" fill="#444" '
-                 f'font-family="sans-serif">{vmax:.3g}</text>')
+                 f'font-family="sans-serif">{_esc(_humanize_name(vmax, title))}</text>')
     parts.append(f'<text x="2" y="{bot}" font-size="8" fill="#444" '
-                 f'font-family="sans-serif">{vmin:.3g}</text>')
+                 f'font-family="sans-serif">{_esc(_humanize_name(vmin, title))}</text>')
     n = len(items)
     padx = 14
     slot = (w - 2 * padx) / float(n)
@@ -802,6 +899,10 @@ def _plot_by_node_panel(x0, y0, w, h, node_vals, title, better):
         parts.append(f'<line x1="{bx:.1f}" y1="{ypos(med):.2f}" '
                      f'x2="{bx+bw:.1f}" y2="{ypos(med):.2f}" stroke="{col}" '
                      f'stroke-width="1.3"/>')
+        # human-readable median value just above the box's top whisker
+        parts.append(f'<text x="{cx:.1f}" y="{ypos(vmx)-2:.2f}" font-size="6.5" '
+                     f'fill="{col}" font-family="sans-serif" '
+                     f'text-anchor="middle">{_esc(_humanize_name(med, title))}</text>')
         # node label below, rotated to avoid overlap
         ly = h - 4
         parts.append(f'<text x="{cx:.1f}" y="{ly:.1f}" font-size="7.5" '
