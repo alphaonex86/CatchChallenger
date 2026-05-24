@@ -434,6 +434,7 @@ def main():
         if bh.acquire_network_lock("benchmarkserversave") is None:
             return 3
     comment = args.comment
+    maxtime = args.maxtime
     bin_path = build()
     if bin_path is None: return 2
     run_bin = setup_run_dir(bin_path)
@@ -501,9 +502,21 @@ def main():
 
     flat_local = {}
     per_tool   = {}    # node_label -> { tool -> {status, metrics} }
+    t_batch_start = time.monotonic()
+    truncated = False     # --maxtime stopped the batch before every node ran
+    prev_label = None
     for node in nodes:
         label = node["label"]
+        # --maxtime: at the node-loop boundary, stop launching more nodes
+        # once the overall cap is exceeded; finalise with what completed.
+        if bh.maxtime_reached(t_batch_start, maxtime, prev_label):
+            truncated = True
+            break
+        prev_label = label
         per_tool[label] = {}
+        # Per-node budget: restart the clock so a slow earlier node never
+        # starves this one (see FleetDeadline).
+        deadline.start_node(label)
         if deadline.reached():
             per_tool[label] = deadline.skip_node(label, all_profilers,
                                                  progress)
@@ -581,9 +594,16 @@ def main():
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
                                         node.get("ssh_port", 22))
+        if node["label"] == "local":
+            cc_path, dp_path = RUN_DIR, DATAPACK_PATH
+        else:
+            wd = node.get("work_dir") or "/tmp/cc-bench-serversave"
+            cc_path, dp_path = wd, os.path.join(wd, "datapack")
         pr = hr.PlatformRecord("benchmarkserversave", batch_id,
                                node["label"], runner=runner,
-                               arch_hint=node.get("arch")).collect()
+                               arch_hint=node.get("arch")).collect(
+                                   cc_binary_path=cc_path,
+                                   datapack_path=dp_path)
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
             # Single-workload benchmark -> emit one "default" slice
@@ -605,9 +625,9 @@ def main():
         if out_p is not None:
             print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
-    # Cross-platform champion compare. SKIP on a --node run: decision +
-    # champion promotion need the WHOLE fleet.
-    if not bh.node_filter_active():
+    # Cross-platform champion compare. SKIP on a --node run OR a --maxtime
+    # truncated run: decision + champion promotion need the WHOLE fleet.
+    if not bh.node_filter_active() and not truncated:
         champ = bh.load_champion("benchmarkserversave")
         decision, summary = bh.decide_multi_node(champ, rec)
         bh.print_decision("benchmarkserversave", decision, summary)

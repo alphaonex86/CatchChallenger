@@ -708,8 +708,19 @@ def _render_session_chart(benchmark, batches):
     from the per-benchmark champion.json."""
     if not batches:
         return None
+    # A cross-node chart with a single node carries no cross-node signal
+    # (can't compare platforms, can't drive KEEP/DISCARD) and only eats
+    # visual space -- skip it. Count distinct nodes across the batches.
+    nodes = {d.get("node") or "unknown"
+             for _ts, _cs, docs in batches for d in docs}
+    if len(nodes) < 2:
+        return None
     champ_short = _champion_commit(benchmark)
     series, commits, better_map = _extract_session_series(batches, champ_short)
+    # A per-node line is only a trend worth charting if it has >=3 points;
+    # a node with <3 values (e.g. only "local" reported b128_net_rx_bytes
+    # once or twice) is a lone dot that can't drive a decision -- drop it.
+    series = {lbl: pts for lbl, pts in series.items() if len(pts) >= 3}
     if not series:
         return None
 
@@ -923,9 +934,21 @@ def _render_by_node_chart(benchmark, records):
     metrics, better = _by_node_metrics(records)
     if not metrics:
         return None
-    mkeys = sorted(metrics.keys())
-    npanels = len(mkeys)
     nnodes = len({n for mv in metrics.values() for n in mv})
+    # A by-execution-node comparison with a single node is just one boxplot
+    # per panel -- nothing to compare against, and it wastes chart space.
+    # Skip it until at least two nodes have history.
+    if nnodes < 2:
+        return None
+    # Drop any metric panel whose data covers <50% of the nodes: a category
+    # reported by only "local" (or only "rpi4", ...) can't drive a cross-node
+    # decision and just eats vertical space. Keep panels seen on at least half
+    # the nodes.
+    min_nodes = (nnodes + 1) // 2   # ceil(nnodes/2): >=50% of the nodes
+    mkeys = sorted(mk for mk in metrics if len(metrics[mk]) >= min_nodes)
+    if not mkeys:
+        return None
+    npanels = len(mkeys)
     # base height + bottom band for the rotated node labels
     panel_h = PANEL_H + 24
     height = TOP_MARGIN + npanels * (panel_h + PANEL_GAP) + 10
@@ -994,13 +1017,15 @@ def regenerate(benchmark, stamp=None):
                 f.write(svg)
             written.append(cand_p)
 
-    # 2) cross-node session chart (one chart, all platforms)
+    # 2) cross-node session chart (one chart, all platforms). Returns None
+    # when fewer than 2 nodes have history -- a single-node chart carries no
+    # cross-node signal. Remove any stale file so it doesn't linger.
     batches = _group_by_batch(records)
     svg = _render_session_chart(benchmark, batches)
+    outdir = os.path.join(bh.RESULTS, benchmark)
+    champ_p = os.path.join(outdir, "champion.svg")
     if svg:
-        outdir = os.path.join(bh.RESULTS, benchmark)
         os.makedirs(outdir, exist_ok=True)
-        champ_p = os.path.join(outdir, "champion.svg")
         with open(champ_p, "w") as f:
             f.write(svg)
         written.append(champ_p)
@@ -1009,18 +1034,22 @@ def regenerate(benchmark, stamp=None):
             with open(cand_p, "w") as f:
                 f.write(svg)
             written.append(cand_p)
+    elif os.path.isfile(champ_p):
+        os.remove(champ_p)
 
     # 3) by-execution-node comparison (log scale, sorted, boxplot). Always
     # current (no candidate freeze): it is a cross-node snapshot of the
     # latest value per node, regenerated from the same history JSONs.
+    # Returns None for a single node (nothing to compare); drop stale file.
     svg = _render_by_node_chart(benchmark, records)
+    bynode_p = os.path.join(outdir, "champion-by-execution-node.svg")
     if svg:
-        outdir = os.path.join(bh.RESULTS, benchmark)
         os.makedirs(outdir, exist_ok=True)
-        p = os.path.join(outdir, "champion-by-execution-node.svg")
-        with open(p, "w") as f:
+        with open(bynode_p, "w") as f:
             f.write(svg)
-        written.append(p)
+        written.append(bynode_p)
+    elif os.path.isfile(bynode_p):
+        os.remove(bynode_p)
 
     return written
 

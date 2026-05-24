@@ -624,6 +624,14 @@ Rules:
 * `champion.svg` and `candidate-<stamp>.svg` are BOTH local-only
   (all of `results/` is git-ignored): regenerable from the local
   history JSONs, which remain the source of truth.
+* Skip charts that can't drive a cross-node decision (they only waste
+  space); regenerate must delete a now-skipped stale SVG:
+  * cross-node `champion.svg` + `champion-by-execution-node.svg`:
+    skip entirely when <2 distinct nodes have history.
+  * `champion-by-execution-node.svg`: drop any metric panel whose data
+    covers <50% of the nodes (ceil(n/2)); skip the chart if no panel left.
+  * cross-node `champion.svg`: drop any per-node series with <3 points
+    (a lone dot is no trend); skip the chart if no series left.
 
 ### Generating charts manually
 
