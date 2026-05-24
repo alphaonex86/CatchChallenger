@@ -276,8 +276,26 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
                 if(!profile.forcedskin.empty())
                     skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
                 else
-                    skinId=rand()%skinsList.size();
-                uint8_t monstergroupId=rand()%profile.monstergroup.size();
+                {
+                    // Skin count from the parsed datapack (CommonDatapack::
+                    // get_skins()), the single client-side source -- the
+                    // datapack CACHE is server-only, the client never sees it.
+                    // It can be 0: a headless server ships skin/fighter/ as
+                    // empty folders and datapack sync transfers files only, so
+                    // the client receives no skin subdirs. Guard rand()%0
+                    // (SIGFPE); skinId 0 is still valid (the server validates
+                    // against ITS own skin count).
+                    const size_t skinCount=CatchChallenger::CommonDatapack::commonDatapack.get_skins().size();
+                    if(skinCount==0)
+                        skinId=0;
+                    else
+                        skinId=rand()%skinCount;
+                }
+                uint8_t monstergroupId;
+                if(profile.monstergroup.empty())
+                    monstergroupId=0;
+                else
+                    monstergroupId=rand()%profile.monstergroup.size();
                 std::cerr << "DEBUG: about to addCharacter charactersGroupIndex="
                           << (int)charactersGroupIndex << " profileIndex=" << (int)profileIndex
                           << " skinId=" << (int)skinId << " monstergroupId="
@@ -338,15 +356,9 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
     //load the profil list
     {
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());//load always after the rates
-        //load the skins list
-        QDir dir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/skin/fighter/"));
-        QFileInfoList entryList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
-        int index=0;
-        while(index<entryList.size())
-        {
-            skinsList << entryList.at(index);
-            index++;
-        }
+        // No separate skin folder-scan: the skin list is whatever
+        // parseDatapack() loaded into CommonDatapack::get_skins() (used at
+        // character creation, guarded against an empty list).
     }
 
     if(client->charactersList.size()<=0 || charactersGroupIndex>=client->charactersList.size() || client->charactersList.at(charactersGroupIndex).empty())
@@ -369,8 +381,22 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
                 if(!profile.forcedskin.empty())
                     skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
                 else
-                    skinId=rand()%skinsList.size();
-                uint8_t monstergroupId=rand()%profile.monstergroup.size();
+                {
+                    // Skin count from the parsed datapack (get_skins(), the
+                    // client-side source; the datapack cache is server-only).
+                    // 0 when the headless server ships skin/fighter/ as empty
+                    // folders (sync transfers files only) -- guard rand()%0.
+                    const size_t skinCount=CatchChallenger::CommonDatapack::commonDatapack.get_skins().size();
+                    if(skinCount==0)
+                        skinId=0;
+                    else
+                        skinId=rand()%skinCount;
+                }
+                uint8_t monstergroupId;
+                if(profile.monstergroup.empty())
+                    monstergroupId=0;
+                else
+                    monstergroupId=rand()%profile.monstergroup.size();
                 client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo.toStdString(),monstergroupId,skinId);
                 numberOfStartCreatingCharacter++;
                 emit_numberOfStartCreatingCharacter(numberOfStartCreatingCharacter);
