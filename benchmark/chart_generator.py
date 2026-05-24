@@ -670,23 +670,19 @@ def _render_session_chart(benchmark, batches):
 
 
 def _by_node_metrics(records):
-    """For the by-execution-node comparison: take each node's MOST RECENT
-    history record and pull out every metric value. Returns
-    ({metric_label -> {node -> value}}, {metric_label -> better}).
+    """For the by-execution-node comparison: collect, per metric category and
+    per node, the LIST of every value across the node's history (so each node
+    gets a real distribution to box-plot). Returns
+    ({metric -> {node -> [values]}}, {metric -> better}).
 
-    metric_label is the flat metric name (results.<tool>.metrics.<name>, e.g.
-    b128_invol_ctx) or "<slice>.<name>" for sub-benchmark metrics -- the same
-    data the per-benchmark champion.svg plots, but indexed metric->node so we
-    can compare systems against each other on one axis."""
-    latest = {}   # node -> (started_utc, doc)
-    for doc, _p in records:
-        node = doc.get("node") or "unknown"
-        ts = doc.get("started_utc", "")
-        if node not in latest or ts > latest[node][0]:
-            latest[node] = (ts, doc)
+    metric is the flat name (results.<tool>.metrics.<name>, e.g.
+    b128_invol_ctx) or the slice-normalised "b<N>_<name>" for sub-benchmark
+    metrics -- same data list as champion.svg, indexed metric->node->values."""
     out = {}
     better = {}
-    for node, (_ts, doc) in latest.items():
+    for doc, _p in records:
+        node = doc.get("node") or "unknown"
+        seen = set()   # flat metric keys already recorded for THIS doc
         for tool, blk in (doc.get("results") or {}).items():
             if not isinstance(blk, dict):
                 continue
@@ -700,17 +696,17 @@ def _by_node_metrics(records):
                     v = float(v)
                 except (TypeError, ValueError):
                     continue
-                out.setdefault(mname, {})[node] = v
+                out.setdefault(mname, {}).setdefault(node, []).append(v)
+                seen.add(mname)
                 if mname not in better and m.get("better"):
                     better[mname] = m["better"]
             for slice_label, smetrics in (blk.get("subbenchmarks") or {}).items():
                 if not isinstance(smetrics, dict):
                     continue
-                # Normalise the slice to the flat "b<N>_<metric>" naming used
-                # by the champion comparison (e.g. "128-bots" -> "b128_"),
-                # so a subbench value DEDUPES against the matching flat metric
-                # instead of producing a second near-identical panel. Adds
-                # only subbench-exclusive metrics (e.g. cpu_percent).
+                # Normalise slice to the flat "b<N>_<metric>" naming so a
+                # subbench value DEDUPES against the matching flat metric in
+                # this same doc; adds only subbench-exclusive metrics (e.g.
+                # cpu_percent).
                 mnum = re.match(r"^(\d+)", slice_label)
                 prefix = ("b" + mnum.group(1)) if mnum else _slug(slice_label)
                 for mname, m in smetrics.items():
@@ -726,128 +722,120 @@ def _by_node_metrics(records):
                     except (TypeError, ValueError):
                         continue
                     key = f"{prefix}_{mname}"
-                    slot = out.setdefault(key, {})
-                    if node in slot:   # already supplied by the flat metric
+                    if key in seen:   # flat already recorded it this doc
                         continue
-                    slot[node] = v
+                    out.setdefault(key, {}).setdefault(node, []).append(v)
                     if key not in better and m.get("better"):
                         better[key] = m["better"]
     return out, better
 
 
 def _plot_by_node_panel(x0, y0, w, h, node_vals, title, better):
-    """One metric panel comparing EXECUTION NODES. x = nodes sorted by value
-    (ascending = best-first for a lower=better metric), y = value on a LOG
-    scale (linear fallback if any value <= 0, since log10 needs > 0). Each
-    node is a dot + short label; a right-of-panel boxplot summarises the
-    spread, with the value list collapsed into +-10% clusters."""
+    """One metric CATEGORY panel: ONE boxplot per execution node (the
+    distribution of that node's history values), boxes laid out side-by-side
+    and SORTED by median (best-first for lower=better), each labelled with the
+    node name, on a LOG y-scale (linear fallback when any value <= 0). Lets
+    you compare systems within the category at a glance."""
     parts = [f'<g transform="translate({x0},{y0})">']
     parts.append(f'<rect x="0" y="0" width="{w}" height="{h}" '
                  f'fill="white" stroke="#888" stroke-width="0.5"/>')
-    items = sorted(node_vals.items(), key=lambda kv: kv[1])  # ascending value
-    vals = [v for _n, v in items]
+    # one (node -> sorted values) entry per node, sorted by median
+    items = []
+    for node, vals in node_vals.items():
+        sv = sorted(vals)
+        if sv:
+            items.append((node, sv, _quantile(sv, 0.50)))
+    items.sort(key=lambda t: t[2])
+    if not items:
+        parts.append("</g>")
+        return "".join(parts)
+    allv = [v for _n, sv, _m in items for v in sv]
     title_txt = title + (f" ({better}=better)" if better else "")
-    # log only when every value is strictly positive
-    uselog = all(v > 0 for v in vals)
+    uselog = all(v > 0 for v in allv)
     parts.append(f'<text x="4" y="-4" font-size="11" font-family="sans-serif">'
                  f'{_esc(title_txt)}{"  [log]" if uselog else ""}</text>')
-    vmin = min(vals); vmax = max(vals)
+    vmin = min(allv); vmax = max(allv)
+    top = 14; bot = h - 38     # reserve a bottom band for node labels
     if uselog:
         lmin = math.log10(vmin); lmax = math.log10(vmax)
         if lmin == lmax:
             lmin -= 0.5; lmax += 0.5
         def ypos(v):
-            return h - ((math.log10(v) - lmin) / (lmax - lmin)) * (h - 14) - 6
+            return bot - ((math.log10(v) - lmin) / (lmax - lmin)) * (bot - top)
     else:
         if vmin == vmax:
             vmin -= 1.0; vmax += 1.0
         pad = (vmax - vmin) * 0.08
         lo = vmin - pad; hi = vmax + pad
         def ypos(v):
-            return h - ((v - lo) / (hi - lo)) * (h - 14) - 6
+            return bot - ((v - lo) / (hi - lo)) * (bot - top)
     # y range labels
-    parts.append(f'<text x="2" y="10" font-size="8" fill="#444" '
+    parts.append(f'<text x="2" y="{top+4}" font-size="8" fill="#444" '
                  f'font-family="sans-serif">{vmax:.3g}</text>')
-    parts.append(f'<text x="2" y="{h-2}" font-size="8" fill="#444" '
+    parts.append(f'<text x="2" y="{bot}" font-size="8" fill="#444" '
                  f'font-family="sans-serif">{vmin:.3g}</text>')
     n = len(items)
-    def xpos(i):
-        if n == 1:
-            return w / 2.0
-        return (i / float(n - 1)) * (w - 40) + 20
-    # connecting ramp + dots + node labels
-    pts_str = " ".join(f"{xpos(i):.1f},{ypos(v):.2f}"
-                       for i, (_n, v) in enumerate(items))
-    parts.append(f'<polyline points="{pts_str}" fill="none" stroke="#1f77b4" '
-                 f'stroke-width="1"/>')
+    padx = 14
+    slot = (w - 2 * padx) / float(n)
+    bw = min(slot * 0.6, 26)
     i = 0
     while i < n:
-        node, v = items[i]
-        cx = xpos(i); cy = ypos(v)
-        parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.2f}" r="2.5" '
-                     f'fill="#1f77b4"/>')
-        # node label, rotated to avoid overlap
-        parts.append(f'<text x="{cx:.1f}" y="{h-1:.1f}" font-size="7" '
-                     f'fill="#333" font-family="sans-serif" '
-                     f'transform="rotate(-30 {cx:.1f} {h-1:.1f})">'
+        node, sv, _med = items[i]
+        col = _LINE_COLOURS[i % len(_LINE_COLOURS)]
+        cx = padx + (i + 0.5) * slot
+        bx = cx - bw / 2.0
+        q1 = _quantile(sv, 0.25); med = _quantile(sv, 0.50)
+        q3 = _quantile(sv, 0.75)
+        vmn = sv[0]; vmx = sv[-1]
+        # whisker + caps
+        parts.append(f'<line x1="{cx:.1f}" y1="{ypos(vmx):.2f}" x2="{cx:.1f}" '
+                     f'y2="{ypos(vmn):.2f}" stroke="{col}" stroke-width="0.7"/>')
+        for cap in (vmn, vmx):
+            parts.append(f'<line x1="{bx+2:.1f}" y1="{ypos(cap):.2f}" '
+                         f'x2="{bx+bw-2:.1f}" y2="{ypos(cap):.2f}" '
+                         f'stroke="{col}" stroke-width="0.7"/>')
+        # box Q1..Q3 + median
+        by = ypos(q3); box_h = ypos(q1) - ypos(q3)
+        parts.append(f'<rect x="{bx:.1f}" y="{by:.2f}" width="{bw:.1f}" '
+                     f'height="{max(box_h,0.5):.2f}" fill="{col}" '
+                     f'fill-opacity="0.22" stroke="{col}" stroke-width="0.8"/>')
+        parts.append(f'<line x1="{bx:.1f}" y1="{ypos(med):.2f}" '
+                     f'x2="{bx+bw:.1f}" y2="{ypos(med):.2f}" stroke="{col}" '
+                     f'stroke-width="1.3"/>')
+        # node label below, rotated to avoid overlap
+        ly = h - 4
+        parts.append(f'<text x="{cx:.1f}" y="{ly:.1f}" font-size="7.5" '
+                     f'fill="#333" font-family="sans-serif" text-anchor="end" '
+                     f'transform="rotate(-35 {cx:.1f} {ly:.1f})">'
                      f'{_esc(node)}</text>')
         i += 1
-    # right boxplot over node values + +-10% clustered value labels
-    svals = sorted(vals)
-    bx = w + 16; bw = 16; cxb = bx + bw / 2.0
-    q1 = _quantile(svals, 0.25); med = _quantile(svals, 0.50)
-    q3 = _quantile(svals, 0.75)
-    parts.append(f'<text x="{bx}" y="-4" font-size="8" fill="#444" '
-                 f'font-family="sans-serif">spread</text>')
-    parts.append(f'<line x1="{cxb:.1f}" y1="{ypos(svals[-1]):.2f}" '
-                 f'x2="{cxb:.1f}" y2="{ypos(svals[0]):.2f}" stroke="#666" '
-                 f'stroke-width="0.8"/>')
-    by = ypos(q3); box_h = ypos(q1) - ypos(q3)
-    parts.append(f'<rect x="{bx:.1f}" y="{by:.2f}" width="{bw}" '
-                 f'height="{max(box_h,0.5):.2f}" fill="#1f77b4" '
-                 f'fill-opacity="0.18" stroke="#1f77b4" stroke-width="0.8"/>')
-    parts.append(f'<line x1="{bx:.1f}" y1="{ypos(med):.2f}" x2="{bx+bw:.1f}" '
-                 f'y2="{ypos(med):.2f}" stroke="#1f77b4" stroke-width="1.4"/>')
-    lx = bx + bw + 5; last_ly = None
-    for cval, cnt, _lo, _hi in _cluster_values(vals):
-        ly = ypos(cval)
-        if last_ly is not None and abs(ly - last_ly) < 9:
-            ly = last_ly + 9
-        last_ly = ly
-        parts.append(f'<line x1="{bx+bw:.1f}" y1="{ypos(cval):.2f}" '
-                     f'x2="{lx-1:.1f}" y2="{ly:.2f}" stroke="#999" '
-                     f'stroke-width="0.5"/>')
-        txt = f"{cval:.3g}" + (f" ×{cnt}" if cnt > 1 else "")
-        parts.append(f'<text x="{lx:.1f}" y="{ly+3:.1f}" font-size="8" '
-                     f'fill="#333" font-family="sans-serif">{_esc(txt)}</text>')
     parts.append("</g>")
     return "".join(parts)
 
 
 def _render_by_node_chart(benchmark, records):
-    """champion-by-execution-node.svg: one panel per metric (same data list
-    as champion.svg), comparing every execution node on a LOG scale, nodes
-    sorted by value, with a boxplot of the spread. Lets you see at a glance
-    how each system ranks against the others per metric."""
+    """champion-by-execution-node.svg: one panel per metric CATEGORY (same
+    data list as champion.svg, e.g. requests_per_s / cpu_percent /
+    b128_invol_ctx), each holding one boxplot PER execution node, sorted by
+    median on a log scale and labelled by node -- compare systems by
+    category."""
     metrics, better = _by_node_metrics(records)
     if not metrics:
         return None
     mkeys = sorted(metrics.keys())
     npanels = len(mkeys)
     nnodes = len({n for mv in metrics.values() for n in mv})
-    # Grow the panel so the right-side per-node value labels (nudged ~9px
-    # apart, up to nnodes of them) and the rotated x-axis node labels don't
-    # overflow.
-    panel_h = max(PANEL_H, nnodes * 9 + 28)
+    # base height + bottom band for the rotated node labels
+    panel_h = PANEL_H + 24
     height = TOP_MARGIN + npanels * (panel_h + PANEL_GAP) + 10
-    width = LEFT_MARGIN + PANEL_W + BOX_W + 20
+    width = LEFT_MARGIN + PANEL_W + 20
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
             f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
     body = [f'<text x="{LEFT_MARGIN}" y="18" font-size="13" '
             f'font-family="sans-serif" font-weight="bold">'
-            f'{_esc(benchmark)} -- by execution node '
-            f'(log scale, {nnodes} node(s), sorted)</text>']
+            f'{_esc(benchmark)} -- by execution node, by category '
+            f'(boxplot per node, log scale, sorted; {nnodes} node(s))</text>']
     y = TOP_MARGIN
     for mk in mkeys:
         body.append(_plot_by_node_panel(LEFT_MARGIN, y, PANEL_W, panel_h,
