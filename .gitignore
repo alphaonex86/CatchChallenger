@@ -213,3 +213,10 @@ benchmark/config.db
 
 vgcore.*
 benchmark/exited
+
+# ── security/ scan workspace: track the tooling (server.py), not the
+#    transient scan output / notes / caches.
+security/*.log
+security/*.txt
+security/SECURITY-IA.md
+security/__pycache__/
