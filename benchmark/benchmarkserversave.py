@@ -605,17 +605,22 @@ def main():
         if out_p is not None:
             print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
-    # Cross-platform champion compare
-    champ = bh.load_champion("benchmarkserversave")
-    decision, summary = bh.decide_multi_node(champ, rec)
-    bh.print_decision("benchmarkserversave", decision, summary)
+    # Cross-platform champion compare. SKIP on a --node run: decision +
+    # champion promotion need the WHOLE fleet.
+    if bh.node_filter_active():
+        print(_color(bh.C_YELLOW, "[decision] skipped — partial run (--node); "
+              "decision/champion need the full fleet"))
+    else:
+        champ = bh.load_champion("benchmarkserversave")
+        decision, summary = bh.decide_multi_node(champ, rec)
+        bh.print_decision("benchmarkserversave", decision, summary)
 
-    if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkserversave")
-        bh.write_record(ch_p, rec)
-        print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
+        if decision == "KEEP":
+            ch_p = bh.champion_path("benchmarkserversave")
+            bh.write_record(ch_p, rec)
+            print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
-    hr.attach_decision("benchmarkserversave", batch_id, decision)
+        hr.attach_decision("benchmarkserversave", batch_id, decision)
     import chart_generator
     for cp in chart_generator.regenerate("benchmarkserversave", cand_stamp):
         print(_color(bh.C_CYAN, f"[chart] {cp}"))

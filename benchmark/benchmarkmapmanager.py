@@ -645,17 +645,23 @@ def main():
             print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
     # Cross-platform champion compare — aggregates every node's metrics,
-    # not just the local host.
-    champ = bh.load_champion("benchmarkmapmanager")
-    decision, summary = bh.decide_multi_node(champ, rec)
-    bh.print_decision("benchmarkmapmanager", decision, summary)
+    # not just the local host. SKIP entirely on a --node run: the decision +
+    # champion promotion need the WHOLE fleet, a partial run can't confirm a
+    # change helps/regresses everywhere.
+    if bh.node_filter_active():
+        print(_color(bh.C_YELLOW, "[decision] skipped — partial run (--node); "
+              "decision/champion need the full fleet"))
+    else:
+        champ = bh.load_champion("benchmarkmapmanager")
+        decision, summary = bh.decide_multi_node(champ, rec)
+        bh.print_decision("benchmarkmapmanager", decision, summary)
 
-    if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkmapmanager")
-        bh.write_record(ch_p, rec)
-        print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
+        if decision == "KEEP":
+            ch_p = bh.champion_path("benchmarkmapmanager")
+            bh.write_record(ch_p, rec)
+            print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
-    hr.attach_decision("benchmarkmapmanager", batch_id, decision)
+        hr.attach_decision("benchmarkmapmanager", batch_id, decision)
     import chart_generator
     for cp in chart_generator.regenerate("benchmarkmapmanager", cand_stamp):
         print(_color(bh.C_CYAN, f"[chart] {cp}"))

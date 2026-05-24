@@ -94,6 +94,14 @@ def node_allowed(label, arch):
     return bool({str(label).lower(), str(arch).lower()} & _NODE_FILTER)
 
 
+def node_filter_active():
+    """True when a --node filter restricts this run to a subset of the fleet.
+    The KEEP/DISCARD/ESCALATE decision + champion promotion need the WHOLE
+    fleet, so callers must skip them when this is True (a partial run can't
+    confirm a change helps/regresses everywhere)."""
+    return _NODE_FILTER is not None
+
+
 def rerun_command():
     """The shell command that re-runs JUST this benchmark, echoed in every
     error banner so the operator can reproduce a single failing benchmark
