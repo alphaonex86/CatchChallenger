@@ -17,6 +17,7 @@ import json
 import os
 import random
 import re
+import shlex
 import shutil
 import statistics
 import subprocess
@@ -68,6 +69,84 @@ C_CYAN   = "\033[96m"
 C_RESET  = "\033[0m"
 
 
+# ---- --node filter -------------------------------------------------------
+# Optional per-invocation restriction to specific execution nodes. None =
+# run every benchmark-enabled node (the default). Set once from each
+# benchmark's main() out of parse_bench_args().node. A node matches when its
+# execution_nodes[].label OR its arch equals one of the tokens; the literal
+# token 'local' keeps the host baseline.
+_NODE_FILTER = None
+
+
+def set_node_filter(tokens):
+    """Restrict benchmark runs to the named nodes (list of label/arch strings,
+    or 'local'); None/empty restores the default 'every node'."""
+    global _NODE_FILTER
+    _NODE_FILTER = set(t.lower() for t in tokens) if tokens else None
+
+
+def node_allowed(label, arch):
+    """True when (label, arch) passes the active --node filter. No filter ->
+    everything allowed; otherwise the node's label OR arch must match a
+    token."""
+    if _NODE_FILTER is None:
+        return True
+    return bool({str(label).lower(), str(arch).lower()} & _NODE_FILTER)
+
+
+def rerun_command():
+    """The shell command that re-runs JUST this benchmark, echoed in every
+    error banner so the operator can reproduce a single failing benchmark
+    without re-running the whole fleet.  Derived from sys.argv (the script
+    path + the flags it was launched with -- only --comment is supported)."""
+    script = sys.argv[0] or "benchmark*.py"
+    parts = ["python3", script] + sys.argv[1:]
+    return " ".join(shlex.quote(p) for p in parts)
+
+
+def _error_banner(colour, headline, detail_sout=None, detail_serr=None):
+    """Shared error/skip banner: a coloured headline + the captured output +
+    the re-run command.  Always flushed to stderr so it survives a `tee`."""
+    bar = "=" * 72
+    print(f"{colour}{bar}{C_RESET}", file=sys.stderr)
+    print(f"{colour}{headline}{C_RESET}", file=sys.stderr)
+    print(f"{colour}{bar}{C_RESET}", file=sys.stderr)
+    if detail_sout and detail_sout.strip():
+        print(detail_sout)
+    if detail_serr and detail_serr.strip():
+        print(detail_serr, file=sys.stderr)
+    print(f"{C_CYAN}re-run just this benchmark:{C_RESET} {rerun_command()}",
+          file=sys.stderr)
+    print(f"{colour}{bar}{C_RESET}", file=sys.stderr, flush=True)
+
+
+def print_local_build_error(label, stage, sout, serr):
+    """Print the captured cmake/compiler output of a FAILED local build under
+    a clear banner.  A local compile failure aborts the whole benchmark*.py
+    (the caller returns non-zero), so the operator must see the actual error
+    here rather than a bare '[build] FAILED'.  `stage` is e.g. 'cmake
+    configure' / 'cmake build'; sout/serr are the captured streams."""
+    _error_banner(
+        C_RED,
+        f"[{label}] LOCAL {stage} FAILED — aborting benchmark "
+        f"(compilation error below)",
+        sout, serr)
+
+
+def print_node_error(benchmark, node_label, status, detail):
+    """Print the FULL error of a remote/infra failure on ONE exec node under a
+    banner (the live progress line only carries a truncated reason).  `status`
+    is 'SKIP' (infra: compile/push/bring-up/server-launch — node unmeasured,
+    not a regression) or 'FAIL' (benchmark ran but produced bad data).  The
+    fleet continues on other nodes; the banner shows the actual cause + the
+    re-run command for this benchmark."""
+    colour = C_YELLOW if status == "SKIP" else C_RED
+    _error_banner(
+        colour,
+        f"[{benchmark}] {node_label} [{status}]",
+        detail_serr=detail)
+
+
 # ---- exec node enumeration -----------------------------------------------
 
 def host_arch():
@@ -116,6 +195,11 @@ def benchmark_exec_nodes():
             if not ex.get("enabled", False):
                 continue
             if not ex.get("benchmark", False):
+                continue
+            # --node filter: skip non-matching nodes BEFORE the loadavg SSH
+            # probe so a narrowed run doesn't waste time reaching boxes it
+            # won't use.
+            if not node_allowed(ex.get("label"), node.get("arch")):
                 continue
             check_la = ex.get("checkloadaverage", True)
             if check_la:
@@ -1250,6 +1334,11 @@ def parse_bench_args(argv=None):
                          "the tmpfs profile dir. Bare --profile (or "
                          "--profile all) runs BOTH callgrind and perf; pass a "
                          "single tool to narrow.")
+    ap.add_argument("--node", action="append", default=None, metavar="LABEL|ARCH",
+                    help="restrict the run to specific execution node(s) by "
+                         "execution_nodes[].label or arch (repeatable; "
+                         "'local' = host baseline only). Default: every "
+                         "benchmark-enabled node.")
     return ap.parse_args(argv)
 
 

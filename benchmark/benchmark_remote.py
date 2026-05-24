@@ -658,20 +658,93 @@ def compile_node_has_qt6(compile_node):
 
 # ---- exec-node staging ---------------------------------------------------
 
+# Media extensions a headless SERVER never needs (no sound, no rendering).
+# Subtracted from CATCHCHALLENGER_EXTENSION_ALLOWED to get the data subset.
+_DATAPACK_MEDIA_EXT = {"png", "jpg", "jpeg", "gif", "bmp", "webp", "ico",
+                       "svg", "tga", "psd",                       # images
+                       "ogg", "opus", "wav", "mp3", "mid", "midi",
+                       "flac", "aac", "m4a", "mod", "xm", "s3m"}  # audio
+# Fallback if GeneralVariable.hpp can't be read/parsed (keep the run working).
+_DATAPACK_KEEP_EXT_FALLBACK = ["tmx", "xml", "tsx", "js"]
+_DATAPACK_KEEP_EXT_CACHE = None
+
+
+def datapack_keep_extensions():
+    """The datapack extensions a headless server keeps, derived AT RUNTIME
+    from CATCHCHALLENGER_EXTENSION_ALLOWED in
+    general/base/GeneralVariable.hpp (the single source of truth for which
+    extensions a datapack may contain) minus the media subset. Parsed once
+    and memoized; falls back to the known data set if the header is
+    unreadable. Updating the #define automatically updates this list."""
+    global _DATAPACK_KEEP_EXT_CACHE
+    if _DATAPACK_KEEP_EXT_CACHE is not None:
+        return _DATAPACK_KEEP_EXT_CACHE
+    keep = None
+    hpp = os.path.join(REPO_ROOT, "general", "base", "GeneralVariable.hpp")
+    try:
+        with open(hpp, "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if "CATCHCHALLENGER_EXTENSION_ALLOWED" in line and "#define" in line:
+                    q1 = line.find('"')
+                    q2 = line.find('"', q1 + 1)
+                    if q1 != -1 and q2 != -1:
+                        allowed = [e.strip().lower()
+                                   for e in line[q1 + 1:q2].split(";")
+                                   if e.strip()]
+                        keep = [e for e in allowed
+                                if e not in _DATAPACK_MEDIA_EXT]
+                    break
+    except OSError as e:
+        print(f"[remote] WARN: cannot read {hpp}: {e}", file=sys.stderr)
+    if not keep:
+        keep = list(_DATAPACK_KEEP_EXT_FALLBACK)
+    _DATAPACK_KEEP_EXT_CACHE = keep
+    return keep
+
+
+def server_datapack_excludes():
+    """rsync args for a SERVER datapack push (headless: data files only).
+    Whitelist: keep the non-media allowed extensions
+    (datapack_keep_extensions(), loaded from GeneralVariable.hpp at runtime),
+    drop all else. Paired with rsync's --delete (always on for datapack) +
+    --delete-excluded so already-pushed media/strays are pruned too, not just
+    skipped.
+
+    `--include=*/` keeps rsync descending into every directory, so the full
+    tree is recreated even where a folder held only excluded files -- in
+    particular skin/fighter/ survives as EMPTY folders, which a no-cache
+    (XML-parse) boot enumerates to build the fighter-skin list. The trailing
+    `--exclude=*` drops images (png/jpg/gif), audio (ogg/opus) and anything
+    outside CATCHCHALLENGER_EXTENSION_ALLOWED in one rule."""
+    # Prune .git before --include=*/ so the source datapack's git checkout
+    # isn't recreated as hundreds of empty folders. First-match-wins.
+    args = ["--delete-excluded", "--exclude=.git", "--exclude=.git/",
+            "--include=*/"]
+    for ext in datapack_keep_extensions():
+        args.append(f"--include=*.{ext}")
+    args.append("--exclude=*")
+    return args
+
+
 def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
-                           timeout=600):
+                           timeout=600, server_mode=False):
     """rsync a local datapack directory to exec_node's work_dir/<remote_subdir>.
 
     Used by benchmarks that need the datapack on the exec node (serversave,
-    botactions). Returns (rc, message)."""
+    botactions). Returns (rc, message).
+
+    `server_mode` (default False) pushes the datapack verbatim. True strips
+    audio/images via server_datapack_excludes() -- the server is headless and
+    never needs them (see server/CLAUDE.md)."""
     eu  = exec_node["user"]
     eh  = exec_node["host"]
     ep  = exec_node.get("port", 22)
     ewd = exec_node["work_dir"]
     ssh_run(eu, eh, ep, f"mkdir -p {shlex.quote(ewd)}", timeout=15)
     dst = f"{ewd}/{remote_subdir}"
+    extra = server_datapack_excludes() if server_mode else None
     return rsync_to(eu, eh, ep, local_datapack.rstrip("/") + "/", dst + "/",
-                    timeout=timeout)
+                    timeout=timeout, extra_args=extra)
 
 
 def _server_properties_xml(maincode, port, max_players=200):
@@ -755,8 +828,11 @@ def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
         return res
 
     ssh_run(user, host, port, f"mkdir -p {shlex.quote(gen)}", timeout=30)
+    # `server save` parses the XML datapack (no cache yet) -> headless server
+    # push: strip audio/images, keep skin/fighter as empty folders.
     rc, msg = rsync_to(user, host, port, local_datapack.rstrip("/") + "/",
-                       f"{gen}/datapack/", timeout=timeout)
+                       f"{gen}/datapack/", timeout=timeout,
+                       extra_args=server_datapack_excludes())
     if rc != 0:
         res = (rc, None, f"cache-gen datapack rsync failed: {msg[:120]}")
         _CACHE_GEN_MEMO[label] = res
@@ -1334,10 +1410,12 @@ def start_server_popen(exec_node, bin_name):
     SSH Popen.  Python holds the connection open; no shell job-control, no
     exec/setsid/nohup required on the remote.
 
-    Returns (ssh_proc, pid_str) where ssh_proc is the live Popen and
+    Returns (ssh_proc, pid_str, reason) where ssh_proc is the live Popen and
     pid_str is the remote server PID (obtained via a second SSH call).
-    On failure returns (None, None).  Caller must eventually call
-    stop_server_popen(ssh_proc, exec_node, pid_str)."""
+    On success reason is "ok".  On failure returns (None, None, reason) where
+    reason classifies the cause (e.g. an illegal-instruction crash on a CPU
+    that lacks an instruction set the binary was built for).  Caller must
+    eventually call stop_server_popen(ssh_proc, exec_node, pid_str)."""
     eu  = exec_node["user"]
     eh  = exec_node["host"]
     ep  = exec_node.get("port", 22)
@@ -1357,6 +1435,16 @@ def start_server_popen(exec_node, bin_name):
     # keeps this Popen alive; closing it disconnects sshd which SIGHUPs the
     # remote shell.  We read the PID from server.pid (reliable regardless of
     # the binary's comm-name length, unlike pgrep -x).
+    #
+    # The cd/chmod/rm prep MUST be synchronous and finish before the launch:
+    # the `&` only backgrounds the single `./bin` command inside the braced
+    # group, NOT the whole `&&` chain.  Earlier this read
+    #   cd … && rm -f server.pid && ./bin … & echo $! >server.pid
+    # where the trailing `&` made the ENTIRE `&&` list async — so `rm -f
+    # server.pid` raced the foreground `echo $! >server.pid` and frequently
+    # deleted the pid file *after* it was written.  The server bound fine but
+    # the harness saw no pid and reported a bogus server-start-failed.  Bracing
+    # the launch keeps `rm` synchronous and captures the server's own pid.
     argv = ["ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes",
             "-o", "ServerAliveInterval=30",
             "-o", "StrictHostKeyChecking=no",
@@ -1364,16 +1452,20 @@ def start_server_popen(exec_node, bin_name):
             "-o", "LogLevel=ERROR",
             "-p", str(ep), _ssh_host(eu, eh),
             f"cd {shlex.quote(ewd)} && chmod +x {shlex.quote(bin_name)} && "
-            f"rm -f server.log server.pid && "
-            f"./{bin_name} </dev/null >server.log 2>&1 & "
-            f"echo $! >server.pid; wait"]
+            f"rm -f server.log server.pid server.rc && "
+            f"{{ ./{bin_name} </dev/null >server.log 2>&1 & "
+            f"echo $! >server.pid; wait $!; echo $? >server.rc; }}"]
     proc = subprocess.Popen(argv, stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL)
 
     # Connection 2: read the PID written by the launch shell — give the remote
-    # a moment to start and create server.pid.
+    # a moment to start and create server.pid.  Fall back to `pgrep -f` if the
+    # file is empty/missing: the remote login shell may be a sh variant whose
+    # `$!`/async-list semantics differ, and a server that actually bound must
+    # be detected regardless.  pgrep -f matches the full command line (the
+    # 26-char binary name is truncated to 15 in comm, so -x can't be used).
     pid = None
-    deadline = time.monotonic() + 5
+    deadline = time.monotonic() + 8
     while time.monotonic() < deadline:
         time.sleep(0.5)
         rc, sout, _ = ssh_run(
@@ -1383,11 +1475,90 @@ def start_server_popen(exec_node, bin_name):
         if cand.isdigit():
             pid = cand
             break
+        rc2, sout2, _ = ssh_run(
+            eu, eh, ep,
+            f"pgrep -f {shlex.quote('./' + bin_name)} 2>/dev/null | head -n1",
+            timeout=10)
+        cand2 = sout2.strip() if rc2 == 0 else ""
+        if cand2.isdigit():
+            pid = cand2
+            break
     if not pid or not pid.isdigit():
         proc.terminate()
         proc.wait()
-        return None, None
-    return proc, pid
+        return None, None, _classify_server_start_failure(exec_node)
+    return proc, pid, "ok"
+
+
+def _missing_baseline_isa(exec_node):
+    """Read the exec node's /proc/cpuinfo flags and return a comma-separated
+    list of the common x86 baseline ISA extensions the CPU lacks (in the
+    order a too-modern -march would emit them).  Empty string when nothing
+    relevant is missing or the arch is non-x86 (no flags line / different
+    feature names).  Pentium III reports no 'sse2'; an i486 reports no
+    'cmov'; an Atom/Geode may lack 'ssse3'/'sse4_1'."""
+    eu  = exec_node["user"]
+    eh  = exec_node["host"]
+    ep  = exec_node.get("port", 22)
+    _, flags_txt, _ = ssh_run(
+        eu, eh, ep,
+        "grep -m1 '^flags' /proc/cpuinfo 2>/dev/null | cut -d: -f2-",
+        timeout=10)
+    flags = set(flags_txt.split())
+    if not flags:
+        return ""
+    # Order matters: report the lowest missing tier first — that is the one a
+    # rebuild must target.  Names match /proc/cpuinfo (sse4_1, not sse4.1).
+    missing = []
+    i = 0
+    while i < len(_X86_BASELINE_ISA):
+        name = _X86_BASELINE_ISA[i]
+        if name not in flags:
+            missing.append(name.upper().replace("_", "."))
+        i += 1
+    return ", ".join(missing)
+
+
+_X86_BASELINE_ISA = ["cmov", "sse", "sse2", "ssse3", "sse4_1", "sse4_2"]
+
+
+def _classify_server_start_failure(exec_node):
+    """Read the remote server.log / server.rc after a failed launch and turn
+    it into a human-readable reason.  The common failure on old x86 nodes
+    (pentium3, pentium-m) is the binary using an instruction the CPU lacks
+    (SSE2/SSSE3/CMOV emitted by a too-modern -march) — the kernel kills it
+    with SIGILL and bash prints 'Illegal instruction'.  Surface that instead
+    of a bare 'rc=-1' so the operator knows it is a build-arch mismatch, not
+    a benchmark bug."""
+    eu  = exec_node["user"]
+    eh  = exec_node["host"]
+    ep  = exec_node.get("port", 22)
+    ewd = exec_node["work_dir"]
+    _, rc_txt, _ = ssh_run(
+        eu, eh, ep, f"cat {shlex.quote(ewd + '/server.rc')} 2>/dev/null",
+        timeout=10)
+    _, tail, _ = ssh_run(
+        eu, eh, ep,
+        f"tail -n 3 {shlex.quote(ewd + '/server.log')} 2>/dev/null "
+        f"| tr '\\n' '|'", timeout=10)
+    rc_txt = rc_txt.strip()
+    log    = tail.strip().strip("|")
+    # 128+SIGILL(4)=132 ; bash/coreutils also print the text below.
+    if rc_txt == "132" or "llegal instruction" in log:
+        missing = _missing_baseline_isa(exec_node)
+        if missing:
+            return (f"illegal-instruction: missing {missing} — binary built "
+                    f"for a too-modern -march; rebuild for this arch")
+        return ("illegal-instruction: binary uses a CPU instruction this "
+                "host lacks (SSE2/SSSE3/CMOV from a too-modern -march) — "
+                "rebuild for this arch")
+    if rc_txt and rc_txt.isdigit() and int(rc_txt) > 128:
+        sig = int(rc_txt) - 128
+        return (f"server-killed-by-signal-{sig}"
+                + (f": {log[:120]}" if log else ""))
+    if log:
+        return f"server-start-failed: {log[:140]}"
+    return "server-start-failed: no server.log (binary missing or chmod failed)"
 
 
 def stop_server_popen(ssh_proc, exec_node, pid):
@@ -1421,9 +1592,9 @@ def measure_remote_server_boot(exec_node, bin_name, ready_timeout=120,
     ewd = exec_node["work_dir"]
 
     t0 = time.monotonic()
-    ssh_proc, pid = start_server_popen(exec_node, bin_name)
+    ssh_proc, pid, start_reason = start_server_popen(exec_node, bin_name)
     if ssh_proc is None:
-        return None, "server-start-failed rc=-1"
+        return None, start_reason
     boot_s = None
     try:
         deadline = time.monotonic() + ready_timeout
@@ -1717,7 +1888,8 @@ def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
     runtime_node, msg = nfs_lxc_prepare(exec_node, verbose=verbose)
     if runtime_node is None:
         nfs_lxc_teardown(exec_node, verbose=verbose)
-        return {p: None for p in profilers}, msg
+        # Bring-up / unreachable node: infra failure, not a perf regression.
+        return {p: None for p in profilers}, f"SKIP:bringup-failed: {msg}"
     try:
         if verbose:
             _rlog(f"{exec_node['label']!r}: pushing binary")
@@ -1725,7 +1897,8 @@ def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
             compile_node, runtime_node, remote_bld, bin_name,
             extras=extras, verbose=verbose)
         if rc != 0:
-            return {p: None for p in profilers}, msg
+            # Push failed (e.g. 'No route to host'): infra, mark SKIP.
+            return {p: None for p in profilers}, f"SKIP:push-failed: {msg}"
         ewd = runtime_node["work_dir"]
 
         def _rc_str(prof):
@@ -1820,8 +1993,14 @@ def run_profiler_fleet(specs, verbose=False, max_workers=8):
         label = s["exec_node"]["label"]
         rc, msg, bld = builds.get(cl, (1, "no build result", None))
         if rc != 0:
+            # A compile-node build failure is NOT a benchmark regression: the
+            # exec node is never touched (no push, no run).  Tag the message
+            # SKIP: so the recorder marks the cells SKIP, not FAIL -- a node
+            # we couldn't build for has an *unknown* metric, which the
+            # decision matrix must not read as a regression.
             with lock:
-                results[label] = ({p: None for p in s["profilers"]}, msg)
+                results[label] = ({p: None for p in s["profilers"]},
+                                  f"SKIP:compile-failed: {msg}")
             return
         out, m = push_and_run_profilers(
             s["compile_node"], s["exec_node"], bld, s["bin_name"],

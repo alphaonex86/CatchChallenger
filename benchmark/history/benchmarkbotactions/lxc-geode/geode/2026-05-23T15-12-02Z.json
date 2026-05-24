@@ -1,0 +1,88 @@
+{
+  "arch": "i686",
+  "arch_emulated": false,
+  "batch_id": "cc677f792c6b410f9de3414b9ea74d0d",
+  "benchmark": "benchmarkbotactions",
+  "comment": "",
+  "commit": "a166d07bb2efddb38a32b78fa7a619c9ce7e7333",
+  "commit_short": "a166d07",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Gentoo 14.3.0 p8) 14.3.0",
+  "cpu_cores": 1,
+  "cpu_flags": "fpu de pse tsc msr cx8 sep pge cmov clflush mmx mmxext 3dnowext 3dnow cpuid 3dnowprefetch vmmcall",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 499.898,
+  "cpu_model": "Geode(TM) Integrated Processor by AMD PCS",
+  "decision": "ESCALATE",
+  "disk_kind": null,
+  "disk_root": "/root/192.168.158.10:",
+  "ended_utc": "2026-05-23T15:34:39Z",
+  "eth_link_mbps": 100,
+  "harness_version": "8c4ff83acbe255218de5fc7b54e453c01ccac405",
+  "host_arch": null,
+  "kernel": "6.12.21-gentoo",
+  "libc": "ldd (Gentoo 2.41-r5 (patchset 7)) 2.41",
+  "libs": {
+    "blake3": {
+      "source": "vendored",
+      "version": null
+    },
+    "tinyxml2": {
+      "source": "system",
+      "version": "10.0.0"
+    },
+    "xxhash": {
+      "source": "system",
+      "version": "0.8.3"
+    },
+    "zlib": {
+      "source": "system",
+      "version": "1.3.1"
+    },
+    "zstd": {
+      "source": "system",
+      "version": "1.5.7"
+    }
+  },
+  "loadavg_1min_at_start": 0.35,
+  "net_card": "eth0",
+  "net_link": "wired",
+  "net_link_detail": null,
+  "node": "geode",
+  "ram_total_mb": 223,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "SKIP",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-23T15:12:02Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

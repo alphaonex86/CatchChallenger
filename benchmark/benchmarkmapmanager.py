@@ -96,16 +96,16 @@ def build():
     cfg += bh.cmake_accel_defs()
     rc, sout, serr, _ = bh.run_capture(cfg, timeout=300)
     if rc != 0:
-        print(sout); print(serr, file=sys.stderr)
-        print(_color(bh.C_RED, "[build] cmake configure FAILED")); return None
+        bh.print_local_build_error("build", "cmake configure", sout, serr)
+        return None
     # Record which libs (system vs vendored) the local build linked, for
     # the "local" node's history record.
     bh.record_libs("local", sout)
     bld = ["cmake", "--build", BUILD_DIR, "--", "-j", str(os.cpu_count() or 1)]
     rc, sout, serr, _ = bh.run_capture(bld, timeout=900)
     if rc != 0:
-        print(sout); print(serr, file=sys.stderr)
-        print(_color(bh.C_RED, "[build] cmake build FAILED")); return None
+        bh.print_local_build_error("build", "cmake build", sout, serr)
+        return None
     bin_path = os.path.join(BUILD_DIR, BIN_NAME)
     if not os.path.isfile(bin_path):
         print(_color(bh.C_RED, f"[build] missing binary: {bin_path}")); return None
@@ -359,8 +359,23 @@ def _record_remote_result(label, runnable, out, msg,
             per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err_msg}
             continue
         if res is None:
-            progress.emit(prof, "no", label, status="FAIL", extra=msg if msg != "ok" else "")
-            per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+            # Infra failures (compile/push/bring-up) are tagged "SKIP:" by
+            # benchmark_remote; they mean the node has no measurement, not a
+            # regression -- record SKIP so the decision matrix treats the
+            # metric as unknown rather than a FAIL.  Either way show the full
+            # cause + re-run command under a banner (the live line truncates).
+            if isinstance(msg, str) and msg.startswith("SKIP:"):
+                detail = msg[5:]
+                bh.print_node_error("benchmarkmapmanager", label, "SKIP", detail)
+                progress.emit(prof, "no", label, status="SKIP",
+                              extra=detail[:80])
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+            else:
+                detail = msg if msg != "ok" else "no-data"
+                bh.print_node_error("benchmarkmapmanager", label, "FAIL", detail)
+                progress.emit(prof, "no", label, status="FAIL",
+                              extra=detail[:80])
+                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
             continue
         # parse per-profiler structure into metric blocks
         if prof == "rusage":
@@ -422,6 +437,7 @@ def _record_remote_result(label, runnable, out, msg,
 
 def main():
     args = bh.parse_bench_args()
+    bh.set_node_filter(args.node)
     if bh.acquire_singleton_lock("benchmarkmapmanager") is None:
         return 3
     br.set_benchmark_label("benchmarkmapmanager")
@@ -458,7 +474,9 @@ def main():
         return 0
 
     arch = bh.host_arch()
-    nodes = [{"label": "local", "arch": arch}] + bh.benchmark_exec_nodes()
+    # --node may exclude the host baseline; only prepend "local" when allowed.
+    local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
+    nodes = local_node + bh.benchmark_exec_nodes()
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
 
     # Pre-resolve per-node profiler availability. profilers_runnable_on()

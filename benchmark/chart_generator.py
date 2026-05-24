@@ -550,9 +550,16 @@ def regenerate(benchmark, stamp=None):
         return []
     written = []
 
-    # 1) per-node charts (unchanged behaviour)
+    # 1) per-node charts. Honour the active --node filter: a node-restricted
+    # run must only rewrite the charts of the node(s) it actually touched,
+    # not churn every other node's champion.svg in git. No filter -> all
+    # nodes (default). The cross-node session chart (step 2) is always
+    # regenerated so the aggregate stays current.
     groups = _group_records(records)
     for (comp, exe), recs in groups.items():
+        arch = recs[0].get("arch") if recs else None
+        if not bh.node_allowed(exe, arch):
+            continue
         svg = _render_group(benchmark, comp, exe, recs)
         if svg is None:
             continue
@@ -607,16 +614,36 @@ def regenerate_all(stamp=None):
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) > 1:
+    # Pull out --node LABEL|ARCH (repeatable, --node=X too): restrict which
+    # per-node charts are rewritten, mirroring the benchmarks' --node. The
+    # rest are explicit benchmark names. No --node -> every node (default).
+    node_tokens = []
+    names = []
+    _argv = sys.argv[1:]
+    i = 0
+    while i < len(_argv):
+        a = _argv[i]
+        if a == "--node":
+            if i + 1 < len(_argv):
+                node_tokens.append(_argv[i + 1]); i += 2
+            else:
+                print("--node requires a value", file=sys.stderr); sys.exit(2)
+        elif a.startswith("--node="):
+            node_tokens.append(a[len("--node="):]); i += 1
+        else:
+            names.append(a); i += 1
+    bh.set_node_filter(node_tokens or None)
+
+    if names:
         # explicit benchmark name(s)
-        for arg in sys.argv[1:]:
+        for arg in names:
             paths = regenerate(arg)
             for p in paths:
                 print(p)
             if not paths:
                 print(f"[chart] no history for {arg}", file=sys.stderr)
     else:
-        # no arg -> regenerate every benchmark we have history for
+        # no benchmark arg -> regenerate every benchmark we have history for
         any_written = False
         for bench, paths in regenerate_all().items():
             for p in paths:
