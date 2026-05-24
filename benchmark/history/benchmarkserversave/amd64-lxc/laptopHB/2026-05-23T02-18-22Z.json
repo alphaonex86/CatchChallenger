@@ -1,0 +1,143 @@
+{
+  "arch": "x86_64",
+  "arch_emulated": false,
+  "batch_id": "6ebdca49799244cfb628ddb9adec5f5b",
+  "benchmark": "benchmarkserversave",
+  "comment": "",
+  "commit": "1856b24d41fc4df07b1d62b70886a5253b31b4d1",
+  "commit_short": "1856b24",
+  "compile_flags": [
+    "-O2",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cores": 8,
+  "cpu_metrics_reliable": false,
+  "cpu_mhz": 1225.163,
+  "cpu_model": "11th Gen Intel(R) Core(TM) i7-11370H @ 3.30GHz",
+  "decision": "ESCALATE",
+  "disk_kind": "nvme",
+  "disk_root": "INTEL SSDPEKNU512GZ",
+  "ended_utc": "2026-05-23T02:20:25Z",
+  "eth_link_mbps": null,
+  "harness_version": "1856b24d41fc4df07b1d62b70886a5253b31b4d1",
+  "host_arch": null,
+  "kernel": "6.12.33+deb13-amd64",
+  "libc": "glibc 2.41",
+  "loadavg_1min_at_start": 0.08,
+  "net_card": "Advanced Micro Devices, Inc. [AMD] FCH LPC Bridge",
+  "net_link": "wifi",
+  "net_link_detail": "wlo1",
+  "node": "laptopHB",
+  "ram_total_mb": 15691,
+  "ram_type": "DDR4-3200MT/s",
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "callgrind": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 223210,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 223210
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 174245,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 174245
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 53280540,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 53280540
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 104314171,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 104314171
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8108,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 8108
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.03,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.03
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "default": {
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 8108,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 8108
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 0.03,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.03
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-23T02:18:22Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": "2.4GHz",
+  "wifi_link_mbps": 286,
+  "wifi_ssid": "Confiared",
+  "wifi_standard": "wifi-6"
+}

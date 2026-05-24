@@ -1,0 +1,396 @@
+{
+  "arch": "i686",
+  "arch_emulated": false,
+  "batch_id": "f76056a7eec74cbba610188720cb24ed",
+  "benchmark": "benchmarkbotactions",
+  "comment": "",
+  "commit": "a166d07bb2efddb38a32b78fa7a619c9ce7e7333",
+  "commit_short": "a166d07",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 12.2.0-14+deb12u1) 12.2.0",
+  "cpu_cores": 1,
+  "cpu_flags": "fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pse36 mmx fxsr sse cpuid",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 1102.493,
+  "cpu_model": "Intel(R) Celeron(TM) CPU                1100MHz",
+  "decision": "ESCALATE",
+  "disk_kind": "ssd-sata",
+  "disk_root": "ATA Samsung SSD 870",
+  "ended_utc": "2026-05-24T05:45:39Z",
+  "eth_link_mbps": 100,
+  "harness_version": "8c4ff83acbe255218de5fc7b54e453c01ccac405",
+  "host_arch": null,
+  "kernel": "6.1.0-40-686-pae",
+  "libc": "glibc 2.36",
+  "libs": {
+    "blake3": {
+      "source": "vendored",
+      "version": null
+    },
+    "tinyxml2": {
+      "source": "system",
+      "version": "9.0.0"
+    },
+    "xxhash": {
+      "source": "system",
+      "version": "0.8.1"
+    },
+    "zlib": {
+      "source": "system",
+      "version": "1.2.13"
+    },
+    "zstd": {
+      "source": "system",
+      "version": "1.5.4"
+    }
+  },
+  "loadavg_1min_at_start": 0.15,
+  "net_card": "eth0",
+  "net_link": "wired",
+  "net_link_detail": null,
+  "node": "pentium3",
+  "ram_total_mb": 229,
+  "ram_type": "DIMM SDRAM",
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 7345840,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 7345840
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "perf_branch-misses:u": {
+          "better": "lower",
+          "median": 3643959,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 3643959
+        },
+        "perf_cache-misses:u": {
+          "better": "lower",
+          "median": 8312127,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 8312127
+        },
+        "perf_cycles:u": {
+          "better": "lower",
+          "median": 1058933034,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1058933034
+        },
+        "perf_instructions:u": {
+          "better": "lower",
+          "median": 1106397557,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1106397557
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "b128_invol_ctx": {
+          "better": "lower",
+          "median": 15.5,
+          "samples": null,
+          "stddev": 5.5,
+          "unit": "count",
+          "value": 15.5
+        },
+        "b128_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b128_max_rss_kb": {
+          "better": "lower",
+          "median": 110476.0,
+          "samples": null,
+          "stddev": 1408.0,
+          "unit": "kb",
+          "value": 110476.0
+        },
+        "b128_minor_pf": {
+          "better": "lower",
+          "median": 20529.5,
+          "samples": null,
+          "stddev": 99.5,
+          "unit": "count",
+          "value": 20529.5
+        },
+        "b128_sys_s": {
+          "better": "lower",
+          "median": 0.175,
+          "samples": null,
+          "stddev": 0.015,
+          "unit": "s",
+          "value": 0.175
+        },
+        "b128_tcp_retrans": {
+          "better": "lower",
+          "median": 20.0,
+          "samples": null,
+          "stddev": 20.0,
+          "unit": "count",
+          "value": 20.0
+        },
+        "b128_user_s": {
+          "better": "lower",
+          "median": 0.345,
+          "samples": null,
+          "stddev": 0.07499999999999998,
+          "unit": "s",
+          "value": 0.345
+        },
+        "b128_vol_ctx": {
+          "better": "lower",
+          "median": 3142.0,
+          "samples": null,
+          "stddev": 114.0,
+          "unit": "count",
+          "value": 3142.0
+        },
+        "b128_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "b32_invol_ctx": {
+          "better": "lower",
+          "median": 10.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 10.0
+        },
+        "b32_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b32_max_rss_kb": {
+          "better": "lower",
+          "median": 108986.0,
+          "samples": null,
+          "stddev": 338.0,
+          "unit": "kb",
+          "value": 108986.0
+        },
+        "b32_minor_pf": {
+          "better": "lower",
+          "median": 20096.0,
+          "samples": null,
+          "stddev": 53.0,
+          "unit": "count",
+          "value": 20096.0
+        },
+        "b32_sys_s": {
+          "better": "lower",
+          "median": 0.245,
+          "samples": null,
+          "stddev": 0.015,
+          "unit": "s",
+          "value": 0.245
+        },
+        "b32_tcp_retrans": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b32_user_s": {
+          "better": "lower",
+          "median": 0.56,
+          "samples": null,
+          "stddev": 0.07,
+          "unit": "s",
+          "value": 0.56
+        },
+        "b32_vol_ctx": {
+          "better": "lower",
+          "median": 1742.0,
+          "samples": null,
+          "stddev": 5.0,
+          "unit": "count",
+          "value": 1742.0
+        },
+        "b32_wall_s": {
+          "better": "lower",
+          "median": 30.009999999999998,
+          "samples": null,
+          "stddev": 0.009999999999999787,
+          "unit": "s",
+          "value": 30.009999999999998
+        },
+        "b4_invol_ctx": {
+          "better": "lower",
+          "median": 10.0,
+          "samples": null,
+          "stddev": 3.0,
+          "unit": "count",
+          "value": 10.0
+        },
+        "b4_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b4_max_rss_kb": {
+          "better": "lower",
+          "median": 90516.0,
+          "samples": null,
+          "stddev": 140.0,
+          "unit": "kb",
+          "value": 90516.0
+        },
+        "b4_minor_pf": {
+          "better": "lower",
+          "median": 15361.0,
+          "samples": null,
+          "stddev": 1.0,
+          "unit": "count",
+          "value": 15361.0
+        },
+        "b4_sys_s": {
+          "better": "lower",
+          "median": 0.055,
+          "samples": null,
+          "stddev": 0.0049999999999999975,
+          "unit": "s",
+          "value": 0.055
+        },
+        "b4_tcp_retrans": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b4_user_s": {
+          "better": "lower",
+          "median": 0.11499999999999999,
+          "samples": null,
+          "stddev": 0.0049999999999999975,
+          "unit": "s",
+          "value": 0.11499999999999999
+        },
+        "b4_vol_ctx": {
+          "better": "lower",
+          "median": 1439.5,
+          "samples": null,
+          "stddev": 5.5,
+          "unit": "count",
+          "value": 1439.5
+        },
+        "b4_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "server-boot": {
+      "artifact": null,
+      "metrics": {
+        "boot_no_cache_s": {
+          "better": "lower",
+          "median": 2.838809121021768,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 2.838809121021768
+        },
+        "boot_with_cache_s": {
+          "better": "lower",
+          "median": 2.588199780002469,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 2.588199780002469
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "no-cache": {
+          "boot_to_bind_s": {
+            "better": "lower",
+            "median": 2.838809121021768,
+            "samples": [
+              2.838809121021768
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 2.838809121021768
+          }
+        },
+        "with-cache": {
+          "boot_to_bind_s": {
+            "better": "lower",
+            "median": 2.588199780002469,
+            "samples": [
+              2.588199780002469
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 2.588199780002469
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-24T04:40:48Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

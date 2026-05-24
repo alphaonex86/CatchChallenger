@@ -1,0 +1,2863 @@
+{
+  "arch": "amd64",
+  "arch_emulated": false,
+  "batch_id": "36d6576eb3494f7393670ac725e733ba",
+  "benchmark": "benchmarkbotactions",
+  "comment": "",
+  "commit": "a166d07bb2efddb38a32b78fa7a619c9ce7e7333",
+  "commit_short": "a166d07",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Gentoo 15.2.1_p20260214 p5) 15.2.1 20260214",
+  "cpu_cores": 32,
+  "cpu_flags": "fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpuid_fault cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid overflow_recov succor smca fsrm flush_l1d amd_lbr_pmc_freeze",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 4165.92,
+  "cpu_model": "AMD Ryzen 9 7950X3D 16-Core Processor",
+  "decision": "ESCALATE",
+  "disk_kind": "nvme",
+  "disk_root": "Samsung SSD 980 PRO 2TB",
+  "ended_utc": "2026-05-23T14:36:13Z",
+  "eth_link_mbps": null,
+  "harness_version": "8c4ff83acbe255218de5fc7b54e453c01ccac405",
+  "host_arch": null,
+  "kernel": "6.18.31-gentoo-dist",
+  "libc": "ldd (Gentoo 2.42-r7 (patchset 9)) 2.42",
+  "libs": {
+    "blake3": {
+      "source": "system",
+      "version": "1.8.4"
+    },
+    "tinyxml2": {
+      "source": "system",
+      "version": "11.0.0"
+    },
+    "xxhash": {
+      "source": "system",
+      "version": "0.8.3"
+    },
+    "zlib": {
+      "source": "system",
+      "version": "1.3.2"
+    },
+    "zstd": {
+      "source": "system",
+      "version": "1.5.7"
+    }
+  },
+  "loadavg_1min_at_start": 13.51,
+  "net_card": "br0",
+  "net_link": "virtual",
+  "net_link_detail": "bridge",
+  "node": "local",
+  "ram_total_mb": 127894,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 7345840,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 7345840
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "perf_branch-misses:u": {
+          "better": "lower",
+          "median": 4546137,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 4546137
+        },
+        "perf_cache-misses:u": {
+          "better": "lower",
+          "median": 9286063,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 9286063
+        },
+        "perf_cycles:u": {
+          "better": "lower",
+          "median": 1121894043,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1121894043
+        },
+        "perf_instructions:u": {
+          "better": "lower",
+          "median": 1103145606,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1103145606
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "b128_cpu_percent": {
+          "better": "lower",
+          "median": 0.11661354457766152,
+          "samples": null,
+          "stddev": 0.016644890558935803,
+          "unit": "%",
+          "value": 0.11661354457766152
+        },
+        "b128_invol_ctx": {
+          "better": "lower",
+          "median": 69.0,
+          "samples": null,
+          "stddev": 18.0,
+          "unit": "count",
+          "value": 69.0
+        },
+        "b128_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b128_max_rss_kb": {
+          "better": "lower",
+          "median": 111012.0,
+          "samples": null,
+          "stddev": 300.0,
+          "unit": "kb",
+          "value": 111012.0
+        },
+        "b128_minor_pf": {
+          "better": "lower",
+          "median": 20451.0,
+          "samples": null,
+          "stddev": 237.0,
+          "unit": "count",
+          "value": 20451.0
+        },
+        "b128_net_rx_bytes": {
+          "better": "lower",
+          "median": 517279.0,
+          "samples": null,
+          "stddev": 3406.0,
+          "unit": "bytes",
+          "value": 517279.0
+        },
+        "b128_net_rx_pkts": {
+          "better": "lower",
+          "median": 5951.5,
+          "samples": null,
+          "stddev": 54.5,
+          "unit": "count",
+          "value": 5951.5
+        },
+        "b128_net_tx_bytes": {
+          "better": "lower",
+          "median": 517279.0,
+          "samples": null,
+          "stddev": 3406.0,
+          "unit": "bytes",
+          "value": 517279.0
+        },
+        "b128_net_tx_pkts": {
+          "better": "lower",
+          "median": 5951.5,
+          "samples": null,
+          "stddev": 54.5,
+          "unit": "count",
+          "value": 5951.5
+        },
+        "b128_sys_s": {
+          "better": "lower",
+          "median": 0.14,
+          "samples": null,
+          "stddev": 0.020000000000000004,
+          "unit": "s",
+          "value": 0.14
+        },
+        "b128_tcp_retrans": {
+          "better": "lower",
+          "median": 1.0,
+          "samples": null,
+          "stddev": 1.0,
+          "unit": "count",
+          "value": 1.0
+        },
+        "b128_user_s": {
+          "better": "lower",
+          "median": 0.35,
+          "samples": null,
+          "stddev": 0.009999999999999981,
+          "unit": "s",
+          "value": 0.35
+        },
+        "b128_vol_ctx": {
+          "better": "lower",
+          "median": 2238.0,
+          "samples": null,
+          "stddev": 123.0,
+          "unit": "count",
+          "value": 2238.0
+        },
+        "b128_wall_s": {
+          "better": "lower",
+          "median": 30.005000000000003,
+          "samples": null,
+          "stddev": 0.005000000000000782,
+          "unit": "s",
+          "value": 30.005000000000003
+        },
+        "b32_cpu_percent": {
+          "better": "lower",
+          "median": 0.04998643456347916,
+          "samples": null,
+          "stddev": 0.016661502979697766,
+          "unit": "%",
+          "value": 0.04998643456347916
+        },
+        "b32_invol_ctx": {
+          "better": "lower",
+          "median": 13.5,
+          "samples": null,
+          "stddev": 3.5,
+          "unit": "count",
+          "value": 13.5
+        },
+        "b32_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b32_max_rss_kb": {
+          "better": "lower",
+          "median": 108984.0,
+          "samples": null,
+          "stddev": 412.0,
+          "unit": "kb",
+          "value": 108984.0
+        },
+        "b32_minor_pf": {
+          "better": "lower",
+          "median": 20110.0,
+          "samples": null,
+          "stddev": 35.0,
+          "unit": "count",
+          "value": 20110.0
+        },
+        "b32_net_rx_bytes": {
+          "better": "lower",
+          "median": 1038628.5,
+          "samples": null,
+          "stddev": 871523.5,
+          "unit": "bytes",
+          "value": 1038628.5
+        },
+        "b32_net_rx_pkts": {
+          "better": "lower",
+          "median": 2015.5,
+          "samples": null,
+          "stddev": 52.5,
+          "unit": "count",
+          "value": 2015.5
+        },
+        "b32_net_tx_bytes": {
+          "better": "lower",
+          "median": 1038628.5,
+          "samples": null,
+          "stddev": 871523.5,
+          "unit": "bytes",
+          "value": 1038628.5
+        },
+        "b32_net_tx_pkts": {
+          "better": "lower",
+          "median": 2015.5,
+          "samples": null,
+          "stddev": 52.5,
+          "unit": "count",
+          "value": 2015.5
+        },
+        "b32_sys_s": {
+          "better": "lower",
+          "median": 0.07500000000000001,
+          "samples": null,
+          "stddev": 0.0049999999999999975,
+          "unit": "s",
+          "value": 0.07500000000000001
+        },
+        "b32_tcp_retrans": {
+          "better": "lower",
+          "median": 1.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1.0
+        },
+        "b32_user_s": {
+          "better": "lower",
+          "median": 0.15,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.15
+        },
+        "b32_vol_ctx": {
+          "better": "lower",
+          "median": 1576.0,
+          "samples": null,
+          "stddev": 7.0,
+          "unit": "count",
+          "value": 1576.0
+        },
+        "b32_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "b4_cpu_percent": {
+          "better": "lower",
+          "median": 0.016662984317083712,
+          "samples": null,
+          "stddev": 0.016662984317083712,
+          "unit": "%",
+          "value": 0.016662984317083712
+        },
+        "b4_invol_ctx": {
+          "better": "lower",
+          "median": 13.0,
+          "samples": null,
+          "stddev": 2.0,
+          "unit": "count",
+          "value": 13.0
+        },
+        "b4_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b4_max_rss_kb": {
+          "better": "lower",
+          "median": 89942.0,
+          "samples": null,
+          "stddev": 482.0,
+          "unit": "kb",
+          "value": 89942.0
+        },
+        "b4_minor_pf": {
+          "better": "lower",
+          "median": 15367.0,
+          "samples": null,
+          "stddev": 1.0,
+          "unit": "count",
+          "value": 15367.0
+        },
+        "b4_net_rx_bytes": {
+          "better": "lower",
+          "median": 10836.5,
+          "samples": null,
+          "stddev": 21.5,
+          "unit": "bytes",
+          "value": 10836.5
+        },
+        "b4_net_rx_pkts": {
+          "better": "lower",
+          "median": 114.0,
+          "samples": null,
+          "stddev": 2.0,
+          "unit": "count",
+          "value": 114.0
+        },
+        "b4_net_tx_bytes": {
+          "better": "lower",
+          "median": 10836.5,
+          "samples": null,
+          "stddev": 21.5,
+          "unit": "bytes",
+          "value": 10836.5
+        },
+        "b4_net_tx_pkts": {
+          "better": "lower",
+          "median": 114.0,
+          "samples": null,
+          "stddev": 2.0,
+          "unit": "count",
+          "value": 114.0
+        },
+        "b4_sys_s": {
+          "better": "lower",
+          "median": 0.05,
+          "samples": null,
+          "stddev": 0.009999999999999998,
+          "unit": "s",
+          "value": 0.05
+        },
+        "b4_tcp_retrans": {
+          "better": "lower",
+          "median": 0.5,
+          "samples": null,
+          "stddev": 0.5,
+          "unit": "count",
+          "value": 0.5
+        },
+        "b4_user_s": {
+          "better": "lower",
+          "median": 0.11,
+          "samples": null,
+          "stddev": 0.009999999999999995,
+          "unit": "s",
+          "value": 0.11
+        },
+        "b4_vol_ctx": {
+          "better": "lower",
+          "median": 1441.0,
+          "samples": null,
+          "stddev": 2.0,
+          "unit": "count",
+          "value": 1441.0
+        },
+        "b4_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "128-bots": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.11661354457766152,
+            "samples": null,
+            "stddev": 0.016644890558935803,
+            "unit": "%",
+            "value": 0.11661354457766152
+          },
+          "invol_ctx": {
+            "better": "lower",
+            "median": 69.0,
+            "samples": null,
+            "stddev": 18.0,
+            "unit": "count",
+            "value": 69.0
+          },
+          "major_pf": {
+            "better": "lower",
+            "median": 0.0,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.0
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 111012.0,
+            "samples": null,
+            "stddev": 300.0,
+            "unit": "kb",
+            "value": 111012.0
+          },
+          "minor_pf": {
+            "better": "lower",
+            "median": 20451.0,
+            "samples": null,
+            "stddev": 237.0,
+            "unit": "count",
+            "value": 20451.0
+          },
+          "net_rx_bytes": {
+            "better": "lower",
+            "median": 517279.0,
+            "samples": null,
+            "stddev": 3406.0,
+            "unit": "bytes",
+            "value": 517279.0
+          },
+          "net_rx_pkts": {
+            "better": "lower",
+            "median": 5951.5,
+            "samples": null,
+            "stddev": 54.5,
+            "unit": "count",
+            "value": 5951.5
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 517279.0,
+            "samples": null,
+            "stddev": 3406.0,
+            "unit": "bytes",
+            "value": 517279.0
+          },
+          "net_tx_pkts": {
+            "better": "lower",
+            "median": 5951.5,
+            "samples": null,
+            "stddev": 54.5,
+            "unit": "count",
+            "value": 5951.5
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.14,
+            "samples": null,
+            "stddev": 0.020000000000000004,
+            "unit": "s",
+            "value": 0.14
+          },
+          "tcp_retrans": {
+            "better": "lower",
+            "median": 1.0,
+            "samples": null,
+            "stddev": 1.0,
+            "unit": "count",
+            "value": 1.0
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.35,
+            "samples": null,
+            "stddev": 0.009999999999999981,
+            "unit": "s",
+            "value": 0.35
+          },
+          "vol_ctx": {
+            "better": "lower",
+            "median": 2238.0,
+            "samples": null,
+            "stddev": 123.0,
+            "unit": "count",
+            "value": 2238.0
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.005000000000003,
+            "samples": null,
+            "stddev": 0.005000000000000782,
+            "unit": "s",
+            "value": 30.005000000000003
+          }
+        },
+        "32-bots": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.04998643456347916,
+            "samples": null,
+            "stddev": 0.016661502979697766,
+            "unit": "%",
+            "value": 0.04998643456347916
+          },
+          "invol_ctx": {
+            "better": "lower",
+            "median": 13.5,
+            "samples": null,
+            "stddev": 3.5,
+            "unit": "count",
+            "value": 13.5
+          },
+          "major_pf": {
+            "better": "lower",
+            "median": 0.0,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.0
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 108984.0,
+            "samples": null,
+            "stddev": 412.0,
+            "unit": "kb",
+            "value": 108984.0
+          },
+          "minor_pf": {
+            "better": "lower",
+            "median": 20110.0,
+            "samples": null,
+            "stddev": 35.0,
+            "unit": "count",
+            "value": 20110.0
+          },
+          "net_rx_bytes": {
+            "better": "lower",
+            "median": 1038628.5,
+            "samples": null,
+            "stddev": 871523.5,
+            "unit": "bytes",
+            "value": 1038628.5
+          },
+          "net_rx_pkts": {
+            "better": "lower",
+            "median": 2015.5,
+            "samples": null,
+            "stddev": 52.5,
+            "unit": "count",
+            "value": 2015.5
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 1038628.5,
+            "samples": null,
+            "stddev": 871523.5,
+            "unit": "bytes",
+            "value": 1038628.5
+          },
+          "net_tx_pkts": {
+            "better": "lower",
+            "median": 2015.5,
+            "samples": null,
+            "stddev": 52.5,
+            "unit": "count",
+            "value": 2015.5
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.07500000000000001,
+            "samples": null,
+            "stddev": 0.0049999999999999975,
+            "unit": "s",
+            "value": 0.07500000000000001
+          },
+          "tcp_retrans": {
+            "better": "lower",
+            "median": 1.0,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 1.0
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.15,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.15
+          },
+          "vol_ctx": {
+            "better": "lower",
+            "median": 1576.0,
+            "samples": null,
+            "stddev": 7.0,
+            "unit": "count",
+            "value": 1576.0
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.0,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 30.0
+          }
+        },
+        "4-bots": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.016662984317083712,
+            "samples": null,
+            "stddev": 0.016662984317083712,
+            "unit": "%",
+            "value": 0.016662984317083712
+          },
+          "invol_ctx": {
+            "better": "lower",
+            "median": 13.0,
+            "samples": null,
+            "stddev": 2.0,
+            "unit": "count",
+            "value": 13.0
+          },
+          "major_pf": {
+            "better": "lower",
+            "median": 0.0,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.0
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 89942.0,
+            "samples": null,
+            "stddev": 482.0,
+            "unit": "kb",
+            "value": 89942.0
+          },
+          "minor_pf": {
+            "better": "lower",
+            "median": 15367.0,
+            "samples": null,
+            "stddev": 1.0,
+            "unit": "count",
+            "value": 15367.0
+          },
+          "net_rx_bytes": {
+            "better": "lower",
+            "median": 10836.5,
+            "samples": null,
+            "stddev": 21.5,
+            "unit": "bytes",
+            "value": 10836.5
+          },
+          "net_rx_pkts": {
+            "better": "lower",
+            "median": 114.0,
+            "samples": null,
+            "stddev": 2.0,
+            "unit": "count",
+            "value": 114.0
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 10836.5,
+            "samples": null,
+            "stddev": 21.5,
+            "unit": "bytes",
+            "value": 10836.5
+          },
+          "net_tx_pkts": {
+            "better": "lower",
+            "median": 114.0,
+            "samples": null,
+            "stddev": 2.0,
+            "unit": "count",
+            "value": 114.0
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.05,
+            "samples": null,
+            "stddev": 0.009999999999999998,
+            "unit": "s",
+            "value": 0.05
+          },
+          "tcp_retrans": {
+            "better": "lower",
+            "median": 0.5,
+            "samples": null,
+            "stddev": 0.5,
+            "unit": "count",
+            "value": 0.5
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.11,
+            "samples": null,
+            "stddev": 0.009999999999999995,
+            "unit": "s",
+            "value": 0.11
+          },
+          "vol_ctx": {
+            "better": "lower",
+            "median": 1441.0,
+            "samples": null,
+            "stddev": 2.0,
+            "unit": "count",
+            "value": 1441.0
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.0,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 30.0
+          }
+        }
+      }
+    },
+    "server-boot": {
+      "artifact": null,
+      "metrics": {
+        "boot_no_cache_s": {
+          "better": "lower",
+          "median": 0.020428337971679866,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.020428337971679866
+        },
+        "boot_with_cache_s": {
+          "better": "lower",
+          "median": 0.020328809012426063,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.020328809012426063
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "no-cache": {
+          "boot_to_bind_s": {
+            "better": "lower",
+            "median": 0.020428337971679866,
+            "samples": [
+              0.020428337971679866
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.020428337971679866
+          }
+        },
+        "with-cache": {
+          "boot_to_bind_s": {
+            "better": "lower",
+            "median": 0.020328809012426063,
+            "samples": [
+              0.020328809012426063
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.020328809012426063
+          }
+        }
+      }
+    },
+    "server-compression": {
+      "artifact": null,
+      "metrics": {
+        "none-large_cpu_percent": {
+          "better": "lower",
+          "median": 0.09996860519946342,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.09996860519946342
+        },
+        "none-large_latency_jitter_ns": {
+          "better": "lower",
+          "median": 13302.838251072451,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 13302.838251072451
+        },
+        "none-large_latency_p50_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "none-large_latency_p95_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "none-large_latency_p999_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "none-large_latency_p99_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "none-large_net_tx_bytes": {
+          "better": "lower",
+          "median": 601065,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 601065
+        },
+        "none-large_requests_per_s": {
+          "better": "lower",
+          "median": 57.03333333333333,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 57.03333333333333
+        },
+        "none-medium_cpu_percent": {
+          "better": "lower",
+          "median": 0.033323722102049085,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.033323722102049085
+        },
+        "none-medium_latency_jitter_ns": {
+          "better": "lower",
+          "median": 13001.806127146385,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 13001.806127146385
+        },
+        "none-medium_latency_p50_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "none-medium_latency_p95_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "none-medium_latency_p999_ns": {
+          "better": "lower",
+          "median": 92681.90002368316,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 92681.90002368316
+        },
+        "none-medium_latency_p99_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "none-medium_net_tx_bytes": {
+          "better": "lower",
+          "median": 191274,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 191274
+        },
+        "none-medium_requests_per_s": {
+          "better": "lower",
+          "median": 19.2,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 19.2
+        },
+        "none-small_cpu_percent": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.0
+        },
+        "none-small_latency_jitter_ns": {
+          "better": "lower",
+          "median": 20298.707297050638,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 20298.707297050638
+        },
+        "none-small_latency_p50_ns": {
+          "better": "lower",
+          "median": 11585.237502960395,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 11585.237502960395
+        },
+        "none-small_latency_p95_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "none-small_latency_p999_ns": {
+          "better": "lower",
+          "median": 92681.90002368316,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 92681.90002368316
+        },
+        "none-small_latency_p99_ns": {
+          "better": "lower",
+          "median": 92681.90002368316,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 92681.90002368316
+        },
+        "none-small_net_tx_bytes": {
+          "better": "lower",
+          "median": 13285,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 13285
+        },
+        "none-small_requests_per_s": {
+          "better": "lower",
+          "median": 1.2333333333333334,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 1.2333333333333334
+        },
+        "zstd6-large_cpu_percent": {
+          "better": "lower",
+          "median": 0.09996691122897151,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.09996691122897151
+        },
+        "zstd6-large_latency_jitter_ns": {
+          "better": "lower",
+          "median": 17137.665689933307,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 17137.665689933307
+        },
+        "zstd6-large_latency_p50_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "zstd6-large_latency_p95_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "zstd6-large_latency_p999_ns": {
+          "better": "lower",
+          "median": 185363.80004736633,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 185363.80004736633
+        },
+        "zstd6-large_latency_p99_ns": {
+          "better": "lower",
+          "median": 92681.90002368316,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 92681.90002368316
+        },
+        "zstd6-large_net_tx_bytes": {
+          "better": "lower",
+          "median": 538318,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 538318
+        },
+        "zstd6-large_requests_per_s": {
+          "better": "lower",
+          "median": 57.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 57.0
+        },
+        "zstd6-medium_cpu_percent": {
+          "better": "lower",
+          "median": 0.033323829260602865,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.033323829260602865
+        },
+        "zstd6-medium_latency_jitter_ns": {
+          "better": "lower",
+          "median": 16374.473806666645,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 16374.473806666645
+        },
+        "zstd6-medium_latency_p50_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "zstd6-medium_latency_p95_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "zstd6-medium_latency_p999_ns": {
+          "better": "lower",
+          "median": 185363.80004736633,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 185363.80004736633
+        },
+        "zstd6-medium_latency_p99_ns": {
+          "better": "lower",
+          "median": 46340.95001184158,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 46340.95001184158
+        },
+        "zstd6-medium_net_tx_bytes": {
+          "better": "lower",
+          "median": 173257,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 173257
+        },
+        "zstd6-medium_requests_per_s": {
+          "better": "lower",
+          "median": 19.233333333333334,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 19.233333333333334
+        },
+        "zstd6-small_cpu_percent": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.0
+        },
+        "zstd6-small_latency_jitter_ns": {
+          "better": "lower",
+          "median": 35033.207895102554,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 35033.207895102554
+        },
+        "zstd6-small_latency_p50_ns": {
+          "better": "lower",
+          "median": 11585.237502960395,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 11585.237502960395
+        },
+        "zstd6-small_latency_p95_ns": {
+          "better": "lower",
+          "median": 92681.90002368316,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 92681.90002368316
+        },
+        "zstd6-small_latency_p999_ns": {
+          "better": "lower",
+          "median": 185363.80004736633,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 185363.80004736633
+        },
+        "zstd6-small_latency_p99_ns": {
+          "better": "lower",
+          "median": 185363.80004736633,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 185363.80004736633
+        },
+        "zstd6-small_net_tx_bytes": {
+          "better": "lower",
+          "median": 11303,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 11303
+        },
+        "zstd6-small_requests_per_s": {
+          "better": "lower",
+          "median": 1.2333333333333334,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 1.2333333333333334
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "none-large": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.09996860519946342,
+            "samples": [
+              0.09996860519946342
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.09996860519946342
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 13302.838251072451,
+            "samples": [
+              13302.838251072451
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 13302.838251072451
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 601065,
+            "samples": [
+              601065
+            ],
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 601065
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 57.03333333333333,
+            "samples": [
+              57.03333333333333
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 57.03333333333333
+          }
+        },
+        "none-medium": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.033323722102049085,
+            "samples": [
+              0.033323722102049085
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.033323722102049085
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 13001.806127146385,
+            "samples": [
+              13001.806127146385
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 13001.806127146385
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 92681.90002368316,
+            "samples": [
+              92681.90002368316
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 92681.90002368316
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 191274,
+            "samples": [
+              191274
+            ],
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 191274
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 19.2,
+            "samples": [
+              19.2
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 19.2
+          }
+        },
+        "none-small": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.0,
+            "samples": [
+              0.0
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.0
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 20298.707297050638,
+            "samples": [
+              20298.707297050638
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 20298.707297050638
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 11585.237502960395,
+            "samples": [
+              11585.237502960395
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11585.237502960395
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 92681.90002368316,
+            "samples": [
+              92681.90002368316
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 92681.90002368316
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 92681.90002368316,
+            "samples": [
+              92681.90002368316
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 92681.90002368316
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 13285,
+            "samples": [
+              13285
+            ],
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 13285
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 1.2333333333333334,
+            "samples": [
+              1.2333333333333334
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 1.2333333333333334
+          }
+        },
+        "zstd6-large": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.09996691122897151,
+            "samples": [
+              0.09996691122897151
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.09996691122897151
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 17137.665689933307,
+            "samples": [
+              17137.665689933307
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 17137.665689933307
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 185363.80004736633,
+            "samples": [
+              185363.80004736633
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 185363.80004736633
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 92681.90002368316,
+            "samples": [
+              92681.90002368316
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 92681.90002368316
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 538318,
+            "samples": [
+              538318
+            ],
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 538318
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 57.0,
+            "samples": [
+              57.0
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 57.0
+          }
+        },
+        "zstd6-medium": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.033323829260602865,
+            "samples": [
+              0.033323829260602865
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.033323829260602865
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 16374.473806666645,
+            "samples": [
+              16374.473806666645
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 16374.473806666645
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 185363.80004736633,
+            "samples": [
+              185363.80004736633
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 185363.80004736633
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 46340.95001184158,
+            "samples": [
+              46340.95001184158
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46340.95001184158
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 173257,
+            "samples": [
+              173257
+            ],
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 173257
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 19.233333333333334,
+            "samples": [
+              19.233333333333334
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 19.233333333333334
+          }
+        },
+        "zstd6-small": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.0,
+            "samples": [
+              0.0
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.0
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 35033.207895102554,
+            "samples": [
+              35033.207895102554
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 35033.207895102554
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 11585.237502960395,
+            "samples": [
+              11585.237502960395
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11585.237502960395
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 92681.90002368316,
+            "samples": [
+              92681.90002368316
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 92681.90002368316
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 185363.80004736633,
+            "samples": [
+              185363.80004736633
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 185363.80004736633
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 185363.80004736633,
+            "samples": [
+              185363.80004736633
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 185363.80004736633
+          },
+          "net_tx_bytes": {
+            "better": "lower",
+            "median": 11303,
+            "samples": [
+              11303
+            ],
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 11303
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 1.2333333333333334,
+            "samples": [
+              1.2333333333333334
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 1.2333333333333334
+          }
+        }
+      }
+    },
+    "server-iouring": {
+      "artifact": null,
+      "metrics": {
+        "iouring-coop-taskrun_cpu_percent": {
+          "better": "lower",
+          "median": 0.06664725265964101,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.06664725265964101
+        },
+        "iouring-coop-taskrun_latency_jitter_ns": {
+          "better": "lower",
+          "median": 1323.2686802006613,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1323.2686802006613
+        },
+        "iouring-coop-taskrun_latency_p50_ns": {
+          "better": "lower",
+          "median": 1448.1546878700494,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1448.1546878700494
+        },
+        "iouring-coop-taskrun_latency_p95_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring-coop-taskrun_latency_p999_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring-coop-taskrun_latency_p99_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring-coop-taskrun_max_rss_kb": {
+          "better": "lower",
+          "median": 109336,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 109336
+        },
+        "iouring-coop-taskrun_requests_per_s": {
+          "better": "lower",
+          "median": 1.0666666666666667,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 1.0666666666666667
+        },
+        "iouring-coop-taskrun_sys_s": {
+          "better": "lower",
+          "median": 0.11,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.11
+        },
+        "iouring-coop-taskrun_user_s": {
+          "better": "lower",
+          "median": 0.14,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.14
+        },
+        "iouring-coop-taskrun_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "iouring-iopoll_cpu_percent": {
+          "better": "lower",
+          "median": 99.58352747047324,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 99.58352747047324
+        },
+        "iouring-iopoll_max_rss_kb": {
+          "better": "lower",
+          "median": 67884,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 67884
+        },
+        "iouring-iopoll_requests_per_s": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.0
+        },
+        "iouring-iopoll_sys_s": {
+          "better": "lower",
+          "median": 0.01,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.01
+        },
+        "iouring-iopoll_user_s": {
+          "better": "lower",
+          "median": 0.09,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.09
+        },
+        "iouring-iopoll_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "iouring-no-sqarray_cpu_percent": {
+          "better": "lower",
+          "median": 0.06665056690895965,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.06665056690895965
+        },
+        "iouring-no-sqarray_latency_jitter_ns": {
+          "better": "lower",
+          "median": 1224.3920940613755,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1224.3920940613755
+        },
+        "iouring-no-sqarray_latency_p50_ns": {
+          "better": "lower",
+          "median": 724.0773439350247,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 724.0773439350247
+        },
+        "iouring-no-sqarray_latency_p95_ns": {
+          "better": "lower",
+          "median": 2896.309375740099,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 2896.309375740099
+        },
+        "iouring-no-sqarray_latency_p999_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring-no-sqarray_latency_p99_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring-no-sqarray_max_rss_kb": {
+          "better": "lower",
+          "median": 93056,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 93056
+        },
+        "iouring-no-sqarray_requests_per_s": {
+          "better": "lower",
+          "median": 1.0666666666666667,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 1.0666666666666667
+        },
+        "iouring-no-sqarray_sys_s": {
+          "better": "lower",
+          "median": 0.08,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.08
+        },
+        "iouring-no-sqarray_user_s": {
+          "better": "lower",
+          "median": 0.15,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.15
+        },
+        "iouring-no-sqarray_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "iouring-sqpoll_cpu_percent": {
+          "better": "lower",
+          "median": 99.77277205706456,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 99.77277205706456
+        },
+        "iouring-sqpoll_latency_jitter_ns": {
+          "better": "lower",
+          "median": 755.9047559051339,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 755.9047559051339
+        },
+        "iouring-sqpoll_latency_p50_ns": {
+          "better": "lower",
+          "median": 1448.1546878700494,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1448.1546878700494
+        },
+        "iouring-sqpoll_latency_p95_ns": {
+          "better": "lower",
+          "median": 1448.1546878700494,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1448.1546878700494
+        },
+        "iouring-sqpoll_latency_p999_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring-sqpoll_latency_p99_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring-sqpoll_max_rss_kb": {
+          "better": "lower",
+          "median": 107736,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 107736
+        },
+        "iouring-sqpoll_requests_per_s": {
+          "better": "lower",
+          "median": 1.0666666666666667,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 1.0666666666666667
+        },
+        "iouring-sqpoll_sys_s": {
+          "better": "lower",
+          "median": 0.07,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.07
+        },
+        "iouring-sqpoll_user_s": {
+          "better": "lower",
+          "median": 0.17,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.17
+        },
+        "iouring-sqpoll_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "iouring-taskrun-flag_cpu_percent": {
+          "better": "lower",
+          "median": 0.06664962750947558,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.06664962750947558
+        },
+        "iouring-taskrun-flag_latency_jitter_ns": {
+          "better": "lower",
+          "median": 1953.3110351400774,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1953.3110351400774
+        },
+        "iouring-taskrun-flag_latency_p50_ns": {
+          "better": "lower",
+          "median": 2896.309375740099,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 2896.309375740099
+        },
+        "iouring-taskrun-flag_latency_p95_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring-taskrun-flag_latency_p999_ns": {
+          "better": "lower",
+          "median": 11585.237502960395,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 11585.237502960395
+        },
+        "iouring-taskrun-flag_latency_p99_ns": {
+          "better": "lower",
+          "median": 11585.237502960395,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 11585.237502960395
+        },
+        "iouring-taskrun-flag_max_rss_kb": {
+          "better": "lower",
+          "median": 94268,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 94268
+        },
+        "iouring-taskrun-flag_requests_per_s": {
+          "better": "lower",
+          "median": 1.0666666666666667,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 1.0666666666666667
+        },
+        "iouring-taskrun-flag_sys_s": {
+          "better": "lower",
+          "median": 0.06,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.06
+        },
+        "iouring-taskrun-flag_user_s": {
+          "better": "lower",
+          "median": 0.19,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.19
+        },
+        "iouring-taskrun-flag_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "iouring_cpu_percent": {
+          "better": "lower",
+          "median": 0.033322078209387915,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "%",
+          "value": 0.033322078209387915
+        },
+        "iouring_latency_jitter_ns": {
+          "better": "lower",
+          "median": 980.8404559356227,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 980.8404559356227
+        },
+        "iouring_latency_p50_ns": {
+          "better": "lower",
+          "median": 1448.1546878700494,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1448.1546878700494
+        },
+        "iouring_latency_p95_ns": {
+          "better": "lower",
+          "median": 2896.309375740099,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 2896.309375740099
+        },
+        "iouring_latency_p999_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring_latency_p99_ns": {
+          "better": "lower",
+          "median": 5792.618751480198,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5792.618751480198
+        },
+        "iouring_max_rss_kb": {
+          "better": "lower",
+          "median": 107772,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 107772
+        },
+        "iouring_requests_per_s": {
+          "better": "lower",
+          "median": 1.0666666666666667,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 1.0666666666666667
+        },
+        "iouring_sys_s": {
+          "better": "lower",
+          "median": 0.09,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.09
+        },
+        "iouring_user_s": {
+          "better": "lower",
+          "median": 0.17,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.17
+        },
+        "iouring_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "iouring": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.033322078209387915,
+            "samples": [
+              0.033322078209387915
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.033322078209387915
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 980.8404559356227,
+            "samples": [
+              980.8404559356227
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 980.8404559356227
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 1448.1546878700494,
+            "samples": [
+              1448.1546878700494
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1448.1546878700494
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 2896.309375740099,
+            "samples": [
+              2896.309375740099
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2896.309375740099
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 107772,
+            "samples": [
+              107772
+            ],
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 107772
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 1.0666666666666667,
+            "samples": [
+              1.0666666666666667
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 1.0666666666666667
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.09,
+            "samples": [
+              0.09
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.09
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.17,
+            "samples": [
+              0.17
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.17
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.0,
+            "samples": [
+              30.0
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 30.0
+          }
+        },
+        "iouring-coop-taskrun": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.06664725265964101,
+            "samples": [
+              0.06664725265964101
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.06664725265964101
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 1323.2686802006613,
+            "samples": [
+              1323.2686802006613
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1323.2686802006613
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 1448.1546878700494,
+            "samples": [
+              1448.1546878700494
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1448.1546878700494
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 109336,
+            "samples": [
+              109336
+            ],
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 109336
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 1.0666666666666667,
+            "samples": [
+              1.0666666666666667
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 1.0666666666666667
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.11,
+            "samples": [
+              0.11
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.11
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.14,
+            "samples": [
+              0.14
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.14
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.0,
+            "samples": [
+              30.0
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 30.0
+          }
+        },
+        "iouring-iopoll": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 99.58352747047324,
+            "samples": [
+              99.58352747047324
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 99.58352747047324
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 67884,
+            "samples": [
+              67884
+            ],
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 67884
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 0.0,
+            "samples": [
+              0.0
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 0.0
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.01,
+            "samples": [
+              0.01
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.01
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.09,
+            "samples": [
+              0.09
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.09
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.0,
+            "samples": [
+              30.0
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 30.0
+          }
+        },
+        "iouring-no-sqarray": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.06665056690895965,
+            "samples": [
+              0.06665056690895965
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.06665056690895965
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 1224.3920940613755,
+            "samples": [
+              1224.3920940613755
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1224.3920940613755
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 724.0773439350247,
+            "samples": [
+              724.0773439350247
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 724.0773439350247
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 2896.309375740099,
+            "samples": [
+              2896.309375740099
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2896.309375740099
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 93056,
+            "samples": [
+              93056
+            ],
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 93056
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 1.0666666666666667,
+            "samples": [
+              1.0666666666666667
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 1.0666666666666667
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.08,
+            "samples": [
+              0.08
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.08
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.15,
+            "samples": [
+              0.15
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.15
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.0,
+            "samples": [
+              30.0
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 30.0
+          }
+        },
+        "iouring-sqpoll": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 99.77277205706456,
+            "samples": [
+              99.77277205706456
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 99.77277205706456
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 755.9047559051339,
+            "samples": [
+              755.9047559051339
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 755.9047559051339
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 1448.1546878700494,
+            "samples": [
+              1448.1546878700494
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1448.1546878700494
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 1448.1546878700494,
+            "samples": [
+              1448.1546878700494
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1448.1546878700494
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 107736,
+            "samples": [
+              107736
+            ],
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 107736
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 1.0666666666666667,
+            "samples": [
+              1.0666666666666667
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 1.0666666666666667
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.07,
+            "samples": [
+              0.07
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.07
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.17,
+            "samples": [
+              0.17
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.17
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.0,
+            "samples": [
+              30.0
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 30.0
+          }
+        },
+        "iouring-taskrun-flag": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.06664962750947558,
+            "samples": [
+              0.06664962750947558
+            ],
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 0.06664962750947558
+          },
+          "latency_jitter_ns": {
+            "better": "lower",
+            "median": 1953.3110351400774,
+            "samples": [
+              1953.3110351400774
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1953.3110351400774
+          },
+          "latency_p50_ns": {
+            "better": "lower",
+            "median": 2896.309375740099,
+            "samples": [
+              2896.309375740099
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2896.309375740099
+          },
+          "latency_p95_ns": {
+            "better": "lower",
+            "median": 5792.618751480198,
+            "samples": [
+              5792.618751480198
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5792.618751480198
+          },
+          "latency_p999_ns": {
+            "better": "lower",
+            "median": 11585.237502960395,
+            "samples": [
+              11585.237502960395
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11585.237502960395
+          },
+          "latency_p99_ns": {
+            "better": "lower",
+            "median": 11585.237502960395,
+            "samples": [
+              11585.237502960395
+            ],
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11585.237502960395
+          },
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 94268,
+            "samples": [
+              94268
+            ],
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 94268
+          },
+          "requests_per_s": {
+            "better": "higher",
+            "median": 1.0666666666666667,
+            "samples": [
+              1.0666666666666667
+            ],
+            "stddev": 0.0,
+            "unit": "req/s",
+            "value": 1.0666666666666667
+          },
+          "sys_s": {
+            "better": "lower",
+            "median": 0.06,
+            "samples": [
+              0.06
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.06
+          },
+          "user_s": {
+            "better": "lower",
+            "median": 0.19,
+            "samples": [
+              0.19
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.19
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 30.0,
+            "samples": [
+              30.0
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 30.0
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-23T14:16:17Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

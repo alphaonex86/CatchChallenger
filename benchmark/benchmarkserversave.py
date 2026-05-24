@@ -99,16 +99,16 @@ def build():
     cfg += bh.cmake_accel_defs()
     rc, sout, serr, _ = bh.run_capture(cfg, timeout=300)
     if rc != 0:
-        print(sout); print(serr, file=sys.stderr)
-        print(_color(bh.C_RED, "[build] cmake configure FAILED")); return None
+        bh.print_local_build_error("build", "cmake configure", sout, serr)
+        return None
     # Record which libs (system vs vendored) the local build linked, for
     # the "local" node's history record.
     bh.record_libs("local", sout)
     bld = ["cmake", "--build", BUILD_DIR, "--", "-j", str(os.cpu_count() or 1)]
     rc, sout, serr, _ = bh.run_capture(bld, timeout=BUILD_TIMEOUT)
     if rc != 0:
-        print(sout); print(serr, file=sys.stderr)
-        print(_color(bh.C_RED, "[build] cmake build FAILED")); return None
+        bh.print_local_build_error("build", "cmake build", sout, serr)
+        return None
     bin_path = os.path.join(BUILD_DIR, BIN_NAME)
     if not os.path.isfile(bin_path):
         print(_color(bh.C_RED, f"[build] missing: {bin_path}")); return None
@@ -339,7 +339,7 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
     if os.path.isdir(DATAPACK_PATH):
         rc_dp, msg_dp = br.rsync_datapack_to_exec(exec_node, DATAPACK_PATH,
                                                    remote_subdir="datapack",
-                                                   timeout=600)
+                                                   timeout=600, server_mode=True)
         if rc_dp != 0:
             for prof in runnable:
                 progress.emit(prof, "no", label, status="FAIL",
@@ -388,9 +388,20 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
                 reason = bh.perf_no_hw_skip(label)
                 progress.emit(prof, "no", label, status="SKIP", extra=reason)
                 per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+            elif isinstance(msg, str) and msg.startswith("SKIP:"):
+                # Infra failure (compile/push/bring-up) tagged by
+                # benchmark_remote: unknown metric, not a regression.  Show the
+                # full cause + re-run command under a banner.
+                detail = msg[5:]
+                bh.print_node_error("benchmarkserversave", label, "SKIP", detail)
+                progress.emit(prof, "no", label, status="SKIP",
+                              extra=detail[:80])
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
             else:
+                detail = msg if msg != "ok" else "no-data"
+                bh.print_node_error("benchmarkserversave", label, "FAIL", detail)
                 progress.emit(prof, "no", label, status="FAIL",
-                              extra=msg if msg != "ok" else "no-data")
+                              extra=detail[:80])
                 per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
             continue
         if prof == "rusage":
@@ -415,6 +426,7 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
 
 def main():
     args = bh.parse_bench_args()
+    bh.set_node_filter(args.node)
     if bh.acquire_singleton_lock("benchmarkserversave") is None:
         return 3
     br.set_benchmark_label("benchmarkserversave")
@@ -437,7 +449,7 @@ def main():
             if os.path.isdir(DATAPACK_PATH):
                 rc_dp, msg_dp = br.rsync_datapack_to_exec(
                     runtime_node, DATAPACK_PATH, remote_subdir="datapack",
-                    timeout=600)
+                    timeout=600, server_mode=True)
                 if rc_dp != 0:
                     return False, f"datapack-rsync: {msg_dp[:80]}"
             br.write_server_properties_on_exec(runtime_node, maincode,
@@ -462,7 +474,9 @@ def main():
         return 0
 
     arch = bh.host_arch()
-    nodes = [{"label": "local", "arch": arch}] + bh.benchmark_exec_nodes()
+    # --node may exclude the host baseline; only prepend "local" when allowed.
+    local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
+    nodes = local_node + bh.benchmark_exec_nodes()
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
 
     # Pre-resolve per-node profiler availability against the persisted

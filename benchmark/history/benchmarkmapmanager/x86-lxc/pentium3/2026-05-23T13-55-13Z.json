@@ -1,0 +1,508 @@
+{
+  "arch": "i686",
+  "arch_emulated": false,
+  "batch_id": "4fe9e5ad23bb42808e129622093aaa1d",
+  "benchmark": "benchmarkmapmanager",
+  "comment": "",
+  "commit": "a166d07bb2efddb38a32b78fa7a619c9ce7e7333",
+  "commit_short": "a166d07",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 12.2.0-14+deb12u1) 12.2.0",
+  "cpu_cores": 1,
+  "cpu_flags": "fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pse36 mmx fxsr sse cpuid",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 1102.493,
+  "cpu_model": "Intel(R) Celeron(TM) CPU                1100MHz",
+  "decision": "DISCARD",
+  "disk_kind": "ssd-sata",
+  "disk_root": "ATA Samsung SSD 870",
+  "ended_utc": "2026-05-23T14:05:05Z",
+  "eth_link_mbps": 100,
+  "harness_version": "8c4ff83acbe255218de5fc7b54e453c01ccac405",
+  "host_arch": null,
+  "kernel": "6.1.0-40-686-pae",
+  "libc": "glibc 2.36",
+  "libs": {},
+  "loadavg_1min_at_start": 0.28,
+  "net_card": "eth0",
+  "net_link": "wired",
+  "net_link_detail": null,
+  "node": "pentium3",
+  "ram_total_mb": 229,
+  "ram_type": "DIMM SDRAM",
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 1337748,
+          "samples": [
+            1337748
+          ],
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 1337748
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "callgrind": {
+      "artifact": null,
+      "metrics": {
+        "callgrind_ir": {
+          "better": "lower",
+          "median": 4163737786,
+          "samples": [
+            4163737786
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 4163737786
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "perf_branch-misses": {
+          "better": "lower",
+          "median": 9251368,
+          "samples": [
+            9251368
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 9251368
+        },
+        "perf_cache-misses": {
+          "better": "lower",
+          "median": 10169469,
+          "samples": [
+            10169469
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 10169469
+        },
+        "perf_cycles": {
+          "better": "lower",
+          "median": 15364388835,
+          "samples": [
+            15364388835
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 15364388835
+        },
+        "perf_instructions": {
+          "better": "lower",
+          "median": 17158664049,
+          "samples": [
+            17158664049
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 17158664049
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 5828,
+          "samples": [
+            5828
+          ],
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 5828
+        },
+        "p100_bytes_sent": {
+          "better": "lower",
+          "median": 55981817,
+          "samples": [
+            55981817
+          ],
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 55981817
+        },
+        "p100_median_tick_ns": {
+          "better": "lower",
+          "median": 1257350,
+          "samples": [
+            1257350
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 1257350
+        },
+        "p100_p95_tick_ns": {
+          "better": "lower",
+          "median": 1378707,
+          "samples": [
+            1378707
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 1378707
+        },
+        "p100_ticks": {
+          "better": "higher",
+          "median": 1909,
+          "samples": [
+            1909
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1909
+        },
+        "p100_ticks_per_s": {
+          "better": "higher",
+          "median": 953.07,
+          "samples": [
+            953.07
+          ],
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 953.07
+        },
+        "p10_bytes_sent": {
+          "better": "lower",
+          "median": 15293328,
+          "samples": [
+            15293328
+          ],
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 15293328
+        },
+        "p10_median_tick_ns": {
+          "better": "lower",
+          "median": 14798,
+          "samples": [
+            14798
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 14798
+        },
+        "p10_p95_tick_ns": {
+          "better": "lower",
+          "median": 17422,
+          "samples": [
+            17422
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 17422
+        },
+        "p10_ticks": {
+          "better": "higher",
+          "median": 45273,
+          "samples": [
+            45273
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 45273
+        },
+        "p10_ticks_per_s": {
+          "better": "higher",
+          "median": 22591.3,
+          "samples": [
+            22591.3
+          ],
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 22591.3
+        },
+        "p200_bytes_sent": {
+          "better": "lower",
+          "median": 32968548,
+          "samples": [
+            32968548
+          ],
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 32968548
+        },
+        "p200_median_tick_ns": {
+          "better": "lower",
+          "median": 8380731,
+          "samples": [
+            8380731
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 8380731
+        },
+        "p200_p95_tick_ns": {
+          "better": "lower",
+          "median": 8844154,
+          "samples": [
+            8844154
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 8844154
+        },
+        "p200_ticks": {
+          "better": "higher",
+          "median": 272,
+          "samples": [
+            272
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 272
+        },
+        "p200_ticks_per_s": {
+          "better": "higher",
+          "median": 136,
+          "samples": [
+            136
+          ],
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 136
+        },
+        "p20_bytes_sent": {
+          "better": "lower",
+          "median": 37441898,
+          "samples": [
+            37441898
+          ],
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 37441898
+        },
+        "p20_median_tick_ns": {
+          "better": "lower",
+          "median": 53326,
+          "samples": [
+            53326
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 53326
+        },
+        "p20_p95_tick_ns": {
+          "better": "lower",
+          "median": 58902,
+          "samples": [
+            58902
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 58902
+        },
+        "p20_ticks": {
+          "better": "higher",
+          "median": 29320,
+          "samples": [
+            29320
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 29320
+        },
+        "p20_ticks_per_s": {
+          "better": "higher",
+          "median": 14638,
+          "samples": [
+            14638
+          ],
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 14638
+        },
+        "p300_bytes_sent": {
+          "better": "lower",
+          "median": 33084381,
+          "samples": [
+            33084381
+          ],
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 33084381
+        },
+        "p300_median_tick_ns": {
+          "better": "lower",
+          "median": 16810143,
+          "samples": [
+            16810143
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 16810143
+        },
+        "p300_p95_tick_ns": {
+          "better": "lower",
+          "median": 17364292,
+          "samples": [
+            17364292
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 17364292
+        },
+        "p300_ticks": {
+          "better": "higher",
+          "median": 128,
+          "samples": [
+            128
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 128
+        },
+        "p300_ticks_per_s": {
+          "better": "higher",
+          "median": 64,
+          "samples": [
+            64
+          ],
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 64
+        },
+        "p50_bytes_sent": {
+          "better": "lower",
+          "median": 56957652,
+          "samples": [
+            56957652
+          ],
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 56957652
+        },
+        "p50_median_tick_ns": {
+          "better": "lower",
+          "median": 314723,
+          "samples": [
+            314723
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 314723
+        },
+        "p50_p95_tick_ns": {
+          "better": "lower",
+          "median": 331087,
+          "samples": [
+            331087
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 331087
+        },
+        "p50_ticks": {
+          "better": "higher",
+          "median": 7284,
+          "samples": [
+            7284
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 7284
+        },
+        "p50_ticks_per_s": {
+          "better": "higher",
+          "median": 3638.36,
+          "samples": [
+            3638.36
+          ],
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 3638.36
+        },
+        "p5_bytes_sent": {
+          "better": "lower",
+          "median": 4198752,
+          "samples": [
+            4198752
+          ],
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 4198752
+        },
+        "p5_median_tick_ns": {
+          "better": "lower",
+          "median": 4362,
+          "samples": [
+            4362
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 4362
+        },
+        "p5_p95_tick_ns": {
+          "better": "lower",
+          "median": 6488,
+          "samples": [
+            6488
+          ],
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 6488
+        },
+        "p5_ticks": {
+          "better": "higher",
+          "median": 44526,
+          "samples": [
+            44526
+          ],
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 44526
+        },
+        "p5_ticks_per_s": {
+          "better": "higher",
+          "median": 21955.6,
+          "samples": [
+            21955.6
+          ],
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 21955.6
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 14.16,
+          "samples": [
+            14.16
+          ],
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 14.16
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-23T13:55:13Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

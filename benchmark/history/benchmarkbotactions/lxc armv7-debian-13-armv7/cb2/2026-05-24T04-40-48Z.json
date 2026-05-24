@@ -1,0 +1,396 @@
+{
+  "arch": "armv7",
+  "arch_emulated": false,
+  "batch_id": "f76056a7eec74cbba610188720cb24ed",
+  "benchmark": "benchmarkbotactions",
+  "comment": "",
+  "commit": "a166d07bb2efddb38a32b78fa7a619c9ce7e7333",
+  "commit_short": "a166d07",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cores": 2,
+  "cpu_flags": "half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": null,
+  "cpu_model": "ARMv7 Processor rev 4 (v7l)",
+  "decision": "ESCALATE",
+  "disk_kind": "emmc",
+  "disk_root": "/dev/mmcblk0p1",
+  "ended_utc": "2026-05-24T05:45:39Z",
+  "eth_link_mbps": 100,
+  "harness_version": "8c4ff83acbe255218de5fc7b54e453c01ccac405",
+  "host_arch": null,
+  "kernel": "6.18.29-current-sunxi",
+  "libc": "glibc 2.41",
+  "libs": {
+    "blake3": {
+      "source": "vendored",
+      "version": null
+    },
+    "tinyxml2": {
+      "source": "system",
+      "version": "11.0.0"
+    },
+    "xxhash": {
+      "source": "system",
+      "version": "0.8.3"
+    },
+    "zlib": {
+      "source": "system",
+      "version": "1.3.1"
+    },
+    "zstd": {
+      "source": "system",
+      "version": "1.5.7"
+    }
+  },
+  "loadavg_1min_at_start": 0.32,
+  "net_card": "end0",
+  "net_link": "wired",
+  "net_link_detail": null,
+  "node": "cb2",
+  "ram_total_mb": 991,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 7345840,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 7345840
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "perf_branch-misses:u": {
+          "better": "lower",
+          "median": 3770061,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 3770061
+        },
+        "perf_cache-misses:u": {
+          "better": "lower",
+          "median": 8558828,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 8558828
+        },
+        "perf_cycles:u": {
+          "better": "lower",
+          "median": 580592869,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 580592869
+        },
+        "perf_instructions:u": {
+          "better": "lower",
+          "median": 1109005958,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1109005958
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "b128_invol_ctx": {
+          "better": "lower",
+          "median": 57.0,
+          "samples": null,
+          "stddev": 48.0,
+          "unit": "count",
+          "value": 57.0
+        },
+        "b128_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b128_max_rss_kb": {
+          "better": "lower",
+          "median": 109402.0,
+          "samples": null,
+          "stddev": 1266.0,
+          "unit": "kb",
+          "value": 109402.0
+        },
+        "b128_minor_pf": {
+          "better": "lower",
+          "median": 20278.0,
+          "samples": null,
+          "stddev": 451.0,
+          "unit": "count",
+          "value": 20278.0
+        },
+        "b128_sys_s": {
+          "better": "lower",
+          "median": 0.18,
+          "samples": null,
+          "stddev": 0.03,
+          "unit": "s",
+          "value": 0.18
+        },
+        "b128_tcp_retrans": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b128_user_s": {
+          "better": "lower",
+          "median": 0.44499999999999995,
+          "samples": null,
+          "stddev": 0.12499999999999997,
+          "unit": "s",
+          "value": 0.44499999999999995
+        },
+        "b128_vol_ctx": {
+          "better": "lower",
+          "median": 3277.0,
+          "samples": null,
+          "stddev": 102.0,
+          "unit": "count",
+          "value": 3277.0
+        },
+        "b128_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "b32_invol_ctx": {
+          "better": "lower",
+          "median": 10.5,
+          "samples": null,
+          "stddev": 0.5,
+          "unit": "count",
+          "value": 10.5
+        },
+        "b32_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b32_max_rss_kb": {
+          "better": "lower",
+          "median": 93194.0,
+          "samples": null,
+          "stddev": 34.0,
+          "unit": "kb",
+          "value": 93194.0
+        },
+        "b32_minor_pf": {
+          "better": "lower",
+          "median": 16102.0,
+          "samples": null,
+          "stddev": 2.0,
+          "unit": "count",
+          "value": 16102.0
+        },
+        "b32_sys_s": {
+          "better": "lower",
+          "median": 0.055,
+          "samples": null,
+          "stddev": 0.0049999999999999975,
+          "unit": "s",
+          "value": 0.055
+        },
+        "b32_tcp_retrans": {
+          "better": "lower",
+          "median": 0.5,
+          "samples": null,
+          "stddev": 0.5,
+          "unit": "count",
+          "value": 0.5
+        },
+        "b32_user_s": {
+          "better": "lower",
+          "median": 0.19,
+          "samples": null,
+          "stddev": 0.01999999999999999,
+          "unit": "s",
+          "value": 0.19
+        },
+        "b32_vol_ctx": {
+          "better": "lower",
+          "median": 1886.5,
+          "samples": null,
+          "stddev": 9.5,
+          "unit": "count",
+          "value": 1886.5
+        },
+        "b32_wall_s": {
+          "better": "lower",
+          "median": 30.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 30.0
+        },
+        "b4_invol_ctx": {
+          "better": "lower",
+          "median": 7.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 7.0
+        },
+        "b4_major_pf": {
+          "better": "lower",
+          "median": 0.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 0.0
+        },
+        "b4_max_rss_kb": {
+          "better": "lower",
+          "median": 90880.0,
+          "samples": null,
+          "stddev": 212.0,
+          "unit": "kb",
+          "value": 90880.0
+        },
+        "b4_minor_pf": {
+          "better": "lower",
+          "median": 15362.0,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 15362.0
+        },
+        "b4_sys_s": {
+          "better": "lower",
+          "median": 0.045,
+          "samples": null,
+          "stddev": 0.015,
+          "unit": "s",
+          "value": 0.045
+        },
+        "b4_tcp_retrans": {
+          "better": "lower",
+          "median": 3.5,
+          "samples": null,
+          "stddev": 3.5,
+          "unit": "count",
+          "value": 3.5
+        },
+        "b4_user_s": {
+          "better": "lower",
+          "median": 0.135,
+          "samples": null,
+          "stddev": 0.035,
+          "unit": "s",
+          "value": 0.135
+        },
+        "b4_vol_ctx": {
+          "better": "lower",
+          "median": 1442.0,
+          "samples": null,
+          "stddev": 6.0,
+          "unit": "count",
+          "value": 1442.0
+        },
+        "b4_wall_s": {
+          "better": "lower",
+          "median": 30.005000000000003,
+          "samples": null,
+          "stddev": 0.005000000000000782,
+          "unit": "s",
+          "value": 30.005000000000003
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "server-boot": {
+      "artifact": null,
+      "metrics": {
+        "boot_no_cache_s": {
+          "better": "lower",
+          "median": 2.1496950199943967,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 2.1496950199943967
+        },
+        "boot_with_cache_s": {
+          "better": "lower",
+          "median": 2.1285287190112285,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 2.1285287190112285
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "no-cache": {
+          "boot_to_bind_s": {
+            "better": "lower",
+            "median": 2.1496950199943967,
+            "samples": [
+              2.1496950199943967
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 2.1496950199943967
+          }
+        },
+        "with-cache": {
+          "boot_to_bind_s": {
+            "better": "lower",
+            "median": 2.1285287190112285,
+            "samples": [
+              2.1285287190112285
+            ],
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 2.1285287190112285
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-24T04:40:48Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

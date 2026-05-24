@@ -1,0 +1,88 @@
+{
+  "arch": "i686",
+  "arch_emulated": false,
+  "batch_id": "cc677f792c6b410f9de3414b9ea74d0d",
+  "benchmark": "benchmarkbotactions",
+  "comment": "",
+  "commit": "a166d07bb2efddb38a32b78fa7a619c9ce7e7333",
+  "commit_short": "a166d07",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 12.2.0-14+deb12u1) 12.2.0",
+  "cpu_cores": 1,
+  "cpu_flags": "fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pse36 mmx fxsr sse cpuid",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 1102.493,
+  "cpu_model": "Intel(R) Celeron(TM) CPU                1100MHz",
+  "decision": "ESCALATE",
+  "disk_kind": "ssd-sata",
+  "disk_root": "ATA Samsung SSD 870",
+  "ended_utc": "2026-05-23T15:34:39Z",
+  "eth_link_mbps": 100,
+  "harness_version": "8c4ff83acbe255218de5fc7b54e453c01ccac405",
+  "host_arch": null,
+  "kernel": "6.1.0-40-686-pae",
+  "libc": "glibc 2.36",
+  "libs": {
+    "blake3": {
+      "source": "vendored",
+      "version": null
+    },
+    "tinyxml2": {
+      "source": "system",
+      "version": "9.0.0"
+    },
+    "xxhash": {
+      "source": "system",
+      "version": "0.8.1"
+    },
+    "zlib": {
+      "source": "system",
+      "version": "1.2.13"
+    },
+    "zstd": {
+      "source": "system",
+      "version": "1.5.4"
+    }
+  },
+  "loadavg_1min_at_start": 0.22,
+  "net_card": "eth0",
+  "net_link": "wired",
+  "net_link_detail": null,
+  "node": "pentium3",
+  "ram_total_mb": 229,
+  "ram_type": "DIMM SDRAM",
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "FAIL",
+      "subbenchmarks": {}
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-23T15:12:02Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

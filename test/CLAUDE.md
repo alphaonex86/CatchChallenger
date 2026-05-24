@@ -191,6 +191,8 @@ Must copy (not symlink) when destination is mutated: `setup_client_cache_partial
 
 Modules: `test/datapack_stage.py` (`staged_local`/`staged_remote`/`remote_cache_for`/`datapack_id`/`stage_all`); `test/stage_datapacks.py` (one-shot driver); `test/all.sh` wipes tmpfs except `cc-datapack/`+`ccache-catchchallenger/`.
 
+**Extension filter (not a 1:1 mirror).** Every staged slot is filtered to `CATCHCHALLENGER_EXTENSION_ALLOWED` (`general/base/GeneralVariable.hpp`, read at runtime) via an rsync whitelist (`--include=*/ --include=*.<ext> ... --exclude=* --delete-excluded`, plus `--exclude=.git`): cruft the engine never loads (README.md, .git, .xcf, .sample) is dropped everywhere. Each datapack is staged TWICE — the full client slot (`<id>`, all allowed extensions incl. images/audio) and a headless-SERVER slot (`<id>-server-headless`, media png/jpg/gif/ogg/opus removed, `skin/fighter/` kept as EMPTY folders for the XML-parse fighter-skin enumeration). Server-only consumers pass `server=True` to `staged_local`/`staged_remote`/`datapack_id`; client/GUI consumers use the default full slot. `_STAGE_SCHEMA` is mixed into the source checksum so a filter-logic change forces one full re-stage. Mirrors `benchmark/benchmark_remote.py:server_datapack_excludes()`.
+
 ## Per-child resource limits — CPU + memory
 
 Every testing*.py that spawns long-lived server binaries should set two `resource.setrlimit` caps in the child's `preexec_fn`:

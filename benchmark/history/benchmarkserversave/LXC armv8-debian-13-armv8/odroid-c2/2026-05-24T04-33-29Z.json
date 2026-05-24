@@ -1,0 +1,166 @@
+{
+  "arch": "aarch64",
+  "arch_emulated": false,
+  "batch_id": "21af294dff334d518720b3439df1c6a7",
+  "benchmark": "benchmarkserversave",
+  "comment": "",
+  "commit": "a166d07bb2efddb38a32b78fa7a619c9ce7e7333",
+  "commit_short": "a166d07",
+  "compile_flags": [
+    "-O2",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cores": 4,
+  "cpu_flags": "fp asimd evtstrm crc32 cpuid",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": null,
+  "cpu_model": "ARMv8 Processor rev 4 (v8l)",
+  "decision": "ESCALATE",
+  "disk_kind": "emmc",
+  "disk_root": "/dev/mmcblk0p1",
+  "ended_utc": "2026-05-24T04:37:46Z",
+  "eth_link_mbps": null,
+  "harness_version": "8c4ff83acbe255218de5fc7b54e453c01ccac405",
+  "host_arch": null,
+  "kernel": "6.18.15-current-meson64",
+  "libc": "glibc 2.41",
+  "libs": {
+    "blake3": {
+      "source": "vendored",
+      "version": null
+    },
+    "tinyxml2": {
+      "source": "system",
+      "version": "11.0.0"
+    },
+    "xxhash": {
+      "source": "system",
+      "version": "0.8.3"
+    },
+    "zlib": {
+      "source": "system",
+      "version": "1.3.1"
+    },
+    "zstd": {
+      "source": "system",
+      "version": "1.5.7"
+    }
+  },
+  "loadavg_1min_at_start": 0.01,
+  "net_card": null,
+  "net_link": null,
+  "net_link_detail": null,
+  "node": "odroid-c2",
+  "ram_total_mb": 1917,
+  "ram_type": null,
+  "results": {
+    "binary-size": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "callgrind": {
+      "artifact": null,
+      "metrics": {},
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "perf-stat": {
+      "artifact": null,
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 893326,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 893326
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 399554,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 399554
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 157663425,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 157663425
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 101467925,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 101467925
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {}
+    },
+    "rusage": {
+      "artifact": null,
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7500,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 7500
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.23,
+          "samples": null,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 0.23
+        }
+      },
+      "skip_reason": null,
+      "status": "PASS",
+      "subbenchmarks": {
+        "default": {
+          "max_rss_kb": {
+            "better": "lower",
+            "median": 7500,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "kb",
+            "value": 7500
+          },
+          "wall_s": {
+            "better": "lower",
+            "median": 0.23,
+            "samples": null,
+            "stddev": 0.0,
+            "unit": "s",
+            "value": 0.23
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "started_utc": "2026-05-24T04:33:29Z",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": null,
+  "wifi_link_mbps": null,
+  "wifi_ssid": null,
+  "wifi_standard": null
+}

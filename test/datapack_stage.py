@@ -24,15 +24,24 @@ sources of slowdown disappear when we stage once and symlink afterwards:
 All rsyncs run concurrently (one thread per (target, source) pair) and
 this module's `stage_all()` blocks until every one completes.
 
+Every staged slot is FILTERED to CATCHCHALLENGER_EXTENSION_ALLOWED
+(general/base/GeneralVariable.hpp, read at runtime): cruft the engine never
+loads (README.md, .git, .xcf, .sample, …) is dropped from every slot. Each
+datapack is staged TWICE: the full client slot (all allowed extensions, incl.
+images/audio) and a media-stripped headless-SERVER slot (`<id>-server-headless`,
+images/audio removed, skin/fighter/ kept as empty folders) for server-only
+consumers. Pass `server=True` to the accessors to reach the stripped slot.
+
 Public API:
     LOCAL_CACHE_ROOT          test_config.LOCAL_CACHE_ROOT
                               (<paths.tmpfs_root>/cc-datapack)
     DEFAULT_REMOTE_CACHE      /home/user/datapack-cache
-    datapack_id(src)          → stable id for a source datapack (basename)
-    staged_local(src)         → path under LOCAL_CACHE_ROOT for `src`
-    staged_remote(node, src)  → path under node['datapack_cache'] for `src`
-    stage_all(srcs, exec_nodes, log_info=print) → run every rsync in
-                                parallel, wait, raise on any failure.
+    allowed_extensions()      → CATCHCHALLENGER_EXTENSION_ALLOWED (runtime)
+    datapack_id(src, server=False)        → stable slot id
+    staged_local(src, server=False)       → path under LOCAL_CACHE_ROOT
+    staged_remote(node, src, server=False)→ path under node['datapack_cache']
+    stage_all(srcs, exec_nodes, log_info=print) → stage both slots for every
+                                src in parallel, wait, raise on any failure.
 
 Idempotent: safe to call stage_all() at every all.sh start.
 """
@@ -41,6 +50,7 @@ import os
 import subprocess
 import threading
 import hashlib
+import sys
 import test_config
 
 
@@ -49,6 +59,91 @@ DEFAULT_REMOTE_CACHE = "/home/user/datapack-cache"
 
 _RSYNC_LOCAL_TIMEOUT = 600
 _RSYNC_REMOTE_TIMEOUT = 1200
+
+# ---- extension filtering -------------------------------------------------
+# CATCHCHALLENGER_EXTENSION_ALLOWED (general/base/GeneralVariable.hpp) is the
+# ONLY set of extensions the engine ever loads from a datapack. We stage a
+# FILTERED mirror, not a 1:1 copy:
+#   * EVERY slot is filtered to the allowed list -> non-datapack cruft
+#     (README.md, .git, GIMP .xcf, .sample, ...) is dropped on client and
+#     server alike (the engine ignores it anyway). "Respect
+#     CATCHCHALLENGER_EXTENSION_ALLOWED in all cases."
+#   * The server-headless slot additionally drops the MEDIA subset (images
+#     png/jpg/gif, audio ogg/opus): a headless server needs no rendering or
+#     sound. skin/fighter/ survives as EMPTY folders (--include=*/) for the
+#     XML-parse fighter-skin enumeration.
+# Loaded from the header AT RUNTIME so updating the #define updates staging.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_MEDIA_EXT = {"png", "jpg", "jpeg", "gif", "bmp", "webp", "ico", "svg",
+              "tga", "psd", "ogg", "opus", "wav", "mp3", "mid", "midi",
+              "flac", "aac", "m4a", "mod", "xm", "s3m"}
+_ALLOWED_EXT_FALLBACK = ["tmx", "xml", "tsx", "js", "png", "jpg", "gif",
+                         "ogg", "opus"]
+_ALLOWED_EXT_CACHE = None
+# Bump when the staging filter logic changes: it is mixed into the source
+# checksum so a logic change invalidates every cached checksum and forces
+# one full re-stage (otherwise an unchanged source would skip the rsync and
+# the new filtering / new server slot would never be applied).
+_STAGE_SCHEMA = "v2-extfilter"
+
+
+def allowed_extensions():
+    """CATCHCHALLENGER_EXTENSION_ALLOWED parsed from GeneralVariable.hpp at
+    runtime (memoized); falls back to the known set if unreadable."""
+    global _ALLOWED_EXT_CACHE
+    if _ALLOWED_EXT_CACHE is not None:
+        return _ALLOWED_EXT_CACHE
+    allowed = None
+    hpp = os.path.join(_REPO_ROOT, "general", "base", "GeneralVariable.hpp")
+    try:
+        with open(hpp, "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if "CATCHCHALLENGER_EXTENSION_ALLOWED" in line and "#define" in line:
+                    q1 = line.find('"')
+                    q2 = line.find('"', q1 + 1)
+                    if q1 != -1 and q2 != -1:
+                        allowed = [e.strip().lower()
+                                   for e in line[q1 + 1:q2].split(";")
+                                   if e.strip()]
+                    break
+    except OSError as e:
+        print(f"[datapack_stage] WARN: cannot read {hpp}: {e}", file=sys.stderr)
+    if not allowed:
+        allowed = list(_ALLOWED_EXT_FALLBACK)
+    _ALLOWED_EXT_CACHE = allowed
+    return allowed
+
+
+def keep_extensions(server):
+    """Extensions to KEEP for a slot: the allowed list, minus the media
+    subset when `server` (headless: no images/audio)."""
+    allowed = allowed_extensions()
+    if server:
+        return [e for e in allowed if e not in _MEDIA_EXT]
+    return list(allowed)
+
+
+def rsync_filter_args(server):
+    """rsync whitelist for a staged datapack slot: keep only the wanted
+    extensions, drop everything else (cruft + media-when-server) with
+    --delete-excluded so already-staged strays are pruned. --include=*/
+    keeps the full directory tree (empty folders where a dir held only
+    excluded files -- e.g. server skin/fighter/)."""
+    # Prune .git BEFORE the dir-include: the source datapack is a git
+    # checkout, and --include=*/ would otherwise recreate its whole object
+    # tree as hundreds of empty folders. First-match-wins, so this comes
+    # first.
+    args = ["--delete-excluded", "--exclude=.git", "--exclude=.git/",
+            "--include=*/"]
+    for ext in keep_extensions(server):
+        args.append(f"--include=*.{ext}")
+    args.append("--exclude=*")
+    return args
+
+
+# Suffix for the headless-server cache slot, kept distinct from the full
+# (client) slot so client tests still get images/audio.
+SERVER_SLOT_SUFFIX = "-server-headless"
 
 # Checksum-skip — at the start of stage_all we recompute every source
 # datapack's checksum and compare it to test_config.get_datapack_checksum
@@ -73,6 +168,10 @@ def _src_checksum(src):
     Returns a hex sha256 string. Empty string on any I/O error so the
     caller falls back to "always rsync"."""
     h = hashlib.sha256()
+    # Mix in the staging-filter schema so a change to the filter logic (new
+    # extension rules / new server slot) invalidates the cached checksum and
+    # forces one full re-stage instead of skipping on an unchanged source.
+    h.update(_STAGE_SCHEMA.encode("ascii"))
     src = os.path.normpath(src)
     base_len = len(src) + 1
     try:
@@ -101,21 +200,24 @@ def _src_checksum(src):
 # all.sh before the per-test helpers initialise.
 
 
-def datapack_id(src):
+def datapack_id(src, server=False):
     """Return a stable cache-key for a source datapack path. The
     basename works because every checked-in datapack lives in its own
     top-level directory (CatchChallenger-datapack, datapack-pkmn, …);
     if two sources somehow had the same basename the caller should
     rename one. Trailing slashes are stripped first so
     /home/user/datapack-pkmn and /home/user/datapack-pkmn/ map to the
-    same id."""
-    return os.path.basename(os.path.normpath(src))
+    same id. `server=True` returns the headless-server slot id (a
+    media-stripped sibling of the full client slot)."""
+    base = os.path.basename(os.path.normpath(src))
+    return base + SERVER_SLOT_SUFFIX if server else base
 
 
-def staged_local(src):
-    """Return the local cache path corresponding to `src`. Does NOT
-    verify the path exists — call stage_all() first."""
-    return os.path.join(LOCAL_CACHE_ROOT, datapack_id(src))
+def staged_local(src, server=False):
+    """Return the local cache path corresponding to `src` (the
+    media-stripped server slot when `server=True`). Does NOT verify the
+    path exists — call stage_all() first."""
+    return os.path.join(LOCAL_CACHE_ROOT, datapack_id(src, server))
 
 
 def remote_cache_for(exec_node):
@@ -123,25 +225,27 @@ def remote_cache_for(exec_node):
     return (exec_node.get("datapack_cache") or DEFAULT_REMOTE_CACHE).rstrip("/")
 
 
-def staged_remote(exec_node, src):
-    """Return the remote-side cache path on `exec_node` for `src`.
-    Does NOT verify; stage_all() rsyncs the source there first."""
-    return remote_cache_for(exec_node) + "/" + datapack_id(src)
+def staged_remote(exec_node, src, server=False):
+    """Return the remote-side cache path on `exec_node` for `src` (the
+    media-stripped server slot when `server=True`). Does NOT verify;
+    stage_all() rsyncs the source there first."""
+    return remote_cache_for(exec_node) + "/" + datapack_id(src, server)
 
 
-def _rsync_local(src, log_info):
+def _rsync_local(src, log_info, server=False):
     """Local rsync source → LOCAL_CACHE_ROOT/<id>. --delete keeps the
     cache slot a true mirror; if a file disappears upstream we drop it
-    here too. The source-checksum gate is enforced one level up in
-    stage_all — when the recomputed source checksum matches the value
-    stored in config.json, this function is not called at all. The
-    staged tree stays a pristine 1:1 mirror of the source (no sentinel
-    or hidden checksum file written into it)."""
-    dst = staged_local(src)
+    here too. The slot is FILTERED to CATCHCHALLENGER_EXTENSION_ALLOWED
+    (server slot also drops media) via rsync_filter_args() so cruft
+    (README.md, .git, .xcf, ...) never lands in the cache. The
+    source-checksum gate is enforced one level up in stage_all."""
+    dst = staged_local(src, server)
     os.makedirs(LOCAL_CACHE_ROOT, exist_ok=True)
     os.makedirs(dst, exist_ok=True)
-    args = ["rsync", "-art", "--delete", src.rstrip("/") + "/", dst + "/"]
-    log_info(f"datapack stage local: {src} -> {dst}")
+    args = (["rsync", "-art", "--delete"] + rsync_filter_args(server)
+            + [src.rstrip("/") + "/", dst + "/"])
+    log_info(f"datapack stage local{' [server]' if server else ''}: "
+             f"{src} -> {dst}")
     try:
         p = subprocess.run(args, timeout=_RSYNC_LOCAL_TIMEOUT,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -153,21 +257,19 @@ def _rsync_local(src, log_info):
                    p.stdout.decode(errors="replace").strip()[-300:])
 
 
-def _rsync_remote(exec_node, src, log_info):
+def _rsync_remote(exec_node, src, log_info, server=False):
     """SSH-rsync source → exec_node:<datapack_cache>/<id>. The remote
     cache persists across runs (we never clean it); rsync --delete only
-    drops files that are gone upstream so the diff stays small. The
-    source-checksum gate is enforced one level up in stage_all — when
-    the recomputed source checksum matches the value stored in
-    config.json, this function is not called for any target. The
-    staged tree stays a pristine 1:1 mirror of the source (no sentinel
-    or hidden checksum file written into it)."""
+    drops files that are gone upstream so the diff stays small. The slot
+    is FILTERED to CATCHCHALLENGER_EXTENSION_ALLOWED (server slot also
+    drops media) via rsync_filter_args() + --delete-excluded so cruft and
+    media are pruned from the cache, not just skipped."""
     from cmd_helpers import RSYNC_SSH_E, SSH_OPTS_LIST
     user = exec_node["user"]
     host = exec_node["host"]
     port = int(exec_node.get("port", 22))
     cache = remote_cache_for(exec_node)
-    name = datapack_id(src)
+    name = datapack_id(src, server)
     dst = cache + "/" + name
     label = exec_node.get("label", host)
     rsync_host = f"{user}@{host}"
@@ -204,10 +306,12 @@ def _rsync_remote(exec_node, src, log_info):
                        out[-200:])
     rsync_args = [
         "rsync", "-art", "--delete",
+        *rsync_filter_args(server),
         "-e", f"{RSYNC_SSH_E} -p {port}",
         src.rstrip("/") + "/", f"{rsync_host}:{dst}/",
     ]
-    log_info(f"datapack stage remote: {src} -> {label}:{dst}")
+    log_info(f"datapack stage remote{' [server]' if server else ''}: "
+             f"{src} -> {label}:{dst}")
     try:
         p = subprocess.run(rsync_args, timeout=_RSYNC_REMOTE_TIMEOUT,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -277,8 +381,8 @@ def stage_all(srcs, exec_nodes=None, log_info=print):
     src_sums = {}          # src -> recomputed checksum
     lock = threading.Lock()
 
-    def runner(src, fn, *args):
-        ok, detail = fn(*args, log_info)
+    def runner(src, fn, args, server):
+        ok, detail = fn(*args, log_info, server=server)
         with lock:
             results.append((ok, detail))
             per_src_results.setdefault(src, []).append((ok, detail))
@@ -290,38 +394,44 @@ def stage_all(srcs, exec_nodes=None, log_info=print):
         cur_sum = _src_checksum(src)
         src_sums[src] = cur_sum
         prev_sum = test_config.get_datapack_checksum(src) if cur_sum else ""
-        # Cached checksum is only authoritative when the staged copy
-        # actually exists on disk. If a previous all.sh wipe deleted
-        # the cache (e.g. operator nuked /mnt/data/perso/tmpfs/* by
-        # hand or the keep-list missed cc-datapack/), the checksum
-        # alone would skip the rsync and the consumer side would still
-        # be empty. Force a re-stage when the local cache dir is
-        # missing or empty, regardless of checksum.
-        local_dst = staged_local(src)
-        local_present = (os.path.isdir(local_dst)
-                         and len(os.listdir(local_dst)) > 0)
+        # Cached checksum is only authoritative when BOTH staged copies (the
+        # full client slot AND the media-stripped server slot) actually exist
+        # on disk. If a previous all.sh wipe deleted the cache, or the server
+        # slot has never been created (first run after this feature landed),
+        # the checksum alone would skip the rsync and a consumer side would
+        # still be empty. Force a re-stage when either local slot is
+        # missing/empty, regardless of checksum.
+        def _present(p):
+            return os.path.isdir(p) and len(os.listdir(p)) > 0
+        local_present = (_present(staged_local(src, server=False))
+                         and _present(staged_local(src, server=True)))
         if (cur_sum and prev_sum == cur_sum and local_present):
             log_info(f"datapack {src}: checksum match (cached), skipping all rsyncs")
             with lock:
                 results.append((True, ""))
                 per_src_results.setdefault(src, []).append((True, ""))
             continue
-        t = threading.Thread(target=runner, args=(src, _rsync_local, src),
-                             daemon=True)
-        t.start()
-        threads.append(t)
-        if exec_nodes:
-            ei = 0
-            while ei < len(exec_nodes):
-                en = exec_nodes[ei]
-                ei += 1
-                if not bool(en.get("enabled", True)):
-                    continue
-                t2 = threading.Thread(target=runner,
-                                      args=(src, _rsync_remote, en, src),
-                                      daemon=True)
-                t2.start()
-                threads.append(t2)
+        # Stage BOTH slots: full (client, server=False) + headless server
+        # (media-stripped, server=True). Each is its own worker so they run
+        # in parallel and a failure of one is reported independently.
+        for srv in (False, True):
+            t = threading.Thread(target=runner,
+                                  args=(src, _rsync_local, (src,), srv),
+                                  daemon=True)
+            t.start()
+            threads.append(t)
+            if exec_nodes:
+                ei = 0
+                while ei < len(exec_nodes):
+                    en = exec_nodes[ei]
+                    ei += 1
+                    if not bool(en.get("enabled", True)):
+                        continue
+                    t2 = threading.Thread(target=runner,
+                                          args=(src, _rsync_remote, (en, src), srv),
+                                          daemon=True)
+                    t2.start()
+                    threads.append(t2)
 
     ti = 0
     while ti < len(threads):

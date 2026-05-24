@@ -198,7 +198,7 @@ def _cmake_build(src_dir, build_dir, extra_defs=None, label="build"):
     cfg += bh.cmake_accel_defs()
     rc, sout, serr, _ = bh.run_capture(cfg, timeout=600)
     if rc != 0:
-        print(sout); print(serr, file=sys.stderr)
+        bh.print_local_build_error(label, "cmake configure", sout, serr)
         return rc, "cmake configure FAILED"
     # Record which libs (system vs vendored) the local build linked, for
     # the "local" node's history record (no-op on a non-CC configure log).
@@ -206,7 +206,7 @@ def _cmake_build(src_dir, build_dir, extra_defs=None, label="build"):
     bld = ["cmake", "--build", build_dir, "--", "-j", str(os.cpu_count() or 1)]
     rc, sout, serr, _ = bh.run_capture(bld, timeout=BUILD_TIMEOUT)
     if rc != 0:
-        print(sout); print(serr, file=sys.stderr)
+        bh.print_local_build_error(label, "cmake build", sout, serr)
         return rc, "cmake build FAILED"
     return 0, "ok"
 
@@ -624,12 +624,13 @@ def _run_iouring_variants(bot_bin, iface):
             print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: server not ready; skip"))
             continue
         try:
-            sample = _run_once(bot_bin, "127.0.0.1", port, medium, iface,
-                               server_pid=proc.pid)
+            sample, sample_err = _run_once(bot_bin, "127.0.0.1", port, medium,
+                                           iface, server_pid=proc.pid)
         finally:
             stop_server(proc)
         if sample is None:
-            print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: bot run failed; skip"))
+            print(_color(bh.C_YELLOW,
+                  f"[iouring] {vlabel}: bot run failed; skip ({sample_err})"))
             continue
         sm = {}
         for k in ("wall_s", "sys_s", "user_s", "max_rss_kb"):
@@ -733,12 +734,13 @@ def _run_compression_variants(bot_bin, iface):
                 print(_color(bh.C_YELLOW, f"[compression] {slabel}: server not ready; skip"))
                 continue
             try:
-                sample = _run_once(bot_bin, "127.0.0.1", port, bots, iface,
-                                   server_pid=proc.pid)
+                sample, sample_err = _run_once(bot_bin, "127.0.0.1", port,
+                                               bots, iface, server_pid=proc.pid)
             finally:
                 stop_server(proc)
             if sample is None:
-                print(_color(bh.C_YELLOW, f"[compression] {slabel}: bot run failed; skip"))
+                print(_color(bh.C_YELLOW,
+                      f"[compression] {slabel}: bot run failed; skip ({sample_err})"))
                 continue
             sm = {}
             # server CPU% (the resource cost)
@@ -925,9 +927,25 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
                        timeout=RUN_TIMEOUT)
     wall = time.monotonic() - t0
     # timeout(1) returns 124 on timeout-expired (= our intended path),
-    # 0 on natural exit. Anything else = bot or server failure.
+    # 0 on natural exit. Anything else = bot or server failure. Surface the
+    # exit code + a stderr tail (minus the /usr/bin/time -v report lines, which
+    # are not the error) so the FAIL says WHY -- a bare None hides connection
+    # refused / auth rejected / crash behind "[FAIL bots=N]".
     if p.returncode not in (0, 124, 128 + signal.SIGINT):
-        return None
+        err_lines = []
+        for ln in p.stderr.splitlines():
+            s = ln.strip()
+            if not s or s.startswith(("Command being timed:", "User time",
+                    "System time", "Percent of CPU", "Elapsed (wall",
+                    "Maximum resident", "Average ", "Major (", "Minor (",
+                    "Voluntary", "Involuntary", "Swaps:", "File system",
+                    "Socket ", "Page size", "Exit status", "Signals delivered",
+                    "Average stack", "Average total", "Average resident",
+                    "Average shared")):
+                continue
+            err_lines.append(s)
+        tail = " | ".join(err_lines)[-400:] or "(no bot stderr)"
+        return None, f"bot host={host}:{port} bots={bots} rc={p.returncode}: {tail}"
 
     post_iface = _read_iface_counters(iface) if iface else None
     post_retrans = _read_tcp_retrans()
@@ -985,22 +1003,24 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
             pct = 100.0
         sample["cpu_percent"] = pct
 
-    return sample
+    return sample, None
 
 
 def cell_run(bin_path, host, port, bots, iface, server_pid=None):
-    """RUN_REPEATS passes (drop first as warmup). Returns per-metric
-    {name -> (median, stddev)} for one (bots) cell."""
+    """RUN_REPEATS passes (drop first as warmup). Returns
+    (per-metric {name -> (median, stddev)}, None) for one (bots) cell, or
+    (None, reason) on failure so the caller can surface WHY it failed."""
     samples = []
     for i in range(RUN_REPEATS):
-        s = _run_once(bin_path, host, port, bots, iface, server_pid=server_pid)
+        s, err = _run_once(bin_path, host, port, bots, iface,
+                           server_pid=server_pid)
         if s is None:
-            return None
+            return None, err
         if i == 0:
             continue
         samples.append(s)
     if not samples:
-        return None
+        return None, "no measured samples after warmup"
     keys = set()
     for s in samples:
         keys.update(k for k, v in s.items() if v is not None)
@@ -1010,7 +1030,7 @@ def cell_run(bin_path, host, port, bots, iface, server_pid=None):
         med, std = bh.stats_of(vals)
         if med is not None:
             out[k] = (med, std)
-    return out
+    return out, None
 
 
 def _unit_for(name):
@@ -1075,46 +1095,79 @@ def _run_remote_cells_botactions(node, avail_profilers, skips, all_profilers,
         return
 
     def _finish_all(status, reason):
+        # The banner (print_node_error) already showed the full reason; keep
+        # the one-line live counter readable with a truncated copy.
+        short = reason if len(reason) <= 80 else reason[:77] + "..."
         for prof in runnable:
             if per_tool[label].get(prof) is None:
-                progress.emit(prof, "no", label, status=status, extra=reason)
+                progress.emit(prof, "no", label, status=status, extra=short)
                 per_tool[label][prof] = {"status": status, "metrics": {}}
         for _ in range(extra_rusage_count):
-            progress.emit("rusage", "no", label, status=status, extra=reason)
+            progress.emit("rusage", "no", label, status=status, extra=short)
 
     def _fail_all(reason):
+        # Show the FULL cause under a banner + the re-run command; the live
+        # progress line only carries a short reason.
+        bh.print_node_error("benchmarkbotactions", label, "FAIL", reason)
         _finish_all("FAIL", reason)
+
+    # Infra failures (compile/push/bring-up/datapack/cache) leave NO metric:
+    # the node is unmeasured, which the decision matrix treats as unknown --
+    # never a regression.  Mark those SKIP, reserving FAIL for a benchmark
+    # that actually ran and produced a bad/garbled result.
+    def _skip_all(reason):
+        bh.print_node_error("benchmarkbotactions", label, "SKIP", reason)
+        _finish_all("SKIP", reason)
 
     # NFS-LXC bring-up (no-op for ordinary nodes) BEFORE any exec-node I/O.
     orig_exec_node = exec_node
     rt_node, prep_msg = br.nfs_lxc_prepare(orig_exec_node, verbose=True)
     if rt_node is None:
-        _fail_all(prep_msg)
+        _skip_all(f"bringup-failed: {prep_msg}")
         br.nfs_lxc_teardown(orig_exec_node, verbose=True)
         return
     try:
         _botactions_remote_body(rt_node, compile_node, label, runnable,
                                 extra_rusage_count, progress, per_tool,
-                                per_subbench, _fail_all, local_bot_bin)
+                                per_subbench, _fail_all, _skip_all,
+                                local_bot_bin)
     finally:
         br.nfs_lxc_teardown(orig_exec_node, verbose=True)
 
 
 def _botactions_remote_body(exec_node, compile_node, label, runnable,
                             extra_rusage_count, progress, per_tool,
-                            per_subbench, _fail_all, local_bot_bin):
+                            per_subbench, _fail_all, _skip_all, local_bot_bin):
     eu  = exec_node["user"]
     eh  = exec_node["host"]
     ep  = exec_node.get("port", 22)
     ewd = exec_node["work_dir"]
 
+    # 0. binary-size is a STATIC metric of the locally-built bot binary; it
+    # needs no datapack, no server build, and no live server.  Collect it
+    # FIRST so that ANY later server-pipeline failure (datapack rsync, server
+    # build, push, missing-SSE2 boot crash) still leaves this datum recorded —
+    # _fail_all() skips tools already filled in here.
+    if "binary-size" in runnable:
+        sz = bh.binary_size(local_bot_bin)
+        if sz is not None:
+            progress.emit("binary-size", "no", label, status="PASS")
+            per_tool[label]["binary-size"] = {
+                "status": "PASS",
+                "metrics": _flat_to_metric_block(
+                    {"binary_size_bytes": (sz, 0.0)})}
+        else:
+            progress.emit("binary-size", "no", label, status="FAIL",
+                          extra="binary-size-failed")
+            per_tool[label]["binary-size"] = {"status": "FAIL", "metrics": {}}
+
     # 1. rsync datapack to exec node
     if os.path.isdir(DATAPACK_PATH):
         rc_dp, msg_dp = br.rsync_datapack_to_exec(exec_node, DATAPACK_PATH,
                                                    remote_subdir="datapack",
-                                                   timeout=600)
+                                                   timeout=600, server_mode=True)
         if rc_dp != 0:
-            _fail_all(f"datapack-rsync-failed: {msg_dp[:80]}")
+            _skip_all(f"datapack-rsync-failed: {msg_dp}")
             return
 
     maincode = _detect_maincode(DATAPACK_PATH)
@@ -1131,7 +1184,8 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
         verbose=True,
     )
     if rc_srv != 0:
-        _fail_all(f"server-build-failed: {msg_srv[:100]}")
+        # Compile-node build failed -> do NOT touch the exec node; SKIP.
+        _skip_all(f"server-build-failed: {msg_srv}")
         return
     # Carry this compile node's system-vs-vendored verdict onto the exec
     # node so its history record stamps the libs it actually ran.
@@ -1141,7 +1195,7 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
     rc_ps, exec_srv_bin, msg_ps = br.push_binary_to_exec(
         compile_node, exec_node, remote_srv_bld, SRV_BIN_NAME, verbose=True)
     if rc_ps != 0:
-        _fail_all(f"push-server-failed: {msg_ps[:80]}")
+        _skip_all(f"push-server-failed: {msg_ps}")
         return
 
     # 3b. Pre-generate the datapack HPS cache on the compile node so the
@@ -1206,18 +1260,22 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
             rc_sc2, msg_sc2 = br.stage_cache_on_exec(
                 compile_node, exec_node, remote_cache, verbose=True)
             if rc_sc2 != 0:
-                _fail_all(f"cache-stage-failed: {msg_sc2[:80]}")
+                _skip_all(f"cache-stage-failed: {msg_sc2}")
                 return
         else:
-            _fail_all(f"no-datapack-cache: {msg_cg[:80]}")
+            _skip_all(f"no-datapack-cache: {msg_cg}")
             return
 
     # 4. Start server on exec node; wait for ready.
     # Python holds a dedicated SSH Popen for the server (foreground on remote).
     # No exec/setsid/nohup needed — the connection lifetime is managed here.
-    srv_ssh_proc, srv_pid = br.start_server_popen(exec_node, SRV_BIN_NAME)
+    srv_ssh_proc, srv_pid, srv_start_reason = br.start_server_popen(
+        exec_node, SRV_BIN_NAME)
     if srv_ssh_proc is None:
-        _fail_all("server-start-failed rc=-1")
+        # Server binary built+pushed but won't launch on this node (e.g. an
+        # illegal-instruction arch mismatch): no measurement -> SKIP, not a
+        # perf regression.
+        _skip_all(srv_start_reason)
         return
 
     log_q = shlex.quote(ewd + "/server.log")
@@ -1237,13 +1295,19 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
             _, tail, _ = br.ssh_run(
                 eu, eh, ep, f"tail -n 3 {log_q} 2>/dev/null | tr '\\n' '|'",
                 timeout=10)
-            reason = (tail.strip().strip("|") or "no server.log")[:160]
+            log = tail.strip().strip("|")
+            if "llegal instruction" in log:
+                missing = br._missing_baseline_isa(exec_node) or "SSE2"
+                reason = (f"illegal-instruction: missing {missing} — binary "
+                          f"built for a too-modern -march; rebuild for this arch")
+            else:
+                reason = "server-died-before-bind: " + (log or "no server.log")
             br.stop_server_popen(srv_ssh_proc, exec_node, srv_pid)
-            _fail_all(f"server-died-before-bind: {reason}")
+            _skip_all(reason)
             return
     if not ready:
         br.stop_server_popen(srv_ssh_proc, exec_node, srv_pid)
-        _fail_all(f"server-not-ready-in-{SERVER_READY_TIMEOUT}s")
+        _skip_all(f"server-not-ready-in-{SERVER_READY_TIMEOUT}s")
         return
 
     # 5. Run bot-actions LOCALLY against exec node's server over the LAN.
@@ -1252,13 +1316,17 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
             all_metrics_flat = {}
             rusage_status    = "PASS"
             for i, bots in enumerate(BOT_COUNTS):
-                cell = cell_run(local_bot_bin, eh, SERVER_PORT, bots,
-                                iface=None, server_pid=None)
+                cell, cell_err = cell_run(local_bot_bin, eh, SERVER_PORT, bots,
+                                          iface=None, server_pid=None)
                 if cell is None:
                     rusage_status = "FAIL"
+                    reason = cell_err or f"bots={bots}: no data"
+                    bh.print_node_error("benchmarkbotactions", label, "FAIL",
+                                        reason)
                     progress.emit("rusage", "no", label, status="FAIL",
-                                  extra=f"bots={bots}")
-                    per_tool[label]["rusage"] = {"status": "FAIL", "metrics": {}}
+                                  extra=f"bots={bots}: {reason[:60]}")
+                    per_tool[label]["rusage"] = {"status": "FAIL",
+                                                 "metrics": {}, "error": reason}
                     continue
                 for name, (med, std) in cell.items():
                     all_metrics_flat[f"b{bots}_{name}"] = (med, std)
@@ -1269,19 +1337,7 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
                     "status": "PASS",
                     "metrics": _flat_to_metric_block(all_metrics_flat)}
 
-        if "binary-size" in runnable:
-            sz = bh.binary_size(local_bot_bin)
-            if sz is not None:
-                progress.emit("binary-size", "no", label, status="PASS")
-                per_tool[label]["binary-size"] = {
-                    "status": "PASS",
-                    "metrics": _flat_to_metric_block(
-                        {"binary_size_bytes": (sz, 0.0)})}
-            else:
-                progress.emit("binary-size", "no", label, status="FAIL",
-                              extra="binary-size-failed")
-                per_tool[label]["binary-size"] = {"status": "FAIL", "metrics": {}}
-
+        # binary-size already collected at the top of the body (step 0).
         if "perf-stat" in runnable:
             bots = BOT_COUNTS[len(BOT_COUNTS) // 2]
             env  = os.environ.copy()
@@ -1307,6 +1363,7 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
 
 def main():
     args = bh.parse_bench_args()
+    bh.set_node_filter(args.node)
     if bh.acquire_singleton_lock("benchmarkbotactions") is None:
         return 3
     br.set_benchmark_label("benchmarkbotactions")
@@ -1378,7 +1435,9 @@ def _run_with_server(bin_path, server_proc, comment,
     # which is the same gate the headless flag in this file's doc-
     # block flips. The remote dispatch is not wired in this benchmark
     # so we emit SKIP for every remote node.
-    nodes = [{"label": "local", "arch": arch}] + bh.benchmark_exec_nodes()
+    # --node may exclude the host baseline; only prepend "local" when allowed.
+    local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
+    nodes = local_node + bh.benchmark_exec_nodes()
     all_profilers = ["rusage", "binary-size", "perf-stat"]
 
     # Pre-resolve per-node profiler availability against the persisted
@@ -1457,11 +1516,14 @@ def _run_with_server(bin_path, server_proc, comment,
             sub = {}  # sub-bench label -> per-metric block
             deadline.note(label, "rusage")
             for bots in BOT_COUNTS:
-                cell = cell_run(bin_path, host, port, bots, iface,
-                                server_pid=server_proc.pid)
+                cell, cell_err = cell_run(bin_path, host, port, bots, iface,
+                                          server_pid=server_proc.pid)
                 if cell is None:
+                    reason = cell_err or f"bots={bots}: no data"
+                    bh.print_node_error("benchmarkbotactions", label, "FAIL",
+                                        reason)
                     progress.emit("rusage", "no", label, status="FAIL",
-                                  extra=f"bots={bots}")
+                                  extra=f"bots={bots}: {reason[:60]}")
                     rusage_status = "FAIL"
                     continue
                 # 1. flatten into the legacy b<count>_<name> dict for the

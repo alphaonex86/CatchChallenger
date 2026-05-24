@@ -315,6 +315,8 @@ realised product, not on the host's preferred row.
 
 ### compilation
 * Fix util it compile on all arch (then generic code path always have to work), if you put SSE intrasic into ARM/MIPS it fail compile, then you have to #ifdef x86 the SSE code
+* A benchmark must NEVER report FAIL on every cell. Local compile failure aborts the whole `benchmark*.py` (non-zero exit, before any cell). A remote compile-node build failure skips ONLY its child execution nodes (recorded SKIP — an unmeasured node is unknown, never a regression); the fleet continues on other nodes. Infra failures (push/unreachable node, bring-up, datapack rsync, cache stage, server won't launch) are SKIP, not FAIL. FAIL is reserved for a benchmark that actually ran and produced bad/garbled data.
+* EVERY error (local compile, remote compile, push, bring-up, server-start, bad result) MUST print the full captured cause under a clear banner AND the exact command to re-run JUST this benchmark (so the operator reproduces one benchmark, not the whole fleet). The live one-line progress counter keeps a truncated reason; the banner carries the full text. Use the shared helpers `bh.print_local_build_error()` (aborting local builds) and `bh.print_node_error()` (per-node remote/infra), both of which append `bh.rerun_command()` — never hand-roll the banner per benchmark.
 
 ### Progress display — mandatory live counter
 
