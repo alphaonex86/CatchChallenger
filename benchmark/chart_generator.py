@@ -22,6 +22,7 @@ working on minimal-rootfs nodes (matplotlib + numpy are not installed
 on every exec target, and the CLAUDE.md "no pip installs" rule blocks
 us from pulling them in)."""
 import json
+import math
 import os
 import re
 
@@ -635,16 +636,201 @@ def _render_session_chart(benchmark, batches):
     return head + "".join(body) + "</svg>\n"
 
 
+def _by_node_metrics(records):
+    """For the by-execution-node comparison: take each node's MOST RECENT
+    history record and pull out every metric value. Returns
+    ({metric_label -> {node -> value}}, {metric_label -> better}).
+
+    metric_label is the flat metric name (results.<tool>.metrics.<name>, e.g.
+    b128_invol_ctx) or "<slice>.<name>" for sub-benchmark metrics -- the same
+    data the per-benchmark champion.svg plots, but indexed metric->node so we
+    can compare systems against each other on one axis."""
+    latest = {}   # node -> (started_utc, doc)
+    for doc, _p in records:
+        node = doc.get("node") or "unknown"
+        ts = doc.get("started_utc", "")
+        if node not in latest or ts > latest[node][0]:
+            latest[node] = (ts, doc)
+    out = {}
+    better = {}
+    for node, (_ts, doc) in latest.items():
+        for tool, blk in (doc.get("results") or {}).items():
+            if not isinstance(blk, dict):
+                continue
+            for mname, m in (blk.get("metrics") or {}).items():
+                v = m.get("median")
+                if v is None:
+                    v = m.get("value")
+                if v is None:
+                    continue
+                try:
+                    v = float(v)
+                except (TypeError, ValueError):
+                    continue
+                out.setdefault(mname, {})[node] = v
+                if mname not in better and m.get("better"):
+                    better[mname] = m["better"]
+            for slice_label, smetrics in (blk.get("subbenchmarks") or {}).items():
+                if not isinstance(smetrics, dict):
+                    continue
+                # Normalise the slice to the flat "b<N>_<metric>" naming used
+                # by the champion comparison (e.g. "128-bots" -> "b128_"),
+                # so a subbench value DEDUPES against the matching flat metric
+                # instead of producing a second near-identical panel. Adds
+                # only subbench-exclusive metrics (e.g. cpu_percent).
+                mnum = re.match(r"^(\d+)", slice_label)
+                prefix = ("b" + mnum.group(1)) if mnum else _slug(slice_label)
+                for mname, m in smetrics.items():
+                    if not isinstance(m, dict):
+                        continue
+                    v = m.get("median")
+                    if v is None:
+                        v = m.get("value")
+                    if v is None:
+                        continue
+                    try:
+                        v = float(v)
+                    except (TypeError, ValueError):
+                        continue
+                    key = f"{prefix}_{mname}"
+                    slot = out.setdefault(key, {})
+                    if node in slot:   # already supplied by the flat metric
+                        continue
+                    slot[node] = v
+                    if key not in better and m.get("better"):
+                        better[key] = m["better"]
+    return out, better
+
+
+def _plot_by_node_panel(x0, y0, w, h, node_vals, title, better):
+    """One metric panel comparing EXECUTION NODES. x = nodes sorted by value
+    (ascending = best-first for a lower=better metric), y = value on a LOG
+    scale (linear fallback if any value <= 0, since log10 needs > 0). Each
+    node is a dot + short label; a right-of-panel boxplot summarises the
+    spread, with the value list collapsed into +-10% clusters."""
+    parts = [f'<g transform="translate({x0},{y0})">']
+    parts.append(f'<rect x="0" y="0" width="{w}" height="{h}" '
+                 f'fill="white" stroke="#888" stroke-width="0.5"/>')
+    items = sorted(node_vals.items(), key=lambda kv: kv[1])  # ascending value
+    vals = [v for _n, v in items]
+    title_txt = title + (f" ({better}=better)" if better else "")
+    # log only when every value is strictly positive
+    uselog = all(v > 0 for v in vals)
+    parts.append(f'<text x="4" y="-4" font-size="11" font-family="sans-serif">'
+                 f'{_esc(title_txt)}{"  [log]" if uselog else ""}</text>')
+    vmin = min(vals); vmax = max(vals)
+    if uselog:
+        lmin = math.log10(vmin); lmax = math.log10(vmax)
+        if lmin == lmax:
+            lmin -= 0.5; lmax += 0.5
+        def ypos(v):
+            return h - ((math.log10(v) - lmin) / (lmax - lmin)) * (h - 14) - 6
+    else:
+        if vmin == vmax:
+            vmin -= 1.0; vmax += 1.0
+        pad = (vmax - vmin) * 0.08
+        lo = vmin - pad; hi = vmax + pad
+        def ypos(v):
+            return h - ((v - lo) / (hi - lo)) * (h - 14) - 6
+    # y range labels
+    parts.append(f'<text x="2" y="10" font-size="8" fill="#444" '
+                 f'font-family="sans-serif">{vmax:.3g}</text>')
+    parts.append(f'<text x="2" y="{h-2}" font-size="8" fill="#444" '
+                 f'font-family="sans-serif">{vmin:.3g}</text>')
+    n = len(items)
+    def xpos(i):
+        if n == 1:
+            return w / 2.0
+        return (i / float(n - 1)) * (w - 40) + 20
+    # connecting ramp + dots + node labels
+    pts_str = " ".join(f"{xpos(i):.1f},{ypos(v):.2f}"
+                       for i, (_n, v) in enumerate(items))
+    parts.append(f'<polyline points="{pts_str}" fill="none" stroke="#1f77b4" '
+                 f'stroke-width="1"/>')
+    i = 0
+    while i < n:
+        node, v = items[i]
+        cx = xpos(i); cy = ypos(v)
+        parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.2f}" r="2.5" '
+                     f'fill="#1f77b4"/>')
+        # node label, rotated to avoid overlap
+        parts.append(f'<text x="{cx:.1f}" y="{h-1:.1f}" font-size="7" '
+                     f'fill="#333" font-family="sans-serif" '
+                     f'transform="rotate(-30 {cx:.1f} {h-1:.1f})">'
+                     f'{_esc(node)}</text>')
+        i += 1
+    # right boxplot over node values + +-10% clustered value labels
+    svals = sorted(vals)
+    bx = w + 16; bw = 16; cxb = bx + bw / 2.0
+    q1 = _quantile(svals, 0.25); med = _quantile(svals, 0.50)
+    q3 = _quantile(svals, 0.75)
+    parts.append(f'<text x="{bx}" y="-4" font-size="8" fill="#444" '
+                 f'font-family="sans-serif">spread</text>')
+    parts.append(f'<line x1="{cxb:.1f}" y1="{ypos(svals[-1]):.2f}" '
+                 f'x2="{cxb:.1f}" y2="{ypos(svals[0]):.2f}" stroke="#666" '
+                 f'stroke-width="0.8"/>')
+    by = ypos(q3); box_h = ypos(q1) - ypos(q3)
+    parts.append(f'<rect x="{bx:.1f}" y="{by:.2f}" width="{bw}" '
+                 f'height="{max(box_h,0.5):.2f}" fill="#1f77b4" '
+                 f'fill-opacity="0.18" stroke="#1f77b4" stroke-width="0.8"/>')
+    parts.append(f'<line x1="{bx:.1f}" y1="{ypos(med):.2f}" x2="{bx+bw:.1f}" '
+                 f'y2="{ypos(med):.2f}" stroke="#1f77b4" stroke-width="1.4"/>')
+    lx = bx + bw + 5; last_ly = None
+    for cval, cnt, _lo, _hi in _cluster_values(vals):
+        ly = ypos(cval)
+        if last_ly is not None and abs(ly - last_ly) < 9:
+            ly = last_ly + 9
+        last_ly = ly
+        parts.append(f'<line x1="{bx+bw:.1f}" y1="{ypos(cval):.2f}" '
+                     f'x2="{lx-1:.1f}" y2="{ly:.2f}" stroke="#999" '
+                     f'stroke-width="0.5"/>')
+        txt = f"{cval:.3g}" + (f" ×{cnt}" if cnt > 1 else "")
+        parts.append(f'<text x="{lx:.1f}" y="{ly+3:.1f}" font-size="8" '
+                     f'fill="#333" font-family="sans-serif">{_esc(txt)}</text>')
+    parts.append("</g>")
+    return "".join(parts)
+
+
+def _render_by_node_chart(benchmark, records):
+    """champion-by-execution-node.svg: one panel per metric (same data list
+    as champion.svg), comparing every execution node on a LOG scale, nodes
+    sorted by value, with a boxplot of the spread. Lets you see at a glance
+    how each system ranks against the others per metric."""
+    metrics, better = _by_node_metrics(records)
+    if not metrics:
+        return None
+    mkeys = sorted(metrics.keys())
+    npanels = len(mkeys)
+    height = TOP_MARGIN + npanels * (PANEL_H + PANEL_GAP) + 10
+    width = LEFT_MARGIN + PANEL_W + BOX_W + 20
+    nnodes = len({n for mv in metrics.values() for n in mv})
+    head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+            f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+    body = [f'<text x="{LEFT_MARGIN}" y="18" font-size="13" '
+            f'font-family="sans-serif" font-weight="bold">'
+            f'{_esc(benchmark)} -- by execution node '
+            f'(log scale, {nnodes} node(s), sorted)</text>']
+    y = TOP_MARGIN
+    for mk in mkeys:
+        body.append(_plot_by_node_panel(LEFT_MARGIN, y, PANEL_W, PANEL_H,
+                                        metrics[mk], mk, better.get(mk)))
+        y += PANEL_H + PANEL_GAP
+    return head + "".join(body) + "</svg>\n"
+
+
 def regenerate(benchmark, stamp=None):
     """Regenerate every chart for `benchmark` from history JSONs.
 
-    Two chart levels are generated:
+    Three chart levels are generated:
       1. Per-node progression charts:
            results/<bench>/<compile>/<exec>/champion.svg
            results/<bench>/<compile>/<exec>/candidate-<stamp>.svg
       2. Cross-node session chart (all platforms grouped by batch):
            results/<bench>/champion.svg
            results/<bench>/candidate-<stamp>.svg
+      3. By-execution-node comparison (log scale, sorted, boxplot):
+           results/<bench>/champion-by-execution-node.svg
 
     `champion.svg` is the always-current progression chart (champion
     commit marked). When `stamp` is given (a benchmark run passes its
@@ -697,6 +883,18 @@ def regenerate(benchmark, stamp=None):
             with open(cand_p, "w") as f:
                 f.write(svg)
             written.append(cand_p)
+
+    # 3) by-execution-node comparison (log scale, sorted, boxplot). Always
+    # current (no candidate freeze): it is a cross-node snapshot of the
+    # latest value per node, regenerated from the same history JSONs.
+    svg = _render_by_node_chart(benchmark, records)
+    if svg:
+        outdir = os.path.join(bh.RESULTS, benchmark)
+        os.makedirs(outdir, exist_ok=True)
+        p = os.path.join(outdir, "champion-by-execution-node.svg")
+        with open(p, "w") as f:
+            f.write(svg)
+        written.append(p)
 
     return written
 
