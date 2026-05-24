@@ -201,11 +201,12 @@ test/remote_build.py.local
 core
 core.*
 
-# ── Benchmark candidate records + their frozen charts (transient;
-#    champion.json / champion.svg are the kept ones). Layout is now
-#    results/<bench>/<compile>/<exec>/ so match at any depth.
-benchmark/results/**/candidate-*.json
-benchmark/results/**/candidate-*.svg
+# ── Benchmark history + results are LOCAL-only (too noisy for git): the
+#    append-only per-run JSON timeline and every regenerated champion/
+#    candidate chart live on disk but are not tracked. Charts + decisions
+#    are reproducible from the local history JSONs.
+benchmark/history/
+benchmark/results/
 
 # ── bot-actions QSettings sidecar (created in cwd by DatabaseBot::init())
 benchmark/config.db

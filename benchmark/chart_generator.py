@@ -252,6 +252,57 @@ def _decision_glyph(cx, cy, decision, size=5):
 
 CPU_SATURATION_THRESHOLD = 90.0
 
+# Right-of-panel gutter for the value boxplot + its clustered value labels.
+BOX_W = 150
+# Values within +-10% are the benchmark noise band (see benchmark/CLAUDE.md
+# decision matrix) -- collapse them into one labelled entry on the chart so
+# near-equal points don't render as N separate numbers.
+VALUE_CLUSTER_TOL = 0.10
+
+
+def _cluster_values(values, tol=VALUE_CLUSTER_TOL):
+    """Collapse near-equal values into +-tol (relative) clusters. Sorts the
+    values, then grows a cluster while the next value is within tol of the
+    cluster's anchor (first member). Returns a list of
+    (median, count, min, max) ascending. Used for the chart value labels and
+    the boxplot annotation so a noise-band of points reads as one number."""
+    vals = sorted(v for v in values if v is not None)
+    if not vals:
+        return []
+    clusters = []
+    cur = [vals[0]]
+    i = 1
+    while i < len(vals):
+        v = vals[i]
+        anchor = cur[0]
+        denom = abs(anchor) if anchor != 0 else 1.0
+        if abs(v - anchor) / denom <= tol:
+            cur.append(v)
+        else:
+            clusters.append(cur)
+            cur = [v]
+        i += 1
+    clusters.append(cur)
+    out = []
+    j = 0
+    while j < len(clusters):
+        c = clusters[j]
+        out.append((c[len(c) // 2], len(c), c[0], c[-1]))
+        j += 1
+    return out
+
+
+def _quantile(sorted_vals, q):
+    """Linear-interpolated quantile of an already-sorted non-empty list."""
+    if len(sorted_vals) == 1:
+        return sorted_vals[0]
+    pos = q * (len(sorted_vals) - 1)
+    lo = int(pos)
+    frac = pos - lo
+    if lo + 1 < len(sorted_vals):
+        return sorted_vals[lo] * (1 - frac) + sorted_vals[lo + 1] * frac
+    return sorted_vals[lo]
+
 
 def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
                 champion_idx, title, panel_metric=None):
@@ -266,8 +317,16 @@ def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
     # axes box
     parts.append(f'<rect x="0" y="0" width="{w}" height="{h}" '
                  f'fill="white" stroke="#888" stroke-width="0.5"/>')
+    # "lower/higher=better" is a property of the METRIC (one per panel), so
+    # show it ONCE in the title -- not repeated on every series legend.
+    panel_better = None
+    for _lbl in points_by_label:
+        if better_map.get(_lbl):
+            panel_better = better_map[_lbl]
+            break
+    title_txt = title + (f" ({panel_better}=better)" if panel_better else "")
     parts.append(f'<text x="4" y="-4" font-size="11" '
-                 f'font-family="sans-serif">{_esc(title)}</text>')
+                 f'font-family="sans-serif">{_esc(title_txt)}</text>')
 
     # y-range over all series in this panel
     all_vals = [p[1] for pts in points_by_label.values() for p in pts]
@@ -337,12 +396,60 @@ def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
             parts.append(f'<circle cx="{cxp:.1f}" cy="{cyp:.2f}" '
                          f'r="2" fill="{col}"/>')
             parts.append(_decision_glyph(cxp, cyp - 8, dec))
-        # legend
-        bet = better_map.get(label)
-        legend = label + (f" ({bet}=better)" if bet else "")
+        # legend: just the series label -- the lower/higher=better direction
+        # is shown once in the panel title, not per series.
         parts.append(f'<text x="{w-4}" y="{12 + ci*11}" font-size="9" '
                      f'text-anchor="end" fill="{col}" '
-                     f'font-family="sans-serif">{_esc(legend)}</text>')
+                     f'font-family="sans-serif">{_esc(label)}</text>')
+
+    # ---- right-of-panel boxplot over ALL plotted values -----------------
+    # Shares this panel's y-scale (ypos). Box = Q1..Q3, line = median,
+    # whiskers = min..max. To its right, the value list collapsed into
+    # +-10% clusters (the noise band): one "value xN" line per cluster, so
+    # near-equal points read as a single number instead of N overlapping
+    # labels.
+    svals = sorted(all_vals)
+    bx = w + 16          # box body left edge (in the right gutter)
+    bw = 16              # box body width
+    cxb = bx + bw / 2.0
+    q1 = _quantile(svals, 0.25)
+    med = _quantile(svals, 0.50)
+    q3 = _quantile(svals, 0.75)
+    vmin = svals[0]; vmax = svals[-1]
+    parts.append(f'<text x="{bx}" y="-4" font-size="8" fill="#444" '
+                 f'font-family="sans-serif">distribution</text>')
+    # whisker min..max
+    parts.append(f'<line x1="{cxb:.1f}" y1="{ypos(vmax):.2f}" x2="{cxb:.1f}" '
+                 f'y2="{ypos(vmin):.2f}" stroke="#666" stroke-width="0.8"/>')
+    # min/max caps
+    for cap in (vmin, vmax):
+        parts.append(f'<line x1="{bx+3:.1f}" y1="{ypos(cap):.2f}" '
+                     f'x2="{bx+bw-3:.1f}" y2="{ypos(cap):.2f}" '
+                     f'stroke="#666" stroke-width="0.8"/>')
+    # box Q1..Q3
+    by = ypos(q3); bh_box = ypos(q1) - ypos(q3)
+    parts.append(f'<rect x="{bx:.1f}" y="{by:.2f}" width="{bw}" '
+                 f'height="{max(bh_box,0.5):.2f}" fill="#1f77b4" '
+                 f'fill-opacity="0.18" stroke="#1f77b4" stroke-width="0.8"/>')
+    # median
+    parts.append(f'<line x1="{bx:.1f}" y1="{ypos(med):.2f}" '
+                 f'x2="{bx+bw:.1f}" y2="{ypos(med):.2f}" '
+                 f'stroke="#1f77b4" stroke-width="1.4"/>')
+    # clustered value labels (number + count) to the right of the box
+    lx = bx + bw + 5
+    last_ly = None
+    for cval, cnt, _lo, _hi in _cluster_values(all_vals):
+        ly = ypos(cval)
+        # nudge apart if two clusters would overlap their text vertically
+        if last_ly is not None and abs(ly - last_ly) < 9:
+            ly = last_ly + 9
+        last_ly = ly
+        parts.append(f'<line x1="{bx+bw:.1f}" y1="{ypos(cval):.2f}" '
+                     f'x2="{lx-1:.1f}" y2="{ly:.2f}" stroke="#999" '
+                     f'stroke-width="0.5"/>')
+        txt = f"{cval:.3g}" + (f" ×{cnt}" if cnt > 1 else "")
+        parts.append(f'<text x="{lx:.1f}" y="{ly+3:.1f}" font-size="8" '
+                     f'fill="#333" font-family="sans-serif">{_esc(txt)}</text>')
 
     parts.append("</g>")
     return "".join(parts)
@@ -430,7 +537,7 @@ def _render_group(benchmark, comp, exe, records):
 
     npanels = len(panels)
     height = TOP_MARGIN + npanels * (PANEL_H + PANEL_GAP) + X_AXIS_H
-    width  = LEFT_MARGIN + PANEL_W + 20
+    width  = LEFT_MARGIN + PANEL_W + BOX_W + 20
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
             f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
@@ -495,7 +602,7 @@ def _render_session_chart(benchmark, batches):
     nbatches = len(batches)
     npanels = len(panels)
     height = TOP_MARGIN + npanels * (PANEL_H + PANEL_GAP) + X_AXIS_H
-    width  = LEFT_MARGIN + PANEL_W + 20
+    width  = LEFT_MARGIN + PANEL_W + BOX_W + 20
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
             f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')

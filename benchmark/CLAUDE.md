@@ -397,18 +397,21 @@ at `benchmark/results/<benchmark-name>/champion.json`. Schema:
 }
 ```
 
-History is git-tracked; champion.json is overwritten in-place when a
-new champion is promoted (the `git log` of the file IS the history).
-Don't keep a parallel JSON list — it desync's.
+`benchmark/history/` and `benchmark/results/` are LOCAL-only — NOT git-
+tracked (`.gitignore` excludes both: too noisy). champion.json is still
+overwritten in-place when a new champion is promoted; the append-only
+per-run JSONs remain the source of truth and charts are regenerated from
+them. Don't keep a parallel JSON list — it desync's. Don't re-add these
+trees to git.
 
 When proposing an optimisation, the agent reads the per-benchmark
 champion.json, compares the candidate's metrics from **every** node
 against the champion's records for those nodes, and writes the decision
 (KEEP / DISCARD / ESCALATE) + per-metric deltas back to
 `benchmark/results/<benchmark-name>/candidate-<stamp>.json`
-(`<stamp>` = the run's started_utc, `:`→`-`). The candidate file is
-git-ignored except for the rare ESCALATE case the operator wants to
-preserve for discussion.
+(`<stamp>` = the run's started_utc, `:`→`-`). All of `results/` is
+git-ignored (local-only); an ESCALATE the operator wants to keep is
+copied out of the tree by hand.
 
 ## Per-run history — append-only, one JSON per run
 
@@ -618,10 +621,9 @@ Rules:
   `history_recorder.py`), not duplicated per `benchmark*.py`.
 * No external chart service — render locally (matplotlib SVG backend
   or hand-rolled SVG). Don't add a new pip dep without asking.
-* `champion.svg` is git-tracked.
-  `candidate-<stamp>.svg` is git-ignored like
-  `candidate-<stamp>.json` (transient; regenerable from the history
-  JSONs, which remain the source of truth).
+* `champion.svg` and `candidate-<stamp>.svg` are BOTH local-only
+  (all of `results/` is git-ignored): regenerable from the local
+  history JSONs, which remain the source of truth.
 
 ### Generating charts manually
 
