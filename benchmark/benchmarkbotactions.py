@@ -1644,15 +1644,22 @@ def _run_with_server(bin_path, server_proc, comment,
     bh.write_record(cand_p, rec)
     print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
 
-    # Cross-platform champion compare.
-    champ = bh.load_champion("benchmarkbotactions")
-    decision, summary = bh.decide_multi_node(champ, rec)
-    bh.print_decision("benchmarkbotactions", decision, summary)
+    # Cross-platform champion compare. SKIP on a --node run: decision +
+    # champion promotion need the WHOLE fleet.
+    partial_run = bh.node_filter_active()
+    decision = None
+    if partial_run:
+        print(_color(bh.C_YELLOW, "[decision] skipped — partial run (--node); "
+              "decision/champion need the full fleet"))
+    else:
+        champ = bh.load_champion("benchmarkbotactions")
+        decision, summary = bh.decide_multi_node(champ, rec)
+        bh.print_decision("benchmarkbotactions", decision, summary)
 
-    if decision == "KEEP":
-        ch_p = bh.champion_path("benchmarkbotactions")
-        bh.write_record(ch_p, rec)
-        print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
+        if decision == "KEEP":
+            ch_p = bh.champion_path("benchmarkbotactions")
+            bh.write_record(ch_p, rec)
+            print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
     # Per-platform history.
     ended_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -1683,7 +1690,8 @@ def _run_with_server(bin_path, server_proc, comment,
         if out_p is not None:
             print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
-    hr.attach_decision("benchmarkbotactions", batch_id, decision)
+    if not partial_run:
+        hr.attach_decision("benchmarkbotactions", batch_id, decision)
     import chart_generator
     for cp in chart_generator.regenerate("benchmarkbotactions", cand_stamp):
         print(_color(bh.C_CYAN, f"[chart] {cp}"))
