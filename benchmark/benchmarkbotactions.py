@@ -105,7 +105,7 @@ SRV_RUN_DIR    = os.path.join(TMPFS_ROOT, "cc-bench-botactions-server")
 #   small  -- baseline syscall floor, only a couple of bots
 #   medium -- typical per-tick offered load
 #   large  -- saturate the NIC tx queue / kernel sk_buff pool
-BOT_COUNTS    = [4, 32, 128]
+BOT_COUNTS    = [2, 4, 8, 16, 32, 60, 79, 128, 200, 300]
 DURATION_S    = 30
 RUN_REPEATS   = 3        # 1 warmup + 2 measured per (size)
 BUILD_TIMEOUT = 1800
@@ -1374,6 +1374,7 @@ def main():
         if bh.acquire_network_lock("benchmarkbotactions") is None:
             return 3
     comment = args.comment
+    maxtime = args.maxtime
     # Build BOTH binaries first so a build failure aborts before we
     # spend wall-time on cell runs / server boot.
     bin_path = build_bot()
@@ -1475,10 +1476,22 @@ def _run_with_server(bin_path, server_proc, comment,
 
     per_tool = {}     # node_label -> { tool -> {status, metrics} }
     per_subbench = {} # node_label -> { tool -> { label -> {metric -> {value,unit,better,...}} } }
+    t_batch_start = time.monotonic()
+    truncated = False     # --maxtime stopped the batch before every node ran
+    prev_label = None
     for node in nodes:
         label = node["label"]
+        # --maxtime: at the node-loop boundary, stop launching more nodes
+        # once the overall cap is exceeded; finalise with what completed.
+        if bh.maxtime_reached(t_batch_start, maxtime, prev_label):
+            truncated = True
+            break
+        prev_label = label
         per_tool[label] = {}
         per_subbench[label] = {}
+        # Per-node budget: restart the clock so a slow earlier node never
+        # starves this one (see FleetDeadline).
+        deadline.start_node(label)
         # Inject the local boot-time benchmark (measured in main() before
         # the persistent server started). Remote nodes record their own
         # server-boot inside _run_remote_cells_botactions.
@@ -1596,6 +1609,11 @@ def _run_with_server(bin_path, server_proc, comment,
         # io_uring tuning sweep (LOCAL only): baseline io_uring vs +SQPOLL
         # vs +IOPOLL, each measured under one medium bot workload. Recorded
         # as the "server-iouring" tool + per-variant sub-benchmark slices.
+        # note() before each sweep: both spin up server+bot fleets several
+        # times (minutes each), so without their own breadcrumb a deadline
+        # firing here would be misattributed to the last note()'d cell
+        # (perf-stat) instead of the sweep that actually ate the time.
+        deadline.note(label, "server-iouring")
         iou_flat, iou_slices = _run_iouring_variants(bin_path, iface)
         if iou_flat:
             per_tool[label]["server-iouring"] = {
@@ -1606,6 +1624,7 @@ def _run_with_server(bin_path, server_proc, comment,
         # sizes. Recorded as the "server-compression" tool + per-(variant,
         # size) sub-benchmark slices carrying req/s + cpu% + bytes-on-wire +
         # latency tail, so the CPU/bandwidth tradeoff is reviewable.
+        deadline.note(label, "server-compression")
         comp_flat, comp_slices = _run_compression_variants(bin_path, iface)
         if comp_flat:
             per_tool[label]["server-compression"] = {
@@ -1646,7 +1665,7 @@ def _run_with_server(bin_path, server_proc, comment,
 
     # Cross-platform champion compare. SKIP on a --node run: decision +
     # champion promotion need the WHOLE fleet.
-    partial_run = bh.node_filter_active()
+    partial_run = bh.node_filter_active() or truncated
     decision = None
     if not partial_run:
         champ = bh.load_champion("benchmarkbotactions")
@@ -1669,9 +1688,16 @@ def _run_with_server(bin_path, server_proc, comment,
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
                                         node.get("ssh_port", 22))
+        if node["label"] == "local":
+            cc_path, dp_path = SRV_RUN_DIR, DATAPACK_PATH
+        else:
+            wd = node.get("work_dir") or "/tmp/cc-bench-botactions"
+            cc_path, dp_path = wd, os.path.join(wd, "datapack")
         pr = hr.PlatformRecord("benchmarkbotactions", batch_id,
                                node["label"], runner=runner,
-                               arch_hint=node.get("arch")).collect()
+                               arch_hint=node.get("arch")).collect(
+                                   cc_binary_path=cc_path,
+                                   datapack_path=dp_path)
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
         # Per-workload sub-benchmark slices (cpu_percent + wall_s + ...).

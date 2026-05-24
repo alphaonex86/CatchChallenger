@@ -445,6 +445,7 @@ def main():
         if bh.acquire_network_lock("benchmarkmapmanager") is None:
             return 3
     comment = args.comment
+    maxtime = args.maxtime
     bin_path = build()
     if bin_path is None:
         return 2
@@ -502,10 +503,22 @@ def main():
     per_tool     = {}     # node_label -> { tool -> {status, metrics, ...} }
     per_subbench = {}     # node_label -> { tool -> { slice_label -> metric_block } }
     remote_specs = []     # built serially below, run in parallel after
+    t_batch_start = time.monotonic()
+    truncated = False     # --maxtime stopped the batch before every node ran
+    prev_label = None
     for node in nodes:
         label = node["label"]
+        # --maxtime: at the node-loop boundary, stop launching more nodes
+        # once the overall cap is exceeded; finalise with what completed.
+        if bh.maxtime_reached(t_batch_start, maxtime, prev_label):
+            truncated = True
+            break
+        prev_label = label
         per_tool[label] = {}
         per_subbench[label] = {}
+        # Per-node budget: restart the clock so a slow earlier node never
+        # starves this one (see FleetDeadline).
+        deadline.start_node(label)
         if deadline.reached():
             per_tool[label] = deadline.skip_node(label, all_profilers,
                                                  progress)
@@ -627,9 +640,15 @@ def main():
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
                                         node.get("ssh_port", 22))
+        # No datapack: this is a self-contained map-manager microbenchmark.
+        if node["label"] == "local":
+            cc_path = BUILD_DIR
+        else:
+            cc_path = node.get("work_dir") or "/tmp/cc-bench-run"
         pr = hr.PlatformRecord("benchmarkmapmanager", batch_id,
                                node["label"], runner=runner,
-                               arch_hint=node.get("arch")).collect()
+                               arch_hint=node.get("arch")).collect(
+                                   cc_binary_path=cc_path)
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
         for tool, slices in per_subbench.get(node["label"], {}).items():
@@ -645,10 +664,10 @@ def main():
             print(_color(bh.C_CYAN, f"[history] {out_p}"))
 
     # Cross-platform champion compare — aggregates every node's metrics,
-    # not just the local host. SKIP entirely on a --node run: the decision +
-    # champion promotion need the WHOLE fleet, a partial run can't confirm a
-    # change helps/regresses everywhere.
-    if not bh.node_filter_active():
+    # not just the local host. SKIP entirely on a --node run OR a --maxtime
+    # truncated run: the decision + champion promotion need the WHOLE fleet,
+    # a partial run can't confirm a change helps/regresses everywhere.
+    if not bh.node_filter_active() and not truncated:
         champ = bh.load_champion("benchmarkmapmanager")
         decision, summary = bh.decide_multi_node(champ, rec)
         bh.print_decision("benchmarkmapmanager", decision, summary)

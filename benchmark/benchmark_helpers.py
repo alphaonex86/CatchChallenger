@@ -66,6 +66,8 @@ C_GREEN  = "\033[92m"
 C_YELLOW = "\033[93m"
 C_RED    = "\033[91m"
 C_CYAN   = "\033[96m"
+C_BLUE   = "\033[94m"
+C_BOLD   = "\033[1m"
 C_RESET  = "\033[0m"
 
 
@@ -596,9 +598,11 @@ class Progress:
         else:
             colour = C_RED
         prefix = f"{colour}[bench]{C_RESET}"
+        node_colour = f"{C_BOLD}{C_RED}" if node == "local" else C_CYAN
+        node_str = f"{node_colour}{node}{C_RESET}"
         msg = (f"{prefix} {self.done}/{self.total} done -- "
                f"benchmark: {self.bench_name}, "
-               f"profiler: {profiler}, SIMD: {simd}, execution_node: {node}")
+               f"profiler: {profiler}, SIMD: {simd}, execution_node: {node_str}")
         if status != "OK" and status != "PASS":
             msg += f"  [{status}{(' '+extra) if extra else ''}]"
         elif extra:
@@ -607,17 +611,18 @@ class Progress:
 
 
 class FleetDeadline:
-    """Hard wall-clock ceiling for a whole benchmark batch -- the same
-    class of bug fixed in setup.py: the {profiler}x{simd}x{arch}x
-    {workload}x{node} matrix is unbounded (a slow/qemu-emulated node, a
-    callgrind run at ~30x, a wedged remote ssh) so without a global cap
-    `benchmark*.py` can run far past the 1h the operator expects
-    (benchmark/CLAUDE.md: 'just run this command without argument with
-    1h timeout'). Checked cooperatively at each node boundary; remaining
-    cells are emitted SKIP(deadline) so the progress counter and the
-    per-platform history JSON stay honest (a skipped cell is recorded,
-    never silently dropped). Default 3600s; override with env
-    CATCHCHALLENGER_BENCH_DEADLINE_S (0 or negative disables the cap)."""
+    """Per-NODE wall-clock budget -- NOT a single whole-fleet pool. Earlier
+    this was one global ceiling for the entire batch; a slow local node
+    (e.g. the io_uring + compression sweeps in benchmarkbotactions, ~46min)
+    drained it and every remaining node was skipped SKIP(deadline) without
+    ever being measured -- losing the cross-arch signal the project exists
+    for. Now each node gets its OWN budget: call `start_node()` at the top
+    of every node iteration to restart the clock, so one node overrunning
+    never starves the nodes after it. Within a node the matrix is still
+    bounded by the per-cell RUN_TIMEOUTs; this budget is the coarse backstop
+    for a node that wedges with no per-cell progress. Default 3600s per
+    node; override with env CATCHCHALLENGER_BENCH_DEADLINE_S (0 or negative
+    disables the cap)."""
 
     def __init__(self, default_s=3600):
         budget = default_s
@@ -634,12 +639,19 @@ class FleetDeadline:
         if budget and budget > 0:
             self.budget   = budget
             self.deadline = time.monotonic() + budget
-            print(f"{C_CYAN}[deadline]{C_RESET} whole-fleet ceiling = "
-                  f"{budget}s; nodes not reached by then are skipped",
-                  flush=True)
+            print(f"{C_CYAN}[deadline]{C_RESET} per-node budget = "
+                  f"{budget}s; a node exceeding it is skipped, the next "
+                  f"node starts fresh", flush=True)
         else:
             self.budget   = None
             self.deadline = None
+
+    def start_node(self, label):
+        """Restart the budget clock for a new node. The deadline is PER
+        NODE: each node gets the full budget regardless of how long earlier
+        nodes took, so a slow node never causes later nodes to be skipped."""
+        if self.budget is not None:
+            self.deadline = time.monotonic() + self.budget
 
     def reached(self):
         return self.deadline is not None and time.monotonic() >= self.deadline
@@ -684,6 +696,28 @@ class FleetDeadline:
             progress.emit(prof, "no", label, status="SKIP", extra=reason)
             blocks[prof] = {"status": "SKIP", "metrics": {}}
         return blocks
+
+
+def maxtime_reached(start_monotonic, maxtime_s, last_label=None):
+    """True when the operator's --maxtime total cap (seconds) is set and the
+    elapsed wall time since `start_monotonic` has passed it. Checked at the
+    node-loop boundary so the batch stops launching MORE nodes once the cap
+    is hit, finalising with whatever completed (a partial run -> no champion
+    decision). Distinct from FleetDeadline, which is a per-node budget;
+    maxtime is one ceiling for the whole batch. maxtime_s None/<=0 => no cap.
+    Prints a one-line notice naming the last node finished so the operator
+    sees why the batch ended early."""
+    if not maxtime_s or maxtime_s <= 0:
+        return False
+    elapsed = int(time.monotonic() - start_monotonic)
+    if elapsed > maxtime_s:
+        print(f"{C_YELLOW}[maxtime]{C_RESET} elapsed {elapsed}s > --maxtime "
+              f"{maxtime_s}s"
+              + (f" after node {last_label}" if last_label else "")
+              + "; stopping the batch, finalising the partial run",
+              flush=True)
+        return True
+    return False
 
 
 # ---- profiler wrappers ---------------------------------------------------
@@ -1347,6 +1381,14 @@ def parse_bench_args(argv=None):
                          "execution_nodes[].label or arch (repeatable; "
                          "'local' = host baseline only). Default: every "
                          "benchmark-enabled node.")
+    ap.add_argument("--maxtime", type=int, default=None, metavar="SECONDS",
+                    help="overall wall-clock ceiling for the whole batch "
+                         "(seconds). Checked at each node-loop boundary: once "
+                         "the elapsed time exceeds it the loop stops launching "
+                         "more nodes and the run finalises with whatever "
+                         "completed (partial -> no champion decision). Unlike "
+                         "the per-node FleetDeadline this is one cap for the "
+                         "entire run. Default: no cap.")
     return ap.parse_args(argv)
 
 
