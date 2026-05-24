@@ -75,7 +75,6 @@ protected:
 
     QTimer connectTimer;
 
-    QFileInfoList skinsList;
     quint16 numberToChangeLoginForMultipleConnexion;
     QSet<quint32> characterOnMap;//protect mutual call: characterSelectForFirstCharacter(), logged_with_client(), haveTheDatapack_with_client()
     quint16 numberOfBotConnected;
