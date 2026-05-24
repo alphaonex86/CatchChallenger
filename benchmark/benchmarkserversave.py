@@ -607,10 +607,7 @@ def main():
 
     # Cross-platform champion compare. SKIP on a --node run: decision +
     # champion promotion need the WHOLE fleet.
-    if bh.node_filter_active():
-        print(_color(bh.C_YELLOW, "[decision] skipped — partial run (--node); "
-              "decision/champion need the full fleet"))
-    else:
+    if not bh.node_filter_active():
         champ = bh.load_champion("benchmarkserversave")
         decision, summary = bh.decide_multi_node(champ, rec)
         bh.print_decision("benchmarkserversave", decision, summary)

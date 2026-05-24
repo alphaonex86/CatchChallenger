@@ -1648,10 +1648,7 @@ def _run_with_server(bin_path, server_proc, comment,
     # champion promotion need the WHOLE fleet.
     partial_run = bh.node_filter_active()
     decision = None
-    if partial_run:
-        print(_color(bh.C_YELLOW, "[decision] skipped — partial run (--node); "
-              "decision/champion need the full fleet"))
-    else:
+    if not partial_run:
         champ = bh.load_champion("benchmarkbotactions")
         decision, summary = bh.decide_multi_node(champ, rec)
         bh.print_decision("benchmarkbotactions", decision, summary)
