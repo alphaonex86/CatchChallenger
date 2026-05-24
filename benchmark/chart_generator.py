@@ -253,8 +253,28 @@ def _decision_glyph(cx, cy, decision, size=5):
 
 CPU_SATURATION_THRESHOLD = 90.0
 
-# Right-of-panel gutter for the value boxplot + its clustered value labels.
+# Right-of-panel gutter for the value boxplot + its clustered value labels
+# (single-boxplot charts: the by-execution-node comparison).
 BOX_W = 150
+# Per-series boxplot slot width: _plot_panel draws one mini-boxplot per
+# series side-by-side, so the gutter scales with the series count.
+BOX_SLOT_W = 16
+
+
+def _series_gutter_w(max_series):
+    """Right-gutter width needed for `max_series` side-by-side mini-boxplots."""
+    return max(max_series, 1) * BOX_SLOT_W + 16
+
+
+# Legend draws one line per series at 11px steps from y=12; grow the panel so
+# a many-series legend (and the per-series boxplots) never overflow into the
+# next panel.
+LEGEND_STEP = 11
+
+
+def _panel_h(max_series):
+    """Panel height: the base, or tall enough for `max_series` legend lines."""
+    return max(PANEL_H, max_series * LEGEND_STEP + 16)
 # Values within +-10% are the benchmark noise band (see benchmark/CLAUDE.md
 # decision matrix) -- collapse them into one labelled entry on the chart so
 # near-equal points don't render as N separate numbers.
@@ -380,6 +400,23 @@ def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
                      f'stroke="#2ca02c" stroke-width="0.7" '
                      f'stroke-dasharray="3,2"/>')
 
+    # Legend labels: strip the dot-segments common to EVERY series in this
+    # panel -- they just repeat the panel metric (e.g. every cross-node
+    # series ends ".rusage.b128_invol_ctx", so only the node "cb2" is
+    # informative). Keeps the distinguishing prefix (node, or node.tool /
+    # tool.slice).
+    _labels = list(points_by_label.keys())
+    _splits = [l.split(".") for l in _labels]
+    _common = 0
+    if _splits:
+        _minlen = min(len(s) for s in _splits)
+        while _common < _minlen and len({s[-(_common + 1)] for s in _splits}) == 1:
+            _common += 1
+    def _short_label(l):
+        s = l.split(".")
+        keep = s[:len(s) - _common] if _common < len(s) else s
+        return ".".join(keep) if keep else l
+
     # one polyline per label
     for ci, (label, pts) in enumerate(sorted(points_by_label.items())):
         col = _LINE_COLOURS[ci % len(_LINE_COLOURS)]
@@ -397,60 +434,52 @@ def _plot_panel(x0, y0, w, h, points_by_label, better_map, commits,
             parts.append(f'<circle cx="{cxp:.1f}" cy="{cyp:.2f}" '
                          f'r="2" fill="{col}"/>')
             parts.append(_decision_glyph(cxp, cyp - 8, dec))
-        # legend: just the series label -- the lower/higher=better direction
-        # is shown once in the panel title, not per series.
+        # legend: distinguishing part only (panel-common suffix stripped);
+        # lower/higher=better is in the title, not per series.
         parts.append(f'<text x="{w-4}" y="{12 + ci*11}" font-size="9" '
                      f'text-anchor="end" fill="{col}" '
-                     f'font-family="sans-serif">{_esc(label)}</text>')
+                     f'font-family="sans-serif">{_esc(_short_label(label))}</text>')
 
-    # ---- right-of-panel boxplot over ALL plotted values -----------------
-    # Shares this panel's y-scale (ypos). Box = Q1..Q3, line = median,
-    # whiskers = min..max. To its right, the value list collapsed into
-    # +-10% clusters (the noise band): one "value xN" line per cluster, so
-    # near-equal points read as a single number instead of N overlapping
-    # labels.
-    svals = sorted(all_vals)
-    bx = w + 16          # box body left edge (in the right gutter)
-    bw = 16              # box body width
-    cxb = bx + bw / 2.0
-    q1 = _quantile(svals, 0.25)
-    med = _quantile(svals, 0.50)
-    q3 = _quantile(svals, 0.75)
-    vmin = svals[0]; vmax = svals[-1]
-    parts.append(f'<text x="{bx}" y="-4" font-size="8" fill="#444" '
-                 f'font-family="sans-serif">distribution</text>')
-    # whisker min..max
-    parts.append(f'<line x1="{cxb:.1f}" y1="{ypos(vmax):.2f}" x2="{cxb:.1f}" '
-                 f'y2="{ypos(vmin):.2f}" stroke="#666" stroke-width="0.8"/>')
-    # min/max caps
-    for cap in (vmin, vmax):
-        parts.append(f'<line x1="{bx+3:.1f}" y1="{ypos(cap):.2f}" '
-                     f'x2="{bx+bw-3:.1f}" y2="{ypos(cap):.2f}" '
-                     f'stroke="#666" stroke-width="0.8"/>')
-    # box Q1..Q3
-    by = ypos(q3); bh_box = ypos(q1) - ypos(q3)
-    parts.append(f'<rect x="{bx:.1f}" y="{by:.2f}" width="{bw}" '
-                 f'height="{max(bh_box,0.5):.2f}" fill="#1f77b4" '
-                 f'fill-opacity="0.18" stroke="#1f77b4" stroke-width="0.8"/>')
-    # median
-    parts.append(f'<line x1="{bx:.1f}" y1="{ypos(med):.2f}" '
-                 f'x2="{bx+bw:.1f}" y2="{ypos(med):.2f}" '
-                 f'stroke="#1f77b4" stroke-width="1.4"/>')
-    # clustered value labels (number + count) to the right of the box
-    lx = bx + bw + 5
-    last_ly = None
-    for cval, cnt, _lo, _hi in _cluster_values(all_vals):
-        ly = ypos(cval)
-        # nudge apart if two clusters would overlap their text vertically
-        if last_ly is not None and abs(ly - last_ly) < 9:
-            ly = last_ly + 9
-        last_ly = ly
-        parts.append(f'<line x1="{bx+bw:.1f}" y1="{ypos(cval):.2f}" '
-                     f'x2="{lx-1:.1f}" y2="{ly:.2f}" stroke="#999" '
-                     f'stroke-width="0.5"/>')
-        txt = f"{cval:.3g}" + (f" ×{cnt}" if cnt > 1 else "")
-        parts.append(f'<text x="{lx:.1f}" y="{ly+3:.1f}" font-size="8" '
-                     f'fill="#333" font-family="sans-serif">{_esc(txt)}</text>')
+    # ---- per-series boxplots in the right gutter ------------------------
+    # ONE mini-boxplot per series (e.g. one per execution node on the
+    # cross-node chart), coloured like its line and sharing this panel's
+    # y-scale + full height, laid out side-by-side so each series'
+    # distribution can be compared at a glance. The top-right legend maps
+    # colour -> series. Box = Q1..Q3, line = median, whiskers = min..max.
+    parts.append(f'<text x="{w+10}" y="-4" font-size="8" fill="#444" '
+                 f'font-family="sans-serif">per-node spread</text>')
+    gx = w + 10
+    for ci, (label, pts) in enumerate(sorted(points_by_label.items())):
+        col = _LINE_COLOURS[ci % len(_LINE_COLOURS)]
+        svals = sorted(v for _i, v, _c, _d in pts)
+        if not svals:
+            continue
+        slot = BOX_SLOT_W
+        cxs = gx + ci * slot + slot / 2.0
+        bw = slot * 0.55
+        bx = cxs - bw / 2.0
+        q1 = _quantile(svals, 0.25)
+        med = _quantile(svals, 0.50)
+        q3 = _quantile(svals, 0.75)
+        vmn = svals[0]; vmx = svals[-1]
+        # whisker + caps
+        parts.append(f'<line x1="{cxs:.1f}" y1="{ypos(vmx):.2f}" '
+                     f'x2="{cxs:.1f}" y2="{ypos(vmn):.2f}" stroke="{col}" '
+                     f'stroke-width="0.6"/>')
+        for cap in (vmn, vmx):
+            parts.append(f'<line x1="{bx+1:.1f}" y1="{ypos(cap):.2f}" '
+                         f'x2="{bx+bw-1:.1f}" y2="{ypos(cap):.2f}" '
+                         f'stroke="{col}" stroke-width="0.6"/>')
+        # box Q1..Q3
+        by = ypos(q3); box_h = ypos(q1) - ypos(q3)
+        parts.append(f'<rect x="{bx:.1f}" y="{by:.2f}" width="{bw:.1f}" '
+                     f'height="{max(box_h,0.5):.2f}" fill="{col}" '
+                     f'fill-opacity="0.22" stroke="{col}" '
+                     f'stroke-width="0.7"/>')
+        # median
+        parts.append(f'<line x1="{bx:.1f}" y1="{ypos(med):.2f}" '
+                     f'x2="{bx+bw:.1f}" y2="{ypos(med):.2f}" '
+                     f'stroke="{col}" stroke-width="1.2"/>')
 
     parts.append("</g>")
     return "".join(parts)
@@ -537,8 +566,10 @@ def _render_group(benchmark, comp, exe, records):
     champion_idx = _find_champion_idx(records, node)
 
     npanels = len(panels)
-    height = TOP_MARGIN + npanels * (PANEL_H + PANEL_GAP) + X_AXIS_H
-    width  = LEFT_MARGIN + PANEL_W + BOX_W + 20
+    max_series = max((len(p) for p in panels.values()), default=1)
+    panel_h = _panel_h(max_series)
+    height = TOP_MARGIN + npanels * (panel_h + PANEL_GAP) + X_AXIS_H
+    width  = LEFT_MARGIN + PANEL_W + _series_gutter_w(max_series) + 20
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
             f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
@@ -552,11 +583,11 @@ def _render_group(benchmark, comp, exe, records):
     # saturation tell-tale and the first thing reviewers look for.
     pkeys = sorted(panels.keys(), key=lambda k: (k != "cpu_percent", k))
     for pname in pkeys:
-        body.append(_plot_panel(LEFT_MARGIN, y, PANEL_W, PANEL_H,
+        body.append(_plot_panel(LEFT_MARGIN, y, PANEL_W, panel_h,
                                 panels[pname], better_map, commits,
                                 champion_idx, pname,
                                 panel_metric=pname))
-        y += PANEL_H + PANEL_GAP
+        y += panel_h + PANEL_GAP
     body.append(_x_axis_labels(LEFT_MARGIN, y, PANEL_W, commits, champion_idx))
     # decision legend (bottom-right)
     body.append(f'<g transform="translate({LEFT_MARGIN + PANEL_W - 220},'
@@ -602,8 +633,10 @@ def _render_session_chart(benchmark, batches):
 
     nbatches = len(batches)
     npanels = len(panels)
-    height = TOP_MARGIN + npanels * (PANEL_H + PANEL_GAP) + X_AXIS_H
-    width  = LEFT_MARGIN + PANEL_W + BOX_W + 20
+    max_series = max((len(p) for p in panels.values()), default=1)
+    panel_h = _panel_h(max_series)
+    height = TOP_MARGIN + npanels * (panel_h + PANEL_GAP) + X_AXIS_H
+    width  = LEFT_MARGIN + PANEL_W + _series_gutter_w(max_series) + 20
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
             f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
@@ -615,11 +648,11 @@ def _render_session_chart(benchmark, batches):
     y = TOP_MARGIN
     pkeys = sorted(panels.keys(), key=lambda k: (k != "cpu_percent", k))
     for pname in pkeys:
-        body.append(_plot_panel(LEFT_MARGIN, y, PANEL_W, PANEL_H,
+        body.append(_plot_panel(LEFT_MARGIN, y, PANEL_W, panel_h,
                                 panels[pname], better_map, commits,
                                 champion_idx, pname,
                                 panel_metric=pname))
-        y += PANEL_H + PANEL_GAP
+        y += panel_h + PANEL_GAP
     body.append(_x_axis_labels(LEFT_MARGIN, y, PANEL_W, commits, champion_idx))
     # decision legend
     body.append(f'<g transform="translate({LEFT_MARGIN + PANEL_W - 220},'
@@ -801,9 +834,13 @@ def _render_by_node_chart(benchmark, records):
         return None
     mkeys = sorted(metrics.keys())
     npanels = len(mkeys)
-    height = TOP_MARGIN + npanels * (PANEL_H + PANEL_GAP) + 10
-    width = LEFT_MARGIN + PANEL_W + BOX_W + 20
     nnodes = len({n for mv in metrics.values() for n in mv})
+    # Grow the panel so the right-side per-node value labels (nudged ~9px
+    # apart, up to nnodes of them) and the rotated x-axis node labels don't
+    # overflow.
+    panel_h = max(PANEL_H, nnodes * 9 + 28)
+    height = TOP_MARGIN + npanels * (panel_h + PANEL_GAP) + 10
+    width = LEFT_MARGIN + PANEL_W + BOX_W + 20
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
             f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
@@ -813,9 +850,9 @@ def _render_by_node_chart(benchmark, records):
             f'(log scale, {nnodes} node(s), sorted)</text>']
     y = TOP_MARGIN
     for mk in mkeys:
-        body.append(_plot_by_node_panel(LEFT_MARGIN, y, PANEL_W, PANEL_H,
+        body.append(_plot_by_node_panel(LEFT_MARGIN, y, PANEL_W, panel_h,
                                         metrics[mk], mk, better.get(mk)))
-        y += PANEL_H + PANEL_GAP
+        y += panel_h + PANEL_GAP
     return head + "".join(body) + "</svg>\n"
 
 
