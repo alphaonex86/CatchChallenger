@@ -113,6 +113,17 @@ except Exception:                                            # pragma: no cover
 
 C_GREEN, C_YELLOW, C_RED, C_CYAN, C_RESET = (
     "\033[92m", "\033[93m", "\033[91m", "\033[96m", "\033[0m")
+C_BLUE = "\033[94m"
+C_BOLD = "\033[1m"
+
+
+def _node_color(node_type):
+    """Header color for a node based on its role."""
+    if node_type == "local":
+        return C_BOLD + C_RED
+    if node_type == "exec":
+        return C_CYAN
+    return C_BLUE  # compile / remote
 
 
 def _disabled_tools_for_label(label):
@@ -429,8 +440,10 @@ def family_from_os_release(osr):
 class Target:
     """A provisioning target: either the local host or an ssh node."""
 
-    def __init__(self, label, ssh=None, deadline=None, lxc_node=None):
+    def __init__(self, label, ssh=None, deadline=None, lxc_node=None,
+                 node_type="compile"):
         self.label = label
+        self.node_type = node_type  # "local" | "compile" | "exec"
         self.ssh = ssh            # None => local; else (user, host, port)
         # Absolute time.monotonic() past which NO command may run. None =>
         # unbounded. Every run() clamps its per-command timeout to the
@@ -694,13 +707,15 @@ def provision(tgt, dry_run, conn_timeout, install_timeout):
         try:
             import benchmark_remote as br
         except Exception as e:
-            print("%s=== %s ===%s" % (C_CYAN, tgt.label, C_RESET))
+            c = _node_color(tgt.node_type)
+            print("%s=== %s ===%s" % (c, tgt.label, C_RESET))
             print("  %s[SKIP]%s lxc_nfs node but benchmark_remote "
                   "unavailable: %s" % (C_YELLOW, C_RESET, e))
             return "skip"
+        c = _node_color(tgt.node_type)
         print("%s[lxc_nfs %s]%s bring-up: stop/umount -> mount NFS -> "
               "lxc-start (defensive remount of catchchallenger guest) ..."
-              % (C_CYAN, tgt.label, C_RESET))
+              % (c, tgt.label, C_RESET))
         _ok, _tail = br.nfs_lxc_bring_up(tgt.lxc_node, verbose=True)
         if not _ok:
             print("%s[lxc_nfs %s]%s bring-up FAILED -- not provisioning"
@@ -713,15 +728,16 @@ def provision(tgt, dry_run, conn_timeout, install_timeout):
             try:
                 import benchmark_remote as br
                 br.nfs_lxc_teardown(tgt.lxc_node, verbose=True)
+                c = _node_color(tgt.node_type)
                 print("%s[lxc_nfs %s]%s stopped + unmounted (host clean)"
-                      % (C_CYAN, tgt.label, C_RESET))
+                      % (c, tgt.label, C_RESET))
             except Exception as e:
                 print("%s[lxc_nfs %s]%s teardown failed (best-effort): %s"
                       % (C_YELLOW, tgt.label, C_RESET, e))
 
 
 def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
-    print("%s=== %s ===%s" % (C_CYAN, tgt.label, C_RESET))
+    print("%s=== %s ===%s" % (_node_color(tgt.node_type), tgt.label, C_RESET))
 
     if tgt.deadline is not None and time.monotonic() >= tgt.deadline:
         print("  %s[SKIP]%s global deadline reached before this node "
@@ -1002,18 +1018,19 @@ def collect_targets(args):
     targets = []
     seen = set()        # dedupe by ssh tuple; the local host is its own key
 
-    def _add(label, ssh, lxc_node=None):
+    def _add(label, ssh, lxc_node=None, node_type="compile"):
         key = ssh if ssh is not None else ("__local__",)
         if key in seen:
             return
         seen.add(key)
-        targets.append(Target(label, ssh=ssh, lxc_node=lxc_node))
+        targets.append(Target(label, ssh=ssh, lxc_node=lxc_node,
+                               node_type=node_type))
 
     # The local host is simultaneously the amd64 compile node and the
     # amd64 baseline execution node (benchmark/CLAUDE.md) -- it belongs to
     # every MODE, never a compile-only / exec-only box.
     if not args.node or "local" in args.node:
-        _add("local", None)
+        _add("local", None, node_type="local")
     if args.local_only:
         return targets
 
@@ -1021,10 +1038,11 @@ def collect_targets(args):
     want_compile = args.mode in ("all", "compile")
     want_exec = args.mode in ("all", "exec")
 
-    def _skip(lbl):
+    def _skip(lbl, node_type="compile"):
+        c = _node_color(node_type)
         print("%s=== %s ===%s\n  %s[SKIP]%s enabled:false "
               "(pass --include-disabled to force)"
-              % (C_CYAN, lbl, C_RESET, C_YELLOW, C_RESET))
+              % (c, lbl, C_RESET, C_YELLOW, C_RESET))
 
     for node in cfg.get("nodes", []):
         # Compilation node == the nodes[].ssh box itself. Its `enabled`
@@ -1033,18 +1051,18 @@ def collect_targets(args):
             lbl = node.get("label", "?")
             if not (args.node and lbl not in args.node):
                 if not args.include_disabled and not node.get("enabled", True):
-                    _skip(lbl)
+                    _skip(lbl, "compile")
                 else:
                     ssh = node.get("ssh", {})
                     _add(lbl, (ssh.get("user"), ssh.get("host"),
-                               ssh.get("port", 22)))
+                               ssh.get("port", 22)), node_type="compile")
         if want_exec:
             for ex in node.get("execution_nodes", []):
                 lbl = ex.get("label", "?")
                 if args.node and lbl not in args.node:
                     continue
                 if not args.include_disabled and not ex.get("enabled", False):
-                    _skip(lbl)
+                    _skip(lbl, "exec")
                     continue
                 # lxc_nfs node? Provision the GUEST, not the outer box
                 # (the outer is e.g. an OpenWrt router with no pkg
@@ -1056,10 +1074,10 @@ def collect_targets(args):
                 if lxc.get("enabled") and lxc.get("guest_ipv6"):
                     _add(lbl, (ex.get("user"), lxc["guest_ipv6"],
                                ex.get("port", 22)),
-                         lxc_node=ex)
+                         lxc_node=ex, node_type="exec")
                 else:
                     _add(lbl, (ex.get("user"), ex.get("host"),
-                               ex.get("port", 22)))
+                               ex.get("port", 22)), node_type="exec")
     return targets
 
 
@@ -1119,10 +1137,11 @@ def main():
     for t in targets:
         t.deadline = deadline
 
+    node_types = {t.label: t.node_type for t in targets}
     summary = {}
     for t in targets:
         if deadline is not None and time.monotonic() >= deadline:
-            print("%s=== %s ===%s" % (C_CYAN, t.label, C_RESET))
+            print("%s=== %s ===%s" % (_node_color(t.node_type), t.label, C_RESET))
             print("  %s[SKIP]%s global deadline reached -- not provisioned"
                   % (C_YELLOW, C_RESET))
             summary[t.label] = "deadline"
@@ -1138,7 +1157,8 @@ def main():
         col = {"ok": C_GREEN, "skip": C_YELLOW, "unreachable": C_YELLOW,
                "partial": C_YELLOW, "deadline": C_YELLOW,
                "fail": C_RED}.get(st, C_RESET)
-        print("  %s%-20s %s%s" % (col, lbl, st, C_RESET))
+        nc = _node_color(node_types.get(lbl, "compile"))
+        print("  %s%-20s%s %s%s%s" % (nc, lbl, C_RESET, col, st, C_RESET))
         if st == "fail":
             rc = 1
     return rc

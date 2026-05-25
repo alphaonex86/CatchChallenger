@@ -54,6 +54,20 @@ def _ts():
     return time.strftime("%H:%M %d/%m/%Y")
 
 
+class _Tee:
+    """Write to multiple streams at once (used to tee stdout + findings file)."""
+    def __init__(self, *streams):
+        self._streams = streams
+
+    def write(self, s):
+        for st in self._streams:
+            st.write(s)
+
+    def flush(self):
+        for st in self._streams:
+            st.flush()
+
+
 def _human_dur(seconds):
     """Elapsed seconds as MINmSECs (e.g. 99min09s)."""
     seconds = int(seconds)
@@ -117,10 +131,21 @@ SYSTEM_PROMPT = (
     "call another tool. When you have enough information, STOP calling tools "
     "and output your final answer. Do NOT mix a tool line with findings.\n"
     "\n"
-    "For each real finding give: line number(s) in the MAIN FILE, the "
-    "untrusted input, and the consequence. Be terse and technical. "
-    "If you find no exploitable security vulnerability in the MAIN FILE, "
-    "reply with exactly 'No issues identified' and nothing else.\n"
+    "MANDATORY OUTPUT FORMAT - your final answer MUST be one of exactly two "
+    "forms, nothing else:\n"
+    "  (A) If you found at least one exploitable vulnerability:\n"
+    "      LINE <n>: <attacker-controlled input> -> <concrete consequence>\n"
+    "      One line per finding. No prose, no summary, no preamble.\n"
+    "  (B) If you found nothing exploitable:\n"
+    "      No issues identified\n"
+    "      That exact phrase, alone, nothing before or after it.\n"
+    "\n"
+    "FORBIDDEN in your final answer: narrative descriptions of the code, "
+    "generic summaries ('the code handles...', 'this class is part of...'), "
+    "opinions ('could potentially', 'might be'), requests for clarification "
+    "('be more specific', 'without more context'), design observations, or "
+    "any text that is not a LINE finding or the exact phrase above. When in "
+    "doubt, output 'No issues identified'.\n"
     "\n"
     "PROJECT NOTEBOOK: you are given the running notebook (SECURITY-IA.md) "
     "below. Use it as prior context. It is PROJECT-WIDE knowledge ONLY: "
@@ -160,8 +185,15 @@ SECURITY_NOTES_FILE = os.path.join(HERE, "SECURITY-IA.md")
 NOTE_RE = re.compile(r"<<<NOTES(.*?)NOTES>>>", re.DOTALL)
 
 # num_ctx bounds (tokens). We size it to the actual payload, clamped here.
-MIN_CTX = 8192
-MAX_CTX = 32768
+# Floor is 16K: smaller contexts truncate the audited file + related files and
+# the model loses the bug. Ceiling is 1M so a large file + its related files
+# can fit when the model/host support it. ensure_context() checks at runtime
+# what the model can actually honour and warns/caps accordingly.
+MIN_CTX = 16384
+MAX_CTX = 1024 * 1024
+# Model's actual trained context, discovered at runtime by ensure_context();
+# fit_ctx caps to it so we never ask Ollama for more than the model can honour.
+MODEL_CTX = None
 
 # Quoted local includes only; <system> includes are ignored.
 INCLUDE_RE = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.MULTILINE)
@@ -297,11 +329,59 @@ def fit_ctx(*texts):
         chars += len(t)
     tokens = chars // 3 + 2048
     tokens = ((tokens + 2047) // 2048) * 2048
+    # Ceiling: MAX_CTX, but never beyond what the model actually supports.
+    ceiling = MAX_CTX if MODEL_CTX is None else min(MAX_CTX, MODEL_CTX)
+    if tokens > ceiling:
+        tokens = ceiling
     if tokens < MIN_CTX:
         tokens = MIN_CTX
-    if tokens > MAX_CTX:
-        tokens = MAX_CTX
     return tokens
+
+
+def ensure_context():
+    """Verify at runtime that the model can actually honour a >=16K context.
+    Asks Ollama (/api/show) for the model's trained context_length and warns if
+    it is below MIN_CTX (a too-small context silently truncates our prompt, so
+    the audit/exploit reasoning degrades). Best-effort: never fatal - if Ollama
+    is unreachable or the field is absent we just note it and continue. The
+    discovered length is stored in MODEL_CTX so fit_ctx caps num_ctx to it."""
+    global MODEL_CTX
+    try:
+        req = urllib.request.Request(
+            OLLAMA_API.replace("/api/generate", "/api/show"),
+            data=json.dumps({"model": MODEL_NAME}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            info = json.loads(resp.read().decode("utf-8", "replace"))
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        sys.stderr.write("%s [ctx] could not query model context length (%s); "
+                         "requesting num_ctx in [%d,%d] anyway\n"
+                         % (_ts(), exc, MIN_CTX, MAX_CTX))
+        return None
+    # model_info keys are arch-prefixed, e.g. "qwen2.context_length".
+    ctx = None
+    for key, val in (info.get("model_info") or {}).items():
+        if key.endswith(".context_length"):
+            try:
+                ctx = int(val)
+            except (TypeError, ValueError):
+                ctx = None
+            break
+    if ctx is None:
+        sys.stderr.write("%s [ctx] model %s context length unknown; requesting "
+                         "num_ctx in [%d,%d]\n"
+                         % (_ts(), MODEL_NAME, MIN_CTX, MAX_CTX))
+    elif ctx < MIN_CTX:
+        sys.stderr.write("%s [ctx] WARNING: model %s max context %d < required "
+                         "%d - prompts will be TRUNCATED. Use a model with a "
+                         "bigger context.\n" % (_ts(), MODEL_NAME, ctx, MIN_CTX))
+    else:
+        sys.stderr.write("%s [ctx] model %s context %d >= %d OK (num_ctx capped "
+                         "to min(%d, %d))\n"
+                         % (_ts(), MODEL_NAME, ctx, MIN_CTX, MAX_CTX, ctx))
+    MODEL_CTX = ctx
+    return ctx
 
 
 def tool_read(arg):
@@ -383,7 +463,7 @@ def chat(messages, timeout=None):
         if deadline:
             sock_to = max(1, int(deadline - time.time()))
         else:
-            sock_to = 120
+            sock_to = 1200
         try:
             req = urllib.request.Request(
                 OLLAMA_CHAT, data=data,
@@ -417,7 +497,7 @@ def chat(messages, timeout=None):
                 return ""
             if attempt >= 5:
                 raise
-            sys.stderr.write("    [chat retry %d/5 after %s]\n" % (attempt, exc))
+            sys.stderr.write("    [chat retry %d/5 after %ds %s]\n" % (attempt, sock_to, exc))
             # Don't sleep past the deadline either.
             nap = 3 * attempt
             if deadline:
@@ -509,10 +589,49 @@ def analyze(path):
     for block in NOTE_RE.findall(answer):
         append_notes(rel, block)
     answer = NOTE_RE.sub("", answer).strip()
+    answer = fix_paths(answer)
     if looks_degenerate(answer):
         sys.stderr.write("    [discarded degenerate output: repetition loop]\n")
         return ""
+    # Validate cited line numbers against the actual file length.  If the model
+    # cited a LINE beyond the end of the main file it was reasoning about an
+    # included file, not the main file - the finding is hallucinated.
+    file_lines = content.splitlines()
+    bad_lines = [int(m.group(1)) for m in re.finditer(r'\bLINE\s+(\d+)\b', answer, re.I)
+                 if int(m.group(1)) > len(file_lines)]
+    if bad_lines:
+        sys.stderr.write(
+            "    [discarded hallucinated lines: %s cited but file has only %d lines]\n"
+            % (", ".join(str(n) for n in bad_lines), len(file_lines)))
+        return ""
     return answer
+
+
+# Repo-relative source paths the model might cite inside finding text.
+# Matches things like "server/base/Foo.cpp" or "general/fight/Bar.hpp".
+_REPOPATH_RE = re.compile(
+    r'\b((?:server|general|client|tools)/[a-zA-Z0-9_/.-]+\.(?:cpp|hpp|h|cc|cxx))\b'
+)
+
+
+def fix_paths(text):
+    """Replace every repo-relative path in `text` that does not exist on disk
+    with the real path found via find_by_basename().  When the model writes
+    'server/base/ProtocolParsingInput.cpp' but the real file is
+    'general/base/ProtocolParsingInput.cpp', the corrected path is substituted
+    so the exploit agent (and the human reader) can locate the file."""
+    def _sub(m):
+        p = m.group(1)
+        if os.path.isfile(os.path.join(REPO_ROOT, p)):
+            return p
+        real = find_by_basename(os.path.basename(p))
+        if real and os.path.isfile(real):
+            corrected = os.path.relpath(real, REPO_ROOT)
+            if corrected != p:
+                sys.stderr.write("    [path fix] %s -> %s\n" % (p, corrected))
+                return corrected
+        return p
+    return _REPOPATH_RE.sub(_sub, text)
 
 
 def looks_degenerate(text):
@@ -535,22 +654,65 @@ def looks_degenerate(text):
     return maxc > 4 or toolish * 2 > len(lines)
 
 
+# Phrases that indicate a vague/narrative non-finding response from the model.
+# These are NOT security findings; they trigger false exploit runs.
+_VAGUE_RE = re.compile(
+    r"be more (?:specific|clear)|without (?:specific|more) details?|"
+    r"without more context|hard(?:er)? to (?:say|provide|give|determine)|"
+    r"it(?:'s| is) (?:difficult|hard|unclear)|could potentially|might be "
+    r"vulnerable|seems? (?:like|to)|the code (?:you|handles|appears|is a)|"
+    r"this (?:class|code|file|snippet) (?:is|appears|seems|handles)|"
+    r"asking about potential|without (?:specific|more) (?:info|details|"
+    r"context)|no concrete|as a (?:starting|general)",
+    re.I,
+)
+
+# A real finding produced by the mandatory format must cite a line number.
+_LINE_NUM_RE = re.compile(r"\bLINE\s+\d+\b|\bline[s]?\s+\d+\b|\b\d+:\d+\b", re.I)
+
+
 def has_findings(answer):
-    """A clean file answers (only) 'No issues identified'."""
+    """True only when the model produced at least one concrete LINE finding.
+
+    The mandatory output format is either 'No issues identified' (clean) or
+    one or more 'LINE <n>: ...' entries. Anything else - vague narratives,
+    generic code descriptions, hedged 'could potentially' text - is treated
+    as no-finding so it never feeds the exploit phase."""
     if not answer:
         return False
     normalized = re.sub(r"[^a-z ]", " ", answer.lower())
     normalized = " ".join(normalized.split())
-    return "no issues identified" not in normalized
+    # Explicit clean-file answer.
+    if "no issues identified" in normalized:
+        return False
+    # Vague narrative - model did not follow the mandatory format.
+    if _VAGUE_RE.search(answer):
+        return False
+    # A real finding must cite at least one line number (the format requires it).
+    if not _LINE_NUM_RE.search(answer):
+        return False
+    return True
 
 
 def run_scan(out=sys.stdout):
-    """Phase 1. Findings blocks are written to `out` (default stdout, so the
-    caller can redirect to findings.txt). Returns 0/1."""
+    """Phase 1. Findings are written to `out` AND always persisted to FINDINGS
+    on disk so the exploit phase can read them without a stdout redirect."""
     if not os.path.isdir(TARGET_DIR):
         sys.stderr.write("[ERROR] Target directory not found: %s\n" % TARGET_DIR)
         return 1
 
+    # Tee every print() into FINDINGS so `python3 server.py scan` (no redirect)
+    # still produces the file the exploit phase needs.
+    findings_fh = open(FINDINGS, "w")
+    out = _Tee(out, findings_fh)
+    try:
+        return _run_scan_inner(out)
+    finally:
+        findings_fh.close()
+
+
+def _run_scan_inner(out):
+    ensure_context()
     files = collect_files()
     scan_start = time.time()
     sys.stderr.write(
@@ -588,6 +750,7 @@ def run_scan(out=sys.stdout):
     out.flush()
     scan_secs = time.time() - scan_start
     try:
+        os.makedirs(os.path.dirname(SCAN_TIME_FILE), exist_ok=True)
         open(SCAN_TIME_FILE, "w").write("%d\n" % int(scan_secs))
     except OSError as exc:
         sys.stderr.write("    [warn] could not record scan time: %s\n" % exc)
@@ -605,6 +768,9 @@ FINDINGS = os.path.join(HERE, "findings.txt")
 SERVER_BIN = os.path.join(OUTPUT_ROOT, "build", "catchchallenger-server-cli")
 STAGED_RUN = os.path.join(OUTPUT_ROOT, "run")
 SERVER_PORT = 61997
+# The live gdb-driven inspection session (LiveServer) runs its OWN server copy on
+# a distinct port so it never clashes with a server the model started via RUN.
+GDB_PORT = SERVER_PORT + 1
 
 # Per-exploit WALL-CLOCK budget. This is a CAP, not a floor: the model may
 # keep rewriting/retrying up to this long, but it ends EARLY on a CONFIRMED
@@ -615,7 +781,7 @@ SERVER_PORT = 61997
 # SCAN_TIME_FILE by the scan phase): hard cap = total scan time (100%), soft cap
 # = 75% of it. Env vars override either. Fallback if no scan time is on disk
 # (e.g. running `exploit` standalone before any scan): 1h hard / 75% soft.
-SCAN_TIME_FILE = os.path.join(HERE, "scan-seconds.txt")
+SCAN_TIME_FILE = os.path.join(os.path.dirname(OUTPUT_ROOT), "scan-seconds.txt")
 FALLBACK_BUDGET = 3600
 
 
@@ -636,8 +802,12 @@ def resolve_budgets():
     soft = int(env_soft) if env_soft else int(hard * 0.75)
     return hard, soft
 EXPLOIT_MAX_STEPS = int(os.environ.get("SECSERVER_STEPS", "400"))  # safety cap
-RUN_TIMEOUT = int(os.environ.get("SECSERVER_RUNTIMEOUT", "900"))  # s per RUN
+RUN_TIMEOUT = int(os.environ.get("SECSERVER_RUNTIMEOUT", "900"))  # s wall per RUN
 RUN_OUT_CAP = 8000      # chars of RUN output fed back to the model
+# Hard caps the compiled exploit ELF runs under (the sandbox enforces these).
+SANDBOX_CPU_SECONDS = int(os.environ.get("SECSERVER_CPU", "10"))   # RLIMIT_CPU
+SANDBOX_MEM_BYTES = int(os.environ.get("SECSERVER_MEM", str(128 * 1024 * 1024)))
+EXPLOIT_BIN_NAME = "exploit"   # fixed path of the compiled ELF (in the chroot: /exploit)
 # Only attempt exploits for findings that smell memory/inputy.
 CANDIDATE_RE = re.compile(
     r"overflow|out.?of.?bounds|oob|use.?after.?free|double.?free|"
@@ -649,14 +819,12 @@ EXPLOIT_SYSTEM = (
     "CatchChallenger game server (the operator's own code). For ONE candidate "
     "finding you must produce a runnable proof and a verdict.\n"
     "\n"
-    "TARGET KIT (already prepared for you):\n"
-    "- Prebuilt gdb-able server binary (CATCHCHALLENGER_DB_INTERNAL_VARS, "
-    "RelWithDebInfo): " + SERVER_BIN + "\n"
-    "- A staged run dir you can copy into your own exploit dir: " + STAGED_RUN +
-    " (contains server-properties.xml, a `datapack` symlink, and "
-    "datapack-cache.bin). The server prints 'Waiting connection on port' once "
-    "listening. Use a UNIQUE port (e.g. " + str(SERVER_PORT) + ") in your copy "
-    "of server-properties.xml so you do not clash with other runs.\n"
+    "TARGET (already running for you):\n"
+    "- The HARNESS runs the server under gdb on 127.0.0.1:" + str(GDB_PORT) +
+    " and OWNS its lifecycle - you do NOT start/stop/continue/step it. Your "
+    "job is to write a client that connects to it and breaks it. You MAY ask "
+    "for a FRESH instance with RESTARTSERVER (e.g. to reset game-state to a "
+    "clean baseline between probes); it reboots on the same port.\n"
     "- Protocol: server is ALLINONESERVER. Handshake magic (PROTOCOL_HEADER_"
     "LOGIN) = bytes 9c d6 49 8d 14. A query frame on the wire is "
     "[packetCode][queryNumber][data...]. Fixed packet sizes: 0xA0=5, "
@@ -666,36 +834,72 @@ EXPLOIT_SYSTEM = (
     "DYNAMIC-size (0xFE) handler that trusts an inner length and reads past "
     "`size`.\n"
     "\n"
-    "SANDBOX: every RUN executes with the whole filesystem READ-ONLY except "
-    "your own exploit dir (the only writable path). So COPY the staged binary "
-    "and config into your exploit dir first (e.g. `cp -r " + STAGED_RUN +
-    "/. ./run/` and `cp " + SERVER_BIN + " ./run/`), then run everything from "
-    "there. Writes/deletes outside your dir will fail - do not attempt them.\n"
+    "HOW YOU ATTACK - write a C/C++ TCP client, then RUN it:\n"
+    "- WRITE one or more .c/.cpp files into your exploit dir. RUN compiles ALL "
+    "of them together into a single STATIC ELF at the fixed path /" +
+    EXPLOIT_BIN_NAME + " and executes it. Your code must open a TCP socket to "
+    "127.0.0.1:" + str(GDB_PORT) + ", do the handshake, and send the crafted "
+    "packets that trigger the bug.\n"
+    "- The ELF runs in a HARD SANDBOX: chrooted to your exploit dir (read-only - "
+    "it cannot see or touch any other path, and cannot write files), in its own "
+    "pid namespace, CPU-time capped (" + str(SANDBOX_CPU_SECONDS) + "s) and "
+    "memory capped (" + str(SANDBOX_MEM_BYTES // (1024 * 1024)) + " MB). A "
+    "seccomp allowlist KILLS any syscall other than what a TCP client needs "
+    "(socket/connect/send/recv/... + memory + basic IO). So: NO opening files, "
+    "NO fork/exec, NO ptrace - just connect to the server and talk. A SIGSYS "
+    "kill in the output means your code used a forbidden syscall; rewrite it to "
+    "only do networking.\n"
+    "- After each RUN the harness checks the server-under-gdb: if your packets "
+    "CRASHED it, that is reported back (with the backtrace) and the exploit is "
+    "an automatic SUCCESS.\n"
     "\n"
-    "DELIVERABLE: write exploit.py (and any helper files) into your exploit "
-    "dir. exploit.py must: start the server (over TCP) under gdb OR valgrind "
-    "(NEVER both - project policy), connect as an unauthenticated TCP client, "
-    "send crafted packets, and capture proof (gdb: crash / corrupted variable "
-    "/ overwritten return address; valgrind: 'Invalid read/write'). Then RUN "
-    "it. Decide the verdict from the ACTUAL output, not speculation.\n"
+    "INSPECTION - GDB (read-only): pauses the server, runs your READ-ONLY gdb "
+    "commands (print/x/info/bt/ptype/break/watch/...), then resumes it. You may "
+    "read ANY variable/memory/register but you CANNOT write it, call functions, "
+    "step/continue it, or run a shell ('(' and '=' are blocked) - so what you "
+    "observe is the server's REAL state and cannot be forged into a fake win. "
+    "Use it to confirm an UNINTENDED state change: RUN your exploit, then GDB "
+    "read the relevant player/item/monster fields and compare to what the rules "
+    "allow.\n"
+    "\n"
+    "EACH TURN, do exactly ONE of: take an ACTION (write/run/inspect), REQUEST "
+    "something you need, or give the final VERDICT - SUCCESS or FAIL.\n"
     "\n"
     "TOOL PROTOCOL - reply with EXACTLY ONE action per message, nothing else:\n"
     "  READ <repo-or-abs path>\n"
     "  GREP <symbol>\n"
     "  WRITE <relpath-in-your-exploit-dir>\n"
-    "  ```\n  <full file content>\n  ```\n"
-    "  RUN\n  ```\n  <shell commands, run in your exploit dir>\n  ```\n"
-    "  VERDICT CONFIRMED <one-line reason>\n"
-    "  VERDICT FALSEPOSITIVE <one-line reason>\n"
-    "Use WRITE then RUN to build and execute your proof. Emit VERDICT "
-    "CONFIRMED the moment you have a working crash/OOB. Emit VERDICT "
-    "FALSEPOSITIVE as soon as you are SURE it cannot be exploited - you do "
-    "NOT need to use the whole time budget, end as soon as you are certain - "
-    "but you MUST explain the concrete LOGIC PATH: trace the untrusted input "
-    "to the sink and name the exact guard / bounds-check / size validation / "
-    "line(s) that make it safe (e.g. the parser-reassembly invariant above). "
-    "A bare 'not exploitable' with no such reasoning will be rejected and you "
-    "will be asked for the path. Keep files small and self-contained."
+    "  ```\n  <full file content (e.g. exploit.c)>\n  ```\n"
+    "  RUN                        (compile your C/C++ -> /" + EXPLOIT_BIN_NAME +
+    " and run it sandboxed)\n"
+    "  RESTARTSERVER              (reboot the server-under-gdb fresh on the "
+    "same port - resets game-state)\n"
+    "  GDB\n  ```\n  <read-only gdb commands, one per line>\n  ```\n"
+    "  VERDICT CONFIRMED <one-line reason>     (= exploit SUCCESS)\n"
+    "  VERDICT FALSEPOSITIVE <one-line reason> (= exploit FAIL)\n"
+    "\n"
+    "WHAT COUNTS AS SUCCESS (VERDICT CONFIRMED):\n"
+    "  (a) the server CRASHES under your exploit (gdb catches SIGSEGV/SIGABRT/"
+    "...);\n"
+    "  (b) the server HANGS - an infinite loop or an event loop that stops "
+    "responding (a DoS). After each RUN the harness pings the event loop (TCP "
+    "connect + handshake) and samples its CPU; a wedged/spinning loop is "
+    "detected;\n"
+    "  (c) any UNINTENDED game-state result you DEMONSTRATE via GDB read-only "
+    "inspection - more of an item than the rules allow, an automatic battle win, "
+    "a NEW monster outside the legitimate catch/warehouse path, a "
+    "corrupted/overwritten value, an auth/ownership bypass.\n"
+    "The harness AUTO-CONFIRMS (a) and (b) the moment it sees them; for (c) show "
+    "it concretely (the gdb-observed memory before vs after your RUN). "
+    "Speculation is not SUCCESS.\n"
+    "WHAT COUNTS AS FAIL (VERDICT FALSEPOSITIVE): you are SURE it cannot be "
+    "exploited. End as soon as you are certain - you need NOT use the whole "
+    "budget - but you MUST give the concrete LOGIC PATH: trace the untrusted "
+    "input to the sink and name the exact guard / bounds-check / size "
+    "validation / line(s) that make it safe (e.g. the parser-reassembly "
+    "invariant above). A bare 'not exploitable' with no such reasoning will be "
+    "rejected and you will be asked for the path. Keep files small and "
+    "self-contained."
 )
 
 CODEBLOCK_RE = re.compile(r"```[a-zA-Z0-9_]*\n(.*?)```", re.DOTALL)
@@ -742,7 +946,15 @@ def parse_action(answer):
     if up.startswith("WRITE "):
         return ("WRITE", first[6:].strip(), first_codeblock(answer))
     if up == "RUN" or up.startswith("RUN "):
-        return ("RUN", "", first_codeblock(answer))
+        return ("RUN", "", None)
+    # Ask the harness for a fresh server-under-gdb (reset game-state / recover a
+    # wedge). The harness still owns the lifecycle; this is the one exception.
+    if up == "RESTARTSERVER" or up.startswith("RESTARTSERVER "):
+        return ("RESTARTSERVER", "", None)
+    # Read-only inspection of the harness-managed server-under-gdb. The gdb
+    # instance lifecycle is the harness's, not the model's.
+    if up == "GDB" or up.startswith("GDB "):
+        return ("GDB", "", first_codeblock(answer))
     # Capture the FULL (possibly multi-line) reason after the keyword - the
     # FALSEPOSITIVE logic-path explanation usually spans several lines.
     if up.startswith("VERDICT CONFIRMED"):
@@ -768,54 +980,558 @@ def do_write(outdir, rel, content):
 BWRAP = shutil.which("bwrap")
 
 
-def do_run(outdir, cmd, timeout=RUN_TIMEOUT):
-    """Execute model-authored shell SANDBOXED with bubblewrap: the whole
-    filesystem is read-only EXCEPT the exploit's own outdir, so a stray
-    `rm -rf` (or any write/delete) cannot touch the repo, the security root,
-    other tmpfs runs, or the prebuilt server. Server binary, datapack and
-    system libs stay readable; network is shared so the TCP attack works.
-    Fail CLOSED if bwrap is unavailable - never run the model's bash raw."""
-    if not cmd:
-        return "RUN error: no ``` code block with commands found."
+# ---------------------------------------------------------------------------
+# Compile + sandboxed execution of the model's C/C++ exploit ELF
+# ---------------------------------------------------------------------------
+# Source files (top level of the exploit dir) compiled into the ELF.
+EXPLOIT_SRC_EXT = (".c", ".cc", ".cpp", ".cxx")
+
+# Syscalls the sandboxed exploit ELF may make: just what a STATIC client needs
+# to start up, manage its own memory, do basic I/O, and CONNECT TO THE SERVER
+# OVER TCP. Anything else (open/openat a file, fork/clone a process, ptrace,
+# mount, ...) is NOT listed and is KILLED by the seccomp filter. x86_64 numbers.
+SECCOMP_ALLOW_X86_64 = (
+    0, 1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23,
+    24, 25, 28, 32, 33, 35, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
+    52, 53, 54, 55, 59, 60, 61, 63, 72, 79, 96, 97, 102, 104, 107, 108, 131,
+    138, 158, 186, 202, 204, 218, 219, 228, 230, 231, 232, 233, 262, 267, 270,
+    271, 273, 281, 288, 290, 291, 292, 293, 302, 318, 324, 332, 334,
+)
+# 267=readlinkat, 61=wait4 and the other non-obvious entries are needed by
+# glibc's static startup/exit (verified empirically). open/openat are NOT in the
+# list on purpose: the exploit cannot open any file (a SIGSYS kill on open() is a
+# clear "you used a forbidden syscall" signal). It can only do networking + its
+# own memory + basic IO on the socket/stdio it already holds.
+
+
+def _seccomp_filter_bytes():
+    """Build a classic-BPF seccomp program (array of struct sock_filter) that
+    ALLOWS only SECCOMP_ALLOW_X86_64 and KILLS the process on anything else.
+    Byte layout is what `bwrap --seccomp FD` expects."""
+    import struct
+    AUDIT_ARCH_X86_64 = 0xC000003E
+    KILL = 0x80000000          # SECCOMP_RET_KILL_PROCESS
+    ALLOW = 0x7FFF0000         # SECCOMP_RET_ALLOW
+    LD_W_ABS = 0x20            # BPF_LD|BPF_W|BPF_ABS
+    JEQ_K = 0x15               # BPF_JMP|BPF_JEQ|BPF_K
+    RET_K = 0x06               # BPF_RET|BPF_K
+    allow = SECCOMP_ALLOW_X86_64
+    n = len(allow)
+    kill_idx = 3 + n           # index of RET KILL
+    allow_idx = 4 + n          # index of RET ALLOW
+    ins = [
+        (LD_W_ABS, 0, 0, 4),                            # 0: A = arch
+        (JEQ_K, 0, kill_idx - 2, AUDIT_ARCH_X86_64),    # 1: wrong arch -> kill
+        (LD_W_ABS, 0, 0, 0),                            # 2: A = syscall nr
+    ]
+    for i, nr in enumerate(allow):                      # 3..: match -> ALLOW
+        j = 3 + i
+        ins.append((JEQ_K, allow_idx - j - 1, 0, nr))
+    ins.append((RET_K, 0, 0, KILL))                     # kill_idx
+    ins.append((RET_K, 0, 0, ALLOW))                    # allow_idx
+    return b"".join(struct.pack("<HBBI", *t) for t in ins)
+
+
+def _compile_exploit(outdir):
+    """Compile every C/C++ source in `outdir` into a single STATIC ELF at the
+    fixed path outdir/EXPLOIT_BIN_NAME. Returns (binpath, None) or (None, err)."""
+    srcs = sorted(
+        os.path.join(outdir, f) for f in os.listdir(outdir)
+        if f.endswith(EXPLOIT_SRC_EXT) and os.path.isfile(os.path.join(outdir, f)))
+    if not srcs:
+        return None, ("RUN error: no C/C++ source (%s) in your exploit dir - "
+                      "WRITE exploit.c first." % "/".join(EXPLOIT_SRC_EXT))
+    binpath = os.path.join(outdir, EXPLOIT_BIN_NAME)
+    cxx = any(s.endswith((".cc", ".cpp", ".cxx")) for s in srcs)
+    # Static link so the chroot needs no shared libs / dynamic loader.
+    cmd = [("g++" if cxx else "gcc"), "-static", "-O1", "-g", "-o", binpath] + srcs
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, "RUN error: compiler failed to launch: %s" % exc
+    if r.returncode != 0 or not os.path.isfile(binpath):
+        return None, "RUN: COMPILE FAILED\n%s" % ((r.stderr or r.stdout or "")[:RUN_OUT_CAP])
+    return binpath, None
+
+
+def _set_sandbox_rlimits():
+    """preexec_fn: cap CPU time and address space of the sandboxed child."""
+    import resource
+    resource.setrlimit(resource.RLIMIT_CPU,
+                       (SANDBOX_CPU_SECONDS, SANDBOX_CPU_SECONDS))
+    resource.setrlimit(resource.RLIMIT_AS, (SANDBOX_MEM_BYTES, SANDBOX_MEM_BYTES))
+    resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
+
+
+def do_run(outdir, _block=None, timeout=RUN_TIMEOUT):
+    """Compile the model's C/C++ exploit and RUN the resulting ELF under a hard
+    sandbox: bubblewrap chroots it to a READ-ONLY view of the exploit dir (it
+    cannot see or touch anything outside that folder) in its own pid/ipc/uts
+    namespaces; a seccomp allowlist KILLS any syscall beyond what a TCP client
+    needs; RLIMIT_CPU and a 128 MB RLIMIT_AS cap it. Host network is shared on
+    purpose so it can reach the gdb-server on 127.0.0.1. Fail CLOSED if bwrap is
+    missing - never run the binary unsandboxed."""
     if not BWRAP:
-        return ("RUN error: bubblewrap (bwrap) not found - refusing to run "
-                "model-authored shell unsandboxed. Install bwrap.")
+        return ("RUN error: bubblewrap (bwrap) not found - refusing to run the "
+                "exploit unsandboxed. Install bwrap.")
+    binpath, err = _compile_exploit(outdir)
+    if err:
+        return err
+    seccomp_path = os.path.join(outdir, ".seccomp.bpf")
+    try:
+        open(seccomp_path, "wb").write(_seccomp_filter_bytes())
+        sfd = os.open(seccomp_path, os.O_RDONLY)
+    except OSError as exc:
+        return "RUN error: cannot stage seccomp filter: %s" % exc
     wrapped = [
         BWRAP,
-        "--ro-bind", "/", "/",          # everything read-only ...
+        "--tmpfs", "/",                    # fresh empty root - the chroot
+        "--ro-bind", binpath, "/" + EXPLOIT_BIN_NAME,   # only the ELF is visible
         "--dev", "/dev",
-        "--proc", "/proc",
-        "--tmpfs", "/tmp",              # fresh throwaway writable /tmp
-        "--bind", outdir, outdir,       # ... except this exploit's own dir
-        "--die-with-parent",
-        "--chdir", outdir,
-        "--setenv", "TMPDIR", outdir,
-        "bash", "-c", cmd,
+        "--tmpfs", "/tmp",
+        "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-cgroup",
+        "--die-with-parent", "--chdir", "/",
+        "--seccomp", str(sfd),
+        "/" + EXPLOIT_BIN_NAME,
     ]
     try:
         r = subprocess.run(wrapped, capture_output=True, text=True,
-                           timeout=timeout)
+                           timeout=timeout, preexec_fn=_set_sandbox_rlimits,
+                           pass_fds=(sfd,))
         out = (r.stdout or "") + (r.stderr or "")
+        out += "\n[exploit exit code %d]" % r.returncode
+        if r.returncode < 0:   # killed by a signal (seccomp SIGSYS, CPU SIGXCPU, ...)
+            out += " (terminated by signal %d)" % (-r.returncode)
     except subprocess.TimeoutExpired as e:
         out = (e.stdout or "") + (e.stderr or "") + \
-              "\n[RUN timed out after %ds]" % timeout
+              "\n[exploit wall-timeout after %ds]" % timeout
     except Exception as e:  # noqa
         out = "RUN error: %s" % e
+    finally:
+        try:
+            os.close(sfd)
+        except OSError:
+            pass
     if len(out) > RUN_OUT_CAP:
         out = out[:RUN_OUT_CAP // 2] + "\n...[truncated]...\n" + out[-RUN_OUT_CAP // 2:]
     return out or "[no output]"
 
 
+# ---------------------------------------------------------------------------
+# Live gdb-driven inspection session (the server-under-gdb the exploit attacks)
+# ---------------------------------------------------------------------------
+# Strips terminal escapes (colour + bracketed-paste) gdb emits over a pty.
+_ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+
+# Fatal signals that mean the SERVER CRASHED (an exploit SUCCESS). SIGINT is NOT
+# here on purpose: that is OUR own `interrupt` to pause for a read, not a crash.
+GDB_CRASH_SIGNALS = ("SIGSEGV", "SIGABRT", "SIGBUS", "SIGFPE", "SIGILL",
+                     "SIGSYS", "stack smashing detected", "*** stack smashing")
+
+# gdb commands the model may run against the LIVE server: an ALLOWLIST by first
+# token, inspection-only. We drive run/continue ourselves so the inferior stays
+# READ-ONLY - the model observes memory/registers/state but can never write the
+# inferior, call functions, resume/step it, touch files, or spawn a shell.
+GDB_ALLOWED = {
+    "print", "p", "output", "x", "info", "i", "bt", "backtrace", "where",
+    "frame", "f", "up", "down", "list", "l", "ptype", "whatis", "display",
+    "undisplay", "thread", "break", "b", "tbreak", "hbreak", "watch", "rwatch",
+    "awatch", "delete", "d", "clear", "disable", "enable", "ignore",
+}
+# Reject a single '=' (assignment to the inferior); '==', '!=', '>=', '<=' are
+# comparisons and fine.
+_ASSIGN_RE = re.compile(r"(?<![=!<>])=(?!=)")
+
+
+def gdb_cmd_ok(line):
+    """True if `line` is a read-only inspection command we permit. We must
+    GUARANTEE the model cannot mutate the inferior (else it could just poke a
+    'win' flag and fake a SUCCESS). So beyond the allowlist we reject:
+      - assignment '='            (set var / print x=...)
+      - '(' anywhere              (a function CALL like `print give_item()` or
+                                   `p memset(p,0,n)` would execute inferior code
+                                   and write memory; casts use '(' too, so we
+                                   drop both - reads use `p var`, `p s->f`,
+                                   `x/8xb 0xADDR`, `info`, `bt`, ...)."""
+    line = line.strip()
+    if not line or line.startswith("#"):
+        return True
+    base = re.split(r"[/\s]", line, 1)[0].lower()   # 'x/4xw' -> 'x'
+    if base not in GDB_ALLOWED:
+        return False
+    if "(" in line or _ASSIGN_RE.search(line):
+        return False
+    return True
+
+
+class LiveServer:
+    """ONE server instance started under gdb (CLI, on a pty) inside the bwrap
+    sandbox, managed entirely by the harness (the model never starts/stops/
+    continues it). The model's compiled exploit ELF connects to it over TCP on
+    127.0.0.1:GDB_PORT and attacks it; after each RUN the harness polls gdb and
+    if the server CRASHED that is an exploit SUCCESS. The model may also inspect
+    it via the GDB tool: strictly READ-ONLY (no writes/calls/flow-control), so
+    what it observes is the server's REAL state and cannot be forged into a fake
+    win. Sandboxed because a confirmed exploit can get code-exec inside the
+    server; that must not touch the host. Best-effort research aid."""
+
+    def __init__(self, outdir):
+        self.outdir = outdir
+        self.rundir = os.path.join(outdir, "gdb-run")
+        self.proc = None
+        self.mfd = -1
+        self.alive = False     # inferior is running (vs stopped/exited)
+        self.crashed = False   # a fatal signal was seen = SUCCESS
+        self.crash_info = ""   # captured stop banner + backtrace
+        self.hung = False      # event loop wedged (no crash) = a DoS / liveness fail
+        self._pid = None       # inferior host pid, for /proc CPU-time sampling
+        self._baseline_reply = False  # did a healthy server reply to the ping at boot?
+        self._closing = False  # in stop(): ignore the kill/exit as a "crash"
+
+    # -- pty plumbing -------------------------------------------------------
+    def _w(self, cmd):
+        os.write(self.mfd, (cmd + "\n").encode())
+
+    def _drain(self, idle=0.6, hard=8):
+        """Read pty output until it goes idle `idle`s or `hard`s elapse, then
+        scan it for a crash (so a fault is caught no matter which call drained
+        it - a TCP poke, an interrupt, anything)."""
+        import select
+        buf = b""
+        last = time.time()
+        end = time.time() + hard
+        while time.time() < end:
+            r, _, _ = select.select([self.mfd], [], [], 0.2)
+            if r:
+                try:
+                    d = os.read(self.mfd, 65536)
+                except OSError:
+                    break
+                if d:
+                    buf += d
+                    last = time.time()
+                else:
+                    break
+            elif time.time() - last > idle:
+                break
+        text = _ANSI_RE.sub("", buf.decode(errors="replace")).replace("\r", "")
+        self._scan_crash(text)
+        return text
+
+    def _scan_crash(self, text):
+        """Latch a crash the first time a fatal signal shows up in gdb output."""
+        if self._closing or self.crashed:
+            return
+        if any(sig in text for sig in GDB_CRASH_SIGNALS):
+            self.crashed = True
+            self.alive = False
+            # Inferior is stopped at the fault now - grab a backtrace as proof.
+            try:
+                self._w("bt")
+                bt = self._drain(idle=0.5, hard=6)  # crashed already latched
+            except OSError:
+                bt = ""
+            self.crash_info = (text + "\n" + bt).strip()
+
+    # -- lifecycle ----------------------------------------------------------
+    def start(self):
+        if self.proc is not None:
+            return "[gdb session already running on port %d]" % GDB_PORT
+        if not BWRAP:
+            return ("GDB error: bubblewrap (bwrap) not found - refusing to run "
+                    "the server+gdb unsandboxed. Install bwrap.")
+        if not os.path.isfile(SERVER_BIN) or not os.path.isdir(STAGED_RUN):
+            return ("GDB error: server kit missing (%s / %s) - build it first."
+                    % (SERVER_BIN, STAGED_RUN))
+        # Private run dir on a distinct port (keep symlinks, e.g. datapack).
+        if os.path.isdir(self.rundir):
+            shutil.rmtree(self.rundir, ignore_errors=True)
+        shutil.copytree(STAGED_RUN, self.rundir, symlinks=True)
+        props = os.path.join(self.rundir, "server-properties.xml")
+        try:
+            txt = open(props).read()
+            txt = txt.replace('value="%d"' % SERVER_PORT, 'value="%d"' % GDB_PORT)
+            open(props, "w").write(txt)
+        except OSError as exc:
+            return "GDB error: cannot set port in server-properties.xml: %s" % exc
+        binpath = os.path.join(self.rundir, "catchchallenger-server-cli")
+        if not os.path.isfile(binpath):
+            binpath = SERVER_BIN
+        # gdb + the server it debugs run inside bwrap: whole fs read-only except
+        # this exploit's outdir; network shared so the TCP attack reaches it.
+        # (pid namespace is NOT unshared, so gdb's ptrace of its child works.)
+        wrapped = [
+            BWRAP,
+            "--ro-bind", "/", "/",
+            "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp",
+            "--bind", self.outdir, self.outdir,
+            "--die-with-parent", "--chdir", self.rundir,
+            "--setenv", "TMPDIR", self.outdir,
+            "gdb", "-q", "-nx", binpath,
+        ]
+        import pty
+        mfd, sfd = pty.openpty()
+        self.proc = subprocess.Popen(
+            wrapped, stdin=sfd, stdout=sfd, stderr=sfd, close_fds=True)
+        os.close(sfd)
+        self.mfd = mfd
+        for c in ("set pagination off", "set confirm off",
+                  "set target-async on", "set width 0", "set height 0"):
+            self._w(c)
+        self._drain(idle=0.4, hard=3)
+        self._w("run &")
+        out = self._drain(idle=0.6, hard=30)
+        self.alive = "Waiting connection on port" in out and not self.crashed
+        if self.alive:
+            self._capture_pid()
+            # Baseline: does a HEALTHY server reply to the event-loop ping? If so,
+            # later silence under an exploit is a hang. If not, we lean on the
+            # CPU-spin signal instead.
+            self._baseline_reply = self._protocol_ping()[1]
+        status = "listening" if self.alive else "NOT confirmed listening"
+        return ("[gdb session started (sandboxed): server under gdb on "
+                "127.0.0.1:%d (%s)]\n%s" % (GDB_PORT, status, out[-2000:]))
+
+    def _capture_pid(self):
+        """Cache the inferior's (host) pid for /proc-based liveness sampling.
+        The gdb-session bwrap does NOT unshare the pid namespace, so gdb's
+        reported pid is a real host pid we can read under /proc."""
+        self._w("interrupt")
+        out = self._drain(idle=0.4, hard=5)
+        m = re.search(r"process (\d+)", out)
+        if not m:
+            self._w("info inferiors")
+            m = re.search(r"process (\d+)", self._drain(idle=0.4, hard=4))
+        self._pid = int(m.group(1)) if m else None
+        self._continue()
+
+    def _interrupt(self):
+        """Stop the inferior so memory can be read (our own SIGINT - not a
+        crash). Returns the stop banner."""
+        self._w("interrupt")
+        return self._drain(idle=0.5, hard=6)
+
+    def _continue(self):
+        if self.alive and not self.crashed:
+            self._w("continue &")
+            self._drain(idle=0.3, hard=3)
+
+    def _crash_suffix(self):
+        if self.crashed:
+            return ("\n\n*** SERVER CRASHED - this is an exploit SUCCESS. "
+                    "Backtrace:\n%s" % (self.crash_info or "(no backtrace)"))
+        return ""
+
+    def gdb(self, block):
+        """Run the model's read-only gdb command(s) against the live inferior."""
+        if self.proc is None:
+            start_out = self.start()
+            if start_out.startswith("GDB error"):
+                return start_out
+        if self.crashed:
+            return "[server already crashed]" + self._crash_suffix()
+        cmds = [ln for ln in (block or "").splitlines() if ln.strip()]
+        if not cmds:
+            return "GDB error: no commands (put them in a ``` code block)."
+        bad = [c for c in cmds if not gdb_cmd_ok(c)]
+        if bad:
+            return ("GDB refused (read-only inspection ONLY - no inferior "
+                    "writes/calls/flow-control/shell; '(' and '=' are blocked): "
+                    "%s" % "; ".join(bad))
+        banner = self._interrupt()
+        chunks = []
+        for c in cmds:
+            if self.crashed:
+                break
+            self._w(c)
+            chunks.append("(gdb) %s\n%s" % (c, self._drain(idle=0.5, hard=8)))
+        self._continue()
+        return ((banner + "\n" if banner.strip() else "")
+                + "\n".join(chunks) + self._crash_suffix())
+
+    # CPU time (clock ticks) the server can burn over the sample window before we
+    # call it spinning. A healthy event loop blocks in epoll/recv (≈0 CPU); a
+    # wedged one (infinite loop / busy deadlock) burns a full core.
+    _HANG_SAMPLE_S = 0.6
+    _HANG_TICKS = 15            # >0.15s CPU in 0.6s wall = spinning (CLK_TCK=100)
+
+    def _cpu_ticks(self):
+        """utime+stime of the inferior from /proc, or None."""
+        if not self._pid:
+            return None
+        try:
+            fields = open("/proc/%d/stat" % self._pid).read().rsplit(")", 1)[1].split()
+            # after "comm)": state is fields[0]; utime=fields[11], stime=fields[12]
+            return int(fields[11]) + int(fields[12])
+        except (OSError, IndexError, ValueError):
+            return None
+
+    # Handshake the client sends first (PROTOCOL_HEADER_LOGIN) - used to ping the
+    # event loop: a healthy loop accepts the connection and processes these bytes.
+    PROTOCOL_HEADER_LOGIN = b"\x9c\xd6\x49\x8d\x14"
+
+    def _protocol_ping(self, timeout=2.0):
+        """Ping the event loop: open a FRESH TCP connection, send the login
+        handshake, wait for a reply. Returns (connected, got_reply). A wedged
+        loop won't process the connection -> no reply."""
+        import socket
+        try:
+            c = socket.create_connection(("127.0.0.1", GDB_PORT), timeout=timeout)
+        except OSError:
+            return (False, False)
+        got = False
+        try:
+            c.sendall(self.PROTOCOL_HEADER_LOGIN)
+            c.settimeout(timeout)
+            try:
+                got = bool(c.recv(4096))
+            except socket.timeout:
+                got = False
+        except OSError:
+            got = False
+        finally:
+            try:
+                c.close()
+            except OSError:
+                pass
+        return (True, got)
+
+    def check_responsive(self):
+        """Liveness check so the harness NEVER hangs on a wedged server AND so a
+        hang counts as a validated exploit. Two independent signals:
+          1. CPU spin: sample the inferior's CPU time over a short window; a full
+             core burned while idle of input = an INFINITE LOOP.
+          2. Event-loop ping: open a fresh TCP connection and send the login
+             handshake; a healthy loop replies, a wedged/deadlocked one does not
+             (judged against the baseline reply captured at startup).
+        Either signal sets self.hung. Symbol-independent."""
+        if self.proc is None or self.crashed or not self.alive:
+            return ""
+        t0 = self._cpu_ticks()
+        time.sleep(self._HANG_SAMPLE_S)
+        t1 = self._cpu_ticks()
+        connected, got_reply = self._protocol_ping()
+        # A crash during the window would have closed the port; re-check gdb.
+        self._drain(idle=0.3, hard=2)
+        if self.crashed:
+            return self._crash_suffix()
+        burned = (t1 - t0) if (t0 is not None and t1 is not None) else None
+        spinning = burned is not None and burned >= self._HANG_TICKS
+        # Unresponsive: can't connect at all, OR it answered the same ping at
+        # startup (baseline) but now stays silent.
+        unresponsive = (not connected) or (self._baseline_reply and not got_reply)
+        if spinning or unresponsive:
+            self.hung = True
+            why = []
+            if spinning:
+                why.append("infinite loop: server burned %dms CPU in %.1fs while "
+                           "idle of input" % (burned * 10, self._HANG_SAMPLE_S))
+            if unresponsive:
+                why.append("event loop did not answer a TCP+handshake ping "
+                           "(connect=%s, reply=%s)"
+                           % ("ok" if connected else "FAILED",
+                              "yes" if got_reply else "none"))
+            return ("\n\n*** SERVER HANG (DoS) - this is an exploit SUCCESS. %s. "
+                    "Confirm with GDB (interrupt + bt shows the stuck loop)."
+                    % "; ".join(why))
+        return ("[responsive: ~0 CPU while idle, event-loop ping reply=%s]"
+                % ("yes" if got_reply else "n/a"))
+
+    def poll_crash(self, hard=4):
+        """After a RUN: did the exploit CRASH the server (= SUCCESS) or HANG its
+        event loop (= DoS / liveness failure)? Returns a short status string."""
+        if self.proc is None:
+            return "[no live server]"
+        if not self.crashed:
+            self._drain(idle=0.4, hard=hard)
+        if self.crashed:
+            return "live server CRASHED" + self._crash_suffix()
+        # No crash - make sure the event loop is still alive (never hangs).
+        return "[live server did not crash]" + self.check_responsive()
+
+    def restart(self):
+        """Tear down the current server-under-gdb and boot a FRESH one on the
+        same port. Lets the model reset to a clean baseline between probes (a
+        game-state mutation in case (c), or a wedged loop) without ever giving
+        it control of the inferior's flow. Clears every per-instance latch so a
+        later poll reflects ONLY the new server, then re-starts."""
+        self.stop()
+        # stop() left proc=None and _closing=True; reset the whole instance
+        # state so the new server starts from a clean slate.
+        self._closing = False
+        self.crashed = False
+        self.crash_info = ""
+        self.hung = False
+        self.alive = False
+        self._pid = None
+        self._baseline_reply = False
+        out = self.start()
+        return "[server restarted on a fresh instance]\n" + out
+
+    def stop(self):
+        self._closing = True
+        if self.proc is not None:
+            try:
+                self._w("kill")
+                self._w("quit")
+            except OSError:
+                pass
+            try:
+                self.proc.kill()
+            except OSError:
+                pass
+            try:
+                os.close(self.mfd)
+            except OSError:
+                pass
+            self.proc = None
+
+
+# The live gdb/TCP session for the exploit currently in progress. Held at module
+# level so run_exploit() can guarantee it is torn down (freeing GDB_PORT) even if
+# a turn raises or the run aborts.
+_CURRENT_LIVE = None
+
+
 def exploit_one(rel, finding, idx, hard_budget, soft_budget):
     """Run the exploit agent for one candidate. Returns (verdict, reason, dir)."""
+    global _CURRENT_LIVE
     outdir = os.path.join(OUTPUT_ROOT, slugify(rel, idx))
     os.makedirs(outdir, exist_ok=True)
     sys.stderr.write("\n%s [exploit %02d] %s -> %s\n" % (_ts(), idx, rel, outdir))
+    # server.py OWNS the gdb instance: we boot the server under gdb up front and
+    # tear it down at the end. The model never starts/stops gdb - it only pokes
+    # the already-running instance via TCP and inspects it read-only via GDB.
+    live = LiveServer(outdir)
+    _CURRENT_LIVE = live
+    boot = live.start()
+    sys.stderr.write("%s     [gdb-instance] %s\n"
+                     % (_ts(), boot.splitlines()[0] if boot else "(no output)"))
 
+    # Correct any wrong repo paths in the scanner finding before showing it to
+    # the exploit agent (e.g. "server/base/X.cpp" -> "general/base/X.cpp").
+    finding = fix_paths(finding)
+    # Include the actual source file so the exploit agent can verify line
+    # numbers and understand the exact code it is attacking.
+    src_path = os.path.join(REPO_ROOT, rel)
+    try:
+        src_content = open(src_path, "r", errors="replace").read()
+    except OSError:
+        src_content = "(source not readable)"
+    src_lines = src_content.splitlines()
+    src_block = (
+        "\n\n=== SOURCE FILE (%s, %d lines) ===\n%s"
+        % (rel, len(src_lines),
+           "\n".join("%d\t%s" % (i + 1, ln) for i, ln in enumerate(src_lines)))
+    )
     user = (
-        "Candidate finding to prove or refute:\n\nFILE: %s\n\nSCANNER NOTE:\n%s\n\n"
-        "Your exploit dir is: %s\nWrite files with paths relative to it. "
-        "RUN commands execute there. Begin." % (rel, finding, outdir))
+        "Candidate finding to prove or refute:\n\nFILE: %s\n\nSCANNER NOTE:\n%s"
+        "%s\n\n"
+        "Your exploit dir is: %s\nWRITE your C/C++ exploit there (paths relative "
+        "to it); RUN compiles it and runs the ELF sandboxed against the server "
+        "ALREADY running under gdb on 127.0.0.1:%d (managed by the harness). Use "
+        "GDB for read-only inspection. Begin."
+        % (rel, finding, src_block, outdir, GDB_PORT))
     messages = [
         {"role": "system", "content": EXPLOIT_SYSTEM},
         {"role": "user", "content": user},
@@ -828,6 +1544,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
     ran_something = False   # did the model actually RUN a test yet?
     nudged = False          # already nudged once on a premature give-up?
     soft_warned = False     # already demanded the wrap-up verdict at soft cap?
+    last_answer = None      # previous reply, to detect verbatim repetition
     step = 0
     while step < EXPLOIT_MAX_STEPS:
         # HARD 1h cap: force-stop this exploit and move on to the next finding,
@@ -847,11 +1564,31 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
         remaining = int(deadline - time.time())
         transcript.append("### assistant (step %d, %ds left)\n%s"
                           % (step, remaining, answer))
+        # Hard repetition guard: if the model emits the EXACT same reply twice
+        # in a row, it is stuck (the 33B sometimes apologises in a tight loop,
+        # e.g. "can't find EventLoop.h ..."). Something is wrong - stop this
+        # exploit and abort the WHOLE run with exit code 255 (per operator
+        # policy: a repeated sentence is a fatal signal, not a soft skip).
+        if last_answer is not None and answer.strip() == last_answer.strip():
+            sys.stderr.write("%s     [REPEAT ABORT] identical reply twice on "
+                             "exploit %02d (%s) -> aborting whole run (exit 255)\n"
+                             % (_ts(), idx, rel))
+            transcript.append("### REPEAT ABORT (identical reply twice; exit 255)")
+            verdict, reason = ("ABORTED",
+                               "model repeated the same reply twice; run aborted")
+            open(os.path.join(outdir, "transcript.md"), "w").write(
+                "# Exploit transcript: %s\n\nVERDICT: %s - %s\n\n%s\n"
+                % (rel, verdict, reason, "\n\n".join(transcript)))
+            live.stop()
+            sys.exit(255)
+        last_answer = answer
         act = parse_action(answer)
+        # A non-action reply (that is NOT a verbatim repeat) just gets nudged
+        # back into the one-action protocol.
         if act is None:
             messages.append({"role": "assistant", "content": answer})
             messages.append({"role": "user", "content":
-                "Reply with exactly ONE action (READ/GREP/WRITE/RUN/VERDICT) "
+                "Reply with exactly ONE action (READ/GREP/WRITE/RUN/GDB/VERDICT) "
                 "as specified, nothing else."})
             continue
         kind, arg, block = act
@@ -888,15 +1625,48 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
             result = do_write(outdir, arg, block)
         elif kind == "RUN":
             # Never let a RUN outlive the hard cap: clamp its timeout to the
-            # time left (min 1s) so a long probe cannot overrun the 1h budget.
+            # time left (min 1s) so a long probe cannot overrun the budget.
             run_to = max(1, min(RUN_TIMEOUT, int(deadline - time.time())))
-            sys.stderr.write("%s     [RUN] (step %d, %ds left, timeout %ds)\n"
+            sys.stderr.write("%s     [RUN] compile+run exploit ELF (step %d, "
+                             "%ds left, timeout %ds)\n"
                              % (_ts(), step, remaining, run_to))
-            result = do_run(outdir, block, timeout=run_to)
+            result = do_run(outdir, timeout=run_to)
+            # The exploit just hammered the live server - did it fault it?
+            result += "\n\n--- live server status ---\n" + live.poll_crash()
             ran_something = True
+        elif kind == "GDB":
+            sys.stderr.write("%s     [GDB] (step %d)\n" % (_ts(), step))
+            result = live.gdb(block)
+            ran_something = True
+        elif kind == "RESTARTSERVER":
+            sys.stderr.write("%s     [RESTARTSERVER] (step %d)\n" % (_ts(), step))
+            result = live.restart()
         else:
             result = "unknown action"
         transcript.append("### tool result (%s %s)\n%s" % (kind, arg, result))
+        # The live server CRASHED under the exploit - that IS the proof. End the
+        # exploit NOW as SUCCESS; do not keep poking (nothing left to confirm).
+        if live.crashed:
+            sys.stderr.write("%s     [CRASH] live server faulted -> SUCCESS, "
+                             "ending exploit %02d (%s)\n" % (_ts(), idx, rel))
+            verdict = "CONFIRMED"
+            reason = "live server crashed under crafted packets: %s" % \
+                " ".join((live.crash_info or "").split())[:160]
+            transcript.append("### CRASH DETECTED (auto-SUCCESS)\n%s"
+                              % live.crash_info)
+            break
+        # The live server HUNG (infinite loop / unresponsive event loop) under the
+        # exploit - a DoS. Per policy this also counts as a VALIDATED exploit.
+        if live.hung:
+            sys.stderr.write("%s     [HANG] live server event loop wedged -> "
+                             "SUCCESS, ending exploit %02d (%s)\n"
+                             % (_ts(), idx, rel))
+            verdict = "CONFIRMED"
+            reason = ("live server event loop hung (DoS) under crafted packets - "
+                      "no crash, server stopped responding")
+            transcript.append("### HANG DETECTED (auto-SUCCESS): event loop "
+                              "unresponsive / infinite loop")
+            break
         # SOFT cap (~75%): stop starting new probes, ask once for the final
         # verdict. The hard cap at the top of the loop is the safety net if the
         # model keeps going. One forced final chat here still leaves headroom
@@ -928,6 +1698,8 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
             "Result of `%s %s`:\n%s\n\n(~%ds of your budget left.) "
             "Next single action." % (kind, arg, result, remaining)})
 
+    live.stop()
+    _CURRENT_LIVE = None
     open(os.path.join(outdir, "transcript.md"), "w").write(
         "# Exploit transcript: %s\n\nVERDICT: %s - %s\n\n%s\n"
         % (rel, verdict, reason, "\n\n".join(transcript)))
@@ -944,6 +1716,7 @@ def run_exploit():
             "&& cmake --build %s/build -j\n"
             % (SERVER_BIN, REPO_ROOT, OUTPUT_ROOT, OUTPUT_ROOT))
         return 1
+    ensure_context()
     findings = parse_findings(FINDINGS)
     if not findings:
         sys.stderr.write("[!] no findings in %s; run `%s scan > findings.txt` "
@@ -971,31 +1744,28 @@ def run_exploit():
         except Exception as e:  # noqa - one bad exploit shouldn't abort the run
             sys.stderr.write("    [error] %s\n" % e)
             verdict, reason, outdir = "ERROR", str(e), "-"
-        # Keep only CONFIRMED exploit folders; drop the rest - BUT first
-        # preserve the logic-path explanation of WHY it is not exploitable in
-        # a kept file, AND keep the full IA chat / thinking transcript as an
-        # individual file (the rest of the folder is then removed).
+        finally:
+            # Guarantee the gdb child + its server (holding GDB_PORT) are gone
+            # before the next candidate, even if the turn raised mid-session.
+            if _CURRENT_LIVE is not None:
+                _CURRENT_LIVE.stop()
+        # Keep EVERY exploit folder (confirmed or not). A non-confirmed one is
+        # not deleted - we just drop a fail.md marker into it recording the
+        # verdict and the logic-path explanation of WHY it is not exploitable.
+        # The aggregate not-exploitable.md is still appended for a quick index.
         kept = os.path.basename(outdir)
         if verdict != "CONFIRMED" and outdir != "-" and os.path.isdir(outdir):
             with open(os.path.join(OUTPUT_ROOT, "not-exploitable.md"), "a") as fh:
                 fh.write("## %s\n**%s.** logic path why it cannot be "
                          "exploited:\n\n%s\n\n---\n\n"
                          % (rel, verdict, reason or "(no explanation given)"))
-            # Rescue the IA chat/thinking transcript before dropping the dir so
-            # the full model conversation survives as its own file.
-            transcripts_dir = os.path.join(OUTPUT_ROOT, "transcripts")
-            os.makedirs(transcripts_dir, exist_ok=True)
-            src = os.path.join(outdir, "transcript.md")
-            saved = ""
-            if os.path.isfile(src):
-                dst = os.path.join(transcripts_dir,
-                                   "%s.md" % os.path.basename(outdir))
-                shutil.move(src, dst)
-                saved = " (chat -> transcripts/%s)" % os.path.basename(dst)
-            shutil.rmtree(outdir, ignore_errors=True)
-            kept = "(dropped; why -> not-exploitable.md)"
-            sys.stderr.write("    [drop] %s -> not exploitable; why kept in "
-                             "not-exploitable.md%s\n" % (rel, saved))
+            with open(os.path.join(outdir, "fail.md"), "w") as fh:
+                fh.write("# FAIL: %s\n\nVERDICT: %s\n\nlogic path why it cannot "
+                         "be exploited:\n\n%s\n"
+                         % (rel, verdict, reason or "(no explanation given)"))
+            kept = "%s (fail.md)" % os.path.basename(outdir)
+            sys.stderr.write("    [fail] %s -> not exploitable; marked with "
+                             "%s/fail.md\n" % (rel, os.path.basename(outdir)))
         results.append((rel, verdict, reason, kept))
         # Notebook stays project-wide + short; the full path is in the file above.
         short = " ".join((reason or "").split())[:120]
@@ -1021,37 +1791,65 @@ def run_exploit():
 # ===========================================================================
 # CLI dispatch
 # ===========================================================================
+def _print_help(prog):
+    sys.stderr.write(
+        "usage: %s [--model=NAME] [scan|exploit|all] [2> progress.log]\n"
+        "\n"
+        "Modes (default: all):\n"
+        "  scan     Audit server/cli; findings printed to stdout AND written\n"
+        "           to %s\n"
+        "  exploit  Generate+run exploits for %s\n"
+        "  all      scan then exploit  [DEFAULT]\n"
+        "\n"
+        "Options:\n"
+        "  --model=NAME   Ollama model to use (default: %s)\n"
+        "                 e.g. --model=qwen3:30b-a3b or --model=qwen2.5-coder:32b\n"
+        "  --help, -h     Show this help\n"
+        "\n"
+        "Environment overrides:\n"
+        "  SECSERVER_BUDGET      Hard per-exploit budget in seconds\n"
+        "  SECSERVER_SOFT_BUDGET Soft per-exploit budget in seconds (default 75%%)\n"
+        "  SECSERVER_STEPS       Max exploit turns (default 400)\n"
+        "  SECSERVER_RUNTIMEOUT  RUN wall timeout in seconds (default 900)\n"
+        "  SECSERVER_CPU         Sandbox RLIMIT_CPU seconds (default 10)\n"
+        "  SECSERVER_MEM         Sandbox RLIMIT_AS bytes (default 128M)\n"
+        "  SECSERVER_MAX         Max exploit candidates to attempt\n"
+        % (prog, FINDINGS, FINDINGS, MODEL_NAME))
+
+
 def main(argv):
-    # No subcommand = full pipeline (scan -> exploit), matching:
-    #   python3 server.py > findings.txt 2> progress.log
-    # scan findings go to stdout (the user's redirect); the exploit phase then
-    # reads them back from FINDINGS and emits only to stderr + REPORT.md, so
-    # findings.txt stays clean.
-    mode = argv[1] if len(argv) > 1 else "all"
+    global MODEL_NAME
+
+    # scan always writes FINDINGS to disk (tee), so the exploit phase works
+    # regardless of whether stdout was redirected.
+    args = argv[1:]
+
+    # Strip --model=NAME and --help/-h from args before the mode word.
+    filtered = []
+    for a in args:
+        if a.startswith("--model="):
+            MODEL_NAME = a[len("--model="):]
+        elif a in ("--help", "-h"):
+            _print_help(argv[0])
+            return 0
+        else:
+            filtered.append(a)
+    args = filtered
+
+    mode = args[0] if args else "all"
     if mode in ("scan", "-s", "--scan"):
         return run_scan(sys.stdout)
     if mode in ("exploit", "-e", "--exploit"):
         return run_exploit()
     if mode in ("all", "-a", "--all"):
         os.makedirs(OUTPUT_ROOT, exist_ok=True)
-        rc = run_scan(sys.stdout)      # -> findings.txt via the user's redirect
+        rc = run_scan(sys.stdout)
         sys.stdout.flush()
         if rc != 0:
             return rc
-        if not os.path.isfile(FINDINGS):
-            sys.stderr.write(
-                "[!] %s not written - redirect stdout to it for the exploit "
-                "phase: `%s > findings.txt 2> progress.log`\n"
-                % (FINDINGS, argv[0]))
-            return 1
         return run_exploit()
-    sys.stderr.write(
-        "usage: %s [scan|exploit|all]   (no arg = all)\n"
-        "  scan     audit server/cli, print findings to stdout "
-        "(redirect to findings.txt)\n"
-        "  exploit  model-generate+run exploits for findings.txt under %s\n"
-        "  all      scan (stdout->findings.txt) then exploit  [DEFAULT]\n"
-        % (argv[0], OUTPUT_ROOT))
+    sys.stderr.write("error: unknown mode %r\n" % mode)
+    _print_help(argv[0])
     return 2
 
 

@@ -315,6 +315,9 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
                  "host":  node.get("ssh_host"),
                  "port":  node.get("ssh_port", 22),
                  "work_dir": node.get("work_dir") or "/tmp/cc-bench-run",
+                 "cflags":   node.get("cflags"),
+                 "cxxflags": node.get("cxxflags"),
+                 "ldflags":  node.get("ldflags"),
                  "lxc_nfs": node.get("lxc_nfs"),
                  "ninja":  node.get("ninja")}
     runnable = [p for p in all_profilers if p in avail_profilers]
@@ -608,10 +611,14 @@ def main():
 
     # Cross-platform candidate record — metrics from every node that
     # produced data, so the decision reflects the whole fleet.
+    ended_utc = hr.iso_now()
     rec = {
         "commit": sha,
         "comment": comment,
-        "date":   time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "date":   ended_utc,
+        "started_utc": started_utc,
+        "ended_utc": ended_utc,
+        "duration_seconds": hr.duration_seconds(started_utc, ended_utc),
         "batch_id": batch_id,
         "benchmark": "benchmarkmapmanager",
         "nodes": {},
@@ -630,7 +637,6 @@ def main():
 
     # Per-platform history -- one JSON per (benchmark, run, platform).
     # Per benchmark/CLAUDE.md the file is append-only; never overwritten.
-    ended_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     for node in nodes:
         if node["label"] not in per_tool:
             continue
@@ -656,7 +662,8 @@ def main():
                 pr.add_subbenchmark(tool, slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
-                         compile_flags=compile_flags,
+                         compile_flags=compile_flags
+                             + list(br.exec_node_flag_defs(node).values()),
                          simd_tier="generic",
                          harness_version=hr.harness_version(),
                          comment=comment)
