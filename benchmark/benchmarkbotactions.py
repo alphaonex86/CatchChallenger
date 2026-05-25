@@ -1181,6 +1181,7 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
         cmake_src_subdir="server/cli",
         build_subdir=f"benchmarkbotactions-srv-{label}",
         cmake_defs=dict(SERVER_RAM_DB_DEFS, CMAKE_BUILD_TYPE="Release"),
+        exec_node=exec_node,
         verbose=True,
     )
     if rc_srv != 0:
@@ -1416,14 +1417,15 @@ def main():
         return 2
     try:
         return _run_with_server(bin_path, server_proc, comment,
-                                local_boot_flat, local_boot_slices)
+                                local_boot_flat, local_boot_slices, maxtime)
     finally:
         print(_color(bh.C_CYAN, "[server] stopping"))
         stop_server(server_proc)
 
 
 def _run_with_server(bin_path, server_proc, comment,
-                     local_boot_flat=None, local_boot_slices=None):
+                     local_boot_flat=None, local_boot_slices=None,
+                     maxtime=None):
     host = "127.0.0.1"
     port = SERVER_PORT
     print(_color(bh.C_CYAN, f"[bench] target = {host}:{port} (embedded)"))
@@ -1634,10 +1636,14 @@ def _run_with_server(bin_path, server_proc, comment,
     # Cross-platform candidate record.
     sha = bh.git_sha()
     cand_stamp = started_utc.replace(":", "-")
+    ended_utc = hr.iso_now()
     rec = {
         "commit":   sha,
         "comment":  comment,
-        "date":     time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "date":     ended_utc,
+        "started_utc": started_utc,
+        "ended_utc": ended_utc,
+        "duration_seconds": hr.duration_seconds(started_utc, ended_utc),
         "batch_id": batch_id,
         "benchmark": "benchmarkbotactions",
         "nodes":    {},
@@ -1678,7 +1684,6 @@ def _run_with_server(bin_path, server_proc, comment,
             print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
     # Per-platform history.
-    ended_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     for node in nodes:
         if node["label"] not in per_tool:
             continue
@@ -1706,7 +1711,8 @@ def _run_with_server(bin_path, server_proc, comment,
                 pr.add_subbenchmark(tool, slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
-                         compile_flags=compile_flags,
+                         compile_flags=compile_flags
+                             + list(br.exec_node_flag_defs(node).values()),
                          simd_tier="generic",
                          harness_version=hr.harness_version(),
                          comment=comment)

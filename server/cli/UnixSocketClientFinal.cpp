@@ -25,10 +25,10 @@ void UnixSocketClientFinal::parseIncommingData()
 
     while(cursor<size)
     {
-        if(buffer[0x0000]==0x01)
+        if(buffer[cursor]==0x01)
         {
                 static const unsigned long long timeUsed=0;
-                UnixSocketClient::write(reinterpret_cast<const char *>(&timeUsed),sizeof(timeUsed)*4);
+                UnixSocketClient::write(reinterpret_cast<const char *>(&timeUsed),sizeof(timeUsed));
             cursor+=1;
         }
         else

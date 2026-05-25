@@ -170,42 +170,172 @@ def _root_block_device(run):
     if rc != 0 or not out.strip():
         return None, None
     src = out.strip()
-    # Resolve LVM/encrypted/etc to underlying device when possible.
-    rc, real = run(["readlink", "-f", src])
-    if rc == 0 and real.strip():
-        src = real.strip()
+    # Resolve LVM/encrypted/etc to underlying device when possible -- but
+    # ONLY for real /dev nodes. An NFS/CIFS source like "192.168.158.10:/"
+    # is not a path; readlink -f would resolve it relative to $HOME and
+    # mangle it into "/root/192.168.158.10:".
+    if src.startswith("/dev/"):
+        rc, real = run(["readlink", "-f", src])
+        if rc == 0 and real.strip():
+            src = real.strip()
     # Strip partition suffix to find the parent disk (sda1->sda, nvme0n1p1->nvme0n1).
     name = src.rsplit("/", 1)[-1]
     parent = re.sub(r"p?\d+$", "", name)
     return src, parent
 
 
-def collect_disk(run):
-    out = {"disk_root": None, "disk_kind": None}
-    src, parent = _root_block_device(run)
+def _disk_info_for_source(run, src):
+    """Map a mount SOURCE (/dev/sda1, /dev/nvme0n1p2, tmpfs, ...) to
+    (disk_root_label, disk_kind). Shared by the root-fs collector and the
+    per-path storage collector so the media classification stays in one
+    place."""
     if not src:
-        return out
-    if src.startswith("tmpfs") or "tmpfs" in src:
-        out["disk_root"] = "tmpfs"; out["disk_kind"] = "tmpfs"; return out
-    # vendor + model from sysfs
+        return None, None
+    # tmpfs / shm / ramfs sources are RAM-backed, no underlying block dev.
+    if src in ("tmpfs", "shm", "ramfs", "none") or "tmpfs" in src:
+        return "tmpfs", "tmpfs"
+    if not src.startswith("/dev/"):
+        # overlay, zfs pool name, network fs (nfs/cifs), etc. -- no block dev
+        # to introspect; record the source verbatim and leave kind unknown.
+        return src, None
+    # Resolve LVM/encrypted/etc to the underlying device when possible.
+    rc, real = run(["readlink", "-f", src])
+    if rc == 0 and real.strip():
+        src = real.strip()
+    name = src.rsplit("/", 1)[-1]
+    # Resolve the parent whole-disk node. A device that already exists
+    # directly under /sys/block (dm-0, mmcblk0, nvme0n1, sda) IS the disk;
+    # only strip a trailing partition suffix when the name is NOT itself a
+    # block device (sda1->sda, nvme0n1p1->nvme0n1, mmcblk0p1->mmcblk0).
+    rc, _ = run(["test", "-d", f"/sys/block/{name}"])
+    if rc == 0:
+        parent = name
+    else:
+        parent = re.sub(r"p?\d+$", "", name)
     vendor = model = ""
     rc, v = run(["cat", f"/sys/block/{parent}/device/vendor"])
     if rc == 0: vendor = v.strip()
     rc, m = run(["cat", f"/sys/block/{parent}/device/model"])
     if rc == 0: model = m.strip()
-    if vendor or model:
-        out["disk_root"] = (vendor + " " + model).strip() or src
-    else:
-        out["disk_root"] = src
+    disk_root = (vendor + " " + model).strip() or src
     # kind: nvme / mmc / rotational vs ssd
     if parent.startswith("nvme"):
-        out["disk_kind"] = "nvme"
+        kind = "nvme"
     elif parent.startswith("mmcblk"):
-        out["disk_kind"] = "emmc" if parent.startswith("mmcblk0") else "sd"
+        kind = "emmc" if parent.startswith("mmcblk0") else "sd"
     else:
+        kind = None
         rc, rot = run(["cat", f"/sys/block/{parent}/queue/rotational"])
         if rc == 0:
-            out["disk_kind"] = "hdd" if rot.strip() == "1" else "ssd-sata"
+            kind = "hdd" if rot.strip() == "1" else "ssd-sata"
+    return disk_root, kind
+
+
+def collect_disk(run):
+    out = {"disk_root": None, "disk_kind": None}
+    src, _parent = _root_block_device(run)
+    if not src:
+        return out
+    out["disk_root"], out["disk_kind"] = _disk_info_for_source(run, src)
+    return out
+
+
+def collect_path_storage(run, path):
+    """Filesystem type + backing media for the mount holding `path`.
+
+    Distinct from collect_disk (which is always the root `/`): the
+    catchchallenger binary and the datapack frequently live somewhere
+    other than `/` -- a tmpfs run dir, an emmc, a separate SSD -- and the
+    storage media materially affects datapack-parse / cache-write timing.
+    `findmnt -T <path>` walks up to the mount actually backing the path.
+
+    Returns {fs_type, mount_source, disk_root, disk_kind}; all None when
+    `path` is None or not resolvable on this host."""
+    out = {"fs_type": None, "mount_source": None,
+           "disk_root": None, "disk_kind": None}
+    if not path:
+        return out
+    rc, fst = run(["findmnt", "-no", "FSTYPE", "-T", path])
+    if rc == 0 and fst.strip():
+        out["fs_type"] = fst.strip().splitlines()[0].strip()
+    rc, src = run(["findmnt", "-no", "SOURCE", "-T", path])
+    if rc == 0 and src.strip():
+        s = src.strip().splitlines()[0].strip()
+        out["mount_source"] = s
+        # findmnt appends a "[/subpath]" suffix for bind mounts / btrfs
+        # subvols (e.g. "/dev/mapper/ssd[/home]"); drop it before
+        # resolving the backing block device.
+        out["disk_root"], out["disk_kind"] = _disk_info_for_source(
+            run, re.sub(r"\[.*\]$", "", s))
+    return out
+
+
+KERNEL_CONFIG_ROOT = os.path.join(HISTORY_ROOT, "kernel-configs")
+
+
+def collect_kernel_config(run):
+    """Capture the running kernel's build config as a content-addressed
+    gzip blob.
+
+    The config is gzipped (deterministically: mtime=0, fixed level, so the
+    same config always yields the same bytes) and the sha256 is taken over
+    the COMPRESSED bytes -- the file is named `<sha256>-config.gz` and the
+    JSON stores only that filename. A reader verifies it by checksumming
+    the .gz directly; there is never any need to decompress. When a node's
+    config is unchanged the file already exists and is NOT rewritten; every
+    run's JSON just points at the same `<sha256>-config.gz`. A differing
+    node config lands as its own file, so cross-node kernel diffs stay
+    visible.
+
+    Sources tried in order: /boot/config-<uname -r>, the kernel build
+    tree's .config, then the gzipped /proc/config.gz.
+
+    Returns {kernel_config_gz} -- the `<sha256>-config.gz` filename under
+    history/kernel-configs/, or None when no config is readable."""
+    import gzip, hashlib, base64, io
+    out = {"kernel_config_gz": None}
+    rc, rel = run(["uname", "-r"])
+    rel = rel.strip() if rc == 0 else ""
+    raw = None  # decompressed config bytes
+    for cand in (f"/boot/config-{rel}", f"/lib/modules/{rel}/build/.config"):
+        rc, _ = run(["test", "-r", cand])
+        if rc == 0:
+            rc, txt = run(["cat", cand])
+            if rc == 0 and txt.strip():
+                raw = txt.encode("utf-8", "replace")
+                break
+    if raw is None:
+        # /proc/config.gz is gzipped; gunzip on the (possibly remote) host
+        # and base64 so the runner's text channel carries it binary-safe.
+        rc, _ = run(["test", "-r", "/proc/config.gz"])
+        if rc == 0:
+            rc, b64 = run("gzip -dc /proc/config.gz 2>/dev/null | base64", timeout=30)
+            if rc == 0 and b64.strip():
+                try:
+                    raw = base64.b64decode(b64)
+                except Exception:
+                    raw = None
+    if raw is None:
+        return out
+    # Re-gzip deterministically (mtime=0) so identical configs produce
+    # identical .gz bytes -- the checksum over the compressed file is then
+    # a stable identity without ever decompressing.
+    buf = io.BytesIO()
+    with gzip.GzipFile(fileobj=buf, mode="wb", compresslevel=9, mtime=0) as f:
+        f.write(raw)
+    gz = buf.getvalue()
+    sha = hashlib.sha256(gz).hexdigest()
+    fname = f"{sha}-config.gz"
+    out["kernel_config_gz"] = fname
+    blob = os.path.join(KERNEL_CONFIG_ROOT, fname)
+    # Dedup: only write when this exact .gz isn't already on disk.
+    if not os.path.exists(blob):
+        try:
+            os.makedirs(KERNEL_CONFIG_ROOT, exist_ok=True)
+            with open(blob, "wb") as f:
+                f.write(gz)
+        except Exception:
+            out["kernel_config_gz"] = None
     return out
 
 
@@ -619,6 +749,24 @@ class PlatformRecord:
             "ram_type":      None,
             "disk_root":     None,
             "disk_kind":     None,
+            # FS type + backing media for the mount holding the cc binary
+            # and the datapack (often a tmpfs run dir / emmc / separate SSD,
+            # NOT the root `/` captured in disk_root/disk_kind above).
+            "cc_storage_path":      None,
+            "cc_storage_fs":        None,
+            "cc_storage_source":    None,
+            "cc_storage_disk_root": None,
+            "cc_storage_disk_kind": None,
+            "datapack_storage_path":      None,
+            "datapack_storage_fs":        None,
+            "datapack_storage_source":    None,
+            "datapack_storage_disk_root": None,
+            "datapack_storage_disk_kind": None,
+            # Running kernel build config: gzipped + content-addressed by
+            # the sha256 of the compressed file, stored once under
+            # history/kernel-configs/<sha256>-config.gz. The JSON keeps only
+            # the filename; verify it by checksumming the .gz directly.
+            "kernel_config_gz":     None,
             "net_card":      None,
             "net_link":      None,
             "net_link_detail": None,
@@ -647,8 +795,13 @@ class PlatformRecord:
         }
         self.results = {}
 
-    def collect(self):
-        """Best-effort fill of every platform field. Never raises."""
+    def collect(self, cc_binary_path=None, datapack_path=None):
+        """Best-effort fill of every platform field. Never raises.
+
+        `cc_binary_path` / `datapack_path` are the locations (on THIS
+        node, as seen by `self.runner`) of the catchchallenger binary and
+        the datapack; when given, their filesystem type + backing media
+        are recorded separately from the root-fs fields."""
         cpu = collect_cpu(self.runner)
         self.platform["cpu_model"] = cpu["cpu_model"]
         self.platform["cpu_cores"] = cpu["cpu_cores"]
@@ -662,6 +815,22 @@ class PlatformRecord:
         disk = collect_disk(self.runner)
         self.platform["disk_root"] = disk["disk_root"]
         self.platform["disk_kind"] = disk["disk_kind"]
+        if cc_binary_path:
+            self.platform["cc_storage_path"] = cc_binary_path
+            st = collect_path_storage(self.runner, cc_binary_path)
+            self.platform["cc_storage_fs"]        = st["fs_type"]
+            self.platform["cc_storage_source"]    = st["mount_source"]
+            self.platform["cc_storage_disk_root"] = st["disk_root"]
+            self.platform["cc_storage_disk_kind"] = st["disk_kind"]
+        if datapack_path:
+            self.platform["datapack_storage_path"] = datapack_path
+            st = collect_path_storage(self.runner, datapack_path)
+            self.platform["datapack_storage_fs"]        = st["fs_type"]
+            self.platform["datapack_storage_source"]    = st["mount_source"]
+            self.platform["datapack_storage_disk_root"] = st["disk_root"]
+            self.platform["datapack_storage_disk_kind"] = st["disk_kind"]
+        kc = collect_kernel_config(self.runner)
+        self.platform["kernel_config_gz"] = kc["kernel_config_gz"]
         self.platform["net_card"]  = collect_net(self.runner)
         link = collect_net_link(self.runner)
         for k in ("net_link", "net_link_detail", "wifi_ssid", "wifi_standard",
@@ -856,6 +1025,19 @@ def new_batch_id():
 
 def iso_now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def duration_seconds(start_iso, end_iso):
+    """Whole-batch wall-clock seconds between two iso_now() stamps
+    ('%Y-%m-%dT%H:%M:%SZ'). Returns a float, or None if either stamp is
+    missing / unparseable (so a malformed timestamp never aborts a run)."""
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    try:
+        t0 = time.mktime(time.strptime(start_iso, fmt))
+        t1 = time.mktime(time.strptime(end_iso, fmt))
+        return round(t1 - t0, 1)
+    except (ValueError, TypeError):
+        return None
 
 
 def harness_version():

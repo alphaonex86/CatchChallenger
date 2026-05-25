@@ -71,6 +71,13 @@ C_BOLD   = "\033[1m"
 C_RESET  = "\033[0m"
 
 
+def log_stamp():
+    """`H:M d/m/y` wall-clock prefix for live progress / remote-dispatch
+    lines, so a multi-hour unattended batch log shows WHEN each cell ran.
+    Kept outside the colour codes so the line stays greppable."""
+    return time.strftime("%H:%M %d/%m/%y")
+
+
 # ---- --node filter -------------------------------------------------------
 # Optional per-invocation restriction to specific execution nodes. None =
 # run every benchmark-enabled node (the default). Set once from each
@@ -234,6 +241,12 @@ def benchmark_exec_nodes():
                 "client_run_mode": ex.get("client_run_mode", "none"),
                 "disabled_tools": list(ex.get("benchmark_disabled_tools", [])),
                 "ninja":          ex.get("ninja"),  # None -> auto-detect, True/False -> override
+                # Per-CPU compile flags: the compile node builds this node's
+                # binary WITH them before pushing (see exec_node_flag_defs).
+                # Absent -> the build is unchanged / generic.
+                "cflags":         ex.get("cflags"),
+                "cxxflags":       ex.get("cxxflags"),
+                "ldflags":        ex.get("ldflags"),
                 # lxc_nfs (diskless NFS-LXC bring-up) must reach the
                 # benchmark's exec_node dict so the harness can stop/mount/
                 # lxc-start the container and then swap rsync/ssh to the
@@ -597,7 +610,7 @@ class Progress:
             colour = C_YELLOW
         else:
             colour = C_RED
-        prefix = f"{colour}[bench]{C_RESET}"
+        prefix = f"{log_stamp()} {colour}[bench]{C_RESET}"
         node_colour = f"{C_BOLD}{C_RED}" if node == "local" else C_CYAN
         node_str = f"{node_colour}{node}{C_RESET}"
         msg = (f"{prefix} {self.done}/{self.total} done -- "

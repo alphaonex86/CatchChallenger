@@ -34,7 +34,8 @@ void Client::sendSystemMessage(const std::string &text, const bool &important, c
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Chat_type_system;
     posOutput+=1;
     {
-        {const uint16_t _tmp_le=(htole16(text.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+        const uint16_t _tmp_le=(htole16(text.size()));
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));
 
         posOutput+=2;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());

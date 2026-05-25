@@ -21,6 +21,7 @@ caller can decide whether to skip / fail-fast / proceed. No timeouts
 are silently swallowed -- a connect timeout to one node never blocks
 the rest of the batch.
 """
+import hashlib
 import json
 import os
 import shlex
@@ -60,7 +61,8 @@ def _rlog(msg, err=False):
     """Print a remote-dispatch line tagged with the current benchmark, e.g.
     `[remote:benchmarkmapmanager] 'pentium-m': pushing binary`. Falls back
     to a bare `[remote]` tag when no benchmark label was set."""
-    tag = f"[remote:{_BENCH_LABEL}]" if _BENCH_LABEL else "[remote]"
+    raw_tag = f"[remote:{_BENCH_LABEL}]" if _BENCH_LABEL else "[remote]"
+    tag = f"{bh.log_stamp()} {bh.C_BLUE}{raw_tag}{bh.C_RESET}"
     print(f"{tag} {msg}", file=sys.stderr if err else sys.stdout, flush=True)
 
 
@@ -536,9 +538,50 @@ def stage_source_on_compile_node(compile_node, repo_root=REPO_ROOT,
     return rc, msg
 
 
+def exec_node_flag_defs(exec_node):
+    """Map an execution node's per-CPU compile flags onto the CMake cache
+    variables the compile node honours, so the binary that gets pushed to
+    that node is built WITH its flags. Three optional string fields in the
+    execution_nodes[] entry of remote_nodes.json:
+
+        cflags   -> CMAKE_C_FLAGS
+        cxxflags -> CMAKE_CXX_FLAGS
+        ldflags  -> CMAKE_EXE_LINKER_FLAGS
+
+    Lets a board pin its own `-march=`/`-mtune=` (e.g. armv8.2-a+crypto on
+    an odroid-n2 vs generic armv8 on an rpi-3) without touching the generic
+    build or any other node. Empty / absent / non-string fields contribute
+    nothing, so a node that sets none builds exactly as before."""
+    if not isinstance(exec_node, dict):
+        return {}
+    mapping = (("cflags",   "CMAKE_C_FLAGS"),
+               ("cxxflags",  "CMAKE_CXX_FLAGS"),
+               ("ldflags",   "CMAKE_EXE_LINKER_FLAGS"))
+    out = {}
+    for src, cmake_var in mapping:
+        v = exec_node.get(src)
+        if isinstance(v, str) and v.strip():
+            out[cmake_var] = v.strip()
+    return out
+
+
+def _merge_flag_defs(cmake_defs, exec_node):
+    """Return a copy of `cmake_defs` with the exec node's compile flags
+    merged in. A caller-supplied value for the same CMake var is kept and
+    the exec flags APPENDED (cmake honours later tokens), never clobbered."""
+    merged = dict(cmake_defs or {})
+    for k, v in exec_node_flag_defs(exec_node).items():
+        existing = merged.get(k)
+        if isinstance(existing, str) and existing.strip():
+            merged[k] = f"{existing} {v}"
+        else:
+            merged[k] = v
+    return merged
+
+
 def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
                           cmake_defs=None, target=None, verbose=False,
-                          use_ninja=None):
+                          use_ninja=None, exec_node=None):
     """cmake -S <work>/sources/<src_subdir> -B <work>/build-bench/<build_subdir>
     then cmake --build. Returns (rc, message, remote_bin_dir).
 
@@ -560,6 +603,10 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     src  = f"{work}/sources/{cmake_src_subdir}"
     bld  = f"{work}/build-bench/{build_subdir}"
 
+    # Fold this exec node's per-CPU flags (cflags/cxxflags/ldflags) into the
+    # configure -- the compile node produces a binary tuned for the node it
+    # will be pushed to. No exec_node / no flags => unchanged behaviour.
+    cmake_defs = _merge_flag_defs(cmake_defs, exec_node)
     defs = []
     if cmake_defs:
         for k, v in cmake_defs.items():
@@ -695,7 +742,7 @@ def datapack_keep_extensions():
                                 if e not in _DATAPACK_MEDIA_EXT]
                     break
     except OSError as e:
-        print(f"[remote] WARN: cannot read {hpp}: {e}", file=sys.stderr)
+        _rlog(f"WARN: cannot read {hpp}: {e}", err=True)
     if not keep:
         keep = list(_DATAPACK_KEEP_EXT_FALLBACK)
     _DATAPACK_KEEP_EXT_CACHE = keep
@@ -1224,6 +1271,9 @@ def exec_node_dict(node):
             "host":     node.get("ssh_host"),
             "port":     node.get("ssh_port", 22),
             "work_dir": node.get("work_dir") or f"/tmp/cc-bench-{node['label']}",
+            "cflags":   node.get("cflags"),
+            "cxxflags": node.get("cxxflags"),
+            "ldflags":  node.get("ldflags"),
             "lxc_nfs":  node.get("lxc_nfs"),
             "ninja":    node.get("ninja")}
 
@@ -1246,7 +1296,7 @@ def profile_on_exec(compile_node, exec_node, cmake_src_subdir, build_subdir,
     rc, msg, bld = build_for_fleet(compile_node, cmake_src_subdir, build_subdir,
                                    cmake_defs=cmake_defs,
                                    use_ninja=exec_node.get("ninja"),
-                                   verbose=verbose)
+                                   verbose=verbose, exec_node=exec_node)
     if rc != 0:
         return [(t, None, f"build failed: {msg}") for t in tools]
     runtime_node, msg = nfs_lxc_prepare(exec_node, verbose=verbose)
@@ -1389,6 +1439,11 @@ def profile_fleet(bench_name, tools, local_cmd, local_cwd, local_timeouts,
             continue
         en = exec_node_dict(node)
         sub = f"{remote_spec['build_subdir_base']}-profile-{cn.get('label', 'cn')}"
+        # Distinct flag set => distinct build dir, so a node's -march= profile
+        # isn't taken against another node's binary on the same compile node.
+        _flag_sig = tuple(sorted(exec_node_flag_defs(en).items()))
+        if _flag_sig:
+            sub += "-" + hashlib.sha1(repr(_flag_sig).encode()).hexdigest()[:8]
         res = profile_on_exec(
             cn, en, remote_spec["cmake_src_subdir"], sub,
             remote_spec["bin_name"], remote_spec["runtime_cmd"], tools,
@@ -1856,10 +1911,13 @@ def run_benchmark_on_exec(compile_node, exec_node, cmake_src_subdir,
 
 
 def build_for_fleet(compile_node, cmake_src_subdir, build_subdir,
-                    cmake_defs=None, use_ninja=None, verbose=False):
+                    cmake_defs=None, use_ninja=None, verbose=False,
+                    exec_node=None):
     """Phase-1 build: stage source + cmake build on ONE compile node.
-    Returns (rc, msg, remote_build_dir). Meant to be run once per compile
-    node (its exec nodes share arch, so one binary serves them all)."""
+    Returns (rc, msg, remote_build_dir). Run once per (compile node, flag
+    set): exec nodes sharing a compile node AND identical cflags/cxxflags/
+    ldflags share one binary; a node with its own flags gets its own build
+    (the caller keys build_subdir on the flag set so they don't collide)."""
     if verbose:
         _rlog(f"{compile_node['label']!r}: staging source")
     rc, msg = stage_source_on_compile_node(compile_node, verbose=verbose)
@@ -1869,7 +1927,7 @@ def build_for_fleet(compile_node, cmake_src_subdir, build_subdir,
         _rlog(f"{compile_node['label']!r}: building {build_subdir}")
     return build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
                                  cmake_defs=cmake_defs, verbose=verbose,
-                                 use_ninja=use_ninja)
+                                 use_ninja=use_ninja, exec_node=exec_node)
 
 
 def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
@@ -1962,36 +2020,54 @@ def run_profiler_fleet(specs, verbose=False, max_workers=8):
     the caller (done serially after this returns, so Progress needs no
     lock)."""
     import concurrent.futures as cf
-    by_cn = {}
+
+    # A build is shared only by exec nodes that agree on BOTH the compile
+    # node AND the per-CPU flags (cflags/cxxflags/ldflags). Key phase-1 on
+    # (compile_label, flag-signature); nodes with their own flags get their
+    # own build dir so one board's -march= never leaks into another's binary.
+    def _flag_sig(s):
+        return tuple(sorted(exec_node_flag_defs(s["exec_node"]).items()))
+
+    def _build_key(s):
+        return (s["compile_node"]["label"], _flag_sig(s))
+
+    def _build_sub(s):
+        cl, sig = _build_key(s)
+        base = f"{s['build_subdir_base']}-{cl}"
+        if not sig:
+            return base
+        # short, stable suffix so different flag sets land in distinct dirs
+        h = hashlib.sha1(repr(sig).encode()).hexdigest()[:8]
+        return f"{base}-{h}"
+
+    by_build = {}
     for s in specs:
-        by_cn.setdefault(s["compile_node"]["label"], []).append(s)
+        by_build.setdefault(_build_key(s), []).append(s)
 
-    # ---- Phase 1: parallel build, one per compile node ------------------
-    builds = {}   # compile_label -> (rc, msg, build_dir)
+    # ---- Phase 1: parallel build, one per (compile node, flag set) ------
+    builds = {}   # (compile_label, flag_sig) -> (rc, msg, build_dir)
 
-    def _build(cl):
-        s = by_cn[cl][0]
-        sub = f"{s['build_subdir_base']}-{cl}"
+    def _build(key):
+        s = by_build[key][0]
         use_ninja = s["exec_node"].get("ninja")
-        return cl, build_for_fleet(
-            s["compile_node"], s["cmake_src_subdir"], sub,
+        return key, build_for_fleet(
+            s["compile_node"], s["cmake_src_subdir"], _build_sub(s),
             cmake_defs=s.get("cmake_defs"), use_ninja=use_ninja,
-            verbose=verbose)
+            verbose=verbose, exec_node=s["exec_node"])
 
-    keys = list(by_cn.keys())
+    keys = list(by_build.keys())
     if keys:
         with cf.ThreadPoolExecutor(max_workers=min(max_workers, len(keys))) as ex:
-            for cl, res in ex.map(_build, keys):
-                builds[cl] = res
+            for key, res in ex.map(_build, keys):
+                builds[key] = res
 
     # ---- Phase 2: parallel push+run per exec node -----------------------
     results = {}
     lock = threading.Lock()
 
     def _run(s):
-        cl = s["compile_node"]["label"]
         label = s["exec_node"]["label"]
-        rc, msg, bld = builds.get(cl, (1, "no build result", None))
+        rc, msg, bld = builds.get(_build_key(s), (1, "no build result", None))
         if rc != 0:
             # A compile-node build failure is NOT a benchmark regression: the
             # exec node is never touched (no push, no run).  Tag the message
@@ -2050,7 +2126,8 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
         _rlog(f"{exec_node['label']!r}: building")
     rc, msg, remote_bld = build_on_compile_node(
         compile_node, cmake_src_subdir, build_subdir,
-        cmake_defs=cmake_defs, verbose=verbose, use_ninja=use_ninja)
+        cmake_defs=cmake_defs, verbose=verbose, use_ninja=use_ninja,
+        exec_node=exec_node)
     if rc != 0:
         return {p: None for p in profilers}, msg
     # Carry the compile node's system-vs-vendored verdict onto this exec
