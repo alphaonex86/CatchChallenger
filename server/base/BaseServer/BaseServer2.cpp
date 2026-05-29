@@ -10,6 +10,8 @@
 #include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../../general/base/ProtocolParsing.hpp"
 #include <fstream>
+#include <sstream>
+#include "../../../general/base/FacilityLibGeneral.hpp"
 
 using namespace CatchChallenger;
 
@@ -457,23 +459,21 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
             #endif
         }
         {
-            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
             std::ostringstream out_file;
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
+            const std::string _s=out_file.str();
+            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+            CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
             #else
-            std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
-            if(!out_file.good() || !out_file.is_open())
+            if(!FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")),_s.data(),_s.size()))
             {
                 std::cerr << "Unable to open data base file " << "database/server/server (abort)" << std::endl;
                 abort();
                 return;
             }
-            #endif
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
-            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
-            {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
             #endif
         }
     }

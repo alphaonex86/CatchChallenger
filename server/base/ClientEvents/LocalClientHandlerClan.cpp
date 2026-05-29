@@ -12,9 +12,11 @@
 #include <cstring>
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <fstream>
+#include <sstream>
 #include <dirent.h>
 #include <unistd.h>
 #include "../../../general/hps/hps.h"
+#include "../../general/base/FacilityLibGeneral.hpp"
 #endif
 
 using namespace CatchChallenger;
@@ -531,23 +533,23 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
             CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
         }
         #else
-        // Save clan to disk
-        std::ofstream clan_out(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/clans/")+std::to_string(clanId)), std::ofstream::binary);
-        if(clan_out.good() && clan_out.is_open())
+        // Save clan to disk (best-effort, as before: failure is ignored)
         {
+            std::ostringstream clan_out;
             hps::to_stream(text, clan_out);
             hps::to_stream((uint64_t)0, clan_out);
+            const std::string _s=clan_out.str();
+            FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/clans/")+std::to_string(clanId)),_s.data(),_s.size());
         }
         // Persist updated maxClanId to database/server
         {
-            std::ofstream srv_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
-            if(srv_file.good() && srv_file.is_open())
-            {
-                hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, srv_file);
-                hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, srv_file);
-                hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, srv_file);
-                hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, srv_file);
-            }
+            std::ostringstream srv_file;
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, srv_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, srv_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, srv_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, srv_file);
+            const std::string _s=srv_file.str();
+            FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")),_s.data(),_s.size());
         }
         #endif
     }

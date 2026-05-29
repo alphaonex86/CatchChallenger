@@ -1292,7 +1292,7 @@ build (gated mutually-exclusive in `general/CCCommon.cmake`).
 
 ### `CATCHCHALLENGER_IO_URING_IOPOLL`
 - **Scope:** server-only — server: cli
-- **Description:** Opt-in flag to add `IORING_SETUP_IOPOLL` to the io_uring ring. In IOPOLL mode the kernel busy-polls hardware completion queues instead of waiting for interrupts, which removes the per-operation interrupt cost on storage paths (O_DIRECT + NVMe / fast block device). Safe on single-core CPUs: no extra thread is spawned. Network sockets are always interrupt-driven regardless of this flag; the gain is on FILE_DB or log-write paths that use `O_DIRECT`. Off by default.
+- **Description:** Opt-in flag that adds `IORING_SETUP_IOPOLL` to a **dedicated FILE io_uring ring** (separate from the socket ring), used for whole-file reads: datapack load at boot and the datapack files streamed to clients on sync (`BaseServerMasterSendDatapack`). Those files are opened `O_DIRECT` and their read completions are busy-polled instead of waiting for an IRQ — a win only on fast block devices (NVMe / SSD) where interrupt cost is significant. It does **not** touch the socket ring (an IOPOLL ring rejects the socket `poll_multishot`/`recv`/`send` the main ring runs, so the two must stay separate). Safe everywhere: where the libc exposes `O_DIRECT` as `0` the file ring is built as a plain interrupt-driven ring instead; on a filesystem that rejects `O_DIRECT` (e.g. tmpfs) the read falls back to a blocking `fopen`/`fread`. Neutral-to-useless on the embedded slow-flash targets — intended for real-disk deployments. Off by default. Without `CATCHCHALLENGER_IO_URING` the file reads stay blocking on every backend (select/poll/epoll/client).
 - **Used in:**
   - `server/cli/EventLoop.cpp`
 

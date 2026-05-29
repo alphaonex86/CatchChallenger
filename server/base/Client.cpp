@@ -21,8 +21,10 @@
 
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <fstream>
+#include <sstream>
 #include <string>
 #include "../../general/hps/hps.h"
+#include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "DictionaryServer.hpp"
@@ -1146,43 +1148,40 @@ void Client::saveCharacterFiles() const {
         public_and_private_informations.public_informations.pseudo.c_str(),
         public_and_private_informations.public_informations.pseudo.size());
     {
-#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        //Compose in memory (both DB modes), then persist: RAM store for
+        //DB_INTERNAL_VARS, else whole-file write (routed through io_uring when
+        //the server installed the ring writer, blocking fopen otherwise).
         std::ostringstream out_file;
         hps::to_stream(*this, out_file);
         const std::string _s=out_file.str();
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
         CatchChallenger::dbInternalVarsStore[std::string("database/common/characters/")+hexa]=
             std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),
                                  reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
 #else
-        std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa), std::ofstream::binary|std::ofstream::trunc);
-        if(!out_file.good() || !out_file.is_open())
+        if(!FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa),_s.data(),_s.size()))
         {
             std::cerr << "unable to open database/common/characters/"+hexa+" for write " << __FILE__ << ":" << __LINE__ << std::endl;
             return;
         }
-        hps::to_stream(*this, out_file);
 #endif
     }
     {
-#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
         std::ostringstream out_file;
         hps::StreamOutputBuffer s(out_file);
         serializeServerPart(s);
         s.flush();
         const std::string _s=out_file.str();
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
         CatchChallenger::dbInternalVarsStore[std::string("database/server/characters/")+hexa]=
             std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),
                                  reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
 #else
-        std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/characters/")+hexa), std::ofstream::binary|std::ofstream::trunc);
-        if(!out_file.good() || !out_file.is_open())
+        if(!FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/characters/")+hexa),_s.data(),_s.size()))
         {
             std::cerr << "unable to open database/server/characters/"+hexa+" for write " << __FILE__ << ":" << __LINE__ << std::endl;
             return;
         }
-        hps::StreamOutputBuffer s(out_file);
-        serializeServerPart(s);
-        s.flush();
 #endif
     }
 }

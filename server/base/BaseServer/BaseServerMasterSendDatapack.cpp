@@ -116,10 +116,10 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                         #ifdef Q_OS_WIN32
                         stringreplaceAll(fullPathFileToOpen,"/","\\");
                         #endif
-                        FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
-                        if(filedesc!=NULL)
+                        bool readOk=false;
+                        const std::vector<char> data=FacilityLibGeneral::readWholeFile(fullPathFileToOpen,readOk);
+                        if(readOk)
                         {
-                            const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                             if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
                             {
                                 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR

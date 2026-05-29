@@ -25,7 +25,10 @@
     #include <cerrno>
     #include <cstring>
     #include <cstdlib>
+    #include <cstdio>
+    #include <sys/stat.h>
     #include "BaseClassSwitch.hpp"
+    #include "../../general/base/FacilityLibGeneral.hpp"
 #endif
 
 EventLoop EventLoop::loop;
@@ -224,6 +227,275 @@ EventLoop::~EventLoop()
 #endif
 }
 
+#if defined(CATCHCHALLENGER_IO_URING)
+// Dedicated io_uring instance for whole-FILE reads (datapack load on boot,
+// datapack files streamed to clients on sync). Deliberately separate from the
+// socket ring: an IORING_SETUP_IOPOLL ring (the CATCHCHALLENGER_IO_URING_IOPOLL
+// opt-in) accepts ONLY pollable O_DIRECT block I/O and would reject the socket
+// poll_multishot/recv/send the main ring runs. Lazily created on first read,
+// reused for the process lifetime, and — like everything else here — only ever
+// submitted to from the single event-loop thread.
+static struct io_uring cc_file_ring;
+static bool cc_file_ring_ready=false;
+// IOPOLL needs genuine O_DIRECT. Where the libc exposes O_DIRECT as 0 (the
+// platform has no direct-I/O), a polled ring has nothing pollable to complete,
+// so compile the file ring as a plain (interrupt-driven) ring instead.
+#if defined(CATCHCHALLENGER_IO_URING_IOPOLL) && (O_DIRECT != 0)
+#define CC_FILE_RING_IOPOLL 1
+#else
+#define CC_FILE_RING_IOPOLL 0
+#endif
+
+static bool cc_ensure_file_ring()
+{
+    if(cc_file_ring_ready)
+        return true;
+    struct io_uring_params p;
+    memset(&p,0,sizeof(p));
+#if CC_FILE_RING_IOPOLL
+    p.flags|=IORING_SETUP_IOPOLL;
+#endif
+    int r=io_uring_queue_init_params(64,&cc_file_ring,&p);
+#if CC_FILE_RING_IOPOLL
+    if(r<0)
+    {
+        //kernel/fs without IOPOLL support -> fall back to a plain ring so the
+        //file reads still go through io_uring (just interrupt-driven).
+        memset(&p,0,sizeof(p));
+        r=io_uring_queue_init(64,&cc_file_ring,0);
+    }
+#endif
+    if(r<0)
+        return false;
+    cc_file_ring_ready=true;
+    return true;
+}
+
+// Read a whole file via the file ring. Returns false on ANY problem so the
+// caller (FacilityLibGeneral::readWholeFile) transparently falls back to a
+// blocking fopen/fread — correctness never depends on the ring succeeding.
+// Signature matches FacilityLibGeneral::WholeFileRingReader.
+static bool cc_uring_read_whole_file(const std::string &path,std::vector<char> &out)
+{
+    if(!cc_ensure_file_ring())
+        return false;
+    int openFlags=O_RDONLY;
+#if CC_FILE_RING_IOPOLL
+    //IOPOLL completions require the fd to bypass the page cache (O_DIRECT).
+    bool useDirect=true;
+    openFlags|=O_DIRECT;
+#else
+    bool useDirect=false;
+#endif
+    int fd=::open(path.c_str(),openFlags);
+#if CC_FILE_RING_IOPOLL
+    if(fd<0 && (errno==EINVAL || errno==ENOTSUP))
+    {
+        //e.g. tmpfs rejects O_DIRECT. A buffered fd can't be polled by an
+        //IOPOLL ring, so the read below will fail and the caller drops to the
+        //blocking path — fine, tmpfs is the RAM-DB bench case where io_uring
+        //file I/O buys nothing anyway.
+        useDirect=false;
+        fd=::open(path.c_str(),O_RDONLY);
+    }
+#endif
+    if(fd<0)
+        return false;
+    struct stat st;
+    if(fstat(fd,&st)!=0 || st.st_size<0)
+    {
+        ::close(fd);
+        return false;
+    }
+    const size_t fileSize=static_cast<size_t>(st.st_size);
+    if(fileSize==0)
+    {
+        ::close(fd);
+        out.clear();
+        return true;
+    }
+    void *buf=nullptr;
+    size_t readLen=fileSize;
+    bool ownBuf=false;
+    if(useDirect)
+    {
+        //O_DIRECT demands an aligned buffer and a block-multiple length; the
+        //kernel returns the real byte count (<= fileSize) at EOF.
+        const size_t ALIGN=4096;
+        readLen=((fileSize+ALIGN-1)/ALIGN)*ALIGN;
+        if(posix_memalign(&buf,ALIGN,readLen)!=0)
+        {
+            ::close(fd);
+            return false;
+        }
+        ownBuf=true;
+    }
+    else
+    {
+        out.resize(fileSize);
+        buf=out.data();
+    }
+    struct io_uring_sqe *sqe=io_uring_get_sqe(&cc_file_ring);
+    if(sqe==nullptr)
+    {
+        if(ownBuf)
+            free(buf);
+        ::close(fd);
+        return false;
+    }
+    io_uring_prep_read(sqe,fd,buf,static_cast<unsigned>(readLen),0);
+    if(io_uring_submit_and_wait(&cc_file_ring,1)<0)
+    {
+        if(ownBuf)
+            free(buf);
+        ::close(fd);
+        return false;
+    }
+    struct io_uring_cqe *cqe=nullptr;
+    if(io_uring_wait_cqe(&cc_file_ring,&cqe)<0 || cqe==nullptr)
+    {
+        if(ownBuf)
+            free(buf);
+        ::close(fd);
+        return false;
+    }
+    const int res=cqe->res;
+    io_uring_cqe_seen(&cc_file_ring,cqe);
+    ::close(fd);
+    if(res<0)
+    {
+        if(ownBuf)
+            free(buf);
+        return false;
+    }
+    const size_t got=static_cast<size_t>(res);
+    if(useDirect)
+    {
+        const size_t copyLen=(got<fileSize)?got:fileSize;
+        out.assign(static_cast<char *>(buf),static_cast<char *>(buf)+copyLen);
+        free(buf);
+    }
+    else
+    {
+        if(got<fileSize)
+            out.resize(got);
+    }
+    return true;
+}
+
+// Whole-file WRITE for FILE_DB saves (character/account/server/clan), routed
+// through cc_file_ring — the SAME ring as reads (O_DIRECT when the IOPOLL
+// opt-in is on, else buffered). CRASH-SAFE via write-to-temp + atomic rename:
+// the bytes are written to a sibling "<dir>/.<name>.tmp", any O_DIRECT block
+// padding is trimmed on the TEMP with ftruncate (never the target), then the
+// temp is rename(2)'d over the target. A kill/crash anywhere leaves either the
+// OLD target intact or the new complete one — never the half-written / padded
+// state that previously corrupted reloads. The leading '.' keeps the temp out
+// of the database/server/clans readdir scan (LocalClientHandlerClan skips
+// '.'-prefixed entries). Returns false on ANY problem so the caller falls back
+// to a blocking rewrite. No fsync: gives atomicity (no torn file), matching the
+// previous ofstream-close durability rather than power-loss durability.
+// Signature matches FacilityLibGeneral::WholeFileRingWriter.
+static bool cc_uring_write_whole_file(const std::string &path,const char *data,size_t size)
+{
+    if(!cc_ensure_file_ring())
+        return false;
+    //temp = "<dir>/.<basename>.tmp" so directory scans (which skip '.'-prefixed
+    //names) never see the in-flight file.
+    std::string tmp;
+    const std::string::size_type slash=path.rfind('/');
+    if(slash==std::string::npos)
+        tmp="."+path+".tmp";
+    else
+        tmp=path.substr(0,slash+1)+"."+path.substr(slash+1)+".tmp";
+    int openFlags=O_WRONLY|O_CREAT|O_TRUNC;
+#if CC_FILE_RING_IOPOLL
+    bool useDirect=true;
+    openFlags|=O_DIRECT;
+#else
+    bool useDirect=false;
+#endif
+    int fd=::open(tmp.c_str(),openFlags,0644);
+#if CC_FILE_RING_IOPOLL
+    if(fd<0 && (errno==EINVAL || errno==ENOTSUP))
+    {
+        //filesystem rejects O_DIRECT (tmpfs): a buffered fd can't be polled by
+        //an IOPOLL ring, so the write below fails and the caller drops to the
+        //blocking path. Acceptable (tmpfs is the RAM-DB case).
+        useDirect=false;
+        fd=::open(tmp.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0644);
+    }
+#endif
+    if(fd<0)
+        return false;
+    bool ok=true;
+    if(size>0)
+    {
+        void *buf=nullptr;
+        size_t writeLen=size;
+        bool ownBuf=false;
+        if(useDirect)
+        {
+            //O_DIRECT: aligned buffer, block-multiple length (padded on the
+            //TEMP only, trimmed below before the rename).
+            const size_t ALIGN=4096;
+            writeLen=((size+ALIGN-1)/ALIGN)*ALIGN;
+            if(posix_memalign(&buf,ALIGN,writeLen)!=0)
+            {
+                ::close(fd);
+                ::unlink(tmp.c_str());
+                return false;
+            }
+            memcpy(buf,data,size);
+            if(writeLen>size)
+                memset(static_cast<char *>(buf)+size,0,writeLen-size);
+            ownBuf=true;
+        }
+        else
+            buf=const_cast<char *>(data);
+        struct io_uring_sqe *sqe=io_uring_get_sqe(&cc_file_ring);
+        if(sqe==nullptr)
+            ok=false;
+        else
+        {
+            io_uring_prep_write(sqe,fd,buf,static_cast<unsigned>(writeLen),0);
+            if(io_uring_submit_and_wait(&cc_file_ring,1)<0)
+                ok=false;
+            else
+            {
+                struct io_uring_cqe *cqe=nullptr;
+                if(io_uring_wait_cqe(&cc_file_ring,&cqe)<0 || cqe==nullptr)
+                    ok=false;
+                else
+                {
+                    const int res=cqe->res;
+                    io_uring_cqe_seen(&cc_file_ring,cqe);
+                    if(!(res>=0 && static_cast<size_t>(res)==writeLen))
+                        ok=false;
+                }
+            }
+        }
+        if(ownBuf)
+            free(buf);
+        if(ok && useDirect && ftruncate(fd,static_cast<off_t>(size))!=0)
+            ok=false;
+    }
+    ::close(fd);
+    if(!ok)
+    {
+        ::unlink(tmp.c_str());
+        return false;
+    }
+    //atomic publish: target is now either the old file or the new complete one.
+    if(::rename(tmp.c_str(),path.c_str())!=0)
+    {
+        ::unlink(tmp.c_str());
+        return false;
+    }
+    return true;
+}
+#endif
+
 bool EventLoop::init()
 {
 #if defined(CATCHCHALLENGER_SELECT)
@@ -271,14 +543,6 @@ bool EventLoop::init()
 #ifdef CATCHCHALLENGER_IO_URING_SQPOLL
     params.flags|=IORING_SETUP_SQPOLL;
     params.sq_thread_idle=2000;
-#endif
-    //CATCHCHALLENGER_IO_URING_IOPOLL: kernel busy-polls CQEs instead of
-    //waiting for interrupts.  Reduces per-packet interrupt cost on storage
-    //paths (O_DIRECT, NVMe); safe on single-core (no extra thread spawned).
-    //Effective only when O_DIRECT file ops go through the ring; network
-    //sockets ignore it silently.
-#ifdef CATCHCHALLENGER_IO_URING_IOPOLL
-    params.flags|=IORING_SETUP_IOPOLL;
 #endif
     //CATCHCHALLENGER_IO_URING_COOP_TASKRUN: kernel never signals userspace
     //to run task work; work drains only on the next io_uring_enter() call.
@@ -403,6 +667,12 @@ bool EventLoop::init()
                   << ", async-send-chain=off (deferred)"
                   << std::endl;
     }
+    //Route whole-file reads (datapack load, client datapack sync) and FILE_DB
+    //whole-file writes (character/account/server saves) through the dedicated
+    //file ring. Installed only for the io_uring backend; select/poll/epoll and
+    //the client keep the blocking fopen/fread/fwrite path (hooks stay null).
+    CatchChallenger::FacilityLibGeneral::wholeFileRingReader=&cc_uring_read_whole_file;
+    CatchChallenger::FacilityLibGeneral::wholeFileRingWriter=&cc_uring_write_whole_file;
     efd=0;
     return true;
 #else

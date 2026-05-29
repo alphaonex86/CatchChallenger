@@ -47,6 +47,29 @@ public:
     static bool isFile(const std::string& file);
     static bool isDir(const std::string& folder);
     static std::vector<char> readAllFileAndClose(FILE * file);
+    // Read an entire file into memory. Default is blocking fopen/fread; if a
+    // backend has installed wholeFileRingReader (the io_uring server does at
+    // startup) the read is routed through its ring instead, falling back to
+    // the blocking path whenever the ring reader declines or fails. ok is set
+    // false only when the file cannot be opened at all.
+    static std::vector<char> readWholeFile(const std::string &path,bool &ok);
+    // Optional injected reader: returns true when it has fully read path into
+    // out (readWholeFile then returns out), false to request the blocking
+    // fallback. Lets server/cli route file reads through io_uring without
+    // general/base depending on liburing. Null on client/select/epoll/poll.
+    typedef bool (*WholeFileRingReader)(const std::string &path,std::vector<char> &out);
+    static WholeFileRingReader wholeFileRingReader;
+    // Write size bytes of data to path, replacing it whole (the FILE_DB save
+    // pattern: compose-in-memory then truncate-rewrite). Default is blocking
+    // fopen("wb")+fwrite; if wholeFileRingWriter is installed (io_uring server)
+    // the write is routed through its ring, falling back to blocking whenever
+    // the ring writer declines or fails. Returns true on success.
+    static bool writeWholeFile(const std::string &path,const char *data,size_t size);
+    // Optional injected writer: returns true when it has fully written the
+    // file, false to request the blocking fallback. Same injection model as
+    // wholeFileRingReader. Null on client/select/epoll/poll.
+    typedef bool (*WholeFileRingWriter)(const std::string &path,const char *data,size_t size);
+    static WholeFileRingWriter wholeFileRingWriter;
     static uint32_t fileSize(FILE * file);
     static std::string getSuffix(const std::string& fileName);
     static std::string getSuffixAndValidatePathFromFS(const std::string& fileName);
