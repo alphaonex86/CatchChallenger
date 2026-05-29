@@ -34,6 +34,15 @@ public:
     //to prevent allocate memory
     static char tempBigBufferForChanges[1+4+1+255*(1+1+1+1)];
     static char tempBigBufferForRemove[1+4+1+255];
+    // Dense buffer for pre-composed player states (x, y, db_id, direction)
+    // aligned same as SendedStatus for fast comparison
+    struct DensePlayerState {
+        uint32_t db_id;
+        COORD_TYPE x;
+        COORD_TYPE y;
+        Direction direction;
+    };
+    static DensePlayerState tempDenseBuffer[255];
 
     /* WHY HERE?
      * Server use ServerMap, Client use Common Map

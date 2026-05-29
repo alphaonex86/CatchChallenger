@@ -58,6 +58,7 @@ using namespace CatchChallenger;
 char MapVisibilityAlgorithm::tempBigBufferForChanges[];
 char MapVisibilityAlgorithm::tempBigBufferForRemove[];
 std::vector<MapVisibilityAlgorithm> MapVisibilityAlgorithm::flat_map_list;
+MapVisibilityAlgorithm::DensePlayerState MapVisibilityAlgorithm::tempDenseBuffer[255];
 
 MapVisibilityAlgorithm::MapVisibilityAlgorithm()
 {
@@ -295,6 +296,36 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
         return;
     }
 
+    // Compose dense buffer of current player states ONCE per call: the map's
+    // current x/y/db_id/direction snapshot is identical for every recipient,
+    // so build it once (N scattered Client reads) and reuse it across all N
+    // recipient diffs (N contiguous cache-friendly reads each) instead of
+    // re-reading the scattered Client objects N*N times. Map state does not
+    // change during the loop below (no insert/remove, only sends), so the
+    // snapshot stays valid for the whole call.
+    const size_t dense_size=std::min(map_clients_id.size(),static_cast<size_t>(255));
+    unsigned int dense_idx=0;
+    while(dense_idx<dense_size)
+    {
+        const PLAYER_INDEX_FOR_CONNECTED &oid=map_clients_id.at(dense_idx);
+        if(oid!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+        {
+            const Client &c=ClientList::list->at(oid);
+            #ifdef CATCHCHALLENGER_TESTING
+            assertXYInRange(c.getX(),c.getY(),"min_network_dense_build");
+            #endif
+            tempDenseBuffer[dense_idx].db_id=c.getPlayerId();
+            tempDenseBuffer[dense_idx].x=c.getX();
+            tempDenseBuffer[dense_idx].y=c.getY();
+            tempDenseBuffer[dense_idx].direction=c.getLastDirection();
+        }
+        else
+        {
+            tempDenseBuffer[dense_idx].db_id=0xffffffff;
+        }
+        dense_idx++;
+    }
+
     unsigned int index_client=0;
     while(index_client<map_clients_id.size())
     {
@@ -326,21 +357,17 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                         }
                         clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                        //populate sendedStatus with current state of all visible players
-                        clientWithMap.sendedStatus.resize(std::min(map_clients_id.size(),static_cast<size_t>(255)));
+                        //populate sendedStatus from the shared dense buffer (current state)
+                        clientWithMap.sendedStatus.resize(dense_size);
                         for(unsigned int ss=0;ss<clientWithMap.sendedStatus.size();ss++)
                         {
-                            const PLAYER_INDEX_FOR_CONNECTED &oid=map_clients_id.at(ss);
-                            if(oid!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+                            const DensePlayerState &dense=tempDenseBuffer[ss];
+                            if(dense.db_id!=0xffffffff)
                             {
-                                const Client &c=ClientList::list->at(oid);
-                                #ifdef CATCHCHALLENGER_TESTING
-                                assertXYInRange(c.getX(),c.getY(),"min_network_path1_sendedStatus");
-                                #endif
-                                clientWithMap.sendedStatus[ss].characterId_db=c.getPlayerId();
-                                clientWithMap.sendedStatus[ss].x=c.getX();
-                                clientWithMap.sendedStatus[ss].y=c.getY();
-                                clientWithMap.sendedStatus[ss].direction=c.getLastDirection();
+                                clientWithMap.sendedStatus[ss].characterId_db=dense.db_id;
+                                clientWithMap.sendedStatus[ss].x=dense.x;
+                                clientWithMap.sendedStatus[ss].y=dense.y;
+                                clientWithMap.sendedStatus[ss].direction=dense.direction;
                             }
                             else
                             {
@@ -362,7 +389,8 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                         uint32_t posOutput=0;
                         posOutput+=1+4+1+2+1;//reserve [0..8] for 0x6B header (used only if insertCount>0)
 
-                        //scan all slots, compare with sendedStatus to detect differences
+                        //compare the shared dense buffer (built once above) against this
+                        //recipient's sendedStatus to detect inserts/changes/removes
                         unsigned int index=0;
                         while(index<map_clients_id.size() && index<255)
                         {
@@ -375,14 +403,14 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             if(index<clientWithMap.sendedStatus.size())
                             {
                                 ClientWithMap::SendedStatus &c_stat=clientWithMap.sendedStatus[index];
-                                const PLAYER_INDEX_FOR_CONNECTED &other_client_id=map_clients_id.at(index);
-                                if(other_client_id!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+                                const DensePlayerState &dense=tempDenseBuffer[index];
+                                if(dense.db_id!=0xffffffff)
                                 {
-                                    const Client &other_client=ClientList::list->at(other_client_id);
+                                    //slot has a client
                                     //same character in this slot as last tick
-                                    if(other_client.getPlayerId()==c_stat.characterId_db)
+                                    if(dense.db_id==c_stat.characterId_db)
                                     {
-                                        if(c_stat.direction==other_client.getLastDirection() && c_stat.x==other_client.getX() && c_stat.y==other_client.getY())
+                                        if(c_stat.direction==dense.direction && c_stat.x==dense.x && c_stat.y==dense.y)
                                         {
                                         }//no change, nothing to send
                                         else
@@ -390,13 +418,13 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                             //position or direction changed -> send 0x66 change entry
                                             {
                                                 #ifdef CATCHCHALLENGER_TESTING
-                                                assertXYInRange(other_client.getX(),other_client.getY(),"min_network_path2_change");
+                                                assertXYInRange(dense.x,dense.y,"min_network_path2_change");
                                                 #endif
                                                 //only send partial changes: slot + x + y + direction (4 bytes per entry)
                                                 MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)]=static_cast<uint8_t>(index);
-                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1]=static_cast<uint8_t>(other_client.getX());
-                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1]=static_cast<uint8_t>(other_client.getY());
-                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1+1]=static_cast<uint8_t>(other_client.getLastDirection());
+                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1]=static_cast<uint8_t>(dense.x);
+                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1]=static_cast<uint8_t>(dense.y);
+                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1+1]=static_cast<uint8_t>(dense.direction);
                                                 changesCount++;
                                             }
                                         }
@@ -407,11 +435,11 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                         //full insert other player on map (another player replaced the old one)
                                         {
                                             #ifdef CATCHCHALLENGER_TESTING
-                                            assertXYInRange(other_client.getX(),other_client.getY(),"min_network_path2_replaced");
+                                            assertXYInRange(dense.x,dense.y,"min_network_path2_replaced");
                                             #endif
                                             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;//local slot
                                             posOutput+=1;
-                                            posOutput+=playerToFullInsert(ClientList::list->at(other_client_id),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                                            posOutput+=playerToFullInsert(ClientList::list->at(map_clients_id.at(index)),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                                             insertCount++;
                                         }
                                     }
@@ -432,18 +460,18 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             //slot is beyond sendedStatus range -> new slot appeared (map grew)
                             else
                             {
-                                const PLAYER_INDEX_FOR_CONNECTED &other_client_id=map_clients_id.at(index);
-                                if(other_client_id!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+                                const DensePlayerState &dense=tempDenseBuffer[index];
+                                if(dense.db_id!=0xffffffff)
                                 {
                                     //new player in a slot we haven't seen before -> full insert
                                     {
                                         #ifdef CATCHCHALLENGER_TESTING
-                                        const Client &nc=ClientList::list->at(other_client_id);
+                                        const Client &nc=ClientList::list->at(map_clients_id.at(index));
                                         assertXYInRange(nc.getX(),nc.getY(),"min_network_path2_beyond");
                                         #endif
                                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;//local slot
                                         posOutput+=1;
-                                        posOutput+=playerToFullInsert(ClientList::list->at(other_client_id),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                                        posOutput+=playerToFullInsert(ClientList::list->at(map_clients_id.at(index)),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                                         insertCount++;
                                     }
                                 }
@@ -499,21 +527,17 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                 posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                             }
                             clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                            //update sendedStatus with current state after send so next tick can detect differences
-                            clientWithMap.sendedStatus.resize(std::min(map_clients_id.size(),static_cast<size_t>(255)));
+                            //update sendedStatus from the shared dense buffer so next tick can detect differences
+                            clientWithMap.sendedStatus.resize(dense_size);
                             for(unsigned int ss=0;ss<clientWithMap.sendedStatus.size();ss++)
                             {
-                                const PLAYER_INDEX_FOR_CONNECTED &oid=map_clients_id.at(ss);
-                                if(oid!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+                                const DensePlayerState &dense=tempDenseBuffer[ss];
+                                if(dense.db_id!=0xffffffff)
                                 {
-                                    const Client &c=ClientList::list->at(oid);
-                                    #ifdef CATCHCHALLENGER_TESTING
-                                    assertXYInRange(c.getX(),c.getY(),"min_network_path2_resync");
-                                    #endif
-                                    clientWithMap.sendedStatus[ss].characterId_db=c.getPlayerId();
-                                    clientWithMap.sendedStatus[ss].x=c.getX();
-                                    clientWithMap.sendedStatus[ss].y=c.getY();
-                                    clientWithMap.sendedStatus[ss].direction=c.getLastDirection();
+                                    clientWithMap.sendedStatus[ss].characterId_db=dense.db_id;
+                                    clientWithMap.sendedStatus[ss].x=dense.x;
+                                    clientWithMap.sendedStatus[ss].y=dense.y;
+                                    clientWithMap.sendedStatus[ss].direction=dense.direction;
                                 }
                                 else
                                     clientWithMap.sendedStatus[ss].characterId_db=0xffffffff;
