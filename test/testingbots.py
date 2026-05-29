@@ -416,10 +416,101 @@ def is_error_line(line):
     return False
 
 
+# gdb path (None = not available; the bot then runs untraced).
+_GDB = shutil.which("gdb")
+
+
+def _write_bot_gdb_cmd(gdb_log_path, out_path):
+    """Write a gdb --batch command file that catches SIGABRT/SIGSEGV/SIGBUS,
+    writes a `bt full` (plus `info frame`) to gdb_log_path via set-logging,
+    then quits.  Logging is enabled only inside the catch commands block so
+    normal startup / "Starting program: ..." messages don't pollute the log
+    — only the crash backtrace does.
+
+    SIGINT is passed through to the inferior without stopping so any caller
+    that signals the wrapped process for clean shutdown still works."""
+    with open(out_path, "w") as f:
+        f.write("set pagination off\n")
+        f.write("set height 0\n")
+        f.write("set width 0\n")
+        f.write("catch signal SIGABRT SIGSEGV SIGBUS\n")
+        f.write("commands\n")
+        f.write(f"  set logging file {gdb_log_path}\n")
+        f.write("  set logging overwrite on\n")
+        f.write("  set logging enabled on\n")
+        f.write("  bt full\n")
+        f.write("  info frame\n")
+        f.write("  set logging enabled off\n")
+        f.write("  quit\n")
+        f.write("end\n")
+        f.write("handle SIGINT pass nostop noprint\n")
+        f.write("run\n")
+
+
+def _bot_should_use_gdb(diag):
+    """gdb does NOT compose with valgrind / ASAN / UBSAN — valgrind runs the
+    binary on its own synthetic CPU (ptrace conflicts), and sanitizers
+    install their own signal handlers that pre-empt SIGABRT before gdb sees
+    it.  Profilers (callgrind, perf record) need clean signal flow too.
+    Skip gdb entirely in those modes; otherwise wrap when gdb is on PATH."""
+    if _GDB is None:
+        return False
+    if diagnostic.is_active(diag):
+        return False
+    return True
+
+
+def _bot_dump_crash_streams(label, stdout_lines, stderr_lines, gdb_log,
+                            lock=None):
+    """Print the gdb backtrace (if any) followed by the last 50 lines of
+    bot std::cout and bot std::cerr.  `lock`, if given, protects the
+    line lists against the still-running reader threads."""
+    def _snap(lst):
+        if lock is None:
+            return list(lst[-50:])
+        with lock:
+            return list(lst[-50:])
+    if gdb_log and os.path.isfile(gdb_log):
+        try:
+            with open(gdb_log, "r", errors="replace") as fh:
+                bt = fh.read().strip()
+        except Exception:
+            bt = ""
+        if bt:
+            print(f"{C_RED}[{label}]{C_RESET} --- GDB BACKTRACE ---")
+            idx = 0
+            bt_lines = bt.splitlines()
+            while idx < len(bt_lines):
+                print(f"  | {bt_lines[idx]}")
+                idx += 1
+    out_tail = _snap(stdout_lines)
+    err_tail = _snap(stderr_lines)
+    print(f"{C_RED}[{label}]{C_RESET} --- std::cout (last 50 lines) ---")
+    idx = 0
+    while idx < len(out_tail):
+        print(f"  | {out_tail[idx]}")
+        idx += 1
+    print(f"{C_RED}[{label}]{C_RESET} --- std::cerr (last 50 lines) ---")
+    idx = 0
+    while idx < len(err_tail):
+        print(f"  | {err_tail[idx]}")
+        idx += 1
+
+
 def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
             action_timeout=BOT_ACTION_TIMEOUT):
     """Run bot for the given duration. Track crashes, errors, and action inactivity.
-    Returns (crashed, errors_found, action_timed_out, last_action_age_s)."""
+    Returns (crashed, errors_found, action_timed_out, last_action_age_s).
+
+    When gdb is available AND we're NOT under valgrind/ASAN/UBSAN/profile
+    (those install their own signal handlers / ptrace -- gdb can't compose),
+    the bot is wrapped in `gdb --batch` with catchpoints on SIGABRT/SIGSEGV
+    /SIGBUS, so any crash produces a `bt full` backtrace written to a
+    per-run log file.  On crash / map-timeout / early-fail the backtrace
+    is dumped together with the last 50 lines of bot std::cout and the
+    last 50 lines of bot std::cerr (kept as two separate streams since
+    qDebug / std::cerr / abort-tracing go to fd 2, while the bot's
+    progress logging goes to fd 1)."""
     binary = os.path.join(build_dir, bin_name)
     if not os.path.isfile(binary):
         log_fail(label, f"binary not found: {binary}")
@@ -441,14 +532,38 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
         env[k] = v
     wrapper = diagnostic.runtime_wrapper(DIAG)
 
-    bot_args = NICE_PREFIX + wrapper + [binary] + list(args)
+    # gdb integration: only when no other instrumenter owns SIGABRT.  The
+    # command file + log file are dropped under build_dir so a parallel run
+    # against a different build_dir doesn't share them.
+    use_gdb = _bot_should_use_gdb(DIAG) and not wrapper
+    gdb_log = None
+    if use_gdb:
+        gdb_log = os.path.join(build_dir, "bot-gdb-crash.log")
+        gdb_cmd = os.path.join(build_dir, "bot-gdb.cmd")
+        try: os.remove(gdb_log)
+        except FileNotFoundError: pass
+        _write_bot_gdb_cmd(gdb_log, gdb_cmd)
+        bin_with_wrap = ["gdb", "-q", "--batch", f"--command={gdb_cmd}",
+                         "--args", binary] + list(args)
+        log_info(f"wrapping bot under gdb (log: {gdb_log})")
+    else:
+        bin_with_wrap = [binary] + list(args)
+
+    bot_args = NICE_PREFIX + wrapper + bin_with_wrap
     diagnostic.record_cmd(bot_args, build_dir)
     proc = subprocess.Popen(
         bot_args, cwd=build_dir,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
         preexec_fn=process_helpers.setsid_and_pdeathsig)
 
     lock = threading.Lock()
+    # Two streams kept separately for the crash-tail dump, plus a
+    # combined output_lines for any downstream consumer that wants a
+    # merged view in arrival order.  Existing pattern detectors run on
+    # every line regardless of stream — qDebug ("stateChanged(N)") goes
+    # to stderr but it's the same signal as stdout's "all_player_on_map()".
+    stdout_lines = []
+    stderr_lines = []
     output_lines = []
     error_lines = []
     on_map = threading.Event()
@@ -463,43 +578,47 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
     early_fail = [None]
     seen_state1 = [False]
 
-    def reader():
+    def consume(line):
+        # detect on-map
+        if "all_player_on_map()" in line:
+            on_map.set()
+            with lock:
+                last_action_time[0] = time.monotonic()
+        # detect non-move action
+        if is_action_line(line):
+            with lock:
+                last_action_time[0] = time.monotonic()
+        # detect errors
+        if is_error_line(line):
+            with lock:
+                error_lines.append(line)
+        # Early-FAIL signals — bot cannot recover from these.
+        if early_fail[0] is None:
+            if "Connection refused by the server" in line:
+                early_fail[0] = "Connection refused by the server"
+            elif "stateChanged(1)" in line:
+                seen_state1[0] = True
+            elif seen_state1[0] and "stateChanged(0)" in line:
+                early_fail[0] = ("stateChanged(0) after stateChanged(1) — "
+                                 "client connected then dropped before map")
+
+    def reader(stream, sink):
         while True:
-            raw = proc.stdout.readline()
+            raw = stream.readline()
             if not raw:
                 break
             line = raw.decode(errors="replace").rstrip("\n")
             with lock:
+                sink.append(line)
                 output_lines.append(line)
+            consume(line)
 
-            # detect on-map
-            if "all_player_on_map()" in line:
-                on_map.set()
-                with lock:
-                    last_action_time[0] = time.monotonic()
-
-            # detect non-move action
-            if is_action_line(line):
-                with lock:
-                    last_action_time[0] = time.monotonic()
-
-            # detect errors
-            if is_error_line(line):
-                with lock:
-                    error_lines.append(line)
-
-            # Early-FAIL signals — bot cannot recover from these.
-            if early_fail[0] is None:
-                if "Connection refused by the server" in line:
-                    early_fail[0] = "Connection refused by the server"
-                elif "stateChanged(1)" in line:
-                    seen_state1[0] = True
-                elif seen_state1[0] and "stateChanged(0)" in line:
-                    early_fail[0] = ("stateChanged(0) after stateChanged(1) — "
-                                     "client connected then dropped before map")
-
-    reader_thread = threading.Thread(target=reader, daemon=True)
-    reader_thread.start()
+    reader_out = threading.Thread(target=reader,
+                                  args=(proc.stdout, stdout_lines), daemon=True)
+    reader_err = threading.Thread(target=reader,
+                                  args=(proc.stderr, stderr_lines), daemon=True)
+    reader_out.start()
+    reader_err.start()
 
     # Wait for bot to reach map (60s like the bot itself), but bail
     # immediately if the reader thread caught a connection-refused or
@@ -514,10 +633,8 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
             log_fail(label, f"client gave up: {early_fail[0]}")
         else:
             log_fail(label, "timeout waiting for bot to reach map (60s)")
-        with lock:
-            tail = output_lines[-50:]
-        for l in tail:
-            print(f"  | {l}")
+        _bot_dump_crash_streams(label, stdout_lines, stderr_lines,
+                                gdb_log, lock=lock)
         try:
             os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
         except ProcessLookupError:
@@ -580,7 +697,15 @@ def run_bot(build_dir, bin_name, args, label, duration=BOT_RUN_DURATION,
         # process exited on its own — that's a crash
         crashed[0] = True
 
-    reader_thread.join(timeout=5)
+    reader_out.join(timeout=5)
+    reader_err.join(timeout=5)
+
+    # On crash or action-timeout, dump the gdb backtrace (if any) plus
+    # the last 50 lines of std::cout and std::cerr — the caller already
+    # logs the FAIL banner, this gives the actual context.
+    if crashed[0] or action_timeout_detected[0]:
+        _bot_dump_crash_streams(label, stdout_lines, stderr_lines,
+                                gdb_log, lock=lock)
 
     with lock:
         errs = list(error_lines)

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include "MainWindow.h"
 #include <iostream>
+#include "../libbot/BotAbort.h"
 
 #ifdef CATCHCHALLENGER_HARDENED
 void BotTargetList::checkDuplicatePointOnMap_Item(const std::map<std::pair<uint8_t, uint8_t>, MapServerMini::ItemOnMap> &pointOnMap_Item)
@@ -20,7 +21,7 @@ void BotTargetList::checkDuplicatePointOnMap_Item(const std::map<std::pair<uint8
     {
         const MapServerMini::ItemOnMap &itemOnMap=item.second;
         if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
-            abort();
+            BOT_ABORT();
         known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
     }
 }
@@ -57,7 +58,7 @@ void BotTargetList::updatePlayerStep()
         CatchChallenger::Api_protocol_Qt *api=n.first;
         ActionsAction::Player &player=actionsAction->clientList[api];
         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
-            abort();
+            BOT_ABORT();
         if(api->getCaracterSelected())
         {
             CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
@@ -71,7 +72,7 @@ void BotTargetList::updatePlayerStep()
                     {
                         haveChange=true;
                         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
-                            abort();
+                            BOT_ABORT();
                         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
                         const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
 
@@ -169,7 +170,7 @@ void BotTargetList::updatePlayerStep()
                         {
                             const uint16_t &currentCodeZone=playerMap->step.at(1).map[player.x+player.y*playerMap->width];
                             if(currentCodeZone==0)
-                                abort();
+                                BOT_ABORT();
                             const MapServerMini::BlockObject * blockObject=playerMap->step.at(1).layers.at(currentCodeZone-1).blockObject;
 
                             std::cout << "The player is into the zone: " << playerMap->map_file << " Block " << std::to_string(blockObject->id+1) << std::endl;
@@ -200,7 +201,7 @@ void BotTargetList::updatePlayerStep()
                                         ActionsAction::move(api,newDirectionToMove,&playerMap,&player.x,&player.y,true,true);
                                         //enter into new zone, drop the entry
                                         if(player.target.bestPath.empty())
-                                            abort();
+                                            BOT_ABORT();
                                         player.target.bestPath.erase(player.target.bestPath.cbegin());
                                         player.mapId=playerMap->id;
                                         ActionsAction::checkOnTileEvent(player);
@@ -208,7 +209,7 @@ void BotTargetList::updatePlayerStep()
                                     else
                                     {
                                         if(player.target.bestPath.size()>2)
-                                            abort();
+                                            BOT_ABORT();
                                         std::cerr << "The current case is: " << std::to_string(player.x) << "," << std::to_string(player.y) << " can't do the next step for internal block change" << std::endl;
                                         player.target.bestPath.clear();
                                     }
@@ -234,7 +235,7 @@ void BotTargetList::updatePlayerStep()
                                         api->newDirection(CatchChallenger::Direction::Direction_look_at_left);
                                     break;
                                     default:
-                                    abort();
+                                    BOT_ABORT();
                                     break;
                                 }
                                 break;
@@ -250,10 +251,10 @@ void BotTargetList::updatePlayerStep()
                         }
 
                         if(playerMap->step.size()<2)
-                            abort();
+                            BOT_ABORT();
                         const uint16_t &currentCodeZone=playerMap->step.at(1).map[player.x+player.y*playerMap->width];
                         if(currentCodeZone==0)
-                            abort();
+                            BOT_ABORT();
                         MapServerMini::BlockObject * blockObject=playerMap->step.at(1).layers.at(currentCodeZone-1).blockObject;
 
                         if(!player.target.bestPath.empty())
@@ -268,7 +269,7 @@ void BotTargetList::updatePlayerStep()
                                 //if the target is on the same block
                                 const MapServerMini::BlockObject * nextBlock=player.target.bestPath.front();
                                 if(blockObject->links.find(nextBlock)==blockObject->links.cend())
-                                    abort();
+                                    BOT_ABORT();
                                 const std::vector<MapServerMini::BlockObject::LinkCondition> &linkConditions=blockObject->links.at(nextBlock).linkConditions;
                                 unsigned int conditionIndex=0;
                                 while(conditionIndex<linkConditions.size())
@@ -278,7 +279,7 @@ void BotTargetList::updatePlayerStep()
                                     {
                                         pointsList=condition.points;
                                         if(pointsList.empty())
-                                            abort();
+                                            BOT_ABORT();
                                         unsigned int index=0;
                                         while(index<pointsList.size())
                                         {
@@ -324,7 +325,7 @@ void BotTargetList::updatePlayerStep()
                                             destinationIndexSelected,
                                             &ok);
                                 if(!ok)
-                                    abort();
+                                    BOT_ABORT();
                                 player.target.linkPoint=pointsList.at(destinationIndexSelected);
                                 player.target.localStep=returnPath;
 
@@ -372,7 +373,7 @@ void BotTargetList::updatePlayerStep()
                                     pointsList.push_back(linkPoint);
                                     std::cout << player.api->getPseudo() << ", player.target.bestPath.empty(): blockObject!=player.target.blockObject && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster" << std::endl;
                                     if(pointsList.size()!=destinations.size())
-                                        abort();
+                                        BOT_ABORT();
                                     uint8_t o=api->getDirection();
                                     while(o>4)
                                         o-=4;
@@ -385,7 +386,7 @@ void BotTargetList::updatePlayerStep()
                                                 destinationIndexSelected,
                                                 &ok);
                                     if(!ok)
-                                        abort();
+                                        BOT_ABORT();
                                     player.target.linkPoint=pointsList.at(destinationIndexSelected);
                                     player.target.localStep=returnPath;
 
@@ -428,17 +429,17 @@ void BotTargetList::updatePlayerStep()
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
                     {
                         std::cerr << "actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend(): " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     const std::string &mapStdString=actionsAction->id_map_to_map.at(player.mapId);
                     CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
@@ -449,7 +450,7 @@ void BotTargetList::updatePlayerStep()
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     switch(api->getDirection())
                     {
@@ -471,19 +472,19 @@ void BotTargetList::updatePlayerStep()
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     if(!ActionsAction::moveWithoutTeleport(api,direction,&mapServer,&x,&y,false,false))
                     {
                         std::cerr << "Unable to do the last move before action: " << mapServer->map_file << "(" << std::to_string(x) << "," << std::to_string(y) << ") to " << std::to_string(direction) << std::endl;
                         ActionsAction::moveWithoutTeleport(api,direction,&mapServer,&x,&y,false,false);
-                        abort();
+                        BOT_ABORT();
                     }
 
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
                     std::pair<uint8_t,uint8_t> p(x,y);
@@ -496,18 +497,18 @@ void BotTargetList::updatePlayerStep()
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     if(CatchChallenger::MoveOnTheMap::getLedge(*mapServer,player.x,player.y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
                     {
                         std::cerr << "can't api->stopMove() on Ledge" << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     api->stopMove();
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     switch(player.target.type)
                     {
@@ -520,7 +521,7 @@ void BotTargetList::updatePlayerStep()
                                 {
                                     const MapServerMini::ItemOnMap &itemOnMap=item.second;
                                     if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
-                                        abort();
+                                        BOT_ABORT();
                                     known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                 }
                             }
@@ -559,12 +560,12 @@ void BotTargetList::updatePlayerStep()
                             if(!found)
                             {
                                 std::cerr << "On the next tile don't found the montioned item on map" << std::endl;
-                                abort();
+                                BOT_ABORT();
                             }
                             if(!alreadyTake)
                             {
                                 std::cerr << "On the next tile don't found the montioned item on map" << std::endl;
-                                abort();
+                                BOT_ABORT();
                             }//can be take by auto take*/
                         }
                         break;
@@ -577,7 +578,7 @@ void BotTargetList::updatePlayerStep()
                             bool haveSeedToPlant=false;
                             const uint32_t &itemId=BotTargetList::getSeedToPlant(api,&haveSeedToPlant);
                             if(!QtDatapackClientLoader::datapackLoader->has_itemToPlant(itemId))
-                                abort();
+                                BOT_ABORT();
                             const uint8_t &plant=QtDatapackClientLoader::datapackLoader->get_itemToPlant(itemId);
                             if(playerInformations.mapData[player.mapId].plants.find(p)==playerInformations.mapData[player.mapId].plants.cend())
                             {
@@ -590,14 +591,14 @@ void BotTargetList::updatePlayerStep()
                                 playerInformations.mapData[player.mapId].plants[p]=playerPlant;
                             }
                             else
-                                abort();
+                                BOT_ABORT();
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
                         {
                             //const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(player.target.extra/*itemUsed*/);
                             if(playerInformations.mapData[player.mapId].plants.find(p)==playerInformations.mapData[player.mapId].plants.cend())
-                                abort();
+                                BOT_ABORT();
                             std::cout << "collectMaturePlant(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                             api->collectMaturePlant();
                             playerInformations.mapData[player.mapId].plants.erase(p);
@@ -785,7 +786,7 @@ void BotTargetList::updatePlayerStep()
                             if(!player.api->tryCatchClient(itemToCapture))//api->useObject(item); call into it
                             {
                                 std::cerr << "!player.api->tryCatchClient(itemToCapture)" << std::endl;
-                                abort();
+                                BOT_ABORT();
                             }
                             ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture)+" for the monster "+QString::number(othermonster->monster));
                             if(api==apiSelectedClient)
@@ -839,7 +840,7 @@ void BotTargetList::updatePlayerStep()
                                 else
                                 {
                                     std::cerr << "No skill found and no rescue skill" << std::endl;
-                                    abort();
+                                    BOT_ABORT();
                                 }
                             }
                             else
@@ -877,7 +878,7 @@ void BotTargetList::updatePlayerStep()
                                     if(maxLevel==0)
                                     {
                                         std::cerr << "player.api->haveAnotherMonsterOnThePlayerToFight() && player.api->isInFight(), unable to select other monster" << std::endl;
-                                        abort();
+                                        BOT_ABORT();
                                     }
                                     if(!player.api->changeOfMonsterInFight(currentPos))
                                     {

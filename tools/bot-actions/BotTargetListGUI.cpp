@@ -5,6 +5,7 @@
 #include <chrono>
 #include <math.h>
 #include <iostream>
+#include "../libbot/BotAbort.h"
 
 std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol_Qt * const api, QListWidget *listGUI)
 {
@@ -462,7 +463,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 {
                     const MapServerMini::ItemOnMap &itemOnMap=item.second;
                     if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
-                        abort();
+                        BOT_ABORT();
                     known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
                 }
             }
@@ -975,7 +976,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_monsterDrop(mapMonster.id))
                         {
                             std::cerr << "drop not found for mapMonster.id: " << mapMonster.id << std::endl;
-                            abort();
+                            BOT_ABORT();
                         }
                         const std::vector<CatchChallenger::MonsterDrops> &drops=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_monsterDrop(mapMonster.id);
                         unsigned int indexDrop=0;
@@ -1121,7 +1122,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         if(player.targetListGlobalTarget.size()!=(uint32_t)ui->globalTargets->count())
         {
             std::cerr << "The target count not match with visual elements" << std::endl;
-            abort();
+            BOT_ABORT();
         }
 
     return itemToReturn;

@@ -10,6 +10,7 @@
 #include <vector>
 #include <iostream>
 #include <QCoreApplication>
+#include "../BotAbort.h"
 
 bool ActionsAction::preload_the_map()
 {
@@ -27,12 +28,12 @@ bool ActionsAction::preload_the_map()
     if(returnList.size()==0)
     {
         std::cerr << "No file map to list" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     if(!semi_loaded_map.empty() || flat_map_list!=NULL)
     {
         std::cerr << "preload_the_map() already call" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     //load the map
     unsigned int size=returnList.size();
@@ -138,7 +139,7 @@ bool ActionsAction::preload_the_map()
                           << "parsed due: " << "regex_search(" << fileName << ",\\.tmx$) && !regex_search("
                           << fileName << ",[\"'])"
                           << std::endl;
-                abort();
+                BOT_ABORT();
             }
         }
         index++;
@@ -536,7 +537,7 @@ bool ActionsAction::preload_the_map()
             id_map_to_map[static_cast<MapServerMini *>(map_list[map_name_to_do_id.at(index)])->id]=map_name_to_do_id.at(index);
         }
         else
-            abort();
+            BOT_ABORT();
         index++;
     }
 

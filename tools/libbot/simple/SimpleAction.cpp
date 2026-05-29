@@ -1,12 +1,13 @@
 #include "SimpleAction.h"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../BotAbort.h"
 
 SimpleAction::SimpleAction()
 {
     if(!connect(&moveTimer,&QTimer::timeout,this,&SimpleAction::doMove))
-        abort();
+        BOT_ABORT();
     if(!connect(&textTimer,&QTimer::timeout,this,&SimpleAction::doText))
-        abort();
+        BOT_ABORT();
     moveTimer.start(1000);
     textTimer.start(1000);
     purgeCpuCache();
@@ -26,7 +27,7 @@ void SimpleAction::insert_player(CatchChallenger::Api_protocol_Qt *api, const Ca
 
     SimpleBotInterface::insert_player(api,player,mapId,x,y,direction);
     if(!connect(api,&CatchChallenger::Api_protocol_Qt::new_chat_text,this,&SimpleAction::new_chat_text,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
 }
 
 void SimpleAction::purgeCpuCache()
@@ -35,7 +36,7 @@ void SimpleAction::purgeCpuCache()
     char *var=static_cast<char *>(malloc(size));
     memset(var,0,size);
     if(memcmp(var,var,size)!=0)
-        abort();
+        BOT_ABORT();
     free(var);
 }
 
@@ -80,7 +81,7 @@ void SimpleAction::doMove()
                 else
                 {
                     qDebug() << "Out of direction scope";
-                    abort();
+                    BOT_ABORT();
                 }
             }
         }

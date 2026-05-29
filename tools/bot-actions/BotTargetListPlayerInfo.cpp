@@ -7,6 +7,7 @@
 #include <chrono>
 #include <QMessageBox>
 #include <iostream>
+#include "../libbot/BotAbort.h"
 
 void BotTargetList::updatePlayerInformation()
 {
@@ -248,7 +249,7 @@ void BotTargetList::updateFightStats()
                 if(monster.level>=monsterGeneralInfo.level_to_xp.size())
                 {
                     std::cerr << "monster.level>=monsterGeneralInfo.level_to_xp.size()" << std::endl;
-                    abort();
+                    BOT_ABORT();
                 }
                 const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
                 item->setText(tr("%1, level: %2\nHP: %3/%4, XP: %5/%6\n%7")

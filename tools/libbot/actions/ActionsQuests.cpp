@@ -3,6 +3,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/FacilityLib.hpp"
+#include "../BotAbort.h"
 
 bool ActionsAction::nextStepQuest(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Quest &quest)
 {
@@ -66,7 +67,7 @@ void ActionsAction::appendReputationPoint(CatchChallenger::Api_protocol_Qt *api,
     if(!QtDatapackClientLoader::datapackLoader->has_reputationNameToId(type))
     {
         //emit error(QStringLiteral("Unknow reputation: %1").arg(type));
-        abort();
+        BOT_ABORT();
         return;
     }
     const uint8_t reputatioId=QtDatapackClientLoader::datapackLoader->get_reputationNameToId(type);

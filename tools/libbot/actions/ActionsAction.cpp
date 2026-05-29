@@ -8,15 +8,16 @@
 #include "../../client/libqtcatchchallenger/Api_client_real.hpp"
 #include "../bot-actions/BotTargetList.h"
 #include <iostream>
+#include "../BotAbort.h"
 
 ActionsAction *ActionsAction::actionsAction=NULL;
 
 ActionsAction::ActionsAction()
 {
     if(!connect(&moveTimer,&QTimer::timeout,this,&ActionsAction::doMove))
-        abort();
+        BOT_ABORT();
     if(!connect(&textTimer,&QTimer::timeout,this,&ActionsAction::doText))
-        abort();
+        BOT_ABORT();
     textTimer.start(1000);
     flat_map_list=NULL;
     loaded=0;
@@ -67,13 +68,13 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const C
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &botplayer=clientList[api];
     if(botplayer.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     //after allMapIsLoaded because is after allMapIsLoaded the api is loaded
     if(player_private_and_public_informations.public_informations.pseudo==player.pseudo)
@@ -81,7 +82,7 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const C
         botplayer.api->addPlayerMonster(player_private_and_public_informations.monsters);
         ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtnew_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
         if(!moveTimer.isActive())
             moveTimer.start(200);
 
@@ -112,13 +113,13 @@ void ActionsAction::insert_player_all(CatchChallenger::Api_protocol_Qt  *api,con
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &botplayer=clientList[api];
     if(botplayer.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     if(player.pseudo!=botplayer.api->get_player_informations().public_informations.pseudo)
     {
@@ -136,13 +137,13 @@ void ActionsAction::forcedEvent(CatchChallenger::Api_protocol_Qt  *api,const uin
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &botplayer=clientList[api];
     if(botplayer.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     botplayer.events[event]=event_value;
 }
@@ -155,13 +156,13 @@ void ActionsAction::newRandomNumber_slot(const std::string &data)
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &botplayer=clientList[api];
     if(botplayer.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     botplayer.api->newRandomNumber(data);
 }
@@ -187,13 +188,13 @@ void ActionsAction::setEvents(CatchChallenger::Api_protocol_Qt  *api, const std:
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &botplayer=clientList[api];
     if(botplayer.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     botplayer.events.clear();
     unsigned int index=0;
@@ -233,13 +234,13 @@ void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol_Qt  *api
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &botplayer=clientList[api];
     if(botplayer.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     botplayer.visiblePlayers.clear();
     delayedMessage[api].clear();
@@ -250,13 +251,13 @@ void ActionsAction::remove_player(CatchChallenger::Api_protocol_Qt  *api, const 
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &botplayer=clientList[api];
     if(botplayer.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     if(allMapIsLoaded)
         botplayer.visiblePlayers.erase(id);
@@ -319,20 +320,20 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
         case CatchChallenger::Direction_move_at_bottom:
         break;
         default:
-            abort();//wrong direction send
+            BOT_ABORT();//wrong direction send
     }
 
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &botplayer=clientList[api];
     if(botplayer.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     CatchChallenger::ParsedLayerLedges ledge;
     ledge=CatchChallenger::MoveOnTheMap::getLedge(map,x,y);
@@ -547,7 +548,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
                     if(!botplayer.api->canDoRandomFight(*new_map,x,y))
                     {
                         std::cerr << "!botplayer.api->canDoRandomFight(*new_map,x,y)" << std::endl;
-                        abort();
+                        BOT_ABORT();
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                         return false;
                     }
@@ -574,7 +575,7 @@ bool ActionsAction::move(CatchChallenger::Api_protocol_Qt  *api,CatchChallenger:
         case CatchChallenger::Direction_move_at_bottom:
         break;
         default:
-            abort();//wrong direction send
+            BOT_ABORT();//wrong direction send
     }
     if(!moveWithoutTeleport(api,direction,map,x,y,checkCollision,allowTeleport))
         return false;
@@ -612,7 +613,7 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol_Qt  *api,C
         case CatchChallenger::Direction_move_at_bottom:
         break;
         default:
-            abort();//wrong direction send
+            BOT_ABORT();//wrong direction send
     }
     if(*map==NULL)
         return false;
@@ -674,7 +675,7 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
     if(actionsAction->id_map_to_map.empty())
     {
         std::cerr << "ActionsAction::checkOnTileEvent() need to be call after all the map is loaded" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     std::pair<uint8_t,uint8_t> pos(player.x,player.y);
     const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
@@ -746,7 +747,7 @@ void ActionsAction::doMove()
         CatchChallenger::Api_protocol_Qt  *api=n.first;
         Player &player=clientList[api];
         if(id_map_to_map.find(player.mapId)==id_map_to_map.cend())
-            abort();
+            BOT_ABORT();
         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
         const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
@@ -760,11 +761,11 @@ void ActionsAction::doMove()
                 if(step.second!=0 || step.first!=CatchChallenger::Orientation::Orientation_none)
                 {
                     if(step.second==0)
-                        abort();
+                        BOT_ABORT();
                     step.second--;
                     //need just continue to walk
                     if(step.first<1 || step.first>4)
-                        abort();
+                        BOT_ABORT();
                     const CatchChallenger::Direction direction=(CatchChallenger::Direction)((uint8_t)step.first+4);
 
                     //get the item in front of to continue the progression
@@ -782,7 +783,7 @@ void ActionsAction::doMove()
                                 {
                                     const MapServerMini::ItemOnMap &itemOnMap=item.second;
                                     if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
-                                        abort();
+                                        BOT_ABORT();
                                     known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                 }
                             }
@@ -816,7 +817,7 @@ void ActionsAction::doMove()
                             if(!move(api,direction,&playerMap,&player.x,&player.y,true,true))
                             {
                                 std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
-                                abort();
+                                BOT_ABORT();
                             }
                             player.mapId=playerMap->id;
                             checkOnTileEvent(player);
@@ -827,14 +828,14 @@ void ActionsAction::doMove()
                     else
                     {
                         std::cerr << "Blocked on: " << playerMap->map_file << " " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << " for " << api->getPseudo() << std::endl;
-                        abort();
+                        BOT_ABORT();
                         if(player.target.bestPath.size()>1)
                         {
                             std::cerr << "Something is wrong to go to the destination, path finding buggy? block not walkable?" << std::endl;
                             std::cerr << "player.api->getAbleToFight(): " << player.api->getAbleToFight() << std::endl;
                             std::cerr << "player.api->canDoRandomFight(*new_map,x,y): " << player.api->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                             canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
-                            abort();
+                            BOT_ABORT();
                         }
                         if(player.target.localStep.size()>1)
                         {
@@ -842,7 +843,7 @@ void ActionsAction::doMove()
                             std::cerr << "player.api->getAbleToFight(): " << player.api->getAbleToFight() << std::endl;
                             std::cerr << "player.api->canDoRandomFight(*new_map,x,y): " << player.api->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                             canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
-                            abort();
+                            BOT_ABORT();
                         }
                         if(player.target.localStep.size()==1)
                             if(player.target.localStep.at(0).second>1)
@@ -851,7 +852,7 @@ void ActionsAction::doMove()
                                 std::cerr << "player.api->getAbleToFight(): " << player.api->getAbleToFight() << std::endl;
                                 std::cerr << "player.api->canDoRandomFight(*new_map,x,y): " << player.api->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                                 canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
-                                abort();
+                                BOT_ABORT();
                             }
                         //turn on the new direction
                         const CatchChallenger::Direction &newDirection=(CatchChallenger::Direction)((uint8_t)direction-4);
@@ -1124,13 +1125,13 @@ void ActionsAction::monsterCatch(const bool &success)
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Player &player=clientList[api];
     if(player.api==NULL)
     {
         std::cerr << "clientList.find(api)==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     if(player.api->playerMonster_catchInProgress.empty())
     {
@@ -1152,7 +1153,7 @@ void ActionsAction::monsterCatch(const bool &success)
             if(playerInformations.warehouse_monsters.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
             {
                 std::cerr << "You have already the maximum number of monster into you warehouse" << std::endl;
-                abort();
+                BOT_ABORT();
             }
             playerInformations.warehouse_monsters.push_back(player.api->playerMonster_catchInProgress.front());
         }

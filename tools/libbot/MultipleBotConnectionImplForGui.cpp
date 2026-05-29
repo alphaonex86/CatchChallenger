@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #endif
 #include <ctime>
+#include "BotAbort.h"
 
 bool MultipleBotConnectionImplForGui::displayingError=false;
 
@@ -104,7 +105,7 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
     if(!serverIsSelected)
     {
         qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): !serverIsSelected (abort)";
-        abort();
+        BOT_ABORT();
     }
     if(firstCharacterSelected)
     {
@@ -170,7 +171,7 @@ void MultipleBotConnectionImplForGui::serverSelect(const uint8_t &charactersGrou
         else
         {
             qDebug() << "MultipleBotConnectionImplFoprGui::serverSelect(): ui->characterList->count()==0 and no client found, abort()";
-            abort();
+            BOT_ABORT();
         }
     }
     else
@@ -184,7 +185,7 @@ void MultipleBotConnectionImplForGui::serverSelect(const uint8_t &charactersGrou
         else
         {
             qDebug() << "MultipleBotConnectionImplFoprGui::serverSelect(): ui->characterList->count()==0 and no client found, abort()";
-            abort();
+            BOT_ABORT();
         }
     }
 }
@@ -279,7 +280,7 @@ void MultipleBotConnectionImplForGui::connectTheExternalSocket(CatchChallengerCl
 {
     MultipleBotConnection::connectTheExternalSocket(client);
     if(!connect(client->api,&CatchChallenger::Api_client_real::Qtnew_chat_text,            this,&MultipleBotConnectionImplForGui::chat_text,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
 }
 
 void MultipleBotConnectionImplForGui::newCharacterId(const quint8 &returnCode, const quint32 &characterId)
@@ -540,19 +541,19 @@ void MultipleBotConnectionImplForGui::disconnected()
     if(!connectedSocketToCatchChallengerClient.contains(senderObject))
     {
         std::cerr << "MultipleBotConnectionImplForGui::disconnected() !connectedSocketToCatchChallengerClient.contains(senderObject)" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     CatchChallengerClient * catchChallengerClient=connectedSocketToCatchChallengerClient.value(senderObject);
     if(catchChallengerClient==NULL)
     {
         std::cerr << "MultipleBotConnectionImplForGui::disconnected() catchChallengerClient==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     CatchChallenger::Api_client_real *api=catchChallengerClient->api;
     if(api==NULL)
     {
         std::cerr << "MultipleBotConnectionImplForGui::disconnected() api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     const CatchChallenger::Api_protocol::StageConnexion stage=api->stage();
     if(stage==CatchChallenger::Api_protocol::StageConnexion::Stage2)

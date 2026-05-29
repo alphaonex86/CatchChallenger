@@ -5,6 +5,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
 #include "ActionsAction.h"
+#include "../BotAbort.h"
 
 // Helper: pointer-based moveWithoutTeleport for preload (no api needed)
 static bool localMoveWithoutTeleport(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap *&map, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
@@ -92,7 +93,7 @@ bool MapServerMini::preload_step2()
         {
             const MapParsedForBot::Layer &layer=step1.layers.at(index);
             if(layer.blockObject==NULL)
-                abort();
+                BOT_ABORT();
             index++;
         }
     }
@@ -137,7 +138,7 @@ bool MapServerMini::preload_step2()
                     if(lastCodeZone>=65535)
                     {
                         std::cerr << "Too many zone" << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                     MapParsedForBot::Layer layer;
                     layer.name="Block "+std::to_string(lastCodeZone);
@@ -280,7 +281,7 @@ bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &bloc
         case CatchChallenger::MapConditionType_Quest:
         break;
     default:
-        abort();
+        BOT_ABORT();
         break;
     }
     linkCondition.points.push_back(linkPoint);
@@ -485,7 +486,7 @@ bool MapServerMini::preload_step2b()
                     if(newx<nextMap->width && newy<nextMap->height)
                     {
                         if(nextMap->step.size()<2)
-                            abort();
+                            BOT_ABORT();
                         const MapParsedForBot &step2nextMap=nextMap->step.at(1);
                         const uint8_t &otherCodeZone=step2nextMap.map[newx+newy*nextMap->width];
                         if(otherCodeZone!=0)
@@ -521,7 +522,7 @@ bool MapServerMini::preload_step2c()
                     if(!mapIsValid(currentStep))
                     {
                         displayConsoleMap(currentStep);
-                        abort();
+                        BOT_ABORT();
                     }
                     //flat_simplified_map replaces parsed_layer
                     //not clickable item

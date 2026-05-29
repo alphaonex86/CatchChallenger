@@ -9,6 +9,7 @@
 
 #include <QNetworkProxy>
 #include <QMessageBox>
+#include "../libbot/BotAbort.h"
 
 MultipleBotConnectionAction MainWindow::multipleBotConnexion;
 
@@ -74,37 +75,37 @@ MainWindow::MainWindow(QWidget *parent) :
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::loggedDone,this,&MainWindow::logged,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackIsReady,this,&MainWindow::datapackIsReady,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackMainSubIsReady,this,&MainWindow::datapackMainSubIsReady,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::statusError,this,&MainWindow::statusError,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfSelectedCharacter,this,&MainWindow::display_numberOfSelectedCharacter,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfStartSelectingCharacter,this,&MainWindow::display_numberOfStartSelectingCharacter,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfHaveDatapackCharacter,this,&MainWindow::display_numberOfHaveDatapackCharacter,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfStartCreatingCharacter,this,&MainWindow::display_numberOfStartCreatingCharacter,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfStartCreatedCharacter,this,&MainWindow::display_numberOfStartCreatedCharacter,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::updateClientListStatus,this,&MainWindow::updateClientListStatus,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected))
-        abort();//,Qt::QueuedConnection
+        BOT_ABORT();//,Qt::QueuedConnection
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_detectSlowDown,this,&MainWindow::detectSlowDown,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_connected,this,&MainWindow::all_player_connected,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_on_map,this,&MainWindow::all_player_on_map,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&multipleBotConnexion,&MultipleBotConnection::emit_lastReplyTime,this,&MainWindow::lastReplyTime,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     if(!connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::detectSlowDown,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     slowDownTimer.start(200);
 
     multipleBotConnexion.botInterface=new ActionsAction();
@@ -278,24 +279,24 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
         ActionsAction::clientList[api]=newPlayer;
 
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qthave_inventory,     actionsAction,&ActionsAction::have_inventory_slot,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtadd_to_inventory,   actionsAction,&ActionsAction::add_to_inventory_slot,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtremove_to_inventory,actionsAction,&ActionsAction::remove_to_inventory_slot,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtsetEvents,   actionsAction,&ActionsAction::setEvents_slot,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtnewEvent,actionsAction,&ActionsAction::newEvent_slot,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtrandom_seeds,actionsAction,&ActionsAction::newRandomNumber_slot,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtmonsterCatch,actionsAction,&ActionsAction::monsterCatch))
-            abort();
+            BOT_ABORT();
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtteleportTo,actionsAction,&ActionsAction::teleportTo))
-            abort();
+            BOT_ABORT();
     }
     else
-        abort();
+        BOT_ABORT();
 }
 
 void MainWindow::updateServerList(CatchChallenger::Api_client_real *senderObject)

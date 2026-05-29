@@ -5,6 +5,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "ActionsAction.h"
 #include "../bot-actions/BotTargetList.h"
+#include "../BotAbort.h"
 
 std::unordered_set<const MapServerMini *> MapServerMini::getValidMaps(const unsigned int &depth) const
 {
@@ -42,7 +43,7 @@ std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessi
 {
     // only the accessible block
     if(currentNearBlock->map!=this)
-        abort();
+        BOT_ABORT();
     std::unordered_set<const BlockObject *> accessibleBlock;
     std::vector<const BlockObject *> blockToParse;
     blockToParse.push_back(currentNearBlock);

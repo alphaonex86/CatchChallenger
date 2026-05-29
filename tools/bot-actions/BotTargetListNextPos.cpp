@@ -6,6 +6,7 @@
 #include <chrono>
 #include <QMessageBox>
 #include <iostream>
+#include "../libbot/BotAbort.h"
 
 //if(target.bestPath.empty()) return real target, else near search the next block
 std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::BlockObject * const blockObject,ActionsBotInterface::GlobalTarget &target)
@@ -28,7 +29,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                     return it->first;
             }
             std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::ItemOnMap: " << std::to_string(target.extra) << std::endl;
-            abort();
+            BOT_ABORT();
             break;
             case ActionsBotInterface::GlobalTarget::Fight:
                 for(std::unordered_map<std::pair<uint8_t,uint8_t>, std::vector<uint16_t>, pairhash>::const_iterator it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
@@ -38,7 +39,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                         return it->first;
                 }
                 std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::Fight: " << std::to_string(target.extra) << std::endl;
-                abort();
+                BOT_ABORT();
             break;
             case ActionsBotInterface::GlobalTarget::Shop:
                 for(std::unordered_map<std::pair<uint8_t,uint8_t>, std::vector<uint16_t>, pairhash>::const_iterator it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
@@ -48,16 +49,16 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                         return it->first;
                 }
                 std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::Shop: " << std::to_string(target.extra) << std::endl;
-                abort();
+                BOT_ABORT();
             break;
             case ActionsBotInterface::GlobalTarget::Heal:
                 for(std::unordered_set<std::pair<uint8_t,uint8_t>, pairhash>::const_iterator it = blockObject->heal.begin();it!=blockObject->heal.cend();++it)
                     return *it;
                 std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::Heal" << std::endl;
-                abort();
+                BOT_ABORT();
             break;
             case ActionsBotInterface::GlobalTarget::WildMonster:
-                abort();
+                BOT_ABORT();
             break;
             case ActionsBotInterface::GlobalTarget::Dirt:
             {
@@ -79,13 +80,13 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                 ActionsAction::resetTarget(target);
                 stopAll();
                 QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded (3): %1").arg(target.type));
-                abort();
+                BOT_ABORT();
             break;
         }
     }
     else
-        abort();
-    abort();
+        BOT_ABORT();
+    BOT_ABORT();
     return point;
 }
 
@@ -111,11 +112,11 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
     CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
     const MapServerMini *mapServer=static_cast<MapServerMini *>(map);
     if(mapServer->step.size()<2)
-        abort();
+        BOT_ABORT();
     const MapServerMini::MapParsedForBot &stepMap=mapServer->step.at(1);
     const uint16_t &currentCodeZone=stepMap.map[player.x+player.y*mapServer->width];
     if(currentCodeZone==0)
-        abort();
+        BOT_ABORT();
 
     //random direction list and try one step
     std::vector<CatchChallenger::Orientation> dlist{
@@ -155,7 +156,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
                         canGO=true;
             break;
             default:
-            abort();
+            BOT_ABORT();
             break;
         }
 
@@ -186,7 +187,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
                     step=player.x-x;
                 break;
                 default:
-                abort();
+                BOT_ABORT();
                 break;
             }
             #ifdef CATCHCHALLENGER_HARDENED
@@ -197,7 +198,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
                           << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
                           << ", n: " << n << ", currentCodeZone: " << currentCodeZone
                           << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
-                abort();
+                BOT_ABORT();
             }
             #endif
             //choose random step

@@ -950,6 +950,78 @@ def _read_tcp_retrans():
 
 _CLK_TCK = os.sysconf("SC_CLK_TCK") if hasattr(os, "sysconf") else 100
 
+# gdb path (None = not available on this host, fall back to untraced run)
+_GDB = shutil.which("gdb")
+# Temp dir for per-run bot stdout / stderr / gdb log files. Named by
+# port+bots so concurrent io_uring variant runs don't collide.
+_BOT_RUN_TMP = "/tmp/cc-bench-botrun"
+
+# /usr/bin/time -v line prefixes that appear in stderr but belong to the
+# timing wrapper, not the bot.  Filtered out when extracting the bot's
+# own stderr tail for crash reports.
+_TIME_V_PREFIXES = (
+    "Command being timed:", "User time", "System time", "Percent of CPU",
+    "Elapsed (wall", "Maximum resident", "Average ", "Major (", "Minor (",
+    "Voluntary", "Involuntary", "Swaps:", "File system", "Socket ",
+    "Page size", "Exit status", "Signals delivered",
+    "Average stack", "Average total", "Average resident", "Average shared",
+)
+
+
+def _write_gdb_catchcmd(gdb_log_path, out_path):
+    """Write a gdb --batch command file that catches SIGABRT/SIGSEGV/SIGBUS,
+    writes a full backtrace to gdb_log_path via set-logging, then quits.
+    Logging is enabled ONLY inside the catch commands block so that
+    normal gdb startup messages ("Starting program: ...") do NOT appear in
+    the log – only the backtrace from a crash run does.
+    SIGINT is forwarded to the inferior without stopping so that
+    `timeout --signal=INT` can terminate the bot cleanly (the normal path)."""
+    with open(out_path, "w") as f:
+        f.write("set pagination off\n")
+        f.write("set height 0\n")
+        f.write("set width 0\n")
+        f.write("catch signal SIGABRT SIGSEGV SIGBUS\n")
+        f.write("commands\n")
+        f.write(f"  set logging file {gdb_log_path}\n")
+        f.write("  set logging overwrite on\n")
+        f.write("  set logging enabled on\n")
+        f.write("  bt full\n")
+        f.write("  info frame\n")
+        f.write("  set logging enabled off\n")
+        f.write("  quit\n")
+        f.write("end\n")
+        # Let timeout --signal=INT reach the inferior without a gdb stop
+        f.write("handle SIGINT pass nostop noprint\n")
+        f.write("run\n")
+
+
+def _bot_crash_report(stdout_log, stderr_log, gdb_log):
+    """Assemble a crash report string: gdb backtrace (if any) followed by
+    the last 50 lines of bot stdout and the last 50 lines of bot stderr
+    (with /usr/bin/time -v metric lines stripped from stderr)."""
+    parts = []
+    if gdb_log and os.path.isfile(gdb_log):
+        try:
+            bt = open(gdb_log, "r", errors="replace").read().strip()
+            if bt:
+                parts.append(f"--- GDB BACKTRACE ---\n{bt}")
+        except Exception:
+            pass
+    for label, path in (("BOT STDOUT", stdout_log), ("BOT STDERR", stderr_log)):
+        if not path or not os.path.isfile(path):
+            continue
+        try:
+            lines = open(path, "r", errors="replace").readlines()
+            if label == "BOT STDERR":
+                lines = [ln for ln in lines
+                         if not ln.strip().startswith(_TIME_V_PREFIXES)]
+            tail = "".join(lines[-50:]).rstrip()
+            if tail:
+                parts.append(f"--- {label} (last 50 lines) ---\n{tail}")
+        except Exception:
+            pass
+    return "\n".join(parts)
+
 def _server_cpu_ticks(pid):
     """Return (utime + stime) for `pid` in clock ticks, or None if the
     process is gone. Reads /proc/<pid>/stat fields 14 (utime) and 15
@@ -983,6 +1055,11 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     sockets gracefully -- a hard SIGKILL leaves TIME_WAIT churn that
     pollutes the NEXT iteration's counters.
 
+    When gdb is available the bot runs under `gdb --batch` with catch
+    commands for SIGABRT/SIGSEGV/SIGBUS.  On any crash the full backtrace
+    is written to a per-run log file and surfaced in the error string
+    together with the last 50 lines of bot stdout and bot stderr.
+
     When `server_pid` is given, sample the server's /proc/<pid>/stat
     cpu ticks pre/post and derive its single-thread CPU% over the run.
     The server is intentionally single-threaded (epoll), so the value
@@ -995,40 +1072,67 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     pre_retrans = _read_tcp_retrans()
     pre_srv_ticks = _server_cpu_ticks(server_pid) if server_pid else None
 
-    cmd = ["timeout", "--signal=INT", str(DURATION_S)] + \
-          _bot_cmd(bin_path, host, port, bots)
+    # Per-run temp dir: named by port+bots so concurrent variant runs on
+    # different ports don't collide; files are overwritten each iteration
+    # (cell_run() stops on first failure, so they always belong to that run).
+    run_tmp = os.path.join(_BOT_RUN_TMP, f"p{port}-b{bots}")
+    os.makedirs(run_tmp, exist_ok=True)
+    stdout_log = os.path.join(run_tmp, "bot_stdout.log")
+    stderr_log = os.path.join(run_tmp, "bot_stderr.log")
+    gdb_log    = os.path.join(run_tmp, "gdb_crash.log")
+    for stale in (stdout_log, stderr_log, gdb_log):
+        try: os.remove(stale)
+        except FileNotFoundError: pass
 
-    full = ["/usr/bin/time", "-v"] + cmd
+    bot_args = _bot_cmd(bin_path, host, port, bots)
+    if _GDB:
+        gdb_cmd_path = os.path.join(run_tmp, "bot.gdb")
+        _write_gdb_catchcmd(gdb_log, gdb_cmd_path)
+        inner = ["gdb", "-q", "--batch",
+                 f"--command={gdb_cmd_path}", "--args"] + bot_args
+    else:
+        inner = bot_args
+
+    # timeout(1) sends --signal=INT after DURATION_S (lets Qt clean up
+    # sockets); returns 124 on expiry, 0 on natural bot exit.
+    # /usr/bin/time -v wraps the whole chain for resource metrics.
+    full = ["/usr/bin/time", "-v",
+            "timeout", "--signal=INT", str(DURATION_S)] + inner
+
     t0 = time.monotonic()
-    # errors="replace": with mapVisibility enabled the server forwards other
-    # players' pseudos, which the datapack stores as raw Latin-1/binary bytes
-    # (not valid UTF-8). The Qt bot echoes them to stderr, so a strict
-    # text=True decode raises UnicodeDecodeError and kills the whole sweep.
-    # We only parse the ASCII /usr/bin/time -v report out of stderr, so
-    # lossy-decoding the non-ASCII player-name bytes is harmless.
-    p = subprocess.run(full, env=env, capture_output=True, text=True,
-                       errors="replace", timeout=RUN_TIMEOUT)
+    with open(stdout_log, "wb") as out_fh, open(stderr_log, "wb") as err_fh:
+        p = subprocess.run(full, env=env, stdout=out_fh, stderr=err_fh,
+                           timeout=RUN_TIMEOUT)
     wall = time.monotonic() - t0
-    # timeout(1) returns 124 on timeout-expired (= our intended path),
-    # 0 on natural exit. Anything else = bot or server failure. Surface the
-    # exit code + a stderr tail (minus the /usr/bin/time -v report lines, which
-    # are not the error) so the FAIL says WHY -- a bare None hides connection
-    # refused / auth rejected / crash behind "[FAIL bots=N]".
-    if p.returncode not in (0, 124, 128 + signal.SIGINT):
-        err_lines = []
-        for ln in p.stderr.splitlines():
-            s = ln.strip()
-            if not s or s.startswith(("Command being timed:", "User time",
-                    "System time", "Percent of CPU", "Elapsed (wall",
-                    "Maximum resident", "Average ", "Major (", "Minor (",
-                    "Voluntary", "Involuntary", "Swaps:", "File system",
-                    "Socket ", "Page size", "Exit status", "Signals delivered",
-                    "Average stack", "Average total", "Average resident",
-                    "Average shared")):
-                continue
-            err_lines.append(s)
-        tail = " | ".join(err_lines)[-400:] or "(no bot stderr)"
-        return None, f"bot host={host}:{port} bots={bots} rc={p.returncode}: {tail}"
+
+    # Read stderr: bot stderr + /usr/bin/time -v report (both land here).
+    # errors="replace": player pseudos forwarded via mapVisibility contain
+    # raw Latin-1 bytes; lossy-decode is harmless – we only parse ASCII
+    # /usr/bin/time -v lines from this stream.
+    try:
+        stderr_text = open(stderr_log, "r", errors="replace").read()
+    except Exception:
+        stderr_text = ""
+
+    # Crash detection:
+    #   (a) bad exit code: 0 / 124 / 130 are the normal paths
+    #   (b) gdb log non-empty: bot crashed inside a gdb-caught signal;
+    #       the catch+quit path makes gdb exit 0 so (a) alone misses it
+    bad_rc = p.returncode not in (0, 124, 128 + signal.SIGINT)
+    gdb_log_content = ""
+    if _GDB and os.path.isfile(gdb_log):
+        try:
+            gdb_log_content = open(gdb_log, "r", errors="replace").read().strip()
+        except Exception:
+            pass
+    if bad_rc or gdb_log_content:
+        crash_info = _bot_crash_report(
+            stdout_log, stderr_log,
+            gdb_log if gdb_log_content else None)
+        msg = f"bot host={host}:{port} bots={bots} rc={p.returncode}"
+        if crash_info:
+            msg = msg + "\n" + crash_info
+        return None, msg
 
     post_iface = _read_iface_counters(iface) if iface else None
     post_retrans = _read_tcp_retrans()
@@ -1037,7 +1141,7 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     sample = {"wall_s": wall, "user_s": None, "sys_s": None,
               "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
               "minor_pf": None, "major_pf": None}
-    for line in p.stderr.splitlines():
+    for line in stderr_text.splitlines():
         s = line.strip()
         if s.startswith("Elapsed (wall clock) time"):
             v = bh._parse_wall(s.split(": ", 1)[1])

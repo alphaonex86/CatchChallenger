@@ -1,6 +1,7 @@
 #include "MapServerMini.h"
 
 #include <iostream>
+#include "../BotAbort.h"
 
 bool MapServerMini::preload_step1()
 {
@@ -190,7 +191,7 @@ bool MapServerMini::preload_step1()
             blockObject.layer=NULL;
             *(layer.blockObject)=blockObject;
             if(layer.blockObject==NULL)
-                abort();
+                BOT_ABORT();
             index++;
         }
     }
@@ -201,7 +202,7 @@ bool MapServerMini::preload_step1()
         {
             const MapParsedForBot::Layer &layer=step1.layers.at(index);
             if(layer.blockObject==NULL)
-                abort();
+                BOT_ABORT();
             index++;
         }
     }
@@ -213,7 +214,7 @@ bool MapServerMini::preload_step1()
         {
             const MapParsedForBot::Layer &layer=step1.layers.at(index);
             if(layer.blockObject==NULL)
-                abort();
+                BOT_ABORT();
             index++;
         }
     }
