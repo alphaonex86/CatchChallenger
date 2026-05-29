@@ -1536,6 +1536,62 @@ def git_sha():
         return "nogit"
 
 
+def _prepare_decision_metrics(metrics):
+    """Return a copy of a node's flat metric dict with throughput-coupled
+    cumulative counters made comparable PER-UNIT-OF-WORK before the matrix.
+
+    bytes_sent and the raw perf_* counters accumulate over a FIXED-TIME
+    window, so a faster variant runs MORE ticks in that window and shows
+    HIGHER totals. Comparing those raw totals flags a speed-up as a
+    regression (benchmark/CLAUDE.md: "CPU%/RSS are never a conclusion on
+    their own ... contrast resource usage against the work-done metric").
+      * <pfx>_bytes_sent -> <pfx>_bytes_per_tick (divided by <pfx>_ticks):
+        the real per-tick network cost. A genuine per-tick network
+        regression still trips the matrix; "sent more only because it ran
+        more ticks" no longer does. No tick pairing -> dropped (can't
+        compare fairly).
+      * raw perf_* (instructions/branch-misses/cache-misses/cycles) are
+        dropped from the decision: cumulative over the perf window with no
+        recorded tick count to normalise against. Per-tick speed is already
+        carried by the latency + ticks_per_s metrics; perf_* stays in the
+        JSON for diagnostics only.
+    """
+    out = {}
+    for name, m in metrics.items():
+        if name.startswith("perf_"):
+            continue
+        if name.endswith("_bytes_sent"):
+            pfx = name[:-len("_bytes_sent")]
+            ticks = metrics.get(pfx + "_ticks")
+            bs = m.get("median")
+            if ticks and ticks.get("median") and bs is not None:
+                out[pfx + "_bytes_per_tick"] = {
+                    "median": bs / ticks["median"],
+                    "stddev": 0.0,
+                    "unit": "bytes/tick",
+                    "better": "lower",
+                }
+            continue
+        out[name] = m
+    return out
+
+
+def _is_tail_jitter(name, improved_map, noise_band):
+    """True when a pX_p95/p99 tail-latency metric regressed but the SAME
+    workload's median moved the OTHER way (improved beyond the noise band).
+
+    That is tail jitter, not a systematic regression: the distribution
+    centre got faster and only an outlier sample wobbled — typical of a
+    sub-microsecond op at the smallest player counts. A tail regression at
+    a FLAT or regressed median is NOT suppressed, so the documented
+    'p99 up at flat p50' real-regression case still trips the matrix."""
+    for tail in ("_p95_tick_ns", "_p99_tick_ns", "_p999_tick_ns"):
+        if name.endswith(tail):
+            med = improved_map.get(name[:-len(tail)] + "_median_tick_ns")
+            return med is not None and med >= noise_band
+    return False
+
+
 def decide_multi_node(champion, candidate, *, keep_threshold=0.30,
                       discard_threshold=0.20, noise_band=0.10):
     """Cross-platform KEEP/DISCARD/ESCALATE decision.
@@ -1566,13 +1622,29 @@ def decide_multi_node(champion, candidate, *, keep_threshold=0.30,
 
     all_node_labels = sorted(set(list(ch_nodes.keys()) + list(ca_nodes.keys())))
     for label in all_node_labels:
-        ch_metrics = (ch_nodes.get(label) or {}).get("metrics", {})
-        ca_metrics = (ca_nodes.get(label) or {}).get("metrics", {})
+        ch_metrics = _prepare_decision_metrics((ch_nodes.get(label) or {}).get("metrics", {}))
+        ca_metrics = _prepare_decision_metrics((ca_nodes.get(label) or {}).get("metrics", {}))
         if not ch_metrics and not ca_metrics:
             continue
         arch = (ch_nodes.get(label) or ca_nodes.get(label) or {}).get("arch", "?")
         all_metric_names = sorted(set(list(ch_metrics.keys()) +
                                        list(ca_metrics.keys())))
+        # first pass: per-metric improvement fraction (the tail-jitter rule
+        # needs a workload's median delta while judging its p95/p99 sibling).
+        improved_map = {}
+        for name in all_metric_names:
+            ch = ch_metrics.get(name)
+            ca = ca_metrics.get(name)
+            if not ch or not ca:
+                continue
+            chm = ch.get("median")
+            cm  = ca.get("median")
+            if chm is None or cm is None:
+                continue
+            better = ch.get("better", "lower")
+            delta = 0.0 if chm == 0 else (cm - chm) / chm
+            improved_map[name] = -delta if better == "lower" else delta
+        # second pass: summary + KEEP/DISCARD triggers
         for name in all_metric_names:
             ch = ch_metrics.get(name)
             ca = ca_metrics.get(name)
@@ -1605,12 +1677,16 @@ def decide_multi_node(champion, candidate, *, keep_threshold=0.30,
                 all_within_noise = False
             if improved >= keep_threshold:
                 any_better = True
+            note = ""
             if improved <= -discard_threshold:
-                any_worse = True
+                if _is_tail_jitter(name, improved_map, noise_band):
+                    note = " [tail-jitter: median improved, not counted]"
+                else:
+                    any_worse = True
             tag = ("better" if improved > 0 else "worse" if improved < 0
                    else "flat")
             summary.append((key, chm, cm,
-                            f"delta={delta:+.2%} ({tag})"))
+                            f"delta={delta:+.2%} ({tag}){note}"))
 
     if all_within_noise:
         decision = "DISCARD"
@@ -1635,8 +1711,21 @@ def decide(champion, candidate, *, keep_threshold=0.30, discard_threshold=0.20,
     any_better = False
     any_worse  = False
     all_within_noise = True
-    for name, ch in champion["metrics"].items():
-        cand = candidate["metrics"].get(name)
+    ch_metrics = _prepare_decision_metrics(champion["metrics"])
+    ca_metrics = _prepare_decision_metrics(candidate["metrics"])
+    improved_map = {}
+    for name, ch in ch_metrics.items():
+        cand = ca_metrics.get(name)
+        if cand is None:
+            continue
+        chm = ch.get("median"); cm = cand.get("median")
+        if chm is None or cm is None:
+            continue
+        better = ch.get("better", "lower")
+        delta = 0.0 if chm == 0 else (cm - chm) / chm
+        improved_map[name] = -delta if better == "lower" else delta
+    for name, ch in ch_metrics.items():
+        cand = ca_metrics.get(name)
         if cand is None:
             summary.append((name, ch["median"], None, "missing in candidate"))
             continue
@@ -1656,9 +1745,13 @@ def decide(champion, candidate, *, keep_threshold=0.30, discard_threshold=0.20,
             all_within_noise = False
         if improved >= keep_threshold:
             any_better = True
+        note = ""
         if improved <= -discard_threshold:
-            any_worse = True
-        summary.append((name, chm, cm, f"delta={delta:+.2%} ({'better' if improved>0 else 'worse' if improved<0 else 'flat'})"))
+            if _is_tail_jitter(name, improved_map, noise_band):
+                note = " [tail-jitter: median improved, not counted]"
+            else:
+                any_worse = True
+        summary.append((name, chm, cm, f"delta={delta:+.2%} ({'better' if improved>0 else 'worse' if improved<0 else 'flat'}){note}"))
     if all_within_noise:
         decision = "DISCARD"   # within ±10% noise band on every metric
     elif any_better and not any_worse:
