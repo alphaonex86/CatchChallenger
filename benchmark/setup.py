@@ -195,7 +195,7 @@ CORE_TOOLS = sorted({"cmake", "gcc", "g++", "make", "rsync", "git",
 PROFILER_TOOLS = sorted(_profiler_tool_set())
 
 OPTIONAL_TOOLS = ["ninja", "ccache", "mold", "ld.lld", "clang",
-                  "gdb", "sensors"]
+                  "gdb", "sensors", "lscpu"]
 
 # Per-package-manager-family tool exclusions: tools that simply do not
 # exist for that distro and must not be probed, listed as "missing", or
@@ -229,6 +229,7 @@ TOOL_TO_PKG = {
     "clang": "clang",
     "gdb": "gdb",
     "sensors": "lm_sensors",
+    "lscpu": "util_linux",
 }
 
 # Per package-manager family: logical package key -> distro package name.
@@ -240,7 +241,7 @@ PKG_MAP = {
         "gcc": "gcc", "gxx": "g++", "make": "make", "rsync": "rsync",
         "git": "git", "python3": "python3", "ninja": "ninja-build",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
-        "gdb": "gdb", "lm_sensors": "lm-sensors",
+        "gdb": "gdb", "lm_sensors": "lm-sensors", "util_linux": "util-linux",
     },
     "dnf": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -248,7 +249,7 @@ PKG_MAP = {
         "gcc": "gcc", "gxx": "gcc-c++", "make": "make", "rsync": "rsync",
         "git": "git", "python3": "python3", "ninja": "ninja-build",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
-        "gdb": "gdb", "lm_sensors": "lm_sensors",
+        "gdb": "gdb", "lm_sensors": "lm_sensors", "util_linux": "util-linux",
     },
     "zypper": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -256,7 +257,7 @@ PKG_MAP = {
         "gcc": "gcc", "gxx": "gcc-c++", "make": "make", "rsync": "rsync",
         "git": "git", "python3": "python3", "ninja": "ninja",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
-        "gdb": "gdb", "lm_sensors": "sensors",
+        "gdb": "gdb", "lm_sensors": "sensors", "util_linux": "util-linux",
     },
     "pacman": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -264,7 +265,7 @@ PKG_MAP = {
         "gcc": "gcc", "gxx": "gcc", "make": "make", "rsync": "rsync",
         "git": "git", "python3": "python", "ninja": "ninja",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
-        "gdb": "gdb", "lm_sensors": "lm_sensors",
+        "gdb": "gdb", "lm_sensors": "lm_sensors", "util_linux": "util-linux",
     },
     "apk": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -272,7 +273,7 @@ PKG_MAP = {
         "gcc": "gcc", "gxx": "g++", "make": "make", "rsync": "rsync",
         "git": "git", "python3": "python3", "ninja": "ninja",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
-        "gdb": "gdb", "lm_sensors": "lm-sensors",
+        "gdb": "gdb", "lm_sensors": "lm-sensors", "util_linux": "util-linux",
     },
     "emerge": {
         "time": "sys-process/time", "perf": "dev-util/perf",
@@ -284,7 +285,7 @@ PKG_MAP = {
         "ninja": "dev-build/ninja", "ccache": "dev-util/ccache",
         "mold": "sys-devel/mold", "lld": "llvm-core/lld",
         "clang": "llvm-core/clang", "gdb": "dev-debug/gdb",
-        "lm_sensors": "sys-apps/lm-sensors",
+        "lm_sensors": "sys-apps/lm-sensors", "util_linux": "sys-apps/util-linux",
     },
     "xbps": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -292,7 +293,7 @@ PKG_MAP = {
         "gcc": "gcc", "gxx": "gcc", "make": "make", "rsync": "rsync",
         "git": "git", "python3": "python3", "ninja": "ninja",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
-        "gdb": "gdb", "lm_sensors": "lm_sensors",
+        "gdb": "gdb", "lm_sensors": "lm_sensors", "util_linux": "util-linux",
     },
 }
 
