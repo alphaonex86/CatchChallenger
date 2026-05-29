@@ -21,6 +21,7 @@
 #include <QFileDialog>
 #include <QSqlQuery>
 #include <QSqlError>
+#include "../libbot/BotAbort.h"
 
 std::unordered_map<const MapServerMini::BlockObject *, std::unordered_map<const MapServerMini::BlockObject *, bool> > BotTargetList::cacheCanGoFromBlockToBlock;
 
@@ -53,9 +54,9 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
             ui->bots->addItem(qtpseudo);
             pseudoToBot[qtpseudo]=client;
             if(!connect(client->api,&CatchChallenger::Api_protocol_Qt::QtteleportTo,this,&BotTargetList::teleportTo))
-                abort();
+                BOT_ABORT();
             if(!connect(client->api,&CatchChallenger::Api_protocol_Qt::QtmonsterCatch,this,&BotTargetList::monsterCatch))
-                abort();
+                BOT_ABORT();
         }
         ++i;
     }
@@ -75,11 +76,11 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
 
     if(!connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerStep))
-        abort();
+        BOT_ABORT();
     if(!connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerMapSlot))
-        abort();
+        BOT_ABORT();
     if(!connect(&autoStartActionTimer,&QTimer::timeout,this,&BotTargetList::autoStartAction))
-        abort();
+        BOT_ABORT();
 
     dirt=true,itemOnMap=true,fight=true,shop=true,heal=true,wildMonster=true;
 }
@@ -147,7 +148,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                                              > pathToEachDestinations,unsigned int &destinationIndexSelected)
 {
     if(pathToEachDestinations.empty())
-        abort();
+        BOT_ABORT();
     destinationIndexSelected=0;
     std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnVar;
     bool haveThePathSelected=false;
@@ -183,7 +184,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 returnVar.erase(returnVar.cbegin());
         #ifdef CATCHCHALLENGER_HARDENED
             else
-                abort();
+                BOT_ABORT();
         #endif
         }
     }
@@ -199,7 +200,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 returnVar.erase(returnVar.cbegin()+returnVar.size()-1);
         #ifdef CATCHCHALLENGER_HARDENED
             else
-                abort();
+                BOT_ABORT();
         #endif
         }
     }
@@ -227,10 +228,10 @@ void BotTargetList::loadAllBotsInformation()
 void BotTargetList::loadAllBotsInformation2()
 {
     if(!actionsAction->preload_the_map_step2())
-        abort();
+        BOT_ABORT();
     actionsAction->loadFinishedReemitTheDelayedFunction();
     if(!ActionsAction::actionsAction->preload_post_subdatapack())
-        abort();
+        BOT_ABORT();
     show();
     SocialChat::socialChat->show();
     //waitScreen.hide();
@@ -405,7 +406,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol_Qt *api)
     QString mapString=QString::fromStdString(playerMap->map_file)+QString(" (%1,%2)").arg(player.x).arg(player.y);
     ui->label_local_target->setTitle("Target on the map: "+mapString);
     if(playerMap->step.size()<2)
-        abort();
+        BOT_ABORT();
     const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
     const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
     if(playerCodeZone<=0 || (uint32_t)(playerCodeZone-1)>=(uint32_t)stepPlayer.layers.size())
@@ -445,7 +446,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol_Qt *api)
                          layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
                          " to " <<
                          player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
-            abort();
+            BOT_ABORT();
         }
     }
 
@@ -509,7 +510,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol_Qt *api)
                          layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
                          " to " <<
                          player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
-            abort();
+            BOT_ABORT();
         }
         const MapServerMini::BlockObject::LinkInformation &linkInformation=layer.blockObject->links.at(player.target.bestPath.front());
         unsigned int indexLinkInformation=0;
@@ -520,7 +521,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol_Qt *api)
             {
                 pointsList=linkCondition.points;
                 if(pointsList.empty())
-                    abort();
+                    BOT_ABORT();
                 unsigned int index=0;
                 while(index<linkCondition.points.size())
                 {
@@ -560,11 +561,11 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol_Qt *api)
         if(pointsList.size()==0)
         {
             std::cerr << "pointsList is empty, no condition respected?" << std::endl;
-            abort();
+            BOT_ABORT();
         }
     }
     if(pointsList.size()!=destinations.size())
-        abort();
+        BOT_ABORT();
     bool ok=false;
     unsigned int destinationIndexSelected=0;
     const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
@@ -574,7 +575,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol_Qt *api)
                 destinationIndexSelected,
                 &ok);
     if(!ok)
-        abort();
+        BOT_ABORT();
     player.target.linkPoint=pointsList.at(destinationIndexSelected);
     player.target.localStep=returnPath;
 
@@ -619,7 +620,7 @@ std::string BotTargetList::stepToString(const std::vector<std::pair<CatchChallen
                 stepToDo+=" none";
             break;
             default:
-                abort();
+                BOT_ABORT();
             break;
         }
 
@@ -664,7 +665,7 @@ void BotTargetList::updateMapInformation(const bool &forceUpdate)
         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
         const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         if(playerMap->step.size()<2)
-            abort();
+            BOT_ABORT();
 
         ui->comboBox_Layer->clear();
         unsigned int index=0;
@@ -741,7 +742,7 @@ void BotTargetList::updateMapContent(const bool &forceUpdate)
         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
         const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         if(playerMap->step.size()<2)
-            abort();
+            BOT_ABORT();
         //if map not sync with x and y
         if(player.x>=playerMap->width)
         {
@@ -978,7 +979,7 @@ void BotTargetList::on_searchDeep_editingFinished()
         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
         const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         if(playerMap->step.size()<2)
-            abort();
+            BOT_ABORT();
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
         const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
         const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
@@ -1000,7 +1001,7 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
     if(currentRow==-1)
         return;
     if(currentRow>=ui->globalTargets->count())
-        abort();
+        BOT_ABORT();
 
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()!=1)
@@ -1111,7 +1112,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         bool *ok)
 {
     if(ok==NULL)
-        abort();
+        BOT_ABORT();
     *ok=false;
 
     //give a look to pathFindingWithCache()
@@ -1122,11 +1123,11 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     std::vector<std::pair<uint8_t,uint8_t> > mapPointToParseList;
     SimplifiedMapForPathFinding simplifiedMap;
     if(source_blockObject->map==NULL)
-        abort();
+        BOT_ABORT();
     if(source_blockObject->map->step.size()<2)
-        abort();
+        BOT_ABORT();
     if(destinations.empty())
-        abort();
+        BOT_ABORT();
     {
         unsigned int index=0;
         while(index<destinations.size())
@@ -1144,7 +1145,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     }
     const MapServerMini::MapParsedForBot &step=source_blockObject->map->step.at(1);
     if(step.map==NULL)
-        abort();
+        BOT_ABORT();
     std::unordered_map<unsigned int,
             std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >
             > pathToEachDestinations;
@@ -1418,7 +1419,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             }
                         }
                         if(!haveContent)
-                            abort();
+                            BOT_ABORT();
                     }
                     switch(set_orientation)
                     {
@@ -1664,7 +1665,7 @@ void BotTargetList::autoStartAction()
         CatchChallenger::Api_protocol_Qt *api=n.first;
         ActionsAction::Player &player=actionsAction->clientList[api];
         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
-            abort();
+            BOT_ABORT();
         if(api->getCaracterSelected())
         {
             if(!player.target.sinceTheLastAction.isValid())
@@ -1680,7 +1681,7 @@ void BotTargetList::autoStartAction()
                 const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
                 const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
                 if((uint32_t)playerMap->step.size()<=(uint32_t)ui->comboBoxStep->currentIndex())
-                    abort();
+                    BOT_ABORT();
                 const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
                 const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
                 if(playerCodeZone<=0 || (uint32_t)(playerCodeZone-1)>=(uint32_t)stepPlayer.layers.size())
@@ -1696,7 +1697,7 @@ void BotTargetList::autoStartAction()
                                      layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
                                      " to " <<
                                      player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                 }
 
@@ -1713,7 +1714,7 @@ void BotTargetList::autoStartAction()
                                      layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
                                      " to " <<
                                      player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
-                        abort();
+                        BOT_ABORT();
                     }
                 }
 
@@ -1778,7 +1779,7 @@ void BotTargetList::autoStartAction()
                                              layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
                                              " to " <<
                                              player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
-                                abort();
+                                BOT_ABORT();
                             }
                         }
                     break;

@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <QCoreApplication>
+#include "../BotAbort.h"
 
 bool ActionsAction::preload_other_pre()
 {
@@ -68,7 +69,7 @@ bool ActionsAction::preload_the_map_step2()
 bool ActionsAction::preload_post_subdatapack()
 {
     if(map_list.empty())
-        abort();
+        BOT_ABORT();
     unsigned int index=0;
     while(index<map_list.size())
     {
@@ -116,7 +117,7 @@ void ActionsAction::loadFinishedReemitTheDelayedFunction()
                 remove_player(api,delayedMapPlayerChange.removeId);
             break;
             default:
-                abort();
+                BOT_ABORT();
             }
 
             index++;

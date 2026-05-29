@@ -6,6 +6,7 @@
 
 #include <QMessageBox>
 #include <QString>
+#include "../BotAbort.h"
 
 void ActionsAction::seed_planted_slot(const bool &ok)
 {
@@ -36,7 +37,7 @@ void ActionsAction::plant_collected(CatchChallenger::Api_protocol_Qt *api,const 
         return;
     ActionsAction::Player &player=actionsAction->clientList[api];
     if(player.plant_collect_in_waiting.empty())
-        abort();
+        BOT_ABORT();
     CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
     const Player::ClientPlantInCollecting &plantInCollecting=player.plant_collect_in_waiting.at(0);
     switch(stat)

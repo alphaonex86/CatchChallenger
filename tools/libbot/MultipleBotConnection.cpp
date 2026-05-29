@@ -7,6 +7,7 @@
 #include <QNetworkProxy>
 #include <QPluginLoader>
 #include <iostream>
+#include "BotAbort.h"
 
 MultipleBotConnection::MultipleBotConnection() :
     botInterface(NULL),
@@ -148,10 +149,10 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
     if(client->api==NULL)
     {
         std::cerr << "tryLink client->api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     if(!connect(client->api,&CatchChallenger::Api_client_real::Qtprotocol_is_good,this,&MultipleBotConnection::protocol_is_good))
-        abort();
+        BOT_ABORT();
     if(!multipleConnexion())
     {
         client->login=login();
@@ -177,7 +178,7 @@ void MultipleBotConnection::protocol_is_good_with_client(CatchChallengerClient *
     if(client->api==NULL)
     {
         std::cerr << "protocol_is_good_with_client client->api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     client->stat=Status_WaitLogin;
     updateClientListStatus();
@@ -251,7 +252,7 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
     if(client->api==NULL)
     {
         std::cerr << "logged_with_client client->api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     if(client->charactersList.empty() || client->charactersList.at(charactersGroupIndex).size()<=0)
     {
@@ -330,7 +331,7 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
                     {
                         //then do fake init normaly done into haveDatapackMainSubCode_with_client(
                         if(!client->api->setMapNumber(tempMapList.size()))
-                            abort();
+                            BOT_ABORT();
                         client->api->have_main_and_sub_datapack_loaded();
                     }
                     //qDebug() << "MultipleBotConnection::logged_with_client(): Add char on map: Manual select character:" << character_id;
@@ -347,7 +348,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
     if(client->api==NULL)
     {
         std::cerr << "haveTheDatapack_with_client client->api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     numberOfHaveDatapackCharacter++;
     emit_numberOfHaveDatapackCharacter(numberOfHaveDatapackCharacter);
@@ -422,7 +423,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
             if(!serverIsSelected)
             {
                 qDebug() << "if(!serverIsSelected) for multipleConnexion()";
-                abort();
+                BOT_ABORT();
             }
             if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
                 qDebug() << "Unable to select character after datapack loading:" << character_id;
@@ -443,7 +444,7 @@ void MultipleBotConnection::haveDatapackMainSubCode_with_client(CatchChallengerC
     if(client->api==NULL)
     {
         std::cerr << "haveDatapackMainSubCode_with_client client->api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     client->api->sendDatapackContentMainSub();
 }
@@ -453,7 +454,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
     if(client->api==NULL)
     {
         std::cerr << "haveTheDatapackMainSub_with_client client->api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     Q_UNUSED(client);
     if(botInterface!=NULL)
@@ -463,7 +464,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         {
             qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
             #ifdef CATCHCHALLENGER_HARDENED
-            abort();
+            BOT_ABORT();
             #else
             return;
             #endif
@@ -472,7 +473,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         {
             qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
             #ifdef CATCHCHALLENGER_HARDENED
-            abort();
+            BOT_ABORT();
             #else
             return;
             #endif
@@ -482,7 +483,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
     if(!tempMapList.isEmpty())
     {
         qDebug() << "MultipleBotConnection::haveTheDatapackMainSub_with_client() !tempMapList.isEmpty() internal bug";
-        abort();
+        BOT_ABORT();
     }
     {
         const QString &datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
@@ -514,7 +515,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(datapackPath.toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
     }
     if(!client->api->setMapNumber(tempMapList.size()))
-        abort();
+        BOT_ABORT();
     client->api->have_main_and_sub_datapack_loaded();
     ifMultipleConnexionStartCreation();
 }
@@ -526,7 +527,7 @@ void MultipleBotConnection::ifMultipleConnexionStartCreation()
         if(!connectTimer.isActive())
         {
             if(!connect(&connectTimer,&QTimer::timeout,this,&MultipleBotConnection::connectTimerSlot,Qt::UniqueConnection))
-                abort();
+                BOT_ABORT();
             unsigned int temp_ms=1000/connectBySeconds();
             if(temp_ms<1)
                 temp_ms=1;
@@ -579,7 +580,7 @@ void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::Ca
     if(client->api==NULL)
     {
         std::cerr << "newCharacterId_with_client client->api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     if(returnCode!=0x00)
     {
@@ -705,13 +706,13 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
     updateClientListStatus();
 
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&MultipleBotConnection::sslErrors,Qt::QueuedConnection))
-        abort();
+        BOT_ABORT();
     #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),this,&MultipleBotConnection::newSocketError))
-        abort();
+        BOT_ABORT();
     #else
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::errorOccurred),this,&MultipleBotConnection::newSocketError))
-        abort();
+        BOT_ABORT();
     #endif
     #ifdef CATCHCHALLENGER_BOT_TESTCONNECT
     qDebug() << "Try connect on: " << host() << ":" << port();
@@ -728,39 +729,39 @@ void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * cli
     if(client->api==NULL)
     {
         std::cerr << "connectTheExternalSocket client->api==NULL" << std::endl;
-        abort();
+        BOT_ABORT();
     }
     client->api->setDatapackPath(QCoreApplication::applicationDirPath().toStdString()+"/datapack/");
     if(!connect(client->api,&CatchChallenger::Api_client_real::Qtinsert_player,            this,&MultipleBotConnection::insert_player))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::Qtremove_player,            this,&MultipleBotConnection::remove_player))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::QtdropAllPlayerOnTheMap,    this,&MultipleBotConnection::dropAllPlayerOnTheMap))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::QthaveCharacter,            this,&MultipleBotConnection::haveCharacter))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::Qtlogged,                   this,&MultipleBotConnection::logged))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::Qthave_current_player_info, this,&MultipleBotConnection::have_current_player_info))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::QtnewError,                 this,&MultipleBotConnection::newError))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::QtnewCharacterId,           this,&MultipleBotConnection::newCharacterId))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::QtlastReplyTime,            this,&MultipleBotConnection::lastReplyTime))
-        abort();
+        BOT_ABORT();
     if(!connect(client->api,&CatchChallenger::Api_client_real::QtnotLogged,                this,&MultipleBotConnection::notLogged))
-        abort();
+        BOT_ABORT();
     if(!connect(client->socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MultipleBotConnection::disconnected))
-        abort();
+        BOT_ABORT();
     if(apiToCatchChallengerClient.isEmpty())
     {
         if(!connect(client->api,&CatchChallenger::Api_client_real::QthaveTheDatapack,         this,&MultipleBotConnection::haveTheDatapack,Qt::QueuedConnection/*Qt::QueuedConnection need the fix the order of event, need datapack vs already have datapack*/))
-            abort();
+            BOT_ABORT();
         if(!connect(client->api,&CatchChallenger::Api_client_real::QthaveTheDatapackMainSub,  this,&MultipleBotConnection::haveTheDatapackMainSub,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
         if(!connect(client->api,&CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,  this,&MultipleBotConnection::haveTheDatapackMainSubCode,Qt::QueuedConnection))
-            abort();
+            BOT_ABORT();
     }
     client->haveShowDisconnectionReason=false;
     client->haveBeenDiscounted=false;

@@ -1,6 +1,7 @@
 #include "WaitScreen.h"
 #include "ui_WaitScreen.h"
 #include "../libbot/actions/ActionsAction.h"
+#include "../libbot/BotAbort.h"
 
 WaitScreen::WaitScreen(QWidget *parent) :
     QWidget(parent),
@@ -8,7 +9,7 @@ WaitScreen::WaitScreen(QWidget *parent) :
 {
     ui->setupUi(this);
     if(!connect(&updateWaitScreenTimer,&QTimer::timeout,this,&WaitScreen::updateWaitScreen))
-        abort();
+        BOT_ABORT();
 }
 
 WaitScreen::~WaitScreen()

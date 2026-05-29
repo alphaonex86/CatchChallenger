@@ -2,6 +2,7 @@
 #include "ui_BotTargetList.h"
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "MapBrowse.h"
+#include "../libbot/BotAbort.h"
 
 std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock,const unsigned int &depth)
 {
@@ -461,7 +462,7 @@ bool operator==(const CatchChallenger::MapCondition& lhs, const CatchChallenger:
             return false;
         break;
         default:
-        abort();
+        BOT_ABORT();
         break;
     }
     return true;
