@@ -138,6 +138,118 @@ def collect_cpu(run):
     return out
 
 
+def collect_cpu_cache(run):
+    """Per-level CPU cache geometry of cpu0 from sysfs.
+
+    Returns a list of {type, level, size, line_size_bytes} dicts (one per
+    /sys/devices/system/cpu/cpu0/cache/index*), or [] when sysfs has no
+    cache nodes (common on emulated / minimal-rootfs nodes). Cache size +
+    line size let a reader explain a 'small/medium/large' workload cliff:
+    a regression that only shows once the dataset exceeds L2 is a cache
+    effect, not an algorithmic one."""
+    out = []
+    rc, listing = run(["sh", "-c",
+                       "ls -d /sys/devices/system/cpu/cpu0/cache/index* 2>/dev/null"])
+    if rc != 0 or not listing.strip():
+        # sysfs has no per-index cache nodes (minimal-rootfs / emulated /
+        # some containers). Fall back to parsing `lscpu`, which reports
+        # cache geometry from its own probing. No line size is exposed
+        # there, so line_size_bytes stays null.
+        return collect_cpu_cache_lscpu(run)
+    indices = sorted(listing.split())
+    i = 0
+    while i < len(indices):
+        d = indices[i].strip()
+        i += 1
+        if d:
+            entry = {"type": None, "level": None, "size": None,
+                     "line_size_bytes": None}
+            t = _read(run, d + "/type").strip()
+            if t:
+                entry["type"] = t
+            lvl = _read(run, d + "/level").strip()
+            if lvl:
+                try: entry["level"] = int(lvl)
+                except ValueError: entry["level"] = lvl
+            sz = _read(run, d + "/size").strip()
+            if sz:
+                entry["size"] = sz
+            ls = _read(run, d + "/coherency_line_size").strip()
+            if ls:
+                try: entry["line_size_bytes"] = int(ls)
+                except ValueError: entry["line_size_bytes"] = ls
+            out.append(entry)
+    return out
+
+
+def collect_cpu_cache_lscpu(run):
+    """Fallback cache geometry from `lscpu` when sysfs index* nodes are
+    absent. lscpu prints lines like 'L1d cache: 32 KiB (1 instance)' or
+    the older 'L1d cache: 32K'. Maps the Ln label to {type, level, size};
+    coherency_line_size is not reported by lscpu so it stays null.
+    Returns [] when lscpu is missing or prints no cache line."""
+    out = []
+    rc, txt = run(["sh", "-c", "lscpu 2>/dev/null"])
+    if rc != 0 or not txt.strip():
+        return collect_cpu_cache_dmesg(run)
+    line = 0
+    lines = txt.splitlines()
+    while line < len(lines):
+        k, _, v = lines[line].partition(":")
+        line += 1
+        k = k.strip(); v = v.strip()
+        if k.endswith("cache") and k[:1] == "L":
+            label = k[:-len("cache")].strip()  # e.g. "L1d", "L2"
+            lvl = None
+            ctype = "Unified"
+            if len(label) >= 2 and label[1:2].isdigit():
+                try: lvl = int(label[1])
+                except ValueError: lvl = None
+                tag = label[2:3].lower()
+                if tag == "d":
+                    ctype = "Data"
+                elif tag == "i":
+                    ctype = "Instruction"
+            # Strip the trailing "(N instance...)" annotation if present.
+            size = v.split("(", 1)[0].strip()
+            if size:
+                out.append({"type": ctype, "level": lvl,
+                            "size": size, "line_size_bytes": None})
+    if not out:
+        # lscpu present but printed no cache line (some ARM kernels) --
+        # last-resort: scrape dmesg for the cache type the kernel logged.
+        return collect_cpu_cache_dmesg(run)
+    return out
+
+
+def collect_cpu_cache_dmesg(run):
+    """Last-resort cache info from the kernel boot log when neither sysfs
+    index* nodes nor lscpu expose cache geometry (common on minimal-rootfs
+    ARM boards, e.g. Raspberry Pi). dmesg only logs the cache *type/policy*,
+    not size or line size, so those stay null -- but recording that a data
+    and instruction cache exist is still better than an empty list. Parses:
+        CPU: PIPT / VIPT nonaliasing data cache, VIPT nonaliasing instruction cache
+    Returns [] when dmesg is unreadable (needs root on some kernels) or no
+    cache line is present."""
+    out = []
+    rc, txt = run(["sh", "-c", "dmesg 2>/dev/null | grep -i cache"])
+    if rc != 0 or not txt.strip():
+        return out
+    line = 0
+    lines = txt.splitlines()
+    while line < len(lines):
+        s = lines[line]
+        line += 1
+        low = s.lower()
+        if "data cache" in low:
+            out.append({"type": "Data", "level": 1, "size": None,
+                        "line_size_bytes": None})
+        if "instruction cache" in low:
+            out.append({"type": "Instruction", "level": 1, "size": None,
+                        "line_size_bytes": None})
+    return out
+
+
 def collect_ram(run):
     out = {"ram_total_mb": None, "ram_type": None}
     txt = _read(run, "/proc/meminfo")
@@ -745,6 +857,10 @@ class PlatformRecord:
             # first /proc/cpuinfo capability line (x86 "flags" / arm-riscv
             # "Features") — the CPU's SIMD/feature set the run measured on.
             "cpu_flags":     None,
+            # Per-level cache geometry of cpu0 from sysfs: list of
+            # {type, level, size, line_size_bytes}. [] when sysfs exposes
+            # no cache nodes. Explains workload-size cliffs (L1/L2/L3).
+            "cpu_cache":     [],
             "ram_total_mb":  None,
             "ram_type":      None,
             "disk_root":     None,
@@ -807,6 +923,7 @@ class PlatformRecord:
         self.platform["cpu_cores"] = cpu["cpu_cores"]
         self.platform["cpu_mhz"]   = cpu["cpu_mhz"]
         self.platform["cpu_flags"] = cpu["cpu_flags"]
+        self.platform["cpu_cache"] = collect_cpu_cache(self.runner)
         if self.platform["arch"] is None and cpu["arch"]:
             self.platform["arch"] = cpu["arch"]
         ram = collect_ram(self.runner)

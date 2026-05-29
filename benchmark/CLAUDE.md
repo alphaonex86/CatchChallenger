@@ -461,6 +461,7 @@ Schema (one platform per file):
   "cpu_cores":  <int>,
   "cpu_mhz":    <float>,
   "cpu_flags":  "<first /proc/cpuinfo flags (x86) / Features (arm,riscv) line>",
+  "cpu_cache":  [{"type":"Data|Instruction|Unified","level":<int>,"size":"<e.g. 32K>","line_size_bytes":<int>}, ...],
   "ram_total_mb": <int>,
   "ram_type":   "<DDR3-1600 | LPDDR4-3200 | unknown>",
   "disk_root":  "<vendor + model of the device backing /, from lsblk/smartctl>",

@@ -137,9 +137,17 @@ SERVER_RAM_DB_DEFS = {
 }
 
 # io_uring tuning variants compared on the LOCAL host (the controlled
-# bench box; SQPOLL/IOPOLL behaviour is kernel/CPU specific and only
+# bench box; SQPOLL behaviour is kernel/CPU specific and only
 # reproducible there). "with and without" each sub-option => baseline
-# io_uring vs +SQPOLL vs +IOPOLL, all on top of the RAM-DB defines.
+# io_uring vs the opt-in tuning flags, all on top of the RAM-DB defines.
+# (IOPOLL was dropped: IORING_SETUP_IOPOLL only completes pollable
+# O_DIRECT block I/O SUBMITTED TO THE RING. The server does have file I/O
+# — datapack load at boot, FILE_DB database saves — but it is plain
+# blocking fopen/fread/write, NOT on the ring; the ring carries only
+# sockets (+splice/sendfile for the datapack-to-client send). So IOPOLL
+# has nothing pollable to complete and just busy-spins a core at 100%
+# serving ~0 bytes. It would only become meaningful if those file paths
+# were moved onto the ring with O_DIRECT — not the case today.)
 # liburing-dev required; a variant whose build fails (no liburing) is
 # skipped, not failed.
 # CATCHCHALLENGER_BENCHMARK enables the server-side throughput counter
@@ -152,13 +160,33 @@ IO_URING_BASE_DEFS = dict(SERVER_RAM_DB_DEFS, CATCHCHALLENGER_IO_URING="ON",
 IO_URING_VARIANTS = [
     ("iouring",              {}),
     ("iouring-sqpoll",       {"CATCHCHALLENGER_IO_URING_SQPOLL": "ON"}),
-    ("iouring-iopoll",       {"CATCHCHALLENGER_IO_URING_IOPOLL": "ON"}),
     ("iouring-coop-taskrun", {"CATCHCHALLENGER_IO_URING_COOP_TASKRUN": "ON"}),
     # TASKRUN_FLAG has no effect without COOP_TASKRUN, so enable both.
     ("iouring-taskrun-flag", {"CATCHCHALLENGER_IO_URING_COOP_TASKRUN": "ON",
                               "CATCHCHALLENGER_IO_URING_TASKRUN_FLAG": "ON"}),
     ("iouring-no-sqarray",   {"CATCHCHALLENGER_IO_URING_NO_SQARRAY": "ON"}),
 ]
+
+# Visibility-broadcast strategies swept for EACH io_uring variant. The mode
+# is a RUNTIME setting (server-properties.xml mapVisibility/minimize), so no
+# rebuild is needed — each io_uring binary is run once per mode. The two
+# strategies live in server/base/MapManagement/MapVisibilityAlgorithm.cpp:
+#   "network" -> min_network(): per-recipient diff, fewer bytes, more CPU.
+#   "cpu"     -> min_CPU(): compose the 0x65+0x6B player block ONCE and fan
+#                the SAME datablock out to every socket on the map, more
+#                bytes but cache-hot + far less CPU.
+# Crossing this with the io_uring tuning options answers "does any io_uring
+# flag shift the CPU-vs-bytes tradeoff between the two strategies?" — the
+# hypothesis being that min_CPU's shared datablock stays in cache and wins
+# on server CPU%/latency, paying for it in net_tx_bytes.
+IO_URING_VISIBILITY_MODES = ["network", "cpu"]
+# Bot count for the io_uring x visibility sweep. Deliberately high (vs the
+# 'medium' used by the bare network cells): the shared-datablock cache
+# effect only shows when many players share a single map, so maximise
+# per-map density. Wall time is fixed at DURATION_S regardless of count, so
+# a high count costs no extra wall time — only more offered load. Capped
+# below mapVisibility Max=254 so the broadcast runs instead of early-outing.
+IO_URING_VIS_BOTS = 200
 
 # Compression sweep (LOCAL): protocol Zstandard at level 6 vs OFF, set at
 # RUNTIME via server-properties.xml `compression` (one BENCHMARK-enabled
@@ -480,7 +508,8 @@ def _start_server_in(staged_bin, ready_timeout=SERVER_BOOT_TIMEOUT):
 
 
 def _stage_variant_run_dir(server_bin, run_dir, port,
-                           compression=None, compression_level=6):
+                           compression=None, compression_level=6,
+                           visibility_minimize=None):
     """Stage a run dir (binary copy + datapack symlink + server-properties
     on `port`) for an io_uring / compression variant server.
 
@@ -488,7 +517,19 @@ def _stage_variant_run_dir(server_bin, run_dir, port,
     "none" -> write the key so the compression sweep can toggle protocol
     compression at runtime. main-unix2.cpp reads it and loadAndFixSettings()
     applies it to CompressionProtocol::compressionTypeServer AFTER the
-    BaseServer2 ctor default, so the setting actually sticks."""
+    BaseServer2 ctor default, so the setting actually sticks.
+
+    visibility_minimize: None -> omit the <mapVisibility> group entirely
+    (server default = disabled, so the MapVisibilityAlgorithm broadcast
+    never fires). "network" or "cpu" -> enable the per-tick broadcast and
+    pick the strategy at RUNTIME (main-unix2.cpp mapVisibility/minimize):
+    "network" routes through MapVisibilityAlgorithm::min_network() (per-
+    recipient diff), "cpu" through min_CPU() (one shared datablock fanned
+    out to every socket). This is the axis the io_uring sweep crosses so
+    the cost of each broadcast strategy is visible under each io_uring
+    config. Max=254 is the algorithm's hard per-map cap (above it the
+    ">=max -> stop update" early-out fires and nothing is sent); Reshow=3
+    is the engine minimum (BaseServerSettings clamps anything lower)."""
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir, ignore_errors=True)
     os.makedirs(run_dir, exist_ok=True)
@@ -502,6 +543,15 @@ def _stage_variant_run_dir(server_bin, run_dir, port,
         compression_xml = (
             f'    <compression value="{compression}"/>\n'
             f'    <compressionLevel value="{compression_level}"/>\n')
+    visibility_xml = ""
+    if visibility_minimize is not None:
+        visibility_xml = (
+            '    <mapVisibility>\n'
+            '        <enable value="true"/>\n'
+            '        <Max value="254"/>\n'
+            '        <Reshow value="3"/>\n'
+            f'        <minimize value="{visibility_minimize}"/>\n'
+            '    </mapVisibility>\n')
     with open(os.path.join(run_dir, "server-properties.xml"), "w") as f:
         f.write(
             '<?xml version="1.0"?>\n<configuration>\n'
@@ -510,6 +560,7 @@ def _stage_variant_run_dir(server_bin, run_dir, port,
             '    <max-players value="500"/>\n'
             '    <httpDatapackMirror value=""/>\n'
             f'{compression_xml}'
+            f'{visibility_xml}'
             f'    <master>\n        <external-server-port value="{port}"/>\n    </master>\n'
             f'    <content>\n        <mainDatapackCode value="{maincode}"/>\n'
             '        <subDatapackCode value=""/>\n    </content>\n</configuration>\n')
@@ -591,14 +642,20 @@ def _read_bench_latency(run_dir):
 
 
 def _run_iouring_variants(bot_bin, iface):
-    """LOCAL io_uring variant comparison: build the server for each
-    (baseline io_uring / +SQPOLL / +IOPOLL), run ONE medium bot workload
-    against it, record wall/sys/user/RSS + server CPU%. Returns
-    (boot_flat {name:(med,std)}, slices {variant: metric_block}). A
+    """LOCAL io_uring x visibility-mode sweep. For every io_uring tuning
+    variant (baseline / +SQPOLL / +COOP_TASKRUN / +TASKRUN_FLAG /
+    +NO_SQARRAY) the server is built ONCE, then run twice — once with the
+    MapVisibilityAlgorithm broadcast in min_network mode and once in min_CPU
+    mode (mapVisibility/minimize toggled at RUNTIME, no rebuild). Per
+    (variant, mode) it records wall/sys/user/RSS + server CPU% + requests/s
+    + latency tail + bytes-on-wire so the CPU-vs-bytes tradeoff of the two
+    broadcast strategies is legible under each io_uring config. Returns
+    (flat {name:(med,std)}, slices {"<variant>-<mode>": metric_block}). A
     variant whose build fails (no liburing) or whose server won't bind is
     skipped with a note -- never a hard failure."""
     flat, slices = {}, {}
-    medium = BOT_COUNTS[len(BOT_COUNTS) // 2]
+    bots = IO_URING_VIS_BOTS
+    port_seq = 0
     for i, (vlabel, extra) in enumerate(IO_URING_VARIANTS):
         defs = dict(IO_URING_BASE_DEFS)
         defs.update(extra)
@@ -613,71 +670,91 @@ def _run_iouring_variants(bot_bin, iface):
         if not os.path.isfile(sbin):
             print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: binary missing; skip"))
             continue
-        port = SERVER_PORT + 10 + i
-        rdir = os.path.join(TMPFS_ROOT, f"cc-bench-botactions-{vlabel}")
-        staged = _stage_variant_run_dir(sbin, rdir, port)
-        # pre-generate the cache so the variant server boots fast
-        bh.run_capture([staged, "save"], timeout=RUN_TIMEOUT, cwd=rdir,
-                       preexec_fn=bh._drop_core_rlimit)
-        proc = _start_server_in(staged)
-        if proc is None:
-            print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: server not ready; skip"))
-            continue
-        try:
-            sample, sample_err = _run_once(bot_bin, "127.0.0.1", port, medium,
-                                           iface, server_pid=proc.pid)
-        finally:
-            stop_server(proc)
-        if sample is None:
-            print(_color(bh.C_YELLOW,
-                  f"[iouring] {vlabel}: bot run failed; skip ({sample_err})"))
-            continue
-        sm = {}
-        for k in ("wall_s", "sys_s", "user_s", "max_rss_kb"):
-            v = sample.get(k)
-            if v is not None:
-                flat[f"{vlabel}_{k}"] = (v, 0.0)
-                sm[k] = {"value": v, "median": v, "stddev": 0.0,
-                         "unit": "kb" if k.endswith("_kb") else "s",
+        # Same binary, two runtime visibility strategies. min_network vs
+        # min_CPU is the axis this sweep exists to compare.
+        for mode in IO_URING_VISIBILITY_MODES:
+            slabel = f"{vlabel}-{mode}"
+            port = SERVER_PORT + 10 + port_seq
+            port_seq += 1
+            rdir = os.path.join(TMPFS_ROOT, f"cc-bench-botactions-{slabel}")
+            staged = _stage_variant_run_dir(sbin, rdir, port,
+                                            visibility_minimize=mode)
+            # pre-generate the cache so the variant server boots fast
+            bh.run_capture([staged, "save"], timeout=RUN_TIMEOUT, cwd=rdir,
+                           preexec_fn=bh._drop_core_rlimit)
+            proc = _start_server_in(staged)
+            if proc is None:
+                print(_color(bh.C_YELLOW, f"[iouring] {slabel}: server not ready; skip"))
+                continue
+            try:
+                sample, sample_err = _run_once(bot_bin, "127.0.0.1", port, bots,
+                                               iface, server_pid=proc.pid)
+            finally:
+                stop_server(proc)
+            if sample is None:
+                print(_color(bh.C_YELLOW,
+                      f"[iouring] {slabel}: bot run failed; skip ({sample_err})"))
+                continue
+            sm = {}
+            for k in ("wall_s", "sys_s", "user_s", "max_rss_kb"):
+                v = sample.get(k)
+                if v is not None:
+                    flat[f"{slabel}_{k}"] = (v, 0.0)
+                    sm[k] = {"value": v, "median": v, "stddev": 0.0,
+                             "unit": "kb" if k.endswith("_kb") else "s",
+                             "better": "lower", "samples": [v]}
+            # bytes-on-wire (loopback rx/tx): THE metric that distinguishes
+            # the two broadcast strategies. min_CPU rebroadcasts every
+            # player every tick (high tx); min_network sends only the diff
+            # (low tx). Without it "min_CPU uses less CPU" is the meaningless
+            # half-conclusion benchmark/CLAUDE.md warns against — the CPU win
+            # only counts if paired with its bandwidth cost.
+            for k in ("net_tx_bytes", "net_rx_bytes"):
+                v = sample.get(k)
+                if v is not None:
+                    flat[f"{slabel}_{k}"] = (v, 0.0)
+                    sm[k] = {"value": v, "median": v, "stddev": 0.0,
+                             "unit": "bytes", "better": "lower", "samples": [v]}
+            cpu = sample.get("cpu_percent")
+            if cpu is not None:
+                flat[f"{slabel}_cpu_percent"] = (cpu, 0.0)
+                sm["cpu_percent"] = {"value": cpu, "median": cpu, "stddev": 0.0,
+                                     "unit": "%", "better": "lower", "samples": [cpu]}
+            # Work-done metric: server read-events processed (BENCH counter)
+            # divided by the run's wall time => requests/s. This is the number
+            # CPU%/RSS must be contrasted against — less CPU at a LOWER
+            # requests/s is a regression, not a win (benchmark/CLAUDE.md:
+            # "CPU%/RSS are never a conclusion on their own").
+            rps = None
+            packets = _read_bench_packets_in(rdir)
+            wall = sample.get("wall_s")
+            if packets is not None and wall and wall > 0:
+                rps = packets / wall
+                flat[f"{slabel}_requests_per_s"] = (rps, 0.0)
+                sm["requests_per_s"] = {"value": rps, "median": rps,
+                                        "stddev": 0.0, "unit": "req/s",
+                                        "better": "higher", "samples": [rps]}
+            # Latency tail + jitter from the server's processing-time histogram.
+            # The throughput headline (req/s) MUST ride with its latency/jitter:
+            # a req/s win that inflates p99 or jitter is a tick-stability
+            # regression on the constrained targets (benchmark/CLAUDE.md
+            # "Latency vs throughput").
+            lat = _read_bench_latency(rdir)
+            for k, v in lat.items():
+                flat[f"{slabel}_{k}"] = (v, 0.0)
+                sm[k] = {"value": v, "median": v, "stddev": 0.0, "unit": "ns",
                          "better": "lower", "samples": [v]}
-        cpu = sample.get("cpu_percent")
-        if cpu is not None:
-            flat[f"{vlabel}_cpu_percent"] = (cpu, 0.0)
-            sm["cpu_percent"] = {"value": cpu, "median": cpu, "stddev": 0.0,
-                                 "unit": "%", "better": "lower", "samples": [cpu]}
-        # Work-done metric: server read-events processed (BENCH counter)
-        # divided by the run's wall time => requests/s. This is the number
-        # CPU%/RSS must be contrasted against — less CPU at a LOWER
-        # requests/s is a regression, not a win (benchmark/CLAUDE.md:
-        # "CPU%/RSS are never a conclusion on their own").
-        rps = None
-        packets = _read_bench_packets_in(rdir)
-        wall = sample.get("wall_s")
-        if packets is not None and wall and wall > 0:
-            rps = packets / wall
-            flat[f"{vlabel}_requests_per_s"] = (rps, 0.0)
-            sm["requests_per_s"] = {"value": rps, "median": rps,
-                                    "stddev": 0.0, "unit": "req/s",
-                                    "better": "higher", "samples": [rps]}
-        # Latency tail + jitter from the server's processing-time histogram.
-        # The throughput headline (req/s) MUST ride with its latency/jitter:
-        # a req/s win that inflates p99 or jitter is a tick-stability
-        # regression on the constrained targets (benchmark/CLAUDE.md
-        # "Latency vs throughput").
-        lat = _read_bench_latency(rdir)
-        for k, v in lat.items():
-            flat[f"{vlabel}_{k}"] = (v, 0.0)
-            sm[k] = {"value": v, "median": v, "stddev": 0.0, "unit": "ns",
-                     "better": "lower", "samples": [v]}
-        if sm:
-            slices[vlabel] = sm
-        rps_s = f"{rps:.0f}req/s" if rps is not None else "req/s=?"
-        p99 = lat.get("latency_p99_ns")
-        jit = lat.get("latency_jitter_ns")
-        lat_s = (f" p99={p99:.0f}ns jitter={jit:.0f}ns"
-                 if p99 is not None else "")
-        print(_color(bh.C_GREEN, f"[iouring] {vlabel}: wall={sample.get('wall_s')}s "
-              f"sys={sample.get('sys_s')}s cpu={cpu}% {rps_s}{lat_s}"))
+            if sm:
+                slices[slabel] = sm
+            rps_s = f"{rps:.0f}req/s" if rps is not None else "req/s=?"
+            tx = sample.get("net_tx_bytes")
+            tx_s = f" tx={tx}B" if tx is not None else ""
+            p99 = lat.get("latency_p99_ns")
+            jit = lat.get("latency_jitter_ns")
+            lat_s = (f" p99={p99:.0f}ns jitter={jit:.0f}ns"
+                     if p99 is not None else "")
+            print(_color(bh.C_GREEN, f"[iouring] {slabel}: wall={sample.get('wall_s')}s "
+                  f"sys={sample.get('sys_s')}s cpu={cpu}% {rps_s}{tx_s}{lat_s}"))
     return flat, slices
 
 
@@ -923,8 +1000,14 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
 
     full = ["/usr/bin/time", "-v"] + cmd
     t0 = time.monotonic()
+    # errors="replace": with mapVisibility enabled the server forwards other
+    # players' pseudos, which the datapack stores as raw Latin-1/binary bytes
+    # (not valid UTF-8). The Qt bot echoes them to stderr, so a strict
+    # text=True decode raises UnicodeDecodeError and kills the whole sweep.
+    # We only parse the ASCII /usr/bin/time -v report out of stderr, so
+    # lossy-decoding the non-ASCII player-name bytes is harmless.
     p = subprocess.run(full, env=env, capture_output=True, text=True,
-                       timeout=RUN_TIMEOUT)
+                       errors="replace", timeout=RUN_TIMEOUT)
     wall = time.monotonic() - t0
     # timeout(1) returns 124 on timeout-expired (= our intended path),
     # 0 on natural exit. Anything else = bot or server failure. Surface the
@@ -1388,7 +1471,7 @@ def main():
     staged = setup_server_run_dir(server_bin)
     if args.profile:
         # Profile the server under bot load for each requested tool. This
-        # benchmark's server+bot workload is local-only (SQPOLL/IOPOLL is
+        # benchmark's server+bot workload is local-only (SQPOLL is
         # kernel/CPU specific and the remote dispatch isn't wired), so
         # --profile stays on the host; artefacts are still node/core-tagged.
         tools = bh.profile_tools(args.profile)
@@ -1608,9 +1691,14 @@ def _run_with_server(bin_path, server_proc, comment,
                           extra=node_skips[label].get("perf-stat", "tool-missing"))
             per_tool[label]["perf-stat"] = {"status": "SKIP", "metrics": {}}
 
-        # io_uring tuning sweep (LOCAL only): baseline io_uring vs +SQPOLL
-        # vs +IOPOLL, each measured under one medium bot workload. Recorded
-        # as the "server-iouring" tool + per-variant sub-benchmark slices.
+        # io_uring x visibility-mode sweep (LOCAL only): each io_uring
+        # tuning variant (baseline / +SQPOLL / +COOP_TASKRUN /
+        # +TASKRUN_FLAG / +NO_SQARRAY) run under BOTH MapVisibilityAlgorithm
+        # broadcast strategies — min_network and min_CPU — toggled at
+        # runtime. Recorded as the "server-iouring" tool + per-(variant,mode)
+        # sub-benchmark slices carrying CPU% + req/s + bytes-on-wire + the
+        # latency tail, so the CPU-vs-bytes tradeoff of the two strategies is
+        # reviewable under every io_uring config.
         # note() before each sweep: both spin up server+bot fleets several
         # times (minutes each), so without their own breadcrumb a deadline
         # firing here would be misattributed to the last note()'d cell
