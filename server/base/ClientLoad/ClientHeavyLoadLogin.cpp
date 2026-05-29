@@ -14,6 +14,8 @@
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <sys/stat.h>
 #include <fstream>
+#include <sstream>
+#include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #endif
@@ -597,35 +599,22 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         {
-            #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
             std::ostringstream out_file;
-            #else
-            std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
-            if(!out_file.good() || !out_file.is_open())
-            {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
-            #endif
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
+            const std::string _s=out_file.str();
             #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
-            {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+            CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+            #else
+            if(!FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")),_s.data(),_s.size()))
+            {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
             #endif
         }
         {
             {
-                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
                 std::ostringstream out_file;
-                #else
-                std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)), std::ofstream::binary);
-                if(!out_file.good() || !out_file.is_open())
-                {
-                    std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " (abort)" << std::endl;
-                    abort();
-                    return;
-                }
-                #endif
-
                 std::vector<char> secretTokenBinary;
                 secretTokenBinary.resize(CATCHCHALLENGER_HASH_SIZE);
                 memcpy(secretTokenBinary.data(),askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE);
@@ -636,27 +625,32 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 }
                 hps::to_stream(secretTokenBinary, out_file);
                 hps::to_stream(account_id_db, out_file);
+                const std::string _s=out_file.str();
                 #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
-                {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+                CatchChallenger::dbInternalVarsStore[std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+                #else
+                if(!FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)),_s.data(),_s.size()))
+                {
+                    std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " (abort)" << std::endl;
+                    abort();
+                    return;
+                }
                 #endif
             }
             {
-                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
                 std::ostringstream out_file;
+                std::vector<CharacterEntry> characterEntryList;
+                hps::to_stream(characterEntryList, out_file);
+                const std::string _s=out_file.str();
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                CatchChallenger::dbInternalVarsStore[std::string("database/common/accounts/")+std::to_string(account_id_db)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
                 #else
-                std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ofstream::binary);
-                if(!out_file.good() || !out_file.is_open())
+                if(!FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)),_s.data(),_s.size()))
                 {
                     std::cerr << "Unable to open data base file database/common/accounts/" << account_id_db << " (abort)" << std::endl;
                     abort();
                     return;
                 }
-                #endif
-
-                std::vector<CharacterEntry> characterEntryList;
-                hps::to_stream(characterEntryList, out_file);
-                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
-                {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/common/accounts/")+std::to_string(account_id_db)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
                 #endif
             }
         }

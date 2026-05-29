@@ -154,12 +154,15 @@ if(CATCHCHALLENGER_IO_URING)
     target_link_libraries(catchchallenger-server-cli PRIVATE ${LIBURING_LIBRARY})
     # Opt-in io_uring tuning (EventLoop.cpp gates on these). Sub-options of
     # the io_uring backend; only meaningful when CATCHCHALLENGER_IO_URING is
-    # on. SQPOLL spins a kernel submission-poll thread (multi-core hosts);
-    # IOPOLL busy-polls completions (storage paths). Used by the benchmark
-    # harness to compare the variants.
+    # on. SQPOLL spins a kernel submission-poll thread (multi-core hosts).
+    # Used by the benchmark harness to compare the variants.
     if(CATCHCHALLENGER_IO_URING_SQPOLL)
         target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_IO_URING_SQPOLL)
     endif()
+    # IOPOLL applies to the dedicated FILE ring (datapack load + datapack-to-
+    # client sync reads), NOT the socket ring: it opens those files O_DIRECT and
+    # busy-polls completions on a polled ring. No-op where O_DIRECT is 0; on a
+    # filesystem that rejects O_DIRECT (tmpfs) the read falls back to blocking.
     if(CATCHCHALLENGER_IO_URING_IOPOLL)
         target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_IO_URING_IOPOLL)
     endif()

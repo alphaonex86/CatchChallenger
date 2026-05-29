@@ -15,6 +15,8 @@
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <sys/stat.h>
 #include <fstream>
+#include <sstream>
+#include "../../general/base/FacilityLibGeneral.hpp"
 #endif
 
 /// \todo solve disconnecting/destroy during the SQL loading
@@ -544,19 +546,17 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
     #ifdef CATCHCHALLENGER_DB_FILE
     {
-        #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
         std::ostringstream out_file;
-        #else
-        std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")), std::ofstream::binary);
-        if(!out_file.good() || !out_file.is_open())
-        {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
-        #endif
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
+        const std::string _s=out_file.str();
         #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
-        {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
+        CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
+        #else
+        if(!FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")),_s.data(),_s.size()))
+        {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
         #endif
     }
     #endif
@@ -700,20 +700,18 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             characterEntryList.push_back(newChar);
 
             {
-                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
                 std::ostringstream out_file;
+                hps::to_stream(characterEntryList, out_file);
+                const std::string _s=out_file.str();
+                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+                CatchChallenger::dbInternalVarsStore[std::string("database/common/accounts/")+std::to_string(account_id_db)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
                 #else
-                std::ofstream out_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ofstream::binary);
-                if(!out_file.good() || !out_file.is_open())
+                if(!FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)),_s.data(),_s.size()))
                 {
                     std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
                     abort();
                     return;
                 }
-                #endif
-                hps::to_stream(characterEntryList, out_file);
-                #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
-                {const std::string _s=out_file.str();CatchChallenger::dbInternalVarsStore[std::string("database/common/accounts/")+std::to_string(account_id_db)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());}
                 #endif
             }
         }

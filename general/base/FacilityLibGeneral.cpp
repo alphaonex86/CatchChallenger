@@ -22,6 +22,8 @@ std::string FacilityLibGeneral::text_clan="clan";
 std::string FacilityLibGeneral::text_dotcomma=";";
 
 std::string FacilityLibGeneral::applicationDirPath;
+FacilityLibGeneral::WholeFileRingReader FacilityLibGeneral::wholeFileRingReader=nullptr;
+FacilityLibGeneral::WholeFileRingWriter FacilityLibGeneral::wholeFileRingWriter=nullptr;
 
 unsigned int FacilityLibGeneral::toUTF8WithHeader(const std::string &text,char * const data)
 {
@@ -272,6 +274,63 @@ std::vector<char> FacilityLibGeneral::readAllFileAndClose(FILE * file)
     fclose(file);
 
     return data;
+}
+
+std::vector<char> FacilityLibGeneral::readWholeFile(const std::string &path,bool &ok)
+{
+    std::vector<char> out;
+    //io_uring server (if it installed the hook) reads through its file ring;
+    //a decline/failure there transparently falls through to the blocking path
+    //below, so correctness never depends on the ring succeeding.
+    if(wholeFileRingReader!=nullptr)
+    {
+        if(wholeFileRingReader(path,out))
+        {
+            ok=true;
+            return out;
+        }
+        out.clear();
+    }
+    //blocking fallback: plain fopen/fread (the only path on client, select,
+    //poll and epoll builds). Caller is responsible for any platform path
+    //fix-up (e.g. '/'->'\\' on win32) before calling.
+    FILE *filedesc=fopen(path.c_str(),"rb");
+    if(filedesc==NULL)
+    {
+        ok=false;
+        return out;
+    }
+    out=readAllFileAndClose(filedesc);
+    ok=true;
+    return out;
+}
+
+bool FacilityLibGeneral::writeWholeFile(const std::string &path,const char *data,size_t size)
+{
+    //io_uring server (if it installed the hook) writes through its file ring;
+    //a decline/failure there falls through to the blocking path below, which
+    //fully truncate-rewrites — so a half-finished ring write never persists.
+    if(wholeFileRingWriter!=nullptr)
+    {
+        if(wholeFileRingWriter(path,data,size))
+            return true;
+    }
+    //blocking fallback: plain fopen("wb")+fwrite (the only path on client,
+    //select, poll and epoll builds). "wb" truncates, matching the previous
+    //std::ofstream(binary|trunc) semantics.
+    FILE *filedesc=fopen(path.c_str(),"wb");
+    if(filedesc==NULL)
+        return false;
+    if(size>0)
+    {
+        if(fwrite(data,1,size,filedesc)!=size)
+        {
+            fclose(filedesc);
+            return false;
+        }
+    }
+    fclose(filedesc);
+    return true;
 }
 
 uint32_t FacilityLibGeneral::fileSize(FILE * file)
