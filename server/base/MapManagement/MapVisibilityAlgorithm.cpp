@@ -390,9 +390,15 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                         posOutput+=1+4+1+2+1;//reserve [0..8] for 0x6B header (used only if insertCount>0)
 
                         //compare the shared dense buffer (built once above) against this
-                        //recipient's sendedStatus to detect inserts/changes/removes
+                        //recipient's sendedStatus to detect inserts/changes/removes.
+                        //Hoist both loop bounds: dense_size already = min(map_clients_id.size(),255)
+                        //from above, and sendedStatus is not resized until after this loop. The
+                        //compiler can't hoist them itself — the rare insert path calls
+                        //playerToFullInsert(), which it can't prove leaves the vectors untouched —
+                        //so without this it reloads .size() every iteration of the N*N path.
+                        const size_t ss_size=clientWithMap.sendedStatus.size();
                         unsigned int index=0;
-                        while(index<map_clients_id.size() && index<255)
+                        while(index<dense_size)
                         {
                             if(index_client==index)//skip self
                             {
@@ -400,7 +406,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                 continue;
                             }
                             //slot is within sendedStatus range -> can compare with last-sent state
-                            if(index<clientWithMap.sendedStatus.size())
+                            if(index<ss_size)
                             {
                                 ClientWithMap::SendedStatus &c_stat=clientWithMap.sendedStatus[index];
                                 const DensePlayerState &dense=tempDenseBuffer[index];
