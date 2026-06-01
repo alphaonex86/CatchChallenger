@@ -54,6 +54,26 @@
 
 using namespace CatchChallenger;
 
+//Pack x, y and direction into one 32-bit word (x | y<<8 | direction<<16, high
+//byte 0). Used for both DensePlayerState::xyd and SendedStatus::xyd so the
+//per-tick diff compares position+direction with a single 32-bit compare and
+//copies a whole slot as one 64-bit word. Endian-neutral: the bytes are
+//re-extracted with shifts when written to the wire, never type-punned.
+static inline uint32_t packXYD(const COORD_TYPE &x,const COORD_TYPE &y,const Direction &direction)
+{
+    return (uint32_t)x | ((uint32_t)y<<8) | ((uint32_t)direction<<16);
+}
+
+//DensePlayerState (the per-tick snapshot) and ClientWithMap::SendedStatus (the
+//per-recipient last-sent state) are deliberately the SAME 8-byte {db_id,xyd}
+//layout so the diff loop compares a slot as one 64-bit word and the sent-state
+//is refreshed with a single flat memcpy of the dense snapshot. Guard that
+//invariant: if either struct ever diverges these asserts fail at compile time.
+static_assert(sizeof(MapVisibilityAlgorithm::DensePlayerState)==sizeof(ClientWithMap::SendedStatus),
+              "DensePlayerState and SendedStatus must stay the same size for the memcpy refresh");
+static_assert(sizeof(MapVisibilityAlgorithm::DensePlayerState)==8,
+              "DensePlayerState must be exactly 8 bytes with no padding");
+
 //to prevent allocate memory
 char MapVisibilityAlgorithm::tempBigBufferForChanges[];
 char MapVisibilityAlgorithm::tempBigBufferForRemove[];
@@ -315,9 +335,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
             assertXYInRange(c.getX(),c.getY(),"min_network_dense_build");
             #endif
             tempDenseBuffer[dense_idx].db_id=c.getPlayerId();
-            tempDenseBuffer[dense_idx].x=c.getX();
-            tempDenseBuffer[dense_idx].y=c.getY();
-            tempDenseBuffer[dense_idx].direction=c.getLastDirection();
+            tempDenseBuffer[dense_idx].xyd=packXYD(c.getX(),c.getY(),c.getLastDirection());
         }
         else
         {
@@ -357,23 +375,13 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                         }
                         clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                        //populate sendedStatus from the shared dense buffer (current state)
+                        //populate sendedStatus from the shared dense buffer (current state).
+                        //The new sent-state IS the dense snapshot; empty slots already carry
+                        //db_id==0xffffffff and their xyd is never read while empty, so a flat
+                        //copy matches the old per-field loop. memcpy is internally vectorised.
                         clientWithMap.sendedStatus.resize(dense_size);
-                        for(unsigned int ss=0;ss<clientWithMap.sendedStatus.size();ss++)
-                        {
-                            const DensePlayerState &dense=tempDenseBuffer[ss];
-                            if(dense.db_id!=0xffffffff)
-                            {
-                                clientWithMap.sendedStatus[ss].characterId_db=dense.db_id;
-                                clientWithMap.sendedStatus[ss].x=dense.x;
-                                clientWithMap.sendedStatus[ss].y=dense.y;
-                                clientWithMap.sendedStatus[ss].direction=dense.direction;
-                            }
-                            else
-                            {
-                                clientWithMap.sendedStatus[ss].characterId_db=0xffffffff;
-                            }
-                        }
+                        if(dense_size>0)
+                            memcpy(clientWithMap.sendedStatus.data(),tempDenseBuffer,dense_size*sizeof(DensePlayerState));
                     }
                     /// PATH 2: same map as last tick -> diff update
                     /// Compare sendedStatus with current state to detect inserts/changes/removes.
@@ -416,21 +424,25 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                     //same character in this slot as last tick
                                     if(dense.db_id==c_stat.characterId_db)
                                     {
-                                        if(c_stat.direction==dense.direction && c_stat.x==dense.x && c_stat.y==dense.y)
+                                        if(c_stat.xyd==dense.xyd)
                                         {
-                                        }//no change, nothing to send
+                                        }//no change, nothing to send (single 32-bit compare of x+y+direction)
                                         else
                                         {
                                             //position or direction changed -> send 0x66 change entry
                                             {
                                                 #ifdef CATCHCHALLENGER_TESTING
-                                                assertXYInRange(dense.x,dense.y,"min_network_path2_change");
+                                                assertXYInRange(static_cast<COORD_TYPE>(dense.xyd),static_cast<COORD_TYPE>(dense.xyd>>8),"min_network_path2_change");
                                                 #endif
-                                                //only send partial changes: slot + x + y + direction (4 bytes per entry)
-                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)]=static_cast<uint8_t>(index);
-                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1]=static_cast<uint8_t>(dense.x);
-                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1]=static_cast<uint8_t>(dense.y);
-                                                MapVisibilityAlgorithm::tempBigBufferForChanges[1+4+1+changesCount*(1+1+1+1)+1+1+1]=static_cast<uint8_t>(dense.direction);
+                                                //only send partial changes: slot + x + y + direction (4 bytes per entry).
+                                                //Hoist the per-entry base pointer (was recomputed 4x) and unpack the
+                                                //bytes from xyd with shifts -> endian-neutral wire order.
+                                                char *ce=MapVisibilityAlgorithm::tempBigBufferForChanges+(1+4+1)+changesCount*(1+1+1+1);
+                                                //one 32-bit store instead of 4 byte stores. dense.xyd already holds
+                                                //x|y<<8|dir<<16, so (xyd<<8)|slot lays the wire bytes [slot][x][y][dir]
+                                                //out in order; htole32 makes that byte order identical on every endianness.
+                                                const uint32_t entry=htole32((uint32_t)(uint8_t)index | (dense.xyd<<8));
+                                                memcpy(ce,&entry,sizeof(entry));
                                                 changesCount++;
                                             }
                                         }
@@ -441,7 +453,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                         //full insert other player on map (another player replaced the old one)
                                         {
                                             #ifdef CATCHCHALLENGER_TESTING
-                                            assertXYInRange(dense.x,dense.y,"min_network_path2_replaced");
+                                            assertXYInRange(static_cast<COORD_TYPE>(dense.xyd),static_cast<COORD_TYPE>(dense.xyd>>8),"min_network_path2_replaced");
                                             #endif
                                             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;//local slot
                                             posOutput+=1;
@@ -533,21 +545,12 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                 posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                             }
                             clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                            //update sendedStatus from the shared dense buffer so next tick can detect differences
+                            //update sendedStatus from the shared dense buffer so next tick can
+                            //detect differences. Flat memcpy: the dense snapshot IS the new
+                            //sent-state (see PATH 1 note), internally vectorised by libc.
                             clientWithMap.sendedStatus.resize(dense_size);
-                            for(unsigned int ss=0;ss<clientWithMap.sendedStatus.size();ss++)
-                            {
-                                const DensePlayerState &dense=tempDenseBuffer[ss];
-                                if(dense.db_id!=0xffffffff)
-                                {
-                                    clientWithMap.sendedStatus[ss].characterId_db=dense.db_id;
-                                    clientWithMap.sendedStatus[ss].x=dense.x;
-                                    clientWithMap.sendedStatus[ss].y=dense.y;
-                                    clientWithMap.sendedStatus[ss].direction=dense.direction;
-                                }
-                                else
-                                    clientWithMap.sendedStatus[ss].characterId_db=0xffffffff;
-                            }
+                            if(dense_size>0)
+                                memcpy(clientWithMap.sendedStatus.data(),tempDenseBuffer,dense_size*sizeof(DensePlayerState));
                         }
                     }
                 }
