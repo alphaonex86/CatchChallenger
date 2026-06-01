@@ -437,12 +437,14 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                                 //only send partial changes: slot + x + y + direction (4 bytes per entry).
                                                 //Hoist the per-entry base pointer (was recomputed 4x) and unpack the
                                                 //bytes from xyd with shifts -> endian-neutral wire order.
+                                                //The 0x66 wire entry is a plain byte sequence [slot][x][y][direction];
+                                                //write the bytes directly. No integer punning / endianness conversion:
+                                                //the protocol is byte-oriented, so there is no host-endianness to fix up.
                                                 char *ce=MapVisibilityAlgorithm::tempBigBufferForChanges+(1+4+1)+changesCount*(1+1+1+1);
-                                                //one 32-bit store instead of 4 byte stores. dense.xyd already holds
-                                                //x|y<<8|dir<<16, so (xyd<<8)|slot lays the wire bytes [slot][x][y][dir]
-                                                //out in order; htole32 makes that byte order identical on every endianness.
-                                                const uint32_t entry=htole32((uint32_t)(uint8_t)index | (dense.xyd<<8));
-                                                memcpy(ce,&entry,sizeof(entry));
+                                                ce[0]=static_cast<uint8_t>(index);
+                                                ce[1]=static_cast<uint8_t>(dense.xyd);     //x  = xyd bits 0..7
+                                                ce[2]=static_cast<uint8_t>(dense.xyd>>8);  //y  = xyd bits 8..15
+                                                ce[3]=static_cast<uint8_t>(dense.xyd>>16); //direction = xyd bits 16..23
                                                 changesCount++;
                                             }
                                         }
