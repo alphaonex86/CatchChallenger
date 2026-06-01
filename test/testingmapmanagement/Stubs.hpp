@@ -174,9 +174,8 @@ public:
     struct SendedStatus
     {
         uint32_t characterId_db;
-        COORD_TYPE x;
-        COORD_TYPE y;
-        Direction direction;
+        //mirror production ClientWithMap::SendedStatus: x | y<<8 | direction<<16
+        uint32_t xyd;
     };
     std::vector<SendedStatus> sendedStatus;
     CATCHCHALLENGER_TYPE_MAPID sendedMap;

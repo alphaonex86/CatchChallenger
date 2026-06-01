@@ -38,9 +38,11 @@ public:
     // aligned same as SendedStatus for fast comparison
     struct DensePlayerState {
         uint32_t db_id;
-        COORD_TYPE x;
-        COORD_TYPE y;
-        Direction direction;
+        //same packed layout as ClientWithMap::SendedStatus::xyd
+        //(x | (y<<8) | (direction<<16), high byte 0): 8 bytes, no padding,
+        //so the diff loop can compare a slot with a single 32-bit (xyd) or
+        //64-bit (db_id+xyd) compare and SIMD can scan it byte-exactly.
+        uint32_t xyd;
     };
     static DensePlayerState tempDenseBuffer[255];
 
