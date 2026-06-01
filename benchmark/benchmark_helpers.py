@@ -14,6 +14,7 @@ benchmarkXXX.py keeps its workload-specific bits (build, run, parse).
 """
 import fcntl
 import json
+import math
 import os
 import random
 import re
@@ -1303,7 +1304,55 @@ def stats_of(samples):
     return statistics.median(samples), statistics.pstdev(samples)
 
 
-# ---- champion compare ----------------------------------------------------
+# ---- BENCH log2-histogram parsing (shared by client + server) ------------
+
+def bench_hist_percentiles(buckets):
+    """Reconstruct p50/p95/p99/p999 + jitter (ns) from a {bucket_index: count}
+    log2 histogram where bucket i covers [2^i, 2^(i+1)) ns -- the exact
+    convention emitted by the server (BENCH lat_hist_<i>) and the client
+    LatencyRecorder (BENCH <metric>_lat_hist_<i>). Each bucket's geometric
+    midpoint (2^i * sqrt(2)) is its representative latency. {} when empty."""
+    total = sum(buckets.values())
+    if total == 0:
+        return {}
+    ordered = sorted(buckets.items())
+    def rep(i):
+        return (2.0 ** i) * math.sqrt(2.0)
+    mean = sum(rep(i) * c for i, c in ordered) / total
+    var = sum(c * (rep(i) - mean) ** 2 for i, c in ordered) / total
+    out = {"jitter_ns": math.sqrt(var), "count": total}
+    def percentile(p):
+        target = p * total
+        cum = 0
+        for i, c in ordered:
+            cum += c
+            if cum >= target:
+                return rep(i)
+        return rep(ordered[-1][0])
+    out["p50_ns"]  = percentile(0.50)
+    out["p95_ns"]  = percentile(0.95)
+    out["p99_ns"]  = percentile(0.99)
+    out["p999_ns"] = percentile(0.999)
+    return out
+
+
+def parse_client_bench_stdout(text):
+    """Parse the bot-actions --latency BENCH dump (on stdout at SIGINT):
+        BENCH <metric>_lat_hist_<i>=<count>
+        BENCH <metric>_count=<N>
+    for metric in {chat, join, rtt}. Returns {metric: {p50_ns, p95_ns,
+    p99_ns, p999_ns, jitter_ns, count}} -- only metrics that produced at
+    least one sample. A metric the run never observed is simply absent
+    (the comparator treats a missing metric as 'unknown')."""
+    per = {}
+    for m in re.finditer(r"BENCH (\w+)_lat_hist_(\d+)=(\d+)", text):
+        per.setdefault(m.group(1), {})[int(m.group(2))] = int(m.group(3))
+    out = {}
+    for metric, buckets in per.items():
+        stats = bench_hist_percentiles(buckets)
+        if stats:
+            out[metric] = stats
+    return out
 
 def node_path_parts(node_label):
     """Map a node label to the (compile_label, exec_label) pair that

@@ -9,6 +9,8 @@
 
 #include <QNetworkProxy>
 #include <QMessageBox>
+#include <iostream>
+#include <cstdlib>
 #include "../libbot/BotAbort.h"
 
 MultipleBotConnectionAction MainWindow::multipleBotConnexion;
@@ -147,6 +149,20 @@ MainWindow::MainWindow(QWidget *parent) :
     //LanguagesSelect::languagesSelect=new LanguagesSelect();
     botTargetList=NULL;
     mAutoConnect=false;
+#ifdef CATCHCHALLENGER_BENCHMARK
+    latencyRecorder=NULL;
+    if(g_latencyMode)
+    {
+        //the latency driver owns all chat traffic; silence the AI's random
+        //chat + replies so they don't add to the per-bot chat DDOS budget.
+        multipleBotConnexion.botInterface->setValue("randomText",false);
+        multipleBotConnexion.botInterface->setValue("globalChatRandomReply",false);
+        latencyRecorder=new LatencyRecorder(this);
+        if(!connect(&latencySigintTimer,&QTimer::timeout,this,&MainWindow::latencySigintPoll))
+            BOT_ABORT();
+        latencySigintTimer.start(100);
+    }
+#endif
 }
 
 MainWindow::~MainWindow()
@@ -294,6 +310,10 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
             BOT_ABORT();
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtteleportTo,actionsAction,&ActionsAction::teleportTo))
             BOT_ABORT();
+#ifdef CATCHCHALLENGER_BENCHMARK
+        if(g_latencyMode && latencyRecorder!=NULL)
+            latencyRecorder->registerApi(api);
+#endif
     }
     else
         BOT_ABORT();
@@ -719,6 +739,16 @@ void MainWindow::all_player_on_map()
     this->hide();
     botTargetList->hide();
     botTargetList->loadAllBotsInformation();
+#ifdef CATCHCHALLENGER_BENCHMARK
+    //the latency driver owns all traffic (chat + move). Stop the autonomous AI
+    //so it never interleaves actions and trips the server "same direction"
+    //check, then start the deterministic probe driver.
+    if(g_latencyMode && latencyRecorder!=NULL)
+    {
+        static_cast<ActionsAction *>(multipleBotConnexion.botInterface)->stopAll();
+        latencyRecorder->start(g_latencySeconds);
+    }
+#endif
 }
 
 void MainWindow::on_host_returnPressed()
@@ -733,3 +763,18 @@ void MainWindow::on_showPassword_toggled(bool)
     else
         ui->pass->setEchoMode(QLineEdit::Password);
 }
+
+#ifdef CATCHCHALLENGER_BENCHMARK
+void MainWindow::latencySigintPoll()
+{
+    if(g_latencySigint==0)
+        return;
+    latencySigintTimer.stop();
+    if(latencyRecorder!=NULL)
+        latencyRecorder->dumpBench();
+    //hard exit without unwinding (see LatencyRecorder::onMeasureDone): avoids
+    //the Qt teardown abort when bots are still connected. BENCH already flushed.
+    std::cout.flush();
+    std::_Exit(0);
+}
+#endif
