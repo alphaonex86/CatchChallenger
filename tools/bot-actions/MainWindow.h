@@ -17,6 +17,9 @@
 #include "../../client/libcatchchallenger/ClientStructures.hpp"
 #include "BotTargetList.h"
 #include "SocialChat.h"
+#ifdef CATCHCHALLENGER_BENCHMARK
+#include "LatencyRecorder.h"
+#endif
 
 namespace Ui {
 class MainWindow;
@@ -65,6 +68,9 @@ private slots:
     void all_player_on_map();
     void on_host_returnPressed();
     void on_showPassword_toggled(bool);
+#ifdef CATCHCHALLENGER_BENCHMARK
+    void latencySigintPoll();
+#endif
 
 signals:
     void isDisconnected();
@@ -74,6 +80,10 @@ private:
     bool mAutoConnect;
     QTimer autoConnectTimeout;
     void autoSelectServer();
+#ifdef CATCHCHALLENGER_BENCHMARK
+    LatencyRecorder *latencyRecorder;
+    QTimer latencySigintTimer;
+#endif
 };
 
 #endif // MAINWINDOW_H

@@ -28,6 +28,9 @@ add_executable(bot-actions
     TargetFilter.cpp
     MultipleBotConnectionAction.cpp
     DatabaseBot.cpp
+    # client-side latency instrumentation (compiles to nothing unless
+    # CATCHCHALLENGER_BENCHMARK is set; activated by --latency)
+    LatencyRecorder.cpp
     # Qt resource: ships config.db that DatabaseBot::init() loads from
     # :/config.db before opening the SQLite handle. AUTORCC alone does
     # not discover .qrc files; they have to appear in sources.
@@ -60,6 +63,17 @@ target_compile_definitions(bot-actions PRIVATE
     CATCHCHALLENGER_ABORTIFERROR
     CATCHCHALLENGER_NOAUDIO
 )
+
+# Client-side latency benchmark instrumentation (LatencyRecorder + --latency).
+# OFF by default -> zero overhead in normal/dev builds. benchmarkclientlatency.py
+# configures with -DCATCHCHALLENGER_BENCHMARK=ON.
+option(CATCHCHALLENGER_BENCHMARK
+       "Client-side latency instrumentation for benchmark*.py (benchmark only)"
+       OFF)
+if(CATCHCHALLENGER_BENCHMARK)
+    target_compile_definitions(bot-actions PRIVATE
+        CATCHCHALLENGER_BENCHMARK)
+endif()
 
 target_include_directories(bot-actions PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
