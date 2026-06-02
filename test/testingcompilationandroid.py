@@ -320,6 +320,72 @@ def android_local_ready():
     return True
 
 
+# Highest Java major version the cached gradle distribution (gradle 8.10) can
+# RUN on. Newer JDKs make gradle abort with "Unsupported class file major
+# version". Java 22 == class-file major 66; gradle 8.10 supports up to Java 22.
+GRADLE_MAX_JAVA_MAJOR = 22
+
+
+def jdk_major_version(java_home):
+    """Return the integer Java major (8, 17, 21, 25, ...) of a JDK, or None.
+
+    Reads the `release` file (JAVA_VERSION="21.0.8" -> 21) without launching a
+    JVM; falls back to parsing `javac -version`."""
+    rel = os.path.join(java_home, "release")
+    try:
+        if os.path.isfile(rel):
+            with open(rel) as f:
+                for line in f:
+                    if line.startswith("JAVA_VERSION="):
+                        v = line.split("=", 1)[1].strip().strip('"')
+                        first = v.split(".")[0]
+                        # "1.8.0" style -> use the second component
+                        if first == "1":
+                            return int(v.split(".")[1])
+                        return int(first)
+    except (OSError, ValueError, IndexError):
+        pass
+    try:
+        out = subprocess.run([os.path.join(java_home, "bin", "javac"), "-version"],
+                             capture_output=True, text=True, timeout=15)
+        tok = (out.stdout or out.stderr).split()
+        if len(tok) >= 2:
+            v = tok[1]
+            first = v.split(".")[0]
+            return int(v.split(".")[1]) if first == "1" else int(first)
+    except (OSError, ValueError, IndexError, subprocess.SubprocessError):
+        pass
+    return None
+
+
+def ensure_gradle_offline(gradle_user_home):
+    """Force every gradle invocation OFFLINE.
+
+    androiddeployqt's `--gradle` step has no --offline passthrough, so on a
+    network-isolated box gradle blocks for many minutes retrying repository
+    metadata fetches before each build (the dependencies AND the gradle
+    distribution are already in the cache from a prior online warm-up — only the
+    online freshness checks hang). That is what makes the whole test exceed the
+    25m cap and get Killed. A gradle init script under
+    $GRADLE_USER_HOME/init.d/ runs for every build and flips the offline flag,
+    so resolution uses the cache and never touches the network. Idempotent."""
+    init_d = os.path.join(gradle_user_home, "init.d")
+    try:
+        os.makedirs(init_d, exist_ok=True)
+    except OSError:
+        return
+    script = os.path.join(init_d, "cc-force-offline.gradle")
+    content = ("// written by testingcompilationandroid.py: this box must never\n"
+               "// reach the network during a build (deps are pre-cached).\n"
+               "gradle.startParameter.offline = true\n")
+    try:
+        if not os.path.isfile(script) or open(script).read() != content:
+            with open(script, "w") as f:
+                f.write(content)
+    except OSError:
+        pass
+
+
 def android_env():
     """Build a fresh, self-contained env for adb / emulator / qmake-android /
     androiddeployqt. We deliberately do NOT inherit ANDROID_*, QT_*,
@@ -364,6 +430,14 @@ def android_env():
     env["QT_ANDROID_BUILD_ALL_ABIS"] = "FALSE"
     env["CMAKE_BUILD_TYPE"]         = "Release"
 
+    # Pin GRADLE_USER_HOME to the real (cache-populated) ~/.gradle and force
+    # every gradle build offline, so androiddeployqt --gradle uses the cache
+    # and never blocks on network metadata fetches (the 25m-hang cause).
+    gradle_user_home = os.path.join(env.get("HOME", os.path.expanduser("~")),
+                                    ".gradle")
+    env["GRADLE_USER_HOME"] = gradle_user_home
+    ensure_gradle_offline(gradle_user_home)
+
     # When CCACHE_DIR is not already in the parent env (running this
     # script standalone, not via all.sh), fall back to the shared
     # tmpfs slot so the NDK build still hits the cache populated by
@@ -387,18 +461,41 @@ def android_env():
                 "/usr/lib/jvm/openjdk-*", "/usr/lib/jvm/jdk-*",
                 "/opt/jdk-*"):
         jdk_candidates.extend(sorted(_glob.glob(pat), reverse=True))
+    # Pick the HIGHEST JDK gradle can actually RUN on, not just the newest one
+    # on disk. gradle 8.10 (the cached distribution) refuses to start on a JDK
+    # newer than Java 22 ("Unsupported class file major version 6x"), so a box
+    # carrying only a too-new JDK (e.g. Java 25) must NOT be handed to gradle —
+    # we'd just trade the network hang for an instant build-script crash. Among
+    # javac-bearing JDKs prefer major<=GRADLE_MAX_JAVA_MAJOR; remember the best
+    # incompatible one only as a last resort so the reason is still visible.
     java_home = None
+    java_major = None
+    best_incompat = None
+    best_incompat_major = None
     ji = 0
     while ji < len(jdk_candidates):
         cand = jdk_candidates[ji]
         ji += 1
         if os.path.isfile(os.path.join(cand, "bin", "javac")):
-            java_home = cand
-            break
+            major = jdk_major_version(cand)
+            if major is not None and major <= GRADLE_MAX_JAVA_MAJOR:
+                if java_major is None or major > java_major:
+                    java_home = cand
+                    java_major = major
+            else:
+                if best_incompat_major is None or (major or 0) > best_incompat_major:
+                    best_incompat = cand
+                    best_incompat_major = major
+    if java_home is None and best_incompat is not None:
+        # no gradle-compatible JDK; keep the newest so the failure message names it
+        java_home = best_incompat
+        java_major = best_incompat_major
     if java_home is not None:
         env["JAVA_HOME"]            = java_home
         env["GRADLE_JAVA_HOME"]     = java_home
         env["ORG_GRADLE_JAVA_HOME"] = java_home
+        if java_major is not None:
+            env["CC_JAVA_MAJOR"]    = str(java_major)
 
     qt_root = ANDROID_QT_DIR
     qt_host_bin = None
@@ -1244,6 +1341,21 @@ def main():
 
     if not android_local_ready():
         log_info(f"android local tooling under {CC_ANDROID_HOME} not ready — skipping android test")
+        save_failed_cases()
+        summary()
+        return
+
+    # gradle 8.10 (the cached distribution) cannot RUN on a JDK newer than
+    # Java 22. If the only JDK with javac on this box is too new (e.g. Java 25),
+    # the build can't proceed — this is an environment gap, not a code
+    # regression, so skip cleanly (same convention as the tooling check above)
+    # and tell the operator which JDK to install. NOTE: the offline fix above
+    # means we no longer HANG 25m on the network before reaching this point.
+    _jmaj = android_env().get("CC_JAVA_MAJOR")
+    if _jmaj is None or int(_jmaj) > GRADLE_MAX_JAVA_MAJOR:
+        log_info(f"no JDK with javac at Java <= {GRADLE_MAX_JAVA_MAJOR} for gradle 8.10 "
+                 f"(found: Java {_jmaj}); install a compatible JDK (e.g. Java 21) "
+                 f"— skipping android test")
         save_failed_cases()
         summary()
         return
