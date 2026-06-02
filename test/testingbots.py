@@ -164,6 +164,10 @@ ERROR_WHITELIST = [
     "CATCHCHALLENGER_ABORTIFERROR",
     "set breakpoint pending",
     "handle SIGPIPE",
+    # gdb prints this banner when it ARMS the signal catchpoint (note the
+    # plural "signals" listing them) — it is not a crash. A real catch reads
+    # singular "Catchpoint N (signal SIGSEGV)," so this whitelist can't hide one.
+    "Catchpoint 1 (signals",
     "error at loading",            # map loading info, followed by abort only if fatal
     "Path not found",              # pathfinding miss, not a crash
     "Warning: Bug due to resolved path is empty",  # known benign warning
