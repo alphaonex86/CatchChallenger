@@ -71,6 +71,7 @@ Before starting a task, always check for a CLAUDE.md file in the current working
 * never try install/update packages on any system (request it from user)
 * never use symlinks in the repository
 * **separate compilation artifacts.** CMake build dirs go OUT of source tree. Generated files (`CMakeCache.txt`, `*.o`, `moc_*`, `qrc_*`, `ui_*.h`, `Makefile`, `__pycache__/`) must NEVER appear next to checked-in `.cpp/.hpp/.pro/CMakeLists.txt`. Fix the tool, don't `.gitignore` artefacts.
+* **HARD RULE: never alter the original datapack `/home/user/Desktop/CatchChallenger/CatchChallenger-datapack/`.** Read-only source of truth; tests stage copies elsewhere. Fix the staging/copy, never write to this tree.
 * never change `/home/user/Desktop/CatchChallenger/working/test/*.png` reference images. Fix the renderer/determinism, not the reference. Only project owner updates these PNGs.
 * **Never compare reference images by checksum / md5sum / sha256sum.** PNG is lossless but compression is non-canonical: same pixels encode to different bytes (deflate strategy, filter, palette, metadata chunks, level) — even between two runs of the same Qt build. md5sum match = subset of "pixels match"; mismatch tells nothing. Always use the per-pixel-tolerance checker (`testingmap2png.py`/`testingmap4client.py` ±10% per-channel + diff-mask). Work the diff-mask hint, not bytes.
 * forbid adding new Qt modules to .pro/.pri files; reuse only modules already listed

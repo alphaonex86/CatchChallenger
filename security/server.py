@@ -772,6 +772,27 @@ SERVER_PORT = 61997
 # a distinct port so it never clashes with a server the model started via RUN.
 GDB_PORT = SERVER_PORT + 1
 
+
+def resolve_run_under():
+    """STARTING supervisor for the target server. The exploit model OWNS this
+    choice at runtime - it switches with the MODE action (see EXPLOIT_SYSTEM) -
+    so this only sets which tool the FIRST instance boots under:
+      - gdb      : catch fatal signals (SIGSEGV/SIGABRT/...) + read-only live
+                   inspection of game state. Misses memory errors that don't
+                   actually crash.
+      - valgrind : run under Memcheck. ANY memory error it reports (invalid
+                   read/write, OOB, bad free, fatal signal) = exploit SUCCESS,
+                   even a SILENT out-of-range access that never segfaults. Live
+                   gdb inspection is off in this mode (valgrind owns the process).
+    Default gdb; SECSERVER_MODE / --mode= only nudge the starting point."""
+    m = os.environ.get("SECSERVER_MODE", "gdb").strip().lower()
+    return "valgrind" if m in ("valgrind", "vg", "memcheck") else "gdb"
+
+
+# Starting supervisor (the exploit model switches at will via the MODE action).
+RUN_UNDER = resolve_run_under()
+VALGRIND = shutil.which("valgrind")
+
 # Per-exploit WALL-CLOCK budget. This is a CAP, not a floor: the model may
 # keep rewriting/retrying up to this long, but it ends EARLY on a CONFIRMED
 # proof OR once it is sure it cannot be exploited (VERDICT FALSEPOSITIVE).
@@ -820,11 +841,23 @@ EXPLOIT_SYSTEM = (
     "finding you must produce a runnable proof and a verdict.\n"
     "\n"
     "TARGET (already running for you):\n"
-    "- The HARNESS runs the server under gdb on 127.0.0.1:" + str(GDB_PORT) +
-    " and OWNS its lifecycle - you do NOT start/stop/continue/step it. Your "
-    "job is to write a client that connects to it and breaks it. You MAY ask "
-    "for a FRESH instance with RESTARTSERVER (e.g. to reset game-state to a "
-    "clean baseline between probes); it reboots on the same port.\n"
+    "- The HARNESS runs the server under a SUPERVISOR on 127.0.0.1:" +
+    str(GDB_PORT) + " and OWNS its lifecycle - you do NOT start/stop/continue/"
+    "step it. Your job is to write a client that connects to it and breaks it. "
+    "You MAY ask for a FRESH instance with RESTARTSERVER (e.g. to reset "
+    "game-state to a clean baseline between probes); it reboots on the same "
+    "port.\n"
+    "- YOU CHOOSE THE SUPERVISOR with the MODE action - pick whichever exposes "
+    "the bug you are chasing, and switch any time:\n"
+    "    MODE gdb       crashes (SIGSEGV/SIGABRT/...) are caught AND you get "
+    "read-only live inspection of game state (the GDB action). Best for proving "
+    "an UNINTENDED state change (case c) or grabbing a crash backtrace.\n"
+    "    MODE valgrind  the server runs under Memcheck: ANY memory error it "
+    "reports - 'Invalid read/write of size N', out-of-bounds, invalid/mismatched "
+    "free, or a fatal signal - is an AUTOMATIC SUCCESS, even a SILENT "
+    "out-of-range access that NEVER crashes. The GDB inspection action is OFF in "
+    "this mode (valgrind owns the process). Best for hunting OOB/use-after-free/"
+    "bad-free reads & writes. Switching MODE reboots the server fresh.\n"
     "- Protocol: server is ALLINONESERVER. Handshake magic (PROTOCOL_HEADER_"
     "LOGIN) = bytes 9c d6 49 8d 14. A query frame on the wire is "
     "[packetCode][queryNumber][data...]. Fixed packet sizes: 0xA0=5, "
@@ -849,11 +882,13 @@ EXPLOIT_SYSTEM = (
     "NO fork/exec, NO ptrace - just connect to the server and talk. A SIGSYS "
     "kill in the output means your code used a forbidden syscall; rewrite it to "
     "only do networking.\n"
-    "- After each RUN the harness checks the server-under-gdb: if your packets "
-    "CRASHED it, that is reported back (with the backtrace) and the exploit is "
-    "an automatic SUCCESS.\n"
+    "- After each RUN the harness checks the supervised server: if your packets "
+    "CRASHED it (or, in MODE valgrind, tripped a memcheck memory error) that is "
+    "reported back (with the backtrace / memcheck report) and the exploit is an "
+    "automatic SUCCESS.\n"
     "\n"
-    "INSPECTION - GDB (read-only): pauses the server, runs your READ-ONLY gdb "
+    "INSPECTION - GDB (read-only, MODE gdb ONLY): pauses the server, runs your "
+    "READ-ONLY gdb "
     "commands (print/x/info/bt/ptype/break/watch/...), then resumes it. You may "
     "read ANY variable/memory/register but you CANNOT write it, call functions, "
     "step/continue it, or run a shell ('(' and '=' are blocked) - so what you "
@@ -872,26 +907,31 @@ EXPLOIT_SYSTEM = (
     "  ```\n  <full file content (e.g. exploit.c)>\n  ```\n"
     "  RUN                        (compile your C/C++ -> /" + EXPLOIT_BIN_NAME +
     " and run it sandboxed)\n"
-    "  RESTARTSERVER              (reboot the server-under-gdb fresh on the "
+    "  RESTARTSERVER              (reboot the supervised server fresh on the "
     "same port - resets game-state)\n"
-    "  GDB\n  ```\n  <read-only gdb commands, one per line>\n  ```\n"
+    "  MODE gdb | MODE valgrind   (choose/switch the supervisor; reboots fresh)\n"
+    "  GDB\n  ```\n  <read-only gdb commands, one per line>\n  ```"
+    "  (gdb mode only)\n"
     "  VERDICT CONFIRMED <one-line reason>     (= exploit SUCCESS)\n"
     "  VERDICT FALSEPOSITIVE <one-line reason> (= exploit FAIL)\n"
     "\n"
     "WHAT COUNTS AS SUCCESS (VERDICT CONFIRMED):\n"
     "  (a) the server CRASHES under your exploit (gdb catches SIGSEGV/SIGABRT/"
-    "...);\n"
+    "...), OR - in MODE valgrind - valgrind reports ANY memory error (invalid "
+    "read/write, OOB, bad free) even with no crash;\n"
     "  (b) the server HANGS - an infinite loop or an event loop that stops "
     "responding (a DoS). After each RUN the harness pings the event loop (TCP "
     "connect + handshake) and samples its CPU; a wedged/spinning loop is "
     "detected;\n"
     "  (c) any UNINTENDED game-state result you DEMONSTRATE via GDB read-only "
-    "inspection - more of an item than the rules allow, an automatic battle win, "
-    "a NEW monster outside the legitimate catch/warehouse path, a "
+    "inspection (MODE gdb) - more of an item than the rules allow, an automatic "
+    "battle win, a NEW monster outside the legitimate catch/warehouse path, a "
     "corrupted/overwritten value, an auth/ownership bypass.\n"
     "The harness AUTO-CONFIRMS (a) and (b) the moment it sees them; for (c) show "
     "it concretely (the gdb-observed memory before vs after your RUN). "
-    "Speculation is not SUCCESS.\n"
+    "Speculation is not SUCCESS. TIP: a memory-corruption finding is usually "
+    "fastest to prove under MODE valgrind (it flags the bad access directly); "
+    "switch to MODE gdb when you need to read game state for case (c).\n"
     "WHAT COUNTS AS FAIL (VERDICT FALSEPOSITIVE): you are SURE it cannot be "
     "exploited. End as soon as you are certain - you need NOT use the whole "
     "budget - but you MUST give the concrete LOGIC PATH: trace the untrusted "
@@ -951,6 +991,10 @@ def parse_action(answer):
     # wedge). The harness still owns the lifecycle; this is the one exception.
     if up == "RESTARTSERVER" or up.startswith("RESTARTSERVER "):
         return ("RESTARTSERVER", "", None)
+    # Pick which supervisor the target runs under (gdb | valgrind). The model
+    # chooses; the harness reboots the server under that tool on the same port.
+    if up.startswith("MODE "):
+        return ("MODE", first[5:].strip(), None)
     # Read-only inspection of the harness-managed server-under-gdb. The gdb
     # instance lifecycle is the harness's, not the model's.
     if up == "GDB" or up.startswith("GDB "):
@@ -1128,6 +1172,21 @@ _ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 GDB_CRASH_SIGNALS = ("SIGSEGV", "SIGABRT", "SIGBUS", "SIGFPE", "SIGILL",
                      "SIGSYS", "stack smashing detected", "*** stack smashing")
 
+# Memcheck report lines that mean the server touched memory it must not have:
+# an out-of-range read/write, a bad/double free, or a fatal signal valgrind
+# intercepted. Seeing any of these AFTER the attack packets = the exploit
+# corrupted memory = SUCCESS, even when the process never actually crashes (the
+# whole reason VALGRIND mode catches what gdb cannot). Leak summaries and
+# "uninitialised value" warnings are intentionally NOT here: library noise, not
+# attacker-controlled corruption.
+VALGRIND_ERROR_MARKERS = (
+    "Invalid read of size",
+    "Invalid write of size",
+    "Invalid free",
+    "Mismatched free",
+    "Process terminating with default action of signal",
+)
+
 # gdb commands the model may run against the LIVE server: an ALLOWLIST by first
 # token, inspection-only. We drive run/continue ourselves so the inferior stays
 # READ-ONLY - the model observes memory/registers/state but can never write the
@@ -1175,18 +1234,20 @@ class LiveServer:
     win. Sandboxed because a confirmed exploit can get code-exec inside the
     server; that must not touch the host. Best-effort research aid."""
 
-    def __init__(self, outdir):
+    def __init__(self, outdir, mode=None):
         self.outdir = outdir
+        self.mode = mode or RUN_UNDER          # 'gdb' or 'valgrind'
         self.rundir = os.path.join(outdir, "gdb-run")
         self.proc = None
         self.mfd = -1
         self.alive = False     # inferior is running (vs stopped/exited)
-        self.crashed = False   # a fatal signal was seen = SUCCESS
-        self.crash_info = ""   # captured stop banner + backtrace
+        self.crashed = False   # a fatal signal / memcheck error was seen = SUCCESS
+        self.crash_info = ""   # captured stop banner + backtrace / valgrind report
         self.hung = False      # event loop wedged (no crash) = a DoS / liveness fail
         self._pid = None       # inferior host pid, for /proc CPU-time sampling
         self._baseline_reply = False  # did a healthy server reply to the ping at boot?
         self._closing = False  # in stop(): ignore the kill/exit as a "crash"
+        self._booting = False  # during start(): ignore startup memcheck noise
 
     # -- pty plumbing -------------------------------------------------------
     def _w(self, cmd):
@@ -1219,30 +1280,48 @@ class LiveServer:
         return text
 
     def _scan_crash(self, text):
-        """Latch a crash the first time a fatal signal shows up in gdb output."""
+        """Latch a crash/memory-error the first time one shows up in the output.
+        gdb mode: a fatal signal. valgrind mode: a fatal signal OR any Memcheck
+        error marker (an OOB/invalid access counts even with no crash). Startup
+        memcheck noise is ignored (see self._booting)."""
         if self._closing or self.crashed:
             return
-        if any(sig in text for sig in GDB_CRASH_SIGNALS):
+        markers = GDB_CRASH_SIGNALS
+        if self.mode == "valgrind":
+            # Don't let library/startup memcheck chatter before the attack count
+            # as an exploit; only post-boot errors are attacker-induced.
+            if self._booting:
+                return
+            markers = markers + VALGRIND_ERROR_MARKERS
+        if any(m in text for m in markers):
             self.crashed = True
             self.alive = False
-            # Inferior is stopped at the fault now - grab a backtrace as proof.
-            try:
-                self._w("bt")
-                bt = self._drain(idle=0.5, hard=6)  # crashed already latched
-            except OSError:
-                bt = ""
-            self.crash_info = (text + "\n" + bt).strip()
+            if self.mode == "gdb":
+                # Inferior is stopped at the fault now - grab a backtrace as proof.
+                try:
+                    self._w("bt")
+                    bt = self._drain(idle=0.5, hard=6)  # crashed already latched
+                except OSError:
+                    bt = ""
+                self.crash_info = (text + "\n" + bt).strip()
+            else:
+                # Valgrind already printed its own stack trace inline with the
+                # error; the captured text IS the proof (no gdb prompt to query).
+                self.crash_info = text.strip()
 
     # -- lifecycle ----------------------------------------------------------
     def start(self):
         if self.proc is not None:
-            return "[gdb session already running on port %d]" % GDB_PORT
+            return "[%s session already running on port %d]" % (self.mode, GDB_PORT)
         if not BWRAP:
-            return ("GDB error: bubblewrap (bwrap) not found - refusing to run "
-                    "the server+gdb unsandboxed. Install bwrap.")
+            return ("%s error: bubblewrap (bwrap) not found - refusing to run "
+                    "the server unsandboxed. Install bwrap." % self.mode.upper())
+        if self.mode == "valgrind" and not VALGRIND:
+            return ("VALGRIND error: valgrind not found - install it or run with "
+                    "SECSERVER_MODE=gdb.")
         if not os.path.isfile(SERVER_BIN) or not os.path.isdir(STAGED_RUN):
-            return ("GDB error: server kit missing (%s / %s) - build it first."
-                    % (SERVER_BIN, STAGED_RUN))
+            return ("%s error: server kit missing (%s / %s) - build it first."
+                    % (self.mode.upper(), SERVER_BIN, STAGED_RUN))
         # Private run dir on a distinct port (keep symlinks, e.g. datapack).
         if os.path.isdir(self.rundir):
             shutil.rmtree(self.rundir, ignore_errors=True)
@@ -1253,13 +1332,25 @@ class LiveServer:
             txt = txt.replace('value="%d"' % SERVER_PORT, 'value="%d"' % GDB_PORT)
             open(props, "w").write(txt)
         except OSError as exc:
-            return "GDB error: cannot set port in server-properties.xml: %s" % exc
+            return "%s error: cannot set port in server-properties.xml: %s" % (
+                self.mode.upper(), exc)
         binpath = os.path.join(self.rundir, "catchchallenger-server-cli")
         if not os.path.isfile(binpath):
             binpath = SERVER_BIN
-        # gdb + the server it debugs run inside bwrap: whole fs read-only except
-        # this exploit's outdir; network shared so the TCP attack reaches it.
-        # (pid namespace is NOT unshared, so gdb's ptrace of its child works.)
+        # The supervisor (gdb or valgrind) + the server run inside bwrap: whole
+        # fs read-only except this exploit's outdir; network shared so the TCP
+        # attack reaches it. (pid namespace is NOT unshared, so gdb's ptrace of
+        # its child / valgrind's /proc pid both work.)
+        if self.mode == "valgrind":
+            # Memcheck with no leak/uninit noise: we only care about OOB / bad
+            # frees / fatal signals (the markers in VALGRIND_ERROR_MARKERS).
+            # --error-exitcode=0 so a reported error never changes the exit code
+            # (we latch on the printed marker, not the exit status).
+            tool = [VALGRIND, "--tool=memcheck", "--error-exitcode=0",
+                    "--leak-check=no", "--track-origins=no", "--num-callers=20",
+                    "--child-silent-after-fork=yes", binpath]
+        else:
+            tool = ["gdb", "-q", "-nx", binpath]
         wrapped = [
             BWRAP,
             "--ro-bind", "/", "/",
@@ -1267,35 +1358,48 @@ class LiveServer:
             "--bind", self.outdir, self.outdir,
             "--die-with-parent", "--chdir", self.rundir,
             "--setenv", "TMPDIR", self.outdir,
-            "gdb", "-q", "-nx", binpath,
-        ]
+        ] + tool
         import pty
         mfd, sfd = pty.openpty()
         self.proc = subprocess.Popen(
             wrapped, stdin=sfd, stdout=sfd, stderr=sfd, close_fds=True)
         os.close(sfd)
         self.mfd = mfd
-        for c in ("set pagination off", "set confirm off",
-                  "set target-async on", "set width 0", "set height 0"):
-            self._w(c)
-        self._drain(idle=0.4, hard=3)
-        self._w("run &")
-        out = self._drain(idle=0.6, hard=30)
+        self._booting = True
+        if self.mode == "gdb":
+            for c in ("set pagination off", "set confirm off",
+                      "set target-async on", "set width 0", "set height 0"):
+                self._w(c)
+            self._drain(idle=0.4, hard=3)
+            self._w("run &")
+            out = self._drain(idle=0.6, hard=30)
+        else:
+            # Valgrind instruments the whole Qt/SQL startup -> much slower and it
+            # boots on its own (no "run" to send). Wait longer, and give it a
+            # bigger idle gap before concluding it has settled at the listen loop.
+            out = self._drain(idle=3.0, hard=240)
+        self._booting = False
         self.alive = "Waiting connection on port" in out and not self.crashed
         if self.alive:
-            self._capture_pid()
+            self._capture_pid(out)
             # Baseline: does a HEALTHY server reply to the event-loop ping? If so,
             # later silence under an exploit is a hang. If not, we lean on the
             # CPU-spin signal instead.
             self._baseline_reply = self._protocol_ping()[1]
         status = "listening" if self.alive else "NOT confirmed listening"
-        return ("[gdb session started (sandboxed): server under gdb on "
-                "127.0.0.1:%d (%s)]\n%s" % (GDB_PORT, status, out[-2000:]))
+        return ("[%s session started (sandboxed): server under %s on "
+                "127.0.0.1:%d (%s)]\n%s"
+                % (self.mode, self.mode, GDB_PORT, status, out[-2000:]))
 
-    def _capture_pid(self):
+    def _capture_pid(self, boot_text=None):
         """Cache the inferior's (host) pid for /proc-based liveness sampling.
-        The gdb-session bwrap does NOT unshare the pid namespace, so gdb's
-        reported pid is a real host pid we can read under /proc."""
+        bwrap does NOT unshare the pid namespace, so the reported pid is a real
+        host pid we can read under /proc. gdb: ask it. valgrind: parse its own
+        '==PID==' line prefix from the boot output."""
+        if self.mode == "valgrind":
+            m = re.search(r"==(\d+)==", boot_text or "")
+            self._pid = int(m.group(1)) if m else None
+            return
         self._w("interrupt")
         out = self._drain(idle=0.4, hard=5)
         m = re.search(r"process (\d+)", out)
@@ -1307,23 +1411,41 @@ class LiveServer:
 
     def _interrupt(self):
         """Stop the inferior so memory can be read (our own SIGINT - not a
-        crash). Returns the stop banner."""
+        crash). Returns the stop banner. No-op under valgrind (no gdb prompt)."""
+        if self.mode != "gdb":
+            return ""
         self._w("interrupt")
         return self._drain(idle=0.5, hard=6)
 
     def _continue(self):
+        if self.mode != "gdb":
+            return
         if self.alive and not self.crashed:
             self._w("continue &")
             self._drain(idle=0.3, hard=3)
 
     def _crash_suffix(self):
         if self.crashed:
+            if self.mode == "valgrind":
+                return ("\n\n*** VALGRIND FLAGGED A MEMORY ERROR - this is an "
+                        "exploit SUCCESS. Memcheck report:\n%s"
+                        % (self.crash_info or "(no report)"))
             return ("\n\n*** SERVER CRASHED - this is an exploit SUCCESS. "
                     "Backtrace:\n%s" % (self.crash_info or "(no backtrace)"))
         return ""
 
     def gdb(self, block):
-        """Run the model's read-only gdb command(s) against the live inferior."""
+        """Run the model's read-only gdb command(s) against the live inferior.
+        Unavailable under valgrind: valgrind owns the process, so we cannot
+        attach a read-only gdb to it. The model doesn't need it there - any
+        memory error is auto-detected from valgrind's output after each RUN."""
+        if self.mode != "gdb":
+            return ("[live GDB inspection is OFF in VALGRIND mode] The server "
+                    "runs under valgrind/memcheck; after each RUN the harness "
+                    "scans valgrind's output and AUTO-CONFIRMS any memory error "
+                    "it reports (invalid read/write, OOB, bad free, fatal "
+                    "signal). Just RUN your attack packets - no inspection "
+                    "needed." + self._crash_suffix())
         if self.proc is None:
             start_out = self.start()
             if start_out.startswith("GDB error"):
@@ -1438,14 +1560,20 @@ class LiveServer:
                 % ("yes" if got_reply else "n/a"))
 
     def poll_crash(self, hard=4):
-        """After a RUN: did the exploit CRASH the server (= SUCCESS) or HANG its
-        event loop (= DoS / liveness failure)? Returns a short status string."""
+        """After a RUN: did the exploit CRASH the server / trip a memcheck error
+        (= SUCCESS) or HANG its event loop (= DoS / liveness failure)? Returns a
+        short status string."""
         if self.proc is None:
             return "[no live server]"
         if not self.crashed:
-            self._drain(idle=0.4, hard=hard)
+            # Valgrind is slow and prints its error report a beat after the bad
+            # access; give the pty a little longer to surface it.
+            self._drain(idle=0.5 if self.mode == "valgrind" else 0.4,
+                        hard=hard * 3 if self.mode == "valgrind" else hard)
         if self.crashed:
-            return "live server CRASHED" + self._crash_suffix()
+            tag = ("valgrind flagged a memory error" if self.mode == "valgrind"
+                   else "live server CRASHED")
+            return tag + self._crash_suffix()
         # No crash - make sure the event loop is still alive (never hangs).
         return "[live server did not crash]" + self.check_responsive()
 
@@ -1467,6 +1595,23 @@ class LiveServer:
         self._baseline_reply = False
         out = self.start()
         return "[server restarted on a fresh instance]\n" + out
+
+    def set_mode(self, new_mode):
+        """Switch the SUPERVISOR the target runs under, on the model's request.
+        gdb (signals + read-only live inspection) <-> valgrind (Memcheck: catches
+        SILENT out-of-bounds / bad-free that never crash, no live inspection).
+        Reboots the server under the chosen tool on the same port. The model
+        drives this so it can pick whichever exposes the bug it is chasing."""
+        want = "valgrind" if new_mode.strip().lower() in (
+            "valgrind", "vg", "memcheck") else "gdb"
+        if want == "valgrind" and not VALGRIND:
+            return ("MODE error: valgrind is not installed on this host; staying "
+                    "under %s." % self.mode)
+        if want == self.mode and self.proc is not None:
+            return "[already supervising under %s on 127.0.0.1:%d]" % (
+                self.mode, GDB_PORT)
+        self.mode = want
+        return ("[supervisor switched to %s]\n" % want) + self.restart()
 
     def stop(self):
         self._closing = True
@@ -1499,14 +1644,16 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
     outdir = os.path.join(OUTPUT_ROOT, slugify(rel, idx))
     os.makedirs(outdir, exist_ok=True)
     sys.stderr.write("\n%s [exploit %02d] %s -> %s\n" % (_ts(), idx, rel, outdir))
-    # server.py OWNS the gdb instance: we boot the server under gdb up front and
-    # tear it down at the end. The model never starts/stops gdb - it only pokes
-    # the already-running instance via TCP and inspects it read-only via GDB.
+    # server.py OWNS the supervisor instance: we boot the server under gdb (or
+    # valgrind) up front and tear it down at the end. The model never starts/
+    # stops it - it only pokes the already-running instance via TCP (and, in gdb
+    # mode, inspects it read-only via GDB).
     live = LiveServer(outdir)
     _CURRENT_LIVE = live
     boot = live.start()
-    sys.stderr.write("%s     [gdb-instance] %s\n"
-                     % (_ts(), boot.splitlines()[0] if boot else "(no output)"))
+    sys.stderr.write("%s     [%s-instance] %s\n"
+                     % (_ts(), live.mode,
+                        boot.splitlines()[0] if boot else "(no output)"))
 
     # Correct any wrong repo paths in the scanner finding before showing it to
     # the exploit agent (e.g. "server/base/X.cpp" -> "general/base/X.cpp").
@@ -1529,9 +1676,11 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
         "%s\n\n"
         "Your exploit dir is: %s\nWRITE your C/C++ exploit there (paths relative "
         "to it); RUN compiles it and runs the ELF sandboxed against the server "
-        "ALREADY running under gdb on 127.0.0.1:%d (managed by the harness). Use "
-        "GDB for read-only inspection. Begin."
-        % (rel, finding, src_block, outdir, GDB_PORT))
+        "ALREADY running on 127.0.0.1:%d (managed by the harness). It starts "
+        "under MODE %s; switch with 'MODE gdb' / 'MODE valgrind' whenever the "
+        "other supervisor better exposes this bug (valgrind for OOB/bad-free, "
+        "gdb for live game-state inspection). Begin."
+        % (rel, finding, src_block, outdir, GDB_PORT, live.mode))
     messages = [
         {"role": "system", "content": EXPLOIT_SYSTEM},
         {"role": "user", "content": user},
@@ -1641,19 +1790,28 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
         elif kind == "RESTARTSERVER":
             sys.stderr.write("%s     [RESTARTSERVER] (step %d)\n" % (_ts(), step))
             result = live.restart()
+        elif kind == "MODE":
+            sys.stderr.write("%s     [MODE] -> %s (step %d)\n"
+                             % (_ts(), arg, step))
+            result = live.set_mode(arg)
         else:
             result = "unknown action"
         transcript.append("### tool result (%s %s)\n%s" % (kind, arg, result))
-        # The live server CRASHED under the exploit - that IS the proof. End the
-        # exploit NOW as SUCCESS; do not keep poking (nothing left to confirm).
+        # The live server CRASHED / valgrind flagged a memory error under the
+        # exploit - that IS the proof. End the exploit NOW as SUCCESS; do not
+        # keep poking (nothing left to confirm).
         if live.crashed:
-            sys.stderr.write("%s     [CRASH] live server faulted -> SUCCESS, "
-                             "ending exploit %02d (%s)\n" % (_ts(), idx, rel))
+            if live.mode == "valgrind":
+                tag, why = "MEMERR", "valgrind detected a memory error"
+            else:
+                tag, why = "CRASH", "live server crashed"
+            sys.stderr.write("%s     [%s] %s -> SUCCESS, ending exploit %02d "
+                             "(%s)\n" % (_ts(), tag, why, idx, rel))
             verdict = "CONFIRMED"
-            reason = "live server crashed under crafted packets: %s" % \
-                " ".join((live.crash_info or "").split())[:160]
-            transcript.append("### CRASH DETECTED (auto-SUCCESS)\n%s"
-                              % live.crash_info)
+            reason = "%s under crafted packets: %s" % (
+                why, " ".join((live.crash_info or "").split())[:160])
+            transcript.append("### %s DETECTED (auto-SUCCESS)\n%s"
+                              % (tag, live.crash_info))
             break
         # The live server HUNG (infinite loop / unresponsive event loop) under the
         # exploit - a DoS. Per policy this also counts as a VALIDATED exploit.
@@ -1804,9 +1962,15 @@ def _print_help(prog):
         "Options:\n"
         "  --model=NAME   Ollama model to use (default: %s)\n"
         "                 e.g. --model=qwen3:30b-a3b or --model=qwen2.5-coder:32b\n"
+        "  --mode=MODE    STARTING supervisor: gdb (default) or valgrind. The\n"
+        "                 exploit model switches at runtime via its MODE action;\n"
+        "                 this only sets which tool the first instance boots\n"
+        "                 under. Same as SECSERVER_MODE.\n"
         "  --help, -h     Show this help\n"
         "\n"
         "Environment overrides:\n"
+        "  SECSERVER_MODE        gdb (default) | valgrind  starting supervisor;\n"
+        "                        the exploit model switches at runtime (see --mode)\n"
         "  SECSERVER_BUDGET      Hard per-exploit budget in seconds\n"
         "  SECSERVER_SOFT_BUDGET Soft per-exploit budget in seconds (default 75%%)\n"
         "  SECSERVER_STEPS       Max exploit turns (default 400)\n"
@@ -1818,17 +1982,20 @@ def _print_help(prog):
 
 
 def main(argv):
-    global MODEL_NAME
+    global MODEL_NAME, RUN_UNDER
 
     # scan always writes FINDINGS to disk (tee), so the exploit phase works
     # regardless of whether stdout was redirected.
     args = argv[1:]
 
-    # Strip --model=NAME and --help/-h from args before the mode word.
+    # Strip --model=NAME / --mode=gdb|valgrind / --help/-h before the phase word.
     filtered = []
     for a in args:
         if a.startswith("--model="):
             MODEL_NAME = a[len("--model="):]
+        elif a.startswith("--mode="):
+            m = a[len("--mode="):].strip().lower()
+            RUN_UNDER = "valgrind" if m in ("valgrind", "vg", "memcheck") else "gdb"
         elif a in ("--help", "-h"):
             _print_help(argv[0])
             return 0

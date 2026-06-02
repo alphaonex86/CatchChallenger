@@ -129,9 +129,14 @@ def setup_run_dir(bin_path):
     dst_bin = os.path.join(RUN_DIR, BIN_NAME)
     shutil.copy2(bin_path, dst_bin)
     os.chmod(dst_bin, 0o755)
-    # datapack symlink (symlinks here are runtime artefacts in tmpfs --
-    # NOT in the source repo, so the "no symlinks in repo" rule is fine).
-    os.symlink(DATAPACK_PATH, os.path.join(RUN_DIR, "datapack"))
+    # HARD RULE (CLAUDE.md): never point a runtime binary's datapack dir
+    # at the SOURCE datapack. The server only writes datapack-cache.bin
+    # into RUN_DIR (never inside datapack/), but COPY rather than symlink
+    # so no future writer / maincode-switch bug can ever reach the source
+    # -- same lesson as testinggateway.stage_gateway_datapack. RUN_DIR is
+    # tmpfs, wiped above; the copy is outside the measured window.
+    shutil.copytree(DATAPACK_PATH, os.path.join(RUN_DIR, "datapack"),
+                    symlinks=False)
     # Pick a maincode that actually exists in the datapack (server's
     # CommonSettingsServer regex requires ^[a-z0-9]+$ — brackets break
     # it). Prefer "test" when present (small map set, fastest parse).
