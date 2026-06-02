@@ -220,7 +220,12 @@ def setup_local_server(server_bin):
     dst = os.path.join(SRV_RUN_DIR, SRV_BIN_NAME)
     shutil.copy2(server_bin, dst)
     os.chmod(dst, 0o755)
-    os.symlink(DATAPACK_PATH, os.path.join(SRV_RUN_DIR, "datapack"))
+    # HARD RULE (CLAUDE.md): never point a runtime binary's datapack dir
+    # at the SOURCE datapack. COPY rather than symlink so no writer can
+    # ever reach the source (testinggateway.stage_gateway_datapack lesson).
+    # SRV_RUN_DIR is tmpfs, wiped above; outside the measured window.
+    shutil.copytree(DATAPACK_PATH, os.path.join(SRV_RUN_DIR, "datapack"),
+                    symlinks=False)
     maincode = _detect_maincode(DATAPACK_PATH)
     with open(os.path.join(SRV_RUN_DIR, "server-properties.xml"), "w") as f:
         f.write(server_properties_xml(maincode, SERVER_PORT))

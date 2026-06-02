@@ -304,7 +304,12 @@ def setup_server_run_dir(server_bin):
     dst_bin = os.path.join(SRV_RUN_DIR, SRV_BIN_NAME)
     shutil.copy2(server_bin, dst_bin)
     os.chmod(dst_bin, 0o755)
-    os.symlink(DATAPACK_PATH, os.path.join(SRV_RUN_DIR, "datapack"))
+    # HARD RULE (CLAUDE.md): never point a runtime binary's datapack dir
+    # at the SOURCE datapack. COPY rather than symlink so no writer can
+    # ever reach the source (testinggateway.stage_gateway_datapack lesson).
+    # SRV_RUN_DIR is tmpfs, wiped above; outside the measured window.
+    shutil.copytree(DATAPACK_PATH, os.path.join(SRV_RUN_DIR, "datapack"),
+                    symlinks=False)
     maincode = _detect_maincode(DATAPACK_PATH)
     xml = os.path.join(SRV_RUN_DIR, "server-properties.xml")
     with open(xml, "w") as f:
@@ -536,7 +541,12 @@ def _stage_variant_run_dir(server_bin, run_dir, port,
     dst = os.path.join(run_dir, SRV_BIN_NAME)
     shutil.copy2(server_bin, dst)
     os.chmod(dst, 0o755)
-    os.symlink(DATAPACK_PATH, os.path.join(run_dir, "datapack"))
+    # HARD RULE (CLAUDE.md): never point a runtime binary's datapack dir
+    # at the SOURCE datapack. COPY rather than symlink so no writer can
+    # ever reach the source (testinggateway.stage_gateway_datapack lesson).
+    # run_dir is tmpfs, wiped above; outside the measured window.
+    shutil.copytree(DATAPACK_PATH, os.path.join(run_dir, "datapack"),
+                    symlinks=False)
     maincode = _detect_maincode(DATAPACK_PATH)
     compression_xml = ""
     if compression is not None:

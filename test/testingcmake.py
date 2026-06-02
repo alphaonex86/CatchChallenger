@@ -22,6 +22,15 @@ This script:
      catch breakage of the standalone-open contract early (missing
      include() path, missing fragment, accidental cross-CMakeLists
      dependency).
+  4. Additionally, when a project carries a sibling CMakePresets.json,
+     its buildPresets are statically sanity-checked. Configure (steps
+     1-2) never exercises `cmake --build --preset`, but that IS Qt
+     Creator's Build step — and a malformed build preset fails only
+     there, invisibly to a `cmake -S/-B` configure. The one that bit
+     us: `"jobs": 0`, which Qt Creator turns into `cmake --build <dir>
+     --target all -j 0`, rejected by cmake ("The <jobs> value requires
+     a positive integer argument"). So the project configured fine yet
+     would not build out of the box in Qt Creator.
 
 Args mirror the rest of the suite (--sanitize/--valgrind etc. are
 forwarded but only used for diagnostics — configure timing isn't
@@ -106,6 +115,44 @@ def discover_standalone_cmakelists():
     return sorted(out)
 
 
+def validate_build_presets(src_dir):
+    """Static sanity-check of a project's CMakePresets.json buildPresets.
+
+    Returns (ok, message). No CMakePresets.json -> (True, "").
+
+    cmake maps a build preset's `jobs` straight onto `-j<jobs>`; anything
+    but a positive integer makes `cmake --build --preset` (the command Qt
+    Creator's Build step runs) fail. The repo convention is to omit `jobs`
+    so the native build tool picks its own default parallelism — this
+    catches a re-introduced `"jobs": 0` before it reaches a developer's
+    Qt Creator."""
+    presets = os.path.join(src_dir, "CMakePresets.json")
+    if not os.path.isfile(presets):
+        return (True, "")
+    try:
+        with open(presets) as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        return (False, f"CMakePresets.json is not valid JSON: {e}")
+    build_presets = data.get("buildPresets", [])
+    if not isinstance(build_presets, list):
+        return (False, 'CMakePresets.json: "buildPresets" must be a list')
+    bad = []
+    for bp in build_presets:
+        if isinstance(bp, dict) and "jobs" in bp:
+            jobs = bp["jobs"]
+            # bool is a subclass of int in Python — reject true/false too.
+            if isinstance(jobs, bool) or not isinstance(jobs, int) or jobs < 1:
+                bad.append(f'buildPreset "{bp.get("name", "?")}" has jobs={jobs!r}')
+    if bad:
+        return (False,
+                "CMakePresets.json buildPreset jobs invalid "
+                "(cmake --build --preset / Qt Creator Build fails with "
+                "'-j <bad>'): " + "; ".join(bad)
+                + ' — omit "jobs" for native default, or use a positive integer')
+    return (True, "")
+
+
 def configure_one(cmakelists_path):
     """Configure a single CMakeLists.txt into a fresh build dir.
     Returns (label, ok, message, elapsed_seconds)."""
@@ -139,6 +186,12 @@ def configure_one(cmakelists_path):
         # CMakeFiles/CMakeError.log if cmake produced one.
         tail = "\n    ".join((proc.stderr or proc.stdout or "").rstrip().splitlines()[-8:])
         return (label, False, f"cmake exit {proc.returncode}\n    {tail}", elapsed)
+    # Configure succeeded — also gate on the build presets being usable,
+    # so the "opens & builds in Qt Creator" contract is verified, not just
+    # the `cmake -S/-B` configure path.
+    preset_ok, preset_msg = validate_build_presets(src_dir)
+    if not preset_ok:
+        return (label, False, preset_msg, elapsed)
     return (label, True, "", elapsed)
 
 
