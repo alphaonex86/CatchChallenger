@@ -3,15 +3,23 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QTimer>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QPixmap>
 #include <QPainter>
 #include <QColor>
+#include <QEvent>
+#include <QResizeEvent>
+#include <QMouseEvent>
+#include <QSizePolicy>
 #include <QDir>
 #include <QDirIterator>
 #include <QFileInfo>
+#include <QBuffer>
+#include <QFile>
 #include <QCoreApplication>
 #include <QDebug>
 
@@ -48,29 +56,31 @@ static const int kAlphaTransparent = 13;
 static const int kZoom = 16;          // preview magnification (16x16 -> 256x256)
 static const int kStepBudget = 200000; // comparisons handled per event-loop tick
 
-// Per-channel "within +-10%" test, matching the project's image checker
-// (testingmap2png.py): the difference must be within 10% of the larger value,
-// and a 0 requires an exact 0 on the other side. Integer form of
-// |x-y| <= 0.10*max(x,y).
-static inline bool within10(int x, int y)
+// Per-channel "within +-15%" test: the difference must be within 15% of the
+// larger value, and a 0 requires an exact 0 on the other side. Integer form of
+// |x-y| <= 0.15*max(x,y).
+static inline bool within15(int x, int y)
 {
     const int d = (x > y) ? (x - y) : (y - x);
     const int m = (x > y) ? x : y;
-    return d * 10 <= m;
+    return d * 100 <= m * 15;
 }
 
-TileDeduplicator::TileDeduplicator(const QString &datapackPath, bool batch, QWidget *parent) :
+TileDeduplicator::TileDeduplicator(const QString &datapackPath, bool batch, bool checkAll, QWidget *parent) :
     QWidget(parent),
     datapack_path_(datapackPath),
     batch_(batch),
+    check_all_(checkAll),
     i_(0),
     j_(1),
+    write_done_(false),
     map_changed_(false),
     identical_merges_(0),
     similar_merges_(0),
     skips_(0),
     maps_rewritten_(0),
     maps_skipped_(0),
+    cells_cleared_(0),
     step_timer_(new QTimer(this)),
     status_label_(new QLabel(this)),
     decision_widget_(new QWidget(this)),
@@ -80,7 +90,19 @@ TileDeduplicator::TileDeduplicator(const QString &datapackPath, bool batch, QWid
     info_a_(new QLabel(decision_widget_)),
     info_b_(new QLabel(decision_widget_)),
     skip_button_(new QPushButton(tr("SKIP"), decision_widget_)),
-    merge_button_(new QPushButton(tr("MERGE"), decision_widget_))
+    back_button_(new QPushButton(tr("BACK"), decision_widget_)),
+    save_button_(new QPushButton(tr("SAVE NOW"), decision_widget_)),
+    keep_left_button_(new QPushButton(tr("\342\227\200 KEEP LEFT"), decision_widget_)),
+    keep_right_button_(new QPushButton(tr("KEEP RIGHT \342\226\266"), decision_widget_)),
+    scroll_a_(new QScrollArea(decision_widget_)),
+    scroll_b_(new QScrollArea(decision_widget_)),
+    tileset_a_(new QLabel()),
+    tileset_b_(new QLabel()),
+    anim_timer_(new QTimer(this)),
+    anim_on_(true),
+    pick_left_(-1),
+    pick_right_(-1),
+    dirty_(false)
 {
     setWindowTitle(tr("CatchChallenger - Tileset tile deduplicator"));
 
@@ -88,23 +110,56 @@ TileDeduplicator::TileDeduplicator(const QString &datapackPath, bool batch, QWid
     status_label_->setText(tr("Loading tilesets..."));
     root->addWidget(status_label_);
 
-    prompt_label_->setText(tr("These two tiles are SIMILAR. Merge them into one, or keep both?"));
+    prompt_label_->setText(tr("SIMILAR tiles. Click the big tile to KEEP it (the other is "
+                              "dropped, all maps repointed to it); SKIP keeps both. Manual: "
+                              "click a tile in each tileset below, then KEEP LEFT or KEEP "
+                              "RIGHT to choose which one survives."));
+    prompt_label_->setWordWrap(true);
 
     QHBoxLayout *previews = new QHBoxLayout();
     QVBoxLayout *colA = new QVBoxLayout();
     QVBoxLayout *colB = new QVBoxLayout();
-    preview_a_->setFixedSize(kTileW * kZoom, kTileH * kZoom);
-    preview_b_->setFixedSize(kTileW * kZoom, kTileH * kZoom);
+    // Previews grow when the window is maximized (re-rendered crisp in
+    // resizeEvent); clicking either one chooses it as the keeper.
+    preview_a_->setMinimumSize(kTileW * kZoom, kTileH * kZoom);
+    preview_a_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    preview_a_->setAlignment(Qt::AlignCenter);
+    preview_a_->setCursor(Qt::PointingHandCursor);
+    preview_a_->installEventFilter(this);
+    preview_b_->setMinimumSize(kTileW * kZoom, kTileH * kZoom);
+    preview_b_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    preview_b_->setAlignment(Qt::AlignCenter);
+    preview_b_->setCursor(Qt::PointingHandCursor);
+    preview_b_->installEventFilter(this);
+    // Each column also shows the tile's full tileset at 1x (scrollable), with a
+    // blinking marker at the tile, set up in showPrompt()/onAnimTick().
+    scroll_a_->setWidget(tileset_a_);
+    scroll_b_->setWidget(tileset_b_);
+    scroll_a_->setMinimumSize(360, 300);
+    scroll_b_->setMinimumSize(360, 300);
+    scroll_a_->setAlignment(Qt::AlignCenter);
+    scroll_b_->setAlignment(Qt::AlignCenter);
+    // Clicking a tile in a sheet picks that tileset's candidate; KEEP LEFT / KEEP
+    // RIGHT then chooses which one survives — a manual replace the auto-compare missed.
+    tileset_a_->installEventFilter(this);
+    tileset_b_->installEventFilter(this);
+    tileset_a_->setCursor(Qt::PointingHandCursor);
+    tileset_b_->setCursor(Qt::PointingHandCursor);
     colA->addWidget(preview_a_);
     colA->addWidget(info_a_);
+    colA->addWidget(scroll_a_);
     colB->addWidget(preview_b_);
     colB->addWidget(info_b_);
+    colB->addWidget(scroll_b_);
     previews->addLayout(colA);
     previews->addLayout(colB);
 
     QHBoxLayout *buttons = new QHBoxLayout();
+    buttons->addWidget(back_button_);
     buttons->addWidget(skip_button_);
-    buttons->addWidget(merge_button_);
+    buttons->addWidget(save_button_);
+    buttons->addWidget(keep_left_button_);
+    buttons->addWidget(keep_right_button_);
 
     QVBoxLayout *decisionLayout = new QVBoxLayout(decision_widget_);
     decisionLayout->addWidget(prompt_label_);
@@ -114,7 +169,13 @@ TileDeduplicator::TileDeduplicator(const QString &datapackPath, bool batch, QWid
     decision_widget_->hide();
 
     connect(skip_button_, &QPushButton::clicked, this, &TileDeduplicator::onSkipClicked);
-    connect(merge_button_, &QPushButton::clicked, this, &TileDeduplicator::onMergeClicked);
+    connect(back_button_, &QPushButton::clicked, this, &TileDeduplicator::onBackClicked);
+    connect(save_button_, &QPushButton::clicked, this, &TileDeduplicator::onSaveClicked);
+    connect(keep_left_button_, &QPushButton::clicked, this, &TileDeduplicator::onKeepLeftPick);
+    connect(keep_right_button_, &QPushButton::clicked, this, &TileDeduplicator::onKeepRightPick);
+
+    anim_timer_->setInterval(450);
+    connect(anim_timer_, &QTimer::timeout, this, &TileDeduplicator::onAnimTick);
 
     step_timer_->setInterval(0);
     connect(step_timer_, &QTimer::timeout, this, &TileDeduplicator::onStep);
@@ -148,8 +209,10 @@ void TileDeduplicator::loadAndStart()
 }
 
 // Read every .tsx in the datapack, split each into 16x16 tiles and keep the
-// non-empty ones. Animated tiles and tiles carrying properties are skipped:
-// merging them away would silently drop their animation/metadata.
+// non-empty ones. Animated tiles are skipped entirely (merging would drop their
+// frames). Tiles carrying custom properties ARE loaded — so they show in the
+// views and can be merged by hand — but are flagged has_properties so the O(n^2)
+// pass never auto-merges them (that would silently drop the property metadata).
 bool TileDeduplicator::loadTilesets()
 {
     QStringList tsxFiles;
@@ -180,18 +243,29 @@ bool TileDeduplicator::loadTilesets()
         {
             const QString canonTsx = QFileInfo(tsxPath).canonicalFilePath();
             const QImage sheet = tileset->image().toImage().convertToFormat(QImage::Format_ARGB32);
+            // Keep the whole sheet (1x) + its column count so a prompt can show
+            // the tile inside its tileset with a blinking marker.
+            if(!sheet.isNull() && sheet.width() >= kTileW)
+            {
+                sheets_.insert(canonTsx, QPixmap::fromImage(sheet));
+                sheetCols_.insert(canonTsx, sheet.width() / kTileW);
+            }
 
             const QList<Tiled::Tile *> &tiles = tileset->tiles();
             int ti = 0;
             while(ti < tiles.size())
             {
                 Tiled::Tile *tile = tiles.at(ti);
-                if(tile->isAnimated() || !tile->properties().isEmpty())
+                if(tile->isAnimated())
                 {
-                    // keep animation/property-bearing tiles untouched
+                    // keep animated tiles untouched (merging drops their frames)
                 }
                 else
                 {
+                    // A custom property is gameplay metadata: the tile is still
+                    // loaded (visible, hand-mergeable) but flagged so it is never
+                    // auto-merged.
+                    const bool hasProps = !tile->properties().isEmpty();
                     // The tile's pixels live in a source pixmap indexed by
                     // imageRect(). For single-image tilesets that source is the
                     // shared sheet (tile->image() returns the whole sheet, so we
@@ -245,7 +319,20 @@ bool TileDeduplicator::loadTilesets()
                             }
                             entry.hash = h;
                             entry.merged_into = -1;
+                            entry.has_properties = hasProps;
+                            tile_index_.insert(qMakePair(canonTsx, entry.id), static_cast<int>(tiles_.size()));
                             tiles_.push_back(std::move(entry));
+                        }
+                        else
+                        {
+                            // Fully transparent: an empty tile. Keep it out of the
+                            // O(n^2) compare (thousands of equal blanks), but record
+                            // it so every visual tile-layer cell pointing at it is
+                            // replaced by transparent space on rewrite. A transparent
+                            // tile carrying a custom property is a marker (e.g.
+                            // invisible.tsx) — never auto-clear it.
+                            if(!hasProps)
+                                transparent_tiles_.insert((canonTsx + QStringLiteral("#") + QString::number(entry.id)).toStdString());
                         }
                     }
                 }
@@ -258,6 +345,20 @@ bool TileDeduplicator::loadTilesets()
     qDebug() << "Loaded" << static_cast<int>(tiles_.size()) << "non-empty 16x16 tiles from"
              << tsxFiles.size() << "tileset(s)";
     return !tsxFiles.isEmpty();
+}
+
+bool TileDeduplicator::isPresenceLayer(const QString &name)
+{
+    // Layers where a non-empty cell means block / encounter / surf / ledge
+    // regardless of the tile's pixels; clearing a transparent cell here would
+    // silently delete that gameplay marker.
+    return name == QLatin1String("Collisions")
+        || name == QLatin1String("Grass")
+        || name == QLatin1String("OnGrass")
+        || name == QLatin1String("Water")
+        || name == QLatin1String("LedgesDown")
+        || name == QLatin1String("LedgesLeft")
+        || name == QLatin1String("LedgesRight");
 }
 
 TileDeduplicator::CompareLevel TileDeduplicator::comparePixels(const TileEntry &a, const TileEntry &b)
@@ -278,14 +379,14 @@ TileDeduplicator::CompareLevel TileDeduplicator::comparePixels(const TileEntry &
         const int ab = qAlpha(pb);
 
         bool pixelMatch;
-        if(!within10(aa, ab))
+        if(!within15(aa, ab))
             pixelMatch = false;
         else if(aa <= kAlphaTransparent && ab <= kAlphaTransparent)
             pixelMatch = true; // both transparent: RGB is not rendered
         else
-            pixelMatch = within10(qRed(pa), qRed(pb)) &&
-                         within10(qGreen(pa), qGreen(pb)) &&
-                         within10(qBlue(pa), qBlue(pb));
+            pixelMatch = within15(qRed(pa), qRed(pb)) &&
+                         within15(qGreen(pa), qGreen(pb)) &&
+                         within15(qBlue(pa), qBlue(pb));
 
         if(!pixelMatch)
         {
@@ -349,6 +450,9 @@ void TileDeduplicator::mergePair(int a, int b, bool *sourceLost)
         }
     }
     tiles_[loser].merged_into = keeper;
+    merge_log_.push_back(loser);
+    dirty_ = true;
+    effectiveSheets_.clear();  // merge changed: rebuild the "with changes" sheets
     if(sourceLost != nullptr)
         *sourceLost = (loser == a);
 }
@@ -395,9 +499,24 @@ void TileDeduplicator::onStep()
             j_++;
             continue;
         }
+        // By default only compare tiles ACROSS different tilesets (within-file
+        // duplicates are usually intentional); --check-all also compares tiles
+        // that live in the same .tsx.
+        if(!check_all_ && tiles_[i_].tsx == tiles_[j_].tsx)
+        {
+            j_++;
+            continue;
+        }
 
         const CompareLevel level = comparePixels(tiles_[i_], tiles_[j_]);
-        if(level == Identical)
+        // Only act on a pair when NEITHER tile carries a custom property: auto-merge
+        // it when IDENTICAL, ask the user when SIMILAR. If either tile has a custom
+        // property we neither auto-merge (that would drop the property's gameplay
+        // metadata) nor even prompt — just skip it. Such tiles are still loaded and
+        // shown, so they can be deduplicated by hand via the tileset views.
+        if(tiles_[i_].has_properties || tiles_[j_].has_properties)
+            j_++;
+        else if(level == Identical)
         {
             bool sourceLost = false;
             mergePair(i_, j_, &sourceLost);
@@ -424,8 +543,10 @@ void TileDeduplicator::onStep()
     updateProgress();
 }
 
-QPixmap TileDeduplicator::renderPreview(const TileEntry &t) const
+QPixmap TileDeduplicator::renderPreview(const TileEntry &t, int zoom) const
 {
+    if(zoom < 1)
+        zoom = 1;
     QImage tileImage(kTileW, kTileH, QImage::Format_ARGB32);
     int y = 0;
     while(y < kTileH)
@@ -440,22 +561,27 @@ QPixmap TileDeduplicator::renderPreview(const TileEntry &t) const
         y++;
     }
 
-    const int w = kTileW * kZoom;
-    const int h = kTileH * kZoom;
+    const int w = kTileW * zoom;
+    const int h = kTileH * zoom;
     QPixmap canvas(w, h);
     QPainter painter(&canvas);
 
-    // Checkerboard background so transparent parts of the tile are visible.
+    // Checkerboard background so transparent parts of the tile are visible. The
+    // square is HALF a zoomed pixel (kZoom/2) so each real tile pixel shows a 2x2
+    // checker (4 squares per pixel) — that makes partial transparency easy to read.
     const QColor light(200, 200, 200);
     const QColor dark(120, 120, 120);
+    int sq = zoom / 2;          // half a zoomed pixel => 4 checker squares per pixel
+    if(sq < 1)
+        sq = 1;
     int cy = 0;
-    while(cy < kTileH)
+    while(cy * sq < h)
     {
         int cx = 0;
-        while(cx < kTileW)
+        while(cx * sq < w)
         {
             const bool even = ((cx + cy) & 1) == 0;
-            painter.fillRect(cx * kZoom, cy * kZoom, kZoom, kZoom, even ? light : dark);
+            painter.fillRect(cx * sq, cy * sq, sq, sq, even ? light : dark);
             cx++;
         }
         cy++;
@@ -471,8 +597,9 @@ QPixmap TileDeduplicator::renderPreview(const TileEntry &t) const
 void TileDeduplicator::showPrompt(int a, int b)
 {
     step_timer_->stop();
-    preview_a_->setPixmap(renderPreview(tiles_[a]));
-    preview_b_->setPixmap(renderPreview(tiles_[b]));
+    const int z = previewZoom();
+    preview_a_->setPixmap(renderPreview(tiles_[a], z));
+    preview_b_->setPixmap(renderPreview(tiles_[b], z));
     info_a_->setText(tr("%1\nid %2  alpha %3")
                      .arg(QFileInfo(tiles_[a].tsx).fileName())
                      .arg(tiles_[a].id)
@@ -481,35 +608,347 @@ void TileDeduplicator::showPrompt(int a, int b)
                      .arg(QFileInfo(tiles_[b].tsx).fileName())
                      .arg(tiles_[b].id)
                      .arg(tiles_[b].alpha_sum));
+    anim_on_ = true;
+    pick_left_ = -1;
+    pick_right_ = -1;
+    keep_left_button_->setEnabled(false);
+    keep_right_button_->setEnabled(false);
+    renderTilesetView(tileset_a_, scroll_a_, tiles_[a], anim_on_, pick_left_);
+    renderTilesetView(tileset_b_, scroll_b_, tiles_[b], anim_on_, pick_right_);
+    anim_timer_->start();
+    back_button_->setEnabled(!undo_.empty());
+    updateSaveButton();
     decision_widget_->show();
 }
 
-void TileDeduplicator::onMergeClicked()
+void TileDeduplicator::onKeepA()
 {
-    bool sourceLost = false;
-    mergePair(i_, j_, &sourceLost);
+    mergeKeeping(i_, j_);  // keep the left tile (i_), drop the right (j_)
+}
+
+void TileDeduplicator::onKeepB()
+{
+    mergeKeeping(j_, i_);  // keep the right tile (j_), drop the left (i_)
+}
+
+// For a SIMILAR pair the user clicked the tile to keep: the loser points at the
+// keeper and every .tmx will be repointed to it.
+void TileDeduplicator::mergeKeeping(int keeper, int loser)
+{
+    pushUndo(0);           // record pre-decision state so BACK can revert it
+    tiles_[loser].merged_into = keeper;
+    merge_log_.push_back(loser);
     similar_merges_++;
+    dirty_ = true;
+    effectiveSheets_.clear();  // merge changed: rebuild the "with changes" sheets
     decision_widget_->hide();
-    if(sourceLost)
-        advanceSource();
+    anim_timer_->stop();
+    if(loser == i_)
+        advanceSource();   // the outer/source tile was dropped
     else
-        j_++;
+        j_++;              // the inner tile was dropped, keep scanning this source
     step_timer_->start();
+}
+
+// Magnification for the previews from their current on-screen size, so they grow
+// when the window is maximized; never below the base kZoom.
+int TileDeduplicator::previewZoom() const
+{
+    int s = preview_a_->width();
+    if(preview_a_->height() < s)
+        s = preview_a_->height();
+    int z = s / kTileW;
+    if(z < kZoom)
+        z = kZoom;
+    return z;
+}
+
+bool TileDeduplicator::eventFilter(QObject *watched, QEvent *event)
+{
+    if(event->type() == QEvent::MouseButtonPress && decision_widget_->isVisible())
+    {
+        if(watched == preview_a_)
+        {
+            onKeepA();
+            return true;
+        }
+        if(watched == preview_b_)
+        {
+            onKeepB();
+            return true;
+        }
+        if(watched == tileset_a_)
+        {
+            onSheetClick(true, static_cast<QMouseEvent *>(event)->position().toPoint());
+            return true;
+        }
+        if(watched == tileset_b_)
+        {
+            onSheetClick(false, static_cast<QMouseEvent *>(event)->position().toPoint());
+            return true;
+        }
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
+void TileDeduplicator::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    // Re-render the previews crisp at the new size while a SIMILAR pair is shown.
+    if(decision_widget_->isVisible() &&
+       i_ < static_cast<int>(tiles_.size()) && j_ < static_cast<int>(tiles_.size()))
+    {
+        const int z = previewZoom();
+        preview_a_->setPixmap(renderPreview(tiles_[i_], z));
+        preview_b_->setPixmap(renderPreview(tiles_[j_], z));
+    }
 }
 
 void TileDeduplicator::onSkipClicked()
 {
-    // Remember this source tile so we never ask about it again this run.
-    skipped_sources_.insert(tiles_[i_].hash);
+    pushUndo(0);
+    // Remember this source tile so we never ask about it again this run. Record
+    // the hash in the undo step only if WE added it, so BACK removes exactly that.
+    if(skipped_sources_.insert(tiles_[i_].hash).second)
+        undo_.back().skipHashAdded = tiles_[i_].hash;
     skips_++;
     decision_widget_->hide();
+    anim_timer_->stop();
     j_++;
     step_timer_->start();
+}
+
+void TileDeduplicator::pushUndo(quint64 skipHash)
+{
+    UndoStep u;
+    u.i = i_;
+    u.j = j_;
+    u.mergeLogLen = merge_log_.size();
+    u.identical = identical_merges_;
+    u.similar = similar_merges_;
+    u.skips = skips_;
+    u.skipHashAdded = skipHash;
+    undo_.push_back(u);
+}
+
+// Revert the most recent SIMILAR decision: undo every merge it (and the identical
+// auto-merges that followed it before the next prompt) made, drop a skip it added,
+// restore the iteration position and counters, and re-show that prompt. Clicking
+// BACK repeatedly walks further back through the decision history.
+void TileDeduplicator::onBackClicked()
+{
+    if(undo_.empty())
+        return;
+    step_timer_->stop();
+    const UndoStep u = undo_.back();
+    undo_.pop_back();
+    while(merge_log_.size() > u.mergeLogLen)
+    {
+        const int idx = merge_log_.back();
+        merge_log_.pop_back();
+        tiles_[idx].merged_into = -1;
+    }
+    if(u.skipHashAdded != 0)
+        skipped_sources_.erase(u.skipHashAdded);
+    identical_merges_ = u.identical;
+    similar_merges_ = u.similar;
+    skips_ = u.skips;
+    dirty_ = true;
+    effectiveSheets_.clear();  // merges reverted: rebuild the "with changes" sheets
+    i_ = u.i;
+    j_ = u.j;
+    showPrompt(i_, j_);
+}
+
+// Persist the current merges/skips to disk now, without ending the run, so the
+// user need not finish every prompt to save progress.
+void TileDeduplicator::onSaveClicked()
+{
+    save_button_->setEnabled(false);
+    status_label_->setText(tr("Saving..."));
+    status_label_->repaint();
+    applyRemaps();             // writes pending maps and clears dirty_
+    status_label_->setText(tr("Saved. processing... %1/%2 tiles")
+                           .arg(i_ + 1).arg(static_cast<int>(tiles_.size())));
+    updateSaveButton();        // dirty_ is now false -> SAVE stays disabled
+}
+
+void TileDeduplicator::onAnimTick()
+{
+    if(!decision_widget_->isVisible() ||
+       i_ >= static_cast<int>(tiles_.size()) || j_ >= static_cast<int>(tiles_.size()))
+        return;
+    anim_on_ = !anim_on_;
+    renderTilesetView(tileset_a_, scroll_a_, tiles_[i_], anim_on_, pick_left_);
+    renderTilesetView(tileset_b_, scroll_b_, tiles_[j_], anim_on_, pick_right_);
+}
+
+// Build (and cache) the tileset sheet "with the changes done": start from the
+// on-disk sheet, then repaint every tile that has been merged away this session
+// with its keeper tile's pixels, so the prompt previews the deduplicated result.
+// Purely in-memory — the .tsx/.png on disk is never touched; the cache is cleared
+// on every merge and discarded at exit, so a fresh run re-reads the clean tilesets.
+QPixmap TileDeduplicator::effectiveSheet(const QString &tsx) const
+{
+    QHash<QString, QPixmap>::const_iterator c = effectiveSheets_.constFind(tsx);
+    if(c != effectiveSheets_.constEnd())
+        return c.value();
+
+    QHash<QString, QPixmap>::const_iterator s = sheets_.constFind(tsx);
+    if(s == sheets_.constEnd())
+        return QPixmap();
+
+    QPixmap canvas = s.value();          // COW copy of the on-disk sheet
+    const int cols = sheetCols_.value(tsx, 1);
+    if(cols > 0)
+    {
+        QPainter painter(&canvas);
+        // A tile merged away this session is deleted: its maps now point at the
+        // keeper (which lives in another sheet), so its own cell is cleared to
+        // fully transparent "empty" space. CompositionMode_Source writes the
+        // 0-alpha pixels rather than blending, so the slot reads as removed.
+        painter.setCompositionMode(QPainter::CompositionMode_Source);
+        const int n = static_cast<int>(tiles_.size());
+        int idx = 0;
+        while(idx < n)
+        {
+            if(tiles_[idx].tsx == tsx && tiles_[idx].merged_into != -1)
+            {
+                const int tx = (tiles_[idx].id % cols) * kTileW;
+                const int ty = (tiles_[idx].id / cols) * kTileH;
+                painter.fillRect(tx, ty, kTileW, kTileH, Qt::transparent);
+            }
+            idx++;
+        }
+        painter.end();
+    }
+
+    effectiveSheets_.insert(tsx, canvas);
+    return canvas;
+}
+
+// Show tile t's whole tileset at 1x with a marker rectangle at the tile cell;
+// the marker is bright on the highlightOn phase (blink), and the view is scrolled
+// to bring the tile into view.
+void TileDeduplicator::renderTilesetView(QLabel *label, QScrollArea *scroll, const TileEntry &t, bool highlightOn, int pickIdx) const
+{
+    // Show the sheet "with the changes done" (the in-memory buffer), not the raw
+    // on-disk tileset: tiles merged away this session appear as their keeper.
+    QPixmap canvas = effectiveSheet(t.tsx);
+    if(canvas.isNull())
+    {
+        label->clear();
+        return;
+    }
+    const int cols = sheetCols_.value(t.tsx, 1);
+    const int col = (cols > 0) ? (t.id % cols) : 0;
+    const int row = (cols > 0) ? (t.id / cols) : 0;
+    const int tx = col * kTileW;
+    const int ty = row * kTileH;
+
+    QPainter painter(&canvas);           // canvas is a COW copy; QPainter detaches it
+    QPen pen(highlightOn ? QColor(255, 40, 40) : QColor(255, 220, 0));
+    pen.setWidth(highlightOn ? 2 : 1);
+    painter.setPen(pen);
+    painter.drawRect(tx, ty, kTileW - 1, kTileH - 1);
+    if(highlightOn)
+        painter.drawRect(tx - 2, ty - 2, kTileW + 3, kTileH + 3);
+    // green box on a manually-picked tile in this sheet
+    if(pickIdx >= 0 && pickIdx < static_cast<int>(tiles_.size()) && tiles_[pickIdx].tsx == t.tsx)
+    {
+        const int pcols = sheetCols_.value(t.tsx, 1);
+        const int pcol = (pcols > 0) ? (tiles_[pickIdx].id % pcols) : 0;
+        const int prow = (pcols > 0) ? (tiles_[pickIdx].id / pcols) : 0;
+        QPen pickPen(QColor(40, 220, 40));
+        pickPen.setWidth(2);
+        painter.setPen(pickPen);
+        painter.drawRect(pcol * kTileW, prow * kTileH, kTileW - 1, kTileH - 1);
+    }
+    painter.end();
+
+    label->setPixmap(canvas);
+    label->resize(canvas.size());
+    // Centre the marked tile in the scroll viewport.
+    scroll->ensureVisible(tx + kTileW / 2, ty + kTileH / 2,
+                          scroll->viewport()->width() / 2, scroll->viewport()->height() / 2);
+}
+
+// A click on a tileset view picks a tile: the left sheet's pick is the manual
+// replacement SOURCE, the right sheet's the DESTINATION (a green marker shows it).
+void TileDeduplicator::onSheetClick(bool leftSheet, const QPoint &pos)
+{
+    if(i_ >= static_cast<int>(tiles_.size()) || j_ >= static_cast<int>(tiles_.size()))
+        return;
+    const QString tsx = leftSheet ? tiles_[i_].tsx : tiles_[j_].tsx;
+    const int cols = sheetCols_.value(tsx, 1);
+    if(cols <= 0 || pos.x() < 0 || pos.y() < 0)
+        return;
+    const int tileId = (pos.y() / kTileH) * cols + (pos.x() / kTileW);
+    const int idx = tile_index_.value(qMakePair(tsx, tileId), -1);
+    // Not selectable: an empty/animated/absent tile (no index), or a tile already
+    // merged away this session — it now shows as empty space, so picking it is
+    // meaningless (no pixels left, and it can't be a keeper or a loser).
+    if(idx < 0 || tiles_[idx].merged_into != -1)
+        return;
+    if(leftSheet)
+    {
+        pick_left_ = idx;
+        renderTilesetView(tileset_a_, scroll_a_, tiles_[i_], anim_on_, pick_left_);
+    }
+    else
+    {
+        pick_right_ = idx;
+        renderTilesetView(tileset_b_, scroll_b_, tiles_[j_], anim_on_, pick_right_);
+    }
+    const bool ready = (pick_left_ >= 0 && pick_right_ >= 0 && pick_left_ != pick_right_);
+    keep_left_button_->setEnabled(ready);
+    keep_right_button_->setEnabled(ready);
+}
+
+// Commit the manually-picked source->dest replacement (a forced merge the
+// auto-compare did not make), revertible with BACK, then clear the picks.
+void TileDeduplicator::onKeepLeftPick()
+{
+    manualReplace(pick_left_, pick_right_);   // keep the LEFT pick, replace the right with it
+}
+
+void TileDeduplicator::onKeepRightPick()
+{
+    manualReplace(pick_right_, pick_left_);   // keep the RIGHT pick, replace the left with it
+}
+
+// Commit a manual replacement: every map reference to the loser tile is rewritten
+// to the keeper tile. Revertible with BACK; clears the picks afterwards.
+void TileDeduplicator::manualReplace(int keeper, int loser)
+{
+    if(keeper < 0 || loser < 0 || keeper == loser)
+        return;
+    if(tiles_[loser].merged_into != -1)
+        return;            // loser already merged away
+    pushUndo(0);
+    tiles_[loser].merged_into = keeper;
+    merge_log_.push_back(loser);
+    similar_merges_++;
+    dirty_ = true;
+    effectiveSheets_.clear();  // merge changed: the sheets below must show it now
+    pick_left_ = -1;
+    pick_right_ = -1;
+    keep_left_button_->setEnabled(false);
+    keep_right_button_->setEnabled(false);
+    updateSaveButton();
+    renderTilesetView(tileset_a_, scroll_a_, tiles_[i_], anim_on_, pick_left_);
+    renderTilesetView(tileset_b_, scroll_b_, tiles_[j_], anim_on_, pick_right_);
+}
+
+void TileDeduplicator::updateSaveButton()
+{
+    save_button_->setEnabled(dirty_);
 }
 
 void TileDeduplicator::finish()
 {
     step_timer_->stop();
+    anim_timer_->stop();
     decision_widget_->hide();
     status_label_->setText(tr("Rewriting maps..."));
     status_label_->repaint();
@@ -522,7 +961,8 @@ void TileDeduplicator::finish()
              << "similar-merges:" << similar_merges_
              << "skips:" << skips_
              << "maps-rewritten:" << maps_rewritten_
-             << "maps-skipped(unresolved tileset):" << maps_skipped_;
+             << "maps-skipped(unresolved tileset):" << maps_skipped_
+             << "empty-cells-cleared:" << cells_cleared_;
     close();
     // In batch mode no window was shown, so closing won't end the event loop.
     QCoreApplication::quit();
@@ -548,8 +988,11 @@ void TileDeduplicator::applyRemaps()
         idx++;
     }
 
-    if(remap_.isEmpty())
-        return; // nothing merged, leave every map untouched
+    if(remap_.isEmpty() && transparent_tiles_.empty())
+    {
+        dirty_ = false;
+        return; // nothing merged and no empty tiles to clear: leave maps untouched
+    }
 
     QStringList tmxFiles;
     {
@@ -560,12 +1003,71 @@ void TileDeduplicator::applyRemaps()
     }
     tmxFiles.sort();
 
+    startWriter();
     int fi = 0;
     while(fi < tmxFiles.size())
     {
         remapOneMap(tmxFiles.at(fi));
         fi++;
     }
+    stopWriterAndJoin();
+    dirty_ = false;
+}
+
+void TileDeduplicator::startWriter()
+{
+    write_done_ = false;
+    writer_thread_ = std::thread(&TileDeduplicator::writerLoop, this);
+}
+
+void TileDeduplicator::enqueueWrite(const QString &fileName, const QByteArray &data)
+{
+    {
+        std::lock_guard<std::mutex> lock(write_mutex_);
+        WriteJob job;
+        job.fileName = fileName;
+        job.data = data;
+        write_queue_.push(job);
+    }
+    write_cv_.notify_one();
+}
+
+// Background thread: drain the queue, writing each finished map's bytes to disk.
+// Exits once the queue is empty and stopWriterAndJoin() has set write_done_.
+void TileDeduplicator::writerLoop()
+{
+    while(true)
+    {
+        WriteJob job;
+        {
+            std::unique_lock<std::mutex> lock(write_mutex_);
+            while(write_queue_.empty() && !write_done_)
+                write_cv_.wait(lock);
+            if(write_queue_.empty())
+                return;
+            job = write_queue_.front();
+            write_queue_.pop();
+        }
+        QFile f(job.fileName);
+        if(f.open(QFile::WriteOnly))
+        {
+            f.write(job.data);
+            f.close();
+        }
+        else
+            qWarning() << "Unable to write map" << job.fileName;
+    }
+}
+
+void TileDeduplicator::stopWriterAndJoin()
+{
+    {
+        std::lock_guard<std::mutex> lock(write_mutex_);
+        write_done_ = true;
+    }
+    write_cv_.notify_one();
+    if(writer_thread_.joinable())
+        writer_thread_.join();
 }
 
 void TileDeduplicator::remapOneMap(const QString &fileName)
@@ -621,11 +1123,22 @@ void TileDeduplicator::remapOneMap(const QString &fileName)
 
     if(map_changed_)
     {
+        // Serialize here (Tiled is never touched off-thread), then hand the bytes
+        // to the background writer: this map is final now ("no more changes into
+        // it"), so its disk write overlaps the parse+remap of the next map.
         Tiled::MapWriter writer;
-        if(!writer.writeMap(map.get(), fileName))
-            qWarning() << "Unable to write map" << fileName << ":" << writer.errorString();
+        QByteArray bytes;
+        QBuffer buffer(&bytes);
+        buffer.open(QIODevice::WriteOnly);
+        writer.writeMap(map.get(), &buffer, fileName);
+        buffer.close();
+        if(bytes.isEmpty())
+            qWarning() << "Failed to serialize map" << fileName;
         else
+        {
+            enqueueWrite(fileName, bytes);
             maps_rewritten_++;
+        }
     }
 }
 
@@ -637,6 +1150,9 @@ void TileDeduplicator::remapLayers(const QList<Tiled::Layer *> &layers, Tiled::M
         Tiled::Layer *layer = layers.at(li);
         if(Tiled::TileLayer *tileLayer = layer->asTileLayer())
         {
+            // Empty-tile clearing is safe only on visual layers; on presence
+            // layers a transparent cell still blocks/triggers, so keep it.
+            const bool clearable = !isPresenceLayer(tileLayer->name());
             Tiled::TileLayer::iterator it = tileLayer->begin();
             Tiled::TileLayer::iterator end = tileLayer->end();
             while(it != end)
@@ -648,14 +1164,23 @@ void TileDeduplicator::remapLayers(const QList<Tiled::Layer *> &layers, Tiled::M
                     if(!canon.isEmpty())
                     {
                         const QString key = canon + QStringLiteral("#") + QString::number(cell.tileId());
-                        QHash<QString, QPair<QString, int> >::const_iterator r = remap_.constFind(key);
-                        if(r != remap_.constEnd())
+                        if(clearable && transparent_tiles_.count(key.toStdString()) != 0)
                         {
-                            Tiled::Tile *keep = keeperTileForMap(map, r.value().first, r.value().second);
-                            if(keep != nullptr)
+                            cell = Tiled::Cell();   // empty tile -> transparent space
+                            map_changed_ = true;
+                            cells_cleared_++;
+                        }
+                        else
+                        {
+                            QHash<QString, QPair<QString, int> >::const_iterator r = remap_.constFind(key);
+                            if(r != remap_.constEnd())
                             {
-                                cell.setTile(keep); // flip flags are preserved
-                                map_changed_ = true;
+                                Tiled::Tile *keep = keeperTileForMap(map, r.value().first, r.value().second);
+                                if(keep != nullptr)
+                                {
+                                    cell.setTile(keep); // flip flags are preserved
+                                    map_changed_ = true;
+                                }
                             }
                         }
                     }
@@ -715,6 +1240,11 @@ Tiled::Tile *TileDeduplicator::keeperTileForMap(Tiled::Map *map, const QString &
             qWarning() << "Unable to load keeper tileset" << tsx << ":" << reader.errorString();
             return nullptr;
         }
+        // Standalone readTileset() leaves fileName empty, which makes the writer
+        // EMBED the whole tileset (with its <image>) into the map instead of
+        // writing an external <tileset source=...>. Set it so the added keeper
+        // tileset stays an external reference like the datapack's others.
+        tileset->setFileName(tsx);
         map->addTileset(tileset);
         ts_by_canon_.insert(tsx, tileset);
         canon_by_ts_.insert(tileset.data(), tsx);

@@ -22,14 +22,16 @@ int main(int argc, char *argv[])
     QStringList arguments = QCoreApplication::arguments();
     if(arguments.contains(QStringLiteral("--help")) || arguments.contains(QStringLiteral("-h")))
     {
-        std::cout << "Usage: " << argv[0] << " [--batch] <datapack_path>" << std::endl;
-        std::cout << "Compares every 16x16 tile of every tileset; auto-merges identical" << std::endl;
-        std::cout << "tiles, asks about similar ones, then rewrites all .tmx references." << std::endl;
-        std::cout << "  --batch  headless: auto-merge identical, keep similar, no window." << std::endl;
+        std::cout << "Usage: " << argv[0] << " [--batch] [--check-all] <datapack_path>" << std::endl;
+        std::cout << "Compares 16x16 tiles ACROSS tilesets; auto-merges identical tiles," << std::endl;
+        std::cout << "asks about similar ones, then rewrites all .tmx references." << std::endl;
+        std::cout << "  --batch      headless: auto-merge identical, keep similar, no window." << std::endl;
+        std::cout << "  --check-all  also compare tiles within the same tileset file (can generate problem with animation, then where into same tileset the tile are very similar)." << std::endl;
         return 0;
     }
 
     bool batch = arguments.removeAll(QStringLiteral("--batch")) > 0;
+    bool checkAll = arguments.removeAll(QStringLiteral("--check-all")) > 0;
 
     QString datapackPath;
     if(arguments.size() > 1)
@@ -45,7 +47,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    TileDeduplicator w(datapackPath, batch);
+    TileDeduplicator w(datapackPath, batch, checkAll);
     if(!batch)
         w.show();
     return a.exec();
