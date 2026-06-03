@@ -80,6 +80,18 @@ uint8_t master_considerDownAfterNumberOfTry;
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
 {
+#ifdef __DJGPP__
+    //MS-DOS has no /dev/urandom: fill with rand() in a loop, same as the
+    //non-linux token path in ClientNetworkRead.cpp. The server RNG is already
+    //seeded at startup; poor-quality randomness is fine for this single-machine
+    //DOS server's stat-client token.
+    int index=0;
+    while(index<CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
+    {
+        data[index]=static_cast<uint8_t>(rand()%256);
+        index++;
+    }
+#else
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
     {
@@ -92,9 +104,10 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
         std::cerr << "Unable to read the " << CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
         abort();
     }
+    fclose(fpRandomFile);
+#endif
     settings.setValue("token",binarytoHexa(reinterpret_cast<char *>(data)
                                            ,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER).c_str());
-    fclose(fpRandomFile);
     settings.sync();
 }
 #endif

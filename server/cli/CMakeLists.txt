@@ -14,7 +14,11 @@ project(catchchallenger_server_cli_unix LANGUAGES C CXX)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
-find_package(Threads REQUIRED)
+# MS-DOS (DJGPP, CC_TARGET_MSDOS from the toolchain file) is single-threaded
+# and has no pthreads — skip the Threads probe there.
+if(NOT CC_TARGET_MSDOS)
+    find_package(Threads REQUIRED)
+endif()
 
 include(${CC_REPO_ROOT}/general/general.cmake)
 include(${CC_REPO_ROOT}/server/catchchallenger-server.cmake)
@@ -52,9 +56,12 @@ target_link_libraries(catchchallenger-server-cli PRIVATE
     catchchallenger_common_flags
     catchchallenger_general
     catchchallenger_server_base
-    Threads::Threads
     ZLIB::ZLIB
 )
+# pthreads everywhere except MS-DOS (single-threaded; no libpthread there).
+if(NOT CC_TARGET_MSDOS)
+    target_link_libraries(catchchallenger-server-cli PRIVATE Threads::Threads)
+endif()
 
 # IO-backend + class-mode + DB-mode are per-executable.
 target_compile_definitions(catchchallenger-server-cli PRIVATE
@@ -138,6 +145,22 @@ if(WIN32)
         message(FATAL_ERROR "Windows build supports only CATCHCHALLENGER_SELECT (no poll/io_uring).")
     endif()
     set(CATCHCHALLENGER_SELECT ON)
+endif()
+
+# MS-DOS (DJGPP): only the select(2) backend exists (no poll/epoll/io_uring),
+# and the TCP stack is Watt-32 (libwatt.a, brought in via the toolchain's
+# link_directories). Force-pin SELECT and link Watt-32.
+if(CC_TARGET_MSDOS)
+    if(CATCHCHALLENGER_POLL OR CATCHCHALLENGER_IO_URING)
+        message(FATAL_ERROR "MS-DOS build supports only CATCHCHALLENGER_SELECT.")
+    endif()
+    set(CATCHCHALLENGER_SELECT ON)
+    # Watt-32 TCP stack + libssp (DJGPP's libc doesn't auto-provide the
+    # __stack_chk_guard/__stack_chk_fail that -fstack-protector references).
+    target_link_libraries(catchchallenger-server-cli PRIVATE watt ssp)
+    # XXH3 (xxhash) hardcodes alignas(64); DJGPP's COFF caps alignment at 16.
+    # Only XXH32 is used here, so drop XXH3 entirely (vendored lib untouched).
+    target_compile_definitions(catchchallenger-server-cli PRIVATE XXH_NO_XXH3)
 endif()
 
 # Backend selection — these affect EventLoop.cpp only. The three options

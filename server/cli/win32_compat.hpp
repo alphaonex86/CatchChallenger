@@ -20,7 +20,14 @@
 //   cc_close_socket(fd) — closesocket() on Windows, ::close() on Linux.
 //   cc_sock_errno()   — WSAGetLastError() on Windows, errno on Linux.
 
-#ifdef _WIN32
+// Windows and MS-DOS (DJGPP) are both select(2)-based and lack
+// <sys/epoll.h>, so they SHARE the synthesised epoll_event + EPOLL* bits
+// below; only the socket headers and the cc_* helpers differ. All of this is
+// #ifdef-gated: the Linux epoll branch is byte-identical to before, so the
+// native server binary does not grow.
+#if defined(_WIN32) || defined(__DJGPP__)
+
+#if defined(_WIN32)
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -41,6 +48,27 @@
 
 // MinGW's <sys/types.h> already provides ssize_t/off_t, but make sure.
 #include <sys/types.h>
+
+#else // __DJGPP__ — MS-DOS: BSD sockets come from Watt-32, not the libc
+
+#include <tcp.h>          // Watt-32: sock_init() + BSD socket layer
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/ioctl.h>    // Watt-32: ioctlsocket() + FIONBIO / FIONREAD
+#include <unistd.h>
+#include <cstdint>
+#include <cerrno>
+#include <sys/types.h>
+
+// Watt-32's <sys/wtypes.h> defines legacy lowercase type macros
+// (byte/word/dword); `byte` collides with C++17 std::byte and breaks the
+// stdlib. We only needed the declarations above — drop the macros now so any
+// STL header pulled in afterwards keeps std::byte intact.
+#undef byte
+#undef word
+#undef dword
+
+#endif
 
 // Map Linux epoll event mask names onto distinct bit values. select(2) is
 // level-triggered, so EPOLLET is defined as 0 (harmless when OR'd in).
@@ -88,6 +116,8 @@ struct epoll_event {
     epoll_data_t data;
 };
 
+#if defined(_WIN32)
+
 inline bool cc_winsock_init()
 {
     WSADATA wsa;
@@ -105,13 +135,35 @@ inline int cc_sock_errno()
     return WSAGetLastError();
 }
 
-// MinGW lacks SO_REUSEPORT (SO_REUSEADDR is enough on Windows to share
-// the same port between processes).
+#else // __DJGPP__ — Watt-32 BSD socket helpers
+
+// sock_init() brings up the Watt-32 stack (loads the packet driver, runs
+// DHCP/BOOTP as configured); returns 0 on success.
+inline bool cc_winsock_init()
+{
+    return sock_init()==0;
+}
+
+// Watt-32 closes a socket handle with close_s(); plain close() is for files.
+inline int cc_close_socket(int fd)
+{
+    return close_s(fd);
+}
+
+inline int cc_sock_errno()
+{
+    return errno;
+}
+
+#endif
+
+// Neither Windows (MinGW) nor Watt-32 has SO_REUSEPORT; SO_REUSEADDR is
+// enough to share the listening port.
 #ifndef SO_REUSEPORT
 #define SO_REUSEPORT SO_REUSEADDR
 #endif
 
-#else // !_WIN32
+#else // real epoll — Linux
 
 #include <sys/epoll.h>
 #include <sys/socket.h>
@@ -133,6 +185,6 @@ inline int cc_sock_errno()
     return errno;
 }
 
-#endif // _WIN32
+#endif // select-target (Windows/DJGPP) vs Linux epoll
 
 #endif // WIN32_COMPAT_HPP

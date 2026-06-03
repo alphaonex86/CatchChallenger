@@ -84,6 +84,14 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
         if(r==SOCKET_ERROR)
             return -1;
         return r;
+#elif defined(__DJGPP__)
+        //Accepted Watt-32 client sockets stay BLOCKING (make_non_blocking is
+        //disabled for the client fd — see main-unix.cpp), and Watt-32 has no
+        //fcntl(F_GETFL). Reads are driven entirely by bytesAvailable()
+        //(FIONREAD): with nothing available, do NOT recv() here (it would block
+        //the single-threaded event loop) — report "no data", like the POSIX
+        //blocking-socket path below.
+        return bytesAvailableVar;
 #else
         //good alternative?: Not work
         /*if(errno == 11)
@@ -108,6 +116,11 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
                    ?static_cast<int>(bytesAvailableVar):static_cast<int>(bufferSize);
     const int r=::recv(static_cast<SOCKET>(infd),buffer,want,0);
     count=(r==SOCKET_ERROR)?-1:r;
+#elif defined(__DJGPP__)
+    const int want=(bytesAvailableVar>0 && bytesAvailableVar<(ssize_t)bufferSize)
+                   ?static_cast<int>(bytesAvailableVar):static_cast<int>(bufferSize);
+    const int r=::recv(infd,buffer,want,0);
+    count=(r<0)?-1:r;
 #else
     if(bytesAvailableVar>0 && bytesAvailableVar<(ssize_t)bufferSize)
         count=::read(infd, buffer, bytesAvailableVar);
@@ -118,7 +131,7 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
     {
         /* If errno == EAGAIN, that means we have read all
         data. So go back to the main loop. */
-        if(errno != EAGAIN)
+        if(errno != EAGAIN && errno != EWOULDBLOCK)
         {
             std::cerr << "Read socket error" << std::endl;
             close();
@@ -136,12 +149,34 @@ ssize_t EventLoopClient::write(const char *buffer, const size_t &bufferSize)
 #ifdef _WIN32
     const int sret=::send(static_cast<SOCKET>(infd),buffer,static_cast<int>(bufferSize),0);
     const ssize_t size=(sret==SOCKET_ERROR)?-1:sret;
+#elif defined(__DJGPP__)
+    //Watt-32 has no write() on sockets, and its send() does NOT reliably queue
+    //a buffer larger than its internal TCP window in a single call — it can
+    //report the full count while only part of the bytes are actually
+    //transmitted (datapack packets are tens of KB, well past the window). Send
+    //in bounded chunks, looping until the whole block is out. The socket is
+    //blocking, so each send() blocks until its chunk is accepted.
+    ssize_t size=0;
+    while(static_cast<size_t>(size)<bufferSize)
+    {
+        const size_t remain=bufferSize-static_cast<size_t>(size);
+        const int chunk=(remain>4096)?4096:static_cast<int>(remain);
+        const int sret=::send(infd,buffer+size,chunk,0);
+        if(sret<0)
+        {
+            if(errno==EWOULDBLOCK)
+                continue;//blocking socket: window momentarily full, retry
+            size=-1;
+            break;
+        }
+        size+=sret;
+    }
 #else
     const ssize_t size = ::write(infd, buffer, bufferSize);
 #endif
     if(size != (ssize_t)bufferSize)
     {
-        if(errno != EAGAIN)
+        if(errno != EAGAIN && errno != EWOULDBLOCK)
         {
             if(errno!=104)
                 std::cerr << "Write socket error, errno: " << errno << std::endl;
@@ -188,6 +223,12 @@ long int EventLoopClient::bytesAvailable() const
 #ifdef _WIN32
     u_long avail=0;
     if(::ioctlsocket(static_cast<SOCKET>(infd),FIONREAD,&avail)==0)
+    {
+        nbytes=static_cast<long int>(avail);
+#elif defined(__DJGPP__)
+    //Watt-32: plain ioctl() doesn't drive sockets; use ioctlsocket(FIONREAD).
+    int avail=0;
+    if(::ioctlsocket(infd,FIONREAD,&avail)==0)
     {
         nbytes=static_cast<long int>(avail);
 #else
