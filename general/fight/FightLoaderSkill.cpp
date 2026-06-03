@@ -237,7 +237,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::load
                                                         else
                                                             effect.effect.on=ApplyOn_AloneEnemy;
                                                         if(monsterBuffs.find(idBuff)==monsterBuffs.cend())
-                                                            std::cerr << "Unable to open the xml file: " << file << ", this buff id is not found: " << idBuff << ": child->Name(): " << item->Name() << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", this buff id is not found: " << std::to_string(idBuff) << ": child->Name(): " << item->Name() << std::endl;
                                                         else
                                                         {
                                                             effect.effect.level=1;
@@ -258,7 +258,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::load
                                                             if(ok2)
                                                             {
                                                                 if(monsterBuffs.at(idBuff).level.size()<effect.effect.level)
-                                                                    std::cerr << "Unable to open the xml file: " << file << ", level needed: " << effect.effect.level << ", level max found: " << monsterBuffs.at(idBuff).level.size() << ": child->Name(): " << item->Name() << std::endl;
+                                                                    std::cerr << "Unable to open the xml file: " << file << ", level needed: " << std::to_string(effect.effect.level) << ", level max found: " << monsterBuffs.at(idBuff).level.size() << ": child->Name(): " << item->Name() << std::endl;
                                                                 else
                                                                 {
                                                                     effect.effect.buff=idBuff;
@@ -374,7 +374,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::load
             {
                 const Skill::Life &life=skillList.life.front();
                 monsterSkills.erase(0);
-                std::cerr << "Warning: no valid life effect for the default attack (id: 0): success=100%: " << life.success << ", on=ApplyOn_AloneEnemy: " << life.effect.on << ", quantity<0: " << life.effect.quantity << " for skill" << std::endl;
+                std::cerr << "Warning: no valid life effect for the default attack (id: 0): success=100%: " << std::to_string(life.success) << ", on=ApplyOn_AloneEnemy: " << std::to_string(life.effect.on) << ", quantity<0: " << life.effect.quantity << " for skill" << std::endl;
             }
         }
         #endif

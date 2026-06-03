@@ -13,13 +13,13 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
         const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
         {
-            std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "x to out of map: " << std::to_string(this->x) << " > " << std::to_string(map.width) <<" (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
         if(this->y>=map.height)
         {
-            std::cerr << "y to out of map: " << this->y << " > " << map.height << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "y to out of map: " << std::to_string(this->y) << " > " << std::to_string(map.height) <<" (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
@@ -27,7 +27,7 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
     #endif
 
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    std::cout << "moveThePlayer(): for player (" << x << "," << y << "): " << public_and_private_informations.public_informations.simplifiedId
+    std::cout << "moveThePlayer(): for player (" << std::to_string(x) << "," << std::to_string(y) << "): " << public_and_private_informations.public_informations.simplifiedId
               << ", previousMovedUnit: " << previousMovedUnit << " (" << MoveOnTheMap::directionToString(getLastDirection())
               << "), next direction: " << MoveOnTheMap::directionToString(direction) << std::endl;
     #endif
@@ -38,13 +38,13 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
         const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
         {
-            std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "x to out of map: " << std::to_string(this->x) << " > " << std::to_string(map.width) <<" (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
         if(this->y>=map.height)
         {
-            std::cerr << "y to out of map: " << this->y << " > " << map.height << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "y to out of map: " << std::to_string(this->y) << " > " << std::to_string(map.height) <<" (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
@@ -60,13 +60,13 @@ bool Client::singleMove(const Direction &direction)
         const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
         if(this->x>=map.width)
         {
-            std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "x to out of map: " << std::to_string(this->x) << " > " << std::to_string(map.width) <<" (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
         if(this->y>=map.height)
         {
-            std::cerr << "x to out of map: " << this->y << " > " << map.height << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "x to out of map: " << std::to_string(this->y) << " > " << std::to_string(map.height) <<" (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
