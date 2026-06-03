@@ -18,6 +18,87 @@
 
 using namespace CatchChallenger;
 
+#ifdef CATCHCHALLENGER_DATAPACK_CPP_EMIT
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../DatapackCppBuffer.hpp"
+
+// Default (BaseServer): no listen settings to emit. EventLoopServer overrides
+// this to return its NormalServerSettings (it holds the server-port/ip). The
+// hook is EMIT-gated, so production builds never get the virtual.
+NormalServerSettings BaseServer::getNormalSettingsForCacheEmit() const
+{
+    NormalServerSettings nss;
+    nss.server_port=0;
+    nss.proxy_port=0;
+    return nss;
+}
+
+// stage1: emit the WHOLE cache — settings + datapack + maps — as human-readable
+// C++ const arrays, in EXACTLY the cumulative read order of
+// loadSettingsFromBinaryCache() + preload_1_the_data() + preload_12 so the
+// stage2 CppReadBuffer can feed the unchanged parse path with no byte
+// deserialization. The server datapack is almost entirely numeric (no monster
+// names / descriptions / ... — that is client display data), so the emitted
+// arrays are compact and dominated by typed numbers, not strings.
+void BaseServer::emitDatapackCpp(const std::string &dir)
+{
+    CppEmitBuffer eb;
+    // --- settings block (order mirrors loadSettingsFromBinaryCache) ---
+    eb << GlobalServerData::serverSettings;
+    eb << CommonSettingsServer::commonSettingsServer.dontSendPseudo;
+    eb << CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
+    eb << CommonSettingsServer::commonSettingsServer.mainDatapackCode;
+    eb << CommonSettingsServer::commonSettingsServer.subDatapackCode;
+    eb << CommonSettingsServer::commonSettingsServer.exportedXml;
+    eb << CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer;
+    eb << CommonSettingsServer::commonSettingsServer.rates_xp;
+    eb << CommonSettingsServer::commonSettingsServer.rates_gold;
+    eb << CommonSettingsServer::commonSettingsServer.rates_xp_pow;
+    eb << CommonSettingsServer::commonSettingsServer.rates_drop;
+    eb << CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
+    eb << CommonSettingsServer::commonSettingsServer.chat_allow_all;
+    eb << CommonSettingsServer::commonSettingsServer.chat_allow_local;
+    eb << CommonSettingsServer::commonSettingsServer.chat_allow_private;
+    eb << CommonSettingsServer::commonSettingsServer.chat_allow_clan;
+    {
+        const NormalServerSettings nss=getNormalSettingsForCacheEmit();
+        eb << nss.proxy;
+        eb << nss.proxy_port;
+        eb << nss.server_ip;
+        eb << nss.server_port;
+        // ALLINONESERVER: no master block, matching loadSettingsFromBinaryCache.
+    }
+    // --- datapack block (order mirrors preload_1_the_data cache branch) ---
+    eb << CommonDatapack::commonDatapack;
+    eb << CommonDatapackServerSpec::commonDatapackServerSpec;
+    eb << GlobalServerData::serverPrivateVariables.randomData;
+    eb << GlobalServerData::serverPrivateVariables.events;
+    eb << CommonSettingsCommon::commonSettingsCommon.datapackHashBase;
+    eb << CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
+    eb << CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
+    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+    eb << BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
+    eb << Client::datapack_file_hash_cache_main;
+    eb << Client::datapack_file_hash_cache_sub;
+    #endif
+    eb << GlobalServerData::serverPrivateVariables.skinList;
+    eb << GlobalServerData::serverPrivateVariables.monsterDrops;
+    eb << MapVisibilityAlgorithm::flat_map_list;
+    // --- map/dictionary block (order mirrors preload_12 cache branch) ---
+    {
+        const CATCHCHALLENGER_TYPE_MAPID mapListSize=
+            static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapPathToId.size());
+        eb << mapListSize;
+    }
+    eb << MapVisibilityAlgorithm::flat_map_list;
+    eb << DictionaryServer::dictionary_map_database_to_internal;
+    if(!eb.emitTo(dir))
+        std::cerr << "datapack-cpp emit failed to write into " << dir << std::endl;
+}
+#endif
+
 void BaseServer::preload_12_async_dictionary_map()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
@@ -580,6 +661,15 @@ void BaseServer::preload_industries_return()
                 ::utime((basePath+"/datapack-cache.bin").c_str(),&times);
             }
         }
+        #ifdef CATCHCHALLENGER_DATAPACK_CPP_EMIT
+        {
+            // stage1: also emit the cache as human-readable C++ const data for
+            // the no-FS / ESP32 build (next to the .bin). #ifdef-gated: off in
+            // every other build (no extra code, no extra cost).
+            const std::string &basePath=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath);
+            emitDatapackCpp(basePath);
+        }
+        #endif
         ::exit(0);
         return;
     }

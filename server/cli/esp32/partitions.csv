@@ -1,0 +1,9 @@
+# Partition table for the CatchChallenger ESP32 server (single big app, no FS).
+# The datapack + settings are compiled into the app image (.rodata), so there is
+# NO data/SPIFFS/littlefs partition — only NVS (wifi calibration) + the app.
+# 0x2C0000 (2.75 MiB) fits the server + the "test" maincode datapack on a 4 MiB
+# flash. A bigger datapack needs a bigger flash + a bigger factory partition.
+# Name,     Type, SubType,  Offset,   Size
+nvs,        data, nvs,      0x9000,   0x6000
+phy_init,   data, phy,      0xf000,   0x1000
+factory,    app,  factory,  0x10000,  0x2C0000

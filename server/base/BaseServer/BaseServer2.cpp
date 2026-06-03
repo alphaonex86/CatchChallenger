@@ -69,6 +69,7 @@ BaseServer::BaseServer() :
     // with a clear "looked at A and B" message rather than silently
     // feeding empty data through preload.
     {
+#ifndef CATCHCHALLENGER_DATAPACK_CPP
         const std::string bin_dir = FacilityLibGeneral::getFolderFromFile(
                 CatchChallenger::FacilityLibGeneral::applicationDirPath);
         const std::string candidates[2] = {
@@ -98,6 +99,13 @@ BaseServer::BaseServer() :
                       << std::endl;
             std::exit(EXIT_FAILURE);
         }
+#else
+        // datapack-cpp / ESP32: the datapack lives in flash (.rodata); there is
+        // no datapack/ directory and no filesystem. Set a nominal base path for
+        // the runtime path strings — no file under it is ever opened (clients
+        // carry the matching datapack, or fetch it from an HTTP mirror).
+        GlobalServerData::serverSettings.datapack_basePath = "datapack/";
+#endif
     }
     GlobalServerData::serverSettings.compressionType                            = CompressionProtocol::CompressionType::Zstandard;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
@@ -175,6 +183,7 @@ BaseServer::BaseServer() :
     in_file=nullptr;
     serialBuffer=nullptr;
     out_file=nullptr;
+    loadFromMemory=false;
     #endif
 
     initAll();
@@ -191,6 +200,17 @@ BaseServer::~BaseServer()
 }
 
 #ifdef CATCHCHALLENGER_CACHE_HPS
+#ifdef CATCHCHALLENGER_DATAPACK_CPP
+void BaseServer::setLoadFromCppData(const DatapackCppData &data)
+{
+    // datapack-cpp / ESP32: read the datapack + settings in place from the
+    // human-readable C++ const arrays in flash (.rodata). No file, no syscall,
+    // no byte deserialization — the same preload path then runs unchanged.
+    serialBuffer=new CppReadBuffer(data);
+    loadFromMemory=true;
+}
+#endif
+
 void BaseServer::setSave(const std::string &file)
 {
     out_file=new std::ofstream(file, std::ofstream::binary);
@@ -210,17 +230,26 @@ void BaseServer::setLoad(const std::string &file)
         in_file=nullptr;
     }
     else
+    {
+        #ifndef CATCHCHALLENGER_DATAPACK_CPP
         serialBuffer=new hps::StreamInputBuffer(*in_file);
+        #else
+        // datapack-cpp build never loads from a file (the cache is in flash);
+        // setLoadFromCppData() is used instead. Keep setLoad compilable.
+        delete in_file;
+        in_file=nullptr;
+        #endif
+    }
 }
 
 bool BaseServer::binaryCacheIsOpen() const
 {
-    return in_file!=nullptr || out_file!=nullptr;
+    return in_file!=nullptr || out_file!=nullptr || loadFromMemory;
 }
 
 bool BaseServer::binaryInputCacheIsOpen() const
 {
-    return in_file!=nullptr;
+    return in_file!=nullptr || loadFromMemory;
 }
 
 bool BaseServer::binaryOutputCacheIsOpen() const

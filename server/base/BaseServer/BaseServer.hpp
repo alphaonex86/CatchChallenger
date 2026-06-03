@@ -15,12 +15,26 @@
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../../general/hps/hps.h"
 #endif
+#ifdef CATCHCHALLENGER_DATAPACK_CPP
+#include "../DatapackCppBuffer.hpp"
+#endif
 #include "../ServerStructures.hpp"
 #include "BaseServerMasterLoadDictionary.hpp"
 #include "BaseServerMasterSendDatapack.hpp"
 #include "BaseServerLogin.hpp"
 
 namespace CatchChallenger {
+#ifdef CATCHCHALLENGER_CACHE_HPS
+// Datapack/settings input buffer: on the ESP32 no-filesystem build (datapack-cpp)
+// it reads human-readable C++ const arrays straight from flash (.rodata); every
+// other build keeps the normal file/stream reader. Same operator>> surface, so
+// the whole cache-load path is shared.
+#ifdef CATCHCHALLENGER_DATAPACK_CPP
+typedef CppReadBuffer CcDatapackInputBuffer;
+#else
+typedef hps::StreamInputBuffer CcDatapackInputBuffer;
+#endif
+#endif
 class BaseServer :
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         public BaseServerMasterLoadDictionary,
@@ -44,6 +58,18 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     void setSave(const std::string &file);
     void setLoad(const std::string &file);
+    #ifdef CATCHCHALLENGER_DATAPACK_CPP
+    // datapack-cpp / ESP32: wire the loader to the human-readable C++ const
+    // datapack + settings in flash (.rodata) — no file opened, read in place.
+    void setLoadFromCppData(const DatapackCppData &data);
+    #endif
+    #ifdef CATCHCHALLENGER_DATAPACK_CPP_EMIT
+    // stage1: re-emit the whole cache (settings + datapack + maps) as human-
+    // readable C++ const data into <dir>/datapack_cpp.{cpp,hpp}. EMIT-gated.
+    void emitDatapackCpp(const std::string &dir);
+    // overridden by EventLoopServer (which holds the listen settings).
+    virtual NormalServerSettings getNormalSettingsForCacheEmit() const;
+    #endif
     bool binaryCacheIsOpen() const;
     bool binaryInputCacheIsOpen() const;
     bool binaryOutputCacheIsOpen() const;
@@ -189,8 +215,16 @@ protected:
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     std::ifstream *in_file;
-    hps::StreamInputBuffer *serialBuffer;
+    // datapack-cpp (ESP32, no FS): the same load path reads the datapack +
+    // settings from human-readable C++ const arrays in flash (.rodata) instead
+    // of from a file — CcDatapackInputBuffer is CppReadBuffer there, the normal
+    // file-backed hps::StreamInputBuffer everywhere else. setLoadFromCppData()
+    // wires serialBuffer to the flash data; loadFromMemory then makes preload
+    // take the same cache-read path setLoad() uses, with no syscall. See
+    // server/base/DatapackCppBuffer.hpp and test/ESP32.md.
+    CcDatapackInputBuffer *serialBuffer;
     std::ofstream *out_file;
+    bool loadFromMemory;
     #endif
 
     #ifdef CATCHCHALLENGER_DB_FILE

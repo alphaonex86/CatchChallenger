@@ -1,0 +1,15 @@
+menu "CatchChallenger server"
+
+    config CATCHCHALLENGER_WIFI_SSID
+        string "WiFi SSID"
+        default "myssid"
+        help
+            SSID the ESP32 server joins (STA mode). DHCP gives it an address.
+
+    config CATCHCHALLENGER_WIFI_PASSWORD
+        string "WiFi password"
+        default "mypassword"
+        help
+            WPA2 password for the SSID above. Set via `idf.py menuconfig`.
+
+endmenu

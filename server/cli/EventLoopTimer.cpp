@@ -3,7 +3,9 @@
 #include "win32_compat.hpp"
 
 #include <iostream>
-#if !defined(_WIN32) && !defined(__DJGPP__)
+// ESP32 (lwIP/FreeRTOS) has no timerfd, exactly like MS-DOS (DJGPP) — both use
+// the select(2)-timeout interval-timer registry below instead.
+#if !defined(_WIN32) && !defined(__DJGPP__) && !defined(CC_TARGET_ESP32)
 #include <sys/timerfd.h>
 #endif
 #ifndef _WIN32
@@ -15,10 +17,10 @@
 
 char buff_temp[sizeof(uint64_t)];
 
-#ifdef __DJGPP__
-//Stored in tfd while a DOS timer is armed: it lives in the EventLoop's timer
-//registry, not behind a real fd, so any non-(-1) value works as the
-//"active"/"already armed" marker.
+#if defined(__DJGPP__) || defined(CC_TARGET_ESP32)
+//Stored in tfd while a registry (non-fd) timer is armed: it lives in the
+//EventLoop's interval-timer registry (DOS and ESP32 have no timerfd), so any
+//non-(-1) value works as the "active"/"already armed" marker.
 static const int CC_DOS_TIMER_ARMED=0x7fffffff;
 #endif
 
@@ -177,12 +179,13 @@ bool EventLoopTimer::start(const unsigned int &msec, unsigned int offset)
         return false;
     }
     return true;
-#elif defined(__DJGPP__)
+#elif defined(__DJGPP__) || defined(CC_TARGET_ESP32)
     //-------------------------------------------------------------------
-    // MS-DOS (DJGPP): no timerfd and no threads. Register the interval with
-    // the EventLoop; wait() sleeps on select(2)'s timeout until it is due and
-    // returns a synthetic event that the main loop dispatches to exec().
-    // tfd holds a non-fd sentinel so active() and the already-armed guard work.
+    // MS-DOS (DJGPP) and ESP32 (lwIP/FreeRTOS): no timerfd and no threads.
+    // Register the interval with the EventLoop; wait() sleeps on select(2)'s
+    // timeout until it is due and returns a synthetic event that the main loop
+    // dispatches to exec(). tfd holds a non-fd sentinel so active() and the
+    // already-armed guard work.
     //-------------------------------------------------------------------
     EventLoop::loop.dosTimerArm(this,msec,offset,singleShot);
     tfd=CC_DOS_TIMER_ARMED;
@@ -260,8 +263,8 @@ bool EventLoopTimer::stop()
 {
     if(tfd==-1)
         return false;
-#ifdef __DJGPP__
-    //DOS: the timer is in the EventLoop registry, not an fd — just unregister.
+#if defined(__DJGPP__) || defined(CC_TARGET_ESP32)
+    //DOS/ESP32: the timer is in the EventLoop registry, not an fd — just unregister.
     EventLoop::loop.dosTimerDisarm(this);
     tfd=-1;
     return true;
@@ -321,7 +324,7 @@ void EventLoopTimer::validateTheTimer()
     char buf[16];
     //Drain whatever bytes the callback enqueued; we don't care about count.
     ::recv(static_cast<SOCKET>(tfd),buf,sizeof(buf),0);
-#elif defined(__DJGPP__)
+#elif defined(__DJGPP__) || defined(CC_TARGET_ESP32)
     //Nothing to drain: EventLoop::wait() already rescheduled this timer when
     //it synthesized the tick event.
 #else

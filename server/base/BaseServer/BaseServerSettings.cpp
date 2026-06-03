@@ -135,6 +135,10 @@ void BaseServer::loadAndFixSettings()
             abort();
         }
     }
+    // datapack-cpp / ESP32: the datapack lives in flash (.rodata), there is no
+    // map/main/<code>/ directory on a filesystem to stat — the maincode string
+    // is still validated above, but skip the on-disk folder checks.
+    #ifndef CATCHCHALLENGER_DATAPACK_CPP
     const std::string &mainDir=GlobalServerData::serverSettings.datapack_basePath+std::string("map/main/")+CommonSettingsServer::commonSettingsServer.mainDatapackCode+std::string("/");
     if(!FacilityLibGeneral::isDir(mainDir))
     {
@@ -151,6 +155,7 @@ void BaseServer::loadAndFixSettings()
             CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
         }
     }
+    #endif
 
     if(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1)
     {

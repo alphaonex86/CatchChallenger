@@ -1,0 +1,29 @@
+# sdkconfig.defaults — ESP32 build defaults for the CatchChallenger server.
+# `idf.py menuconfig` can override; the WiFi SSID/password live under
+# "CatchChallenger server" (main/Kconfig.projbuild).
+
+# Optimise for size: the datapack const data lives in flash (.rodata), keep code small.
+CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+
+# The server event loop runs in the app_main task. main()'s frame holds
+# epoll_event events[512] (~8 KiB) + a 4 KiB buffer + deep parse call stacks, so
+# the default 3.5 KiB main-task stack is far too small.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=32768
+
+# lwIP: enough sockets for the listen socket + the UDP announce + up to 10
+# clients (server-properties max-players=10), and BSD select(2)/SO_REUSEADDR
+# (the EventLoop SELECT backend + the dual IPv4/IPv6 bind need them).
+CONFIG_LWIP_MAX_SOCKETS=16
+CONFIG_LWIP_SO_REUSE=y
+CONFIG_LWIP_IPV6=y
+
+# Custom partition table (big factory app partition for the in-flash datapack).
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# ESP32 with external SPI RAM (ESP32-WROVER / -S3 PSRAM): the deserialized
+# datapack containers + per-player state live in RAM. A plain 520 KB-SRAM ESP32
+# only fits the small "test" maincode; enable PSRAM for headroom / bigger packs.
+# Uncomment for a PSRAM board:
+#CONFIG_SPIRAM=y
+#CONFIG_SPIRAM_USE_MALLOC=y

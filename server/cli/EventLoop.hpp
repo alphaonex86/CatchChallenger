@@ -31,13 +31,14 @@ public:
     int ctl(int __op, int __fd,epoll_event *__event);
     static EventLoop loop;
 
-#ifdef __DJGPP__
-    //MS-DOS has no timerfd and no threads, so periodic EventLoopTimer ticks
-    //cannot come from a readable fd. Instead the timer registers its schedule
-    //here; wait() uses select(2)'s timeout to sleep until the soonest one is
-    //due and then returns a synthetic EPOLLIN event carrying `timer` (the main
-    //loop dispatches it to EventLoopTimer::exec()). offset is the delay to the
-    //first tick (0 == msec); msec is the repeat interval; singleShot fires once.
+#if defined(__DJGPP__) || defined(CC_TARGET_ESP32)
+    //MS-DOS and ESP32 (lwIP/FreeRTOS) have no timerfd and no threads, so periodic
+    //EventLoopTimer ticks cannot come from a readable fd. Instead the timer
+    //registers its schedule here; wait() uses select(2)'s timeout to sleep until
+    //the soonest one is due and then returns a synthetic EPOLLIN event carrying
+    //`timer` (the main loop dispatches it to EventLoopTimer::exec()). offset is
+    //the delay to the first tick (0 == msec); msec is the repeat interval;
+    //singleShot fires once.
     void dosTimerArm(void *timer,unsigned int msec,unsigned int offset,bool singleShot);
     void dosTimerDisarm(void *timer);
 #endif

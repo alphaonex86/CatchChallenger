@@ -3,7 +3,16 @@
 
 #include <stdint.h>
 
-#if __cplusplus >= 202302L && __has_include(<flat_map>)
+// datapack-cpp (ESP32): the generated flash data layout depends on the map/set
+// type, because HPS serializes std::flat_map (keys[] then values[]) and
+// std::unordered_map (size + interleaved pairs) with DIFFERENT byte layouts.
+// stage1 emits on the host (g++ with <flat_map>) while stage2/ESP32 compiles
+// with xtensa gcc (no <flat_map> yet) — picking different types would make the
+// emitted data unreadable. Force unordered_* for the whole datapack-cpp
+// pipeline (emit + read) so the layout is toolchain-independent. Normal builds
+// are unaffected (still std::flat_map on C++23).
+#if __cplusplus >= 202302L && __has_include(<flat_map>) \
+    && !defined(CATCHCHALLENGER_DATAPACK_CPP) && !defined(CATCHCHALLENGER_DATAPACK_CPP_EMIT)
 #include <flat_map>
 #include <flat_set>
 template<typename K, typename V>

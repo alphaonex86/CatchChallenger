@@ -2,7 +2,8 @@
 #include "../../general/base/GeneralVariable.hpp"
 
 #include <iostream>
-#if !defined(_WIN32) && !defined(__DJGPP__)
+// ESP32 (lwIP) has no sendfile(2) either — same as MS-DOS (DJGPP).
+#if !defined(_WIN32) && !defined(__DJGPP__) && !defined(CC_TARGET_ESP32)
 #include <sys/sendfile.h>
 #endif
 #if !defined(_WIN32)
@@ -52,11 +53,12 @@ struct SelectState
 static SelectState *g_select=nullptr;
 }//namespace
 
-#ifdef __DJGPP__
+#if defined(__DJGPP__) || defined(CC_TARGET_ESP32)
 #include <time.h>
 namespace {
-//MS-DOS interval-timer registry (no timerfd/threads on DOS). wait() drives
-//these off select(2)'s timeout — see dosTimerArm/Disarm + the wait() body.
+//Interval-timer registry for backends with no timerfd and no threads (MS-DOS
+//and ESP32/lwIP). wait() drives these off select(2)'s timeout — see
+//dosTimerArm/Disarm + the wait() body.
 struct DosTimer
 {
     void *ptr;                  //the EventLoopTimer*, returned as event.data.ptr
@@ -66,11 +68,20 @@ struct DosTimer
 };
 static std::vector<DosTimer> g_dos_timers;
 
-//Monotonic millisecond clock. uclock() is DJGPP's high-resolution PIT-based
-//counter (it reprograms the 8254 on first use); UCLOCKS_PER_SEC ~= 1.19 MHz.
+//Monotonic millisecond clock.
 static unsigned long long cc_now_ms()
 {
+#ifdef __DJGPP__
+    //uclock() is DJGPP's high-resolution PIT-based counter (it reprograms the
+    //8254 on first use); UCLOCKS_PER_SEC ~= 1.19 MHz.
     return static_cast<unsigned long long>(uclock())*1000ULL/UCLOCKS_PER_SEC;
+#else
+    //ESP32 (lwIP/newlib): monotonic since boot via clock_gettime.
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC,&ts);
+    return static_cast<unsigned long long>(ts.tv_sec)*1000ULL
+          +static_cast<unsigned long long>(ts.tv_nsec)/1000000ULL;
+#endif
 }
 }//namespace
 
@@ -808,8 +819,8 @@ static inline void _event_rate_account(int produced)
 int EventLoop::wait(epoll_event *events,const int &maxevents)
 {
 #if defined(CATCHCHALLENGER_SELECT)
-#ifdef __DJGPP__
-    //DOS: still service armed interval timers even when no fds are registered.
+#if defined(__DJGPP__) || defined(CC_TARGET_ESP32)
+    //DOS/ESP32: still service armed interval timers even when no fds are registered.
     if(g_select==nullptr)
         return 0;
     if(g_select->events.empty() && g_dos_timers.empty())
@@ -842,8 +853,8 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
         FD_SET(fd,&efds);
         if(fd>maxfd) maxfd=fd;
     }
-#ifdef __DJGPP__
-    //Sleep at most until the soonest armed timer is due — this is the DOS
+#if defined(__DJGPP__) || defined(CC_TARGET_ESP32)
+    //Sleep at most until the soonest armed timer is due — this is the DOS/ESP32
     //interval-timer source (no timerfd). With no timers, block indefinitely.
     struct timeval tv;
     struct timeval *ptv=nullptr;
@@ -1499,9 +1510,9 @@ ssize_t EventLoop::sendFile(int sock_fd,int in_fd,off_t *offset,size_t len)
             return static_cast<ssize_t>(total);
     }
     return static_cast<ssize_t>(total);
-#elif defined(__DJGPP__)
-    //MS-DOS (Watt-32) has no sendfile(2): same userspace bounce as Windows,
-    //using POSIX lseek/read for the file and Watt-32 send() for the socket.
+#elif defined(__DJGPP__) || defined(CC_TARGET_ESP32)
+    //MS-DOS (Watt-32) and ESP32 (lwIP) have no sendfile(2): same userspace
+    //bounce as Windows, POSIX lseek/read for the file + send() for the socket.
     char buf[4096];
     size_t total=0;
     while(total<len)
