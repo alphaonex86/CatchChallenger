@@ -74,7 +74,10 @@ std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderN
         {
             InodeDescriptor inode;
             inode.name=ent->d_name;
-            inode.absoluteFilePath=folder+'/'+ent->d_name;
+            // folder is guaranteed to end with '/' (or '\\') — see the check
+            // above and the stat() join below — so don't add a second separator
+            // (that produced paths like "monsters/skill//skill.xml").
+            inode.absoluteFilePath=folder+ent->d_name;
             struct stat myStat;
             //if(strcmp(ent->d_name,".")!=0 && strcmp(ent->d_name,"..")!=0)
             //just hide . and .. and any hiden files
