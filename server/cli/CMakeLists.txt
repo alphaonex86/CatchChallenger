@@ -39,6 +39,7 @@ set(_filedb_sources
     timer/TimerCityCapture.cpp
     timer/TimerSendInsertMoveRemove.cpp
     timer/TimerPositionSync.cpp
+    timer/TimerBroadcastAnnounce.cpp
     timer/TimerDdos.cpp
     timer/TimerEvents.cpp
     timer/TimeRangeEvent.cpp
@@ -105,6 +106,35 @@ if(CATCHCHALLENGER_DB_INTERNAL_VARS)
     target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_INTERNAL_VARS)
     target_sources(catchchallenger-server-cli PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/../base/DbInternalVars.cpp)
+endif()
+
+# datapack-cpp EMIT (stage1 only): make `--save` additionally re-emit the binary
+# cache as C++ source (datapack_cache_blob.cpp/.hpp next to datapack-cache.bin),
+# which the stage2 / ESP32 build below compiles in. #ifdef-gated in
+# BaseServerLoadSQL.cpp so every other build carries none of this code/cost.
+if(CATCHCHALLENGER_DATAPACK_CPP_EMIT)
+    target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DATAPACK_CPP_EMIT)
+endif()
+
+# datapack-cpp (ESP32 / no-filesystem): embed the whole binary datapack cache as
+# a const byte array compiled into .rodata (flash / XIP on ESP32), loaded in
+# place with NO file and NO RAM copy of the blob (BaseServer::setLoadFromMemory).
+# The blob .cpp/.hpp are produced by stage1 (server-cli --save ->
+# datapack-cache.bin -> emit) into CATCHCHALLENGER_DATAPACK_CPP_DIR. Pair with
+# CATCHCHALLENGER_NOXML + CATCHCHALLENGER_DB_INTERNAL_VARS for a server that
+# needs no filesystem at all. See test/ESP32.md and test/testingcompilationESP32.py.
+if(CATCHCHALLENGER_DATAPACK_CPP)
+    if(NOT CATCHCHALLENGER_DATAPACK_CPP_DIR)
+        message(FATAL_ERROR
+            "CATCHCHALLENGER_DATAPACK_CPP=ON requires -DCATCHCHALLENGER_DATAPACK_CPP_DIR=<dir holding datapack_cpp.cpp/.hpp> (run stage1 first)")
+    endif()
+    target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DATAPACK_CPP)
+    # the generated dir (datapack_cpp.hpp) + server/base (DatapackCppBuffer.hpp it includes)
+    target_include_directories(catchchallenger-server-cli PRIVATE
+        ${CATCHCHALLENGER_DATAPACK_CPP_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../base)
+    target_sources(catchchallenger-server-cli PRIVATE
+        ${CATCHCHALLENGER_DATAPACK_CPP_DIR}/datapack_cpp.cpp)
 endif()
 if(CATCHCHALLENGER_DB_POSTGRESQL)
     target_compile_definitions(catchchallenger-server-cli PRIVATE CATCHCHALLENGER_DB_POSTGRESQL)

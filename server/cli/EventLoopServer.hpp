@@ -17,6 +17,11 @@ public:
     void unload_the_data();
     void setNormalSettings(const NormalServerSettings &settings);
     NormalServerSettings getNormalSettings() const;
+    #ifdef CATCHCHALLENGER_DATAPACK_CPP_EMIT
+    // stage1 datapack-cpp emit: expose the listen settings to BaseServer's
+    // emitDatapackCpp() so they ride along in the generated C++ cache.
+    NormalServerSettings getNormalSettingsForCacheEmit() const override;
+    #endif
     void loadAndFixSettings();
     void preload_finish();
     bool isReady();

@@ -250,6 +250,13 @@ NormalServerSettings EventLoopServer::getNormalSettings() const
     return normalServerSettings;
 }
 
+#ifdef CATCHCHALLENGER_DATAPACK_CPP_EMIT
+NormalServerSettings EventLoopServer::getNormalSettingsForCacheEmit() const
+{
+    return normalServerSettings;
+}
+#endif
+
 void EventLoopServer::loadAndFixSettings()
 {
     BaseServer::loadAndFixSettings();

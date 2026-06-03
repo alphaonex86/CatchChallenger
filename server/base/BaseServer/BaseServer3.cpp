@@ -33,13 +33,13 @@ void BaseServer::preload_1_the_data()
     //load from cache here
     #ifdef CATCHCHALLENGER_CACHE_HPS
     #ifdef CATCHCHALLENGER_NOXML
-    if(in_file==nullptr)
+    if(in_file==nullptr && !loadFromMemory)
     {
         std::cerr << "CATCHCHALLENGER_NOXML defined but no binary cache (datapack-cache.bin) available (abort)" << std::endl;
         abort();
     }
     #endif
-    if(in_file!=nullptr)
+    if(in_file!=nullptr || loadFromMemory)
     {
         size_t lastSize=serialBuffer->tellg();
         {

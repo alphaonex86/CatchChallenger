@@ -274,6 +274,15 @@ public:
     std::string server_message;
     std::string daillygift;
 
+    //LAN announce name. EMPTY = disabled (default); any non-empty name enables
+    //the periodic UDP broadcast the desktop "open to LAN" server sends (client
+    //side: LanBroadcastWatcher, UDP 42490), so LAN clients auto-discover it and
+    //the name is what they show in the server list. Set via server-properties.xml
+    //<broadcastName>. Appended LAST in serialize()/parse() so it rides along in
+    //datapack-cache.bin and the NOXML / ESP32 build keeps the setting with no
+    //filesystem (this broadcast is what announces an ESP32 server on the wifi).
+    std::string broadcastName;
+
 #ifdef CATCHCHALLENGER_CACHE_HPS
 template <class B>
 void serialize(B& buf) const {
@@ -328,6 +337,9 @@ void serialize(B& buf) const {
     //content
     buf << server_message;
     buf << daillygift;
+
+    //LAN announce (appended last: keeps backward layout for the blocks above)
+    buf << broadcastName;
 }
 template <class B>
 void parse(B& buf) {
@@ -386,6 +398,9 @@ void parse(B& buf) {
     //content
     buf >> server_message;
     buf >> daillygift;
+
+    //LAN announce (appended last: keeps backward layout for the blocks above)
+    buf >> broadcastName;
 }
 #endif
 };

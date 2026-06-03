@@ -134,6 +134,8 @@ Reference: `android_env()` in `test/testingclient.py`.
 
 * **Android** — local Qt-for-Android cross-compile + local emulator. **Only `client/qtopengl`**. Tooling: `/mnt/data/perso/progs/CatchChallenger-android/{sdk,avd,apk,build}/`. Self-skips when VPS unreachable or SDK/adb/emulator/AVD missing. Branding (label "CatchChallenger", landscape lock, icon) lives in `client/qtopengl/resources/android-package-source/` wired via target prop `QT_ANDROID_PACKAGE_SOURCE_DIR`. Qt ships only the openssl TLS *plugin*, not libssl/libcrypto — KDAB android_openssl checkout at `<android_workspace>/android_openssl` bundled via `-DCATCHCHALLENGER_ANDROID_OPENSSL_DIR` (optional; absent → TLS-less apk). Phases `android tls-backend qtopengl`, `android official-connect v4/v6` (literal-IP `--host` forces family; protocol-good marker = connected; host-unreachable → skip-as-pass).
 
+* **ESP32** — server (`server/cli`) on ESP32, **no filesystem**: datapack + settings compiled into flash as human-readable C++ const (`server/base/DatapackCppBuffer.hpp`), read in place. Full how-to: `test/ESP32.md`. stage1 = host build `-DCATCHCHALLENGER_DATAPACK_CPP_EMIT=ON` + `--save` → `/mnt/data/perso/tmpfs/datapack-cpp/datapack_cpp.{cpp,hpp}` (settings baked via partial server-properties.xml: `<broadcastName>` non-empty = LAN announce on, max-players 10, `<mapVisibility><minimize>cpu`, maincode `test`). stage2 = host proof, `-DCATCHCHALLENGER_NOXML=ON -DCATCHCHALLENGER_DATAPACK_CPP=ON -DCATCHCHALLENGER_DATAPACK_CPP_DIR=… -DCATCHCHALLENGER_DB_INTERNAL_VARS=ON -DCATCHCHALLENGER_SELECT=ON`; run in an empty dir → assert `commonDatapack size:`+`correctly bind:`+`LAN announce enabled:` (no FS). ESP-IDF (`server/cli/esp32/`, idf.py) + `qemu-system-xtensa` phases self-skip when `$CC_ESP32_PREFIX/esp-idf` / qemu absent. ESP32 reuses the DJGPP no-`timerfd`/`sendfile` path via `CC_TARGET_ESP32`. The two server features (LAN-announce `TimerBroadcastAnnounce`, `GameServerSettings::broadcastName`) are always-on and gated nowhere; the datapack-cpp emit/read are `#ifdef`-gated so other builds are unchanged.
+
 ## Diagnostic-tool runs — clang+sanitizer, gcc+valgrind, profile
 
 Three mutually-exclusive modes. All wired into every `testing*.py` and `all.sh` via the `test/diagnostic.py` shared helper (sanitizer/valgrind propagate to remote nodes; profile is local-only).
@@ -290,6 +292,7 @@ Each `testing*.py` has its own wall-time ceiling sized roughly to "twice the lon
 | testingcluster.py               | 10 min |
 | testingcmake.py                 | 30 min |
 | testingcompilationandroid.py    | 25 min |
+| testingcompilationESP32.py      | 45 min |
 | testingcompilationmac.py        | 15 min |
 | testingcompilationwindows.py    | 15 min |
 | testingfight.py                 | 15 min |

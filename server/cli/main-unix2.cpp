@@ -599,6 +599,13 @@ void send_settings(
     /*if(QCoreApplication::arguments().contains("--benchmark"))
         GlobalServerData::serverSettings.benchmark=true;*/
 
+    //LAN announce. <broadcastName> EMPTY = disabled (default); any non-empty
+    //name enables the periodic UDP broadcast the desktop "open to LAN" server
+    //sends, so LAN clients auto-discover it (client side: LanBroadcastWatcher,
+    //UDP 42490) and show that name. This is how an ESP32 server announces itself
+    //on the wifi. Baked into datapack-cache.bin, so the NOXML build keeps it (no FS).
+    formatedServerSettings.broadcastName = settings->value("broadcastName");
+
     server->setSettings(formatedServerSettings);
     server->setNormalSettings(formatedServerNormalSettings);
     #ifdef CATCHCHALLENGER_CACHE_HPS
