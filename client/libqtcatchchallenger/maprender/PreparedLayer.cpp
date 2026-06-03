@@ -20,7 +20,7 @@ void PreparedLayer::hoverMoveEvent(QGraphicsSceneHoverEvent * event)
     event->accept();
     const uint8_t &x=static_cast<uint8_t>(qCeil(event->pos().x()/CatchChallenger::QMap_client::all_map.at(mapIndex)->tiledMap->tileWidth())-1);
     const uint8_t &y=static_cast<uint8_t>(qCeil(event->pos().y()/CatchChallenger::QMap_client::all_map.at(mapIndex)->tiledMap->tileHeight())-1);
-    qDebug() << "Mouse hover move event on map at " << mapIndex << x << y;
+    qDebug() << "Mouse hover move event on map at " << mapIndex << +x << +y;
 }
 
 void PreparedLayer::hoverEnterEvent(QGraphicsSceneHoverEvent * event)
@@ -28,7 +28,7 @@ void PreparedLayer::hoverEnterEvent(QGraphicsSceneHoverEvent * event)
     event->accept();
     const uint8_t &x=static_cast<uint8_t>(qCeil(event->pos().x()/CatchChallenger::QMap_client::all_map.at(mapIndex)->tiledMap->tileWidth())-1);
     const uint8_t &y=static_cast<uint8_t>(qCeil(event->pos().y()/CatchChallenger::QMap_client::all_map.at(mapIndex)->tiledMap->tileHeight())-1);
-    qDebug() << "Mouse hover enter event on map at " << mapIndex << x << y;
+    qDebug() << "Mouse hover enter event on map at " << mapIndex << +x << +y;
 }
 
 void PreparedLayer::hoverLeaveEvent(QGraphicsSceneHoverEvent * event)
@@ -36,7 +36,7 @@ void PreparedLayer::hoverLeaveEvent(QGraphicsSceneHoverEvent * event)
     event->accept();
     const uint8_t &x=static_cast<uint8_t>(qCeil(event->pos().x()/CatchChallenger::QMap_client::all_map.at(mapIndex)->tiledMap->tileWidth())-1);
     const uint8_t &y=static_cast<uint8_t>(qCeil(event->pos().y()/CatchChallenger::QMap_client::all_map.at(mapIndex)->tiledMap->tileHeight())-1);
-    qDebug() << "Mouse hover leave event on map at " << mapIndex << x << y;
+    qDebug() << "Mouse hover leave event on map at " << mapIndex << +x << +y;
 }
 
 void PreparedLayer::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
@@ -44,7 +44,7 @@ void PreparedLayer::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * event)
     event->accept();
     const uint8_t &x=static_cast<uint8_t>(qCeil(event->pos().x()/CatchChallenger::QMap_client::all_map.at(mapIndex)->tiledMap->tileWidth())-1);
     const uint8_t &y=static_cast<uint8_t>(qCeil(event->pos().y()/CatchChallenger::QMap_client::all_map.at(mapIndex)->tiledMap->tileHeight())-1);
-    qDebug() << "Mouse double click event on map at " << mapIndex << x << y;
+    qDebug() << "Mouse double click event on map at " << mapIndex << +x << +y;
     eventOnMap(CatchChallenger::MapEvent_DoubleClick,mapIndex,x,y);
 }
 

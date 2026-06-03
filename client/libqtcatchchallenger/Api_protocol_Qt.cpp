@@ -1205,7 +1205,7 @@ void Api_protocol_Qt::addAndApplyAttackReturnList(const std::vector<Skill::Attac
                 Skill::BuffEffect buff=attackReturn.addBuffEffectMonster.at(sub_index);
                 if(!attackReturn.doByTheCurrentMonster)
                     buff.on=invertApplyOn(buff.on);
-                qDebug() << "addAndApplyAttackReturnList() buff on " << buff.on << ", buff:" << buff.buff << ", buff level:" << buff.level;
+                qDebug() << "addAndApplyAttackReturnList() buff on " << +buff.on << ", buff:" << +buff.buff << ", buff level:" << +buff.level;
                 addCurrentBuffEffect(buff);
                 sub_index++;
             }
@@ -1215,7 +1215,7 @@ void Api_protocol_Qt::addAndApplyAttackReturnList(const std::vector<Skill::Attac
                 Skill::BuffEffect buff=attackReturn.removeBuffEffectMonster.at(sub_index);
                 if(!attackReturn.doByTheCurrentMonster)
                     buff.on=invertApplyOn(buff.on);
-                qDebug() << "addAndApplyAttackReturnList() buff on " << buff.on << ", buff:" << buff.buff << ", buff level:" << buff.level;
+                qDebug() << "addAndApplyAttackReturnList() buff on " << +buff.on << ", buff:" << +buff.buff << ", buff level:" << +buff.level;
                 removeBuffEffectFull(buff);
                 sub_index++;
             }
@@ -1225,7 +1225,7 @@ void Api_protocol_Qt::addAndApplyAttackReturnList(const std::vector<Skill::Attac
                 Skill::LifeEffectReturn lifeEffect=attackReturn.lifeEffectMonster.at(sub_index);
                 if(!attackReturn.doByTheCurrentMonster)
                     lifeEffect.on=invertApplyOn(lifeEffect.on);
-                qDebug() << "addAndApplyAttackReturnList() life effect on " << lifeEffect.on << ", quantity:" << lifeEffect.quantity;
+                qDebug() << "addAndApplyAttackReturnList() life effect on " << +lifeEffect.on << ", quantity:" << lifeEffect.quantity;
                 if(!applyCurrentLifeEffectReturn(lifeEffect))
                 {
                     emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
@@ -1240,7 +1240,7 @@ void Api_protocol_Qt::addAndApplyAttackReturnList(const std::vector<Skill::Attac
                 Skill::LifeEffectReturn buffEffect=attackReturn.buffLifeEffectMonster.at(sub_index);
                 if(!attackReturn.doByTheCurrentMonster)
                     buffEffect.on=invertApplyOn(buffEffect.on);
-                qDebug() << "addAndApplyAttackReturnList() life effect on " << buffEffect.on << ", quantity:" << buffEffect.quantity;
+                qDebug() << "addAndApplyAttackReturnList() life effect on " << +buffEffect.on << ", quantity:" << buffEffect.quantity;
                 if(!applyCurrentLifeEffectReturn(buffEffect))
                 {
                     emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),

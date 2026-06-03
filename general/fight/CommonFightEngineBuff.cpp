@@ -228,7 +228,7 @@ std::vector<Skill::LifeEffectReturn> CommonFightEngine::applyBuffLifeEffect(Publ
             {
                 const Buff::Effect &effect=effects.at(sub_index);
                 #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-                std::cout << "Buff: Apply on" << playerMonster->monster << "the buff" << playerBuff.buff << "and effect on" << effect.on << "quantity" << effect.quantity << "type" << effect.type << "was hp:" << playerMonster->hp << std::endl;
+                std::cout << "Buff: Apply on" << playerMonster->monster << "the buff" << std::to_string(playerBuff.buff) << "and effect on" << std::to_string(effect.on) << "quantity" << effect.quantity << "type" << std::to_string(effect.type) << "was hp:" << playerMonster->hp << std::endl;
                 #endif
                 if(effect.on==Buff::Effect::EffectOn_HP)
                 {
@@ -273,7 +273,7 @@ std::vector<Skill::LifeEffectReturn> CommonFightEngine::applyBuffLifeEffect(Publ
                     }
                 }
                 #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-                std::cout << "Buff: Apply on" << playerMonster->monster << "the buff" << playerBuff.buff << "and effect on" << effect.on << "quantity" << effect.quantity << "type" << effect.type << "new hp:" << playerMonster->hp << std::endl;
+                std::cout << "Buff: Apply on" << playerMonster->monster << "the buff" << std::to_string(playerBuff.buff) << "and effect on" << std::to_string(effect.on) << "quantity" << effect.quantity << "type" << std::to_string(effect.type) << "new hp:" << playerMonster->hp << std::endl;
                 #endif
                 sub_index++;
             }

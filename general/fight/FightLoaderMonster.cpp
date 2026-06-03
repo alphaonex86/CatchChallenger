@@ -404,7 +404,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                                                         }
                                                         if(index==monster.learn.size())
                                                         {
-                                                            std::cerr << "Unable to open the xml file: " << file << ", attack " << attackVar.learnSkill << " with level " << attackVar.learnSkillLevel << " can't be added because not same attack with previous level: child->Name(): " << attack->Name() << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", attack " << attackVar.learnSkill << " with level " << std::to_string(attackVar.learnSkillLevel) << " can't be added because not same attack with previous level: child->Name(): " << attack->Name() << std::endl;
                                                             ok=false;
                                                         }
                                                     }
@@ -419,13 +419,13 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                                                                 ok=true;
                                                             if(monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel && monster.learn.at(index).learnSkill==attackVar.learnSkill)
                                                             {
-                                                                std::cerr << "Unable to open the xml file: " << file << ", attack already do for this level for skill " << attackVar.learnSkill << " at level " << attackVar.learnSkillLevel << " for monster " << id << ": child->Name(): " << attack->Name() << std::endl;
+                                                                std::cerr << "Unable to open the xml file: " << file << ", attack already do for this level for skill " << attackVar.learnSkill << " at level " << std::to_string(attackVar.learnSkillLevel) << " for monster " << id << ": child->Name(): " << attack->Name() << std::endl;
                                                                 ok=false;
                                                                 break;
                                                             }
                                                             if(monster.learn.at(index).learnSkill==attackVar.learnSkill && monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel)
                                                             {
-                                                                std::cerr << "Unable to open the xml file: " << file << ", this attack level is already found " << attackVar.learnSkill << ", level: " << attackVar.learnSkillLevel << " for attack: " << index << ": child->Name(): " << attack->Name() << std::endl;
+                                                                std::cerr << "Unable to open the xml file: " << file << ", this attack level is already found " << attackVar.learnSkill << ", level: " << std::to_string(attackVar.learnSkillLevel) << " for attack: " << index << ": child->Name(): " << attack->Name() << std::endl;
                                                                 ok=false;
                                                                 break;
                                                             }
@@ -435,7 +435,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                                                             monster.learn.push_back(attackVar);
                                                     }
                                                     else
-                                                        std::cerr << "Unable to open the xml file: " << file << ", no way to learn " << attackVar.learnSkill << ", level: " << attackVar.learnSkillLevel << " for attack: ?: child->Name(): " << attack->Name() << std::endl;
+                                                        std::cerr << "Unable to open the xml file: " << file << ", no way to learn " << attackVar.learnSkill << ", level: " << std::to_string(attackVar.learnSkillLevel) << " for attack: ?: child->Name(): " << attack->Name() << std::endl;
                                                 }
                                                 else
                                                     std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child->Name(): " << attack->Name() << std::endl;
@@ -569,7 +569,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                                             if(typeText=="level" && (evolutionVar.data.level<0 || evolutionVar.data.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX))
                                             {
                                                 ok=false;
-                                                std::cerr << "Unable to open the xml file: " << file << ", level out of range: " << evolutionVar.data.level << " child->Name(): " << evolutionItem->Name() << std::endl;
+                                                std::cerr << "Unable to open the xml file: " << file << ", level out of range: " << std::to_string(evolutionVar.data.level) << " child->Name(): " << evolutionItem->Name() << std::endl;
                                             }
                                         }
                                         if(ok)
