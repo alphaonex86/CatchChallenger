@@ -56,6 +56,7 @@ set(_unix_sources
     ${CC_REPO_ROOT}/server/cli/timer/TimeRangeEvent.cpp
     ${CC_REPO_ROOT}/server/cli/timer/PlayerUpdaterEventLoop.cpp
     ${CC_REPO_ROOT}/server/cli/timer/TimeRangeEventScan.cpp
+    ${CC_REPO_ROOT}/server/cli/timer/TimerBroadcastAnnounce.cpp
 )
 
 set(_extra_sources
