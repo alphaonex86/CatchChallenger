@@ -215,6 +215,11 @@ def build_server():
     cfg = NICE_PREFIX_COMPILE + [
         "cmake", "-S", SERVER_SRC, "-B", SERVER_BUILD,
         "-DCMAKE_TOOLCHAIN_FILE=" + TOOLCHAIN,
+        # Pin Release like the windows/mac/android cross scripts. Without it
+        # general/CCCommon.cmake defaults CMAKE_BUILD_TYPE to Debug (-g), which
+        # buries the ~7 MiB program under ~140 MiB of DWARF (.debug_info alone
+        # is >120 MiB) — a shipped DOS .exe must never carry a Debug build.
+        "-DCMAKE_BUILD_TYPE=Release",
         "-DCATCHCHALLENGER_SELECT=ON",
         "-DCATCHCHALLENGER_DB_FILE=ON",
     ]
@@ -309,9 +314,10 @@ def _build_data_img(work, datapack_dir, server_props):
     _mt(["mformat", "-F", "c:"], env)
     srv = os.path.join(work, "CCSRV.EXE")          # 8.3 name for the server exe
     shutil.copy2(SERVER_EXE, srv)
-    # Strip the staged copy: the unstripped DJGPP exe is ~150 MiB (debug info);
-    # stripped it is ~7 MiB, which fits the data disk. Keep SERVER_EXE itself
-    # full-symbol for post-mortem.
+    # Strip the staged copy: SERVER_EXE is a Release build (~7 MiB, no -g debug
+    # info) but still carries a symbol table; stripping drops it to ~5-6 MiB so
+    # the guest C: disk and DOS real-mode load stay lean. SERVER_EXE itself is
+    # left with its symbol table for post-mortem nm/objdump.
     strip = os.path.join(DJGPP_ROOT, "bin", TRIPLE + "-strip")
     if os.path.isfile(strip):
         subprocess.run([strip, srv], capture_output=True, timeout=clamp_local(120))
