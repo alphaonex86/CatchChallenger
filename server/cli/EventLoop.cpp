@@ -2,8 +2,10 @@
 #include "../../general/base/GeneralVariable.hpp"
 
 #include <iostream>
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__DJGPP__)
 #include <sys/sendfile.h>
+#endif
+#if !defined(_WIN32)
 #include <unistd.h>
 #endif
 
@@ -49,6 +51,65 @@ struct SelectState
 };
 static SelectState *g_select=nullptr;
 }//namespace
+
+#ifdef __DJGPP__
+#include <time.h>
+namespace {
+//MS-DOS interval-timer registry (no timerfd/threads on DOS). wait() drives
+//these off select(2)'s timeout — see dosTimerArm/Disarm + the wait() body.
+struct DosTimer
+{
+    void *ptr;                  //the EventLoopTimer*, returned as event.data.ptr
+    unsigned long long next_ms; //absolute time of the next tick
+    unsigned int interval_ms;   //repeat period (ignored when singleShot)
+    bool singleShot;
+};
+static std::vector<DosTimer> g_dos_timers;
+
+//Monotonic millisecond clock. uclock() is DJGPP's high-resolution PIT-based
+//counter (it reprograms the 8254 on first use); UCLOCKS_PER_SEC ~= 1.19 MHz.
+static unsigned long long cc_now_ms()
+{
+    return static_cast<unsigned long long>(uclock())*1000ULL/UCLOCKS_PER_SEC;
+}
+}//namespace
+
+void EventLoop::dosTimerArm(void *timer,unsigned int msec,unsigned int offset,bool singleShot)
+{
+    if(offset==0)
+        offset=msec;
+    DosTimer t;
+    t.ptr=timer;
+    t.next_ms=cc_now_ms()+offset;
+    t.interval_ms=msec;
+    t.singleShot=singleShot;
+    size_t i=0;
+    while(i<g_dos_timers.size())
+    {
+        if(g_dos_timers[i].ptr==timer)
+        {
+            g_dos_timers[i]=t;//re-arm in place
+            return;
+        }
+        ++i;
+    }
+    g_dos_timers.push_back(t);
+}
+
+void EventLoop::dosTimerDisarm(void *timer)
+{
+    size_t i=0;
+    while(i<g_dos_timers.size())
+    {
+        if(g_dos_timers[i].ptr==timer)
+        {
+            g_dos_timers.erase(g_dos_timers.begin()+i);
+            return;
+        }
+        ++i;
+    }
+}
+#endif
 #elif defined(CATCHCHALLENGER_POLL)
 //----------------------------- poll(2) backend -----------------------------
 //Translation layer: EPOLLIN/OUT/ERR/HUP/RDHUP and POLLIN/OUT/ERR/HUP/RDHUP
@@ -747,8 +808,16 @@ static inline void _event_rate_account(int produced)
 int EventLoop::wait(epoll_event *events,const int &maxevents)
 {
 #if defined(CATCHCHALLENGER_SELECT)
+#ifdef __DJGPP__
+    //DOS: still service armed interval timers even when no fds are registered.
+    if(g_select==nullptr)
+        return 0;
+    if(g_select->events.empty() && g_dos_timers.empty())
+        return 0;
+#else
     if(g_select==nullptr || g_select->events.empty())
         return 0;
+#endif
     fd_set rfds, wfds, efds;
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
@@ -773,6 +842,87 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
         FD_SET(fd,&efds);
         if(fd>maxfd) maxfd=fd;
     }
+#ifdef __DJGPP__
+    //Sleep at most until the soonest armed timer is due — this is the DOS
+    //interval-timer source (no timerfd). With no timers, block indefinitely.
+    struct timeval tv;
+    struct timeval *ptv=nullptr;
+    if(!g_dos_timers.empty())
+    {
+        const unsigned long long now=cc_now_ms();
+        unsigned long long soonest=0;
+        bool have=false;
+        size_t ti=0;
+        while(ti<g_dos_timers.size())
+        {
+            const unsigned long long nf=g_dos_timers[ti].next_ms;
+            if(!have || nf<soonest)
+            {
+                soonest=nf;
+                have=true;
+            }
+            ++ti;
+        }
+        const unsigned long long wait_ms=(soonest>now)?(soonest-now):0;
+        tv.tv_sec=static_cast<long>(wait_ms/1000ULL);
+        tv.tv_usec=static_cast<long>((wait_ms%1000ULL)*1000ULL);
+        ptv=&tv;
+    }
+    const int n=::select(maxfd+1,&rfds,&wfds,&efds,ptv);
+    //n==0 is a normal timer-timeout here, NOT an error; only n<0 with nothing
+    //else to report is a real failure.
+    int produced=0;
+    if(n>0)
+    {
+        for(const std::pair<const int,uint32_t> &e : g_select->events)
+        {
+            if(produced>=maxevents)
+                break;
+            const int fd=e.first;
+            uint32_t out=0;
+            if(FD_ISSET(fd,&rfds)) out|=EPOLLIN;
+            if(FD_ISSET(fd,&wfds)) out|=EPOLLOUT;
+            if(FD_ISSET(fd,&efds)) out|=EPOLLERR;
+            if(out!=0)
+            {
+                events[produced].events=out;
+                events[produced].data.ptr=g_select->ptrs[fd];
+                ++produced;
+            }
+        }
+    }
+    //Append a synthetic EPOLLIN event for every timer now due, then reschedule
+    //(periodic) or drop (single-shot). The main loop dispatches data.ptr to
+    //EventLoopTimer::exec().
+    const unsigned long long now2=cc_now_ms();
+    size_t di=0;
+    while(di<g_dos_timers.size())
+    {
+        if(produced>=maxevents)
+            break;
+        if(g_dos_timers[di].next_ms<=now2)
+        {
+            events[produced].events=EPOLLIN;
+            events[produced].data.ptr=g_dos_timers[di].ptr;
+            ++produced;
+            if(g_dos_timers[di].singleShot)
+            {
+                g_dos_timers.erase(g_dos_timers.begin()+di);
+                continue;//don't ++di: the next entry shifted into this slot
+            }
+            //schedule the next tick from completion (no catch-up storm if a
+            //slow exec() overran the interval).
+            g_dos_timers[di].next_ms=now2+g_dos_timers[di].interval_ms;
+        }
+        ++di;
+    }
+    #ifdef CATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE
+    _event_rate_account(produced);
+    #endif
+    if(n<0 && produced==0)
+        return n;
+    return produced;
+#else
     const int n=::select(maxfd+1,&rfds,&wfds,&efds,nullptr);
     if(n<=0)
     {
@@ -802,6 +952,7 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
     _event_rate_account(produced);
     #endif
     return produced;
+#endif
 #elif defined(CATCHCHALLENGER_POLL)
     if(g_poll==nullptr || g_poll->pfds.empty())
         return 0;
@@ -1345,6 +1496,34 @@ ssize_t EventLoop::sendFile(int sock_fd,int in_fd,off_t *offset,size_t len)
         *offset+=s;
         total+=static_cast<size_t>(s);
         if(s<r)
+            return static_cast<ssize_t>(total);
+    }
+    return static_cast<ssize_t>(total);
+#elif defined(__DJGPP__)
+    //MS-DOS (Watt-32) has no sendfile(2): same userspace bounce as Windows,
+    //using POSIX lseek/read for the file and Watt-32 send() for the socket.
+    char buf[4096];
+    size_t total=0;
+    while(total<len)
+    {
+        const size_t want=(len-total<sizeof(buf))?(len-total):sizeof(buf);
+        if(::lseek(in_fd,*offset,SEEK_SET)==(off_t)-1)
+            return -1;
+        const ssize_t r=::read(in_fd,buf,want);
+        if(r<0)
+            return -1;
+        if(r==0)
+            return static_cast<ssize_t>(total);
+        const int s=::send(sock_fd,buf,static_cast<int>(r),0);
+        if(s<0)
+        {
+            if(total>0)
+                return static_cast<ssize_t>(total);
+            return -1;
+        }
+        *offset+=s;
+        total+=static_cast<size_t>(s);
+        if(s<static_cast<int>(r))
             return static_cast<ssize_t>(total);
     }
     return static_cast<ssize_t>(total);

@@ -141,6 +141,25 @@
     #error byte order not supported
 
     #endif
+#elif defined(__DJGPP__)
+    /* MS-DOS (DJGPP): always little-endian x86, and the toolchain has no
+       <endian.h>. The host<->little conversions are no-ops; host<->big use
+       the compiler bswap builtins. Avoids pulling Watt-32's htons/htonl here
+       (this header is included by purely-logic TUs that never touch sockets). */
+    #define htobe16(x) __builtin_bswap16(x)
+    #define htole16(x) (x)
+    #define be16toh(x) __builtin_bswap16(x)
+    #define le16toh(x) (x)
+
+    #define htobe32(x) __builtin_bswap32(x)
+    #define htole32(x) (x)
+    #define be32toh(x) __builtin_bswap32(x)
+    #define le32toh(x) (x)
+
+    #define htobe64(x) __builtin_bswap64(x)
+    #define htole64(x) (x)
+    #define be64toh(x) __builtin_bswap64(x)
+    #define le64toh(x) (x)
 #else
     #if defined(__linux__) || defined(__CYGWIN__)
         #include <endian.h>

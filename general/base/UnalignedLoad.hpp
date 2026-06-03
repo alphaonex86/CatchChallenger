@@ -47,6 +47,16 @@
         #define htole32(x) OSSwapHostToLittleInt32(x)
         #define htole64(x) OSSwapHostToLittleInt64(x)
     #endif
+#elif defined(__DJGPP__)
+    // MS-DOS (DJGPP): little-endian x86, no <endian.h>. host<->little no-op.
+    #ifndef le16toh
+        #define le16toh(x) (x)
+        #define le32toh(x) (x)
+        #define le64toh(x) (x)
+        #define htole16(x) (x)
+        #define htole32(x) (x)
+        #define htole64(x) (x)
+    #endif
 #else
     #include <endian.h>
 #endif

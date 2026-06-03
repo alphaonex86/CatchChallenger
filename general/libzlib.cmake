@@ -48,10 +48,6 @@ if(NOT TARGET catchchallenger_zlib)
             ${ZLIB_SRC_DIR}/compress.c
             ${ZLIB_SRC_DIR}/crc32.c
             ${ZLIB_SRC_DIR}/deflate.c
-            ${ZLIB_SRC_DIR}/gzclose.c
-            ${ZLIB_SRC_DIR}/gzlib.c
-            ${ZLIB_SRC_DIR}/gzread.c
-            ${ZLIB_SRC_DIR}/gzwrite.c
             ${ZLIB_SRC_DIR}/infback.c
             ${ZLIB_SRC_DIR}/inffast.c
             ${ZLIB_SRC_DIR}/inflate.c
@@ -60,6 +56,17 @@ if(NOT TARGET catchchallenger_zlib)
             ${ZLIB_SRC_DIR}/uncompr.c
             ${ZLIB_SRC_DIR}/zutil.c
         )
+        # The gz* file API (gzopen/gzread/…) needs POSIX errno values
+        # (EWOULDBLOCK) DJGPP lacks. CatchChallenger only uses the in-memory
+        # inflate/uncompress path (tiled map layers), so skip gz* on MS-DOS.
+        if(NOT CC_TARGET_MSDOS)
+            list(APPEND ZLIB_SOURCES
+                ${ZLIB_SRC_DIR}/gzclose.c
+                ${ZLIB_SRC_DIR}/gzlib.c
+                ${ZLIB_SRC_DIR}/gzread.c
+                ${ZLIB_SRC_DIR}/gzwrite.c
+            )
+        endif()
         add_library(catchchallenger_zlib STATIC ${ZLIB_SOURCES})
         target_include_directories(catchchallenger_zlib PUBLIC ${ZLIB_SRC_DIR})
         # Silence well-known harmless warnings in vendored zlib so it compiles

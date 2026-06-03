@@ -119,8 +119,12 @@ bool vectorremoveOne(std::vector<T> &list,const T &item)
     }
 }
 
-template <class T>
-bool vectorcontainsAtLeastOne(const std::vector<T> &list,const T &item)
+// `item` has its own type K (not forced to T): a literal 0/-1 is `int` while
+// the vector element may be a 32-bit type that is `long` on some targets
+// (DJGPP's int32_t), which makes the single-type form fail deduction. std::find
+// still compares T==K fine.
+template <class T, class K>
+bool vectorcontainsAtLeastOne(const std::vector<T> &list,const K &item)
 {
     const typename std::vector<T>::const_iterator &r=std::find(list.cbegin(),list.cend(),item);
     if(r==list.cend())

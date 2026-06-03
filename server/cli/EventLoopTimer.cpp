@@ -3,8 +3,10 @@
 #include "win32_compat.hpp"
 
 #include <iostream>
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__DJGPP__)
 #include <sys/timerfd.h>
+#endif
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 #include <errno.h>
@@ -12,6 +14,13 @@
 #include <time.h>
 
 char buff_temp[sizeof(uint64_t)];
+
+#ifdef __DJGPP__
+//Stored in tfd while a DOS timer is armed: it lives in the EventLoop's timer
+//registry, not behind a real fd, so any non-(-1) value works as the
+//"active"/"already armed" marker.
+static const int CC_DOS_TIMER_ARMED=0x7fffffff;
+#endif
 
 #ifdef _WIN32
 //-----------------------------------------------------------------------
@@ -168,6 +177,16 @@ bool EventLoopTimer::start(const unsigned int &msec, unsigned int offset)
         return false;
     }
     return true;
+#elif defined(__DJGPP__)
+    //-------------------------------------------------------------------
+    // MS-DOS (DJGPP): no timerfd and no threads. Register the interval with
+    // the EventLoop; wait() sleeps on select(2)'s timeout until it is due and
+    // returns a synthetic event that the main loop dispatches to exec().
+    // tfd holds a non-fd sentinel so active() and the already-armed guard work.
+    //-------------------------------------------------------------------
+    EventLoop::loop.dosTimerArm(this,msec,offset,singleShot);
+    tfd=CC_DOS_TIMER_ARMED;
+    return true;
 #else
     if((tfd=::timerfd_create(CLOCK_REALTIME,TFD_NONBLOCK)) < 0)
     {
@@ -241,6 +260,12 @@ bool EventLoopTimer::stop()
 {
     if(tfd==-1)
         return false;
+#ifdef __DJGPP__
+    //DOS: the timer is in the EventLoop registry, not an fd — just unregister.
+    EventLoop::loop.dosTimerDisarm(this);
+    tfd=-1;
+    return true;
+#else
     if(EventLoop::loop.ctl(EPOLL_CTL_DEL,tfd,NULL) < 0)
     {
         std::cerr << "epoll_ctl error" << std::endl;
@@ -263,6 +288,7 @@ bool EventLoopTimer::stop()
 #endif
     tfd=-1;
     return true;
+#endif
 }
 
 bool EventLoopTimer::active()
@@ -295,6 +321,9 @@ void EventLoopTimer::validateTheTimer()
     char buf[16];
     //Drain whatever bytes the callback enqueued; we don't care about count.
     ::recv(static_cast<SOCKET>(tfd),buf,sizeof(buf),0);
+#elif defined(__DJGPP__)
+    //Nothing to drain: EventLoop::wait() already rescheduled this timer when
+    //it synthesized the tick event.
 #else
     if(::read(tfd, buff_temp, sizeof(uint64_t))!=sizeof(uint64_t))
     {}
