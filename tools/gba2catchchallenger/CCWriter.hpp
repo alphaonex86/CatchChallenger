@@ -53,6 +53,21 @@ private:
     void writeInformations();
     void writeStart();
     void writeZones();
+    // Generate the shared map/invisible.tsx marker tileset (object markers +
+    // distinct semi-transparent per-semantic-layer markers).
+    void writeMarkers();
+    // Per-map layer-visibility guard: every tile layer must have >=1 cell not
+    // hidden by a fully-opaque tile on a layer above it.  Accumulates violations.
+    void layerVisibilityGuard(const DecodedMap &map,
+                              const std::vector<uint32_t> &walkable,
+                              const std::vector<uint32_t> &grass, bool anyGrass,
+                              const std::vector<uint32_t> &water, bool anyWater,
+                              const std::vector<uint32_t> &ledgeUp,
+                              const std::vector<uint32_t> &ledgeDown,
+                              const std::vector<uint32_t> &ledgeLeft,
+                              const std::vector<uint32_t> &ledgeRight, bool anyLedge,
+                              const std::vector<uint32_t> &collisions,
+                              const std::vector<uint32_t> &walkbehind, bool anyOver);
 
     // GID layer data -> base64(zstd(LE u32 grid)).
     std::string encodeLayer(const std::vector<uint32_t> &gids) const;
@@ -72,6 +87,9 @@ private:
     std::string fireredDir_;
     SkinResolver &skins_;
     std::unordered_map<uint8_t,std::string> skinCache_;
+    int guardLayers_;                          // tile layers checked
+    int guardMasked_;                          // layers with no visible cell
+    std::vector<std::string> guardMaskedList_; // first few offending layers
 };
 
 #endif // GBA2CC_CCWRITER_HPP
