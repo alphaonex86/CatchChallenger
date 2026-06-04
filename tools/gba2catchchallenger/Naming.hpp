@@ -36,6 +36,9 @@ private:
     static uint16_t keyOf(uint8_t group, uint8_t map);
     std::string sectionName(uint8_t sid) const; // decoded display name, "" if none
     bool isArea(const DecodedMap &m) const;
+    // A small generic interior (<=12x10) with a teleport-on-push/it exit on the
+    // bottom rows and no shop / trainer-fight bot — i.e. a plain "house".
+    bool looksLikeHouse(const DecodedMap &m) const;
     // Section id of the named area a map belongs to (its own when it is a named
     // area map, else the nearest named area reachable by warps); -1 if none.
     int namedSidOf(uint16_t key) const;

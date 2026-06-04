@@ -338,3 +338,36 @@ std::string Decoder::warpType(uint16_t behavior) const
         return std::string("door");
     return std::string("teleport on it");
 }
+
+uint16_t Decoder::metatileBehavior(const DecodedMap &m, uint16_t metatile) const
+{
+    const GameInfo &gi=rom_.game();
+    uint32_t attrField=(gi.engine==Engine::Frlg) ? 0x14 : 0x10;
+    uint32_t metaInPrim=gi.metatilesInPrimary;
+    bool ok=false;
+    uint32_t base;
+    uint32_t idx;
+    if(metatile<metaInPrim)
+    {
+        base=rom_.pointer(m.primaryTileset+attrField,&ok);
+        idx=metatile;
+    }
+    else
+    {
+        base=rom_.pointer(m.secondaryTileset+attrField,&ok);
+        idx=metatile-metaInPrim;
+    }
+    if(!ok)
+        return 0xFFFF;
+    uint32_t off=base+idx*gi.attributeSize();
+    uint32_t attr=(gi.attributeSize()==4) ? rom_.u32(off) : rom_.u16(off);
+    return gi.behavior(attr);
+}
+
+std::string Decoder::warpClassAt(const DecodedMap &m, const DecodedWarp &w) const
+{
+    if(m.blocksPtr==0 || w.x>=m.width || w.y>=m.height)
+        return std::string();
+    uint16_t meta=static_cast<uint16_t>(rom_.u16(m.blocksPtr+(static_cast<uint32_t>(w.y)*static_cast<uint32_t>(m.width)+w.x)*2) & 0x3FF);
+    return warpType(metatileBehavior(m,meta));
+}

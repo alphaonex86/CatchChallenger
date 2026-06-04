@@ -98,6 +98,10 @@ public:
     // and open it), "teleport on push" (arrow/edge warp, you walk into it) or
     // "teleport on it" (step-on pad / stairs / ladder / hole).
     std::string warpType(uint16_t behavior) const;
+    // Raw metatile behaviour at a map cell's metatile (engine-dependent attribute
+    // decode), and the warp class of the tile a warp sits on.
+    uint16_t metatileBehavior(const DecodedMap &m, uint16_t metatile) const;
+    std::string warpClassAt(const DecodedMap &m, const DecodedWarp &w) const;
 
 private:
     DecodedMap decodeMap(uint8_t group, uint8_t map, uint32_t headerOffset);

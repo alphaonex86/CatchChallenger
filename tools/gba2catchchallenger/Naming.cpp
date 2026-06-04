@@ -1,4 +1,5 @@
 #include "Naming.hpp"
+#include "Gen3Script.hpp"
 #include "Gen3Text.hpp"
 
 #include <algorithm>
@@ -45,6 +46,43 @@ bool Naming::isArea(const DecodedMap &m) const
 {
     // town(1) city(2) route(3) underground(4) underwater(5) ocean(6)
     return m.mapType>=1 && m.mapType<=6;
+}
+
+bool Naming::looksLikeHouse(const DecodedMap &m) const
+{
+    if(m.width>12 || m.height>10)
+        return false;
+    // an exit warp (teleport-on-push/it, not a door) on the bottom two rows
+    bool bottomExit=false;
+    size_t wi=0;
+    while(wi<m.warps.size())
+    {
+        const DecodedWarp &w=m.warps[wi];
+        if(static_cast<int>(w.y)>=m.height-2)
+        {
+            std::string wc=decoder_.warpClassAt(m,w);
+            if(wc=="teleport on push" || wc=="teleport on it")
+            {
+                bottomExit=true;
+                break;
+            }
+        }
+        wi++;
+    }
+    if(!bottomExit)
+        return false;
+    // not a shop and no trainer fight (which would make it a gym / special place)
+    Gen3Script script(rom_);
+    size_t ni=0;
+    while(ni<m.npcs.size())
+    {
+        const DecodedNpc &n=m.npcs[ni];
+        ScriptResult r=script.classify(n.trainerType,n.scriptPtr);
+        if(r.kind==BotKind::Fight || r.kind==BotKind::Mart)
+            return false;
+        ni++;
+    }
+    return true;
 }
 
 int Naming::namedSidOf(uint16_t key) const
@@ -318,10 +356,14 @@ void Naming::build()
             an++;
         }
 
-        // indoor maps grouped into buildings (connected components via warps).
+        // Indoor maps grouped into buildings (connected components via warps).
+        // Each is named: a distinct section name; else a "house" for a small
+        // generic interior (<=12x10, bottom exit, no shop/fight); else building-N.
         std::set<uint16_t> indoorSet(indoorMaps.begin(),indoorMaps.end());
         std::set<uint16_t> visited;
-        int buildingIndex=0;
+        std::vector<std::vector<uint16_t> > comps;
+        std::vector<std::string> compName,compDisplay;
+        std::vector<char> compHouse;
         size_t ii=0;
         while(ii<indoorMaps.size())
         {
@@ -355,10 +397,7 @@ void Naming::build()
                 }
             }
             std::sort(comp.begin(),comp.end());
-            buildingIndex++;
-
-            // building name: a shared named section distinct from the area, else generic.
-            std::string bname,bdisplay;
+            std::string sname,sdisp;
             size_t ci=0;
             while(ci<comp.size())
             {
@@ -366,18 +405,56 @@ void Naming::build()
                 std::string sn=(cm!=nullptr) ? sectionName(cm->regionSection) : std::string();
                 if(!sn.empty() && Gen3Text::slug(sn)!=areaSlug[A])
                 {
-                    bname=Gen3Text::slug(sn);
-                    bdisplay=Gen3Text::display(sn);
+                    sname=Gen3Text::slug(sn);
+                    sdisp=Gen3Text::display(sn);
                     break;
                 }
                 ci++;
             }
+            bool house=false;
+            if(sname.empty() && comp.size()==1)
+            {
+                const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[0]>>8),static_cast<uint8_t>(comp[0] & 0xFF));
+                if(cm!=nullptr && looksLikeHouse(*cm))
+                    house=true;
+            }
+            comps.push_back(comp);
+            compName.push_back(sname);
+            compDisplay.push_back(sdisp);
+            compHouse.push_back(house ? 1 : 0);
+        }
+        int houseTotal=0;
+        {
+            size_t k=0;
+            while(k<compHouse.size())
+            {
+                if(compHouse[k])
+                    houseTotal++;
+                k++;
+            }
+        }
+        int buildingIndex=0,houseIndex=0;
+        size_t cc=0;
+        while(cc<comps.size())
+        {
+            const std::vector<uint16_t> &comp=comps[cc];
+            std::string bname=compName[cc],bdisplay=compDisplay[cc];
             if(bname.empty())
             {
-                bname="building-"+std::to_string(buildingIndex);
-                bdisplay=areaDisplay[A]+" - Building "+std::to_string(buildingIndex);
+                if(compHouse[cc])
+                {
+                    houseIndex++;
+                    bname=(houseTotal==1) ? std::string("house") : ("house-"+std::to_string(houseIndex));
+                    bdisplay=(houseTotal==1) ? (areaDisplay[A]+" - House")
+                                             : (areaDisplay[A]+" - House "+std::to_string(houseIndex));
+                }
+                else
+                {
+                    buildingIndex++;
+                    bname="building-"+std::to_string(buildingIndex);
+                    bdisplay=areaDisplay[A]+" - Building "+std::to_string(buildingIndex);
+                }
             }
-
             if(comp.size()==1)
             {
                 path_[comp[0]]=folder+"/"+bname;
@@ -395,7 +472,9 @@ void Naming::build()
                     f++;
                 }
             }
+            cc++;
         }
+
         ++bit;
     }
 
