@@ -28,7 +28,9 @@ CCWriter::CCWriter(const GbaRom &rom,
     fireredDir_(fireredDir),
     skins_(skins),
     guardLayers_(0),
-    guardMasked_(0)
+    guardMasked_(0),
+    guardTopMaps_(0),
+    guardTopCover_(0)
 {
 }
 
@@ -319,6 +321,32 @@ void CCWriter::layerVisibilityGuard(const DecodedMap &map,
         }
         li++;
     }
+    // Second guard: the last/top tile layer (WalkBehind in general) must NOT be a
+    // FULL-SURFACE 100%-opaque cover — a fully-opaque over-tile on EVERY cell would
+    // hide every layer below it (the whole map would render as just WalkBehind).
+    if(anyOver)
+    {
+        guardTopMaps_++;
+        bool fullCover=true;
+        size_t c=0;
+        while(c<cells)
+        {
+            // a cell breaks the cover if WalkBehind is empty there OR its over-tile
+            // is not 100% opaque (masking[c] was set only for fully-opaque overs).
+            if(walkbehind[c]==0 || masking[c]==0)
+            {
+                fullCover=false;
+                break;
+            }
+            c++;
+        }
+        if(fullCover)
+        {
+            guardTopCover_++;
+            if(guardTopCoverList_.size()<20)
+                guardTopCoverList_.push_back(myPath+" / WalkBehind");
+        }
+    }
 }
 
 bool CCWriter::writeAll()
@@ -345,6 +373,16 @@ bool CCWriter::writeAll()
                   << guardLayers_ << " layers fully hidden by an opaque tile above):" << std::endl;
         size_t k=0;
         while(k<guardMaskedList_.size()){ std::cout << "  " << guardMaskedList_[k] << std::endl; k++; }
+    }
+    if(guardTopCover_==0)
+        std::cout << "CCWriter GUARD top-layer-cover: PASS (" << guardTopMaps_
+                  << " WalkBehind layers, none a full 100%-opaque cover)" << std::endl;
+    else
+    {
+        std::cout << "CCWriter GUARD top-layer-cover: FAIL (" << guardTopCover_
+                  << " WalkBehind layers fully cover the map with opaque tiles, hiding everything below):" << std::endl;
+        size_t k=0;
+        while(k<guardTopCoverList_.size()){ std::cout << "  " << guardTopCoverList_[k] << std::endl; k++; }
     }
     return true;
 }
