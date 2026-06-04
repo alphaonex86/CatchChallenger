@@ -90,6 +90,9 @@ private:
     int guardLayers_;                          // tile layers checked
     int guardMasked_;                          // layers with no visible cell
     std::vector<std::string> guardMaskedList_; // first few offending layers
+    int guardTopMaps_;                         // maps whose top layer was checked
+    int guardTopCover_;                        // top layer = full 100%-opaque cover
+    std::vector<std::string> guardTopCoverList_;
 };
 
 #endif // GBA2CC_CCWRITER_HPP
