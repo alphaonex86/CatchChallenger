@@ -801,8 +801,10 @@ void CCWriter::writeMapXml(const DecodedMap &map)
                 out << " </bot>\n";
             }
             else
-                out << " <bot id=\"" << b.id << "\">\n  <step type=\"text\" id=\"1\">\n"
-                    << "   <text><![CDATA[]]></text>\n  </step>\n </bot>\n";
+                // No decodable text and no fight/shop/heal/pc metadata: define
+                // the bot (so the .tmx reference resolves) but emit NO step — an
+                // empty <text> step is never written.
+                out << " <bot id=\"" << b.id << "\"></bot>\n";
         }
         bi++;
     }
