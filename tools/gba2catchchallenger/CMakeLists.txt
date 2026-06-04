@@ -11,6 +11,11 @@ include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 find_package(Qt6 COMPONENTS Core Gui REQUIRED)
 
 include(${CC_REPO_ROOT}/general/general.cmake)
+# libtiled (catchchallenger_tiled): the render-based layer-visibility guard loads
+# each written .tmx and renders it with libtiled — the same renderer map2png/the
+# client use — to verify every layer is visible.  Self-contained include (mirrors
+# tools/map2png); it find_package(ZLIB) itself and propagates its PUBLIC header dir.
+include(${CC_REPO_ROOT}/client/libqtcatchchallenger/libtiled.cmake)
 
 add_executable(gba2catchchallenger
     main.cpp
@@ -40,6 +45,7 @@ set_target_properties(gba2catchchallenger PROPERTIES
 
 target_link_libraries(gba2catchchallenger PRIVATE
     catchchallenger_general
+    catchchallenger_tiled
     Qt6::Core
     Qt6::Gui
     ${ZSTD_LIBRARY}
