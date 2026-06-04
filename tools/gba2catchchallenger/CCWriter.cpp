@@ -774,21 +774,20 @@ void CCWriter::writeMapXml(const DecodedMap &map)
             out << " <bot id=\"" << b.id << "\">\n  <step type=\"pc\" id=\"1\"/>\n </bot>\n";
             emitted=true;
         }
-        // SIGN -> the ROM sign string, split into [Next] pages (project owner's
-        // call to include sign text).  Plain talking NPC -> one empty text step
-        // (creative dialogue is not transcribed).
+        // SIGN or plain talking NPC -> the ROM text string, split into [Next]
+        // pages (project owner's call to include the in-game text).  A sign also
+        // gets a "Sign" name; an NPC keeps just its dialogue steps.
         if(!emitted)
         {
             std::vector<std::string> pages;
-            if(b.isSign)
-            {
-                uint32_t tptr=script_.signTextOffset(b.scriptPtr);
-                if(tptr!=0)
-                    pages=Gen3Text::decodeSign(rom_,tptr,512);
-            }
+            uint32_t tptr=script_.signTextOffset(b.scriptPtr);
+            if(tptr!=0)
+                pages=Gen3Text::decodeSign(rom_,tptr,512);
             if(!pages.empty())
             {
-                out << " <bot id=\"" << b.id << "\">\n  <name><![CDATA[Sign]]></name>\n";
+                out << " <bot id=\"" << b.id << "\">\n";
+                if(b.isSign)
+                    out << "  <name><![CDATA[Sign]]></name>\n";
                 size_t pi=0;
                 while(pi<pages.size())
                 {
