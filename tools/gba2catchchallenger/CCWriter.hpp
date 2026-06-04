@@ -53,9 +53,6 @@ private:
     void writeInformations();
     void writeStart();
     void writeZones();
-    // Generate the shared map/invisible.tsx marker tileset (object markers +
-    // distinct semi-transparent per-semantic-layer markers).
-    void writeMarkers();
     // Render-based guard: reload every written .tmx with libtiled and render it
     // with all tile layers, then with each single tile layer hidden; a layer that
     // does not change the rendered pixels is invisible.  Ground truth for the

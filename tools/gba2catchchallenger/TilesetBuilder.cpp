@@ -1287,6 +1287,47 @@ static std::string poolBaseName(const std::set<std::string> &areas, std::set<std
     return name;
 }
 
+void TilesetBuilder::writeMarkerSheet() const
+{
+    // LOCAL semantic-layer marker tileset: tileset/marker.png (8 cells, 128x16) +
+    // marker.tsx.  Cells 0-6 are one distinct SEMI-TRANSPARENT colour per gameplay
+    // layer (Collisions/Water/Grass/Ledges*), so toggling the layer in Tiled is
+    // visible and it never hides the layer below.  This stays inside the per-ROM
+    // tileset/ dir — the shared map/invisible.* is reserved for engine object
+    // markers and is NEVER written by the converter.
+    const int N=8, TS=16;
+    QImage img(N*TS,TS,QImage::Format_ARGB32);
+    img.fill(0);
+    static const int cols[7][4]={
+        {255,  0,  0, 96}, // 0 Collisions  red
+        { 20,110,255, 96}, // 1 Water       blue
+        {  0,200,  0, 96}, // 2 Grass       green
+        {255,235,  0, 96}, // 3 LedgesUp    yellow
+        {255,140,  0, 96}, // 4 LedgesDown  orange
+        {  0,220,220, 96}, // 5 LedgesLeft  cyan
+        {230,  0,230, 96}, // 6 LedgesRight magenta
+    };
+    int t=0;
+    while(t<7)
+    {
+        QRgb c=qRgba(cols[t][0],cols[t][1],cols[t][2],cols[t][3]);
+        int tx=t*TS;
+        int yy=0;
+        while(yy<TS){ int xx=0; while(xx<TS){ img.setPixel(tx+xx,yy,c); xx++; } yy++; }
+        t++;
+    }
+    img.save(QString::fromStdString(tilesetDir_+"/marker.png"),"PNG");
+    std::ofstream tsx(tilesetDir_+"/marker.tsx");
+    if(tsx.is_open())
+    {
+        tsx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        tsx << "<tileset name=\"marker\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"" << N
+            << "\" columns=\"" << N << "\">\n";
+        tsx << " <image source=\"marker.png\" width=\"" << (N*TS) << "\" height=\"" << TS << "\"/>\n";
+        tsx << "</tileset>\n";
+    }
+}
+
 bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &naming)
 {
     uint32_t metaInPrim=rom_.game().metatilesInPrimary;
@@ -1407,6 +1448,7 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     else
         std::cout << "TilesetBuilder GUARD adjacency: PASS (" << totalAdj
                   << " unavoidable cyclic-pattern edge(s); all linearisable adjacencies kept)" << std::endl;
+    writeMarkerSheet();
     return true;
 }
 
