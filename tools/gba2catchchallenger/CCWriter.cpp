@@ -3,7 +3,6 @@
 #include "OverworldSprite.hpp"
 
 #include <QByteArray>
-#include <QColor>
 #include <QDir>
 #include <QImage>
 #include <QPainter>
@@ -235,52 +234,6 @@ std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
     return bots;
 }
 
-void CCWriter::writeMarkers()
-{
-    // The shared map/invisible.tsx marker tileset (16 tiles, 64x64): object
-    // markers 0-3 and the per-semantic-layer markers 5-11.  All SEMI-TRANSPARENT
-    // (alpha < 255) so a marker never fully hides a layer below it, and each
-    // semantic marker is a DISTINCT colour so the layers are told apart in Tiled.
-    const int TS=16;
-    QImage img(64,64,QImage::Format_ARGB32);
-    img.fill(QColor(0,0,0,0));
-    struct Marker { int index; int r,g,b,a; };
-    const Marker mk[]={
-        {0,  79,123, 81, 73}, // object: bot
-        {1, 255,204,  0, 73}, // object: rescue
-        {2,  90, 90,255, 73}, // object: teleport
-        {3, 212,148,  9, 73}, // object: border
-        {5, 255,  0,  0, 96}, // Collisions  -> red
-        {6,  20,110,255, 96}, // Water       -> blue
-        {7,   0,200,  0, 96}, // Grass       -> green
-        {8, 255,235,  0, 96}, // LedgesUp    -> yellow
-        {9, 255,140,  0, 96}, // LedgesDown  -> orange
-        {10,  0,220,220, 96}, // LedgesLeft  -> cyan
-        {11,230,  0,230, 96}, // LedgesRight -> magenta
-    };
-    size_t k=0;
-    while(k<sizeof(mk)/sizeof(mk[0]))
-    {
-        const Marker &m=mk[k];
-        int tx=(m.index%4)*TS;
-        int ty=(m.index/4)*TS;
-        QColor col(m.r,m.g,m.b,m.a);
-        int yy=0;
-        while(yy<TS){ int xx=0; while(xx<TS){ img.setPixelColor(tx+xx,ty+yy,col); xx++; } yy++; }
-        k++;
-    }
-    // map/ root is two levels up from fireredDir_ (.../map/main/<label>).
-    std::string root=fireredDir_+"/../../";
-    img.save(QString::fromStdString(root+"invisible.png"),"PNG");
-    std::ofstream tsx(root+"invisible.tsx");
-    if(tsx.is_open())
-    {
-        tsx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        tsx << "<tileset name=\"invisible.tsx\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"16\" columns=\"4\">\n";
-        tsx << " <image source=\"invisible.png\" width=\"64\" height=\"64\"/>\n";
-        tsx << "</tileset>\n";
-    }
-}
 
 void CCWriter::layerVisibilityGuard(const DecodedMap &map,
                                     const std::vector<uint32_t> &walkable,
@@ -391,7 +344,6 @@ void CCWriter::layerVisibilityGuard(const DecodedMap &map,
 
 bool CCWriter::writeAll()
 {
-    writeMarkers();
     const std::vector<DecodedMap> &maps=decoder_.maps();
     size_t i=0;
     while(i<maps.size())
@@ -582,22 +534,25 @@ void CCWriter::writeMap(const DecodedMap &map)
     uint32_t teleportGid=invFirst+2;
     uint32_t borderGid=invFirst+3;
     // Semantic tile layers (Collisions/Grass/Water/Ledges) each use their OWN
-    // distinct, SEMI-TRANSPARENT marker from invisible.tsx (red/blue/green/...):
+    // distinct, SEMI-TRANSPARENT marker from the LOCAL tileset/marker.tsx (NOT the
+    // shared map/invisible.tsx, which is reserved for engine object markers):
     //  * distinct colour per layer -> you can tell collision from water from grass;
     //  * different from the Walkable tile below -> toggling the layer in Tiled
     //    shows a visible change (re-using the real tile showed none — it is
     //    identical to Walkable directly below it);
     //  * semi-transparent -> it never HIDES the layer below it (so toggling the
     //    layers below still shows a change too), and in-game it is a faint tint.
-    // The layerVisibilityGuard() then asserts no layer ends up fully hidden by a
-    // 100%-opaque tile above it (only an opaque WalkBehind over-tile can do that).
-    uint32_t mkCollision=invFirst+5;
-    uint32_t mkWater=invFirst+6;
-    uint32_t mkGrass=invFirst+7;
-    uint32_t mkLedgeUp=invFirst+8;
-    uint32_t mkLedgeDown=invFirst+9;
-    uint32_t mkLedgeLeft=invFirst+10;
-    uint32_t mkLedgeRight=invFirst+11;
+    // marker.tsx is referenced right after invisible.tsx (16 tiles), so its first
+    // gid is invFirst+16.  The layerVisibilityGuard() then asserts no layer ends up
+    // fully hidden by a 100%-opaque tile above (only an opaque WalkBehind can).
+    uint32_t mkBase=invFirst+16;
+    uint32_t mkCollision=mkBase+0;
+    uint32_t mkWater=mkBase+1;
+    uint32_t mkGrass=mkBase+2;
+    uint32_t mkLedgeUp=mkBase+3;
+    uint32_t mkLedgeDown=mkBase+4;
+    uint32_t mkLedgeLeft=mkBase+5;
+    uint32_t mkLedgeRight=mkBase+6;
 
     // Build the layers.
     std::vector<uint32_t> walkable(cells,0);
@@ -709,10 +664,14 @@ void CCWriter::writeMap(const DecodedMap &map)
         out << " <tileset firstgid=\"" << refs[ri].first << "\" source=\"" << tsPre << refs[ri].second << ".tsx\"/>\n";
         ri++;
     }
-    // Shared map/invisible.tsx (object markers), at map/ root = tsPre minus the
-    // trailing "tileset/" plus "../../" (main/<label>/ up to map/).
+    // Shared map/invisible.tsx (engine object markers — teleporter/bot/etc, things
+    // invisible in the Tiled editor because CatchChallenger adds them at runtime).
+    // Referenced READ-ONLY; the converter never writes outside map/main/<label>/.
     std::string invRel=tsPre.substr(0,tsPre.size()>=8 ? tsPre.size()-8 : 0)+"../../invisible.tsx";
     out << " <tileset firstgid=\"" << invFirst << "\" source=\"" << invRel << "\"/>\n";
+    // LOCAL semantic-layer marker tileset (tileset/marker.tsx, generated next to the
+    // ROM-extracted pool sheets); firstgid = invFirst + 16 (invisible.tsx has 16).
+    out << " <tileset firstgid=\"" << (invFirst+16) << "\" source=\"" << tsPre << "marker.tsx\"/>\n";
 
     int layerId=1;
     out << " <layer id=\"" << layerId++ << "\" name=\"Walkable\" width=\"" << w << "\" height=\"" << h << "\">\n";
