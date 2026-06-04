@@ -1,6 +1,8 @@
 #include "Gen3Script.hpp"
 #include "Gen3Text.hpp"
 
+#include <unordered_set>
+
 ScriptResult::ScriptResult() :
     kind(BotKind::None),
     trainerId(0)
@@ -136,27 +138,92 @@ ScriptResult Gen3Script::classify(uint16_t trainerType, uint32_t scriptOffset) c
     return r;
 }
 
+// True when the bytes at off look like real Gen3 text (has letters, few
+// out-of-charmap bytes) rather than a movement script or pointer table — so a
+// movement-only NPC stays empty instead of getting garbage.
+static bool textLooksReadable(const GbaRom &rom, uint32_t off)
+{
+    int letters=0,total=0,bad=0;
+    uint32_t n=0;
+    while(n<20 && off+n<rom.size())
+    {
+        uint8_t b=rom.u8(off+n);
+        if(b==0xFF)
+            break;
+        total++;
+        if(b>=0xBB && b<=0xEE)                                 // A-Z / a-z
+            letters++;
+        else if(b==0x00 || (b>=0xA1 && b<=0xBA))               // space/digit/punct
+            ;
+        else if(b==0xFE || b==0xFB || b==0xFA || b==0xFC || b==0xFD) // control
+            ;
+        else
+            bad++;                                             // out-of-charmap
+        n++;
+    }
+    return total>=3 && letters>=2 && bad*4<total;
+}
+
 uint32_t Gen3Script::signTextOffset(uint32_t scriptOffset) const
 {
     if(scriptOffset==0 || scriptOffset+6>rom_.size())
         return 0;
-    uint32_t end=scriptOffset+96;
-    if(end+6>rom_.size())
-        end=rom_.size()-6;
-    // A sign script shows its text via loadpointer (0x0F <bank> <u32 ptr>)
-    // feeding a callstd msgbox.  Return the first such bank-0 pointer's text
-    // file offset.
-    uint32_t p=scriptOffset;
-    while(p<end)
+    // A talking script shows text via loadpointer (0x0F 0x00 <u32 ptr>) into a
+    // msgbox.  Walk the script (and the fragments it goto/call-jumps to) and
+    // return the first readable text pointer.  The main fragment is fully scanned
+    // first, so its dialogue wins; branches only catch text reached past a jump.
+    std::vector<uint32_t> stack;
+    stack.push_back(scriptOffset);
+    std::unordered_set<uint32_t> seen;
+    int frags=0;
+    while(!stack.empty() && frags<6)
     {
-        if(rom_.u8(p)==0x0F && rom_.u8(p+1)==0x00)
+        uint32_t s=stack.back();
+        stack.pop_back();
+        if(s==0 || s+6>rom_.size() || seen.count(s)!=0)
+            continue;
+        seen.insert(s);
+        frags++;
+        uint32_t end=s+220;
+        if(end+6>rom_.size())
+            end=rom_.size()-6;
+        // (1) the first readable loadpointer text in this fragment is the dialogue
+        // — a plain pattern search, NOT a command walk, so a data byte that looks
+        // like end/goto can't cut the search short.
+        uint32_t p=s;
+        while(p+6<=end)
         {
-            bool ok=false;
-            uint32_t t=rom_.pointer(p+2,&ok);
-            if(ok && t+1<rom_.size())
-                return t;
+            if(rom_.u8(p)==0x0F && rom_.u8(p+1)==0x00)
+            {
+                bool ok=false;
+                uint32_t t=rom_.pointer(p+2,&ok);
+                if(ok && t+1<rom_.size() && textLooksReadable(rom_,t))
+                    return t;
+            }
+            p++;
         }
-        p++;
+        // (2) no text here: queue the fragment's goto/call jump targets to try,
+        // so dialogue reached only past a branch is still found.
+        p=s;
+        while(p+5<=end)
+        {
+            uint8_t op=rom_.u8(p);
+            if(op==0x04 || op==0x05)                  // call / goto <u32>
+            {
+                bool ok=false;
+                uint32_t tgt=rom_.pointer(p+1,&ok);
+                if(ok)
+                    stack.push_back(tgt);
+            }
+            else if(op==0x06 || op==0x07)             // goto_if / call_if <u8><u32>
+            {
+                bool ok=false;
+                uint32_t tgt=rom_.pointer(p+2,&ok);
+                if(ok)
+                    stack.push_back(tgt);
+            }
+            p++;
+        }
     }
     return 0;
 }
