@@ -516,13 +516,9 @@ void CCWriter::writeMap(const DecodedMap &map)
     uint32_t w=static_cast<uint32_t>(map.width);
     uint32_t h=static_cast<uint32_t>(map.height);
     uint32_t cells=w*h;
-    // The semantic tile LAYERS (Collisions/Grass/Water/Ledges) re-use the REAL
-    // map tile at each cell (the engine only needs a non-empty gid), so the
-    // layer is visible AND the editor render matches the game.
-    // The Moving/Object OBJECTS instead use the shared map/invisible.tsx markers
-    // (objects are not tile layers, so a transparent marker is fine): tile 0
-    // bot, 1 rescue, 2 teleport, 3 border-offset.  Doors reference their own
-    // animated door tile.
+    // The Moving/Object OBJECTS use the shared map/invisible.tsx markers (objects
+    // are added by the engine at runtime / invisible in the editor): tile 0 bot,
+    // 1 rescue, 2 teleport, 3 border-offset.  Doors reference their animated tile.
     uint32_t invFirst=tilesets_.markerGid(map);
     if(invFirst==0)
     {
@@ -533,26 +529,6 @@ void CCWriter::writeMap(const DecodedMap &map)
     uint32_t rescueGid=invFirst+1;
     uint32_t teleportGid=invFirst+2;
     uint32_t borderGid=invFirst+3;
-    // Semantic tile layers (Collisions/Grass/Water/Ledges) each use their OWN
-    // distinct, SEMI-TRANSPARENT marker from the LOCAL tileset/marker.tsx (NOT the
-    // shared map/invisible.tsx, which is reserved for engine object markers):
-    //  * distinct colour per layer -> you can tell collision from water from grass;
-    //  * different from the Walkable tile below -> toggling the layer in Tiled
-    //    shows a visible change (re-using the real tile showed none — it is
-    //    identical to Walkable directly below it);
-    //  * semi-transparent -> it never HIDES the layer below it (so toggling the
-    //    layers below still shows a change too), and in-game it is a faint tint.
-    // marker.tsx is referenced right after invisible.tsx (16 tiles), so its first
-    // gid is invFirst+16.  The layerVisibilityGuard() then asserts no layer ends up
-    // fully hidden by a 100%-opaque tile above (only an opaque WalkBehind can).
-    uint32_t mkBase=invFirst+16;
-    uint32_t mkCollision=mkBase+0;
-    uint32_t mkWater=mkBase+1;
-    uint32_t mkGrass=mkBase+2;
-    uint32_t mkLedgeUp=mkBase+3;
-    uint32_t mkLedgeDown=mkBase+4;
-    uint32_t mkLedgeLeft=mkBase+5;
-    uint32_t mkLedgeRight=mkBase+6;
 
     // Build the layers.
     std::vector<uint32_t> walkable(cells,0);
@@ -567,13 +543,22 @@ void CCWriter::writeMap(const DecodedMap &map)
     std::vector<uint32_t> ledgeRight(cells,0);
     bool anyGrass=false,anyWater=false,anyLedge=false;
 
+    // DISJOINT real-tile layers (no generated markers): every cell's REAL
+    // below-player tile (groundGid) goes to EXACTLY ONE layer chosen by its
+    // behaviour; its above-player over-tile (overGid) goes to WalkBehind.  Because
+    // the ground layers never overlap, hiding any single layer in Tiled removes its
+    // cells and visibly changes the render.  Walkable stays EMPTY at feature cells
+    // (water/grass/ledge/collision): the engine makes water/grass/lava passable via
+    // the layer's walkOn monsterCollision (map/layers.xml), collisions block (254),
+    // ledges are 250-253 — none need a Walkable tile.  (CatchChallenger re-orders
+    // tile layers at load, so this must NOT depend on layer order — disjoint does.)
     uint32_t c=0;
     while(c<cells)
     {
         uint16_t block=rom_.u16(map.blocksPtr+c*2);
         uint16_t metatile=block & 0x3FF;
         uint8_t collisionBits=static_cast<uint8_t>((block>>10) & 0x3);
-        walkable[c]=tilesets_.groundGid(map,static_cast<int>(c%map.width),static_cast<int>(c/map.width));
+        uint32_t g=tilesets_.groundGid(map,static_cast<int>(c%map.width),static_cast<int>(c/map.width));
         uint32_t og=tilesets_.overGid(map,metatile);
         if(og!=0)
         {
@@ -583,38 +568,38 @@ void CCWriter::writeMap(const DecodedMap &map)
 
         uint16_t beh=tilesets_.behavior(map,metatile);
         Terrain t=decoder_.terrain(beh);
-        bool isWater=(t==Terrain::Water);
-        if(t==Terrain::Grass)
+        if(t==Terrain::Water)
         {
-            grass[c]=mkGrass;
-            anyGrass=true;
-        }
-        else if(isWater)
-        {
-            water[c]=mkWater;
-            anyWater=true;
+            water[c]=g; anyWater=true;
         }
         else if(t==Terrain::LedgeUp)
         {
-            ledgeUp[c]=mkLedgeUp; anyLedge=true;
+            ledgeUp[c]=g; anyLedge=true;
         }
         else if(t==Terrain::LedgeDown)
         {
-            ledgeDown[c]=mkLedgeDown; anyLedge=true;
+            ledgeDown[c]=g; anyLedge=true;
         }
         else if(t==Terrain::LedgeLeft)
         {
-            ledgeLeft[c]=mkLedgeLeft; anyLedge=true;
+            ledgeLeft[c]=g; anyLedge=true;
         }
         else if(t==Terrain::LedgeRight)
         {
-            ledgeRight[c]=mkLedgeRight; anyLedge=true;
+            ledgeRight[c]=g; anyLedge=true;
         }
-        // Block on foot when the collision bit is set, except for surfable
-        // water (kept out of Collisions; the Water layer's swim gating in
-        // map/layers.xml is what stops on-foot walking there).
-        if(collisionBits!=0 && !isWater)
-            collisions[c]=mkCollision;
+        else if(t==Terrain::Grass)
+        {
+            grass[c]=g; anyGrass=true;
+        }
+        else if(collisionBits!=0)
+        {
+            collisions[c]=g;
+        }
+        else
+        {
+            walkable[c]=g;
+        }
         c++;
     }
 
@@ -669,9 +654,6 @@ void CCWriter::writeMap(const DecodedMap &map)
     // Referenced READ-ONLY; the converter never writes outside map/main/<label>/.
     std::string invRel=tsPre.substr(0,tsPre.size()>=8 ? tsPre.size()-8 : 0)+"../../invisible.tsx";
     out << " <tileset firstgid=\"" << invFirst << "\" source=\"" << invRel << "\"/>\n";
-    // LOCAL semantic-layer marker tileset (tileset/marker.tsx, generated next to the
-    // ROM-extracted pool sheets); firstgid = invFirst + 16 (invisible.tsx has 16).
-    out << " <tileset firstgid=\"" << (invFirst+16) << "\" source=\"" << tsPre << "marker.tsx\"/>\n";
 
     int layerId=1;
     out << " <layer id=\"" << layerId++ << "\" name=\"Walkable\" width=\"" << w << "\" height=\"" << h << "\">\n";

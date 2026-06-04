@@ -117,10 +117,6 @@ private:
     TilePool buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
                        const std::vector<uint16_t> &usedIds, const std::string &baseName,
                        const std::vector<const DecodedMap *> &poolMaps);
-    // Write the LOCAL semantic-layer marker tileset (tileset/marker.png + .tsx):
-    // 7 distinct semi-transparent colours, one per Collisions/Water/Grass/Ledge*
-    // layer.  Kept local to map/main/<label>/ (never the shared map/invisible.*).
-    void writeMarkerSheet() const;
     Gen3Tileset &tilesetFor(const DecodedMap &map) const;
     static uint64_t pairKey(uint32_t primary, uint32_t secondary);
     // Dedup key for a ground cell: its metatile + its 4 map-neighbour metatiles
