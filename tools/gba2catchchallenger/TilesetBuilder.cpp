@@ -1485,6 +1485,35 @@ uint32_t TilesetBuilder::overGid(const DecodedMap &map, uint16_t metatile) const
     return secondaryBase(map)+static_cast<uint32_t>(it->second);
 }
 
+bool TilesetBuilder::overOpaque(const DecodedMap &map, uint16_t metatile) const
+{
+    std::pair<uint64_t,uint16_t> key(pairKey(map.primaryTileset,map.secondaryTileset),metatile);
+    std::map<std::pair<uint64_t,uint16_t>,bool>::const_iterator it=overOpaqueCache_.find(key);
+    if(it!=overOpaqueCache_.cend())
+        return it->second;
+    Gen3Tileset &ts=tilesetFor(map);
+    QImage under=ts.renderUnder(metatile);
+    QImage over=ts.renderOver(metatile,under);
+    bool opaque=!over.isNull();
+    int yy=0;
+    while(yy<over.height() && opaque)
+    {
+        int xx=0;
+        while(xx<over.width())
+        {
+            if(over.pixelColor(xx,yy).alpha()<255)
+            {
+                opaque=false;
+                break;
+            }
+            xx++;
+        }
+        yy++;
+    }
+    overOpaqueCache_[key]=opaque;
+    return opaque;
+}
+
 uint32_t TilesetBuilder::doorGid(const DecodedMap &map, uint16_t metatile) const
 {
     uint32_t metaInPrim=rom_.game().metatilesInPrimary;

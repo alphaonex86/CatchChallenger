@@ -105,6 +105,10 @@ public:
 
     uint16_t behavior(const DecodedMap &map, uint16_t metatileId) const;
     uint8_t layerType(const DecodedMap &map, uint16_t metatileId) const;
+    // True when the metatile's lifted "over" (WalkBehind) tile is fully opaque
+    // (every pixel alpha 255) — i.e. it would completely hide a layer below it.
+    // Used by the CCWriter per-layer visibility guard.
+    bool overOpaque(const DecodedMap &map, uint16_t metatileId) const;
 
     static const uint32_t kCapacity;  // tiles per sheet
     static const int kColumns;
@@ -127,6 +131,7 @@ private:
     std::unordered_map<uint32_t,TilePool> primaryPools_;   // by primary ptr
     std::unordered_map<uint64_t,TilePool> secondaryPools_; // by pair key
     mutable std::map<uint64_t,Gen3Tileset *> cache_;
+    mutable std::map<std::pair<uint64_t,uint16_t>,bool> overOpaqueCache_;
 };
 
 #endif // GBA2CC_TILESETBUILDER_HPP

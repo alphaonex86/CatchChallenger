@@ -3,6 +3,7 @@
 #include "OverworldSprite.hpp"
 
 #include <QByteArray>
+#include <QColor>
 #include <QDir>
 #include <QImage>
 #include <algorithm>
@@ -25,7 +26,9 @@ CCWriter::CCWriter(const GbaRom &rom,
     wild_(wild),
     script_(rom),
     fireredDir_(fireredDir),
-    skins_(skins)
+    skins_(skins),
+    guardLayers_(0),
+    guardMasked_(0)
 {
 }
 
@@ -190,8 +193,137 @@ std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
     return bots;
 }
 
+void CCWriter::writeMarkers()
+{
+    // The shared map/invisible.tsx marker tileset (16 tiles, 64x64): object
+    // markers 0-3 and the per-semantic-layer markers 5-11.  All SEMI-TRANSPARENT
+    // (alpha < 255) so a marker never fully hides a layer below it, and each
+    // semantic marker is a DISTINCT colour so the layers are told apart in Tiled.
+    const int TS=16;
+    QImage img(64,64,QImage::Format_ARGB32);
+    img.fill(QColor(0,0,0,0));
+    struct Marker { int index; int r,g,b,a; };
+    const Marker mk[]={
+        {0,  79,123, 81, 73}, // object: bot
+        {1, 255,204,  0, 73}, // object: rescue
+        {2,  90, 90,255, 73}, // object: teleport
+        {3, 212,148,  9, 73}, // object: border
+        {5, 255,  0,  0, 96}, // Collisions  -> red
+        {6,  20,110,255, 96}, // Water       -> blue
+        {7,   0,200,  0, 96}, // Grass       -> green
+        {8, 255,235,  0, 96}, // LedgesUp    -> yellow
+        {9, 255,140,  0, 96}, // LedgesDown  -> orange
+        {10,  0,220,220, 96}, // LedgesLeft  -> cyan
+        {11,230,  0,230, 96}, // LedgesRight -> magenta
+    };
+    size_t k=0;
+    while(k<sizeof(mk)/sizeof(mk[0]))
+    {
+        const Marker &m=mk[k];
+        int tx=(m.index%4)*TS;
+        int ty=(m.index/4)*TS;
+        QColor col(m.r,m.g,m.b,m.a);
+        int yy=0;
+        while(yy<TS){ int xx=0; while(xx<TS){ img.setPixelColor(tx+xx,ty+yy,col); xx++; } yy++; }
+        k++;
+    }
+    // map/ root is two levels up from fireredDir_ (.../map/main/<label>).
+    std::string root=fireredDir_+"/../../";
+    img.save(QString::fromStdString(root+"invisible.png"),"PNG");
+    std::ofstream tsx(root+"invisible.tsx");
+    if(tsx.is_open())
+    {
+        tsx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        tsx << "<tileset name=\"invisible.tsx\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"16\" columns=\"4\">\n";
+        tsx << " <image source=\"invisible.png\" width=\"64\" height=\"64\"/>\n";
+        tsx << "</tileset>\n";
+    }
+}
+
+void CCWriter::layerVisibilityGuard(const DecodedMap &map,
+                                    const std::vector<uint32_t> &walkable,
+                                    const std::vector<uint32_t> &grass, bool anyGrass,
+                                    const std::vector<uint32_t> &water, bool anyWater,
+                                    const std::vector<uint32_t> &ledgeUp,
+                                    const std::vector<uint32_t> &ledgeDown,
+                                    const std::vector<uint32_t> &ledgeLeft,
+                                    const std::vector<uint32_t> &ledgeRight, bool anyLedge,
+                                    const std::vector<uint32_t> &collisions,
+                                    const std::vector<uint32_t> &walkbehind, bool anyOver)
+{
+    size_t cells=walkable.size();
+    // The only layer that can fully hide a layer below it is WalkBehind, when its
+    // lifted over-tile is 100% opaque (the semantic markers are semi-transparent,
+    // and Walkable is the bottom layer).  Pre-mark those masking cells.
+    std::vector<char> masking(cells,0);
+    if(anyOver)
+    {
+        size_t c=0;
+        while(c<cells)
+        {
+            if(walkbehind[c]!=0)
+            {
+                uint16_t mt=static_cast<uint16_t>(rom_.u16(map.blocksPtr+static_cast<uint32_t>(c)*2)&0x3FF);
+                if(tilesets_.overOpaque(map,mt))
+                    masking[c]=1;
+            }
+            c++;
+        }
+    }
+    // For each tile layer (bottom -> top), require >=1 cell that has the layer's
+    // tile AND is not masked by an opaque tile above (WalkBehind itself is top).
+    struct LG { const char *name; const std::vector<uint32_t> *data; bool top; bool present; };
+    LG layers[]={
+        {"Walkable",&walkable,false,true},
+        {"Grass",&grass,false,anyGrass},
+        {"Water",&water,false,anyWater},
+        {"LedgesUp",&ledgeUp,false,anyLedge},
+        {"LedgesDown",&ledgeDown,false,anyLedge},
+        {"LedgesLeft",&ledgeLeft,false,anyLedge},
+        {"LedgesRight",&ledgeRight,false,anyLedge},
+        {"Collisions",&collisions,false,true},
+        {"WalkBehind",&walkbehind,true,anyOver},
+    };
+    std::string myPath=naming_.pathFor(map.group,map.map);
+    size_t li=0;
+    while(li<sizeof(layers)/sizeof(layers[0]))
+    {
+        const LG &L=layers[li];
+        if(L.present)
+        {
+            bool hasTile=false,visible=false;
+            size_t c=0;
+            while(c<cells)
+            {
+                if((*L.data)[c]!=0)
+                {
+                    hasTile=true;
+                    if(L.top || masking[c]==0)
+                    {
+                        visible=true;
+                        break;
+                    }
+                }
+                c++;
+            }
+            if(hasTile)
+            {
+                guardLayers_++;
+                if(!visible)
+                {
+                    guardMasked_++;
+                    if(guardMaskedList_.size()<20)
+                        guardMaskedList_.push_back(myPath+" / "+L.name);
+                }
+            }
+        }
+        li++;
+    }
+}
+
 bool CCWriter::writeAll()
 {
+    writeMarkers();
     const std::vector<DecodedMap> &maps=decoder_.maps();
     size_t i=0;
     while(i<maps.size())
@@ -204,6 +336,16 @@ bool CCWriter::writeAll()
     writeStart();
     writeZones();
     std::cout << "CCWriter: wrote " << maps.size() << " maps to " << fireredDir_ << std::endl;
+    if(guardMasked_==0)
+        std::cout << "CCWriter GUARD layer-visibility: PASS (" << guardLayers_
+                  << " tile layers, each visible when toggled)" << std::endl;
+    else
+    {
+        std::cout << "CCWriter GUARD layer-visibility: FAIL (" << guardMasked_ << "/"
+                  << guardLayers_ << " layers fully hidden by an opaque tile above):" << std::endl;
+        size_t k=0;
+        while(k<guardMaskedList_.size()){ std::cout << "  " << guardMaskedList_[k] << std::endl; k++; }
+    }
     return true;
 }
 void CCWriter::writeMap(const DecodedMap &map)
@@ -228,14 +370,23 @@ void CCWriter::writeMap(const DecodedMap &map)
     uint32_t rescueGid=invFirst+1;
     uint32_t teleportGid=invFirst+2;
     uint32_t borderGid=invFirst+3;
-    // Semantic tile layers (Collisions/Grass/Water/Ledges) re-use the cell's own
-    // REAL Walkable tile (the official CatchChallenger convention, e.g.
-    // altate-islands), NOT a transparent marker: the engine only needs a non-empty
-    // gid, but a transparent marker is invisible in the editor — toggling/isolating
-    // the layer in Tiled then shows nothing, so you can't see where the collision /
-    // water / grass / ledge is.  Re-using the real tile makes each layer visible
-    // when shown alone, and is a no-op in the game render (the same tile drawn on
-    // Walkable and on the semantic layer = identical pixels, no artifact).
+    // Semantic tile layers (Collisions/Grass/Water/Ledges) each use their OWN
+    // distinct, SEMI-TRANSPARENT marker from invisible.tsx (red/blue/green/...):
+    //  * distinct colour per layer -> you can tell collision from water from grass;
+    //  * different from the Walkable tile below -> toggling the layer in Tiled
+    //    shows a visible change (re-using the real tile showed none — it is
+    //    identical to Walkable directly below it);
+    //  * semi-transparent -> it never HIDES the layer below it (so toggling the
+    //    layers below still shows a change too), and in-game it is a faint tint.
+    // The layerVisibilityGuard() then asserts no layer ends up fully hidden by a
+    // 100%-opaque tile above it (only an opaque WalkBehind over-tile can do that).
+    uint32_t mkCollision=invFirst+5;
+    uint32_t mkWater=invFirst+6;
+    uint32_t mkGrass=invFirst+7;
+    uint32_t mkLedgeUp=invFirst+8;
+    uint32_t mkLedgeDown=invFirst+9;
+    uint32_t mkLedgeLeft=invFirst+10;
+    uint32_t mkLedgeRight=invFirst+11;
 
     // Build the layers.
     std::vector<uint32_t> walkable(cells,0);
@@ -269,35 +420,35 @@ void CCWriter::writeMap(const DecodedMap &map)
         bool isWater=(t==Terrain::Water);
         if(t==Terrain::Grass)
         {
-            grass[c]=walkable[c];
+            grass[c]=mkGrass;
             anyGrass=true;
         }
         else if(isWater)
         {
-            water[c]=walkable[c];
+            water[c]=mkWater;
             anyWater=true;
         }
         else if(t==Terrain::LedgeUp)
         {
-            ledgeUp[c]=walkable[c]; anyLedge=true;
+            ledgeUp[c]=mkLedgeUp; anyLedge=true;
         }
         else if(t==Terrain::LedgeDown)
         {
-            ledgeDown[c]=walkable[c]; anyLedge=true;
+            ledgeDown[c]=mkLedgeDown; anyLedge=true;
         }
         else if(t==Terrain::LedgeLeft)
         {
-            ledgeLeft[c]=walkable[c]; anyLedge=true;
+            ledgeLeft[c]=mkLedgeLeft; anyLedge=true;
         }
         else if(t==Terrain::LedgeRight)
         {
-            ledgeRight[c]=walkable[c]; anyLedge=true;
+            ledgeRight[c]=mkLedgeRight; anyLedge=true;
         }
         // Block on foot when the collision bit is set, except for surfable
         // water (kept out of Collisions; the Water layer's swim gating in
         // map/layers.xml is what stops on-foot walking there).
         if(collisionBits!=0 && !isWater)
-            collisions[c]=walkable[c];
+            collisions[c]=mkCollision;
         c++;
     }
 
@@ -305,6 +456,9 @@ void CCWriter::writeMap(const DecodedMap &map)
     std::string myPath=naming_.pathFor(map.group,map.map);
     if(myPath.empty())
         myPath=rom_.game().region+"/misc/g"+std::to_string(map.group)+"-m"+std::to_string(map.map);
+    layerVisibilityGuard(map,walkable,grass,anyGrass,water,anyWater,
+                         ledgeUp,ledgeDown,ledgeLeft,ledgeRight,anyLedge,
+                         collisions,walkbehind,anyOver);
     std::string path=fireredDir_+"/"+myPath+".tmx";
     std::string::size_type slash=path.find_last_of('/');
     QDir().mkpath(QString::fromStdString(path.substr(0,slash)));
