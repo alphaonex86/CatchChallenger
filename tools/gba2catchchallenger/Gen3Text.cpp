@@ -111,8 +111,16 @@ std::vector<std::string> Gen3Text::decodeSign(const GbaRom &rom, uint32_t offset
             cur+="<br />";
         else if(b==0xB0)                    // ellipsis
             cur+="...";
-        else if(b==0xFD)                    // buffered variable -> skip its id byte
-            n++;
+        else if(b==0xFD)                    // placeholder: next byte = variable id
+        {
+            uint8_t id=rom.u8(offset+static_cast<uint32_t>(n)+1);
+            if(id==0x01)
+                cur+="Player";              // PLAYER name (dynamic)
+            else if(id==0x06)
+                cur+="Rival";               // RIVAL name (dynamic)
+            // else: a script-set STR_VAR (monster/item/number) we can't resolve
+            n++;                            // skip the id byte
+        }
         else if(b==0xFC)                    // extended formatting control -> skip cmd byte
             n++;
         else
