@@ -56,6 +56,11 @@ private:
     // Generate the shared map/invisible.tsx marker tileset (object markers +
     // distinct semi-transparent per-semantic-layer markers).
     void writeMarkers();
+    // Render-based guard: reload every written .tmx with libtiled and render it
+    // with all tile layers, then with each single tile layer hidden; a layer that
+    // does not change the rendered pixels is invisible.  Ground truth for the
+    // analytical layerVisibilityGuard.  Run once after every map is written.
+    void renderVisibilityGuard();
     // Per-map layer-visibility guard: every tile layer must have >=1 cell not
     // hidden by a fully-opaque tile on a layer above it.  Accumulates violations.
     void layerVisibilityGuard(const DecodedMap &map,
@@ -93,6 +98,10 @@ private:
     int guardTopMaps_;                         // maps whose top layer was checked
     int guardTopCover_;                        // top layer = full 100%-opaque cover
     std::vector<std::string> guardTopCoverList_;
+    std::vector<std::string> writtenTmx_;      // abs paths of every .tmx written
+    int renderLayers_;                         // tile layers rendered-tested
+    int renderInvisible_;                      // layers whose hide changed nothing
+    std::vector<std::string> renderInvisibleList_;
 };
 
 #endif // GBA2CC_CCWRITER_HPP

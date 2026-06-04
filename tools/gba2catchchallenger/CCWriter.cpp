@@ -6,11 +6,24 @@
 #include <QColor>
 #include <QDir>
 #include <QImage>
+#include <QPainter>
 #include <algorithm>
+#include <atomic>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <thread>
 #include <unordered_set>
+#include <vector>
 #include <zstd.h>
+
+// libtiled — render the written .tmx exactly as map2png / the client do.
+#include <mapreader.h>
+#include <map.h>
+#include <layer.h>
+#include <tilelayer.h>
+#include <maprenderer.h>
+#include <orthogonalrenderer.h>
 
 CCWriter::CCWriter(const GbaRom &rom,
                    const Decoder &decoder,
@@ -30,8 +43,35 @@ CCWriter::CCWriter(const GbaRom &rom,
     guardLayers_(0),
     guardMasked_(0),
     guardTopMaps_(0),
-    guardTopCover_(0)
+    guardTopCover_(0),
+    renderLayers_(0),
+    renderInvisible_(0)
 {
+}
+
+// Render the map's tile layers (all of them, or all but hideIndex) with libtiled,
+// exactly as the client/map2png do, into an ARGB image.  Object groups are
+// skipped (only tile layers matter, and skipping them avoids map2png's known
+// stale-back-pointer crash).  Same painter setup for every call so the resulting
+// images are directly comparable.
+static QImage renderTiledLayers(const Tiled::MapRenderer &renderer,
+                                const QList<Tiled::Layer *> &layers,
+                                const QRect &bounds, int hideIndex)
+{
+    QImage img(bounds.size(),QImage::Format_ARGB32_Premultiplied);
+    img.fill(0);
+    QPainter p(&img);
+    p.translate(-bounds.topLeft());
+    int i=0;
+    while(i<layers.size())
+    {
+        Tiled::Layer *L=layers.at(i);
+        if(i!=hideIndex && L->isTileLayer())
+            renderer.drawTileLayer(&p,L->asTileLayer(),QRectF(bounds));
+        i++;
+    }
+    p.end();
+    return img;
 }
 
 std::string CCWriter::relPath(const std::string &fromPath, const std::string &toPath)
@@ -384,7 +424,140 @@ bool CCWriter::writeAll()
         size_t k=0;
         while(k<guardTopCoverList_.size()){ std::cout << "  " << guardTopCoverList_[k] << std::endl; k++; }
     }
+    renderVisibilityGuard();
     return true;
+}
+
+// Per-thread accumulator + the shared render queue for the parallel guard.
+struct RenderGuardResult {
+    int layers;
+    int invisible;
+    std::vector<std::string> list;
+    RenderGuardResult() : layers(0), invisible(0) {}
+};
+struct RenderGuardQueue {
+    const std::vector<std::unique_ptr<Tiled::Map> > *maps;
+    const std::vector<std::string> *tmxPaths;
+    const std::string *fireredDir;
+    std::atomic<size_t> next;
+};
+
+// One worker: pull the next map index off the shared queue, render it (baseline
+// then each non-empty tile layer hidden) and record any layer whose hide does not
+// change the pixels.  Reads only the shared (already-loaded) maps + cached
+// tilesets and writes its OWN QImages + result, so no locking is needed.
+static void renderGuardWorker(RenderGuardQueue *q, RenderGuardResult *out)
+{
+    while(true)
+    {
+        size_t idx=q->next.fetch_add(1);
+        if(idx>=q->maps->size())
+            break;
+        Tiled::Map *map=(*q->maps)[idx].get();
+        if(map==nullptr)
+            continue;
+        Tiled::OrthogonalRenderer renderer(map);
+        QRect bounds=renderer.mapBoundingRect();
+        if(bounds.width()<=0 || bounds.height()<=0)
+            continue;
+        const QList<Tiled::Layer *> &layers=map->layers();
+        QImage baseline=renderTiledLayers(renderer,layers,bounds,-1);
+        int i=0;
+        while(i<layers.size())
+        {
+            Tiled::Layer *L=layers.at(i);
+            if(L->isTileLayer() && !L->asTileLayer()->isEmpty())
+            {
+                out->layers++;
+                QImage variant=renderTiledLayers(renderer,layers,bounds,i);
+                if(variant==baseline)
+                {
+                    out->invisible++;
+                    if(out->list.size()<30)
+                    {
+                        std::string rel=(*q->tmxPaths)[idx];
+                        if(rel.compare(0,q->fireredDir->size(),*q->fireredDir)==0)
+                            rel=rel.substr(q->fireredDir->size()+1);
+                        out->list.push_back(rel+" / "+L->name().toStdString());
+                    }
+                }
+            }
+            i++;
+        }
+    }
+}
+
+void CCWriter::renderVisibilityGuard()
+{
+    if(writtenTmx_.empty())
+        return;
+    // Phase 1 (serial, main thread): load every written .tmx with libtiled.  The
+    // load path is NOT thread-safe — it uses the global TilesetManager cache (so
+    // each distinct tileset sheet loads exactly ONCE and is reused across maps)
+    // and builds QPixmaps, which Qt only allows on the main thread.
+    std::vector<std::unique_ptr<Tiled::Map> > maps;
+    maps.reserve(writtenTmx_.size());
+    size_t mi=0;
+    while(mi<writtenTmx_.size())
+    {
+        Tiled::MapReader reader;
+        maps.push_back(reader.readMap(QString::fromStdString(writtenTmx_[mi])));
+        if(maps.back()==nullptr)
+            std::cerr << "render-guard: could not load " << writtenTmx_[mi] << std::endl;
+        mi++;
+    }
+    // Phase 2 (parallel): a render queue drained by one worker per CPU core.  Each
+    // job renders one map's tile layers (all, then each hidden) and compares — the
+    // rendering only READS the shared maps + cached tilesets, writing its own
+    // images, so the cores run independently with no locking.
+    unsigned int nthreads=std::thread::hardware_concurrency();
+    if(nthreads<1)
+        nthreads=1;
+    if(static_cast<size_t>(nthreads)>maps.size())
+        nthreads=static_cast<unsigned int>(maps.size());
+    RenderGuardQueue q;
+    q.maps=&maps;
+    q.tmxPaths=&writtenTmx_;
+    q.fireredDir=&fireredDir_;
+    q.next.store(0);
+    std::vector<RenderGuardResult> results(nthreads);
+    std::vector<std::thread> pool;
+    unsigned int t=0;
+    while(t<nthreads)
+    {
+        pool.push_back(std::thread(renderGuardWorker,&q,&results[t]));
+        t++;
+    }
+    t=0;
+    while(t<pool.size())
+    {
+        pool[t].join();
+        t++;
+    }
+    t=0;
+    while(t<results.size())
+    {
+        renderLayers_+=results[t].layers;
+        renderInvisible_+=results[t].invisible;
+        size_t k=0;
+        while(k<results[t].list.size() && renderInvisibleList_.size()<30)
+        {
+            renderInvisibleList_.push_back(results[t].list[k]);
+            k++;
+        }
+        t++;
+    }
+    if(renderInvisible_==0)
+        std::cout << "CCWriter GUARD render-visibility: PASS (" << renderLayers_
+                  << " tile layers libtiled-rendered on " << nthreads
+                  << " threads; hiding each changes the render)" << std::endl;
+    else
+    {
+        std::cout << "CCWriter GUARD render-visibility: FAIL (" << renderInvisible_ << "/"
+                  << renderLayers_ << " layers render IDENTICALLY whether shown or hidden):" << std::endl;
+        size_t k=0;
+        while(k<renderInvisibleList_.size()){ std::cout << "  " << renderInvisibleList_[k] << std::endl; k++; }
+    }
 }
 void CCWriter::writeMap(const DecodedMap &map)
 {
@@ -735,6 +908,9 @@ void CCWriter::writeMap(const DecodedMap &map)
     out << " </objectgroup>\n";
 
     out << "</map>\n";
+    out.close();
+    // record for the render-based visibility guard (run after all maps written).
+    writtenTmx_.push_back(path);
 }
 
 void CCWriter::writeInformations()
