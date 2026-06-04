@@ -535,6 +535,8 @@ void CCWriter::writeMap(const DecodedMap &map)
     std::vector<uint32_t> walkbehind(cells,0);
     bool anyOver=false;
     std::vector<uint32_t> collisions(cells,0);
+    std::vector<uint32_t> collisions2(cells,0); // 2nd Collisions: the over of a
+    bool anyCollisions2=false;                  // collidable cell (superposed below player)
     std::vector<uint32_t> grass(cells,0);
     std::vector<uint32_t> water(cells,0);
     std::vector<uint32_t> ledgeUp(cells,0);
@@ -545,13 +547,17 @@ void CCWriter::writeMap(const DecodedMap &map)
 
     // DISJOINT real-tile layers (no generated markers): every cell's REAL
     // below-player tile (groundGid) goes to EXACTLY ONE layer chosen by its
-    // behaviour; its above-player over-tile (overGid) goes to WalkBehind.  Because
-    // the ground layers never overlap, hiding any single layer in Tiled removes its
-    // cells and visibly changes the render.  Walkable stays EMPTY at feature cells
-    // (water/grass/ledge/collision): the engine makes water/grass/lava passable via
-    // the layer's walkOn monsterCollision (map/layers.xml), collisions block (254),
-    // ledges are 250-253 — none need a Walkable tile.  (CatchChallenger re-orders
-    // tile layers at load, so this must NOT depend on layer order — disjoint does.)
+    // behaviour, so hiding any layer in Tiled removes its cells (visible change).
+    // The above-player over-tile (overGid) goes to WalkBehind ONLY for cells the
+    // player can stand on; for a COLLIDABLE cell the player is never there, so its
+    // over stays BELOW the player, superposed on a 2nd "Collisions" layer (the
+    // engine OR-merges the Collisions layers for blocking, so a 2nd one is free
+    // superposition, NOT an extra tile above the player — that wrongly hid the
+    // player behind whole building/tree bodies).  Walkable stays EMPTY at feature
+    // cells (water/grass/ledge/collision): the engine still makes water/grass/lava
+    // passable via the layer's walkOn monsterCollision (map/layers.xml), collisions
+    // block (254), ledges 250-253.  (CatchChallenger re-orders tile layers at load,
+    // so this must NOT depend on layer order — disjoint + OR-merge do not.)
     uint32_t c=0;
     while(c<cells)
     {
@@ -560,14 +566,10 @@ void CCWriter::writeMap(const DecodedMap &map)
         uint8_t collisionBits=static_cast<uint8_t>((block>>10) & 0x3);
         uint32_t g=tilesets_.groundGid(map,static_cast<int>(c%map.width),static_cast<int>(c/map.width));
         uint32_t og=tilesets_.overGid(map,metatile);
-        if(og!=0)
-        {
-            walkbehind[c]=og;
-            anyOver=true;
-        }
 
         uint16_t beh=tilesets_.behavior(map,metatile);
         Terrain t=decoder_.terrain(beh);
+        bool onCollisions=false;
         if(t==Terrain::Water)
         {
             water[c]=g; anyWater=true;
@@ -594,11 +596,22 @@ void CCWriter::writeMap(const DecodedMap &map)
         }
         else if(collisionBits!=0)
         {
-            collisions[c]=g;
+            collisions[c]=g; onCollisions=true;
         }
         else
         {
             walkable[c]=g;
+        }
+        if(og!=0)
+        {
+            if(onCollisions)
+            {
+                collisions2[c]=og; anyCollisions2=true;
+            }
+            else
+            {
+                walkbehind[c]=og; anyOver=true;
+            }
         }
         c++;
     }
@@ -681,9 +694,18 @@ void CCWriter::writeMap(const DecodedMap &map)
     }
     out << " <layer id=\"" << layerId++ << "\" name=\"Collisions\" width=\"" << w << "\" height=\"" << h << "\">\n";
     out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(collisions) << "</data>\n </layer>\n";
+    // 2nd "Collisions" layer: the over-tiles of collidable cells, superposed on the
+    // first.  The engine OR-merges layers named "Collisions" for blocking, so this
+    // is purely visual stacking (the full building/tree renders BELOW the player);
+    // it does not lift those tiles above the player like WalkBehind would.
+    if(anyCollisions2)
+    {
+        out << " <layer id=\"" << layerId++ << "\" name=\"Collisions\" width=\"" << w << "\" height=\"" << h << "\">\n";
+        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(collisions2) << "</data>\n </layer>\n";
+    }
     // WalkBehind holds the lifted overlay tiles and must be the last tile layer:
     // the client inserts the player sprite just before it, so these draw above
-    // the player (tree tops, roofs, ...).
+    // the player (tree tops, roofs, ...) — but ONLY for player-reachable cells.
     if(anyOver)
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"WalkBehind\" width=\"" << w << "\" height=\"" << h << "\">\n";
