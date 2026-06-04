@@ -3,9 +3,13 @@
 
 #include <unordered_set>
 
+static bool textLooksReadable(const GbaRom &rom, uint32_t off);
+
 ScriptResult::ScriptResult() :
     kind(BotKind::None),
-    trainerId(0)
+    trainerId(0),
+    introText(0),
+    defeatText(0)
 {
 }
 
@@ -60,6 +64,15 @@ std::vector<PartyMon> Gen3Script::party(uint16_t trainerId) const
     return out;
 }
 
+std::string Gen3Script::trainerName(uint16_t trainerId) const
+{
+    const GameInfo &gi=rom_.game();
+    if(gi.trainers==0 || trainerId>=gi.trainersCount)
+        return std::string();
+    // name[12] at gTrainers[id]+0x04, ALL-CAPS in the ROM -> Title Case.
+    return Gen3Text::display(Gen3Text::decode(rom_,gi.trainers+static_cast<uint32_t>(trainerId)*0x28+0x04,12));
+}
+
 bool Gen3Script::looksLikeItemList(uint32_t off, std::vector<uint16_t> &items) const
 {
     items.clear();
@@ -104,6 +117,26 @@ ScriptResult Gen3Script::classify(uint16_t trainerType, uint32_t scriptOffset) c
                 {
                     r.kind=BotKind::Fight;
                     r.trainerId=tid;
+                    // trainerbattle text pointers: pre-battle (intro) and defeat.
+                    // Most types: intro@+6, defeat@+10; the no-intro types 3/9:
+                    // defeat@+6.  Validate each so a different layout yields none.
+                    uint8_t bt=rom_.u8(p+1);
+                    bool ok=false;
+                    if(bt==3 || bt==9)
+                    {
+                        uint32_t dt=rom_.pointer(p+6,&ok);
+                        if(ok && textLooksReadable(rom_,dt))
+                            r.defeatText=dt;
+                    }
+                    else
+                    {
+                        uint32_t it=rom_.pointer(p+6,&ok);
+                        if(ok && textLooksReadable(rom_,it))
+                            r.introText=it;
+                        uint32_t dt=rom_.pointer(p+10,&ok);
+                        if(ok && textLooksReadable(rom_,dt))
+                            r.defeatText=dt;
+                    }
                     return r;
                 }
             }

@@ -21,6 +21,8 @@ struct PartyMon {
 struct ScriptResult {
     BotKind kind;
     uint16_t trainerId;            // valid when kind==Fight
+    uint32_t introText;            // Fight: file offset of pre-battle text (0=none)
+    uint32_t defeatText;           // Fight: file offset of defeat text (0=none)
     std::vector<uint16_t> itemIds; // valid when kind==Mart
     ScriptResult();
 };
@@ -34,6 +36,8 @@ public:
     // target), or 0 if none found.  Used only for SIGN bots, not NPC dialogue.
     uint32_t signTextOffset(uint32_t scriptOffset) const;
     std::vector<PartyMon> party(uint16_t trainerId) const;
+    // Trainer's personal name (gTrainers[id]+0x04), Title-cased, or "" if blank.
+    std::string trainerName(uint16_t trainerId) const;
     std::string itemName(uint16_t id) const;
     std::string speciesName(uint16_t internalId) const;
 
