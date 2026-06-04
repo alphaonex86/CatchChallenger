@@ -94,9 +94,9 @@
     </message>
     <message>
         <location filename="../../mainwindow.ui" line="221"/>
-        <source>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;color:#FFF;text-decoration:none;&quot;&gt;CatchChallenger&lt;/span&gt;&lt;/a&gt; &lt;!-- (Don&apos;t remove please) --&gt;</source>
+        <source>&lt;a href=&quot;https://catchchallenger.herman-brule.com/&quot;&gt;&lt;span style=&quot;color:#FFF;text-decoration:none;&quot;&gt;CatchChallenger&lt;/span&gt;&lt;/a&gt; &lt;!-- (Don&apos;t remove please) --&gt;</source>
         <translatorcomment>Merci de ne pas supprimer ce lien</translatorcomment>
-        <translation>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;color:#FFF;text-decoration:none;&quot;&gt;CatchChallenger&lt;/span&gt;&lt;/a&gt; &lt;!-- (Don&apos;t remove please) --&gt;</translation>
+        <translation>&lt;a href=&quot;https://catchchallenger.herman-brule.com/&quot;&gt;&lt;span style=&quot;color:#FFF;text-decoration:none;&quot;&gt;CatchChallenger&lt;/span&gt;&lt;/a&gt; &lt;!-- (Don&apos;t remove please) --&gt;</translation>
     </message>
     <message>
         <location filename="../../mainwindow.ui" line="231"/>
@@ -182,13 +182,13 @@
     </message>
     <message>
         <location filename="../../mainwindow.ui" line="1018"/>
-        <source>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Web site&lt;/span&gt;&lt;/a&gt;</source>
-        <translation>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Site web&lt;/span&gt;&lt;/a&gt;</translation>
+        <source>&lt;a href=&quot;https://catchchallenger.herman-brule.com/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Web site&lt;/span&gt;&lt;/a&gt;</source>
+        <translation>&lt;a href=&quot;https://catchchallenger.herman-brule.com/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Site web&lt;/span&gt;&lt;/a&gt;</translation>
     </message>
     <message>
         <location filename="../../mainwindow.ui" line="1045"/>
-        <source>&lt;a href=&quot;http://catchchallenger.first-world.info/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Register&lt;/span&gt;&lt;/a&gt;</source>
-        <translation>&lt;a href=&quot;http://catchchallenger.first-world.info/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;S&apos;enregister&lt;/span&gt;&lt;/a&gt;</translation>
+        <source>&lt;a href=&quot;https://catchchallenger.herman-brule.com/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Register&lt;/span&gt;&lt;/a&gt;</source>
+        <translation>&lt;a href=&quot;https://catchchallenger.herman-brule.com/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;S&apos;enregister&lt;/span&gt;&lt;/a&gt;</translation>
     </message>
     <message>
         <location filename="../../mainwindow.ui" line="1085"/>

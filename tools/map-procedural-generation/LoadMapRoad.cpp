@@ -633,13 +633,36 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 }
 
                 if(isCity){
-                    // City building
+                    City *city = NULL;
+                    for(City &c: cities){
+                        if(c.x == x && c.y == y)
+                            city = &c;
+                    }
+
+                    // City buildings: a heal center first, an optional gym (reuses
+                    // building-big-1) for non-small cities, an optional shop, then
+                    // a few houses. templateKind / templateBaseName run parallel to
+                    // templates and drive per-slot bot generation. baseName "" means
+                    // a plain house (handled by generateRoom).
                     QList<MapBrush::MapTemplate> templates = QList<MapBrush::MapTemplate>();
+                    std::vector<BotKind> templateKind;
+                    std::vector<std::string> templateBaseName;
 
                     templates.push_back(mapTemplatebuildingheal);
+                    templateKind.push_back(BotKind_heal);
+                    templateBaseName.push_back("building-heal");
 
-                    if(rand()%2)
+                    if(setting.doGym && city!=NULL && city->type!=CityType_small){
+                        templates.push_back(mapTemplatebuildingbig1);
+                        templateKind.push_back(BotKind_fight);
+                        templateBaseName.push_back("gym");
+                    }
+
+                    if(rand()%2){
                         templates.push_back(mapTemplatebuildingshop);
+                        templateKind.push_back(BotKind_shop);
+                        templateBaseName.push_back("building-shop");
+                    }
 
                     int building = rand()%4 + 2;
 
@@ -655,15 +678,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             templates.push_back(mapTemplatebuildingbig1);
                             break;
                         }
+                        templateKind.push_back(BotKind_text);
+                        templateBaseName.push_back("");
                     }
 
                     std::sort(zones.begin(), zones.end(), ZoneSorter(scaleWidth, scaleHeight));
-                    City *city = NULL;
-
-                    for(City &c: cities){
-                        if(c.x == x && c.y == y)
-                            city = &c;
-                    }
 
                     if(city != NULL){
                         LoadMapAll::RoomSettings rs;
@@ -738,7 +757,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
 
                         int buildingId=1;
 
-                        for(MapBrush::MapTemplate &temp: templates){
+                        unsigned int templateIndex=0;
+                        while(templateIndex<(unsigned int)templates.size()){
+                            MapBrush::MapTemplate &temp=templates[templateIndex];
+                            const BotKind slotKind=templateKind.at(templateIndex);
+                            const std::string &slotBaseName=templateBaseName.at(templateIndex);
                             int i;
                             int limit = 500;
                             for(i=0; i<limit; i++){
@@ -782,10 +805,42 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                         }
 
                                         if(valid){
-                                            if(temp.name != mapTemplatebuildingheal.name && temp.name != mapTemplatebuildingshop.name){
+                                            if(slotBaseName.empty()){
                                                 generateRoom(worldMap, temp, buildingId++, x, y, pos, *city, cityLowerCaseName, setting, rs);
                                             }else{
-                                                addBuildingChain(temp.name,temp.name, temp, worldMap, x, y, mapWidth, mapHeight, pos, *city, cityLowerCaseName);
+                                                //a key building (heal/shop/gym). For a gym build a VALID
+                                                //monster pool from an adjacent road tile (the city tile
+                                                //itself has none) — never .at() the city coord; if no
+                                                //adjacent pool exists botStepXml falls back to a text bot.
+                                                std::vector<RoadMonster> buildingPool;
+                                                const uint8_t buildingLevel=city->level;
+                                                std::string desc="Building";
+                                                if(slotKind==BotKind_heal)
+                                                    desc="Heal";
+                                                else if(slotKind==BotKind_shop)
+                                                    desc="Shop";
+                                                else if(slotKind==BotKind_fight)
+                                                {
+                                                    desc="Gym";
+                                                    const int nbx[4]={(int)x-1,(int)x+1,(int)x,(int)x};
+                                                    const int nby[4]={(int)y,(int)y,(int)y-1,(int)y+1};
+                                                    int n=0;
+                                                    while(n<4 && buildingPool.empty())
+                                                    {
+                                                        const int nx=nbx[n];
+                                                        const int ny=nby[n];
+                                                        if(nx>=0 && ny>=0
+                                                                && roadCoordToIndex.find((uint16_t)nx)!=roadCoordToIndex.cend()
+                                                                && roadCoordToIndex.at((uint16_t)nx).find((uint16_t)ny)!=roadCoordToIndex.at((uint16_t)nx).cend())
+                                                        {
+                                                            const RoadIndex &adjacent=roadCoordToIndex.at((uint16_t)nx).at((uint16_t)ny);
+                                                            if(!adjacent.roadMonsters.empty())
+                                                                buildingPool=adjacent.roadMonsters;
+                                                        }
+                                                        n++;
+                                                    }
+                                                }
+                                                addBuildingChain(slotBaseName,desc, temp, worldMap, x, y, mapWidth, mapHeight, pos, *city, cityLowerCaseName, slotKind, setting, buildingPool, buildingLevel);
                                             }
                                             zone->type = 5;
                                             for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
@@ -807,7 +862,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 }
                             }
 
-                            if(i >= limit && temp.name == mapTemplatebuildingheal.name){
+                            if(i >= limit && slotKind == BotKind_heal){
                                 Tiled::ObjectGroup* moving = LoadMap::searchObjectGroupByName(worldMap, "Moving");
 
                                 qreal point_x = (x+.5)*mapWidth;
@@ -829,6 +884,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 rescue->setCell(Tiled::Cell(invis->tileAt(1)));
                                 moving->addObject(rescue);
                             }
+                            templateIndex++;
                         }
                     }
                 }
@@ -1366,8 +1422,6 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     // Do the random bots
                     LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
                     const char* directions[] = {"left", "right", "top", "bottom"};
-                    std::string file = getMapFile(x, y);
-                    std::string filename = file.substr(file.find_last_of('/')+1);
 
                     for(int i = 0; i<15; i++){
                         unsigned int ox = rand()%mapWidth;
@@ -1414,10 +1468,13 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 int pixels_y = tiles_y * tileHeight;
 
                                 Tiled::MapObject *bot = new Tiled::MapObject("", "bot", QPointF(pixels_x, pixels_y), QSizeF(tileWidth, tileHeight));
-                                bot->setProperty("file", QString::fromStdString(filename+"-bots"));
+                                //the per-chunk local id (and inline <bot> def) is assigned at
+                                //split time by LoadMapAll::emitRoadBotsForChunk(); this id is a
+                                //placeholder that gets overwritten there.
                                 bot->setProperty("id", QString::number(roadBot.id));
                                 bot->setProperty("lookAt", directions[roadBot.look_at]);
-                                bot->setProperty("skin", QString::number(roadBot.skin));
+                                //skin is a datapack skin NAME, picked from the configured pool
+                                bot->setProperty("skin", QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
                                 bot->setCell(newCell);
                                 objectLayer->addObject(bot);
 
@@ -1575,100 +1632,49 @@ bool LoadMapAll::checkPathing(unsigned int *map, unsigned int width, unsigned in
     return false;
 }
 
-void LoadMapAll::writeRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount)
+//Emit the inline <bot> defs for the road trainers that fall inside ONE split
+//chunk, and renumber those world-map bot objects to per-file local ids (1..K).
+//The returned XML is spliced into the chunk's own .xml — the only place the
+//engine reads bots (Map_loader.cpp). Fights are inline, so there is no longer
+//any -bots.xml sidecar or /fight/ directory (the engine never read them).
+QString LoadMapAll::emitRoadBotsForChunk(Tiled::Map &worldMap,
+                                         const unsigned int &chunkTileX, const unsigned int &chunkTileY,
+                                         const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
+                                         const RoadIndex &roadIndex, const SettingsAll::SettingsExtra &setting)
 {
-    const unsigned int mapWidth=worldMap.width()/mapXCount;
-    const unsigned int mapHeight=worldMap.height()/mapYCount;
-    const unsigned int w=worldMap.width()/mapWidth;
-    const unsigned int h=worldMap.height()/mapHeight;
-    unsigned int y=0;
-    int fightId = 0;
-
-    QString fightDir = QCoreApplication::applicationDirPath()+"/dest/map/main/official/fight/";
-
-    if(!QDir(fightDir).exists()){
-        QDir().mkdir(fightDir);
-    }
-
-    while(y<h)
+    QString out;
+    Tiled::ObjectGroup *objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
+    if(objectLayer==NULL)
+        return out;
+    const unsigned int x0=chunkTileX*singleMapWidth;
+    const unsigned int y0=chunkTileY*singleMapHeight;
+    const unsigned int x1=x0+singleMapWidth;
+    const unsigned int y1=y0+singleMapHeight;
+    const QList<Tiled::MapObject*> &objects=objectLayer->objects();
+    unsigned int localBotId=1;
+    unsigned int index=0;
+    while(index<(unsigned int)objects.size())
     {
-        unsigned int x=0;
-        while(x<w)
+        Tiled::MapObject *object=objects.at(index);
+        if(object->type()=="bot")
         {
-            const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
-            const bool isCity=haveCityEntry(citiesCoordToIndex,x,y);
-
-            if(zoneOrientation != 0 && !isCity){
-                std::string file = getMapFile(x, y);
-                std::string filename = file.substr(file.find_last_of('/')+1); // parent folder + name
-                std::string fightname = file.substr(file.find_last_of('/', file.find_last_of('/')-1)+1); // parent folder + name
-                std::replace( fightname.begin(), fightname.end(), '/', '-');
-
-                QString botxml = "<bots>\n";
-                QString fightxml = "<fights>\n";
-                const LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
-
-                for(RoadBot bot: roadIndex.roadBot){
-                    if(bot.x >= mapWidth*x && bot.x < (x+1)*mapWidth
-                            && bot.y >= mapHeight*y && bot.y < (y+1)*mapHeight
-                            && !roadIndex.roadMonsters.empty()){
-                        int monster = rand()%2 + rand()%3 +1; // Max: 4
-                        int reward = roadIndex.level * 30 + 100;
-                        fightId++;
-
-                        botxml += "<bot id=\"" + QString::number(bot.id) + "\">\n";
-                        botxml += " <name>" + QString::number(bot.id) + "</name>\n";
-                        botxml += " <step fightid=\"" + QString::number(fightId) + "\" id=\"1\" type=\"fight\"/>\n";
-                        botxml += "</bot>\n";
-
-                        fightxml += "<fight id=\""+QString::number(fightId)+"\">\n";
-                        fightxml += " <start><![CDATA[I lost to trainers before you, so I don't mind.]]></start>\n";
-
-                        for(int i = 0; i<monster; i++){
-                            int selected = rand() % roadIndex.roadMonsters.size();
-                            int level = roadIndex.level * (95. + rand()%10) / 100.;
-                            fightxml += " <monster id=\""+QString::number(roadIndex.roadMonsters.at(selected).monsterId)+"\" level=\""+QString::number(level)+"\"/>\n";
-                            reward += level * level;
-                        }
-                        fightxml += " <gain cash=\""+QString::number(reward)+"\"/>\n";
-
-                        fightxml += "</fight>\n";
-                    }
-                }
-
-                botxml += "</bots>";
-                fightxml += "</fights>";
-                QFile botinfo(QString::fromStdString(file+"-bots.xml"));
-                QFile fightinfo(fightDir+QString::fromStdString(fightname)+".xml");
-
-                if(botinfo.open(QFile::WriteOnly))
-                {
-                    QByteArray contentData(botxml.toUtf8());
-                    botinfo.write(contentData.constData(),contentData.size());
-                    botinfo.close();
-                }
-                else
-                {
-                    std::cerr << "Unable to write bot file " << filename << std::endl;
-                    abort();
-                }
-
-                if(fightinfo.open(QFile::WriteOnly))
-                {
-                    QByteArray contentData(fightxml.toUtf8());
-                    fightinfo.write(contentData.constData(),contentData.size());
-                    fightinfo.close();
-                }
-                else
-                {
-                    std::cerr << "Unable to write fight file " << fightname << std::endl;
-                    abort();
-                }
+            const unsigned int tileX=(unsigned int)(object->x())/worldMap.tileWidth();
+            const unsigned int tileY=(unsigned int)(object->y())/worldMap.tileHeight();
+            if(tileX>=x0 && tileX<x1 && tileY>=y0 && tileY<y1)
+            {
+                Tiled::Properties properties=object->properties();
+                properties.remove("file");//dead engine property
+                properties["id"]=QString::number(localBotId);
+                object->setProperties(properties);
+                out+=botStepXml(localBotId,BotKind_fight,std::to_string(localBotId),
+                                properties.value("lookAt").toString(),setting,
+                                roadIndex.roadMonsters,roadIndex.level);
+                localBotId++;
             }
-            x++;
         }
-        y++;
+        index++;
     }
+    return out;
 }
 
 Tiled::Tile *LoadMapAll::fetchTile(Tiled::Map &worldMap, QString data)
@@ -1687,6 +1693,98 @@ Tiled::Tile *LoadMapAll::fetchTile(Tiled::Map &worldMap, QString data)
         std::cerr << "Invalid settings [fetchTile] " << data.toStdString() << std::endl;
         return NULL;
     }
+}
+
+QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, const std::string &name,
+                               const QString &lookAt, const SettingsAll::SettingsExtra &setting,
+                               const std::vector<RoadMonster> &monsterPool, const uint8_t &level)
+{
+    BotKind realKind=kind;
+    //a fight bot with no usable monster pool degrades to a plain text bot so we
+    //never emit an invalid <monster id> (engine would log "monster not found").
+    if((realKind==BotKind_fight || realKind==BotKind_leader) && monsterPool.empty())
+        realKind=BotKind_text;
+
+    QString out="  <bot id=\""+QString::number(id)+"\"";
+    if(!lookAt.isEmpty())
+        out+=" lookAt=\""+lookAt+"\"";
+    out+=">\n";
+    out+="    <name>"+QString::fromStdString(name)+"</name>\n";
+    switch(realKind)
+    {
+        case BotKind_heal:
+            //healing-center attendant: greet -> heal -> sign off (target.md §5.4)
+            out+="    <step id=\"1\" type=\"text\"><text><![CDATA[Let me restore your team.<br /><a href=\"3;2\">[Heal]</a>]]></text></step>\n";
+            out+="    <step id=\"2\" type=\"text\"><text><![CDATA[Good luck out there!]]></text></step>\n";
+            out+="    <step id=\"3\" type=\"heal\"/>\n";
+        break;
+        case BotKind_shop:
+        {
+            out+="    <step id=\"1\" type=\"text\"><text><![CDATA[Welcome!<br /><a href=\"2\">Buy</a><br /><a href=\"3\">Sell</a>]]></text></step>\n";
+            out+="    <step id=\"2\" type=\"shop\">\n";
+            unsigned int indexItem=0;
+            while(indexItem<setting.shopItems.size())
+            {
+                out+="      <product item=\""+QString::number(setting.shopItems.at(indexItem))+"\"/>\n";
+                indexItem++;
+            }
+            out+="    </step>\n";
+            out+="    <step id=\"3\" type=\"sell\"/>\n";
+        }
+        break;
+        case BotKind_fight:
+        case BotKind_leader:
+        {
+            const bool leader=(realKind==BotKind_leader);
+            //team size 1..4 (road math), the gym leader fields one extra
+            int monsterCount=rand()%2 + rand()%3 + 1;
+            if(leader)
+                monsterCount++;
+            int reward=level*30+100;
+            QString monsterXml;
+            int indexMonster=0;
+            while(indexMonster<monsterCount)
+            {
+                const unsigned int selected=rand()%monsterPool.size();
+                int monsterLevel=level*(95+rand()%10)/100;
+                if(monsterLevel<1)
+                    monsterLevel=1;
+                monsterXml+="      <monster id=\""+QString::number(monsterPool.at(selected).monsterId)+"\" level=\""+QString::number(monsterLevel)+"\"/>\n";
+                reward+=monsterLevel*monsterLevel;
+                indexMonster++;
+            }
+            if(leader)
+                reward*=2;
+            out+="    <step id=\"1\" type=\"fight\"";
+            if(leader)
+                out+=" leader=\"true\"";//engine ignores it; kept for datapack parity
+            out+=">\n";
+            if(leader)
+                out+="      <start><![CDATA[I am the leader here. Prove your worth!]]></start>\n";
+            else
+                out+="      <start><![CDATA[You look strong - let's battle!]]></start>\n";
+            out+="      <win><![CDATA[Well fought.]]></win>\n";
+            out+=monsterXml;
+            out+="      <gain cash=\""+QString::number(reward)+"\"/>\n";
+            out+="    </step>\n";
+        }
+        break;
+        case BotKind_text:
+        default:
+        {
+            QString message;
+            if(!setting.npcMessage.empty())
+                message=QString::fromStdString(setting.npcMessage.at(rand()%setting.npcMessage.size()));
+            else
+                message="...";
+            //a literal ]]> inside a message would close the CDATA section early
+            message.replace("]]>","]]&gt;");
+            out+="    <step id=\"1\" type=\"text\"><text><![CDATA["+message+"]]></text></step>\n";
+        }
+        break;
+    }
+    out+="  </bot>\n";
+    return out;
 }
 
 void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate &mapTemplate, const unsigned int id, const uint32_t &x, const uint32_t &y,
@@ -1783,6 +1881,35 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
     {
         Tiled::Map *nextHopMap=otherMap.at(index);
         Tiled::Properties properties=nextHopMap->properties();
+        //renumber this floor's bot objects to local ids 1..K and build the
+        //matching inline <bot> defs: the engine reads bots ONLY from a map's own
+        //sibling .xml, matched by uint8 id, so per-file local ids are required
+        //(the global botId counter overflows uint8 on large worlds).
+        QString botXml;
+        {
+            Tiled::ObjectGroup *npcs=LoadMap::searchObjectGroupByName(*nextHopMap,"Object");
+            if(npcs!=NULL)
+            {
+                const QList<Tiled::MapObject*> &npcObjects=npcs->objects();
+                unsigned int localBotId=1;
+                unsigned int indexNpc=0;
+                while(indexNpc<(unsigned int)npcObjects.size())
+                {
+                    Tiled::MapObject *npc=npcObjects.at(indexNpc);
+                    if(npc->type()=="bot")
+                    {
+                        Tiled::Properties npcProperties=npc->properties();
+                        npcProperties["id"]=QString::number(localBotId);
+                        npc->setProperties(npcProperties);
+                        botXml+=botStepXml(localBotId,BotKind_text,std::to_string(localBotId),
+                                           npcProperties.value("lookAt").toString(),setting,
+                                           std::vector<RoadMonster>(),0);
+                        localBotId++;
+                    }
+                    indexNpc++;
+                }
+            }
+        }
         std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+".tmx";
         if(otherMap.size()>1)
             filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+"/floor-"+std::to_string(index)+".tmx";
@@ -1821,8 +1948,9 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
                 if(!zone.empty())
                     content+=" zone=\""+QString::fromStdString(zone)+"\"";
                 content+=">\n"
-                         "  <name>floor-"+QString::number(index)+"</name>\n"
-                                                                        "</map>";
+                         "  <name>floor-"+QString::number(index)+"</name>\n";
+                content+=botXml;
+                content+="</map>";
                 QByteArray contentData(content.toUtf8());
                 xmlinfo.write(contentData.constData(),contentData.size());
                 xmlinfo.close();
@@ -1846,62 +1974,16 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
         }
     }
 
-    // Write bots files
-    for(Tiled::Map* room: otherMap){
-        Tiled::ObjectGroup* npcs = LoadMap::searchObjectGroupByName(*room, "Object");
-
-        if(npcs->objectCount() > 0){
-            const int i = room->property("floor-id").toInt();
-
-            QString botpath;
-
-            if(floorCount > 1){
-                botpath = name+"-bot";
-            }else{
-                botpath = "floor-"+QString::number(i)+"-bot";
-            }
-
-
-            std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+"-bot.xml";
-
-            if(floorCount > 1){
-                filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+"/floor-"+std::to_string(i)+"-bot.xml";
-            }
-
-            QFile xmlinfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
-            QString content("<bots>");
-
-            for(Tiled::MapObject* npc: npcs->objects()){
-
-                if(npc->type() == "bot"){
-                    Tiled::Properties properties = npc->properties();
-
-                    properties["file"] = botpath;
-
-                    content += "\n\t<bot id=\""+properties["id"].toString()+"\">";
-                    content += "\n\t\t<name>"+properties["id"].toString()+"</name>";
-                    content += "\n\t\t<step id=\"1\" type=\"text\"><![CDATA[";
-                    content += QString::fromStdString(setting.npcMessage.at(rand()%setting.npcMessage.size()));
-                    content += "]]></step>";
-                    content += "\n\t</bot>";
-                }
-            }
-
-            if(xmlinfo.open(QFile::WriteOnly))
-            {
-                content+= "\n</bots>";
-                QByteArray contentData(content.toUtf8());
-                xmlinfo.write(contentData.constData(),contentData.size());
-                xmlinfo.close();
-            }
-            else
-            {
-                std::cerr << "Unable to write " << filePath << std::endl;
-                abort();
-            }
+    //bot definitions are now emitted inline in each floor's own .xml above (the
+    //only place the engine reads bots from); the old <bots>-wrapped *-bot.xml
+    //sidecar was never read by the engine. Just free the per-floor room maps.
+    {
+        unsigned int indexRoom=0;
+        while(indexRoom<(unsigned int)otherMap.size())
+        {
+            delete otherMap.at(indexRoom);
+            indexRoom++;
         }
-
-        delete room;
     }
     doors.clear();
 }
@@ -2087,7 +2169,7 @@ void LoadMapAll::generateRoomContent(Tiled::Map &roomMap, const SettingsAll::Set
                         properties["lookAt"] = directions[rand()%4];
                     }
                     if(!properties.contains("skin")){
-                        properties["skin"] = QString::number(rand()%100);
+                        properties["skin"] = QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size()));
                     }
                     properties["id"] = QString::number(botId++);
 

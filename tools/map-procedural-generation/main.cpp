@@ -48,9 +48,27 @@ int main(int argc, char *argv[])
     a.setApplicationName(QStringLiteral("map-procedural-generation"));
     a.setApplicationVersion(QStringLiteral("1.0"));
 
-    if(!QFile::exists(QCoreApplication::applicationDirPath()+"/settings.xml"))
-        QFile::copy(":/settings.xml",QCoreApplication::applicationDirPath()+"/settings.xml");
-    QSettings settings(QCoreApplication::applicationDirPath()+"/settings.xml",QSettings::NativeFormat);
+    //Optional "--config <path>" selects a per-datapack settings file so the same
+    //binary can target different datapacks (each datapack needs its own tile
+    //indices / tileset paths / item & monster ids). Defaults to settings.xml next
+    //to the binary, preserving the previous behaviour.
+    QString settingsPath=QCoreApplication::applicationDirPath()+"/settings.xml";
+    {
+        const QStringList args=a.arguments();
+        int ai=1;
+        while(ai<args.size())
+        {
+            if((args.at(ai)=="--config" || args.at(ai)=="-c") && ai+1<args.size())
+            {
+                settingsPath=args.at(ai+1);
+                ai++;
+            }
+            ai++;
+        }
+    }
+    if(!QFile::exists(settingsPath))
+        QFile::copy(":/settings.xml",settingsPath);
+    QSettings settings(settingsPath,QSettings::NativeFormat);
 
     QDir dir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
     dir.removeRecursively();
@@ -74,7 +92,7 @@ int main(int argc, char *argv[])
                             "    <name lang=\"fr\">Map généré</name>\n"
                             "    <initial>G</initial>\n"
                             "    <options>\n");
-        QFile optionsFile(QCoreApplication::applicationDirPath()+"/settings.xml");
+        QFile optionsFile(settingsPath);
         if(!optionsFile.open(QFile::ReadOnly))
         {
             std::cerr << "!optionsFile.open(QFile::ReadOnly)" << std::endl;
@@ -154,7 +172,6 @@ int main(int argc, char *argv[])
                 t.start();
                 LoadMapAll::addCity(tiledMap,gridCity,config.citiesNames,config.mapXCount,config.mapYCount,config.maxCityLinks,config.cityRadius,
                                     levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap);
-                //LoadMapAll::addCityContent(tiledMap,config.mapXCount,config.mapYCount,false);
                 qDebug("place cities took %lld ms", t.elapsed());
                 if(config.dotransition)
                 {
@@ -176,7 +193,6 @@ int main(int argc, char *argv[])
                 TransitionTerrain::mergeDown(tiledMap);
                 qDebug("mergeDown took %lld ms", t.elapsed());
                 t.start();
-                //LoadMapAll::addCityContent(tiledMap, config.mapXCount, config.mapYCount,true);
                 LoadMapAll::addMapChange(tiledMap,config.mapXCount,config.mapYCount);
                 qDebug("add city content took %lld ms", t.elapsed());
                 t.start();
@@ -386,6 +402,10 @@ int main(int argc, char *argv[])
                             }
                             additionalXmlInfo+="  </grass>\n";
                         }
+                        //inline trainer <bot> defs for this chunk (renumbers the
+                        //chunk's world bot objects to local ids) — the engine reads
+                        //bots only from the map's own .xml.
+                        additionalXmlInfo+=LoadMapAll::emitRoadBotsForChunk(tiledMap,x,y,singleMapWitdh,singleMapHeight,roadIndex,config).toStdString();
                         if(!PartialMap::save(tiledMap,
                                          x*singleMapWitdh,y*singleMapHeight,
                                          x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
@@ -411,9 +431,8 @@ int main(int argc, char *argv[])
             }
         }
         qDebug("Write chunk tmx %lld ms", t.elapsed());
-        t.start();
-        LoadMapAll::writeRoadContent(tiledMap, config.mapXCount, config.mapYCount);
-        qDebug("Write bots xml %lld ms", t.elapsed());
+        //road trainer bots are now emitted inline per chunk during the split
+        //loop above (LoadMapAll::emitRoadBotsForChunk via additionalXmlInfo).
         //do the start point
         QFile start(QCoreApplication::applicationDirPath()+"/dest/map/main/official/start.xml");
         if(start.open(QFile::WriteOnly))

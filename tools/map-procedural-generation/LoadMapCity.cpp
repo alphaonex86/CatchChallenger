@@ -20,9 +20,16 @@
 
 void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap,
                                   const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
-                                  const std::pair<uint8_t, uint8_t> pos, const City &city,const std::string &zone)
+                                  const std::pair<uint8_t, uint8_t> pos, const City &city,const std::string &zone,
+                                  const BotKind &botKind, const SettingsAll::SettingsExtra &setting,
+                                  const std::vector<RoadMonster> &monsterPool, const uint8_t &level)
 {
     bool ok=false;
+    //tile inside the entrance floor where stepping through the door drops the
+    //player; captured from the exterior door below. Defaults match the shipped
+    //building templates (floor-0 spawn at 5,10).
+    int spawnX=5;
+    int spawnY=10;
     //search the brush door and retarget
     std::unordered_map<Tiled::MapObject*,Tiled::Properties> oldValue;
     std::vector<Tiled::MapObject*> doors=getDoorsListAndTp(mapTemplatebuilding.tiledMap);
@@ -32,6 +39,15 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         Tiled::MapObject* object=doors.at(index);
         Tiled::Properties properties=object->properties();
         oldValue[object]=object->properties();
+        //the exterior door's destination x/y IS the player's spawn tile inside
+        //the entrance floor — place the key-building bot(s) relative to it.
+        if(index==0)
+        {
+            if(properties.contains("x"))
+                spawnX=properties.value("x").toInt();
+            if(properties.contains("y"))
+                spawnY=properties.value("y").toInt();
+        }
         if(mapTemplatebuilding.otherMap.size()>1)
             properties["map"]=QString::fromStdString(baseName)+"/"+properties.value("map").toString();
         else
@@ -92,6 +108,87 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
     {
         Tiled::Map *nextHopMap=mapTemplatebuilding.otherMap.at(index);
         Tiled::Properties properties=nextHopMap->properties();
+
+        //Inject the key-building bot object(s) into the ENTRANCE floor (index 0)
+        //and build the matching inline <bot> defs. Objects go into an "Object"
+        //group (the only group the engine scans for bots; created here if the
+        //template lacks one) with a marker cell from the interior's OWN
+        //"invisible" tileset. They are removed again after the file is written
+        //so the shared template stays pristine for the next city.
+        QString botXml;
+        std::vector<Tiled::MapObject*> injectedBots;
+        Tiled::ObjectGroup *npcGroup=NULL;
+        bool createdNpcGroup=false;
+        if(index==0)
+        {
+            std::vector<std::pair<BotKind,std::string> > toPlace;//bot kind, skin name
+            if(botKind==BotKind_fight)
+            {
+                //a gym: several trainers plus one leader
+                unsigned int trainer=0;
+                while(trainer<setting.gymTrainers)
+                {
+                    toPlace.push_back(std::pair<BotKind,std::string>(BotKind_fight,setting.gymTrainerSkin));
+                    trainer++;
+                }
+                toPlace.push_back(std::pair<BotKind,std::string>(BotKind_leader,setting.gymLeaderSkin));
+            }
+            else if(botKind==BotKind_heal)
+                toPlace.push_back(std::pair<BotKind,std::string>(BotKind_heal,setting.healSkin));
+            else if(botKind==BotKind_shop)
+                toPlace.push_back(std::pair<BotKind,std::string>(BotKind_shop,setting.shopSkin));
+
+            if(!toPlace.empty())
+            {
+                npcGroup=LoadMap::searchObjectGroupByName(*nextHopMap,"Object");
+                if(npcGroup==NULL)
+                {
+                    npcGroup=new Tiled::ObjectGroup("Object",0,0);
+                    nextHopMap->addLayer(npcGroup);
+                    createdNpcGroup=true;
+                }
+                Tiled::Tileset *invisInterior=LoadMap::searchTilesetByName(*nextHopMap,"invisible");
+                const int tileW=nextHopMap->tileWidth();
+                const int tileH=nextHopMap->tileHeight();
+                unsigned int localBotId=1;
+                unsigned int placeIndex=0;
+                while(placeIndex<toPlace.size())
+                {
+                    //spread bots on walkable interior tiles a couple of rows
+                    //above the entrance spawn; a lone key-building bot sits on
+                    //the entrance column (blocking it like a service counter).
+                    int tileX=2+(int)((placeIndex%4)*2);
+                    int tileY=spawnY-2-(int)((placeIndex/4)*2);
+                    if(toPlace.size()==1)
+                        tileX=spawnX;
+                    if(tileX>nextHopMap->width()-2)
+                        tileX=nextHopMap->width()-2;
+                    if(tileX<1)
+                        tileX=1;
+                    if(tileY<1)
+                        tileY=1;
+                    //object Y carries the engine's -1 tile correction, so add 1
+                    Tiled::MapObject *npc=new Tiled::MapObject("","bot",
+                        QPointF(tileX*tileW,(tileY+1)*tileH),QSizeF(tileW,tileH));
+                    npc->setProperty("id",QString::number(localBotId));
+                    npc->setProperty("lookAt","bottom");
+                    npc->setProperty("skin",QString::fromStdString(toPlace.at(placeIndex).second));
+                    if(invisInterior!=NULL)
+                    {
+                        Tiled::Cell markerCell;
+                        markerCell.setTile(invisInterior->tileAt(3));
+                        npc->setCell(markerCell);
+                    }
+                    npcGroup->addObject(npc);
+                    injectedBots.push_back(npc);
+                    botXml+=botStepXml(localBotId,toPlace.at(placeIndex).first,std::to_string(localBotId),
+                                       "bottom",setting,monsterPool,level);
+                    localBotId++;
+                    placeIndex++;
+                }
+            }
+        }
+
         std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
         if(mapTemplatebuilding.otherMap.size()>1)
             filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+"/"+mapTemplatebuilding.otherMapName.at(index)+".tmx";
@@ -130,8 +227,9 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                 if(!zone.empty())
                     content+=" zone=\""+QString::fromStdString(zone)+"\"";
                 content+=">\n"
-                         "  <name>"+QString::fromStdString(description)+"</name>\n"
-                                                                        "</map>";
+                         "  <name>"+QString::fromStdString(description)+"</name>\n";
+                content+=botXml;
+                content+="</map>";
                 QByteArray contentData(content.toUtf8());
                 xmlinfo.write(contentData.constData(),contentData.size());
                 xmlinfo.close();
@@ -140,6 +238,31 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
             {
                 std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
                 abort();
+            }
+        }
+
+        //remove the injected bot objects (and the group, if we created it) so
+        //the shared interior template is unchanged for the next city.
+        {
+            unsigned int b=0;
+            while(b<injectedBots.size())
+            {
+                npcGroup->removeObject(injectedBots.at(b));
+                delete injectedBots.at(b);
+                b++;
+            }
+        }
+        if(createdNpcGroup)
+        {
+            int li=0;
+            while(li<nextHopMap->layerCount())
+            {
+                if(nextHopMap->layerAt(li)==npcGroup)
+                {
+                    delete nextHopMap->takeLayerAt(li);
+                    break;
+                }
+                li++;
             }
         }
         index++;
@@ -258,146 +381,6 @@ std::vector<Tiled::MapObject*> LoadMapAll::getDoorsListAndTp(Tiled::Map * map)
         }
     }
     return doors;
-}
-
-void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full)
-{
-    if(MapBrush::mapMask==NULL)
-    {
-        std::cerr << "MapBrush::mapMask==NULL (abort) into LoadMapAll::addCityContent" << std::endl;
-        abort();
-    }
-    const unsigned int mapWidth=worldMap.width()/mapXCount;
-    const unsigned int mapHeight=worldMap.height()/mapYCount;
-    MapBrush::MapTemplate mapTemplateBig;
-    MapBrush::MapTemplate mapTemplateMedium;
-    MapBrush::MapTemplate mapTemplateSmall;
-    loadMapTemplate("",mapTemplateBig,"city-big",mapWidth,mapHeight,worldMap);
-    loadMapTemplate("",mapTemplateMedium,"city-medium",mapWidth,mapHeight,worldMap);
-    loadMapTemplate("",mapTemplateSmall,"city-small",mapWidth,mapHeight,worldMap);
-
-    MapBrush::MapTemplate mapTemplatebuildingshop;
-    MapBrush::MapTemplate mapTemplatebuildingheal;
-    MapBrush::MapTemplate mapTemplatebuilding1;
-    MapBrush::MapTemplate mapTemplatebuilding2;
-    MapBrush::MapTemplate mapTemplatebuildingbig1;
-    if(full)
-    {
-        loadMapTemplate("building-shop/",mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
-        loadMapTemplate("building-heal/",mapTemplatebuildingheal,"building-heal",mapWidth,mapHeight,worldMap);
-        loadMapTemplate("building-1/",mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
-        loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
-        loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
-    }
-
-    unsigned int index=0;
-    while(index<cities.size())
-    {
-        const City &city=cities.at(index);
-        const std::string &cityLowerCaseName=LoadMapAll::lowerCase(city.name);
-        const uint32_t x=city.x;
-        const uint32_t y=city.y;
-        Tiled::Map *map=NULL;
-        MapBrush::MapTemplate mapTemplate;
-        std::vector<std::pair<uint8_t,uint8_t> > positionBuilding;
-        switch(city.type) {
-        case CityType_small:
-            map=mapTemplateSmall.tiledMap;
-            mapTemplate=mapTemplateSmall;
-            if(full)
-            {
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(15,15));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(24,15));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(24,22));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(15,22));
-            }
-            break;
-        case CityType_medium:
-            map=mapTemplateMedium.tiledMap;
-            mapTemplate=mapTemplateMedium;
-            if(full)
-            {
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(15,15));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(24,15));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(24,22));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(15,22));
-            }
-            break;
-        default:
-            map=mapTemplateBig.tiledMap;
-            mapTemplate=mapTemplateBig;
-            if(full)
-            {
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(11,11));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(11,18));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(11,25));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(20,11));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(20,18));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(20,25));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(29,11));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(29,18));
-                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(29,25));
-            }
-            break;
-        }
-        const uint8_t xoffset=(mapWidth-map->width())/2;
-        const uint8_t yoffset=(mapHeight-map->height())/2;
-        MapBrush::brushTheMap(worldMap,mapTemplate,x*mapWidth+xoffset,y*mapHeight+yoffset,MapBrush::mapMask,true);
-        bool haveHeal=false;
-        bool haveShop=false;
-        unsigned int housecount=0;
-        while(!positionBuilding.empty())
-        {
-            unsigned int randomIndex=rand()%positionBuilding.size();
-            std::pair<uint8_t,uint8_t> pos=positionBuilding.at(randomIndex);
-            positionBuilding.erase(positionBuilding.cbegin()+randomIndex);
-            if(!haveHeal)
-            {
-                haveHeal=true;
-                addBuildingChain("heal","Heal",mapTemplatebuildingheal,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
-            }
-            else if(!haveShop)
-            {
-                haveShop=true;
-                addBuildingChain("shop","Shop",mapTemplatebuildingshop,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
-            }
-            else
-            {
-                unsigned int randmax=2;
-                if(city.type==CityType_big)
-                    randmax=3;
-                switch(rand()%randmax)
-                {
-                case 0:
-                    housecount++;
-                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding1,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
-                    break;
-                case 1:
-                default:
-                    housecount++;
-                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding2,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
-                    break;
-                case 2:
-                    housecount++;
-                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuildingbig1,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
-                    break;
-                }
-            }
-        }
-        index++;
-    }
-
-    LoadMapAll::deleteMapList(mapTemplateBig);
-    LoadMapAll::deleteMapList(mapTemplateMedium);
-    LoadMapAll::deleteMapList(mapTemplateSmall);
-    if(full)
-    {
-        LoadMapAll::deleteMapList(mapTemplatebuildingshop);
-        LoadMapAll::deleteMapList(mapTemplatebuildingheal);
-        LoadMapAll::deleteMapList(mapTemplatebuilding1);
-        LoadMapAll::deleteMapList(mapTemplatebuilding2);
-        LoadMapAll::deleteMapList(mapTemplatebuildingbig1);
-    }
 }
 
 void LoadMapAll::deleteMapList(MapBrush::MapTemplate &mapTemplatebuilding)

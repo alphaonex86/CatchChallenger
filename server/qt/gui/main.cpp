@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     // MainWindow::wireSettings() relies on the default-constructed
     // QSettings finding the file we just wrote to last time.
     QCoreApplication::setOrganizationName(QStringLiteral("CatchChallenger"));
-    QCoreApplication::setOrganizationDomain(QStringLiteral("catchchallenger.first-world.info"));
+    QCoreApplication::setOrganizationDomain(QStringLiteral("catchchallenger.herman-brule.com"));
     QCoreApplication::setApplicationName(QStringLiteral("server-gui"));
 
     // CLI args: --autostart (testingqtserver.py), --screenshot=PATH +

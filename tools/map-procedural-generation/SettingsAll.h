@@ -3,6 +3,7 @@
 
 #include <QSettings>
 #include <vector>
+#include <string>
 
 #include "../map-procedural-generation-terrain/Settings.h"
 
@@ -69,6 +70,19 @@ public:
 
         RoomSetting room;
         std::vector<std::string> npcMessage;
+
+        //key-building / bot generation
+        bool doGym;
+        unsigned int gymTrainers;
+        std::vector<unsigned int> shopItems;
+        //Bot sprite skins are datapack-specific NAMES (a folder under skin/bot/
+        //or skin/fighter/), NOT numeric indices. botSkins is the random pool for
+        //road/house/trainer NPCs; the key-building skins pick a fixed look.
+        std::vector<std::string> botSkins;
+        std::string healSkin;
+        std::string shopSkin;
+        std::string gymTrainerSkin;
+        std::string gymLeaderSkin;
     };
 
     static void putDefaultSettings(QSettings &settings);

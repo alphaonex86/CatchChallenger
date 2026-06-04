@@ -1,0 +1,88 @@
+#include "Wild.hpp"
+#include "Gen3Text.hpp"
+
+#include <iostream>
+
+// Standard Gen3 per-slot encounter weights (percent), summing to 100.
+static const int kLandWeights[12]={20,20,10,10,10,10,5,5,5,5,4,1};
+static const int kWaterWeights[5]={60,30,5,4,1};
+
+Wild::Wild(const GbaRom &rom) :
+    rom_(rom)
+{
+}
+
+std::string Wild::speciesName(uint16_t internalId) const
+{
+    const GameInfo &gi=rom_.game();
+    if(gi.speciesNames==0 || internalId==0)
+        return std::string();
+    uint32_t off=gi.speciesNames+static_cast<uint32_t>(internalId)*11;
+    return Gen3Text::display(Gen3Text::decode(rom_,off,11));
+}
+
+std::vector<WildSlot> Wild::decodeInfo(uint32_t infoPtr, int count, const int *weights)
+{
+    std::vector<WildSlot> out;
+    if(infoPtr==0 || infoPtr+8>rom_.size())
+        return out;
+    bool ok=false;
+    uint32_t arr=rom_.pointer(infoPtr+0x04,&ok);
+    if(!ok)
+        return out;
+    int i=0;
+    while(i<count)
+    {
+        uint32_t e=arr+static_cast<uint32_t>(i)*4;
+        if(e+4>rom_.size())
+            break;
+        WildSlot slot;
+        slot.minLevel=rom_.u8(e+0);
+        slot.maxLevel=rom_.u8(e+1);
+        uint16_t species=rom_.u16(e+2);
+        slot.species=speciesName(species);
+        slot.weight=weights[i];
+        out.push_back(slot);
+        i++;
+    }
+    return out;
+}
+
+void Wild::build()
+{
+    const GameInfo &gi=rom_.game();
+    if(gi.wildTable==0)
+        return;
+    uint32_t o=gi.wildTable;
+    int guard=0;
+    while(guard<2048)
+    {
+        uint8_t grp=rom_.u8(o+0);
+        uint8_t num=rom_.u8(o+1);
+        if(grp==0xFF)
+            break;
+        bool ok=false;
+        uint32_t land=rom_.pointer(o+0x04,&ok);
+        uint32_t water=0;
+        bool okW=false;
+        water=rom_.pointer(o+0x08,&okW);
+        WildSet set;
+        if(ok)
+            set.land=decodeInfo(land,12,kLandWeights);
+        if(okW)
+            set.water=decodeInfo(water,5,kWaterWeights);
+        if(!set.land.empty() || !set.water.empty())
+            sets_[static_cast<uint16_t>((grp<<8)|num)]=set;
+        o+=0x14;
+        guard++;
+    }
+    std::cout << "Wild: " << sets_.size() << " maps with encounters" << std::endl;
+}
+
+const WildSet *Wild::find(uint8_t group, uint8_t map) const
+{
+    std::unordered_map<uint16_t,WildSet>::const_iterator it=sets_.find(static_cast<uint16_t>((group<<8)|map));
+    if(it==sets_.cend())
+        return nullptr;
+    return &it->second;
+}
