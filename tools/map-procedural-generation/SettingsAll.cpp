@@ -98,6 +98,29 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     settings.endGroup();
     settings.endGroup();
 
+    settings.beginGroup("building");
+    if(!settings.contains("doGym"))
+        settings.setValue("doGym",true);
+    if(!settings.contains("gymTrainers"))
+        settings.setValue("gymTrainers",3);
+    //numeric item ids sold by every generated shop; must exist in the target
+    //datapack's items table or the engine silently drops the product.
+    if(!settings.contains("shopItems"))
+        settings.setValue("shopItems","1,2,3,5,6");
+    //skins are folder NAMES under the datapack's skin/bot (or skin/fighter);
+    //these defaults are real CatchChallenger-datapack skin names.
+    if(!settings.contains("botSkins"))
+        settings.setValue("botSkins","franck,oldman,florist,farmer,smith,alphonse,captain");
+    if(!settings.contains("healSkin"))
+        settings.setValue("healSkin","oldgirl");
+    if(!settings.contains("shopSkin"))
+        settings.setValue("shopSkin","bankier");
+    if(!settings.contains("gymTrainerSkin"))
+        settings.setValue("gymTrainerSkin","smith");
+    if(!settings.contains("gymLeaderSkin"))
+        settings.setValue("gymLeaderSkin","soldier");
+    settings.endGroup();
+
     settings.beginGroup("wildMonsters");
     settings.beginGroup("0");
     if(!settings.contains("comment"))
@@ -228,6 +251,48 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     room.tilesets = settings.value("tileset").toString().split(",");
     config.room = room;
 
+    settings.endGroup();
+
+    settings.beginGroup("building");
+    config.doGym=settings.value("doGym",true).toBool();
+    config.gymTrainers=settings.value("gymTrainers",3).toUInt();
+    config.shopItems.clear();
+    {
+        const QStringList shopItemsList=settings.value("shopItems","1,2,3").toString().split(",");
+        unsigned int indexShopItem=0;
+        while(indexShopItem<(unsigned int)shopItemsList.size())
+        {
+            bool ok=false;
+            const unsigned int itemId=shopItemsList.at(indexShopItem).trimmed().toUInt(&ok);
+            if(ok)
+                config.shopItems.push_back(itemId);
+            indexShopItem++;
+        }
+    }
+    if(config.shopItems.empty())
+    {
+        config.shopItems.push_back(1);
+        config.shopItems.push_back(2);
+        config.shopItems.push_back(3);
+    }
+    config.botSkins.clear();
+    {
+        const QStringList botSkinsList=settings.value("botSkins","franck,oldman,florist,farmer,smith,alphonse,captain").toString().split(",");
+        unsigned int indexSkin=0;
+        while(indexSkin<(unsigned int)botSkinsList.size())
+        {
+            const std::string skinName=botSkinsList.at(indexSkin).trimmed().toStdString();
+            if(!skinName.empty())
+                config.botSkins.push_back(skinName);
+            indexSkin++;
+        }
+    }
+    if(config.botSkins.empty())
+        config.botSkins.push_back("bot");
+    config.healSkin=settings.value("healSkin","oldgirl").toString().toStdString();
+    config.shopSkin=settings.value("shopSkin","bankier").toString().toStdString();
+    config.gymTrainerSkin=settings.value("gymTrainerSkin","smith").toString().toStdString();
+    config.gymLeaderSkin=settings.value("gymLeaderSkin","soldier").toString().toStdString();
     settings.endGroup();
 
     settings.beginGroup("wildMonsters");

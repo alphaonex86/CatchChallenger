@@ -9,6 +9,8 @@
 #include <QRgb>
 #include <QByteArray>
 #include <QPixmap>
+#include <QFile>
+#include <QSet>
 
 #include <vector>
 #include <unordered_set>
@@ -22,6 +24,8 @@ class QLabel;
 class QPushButton;
 class QTimer;
 class QScrollArea;
+class QHBoxLayout;
+class QCheckBox;
 
 namespace Tiled {
 class Map;
@@ -58,35 +62,64 @@ public:
     // batch=true runs headless: auto-merge IDENTICAL tiles, auto-keep SIMILAR
     // ones (they need a human decision) and never open a prompt. Used for
     // scripted/CI runs; the interactive window is the default (batch=false).
-    explicit TileDeduplicator(const QString &datapackPath, bool batch = false, bool checkAll = false, QWidget *parent = nullptr);
+    explicit TileDeduplicator(const QString &datapackPath, bool batch = false, bool checkAll = false, bool resetSkips = false,
+                              bool stat = false, const QString &migrateFrom = QString(), const QString &migrateTo = QString(),
+                              const QString &removeTsx = QString(), QWidget *parent = nullptr);
     ~TileDeduplicator() override;
 
 private slots:
     void loadAndStart();       // first event-loop tick: load tilesets, begin
     void onStep();             // process a bounded batch of comparisons
-    void onSkipClicked();      // user kept both tiles of a SIMILAR pair
-    void onBackClicked();      // revert the last decision and re-show its prompt
-    void onSaveClicked();      // flush the current merges/skips to disk now
+    void onSkipClicked();      // user kept every tile of the SIMILAR cluster
+    void onBackClicked();      // revert the current cluster's decisions, re-show prompt
     void onAnimTick();         // blink the tile markers on the tileset views
-    void onKeepLeftPick();     // manual replace: keep the left-sheet pick, drop the right
-    void onKeepRightPick();    // manual replace: keep the right-sheet pick, drop the left
+    void onKeepColumnClicked();  // "KEEP THIS TILE": keep one column, drop the rest
 
 protected:
-    // A click on a preview tile picks it as the keeper (drops the other);
-    // resizing rescales the crisp previews so they grow when maximized.
+    // A click on a column preview keeps that tile (the other columns are dropped);
+    // resizing rescales the crisp previews so they grow when maximized; closing the
+    // window flushes the current cluster's pending changes to disk.
     bool eventFilter(QObject *watched, QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
 
 private:
-    void onKeepA();            // keep the left tile (i_), drop the right (j_)
-    void onKeepB();            // keep the right tile (j_), drop the left (i_)
-    void mergeKeeping(int keeper, int loser);
     int previewZoom() const;   // current magnification from the preview size
-    void pushUndo(quint64 skipHash);  // record the pre-decision state for BACK
-    void onSheetClick(bool leftSheet, const QPoint &pos);  // pick a tile in a tileset view
-    void manualReplace(int keeper, int loser);  // commit a manual keep/replace pick
-    void updateSaveButton();   // SAVE enabled only when there are unsaved changes
+    void pushUndo();           // record the pre-decision state for BACK
+    std::string tileKey(int idx) const;  // "<canonical tsx>#<id>" (skip/remap key)
     enum CompareLevel : std::uint8_t { Identical, Similar, Different };
+
+    // Cluster decision view: a SIMILAR prompt shows one column per tile similar to
+    // the source — all of them, in a horizontally-scrollable row (no cap).
+    // buildCluster() gathers them; showCluster() (re)builds and paints the columns;
+    // keepColumn() treats a column as the GROUP MASTER (kept), merges every other
+    // TICKED column into it, and leaves the rest pending (the view refreshes with
+    // them until fewer than 2 remain, then finishCluster() resumes scanning);
+    // selectInColumn() re-picks a column's tile from its sheet.
+    void buildCluster(int source);
+    void showCluster();
+    void rebuildColumns();
+    void clearColumns();
+    void renderColumn(int colIndex, bool highlightOn);
+    void keepColumn(int colIndex);
+    void finishCluster();
+    void selectInColumn(int colIndex, const QPoint &pos);
+
+    // --migrate-from/--migrate-to: rewrite every map to use the migrate-to tileset
+    // instead of the migrate-from one (same local tile ids), then delete the
+    // migrate-from .tsx and its image. Runs instead of the dedup pass.
+    void runMigrate();
+    // --stat: print each .tsx under the path with how many tile cells reference it
+    // (counting repeats) and in how many maps. Runs instead of the dedup pass;
+    // statCountLayers() tallies the cells of one map's layers (recursing into groups).
+    void runStat();
+    void statCountLayers(const QList<Tiled::Layer *> &layers,
+                         const QHash<const Tiled::Tileset *, QString> &canonByTs,
+                         QHash<QString, qint64> &tilesByTsx, QSet<QString> &seen);
+    // --remove <.tsx>: clear every cell that uses the tileset (and drop its <tileset>
+    // entry) from all maps, then delete the .tsx and its image. Runs instead of dedup.
+    void runRemove();
+    void clearTilesetCells(const QList<Tiled::Layer *> &layers, const Tiled::Tileset *ts, int &cleared);
 
     bool loadTilesets();
     // Presence-trigger layers (Collisions/Grass/Water/Ledges*) where a cell's
@@ -100,7 +133,7 @@ private:
     bool identityLess(const TileEntry &a, const TileEntry &b) const;
     void advanceSource();
     void updateProgress();
-    void showPrompt(int a, int b);
+    void showPrompt(int source);   // gather the cluster of tiles similar to source and prompt
     void finish();
 
     QPixmap renderPreview(const TileEntry &t, int zoom) const;
@@ -113,6 +146,27 @@ private:
     // deduplicated result instead of the raw on-disk art. Result is cached (built
     // lazily) and the cache is cleared on every merge.
     QPixmap effectiveSheet(const QString &tsx) const;
+
+    // Append-only audit log (<datapack>/tile-dedup.log). One line per committed merge
+    // (AUTO/USER, loser -> keeper, written after the maps/png are on disk) and one
+    // per skipped tile (SKIP, written immediately). ensureLogOpen() opens it lazily
+    // and writes the per-run header; replaySkips() reloads the SKIP lines at startup
+    // so SKIP decisions survive a restart (merges resume via the blanked png).
+    bool ensureLogOpen();
+    void logMerge(int loser, int keeper, bool automatic);
+    void logSkip(int idx);
+    void replaySkips();
+    void purgeSkipLines();  // --reset-skips: drop all SKIP lines from the log
+
+    // Commit every merge made since the last commit straight to disk: rewrite the
+    // affected .tmx maps to the keeper, blank each merged loser tile to transparent
+    // in its tileset .png (so a restart re-reads it as empty and never re-detects
+    // it), then append the merges to the log. Called when a cluster is finished and
+    // when the window is closed — there is no manual SAVE.
+    void flushChanges();
+    // Build (once, lazily) the canonical-tsx -> [.tmx files] index used by
+    // flushChanges() to rewrite only the maps that reference a merged tile.
+    void buildMapIndex();
 
     // .tmx rewriting
     void applyRemaps();
@@ -131,10 +185,18 @@ private:
     QString datapack_path_;
     bool batch_;
     bool check_all_;           // also compare tiles within the same tileset
+    bool reset_skips_;         // --reset-skips: forget all previously SKIP-ped tiles
+    bool stat_;                // --stat: list .tsx with their .tmx usage count, then quit
+    QString migrate_from_;     // --migrate-from <.tsx>: tileset to replace then delete
+    QString migrate_to_;       // --migrate-to <.tsx>: tileset to migrate every map to
+    QString remove_tsx_;       // --remove <.tsx>: tileset to delete + clear from all maps
     std::vector<TileEntry> tiles_;
     int i_;
     int j_;
-    std::unordered_set<quint64> skipped_sources_;
+    // "<canonical tsx>#<id>" of tiles the user chose to leave alone via SKIP. They
+    // are excluded from every later prompt (as source and as candidate) and persisted
+    // in the log, so SKIP is remembered across restarts.
+    std::unordered_set<std::string> skipped_tiles_;
     // Fully-transparent ("empty") tiles, keyed "<canonical tsx>#<id>". They are
     // kept out of the O(n^2) compare; instead every visual tile-layer cell that
     // points at one is replaced by transparent space (an empty cell) on rewrite.
@@ -152,10 +214,22 @@ private:
     // (tsx, tileId) -> index into tiles_, to resolve a click on a tileset view.
     QHash<QPair<QString, int>, int> tile_index_;
 
-    // Undo support: merge_log_ records every tile whose merged_into was set (in
-    // order); each user decision pushes an UndoStep capturing the pre-decision
-    // state so BACK can revert it and re-show that prompt.
-    std::vector<int> merge_log_;
+    // Every merge made this run, in order: the loser tile, the keeper it points at,
+    // and whether it was automatic. merge_log_committed_ is how many of these have
+    // already been written to disk (maps + png) and logged by flushChanges(); the
+    // rest are pending. BACK only ever touches the pending tail (the current,
+    // not-yet-committed cluster).
+    struct MergeRec
+    {
+        int loser;
+        int keeper;
+        bool automatic;
+    };
+    std::vector<MergeRec> merge_log_;
+    std::size_t merge_log_committed_;
+    // Undo support: each user decision pushes an UndoStep capturing the pre-decision
+    // state so BACK can revert it and re-show that prompt (within the current cluster
+    // only — undo_ is cleared once the cluster is committed to disk).
     struct UndoStep
     {
         int i;
@@ -164,9 +238,24 @@ private:
         int identical;
         int similar;
         int skips;
-        quint64 skipHashAdded;     // hash this decision added to skipped_sources_, or 0
+        std::vector<int> cluster;  // the pending set shown before this decision (for BACK)
     };
     std::vector<UndoStep> undo_;
+
+    // canonical .tsx -> .tmx files that reference it (built once by buildMapIndex())
+    // and the canonical .tsx -> tileset .png path, so flushChanges() can rewrite only
+    // the affected maps and blank the merged tiles in the right image.
+    QHash<QString, QStringList> maps_by_tsx_;
+    QHash<QString, QString> png_by_tsx_;
+    bool map_index_built_;
+    // canonical .tsx whose sheet became fully transparent (all tiles merged away):
+    // its <tileset> entry is removed from every map, and the .tsx/.png are deleted.
+    std::unordered_set<std::string> dead_tsx_;
+
+    // Append-only merge audit log, opened lazily on the first merge and kept open
+    // for the whole run (closed — and thereby flushed — in the destructor).
+    QFile log_file_;
+    bool log_open_tried_;      // we already attempted to open log_file_ this run
 
     // Background map-writer: serialized map bytes are queued here and written by
     // writer_thread_; the queue is drained and the thread joined before exit.
@@ -200,24 +289,31 @@ private:
     QLabel *status_label_;
     QWidget *decision_widget_;
     QLabel *prompt_label_;
-    QLabel *preview_a_;
-    QLabel *preview_b_;
-    QLabel *info_a_;
-    QLabel *info_b_;
     QPushButton *skip_button_;
     QPushButton *back_button_;
-    QPushButton *save_button_;
-    QPushButton *keep_left_button_;
-    QPushButton *keep_right_button_;
-    QScrollArea *scroll_a_;
-    QScrollArea *scroll_b_;
-    QLabel *tileset_a_;
-    QLabel *tileset_b_;
     QTimer *anim_timer_;
     bool anim_on_;
-    int pick_left_;             // manually-picked source tile (left sheet), or -1
-    int pick_right_;             // manually-picked dest tile (right sheet), or -1
-    bool dirty_;               // unsaved changes since the last write
+
+    // One on-screen column of the cluster decision view: a "group" tick-box, a
+    // magnified preview, an info label, the tile's whole tileset (scrollable, with a
+    // blinking marker) and a "KEEP THIS (MASTER)" button. cur is the tile this column
+    // currently stands for (the cluster member by default, re-pickable from its sheet).
+    struct Column
+    {
+        QWidget *box;
+        QCheckBox *check;
+        QLabel *preview;
+        QLabel *info;
+        QScrollArea *scroll;
+        QLabel *tileset;
+        QPushButton *keep;
+        int cur;
+    };
+    QWidget *columns_container_;     // holds the columns row
+    QHBoxLayout *columns_layout_;    // one QWidget box per column, rebuilt each prompt
+    QScrollArea *columns_scroll_;    // horizontal scroll wrapper around the columns row
+    std::vector<Column> columns_;
+    std::vector<int> cluster_;       // tiles currently pending in the prompt (>=2 to show)
 };
 
 #endif // TILEDEDUPLICATOR_HPP

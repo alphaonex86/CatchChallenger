@@ -184,3 +184,17 @@ snowmountain\transition_tsx=tileset/terra.tsx
 22\heightmoisurelist="2,1->2,10;2,2->2,10;2,3->2,10;2,4->2,10;2,5->2,10;2,6->2,10"
 3\heightmoisurelist="3,1->10,10;3,2->10,10;3,3->10,10;3,4->10,10;3,5->10,10;3,6->10,10"
 8\heightmoisurelist="2,1->10,2;2,2->10,2;2,3->10,2;2,4->10,2;2,5->10,2;2,6->10,2"
+
+[building]
+; key-building / bot generation (CatchChallenger-datapack).
+; shopItems = numeric item ids that exist in items/items.xml.
+; *Skin = a folder NAME under skin/bot (or skin/fighter), NOT an index.
+; botSkins = random pool for road/house/trainer NPCs.
+botSkins="franck,oldman,florist,farmer,smith,alphonse,captain"
+doGym=true
+gymLeaderSkin=soldier
+gymTrainerSkin=smith
+gymTrainers=3
+healSkin=oldgirl
+shopItems="1,2,3,5,6"
+shopSkin=bankier

@@ -135,6 +135,21 @@ public:
     };
     static int botId;
 
+    //one inline <bot> definition is emitted per bot, as a direct child of the
+    //map's own sibling .xml — that is the ONLY place the engine reads bots from
+    //(Map_loader.cpp), matched to the .tmx bot object by its integer id.
+    enum BotKind : uint8_t
+    {
+        BotKind_text=0,
+        BotKind_heal=1,
+        BotKind_shop=2,
+        BotKind_fight=3,
+        BotKind_leader=4
+    };
+    static QString botStepXml(const unsigned int &id, const BotKind &kind, const std::string &name,
+                              const QString &lookAt, const SettingsAll::SettingsExtra &setting,
+                              const std::vector<RoadMonster> &monsterPool, const uint8_t &level);
+
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                         const unsigned int &mapXCount, const unsigned int &mapYCount,
@@ -150,7 +165,6 @@ public:
                                   const unsigned int &x2, const unsigned int &y2);
     static Orientation reverseOrientation(const Orientation &orientation);
     static std::string orientationToString(const Orientation &orientation);
-    static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount, bool full);
     static void loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate,const QString& fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
     static void addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
     static std::string getMapFile(const unsigned int &x, const unsigned int &y);
@@ -158,7 +172,9 @@ public:
     static void deleteMapList(MapBrush::MapTemplate &mapTemplatebuilding);
     static std::vector<Tiled::MapObject*> getDoorsListAndTp(Tiled::Map * map);
     static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
-                                 const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone);
+                                 const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone,
+                                 const BotKind &botKind, const SettingsAll::SettingsExtra &setting,
+                                 const std::vector<RoadMonster> &monsterPool, const uint8_t &level);
 
     /**
      * @brief addRoadContent Populate road between the city
@@ -168,7 +184,10 @@ public:
     static void addRoadContent(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
     static void cleanRoadPath(unsigned int *map, unsigned int width, unsigned int height);
     static bool checkPathing(unsigned int * map, unsigned int width, unsigned int height, unsigned int sx, unsigned int sy, unsigned int dx, unsigned int dy);
-    static void writeRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
+    static QString emitRoadBotsForChunk(Tiled::Map &worldMap,
+                                        const unsigned int &chunkTileX, const unsigned int &chunkTileY,
+                                        const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
+                                        const RoadIndex &roadIndex, const SettingsAll::SettingsExtra &setting);
     static Tiled::Tile* fetchTile(Tiled::Map &worldMap, QString data);
     static void generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate& mapTemplate, const unsigned int id, const uint32_t &x, const uint32_t &y,
                              const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone, const SettingsAll::SettingsExtra &setting, RoomSettings &roomSettings);

@@ -1,0 +1,187 @@
+; ============================================================================
+; settings.xml for datapack-pkmn
+;   target: /home/user/Desktop/CatchChallenger/datapack-pkmn
+;   place at: <generator run CWD>/settings.xml  (next to dest/map/tileset/)
+;
+; Tile indices below were DERIVED from the hand-authored gen2 maps after running
+; tools/datapack-tileset-deduplicate on datapack-pkmn/map/ (see the repo file
+; pkmn-gen2.txt for the per-layer tile-role decode). The gameplay-critical tiles
+; (ground / water / tall grass / ledges / collisions / interior floor+walls) are
+; data-derived and confident. A few non-essential biome variants (sand/snow/
+; mountain ground) reuse plausible tileset-1 ground tiles and are marked
+; "; guess". The interior furniture + tree overlays still use the CatchChallenger
+; template/ set (which references inside-*/wood tilesets pkmn lacks) — replace
+; those with pkmn templates or inline tiles before a fully clean run.
+;
+; PKMN .tsx live FLAT in map/ (not map/tileset/); stage them into
+; <run>/dest/map/tileset/ so these bare names resolve (see DATAPACK-CONFIG.md).
+; No usable transition bands -> dotransition=false.
+; ============================================================================
+
+[General]
+cityRadius=3
+displaycity=false
+displayregion=false
+displayzone=false
+doallmap=true
+dominimap=true
+dotransition=false
+dovegetation=true
+levelmapmax=50
+levelmapmin=2
+levelmapscale=0.05
+mapHeight=40
+mapWidth=40
+mapXCount=6
+mapYCount=6
+maxCityLinks=3
+miniMapDivisor=4.0
+scale_City=3
+scale_TerrainMap=0.03
+scale_TerrainMoisure=0.1
+scale_Zone=0.1
+seed=400
+tileStep=4
+
+[plants]
+; tree-*.tmx templates reference CC tilesets internally -> wrong tree art for
+; pkmn until pkmn tree templates are added. ; TODO pkmn template
+tree-1\heightmoisurelist="3,1;3,2;3,3;3,4;3,5;3,6"
+tree-1\tmx=tree-1
+tree-2\heightmoisurelist="1,1;1,2;1,3;1,4;1,5;1,6;2,1;2,2;2,3;2,4;2,5;2,6"
+tree-2\tmx=tree-2
+
+[road]
+bot\cashbase=100
+bot\cashexp=1.5
+bot\cashmonster=0.2
+bot\dobot=true
+bot\maxbot=15
+bot\maxskin=474
+; ledges: tileset-1 one-way jump tiles (gen2 LedgesDown/Left/Right decode)
+ledge\doledge=true
+ledge\ledgebottom=740
+ledge\ledgechance=0.7
+ledge\ledgeleft=710
+ledge\ledgeright=711
+ledge\tsx=tileset-1.tsx
+; overworld tileset alias for region overlays
+region\extratileset=ow->tileset-1.tsx
+; tall grass (encounter) overlay = tileset-1/32 (gen2 Grass layer decode)
+region\grass="grass->ow/32"
+region\initialregion=300
+region\mountain_layer=Collisions
+region\mountain_terrain="mountain,snow"
+; impassable mountain/edge collision tiles (gen2 Collisions decode)
+region\mountain_tile="961,36,37,38,39,70,71,4,5,68,69"
+region\mountain_tsx=ow
+region\retrymax=500
+region\walkway=""
+region\walkwayregion=20
+region\waterchance=0.2
+
+[room]
+; interiors: floor from normal1, walls from tileset-1, furniture from normal2
+; (gen2 INTERIOR Walkable/Collisions decode).
+floor="terra/672,terra/673,terra/674"
+furniture\table1\layer="Collisions"
+furniture\table1\tiles="mobilier/0,mobilier/1,mobilier/32,mobilier/33"  ; TODO pick real pkmn table tiles in normal2
+furniture\table1\tags="table"
+furniture\table1\width=2
+furniture\exit\layer="OnGrass"
+furniture\exit\tags="exit"
+furniture\exit\template="exit"            ; TODO pkmn template (CC inside-* tileset)
+furniture\stairup\template="stair-up"     ; TODO pkmn template
+furniture\stairup\tags="stair-up"
+furniture\stairup\width=2
+furniture\stairup\offsetY=-1
+furniture\stairdown\template="stair-down" ; TODO pkmn template
+furniture\stairdown\tags="stair-down"
+furniture\stairdown\width=2
+tileset="terra->normal1.tsx,mobilier->normal2.tsx,wall->tileset-1.tsx,invisible->invisible.tsx"
+walls\generic1\layer="OnGrass"
+walls\generic1\tiles="wall/123,wall/155"
+walls\generic2\layer="OnGrass"
+walls\generic2\tiles="wall/17,wall/49"
+
+[temp]
+monstainborder\collision_tile="961,36,37,38,39,70,71,4,5,68,69"
+
+[terrain]
+; land biomes paint a flat tileset-1 ground tile (dotransition=false, so the
+; 12-id transition bands are present-but-unused, filled with the base tileId).
+; grass/water are data-derived; sand/snow/mountain reuse ground variants.
+grass\heightmoisurelist="1,2;1,3;1,4;2,2;2,3;2,4;2,5;2,6;3,3;3,4;3,5;3,6"
+grass\layer=Walkable
+grass\outsideBorder=true
+grass\tileId=1
+grass\transition_tile="1,1,1,1,1,1,1,1,1,1,1,1"
+grass\transition_tsx=tileset-1.tsx
+grass\tsx=tileset-1.tsx
+grass2\heightmoisurelist="1,5;1,6"
+grass2\layer=Walkable
+grass2\outsideBorder=true
+grass2\tileId=2
+grass2\transition_tile="2,2,2,2,2,2,2,2,2,2,2,2"
+grass2\transition_tsx=tileset-1.tsx
+grass2\tsx=tileset-1.tsx
+mountain\heightmoisurelist="4,1;4,2;4,3"
+mountain\layer=Walkable
+mountain\outsideBorder=true
+mountain\tileId=129     ; guess (walkable highland ground)
+mountain\transition_tile="129,129,129,129,129,129,129,129,129,129,129,129"
+mountain\transition_tsx=tileset-1.tsx
+mountain\tsx=tileset-1.tsx
+sand\heightmoisurelist="1,1"
+sand\layer=Walkable
+sand\outsideBorder=true
+sand\tileId=3           ; guess (ground variant)
+sand\transition_tile="3,3,3,3,3,3,3,3,3,3,3,3"
+sand\transition_tsx=tileset-1.tsx
+sand\tsx=tileset-1.tsx
+sand2\heightmoisurelist="2,1;3,1;3,2"
+sand2\layer=Walkable
+sand2\outsideBorder=true
+sand2\tileId=97         ; guess (ground variant)
+sand2\transition_tile="97,97,97,97,97,97,97,97,97,97,97,97"
+sand2\transition_tsx=tileset-1.tsx
+sand2\tsx=tileset-1.tsx
+snow\heightmoisurelist="4,4;4,5;4,6"
+snow\layer=Walkable
+snow\outsideBorder=true
+snow\tileId=65          ; guess (ground variant)
+snow\transition_tile="65,65,65,65,65,65,65,65,65,65,65,65"
+snow\transition_tsx=tileset-1.tsx
+snow\tsx=tileset-1.tsx
+water\heightmoisurelist="0,1;0,2;0,3;0,4;0,5;0,6"
+water\layer=Water
+water\outsideBorder=false
+water\tileId=192
+water\transition_tile="192,192,192,192,192,192,192,192,192,192,192,192"
+water\transition_tsx=normal18.tsx
+water\tsx=normal18.tsx
+
+[terrainGroup]
+
+[building]
+; PKMN item ids from items.xml (95=Acro Bike, 96=Bicycle, 98=Escape Rope,
+; 102=Honey, 107=Poke Doll) -> all valid sellables.
+; *Skin = a folder NAME under skin/fighter or skin/bot (NOT a numeric index).
+; PKMN skin/fighter holds named human sprites (boy,girl,ghost,rocketboy,
+; rocketgirl); skin/bot holds numbered sprites (1,4,7,...). Either resolves.
+botSkins="boy,girl,ghost"
+doGym=true
+gymLeaderSkin=rocketgirl
+gymTrainerSkin=rocketboy
+gymTrainers=3
+healSkin=girl
+shopItems="95,96,98,102,107"
+shopSkin=boy
+
+[wildMonsters]
+0\comment=key is the id
+0\heightmoisurelist=
+1\heightmoisurelist="1,1->10,10;1,2->10,10;1,3->10,10;1,4->10,10;1,5->10,10;1,6->10,10;2,1->10,10;2,2->10,10;2,3->10,10;2,4->10,10;2,5->10,10;2,6->10,10;3,1->10,10;3,2->10,10;3,3->10,10;3,4->10,10;3,5->10,10;3,6->10,10"
+4\heightmoisurelist="2,1->8,10;2,2->8,10;2,3->8,10;3,1->8,10;3,2->8,10;3,3->8,10"
+7\heightmoisurelist="0,1->8,10;0,2->8,10;0,3->8,10;0,4->8,10;1,1->4,10;1,2->4,10"
+25\heightmoisurelist="3,3->4,10;3,4->4,10;3,5->4,10;4,4->4,10;4,5->4,10;4,6->4,10"

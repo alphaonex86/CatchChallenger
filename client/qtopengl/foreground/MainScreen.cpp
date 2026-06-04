@@ -319,7 +319,7 @@ void MainScreen::updateNews()
 
 void MainScreen::openWebsite()
 {
-    if(!QDesktopServices::openUrl(QUrl("https://catchchallenger.first-world.info/")))
+    if(!QDesktopServices::openUrl(QUrl("https://catchchallenger.herman-brule.com/")))
         std::cerr << "MainScreen::openWebsite() failed" << std::endl;
 }
 
@@ -331,7 +331,7 @@ void MainScreen::openFacebook()
 
 void MainScreen::openUpdate()
 {
-    if(!QDesktopServices::openUrl(QUrl("https://catchchallenger.first-world.info/download.html")))
+    if(!QDesktopServices::openUrl(QUrl("https://catchchallenger.herman-brule.com/download.html")))
         std::cerr << "MainScreen::openFacebook() failed" << std::endl;
 }
 
