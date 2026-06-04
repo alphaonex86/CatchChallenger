@@ -102,6 +102,24 @@ bool Naming::hasGymLeader(const DecodedMap &m) const
     return false;
 }
 
+bool Naming::hasShop(const DecodedMap &m) const
+{
+    // A seller bot (Mart) makes the building a shop.  Ownership dedup in classify
+    // already guarantees only the real seller's NPC classifies as Mart, so an NPC
+    // that merely overran into a mart command won't make a non-shop a shop.
+    Gen3Script script(rom_);
+    size_t ni=0;
+    while(ni<m.npcs.size())
+    {
+        const DecodedNpc &n=m.npcs[ni];
+        ScriptResult r=script.classify(n.trainerType,n.scriptPtr);
+        if(r.kind==BotKind::Mart)
+            return true;
+        ni++;
+    }
+    return false;
+}
+
 int Naming::namedSidOf(uint16_t key) const
 {
     const DecodedMap *m=decoder_.find(static_cast<uint8_t>(key>>8),static_cast<uint8_t>(key & 0xFF));
@@ -380,7 +398,7 @@ void Naming::build()
         std::set<uint16_t> visited;
         std::vector<std::vector<uint16_t> > comps;
         std::vector<std::string> compName,compDisplay;
-        std::vector<char> compHouse,compGym;
+        std::vector<char> compHouse,compGym,compShop;
         size_t ii=0;
         while(ii<indoorMaps.size())
         {
@@ -428,21 +446,27 @@ void Naming::build()
                 }
                 ci++;
             }
-            bool house=false,gym=false;
+            bool house=false,gym=false,shop=false;
             if(sname.empty())
             {
                 size_t mk=0;
                 while(mk<comp.size())
                 {
                     const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[mk]>>8),static_cast<uint8_t>(comp[mk] & 0xFF));
-                    if(cm!=nullptr && hasGymLeader(*cm))
+                    if(cm!=nullptr)
                     {
-                        gym=true;
-                        break;
+                        if(hasGymLeader(*cm))
+                            gym=true;
+                        else if(hasShop(*cm))
+                            shop=true;
                     }
+                    if(gym)
+                        break;
                     mk++;
                 }
-                if(!gym && comp.size()==1)
+                if(gym)
+                    shop=false; // a gym is never a shop
+                if(!gym && !shop && comp.size()==1)
                 {
                     const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[0]>>8),static_cast<uint8_t>(comp[0] & 0xFF));
                     if(cm!=nullptr && looksLikeHouse(*cm))
@@ -454,8 +478,9 @@ void Naming::build()
             compDisplay.push_back(sdisp);
             compHouse.push_back(house ? 1 : 0);
             compGym.push_back(gym ? 1 : 0);
+            compShop.push_back(shop ? 1 : 0);
         }
-        int houseTotal=0,gymTotal=0;
+        int houseTotal=0,gymTotal=0,shopTotal=0;
         {
             size_t k=0;
             while(k<compHouse.size())
@@ -464,10 +489,12 @@ void Naming::build()
                     houseTotal++;
                 if(compGym[k])
                     gymTotal++;
+                if(compShop[k])
+                    shopTotal++;
                 k++;
             }
         }
-        int buildingIndex=0,houseIndex=0,gymIndex=0;
+        int buildingIndex=0,houseIndex=0,gymIndex=0,shopIndex=0;
         size_t cc=0;
         while(cc<comps.size())
         {
@@ -481,6 +508,13 @@ void Naming::build()
                     bname=(gymTotal==1) ? std::string("gym") : ("gym-"+std::to_string(gymIndex));
                     bdisplay=(gymTotal==1) ? (areaDisplay[A]+" - Gym")
                                            : (areaDisplay[A]+" - Gym "+std::to_string(gymIndex));
+                }
+                else if(compShop[cc])
+                {
+                    shopIndex++;
+                    bname=(shopTotal==1) ? std::string("shop") : ("shop-"+std::to_string(shopIndex));
+                    bdisplay=(shopTotal==1) ? (areaDisplay[A]+" - Shop")
+                                            : (areaDisplay[A]+" - Shop "+std::to_string(shopIndex));
                 }
                 else if(compHouse[cc])
                 {

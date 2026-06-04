@@ -41,6 +41,8 @@ private:
     bool looksLikeHouse(const DecodedMap &m) const;
     // The map hosts a gym-leader trainer (a Fight bot of the leader class).
     bool hasGymLeader(const DecodedMap &m) const;
+    // The map hosts a shop (a Mart seller bot) -> the building is named shop.
+    bool hasShop(const DecodedMap &m) const;
     // Section id of the named area a map belongs to (its own when it is a named
     // area map, else the nearest named area reachable by warps); -1 if none.
     int namedSidOf(uint16_t key) const;
