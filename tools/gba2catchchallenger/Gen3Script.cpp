@@ -1,15 +1,21 @@
 #include "Gen3Script.hpp"
 #include "Gen3Text.hpp"
+#include "Decoder.hpp"
 
 #include <unordered_set>
 
 static bool textLooksReadable(const GbaRom &rom, uint32_t off);
 
+std::unordered_map<uint32_t,uint32_t> Gen3Script::battleOwner_;
+std::unordered_map<uint32_t,uint32_t> Gen3Script::martOwner_;
+
 ScriptResult::ScriptResult() :
     kind(BotKind::None),
     trainerId(0),
+    leader(false),
     introText(0),
-    defeatText(0)
+    defeatText(0),
+    matchOffset(0)
 {
 }
 
@@ -47,7 +53,10 @@ std::vector<PartyMon> Gen3Script::party(uint16_t trainerId) const
     uint32_t partyPtr=rom_.pointer(off+0x24,&ok);
     if(!ok || partySize<1 || partySize>6)
         return out;
-    uint32_t esz=(flags & 0x02) ? 16 : 8;
+    // Entry size is set by the custom-moveset flag (0x01): default-moves entries
+    // are 8 bytes (iv,lvl,species[,item]); custom-moves entries are 16 (the four
+    // extra u16 moves).  The held-item flag (0x02) does NOT change the size.
+    uint32_t esz=(flags & 0x01) ? 16 : 8;
     uint32_t k=0;
     while(k<partySize)
     {
@@ -94,6 +103,135 @@ bool Gen3Script::looksLikeItemList(uint32_t off, std::vector<uint16_t> &items) c
     return !items.empty() && items.size()<=50;
 }
 
+// File offset of the first valid trainerbattle command in [scriptOffset, +400),
+// validated structurally so non-trainer script bytes don't false-match:
+//   * battle type < 10 and the reserved local_id word (always 0 for single
+//     battles, which every trainer here is) is 0;
+//   * trainer id in range with a non-empty party whose every level is 1..100;
+//   * the intro/defeat pointer at +6 points to readable text.
+uint32_t Gen3Script::findBattle(uint32_t scriptOffset, uint8_t *outType, uint16_t *outTid) const
+{
+    if(scriptOffset==0 || scriptOffset+6>rom_.size())
+        return 0;
+    const GameInfo &gi=rom_.game();
+    uint32_t end=scriptOffset+400;
+    if(end+6>rom_.size())
+        end=rom_.size()-6;
+    uint32_t p=scriptOffset;
+    while(p<end)
+    {
+        if(rom_.u8(p)==0x5C)
+        {
+            uint8_t bt=rom_.u8(p+1);
+            uint16_t tid=rom_.u16(p+2);
+            uint16_t reserved=rom_.u16(p+4);
+            bool pok=false;
+            uint32_t ip=rom_.pointer(p+6,&pok);
+            bool partyOk=false;
+            if(tid<gi.trainersCount)
+            {
+                std::vector<PartyMon> pty=party(tid);
+                partyOk=!pty.empty();
+                size_t i=0;
+                while(i<pty.size())
+                {
+                    if(pty[i].level<1 || pty[i].level>100)
+                        partyOk=false;
+                    i++;
+                }
+            }
+            if(bt<10 && reserved==0 && tid<gi.trainersCount && pok && textLooksReadable(rom_,ip) && partyOk)
+            {
+                if(outType!=nullptr)
+                    *outType=bt;
+                if(outTid!=nullptr)
+                    *outTid=tid;
+                return p;
+            }
+        }
+        p++;
+    }
+    return 0;
+}
+
+uint32_t Gen3Script::findMart(uint32_t scriptOffset, std::vector<uint16_t> *outItems) const
+{
+    if(scriptOffset==0 || scriptOffset+6>rom_.size())
+        return 0;
+    uint32_t end=scriptOffset+400;
+    if(end+6>rom_.size())
+        end=rom_.size()-6;
+    uint32_t p=scriptOffset;
+    while(p<end)
+    {
+        if(rom_.u8(p)==0x86)
+        {
+            bool ok=false;
+            uint32_t lp=rom_.pointer(p+1,&ok);
+            std::vector<uint16_t> items;
+            if(ok && looksLikeItemList(lp,items))
+            {
+                if(outItems!=nullptr)
+                    *outItems=items;
+                return p;
+            }
+        }
+        p++;
+    }
+    return 0;
+}
+
+void Gen3Script::indexBattleOwners(const GbaRom &rom, const std::vector<DecodedMap> &maps)
+{
+    // For each trainerbattle / mart command, the owning NPC is the one whose
+    // script starts closest before it (smallest delta).  Any other NPC that
+    // reaches the same command does so only because the 400-byte scan overran its
+    // own, ended, script — classify() rejects those, so a gym keeps a single
+    // leader and a mart a single seller (no phantom shop on a gym, no duplicates).
+    battleOwner_.clear();
+    martOwner_.clear();
+    std::unordered_map<uint32_t,uint32_t> bestBattle; // command -> smallest delta seen
+    std::unordered_map<uint32_t,uint32_t> bestMart;
+    Gen3Script s(rom);
+    size_t mi=0;
+    while(mi<maps.size())
+    {
+        const DecodedMap &m=maps[mi];
+        size_t ni=0;
+        while(ni<m.npcs.size())
+        {
+            uint32_t sp=m.npcs[ni].scriptPtr;
+            if(sp!=0)
+            {
+                uint32_t cmd=s.findBattle(sp,nullptr,nullptr);
+                if(cmd!=0)
+                {
+                    uint32_t d=cmd-sp;
+                    std::unordered_map<uint32_t,uint32_t>::iterator it=bestBattle.find(cmd);
+                    if(it==bestBattle.end() || d<it->second)
+                    {
+                        bestBattle[cmd]=d;
+                        battleOwner_[cmd]=sp;
+                    }
+                }
+                uint32_t mcmd=s.findMart(sp,nullptr);
+                if(mcmd!=0)
+                {
+                    uint32_t d=mcmd-sp;
+                    std::unordered_map<uint32_t,uint32_t>::iterator it=bestMart.find(mcmd);
+                    if(it==bestMart.end() || d<it->second)
+                    {
+                        bestMart[mcmd]=d;
+                        martOwner_[mcmd]=sp;
+                    }
+                }
+            }
+            ni++;
+        }
+        mi++;
+    }
+}
+
 ScriptResult Gen3Script::classify(uint16_t trainerType, uint32_t scriptOffset) const
 {
     ScriptResult r;
@@ -104,63 +242,58 @@ ScriptResult Gen3Script::classify(uint16_t trainerType, uint32_t scriptOffset) c
     if(end+6>rom_.size())
         end=rom_.size()-6;
 
-    // Trainer battle (opcode 0x5C <u8 type> <u16 trainerId>).
-    if(trainerType!=0)
+    // Trainer battle.  Scanned for EVERY NPC (not only sight-trainers) so
+    // script-triggered battles — gym leaders especially — are found.  Ownership
+    // (indexBattleOwners) ensures only the NPC whose script truly contains the
+    // command is the trainer; the rest just overran into it and stay non-fight.
+    (void)trainerType;
     {
-        uint32_t p=scriptOffset;
-        while(p<end)
+        uint8_t bt=0;
+        uint16_t tid=0;
+        uint32_t p=findBattle(scriptOffset,&bt,&tid);
+        std::unordered_map<uint32_t,uint32_t>::const_iterator own=battleOwner_.find(p);
+        if(p!=0 && (own==battleOwner_.end() || own->second==scriptOffset))
         {
-            if(rom_.u8(p)==0x5C)
+            r.kind=BotKind::Fight;
+            r.trainerId=tid;
+            r.matchOffset=p;
+            if(gi.leaderClass!=0xFF && rom_.u8(gi.trainers+static_cast<uint32_t>(tid)*0x28+0x01)==gi.leaderClass)
+                r.leader=true;
+            // trainerbattle text pointers: pre-battle (intro) and defeat.
+            // Most types: intro@+6, defeat@+10; the no-intro types 3/9:
+            // defeat@+6.  Validate each so a different layout yields none.
+            bool ok=false;
+            if(bt==3 || bt==9)
             {
-                uint16_t tid=rom_.u16(p+2);
-                if(tid<gi.trainersCount)
-                {
-                    r.kind=BotKind::Fight;
-                    r.trainerId=tid;
-                    // trainerbattle text pointers: pre-battle (intro) and defeat.
-                    // Most types: intro@+6, defeat@+10; the no-intro types 3/9:
-                    // defeat@+6.  Validate each so a different layout yields none.
-                    uint8_t bt=rom_.u8(p+1);
-                    bool ok=false;
-                    if(bt==3 || bt==9)
-                    {
-                        uint32_t dt=rom_.pointer(p+6,&ok);
-                        if(ok && textLooksReadable(rom_,dt))
-                            r.defeatText=dt;
-                    }
-                    else
-                    {
-                        uint32_t it=rom_.pointer(p+6,&ok);
-                        if(ok && textLooksReadable(rom_,it))
-                            r.introText=it;
-                        uint32_t dt=rom_.pointer(p+10,&ok);
-                        if(ok && textLooksReadable(rom_,dt))
-                            r.defeatText=dt;
-                    }
-                    return r;
-                }
+                uint32_t dt=rom_.pointer(p+6,&ok);
+                if(ok && textLooksReadable(rom_,dt))
+                    r.defeatText=dt;
             }
-            p++;
+            else
+            {
+                uint32_t it=rom_.pointer(p+6,&ok);
+                if(ok && textLooksReadable(rom_,it))
+                    r.introText=it;
+                uint32_t dt=rom_.pointer(p+10,&ok);
+                if(ok && textLooksReadable(rom_,dt))
+                    r.defeatText=dt;
+            }
+            return r;
         }
     }
-    // Mart (opcode 0x86 <u32 ptr to item list>).
+    // Mart (opcode 0x86 <u32 ptr to item list>).  Ownership keeps a single seller
+    // per shop and prevents a gym/other NPC that overran into a mart command from
+    // becoming a phantom shop.
     {
-        uint32_t p=scriptOffset;
-        while(p<end)
+        std::vector<uint16_t> items;
+        uint32_t p=findMart(scriptOffset,&items);
+        std::unordered_map<uint32_t,uint32_t>::const_iterator own=martOwner_.find(p);
+        if(p!=0 && (own==martOwner_.end() || own->second==scriptOffset))
         {
-            if(rom_.u8(p)==0x86)
-            {
-                bool ok=false;
-                uint32_t lp=rom_.pointer(p+1,&ok);
-                std::vector<uint16_t> items;
-                if(ok && looksLikeItemList(lp,items))
-                {
-                    r.kind=BotKind::Mart;
-                    r.itemIds=items;
-                    return r;
-                }
-            }
-            p++;
+            r.kind=BotKind::Mart;
+            r.matchOffset=p;
+            r.itemIds=items;
+            return r;
         }
     }
     // Heal and PC are intentionally NOT classified from scripts: the candidate

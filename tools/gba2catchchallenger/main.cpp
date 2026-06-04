@@ -11,6 +11,7 @@
 #include "DatapackBase.hpp"
 #include "Decoder.hpp"
 #include "Gba.hpp"
+#include "Gen3Script.hpp"
 #include "Naming.hpp"
 #include "SkinResolver.hpp"
 #include "TilesetBuilder.hpp"
@@ -77,6 +78,10 @@ int main(int argc, char *argv[])
         std::cerr << "Map decoding failed" << std::endl;
         return 1;
     }
+
+    // Resolve, across all maps, the single owner of each trainerbattle command so
+    // overrunning NPCs/signs don't duplicate a gym leader (one leader per gym).
+    Gen3Script::indexBattleOwners(rom,decoder.maps());
 
     std::string outDir=datapack+"/map/main/"+rom.game().label;
     std::string tilesetDir=outDir+"/tileset";

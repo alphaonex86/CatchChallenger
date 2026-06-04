@@ -738,7 +738,8 @@ void CCWriter::writeMapXml(const DecodedMap &map)
                 out << " <bot id=\"" << b.id << "\">\n";
                 if(!tname.empty())
                     out << "  <name><![CDATA[" << tname << "]]></name>\n";
-                out << "  <step type=\"fight\" id=\"1\">\n";
+                out << "  <step type=\"fight\" id=\"1\""
+                    << (res.leader ? " leader=\"true\"" : "") << ">\n";
                 if(res.introText!=0)
                 {
                     std::vector<std::string> pg=Gen3Text::decodeSign(rom_,res.introText,512);
@@ -764,12 +765,24 @@ void CCWriter::writeMapXml(const DecodedMap &map)
                         << static_cast<int>(party[pi].level) << "\"/>\n";
                     pi++;
                 }
+                // Prize money, Gen3 formula: lastMonLevel * classMoney * 4.  The
+                // per-class money table isn't located in the ROM, so classMoney is
+                // approximated — 25 for gym leaders (giving the canonical
+                // level*100, e.g. a L40 ace -> 4000) and 15 for other trainers.
+                int lastLevel=party.empty() ? 0 : static_cast<int>(party.back().level);
+                int cash=lastLevel*(res.leader ? 100 : 60);
+                if(cash>0)
+                    out << "   <gain cash=\"" << cash << "\"/>\n";
                 out << "  </step>\n </bot>\n";
                 emitted=true;
             }
         }
         else if(res.kind==BotKind::Mart)
         {
+            // Full seller bot: a text step offering Buy/Sell, the shop (buy) step
+            // with the ROM's product list, and a sell step — matching the engine's
+            // shop convention.  Ownership (martOwner_) already guarantees a single
+            // seller per shop, so there are no duplicate sellers / phantom shops.
             std::string body;
             size_t ii=0;
             while(ii<res.itemIds.size())
@@ -781,8 +794,16 @@ void CCWriter::writeMapXml(const DecodedMap &map)
             }
             if(!body.empty())
             {
-                out << " <bot id=\"" << b.id << "\">\n  <step type=\"shop\" id=\"1\">\n"
-                    << body << "  </step>\n </bot>\n";
+                out << " <bot id=\"" << b.id << "\">\n"
+                    << "  <name><![CDATA[Seller]]></name>\n"
+                    << "  <step type=\"text\" id=\"1\">\n"
+                    << "   <text><![CDATA[Welcome!<br /><a href=\"2\">Buy</a><br /><a href=\"3\">Sell</a>]]></text>\n"
+                    << "  </step>\n"
+                    << "  <step type=\"shop\" id=\"2\">\n"
+                    << body
+                    << "  </step>\n"
+                    << "  <step type=\"sell\" id=\"3\"/>\n"
+                    << " </bot>\n";
                 emitted=true;
             }
         }

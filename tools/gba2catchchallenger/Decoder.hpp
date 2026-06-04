@@ -68,6 +68,7 @@ struct DecodedMap {
     uint32_t secondaryTileset;// file offset of the secondary Tileset struct (0 if none)
     uint8_t regionSection;
     uint8_t mapType;        // MapHeader+0x17 (1 town,2 city,3 route,8 indoor,...)
+    uint8_t cave;           // MapHeader+0x15 (flash/darkness flag -> cave maps)
     uint16_t music;
     std::vector<DecodedWarp> warps;
     std::vector<DecodedConnection> connections;
