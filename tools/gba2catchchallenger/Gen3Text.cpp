@@ -45,6 +45,90 @@ std::string Gen3Text::decode(const GbaRom &rom, uint32_t offset, size_t maxLen)
     return out;
 }
 
+// Fuller charmap for sign text (adds punctuation the name decoder doesn't need).
+static char signChar(uint8_t b)
+{
+    if(b==0x00)
+        return ' ';
+    if(b>=0xA1 && b<=0xAA)
+        return static_cast<char>('0'+(b-0xA1));
+    if(b>=0xBB && b<=0xD4)
+        return static_cast<char>('A'+(b-0xBB));
+    if(b>=0xD5 && b<=0xEE)
+        return static_cast<char>('a'+(b-0xD5));
+    switch(b)
+    {
+        case 0x1B: return 'e'; // accented e (POKeMON)
+        case 0xAB: return '!';
+        case 0xAC: return '?';
+        case 0xAD: return '.';
+        case 0xAE: return '-';
+        case 0xB1: return '"';
+        case 0xB2: return '"';
+        case 0xB3: return '\'';
+        case 0xB4: return '\'';
+        case 0xB8: return ',';
+        case 0xBA: return '/';
+        default:   return 0;   // drop other control/symbol bytes
+    }
+}
+
+static std::string trimSignPage(std::string s)
+{
+    bool changed=true;
+    const std::string br="<br />";
+    while(changed)
+    {
+        changed=false;
+        while(!s.empty() && s.back()==' ') { s.pop_back(); changed=true; }
+        if(s.size()>=br.size() && s.compare(s.size()-br.size(),br.size(),br)==0)
+        { s.erase(s.size()-br.size()); changed=true; }
+    }
+    size_t i=0;
+    while(i<s.size() && s[i]==' ')
+        i++;
+    return s.substr(i);
+}
+
+std::vector<std::string> Gen3Text::decodeSign(const GbaRom &rom, uint32_t offset, size_t maxLen)
+{
+    std::vector<std::string> pages;
+    std::string cur;
+    size_t n=0;
+    while(n<maxLen)
+    {
+        uint8_t b=rom.u8(offset+static_cast<uint32_t>(n));
+        if(b==0xFF)
+            break;                          // end of string
+        else if(b==0xFB || b==0xFA)         // paragraph / scroll -> next page
+        {
+            std::string t=trimSignPage(cur);
+            if(!t.empty())
+                pages.push_back(t);
+            cur.clear();
+        }
+        else if(b==0xFE)                    // newline
+            cur+="<br />";
+        else if(b==0xB0)                    // ellipsis
+            cur+="...";
+        else if(b==0xFD)                    // buffered variable -> skip its id byte
+            n++;
+        else if(b==0xFC)                    // extended formatting control -> skip cmd byte
+            n++;
+        else
+        {
+            char c=signChar(b);
+            if(c!=0)
+                cur.push_back(c);
+        }
+        n++;
+    }
+    std::string t=trimSignPage(cur);
+    if(!t.empty())
+        pages.push_back(t);
+    return pages;
+}
+
 std::string Gen3Text::slug(const std::string &s)
 {
     std::string out;

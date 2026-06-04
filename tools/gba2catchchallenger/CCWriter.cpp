@@ -1,4 +1,5 @@
 #include "CCWriter.hpp"
+#include "Gen3Text.hpp"
 #include "OverworldSprite.hpp"
 
 #include <QByteArray>
@@ -773,10 +774,37 @@ void CCWriter::writeMapXml(const DecodedMap &map)
             out << " <bot id=\"" << b.id << "\">\n  <step type=\"pc\" id=\"1\"/>\n </bot>\n";
             emitted=true;
         }
-        // Plain talking NPC or script sign: one empty text step (no ROM prose).
+        // SIGN -> the ROM sign string, split into [Next] pages (project owner's
+        // call to include sign text).  Plain talking NPC -> one empty text step
+        // (creative dialogue is not transcribed).
         if(!emitted)
-            out << " <bot id=\"" << b.id << "\">\n  <step type=\"text\" id=\"1\">\n"
-                << "   <text><![CDATA[]]></text>\n  </step>\n </bot>\n";
+        {
+            std::vector<std::string> pages;
+            if(b.isSign)
+            {
+                uint32_t tptr=script_.signTextOffset(b.scriptPtr);
+                if(tptr!=0)
+                    pages=Gen3Text::decodeSign(rom_,tptr,512);
+            }
+            if(!pages.empty())
+            {
+                out << " <bot id=\"" << b.id << "\">\n  <name><![CDATA[Sign]]></name>\n";
+                size_t pi=0;
+                while(pi<pages.size())
+                {
+                    std::string t=pages[pi];
+                    if(pi+1<pages.size())
+                        t+="<br /><a href=\"next\">[Next]</a>";
+                    out << "  <step type=\"text\" id=\"" << (pi+1) << "\">\n   <text><![CDATA["
+                        << t << "]]></text>\n  </step>\n";
+                    pi++;
+                }
+                out << " </bot>\n";
+            }
+            else
+                out << " <bot id=\"" << b.id << "\">\n  <step type=\"text\" id=\"1\">\n"
+                    << "   <text><![CDATA[]]></text>\n  </step>\n </bot>\n";
+        }
         bi++;
     }
     out << "</map>\n";

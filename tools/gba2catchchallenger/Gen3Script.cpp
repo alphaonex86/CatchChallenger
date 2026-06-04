@@ -135,3 +135,28 @@ ScriptResult Gen3Script::classify(uint16_t trainerType, uint32_t scriptOffset) c
     (void)gi;
     return r;
 }
+
+uint32_t Gen3Script::signTextOffset(uint32_t scriptOffset) const
+{
+    if(scriptOffset==0 || scriptOffset+6>rom_.size())
+        return 0;
+    uint32_t end=scriptOffset+96;
+    if(end+6>rom_.size())
+        end=rom_.size()-6;
+    // A sign script shows its text via loadpointer (0x0F <bank> <u32 ptr>)
+    // feeding a callstd msgbox.  Return the first such bank-0 pointer's text
+    // file offset.
+    uint32_t p=scriptOffset;
+    while(p<end)
+    {
+        if(rom_.u8(p)==0x0F && rom_.u8(p+1)==0x00)
+        {
+            bool ok=false;
+            uint32_t t=rom_.pointer(p+2,&ok);
+            if(ok && t+1<rom_.size())
+                return t;
+        }
+        p++;
+    }
+    return 0;
+}

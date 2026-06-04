@@ -30,6 +30,9 @@ public:
     explicit Gen3Script(const GbaRom &rom);
 
     ScriptResult classify(uint16_t trainerType, uint32_t scriptOffset) const;
+    // File offset of a sign script's displayed text (its loadpointer/msgbox
+    // target), or 0 if none found.  Used only for SIGN bots, not NPC dialogue.
+    uint32_t signTextOffset(uint32_t scriptOffset) const;
     std::vector<PartyMon> party(uint16_t trainerId) const;
     std::string itemName(uint16_t id) const;
     std::string speciesName(uint16_t internalId) const;
