@@ -228,12 +228,14 @@ void CCWriter::writeMap(const DecodedMap &map)
     uint32_t rescueGid=invFirst+1;
     uint32_t teleportGid=invFirst+2;
     uint32_t borderGid=invFirst+3;
-    // Semantic tile layers (Collisions/Grass/Water/Ledges) use a TRANSPARENT
-    // invisible.tsx tile, not the cell's own Walkable tile: the engine only
-    // needs a non-empty gid, and a transparent marker avoids putting the same
-    // tile at the same position on two layers (and keeps the editor render ==
-    // the game render).
-    uint32_t semanticMk=invFirst+4;
+    // Semantic tile layers (Collisions/Grass/Water/Ledges) re-use the cell's own
+    // REAL Walkable tile (the official CatchChallenger convention, e.g.
+    // altate-islands), NOT a transparent marker: the engine only needs a non-empty
+    // gid, but a transparent marker is invisible in the editor — toggling/isolating
+    // the layer in Tiled then shows nothing, so you can't see where the collision /
+    // water / grass / ledge is.  Re-using the real tile makes each layer visible
+    // when shown alone, and is a no-op in the game render (the same tile drawn on
+    // Walkable and on the semantic layer = identical pixels, no artifact).
 
     // Build the layers.
     std::vector<uint32_t> walkable(cells,0);
@@ -267,35 +269,35 @@ void CCWriter::writeMap(const DecodedMap &map)
         bool isWater=(t==Terrain::Water);
         if(t==Terrain::Grass)
         {
-            grass[c]=semanticMk;
+            grass[c]=walkable[c];
             anyGrass=true;
         }
         else if(isWater)
         {
-            water[c]=semanticMk;
+            water[c]=walkable[c];
             anyWater=true;
         }
         else if(t==Terrain::LedgeUp)
         {
-            ledgeUp[c]=semanticMk; anyLedge=true;
+            ledgeUp[c]=walkable[c]; anyLedge=true;
         }
         else if(t==Terrain::LedgeDown)
         {
-            ledgeDown[c]=semanticMk; anyLedge=true;
+            ledgeDown[c]=walkable[c]; anyLedge=true;
         }
         else if(t==Terrain::LedgeLeft)
         {
-            ledgeLeft[c]=semanticMk; anyLedge=true;
+            ledgeLeft[c]=walkable[c]; anyLedge=true;
         }
         else if(t==Terrain::LedgeRight)
         {
-            ledgeRight[c]=semanticMk; anyLedge=true;
+            ledgeRight[c]=walkable[c]; anyLedge=true;
         }
         // Block on foot when the collision bit is set, except for surfable
         // water (kept out of Collisions; the Water layer's swim gating in
         // map/layers.xml is what stops on-foot walking there).
         if(collisionBits!=0 && !isWater)
-            collisions[c]=semanticMk;
+            collisions[c]=walkable[c];
         c++;
     }
 
