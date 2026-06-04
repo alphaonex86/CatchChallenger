@@ -85,6 +85,23 @@ bool Naming::looksLikeHouse(const DecodedMap &m) const
     return true;
 }
 
+bool Naming::hasGymLeader(const DecodedMap &m) const
+{
+    if(rom_.game().leaderClass==0xFF)
+        return false;
+    Gen3Script script(rom_);
+    size_t ni=0;
+    while(ni<m.npcs.size())
+    {
+        const DecodedNpc &n=m.npcs[ni];
+        ScriptResult r=script.classify(n.trainerType,n.scriptPtr);
+        if(r.kind==BotKind::Fight && r.leader)
+            return true;
+        ni++;
+    }
+    return false;
+}
+
 int Naming::namedSidOf(uint16_t key) const
 {
     const DecodedMap *m=decoder_.find(static_cast<uint8_t>(key>>8),static_cast<uint8_t>(key & 0xFF));
@@ -363,7 +380,7 @@ void Naming::build()
         std::set<uint16_t> visited;
         std::vector<std::vector<uint16_t> > comps;
         std::vector<std::string> compName,compDisplay;
-        std::vector<char> compHouse;
+        std::vector<char> compHouse,compGym;
         size_t ii=0;
         while(ii<indoorMaps.size())
         {
@@ -411,29 +428,46 @@ void Naming::build()
                 }
                 ci++;
             }
-            bool house=false;
-            if(sname.empty() && comp.size()==1)
+            bool house=false,gym=false;
+            if(sname.empty())
             {
-                const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[0]>>8),static_cast<uint8_t>(comp[0] & 0xFF));
-                if(cm!=nullptr && looksLikeHouse(*cm))
-                    house=true;
+                size_t mk=0;
+                while(mk<comp.size())
+                {
+                    const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[mk]>>8),static_cast<uint8_t>(comp[mk] & 0xFF));
+                    if(cm!=nullptr && hasGymLeader(*cm))
+                    {
+                        gym=true;
+                        break;
+                    }
+                    mk++;
+                }
+                if(!gym && comp.size()==1)
+                {
+                    const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[0]>>8),static_cast<uint8_t>(comp[0] & 0xFF));
+                    if(cm!=nullptr && looksLikeHouse(*cm))
+                        house=true;
+                }
             }
             comps.push_back(comp);
             compName.push_back(sname);
             compDisplay.push_back(sdisp);
             compHouse.push_back(house ? 1 : 0);
+            compGym.push_back(gym ? 1 : 0);
         }
-        int houseTotal=0;
+        int houseTotal=0,gymTotal=0;
         {
             size_t k=0;
             while(k<compHouse.size())
             {
                 if(compHouse[k])
                     houseTotal++;
+                if(compGym[k])
+                    gymTotal++;
                 k++;
             }
         }
-        int buildingIndex=0,houseIndex=0;
+        int buildingIndex=0,houseIndex=0,gymIndex=0;
         size_t cc=0;
         while(cc<comps.size())
         {
@@ -441,7 +475,14 @@ void Naming::build()
             std::string bname=compName[cc],bdisplay=compDisplay[cc];
             if(bname.empty())
             {
-                if(compHouse[cc])
+                if(compGym[cc])
+                {
+                    gymIndex++;
+                    bname=(gymTotal==1) ? std::string("gym") : ("gym-"+std::to_string(gymIndex));
+                    bdisplay=(gymTotal==1) ? (areaDisplay[A]+" - Gym")
+                                           : (areaDisplay[A]+" - Gym "+std::to_string(gymIndex));
+                }
+                else if(compHouse[cc])
                 {
                     houseIndex++;
                     bname=(houseTotal==1) ? std::string("house") : ("house-"+std::to_string(houseIndex));
@@ -506,6 +547,8 @@ std::string Naming::typeFor(uint8_t group, uint8_t map) const
         return std::string("indoor");
     if(m->mapType==1 || m->mapType==2)
         return std::string("city");
+    if(m->mapType==4)                       // underground -> cave (wild encounters)
+        return std::string("cave");
     if(m->mapType>=3 && m->mapType<=6)
         return std::string("outdoor");
     return std::string("indoor");

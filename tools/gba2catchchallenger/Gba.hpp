@@ -51,6 +51,7 @@ struct GameInfo {
     uint32_t speciesToNatDex;    // gSpeciesToNationalPokedexNumber (u16 array)
     uint32_t trainers;           // gTrainers (stride 0x28)
     uint32_t trainersCount;
+    uint8_t leaderClass;         // gym-leader trainer class (0xFF = unknown/none)
     uint32_t itemNames;          // gItems name records (stride 44, name[14]@+0)
     uint16_t healSpecial;        // special id that heals the party
     // Primary-tileset water animation (tiles animWaterTile..+animWaterTileCount).

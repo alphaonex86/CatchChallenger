@@ -13,6 +13,7 @@ DecodedMap::DecodedMap() :
     secondaryTileset(0),
     regionSection(0),
     mapType(0),
+    cave(0),
     music(0)
 {
 }
@@ -170,6 +171,7 @@ DecodedMap Decoder::decodeMap(uint8_t group, uint8_t map, uint32_t headerOffset)
         dm.secondaryTileset=0;
     dm.music=rom_.u16(headerOffset+0x10);
     dm.regionSection=rom_.u8(headerOffset+0x14);
+    dm.cave=rom_.u8(headerOffset+0x15);
     dm.mapType=rom_.u8(headerOffset+0x17);
 
     uint32_t events=rom_.pointer(headerOffset+0x04,&ok);

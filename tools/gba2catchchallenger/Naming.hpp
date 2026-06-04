@@ -39,6 +39,8 @@ private:
     // A small generic interior (<=12x10) with a teleport-on-push/it exit on the
     // bottom rows and no shop / trainer-fight bot — i.e. a plain "house".
     bool looksLikeHouse(const DecodedMap &m) const;
+    // The map hosts a gym-leader trainer (a Fight bot of the leader class).
+    bool hasGymLeader(const DecodedMap &m) const;
     // Section id of the named area a map belongs to (its own when it is a named
     // area map, else the nearest named area reachable by warps); -1 if none.
     int namedSidOf(uint16_t key) const;

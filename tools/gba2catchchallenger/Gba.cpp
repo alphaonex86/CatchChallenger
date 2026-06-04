@@ -79,8 +79,9 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom)
         info.wildTable=0x3C9D28;
         info.speciesNames=0x245F50;
         info.speciesToNatDex=0x25205E;
-        info.trainers=0x23EB60;
-        info.trainersCount=742;
+        info.trainers=0x23EB38; // gTrainers[0]; 0x23EB60 was entry 1 (off by one 0x28)
+        info.trainersCount=743;
+        info.leaderClass=84; // TRAINER_CLASS_LEADER (FireRed): the 8 gym leaders
         info.itemNames=0x3DB098;
         info.healSpecial=0x0160;
         info.animWaterTile=508;
@@ -116,8 +117,9 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom)
         info.wildTable=0x39D46C;
         info.speciesNames=0x1F7184;
         info.speciesToNatDex=0x1FC52E;
-        info.trainers=0x1F053C;
-        info.trainersCount=693;
+        info.trainers=0x1F0514; // gTrainers[0]; 0x1F053C was entry 1 (off by one 0x28)
+        info.trainersCount=694;
+        info.leaderClass=0xFF; // RSE gym-leader class not yet pinned -> no gym/leader flag
         info.itemNames=0x3C5580;
         info.healSpecial=0x008E;
         info.animWaterTile=508;
