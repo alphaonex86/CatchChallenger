@@ -734,7 +734,29 @@ void CCWriter::writeMapXml(const DecodedMap &map)
             std::vector<PartyMon> party=script_.party(res.trainerId);
             if(!party.empty())
             {
-                out << " <bot id=\"" << b.id << "\">\n  <step type=\"fight\" id=\"1\">\n";
+                std::string tname=script_.trainerName(res.trainerId);
+                out << " <bot id=\"" << b.id << "\">\n";
+                if(!tname.empty())
+                    out << "  <name><![CDATA[" << tname << "]]></name>\n";
+                out << "  <step type=\"fight\" id=\"1\">\n";
+                if(res.introText!=0)
+                {
+                    std::vector<std::string> pg=Gen3Text::decodeSign(rom_,res.introText,512);
+                    std::string s;
+                    size_t k=0;
+                    while(k<pg.size()){ if(k)s+="<br />"; s+=pg[k]; k++; }
+                    if(!s.empty())
+                        out << "   <start><![CDATA[" << s << "]]></start>\n";
+                }
+                if(res.defeatText!=0)
+                {
+                    std::vector<std::string> pg=Gen3Text::decodeSign(rom_,res.defeatText,512);
+                    std::string s;
+                    size_t k=0;
+                    while(k<pg.size()){ if(k)s+="<br />"; s+=pg[k]; k++; }
+                    if(!s.empty())
+                        out << "   <win><![CDATA[" << s << "]]></win>\n";
+                }
                 size_t pi=0;
                 while(pi<party.size())
                 {
