@@ -91,11 +91,14 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   Collisions and the object on the 2nd Collisions layer (both below the player,
   OR-merged) so it is visually identical and the background never lands on the
   Water/Grass logic layer. (412 baked tiles across the full set split this way.)
-  A **bg/fg-split GUARD** is the test case for it: every split is recomposed from its
-  FINAL stored terrain + FINAL stored overlay and compared to the metatile re-rendered
-  straight from the ROM (end-to-end — it catches a wrong detection, an over-aggressive
-  near-dup fold, or a layout/gid slip), and the object must keep ≥12 opaque px. Watch
-  for `GUARD bg/fg-split: PASS`.  **Compact packing:** blocks are placed with a SKYLINE bottom-left
+  A **layer-recompose GUARD** is the test case for ALL layer splits: every tile split
+  across two layers — a ROM-sublayer overlay (terrain under + transparent object over),
+  a bg/fg split (reused terrain under + shared object over), or a building wall+roof —
+  is recomposed from its FINAL stored under + FINAL stored over and compared to the
+  metatile re-rendered straight from the ROM (end-to-end — it catches a wrong split, an
+  over-aggressive near-dup fold, or a layout/gid slip); bg/fg objects must keep ≥12
+  opaque px. (firered: 1534 split tiles verified, 78 of them bg/fg.) Watch for
+  `GUARD layer-recompose: PASS`.  **Compact packing:** blocks are placed with a SKYLINE bottom-left
   strip-packer (the rectangle bin-packing used for sprite atlases), free single
   tiles fill every remaining gap — **anchored first** next to a dominant on-map
   neighbour (even an unreciprocated one), so a reused building corner drops into
