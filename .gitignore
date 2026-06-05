@@ -220,3 +220,6 @@ security/*.log
 security/*.txt
 security/SECURITY-IA.md
 security/__pycache__/
+
+# clangd / tooling index cache
+.cache/

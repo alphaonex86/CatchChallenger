@@ -1229,7 +1229,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
                               << "have right map: "
                               << map_name.at(currentTempMap.border.right.mapIndex)
                               << ", but the left map have different left map: "
-                              << map_name.at(rightTempMap.border.top.mapIndex)
+                              << map_name.at(rightTempMap.border.left.mapIndex)
                               << std::endl;
                 currentTempMap.border.right.mapIndex=65535;
                 rightTempMap.border.left.mapIndex=65535;

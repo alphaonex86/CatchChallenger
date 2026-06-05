@@ -119,6 +119,12 @@ int main(int argc, char *argv[])
     skinBotDir+="/skin/bot";
     SkinResolver skins(skinBotDir,26);
 
+    // A complete main carries the standard per-main folders even when empty, so
+    // the datapack loader (and tools like datapack-explorer-generator) don't error
+    // on a missing quests/ directory.  Subs inherit these from their main.
+    if(!gi.isSub())
+        QDir().mkpath(QString::fromStdString(outDir+"/quests"));
+
     if(gi.isSub())
     {
         // Sub overlay: no .tmx / tileset / skins — geometry is shared from the
