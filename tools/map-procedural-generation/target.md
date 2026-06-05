@@ -98,6 +98,39 @@ Rules:
 - The main overworld map conventionally shares the folder name
   (`town-a/town-a.tmx`), but only the path in border/door targets actually matters.
 
+### 2.1 Region & location naming taxonomy
+
+A readable world names every folder for *what it is*. Derive names in this order (a
+real ROM-import does the same — see the reference worlds under `datapack-pkmn/map/main/`,
+which split a two-region world into `<region>/` trees with named locations and typed
+fallbacks):
+
+1. **Real name when known.** If the source gives a place a name, slugify it
+   (`new-bark-town`, `route-29`, `ice-path`). The overworld map repeats the folder name.
+2. **Type fallback for an unnamed location.** With no name, name it by its map *type*:
+   a `city`/town cluster → `city-N`; interconnected `cave` → `cave-N`; an outdoor route →
+   `road-N`. Never a bare `area-N`.
+3. **One shared `building/` for orphan interiors.** Every interior with no name **and**
+   no warp to any named place (disconnected in the warp graph) collects under a single
+   `building/` parent (`building-N` / `house-N` inside), so it never clutters the region
+   root beside the real towns.
+4. **A map keeps its own named section** when it has no warp-reachable named neighbour but
+   the source still tags it (a detached town building stays under its town, not `building/`).
+
+**Regions (the top folder level).** A single-region world uses one region folder. A
+**multi-region** world assigns each location a region:
+
+- **By name/affinity** when recognisable (a known place → its region).
+- **By graph propagation** — an unnamed cave/road/city inherits the region of the place it
+  warps or borders to (build the *map-of-maps*: nodes = locations, edges = warps+borders).
+- **By isolation** — a leftover cluster densely linked internally but weakly to the rest
+  (e.g. ≥~30 maps reachable among themselves) is its own region; if it can't be named,
+  call it `region-1`, `region-2`, … A tiny stray cluster joins the dominant region rather
+  than spawning a one-map "region".
+
+Cross-region borders/doors use ordinary relative paths (`../../<region>/<location>/<map>`);
+the engine resolves them the same as same-region links.
+
 ---
 
 ## 3. Coordinate system, units, and paths
