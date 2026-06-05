@@ -10,7 +10,7 @@
 #include <unordered_set>
 
 const uint32_t TilesetBuilder::kCapacity=1024;
-const int TilesetBuilder::kColumns=16;
+const int TilesetBuilder::kColumns=32;
 
 // ---------------------------------------------------------------------------
 // Gen3Tileset
@@ -488,6 +488,25 @@ static int dedupAdd(const QImage &img, std::unordered_map<std::string,int> &seen
     return idx;
 }
 
+// The single most-frequent neighbour in a (neighbour -> count) histogram; ties
+// broken toward the smallest index for determinism.  -1 when the histogram is
+// empty (the tile never had a neighbour in that direction).
+static int dominantNeighbour(const std::unordered_map<int,int> &counts)
+{
+    int best=-1,bestCount=0;
+    std::unordered_map<int,int>::const_iterator it=counts.cbegin();
+    while(it!=counts.cend())
+    {
+        if(it->second>bestCount || (it->second==bestCount && (best<0 || it->first<best)))
+        {
+            best=it->first;
+            bestCount=it->second;
+        }
+        ++it;
+    }
+    return best;
+}
+
 // 2-D adjacency layout for ONE tile set (grounds, or the WalkBehind/over tiles).
 // cellTi[map][y*W+x] = the tile index used at that map cell (-1 = none).  Tiles
 // that are CONSISTENTLY each other's immediate map-neighbour are packed as rigid
@@ -505,7 +524,13 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
     (void)label;
     int N=static_cast<int>(tiles.size());
     std::vector<char> used(N,0);
-    std::vector<int> rN(N,-2),dN(N,-2),lN(N,-2),uN(N,-2); // -2 unset, -1 none/varies
+    // DOMINANT on-map neighbour: count how often each tile sits immediately to
+    // the right / below / left / above another across all pool maps, then keep
+    // only the single most-frequent neighbour per direction.  This groups a
+    // building's tiles into one block even when an occasional map cell differs —
+    // the old rule required the neighbour to be IDENTICAL on EVERY map, which
+    // fragmented anything that varied.  Edges survive only when reciprocated.
+    std::vector<std::unordered_map<int,int> > cR(N),cD(N),cL(N),cU(N);
     size_t mi=0;
     while(mi<poolMaps.size())
     {
@@ -523,14 +548,10 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
                 {
                     used[ti]=1;
                     int nb;
-                    nb=(x+1<W)?ct[static_cast<size_t>(y)*W+x+1]:-1;
-                    if(nb>=0){ if(rN[ti]==-2)rN[ti]=nb; else if(rN[ti]!=nb)rN[ti]=-1; }
-                    nb=(y+1<H)?ct[static_cast<size_t>(y+1)*W+x]:-1;
-                    if(nb>=0){ if(dN[ti]==-2)dN[ti]=nb; else if(dN[ti]!=nb)dN[ti]=-1; }
-                    nb=(x>0)?ct[static_cast<size_t>(y)*W+x-1]:-1;
-                    if(nb>=0){ if(lN[ti]==-2)lN[ti]=nb; else if(lN[ti]!=nb)lN[ti]=-1; }
-                    nb=(y>0)?ct[static_cast<size_t>(y-1)*W+x]:-1;
-                    if(nb>=0){ if(uN[ti]==-2)uN[ti]=nb; else if(uN[ti]!=nb)uN[ti]=-1; }
+                    nb=(x+1<W)?ct[static_cast<size_t>(y)*W+x+1]:-1; if(nb>=0) cR[ti][nb]++;
+                    nb=(y+1<H)?ct[static_cast<size_t>(y+1)*W+x]:-1; if(nb>=0) cD[ti][nb]++;
+                    nb=(x>0)?ct[static_cast<size_t>(y)*W+x-1]:-1;   if(nb>=0) cL[ti][nb]++;
+                    nb=(y>0)?ct[static_cast<size_t>(y-1)*W+x]:-1;   if(nb>=0) cU[ti][nb]++;
                 }
                 x++;
             }
@@ -538,8 +559,16 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
         }
         mi++;
     }
+    std::vector<int> rN(N,-1),dN(N,-1),lN(N,-1),uN(N,-1);
     int t=0;
-    while(t<N){ if(rN[t]<0)rN[t]=-1; if(dN[t]<0)dN[t]=-1; if(lN[t]<0)lN[t]=-1; if(uN[t]<0)uN[t]=-1; t++; }
+    while(t<N)
+    {
+        rN[t]=dominantNeighbour(cR[static_cast<size_t>(t)]);
+        dN[t]=dominantNeighbour(cD[static_cast<size_t>(t)]);
+        lN[t]=dominantNeighbour(cL[static_cast<size_t>(t)]);
+        uN[t]=dominantNeighbour(cU[static_cast<size_t>(t)]);
+        t++;
+    }
     t=0;
     while(t<N){ if(rN[t]>=0 && lN[rN[t]]!=t)rN[t]=-1; if(dN[t]>=0 && uN[dN[t]]!=t)dN[t]=-1; t++; }
     t=0;
@@ -800,11 +829,17 @@ Gen3Tileset &TilesetBuilder::tilesetFor(const DecodedMap &map) const
 
 TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
                                    const std::vector<uint16_t> &usedIds, const std::string &baseName,
-                                   const std::vector<const DecodedMap *> &poolMaps)
+                                   const std::vector<const DecodedMap *> &poolMaps,
+                                   const std::string &subDir)
 {
     Gen3Tileset ts(rom_,primaryPtr,secondaryPtr);
     TilePool pool;
     pool.baseName=baseName;
+    pool.subDir=subDir;
+    // Sheets of a region-specific pool live in tileset/<region>/ (see prepare).
+    const std::string outDir=subDir.empty() ? tilesetDir_ : tilesetDir_+"/"+subDir;
+    if(!subDir.empty())
+        QDir().mkpath(QString::fromStdString(outDir));
     const int overThreshold=9;
     const GameInfo &gi=rom_.game();
     int waterFrames=static_cast<int>(gi.animWaterFrames);
@@ -1224,8 +1259,8 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             ++ait;
         }
         std::string name=baseName+"_"+std::to_string(s);
-        sheet.save(QString::fromStdString(tilesetDir_+"/"+name+".png"),"PNG");
-        writeTsx(tilesetDir_,name,kColumns,sheet,cnt,localAnims);
+        sheet.save(QString::fromStdString(outDir+"/"+name+".png"),"PNG");
+        writeTsx(outDir,name,kColumns,sheet,cnt,localAnims);
         s++;
     }
 
@@ -1285,6 +1320,31 @@ static std::string poolBaseName(const std::set<std::string> &areas, std::set<std
     }
     used.insert(name);
     return name;
+}
+
+// The single region (first path component, e.g. "kanto") shared by ALL of a
+// pool's maps, or "" when the pool spans more than one region (then the pool
+// stays at the tileset/ root, shared).
+static std::string poolRegion(const std::vector<const DecodedMap *> &poolMaps, const Naming &naming)
+{
+    std::string region;
+    bool set=false;
+    size_t i=0;
+    while(i<poolMaps.size())
+    {
+        const std::string &p=naming.pathFor(poolMaps[i]->group,poolMaps[i]->map);
+        std::string r;
+        std::string::size_type slash=p.find('/');
+        if(slash!=std::string::npos)
+            r=p.substr(0,slash);
+        if(!r.empty())
+        {
+            if(!set) { region=r; set=true; }
+            else if(region!=r) return std::string();
+        }
+        i++;
+    }
+    return region;
 }
 
 bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &naming)
@@ -1348,6 +1408,11 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
 
     QDir().mkpath(QString::fromStdString(tilesetDir_));
 
+    // When a label has many tilesets (>50 pools), region-specific pools are
+    // tidied into tileset/<region>/ subfolders (a pool whose maps all live in one
+    // region); pools shared across regions stay at the tileset/ root.
+    const bool nestByRegion=(usedPrimary.size()+usedSecondary.size())>50;
+
     std::set<std::string> usedNames;
     // deterministic order so collision suffixes are stable across runs
     std::vector<uint32_t> primaryKeys;
@@ -1360,7 +1425,8 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
         uint32_t key=primaryKeys[ki];
         const std::vector<uint16_t> &ids=usedPrimary[key];
         std::string name=poolBaseName(primaryAreas[key],usedNames);
-        primaryPools_[key]=buildPool(key,0,ids,name,poolMapsPrimary[key]);
+        std::string sub=nestByRegion ? poolRegion(poolMapsPrimary[key],naming) : std::string();
+        primaryPools_[key]=buildPool(key,0,ids,name,poolMapsPrimary[key],sub);
         ki++;
     }
 
@@ -1376,7 +1442,8 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
         uint32_t secondary=static_cast<uint32_t>(key & 0xFFFFFFFFu);
         const std::vector<uint16_t> &ids=usedSecondary[key];
         std::string name=poolBaseName(secondaryAreas[key],usedNames);
-        secondaryPools_[key]=buildPool(primary,secondary,ids,name,poolMapsSecondary[key]);
+        std::string sub=nestByRegion ? poolRegion(poolMapsSecondary[key],naming) : std::string();
+        secondaryPools_[key]=buildPool(primary,secondary,ids,name,poolMapsSecondary[key],sub);
         ki++;
     }
 
@@ -1545,7 +1612,8 @@ std::vector<std::pair<uint32_t,std::string> > TilesetBuilder::tilesetRefs(const 
         uint32_t s=0;
         while(s<p->sheetCount)
         {
-            out.push_back(std::make_pair(1+s*kCapacity,p->baseName+"_"+std::to_string(s)));
+            out.push_back(std::make_pair(1+s*kCapacity,
+                (p->subDir.empty()?p->baseName:p->subDir+"/"+p->baseName)+"_"+std::to_string(s)));
             s++;
         }
     }
@@ -1556,7 +1624,8 @@ std::vector<std::pair<uint32_t,std::string> > TilesetBuilder::tilesetRefs(const 
         uint32_t s=0;
         while(s<sec->sheetCount)
         {
-            out.push_back(std::make_pair(base+s*kCapacity,sec->baseName+"_"+std::to_string(s)));
+            out.push_back(std::make_pair(base+s*kCapacity,
+                (sec->subDir.empty()?sec->baseName:sec->subDir+"/"+sec->baseName)+"_"+std::to_string(s)));
             s++;
         }
     }

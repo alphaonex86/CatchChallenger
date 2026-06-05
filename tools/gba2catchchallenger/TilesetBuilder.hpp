@@ -75,6 +75,7 @@ private:
 // A de-duplicated pool of unique tiles, packed into N fixed-capacity sheets.
 struct TilePool {
     std::string baseName;     // sheet files are baseName + "_" + sheetIndex
+    std::string subDir;       // region subfolder under tileset/ ("" = root)
     uint32_t uniqueCount;     // number of unique tiles
     uint32_t sheetCount;      // ceil(uniqueCount / capacity)
     uint32_t duplicateTiles;  // GUARD: redundant non-animation duplicate cells
@@ -116,7 +117,8 @@ public:
 private:
     TilePool buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
                        const std::vector<uint16_t> &usedIds, const std::string &baseName,
-                       const std::vector<const DecodedMap *> &poolMaps);
+                       const std::vector<const DecodedMap *> &poolMaps,
+                       const std::string &subDir);
     Gen3Tileset &tilesetFor(const DecodedMap &map) const;
     static uint64_t pairKey(uint32_t primary, uint32_t secondary);
     // Dedup key for a ground cell: its metatile + its 4 map-neighbour metatiles
