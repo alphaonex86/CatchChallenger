@@ -758,30 +758,77 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
     }
     { int q=0; while(q<N){ int rr=q; while(repOf[rr]!=rr) rr=repOf[rr]; repOf[q]=rr; q++; } }
 
-    // shelf-pack surviving blocks into the COLS-wide grid (whole blocks intact)
+    // Shelf-pack only the MULTI-tile blocks (they must keep their 2-D shape).
+    // The single, adjacency-free tiles are collected separately and used to fill
+    // every transparent gap the block packing leaves (end-of-shelf, below a
+    // shorter block, a block's internal hole), so the sheet wastes almost no
+    // transparent space — a free tile "doesn't need to be around another tile".
     std::unordered_map<int,uint32_t> tilePos;
     std::vector<std::vector<int> > grid;
+    std::vector<int> singles; // free 1x1 tiles -> fill gaps
     int cursorX=0,shelfY=0,shelfH=0;
     size_t ui=0;
     while(ui<units.size())
     {
         if(keptUnit[ui])
         {
-            int w=unitW[ui],h=unitH[ui];
-            if(cursorX+w>COLS){ cursorX=0; shelfY+=shelfH; shelfH=0; }
-            while(static_cast<int>(grid.size())<shelfY+h) grid.push_back(std::vector<int>(static_cast<size_t>(COLS),-1));
-            size_t bi=0;
-            while(bi<units[ui].size())
+            if(units[ui].size()<=1)
             {
-                int ti=units[ui][bi];
-                int gc=cursorX+bc[ti],gr=shelfY+br[ti];
-                grid[static_cast<size_t>(gr)][static_cast<size_t>(gc)]=ti;
-                tilePos[ti]=static_cast<uint32_t>(gr)*static_cast<uint32_t>(COLS)+static_cast<uint32_t>(gc);
-                bi++;
+                if(!units[ui].empty())
+                    singles.push_back(units[ui][0]);
             }
-            cursorX+=w; if(h>shelfH)shelfH=h;
+            else
+            {
+                int w=unitW[ui],h=unitH[ui];
+                if(cursorX+w>COLS){ cursorX=0; shelfY+=shelfH; shelfH=0; }
+                while(static_cast<int>(grid.size())<shelfY+h) grid.push_back(std::vector<int>(static_cast<size_t>(COLS),-1));
+                size_t bi=0;
+                while(bi<units[ui].size())
+                {
+                    int ti=units[ui][bi];
+                    int gc=cursorX+bc[ti],gr=shelfY+br[ti];
+                    grid[static_cast<size_t>(gr)][static_cast<size_t>(gc)]=ti;
+                    tilePos[ti]=static_cast<uint32_t>(gr)*static_cast<uint32_t>(COLS)+static_cast<uint32_t>(gc);
+                    bi++;
+                }
+                cursorX+=w; if(h>shelfH)shelfH=h;
+            }
         }
         ui++;
+    }
+    // Fill the transparent gaps in the packed grid with the free single tiles,
+    // then append any remainder as fully-dense rows.
+    size_t si=0;
+    {
+        size_t gr=0;
+        while(gr<grid.size())
+        {
+            int gc=0;
+            while(gc<COLS)
+            {
+                if(grid[gr][static_cast<size_t>(gc)]<0 && si<singles.size())
+                {
+                    int ti=singles[si++];
+                    grid[gr][static_cast<size_t>(gc)]=ti;
+                    tilePos[ti]=static_cast<uint32_t>(gr)*static_cast<uint32_t>(COLS)+static_cast<uint32_t>(gc);
+                }
+                gc++;
+            }
+            gr++;
+        }
+    }
+    while(si<singles.size())
+    {
+        grid.push_back(std::vector<int>(static_cast<size_t>(COLS),-1));
+        size_t gr=grid.size()-1;
+        int gc=0;
+        while(gc<COLS && si<singles.size())
+        {
+            int ti=singles[si++];
+            grid[gr][static_cast<size_t>(gc)]=ti;
+            tilePos[ti]=static_cast<uint32_t>(gr)*static_cast<uint32_t>(COLS)+static_cast<uint32_t>(gc);
+            gc++;
+        }
     }
 
     // adjacency check: consistent immediate map-neighbours must stay adjacent
