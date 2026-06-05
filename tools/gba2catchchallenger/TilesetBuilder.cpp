@@ -447,6 +447,113 @@ static void blitTile(QImage &sheet, int columns, uint32_t cell, const QImage &ti
     }
 }
 
+// A guessed terrain name from an average colour (best-effort, for the wangcolor).
+static std::string terrainName(int r, int g, int b)
+{
+    int mx=std::max(r,std::max(g,b)), mn=std::min(r,std::min(g,b));
+    if(mx-mn<28)
+        return (mx>185) ? "path" : ((mx<80) ? "shadow" : "rock");
+    if(g>=r && g>=b)
+        return "grass";
+    if(b>=r && b>=g)
+        return "water";
+    if(r>=b && g>=b && r>150)
+        return "sand";
+    return "terrain";
+}
+
+// Best-effort Tiled "corner" Wang/terrain set for a sheet: cluster every OPAQUE
+// (non-overlay, non-animation) tile's four 8x8 corners by AVERAGE colour; the
+// large clusters become terrain colours and each tile gets a per-corner wangid,
+// so Tiled can auto-tile grass<->sand / land<->water transitions.  This is purely
+// editor metadata (libtiled ignores it when rendering).  Detail tiles fall into
+// small clusters and stay terrain 0 (none).
+static void emitWangSet(std::ostream &tsx, const QImage &sheet, int columns, uint32_t tilecount,
+                        const std::unordered_map<int,std::string> &anims)
+{
+    static const int cox[4]={0,8,0,8}; // corner offsets: 0=TL 1=TR 2=BL 3=BR
+    static const int coy[4]={0,0,8,8};
+    std::vector<int> cornerCluster(static_cast<size_t>(tilecount)*4,-1);
+    std::vector<int> repR,repG,repB,repCount;
+    const long kJoin=42*42; // squared RGB distance to join a cluster
+    uint32_t t=0;
+    while(t<tilecount)
+    {
+        int tc=static_cast<int>(t%static_cast<uint32_t>(columns));
+        int tr=static_cast<int>(t/static_cast<uint32_t>(columns));
+        int bx=tc*16, by=tr*16;
+        bool ok=(anims.find(static_cast<int>(t))==anims.cend());
+        if(ok)
+        {
+            int yy=0;
+            while(yy<16 && ok){ int xx=0; while(xx<16){ if(qAlpha(sheet.pixel(bx+xx,by+yy))<255){ok=false;break;} xx++; } yy++; }
+        }
+        if(ok)
+        {
+            int k=0;
+            while(k<4)
+            {
+                long sr=0,sg=0,sb=0;
+                int yy=0;
+                while(yy<8){ int xx=0; while(xx<8){ QRgb p=sheet.pixel(bx+cox[k]+xx,by+coy[k]+yy); sr+=qRed(p);sg+=qGreen(p);sb+=qBlue(p); xx++; } yy++; }
+                int ar=static_cast<int>(sr/64),ag=static_cast<int>(sg/64),ab=static_cast<int>(sb/64);
+                int best=-1; long bestd=0;
+                size_t ci=0;
+                while(ci<repR.size())
+                {
+                    long dr=ar-repR[ci],dg=ag-repG[ci],db=ab-repB[ci];
+                    long d=dr*dr+dg*dg+db*db;
+                    if(best<0 || d<bestd){ best=static_cast<int>(ci); bestd=d; }
+                    ci++;
+                }
+                if(best>=0 && bestd<=kJoin){ cornerCluster[t*4+k]=best; repCount[best]++; }
+                else { cornerCluster[t*4+k]=static_cast<int>(repR.size()); repR.push_back(ar);repG.push_back(ag);repB.push_back(ab);repCount.push_back(1); }
+                k++;
+            }
+        }
+        t++;
+    }
+    // Keep the dominant clusters (appearing on many corners) as terrains, biggest
+    // first (cap 8) — enough for the main grass/sand/water/rock/path terrains
+    // without splintering into near-identical shades.
+    std::vector<std::pair<int,int> > rank; // (count, clusterId)
+    { size_t ci=0; while(ci<repR.size()){ if(repCount[ci]>=12) rank.push_back(std::make_pair(repCount[ci],static_cast<int>(ci))); ci++; } }
+    std::sort(rank.begin(),rank.end());
+    std::reverse(rank.begin(),rank.end());
+    std::unordered_map<int,int> clusterTerrain; // clusterId -> 1-based terrain id
+    if(rank.size()>8) rank.resize(8);
+    size_t ri=0;
+    while(ri<rank.size()){ clusterTerrain[rank[ri].second]=static_cast<int>(ri)+1; ri++; }
+    if(clusterTerrain.empty())
+        return;
+    tsx << " <wangsets>\n  <wangset name=\"Terrain\" type=\"corner\" tile=\"-1\">\n";
+    ri=0;
+    while(ri<rank.size())
+    {
+        int cid=rank[ri].second;
+        char col[8]; std::snprintf(col,sizeof(col),"#%02x%02x%02x",repR[cid]&0xff,repG[cid]&0xff,repB[cid]&0xff);
+        tsx << "   <wangcolor name=\"" << terrainName(repR[cid],repG[cid],repB[cid]) << "-" << (ri+1)
+            << "\" color=\"" << col << "\" tile=\"-1\" probability=\"1\"/>\n";
+        ri++;
+    }
+    // corner index -> wangid position: TR=1, BR=3, BL=5, TL=7 (edges 0/2/4/6 stay 0)
+    t=0;
+    while(t<tilecount)
+    {
+        int tl=-1,tr=-1,bl=-1,br=-1;
+        std::unordered_map<int,int>::const_iterator f;
+        f=clusterTerrain.find(cornerCluster[t*4+0]); tl=(f!=clusterTerrain.cend())?f->second:0;
+        f=clusterTerrain.find(cornerCluster[t*4+1]); tr=(f!=clusterTerrain.cend())?f->second:0;
+        f=clusterTerrain.find(cornerCluster[t*4+2]); bl=(f!=clusterTerrain.cend())?f->second:0;
+        f=clusterTerrain.find(cornerCluster[t*4+3]); br=(f!=clusterTerrain.cend())?f->second:0;
+        if(cornerCluster[t*4+0]<0){ t++; continue; } // not an opaque terrain tile
+        if(tl>0||tr>0||bl>0||br>0)
+            tsx << "   <wangtile tileid=\"" << t << "\" wangid=\"0," << tr << ",0," << br << ",0," << bl << ",0," << tl << "\"/>\n";
+        t++;
+    }
+    tsx << "  </wangset>\n </wangsets>\n";
+}
+
 static void writeTsx(const std::string &dir, const std::string &name, int columns, const QImage &sheet,
                      uint32_t tilecount, const std::unordered_map<int,std::string> &anims)
 {
@@ -470,6 +577,7 @@ static void writeTsx(const std::string &dir, const std::string &name, int column
                 << anims.at(ids[k]) << "\"/>\n  </properties>\n </tile>\n";
             k++;
         }
+        emitWangSet(tsx,sheet,columns,tilecount,anims);
         tsx << "</tileset>\n";
     }
 }
