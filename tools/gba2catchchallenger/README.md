@@ -69,9 +69,22 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   tiles each. (`kContextSplitMax` can split a tile per-neighbourhood for stricter
   2-D, but default 0 — it bloats the sheets far more than it helps.) `main.cpp`
   wipes the `<label>/` output dir before each run so stale sheets never accumulate.
-  **Region subfolders:** when a label has many tilesets (>50 pools), a pool whose
-  maps all live in one region is tidied into `tileset/<region>/` (e.g.
-  `tileset/kanto/`); pools shared across regions stay at the `tileset/` root.
+  **Region subfolders:** when a label has many tilesets (>50 pools) AND the label
+  spans ≥2 regions, a pool whose maps all live in one region is tidied into
+  `tileset/<region>/` (e.g. `tileset/kanto/`); pools shared across regions stay at
+  the `tileset/` root.
+  **Layer composite vs decompose:** a metatile that is collidable everywhere with a
+  UNIQUE top (a building face) is composited into ONE wall+roof tile (reads merged,
+  like the in-game view); a top that's a REUSABLE overlay (a cliff/ledge edge, a
+  rock, a tree top — it sits on ≥2 backgrounds or on a standalone terrain) stays a
+  separate TRANSPARENT tile over the base terrain, reused over any background
+  (fewer tiles).  The shelf pack leaves no transparent gaps — free single tiles
+  fill them.
+  **Tiled Wang/terrain sets:** each `.tsx` carries a best-effort `<wangset>` (corner
+  type) — every opaque tile's four 8×8 corners are clustered by average colour into
+  the dominant terrains (grass/sand/water/rock/path) and each tile gets a per-corner
+  `wangid`, so the editor auto-tiles transitions.  Heuristic (corner colour),
+  editor-only (libtiled ignores it when rendering); some wangids may need hand-tweaks.
   The same 2-D `layout2D` packer is applied to the over (WalkBehind) tiles too,
   so building/tree tops read like the map (not dumped in dedup order); an over
   identical to a ground tile folds onto it (no duplicate). Two **post-build
