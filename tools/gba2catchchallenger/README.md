@@ -142,6 +142,15 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   immediate map-neighbour stays adjacent in the sheet — it PASSes, reporting only
   *unavoidable cyclic-pattern edges* (a repeating texture / loop that cannot be
   linearised). Watch for `GUARD dup: PASS` and `GUARD adjacency: PASS`.
+  A **metatile-routing** GUARD verifies the primary/secondary split: every map
+  cell's metatile (id) must decode to real graphics in the array it is routed to
+  (primary when `id < metatilesInPrimary`, else secondary `id − metatilesInPrimary`).
+  It FAILs when a used metatile is **empty in its routed array but holds graphics
+  in the other** at the same id — the signature of a wrong `metatilesInPrimary`,
+  which renders that cell as a backdrop "black hole" (a lost building/object).
+  Retail ROMs are 0 (PASS); off-fingerprint hacks that relocated/expanded their
+  tilesets (HnS, Glazed) trip it, surfacing the limitation instead of silently
+  shipping black cells. Informational — it never aborts the run.
 * **Maps** — width×height metatile grid → `Walkable` layer. Collision bit →
   `Collisions`. Metatile behaviour → `Grass` (wild encounters), `Water` (surf),
   `LedgesUp/Down/Left/Right`.

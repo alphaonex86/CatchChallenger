@@ -155,6 +155,30 @@ uint32_t Gen3Tileset::attributeOffset(uint16_t id) const
     return secondaryAttrPtr_+idx*sz;
 }
 
+bool Gen3Tileset::metatileMisrouted(uint16_t id) const
+{
+    // Only metatiles routed to the SECONDARY array can be mis-routed: a metatile
+    // below metatilesInPrimary already reads the primary array (the lowest), so
+    // there is no other place its graphics could live.
+    uint32_t primaryCount=game_.metatilesInPrimary;
+    if(id<primaryCount)
+        return false;
+    uint32_t secOff=secondaryMetaPtr_+static_cast<uint32_t>(id-primaryCount)*16;
+    uint32_t priOff=primaryMetaPtr_+static_cast<uint32_t>(id)*16;
+    bool chosenEmpty=true;  // secondary[id-N] has no graphics (all subtile ids 0)
+    bool altContent=false;  // primary[id] (same absolute id) DOES have graphics
+    int s=0;
+    while(s<8)
+    {
+        if((rom_.u16(secOff+static_cast<uint32_t>(s)*2)&0x3FF)!=0)
+            chosenEmpty=false;
+        if((rom_.u16(priOff+static_cast<uint32_t>(s)*2)&0x3FF)!=0)
+            altContent=true;
+        s++;
+    }
+    return chosenEmpty && altContent;
+}
+
 void Gen3Tileset::drawSubtile(QImage &dst, int px, int py, uint16_t entry) const
 {
     uint16_t tileIndex=entry & 0x3FF;
@@ -1189,7 +1213,8 @@ TilePool::TilePool() :
     tinyTiles(0),
     bgFgSplits(0),
     layerSplitTiles(0),
-    layerSplitBad(0)
+    layerSplitBad(0),
+    misroutedMetatiles(0)
 {
 }
 
@@ -1322,6 +1347,19 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     TilePool pool;
     pool.baseName=baseName;
     pool.subDir=subDir;
+    // GUARD metatile-routing: a metatile placed on a map that decodes EMPTY in the
+    // array it is routed to, while the OTHER array holds real graphics at the same
+    // id, signals a wrong metatilesInPrimary split (the cell renders as a backdrop
+    // "black hole" instead of its building/object).  Count the distinct offenders.
+    {
+        size_t mi=0;
+        while(mi<usedIds.size())
+        {
+            if(ts.metatileMisrouted(usedIds[mi]))
+                pool.misroutedMetatiles++;
+            mi++;
+        }
+    }
     // Sheets of a region-specific pool live in tileset/<region>/ (see prepare).
     const std::string outDir=subDir.empty() ? tilesetDir_ : tilesetDir_+"/"+subDir;
     if(!subDir.empty())
@@ -2346,11 +2384,11 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     // Object/semantic markers come from the generated visible markers.tsx
     // (written by writeMarkers above), referenced at markerGid(map).
 
-    uint32_t totalSheets=0,totalDup=0,totalAdj=0,totalBgFg=0,totalLayer=0,totalLayerBad=0,totalTiny=0;
+    uint32_t totalSheets=0,totalDup=0,totalAdj=0,totalBgFg=0,totalLayer=0,totalLayerBad=0,totalTiny=0,totalMisrouted=0;
     std::unordered_map<uint32_t,TilePool>::const_iterator a=primaryPools_.begin();
-    while(a!=primaryPools_.cend()) { totalSheets+=a->second.sheetCount; totalDup+=a->second.duplicateTiles; totalAdj+=a->second.adjacencyViolations; totalBgFg+=a->second.bgFgSplits; totalLayer+=a->second.layerSplitTiles; totalLayerBad+=a->second.layerSplitBad; totalTiny+=a->second.tinyTiles; ++a; }
+    while(a!=primaryPools_.cend()) { totalSheets+=a->second.sheetCount; totalDup+=a->second.duplicateTiles; totalAdj+=a->second.adjacencyViolations; totalBgFg+=a->second.bgFgSplits; totalLayer+=a->second.layerSplitTiles; totalLayerBad+=a->second.layerSplitBad; totalTiny+=a->second.tinyTiles; totalMisrouted+=a->second.misroutedMetatiles; ++a; }
     std::unordered_map<uint64_t,TilePool>::const_iterator b=secondaryPools_.begin();
-    while(b!=secondaryPools_.cend()) { totalSheets+=b->second.sheetCount; totalDup+=b->second.duplicateTiles; totalAdj+=b->second.adjacencyViolations; totalBgFg+=b->second.bgFgSplits; totalLayer+=b->second.layerSplitTiles; totalLayerBad+=b->second.layerSplitBad; totalTiny+=b->second.tinyTiles; ++b; }
+    while(b!=secondaryPools_.cend()) { totalSheets+=b->second.sheetCount; totalDup+=b->second.duplicateTiles; totalAdj+=b->second.adjacencyViolations; totalBgFg+=b->second.bgFgSplits; totalLayer+=b->second.layerSplitTiles; totalLayerBad+=b->second.layerSplitBad; totalTiny+=b->second.tinyTiles; totalMisrouted+=b->second.misroutedMetatiles; ++b; }
     std::cout << "TilesetBuilder: " << primaryPools_.size() << " primary + "
               << secondaryPools_.size() << " secondary pools, " << totalSheets
               << " deduplicated sheets" << std::endl;
@@ -2394,6 +2432,19 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     else
         std::cout << "TilesetBuilder GUARD tiny-tile: FAIL (" << totalTiny
                   << " near-empty tile(s) with 1..12 visible px, rest transparent)" << std::endl;
+    // GUARD 5: metatile-routing.  A map cell's metatile must decode to graphics in
+    // the array it is routed to (primary if id<metatilesInPrimary else secondary).
+    // When the routed array is EMPTY but the OTHER array holds graphics at the same
+    // id, metatilesInPrimary is wrong for this ROM and the cell renders as a
+    // backdrop "black hole" (e.g. a building lost to black).  Retail ROMs have the
+    // correct split (0); off-fingerprint hacks that relocated/expanded their
+    // tilesets (HnS/Glazed) can trip it — surfaced, not silently shipped.
+    if(totalMisrouted==0)
+        std::cout << "TilesetBuilder GUARD metatile-routing: PASS (every map metatile decodes in its routed array)" << std::endl;
+    else
+        std::cout << "TilesetBuilder GUARD metatile-routing: FAIL (" << totalMisrouted
+                  << " used metatile(s) empty in their routed array but present in the other"
+                  << " — metatilesInPrimary split wrong, cells render as black holes)" << std::endl;
     return true;
 }
 
