@@ -721,6 +721,11 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
         uN[t]=dominantNeighbour(cU[static_cast<size_t>(t)]);
         t++;
     }
+    // Keep the UNRECIPROCATED dominant neighbours: a reused corner tile (its
+    // edge into a building is dominant one way but the building's edge points at
+    // a different reuse) stays a single below, but we still want to drop it into
+    // that building's hole rather than scatter it (smart gap-fill).
+    std::vector<int> rN0(rN),dN0(dN),lN0(lN),uN0(uN);
     t=0;
     while(t<N){ if(rN[t]>=0 && lN[rN[t]]!=t)rN[t]=-1; if(dN[t]>=0 && uN[dN[t]]!=t)dN[t]=-1; t++; }
     t=0;
@@ -925,8 +930,58 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
         int k=0; while(k<w){ skyline[static_cast<size_t>(bestX+k)]=bestY+h; k++; }
         bk++;
     }
-    // Fill the transparent gaps in the packed grid with the free single tiles,
-    // then append any remainder as fully-dense rows.
+    // SMART gap-fill: first drop each free single into an EXISTING hole that is
+    // adjacent to one of its dominant on-map neighbours (using the unreciprocated
+    // rN0/.. so a reused building corner still lands in its building's hole, e.g.
+    // the bottom-left of a 2x2 whose other three tiles already form the block).
+    // Repeat while progress is made (a single may anchor on another just placed),
+    // then raster-fill whatever could not be anchored.
+    std::vector<char> placedS(singles.size(),0);
+    {
+        bool progress=true;
+        while(progress)
+        {
+            progress=false;
+            size_t sj=0;
+            while(sj<singles.size())
+            {
+                if(!placedS[sj])
+                {
+                    int s=singles[sj];
+                    int cand=-1;
+                    int dir=0;
+                    while(dir<4 && cand<0)
+                    {
+                        int nb=(dir==0)?rN0[s]:(dir==1)?lN0[s]:(dir==2)?dN0[s]:uN0[s];
+                        if(nb>=0)
+                        {
+                            int rep=nb; while(repOf[rep]!=rep) rep=repOf[rep];
+                            std::unordered_map<int,uint32_t>::const_iterator pn=tilePos.find(rep);
+                            if(pn!=tilePos.cend())
+                            {
+                                int nr=static_cast<int>(pn->second)/COLS, nc=static_cast<int>(pn->second)%COLS;
+                                int tr=nr,tc=nc;
+                                if(dir==0)tc=nc-1; else if(dir==1)tc=nc+1; else if(dir==2)tr=nr-1; else tr=nr+1;
+                                if(tr>=0 && tc>=0 && tc<COLS && tr<static_cast<int>(grid.size()) && grid[static_cast<size_t>(tr)][static_cast<size_t>(tc)]<0)
+                                    cand=tr*COLS+tc;
+                            }
+                        }
+                        dir++;
+                    }
+                    if(cand>=0)
+                    {
+                        grid[static_cast<size_t>(cand/COLS)][static_cast<size_t>(cand%COLS)]=s;
+                        tilePos[s]=static_cast<uint32_t>(cand);
+                        placedS[sj]=1;
+                        progress=true;
+                    }
+                }
+                sj++;
+            }
+        }
+    }
+    { std::vector<int> rem; size_t sj=0; while(sj<singles.size()){ if(!placedS[sj]) rem.push_back(singles[sj]); sj++; } singles.swap(rem); }
+    // Raster-fill the remaining (un-anchored) singles into any leftover gaps.
     size_t si=0;
     {
         size_t gr=0;
