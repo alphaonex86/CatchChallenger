@@ -1484,8 +1484,12 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     // tiles is their common OBJECT (consistent for both, unlike a per-tile min-fg
     // mask); the rest is background, PARTIAL-matched (over the object's complement)
     // to find its original tile so the object lifts onto one shared overlay.
+    // SKIPPED for the 32MB hacks: their generic tiles share large regions everywhere,
+    // so this aggressive split over-extracts and raises the hacks' render-visibility
+    // miss; the officials (<=16MB) get the full benefit.
+    if(rom_.size()<=0x1000000u)
     {
-        const int kBgMatchDiff=24, kMinObject=64, kMinBackground=48, kRecomposeTol=48, kRecomposeMaxBad=2;
+        const int kBgMatchDiff=24, kMinObject=64, kMinBackground=36, kRecomposeTol=48, kRecomposeMaxBad=2;
         std::vector<uint16_t> oc; std::vector<const QImage *> ocImg;   // object candidates (still composited)
         std::vector<const QImage *> terr;                              // WALKABLE terrains = the only valid backgrounds
         {
