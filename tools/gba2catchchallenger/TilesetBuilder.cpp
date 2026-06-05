@@ -659,6 +659,40 @@ static int dominantNeighbour(const std::unordered_map<int,int> &counts)
     return best;
 }
 
+// True when every pixel of the tile is fully opaque (a baked ground tile).
+static bool isFullyOpaque(const QImage &img)
+{
+    int w=img.width(),h=img.height(),y=0;
+    while(y<h){ int x=0; while(x<w){ if(qAlpha(img.pixel(x,y))!=255) return false; x++; } y++; }
+    return true;
+}
+
+// Foreground of opaque tile x sitting OVER background terrain t: a pixel that
+// differs from t by more than maxDiff on any channel keeps x's colour (it is the
+// object); a pixel matching t becomes transparent (the terrain shows through from
+// the layer below).  *opaqueOut = count of kept (object) pixels.
+static QImage foregroundOver(const QImage &x, const QImage &t, int maxDiff, int &opaqueOut)
+{
+    int w=x.width(),h=x.height();
+    QImage fg(w,h,QImage::Format_ARGB32);
+    fg.fill(Qt::transparent);
+    int op=0,y=0;
+    while(y<h)
+    {
+        int xx=0;
+        while(xx<w)
+        {
+            QRgb a=x.pixel(xx,y), b=t.pixel(xx,y);
+            if(qAbs(qRed(a)-qRed(b))>maxDiff || qAbs(qGreen(a)-qGreen(b))>maxDiff || qAbs(qBlue(a)-qBlue(b))>maxDiff)
+            { fg.setPixel(xx,y,a); op++; }
+            xx++;
+        }
+        y++;
+    }
+    opaqueOut=op;
+    return fg;
+}
+
 // 2-D adjacency layout for ONE tile set (grounds, or the WalkBehind/over tiles).
 // cellTi[map][y*W+x] = the tile index used at that map cell (-1 = none).  Tiles
 // that are CONSISTENTLY each other's immediate map-neighbour are packed as rigid
@@ -1239,6 +1273,92 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             }
         }
         i++;
+    }
+
+    // Pass 1b: BACKGROUND/FOREGROUND split of baked collidable object tiles.  The
+    // ROM bakes a collidable OBJECT (rock, cliff, tree) onto a terrain in ONE image,
+    // so the SAME object renders as several near-duplicate tiles that differ ONLY in
+    // their background terrain (user: common_0 #172/#177, #322/#394, #416/#420).
+    // Detect "object over a WALKABLE terrain": for a composited, always-collidable,
+    // fully-opaque ground tile X, find a terrain tile T that is WALKABLE somewhere
+    // (a real background you can stand on -- this prevents an inverted split where
+    // the "object" would be the background) and matches X except a connected
+    // foreground region of >=12 px.  Split X into under = T (the terrain, reused) +
+    // over = the transparent foreground (the object, ONE shared overlay reused over
+    // every background).  Keep only foregrounds reused over >=2 DISTINCT terrains
+    // (the user's "same object, different background"), so a one-off coincidence is
+    // not split.  For a collidable cell CCWriter puts T on Collisions and the
+    // foreground on the 2nd Collisions layer (both BELOW the player, OR-merged for
+    // blocking) -> visually identical, and the background never lands on the
+    // Water/Grass logic layer.
+    {
+        const int kBgMatchDiff=24;   // a background pixel matches the terrain within this
+        const int kMinForeground=12; // extracted object must be >=12 connected opaque px
+        const int kMinBackground=48; // and leave a real terrain area visible behind it
+        std::vector<std::pair<std::string,QImage> > terrains;
+        std::unordered_set<std::string> terrSeen;
+        {
+            std::unordered_map<uint16_t,QImage>::const_iterator tit=metaGroundImg.cbegin();
+            while(tit!=metaGroundImg.cend())
+            {
+                const uint8_t cf=collFlag.count(tit->first)?collFlag[tit->first]:0;
+                if(((cf&2)!=0) && isFullyOpaque(tit->second))
+                {
+                    std::string k(reinterpret_cast<const char *>(tit->second.constBits()),static_cast<size_t>(tit->second.sizeInBytes()));
+                    if(terrSeen.insert(k).second) terrains.push_back(std::make_pair(k,tit->second));
+                }
+                ++tit;
+            }
+        }
+        std::vector<uint16_t> objIds; std::vector<QImage> objFg; std::vector<int> objT;
+        std::unordered_map<uint16_t,QImage>::const_iterator oit=metaGroundImg.cbegin();
+        while(oit!=metaGroundImg.cend())
+        {
+            uint16_t id=oit->first;
+            const uint8_t cf=collFlag.count(id)?collFlag[id]:0;
+            bool alwaysCollidable=((cf&1)!=0)&&((cf&2)==0);
+            uint16_t beh=ts.behavior(id);
+            bool normalTerrain=!(beh==0x02||beh==0x03||(beh>=0x10&&beh<=0x15)||(beh>=0x38&&beh<=0x3B));
+            if(overLocal.count(id) && overLocal[id]==-1 && alwaysCollidable && normalTerrain && isFullyOpaque(oit->second))
+            {
+                int bestT=-1,bestOp=1000; QImage bestFg;
+                size_t ti=0;
+                while(ti<terrains.size())
+                {
+                    int op=0;
+                    QImage fg=foregroundOver(oit->second,terrains[ti].second,kBgMatchDiff,op);
+                    if(op>=kMinForeground && (256-op)>=kMinBackground && op<bestOp && largestOpaqueComponent(fg)>=kMinForeground)
+                    { bestOp=op; bestT=static_cast<int>(ti); bestFg=fg; }
+                    ti++;
+                }
+                if(bestT>=0){ objIds.push_back(id); objFg.push_back(bestFg); objT.push_back(bestT); }
+            }
+            ++oit;
+        }
+        std::unordered_map<std::string,std::unordered_set<std::string> > fgToTerr;
+        std::vector<std::string> fgKeys(objIds.size());
+        size_t k=0;
+        while(k<objIds.size())
+        {
+            std::string fk(reinterpret_cast<const char *>(objFg[k].constBits()),static_cast<size_t>(objFg[k].sizeInBytes()));
+            fgKeys[k]=fk;
+            fgToTerr[fk].insert(terrains[static_cast<size_t>(objT[k])].first);
+            k++;
+        }
+        int splitCount=0;
+        k=0;
+        while(k<objIds.size())
+        {
+            if(fgToTerr[fgKeys[k]].size()>=2)
+            {
+                overLocal[objIds[k]]=dedupAdd(objFg[k],overSeen,overs);
+                metaGroundImg[objIds[k]]=terrains[static_cast<size_t>(objT[k])].second;
+                splitCount++;
+            }
+            k++;
+        }
+        if(splitCount>0)
+            std::cout << "  bg/fg split: " << splitCount << " baked object tile(s) -> shared overlay + reused terrain in " << baseName << std::endl;
     }
 
     // Pass 2: for each ground metatile count its DISTINCT neighbourhoods across

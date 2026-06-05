@@ -78,7 +78,19 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   like the in-game view); a top that's a REUSABLE overlay (a cliff/ledge edge, a
   rock, a tree top — it sits on ≥2 backgrounds or on a standalone terrain) stays a
   separate TRANSPARENT tile over the base terrain, reused over any background
-  (fewer tiles).  **Compact packing:** blocks are placed with a SKYLINE bottom-left
+  (fewer tiles).
+  **Background/foreground split of BAKED tiles:** the ROM sometimes bakes a
+  collidable object (rock, cliff, tree) onto a terrain in ONE image, so the SAME
+  object is stored as several near-duplicate tiles that differ only in their
+  background. The builder detects "object over a WALKABLE terrain T" — a composited,
+  always-collidable, fully-opaque tile that matches some standable terrain T except
+  a connected foreground region of ≥12 px (T must be walkable so the split is not
+  inverted) — and, when a foreground is reused over ≥2 distinct terrains, splits it
+  into `under = T` (terrain, reused) + `over =` the transparent object (ONE shared
+  overlay reused over every background). For a collidable cell the terrain draws on
+  Collisions and the object on the 2nd Collisions layer (both below the player,
+  OR-merged) so it is visually identical and the background never lands on the
+  Water/Grass logic layer. (firered: 412 baked tiles across the set split this way.)  **Compact packing:** blocks are placed with a SKYLINE bottom-left
   strip-packer (the rectangle bin-packing used for sprite atlases), free single
   tiles fill every remaining gap — **anchored first** next to a dominant on-map
   neighbour (even an unreciprocated one), so a reused building corner drops into
