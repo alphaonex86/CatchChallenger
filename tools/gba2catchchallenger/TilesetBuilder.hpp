@@ -81,6 +81,7 @@ struct TilePool {
     uint32_t sheetCount;      // number of emitted sheet files (main sheets + anim sheet(s))
     uint32_t duplicateTiles;  // GUARD: redundant non-animation duplicate cells
     uint32_t adjacencyViolations; // GUARD: consistent map-neighbours not kept adjacent
+    uint32_t tinyTiles;         // GUARD: tiles with 1..12 visible px (near-empty, rest transparent)
     uint32_t bgFgSplits;        // Pass-1b background/foreground splits applied (feature count)
     uint32_t layerSplitTiles;   // tiles split across 2 layers (under+over) the guard verified
     uint32_t layerSplitBad;     // GUARD: such tiles whose under+over != the ROM metatile

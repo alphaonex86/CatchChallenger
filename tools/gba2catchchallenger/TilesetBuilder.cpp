@@ -693,6 +693,67 @@ static QImage foregroundOver(const QImage &x, const QImage &t, int maxDiff, int 
     return fg;
 }
 
+// Largest 4-connected run of pixels where opaque tiles x and y AGREE (<=maxDiff per
+// channel) — the SHARED object of two baked tiles that differ only in background.
+// Writes that component into compMask (1 = object pixel); returns its pixel count.
+// *bgDiff = number of pixels where x and y differ (their two backgrounds).
+static int sharedObjectMask(const QImage &x, const QImage &y, int maxDiff, std::vector<char> &compMask, int &bgDiff)
+{
+    const int w=16,h=16,n=w*h;
+    std::vector<char> same(static_cast<size_t>(n),0);
+    int diff=0,yy=0;
+    while(yy<h)
+    {
+        int xx=0;
+        while(xx<w)
+        {
+            QRgb a=x.pixel(xx,yy), b=y.pixel(xx,yy);
+            bool s=(qAbs(qRed(a)-qRed(b))<=maxDiff && qAbs(qGreen(a)-qGreen(b))<=maxDiff && qAbs(qBlue(a)-qBlue(b))<=maxDiff);
+            same[static_cast<size_t>(yy*w+xx)]=s?1:0;
+            if(!s) diff++;
+            xx++;
+        }
+        yy++;
+    }
+    bgDiff=diff;
+    std::vector<char> seen(static_cast<size_t>(n),0);
+    compMask.assign(static_cast<size_t>(n),0);
+    int best=0,p=0;
+    while(p<n)
+    {
+        if(same[static_cast<size_t>(p)] && !seen[static_cast<size_t>(p)])
+        {
+            std::vector<int> stack,comp;
+            stack.push_back(p); seen[static_cast<size_t>(p)]=1;
+            while(!stack.empty())
+            {
+                int c=stack.back(); stack.pop_back(); comp.push_back(c);
+                int cx=c%w,cy=c/w;
+                static const int dxx[4]={1,-1,0,0},dyy[4]={0,0,1,-1};
+                int k=0;
+                while(k<4)
+                {
+                    int nx=cx+dxx[k],ny=cy+dyy[k];
+                    if(nx>=0&&nx<w&&ny>=0&&ny<h)
+                    {
+                        int ni=ny*w+nx;
+                        if(same[static_cast<size_t>(ni)] && !seen[static_cast<size_t>(ni)]){ seen[static_cast<size_t>(ni)]=1; stack.push_back(ni); }
+                    }
+                    k++;
+                }
+            }
+            if(static_cast<int>(comp.size())>best)
+            {
+                best=static_cast<int>(comp.size());
+                std::fill(compMask.begin(),compMask.end(),0);
+                size_t q=0; while(q<comp.size()){ compMask[static_cast<size_t>(comp[q])]=1; q++; }
+            }
+        }
+        p++;
+    }
+    return best;
+}
+
 // 2-D adjacency layout for ONE tile set (grounds, or the WalkBehind/over tiles).
 // cellTi[map][y*W+x] = the tile index used at that map cell (-1 = none).  Tiles
 // that are CONSISTENTLY each other's immediate map-neighbour are packed as rigid
@@ -1111,6 +1172,7 @@ TilePool::TilePool() :
     sheetCount(0),
     duplicateTiles(0),
     adjacencyViolations(0),
+    tinyTiles(0),
     bgFgSplits(0),
     layerSplitTiles(0),
     layerSplitBad(0)
@@ -1187,7 +1249,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     const std::string outDir=subDir.empty() ? tilesetDir_ : tilesetDir_+"/"+subDir;
     if(!subDir.empty())
         QDir().mkpath(QString::fromStdString(outDir));
-    const int overThreshold=9;
+    const int overThreshold=12; // a significant over needs >12 opaque px (no near-empty overlay)
     const GameInfo &gi=rom_.game();
     int waterFrames=static_cast<int>(gi.animWaterFrames);
     std::string animStr;
@@ -1333,7 +1395,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     // Water/Grass logic layer.
     {
         const int kBgMatchDiff=24;   // a background pixel matches the terrain within this
-        const int kMinForeground=12; // extracted object must be >=12 connected opaque px
+        const int kMinForeground=13; // extracted object must be >12 connected opaque px (no near-empty tile)
         const int kMinBackground=48; // and leave a real terrain area visible behind it
         std::vector<std::pair<std::string,QImage> > terrains;
         std::unordered_set<std::string> terrSeen;
@@ -1400,6 +1462,128 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         }
         if(splitCount>0)
             std::cout << "  bg/fg split: " << splitCount << " baked object tile(s) -> shared overlay + reused terrain in " << baseName << std::endl;
+    }
+
+    // Pass 1c: PAIR-BASED partial match — catches a SAME object on DIFFERENT
+    // backgrounds that Pass 1b's full-tile terrain match misses (it picks a min-
+    // foreground terrain that is NOT the real background, e.g. common_0 #315
+    // cliff-over-water + #319 cliff-over-sand).  The SHARED region of two baked
+    // tiles is their common OBJECT (consistent for both, unlike a per-tile min-fg
+    // mask); the rest is background, PARTIAL-matched (over the object's complement)
+    // to find its original tile so the object lifts onto one shared overlay.
+    {
+        const int kBgMatchDiff=24, kMinObject=64, kMinBackground=48, kRecomposeTol=48, kRecomposeMaxBad=2;
+        std::vector<uint16_t> oc; std::vector<const QImage *> ocImg;   // object candidates (still composited)
+        std::vector<const QImage *> terr;                              // WALKABLE terrains = the only valid backgrounds
+        {
+            std::unordered_map<uint16_t,QImage>::const_iterator it=metaGroundImg.cbegin();
+            while(it!=metaGroundImg.cend())
+            {
+                uint16_t id=it->first;
+                const uint8_t cf=collFlag.count(id)?collFlag[id]:0;
+                if(((cf&2)!=0) && isFullyOpaque(it->second)) terr.push_back(&it->second); // a tile you can stand on
+                bool alwaysCollidable=((cf&1)!=0)&&((cf&2)==0);
+                uint16_t beh=ts.behavior(id);
+                bool normalTerrain=!(beh==0x02||beh==0x03||(beh>=0x10&&beh<=0x15)||(beh>=0x38&&beh<=0x3B));
+                if(overLocal.count(id) && overLocal[id]==-1 && alwaysCollidable && normalTerrain && isFullyOpaque(it->second))
+                { oc.push_back(id); ocImg.push_back(&it->second); }
+                ++it;
+            }
+        }
+        std::vector<uint16_t> pairIds; std::vector<QImage> pairFg, pairBg;
+        size_t a=0;
+        while(a<oc.size())
+        {
+            std::vector<char> bestMask; int bestCC=0;
+            size_t b2=0;
+            while(b2<oc.size())
+            {
+                if(b2!=a)
+                {
+                    std::vector<char> m; int bgd=0;
+                    int cc=sharedObjectMask(*ocImg[a],*ocImg[b2],kBgMatchDiff,m,bgd);
+                    if(cc>=kMinObject && bgd>=kMinBackground && cc>bestCC){ bestCC=cc; bestMask.swap(m); }
+                }
+                b2++;
+            }
+            if(bestCC>=kMinObject)
+            {
+                // PARTIAL-match the background (complement of the object) against WALKABLE
+                // terrains only -- the discriminator that keeps the OBJECT the foreground
+                // (if the shared region were itself background, the "background" would be
+                // the real object, which is NOT a walkable terrain, and nothing matches).
+                int bestT=-1,bestMis=1000;
+                size_t t=0;
+                while(t<terr.size())
+                {
+                    if(terr[t]!=ocImg[a])
+                    {
+                        int mis=0,p=0;
+                        while(p<256)
+                        {
+                            if(!bestMask[static_cast<size_t>(p)])
+                            {
+                                QRgb u=ocImg[a]->pixel(p%16,p/16), v=terr[t]->pixel(p%16,p/16);
+                                if(qAbs(qRed(u)-qRed(v))>kBgMatchDiff||qAbs(qGreen(u)-qGreen(v))>kBgMatchDiff||qAbs(qBlue(u)-qBlue(v))>kBgMatchDiff) mis++;
+                            }
+                            p++;
+                        }
+                        if(mis<bestMis){ bestMis=mis; bestT=static_cast<int>(t); }
+                    }
+                    t++;
+                }
+                if(bestT>=0)
+                {
+                    // RECOMPOSE pre-check: terrain + object overlay must reproduce X (the
+                    // guard's own test, run here so we only ever apply a split that PASSes).
+                    int badRecompose=0,p=0;
+                    while(p<256)
+                    {
+                        if(!bestMask[static_cast<size_t>(p)])
+                        {
+                            QRgb u=ocImg[a]->pixel(p%16,p/16), v=terr[static_cast<size_t>(bestT)]->pixel(p%16,p/16);
+                            if(qAbs(qRed(u)-qRed(v))>kRecomposeTol||qAbs(qGreen(u)-qGreen(v))>kRecomposeTol||qAbs(qBlue(u)-qBlue(v))>kRecomposeTol) badRecompose++;
+                        }
+                        p++;
+                    }
+                    if(badRecompose<=kRecomposeMaxBad)
+                    {
+                        QImage ov(16,16,QImage::Format_ARGB32); ov.fill(Qt::transparent);
+                        p=0; while(p<256){ if(bestMask[static_cast<size_t>(p)]) ov.setPixel(p%16,p/16,ocImg[a]->pixel(p%16,p/16)); p++; }
+                        pairIds.push_back(oc[a]); pairFg.push_back(ov); pairBg.push_back(terr[static_cast<size_t>(bestT)]->copy());
+                    }
+                }
+            }
+            a++;
+        }
+        // Keep only an object reused over >=2 DISTINCT backgrounds (the genuine
+        // "same object, different background"); a one-off match is dropped so the
+        // split stays high-confidence (over-splitting covered whole terrain layers).
+        std::unordered_map<std::string,std::unordered_set<std::string> > fgToBg;
+        std::vector<std::string> fgK(pairIds.size());
+        size_t k=0;
+        while(k<pairIds.size())
+        {
+            fgK[k]=std::string(reinterpret_cast<const char *>(pairFg[k].constBits()),static_cast<size_t>(pairFg[k].sizeInBytes()));
+            std::string bgk(reinterpret_cast<const char *>(pairBg[k].constBits()),static_cast<size_t>(pairBg[k].sizeInBytes()));
+            fgToBg[fgK[k]].insert(bgk);
+            k++;
+        }
+        int applied=0;
+        k=0;
+        while(k<pairIds.size())
+        {
+            if(fgToBg[fgK[k]].size()>=2)
+            {
+                overLocal[pairIds[k]]=dedupAdd(pairFg[k],overSeen,overs);
+                metaGroundImg[pairIds[k]]=pairBg[k];
+                splitIds.push_back(pairIds[k]);
+                applied++;
+            }
+            k++;
+        }
+        if(applied>0)
+            std::cout << "  bg/fg pair-split: " << applied << " same-object tile(s) -> shared overlay + matched background in " << baseName << std::endl;
     }
 
     // Pass 2: for each ground metatile count its DISTINCT neighbourhoods across
@@ -1919,6 +2103,22 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             std::cout << "  [guard] pool " << baseName << ": " << pool.duplicateTiles
                       << " duplicate non-animation tile(s)" << std::endl;
     }
+
+    // GUARD tiny-tile: a tile must not be NEAR-EMPTY — 1..12 visible (alpha>0) pixels
+    // with everything else fully transparent.  A fully-transparent tile (0 visible) is
+    // fine, and a tile with >=13 visible px is fine; only a 1..12-pixel speck is a
+    // wasted/degenerate overlay.  Animation frames are exempt (a frame may be sparse).
+    {
+        uint32_t k=0;
+        while(static_cast<size_t>(k)<tiles.size() && k<animStart)
+        {
+            const QImage &a=tiles[k];
+            int vis=0,y=0;
+            while(y<16){ int x=0; while(x<16){ if(qAlpha(a.pixel(x,y))>0) vis++; x++; } y++; }
+            if(vis>=1 && vis<=12) pool.tinyTiles++;
+            k++;
+        }
+    }
     return pool;
 }
 
@@ -2094,11 +2294,11 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     // Object/semantic markers come from the generated visible markers.tsx
     // (written by writeMarkers above), referenced at markerGid(map).
 
-    uint32_t totalSheets=0,totalDup=0,totalAdj=0,totalBgFg=0,totalLayer=0,totalLayerBad=0;
+    uint32_t totalSheets=0,totalDup=0,totalAdj=0,totalBgFg=0,totalLayer=0,totalLayerBad=0,totalTiny=0;
     std::unordered_map<uint32_t,TilePool>::const_iterator a=primaryPools_.begin();
-    while(a!=primaryPools_.cend()) { totalSheets+=a->second.sheetCount; totalDup+=a->second.duplicateTiles; totalAdj+=a->second.adjacencyViolations; totalBgFg+=a->second.bgFgSplits; totalLayer+=a->second.layerSplitTiles; totalLayerBad+=a->second.layerSplitBad; ++a; }
+    while(a!=primaryPools_.cend()) { totalSheets+=a->second.sheetCount; totalDup+=a->second.duplicateTiles; totalAdj+=a->second.adjacencyViolations; totalBgFg+=a->second.bgFgSplits; totalLayer+=a->second.layerSplitTiles; totalLayerBad+=a->second.layerSplitBad; totalTiny+=a->second.tinyTiles; ++a; }
     std::unordered_map<uint64_t,TilePool>::const_iterator b=secondaryPools_.begin();
-    while(b!=secondaryPools_.cend()) { totalSheets+=b->second.sheetCount; totalDup+=b->second.duplicateTiles; totalAdj+=b->second.adjacencyViolations; totalBgFg+=b->second.bgFgSplits; totalLayer+=b->second.layerSplitTiles; totalLayerBad+=b->second.layerSplitBad; ++b; }
+    while(b!=secondaryPools_.cend()) { totalSheets+=b->second.sheetCount; totalDup+=b->second.duplicateTiles; totalAdj+=b->second.adjacencyViolations; totalBgFg+=b->second.bgFgSplits; totalLayer+=b->second.layerSplitTiles; totalLayerBad+=b->second.layerSplitBad; totalTiny+=b->second.tinyTiles; ++b; }
     std::cout << "TilesetBuilder: " << primaryPools_.size() << " primary + "
               << secondaryPools_.size() << " secondary pools, " << totalSheets
               << " deduplicated sheets" << std::endl;
@@ -2131,6 +2331,17 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     else
         std::cout << "TilesetBuilder GUARD layer-recompose: FAIL (" << totalLayerBad << "/" << totalLayer
                   << " split tile(s) do NOT recompose to the original ROM tile)" << std::endl;
+    // GUARD 4: no NEAR-EMPTY tile (1..12 visible px, rest fully transparent); a fully
+    // transparent tile is fine.  A handful are tolerated (owner accepts very few).
+    const uint32_t kTinyTolerance=8;
+    if(totalTiny==0)
+        std::cout << "TilesetBuilder GUARD tiny-tile: PASS (no near-empty 1..12-px tiles)" << std::endl;
+    else if(totalTiny<=kTinyTolerance)
+        std::cout << "TilesetBuilder GUARD tiny-tile: PASS (" << totalTiny
+                  << " near-empty tile(s) with 1..12 visible px — within tolerance)" << std::endl;
+    else
+        std::cout << "TilesetBuilder GUARD tiny-tile: FAIL (" << totalTiny
+                  << " near-empty tile(s) with 1..12 visible px, rest transparent)" << std::endl;
     return true;
 }
 
