@@ -31,6 +31,13 @@ public:
 
     bool writeAll();
 
+    // Sub-datapack overlay: emit ONLY what differs from the already-generated
+    // main at mainDir (e.g. map/main/ruby).  The sub has no .tmx/tileset (geometry
+    // is shared from main); it writes informations.xml plus, per map, a partial
+    // <map>.xml carrying only the changed wild-encounter sections (<grass>/<water>)
+    // — the version-exclusive Pokemon — matching map/main/test/sub/smallchange/.
+    bool writeSubOverlay(const std::string &mainDir);
+
     // One bot placed on a map.  A skinned bot is a Gen3 NPC; a skinless bot is
     // a script sign (the "press A" text panels), which CatchChallenger models
     // as a bot with no skin.  Built once and shared by the .tmx object emission

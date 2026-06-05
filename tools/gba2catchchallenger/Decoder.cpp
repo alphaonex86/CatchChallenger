@@ -48,6 +48,85 @@ const DecodedMap *Decoder::find(uint8_t group, uint8_t map) const
     return &maps_[it->second];
 }
 
+std::vector<uint32_t> Decoder::walkGroups(uint32_t offset) const
+{
+    // Each gMapGroups entry points to a group array; group[0] -> MapHeader[0] ->
+    // MapLayout.  A real table has many such entries back to back.
+    std::vector<uint32_t> groupPtr;
+    uint32_t o=offset;
+    bool ok=false;
+    while(true)
+    {
+        uint32_t gp=rom_.pointer(o,&ok);
+        if(!ok)
+            break;
+        uint32_t header0=rom_.pointer(gp,&ok);
+        if(!ok)
+            break;
+        uint32_t layout0=rom_.pointer(header0,&ok);
+        if(!ok || !looksLikeLayout(layout0))
+            break;
+        groupPtr.push_back(gp);
+        o+=4;
+        if(groupPtr.size()>256)
+            break;
+    }
+    return groupPtr;
+}
+
+uint32_t Decoder::groupMapCount(uint32_t groupOffset) const
+{
+    uint32_t count=0;
+    bool ok=false;
+    while(true)
+    {
+        uint32_t header=rom_.pointer(groupOffset+count*4,&ok);
+        if(!ok)
+            break;
+        uint32_t layout=rom_.pointer(header,&ok);
+        if(!ok || !looksLikeLayout(layout))
+            break;
+        count++;
+        if(count>512)
+            break;
+    }
+    return count;
+}
+
+uint32_t Decoder::findMapGroups() const
+{
+    // Word-aligned sweep: at each offset try to walk a gMapGroups table; keep the
+    // candidate (>=8 groups) with the most total maps.  Non-table offsets fail at
+    // the first pointer check, so this stays cheap even on a 32MiB hack ROM.
+    uint32_t best=0;
+    uint64_t bestScore=0;
+    uint32_t size=rom_.size();
+    uint32_t o=0;
+    while(o+4<=size)
+    {
+        std::vector<uint32_t> gp=walkGroups(o);
+        if(gp.size()>=8)
+        {
+            uint64_t total=0;
+            size_t i=0;
+            while(i<gp.size())
+            {
+                total+=groupMapCount(gp[i]);
+                i++;
+            }
+            if(total>bestScore)
+            {
+                bestScore=total;
+                best=o;
+            }
+            o+=4*static_cast<uint32_t>(gp.size()); // skip past this table
+        }
+        else
+            o+=4;
+    }
+    return best;
+}
+
 bool Decoder::looksLikeLayout(uint32_t layoutOffset) const
 {
     if(layoutOffset==0 || layoutOffset+0x18>rom_.size())
@@ -67,31 +146,32 @@ bool Decoder::looksLikeLayout(uint32_t layoutOffset) const
 bool Decoder::decodeAll()
 {
     const GameInfo &game=rom_.game();
-    uint32_t groupsOffset=game.mapGroupsOffset;
-    // Walk gMapGroups while each entry resolves group -> map0 -> header -> layout.
-    std::vector<uint32_t> groupPtr;
-    uint32_t o=groupsOffset;
     bool ok=false;
-    while(true)
+    // gMapGroups: use the per-game offset; if it is 0 (a hack) or fails to
+    // validate, scan the whole ROM for a relocated/expanded table.
+    uint32_t groupsOffset=game.mapGroupsOffset;
+    std::vector<uint32_t> groupPtr;
+    if(groupsOffset!=0)
+        groupPtr=walkGroups(groupsOffset);
+    if(groupPtr.size()<8)
     {
-        uint32_t gp=rom_.pointer(o,&ok);
-        if(!ok)
-            break;
-        uint32_t header0=rom_.pointer(gp,&ok);
-        if(!ok)
-            break;
-        uint32_t layout0=rom_.pointer(header0,&ok);
-        if(!ok || !looksLikeLayout(layout0))
-            break;
-        groupPtr.push_back(gp);
-        o+=4;
-        if(groupPtr.size()>256)
-            break;
+        uint32_t scanned=findMapGroups();
+        if(scanned!=0)
+        {
+            std::vector<uint32_t> alt=walkGroups(scanned);
+            if(alt.size()>groupPtr.size())
+            {
+                groupsOffset=scanned;
+                groupPtr=alt;
+                std::cout << "Decoder: gMapGroups located by scan at 0x"
+                          << std::hex << groupsOffset << std::dec << std::endl;
+            }
+        }
     }
     if(groupPtr.empty())
     {
-        std::cerr << "Decoder: gMapGroups not recognised at offset 0x"
-                  << std::hex << groupsOffset << std::dec << std::endl;
+        std::cerr << "Decoder: gMapGroups not recognised (per-game offset 0x"
+                  << std::hex << game.mapGroupsOffset << std::dec << ")" << std::endl;
         return false;
     }
     // Per-group map count: group arrays are contiguous in ROM, so the count is
@@ -115,21 +195,7 @@ bool Decoder::decodeAll()
         if(next!=0)
             count=(next-start)/4;
         else
-        {
-            count=0;
-            while(true)
-            {
-                uint32_t header=rom_.pointer(start+count*4,&ok);
-                if(!ok)
-                    break;
-                uint32_t layout=rom_.pointer(header,&ok);
-                if(!ok || !looksLikeLayout(layout))
-                    break;
-                count++;
-                if(count>512)
-                    break;
-            }
-        }
+            count=groupMapCount(start);
         uint32_t mi=0;
         while(mi<count)
         {

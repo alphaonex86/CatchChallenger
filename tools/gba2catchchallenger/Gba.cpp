@@ -47,7 +47,65 @@ std::string GameInfo::regionFor(uint8_t sid) const
     return region;
 }
 
-GameInfo GameInfo::detect(const std::vector<uint8_t> &rom)
+// Engine that backs a 4-char game code; *ok=false for a non-Gen3 code.
+static Engine engineForCode(const std::string &code, bool *ok)
+{
+    *ok=true;
+    if(code=="BPRE" || code=="BPGE")
+        return Engine::Frlg;
+    if(code=="BPEE" || code=="AXVE" || code=="AXPE")
+        return Engine::Rse;
+    *ok=false;
+    return Engine::Frlg;
+}
+
+// Derive a datapack code for a non-canonical hack from its file name:
+// the first lowercase [a-z0-9] token that is not a generic word ("pokemon",
+// "version", ...).  "Pokemon Glazed.gba" -> "glazed", "HnS v1.2.1.gba" -> "hns".
+// The result matches CATCHCHALLENGER_CHECK_(MAIN|SUB)DATAPACKCODE ("^[a-z0-9]+$").
+static std::string slugFromPath(const std::string &romPath)
+{
+    std::string base=romPath;
+    size_t slash=base.find_last_of("/\\");
+    if(slash!=std::string::npos)
+        base=base.substr(slash+1);
+    size_t dot=base.find_last_of('.');
+    if(dot!=std::string::npos)
+        base=base.substr(0,dot);
+    // split into lowercase alnum tokens
+    std::vector<std::string> tokens;
+    std::string cur;
+    size_t i=0;
+    while(i<=base.size())
+    {
+        char c=(i<base.size())?base[i]:' ';
+        if((c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9'))
+        {
+            if(c>='A'&&c<='Z')
+                c=static_cast<char>(c-'A'+'a');
+            cur.push_back(c);
+        }
+        else
+        {
+            if(!cur.empty())
+                tokens.push_back(cur);
+            cur.clear();
+        }
+        i++;
+    }
+    size_t t=0;
+    while(t<tokens.size())
+    {
+        const std::string &tk=tokens[t];
+        // skip generic words and pure version tokens (start with a digit)
+        if(tk!="pokemon" && tk!="version" && tk!="the" && !(tk[0]>='0'&&tk[0]<='9'))
+            return tk;
+        t++;
+    }
+    return tokens.empty()?std::string("rom"):tokens.front();
+}
+
+GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &romPath)
 {
     GameInfo info;
     if(rom.size()<0xC0)
@@ -56,12 +114,17 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom)
     uint8_t version=rom[0xBC];
     info.code=code;
     info.version=version;
-    // Per-game table.  Only the two requested ROMs are wired up; the structure
-    // makes it trivial to add LeafGreen/Emerald/Sapphire later (same engines).
-    if(code=="BPRE") // FireRed
+    // A canonical retail ROM is exactly 16MiB; hacks here are expanded (32MiB) or
+    // relocate their tables, so size gates "use the hardcoded offsets" vs "treat
+    // as a standalone hack and scan".
+    const bool is16MB=(rom.size()==0x1000000u);
+    // Per-game table.  Five canonical bases are wired up; siblings that share a
+    // region with a base are emitted as sub overlays (mainCode+subCode).
+    if(code=="BPRE" && is16MB) // FireRed
     {
         info.valid=true;
         info.label="firered";
+        info.mainCode="firered";
         info.engine=Engine::Frlg;
         info.mapGroupsOffset=0x352718;
         info.tilesInPrimary=640;
@@ -96,10 +159,11 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom)
         info.region2MinSid=0x8f;
         info.region2MaxSid=0xc3;
     }
-    else if(code=="AXVE") // Ruby
+    else if(code=="AXVE" && is16MB) // Ruby
     {
         info.valid=true;
         info.label="ruby";
+        info.mainCode="ruby";
         info.engine=Engine::Rse;
         info.mapGroupsOffset=0x3085a0;
         info.tilesInPrimary=512;
@@ -129,8 +193,114 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom)
         info.animWaterArray=0x376F3C;
         info.doorTable=0x30F9CC; // gDoorAnimGraphicsTable (stride 12)
     }
+    else if(code=="BPGE" && is16MB) // LeafGreen — sub overlay of FireRed (Kanto)
+    {
+        // Sibling sub: only the sub-overlay needs map decode + naming + wild, so
+        // only those tables are wired (verified by signature scan, 2026-06-05).
+        // FRLG engine constants are shared with FireRed.  No tmx/tileset/skins are
+        // written for a sub, so owGfx/trainers/itemNames/doorTable/animWater stay 0.
+        info.valid=true;
+        info.label="leafgreen";
+        info.mainCode="firered";
+        info.subCode="leafgreen";
+        info.engine=Engine::Frlg;
+        info.mapGroupsOffset=0x3526F8;
+        info.tilesInPrimary=640;
+        info.metatilesInPrimary=640;
+        info.palettesInPrimary=7;
+        info.region="kanto";
+        info.mapNameTable=0x3F19F8;
+        info.mapNameStride=4;
+        info.mapNameField=0;
+        info.mapNameMinSid=0x58;
+        info.mapNameMaxSid=0xC4;
+        info.wildTable=0x3C9B64;
+        info.speciesNames=0x245F2C;
+        // Sevii split matches FireRed so sub paths land in the same region folders.
+        info.region2="sevii-islands";
+        info.region2MinSid=0x8f;
+        info.region2MaxSid=0xc3;
+    }
+    else if(code=="AXPE" && is16MB) // Sapphire — sub overlay of Ruby (Hoenn)
+    {
+        info.valid=true;
+        info.label="sapphire";
+        info.mainCode="ruby";
+        info.subCode="sapphire";
+        info.engine=Engine::Rse;
+        info.mapGroupsOffset=0x308530;
+        info.tilesInPrimary=512;
+        info.metatilesInPrimary=512;
+        info.palettesInPrimary=6;
+        info.region="hoenn";
+        info.mapNameTable=0x3E743C;
+        info.mapNameStride=8;
+        info.mapNameField=4;
+        info.mapNameMinSid=0x00;
+        info.mapNameMaxSid=0x56;
+        info.wildTable=0x39D2B4;
+        info.speciesNames=0x1F7114;
+    }
+    else if(code=="BPEE" && is16MB) // Emerald — sub overlay of Ruby (Hoenn)
+    {
+        info.valid=true;
+        info.label="emerald";
+        info.mainCode="ruby";
+        info.subCode="emerald";
+        info.engine=Engine::Rse;
+        info.mapGroupsOffset=0x486578;
+        info.tilesInPrimary=512;
+        info.metatilesInPrimary=512;
+        info.palettesInPrimary=6;
+        info.region="hoenn";
+        // Emerald's section names live at a relocated table; the town/route names
+        // match Ruby's exactly, so the slugs (and hence sub paths) align with the
+        // Ruby main.  Emerald sids start at 0x24 (LITTLEROOT) and run past 0x6B.
+        info.mapNameTable=0x5A135C;
+        info.mapNameStride=8;
+        info.mapNameField=4;
+        info.mapNameMinSid=0x24;
+        info.mapNameMaxSid=0xD4;
+        info.wildTable=0x552D48;
+        info.speciesNames=0x3185C8;
+    }
     else
-        std::cerr << "Unknown ROM code '" << code << "' version " << (int)version << std::endl;
+    {
+        // Not a canonical retail ROM.  If it still rides a known Gen3 engine
+        // (a ROM hack: relocated/expanded), emit it as a STANDALONE main and let
+        // the decoder locate gMapGroups by signature scan (mapGroupsOffset=0).
+        // Metadata tables are unknown for a hack, so they stay 0 — maps+tilesets
+        // render, names fall back to generic, no wild/skins/doors.
+        bool eok=false;
+        Engine eng=engineForCode(code,&eok);
+        if(!eok)
+        {
+            std::cerr << "Unknown ROM code '" << code << "' version " << (int)version
+                      << " (not a supported Gen3 engine)" << std::endl;
+            return info;
+        }
+        info.valid=true;
+        info.engine=eng;
+        info.label=slugFromPath(romPath);
+        info.mainCode=info.label;
+        info.region=info.label;
+        info.mapGroupsOffset=0; // => Decoder::decodeAll scans for gMapGroups
+        if(eng==Engine::Frlg)
+        {
+            info.tilesInPrimary=640;
+            info.metatilesInPrimary=640;
+            info.palettesInPrimary=7;
+        }
+        else
+        {
+            info.tilesInPrimary=512;
+            info.metatilesInPrimary=512;
+            info.palettesInPrimary=6;
+        }
+        std::cerr << "ROM '" << code << "' v" << (int)version << " (" << rom.size()/(1024*1024)
+                  << "MB) is not canonical -> standalone hack main '" << info.label
+                  << "' (gMapGroups will be scanned)" << std::endl;
+    }
     return info;
 }
 
@@ -180,7 +350,7 @@ bool GbaRom::load(const std::string &path)
         std::cerr << "Short read on ROM: " << path << std::endl;
         return false;
     }
-    game_=GameInfo::detect(data_);
+    game_=GameInfo::detect(data_,path);
     return game_.valid;
 }
 

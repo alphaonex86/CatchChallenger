@@ -109,6 +109,14 @@ private:
     void decodeEvents(uint32_t eventsOffset, DecodedMap &out);
     void decodeConnections(uint32_t connectionsOffset, DecodedMap &out);
     bool looksLikeLayout(uint32_t layoutOffset) const;
+    // Consecutive group-array pointers at `offset` whose first map resolves to a
+    // sane layout — validates a gMapGroups candidate (empty => not a table).
+    std::vector<uint32_t> walkGroups(uint32_t offset) const;
+    // Consecutive valid map headers in one group array (capped).
+    uint32_t groupMapCount(uint32_t groupOffset) const;
+    // Scan the whole ROM for gMapGroups, used when the per-game offset is 0 or
+    // fails to validate (a relocated/expanded hack).  Returns 0 if not found.
+    uint32_t findMapGroups() const;
 
     const GbaRom &rom_;
     std::vector<DecodedMap> maps_;

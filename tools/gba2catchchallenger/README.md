@@ -8,19 +8,46 @@ index, no in-game proper names are emitted.
 gba2catchchallenger --datapack <datapack-root> --gba <rom.gba>
 ```
 
-`--gda` is accepted as an alias for `--gba`. Output is written to
-`<datapack-root>/map/main/<label>/` with tilesets under `<label>/tileset/`,
-where `<label>` is derived from the ROM (`firered`, `ruby`, ...).
+`--gda` is accepted as an alias for `--gba`. The ROM's **role is auto-detected
+from its header** (`GameInfo::detect`) and decides where the output lands:
+
+* a **base** → `<datapack-root>/map/main/<label>/` (full maps + tilesets), label
+  derived from the ROM (`firered`, `ruby`, ...);
+* a **sibling sub** (LeafGreen↔FireRed, Sapphire/Emerald↔Ruby — same region, same
+  map geometry) → `map/main/<mainCode>/sub/<subCode>/` as a **diff overlay**;
+* a **standalone hack** (an off-fingerprint ROM still on a known Gen3 engine, e.g.
+  a 32 MiB expanded build) → its own `map/main/<slug>/`, slug from the filename.
 
 ## Supported ROMs
 
-| ROM | code/ver | engine | maps |
-|-----|----------|--------|------|
-| FireRed | BPRE v1 | FRLG | 425 |
-| Ruby | AXVE v1 | RSE | 394 |
+| ROM | code/ver | engine | maps | role |
+|-----|----------|--------|------|------|
+| FireRed   | BPRE v1 | FRLG | 425 | main `firered` |
+| LeafGreen | BPGE v1 | FRLG | 425 | sub `firered/sub/leafgreen` |
+| Ruby      | AXVE v1 | RSE  | 394 | main `ruby` |
+| Sapphire  | AXPE v2 | RSE  | 394 | sub `ruby/sub/sapphire` |
+| Emerald   | BPEE v0 | RSE  | 518 | sub `ruby/sub/emerald` |
+| *hack*    | any Gen3 code, off-fingerprint | — | — | standalone `<slug>` |
 
-Adding a sibling (LeafGreen / Emerald / Sapphire) is a one-row edit in
-`GameInfo::detect()` — the engines are already handled.
+Classification is deterministic from the header, not fuzzy similarity: a canonical
+retail ROM is exactly 16 MiB and validates `gMapGroups` at its known offset.
+Anything else on a recognised engine becomes a standalone hack and its
+`gMapGroups` is **located by a signature scan** (`Decoder::findMapGroups`), so a
+ROM that relocated/expanded its tables still decodes (Glazed kept Emerald's table;
+HnS relocated it to 0xF39750).
+
+## Sub-datapack overlays
+
+A sibling sub shares the main's geometry, so its overlay writes **no `.tmx` and no
+tileset** — only what differs. `CCWriter::writeSubOverlay` diffs the sibling's
+per-map wild-encounter sections (`<grass>`/`<water>`, the version-exclusive
+Pokémon) against the already-generated main and writes, per changed map, a partial
+`<map>.xml` carrying only the changed sections, plus the sub's own
+`informations.xml`. This matches the canonical example
+`map/main/test/sub/smallchange/` (a water-only override). Maps identical to the
+main are not duplicated; sibling-exclusive maps (e.g. Emerald's Battle Frontier)
+are skipped by the wild-only overlay. Because a sub is diffed against its main, the
+main must be generated first (see `generate-datapack-pkmn.sh`).
 
 ## What is decoded
 
