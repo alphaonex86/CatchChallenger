@@ -1230,8 +1230,71 @@ std::vector<SheetSeg> poolSheetSegments(uint32_t mainCount, uint32_t uniqueCount
 
 TilesetBuilder::TilesetBuilder(const GbaRom &rom, const std::string &tilesetDir) :
     rom_(rom),
-    tilesetDir_(tilesetDir)
+    tilesetDir_(tilesetDir),
+    globalAnimCols_(rom.game().animWaterFrames>8?static_cast<int>(rom.game().animWaterFrames):8)
 {
+}
+
+// Register an animation in the ONE global anim collection, de-duplicated by frame
+// content and laid out 1 ANIMATION PER ROW (padded to globalAnimCols_).  Returns the
+// global index of its first frame.
+int TilesetBuilder::registerGlobalAnim(const std::vector<QImage> &frames, const std::string &animStr)
+{
+    std::string key;
+    size_t f=0;
+    while(f<frames.size())
+    {
+        QImage a=frames[f].convertToFormat(QImage::Format_ARGB32);
+        key.append(reinterpret_cast<const char *>(a.constBits()),static_cast<size_t>(a.sizeInBytes()));
+        f++;
+    }
+    std::unordered_map<std::string,int>::const_iterator it=globalAnimSeen_.find(key);
+    if(it!=globalAnimSeen_.cend())
+        return it->second;
+    QImage pad(16,16,QImage::Format_ARGB32);
+    pad.fill(Qt::transparent);
+    while(globalAnims_.size()%static_cast<size_t>(globalAnimCols_)!=0) globalAnims_.push_back(pad); // new row
+    int first=static_cast<int>(globalAnims_.size());
+    f=0;
+    while(f<frames.size()) { globalAnims_.push_back(frames[f].convertToFormat(QImage::Format_ARGB32)); f++; }
+    globalAnimSeen_[key]=first;
+    globalAnimStr_[first]=animStr;
+    return first;
+}
+
+// Emit the ONE shared global anim tileset (anim_0.png/.tsx, more if > kCapacity) at
+// the tileset/ root, laid out globalAnimCols_ wide = 1 animation per row.
+void TilesetBuilder::emitGlobalAnim()
+{
+    uint32_t total=static_cast<uint32_t>(globalAnims_.size());
+    uint32_t s=0;
+    while(s*kCapacity<total)
+    {
+        uint32_t startCell=s*kCapacity;
+        uint32_t cnt=total-startCell;
+        if(cnt>kCapacity) cnt=kCapacity;
+        int cols=globalAnimCols_;
+        int rows=static_cast<int>((cnt+static_cast<uint32_t>(cols)-1)/static_cast<uint32_t>(cols));
+        QImage sheet(cols*16,rows*16,QImage::Format_ARGB32);
+        sheet.fill(Qt::transparent);
+        uint32_t c=0;
+        while(c<cnt){ blitTile(sheet,cols,c,globalAnims_[startCell+c]); c++; }
+        std::unordered_map<int,std::string> localAnims;
+        std::unordered_map<int,std::string>::const_iterator it=globalAnimStr_.cbegin();
+        while(it!=globalAnimStr_.cend())
+        {
+            if(it->first>=static_cast<int>(startCell) && it->first<static_cast<int>(startCell+cnt))
+                localAnims[it->first-static_cast<int>(startCell)]=it->second;
+            ++it;
+        }
+        std::string name="anim_"+std::to_string(s);
+        sheet.save(QString::fromStdString(tilesetDir_+"/"+name+".png"),"PNG");
+        writeTsx(tilesetDir_,name,cols,sheet,cnt,localAnims);
+        s++;
+    }
+    if(total>0)
+        std::cout << "TilesetBuilder: 1 shared global anim tileset (" << total << " tiles, "
+                  << globalAnimStr_.size() << " animations)" << std::endl;
 }
 
 uint64_t TilesetBuilder::pairKey(uint32_t primary, uint32_t secondary)
@@ -1871,58 +1934,24 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     overs.clear();
     uint32_t groundCount=static_cast<uint32_t>(grounds.size());
     uint32_t groundsOvers=groundCount;
-    // Visible+hidden tiles, then the animation tiles.
-    uint32_t animStart=groundsOvers;
-    // The _anim sheet is laid out 1 ANIMATION PER ROW: width = the animation length,
-    // and every animation is padded to start at a row boundary so it reads cleanly.
-    int animCols=(waterFrames>8)?waterFrames:8;
-    pool.animCols=static_cast<uint32_t>(animCols);
-    QImage animPad(16,16,QImage::Format_ARGB32);
-    animPad.fill(Qt::transparent);
+    uint32_t animStart=groundsOvers; // pool now ends at grounds+overs (no anim region)
 
-    // Animation frame sequences, kept consecutive and inside one sheet.
-    std::vector<QImage> anims;
-    std::unordered_map<std::string,int> animSeen;
-    std::unordered_map<uint16_t,int> animLocal;
-    std::unordered_map<int,std::string> animLocalStr;
+    // Water + door animations go to the ONE shared GLOBAL anim tileset, de-duplicated
+    // ACROSS pools (water/flowers/doors appear once for the whole label) and laid out
+    // 1 animation per row.  The pool records only metatile -> GLOBAL anim index; its
+    // OWN tiles are just grounds+overs.
     i=0;
     while(i<animatedIds.size())
     {
         uint16_t id=animatedIds[i];
         std::vector<QImage> frames;
-        std::string key;
         int f=0;
-        while(f<waterFrames)
-        {
-            QImage fr=ts.renderMetatileFrame(id,f).convertToFormat(QImage::Format_ARGB32);
-            key.append(reinterpret_cast<const char *>(fr.constBits()),static_cast<size_t>(fr.sizeInBytes()));
-            frames.push_back(fr);
-            f++;
-        }
-        std::unordered_map<std::string,int>::const_iterator it=animSeen.find(key);
-        if(it!=animSeen.cend())
-            animLocal[id]=it->second;
-        else
-        {
-            while(anims.size()%static_cast<size_t>(animCols)!=0) anims.push_back(animPad); // start a new row
-            int firstLocal=static_cast<int>(anims.size());
-            f=0;
-            while(f<waterFrames) { anims.push_back(frames[f]); f++; }
-            animSeen[key]=firstLocal;
-            animLocal[id]=firstLocal;
-            animLocalStr[firstLocal]=animStr;
-        }
+        while(f<waterFrames) { frames.push_back(ts.renderMetatileFrame(id,f).convertToFormat(QImage::Format_ARGB32)); f++; }
+        pool.animGlobal[id]=registerGlobalAnim(frames,animStr);
         i++;
     }
-
-    // Door animation tiles: the real door-open frames from the ROM's
-    // gDoorAnimGraphicsTable (closed -> 3 progressively open states), placed in
-    // the consecutive animation section so the door OBJECT references an animated
-    // tile (the client deletes a door whose tile has no animation and requires
-    // frames>1).  Only the object uses these; the static Walkable door tile is
-    // unaffected.  Falls back to a 2-frame static door if the metatile is not in
-    // the table.
-    std::unordered_map<uint16_t,int> doorLocal;
+    // Door open-animation frames (closed -> open states); fall back to a 2-frame
+    // static door.  Only the door OBJECT references these.
     i=0;
     while(i<doorIds.size())
     {
@@ -1939,45 +1968,23 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             dframes.push_back(c);
             dstr="120ms;2frames";
         }
-        std::string key;
         size_t fr=0;
-        while(fr<dframes.size())
-        {
-            dframes[fr]=dframes[fr].convertToFormat(QImage::Format_ARGB32);
-            key.append(reinterpret_cast<const char *>(dframes[fr].constBits()),static_cast<size_t>(dframes[fr].sizeInBytes()));
-            fr++;
-        }
-        std::unordered_map<std::string,int>::const_iterator it=animSeen.find(key);
-        if(it!=animSeen.cend())
-            doorLocal[id]=it->second;
-        else
-        {
-            while(anims.size()%static_cast<size_t>(animCols)!=0) anims.push_back(animPad); // start a new row
-            int firstLocal=static_cast<int>(anims.size());
-            fr=0;
-            while(fr<dframes.size()) { anims.push_back(dframes[fr]); fr++; }
-            animSeen[key]=firstLocal;
-            doorLocal[id]=firstLocal;
-            animLocalStr[firstLocal]=dstr;
-        }
+        while(fr<dframes.size()) { dframes[fr]=dframes[fr].convertToFormat(QImage::Format_ARGB32); fr++; }
+        pool.animGlobal[id]=registerGlobalAnim(dframes,dstr);
         i++;
     }
 
-    // Concatenate: ground+over region, padded so the (row-major) anim region
-    // starts on a fresh sheet, then the anims.
+    // The pool's own tiles are just grounds + overs (overs are empty after the
+    // unified layout — they live inside grounds via overRemap).
     std::vector<QImage> tiles;
-    tiles.reserve(animStart+anims.size());
+    tiles.reserve(grounds.size()+overs.size());
     size_t j=0;
     while(j<grounds.size()) { tiles.push_back(grounds[j]); j++; }
     j=0;
     while(j<overs.size()) { tiles.push_back(overs[j]); j++; }
-    QImage blank(16,16,QImage::Format_ARGB32);
-    blank.fill(Qt::transparent);
-    while(static_cast<uint32_t>(tiles.size())<animStart) tiles.push_back(blank);
-    j=0;
-    while(j<anims.size()) { tiles.push_back(anims[j]); j++; }
 
-    // Resolve per-metatile cells into the concatenated layout.
+    // Resolve per-metatile cells.  Water/door metatiles resolve via pool.animGlobal
+    // (the global anim tileset), not a pool-local cell.
     i=0;
     while(i<usedIds.size())
     {
@@ -1985,31 +1992,12 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         std::unordered_map<uint16_t,int>::const_iterator git=groundLocal.find(id);
         if(git!=groundLocal.cend())
             pool.groundCell[id]=git->second;            // plain (high-freq) ground
-        else
-        {
-            std::unordered_map<uint16_t,int>::const_iterator dit=animLocal.find(id);
-            if(dit!=animLocal.cend())
-                pool.groundCell[id]=static_cast<int>(animStart)+dit->second; // water
-            // else: a context-split metatile -> resolved via contextCell below
-        }
         std::unordered_map<uint16_t,int>::const_iterator oit=overLocal.find(id);
         pool.overCell[id]=(oit!=overLocal.cend() && oit->second>=0)
                           ? static_cast<int>(overRemap[static_cast<size_t>(oit->second)]) : -1;
         i++;
     }
     pool.contextCell=contextLocal; // split tile contexts -> final ground cells
-    std::unordered_map<uint16_t,int>::const_iterator drit=doorLocal.cbegin();
-    while(drit!=doorLocal.cend())
-    {
-        pool.doorCell[drit->first]=static_cast<int>(animStart)+drit->second;
-        ++drit;
-    }
-    std::unordered_map<int,std::string>::const_iterator cit=animLocalStr.cbegin();
-    while(cit!=animLocalStr.cend())
-    {
-        pool.cellAnimation[static_cast<int>(animStart)+cit->first]=cit->second;
-        ++cit;
-    }
 
     // GUARD layer-recompose (TEST CASE): EVERY tile split across TWO layers must
     // RECOMPOSE to the original ROM metatile.  Covers all three kinds of split:
@@ -2351,6 +2339,10 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
         ki++;
     }
 
+    // Emit the ONE shared global animation tileset (filled by buildPool via
+    // registerGlobalAnim): water/flowers/doors de-duplicated across all pools.
+    emitGlobalAnim();
+
     // Object/semantic markers come from the generated visible markers.tsx
     // (written by writeMarkers above), referenced at markerGid(map).
 
@@ -2449,7 +2441,11 @@ uint32_t TilesetBuilder::groundGid(const DecodedMap &map, int x, int y) const
     if(p==nullptr)
         return 0;
     uint32_t base=primary ? 1u : secondaryBase(map);
-    // plain (de-duplicated) ground or animated water tile
+    // animated water -> the ONE shared global anim tileset
+    std::unordered_map<uint16_t,int>::const_iterator ag=p->animGlobal.find(m);
+    if(ag!=p->animGlobal.cend() && ag->second>=0)
+        return animBase(map)+static_cast<uint32_t>(ag->second);
+    // plain (de-duplicated) ground tile
     std::unordered_map<uint16_t,int>::const_iterator g=p->groundCell.find(m);
     if(g!=p->groundCell.cend() && g->second>=0)
         return base+static_cast<uint32_t>(g->second);
@@ -2517,20 +2513,26 @@ uint32_t TilesetBuilder::doorGid(const DecodedMap &map, uint16_t metatile) const
     const TilePool *p=(metatile<metaInPrim) ? primaryPool(map) : secondaryPool(map);
     if(p==nullptr)
         return 0;
-    std::unordered_map<uint16_t,int>::const_iterator it=p->doorCell.find(metatile);
-    if(it==p->doorCell.cend() || it->second<0)
+    std::unordered_map<uint16_t,int>::const_iterator it=p->animGlobal.find(metatile);
+    if(it==p->animGlobal.cend() || it->second<0)
         return 0;
-    uint32_t base=(metatile<metaInPrim) ? 1u : secondaryBase(map);
-    return base+static_cast<uint32_t>(it->second);
+    return animBase(map)+static_cast<uint32_t>(it->second); // global anim tileset
 }
 
-uint32_t TilesetBuilder::markerGid(const DecodedMap &map) const
+// First gid of the ONE global anim tileset for this map: right after the primary +
+// secondary pools (which no longer hold any anim tiles).
+uint32_t TilesetBuilder::animBase(const DecodedMap &map) const
 {
     uint32_t base=secondaryBase(map);
     const TilePool *s=secondaryPool(map);
     if(s!=nullptr)
         base+=s->uniqueCount;
     return base;
+}
+
+uint32_t TilesetBuilder::markerGid(const DecodedMap &map) const
+{
+    return animBase(map)+static_cast<uint32_t>(globalAnims_.size());
 }
 
 std::vector<std::pair<uint32_t,std::string> > TilesetBuilder::tilesetRefs(const DecodedMap &map) const
@@ -2552,6 +2554,12 @@ std::vector<std::pair<uint32_t,std::string> > TilesetBuilder::tilesetRefs(const 
         std::vector<SheetSeg> segs=poolSheetSegments(sec->mainCount,sec->uniqueCount);
         size_t i=0;
         while(i<segs.size()){ out.push_back(std::make_pair(base+segs[i].start,pre+segs[i].suffix)); i++; }
+    }
+    // the ONE shared global animation tileset (at tileset/ root), in kCapacity sheets
+    if(!globalAnims_.empty())
+    {
+        uint32_t ab=animBase(map), total=static_cast<uint32_t>(globalAnims_.size()), s=0;
+        while(s*kCapacity<total){ out.push_back(std::make_pair(ab+s*kCapacity,"anim_"+std::to_string(s))); s++; }
     }
     return out;
 }

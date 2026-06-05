@@ -73,12 +73,14 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   spans ≥2 regions, a pool whose maps all live in one region is tidied into
   `tileset/<region>/` (e.g. `tileset/kanto/`); pools shared across regions stay at
   the `tileset/` root.
-  **Anim/door sheet:** a pool's **door + animated** tiles go on their OWN sheet
-  `<base>_anim_<n>.png` (separate from the ground/over `<base>_<n>.png` sheets) so
-  they are grouped on a unique, easy-to-find tileset. Gids stay `base+position`;
-  only the file split and the per-sheet firstgid (`= base + startCell`) change, so
-  `secondaryBase`/`markerGid` are contiguous (use `uniqueCount`, not
-  `sheetCount*kCapacity`). The anim sheet is sized to its tiles (no padding waste).
+  **Global anim tileset:** ALL water/door animations across the whole label go to ONE
+  shared tileset `tileset/anim_<n>.png`, **de-duplicated across pools** (the same water
+  / flower / door animation is stored once for the entire region) and laid out **1
+  animation per row** (width = the animation length). A pool's own tiles are just
+  grounds+overs; it records only `metatile → global anim index`. Each map references
+  the global anim tileset at `animBase` (right after its primary+secondary pools), and
+  the marker follows it. (firered: 62 animations in one `anim_0` instead of ~22 tiny
+  per-pool `_anim` sheets.)
   **Layer composite vs decompose:** a metatile that is collidable everywhere with a
   UNIQUE top (a building face) is composited into ONE wall+roof tile (reads merged,
   like the in-game view); a top that's a REUSABLE overlay (a cliff/ledge edge, a
