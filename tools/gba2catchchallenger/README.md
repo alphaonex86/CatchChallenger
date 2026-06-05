@@ -55,12 +55,18 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   graphics, BGR555 palettes, 8-subtile (2-layer) metatiles with flips. Each
   metatile becomes one 16×16 CatchChallenger tile, pooled per
   `(primary,secondary)` pointer pair. Each distinct graphic is stored once;
-  tiles with a consistent on-map neighbour are packed as rigid 2-D blocks
-  (buildings read like the map) and identical blocks are merged, so the sheet
-  has almost no duplicate tiles. Sheets hold `kCapacity` tiles each (16 wide).
-  (`kContextSplitMax` can split a tile per-neighbourhood for stricter 2-D, but
-  default 0 — it bloats the sheets far more than it helps.) `main.cpp` wipes the
-  `<label>/` output dir before each run so stale sheets never accumulate.
+  tiles are packed as rigid 2-D blocks by their **dominant** (most-frequent,
+  reciprocated) on-map neighbour, so a whole building/tree reads like the map —
+  even when an occasional cell varies (the old rule required the neighbour to be
+  identical on *every* map, which fragmented anything that varied). Identical
+  blocks merge, so the sheet has almost no duplicate tiles. Sheets are **32 tiles
+  wide** (512 px, ~square like the gen2 native blocksets) and hold `kCapacity`
+  tiles each. (`kContextSplitMax` can split a tile per-neighbourhood for stricter
+  2-D, but default 0 — it bloats the sheets far more than it helps.) `main.cpp`
+  wipes the `<label>/` output dir before each run so stale sheets never accumulate.
+  **Region subfolders:** when a label has many tilesets (>50 pools), a pool whose
+  maps all live in one region is tidied into `tileset/<region>/` (e.g.
+  `tileset/kanto/`); pools shared across regions stay at the `tileset/` root.
   The same 2-D `layout2D` packer is applied to the over (WalkBehind) tiles too,
   so building/tree tops read like the map (not dumped in dedup order); an over
   identical to a ground tile folds onto it (no duplicate). Two **post-build
