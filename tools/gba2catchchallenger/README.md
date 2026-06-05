@@ -73,6 +73,12 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   spans ≥2 regions, a pool whose maps all live in one region is tidied into
   `tileset/<region>/` (e.g. `tileset/kanto/`); pools shared across regions stay at
   the `tileset/` root.
+  **Anim/door sheet:** a pool's **door + animated** tiles go on their OWN sheet
+  `<base>_anim_<n>.png` (separate from the ground/over `<base>_<n>.png` sheets) so
+  they are grouped on a unique, easy-to-find tileset. Gids stay `base+position`;
+  only the file split and the per-sheet firstgid (`= base + startCell`) change, so
+  `secondaryBase`/`markerGid` are contiguous (use `uniqueCount`, not
+  `sheetCount*kCapacity`). The anim sheet is sized to its tiles (no padding waste).
   **Layer composite vs decompose:** a metatile that is collidable everywhere with a
   UNIQUE top (a building face) is composited into ONE wall+roof tile (reads merged,
   like the in-game view); a top that's a REUSABLE overlay (a cliff/ledge edge, a
