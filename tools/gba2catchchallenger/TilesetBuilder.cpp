@@ -978,6 +978,41 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         }
     }
 
+    // Pre-render each metatile's bottom (under) and top (over), and record which
+    // distinct backgrounds (unders) each significant top sits on.  A top seen on
+    // >=2 backgrounds — or whose base terrain ALSO exists as a standalone ground
+    // tile — is a REUSABLE OVERLAY (a cliff/ledge edge, a rock, a tree top): it
+    // stays a separate transparent tile over the base terrain (reused across
+    // backgrounds = fewer tiles, e.g. one rock over any ground).  A top UNIQUE to
+    // its background on an always-collidable cell is a building face -> composited.
+    std::unordered_map<uint16_t,QImage> underCache,overCache;
+    std::unordered_map<uint16_t,char> sigOver;
+    std::unordered_map<std::string,std::unordered_set<std::string> > overToUnders;
+    std::unordered_set<std::string> standaloneUnders;
+    {
+        size_t p=0;
+        while(p<usedIds.size())
+        {
+            uint16_t id=usedIds[p];
+            if(ts.behavior(id)==0x69 || (waterFrames>0 && ts.isAnimatedWater(id))) { p++; continue; }
+            QImage under=ts.renderUnder(id).convertToFormat(QImage::Format_ARGB32);
+            QImage over=ts.renderOver(id,under).convertToFormat(QImage::Format_ARGB32);
+            std::string uk(reinterpret_cast<const char *>(under.constBits()),static_cast<size_t>(under.sizeInBytes()));
+            bool sig=(ts.layerType(id)!=1 && largestOpaqueComponent(over)>overThreshold);
+            underCache[id]=under;
+            overCache[id]=over;
+            sigOver[id]=sig?1:0;
+            if(sig)
+            {
+                std::string ok(reinterpret_cast<const char *>(over.constBits()),static_cast<size_t>(over.sizeInBytes()));
+                overToUnders[ok].insert(uk);
+            }
+            else
+                standaloneUnders.insert(uk); // a plain tile's base IS a standalone terrain
+            p++;
+        }
+    }
+
     // Pass 1: classify each used metatile and render its ground (Walkable) image.
     // Animated water metatiles are handled later in the anim section.
     size_t i=0;
@@ -992,24 +1027,29 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             animatedIds.push_back(id);
         else
         {
-            // Only NORMAL(0) and SPLIT(2) metatiles draw their top sub-layer
-            // ABOVE the player; COVERED(1) draws both sub-layers below the
-            // player, so its top must stay in the ground tile (never lifted to
-            // WalkBehind).  This keeps WalkBehind minimal: building/tree tops.
-            uint8_t lt=ts.layerType(id);
             const uint8_t cf=collFlag.count(id) ? collFlag[id] : 0;
             const bool alwaysCollidable=((cf&1)!=0) && ((cf&2)==0);
-            QImage under=ts.renderUnder(id);
-            QImage over=ts.renderOver(id,under);
-            if(!alwaysCollidable && lt!=1 && largestOpaqueComponent(over)>overThreshold)
+            const QImage &under=underCache[id];
+            const QImage &over=overCache[id];
+            bool reusable=false;
+            if(sigOver[id])
+            {
+                std::string ok(reinterpret_cast<const char *>(over.constBits()),static_cast<size_t>(over.sizeInBytes()));
+                std::string uk(reinterpret_cast<const char *>(under.constBits()),static_cast<size_t>(under.sizeInBytes()));
+                std::unordered_map<std::string,std::unordered_set<std::string> >::const_iterator f=overToUnders.find(ok);
+                reusable=(f!=overToUnders.cend() && f->second.size()>=2) || (standaloneUnders.count(uk)>0);
+            }
+            // Decompose (base terrain + reusable transparent overlay) for a
+            // reusable overlay OR any walkable cell (the top must lift above the
+            // player so it can be walked behind); composite (fuse into one tile)
+            // only a UNIQUE top on an always-collidable cell = a building face.
+            if(sigOver[id] && (reusable || !alwaysCollidable))
             {
                 overLocal[id]=dedupAdd(over,overSeen,overs);
-                metaGroundImg[id]=under.convertToFormat(QImage::Format_ARGB32);
+                metaGroundImg[id]=under;
             }
             else
             {
-                // COVERED, no real top, OR always-collidable -> the full
-                // composited metatile (bottom+top) is the single ground tile.
                 overLocal[id]=-1;
                 metaGroundImg[id]=ts.renderMetatile(id).convertToFormat(QImage::Format_ARGB32);
             }
