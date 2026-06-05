@@ -80,7 +80,10 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   separate TRANSPARENT tile over the base terrain, reused over any background
   (fewer tiles).  **Compact packing:** blocks are placed with a SKYLINE bottom-left
   strip-packer (the rectangle bin-packing used for sprite atlases), free single
-  tiles fill every remaining gap, and the sheet WIDTH is adaptive per pool
+  tiles fill every remaining gap — **anchored first** next to a dominant on-map
+  neighbour (even an unreciprocated one), so a reused building corner drops into
+  its building's empty hole instead of being scattered to a far cell, then any
+  leftover singles raster-fill — and the sheet WIDTH is adaptive per pool
   (≈√tiles, 8..32) so a small pool doesn't waste a 32-wide sheet — firered tileset
   free space dropped from ~67% to ~20%.
   **Tiled Wang/terrain sets:** each `.tsx` carries a best-effort `<wangset>` (corner
