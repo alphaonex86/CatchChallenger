@@ -1182,6 +1182,7 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
 TilePool::TilePool() :
     uniqueCount(0),
     mainCount(0),
+    animCols(0),
     sheetCount(0),
     duplicateTiles(0),
     adjacencyViolations(0),
@@ -1872,6 +1873,12 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     uint32_t groundsOvers=groundCount;
     // Visible+hidden tiles, then the animation tiles.
     uint32_t animStart=groundsOvers;
+    // The _anim sheet is laid out 1 ANIMATION PER ROW: width = the animation length,
+    // and every animation is padded to start at a row boundary so it reads cleanly.
+    int animCols=(waterFrames>8)?waterFrames:8;
+    pool.animCols=static_cast<uint32_t>(animCols);
+    QImage animPad(16,16,QImage::Format_ARGB32);
+    animPad.fill(Qt::transparent);
 
     // Animation frame sequences, kept consecutive and inside one sheet.
     std::vector<QImage> anims;
@@ -1897,16 +1904,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             animLocal[id]=it->second;
         else
         {
-            uint32_t abs=animStart+static_cast<uint32_t>(anims.size());
-            uint32_t pos=abs%kCapacity;
-            if(pos+static_cast<uint32_t>(waterFrames)>kCapacity)
-            {
-                QImage empty(16,16,QImage::Format_ARGB32);
-                empty.fill(Qt::transparent);
-                uint32_t pad=kCapacity-pos;
-                uint32_t p=0;
-                while(p<pad) { anims.push_back(empty); p++; }
-            }
+            while(anims.size()%static_cast<size_t>(animCols)!=0) anims.push_back(animPad); // start a new row
             int firstLocal=static_cast<int>(anims.size());
             f=0;
             while(f<waterFrames) { anims.push_back(frames[f]); f++; }
@@ -1954,17 +1952,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             doorLocal[id]=it->second;
         else
         {
-            uint32_t nf=static_cast<uint32_t>(dframes.size());
-            uint32_t abs=animStart+static_cast<uint32_t>(anims.size());
-            uint32_t pos=abs%kCapacity;
-            if(pos+nf>kCapacity)
-            {
-                QImage empty(16,16,QImage::Format_ARGB32);
-                empty.fill(Qt::transparent);
-                uint32_t pad=kCapacity-pos;
-                uint32_t p=0;
-                while(p<pad) { anims.push_back(empty); p++; }
-            }
+            while(anims.size()%static_cast<size_t>(animCols)!=0) anims.push_back(animPad); // start a new row
             int firstLocal=static_cast<int>(anims.size());
             fr=0;
             while(fr<dframes.size()) { anims.push_back(dframes[fr]); fr++; }
@@ -2096,13 +2084,15 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     {
         uint32_t startCell=segs[sg].start;
         uint32_t cnt=segs[sg].count;
-        int rows=static_cast<int>((cnt+poolCols-1)/poolCols);
-        QImage sheet(poolCols*16,rows*16,QImage::Format_ARGB32);
+        // the _anim sheet (startCell >= mainCount) is narrow = 1 animation per row.
+        int segCols=(startCell>=pool.mainCount && pool.animCols>0)?static_cast<int>(pool.animCols):poolCols;
+        int rows=static_cast<int>((cnt+static_cast<uint32_t>(segCols)-1)/static_cast<uint32_t>(segCols));
+        QImage sheet(segCols*16,rows*16,QImage::Format_ARGB32);
         sheet.fill(Qt::transparent);
         uint32_t c=0;
         while(c<cnt)
         {
-            blitTile(sheet,poolCols,c,tiles[startCell+c]);
+            blitTile(sheet,segCols,c,tiles[startCell+c]);
             c++;
         }
         // animations whose first frame is in this sheet, remapped to local ids
@@ -2116,7 +2106,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         }
         std::string name=baseName+segs[sg].suffix;
         sheet.save(QString::fromStdString(outDir+"/"+name+".png"),"PNG");
-        writeTsx(outDir,name,poolCols,sheet,cnt,localAnims);
+        writeTsx(outDir,name,segCols,sheet,cnt,localAnims);
         sg++;
     }
 
