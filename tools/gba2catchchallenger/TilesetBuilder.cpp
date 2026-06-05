@@ -1109,7 +1109,9 @@ TilePool::TilePool() :
     uniqueCount(0),
     sheetCount(0),
     duplicateTiles(0),
-    adjacencyViolations(0)
+    adjacencyViolations(0),
+    bgFgSplits(0),
+    bgFgMismatch(0)
 {
 }
 
@@ -1275,6 +1277,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         i++;
     }
 
+    std::vector<uint16_t> splitIds; // metatiles split by Pass 1b (verified at end)
     // Pass 1b: BACKGROUND/FOREGROUND split of baked collidable object tiles.  The
     // ROM bakes a collidable OBJECT (rock, cliff, tree) onto a terrain in ONE image,
     // so the SAME object renders as several near-duplicate tiles that differ ONLY in
@@ -1353,6 +1356,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             {
                 overLocal[objIds[k]]=dedupAdd(objFg[k],overSeen,overs);
                 metaGroundImg[objIds[k]]=terrains[static_cast<size_t>(objT[k])].second;
+                splitIds.push_back(objIds[k]);
                 splitCount++;
             }
             k++;
@@ -1758,6 +1762,60 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         ++cit;
     }
 
+    // GUARD bg/fg-split (TEST CASE for Pass 1b): every split must REPRODUCE the
+    // original ROM tile.  Recompose the FINAL stored terrain (groundCell) with the
+    // FINAL stored object overlay (overCell) drawn on top -- exactly as CCWriter
+    // stacks Collisions + 2nd-Collisions below the player -- and compare to the
+    // metatile re-rendered straight from the ROM.  End-to-end: it catches a wrong
+    // detection, an over-aggressive near-dup fold, or a layout/gid slip (each would
+    // shift the pixels).  Also re-checks the user's >=12-opaque-px contract.
+    {
+        const int kSplitTol=64;    // per-channel; tolerates the near-dup fold, not a wrong tile
+        const int kSplitMaxBad=24; // more off-tolerance pixels than this == the split is broken
+        size_t si=0;
+        while(si<splitIds.size())
+        {
+            uint16_t id=splitIds[si];
+            std::unordered_map<uint16_t,int>::const_iterator gc=pool.groundCell.find(id);
+            std::unordered_map<uint16_t,int>::const_iterator oc=pool.overCell.find(id);
+            if(gc!=pool.groundCell.cend() && oc!=pool.overCell.cend() && oc->second>=0
+               && static_cast<size_t>(gc->second)<tiles.size() && static_cast<size_t>(oc->second)<tiles.size())
+            {
+                QImage terr=tiles[static_cast<size_t>(gc->second)].convertToFormat(QImage::Format_ARGB32);
+                QImage obj=tiles[static_cast<size_t>(oc->second)].convertToFormat(QImage::Format_ARGB32);
+                QImage orig=ts.renderMetatile(id).convertToFormat(QImage::Format_ARGB32);
+                QImage comp=terr.copy();
+                int objOpaque=0,bad=0,y=0;
+                while(y<16)
+                {
+                    int x=0;
+                    while(x<16)
+                    {
+                        QRgb o=obj.pixel(x,y);
+                        if(qAlpha(o)!=0){ comp.setPixel(x,y,o); objOpaque++; }
+                        x++;
+                    }
+                    y++;
+                }
+                y=0;
+                while(y<16)
+                {
+                    int x=0;
+                    while(x<16)
+                    {
+                        QRgb a=comp.pixel(x,y), b=orig.pixel(x,y);
+                        if(qAbs(qRed(a)-qRed(b))>kSplitTol||qAbs(qGreen(a)-qGreen(b))>kSplitTol||qAbs(qBlue(a)-qBlue(b))>kSplitTol) bad++;
+                        x++;
+                    }
+                    y++;
+                }
+                pool.bgFgSplits++;
+                if(bad>kSplitMaxBad || objOpaque<12) pool.bgFgMismatch++;
+            }
+            si++;
+        }
+    }
+
     pool.uniqueCount=static_cast<uint32_t>(tiles.size());
     pool.sheetCount=(pool.uniqueCount+kCapacity-1)/kCapacity;
 
@@ -1990,11 +2048,11 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     // Object/semantic markers come from the generated visible markers.tsx
     // (written by writeMarkers above), referenced at markerGid(map).
 
-    uint32_t totalSheets=0,totalDup=0,totalAdj=0;
+    uint32_t totalSheets=0,totalDup=0,totalAdj=0,totalSplits=0,totalSplitBad=0;
     std::unordered_map<uint32_t,TilePool>::const_iterator a=primaryPools_.begin();
-    while(a!=primaryPools_.cend()) { totalSheets+=a->second.sheetCount; totalDup+=a->second.duplicateTiles; totalAdj+=a->second.adjacencyViolations; ++a; }
+    while(a!=primaryPools_.cend()) { totalSheets+=a->second.sheetCount; totalDup+=a->second.duplicateTiles; totalAdj+=a->second.adjacencyViolations; totalSplits+=a->second.bgFgSplits; totalSplitBad+=a->second.bgFgMismatch; ++a; }
     std::unordered_map<uint64_t,TilePool>::const_iterator b=secondaryPools_.begin();
-    while(b!=secondaryPools_.cend()) { totalSheets+=b->second.sheetCount; totalDup+=b->second.duplicateTiles; totalAdj+=b->second.adjacencyViolations; ++b; }
+    while(b!=secondaryPools_.cend()) { totalSheets+=b->second.sheetCount; totalDup+=b->second.duplicateTiles; totalAdj+=b->second.adjacencyViolations; totalSplits+=b->second.bgFgSplits; totalSplitBad+=b->second.bgFgMismatch; ++b; }
     std::cout << "TilesetBuilder: " << primaryPools_.size() << " primary + "
               << secondaryPools_.size() << " secondary pools, " << totalSheets
               << " deduplicated sheets" << std::endl;
@@ -2014,6 +2072,17 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     else
         std::cout << "TilesetBuilder GUARD adjacency: PASS (" << totalAdj
                   << " unavoidable cyclic-pattern edge(s); all linearisable adjacencies kept)" << std::endl;
+    // GUARD 3: every background/foreground split (Pass 1b) must recompose to the
+    // original ROM tile (terrain on Collisions + object on 2nd Collisions below the
+    // player == the baked metatile) and keep its >=12-opaque-px object.
+    if(totalSplits==0)
+        std::cout << "TilesetBuilder GUARD bg/fg-split: PASS (no baked object tiles split)" << std::endl;
+    else if(totalSplitBad==0)
+        std::cout << "TilesetBuilder GUARD bg/fg-split: PASS (" << totalSplits
+                  << " split(s); each recomposes to the ROM tile, object >=12 px)" << std::endl;
+    else
+        std::cout << "TilesetBuilder GUARD bg/fg-split: FAIL (" << totalSplitBad << "/" << totalSplits
+                  << " split(s) do NOT recompose to the original ROM tile)" << std::endl;
     return true;
 }
 

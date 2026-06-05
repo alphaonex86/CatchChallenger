@@ -80,6 +80,8 @@ struct TilePool {
     uint32_t sheetCount;      // ceil(uniqueCount / capacity)
     uint32_t duplicateTiles;  // GUARD: redundant non-animation duplicate cells
     uint32_t adjacencyViolations; // GUARD: consistent map-neighbours not kept adjacent
+    uint32_t bgFgSplits;      // background/foreground splits applied in this pool
+    uint32_t bgFgMismatch;    // GUARD: splits whose terrain+overlay != the ROM tile
     std::unordered_map<uint16_t,int> groundCell; // ANIMATED metatile -> pool cell
     std::unordered_map<uint64_t,int> contextCell; // (tile+4 neighbours) -> pool cell
     std::unordered_map<uint16_t,int> overCell;    // metatile -> pool cell, -1 none
