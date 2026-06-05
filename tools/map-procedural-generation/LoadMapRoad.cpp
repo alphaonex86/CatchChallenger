@@ -21,27 +21,6 @@ unsigned int ** LoadMapAll::roadData = NULL;
 int LoadMapAll::botId = 0;
 LoadMapAll::RoadMountain LoadMapAll::mountain;
 
-//Value noise for organic feature scatter (tall grass): a smooth pseudo-random
-//field in [0,1) so a solid feature ZONE breaks into natural clumps instead of a
-//hard rectangular block.  Deterministic per (x,y) (no global rand state) so runs
-//stay reproducible; coords are non-negative cell indices so int truncation is a
-//valid floor.
-static double grassHash(int x,int y)
-{
-    unsigned int h=static_cast<unsigned int>(x)*374761393u + static_cast<unsigned int>(y)*668265263u;
-    h=(h^(h>>13))*1274126177u; h^=(h>>16);
-    return (h & 0xFFFFFFu)/static_cast<double>(0x1000000);
-}
-static double grassNoise(double x,double y)
-{
-    int x0=static_cast<int>(x), y0=static_cast<int>(y);
-    double fx=x-x0, fy=y-y0;
-    double sx=fx*fx*(3.0-2.0*fx), sy=fy*fy*(3.0-2.0*fy); //smoothstep
-    double a=grassHash(x0,y0), b=grassHash(x0+1,y0), c=grassHash(x0,y0+1), d=grassHash(x0+1,y0+1);
-    double top=a+(b-a)*sx, bot=c+(d-c)*sx;
-    return top+(bot-top)*sy;
-}
-
 struct LedgeMarker
 {
     unsigned int x;
@@ -1263,11 +1242,12 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                             for(LoadMap::Terrain* terrain:terrains){
                                 if(LoadMap::searchTileLayerByName(worldMap, terrain->tmp_layerString)->cellAt(tx, ty).tile() == terrain->tile){
                                     if(grassTiles.find(terrain->terrainName.toStdString()) != grassTiles.end()){
-                                        //Organic patches: keep tall grass only where the noise field is
-                                        //high, so the grass zone reads as natural clumps with ragged
-                                        //edges instead of a solid rectangle (period ~6 tiles).
-                                        if(grassNoise(tx/6.0, ty/6.0) > 0.42)
-                                            grassLayer->setCell(tx, ty, grassTiles[terrain->terrainName.toStdString()]);
+                                        //Fill the whole grass ZONE: a solid rectangular block of tall
+                                        //grass is the intended Pokemon style (grid-aligned, like the
+                                        //doc/mapping Goodmap) AND compresses far better than scattered
+                                        //cells (long runs of one gid).  The terrain generator already
+                                        //shapes the grass zones; do NOT thin them with noise.
+                                        grassLayer->setCell(tx, ty, grassTiles[terrain->terrainName.toStdString()]);
                                     }
                                     break;
                                 }
