@@ -59,8 +59,13 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   reciprocated) on-map neighbour, so a whole building/tree reads like the map —
   even when an occasional cell varies (the old rule required the neighbour to be
   identical on *every* map, which fragmented anything that varied). Identical
-  blocks merge, so the sheet has almost no duplicate tiles. Sheets are **32 tiles
-  wide** (512 px, ~square like the gen2 native blocksets) and hold `kCapacity`
+  blocks merge, and **near-duplicate** tiles fold too — the ROM often stores two
+  metatiles that render to visually-identical graphics (a sub-pixel
+  shading/palette nuance) which byte-exact dedup would keep as duplicate-looking
+  rows/cols; `dedupAdd` folds a tile into an existing one when every RGBA channel
+  is within `kNearMaxDiff` and the mean within `kNearMeanDiff` (imperceptible;
+  animation frames never fold). So the sheet has almost no duplicate tiles. Sheets
+  are **32 tiles wide** (512 px, ~square like the gen2 native blocksets) and hold `kCapacity`
   tiles each. (`kContextSplitMax` can split a tile per-neighbourhood for stricter
   2-D, but default 0 — it bloats the sheets far more than it helps.) `main.cpp`
   wipes the `<label>/` output dir before each run so stale sheets never accumulate.
