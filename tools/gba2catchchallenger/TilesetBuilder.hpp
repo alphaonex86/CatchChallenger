@@ -38,6 +38,11 @@ public:
     uint8_t layerType(uint16_t id) const;
     // True when the metatile uses an animated (water) tile slot.
     bool isAnimatedWater(uint16_t id) const;
+    // GUARD signal: metatile `id` is routed to the SECONDARY array
+    // (id>=metatilesInPrimary) where it decodes EMPTY, yet the PRIMARY array holds
+    // real graphics at the same absolute id — the signature of a wrong
+    // metatilesInPrimary split, so the metatile renders as a backdrop "black hole".
+    bool metatileMisrouted(uint16_t id) const;
     // Composite the metatile with the water tiles swapped to animation frame f.
     QImage renderMetatileFrame(uint16_t id, int frame) const;
     // Door-open animation frames (16x16) for a door metatile via the ROM's
@@ -86,6 +91,7 @@ struct TilePool {
     uint32_t bgFgSplits;        // Pass-1b background/foreground splits applied (feature count)
     uint32_t layerSplitTiles;   // tiles split across 2 layers (under+over) the guard verified
     uint32_t layerSplitBad;     // GUARD: such tiles whose under+over != the ROM metatile
+    uint32_t misroutedMetatiles; // GUARD: used metatiles empty in their routed array but present in the other (wrong primary/secondary split)
     std::unordered_map<uint16_t,int> groundCell; // ANIMATED metatile -> pool cell
     std::unordered_map<uint64_t,int> contextCell; // (tile+4 neighbours) -> pool cell
     std::unordered_map<uint16_t,int> overCell;    // metatile -> pool cell, -1 none
