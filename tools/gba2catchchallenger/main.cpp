@@ -12,6 +12,7 @@
 #include "Decoder.hpp"
 #include "Gba.hpp"
 #include "Gen3Script.hpp"
+#include "Gen3Text.hpp"
 #include "Naming.hpp"
 #include "SkinResolver.hpp"
 #include "TilesetBuilder.hpp"
@@ -20,7 +21,9 @@
 #include <QDir>
 #include <QGuiApplication>
 #include <iostream>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 static std::string argValue(const std::vector<std::string> &args, const std::string &key)
@@ -46,6 +49,108 @@ static bool metatileEmpty(const GbaRom &rom, uint32_t base, uint32_t idx)
         s++;
     }
     return true;
+}
+
+static std::string upcaseStr(const std::string &s)
+{
+    std::string out=s;
+    size_t i=0;
+    while(i<out.size())
+    {
+        if(out[i]>='a' && out[i]<='z')
+            out[i]=static_cast<char>(out[i]-'a'+'A');
+        i++;
+    }
+    return out;
+}
+
+// True when a section name's KIND matches a map's type — a town/city map names a
+// settlement, a route names a ROUTE, a cave/underground names a cave-like place.
+// Used to score a candidate section-name table against the maps' own types.
+static bool nameTypeMatches(const std::string &name, uint8_t mapType)
+{
+    std::string u=upcaseStr(name);
+    if(mapType==1 || mapType==2)
+        return u.find(" TOWN")!=std::string::npos || u.find(" CITY")!=std::string::npos
+            || u.find("ISLAND")!=std::string::npos || u.find("VILLAGE")!=std::string::npos
+            || u.find("RESORT")!=std::string::npos || u.find("PLATEAU")!=std::string::npos;
+    if(mapType==3)
+        return u.find("ROUTE ")!=std::string::npos || u.find(" PATH")!=std::string::npos;
+    if(mapType==4)
+        return u.find("CAVE")!=std::string::npos || u.find("TUNNEL")!=std::string::npos
+            || u.find("WELL")!=std::string::npos || u.find("FOREST")!=std::string::npos
+            || u.find("MT")!=std::string::npos || u.find("PATH")!=std::string::npos;
+    return false;
+}
+
+// Recover a RELOCATED section-name table for an off-fingerprint hack whose
+// detect() left it unknown (mapNameTable==0).  The table is a stride-8 array of
+// pointers (name pointer at +4 — the Gen3 layout) to area-name strings; a
+// relocated copy is located by scanning for the base whose entries best match the
+// maps' OWN types (a town map must name a "...TOWN/CITY", a route a "ROUTE ...",
+// etc.), so a wrong base or a generic string pool scores ~0.  Once set, the
+// existing Naming logic yields real area names AND grouping (HnS's 844-map
+// "area-0" overworld blob splits into New Bark Town, the routes, ...).
+static void recoverMapNameTable(GbaRom &rom, const std::vector<DecodedMap> &maps)
+{
+    if(rom.game().mapNameTable!=0)
+        return; // retail ROM / sub already has its table
+    std::map<std::pair<uint8_t,uint8_t>,int> usage; // (sid,mapType) -> map count
+    uint8_t maxSid=0;
+    size_t i=0;
+    while(i<maps.size())
+    {
+        usage[std::make_pair(maps[i].regionSection,maps[i].mapType)]++;
+        if(maps[i].regionSection>maxSid)
+            maxSid=maps[i].regionSection;
+        i++;
+    }
+    const uint32_t stride=8, field=4;
+    uint32_t romSize=rom.size();
+    uint32_t best=0;
+    int bestScore=0;
+    uint32_t o=0x100000; // tables live in the data region, well past the header/code
+    while(o+16<romSize)
+    {
+        bool ok0=false;
+        uint32_t p0=rom.pointer(o+field,&ok0);
+        // cheap filter: the first two entries must both be valid names
+        if(ok0 && !Gen3Text::strictName(rom,p0).empty())
+        {
+            bool ok1=false;
+            uint32_t p1=rom.pointer(o+stride+field,&ok1);
+            if(ok1 && !Gen3Text::strictName(rom,p1).empty())
+            {
+                int score=0;
+                std::map<std::pair<uint8_t,uint8_t>,int>::const_iterator it=usage.begin();
+                while(it!=usage.end())
+                {
+                    bool okn=false;
+                    uint32_t np=rom.pointer(o+static_cast<uint32_t>(it->first.first)*stride+field,&okn);
+                    if(okn)
+                    {
+                        std::string nm=Gen3Text::strictName(rom,np);
+                        if(!nm.empty() && nameTypeMatches(nm,it->first.second))
+                            score+=it->second;
+                    }
+                    ++it;
+                }
+                if(score>bestScore)
+                {
+                    bestScore=score;
+                    best=o;
+                }
+            }
+        }
+        o+=4;
+    }
+    if(best!=0 && bestScore>=8)
+    {
+        rom.setMapNameTable(best,stride,field,0,maxSid);
+        std::cout << "Section-name table recovered at 0x" << std::hex << best << std::dec
+                  << " (type-match score " << bestScore << ", sids 0.." << (int)maxSid
+                  << ") -> real area names" << std::endl;
+    }
 }
 
 // Auto-detect the primary/secondary tileset split (tiles/metatiles/palettes) from
@@ -167,6 +272,10 @@ int main(int argc, char *argv[])
     // Correct the tileset split for expanded-tileset hacks (no-op on retail ROMs):
     // decides primary/secondary metatile routing, so it must run before tilesets.
     autodetectTilesetSplit(rom,decoder.maps());
+
+    // Recover a relocated section-name table for a hack (no-op on retail ROMs):
+    // gives maps their real names + grouping, so it must run before Naming.
+    recoverMapNameTable(rom,decoder.maps());
 
     // Resolve, across all maps, the single owner of each trainerbattle command so
     // overrunning NPCs/signs don't duplicate a gym leader (one leader per gym).

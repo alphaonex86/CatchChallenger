@@ -15,6 +15,11 @@ class Gen3Text {
 public:
     // Decode a 0xFF-terminated Gen3 string at a file offset to UTF-8-ish ASCII.
     static std::string decode(const GbaRom &rom, uint32_t offset, size_t maxLen=64);
+    // STRICT decode for scanning/validating a section-name TABLE entry: returns
+    // the name only if EVERY byte up to the 0xFF terminator is a valid name
+    // character (length 2..maxLen); "" otherwise.  Unlike decode() it does NOT
+    // silently drop control bytes, so random data does not pass as a name.
+    static std::string strictName(const GbaRom &rom, uint32_t offset, size_t maxLen=24);
     // Decode a sign string into PAGES: split on the paragraph/scroll control
     // codes (each becomes a separate text step), newline -> "<br />".  Buffered
     // variables and formatting controls are skipped.
