@@ -766,7 +766,8 @@ static int sharedObjectMask(const QImage &x, const QImage &y, int maxDiff, std::
 static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
     const std::vector<std::vector<int> > &cellTi,
     const std::vector<const DecodedMap *> &poolMaps, int COLS,
-    std::vector<uint32_t> &pos, uint32_t &adjViol, const std::string &label)
+    std::vector<uint32_t> &pos, uint32_t &adjViol, const std::string &label,
+    const std::vector<int> &catOf)
 {
     (void)label;
     int N=static_cast<int>(tiles.size());
@@ -1076,6 +1077,18 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
         }
     }
     { std::vector<int> rem; size_t sj=0; while(sj<singles.size()){ if(!placedS[sj]) rem.push_back(singles[sj]); sj++; } singles.swap(rem); }
+    // The leftover singles can NOT be grouped by map adjacency, so group them by
+    // another findable characteristic — their tileCategory (background/building/
+    // water/grass/ledge/overlay) — so the same KIND clusters in the sheet instead of
+    // scattering.  (Sort by (category, tile) pairs to avoid a custom comparator.)
+    if(!catOf.empty())
+    {
+        std::vector<std::pair<int,int> > sk;
+        size_t z=0;
+        while(z<singles.size()){ int ti=singles[z]; int c=(ti>=0 && ti<static_cast<int>(catOf.size()))?catOf[static_cast<size_t>(ti)]:99; sk.push_back(std::make_pair(c,ti)); z++; }
+        std::sort(sk.begin(),sk.end());
+        z=0; while(z<sk.size()){ singles[z]=sk[z].second; z++; }
+    }
     // Raster-fill the remaining (un-anchored) singles into any leftover gaps.
     size_t si=0;
     {
@@ -1765,9 +1778,32 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             pmi++;
         }
     }
+    // tileCategory per src tile (grounds 0..Gpre-1, then overs) so layout2D groups
+    // leftover singles by KIND — background(0,walkable) / building(1,collidable) /
+    // water(2) / grass(3) / ledge(4) by behaviour / overlay(5) — when map adjacency
+    // can't place them (user: group by indoor/outdoor/cave/building/background).
+    std::vector<int> catOf(static_cast<size_t>(Gpre)+overs.size(),0);
+    {
+        std::unordered_map<uint16_t,int>::const_iterator gi=groundLocal.cbegin();
+        while(gi!=groundLocal.cend())
+        {
+            uint16_t m=gi->first; int g=gi->second;
+            if(g>=0 && g<static_cast<int>(Gpre))
+            {
+                const uint8_t cf=collFlag.count(m)?collFlag[m]:0;
+                uint16_t beh=ts.behavior(m);
+                int c=0;
+                if(beh>=0x10&&beh<=0x15) c=2; else if(beh==0x02||beh==0x03) c=3; else if(beh>=0x38&&beh<=0x3B) c=4;
+                else if(((cf&1)!=0)&&((cf&2)==0)) c=1;
+                catOf[static_cast<size_t>(g)]=c;
+            }
+            ++gi;
+        }
+        size_t o=0; while(o<overs.size()){ catOf[static_cast<size_t>(Gpre)+o]=5; o++; }
+    }
     std::vector<uint32_t> vpos;
     uint32_t vadj=0;
-    std::vector<QImage> newVis=layout2D(src,cellVis,poolMaps,poolCols,vpos,vadj,baseName+":visible");
+    std::vector<QImage> newVis=layout2D(src,cellVis,poolMaps,poolCols,vpos,vadj,baseName+":visible",catOf);
     pool.adjacencyViolations+=vadj;
     // cellHid = the wall of a cell that has an over, ONLY when that wall image is
     // not already shown visibly somewhere (else it would be a duplicate tile).
@@ -1799,7 +1835,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     }
     std::vector<uint32_t> hpos;
     uint32_t hadj=0;
-    std::vector<QImage> newHid=layout2D(grounds,cellHid,poolMaps,poolCols,hpos,hadj,baseName+":hidden");
+    std::vector<QImage> newHid=layout2D(grounds,cellHid,poolMaps,poolCols,hpos,hadj,baseName+":hidden",std::vector<int>());
     pool.adjacencyViolations+=hadj;
     uint32_t V=static_cast<uint32_t>(newVis.size());
     // final position of an OLD ground index g: its visible cell, else the hidden
