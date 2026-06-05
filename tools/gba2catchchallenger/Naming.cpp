@@ -29,6 +29,50 @@ static uint32_t ufFind(std::unordered_map<uint32_t,uint32_t> &uf, uint32_t x)
     return x;
 }
 
+// Region of an area from its (lowercase-kebab) slug, case-insensitively: a known
+// town/landmark keyword, or a route number (Kanto 1-28, Johto 29-48).  "" when
+// unknown — the caller then propagates a region along the map graph or buckets it
+// as region-N.  Keyword tables cover the canonical Gen1-4 regions so a hack that
+// reuses those names (HnS = Johto+Kanto) auto-splits; a fully-custom region stays
+// "" and is detected by clustering instead.
+static std::string regionFromName(const std::string &slug)
+{
+    if(slug.compare(0,6,"route-")==0)
+    {
+        int n=0;
+        size_t p=6;
+        while(p<slug.size() && slug[p]>='0' && slug[p]<='9') { n=n*10+(slug[p]-'0'); p++; }
+        if(n>=1 && n<=28)
+            return "kanto";
+        if(n>=29 && n<=48)
+            return "johto";
+        return std::string();
+    }
+    static const char *johto[]={"new-bark","cherrygrove","violet","azalea","goldenrod","ecruteak",
+        "olivine","cianwood","mahogany","blackthorn","ilex","sprout-tower","slowpoke-well",
+        "union-cave","ruins-of-alph","mt-mortar","mount-mortar","ice-path","dark-cave","dragon-s-den",
+        "tohjo","mt-silver","lake-of-rage","national-park","burned-tower","tin-tower","bell-tower",
+        "whirl-islands","radio-tower","cliff-cave","cliff-edge","embedded-tower","safari-zone",0};
+    static const char *kanto[]={"pallet","viridian","pewter","cerulean","vermilion","lavender",
+        "celadon","saffron","fuchsia","cinnabar","indigo","mt-moon","rock-tunnel","seafoam",
+        "diglett","power-plant","pokemon-mansion","victory-road",0};
+    static const char *hoenn[]={"littleroot","oldale","petalburg","rustboro","dewford","slateport",
+        "mauville","verdanturf","lavaridge","fallarbor","fortree","lilycove","mossdeep","sootopolis",
+        "pacifidlog","ever-grande","rusturf","meteor-falls","granite-cave",0};
+    static const char *sinnoh[]={"twinleaf","sandgem","jubilife","oreburgh","floaroma","eterna",
+        "hearthome","solaceon","veilstone","pastoria","celestic","canalave","snowpoint","sunyshore",
+        "mt-coronet",0};
+    int i=0;
+    while(johto[i]) { if(slug.find(johto[i])!=std::string::npos) return "johto"; i++; }
+    i=0;
+    while(kanto[i]) { if(slug.find(kanto[i])!=std::string::npos) return "kanto"; i++; }
+    i=0;
+    while(hoenn[i]) { if(slug.find(hoenn[i])!=std::string::npos) return "hoenn"; i++; }
+    i=0;
+    while(sinnoh[i]) { if(slug.find(sinnoh[i])!=std::string::npos) return "sinnoh"; i++; }
+    return std::string();
+}
+
 std::string Naming::sectionName(uint8_t sid) const
 {
     const GameInfo &gi=rom_.game();
@@ -427,6 +471,130 @@ void Naming::build()
         ++gk;
     }
 
+    // ---- Per-area REGION (top folder level) ----------------------------------
+    // A retail ROM keeps its engine region (regionFor: e.g. kanto + sevii-islands).
+    // A HACK lands every area under one label region; resolve a real region per
+    // area so a multi-region world (HnS = Johto+Kanto) splits into johto/ kanto/:
+    //   1) by NAME (regionFromName keyword table);
+    //   2) PROPAGATE along the map graph — an unnamed cave/road inherits the region
+    //      of the town it warps/borders to;
+    //   3) a remaining isolated cluster of >=kRegionMin maps is an undetected
+    //      region (a fully-custom one) -> region-1, region-2, ...; smaller
+    //      leftovers (a stray island) join the datapack's dominant region.
+    const GameInfo &gi=rom_.game();
+    bool hack=(gi.region==gi.label);
+    std::unordered_map<uint32_t,std::string> areaRegion;
+    if(!hack)
+    {
+        gk=groups.cbegin();
+        while(gk!=groups.cend())
+        {
+            areaRegion[*gk]=(*gk<0x10000u) ? gi.regionFor(static_cast<uint8_t>(*gk)) : gi.region;
+            ++gk;
+        }
+    }
+    else
+    {
+        gk=groups.cbegin();
+        while(gk!=groups.cend()) { areaRegion[*gk]=regionFromName(areaSlug[*gk]); ++gk; }
+        // area adjacency from the map warp/connection graph
+        std::unordered_map<uint32_t,std::set<uint32_t> > areaAdj;
+        std::unordered_map<uint32_t,int> areaMapCount;
+        i=0;
+        while(i<maps.size())
+        {
+            uint16_t k=keyOf(maps[i].group,maps[i].map);
+            uint32_t ga=groupOf[k];
+            areaMapCount[ga]++;
+            std::unordered_map<uint16_t,std::vector<uint16_t> >::const_iterator it=adj_.find(k);
+            if(it!=adj_.cend())
+            {
+                size_t j=0;
+                while(j<it->second.size())
+                {
+                    std::unordered_map<uint16_t,uint32_t>::const_iterator gb=groupOf.find(it->second[j]);
+                    if(gb!=groupOf.cend() && gb->second!=ga)
+                    {
+                        areaAdj[ga].insert(gb->second);
+                        areaAdj[gb->second].insert(ga);
+                    }
+                    j++;
+                }
+            }
+            i++;
+        }
+        // 2) multi-source BFS: spread each known region to connected unknown areas
+        std::queue<uint32_t> pq;
+        gk=groups.cbegin();
+        while(gk!=groups.cend()) { if(!areaRegion[*gk].empty()) pq.push(*gk); ++gk; }
+        while(!pq.empty())
+        {
+            uint32_t a=pq.front();
+            pq.pop();
+            std::set<uint32_t>::const_iterator nb=areaAdj[a].begin();
+            while(nb!=areaAdj[a].cend())
+            {
+                if(areaRegion[*nb].empty()) { areaRegion[*nb]=areaRegion[a]; pq.push(*nb); }
+                ++nb;
+            }
+        }
+        // dominant region (most maps) for tiny leftover islands
+        std::unordered_map<std::string,int> regCount;
+        gk=groups.cbegin();
+        while(gk!=groups.cend()) { if(!areaRegion[*gk].empty()) regCount[areaRegion[*gk]]+=areaMapCount[*gk]; ++gk; }
+        std::string dominant;
+        int dbest=-1;
+        std::unordered_map<std::string,int>::const_iterator rc=regCount.begin();
+        while(rc!=regCount.cend()) { if(rc->second>dbest) { dbest=rc->second; dominant=rc->first; } ++rc; }
+        if(dominant.empty())
+            dominant=gi.region;
+        // the shared interiors bucket (kBuildingArea, disconnected cross-region
+        // houses) is NOT a region of its own — fold it into the dominant region.
+        if(areaRegion.count(0x20000u) && areaRegion[0x20000u].empty())
+            areaRegion[0x20000u]=dominant;
+        // 3) cluster the still-unknown areas; big cluster = region-N, else dominant
+        const int kRegionMin=30;
+        int regionN=0;
+        std::set<uint32_t> visited;
+        gk=groups.cbegin();
+        while(gk!=groups.cend())
+        {
+            if(areaRegion[*gk].empty() && visited.find(*gk)==visited.cend())
+            {
+                std::vector<uint32_t> comp;
+                std::queue<uint32_t> q;
+                q.push(*gk);
+                visited.insert(*gk);
+                int mapsInComp=0;
+                while(!q.empty())
+                {
+                    uint32_t a=q.front();
+                    q.pop();
+                    comp.push_back(a);
+                    mapsInComp+=areaMapCount[a];
+                    std::set<uint32_t>::const_iterator nb=areaAdj[a].begin();
+                    while(nb!=areaAdj[a].cend())
+                    {
+                        if(areaRegion[*nb].empty() && visited.find(*nb)==visited.cend())
+                        { visited.insert(*nb); q.push(*nb); }
+                        ++nb;
+                    }
+                }
+                std::string rname;
+                if(mapsInComp>=kRegionMin)
+                {
+                    regionN++;
+                    rname="region-"+std::to_string(regionN);
+                }
+                else
+                    rname=dominant;
+                size_t ci=0;
+                while(ci<comp.size()) { areaRegion[comp[ci]]=rname; ci++; }
+            }
+            ++gk;
+        }
+    }
+
     // Group every map by its area group, then assign file names within each.
     std::unordered_map<uint32_t,std::vector<uint16_t> > byArea;
     i=0;
@@ -443,11 +611,9 @@ void Naming::build()
         uint32_t A=bit->first;
         std::vector<uint16_t> members=bit->second;
         std::sort(members.begin(),members.end());
-        // Region folder per area: named areas (A is the section id) may fall in
-        // the game's secondary region (e.g. the Sevii Islands); the rest use the
-        // primary region.
-        std::string region=(A<0x10000u) ? rom_.game().regionFor(static_cast<uint8_t>(A))
-                                         : rom_.game().region;
+        // Region folder per area: resolved above (retail = engine region incl. a
+        // secondary minimap like the Sevii Islands; hack = name/graph/region-N).
+        std::string region=areaRegion.count(A) ? areaRegion[A] : rom_.game().region;
         std::string folder=region+"/"+areaSlug[A];
 
         std::vector<uint16_t> areaMaps,indoorMaps;
