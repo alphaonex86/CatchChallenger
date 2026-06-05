@@ -155,7 +155,13 @@ int Naming::namedSidOf(uint16_t key) const
             }
         }
     }
-    return -1; // orphan
+    // No warp-reachable named AREA: fall back to the map's OWN section if it is
+    // named.  An indoor/secondary map whose outdoor area is not warp-connected
+    // (a detached Pallet Town building, a Route 40 hut, a Battle Frontier room)
+    // still belongs to its own named section, not a generic orphan container.
+    if(!sectionName(m->regionSection).empty())
+        return static_cast<int>(m->regionSection);
+    return -1; // truly unnamed -> heuristic
 }
 
 void Naming::build()
@@ -314,17 +320,58 @@ void Naming::build()
     }
     groups=mergedGroups;
 
+    // FALLBACK category of every UNNAMED area group, when no section name exists
+    // (a hack, or a retail orphan): the Gen3 map TYPE is exactly town/city/route/
+    // cave, so the group's OUTDOOR maps decide its kind — city (a town/city
+    // cluster) > cave (interconnected underground) > road (outdoor routes) > else
+    // building (indoor-only).  Higher priority wins (lower number).
+    std::unordered_map<uint32_t,int> groupCat; // 1 city, 2 cave, 3 road, 0 building/none
+    i=0;
+    while(i<maps.size())
+    {
+        const DecodedMap &m=maps[i];
+        uint32_t g=groupOf[keyOf(m.group,m.map)];
+        int c=0;
+        if(m.mapType==1 || m.mapType==2)
+            c=1;                                // town / city
+        else if(m.mapType==4)
+            c=2;                                // underground / cave
+        else if(m.mapType==3 || m.mapType==5 || m.mapType==6)
+            c=3;                                // route / underwater / ocean
+        if(c!=0)
+        {
+            std::unordered_map<uint32_t,int>::iterator gc=groupCat.find(g);
+            if(gc==groupCat.end() || gc->second==0 || c<gc->second)
+                groupCat[g]=c;
+        }
+        else if(groupCat.find(g)==groupCat.end())
+            groupCat[g]=0;
+        i++;
+    }
+
     // Slug + display per area group (deterministic order, unique slugs).
     std::unordered_map<uint32_t,std::string> areaSlug,areaDisplay;
     std::set<std::string> usedSlugs;
-    int unnamed=0;
+    std::unordered_map<std::string,int> catCounter; // per-kind running number
     std::set<uint32_t>::const_iterator gk=groups.cbegin();
     while(gk!=groups.cend())
     {
         std::string name;
         if(*gk<0x10000u)
             name=sectionName(static_cast<uint8_t>(*gk));
-        std::string slug=name.empty() ? (std::string("area-")+std::to_string(unnamed++)) : Gen3Text::slug(name);
+        std::string fbDisplay; // heuristic display when unnamed (else "" -> use name)
+        std::string slug;
+        if(!name.empty())
+            slug=Gen3Text::slug(name);
+        else
+        {
+            int cat=groupCat.count(*gk) ? groupCat[*gk] : 0;
+            std::string kind=(cat==1) ? "city" : (cat==2) ? "cave" : (cat==3) ? "road" : "building";
+            int num=++catCounter[kind];
+            slug=kind+"-"+std::to_string(num);
+            std::string capped=kind; capped[0]=static_cast<char>(capped[0]-'a'+'A');
+            fbDisplay=capped+" "+std::to_string(num);
+        }
         std::string base=slug;
         int dup=2;
         while(usedSlugs.find(slug)!=usedSlugs.cend())
@@ -334,7 +381,7 @@ void Naming::build()
         }
         usedSlugs.insert(slug);
         areaSlug[*gk]=slug;
-        areaDisplay[*gk]=name.empty() ? slug : Gen3Text::display(name);
+        areaDisplay[*gk]=name.empty() ? fbDisplay : Gen3Text::display(name);
         zones_.push_back(std::make_pair(slug,areaDisplay[*gk]));
         ++gk;
     }

@@ -105,6 +105,11 @@ public:
     // to an empty array slot, rendering the cell as a backdrop "black hole".
     void setTilesetSplit(uint32_t tilesInPrimary, uint32_t metatilesInPrimary, uint32_t palettesInPrimary);
 
+    // Set the (relocated) section-name table found for an off-fingerprint hack
+    // whose `detect()` left it unknown (mapNameTable==0), so every map recovers
+    // its real area name (and hence its area grouping) like a retail ROM.
+    void setMapNameTable(uint32_t table, uint32_t stride, uint32_t field, uint8_t minSid, uint8_t maxSid);
+
     // Raw little-endian reads at a file offset.  No bounds checking beyond a
     // size assertion guard — callers stay inside the ROM by construction.
     uint8_t u8(uint32_t offset) const;

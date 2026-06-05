@@ -45,6 +45,29 @@ std::string Gen3Text::decode(const GbaRom &rom, uint32_t offset, size_t maxLen)
     return out;
 }
 
+std::string Gen3Text::strictName(const GbaRom &rom, uint32_t offset, size_t maxLen)
+{
+    std::string out;
+    size_t n=0;
+    while(n<maxLen)
+    {
+        uint8_t b=rom.u8(offset+static_cast<uint32_t>(n));
+        if(b==0xFF)
+            break;
+        char c=gen3Char(b);
+        if(c==0)
+            return std::string();   // any control/invalid byte => not a name
+        out.push_back(c);
+        n++;
+    }
+    // must terminate within maxLen and be at least 2 chars (no 1-letter "names")
+    if(n<2 || n>=maxLen || rom.u8(offset+static_cast<uint32_t>(n))!=0xFF)
+        return std::string();
+    while(!out.empty() && out.back()==' ')
+        out.pop_back();
+    return out;
+}
+
 // Fuller charmap for sign text (adds punctuation the name decoder doesn't need).
 static char signChar(uint8_t b)
 {

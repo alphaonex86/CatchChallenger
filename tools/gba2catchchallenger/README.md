@@ -161,6 +161,16 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
 * **Maps** — width×height metatile grid → `Walkable` layer. Collision bit →
   `Collisions`. Metatile behaviour → `Grass` (wild encounters), `Water` (surf),
   `LedgesUp/Down/Left/Right`.
+* **Area names** — retail ROMs read the section-name table directly. A hack that
+  RELOCATED it (so `detect()` left it unknown) gets it back: `recoverMapNameTable`
+  scans for the stride-8 table whose entries best **type-match** the maps (a
+  town/city map must name a `…TOWN/CITY`, a route `ROUTE …`, a cave
+  `CAVE/TUNNEL/…`), so a wrong base or a generic string pool scores ~0.  This
+  recovers HnS's Johto names and Glazed's custom region — every map gets its real
+  name **and** grouping (HnS's whole overworld no longer collapses into one
+  `area-0`).  A map with no warp-reachable named area falls back to its own named
+  section (a detached building keeps its town); a genuinely unnamed group is named
+  from its Gen3 map type — `city-N` / `cave-N` / `road-N`, else `building-N`.
 * **Warps** → `door` objects (target map + destination warp coordinates).
 * **Connections** → `border-top/bottom/left/right` objects.
 * **NPCs** → `bot` objects (id, skin, lookAt).

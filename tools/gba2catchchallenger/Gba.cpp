@@ -371,6 +371,15 @@ void GbaRom::setTilesetSplit(uint32_t tilesInPrimary, uint32_t metatilesInPrimar
     game_.palettesInPrimary=palettesInPrimary;
 }
 
+void GbaRom::setMapNameTable(uint32_t table, uint32_t stride, uint32_t field, uint8_t minSid, uint8_t maxSid)
+{
+    game_.mapNameTable=table;
+    game_.mapNameStride=stride;
+    game_.mapNameField=field;
+    game_.mapNameMinSid=minSid;
+    game_.mapNameMaxSid=maxSid;
+}
+
 uint8_t GbaRom::u8(uint32_t offset) const
 {
     if(offset>=data_.size())
