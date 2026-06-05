@@ -1346,71 +1346,73 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     if(poolCols<8) poolCols=8;
     if(poolCols>kColumns) poolCols=kColumns;
 
-    // 2-D adjacency layout for the GROUND tiles (see layout2D).
-    {
-        std::vector<uint32_t> gpos;
-        uint32_t gadj=0;
-        std::vector<QImage> newGrounds=layout2D(grounds,cellTi,poolMaps,poolCols,gpos,gadj,baseName+":ground");
-        std::unordered_map<uint16_t,int>::iterator gl=groundLocal.begin();
-        while(gl!=groundLocal.end()){ gl->second=static_cast<int>(gpos[static_cast<size_t>(gl->second)]); ++gl; }
-        std::unordered_map<uint64_t,int>::iterator cl=contextLocal.begin();
-        while(cl!=contextLocal.end()){ cl->second=static_cast<int>(gpos[static_cast<size_t>(cl->second)]); ++cl; }
-        grounds.swap(newGrounds);
-        pool.adjacencyViolations+=gadj;
-    }
-
-    uint32_t groundCount=static_cast<uint32_t>(grounds.size());
-    QImage blkT(16,16,QImage::Format_ARGB32);
-    blkT.fill(Qt::transparent);
-    std::string blkKey(reinterpret_cast<const char *>(blkT.constBits()),static_cast<size_t>(blkT.sizeInBytes()));
-    // OVER (WalkBehind) tiles.  A human reads the map as the TOP visible tile, so
-    // the over tiles (building/tree tops) must follow the same 2-D map adjacency
-    // as the grounds -- not be dumped in dedup order.  First FOLD any over that is
-    // pixel-identical to a ground tile onto that ground cell (no duplicate), then
-    // lay the remaining overs out with the same block packer, in a region right
-    // after the grounds.  overRemap[old over index] -> absolute pool cell.
-    std::unordered_map<std::string,uint32_t> groundImgPos;
-    {
-        uint32_t p=0;
-        while(p<groundCount)
-        {
-            QImage a=grounds[p].convertToFormat(QImage::Format_ARGB32);
-            std::string key(reinterpret_cast<const char *>(a.constBits()),static_cast<size_t>(a.sizeInBytes()));
-            if(key!=blkKey && groundImgPos.find(key)==groundImgPos.cend()) groundImgPos[key]=p;
-            p++;
-        }
-    }
+    // UNIFIED human-view layout.  A human reads a building as ONE object, but it
+    // is tiles on TWO layers: the ground/under wall (Walkable) and the over/
+    // WalkBehind roof.  So lay out the TOP VISIBLE tile of every map cell -- its
+    // over if it has one, else its ground -- in ONE 2-D pass, so the roof groups
+    // directly ABOVE its wall exactly as seen (not in a separate over region).
+    // The walls HIDDEN behind a roof (cells that carry both) are not in the human
+    // view, so they go to a small region appended AFTER the visible one.
+    uint32_t Gpre=static_cast<uint32_t>(grounds.size());
+    // FOLD an over pixel-identical to a ground image onto that ground (no dup);
+    // overFold[o] = OLD ground index it folds onto, else NOT_FOLDED.
     const uint32_t NOT_FOLDED=0xFFFFFFFFu;
     std::vector<uint32_t> overFold(overs.size(),NOT_FOLDED);
     {
+        std::unordered_map<std::string,uint32_t> groundImgIdx;
+        uint32_t p=0;
+        while(p<Gpre)
+        {
+            QImage a=grounds[p].convertToFormat(QImage::Format_ARGB32);
+            std::string key(reinterpret_cast<const char *>(a.constBits()),static_cast<size_t>(a.sizeInBytes()));
+            if(groundImgIdx.find(key)==groundImgIdx.cend()) groundImgIdx[key]=p;
+            p++;
+        }
         size_t oi=0;
         while(oi<overs.size())
         {
             QImage a=overs[oi].convertToFormat(QImage::Format_ARGB32);
             std::string key(reinterpret_cast<const char *>(a.constBits()),static_cast<size_t>(a.sizeInBytes()));
-            std::unordered_map<std::string,uint32_t>::const_iterator f=groundImgPos.find(key);
-            if(f!=groundImgPos.cend()) overFold[oi]=f->second;
+            std::unordered_map<std::string,uint32_t>::const_iterator f=groundImgIdx.find(key);
+            if(f!=groundImgIdx.cend()) overFold[oi]=f->second;
             oi++;
         }
     }
-    std::vector<std::vector<int> > overCellTi(poolMaps.size());
+    // combined source for the visible pass: grounds [0,Gpre) ++ overs [Gpre,Gpre+O)
+    std::vector<QImage> src;
+    src.reserve(grounds.size()+overs.size());
+    { size_t k=0; while(k<grounds.size()){ src.push_back(grounds[k]); k++; } k=0; while(k<overs.size()){ src.push_back(overs[k]); k++; } }
+    // cellVis = top visible tile per cell (over folded -> its ground index, else
+    // Gpre+overindex; no over -> the ground index).  visGround[g] flags a ground
+    // image actually shown in the visible pass (so it is not duplicated as hidden).
+    std::vector<std::vector<int> > cellVis(poolMaps.size());
+    std::vector<char> visGround(Gpre,0);
     {
         size_t pmi=0;
         while(pmi<poolMaps.size())
         {
             const DecodedMap *mp=poolMaps[pmi];
             int W=static_cast<int>(mp->width), H=static_cast<int>(mp->height);
-            overCellTi[pmi].assign(static_cast<size_t>(W)*static_cast<size_t>(H),-1);
+            cellVis[pmi].assign(static_cast<size_t>(W)*static_cast<size_t>(H),-1);
             int yy=0;
             while(yy<H)
             {
                 int xx=0;
                 while(xx<W)
                 {
+                    int g=cellTi[pmi][static_cast<size_t>(yy)*W+xx];
                     uint16_t m=static_cast<uint16_t>(rom_.u16(mp->blocksPtr+(static_cast<uint32_t>(yy)*W+xx)*2)&0x3FF);
                     std::unordered_map<uint16_t,int>::const_iterator ol=overLocal.find(m);
-                    if(ol!=overLocal.cend() && ol->second>=0 && overFold[static_cast<size_t>(ol->second)]==NOT_FOLDED)
-                        overCellTi[pmi][static_cast<size_t>(yy)*W+xx]=ol->second;
+                    int vis=-1;
+                    if(ol!=overLocal.cend() && ol->second>=0)
+                    {
+                        uint32_t of=overFold[static_cast<size_t>(ol->second)];
+                        vis=(of!=NOT_FOLDED)?static_cast<int>(of):(static_cast<int>(Gpre)+ol->second);
+                    }
+                    else if(g>=0)
+                        vis=g;
+                    if(vis>=0 && vis<static_cast<int>(Gpre)) visGround[static_cast<size_t>(vis)]=1;
+                    cellVis[pmi][static_cast<size_t>(yy)*W+xx]=vis;
                     xx++;
                 }
                 yy++;
@@ -1418,24 +1420,72 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             pmi++;
         }
     }
-    std::vector<uint32_t> opos;
-    uint32_t oadj=0;
+    std::vector<uint32_t> vpos;
+    uint32_t vadj=0;
+    std::vector<QImage> newVis=layout2D(src,cellVis,poolMaps,poolCols,vpos,vadj,baseName+":visible");
+    pool.adjacencyViolations+=vadj;
+    // cellHid = the wall of a cell that has an over, ONLY when that wall image is
+    // not already shown visibly somewhere (else it would be a duplicate tile).
+    std::vector<std::vector<int> > cellHid(poolMaps.size());
     {
-        std::vector<QImage> newOvers=layout2D(overs,overCellTi,poolMaps,poolCols,opos,oadj,baseName+":over");
-        overs.swap(newOvers);
+        size_t pmi=0;
+        while(pmi<poolMaps.size())
+        {
+            const DecodedMap *mp=poolMaps[pmi];
+            int W=static_cast<int>(mp->width), H=static_cast<int>(mp->height);
+            cellHid[pmi].assign(static_cast<size_t>(W)*static_cast<size_t>(H),-1);
+            int yy=0;
+            while(yy<H)
+            {
+                int xx=0;
+                while(xx<W)
+                {
+                    int g=cellTi[pmi][static_cast<size_t>(yy)*W+xx];
+                    uint16_t m=static_cast<uint16_t>(rom_.u16(mp->blocksPtr+(static_cast<uint32_t>(yy)*W+xx)*2)&0x3FF);
+                    std::unordered_map<uint16_t,int>::const_iterator ol=overLocal.find(m);
+                    if(ol!=overLocal.cend() && ol->second>=0 && g>=0 && !visGround[static_cast<size_t>(g)])
+                        cellHid[pmi][static_cast<size_t>(yy)*W+xx]=g;
+                    xx++;
+                }
+                yy++;
+            }
+            pmi++;
+        }
     }
-    pool.adjacencyViolations+=oadj;
-    std::vector<uint32_t> overRemap(opos.size(),0);
+    std::vector<uint32_t> hpos;
+    uint32_t hadj=0;
+    std::vector<QImage> newHid=layout2D(grounds,cellHid,poolMaps,poolCols,hpos,hadj,baseName+":hidden");
+    pool.adjacencyViolations+=hadj;
+    uint32_t V=static_cast<uint32_t>(newVis.size());
+    // final position of an OLD ground index g: its visible cell, else the hidden
+    // region (offset by V).  Remap groundLocal / contextLocal accordingly.
+    {
+        std::unordered_map<uint16_t,int>::iterator gl=groundLocal.begin();
+        while(gl!=groundLocal.end()){ uint32_t g=static_cast<uint32_t>(gl->second); gl->second=static_cast<int>(visGround[g]?vpos[g]:(V+hpos[g])); ++gl; }
+        std::unordered_map<uint64_t,int>::iterator cl=contextLocal.begin();
+        while(cl!=contextLocal.end()){ uint32_t g=static_cast<uint32_t>(cl->second); cl->second=static_cast<int>(visGround[g]?vpos[g]:(V+hpos[g])); ++cl; }
+    }
+    // overRemap[old over index] -> absolute cell: a folded over takes its ground's
+    // final position; a real over takes its visible-pass position.
+    std::vector<uint32_t> overRemap(overs.size(),0);
     {
         size_t oi=0;
-        while(oi<overRemap.size())
+        while(oi<overs.size())
         {
-            overRemap[oi]=(overFold[oi]!=NOT_FOLDED) ? overFold[oi] : (groundCount+opos[oi]);
+            if(overFold[oi]!=NOT_FOLDED){ uint32_t g=overFold[oi]; overRemap[oi]=visGround[g]?vpos[g]:(V+hpos[g]); }
+            else overRemap[oi]=vpos[Gpre+static_cast<uint32_t>(oi)];
             oi++;
         }
     }
-    uint32_t groundsOvers=groundCount+static_cast<uint32_t>(overs.size());
-    // Ground (2-D grid) + over (2-D grid) tiles, then the animation tiles.
+    // Assemble the unified tiles into `grounds` (visible region then hidden walls);
+    // `overs` now empty -- overs live inside the visible region via overRemap.
+    grounds.clear();
+    grounds.reserve(newVis.size()+newHid.size());
+    { size_t k=0; while(k<newVis.size()){ grounds.push_back(newVis[k]); k++; } k=0; while(k<newHid.size()){ grounds.push_back(newHid[k]); k++; } }
+    overs.clear();
+    uint32_t groundCount=static_cast<uint32_t>(grounds.size());
+    uint32_t groundsOvers=groundCount;
+    // Visible+hidden tiles, then the animation tiles.
     uint32_t animStart=groundsOvers;
 
     // Animation frame sequences, kept consecutive and inside one sheet.
@@ -1628,6 +1678,9 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     // Walkable tile.  Count the redundant non-animation duplicates so prepare()
     // can FAIL the run if any survive.
     {
+        QImage blkT(16,16,QImage::Format_ARGB32);
+        blkT.fill(Qt::transparent);
+        std::string blkKey(reinterpret_cast<const char *>(blkT.constBits()),static_cast<size_t>(blkT.sizeInBytes()));
         std::unordered_set<std::string> seenImg;
         uint32_t k=0;
         while(static_cast<size_t>(k)<tiles.size() && k<animStart)

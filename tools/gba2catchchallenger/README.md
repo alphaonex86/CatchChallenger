@@ -91,9 +91,14 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   the dominant terrains (grass/sand/water/rock/path) and each tile gets a per-corner
   `wangid`, so the editor auto-tiles transitions.  Heuristic (corner colour),
   editor-only (libtiled ignores it when rendering); some wangids may need hand-tweaks.
-  The same 2-D `layout2D` packer is applied to the over (WalkBehind) tiles too,
-  so building/tree tops read like the map (not dumped in dedup order); an over
-  identical to a ground tile folds onto it (no duplicate). Two **post-build
+  **Unified human-view layout:** a human reads a building as ONE object, but it is
+  tiles on TWO layers — the ground/under wall (Walkable) and the over/WalkBehind
+  roof. So the packer lays out the TOP VISIBLE tile of every map cell (its over if
+  it has one, else its ground) in ONE 2-D pass, so a roof groups directly ABOVE its
+  wall exactly as seen — overs are NOT dumped in a separate region. An over
+  pixel-identical to a ground tile folds onto it (no duplicate); the few walls
+  HIDDEN behind a roof (cells carrying both) are not in the human view, so they go
+  to a small region appended after the visible one. Two **post-build
   GUARDs** (`prepare`): **dup** FAILs if any non-animation graphic repeats inside
   a pool (animation frames exempt); **adjacency** checks every consistent
   immediate map-neighbour stays adjacent in the sheet — it PASSes, reporting only
