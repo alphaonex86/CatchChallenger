@@ -1709,7 +1709,24 @@ QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, cons
     if(!lookAt.isEmpty())
         out+=" lookAt=\""+lookAt+"\"";
     out+=">\n";
-    out+="    <name>"+QString::fromStdString(name)+"</name>\n";
+    //Display name: an INVENTED person name (deterministic by id) so trainers and
+    //NPCs read as people instead of a raw numeric id ("<name>1</name>"). The names
+    //are original/neutral — no real game character is reused. The numeric `name`
+    //argument is still the per-map bot id and is used as the seed.
+    static const char *const botDisplayNames[]={
+        "Aldric","Bryn","Cora","Dane","Edda","Finn","Gwen","Hale","Ivo","Juna",
+        "Kael","Lyra","Mira","Nuri","Oren","Pell","Quin","Rhea","Soren","Tova",
+        "Ulf","Vera","Wren","Xan","Yara","Zane","Bram","Cleo","Dora","Esra",
+        "Faye","Gus","Hana","Iris","Jad","Kira","Loris","Mads","Noa","Otto"};
+    const size_t botDisplayNameCount=sizeof(botDisplayNames)/sizeof(botDisplayNames[0]);
+    size_t nameSeed=0;
+    {
+        //seed from the passed id string (the per-map bot id) for stable variety
+        size_t ci=0;
+        while(ci<name.size()) { nameSeed=nameSeed*10+static_cast<size_t>(name[ci]); ci++; }
+    }
+    QString displayName=botDisplayNames[(nameSeed+id)%botDisplayNameCount];
+    out+="    <name>"+displayName+"</name>\n";
     switch(realKind)
     {
         case BotKind_heal:
