@@ -475,13 +475,56 @@ static void writeTsx(const std::string &dir, const std::string &name, int column
 }
 
 // Add an image to the de-dup pool; returns its (possibly existing) cell index.
+// Near-duplicate fold tolerance.  The Gen3 ROM often stores two metatiles that
+// render to VISUALLY-IDENTICAL 16x16 graphics (a sub-pixel shading / palette
+// nuance) — byte-exact dedup keeps them, so they read as duplicate rows/cols in
+// the sheet.  Two tiles fold together when EVERY channel is within kNearMaxDiff
+// AND the mean per-channel difference is within kNearMeanDiff (both tiny, so the
+// merge is imperceptible).  Lossy by design (owner-approved).
+static const int kNearMaxDiff=24;   // no single RGBA channel differs by more than this (~9%)
+static const int kNearMeanDiff=2;   // average per-channel difference over the tile
+
+// True when a and b (16x16 ARGB32) are near-identical per the tolerance above.
+static bool nearEqualTile(const QImage &a, const QImage &b)
+{
+    const qsizetype n=a.sizeInBytes();
+    if(b.sizeInBytes()!=n)
+        return false;
+    const uchar *pa=a.constBits();
+    const uchar *pb=b.constBits();
+    long sum=0;
+    qsizetype i=0;
+    while(i<n)
+    {
+        int d=static_cast<int>(pa[i])-static_cast<int>(pb[i]);
+        if(d<0) d=-d;
+        if(d>kNearMaxDiff)
+            return false;
+        sum+=d;
+        i++;
+    }
+    return n>0 && (sum/n)<=kNearMeanDiff;
+}
+
 static int dedupAdd(const QImage &img, std::unordered_map<std::string,int> &seen, std::vector<QImage> &tiles)
 {
     QImage a=img.convertToFormat(QImage::Format_ARGB32);
     std::string key(reinterpret_cast<const char *>(a.constBits()),static_cast<size_t>(a.sizeInBytes()));
     std::unordered_map<std::string,int>::const_iterator it=seen.find(key);
     if(it!=seen.cend())
-        return it->second;
+        return it->second;            // exact duplicate -> reuse
+    // Near-duplicate: fold into an existing visually-identical tile.  Linear scan
+    // with early-exit (pools are bounded; most pairs differ on the first pixels).
+    size_t t=0;
+    while(t<tiles.size())
+    {
+        if(nearEqualTile(a,tiles[t]))
+        {
+            seen[key]=static_cast<int>(t); // cache so the next exact match is O(1)
+            return static_cast<int>(t);
+        }
+        t++;
+    }
     int idx=static_cast<int>(tiles.size());
     tiles.push_back(a);
     seen[key]=idx;
