@@ -25,7 +25,14 @@ struct GameInfo {
     bool valid;
     std::string code;        // 4-char game code, e.g. "BPRE"
     uint8_t version;         // ROM version byte
-    std::string label;       // neutral output label, e.g. "firered"
+    std::string label;       // neutral output label, e.g. "firered" (==subCode for a sub)
+    // Sub-datapack placement.  A canonical sibling that shares its region with a
+    // base (LeafGreen↔FireRed, Sapphire/Emerald↔Ruby) is emitted as an OVERLAY:
+    //   mainCode="firered", subCode="leafgreen" -> map/main/firered/sub/leafgreen/
+    // A base or a standalone hack has subCode empty -> map/main/<mainCode>/.
+    std::string mainCode;    // datapack main code this ROM belongs to
+    std::string subCode;     // "" => this IS a main; else a sub overlay of mainCode
+    bool isSub() const { return !subCode.empty(); }
     Engine engine;
     uint32_t mapGroupsOffset;    // file offset of gMapGroups
     uint32_t tilesInPrimary;     // 8x8 tiles owned by the primary tileset
@@ -68,8 +75,10 @@ struct GameInfo {
     GameInfo();
 
     // Inspect a loaded ROM and fill in the per-game constants.  Returns a
-    // GameInfo with valid==false when the ROM is not recognised.
-    static GameInfo detect(const std::vector<uint8_t> &rom);
+    // GameInfo with valid==false when the ROM is not recognised.  romPath is used
+    // to derive a label for a non-canonical hack (an off-fingerprint ROM that
+    // still rides a known Gen3 engine), e.g. "Pokemon Glazed.gba" -> "glazed".
+    static GameInfo detect(const std::vector<uint8_t> &rom, const std::string &romPath);
 
     // Metatile attribute decode (engine dependent).
     uint16_t behavior(uint32_t attribute) const;

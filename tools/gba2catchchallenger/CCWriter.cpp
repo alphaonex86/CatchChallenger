@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <thread>
 #include <unordered_set>
 #include <vector>
@@ -977,7 +978,7 @@ void CCWriter::writeZones()
 
 // Aggregate a per-slot wild list by species (sum slot weight -> luck, widen the
 // level range) and emit a <grass>/<water> element.
-static void emitWildList(std::ofstream &out, const char *tag, const std::vector<WildSlot> &slotList)
+static void emitWildList(std::ostream &out, const char *tag, const std::vector<WildSlot> &slotList)
 {
     std::vector<std::string> order;
     std::unordered_map<std::string,int> luck,minL,maxL;
@@ -1016,6 +1017,141 @@ static void emitWildList(std::ofstream &out, const char *tag, const std::vector<
         k++;
     }
     out << " </" << tag << ">\n";
+}
+
+// Read a whole text file; sets *exists=false when it cannot be opened.
+static std::string readWholeFile(const std::string &path, bool *exists)
+{
+    std::ifstream in(path,std::ios::binary);
+    if(!in)
+    {
+        if(exists!=nullptr) *exists=false;
+        return std::string();
+    }
+    if(exists!=nullptr) *exists=true;
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    return ss.str();
+}
+
+// Extract the "<tag>...</tag>" block from xml text, or "" when absent.  "<water>"
+// won't match "<waterOldRod>" (the trailing '>' differs), so plain tags are safe.
+static std::string extractSection(const std::string &xml, const char *tag)
+{
+    std::string open=std::string("<")+tag+">";
+    std::string close=std::string("</")+tag+">";
+    size_t a=xml.find(open);
+    if(a==std::string::npos)
+        return std::string();
+    size_t b=xml.find(close,a);
+    if(b==std::string::npos)
+        return std::string();
+    return xml.substr(a,b+close.size()-a);
+}
+
+// Whitespace-stripped content key, so indentation differences never count as a diff.
+static std::string stripWs(const std::string &s)
+{
+    std::string out;
+    out.reserve(s.size());
+    size_t i=0;
+    while(i<s.size())
+    {
+        char c=s[i];
+        if(c!=' ' && c!='\t' && c!='\n' && c!='\r')
+            out.push_back(c);
+        i++;
+    }
+    return out;
+}
+
+bool CCWriter::writeSubOverlay(const std::string &mainDir)
+{
+    const std::string &sub=rom_.game().subCode;
+    std::string display=sub;
+    if(!display.empty())
+        display[0]=static_cast<char>(std::toupper(static_cast<unsigned char>(display[0])));
+    // Sub informations.xml — the overlay's own display identity (its own name,
+    // initial, colour), matching map/main/test/sub/smallchange/informations.xml.
+    QDir().mkpath(QString::fromStdString(fireredDir_));
+    {
+        std::ofstream out(fireredDir_+"/informations.xml");
+        if(out)
+        {
+            out << "<?xml version='1.0'?>\n";
+            out << "<informations color=\"#FF8000\">\n";
+            out << " <name>" << display << "</name>\n";
+            out << " <initial>" << (display.empty()?'S':display[0]) << "</initial>\n";
+            out << "</informations>\n";
+        }
+    }
+
+    const std::vector<DecodedMap> &maps=decoder_.maps();
+    int changed=0, shared=0, missing=0;
+    size_t i=0;
+    while(i<maps.size())
+    {
+        const DecodedMap &map=maps[i];
+        const std::string &P=naming_.pathFor(map.group,map.map);
+        if(P.empty())
+        {
+            i++;
+            continue;
+        }
+        // The sibling's own wild blocks, produced by the SAME emitter as the main
+        // run — so an unchanged encounter list is byte-identical to the main file.
+        std::ostringstream gs,ws;
+        const WildSet *wild=wild_.find(map.group,map.map);
+        if(wild!=nullptr)
+        {
+            emitWildList(gs,"grass",wild->land);
+            emitWildList(ws,"water",wild->water);
+        }
+        const std::string sibGrass=gs.str();
+        const std::string sibWater=ws.str();
+        // The main's version of this map: geometry is shared, so we only ever need
+        // to override wild data.  If the main has no such map, this is a
+        // sibling-exclusive map (e.g. Emerald's Battle Frontier) -> not part of a
+        // wild-only overlay, skip it.
+        bool exists=false;
+        const std::string mainText=readWholeFile(mainDir+"/"+P+".xml",&exists);
+        if(!exists)
+        {
+            missing++;
+            i++;
+            continue;
+        }
+        const std::string mainGrass=extractSection(mainText,"grass");
+        const std::string mainWater=extractSection(mainText,"water");
+        const bool emitG=(!sibGrass.empty()) && (stripWs(sibGrass)!=stripWs(mainGrass));
+        const bool emitW=(!sibWater.empty()) && (stripWs(sibWater)!=stripWs(mainWater));
+        if(!emitG && !emitW)
+        {
+            shared++;
+            i++;
+            continue;
+        }
+        const std::string outFile=fireredDir_+"/"+P+".xml";
+        const std::string outDir=outFile.substr(0,outFile.find_last_of('/'));
+        QDir().mkpath(QString::fromStdString(outDir));
+        std::ofstream out(outFile);
+        if(out)
+        {
+            // Partial map xml: only the changed wild sections.  The engine keeps
+            // the main's geometry + every section we DON'T override.
+            out << "<map>\n";
+            if(emitG) out << sibGrass;
+            if(emitW) out << sibWater;
+            out << "</map>\n";
+            changed++;
+        }
+        i++;
+    }
+    std::cout << "CCWriter sub-overlay '" << rom_.game().mainCode << "/sub/" << sub << "': "
+              << changed << " map(s) with changed wild encounters, "
+              << shared << " identical (shared from main), "
+              << missing << " sibling-only (skipped); wrote to " << fireredDir_ << std::endl;
+    return true;
 }
 
 // Companion <mapbase>.xml: the functional structure (type/zone/name) plus the

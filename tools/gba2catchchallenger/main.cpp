@@ -83,47 +83,66 @@ int main(int argc, char *argv[])
     // overrunning NPCs/signs don't duplicate a gym leader (one leader per gym).
     Gen3Script::indexBattleOwners(rom,decoder.maps());
 
-    std::string outDir=datapack+"/map/main/"+rom.game().label;
+    // Output placement.  A base/standalone goes to map/main/<label>/.  A sibling
+    // sub overlay goes to map/main/<mainCode>/sub/<subCode>/ and is diffed against
+    // the already-generated main at map/main/<mainCode>/.
+    const GameInfo &gi=rom.game();
+    std::string mainDir=datapack+"/map/main/"+gi.mainCode;
+    std::string outDir=gi.isSub() ? (mainDir+"/sub/"+gi.subCode)
+                                   : (datapack+"/map/main/"+gi.label);
     std::string tilesetDir=outDir+"/tileset";
 
-    // Wipe any previous output for this label first: the tileset sheet count and
-    // layout change between runs, so old <label>/tileset/*.png|*.tsx and maps
+    // Wipe any previous output for this label/sub first: the tileset sheet count
+    // and layout change between runs, so old <label>/tileset/*.png|*.tsx and maps
     // would otherwise accumulate as stale files (bloating the datapack and
     // showing tiles no current map references).  Guarded on a non-empty label so
     // this can never escape to map/main/ itself.
-    if(!rom.game().label.empty())
+    if(!gi.label.empty())
     {
         if(QDir(QString::fromStdString(outDir)).removeRecursively())
             std::cout << "Cleaned previous output at " << outDir << std::endl;
     }
 
     // Naming first: the tileset builder names pools after the areas that use
-    // them, so it needs the resolved area slugs.
+    // them, so it needs the resolved area slugs.  The sub run uses the SAME
+    // naming as its main (same section names + indexBattleOwners above), so the
+    // sibling's map paths line up with the main's for the overlay diff.
     Naming naming(rom,decoder);
     naming.build();
-
-    TilesetBuilder tilesets(rom,tilesetDir);
-    if(!tilesets.prepare(decoder.maps(),naming))
-    {
-        std::cerr << "Tileset build failed" << std::endl;
-        return 1;
-    }
 
     Wild wild(rom);
     wild.build();
 
-    // Bot skins: extracted overworld sprites are matched against existing skins
-    // (~10% per-channel tolerance, content-cropped) and reused, else added.
     std::string skinBotDir=datapack;
     if(!skinBotDir.empty() && skinBotDir.back()=='/')
         skinBotDir.pop_back();
     skinBotDir+="/skin/bot";
     SkinResolver skins(skinBotDir,26);
-    skins.loadExisting();
 
-    CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins);
-    writer.writeAll();
-    std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
+    if(gi.isSub())
+    {
+        // Sub overlay: no .tmx / tileset / skins — geometry is shared from the
+        // main; only the changed wild-encounter sections are written.  TilesetBuilder
+        // is constructed but never prepared (unused by the overlay path).
+        TilesetBuilder tilesets(rom,tilesetDir);
+        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins);
+        writer.writeSubOverlay(mainDir);
+    }
+    else
+    {
+        TilesetBuilder tilesets(rom,tilesetDir);
+        if(!tilesets.prepare(decoder.maps(),naming))
+        {
+            std::cerr << "Tileset build failed" << std::endl;
+            return 1;
+        }
+        // Bot skins: extracted overworld sprites are matched against existing skins
+        // (~10% per-channel tolerance, content-cropped) and reused, else added.
+        skins.loadExisting();
+        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins);
+        writer.writeAll();
+        std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
+    }
 
     std::cout << "Done." << std::endl;
     return 0;
