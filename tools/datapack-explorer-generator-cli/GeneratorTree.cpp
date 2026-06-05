@@ -13,6 +13,9 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
+#include <cstring>
+#include <dirent.h>
 
 namespace GeneratorTree {
 
@@ -111,9 +114,116 @@ static std::vector<std::string> parseStartMaps(const std::string &path)
     return maps;
 }
 
+// Wild-encounter layer tags that hold "monster on map" lists.
+static const char *const s_wildLayers[]={"grass","water","cave","lava","waterRod","waterSuperRod",nullptr};
+
+// get_maps() returns map paths WITHOUT extension (e.g. "kanto/pallet/pallet"),
+// but some callers pass ".tmx" paths — drop a trailing ".tmx" so we never chop
+// real characters when appending ".xml".
+static std::string dropTmx(const std::string &rel)
+{
+    if(rel.size()>=4 && rel.compare(rel.size()-4,4,".tmx")==0)
+        return rel.substr(0,rel.size()-4);
+    return rel;
+}
+
+// Resolve a <monster id="..."> attribute to a numeric monster id.  The datapack
+// references a monster by NUMERIC id or by NAME (case-insensitive); gba2cc-built
+// datapacks use names, so a plain atoi() would silently drop every entry.
+static uint16_t resolveMonsterId(const char *idAttr)
+{
+    if(idAttr==nullptr || idAttr[0]=='\0')
+        return 0;
+    bool numeric=true;
+    const char *p=idAttr;
+    while(*p!='\0')
+    {
+        if(*p<'0' || *p>'9')
+        {
+            numeric=false;
+            break;
+        }
+        p++;
+    }
+    if(numeric)
+        return (uint16_t)std::atoi(idAttr);
+    std::string low(idAttr);
+    size_t i=0;
+    while(i<low.size())
+    {
+        if(low[i]>='A' && low[i]<='Z')
+            low[i]=(char)(low[i]-'A'+'a');
+        i++;
+    }
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_tempNameToMonsterId(low))
+        return CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToMonsterId(low);
+    return 0;
+}
+
+// Read a map xml's wild layers into `layers` (layer tag -> set of monster ids).
+// A layer PRESENT in this file REPLACES the same layer already in `layers` — this
+// is exactly the sub-overlay semantics (a sub's <grass> overrides the main's
+// <grass>, sections it omits inherit from the main).  Missing file = no change.
+static void readWildLayers(const std::string &xmlPath,
+                           std::map<std::string,std::set<uint16_t>> &layers)
+{
+    tinyxml2::XMLDocument doc;
+    if(doc.LoadFile(xmlPath.c_str())!=tinyxml2::XML_SUCCESS)
+        return;
+    if(doc.RootElement()==nullptr)
+        return;
+    int t=0;
+    while(s_wildLayers[t]!=nullptr)
+    {
+        const tinyxml2::XMLElement *el=doc.RootElement()->FirstChildElement(s_wildLayers[t]);
+        if(el!=nullptr)
+        {
+            std::set<uint16_t> ids;
+            while(el!=nullptr)
+            {
+                const tinyxml2::XMLElement *mon=el->FirstChildElement("monster");
+                while(mon!=nullptr)
+                {
+                    uint16_t mid=resolveMonsterId(mon->Attribute("id"));
+                    if(mid>0)
+                        ids.insert(mid);
+                    mon=mon->NextSiblingElement("monster");
+                }
+                el=el->NextSiblingElement(s_wildLayers[t]);
+            }
+            layers[s_wildLayers[t]]=ids; // override this layer
+        }
+        t++;
+    }
+}
+
+// Sub-datapack codes under map/main/<mainCode>/sub/ (sorted, "" base excluded).
+static std::vector<std::string> listSubCodes(const std::string &mainCode)
+{
+    std::vector<std::string> subs;
+    const std::string subRoot=Helper::datapackPath()+"map/main/"+mainCode+"/sub/";
+    DIR *d=::opendir(subRoot.c_str());
+    if(d!=nullptr)
+    {
+        struct dirent *ent;
+        while((ent=::readdir(d))!=nullptr)
+        {
+            std::string n=ent->d_name;
+            if(n=="." || n=="..")
+                continue;
+            if(Helper::isDir(subRoot+n))
+                subs.push_back(n);
+        }
+        ::closedir(d);
+    }
+    std::sort(subs.begin(),subs.end());
+    return subs;
+}
+
 // ── Compute exclusive monsters per mainCode ──────────────────────────
 // A monster is "exclusive" to a mainCode if all maps where it appears
-// as a wild monster are within that single mainCode.
+// as a wild monster are within that single mainCode.  (Base maps only; the
+// per-sub version-exclusives are handled by computeSubExclusiveMonsters.)
 
 static std::map<std::string,std::vector<uint16_t>>
 computeExclusiveMonsters()
@@ -127,36 +237,12 @@ computeExclusiveMonsters()
         const std::string &mc=sets[si].mainCode;
         for(size_t mi=0; mi<sets[si].mapPaths.size(); ++mi)
         {
-            // Parse map XML for wild monsters
-            std::string xmlPath=Helper::datapackPath()+"map/main/"+mc+"/"+sets[si].mapPaths[mi];
-            xmlPath=xmlPath.substr(0,xmlPath.size()-4)+".xml";
-
-            tinyxml2::XMLDocument doc;
-            if(doc.LoadFile(xmlPath.c_str())!=tinyxml2::XML_SUCCESS)
-                continue;
-            if(!doc.RootElement()) continue;
-
-            static const char *layers[]={"grass","water","cave","lava","waterRod","waterSuperRod"};
-            for(const char *layer : layers)
-            {
-                const tinyxml2::XMLElement *el=doc.RootElement()->FirstChildElement(layer);
-                while(el)
-                {
-                    const tinyxml2::XMLElement *mon=el->FirstChildElement("monster");
-                    while(mon)
-                    {
-                        const char *idAttr=mon->Attribute("id");
-                        if(idAttr)
-                        {
-                            uint16_t mid=(uint16_t)std::atoi(idAttr);
-                            if(mid>0)
-                                monsterToMainCodes[mid].insert(mc);
-                        }
-                        mon=mon->NextSiblingElement("monster");
-                    }
-                    el=el->NextSiblingElement(layer);
-                }
-            }
+            std::string xmlPath=Helper::datapackPath()+"map/main/"+mc+"/"+dropTmx(sets[si].mapPaths[mi])+".xml";
+            std::map<std::string,std::set<uint16_t>> layers;
+            readWildLayers(xmlPath,layers);
+            for(const std::pair<const std::string,std::set<uint16_t>> &lp : layers)
+                for(uint16_t mid : lp.second)
+                    monsterToMainCodes[mid].insert(mc);
         }
     }
 
@@ -170,6 +256,67 @@ computeExclusiveMonsters()
     // Sort monster IDs
     for(std::pair<const std::string, std::vector<uint16_t>> &p : result)
         std::sort(p.second.begin(),p.second.end());
+    return result;
+}
+
+// ── Compute version-exclusive monsters per sub overlay ───────────────
+// A sub (e.g. ruby/sub/sapphire) overlays per-map wild encounters on its main.
+// Its "exclusive monsters" are the species that appear once the sub overlay is
+// applied but NOT anywhere in the main's base wild data — i.e. the monster
+// CHANGES the sub introduces (the version exclusives).  Returns mainCode ->
+// subCode -> sorted ids.
+static std::map<std::string,std::map<std::string,std::vector<uint16_t>>>
+computeSubExclusiveMonsters()
+{
+    std::map<std::string,std::map<std::string,std::vector<uint16_t>>> result;
+    const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
+    for(size_t si=0; si<sets.size(); ++si)
+    {
+        const std::string &mc=sets[si].mainCode;
+        const std::vector<std::string> subCodes=listSubCodes(mc);
+        if(subCodes.empty())
+            continue;
+        const std::vector<std::string> &mapPaths=sets[si].mapPaths;
+        // Cache each map's base wild layers once, and the base monster union.
+        std::vector<std::map<std::string,std::set<uint16_t>>> mainLayers(mapPaths.size());
+        std::set<uint16_t> baseSet;
+        size_t mi=0;
+        while(mi<mapPaths.size())
+        {
+            std::string base=Helper::datapackPath()+"map/main/"+mc+"/"+dropTmx(mapPaths[mi])+".xml";
+            readWildLayers(base,mainLayers[mi]);
+            for(const std::pair<const std::string,std::set<uint16_t>> &lp : mainLayers[mi])
+                for(uint16_t mid : lp.second)
+                    baseSet.insert(mid);
+            mi++;
+        }
+        size_t sc=0;
+        while(sc<subCodes.size())
+        {
+            const std::string &sub=subCodes[sc];
+            std::set<uint16_t> subSet;
+            mi=0;
+            while(mi<mapPaths.size())
+            {
+                // Start from the main's layers, then apply the sub overlay file.
+                std::map<std::string,std::set<uint16_t>> layers=mainLayers[mi];
+                std::string subXml=Helper::datapackPath()+"map/main/"+mc+"/sub/"+sub+"/"+dropTmx(mapPaths[mi])+".xml";
+                readWildLayers(subXml,layers);
+                for(const std::pair<const std::string,std::set<uint16_t>> &lp : layers)
+                    for(uint16_t mid : lp.second)
+                        subSet.insert(mid);
+                mi++;
+            }
+            std::vector<uint16_t> excl;
+            for(uint16_t mid : subSet)
+                if(baseSet.find(mid)==baseSet.cend())
+                    excl.push_back(mid);
+            std::sort(excl.begin(),excl.end());
+            if(!excl.empty())
+                result[mc][sub]=excl;
+            sc++;
+        }
+    }
     return result;
 }
 
@@ -316,8 +463,9 @@ void generate()
     // Parse root informations
     InfoData rootInfo=parseInformations(Helper::datapackPath()+"informations.xml");
 
-    // Compute exclusive monsters
+    // Compute exclusive monsters (per main, and the version-exclusives per sub)
     std::map<std::string, std::vector<uint16_t>> exclusiveMonsters=computeExclusiveMonsters();
+    std::map<std::string, std::map<std::string,std::vector<uint16_t>>> subExclusiveMonsters=computeSubExclusiveMonsters();
 
     std::ostringstream body;
     body << "<div class=\"map map_type_city\">\n";
@@ -372,15 +520,37 @@ void generate()
         if(exclusiveMonsters.count(mc))
             writeExclusiveMonsters(body,exclusiveMonsters[mc]);
 
-        // Sub-datapacks (if any)
-        std::string subDir=Helper::datapackPath()+"map/main/"+mc+"/sub/";
-        if(Helper::isDir(subDir))
+        // Sub-datapacks (if any): each sub's own heading + the version-exclusive
+        // monsters it introduces (its per-map wild overlay vs this main's base).
+        std::vector<std::string> subCodes=listSubCodes(mc);
+        if(!subCodes.empty())
         {
-            // List sub directories
-            std::vector<std::string> subs;
-            // Use getXmlList approach - list directories manually
-            // For now, just check for informations.xml in potential sub dirs
-            // This is a simplified approach; full implementation would enumerate dirs
+            body << "<div class=\"subblock\"><div class=\"valuetitle\">Sub part(s)</div><div class=\"value\">\n";
+            for(const std::string &sub : subCodes)
+            {
+                InfoData subInfo=parseInformations(Helper::datapackPath()+"map/main/"+mc+"/sub/"+sub+"/informations.xml");
+                body << "<div class=\"map map_type_city\">\n";
+                body << "<div class=\"subblock\"><h1";
+                if(subInfo.initial.empty() && !subInfo.color.empty())
+                    body << " style=\"color:" << subInfo.color << "\"";
+                body << ">\n";
+                body << Helper::htmlEscape(subInfo.name.empty()?sub:subInfo.name);
+                if(!subInfo.initial.empty())
+                {
+                    if(!subInfo.color.empty())
+                        body << "&nbsp;<span style=\"background-color:" << subInfo.color << ";\" class=\"datapackinital\">"
+                             << subInfo.initial << "</span>\n";
+                    else
+                        body << "&nbsp;<span class=\"datapackinital\">" << subInfo.initial << "</span>\n";
+                }
+                body << "</h1></div>\n";
+                if(!subInfo.description.empty())
+                    body << "<div class=\"type_label_list\">" << Helper::htmlEscape(Helper::firstLetterUpper(subInfo.description)) << "</div>\n";
+                if(subExclusiveMonsters.count(mc) && subExclusiveMonsters[mc].count(sub))
+                    writeExclusiveMonsters(body,subExclusiveMonsters[mc][sub]);
+                body << "</div>\n";
+            }
+            body << "</div></div>\n";
         }
 
         body << "</div>\n";

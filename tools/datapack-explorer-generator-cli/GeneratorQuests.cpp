@@ -191,7 +191,9 @@ void generate()
     // with Quest data from CommonDatapackServerSpec (may be empty if
     // quest definitions use old format without map= attribute).
 
-    for(CATCHCHALLENGER_TYPE_QUEST id=0;id<=255;id++)
+    // NB: loop in a WIDER type — CATCHCHALLENGER_TYPE_QUEST is uint8_t, so
+    // "id<=255" with a uint8_t counter never terminates (it wraps 255->0).
+    for(unsigned int id=0;id<=255;id++)
     {
         if(!QtDatapackClientLoader::datapackLoader->has_questExtra(id))
             continue;
@@ -446,7 +448,9 @@ void generate()
               << "\t<th>Rewards</th>\n"
               << "</tr>\n";
 
-    for(CATCHCHALLENGER_TYPE_QUEST id=0;id<=255;id++)
+    // NB: loop in a WIDER type — CATCHCHALLENGER_TYPE_QUEST is uint8_t, so
+    // "id<=255" with a uint8_t counter never terminates (it wraps 255->0).
+    for(unsigned int id=0;id<=255;id++)
     {
         if(!QtDatapackClientLoader::datapackLoader->has_questExtra(id))
             continue;

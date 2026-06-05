@@ -93,8 +93,11 @@ static bool checkForErrors(const std::string &output, const std::string &phase)
         std::string line;
         while(std::getline(stream,line))
         {
+            // Quests are optional content: a datapack (e.g. a gba2cc-converted
+            // region) can legitimately have zero, so "0 quest(s) ..." is not an
+            // error (this also covers the old "bot linked with quest" exception).
             if(line.size()>=2 && line[0]=='0' && line[1]==' '
-               && line.find("bot linked with quest")==std::string::npos)
+               && line.find("quest")==std::string::npos)
             {
                 std::cerr << "ERROR during " << phase << ": \"" << line << "\" should be >0" << std::endl;
                 hasError=true;
