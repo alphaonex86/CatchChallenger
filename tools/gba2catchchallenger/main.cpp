@@ -35,6 +35,91 @@ static std::string argValue(const std::vector<std::string> &args, const std::str
     return std::string();
 }
 
+// True when the metatile at (base,idx) has no graphics (every subtile id is 0).
+static bool metatileEmpty(const GbaRom &rom, uint32_t base, uint32_t idx)
+{
+    int s=0;
+    while(s<8)
+    {
+        if((rom.u16(base+idx*16+static_cast<uint32_t>(s)*2)&0x3FF)!=0)
+            return false;
+        s++;
+    }
+    return true;
+}
+
+// Auto-detect the primary/secondary tileset split (tiles/metatiles/palettes) from
+// the map data.  The engine default (RSE 512/512/6, FRLG 640/640/7) is wrong for a
+// ROM hack that kept one engine's MAP format but expanded its TILESETS to the
+// other's size — e.g. HnS = Emerald maps + FRLG-size 640 tilesets.  A wrong
+// metatilesInPrimary routes high-id metatiles to an empty array slot, so the cell
+// renders as a backdrop "black hole" (a whole building lost).  We decode every map
+// cell's metatile under each standard split and pick the one with the FEWEST
+// all-empty metatiles; the split is overridden only on a STRICT improvement, so
+// retail ROMs (already correct) are never touched.
+static void autodetectTilesetSplit(GbaRom &rom, const std::vector<DecodedMap> &maps)
+{
+    static const uint32_t kCandidate[2]={512,640};
+    uint32_t emptyCells[2]={0,0};
+    size_t mi=0;
+    while(mi<maps.size())
+    {
+        const DecodedMap &m=maps[mi];
+        bool ok=false;
+        uint32_t pmeta=rom.pointer(m.primaryTileset+0x0C,&ok);
+        if(!ok)
+            pmeta=0;
+        uint32_t smeta=0;
+        if(m.secondaryTileset!=0)
+        {
+            bool sok=false;
+            uint32_t s=rom.pointer(m.secondaryTileset+0x0C,&sok);
+            if(sok)
+                smeta=s;
+        }
+        if(pmeta!=0 && m.width>0 && m.height>0)
+        {
+            int32_t y=0;
+            while(y<m.height)
+            {
+                int32_t x=0;
+                while(x<m.width)
+                {
+                    uint16_t id=rom.u16(m.blocksPtr+static_cast<uint32_t>(y*m.width+x)*2)&0x3FF;
+                    int c=0;
+                    while(c<2)
+                    {
+                        uint32_t np=kCandidate[c];
+                        uint32_t base; uint32_t idx;
+                        if(id<np) { base=pmeta; idx=id; }
+                        else { base=smeta; idx=id-np; }
+                        if(base!=0 && metatileEmpty(rom,base,idx))
+                            emptyCells[c]++;
+                        c++;
+                    }
+                    x++;
+                }
+                y++;
+            }
+        }
+        mi++;
+    }
+    // index 1 (640) wins only when STRICTLY fewer empty cells than index 0 (512).
+    int best=(emptyCells[1]<emptyCells[0]) ? 1 : 0;
+    uint32_t curMeta=rom.game().metatilesInPrimary;
+    if(kCandidate[best]!=curMeta && emptyCells[best]<emptyCells[best^1])
+    {
+        if(kCandidate[best]==640)
+            rom.setTilesetSplit(640,640,7);
+        else
+            rom.setTilesetSplit(512,512,6);
+        std::cout << "Tileset split auto-detected: metatilesInPrimary " << curMeta
+                  << " -> " << kCandidate[best] << " (empty-cell count "
+                  << emptyCells[best^1] << " -> " << emptyCells[best]
+                  << "; expanded-tileset hack)" << std::endl;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     qputenv("QT_QPA_PLATFORM","offscreen");
@@ -78,6 +163,10 @@ int main(int argc, char *argv[])
         std::cerr << "Map decoding failed" << std::endl;
         return 1;
     }
+
+    // Correct the tileset split for expanded-tileset hacks (no-op on retail ROMs):
+    // decides primary/secondary metatile routing, so it must run before tilesets.
+    autodetectTilesetSplit(rom,decoder.maps());
 
     // Resolve, across all maps, the single owner of each trainerbattle command so
     // overrunning NPCs/signs don't duplicate a gym leader (one leader per gym).

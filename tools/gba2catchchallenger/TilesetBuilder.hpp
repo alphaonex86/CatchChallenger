@@ -51,6 +51,10 @@ public:
     std::vector<QImage> renderDoorFrames(uint16_t id) const;
 
 private:
+    // DEFINED metatile count of the primary tileset: the metatile array is
+    // immediately followed by its attribute array, so it is (attrPtr-metaPtr)/16.
+    // primary[id] beyond this is out-of-bounds (reads the attribute array).
+    uint32_t primaryMetatileCount() const;
     void drawSubtile(QImage &dst, int px, int py, uint16_t entry) const;
     const uint8_t *tilePixels(uint32_t tileIndex) const;
     uint32_t paletteColor(uint8_t palNum, uint8_t colorIndex) const;

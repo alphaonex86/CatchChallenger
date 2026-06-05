@@ -364,6 +364,13 @@ bool GbaRom::isValid() const
     return game_.valid && !data_.empty();
 }
 
+void GbaRom::setTilesetSplit(uint32_t tilesInPrimary, uint32_t metatilesInPrimary, uint32_t palettesInPrimary)
+{
+    game_.tilesInPrimary=tilesInPrimary;
+    game_.metatilesInPrimary=metatilesInPrimary;
+    game_.palettesInPrimary=palettesInPrimary;
+}
+
 uint8_t GbaRom::u8(uint32_t offset) const
 {
     if(offset>=data_.size())
