@@ -174,6 +174,15 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   interior (no name and no warp to any area) is gathered under a single
   `building/` parent (`building-N` / `house-N` inside) instead of cluttering the
   region root next to the real towns.
+* **Regions** — maps live at `<label>/<region>/<location>/`.  A retail ROM uses its
+  engine region (e.g. Kanto + the Sevii Islands).  A multi-region hack (HnS =
+  Johto + Kanto) splits per area: a name keyword table (town/landmark, plus the
+  route number — Kanto 1–28, Johto 29–48) assigns the obvious ones, an unnamed
+  cave/road **inherits** the region of the town it warps to (graph propagation),
+  and any leftover isolated cluster of ≥30 maps becomes an undetected region
+  `region-1` / `region-2` (a fully-custom region a name table can't place).
+  Cross-region warps use the same relative paths (`../../<region>/…`) the engine
+  already resolves for the retail Sevii ferry.
 * **Warps** → `door` objects (target map + destination warp coordinates).
 * **Connections** → `border-top/bottom/left/right` objects.
 * **NPCs** → `bot` objects (id, skin, lookAt).
