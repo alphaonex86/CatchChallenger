@@ -948,6 +948,36 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     std::vector<uint16_t> animatedIds;
     std::vector<uint16_t> doorIds; // door metatiles (behaviour 0x69)
 
+    // Per-metatile collision usage across the pool's maps.  A metatile that is
+    // COLLIDABLE everywhere it appears (the player is never under-foot) has its
+    // top sub-layer COMPOSITED into its ground tile below — nothing needs to draw
+    // between the two sub-layers — so a building reads VISUALLY MERGED in the
+    // sheet (one wall+roof tile) instead of a split wall + separate roof.  A
+    // metatile ever walked on keeps the split (its top must lift to WalkBehind so
+    // the player can pass behind it).
+    std::unordered_map<uint16_t,uint8_t> collFlag; // bit0 = collidable, bit1 = walkable
+    {
+        size_t pm=0;
+        while(pm<poolMaps.size())
+        {
+            const DecodedMap *mp=poolMaps[pm];
+            int W=static_cast<int>(mp->width), H=static_cast<int>(mp->height);
+            int yy=0;
+            while(yy<H)
+            {
+                int xx=0;
+                while(xx<W)
+                {
+                    uint16_t blk=rom_.u16(mp->blocksPtr+(static_cast<uint32_t>(yy)*W+xx)*2);
+                    collFlag[static_cast<uint16_t>(blk&0x3FF)] |= ((blk>>10)&0x3) ? 1 : 2;
+                    xx++;
+                }
+                yy++;
+            }
+            pm++;
+        }
+    }
+
     // Pass 1: classify each used metatile and render its ground (Walkable) image.
     // Animated water metatiles are handled later in the anim section.
     size_t i=0;
@@ -967,15 +997,19 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             // player, so its top must stay in the ground tile (never lifted to
             // WalkBehind).  This keeps WalkBehind minimal: building/tree tops.
             uint8_t lt=ts.layerType(id);
+            const uint8_t cf=collFlag.count(id) ? collFlag[id] : 0;
+            const bool alwaysCollidable=((cf&1)!=0) && ((cf&2)==0);
             QImage under=ts.renderUnder(id);
             QImage over=ts.renderOver(id,under);
-            if(lt!=1 && largestOpaqueComponent(over)>overThreshold)
+            if(!alwaysCollidable && lt!=1 && largestOpaqueComponent(over)>overThreshold)
             {
                 overLocal[id]=dedupAdd(over,overSeen,overs);
                 metaGroundImg[id]=under.convertToFormat(QImage::Format_ARGB32);
             }
             else
             {
+                // COVERED, no real top, OR always-collidable -> the full
+                // composited metatile (bottom+top) is the single ground tile.
                 overLocal[id]=-1;
                 metaGroundImg[id]=ts.renderMetatile(id).convertToFormat(QImage::Format_ARGB32);
             }
