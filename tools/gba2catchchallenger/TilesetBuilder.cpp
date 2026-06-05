@@ -2162,9 +2162,36 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     return pool;
 }
 
+// Dominant map-TYPE of a pool's maps (the ROM's MapHeader+0x17), as a readable
+// category for an otherwise-anonymous "common" tileset: outdoor (town/city/route/
+// ocean), cave (underground/underwater), or indoor.  So a shared tileset reads as
+// "common-outdoor" / "common-cave" / "common-indoor" instead of "common-7".
+static std::string poolCategory(const std::vector<const DecodedMap *> &poolMaps)
+{
+    int outdoor=0,cave=0,indoor=0;
+    size_t i=0;
+    while(i<poolMaps.size())
+    {
+        uint8_t t=poolMaps[i]->mapType;
+        if(t==4||t==5) cave++;
+        else if(t==1||t==2||t==3||t==6) outdoor++;
+        else indoor++;
+        i++;
+    }
+    // OUTDOOR is the overworld BASE: a general tileset is shared across many outdoor
+    // AND cave/indoor maps (e.g. the firered general primary = 76 outdoor / 80 cave /
+    // 35 indoor), so a bare map-count majority mislabels it "cave".  Call a pool
+    // outdoor whenever its outdoor use is significant (>=30%); only a pool with little
+    // outdoor use is type-specific (cave or indoor by which dominates).
+    int total=outdoor+cave+indoor;
+    if(total>0 && outdoor*10>=total*3) return "outdoor";
+    if(cave>indoor) return "cave";
+    return "indoor";
+}
+
 // Name a pool after the area(s) that use it: one area -> its slug, a few ->
-// joined, many -> "common".  Resolves collisions against already-used names.
-static std::string poolBaseName(const std::set<std::string> &areas, std::set<std::string> &used)
+// joined, many -> "common-<category>".  Resolves collisions against used names.
+static std::string poolBaseName(const std::set<std::string> &areas, std::set<std::string> &used, const std::string &category)
 {
     std::string base;
     if(areas.size()==1)
@@ -2186,6 +2213,9 @@ static std::string poolBaseName(const std::set<std::string> &areas, std::set<std
         base="common";
     if(base.empty())
         base="common";
+    // A shared "common" tileset gets a human category suffix so the folder reads.
+    if(base=="common" && !category.empty())
+        base="common-"+category;
     std::string name=base;
     int dup=2;
     while(used.find(name)!=used.cend())
@@ -2308,7 +2338,7 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     {
         uint32_t key=primaryKeys[ki];
         const std::vector<uint16_t> &ids=usedPrimary[key];
-        std::string name=poolBaseName(primaryAreas[key],usedNames);
+        std::string name=poolBaseName(primaryAreas[key],usedNames,poolCategory(poolMapsPrimary[key]));
         std::string sub=nestByRegion ? poolRegion(poolMapsPrimary[key],naming) : std::string();
         primaryPools_[key]=buildPool(key,0,ids,name,poolMapsPrimary[key],sub);
         ki++;
@@ -2325,7 +2355,7 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
         uint32_t primary=static_cast<uint32_t>(key>>32);
         uint32_t secondary=static_cast<uint32_t>(key & 0xFFFFFFFFu);
         const std::vector<uint16_t> &ids=usedSecondary[key];
-        std::string name=poolBaseName(secondaryAreas[key],usedNames);
+        std::string name=poolBaseName(secondaryAreas[key],usedNames,poolCategory(poolMapsSecondary[key]));
         std::string sub=nestByRegion ? poolRegion(poolMapsSecondary[key],naming) : std::string();
         secondaryPools_[key]=buildPool(primary,secondary,ids,name,poolMapsSecondary[key],sub);
         ki++;
