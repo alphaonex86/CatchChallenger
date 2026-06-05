@@ -170,7 +170,10 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   name **and** grouping (HnS's whole overworld no longer collapses into one
   `area-0`).  A map with no warp-reachable named area falls back to its own named
   section (a detached building keeps its town); a genuinely unnamed group is named
-  from its Gen3 map type — `city-N` / `cave-N` / `road-N`, else `building-N`.
+  from its Gen3 map type — `city-N` / `cave-N` / `road-N`.  Every isolated unnamed
+  interior (no name and no warp to any area) is gathered under a single
+  `building/` parent (`building-N` / `house-N` inside) instead of cluttering the
+  region root next to the real towns.
 * **Warps** → `door` objects (target map + destination warp coordinates).
 * **Connections** → `border-top/bottom/left/right` objects.
 * **NPCs** → `bot` objects (id, skin, lookAt).
