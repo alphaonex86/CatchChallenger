@@ -155,6 +155,20 @@ uint32_t Gen3Tileset::attributeOffset(uint16_t id) const
     return secondaryAttrPtr_+idx*sz;
 }
 
+uint32_t Gen3Tileset::primaryMetatileCount() const
+{
+    // The primary metatile array is immediately followed by its attribute array,
+    // so its DEFINED metatile count is (attrPtr - metaPtr)/16.  Falls back to the
+    // engine constant for an implausible span (attr not adjacent / wrong struct).
+    if(primaryAttrPtr_>primaryMetaPtr_)
+    {
+        uint32_t span=primaryAttrPtr_-primaryMetaPtr_;
+        if(span<=4096u*16u && span>=128u*16u)
+            return span/16u;
+    }
+    return game_.metatilesInPrimary;
+}
+
 bool Gen3Tileset::metatileMisrouted(uint16_t id) const
 {
     // Only metatiles routed to the SECONDARY array can be mis-routed: a metatile
@@ -162,6 +176,12 @@ bool Gen3Tileset::metatileMisrouted(uint16_t id) const
     // there is no other place its graphics could live.
     uint32_t primaryCount=game_.metatilesInPrimary;
     if(id<primaryCount)
+        return false;
+    // primary[id] is REAL graphics only while id is within the primary's DEFINED
+    // metatile array; beyond it the read lands in the attribute array / next data
+    // and must NOT be mistaken for recoverable content.  A genuinely-empty
+    // secondary metatile there is a legit transparent cell, not a routing bug.
+    if(id>=primaryMetatileCount())
         return false;
     uint32_t secOff=secondaryMetaPtr_+static_cast<uint32_t>(id-primaryCount)*16;
     uint32_t priOff=primaryMetaPtr_+static_cast<uint32_t>(id)*16;

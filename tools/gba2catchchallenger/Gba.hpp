@@ -98,6 +98,13 @@ public:
     const GameInfo &game() const;
     bool isValid() const;
 
+    // Override the primary/secondary tileset split (tiles, metatiles, palettes in
+    // the primary).  Used by the off-fingerprint-hack auto-detect when the engine
+    // default is wrong — e.g. an Emerald-MAP-format hack whose TILESETS were
+    // expanded to FRLG size (640/640/7); the wrong split routes high-id metatiles
+    // to an empty array slot, rendering the cell as a backdrop "black hole".
+    void setTilesetSplit(uint32_t tilesInPrimary, uint32_t metatilesInPrimary, uint32_t palettesInPrimary);
+
     // Raw little-endian reads at a file offset.  No bounds checking beyond a
     // size assertion guard — callers stay inside the ROM by construction.
     uint8_t u8(uint32_t offset) const;

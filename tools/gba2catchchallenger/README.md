@@ -148,9 +148,16 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   It FAILs when a used metatile is **empty in its routed array but holds graphics
   in the other** at the same id — the signature of a wrong `metatilesInPrimary`,
   which renders that cell as a backdrop "black hole" (a lost building/object).
-  Retail ROMs are 0 (PASS); off-fingerprint hacks that relocated/expanded their
-  tilesets (HnS, Glazed) trip it, surfacing the limitation instead of silently
-  shipping black cells. Informational — it never aborts the run.
+  Retail ROMs are 0 (PASS).  An off-fingerprint hack that expanded its tilesets to
+  the other engine's size (HnS = Emerald maps + FRLG-size 640 tilesets) would
+  otherwise route high-id building metatiles to empty slots; `autodetectTilesetSplit`
+  (run before tilesets) decodes every map cell under each standard split
+  (512/512/6 vs 640/640/7) and picks the one with the fewest empty metatiles,
+  overriding `metatilesInPrimary` only on a strict improvement (retail ROMs are
+  never touched).  With the right split HnS now passes this guard — and its render
+  is clean.  The guard's "graphics in the other array" probe is bounded by the
+  primary's defined metatile count `(attrPtr − metaPtr)/16` so an out-of-bounds
+  read past the array can't masquerade as recoverable content.
 * **Maps** — width×height metatile grid → `Walkable` layer. Collision bit →
   `Collisions`. Metatile behaviour → `Grass` (wild encounters), `Water` (surf),
   `LedgesUp/Down/Left/Right`.
