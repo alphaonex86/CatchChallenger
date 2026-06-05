@@ -1107,6 +1107,7 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
 
 TilePool::TilePool() :
     uniqueCount(0),
+    mainCount(0),
     sheetCount(0),
     duplicateTiles(0),
     adjacencyViolations(0),
@@ -1114,6 +1115,41 @@ TilePool::TilePool() :
     layerSplitTiles(0),
     layerSplitBad(0)
 {
+}
+
+// A pool's tiles are emitted as several sheet FILES.  The ground+over ("main")
+// tiles [0,mainCount) are cut into kCapacity-sized sheets named "<base>_<n>"; the
+// door + animated tiles [mainCount,uniqueCount) are then cut as their OWN final
+// sheet(s) named "<base>_anim_<n>", so they sit on a unique, easy-to-find tileset.
+// Gids stay base+position; only the file split and each sheet's firstgid
+// (= base + startCell) change.  Returns (startCell, count, name-suffix) per sheet.
+namespace {
+struct SheetSeg { uint32_t start; uint32_t count; std::string suffix; };
+std::vector<SheetSeg> poolSheetSegments(uint32_t mainCount, uint32_t uniqueCount)
+{
+    std::vector<SheetSeg> segs;
+    const uint32_t cap=TilesetBuilder::kCapacity;
+    uint32_t s=0;
+    while(s*cap<mainCount)
+    {
+        uint32_t start=s*cap, cnt=mainCount-start;
+        if(cnt>cap) cnt=cap;
+        SheetSeg seg; seg.start=start; seg.count=cnt; seg.suffix="_"+std::to_string(s);
+        segs.push_back(seg);
+        s++;
+    }
+    uint32_t animCount=(uniqueCount>mainCount)?(uniqueCount-mainCount):0;
+    uint32_t a=0;
+    while(a*cap<animCount)
+    {
+        uint32_t start=mainCount+a*cap, cnt=animCount-a*cap;
+        if(cnt>cap) cnt=cap;
+        SheetSeg seg; seg.start=start; seg.count=cnt; seg.suffix="_anim_"+std::to_string(a);
+        segs.push_back(seg);
+        a++;
+    }
+    return segs;
+}
 }
 
 TilesetBuilder::TilesetBuilder(const GbaRom &rom, const std::string &tilesetDir) :
@@ -1826,15 +1862,16 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     }
 
     pool.uniqueCount=static_cast<uint32_t>(tiles.size());
-    pool.sheetCount=(pool.uniqueCount+kCapacity-1)/kCapacity;
+    pool.mainCount=animStart; // grounds+overs; door+anim tiles ([mainCount,uniqueCount)) follow
+    // Door + animated tiles ([mainCount,uniqueCount)) go on their own "_anim" sheet.
+    std::vector<SheetSeg> segs=poolSheetSegments(pool.mainCount,pool.uniqueCount);
+    pool.sheetCount=static_cast<uint32_t>(segs.size());
 
-    uint32_t s=0;
-    while(s<pool.sheetCount)
+    size_t sg=0;
+    while(sg<segs.size())
     {
-        uint32_t startCell=s*kCapacity;
-        uint32_t cnt=pool.uniqueCount-startCell;
-        if(cnt>kCapacity)
-            cnt=kCapacity;
+        uint32_t startCell=segs[sg].start;
+        uint32_t cnt=segs[sg].count;
         int rows=static_cast<int>((cnt+poolCols-1)/poolCols);
         QImage sheet(poolCols*16,rows*16,QImage::Format_ARGB32);
         sheet.fill(Qt::transparent);
@@ -1853,10 +1890,10 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
                 localAnims[ait->first-static_cast<int>(startCell)]=ait->second;
             ++ait;
         }
-        std::string name=baseName+"_"+std::to_string(s);
+        std::string name=baseName+segs[sg].suffix;
         sheet.save(QString::fromStdString(outDir+"/"+name+".png"),"PNG");
         writeTsx(outDir,name,poolCols,sheet,cnt,localAnims);
-        s++;
+        sg++;
     }
 
     // Post-build GUARD: within a pool no NON-ANIMATION tile graphic may repeat
@@ -2112,8 +2149,10 @@ const TilePool *TilesetBuilder::secondaryPool(const DecodedMap &map) const
 
 uint32_t TilesetBuilder::secondaryBase(const DecodedMap &map) const
 {
+    // Gids are contiguous (gid = base + position), so the secondary pool starts
+    // right after the primary pool's tiles (the anim sheet split does not pad).
     const TilePool *p=primaryPool(map);
-    return 1+(p!=nullptr ? p->sheetCount*kCapacity : 0);
+    return 1+(p!=nullptr ? p->uniqueCount : 0);
 }
 
 uint64_t TilesetBuilder::contextKey(const DecodedMap &map, int x, int y) const
@@ -2219,7 +2258,7 @@ uint32_t TilesetBuilder::markerGid(const DecodedMap &map) const
     uint32_t base=secondaryBase(map);
     const TilePool *s=secondaryPool(map);
     if(s!=nullptr)
-        base+=s->sheetCount*kCapacity;
+        base+=s->uniqueCount;
     return base;
 }
 
@@ -2229,25 +2268,19 @@ std::vector<std::pair<uint32_t,std::string> > TilesetBuilder::tilesetRefs(const 
     const TilePool *p=primaryPool(map);
     if(p!=nullptr)
     {
-        uint32_t s=0;
-        while(s<p->sheetCount)
-        {
-            out.push_back(std::make_pair(1+s*kCapacity,
-                (p->subDir.empty()?p->baseName:p->subDir+"/"+p->baseName)+"_"+std::to_string(s)));
-            s++;
-        }
+        std::string pre=p->subDir.empty()?p->baseName:p->subDir+"/"+p->baseName;
+        std::vector<SheetSeg> segs=poolSheetSegments(p->mainCount,p->uniqueCount);
+        size_t i=0;
+        while(i<segs.size()){ out.push_back(std::make_pair(1+segs[i].start,pre+segs[i].suffix)); i++; }
     }
     const TilePool *sec=secondaryPool(map);
     if(sec!=nullptr)
     {
         uint32_t base=secondaryBase(map);
-        uint32_t s=0;
-        while(s<sec->sheetCount)
-        {
-            out.push_back(std::make_pair(base+s*kCapacity,
-                (sec->subDir.empty()?sec->baseName:sec->subDir+"/"+sec->baseName)+"_"+std::to_string(s)));
-            s++;
-        }
+        std::string pre=sec->subDir.empty()?sec->baseName:sec->subDir+"/"+sec->baseName;
+        std::vector<SheetSeg> segs=poolSheetSegments(sec->mainCount,sec->uniqueCount);
+        size_t i=0;
+        while(i<segs.size()){ out.push_back(std::make_pair(base+segs[i].start,pre+segs[i].suffix)); i++; }
     }
     return out;
 }
