@@ -90,7 +90,12 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   overlay reused over every background). For a collidable cell the terrain draws on
   Collisions and the object on the 2nd Collisions layer (both below the player,
   OR-merged) so it is visually identical and the background never lands on the
-  Water/Grass logic layer. (firered: 412 baked tiles across the set split this way.)  **Compact packing:** blocks are placed with a SKYLINE bottom-left
+  Water/Grass logic layer. (412 baked tiles across the full set split this way.)
+  A **bg/fg-split GUARD** is the test case for it: every split is recomposed from its
+  FINAL stored terrain + FINAL stored overlay and compared to the metatile re-rendered
+  straight from the ROM (end-to-end — it catches a wrong detection, an over-aggressive
+  near-dup fold, or a layout/gid slip), and the object must keep ≥12 opaque px. Watch
+  for `GUARD bg/fg-split: PASS`.  **Compact packing:** blocks are placed with a SKYLINE bottom-left
   strip-packer (the rectangle bin-packing used for sprite atlases), free single
   tiles fill every remaining gap — **anchored first** next to a dominant on-map
   neighbour (even an unreciprocated one), so a reused building corner drops into
