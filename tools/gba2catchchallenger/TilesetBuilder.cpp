@@ -1364,12 +1364,19 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
     // Maps using each pool, in order — the 2-D tile placement walks these.
     std::unordered_map<uint32_t,std::vector<const DecodedMap *> > poolMapsPrimary;
     std::unordered_map<uint64_t,std::vector<const DecodedMap *> > poolMapsSecondary;
+    std::set<std::string> labelRegions; // distinct regions this label spans
     size_t i=0;
     while(i<maps.size())
     {
         const DecodedMap &map=maps[i];
         uint64_t pk=pairKey(map.primaryTileset,map.secondaryTileset);
         const std::string &area=naming.zoneFor(map.group,map.map);
+        {
+            const std::string &mpath=naming.pathFor(map.group,map.map);
+            std::string::size_type sl=mpath.find('/');
+            if(sl!=std::string::npos && sl>0)
+                labelRegions.insert(mpath.substr(0,sl));
+        }
         poolMapsPrimary[map.primaryTileset].push_back(&map);
         if(map.secondaryTileset!=0)
             poolMapsSecondary[pk].push_back(&map);
@@ -1408,10 +1415,12 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
 
     QDir().mkpath(QString::fromStdString(tilesetDir_));
 
-    // When a label has many tilesets (>50 pools), region-specific pools are
-    // tidied into tileset/<region>/ subfolders (a pool whose maps all live in one
-    // region); pools shared across regions stay at the tileset/ root.
-    const bool nestByRegion=(usedPrimary.size()+usedSecondary.size())>50;
+    // When a label has many tilesets (>50 pools) AND spans >=2 regions, region-
+    // specific pools are tidied into tileset/<region>/ subfolders (a pool whose
+    // maps all live in one region); pools shared across regions stay at the
+    // tileset/ root.  A single-region label stays flat (nesting everything under
+    // one region folder would not declutter anything).
+    const bool nestByRegion=(usedPrimary.size()+usedSecondary.size())>50 && labelRegions.size()>=2;
 
     std::set<std::string> usedNames;
     // deterministic order so collision suffixes are stable across runs
