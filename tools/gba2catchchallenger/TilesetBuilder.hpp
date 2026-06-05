@@ -91,6 +91,7 @@ struct TilePool {
     std::unordered_map<uint16_t,int> overCell;    // metatile -> pool cell, -1 none
     std::unordered_map<uint16_t,int> doorCell;    // door metatile -> animated door cell
     std::unordered_map<int,std::string> cellAnimation; // cell -> "<ms>ms;<n>frames"
+    std::unordered_map<uint16_t,int> animGlobal;  // water/door metatile -> GLOBAL anim index
     TilePool();
 };
 
@@ -133,11 +134,23 @@ private:
     const TilePool *primaryPool(const DecodedMap &map) const;
     const TilePool *secondaryPool(const DecodedMap &map) const;
     uint32_t secondaryBase(const DecodedMap &map) const;
+    // First gid of the ONE global animation tileset for a map (after its primary +
+    // secondary pools).  Water/door cells reference it; the marker follows it.
+    uint32_t animBase(const DecodedMap &map) const;
+    // Register an animation (its frames + "<ms>ms;<n>frames") in the global anim
+    // collection (de-duplicated by frame content, laid out 1 animation per row);
+    // returns the GLOBAL index of its first frame.
+    int registerGlobalAnim(const std::vector<QImage> &frames, const std::string &animStr);
+    void emitGlobalAnim();
 
     const GbaRom &rom_;
     std::string tilesetDir_;
     std::unordered_map<uint32_t,TilePool> primaryPools_;   // by primary ptr
     std::unordered_map<uint64_t,TilePool> secondaryPools_; // by pair key
+    std::vector<QImage> globalAnims_;                      // ONE shared anim tileset
+    std::unordered_map<std::string,int> globalAnimSeen_;   // frame-sequence -> first index
+    std::unordered_map<int,std::string> globalAnimStr_;    // first index -> "<ms>ms;<n>frames"
+    int globalAnimCols_;                                   // anim sheet width (1 anim/row)
     mutable std::map<uint64_t,Gen3Tileset *> cache_;
     mutable std::map<std::pair<uint64_t,uint16_t>,bool> overOpaqueCache_;
 };
