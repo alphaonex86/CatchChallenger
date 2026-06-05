@@ -97,6 +97,16 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   Collisions and the object on the 2nd Collisions layer (both below the player,
   OR-merged) so it is visually identical and the background never lands on the
   Water/Grass logic layer. (412 baked tiles across the full set split this way.)
+  **Pair-based partial match:** when the same object is baked over two *different*
+  backgrounds and the full-tile terrain match above can't find the real background
+  (its min-foreground pick is wrong — e.g. a cliff over water vs over sand), the
+  builder pairs the two baked tiles, takes their **shared connected region as the
+  object** (consistent for both), and **partial-matches each tile's background**
+  (the object's complement) against walkable terrains only, pre-checking the
+  recomposition and requiring the object reused over ≥2 backgrounds.
+  A **tiny-tile GUARD** forbids a near-empty tile (1–12 visible px, the rest fully
+  transparent — a wasted/degenerate overlay); a fully-transparent tile is fine and a
+  few violations are tolerated. Overlay thresholds are ≥13 px so no split produces one.
   A **layer-recompose GUARD** is the test case for ALL layer splits: every tile split
   across two layers — a ROM-sublayer overlay (terrain under + transparent object over),
   a bg/fg split (reused terrain under + shared object over), or a building wall+roof —
