@@ -3,6 +3,7 @@
 
 #include <QDir>
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -866,43 +867,63 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
     }
     { int q=0; while(q<N){ int rr=q; while(repOf[rr]!=rr) rr=repOf[rr]; repOf[q]=rr; q++; } }
 
-    // Shelf-pack only the MULTI-tile blocks (they must keep their 2-D shape).
-    // The single, adjacency-free tiles are collected separately and used to fill
-    // every transparent gap the block packing leaves (end-of-shelf, below a
-    // shorter block, a block's internal hole), so the sheet wastes almost no
-    // transparent space — a free tile "doesn't need to be around another tile".
+    // Pack the MULTI-tile blocks (which must keep their 2-D shape) with a SKYLINE
+    // bottom-left strip-packer — the classic rectangle bin-packing used for sprite
+    // atlases (cf. rectpack2D / MaxRects).  Tallest blocks first; each block is
+    // placed at the x that yields the LOWEST top sitting on the current per-column
+    // skyline.  The single, adjacency-free tiles are collected separately and then
+    // fill every remaining gap, so the sheet wastes almost no transparent space
+    // (a shelf-pack left big empty bands below shorter blocks / at shelf ends).
     std::unordered_map<int,uint32_t> tilePos;
     std::vector<std::vector<int> > grid;
     std::vector<int> singles; // free 1x1 tiles -> fill gaps
-    int cursorX=0,shelfY=0,shelfH=0;
-    size_t ui=0;
-    while(ui<units.size())
+    std::vector<std::pair<std::pair<int,int>,size_t> > blocks; // ((-h,-w), unit) -> sort tallest/widest first
     {
-        if(keptUnit[ui])
+        size_t ui=0;
+        while(ui<units.size())
         {
-            if(units[ui].size()<=1)
+            if(keptUnit[ui])
             {
-                if(!units[ui].empty())
-                    singles.push_back(units[ui][0]);
-            }
-            else
-            {
-                int w=unitW[ui],h=unitH[ui];
-                if(cursorX+w>COLS){ cursorX=0; shelfY+=shelfH; shelfH=0; }
-                while(static_cast<int>(grid.size())<shelfY+h) grid.push_back(std::vector<int>(static_cast<size_t>(COLS),-1));
-                size_t bi=0;
-                while(bi<units[ui].size())
+                if(units[ui].size()<=1)
                 {
-                    int ti=units[ui][bi];
-                    int gc=cursorX+bc[ti],gr=shelfY+br[ti];
-                    grid[static_cast<size_t>(gr)][static_cast<size_t>(gc)]=ti;
-                    tilePos[ti]=static_cast<uint32_t>(gr)*static_cast<uint32_t>(COLS)+static_cast<uint32_t>(gc);
-                    bi++;
+                    if(!units[ui].empty())
+                        singles.push_back(units[ui][0]);
                 }
-                cursorX+=w; if(h>shelfH)shelfH=h;
+                else
+                    blocks.push_back(std::make_pair(std::make_pair(-unitH[ui],-unitW[ui]),ui));
             }
+            ui++;
         }
-        ui++;
+    }
+    std::sort(blocks.begin(),blocks.end());
+    std::vector<int> skyline(static_cast<size_t>(COLS),0);
+    size_t bk=0;
+    while(bk<blocks.size())
+    {
+        size_t u=blocks[bk].second;
+        int w=unitW[u],h=unitH[u];
+        if(w>COLS) w=COLS;
+        int bestX=0,bestY=1<<29;
+        int x=0;
+        while(x+w<=COLS)
+        {
+            int y=0,k=0;
+            while(k<w){ if(skyline[static_cast<size_t>(x+k)]>y) y=skyline[static_cast<size_t>(x+k)]; k++; }
+            if(y<bestY){ bestY=y; bestX=x; }
+            x++;
+        }
+        while(static_cast<int>(grid.size())<bestY+h) grid.push_back(std::vector<int>(static_cast<size_t>(COLS),-1));
+        size_t bi=0;
+        while(bi<units[u].size())
+        {
+            int ti=units[u][bi];
+            int gc=bestX+bc[ti],gr=bestY+br[ti];
+            grid[static_cast<size_t>(gr)][static_cast<size_t>(gc)]=ti;
+            tilePos[ti]=static_cast<uint32_t>(gr)*static_cast<uint32_t>(COLS)+static_cast<uint32_t>(gc);
+            bi++;
+        }
+        int k=0; while(k<w){ skyline[static_cast<size_t>(bestX+k)]=bestY+h; k++; }
+        bk++;
     }
     // Fill the transparent gaps in the packed grid with the free single tiles,
     // then append any remainder as fully-dense rows.
@@ -1260,11 +1281,21 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         mi++;
     }
 
+    // Adaptive sheet WIDTH: a small pool wastes most of a fixed 32-wide sheet, so
+    // size the width to the content (~sqrt of the tile count, a touch wider for
+    // buildings) and cap at kColumns.  >=8 keeps an animation run (<=8 frames)
+    // inside the gid budget and rarely splits a building block.  (Cell ids stay
+    // linear, so the gid math is unaffected by the per-pool width.)
+    int estTiles=static_cast<int>(grounds.size()+overs.size());
+    int poolCols=static_cast<int>(std::ceil(std::sqrt(static_cast<double>(estTiles>0?estTiles:1)*1.15)));
+    if(poolCols<8) poolCols=8;
+    if(poolCols>kColumns) poolCols=kColumns;
+
     // 2-D adjacency layout for the GROUND tiles (see layout2D).
     {
         std::vector<uint32_t> gpos;
         uint32_t gadj=0;
-        std::vector<QImage> newGrounds=layout2D(grounds,cellTi,poolMaps,kColumns,gpos,gadj,baseName+":ground");
+        std::vector<QImage> newGrounds=layout2D(grounds,cellTi,poolMaps,poolCols,gpos,gadj,baseName+":ground");
         std::unordered_map<uint16_t,int>::iterator gl=groundLocal.begin();
         while(gl!=groundLocal.end()){ gl->second=static_cast<int>(gpos[static_cast<size_t>(gl->second)]); ++gl; }
         std::unordered_map<uint64_t,int>::iterator cl=contextLocal.begin();
@@ -1335,7 +1366,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     std::vector<uint32_t> opos;
     uint32_t oadj=0;
     {
-        std::vector<QImage> newOvers=layout2D(overs,overCellTi,poolMaps,kColumns,opos,oadj,baseName+":over");
+        std::vector<QImage> newOvers=layout2D(overs,overCellTi,poolMaps,poolCols,opos,oadj,baseName+":over");
         overs.swap(newOvers);
     }
     pool.adjacencyViolations+=oadj;
@@ -1512,13 +1543,13 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         uint32_t cnt=pool.uniqueCount-startCell;
         if(cnt>kCapacity)
             cnt=kCapacity;
-        int rows=static_cast<int>((cnt+kColumns-1)/kColumns);
-        QImage sheet(kColumns*16,rows*16,QImage::Format_ARGB32);
+        int rows=static_cast<int>((cnt+poolCols-1)/poolCols);
+        QImage sheet(poolCols*16,rows*16,QImage::Format_ARGB32);
         sheet.fill(Qt::transparent);
         uint32_t c=0;
         while(c<cnt)
         {
-            blitTile(sheet,kColumns,c,tiles[startCell+c]);
+            blitTile(sheet,poolCols,c,tiles[startCell+c]);
             c++;
         }
         // animations whose first frame is in this sheet, remapped to local ids
@@ -1532,7 +1563,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         }
         std::string name=baseName+"_"+std::to_string(s);
         sheet.save(QString::fromStdString(outDir+"/"+name+".png"),"PNG");
-        writeTsx(outDir,name,kColumns,sheet,cnt,localAnims);
+        writeTsx(outDir,name,poolCols,sheet,cnt,localAnims);
         s++;
     }
 

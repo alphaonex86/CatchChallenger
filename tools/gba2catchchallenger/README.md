@@ -78,8 +78,11 @@ main must be generated first (see `generate-datapack-pkmn.sh`).
   like the in-game view); a top that's a REUSABLE overlay (a cliff/ledge edge, a
   rock, a tree top — it sits on ≥2 backgrounds or on a standalone terrain) stays a
   separate TRANSPARENT tile over the base terrain, reused over any background
-  (fewer tiles).  The shelf pack leaves no transparent gaps — free single tiles
-  fill them.
+  (fewer tiles).  **Compact packing:** blocks are placed with a SKYLINE bottom-left
+  strip-packer (the rectangle bin-packing used for sprite atlases), free single
+  tiles fill every remaining gap, and the sheet WIDTH is adaptive per pool
+  (≈√tiles, 8..32) so a small pool doesn't waste a 32-wide sheet — firered tileset
+  free space dropped from ~67% to ~20%.
   **Tiled Wang/terrain sets:** each `.tsx` carries a best-effort `<wangset>` (corner
   type) — every opaque tile's four 8×8 corners are clustered by average colour into
   the dominant terrains (grass/sand/water/rock/path) and each tile gets a per-corner
