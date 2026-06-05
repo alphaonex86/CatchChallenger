@@ -8,6 +8,7 @@ Before starting a task, always check for a CLAUDE.md file in the current working
 * `test/CLAUDE.md` — testing harness: all.sh, testing*.py, remote/exec nodes, datapack staging, sanitizers/valgrind, image-comparison tolerance, hung-process diagnosis, wall-time optimisation.
 * `server/CLAUDE.md` — per-server-type `server-properties.xml` keys, BaseServer init phases.
 * `client/CLAUDE.md` — client server-selection CLI flags (`--server` / `--host`+`--port` / `--url`).
+* `tools/gba2catchchallenger/CLAUDE.md` — Gen3 ROM→datapack converter: sub-datapack overlays (families/diff-only) and the tileset model (32-wide dominant blocks, near-dup fold, gap-fill, region subfolders, composite vs decompose, Wang sets).
 
 * **CMake project layout — one binary per CMakeLists.txt.**
   There is **NO root `CMakeLists.txt`**. Each binary has its own self-contained `CMakeLists.txt` compiling **exactly one** executable. Library subdirs are INTERFACE libs pulled in via `add_subdirectory`.

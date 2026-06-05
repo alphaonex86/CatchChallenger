@@ -1,0 +1,15 @@
+# gba2catchchallenger — rules
+
+Combine with the root CLAUDE.md (esp. "a ROM converter writes ONLY inside `map/main/<label>/`", disjoint real-tile feature layers, relative `.tsx` paths). Build dir out of tree (`/tmp/gba2cc-build`). Every change must keep ALL guards PASS: TilesetBuilder `dup` + `adjacency`, CCWriter `layer-visibility` + `top-layer-cover` + `render-visibility` (libtiled re-renders every `.tmx`). The two 32MB hacks (glazed/hns) keep a tiny pre-existing render-visibility miss — that is not a regression.
+
+## Role detection & sub-datapack overlays
+* Role is auto-detected from the ROM header (`GameInfo::detect`), NOT fuzzy similarity. Canonical base = (code, version, 16MiB) + valid `gMapGroups`. Off-fingerprint (32MiB / relocated tables) = standalone hack main, label = filename slug; its `gMapGroups` is signature-scanned (`Decoder::findMapGroups`). Per-game enrichment tables (wild/trainers/names/doors/OW gfx) are OPTIONAL — skip gracefully (no garbage) when 0.
+* Sub = an official sibling sharing a region (geometry-identical): Kanto main `firered` + sub `leafgreen`; Hoenn main `ruby` + subs `sapphire`, `emerald`. A sub goes to `map/main/<main>/sub/<sub>/`. Hacks (glazed/hns) are standalone mains, never subs.
+* A sub overlay is DIFF-ONLY: no `.tmx`/tileset (geometry shared from main); write `informations.xml` + a PARTIAL per-map `<map>.xml` holding ONLY the changed wild sections (`<grass>`/`<water>`), diffed against the already-generated main. Matches `datapack-pkmn/map/main/test/sub/smallchange/`. So the main must be generated before its subs.
+
+## Tileset model (TilesetBuilder)
+* Sheets are 32 tiles wide (`kColumns=32`). Pack tiles as rigid 2-D blocks by their DOMINANT (most-frequent, reciprocated) on-map neighbour so a building reads like the map; shelf-pack only multi-tile blocks, then FILL every transparent gap with the free single tiles (no wasted space).
+* Fold NEAR-duplicate tiles (`dedupAdd`): the ROM stores metatiles that render visually-identical — fold when every RGBA channel within `kNearMaxDiff` and mean within `kNearMeanDiff`. Animation frames never fold.
+* Compose vs decompose ACROSS the two metatile sub-layers (refines the root's "collidable over → 2nd Collisions" rule): a UNIQUE top on an always-collidable cell (a building face) is COMPOSITED into one ground tile (`renderMetatile`, no over). A REUSABLE overlay (top sits on ≥2 backgrounds OR its base terrain also exists standalone — cliff/rock/tree/sign) stays a SEPARATE transparent over tile over the base terrain (reused over any background). Walkable tops still lift to WalkBehind (player passes behind).
+* Region subfolders `tileset/<region>/` only when a label has >50 pools AND spans ≥2 regions (region-specific pools nest, shared pools stay at `tileset/` root); single-region labels stay flat. `TilePool.subDir`; `tilesetRefs` prefixes it (CCWriter unchanged).
+* Each `.tsx` carries a best-effort Tiled `<wangset type="corner">` (`emitWangSet`): opaque tiles' 8×8 corners clustered by average colour → dominant terrains → per-tile `wangid`. Editor-only (libtiled ignores it when rendering); knobs `kJoin`/`minCount`/cap.
