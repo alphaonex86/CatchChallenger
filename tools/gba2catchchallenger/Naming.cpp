@@ -349,6 +349,38 @@ void Naming::build()
         i++;
     }
 
+    // Gather every UNNAMED indoor-only ("building") orphan group into ONE shared
+    // "building" area, so disconnected interiors (no name, and no warp to any
+    // named/outdoor area) nest under a single <label>/building/ parent instead of
+    // cluttering the region root next to the real towns/routes/caves.  The indoor
+    // grouping below then numbers them building-1, building-2, ... inside it.
+    const uint32_t kBuildingArea=0x20000u;
+    bool anyBuilding=false;
+    i=0;
+    while(i<maps.size())
+    {
+        uint16_t k=keyOf(maps[i].group,maps[i].map);
+        uint32_t g=groupOf[k];
+        if(g>=0x10000u && g<0x20000u && groupCat.count(g) && groupCat[g]==0)
+        {
+            groupOf[k]=kBuildingArea;
+            anyBuilding=true;
+        }
+        i++;
+    }
+    if(anyBuilding)
+    {
+        groupCat[kBuildingArea]=0;
+        std::set<uint32_t> rebuilt;
+        i=0;
+        while(i<maps.size())
+        {
+            rebuilt.insert(groupOf[keyOf(maps[i].group,maps[i].map)]);
+            i++;
+        }
+        groups=rebuilt;
+    }
+
     // Slug + display per area group (deterministic order, unique slugs).
     std::unordered_map<uint32_t,std::string> areaSlug,areaDisplay;
     std::set<std::string> usedSlugs;
@@ -366,11 +398,20 @@ void Naming::build()
         else
         {
             int cat=groupCat.count(*gk) ? groupCat[*gk] : 0;
-            std::string kind=(cat==1) ? "city" : (cat==2) ? "cave" : (cat==3) ? "road" : "building";
-            int num=++catCounter[kind];
-            slug=kind+"-"+std::to_string(num);
-            std::string capped=kind; capped[0]=static_cast<char>(capped[0]-'a'+'A');
-            fbDisplay=capped+" "+std::to_string(num);
+            if(cat==0)
+            {
+                // the single shared interiors parent (its buildings are numbered inside)
+                slug="building";
+                fbDisplay="Building";
+            }
+            else
+            {
+                std::string kind=(cat==1) ? "city" : (cat==2) ? "cave" : "road";
+                int num=++catCounter[kind];
+                slug=kind+"-"+std::to_string(num);
+                std::string capped=kind; capped[0]=static_cast<char>(capped[0]-'a'+'A');
+                fbDisplay=capped+" "+std::to_string(num);
+            }
         }
         std::string base=slug;
         int dup=2;
