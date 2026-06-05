@@ -78,6 +78,7 @@ struct TilePool {
     std::string subDir;       // region subfolder under tileset/ ("" = root)
     uint32_t uniqueCount;     // number of unique tiles
     uint32_t mainCount;       // ground+over tiles (door+anim tiles follow, on their own sheet)
+    uint32_t animCols;        // width of the _anim sheet = 1 animation per row (0 => use poolCols)
     uint32_t sheetCount;      // number of emitted sheet files (main sheets + anim sheet(s))
     uint32_t duplicateTiles;  // GUARD: redundant non-animation duplicate cells
     uint32_t adjacencyViolations; // GUARD: consistent map-neighbours not kept adjacent
