@@ -9,6 +9,8 @@ Before starting a task, always check for a CLAUDE.md file in the current working
 * `server/CLAUDE.md` — per-server-type `server-properties.xml` keys, BaseServer init phases.
 * `client/CLAUDE.md` — client server-selection CLI flags (`--server` / `--host`+`--port` / `--url`).
 * `tools/gba2catchchallenger/CLAUDE.md` — Gen3 ROM→datapack converter: sub-datapack overlays (families/diff-only) and the tileset model (32-wide dominant blocks, near-dup fold, gap-fill, region subfolders, composite vs decompose, Wang sets).
+* `tools/map-procedural-generation-terrain/CLAUDE.md` — THE standalone base terrain generator (Voronoi biomes + grid-aligned vegetation → one big CSV `all.tmx`); RIGID rectangular features; run-staging.
+* `tools/map-procedural-generation/CLAUDE.md` — content/assembly stage: chunks the terrain `all.tmx` into per-map zlib tmx + adds cities/roads/bots/encounters/interiors; staging to `dest/`, zlib-not-zstd render-verify, name/dialog content rules.
 
 * **CMake project layout — one binary per CMakeLists.txt.**
   There is **NO root `CMakeLists.txt`**. Each binary has its own self-contained `CMakeLists.txt` compiling **exactly one** executable. Library subdirs are INTERFACE libs pulled in via `add_subdirectory`.
