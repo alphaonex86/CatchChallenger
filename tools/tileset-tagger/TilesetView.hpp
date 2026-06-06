@@ -11,6 +11,7 @@
 
 #include <QWidget>
 #include <set>
+#include <string>
 #include <vector>
 
 class TagModel;
@@ -58,6 +59,7 @@ private:
     QTimer *groupTimer_;
     int groupPhase_;
     void paintGroupReview(QPainter &p,double tw,double th,int cols,int n);
+    std::string groupKeyAt(int id) const;   // a tag's group (each tagging op); "" if untagged
     bool selecting_;          // a drag is in progress
     bool additive_;           // Ctrl/Shift held at drag start -> add to the selection
     int dragC0_;              // live rubber-band rectangle while selecting_

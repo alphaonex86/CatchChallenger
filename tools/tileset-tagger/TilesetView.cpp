@@ -204,10 +204,24 @@ void TilesetView::emitSelection(bool finished)
         emit selectionFinished(n);
 }
 
+// A tile's GROUP key = the `group` attribute set by one tagging operation (so each
+// thing you tag is its own group — e.g. each animation LINE).  Falls back to the
+// category for tiles that have no group (auto-suggested), and "" when untagged.
+std::string TilesetView::groupKeyAt(int id) const
+{
+    if(model_==nullptr || id<0 || id>=model_->tileCount())
+        return std::string();
+    const TagModel::TileTag &t=model_->tagOf(id);
+    if(t.category.empty())
+        return std::string();
+    const std::string g=t.attr("group");
+    return g.empty() ? t.category : g;
+}
+
 // REVIEW overlay: paint each tagged tile in its category's semantic colour and
-// outline every CONTIGUOUS same-category group with an animated marching-ant
-// border (an edge is drawn only where the neighbour is a different category or
-// untagged).  Lets the human see the tagged DATA as groups before confirming.
+// outline every GROUP (each tagging operation) with an animated marching-ant
+// border — an edge is drawn where the neighbour is a DIFFERENT group (or
+// untagged).  Lets the human see the tagged DATA as the groups they made.
 void TilesetView::paintGroupReview(QPainter &p,double tw,double th,int cols,int n)
 {
     int id=0;
@@ -230,8 +244,8 @@ void TilesetView::paintGroupReview(QPainter &p,double tw,double th,int cols,int 
     id=0;
     while(id<n)
     {
-        const std::string cat=model_->tagOf(id).category;
-        if(!cat.empty())
+        const std::string key=groupKeyAt(id);
+        if(!key.empty())
         {
             const int c=id%cols;
             const int r=id/cols;
@@ -239,10 +253,10 @@ void TilesetView::paintGroupReview(QPainter &p,double tw,double th,int cols,int 
             const int y0=qRound(r*th);
             const int x1=qRound((c+1)*tw);
             const int y1=qRound((r+1)*th);
-            const bool left  = (c==0)       || model_->tagOf(id-1).category!=cat;
-            const bool right = (c==cols-1)  || model_->tagOf(id+1).category!=cat;
-            const bool up    = (r==0)       || model_->tagOf(id-cols).category!=cat;
-            const bool down  = (id+cols>=n) || model_->tagOf(id+cols).category!=cat;
+            const bool left  = (c==0)       || groupKeyAt(id-1)!=key;
+            const bool right = (c==cols-1)  || groupKeyAt(id+1)!=key;
+            const bool up    = (r==0)       || groupKeyAt(id-cols)!=key;
+            const bool down  = (id+cols>=n) || groupKeyAt(id+cols)!=key;
             int pass=0;
             while(pass<2)
             {
