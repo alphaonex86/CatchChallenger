@@ -15,6 +15,14 @@
 #include "MapDecoder.hpp"
 #include "MapUsageIndex.hpp"
 
+#include "grouplayer.h"
+#include "layer.h"
+#include "map.h"
+#include "mapreader.h"
+#include "tilelayer.h"
+#include "tileset.h"
+#include <memory>
+
 #include <QApplication>
 #include <QDir>
 #include <QDirIterator>
@@ -1359,6 +1367,79 @@ static int runSuggest(const QStringList &args)
     return suggestOne(args.at(0));
 }
 
+// Recursively collect tile layers (into groups too).
+static void usedCollectTL(const QList<Tiled::Layer*> &ls,std::vector<Tiled::TileLayer*> &out)
+{
+    int i=0;
+    while(i<ls.size())
+    {
+        Tiled::Layer *l=ls.at(i);
+        if(l->isTileLayer())
+            out.push_back(static_cast<Tiled::TileLayer*>(l));
+        else if(l->isGroupLayer())
+            usedCollectTL(static_cast<Tiled::GroupLayer*>(l)->layers(),out);
+        i++;
+    }
+}
+// Scan EVERY .tmx under map-dir and record, per tileset (canonical .tsx path), the
+// set of tile ids actually placed on a map.  -> out.json { "<abs.tsx>": [ids...] }.
+static int runUsedTiles(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "usedtiles needs: <map-dir> <out.json>" << std::endl; return 1; }
+    std::map<std::string,std::set<int> > used;
+    QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    int nmaps=0;
+    while(it.hasNext())
+    {
+        const QString path=it.next();
+        Tiled::MapReader reader;
+        std::unique_ptr<Tiled::Map> m=reader.readMap(path);
+        if(m==nullptr)
+        {
+            std::cerr << "  WARN cannot read " << path.toStdString() << ": " << reader.errorString().toStdString() << std::endl;
+            continue;
+        }
+        nmaps++;
+        std::vector<Tiled::TileLayer*> layers;
+        usedCollectTL(m->layers(),layers);
+        size_t li=0;
+        while(li<layers.size())
+        {
+            Tiled::TileLayer *tl=layers.at(li);
+            int y=0;
+            while(y<tl->height())
+            {
+                int x=0;
+                while(x<tl->width())
+                {
+                    const Tiled::Cell &c=tl->cellAt(x,y);
+                    if(!c.isEmpty() && c.tileset()!=nullptr)
+                        used[QFileInfo(c.tileset()->fileName()).canonicalFilePath().toStdString()].insert(c.tileId());
+                    x++;
+                }
+                y++;
+            }
+            li++;
+        }
+    }
+    QJsonObject root;
+    std::map<std::string,std::set<int> >::iterator u=used.begin();
+    while(u!=used.end())
+    {
+        QJsonArray arr;
+        std::set<int>::iterator s=u->second.begin();
+        while(s!=u->second.end()) { arr.append(*s); ++s; }
+        root[QString::fromStdString(u->first)]=arr;
+        ++u;
+    }
+    QFile f(args.at(1));
+    if(!f.open(QIODevice::WriteOnly)) { std::cerr << "cannot write " << args.at(1).toStdString() << std::endl; return 1; }
+    f.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
+    f.close();
+    std::cout << "scanned " << nmaps << " map(s); " << used.size() << " tileset(s) used -> " << args.at(1).toStdString() << std::endl;
+    return 0;
+}
+
 // --- Wave Function Collapse (example-based, coherent-by-construction) ----------
 // Learns 4-direction category adjacency from the MODEL maps, then generates a new
 // category grid where every neighbour pair is one the model actually used.  An
@@ -1537,7 +1618,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--maptensor" || args.at(0)=="--wfc");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -1559,6 +1640,8 @@ int main(int argc, char *argv[])
         return runMapTensor(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--wfc")
         return runWfc(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--usedtiles")
+        return runUsedTiles(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
         return runClassify(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--decode")
