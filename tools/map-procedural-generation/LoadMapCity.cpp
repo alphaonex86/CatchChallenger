@@ -204,6 +204,10 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
 
 #ifdef TILED_CSV
         nextHopMap->setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+#else
+        //canonical datapack encoding: base64 + zstd (like the hand-made
+        //gen2/johto reference), smaller than the libtiled default zlib.
+        nextHopMap->setLayerDataFormat(Tiled::Map::Base64Zstandard);
 #endif
 
         nextHopMap->setProperties(Tiled::Properties());

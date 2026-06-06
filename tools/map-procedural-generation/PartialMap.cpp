@@ -194,6 +194,10 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
 
 #ifdef TILED_CSV
     tiledMap.setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+#else
+    //canonical datapack encoding: base64 + zstd (like the hand-made gen2/johto
+    //reference), smaller than the libtiled default zlib.
+    tiledMap.setLayerDataFormat(Tiled::Map::Base64Zstandard);
 #endif
 
     bool returnVar=maprwriter.writeMap(&tiledMap,fileInfo.absoluteFilePath());
