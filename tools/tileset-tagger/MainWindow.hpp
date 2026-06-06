@@ -59,6 +59,7 @@ private:
     TilesetView *view_;
     MapUsageIndex *usage_;
     MapUsageView *usageView_;
+    QScrollArea *usageScroll_;     // scrolls the native-1:1 map preview (crisp, Tiled-exact)
     QPushButton *openBtn_;
     QComboBox *categoryBox_;
     QComboBox *mapCombo_;

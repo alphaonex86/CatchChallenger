@@ -25,7 +25,7 @@ MapUsageView::MapUsageView(QWidget *parent) :
     setMinimumWidth(220);   // a tall LEFT dock: keep it wide enough to read the map
 }
 
-QSize MapUsageView::sizeHint() const { return QSize(300,460); }   // narrow+tall left dock; leaves the centre room
+QSize MapUsageView::sizeHint() const { return map_.isNull() ? QSize(300,460) : map_.size(); }   // NATIVE so the scroll area shows Tiled-exact pixels
 
 QPoint MapUsageView::firstHighlightCenter() const
 {
@@ -115,27 +115,18 @@ void MapUsageView::paintEvent(QPaintEvent *)
         return;
     }
 
-    // Fit the WHOLE map in the widget, preserving aspect — same overview Tiled gives
-    // (its left panel is the full route scaled down).  SMOOTH for downscale so it is
-    // not the garbled nearest-neighbour drop; native pixels when it happens to upscale.
-    const double sx=(double)width()/(double)map_.width();
-    const double sy=(double)height()/(double)map_.height();
-    double s = sx<sy ? sx : sy;
-    if(s<=0.0) s=1.0;
-    const double dw=map_.width()*s;
-    const double dh=map_.height()*s;
-    const double ox=(width()-dw)/2.0;     // centre it
-    const double oy=(height()-dh)/2.0;
-    p.setRenderHint(QPainter::SmoothPixmapTransform, s<1.0);
-    p.drawImage(QRectF(ox,oy,dw,dh),map_,QRectF(0,0,map_.width(),map_.height()));
+    // Draw the map at NATIVE 1:1 — EXACTLY Tiled's pixel output, no scaling, no
+    // blur.  The widget is native-sized inside a scroll area (which centres it when
+    // smaller than the viewport and scrolls when bigger; we auto-scroll to the cells).
+    const int ox=(width()>map_.width()) ? (width()-map_.width())/2 : 0;   // centre if room
+    const int oy=(height()>map_.height()) ? (height()-map_.height())/2 : 0;
+    p.drawImage(ox,oy,map_);
 
     size_t i=0;
     while(i<rects_.size())
     {
         const QRect r=rects_.at(i);
-        // tile-rect -> scaled, centred widget coords
-        const QRectF wr(ox+r.x()*tileW_*s, oy+r.y()*tileH_*s,
-                        r.width()*tileW_*s, r.height()*tileH_*s);
+        const QRect wr(ox+r.x()*tileW_,oy+r.y()*tileH_,r.width()*tileW_,r.height()*tileH_);
         p.fillRect(wr,QColor(255,90,40,70));
         // marching ants: solid dark under-stroke + animated white dashes over it
         p.setPen(QPen(QColor(0,0,0,200),2));
