@@ -2,9 +2,11 @@
 
 A small Qt6 GUI to tag a Tiled `.tsx` tileset with **semantic categories** so the
 learn-from-examples map generator can read the same meaning from any tileset
-(the hand-made Pokémon-style tilesets *and* the official set). Tags are written
-back into the `.tsx` as standard per-tile `<property>` entries, so Tiled and the
-engine still load the file unchanged.
+(the hand-made Pokémon-style tilesets *and* the official set). Tags are work data,
+so they are stored **out of the datapack** in an XDG sidecar — the datapack stays
+the read-only source of truth (so you can tag `CatchChallenger-datapack/` too).
+Tag files live at
+`~/.local/share/catchchallenger/datapack-<sha256(abs datapack path)>/tileset-<sha256(abs .tsx path)>.json`.
 
 ## Why
 
@@ -37,7 +39,7 @@ cmake --build /tmp/tagger-build -j32
   What a map *can't* tell you is what a tile *looks like* (a cliff, a tree-trunk
   and a wall are all just "Collisions"), so that — the **category** — is your job.
 * **No free-text input** (error-prone): every field is a fixed combo or a
-  checkbox. Tag properties written into the `.tsx`:
+  checkbox. Tag properties (stored in the sidecar json, never in the `.tsx`):
   | property | source | meaning |
   |---|---|---|
   | `category` | you (combo) | what it **looks like** (tree-canopy, building-roof, table…) |
@@ -62,8 +64,8 @@ cmake --build /tmp/tagger-build -j32
   blocked**, not from the drawn-on layer. The read-only line shows it, e.g.
   *"drawn on 'Walkable' · effective BLOCKED (walk 26% / blocked 73% / ledge 0%)"*.
 * **Jump to next untagged** walks you through what's left.
-* **Save .tsx** writes the tags back surgically (foreign engine/Tiled properties
-  on a tile, e.g. `animation`, are preserved).
+* **Save** writes the tags to the sidecar json; the `.tsx` and the rest of the
+  datapack are never modified.
 
 ### Two-step tagging — see a group in situ before naming it
 

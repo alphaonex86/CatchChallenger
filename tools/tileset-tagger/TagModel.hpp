@@ -35,12 +35,14 @@ public:
 
     TagModel();
 
-    // Load a .tsx and its referenced image.  Returns false (and sets error()) on
-    // failure.
+    // Load a .tsx (read-only: dimensions + image + animation hint) and its tags
+    // from the sidecar.  Returns false (and sets error()) on failure.
     bool load(const QString &tsxPath);
-    // Write the current tags back into the .tsx (surgical: only adds/updates the
-    // category/name/size properties, preserves everything else).
+    // Write the current tags to the SIDECAR json (out of the datapack — the .tsx
+    // is never modified).
     bool save();
+    const QString &tagFilePath() const;   // sidecar tag file for this tileset
+    const QString &sidecarDir() const;    // datapack sidecar directory
 
     int tileCount() const;
     int columns() const;
@@ -66,6 +68,8 @@ public:
 private:
     QString tsxPath_;
     QString imagePath_;
+    QString sidecarDir_;
+    QString tagFilePath_;
     QDomDocument doc_;
     QImage image_;
     int tileWidth_;
@@ -78,11 +82,7 @@ private:
     QString error_;
 
     QDomElement tilesetElement();
-    QDomElement ensureTileElement(int id);          // find or create <tile id=...>
-    // remove the <property> entries this tool manages (category + the known
-    // attribute vocabulary + any key in extraKeys) so save() can rewrite them
-    // cleanly while leaving foreign engine/Tiled properties intact.
-    void stripManagedProperties(QDomElement props, const std::map<std::string,std::string> *extraKeys);
+    void loadSidecarTags();                          // read tags_ from tagFilePath_
 };
 
 #endif // TILESETTAGGER_TAGMODEL_HPP
