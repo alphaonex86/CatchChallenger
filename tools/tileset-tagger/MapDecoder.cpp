@@ -17,7 +17,7 @@
 // SEMANTIC colours: the category map should look like the real map when the tags
 // are right (grass green, water blue, building gray/red, path brown) so mis-tags
 // stand out. Unknown categories fall back to a stable hash colour.
-static QColor categoryColor(const std::string &cat)
+QColor MapDecoder::categoryColor(const std::string &cat)
 {
     if(cat.empty())
         return QColor(40,40,48);

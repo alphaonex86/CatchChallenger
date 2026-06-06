@@ -98,6 +98,7 @@ tileset-tagger --decode   <map.tmx | map-dir> <out.png | out-dir>   # render rea
 tileset-tagger --learn    <map-dir> <rules.json>                    # learn the category adjacency model
 tileset-tagger --verify   <map-dir> <rules.json> [threshold]        # reproducibility guard (replay == real)
 tileset-tagger --structure <map-dir> <struct.json>                  # learn building templates + feature-zone sizes
+tileset-tagger --generate <struct.json> <out.png> [W H seed]        # synthesise a rigid-rectangular category map
 ```
 
 ## How to start
