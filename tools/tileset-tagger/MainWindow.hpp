@@ -44,7 +44,10 @@ private:
     MapUsageIndex *usage_;
     MapUsageView *usageView_;
     QComboBox *categoryBox_;
+    QComboBox *layerBox_;
     QComboBox *mapCombo_;
+    QCheckBox *walkable_;
+    QCheckBox *animated_;
     QCheckBox *hRepeat_;
     QCheckBox *hMidRepeat_;
     QCheckBox *vRepeat_;
@@ -58,6 +61,7 @@ private:
     int selR1_;
     void refreshGuard();
     void updateTitle();
+    void prefillFromUsage(const std::vector<int> &ids);   // guess tag from the maps
 };
 
 #endif // TILESETTAGGER_MAINWINDOW_HPP

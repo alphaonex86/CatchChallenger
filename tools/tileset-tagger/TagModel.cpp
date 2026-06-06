@@ -15,6 +15,7 @@ TagModel::TagModel() :
     tileCount_(0),
     columns_(1),
     tags_(),
+    animatedTiles_(),
     emptyTag_(),
     error_()
 {
@@ -29,6 +30,7 @@ bool TagModel::load(const QString &tsxPath)
 {
     tsxPath_=tsxPath;
     tags_.clear();
+    animatedTiles_.clear();
     QFile file(tsxPath);
     if(!file.open(QIODevice::ReadOnly))
     {
@@ -92,6 +94,8 @@ bool TagModel::load(const QString &tsxPath)
                     tag.category=v.toStdString();
                 else
                     tag.attributes[n.toStdString()]=v.toStdString();
+                if(n=="animation" || n=="frames")
+                    animatedTiles_.insert(id);   // foreign anim hint -> pre-fill 'animated'
                 prop=prop.nextSiblingElement("property");
             }
             // a tile is OURS only if it carries a category; otherwise its
@@ -195,6 +199,11 @@ bool TagModel::tileHasPixels(int tileId) const
     return false;
 }
 
+bool TagModel::tileAnimated(int tileId) const
+{
+    return animatedTiles_.find(tileId)!=animatedTiles_.cend();
+}
+
 std::vector<int> TagModel::untaggedNonEmpty() const
 {
     std::vector<int> out;
@@ -228,8 +237,9 @@ std::vector<std::string> TagModel::categoriesUsed() const
 static bool isKnownTagKey(const QString &n)
 {
     // the attribute vocabulary this tool owns; foreign properties are NOT here
-    // and are preserved across save.
-    return n=="category" || n=="name" || n=="size"
+    // and are preserved across save.  (legacy "name" kept so old tags get cleaned)
+    return n=="category" || n=="group" || n=="name" || n=="size"
+        || n=="layer" || n=="walkable" || n=="animated"
         || n=="horizontalRepeat" || n=="horizontalMiddleRepeat"
         || n=="verticalRepeat" || n=="verticalMiddleRepeat"
         || n=="terrain";

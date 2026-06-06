@@ -31,13 +31,28 @@ cmake --build /tmp/tagger-build -j32
 * The sheet is shown with a tile grid. **Untagged tiles that draw pixels are
   flagged red** — the reminder that nothing is forgotten. The window title and a
   panel label always show the remaining untagged count.
-* **No free-text input** (error-prone): a tag is only a **Category** (fixed
-  combo) plus **repeat checkboxes** (`horizontalRepeat`,
-  `horizontalMiddleRepeat` = the centre repeats while the borders stay fixed,
-  `verticalRepeat`, `verticalMiddleRepeat`). The **size** (`WxH`) and an
-  item-group **name** are derived automatically from the selected rectangle.
-* Drag a rectangle over an item → pick its Category → tick any repeat flag →
-  **Tag selection**. **Jump to next untagged** walks you through what's left.
+* **No free-text input** (error-prone): every field is a fixed combo or a
+  checkbox. The tag properties (all written into the `.tsx`):
+  | property | control | meaning |
+  |---|---|---|
+  | `category` | combo | what it is (ground, grass-tall, building-wall, table…) |
+  | `layer` | combo | engine layer it belongs to (walkable/grass/water/lava/ledge/collision/over) |
+  | `walkable` | checkbox | the player can stand on it |
+  | `animated` | checkbox | it animates |
+  | `horizontalRepeat` | checkbox | tiles sideways |
+  | `horizontalMiddleRepeat` | checkbox | centre repeats, borders fixed |
+  | `verticalRepeat` / `verticalMiddleRepeat` | checkbox | same, vertically |
+  | `size` | auto | `WxH` of the selected rectangle |
+  | `group` | auto | groups the tiles of one placed item |
+* **Pre-filled, you just validate.** When you select a rectangle, the tool reads
+  where those exact tiles are used on the real maps and pre-fills every control:
+  the **dominant engine layer** decides category/layer/walkable (a tile mostly on
+  `Collisions` → `building-wall`, not walkable; on `LedgesDown` → `ledge-down`),
+  and **same-tile run detection** ticks the repeat flags (a ground tile that
+  recurs both ways → both repeats; a wall that recurs sideways → horizontalRepeat).
+  You **Tag** to accept, or fix a control first. Groups not used on any map are
+  left untouched.
+* **Jump to next untagged** walks you through what's left.
 * **Save .tsx** writes the tags back surgically (foreign engine/Tiled properties
   on a tile, e.g. `animation`, are preserved).
 

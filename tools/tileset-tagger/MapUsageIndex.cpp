@@ -20,8 +20,12 @@ MapUsageIndex::MapUsageIndex() :
     candidates_(),
     loaded_(),
     rendered_(),
+    lastStats_(),
     error_()
 {
+    lastStats_.totalCells=0;
+    lastStats_.horizontalRepeatCells=0;
+    lastStats_.verticalRepeatCells=0;
 }
 
 MapUsageIndex::~MapUsageIndex()
@@ -103,6 +107,10 @@ std::vector<MapUsageIndex::Usage> MapUsageIndex::findUsages(const std::vector<in
 {
     std::set<int> ids(tileIds.begin(),tileIds.end());
     std::vector<Usage> out;
+    lastStats_.layerCounts.clear();
+    lastStats_.totalCells=0;
+    lastStats_.horizontalRepeatCells=0;
+    lastStats_.verticalRepeatCells=0;
     if(ids.empty())
         return out;
 
@@ -141,6 +149,7 @@ std::vector<MapUsageIndex::Usage> MapUsageIndex::findUsages(const std::vector<in
                     Tiled::TileLayer *tl=layers.at(li);
                     const int w=tl->width();
                     const int h=tl->height();
+                    const std::string layerName=tl->name().toStdString();
                     int y=0;
                     while(y<h)
                     {
@@ -149,7 +158,24 @@ std::vector<MapUsageIndex::Usage> MapUsageIndex::findUsages(const std::vector<in
                         {
                             const Tiled::Cell &c=tl->cellAt(x,y);
                             if(!c.isEmpty() && c.tileset()==target && ids.find(c.tileId())!=ids.end())
+                            {
                                 u.cells.push_back(QPoint(tl->x()+x,tl->y()+y));
+                                // stats for pre-fill: dominant layer + same-tile runs
+                                lastStats_.totalCells++;
+                                lastStats_.layerCounts[layerName]++;
+                                if(x+1<w)
+                                {
+                                    const Tiled::Cell &rc=tl->cellAt(x+1,y);
+                                    if(!rc.isEmpty() && rc.tileset()==target && rc.tileId()==c.tileId())
+                                        lastStats_.horizontalRepeatCells++;
+                                }
+                                if(y+1<h)
+                                {
+                                    const Tiled::Cell &dc=tl->cellAt(x,y+1);
+                                    if(!dc.isEmpty() && dc.tileset()==target && dc.tileId()==c.tileId())
+                                        lastStats_.verticalRepeatCells++;
+                                }
+                            }
                             x++;
                         }
                         y++;
@@ -228,5 +254,7 @@ QImage MapUsageIndex::render(const QString &mapPath)
     rendered_[mapPath]=img;
     return img;
 }
+
+const MapUsageIndex::GroupStats &MapUsageIndex::lastStats() const { return lastStats_; }
 
 const QString &MapUsageIndex::error() const { return error_; }

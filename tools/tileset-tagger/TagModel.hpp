@@ -13,6 +13,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class TagModel {
@@ -56,6 +57,7 @@ public:
 
     const TileTag &tagOf(int tileId) const;
     bool tileHasPixels(int tileId) const;          // any non-transparent pixel?
+    bool tileAnimated(int tileId) const;           // carries an animation property?
     std::vector<int> untaggedNonEmpty() const;     // the GUARD: pixels but no category
     std::vector<std::string> categoriesUsed() const;
 
@@ -71,6 +73,7 @@ private:
     int tileCount_;
     int columns_;
     std::unordered_map<int, TileTag> tags_;
+    std::unordered_set<int> animatedTiles_;
     TileTag emptyTag_;
     QString error_;
 
