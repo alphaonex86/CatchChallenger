@@ -7,21 +7,11 @@
 #include <QPaintEvent>
 #include <QWheelEvent>
 
-// stable colour per category name (FNV-1a hash -> hue) so tagged tiles are
-// visually grouped on the sheet.
-static QColor categoryColor(const std::string &cat)
-{
-    unsigned int h=2166136261u;
-    size_t i=0;
-    while(i<cat.size()) { h=(h^(unsigned char)cat[i])*16777619u; i++; }
-    return QColor::fromHsv((int)(h%360),150,210);
-}
-
 TilesetView::TilesetView(QWidget *parent) :
     QWidget(parent),
     model_(nullptr),
     zoom_(3),
-    showUntagged_(true),
+    showStates_(true),
     selecting_(false),
     hasSelection_(false),
     selCol0_(0),
@@ -62,7 +52,7 @@ QRect TilesetView::cellPixelRect(int col,int row) const
     return QRect(col*tw,row*th,tw,th);
 }
 
-void TilesetView::setShowUntagged(bool on) { showUntagged_=on; update(); }
+void TilesetView::setShowStates(bool on) { showStates_=on; update(); }
 
 void TilesetView::setZoom(int z)
 {
@@ -116,7 +106,7 @@ void TilesetView::emitSelection(bool finished)
 void TilesetView::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
-    p.fillRect(rect(),QColor(48,48,48));
+    p.fillRect(rect(),QColor(40,40,48));
     if(model_==nullptr || model_->image().isNull())
     {
         p.setPen(Qt::white);
@@ -126,37 +116,55 @@ void TilesetView::paintEvent(QPaintEvent *)
     const QImage &img=model_->image();
     const int iw=img.width()*zoom_;
     const int ih=img.height()*zoom_;
-    p.drawImage(QRect(0,0,iw,ih),img);
+
+    // transparency checkerboard (light/dark grey), squares = HALF the zoomed tile,
+    // so the transparent parts of each tile read clearly against it.
+    int sq=(model_->tileWidth()*zoom_)/2;
+    if(sq<4)
+        sq=4;
+    int cy=0;
+    while(cy*sq<ih)
+    {
+        int cx=0;
+        while(cx*sq<iw)
+        {
+            const int sw = (cx*sq+sq>iw) ? iw-cx*sq : sq;
+            const int sh = (cy*sq+sq>ih) ? ih-cy*sq : sq;
+            p.fillRect(cx*sq,cy*sq,sw,sh,((cx+cy)&1) ? QColor(96,96,96) : QColor(168,168,168));
+            cx++;
+        }
+        cy++;
+    }
+    p.drawImage(QRect(0,0,iw,ih),img);   // transparent pixels show the checkerboard
 
     const int tw=model_->tileWidth()*zoom_;
     const int th=model_->tileHeight()*zoom_;
     const int cols=model_->columns();
     const int n=model_->tileCount();
 
-    // tint tagged tiles by category, red-flag untagged-with-pixels
-    int id=0;
-    while(id<n)
+    // three-state overlay (toggleable): red=untagged, yellow=to-review, green=verified
+    if(showStates_)
     {
-        const int c=id%cols;
-        const int r=id/cols;
-        const QRect cell(c*tw,r*th,tw,th);
-        const TagModel::TileTag &tag=model_->tagOf(id);
-        if(!tag.category.empty())
+        int id=0;
+        while(id<n)
         {
-            if(tag.attr("auto")=="guess")
-                p.fillRect(cell,QColor(255,210,0,110));   // to-review auto-guess (yellow)
-            else
+            const int c=id%cols;
+            const int r=id/cols;
+            const QRect cell(c*tw,r*th,tw,th);
+            const TagModel::TileTag &tag=model_->tagOf(id);
+            if(!tag.category.empty())
             {
-                QColor col=categoryColor(tag.category);
-                col.setAlpha(70);
-                p.fillRect(cell,col);
+                if(tag.attr("auto")=="guess")
+                    p.fillRect(cell,QColor(255,205,0,105));    // yellow = to review
+                else
+                    p.fillRect(cell,QColor(40,200,90,90));     // green = verified
             }
+            else if(model_->tileHasPixels(id))
+            {
+                p.fillRect(cell,QColor(255,40,40,105));        // red = untagged
+            }
+            id++;
         }
-        else if(showUntagged_ && model_->tileHasPixels(id))
-        {
-            p.fillRect(cell,QColor(255,0,0,95));
-        }
-        id++;
     }
 
     // grid
