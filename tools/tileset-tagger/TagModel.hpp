@@ -54,6 +54,13 @@ public:
     // horizontalRepeat, ...).  An empty category CLEARS the tag.
     void tagTiles(const std::vector<int> &tileIds, const std::string &category,
                   const std::map<std::string,std::string> &attributes);
+    // Accept the auto-guesses on these tiles as correct: drop the `auto=guess`
+    // flag (yellow -> verified) without changing the category.
+    void markVerified(const std::vector<int> &tileIds);
+
+    // Review progression over the whole tileset.
+    struct Counts { int verified; int toReview; int untagged; };
+    Counts progress() const;
     // Convenience: a rectangle (inclusive tile coords) -> the tile ids it covers.
     std::vector<int> tilesInRect(int col0, int row0, int col1, int row1) const;
 
@@ -62,6 +69,7 @@ public:
     bool tileAnimated(int tileId) const;           // carries an animation property?
     bool tileGreenish(int tileId) const;           // green-dominant art (vegetation hint)
     std::vector<int> untaggedNonEmpty() const;     // the GUARD: pixels but no category
+    std::vector<int> unverifiedTiles() const;      // untagged-with-pixels OR auto=guess, in id order
     std::vector<std::string> categoriesUsed() const;
 
     const QString &error() const;

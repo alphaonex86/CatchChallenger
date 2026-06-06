@@ -36,7 +36,8 @@ private slots:
     void onSelectionFinished(int col0,int row0,int col1,int row1,int tileCount);
     void onMapPicked(int index);
     void onToggleUntagged(bool on);
-    void onNextUntagged();
+    void onNextUntagged();        // jump to the next tile needing attention (red or yellow)
+    void onVerify();              // accept the selected yellow guesses as verified
     void onSuggest();   // bootstrap: auto-tag the unambiguous terrain
 
 private:

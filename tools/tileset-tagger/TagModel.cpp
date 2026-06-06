@@ -190,6 +190,61 @@ void TagModel::tagTiles(const std::vector<int> &tileIds, const std::string &cate
     }
 }
 
+void TagModel::markVerified(const std::vector<int> &tileIds)
+{
+    size_t i=0;
+    while(i<tileIds.size())
+    {
+        std::unordered_map<int,TileTag>::iterator it=tags_.find(tileIds.at(i));
+        if(it!=tags_.end())
+            it->second.attributes.erase("auto");   // yellow -> verified
+        i++;
+    }
+}
+
+std::vector<int> TagModel::unverifiedTiles() const
+{
+    std::vector<int> out;
+    int id=0;
+    while(id<tileCount_)
+    {
+        std::unordered_map<int,TileTag>::const_iterator it=tags_.find(id);
+        if(it!=tags_.cend() && !it->second.category.empty())
+        {
+            if(it->second.attr("auto")=="guess")
+                out.push_back(id);          // yellow: to review
+        }
+        else if(tileHasPixels(id))
+            out.push_back(id);              // red: untagged
+        id++;
+    }
+    return out;
+}
+
+TagModel::Counts TagModel::progress() const
+{
+    Counts c;
+    c.verified=0;
+    c.toReview=0;
+    c.untagged=0;
+    int id=0;
+    while(id<tileCount_)
+    {
+        std::unordered_map<int,TileTag>::const_iterator it=tags_.find(id);
+        if(it!=tags_.cend() && !it->second.category.empty())
+        {
+            if(it->second.attr("auto")=="guess")
+                c.toReview++;
+            else
+                c.verified++;
+        }
+        else if(tileHasPixels(id))
+            c.untagged++;
+        id++;
+    }
+    return c;
+}
+
 std::vector<int> TagModel::tilesInRect(int col0, int row0, int col1, int row1) const
 {
     if(col0>col1) { const int t=col0; col0=col1; col1=t; }
