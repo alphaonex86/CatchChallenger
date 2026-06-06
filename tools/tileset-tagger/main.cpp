@@ -206,6 +206,32 @@ static int suggestOne(const QString &tsx)
     return 0;
 }
 
+static int runClassify(const QStringList &args)
+{
+    // dry-run: show what suggest WOULD tag, without writing anything.
+    if(args.isEmpty()) { std::cerr << "classify needs: <x.tsx>" << std::endl; return 1; }
+    TagModel model;
+    if(!model.load(args.at(0))) { std::cerr << model.error().toStdString() << std::endl; return 1; }
+    MapUsageIndex index;
+    index.build(args.at(0));
+    const std::map<int,MapUsageIndex::TileStat> stats=index.analyzeAllTiles();
+    std::map<std::string,int> hist;
+    int sure=0,guess=0;
+    std::map<int,MapUsageIndex::TileStat>::const_iterator it=stats.begin();
+    while(it!=stats.cend())
+    {
+        std::string norm;
+        bool walk=true,high=true;
+        const std::string cat=MapUsageIndex::suggestCategory(it->second,model.tileGreenish(it->first),norm,walk,high);
+        if(!cat.empty()) { hist[cat]++; if(high) sure++; else guess++; }
+        ++it;
+    }
+    std::cout << QFileInfo(args.at(0)).fileName().toStdString() << ": " << sure << " sure + " << guess << " to-review" << std::endl;
+    std::map<std::string,int>::const_iterator h=hist.begin();
+    while(h!=hist.cend()) { std::cout << "  " << h->first << ": " << h->second << std::endl; ++h; }
+    return 0;
+}
+
 static int runSuggest(const QStringList &args)
 {
     if(args.isEmpty()) { std::cerr << "suggest needs: <x.tsx | tileset-dir>" << std::endl; return 1; }
@@ -230,7 +256,7 @@ int main(int argc, char *argv[])
     while(i<argc) { args.append(QString::fromUtf8(argv[i])); i++; }
     const bool cli = !args.isEmpty()
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
-            || args.at(0)=="--usage" || args.at(0)=="--suggest");
+            || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -246,6 +272,8 @@ int main(int argc, char *argv[])
         return runUsage(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--suggest")
         return runSuggest(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--classify")
+        return runClassify(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;

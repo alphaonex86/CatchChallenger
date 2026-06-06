@@ -92,7 +92,8 @@ tileset-tagger --guard    <x.tsx>                       # report untagged-with-p
 tileset-tagger --tag      <x.tsx> <cat> <c0> <r0> <c1> <r1> [name] [size]
 tileset-tagger --selftest <x.tsx>                       # tag round-trip + guard self-check
 tileset-tagger --usage    <x.tsx> <c0> <r0> <c1> <r1>   # list maps using that tile group
-tileset-tagger --suggest  <x.tsx | tileset-dir>         # bootstrap: auto-tag the terrain
+tileset-tagger --suggest  <x.tsx | tileset-dir>         # auto-tag (terrain + structure)
+tileset-tagger --classify <x.tsx>                       # dry-run: print what suggest would tag
 ```
 
 ## How to start

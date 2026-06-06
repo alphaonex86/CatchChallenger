@@ -55,6 +55,11 @@ public:
         int walkableCells;
         int blockedCells;
         int ledgeCells;
+        // structure signals (for tree-vs-building, base-vs-standalone)
+        int overAbove;       // cells with a WalkBehind/over tile directly above
+        int solidBelow;      // cells with a Collisions tile directly below
+        long blobSizeSum;    // sum of the object-blob (Collisions∪over) size per cell
+        int blobCount;       // cells counted into blobSizeSum  (avg = sum/count)
     };
 
     MapUsageIndex();

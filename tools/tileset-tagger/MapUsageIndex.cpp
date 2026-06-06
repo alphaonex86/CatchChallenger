@@ -42,6 +42,13 @@ static bool cellHasTile(Tiled::TileLayer *layer,int x,int y)
     return !layer->cellAt(x,y).isEmpty();
 }
 
+static bool anyHasTile(const std::vector<Tiled::TileLayer*> &layers,int x,int y)
+{
+    size_t i=0;
+    while(i<layers.size()) { if(cellHasTile(layers.at(i),x,y)) return true; i++; }
+    return false;
+}
+
 MapUsageIndex::~MapUsageIndex()
 {
 }
@@ -340,6 +347,7 @@ std::map<int,MapUsageIndex::TileStat> MapUsageIndex::analyzeAllTiles()
                 Tiled::TileLayer *Lwalk=nullptr,*Lcoll=nullptr,*Ldirt=nullptr;
                 Tiled::TileLayer *Lll=nullptr,*Llr=nullptr,*Llt=nullptr,*Llb=nullptr;
                 std::vector<Tiled::TileLayer*> monsterLayers;
+                std::vector<Tiled::TileLayer*> overLayers;
                 size_t sl=0;
                 while(sl<layers.size())
                 {
@@ -353,8 +361,62 @@ std::map<int,MapUsageIndex::TileStat> MapUsageIndex::analyzeAllTiles()
                     else if(n=="LedgesTop" || n=="LedgesUp") Llt=L;
                     else if(n=="LedgesBottom" || n=="LedgesDown") Llb=L;
                     else if(n=="Grass" || n=="OnGrass" || n=="Water" || n=="Lava") monsterLayers.push_back(L);
+                    else if(n=="WalkBehind" || n=="Over" || n=="Back") overLayers.push_back(L);
                     sl++;
                 }
+
+                // object blob = connected component of (Collisions OR over): small
+                // ⇒ tree/rock, large ⇒ building/cliff. One flood-fill per map.
+                const int mw=m->width();
+                const int mh=m->height();
+                std::vector<int> compSize(mw*mh,0);   // 0 = not-object, >0 = blob size
+                {
+                    std::vector<char> obj(mw*mh,0);
+                    int yy=0;
+                    while(yy<mh)
+                    {
+                        int xx=0;
+                        while(xx<mw)
+                        {
+                            if(cellHasTile(Lcoll,xx,yy) || anyHasTile(overLayers,xx,yy))
+                                obj[xx+yy*mw]=1;
+                            xx++;
+                        }
+                        yy++;
+                    }
+                    std::vector<int> stack;
+                    int idx=0;
+                    while(idx<mw*mh)
+                    {
+                        if(obj[idx]!=0 && compSize[idx]==0)
+                        {
+                            stack.clear();
+                            std::vector<int> cells;
+                            stack.push_back(idx);
+                            compSize[idx]=-1;
+                            while(!stack.empty())
+                            {
+                                const int p=stack.back();
+                                stack.pop_back();
+                                cells.push_back(p);
+                                const int px=p%mw,py=p/mw;
+                                const int nb[4]={px>0?p-1:-1, px<mw-1?p+1:-1, py>0?p-mw:-1, py<mh-1?p+mw:-1};
+                                int k=0;
+                                while(k<4)
+                                {
+                                    const int q=nb[k];
+                                    if(q>=0 && obj[q]!=0 && compSize[q]==0) { compSize[q]=-1; stack.push_back(q); }
+                                    k++;
+                                }
+                            }
+                            const int sz=(int)cells.size();
+                            size_t ck=0;
+                            while(ck<cells.size()) { compSize[cells.at(ck)]=sz; ck++; }
+                        }
+                        idx++;
+                    }
+                }
+
                 size_t li=0;
                 while(li<layers.size())
                 {
@@ -392,6 +454,16 @@ std::map<int,MapUsageIndex::TileStat> MapUsageIndex::analyzeAllTiles()
                                         s.walkableCells++;
                                     else
                                         s.blockedCells++;
+                                }
+                                // structure signals (vertical pairing + blob size)
+                                if(anyHasTile(overLayers,gx,gy-1))
+                                    s.overAbove++;
+                                if(cellHasTile(Lcoll,gx,gy+1))
+                                    s.solidBelow++;
+                                if(gx>=0 && gy>=0 && gx<mw && gy<mh && compSize[gx+gy*mw]>0)
+                                {
+                                    s.blobSizeSum+=compSize[gx+gy*mw];
+                                    s.blobCount++;
                                 }
                             }
                             x++;
@@ -433,11 +505,40 @@ std::string MapUsageIndex::suggestCategory(const TileStat &s,bool greenish,
     }
     if(L=="grass") { normLayer="grass"; return "grass-tall"; }
 
-    // ambiguous: best guess from layer + colour — mark for human review
+    // ambiguous: best guess from layer + colour + STRUCTURE — mark for review.
     highConfidence=false;
+    const double avgBlob = s.blobCount>0 ? (double)s.blobSizeSum/(double)s.blobCount : 0.0;
+    // 3-tier blob size: tiny ⇒ rock, medium ⇒ a discrete building, huge sprawling ⇒ cliff/mountain.
+    const bool tinyBlob  = avgBlob>0.0 && avgBlob<=4.0;
+    const bool hugeBlob  = avgBlob>40.0;
+    // positive pairing signal: a roof directly above (catches the top wall row),
+    // or this is the top of a structure (solid below) — both ⇒ building part.
+    const bool roofAbove = s.total>0 && s.overAbove*2>=s.total;
+
     if(L=="ongrass") { normLayer="grass"; return greenish ? "bush" : "flower"; }
-    if(L.contains("walkbehind") || L=="over" || L=="back") { normLayer="over"; return greenish ? "tree-canopy" : "building-roof"; }
-    if(!walkable) { normLayer="collision"; return greenish ? "tree-trunk" : "building-wall"; }
+
+    // over-tile (drawn above the player): green ⇒ canopy, else ⇒ roof
+    if(L.contains("walkbehind") || L=="over" || L=="back")
+    {
+        normLayer="over";
+        return greenish ? "tree-canopy" : "building-roof";
+    }
+
+    // collidable
+    if(!walkable)
+    {
+        normLayer="collision";
+        if(greenish)
+            return tinyBlob ? "bush" : "tree-trunk";        // vegetation
+        if(roofAbove)
+            return "building-wall";                          // capped by a roof ⇒ building
+        if(tinyBlob)
+            return "rock";                                   // small isolated ⇒ rock/sign
+        if(hugeBlob)
+            return "cliff";                                  // large sprawling ⇒ cliff/mountain
+        return "building-wall";                              // medium discrete ⇒ building
+    }
+
     if(L=="dirt") { normLayer="walkable"; return "path"; }
     normLayer="walkable";
     return greenish ? "grass-short" : "ground";
