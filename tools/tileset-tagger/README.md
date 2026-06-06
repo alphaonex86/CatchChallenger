@@ -97,22 +97,23 @@ tileset-tagger --suggest  <x.tsx | tileset-dir>         # bootstrap: auto-tag th
 
 ## How to start
 
-1. **Auto-tag** every tileset in one go — from the maps, the tool tags each used
-   tile with a best guess (terrain exactly; walls/trees/ground/roofs by layer +
-   colour):
+1. **Just open a tileset** — it **auto-tags on open** (no separate step). From the
+   maps it best-guesses every used tile (terrain exactly; walls/trees/ground/roofs
+   by layer + colour):
    ```
-   tileset-tagger --suggest /home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen2/tileset
-   tileset-tagger --suggest /home/user/Desktop/CatchChallenger/CatchChallenger-datapack/map/tileset
+   tileset-tagger /home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen2/tileset/normal1.tsx
    ```
-   (or click **Suggest terrain** per tileset in the GUI). Tags go to the sidecar.
-2. **Open each tileset** in the GUI and FIX the few wrong guesses. Tiles are
-   coloured: **yellow** = a low-confidence guess to review, faint tint = confident,
-   **red** = untagged (tiles never used on a map). Skim the yellow ones; where a
-   guess is wrong (a cliff tagged `building-wall`, a roof tagged `tree-canopy`),
-   drag a rectangle over the cluster, pick the right **category**, **Tag**. The
-   **Map usage** panel shows each in situ. **Save** when done.
+2. **FIX the few wrong guesses.** Tiles are coloured: **yellow** = a low-confidence
+   guess to review, faint tint = confident, **red** = untagged (tiles never used on
+   a map). Skim the yellow ones; where a guess is wrong (a cliff guessed
+   `building-wall`, a roof guessed `tree-canopy`), drag a rectangle over the
+   cluster, pick the right **category**, **Tag**. The **Map usage** panel shows each
+   in situ. **Save** when done (tags go to the sidecar; the datapack is untouched).
 3. Do the model tilesets (`gen2/tileset/`) and the target (`map/tileset/`); then
    the generator learns from the model and composes onto the target.
+
+To **batch** the auto-tag for a whole directory up front (optional), use
+`tileset-tagger --suggest <tileset-dir>`.
 
 `TagModel` (in `TagModel.{hpp,cpp}`) is the GUI-free, unit-tested core: load the
 `.tsx`+image, read/write tags, run the untagged-pixel guard. The GUI is a thin

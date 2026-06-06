@@ -192,9 +192,16 @@ bool MainWindow::openTsx(const QString &path)
     derivedWalkable_=-1;
     selLabel_->setText(tr("no selection"));
     detectedLabel_->clear();
-    statusBar()->showMessage(tr("%1 map(s) reference this tileset").arg(usage_->candidateCount()),4000);
-    refreshGuard();
-    updateTitle();
+    // auto-suggest on open so there is no separate bootstrap step: fills only the
+    // untagged tiles (idempotent), leaving the human to fix the yellow guesses.
+    if(usage_->candidateCount()>0 && !model_->untaggedNonEmpty().empty())
+        onSuggest();
+    else
+    {
+        statusBar()->showMessage(tr("%1 map(s) reference this tileset").arg(usage_->candidateCount()),4000);
+        refreshGuard();
+        updateTitle();
+    }
     return true;
 }
 
