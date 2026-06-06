@@ -416,7 +416,7 @@ int MainWindow::applySelection()
     const std::string category=categoryBox_->currentText().toStdString();
     const std::vector<int> ids=view_->selectedTiles();   // the exact (maybe non-rect) set
     if(ids.empty())
-        return 0;
+        return -1;   // only empty/transparent cells selected -> nothing to tag
     const int w=selC1_-selC0_+1;
     const int h=selR1_-selR0_+1;
     std::map<std::string,std::string> attrs;
