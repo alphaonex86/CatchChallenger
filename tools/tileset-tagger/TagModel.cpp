@@ -246,6 +246,44 @@ bool TagModel::tileAnimated(int tileId) const
     return animatedTiles_.find(tileId)!=animatedTiles_.cend();
 }
 
+bool TagModel::tileGreenish(int tileId) const
+{
+    // mean colour of the tile's opaque pixels; green-dominant + bright enough =>
+    // vegetation (tree/bush/plant) rather than building/rock. A cheap heuristic
+    // to split the visually-ambiguous Collisions/WalkBehind tiles.
+    if(image_.isNull() || columns_<1 || tileWidth_<1 || tileHeight_<1)
+        return false;
+    const int x0=(tileId%columns_)*tileWidth_;
+    const int y0=(tileId/columns_)*tileHeight_;
+    if(x0+tileWidth_>image_.width() || y0+tileHeight_>image_.height())
+        return false;
+    long r=0,g=0,b=0,n=0;
+    int y=0;
+    while(y<tileHeight_)
+    {
+        int x=0;
+        while(x<tileWidth_)
+        {
+            const QRgb p=image_.pixel(x0+x,y0+y);
+            if(qAlpha(p)!=0)
+            {
+                r+=qRed(p);
+                g+=qGreen(p);
+                b+=qBlue(p);
+                n++;
+            }
+            x++;
+        }
+        y++;
+    }
+    if(n==0)
+        return false;
+    r/=n;
+    g/=n;
+    b/=n;
+    return g>r+12 && g>b+12 && g>60;
+}
+
 std::vector<int> TagModel::untaggedNonEmpty() const
 {
     std::vector<int> out;

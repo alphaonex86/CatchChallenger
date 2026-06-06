@@ -407,6 +407,42 @@ std::map<int,MapUsageIndex::TileStat> MapUsageIndex::analyzeAllTiles()
     return out;
 }
 
+std::string MapUsageIndex::suggestCategory(const TileStat &s,bool greenish,
+                                           std::string &normLayer,bool &walkable,bool &highConfidence)
+{
+    // dominant drawn-on layer
+    QString dom;
+    int best=-1;
+    std::map<std::string,int>::const_iterator l=s.layerCounts.begin();
+    while(l!=s.layerCounts.cend()) { if(l->second>best) { best=l->second; dom=QString::fromStdString(l->first); } ++l; }
+    const QString L=dom.toLower();
+    walkable=(s.walkableCells+s.ledgeCells)>=s.blockedCells;
+    highConfidence=true;
+
+    // unambiguous terrain: layer == visual (high confidence)
+    if(L.contains("water")) { normLayer="water"; return "water"; }
+    if(L.contains("lava")) { normLayer="lava"; return "lava"; }
+    if(L.contains("ledge"))
+    {
+        normLayer="ledge";
+        if(L.contains("down")) return "ledge-down";
+        if(L.contains("up")) return "ledge-up";
+        if(L.contains("left")) return "ledge-left";
+        if(L.contains("right")) return "ledge-right";
+        return "ledge-down";
+    }
+    if(L=="grass") { normLayer="grass"; return "grass-tall"; }
+
+    // ambiguous: best guess from layer + colour — mark for human review
+    highConfidence=false;
+    if(L=="ongrass") { normLayer="grass"; return greenish ? "bush" : "flower"; }
+    if(L.contains("walkbehind") || L=="over" || L=="back") { normLayer="over"; return greenish ? "tree-canopy" : "building-roof"; }
+    if(!walkable) { normLayer="collision"; return greenish ? "tree-trunk" : "building-wall"; }
+    if(L=="dirt") { normLayer="walkable"; return "path"; }
+    normLayer="walkable";
+    return greenish ? "grass-short" : "ground";
+}
+
 const MapUsageIndex::GroupStats &MapUsageIndex::lastStats() const { return lastStats_; }
 
 const QString &MapUsageIndex::error() const { return error_; }

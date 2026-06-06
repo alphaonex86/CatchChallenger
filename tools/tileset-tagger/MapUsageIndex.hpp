@@ -71,6 +71,11 @@ public:
     const GroupStats &lastStats() const;   // stats from the last findUsages()
     // One scan of all maps -> per-tile-id placement layer + effective walkability.
     std::map<int,TileStat> analyzeAllTiles();
+    // Best-guess visual category for a tile from its map usage + a greenish hint.
+    // Sets normLayer/walkable, and highConfidence=false for the ambiguous guesses
+    // the human should review.  Returns "" only if the tile was never placed.
+    static std::string suggestCategory(const TileStat &s,bool greenish,
+                                       std::string &normLayer,bool &walkable,bool &highConfidence);
 
     // Composite-render a map's tile layers to an image (cached).
     QImage render(const QString &mapPath);
