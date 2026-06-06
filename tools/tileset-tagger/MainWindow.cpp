@@ -111,9 +111,11 @@ MainWindow::MainWindow() :
     hMidRepeat_(nullptr),
     vRepeat_(nullptr),
     vMidRepeat_(nullptr),
+    reviewCheck_(nullptr),
     selLabel_(nullptr),
     detectedLabel_(nullptr),
     guardLabel_(nullptr),
+    wasComplete_(false),
     currentUsages_(),
     derivedLayer_(),
     derivedWalkable_(-1),
@@ -212,6 +214,12 @@ MainWindow::MainWindow() :
     line3->setFrameShape(QFrame::HLine);
     lay->addWidget(line3);
 
+    // REVIEW: animated group outlines + confirm-all-and-advance (auto-on when 100% tagged)
+    reviewCheck_=new QCheckBox(tr("review groups (animated outlines)"),panel);
+    lay->addWidget(reviewCheck_);
+    QPushButton *confirmBtn=new QPushButton(tr("✓ Confirm tileset → save & next tileset"),panel);
+    lay->addWidget(confirmBtn);
+
     QCheckBox *showUntagged=new QCheckBox(tr("show state colours (✗ red · ⚠ yellow · ✓ green)"),panel);
     showUntagged->setChecked(true);
     lay->addWidget(showUntagged);
@@ -249,6 +257,8 @@ MainWindow::MainWindow() :
     connect(view_,&TilesetView::selectionFinished,this,&MainWindow::onSelectionFinished);
     connect(mapCombo_,SIGNAL(currentIndexChanged(int)),this,SLOT(onMapPicked(int)));
     connect(categoryBox_,&QComboBox::currentTextChanged,this,&MainWindow::onCategoryChanged);
+    connect(reviewCheck_,&QCheckBox::toggled,this,&MainWindow::onToggleGroups);
+    connect(confirmBtn,&QPushButton::clicked,this,&MainWindow::onConfirmTileset);
     onCategoryChanged(categoryBox_->currentText());   // initial description
 
     resize(1320,860);   // room for: left map dock + central tileset + right tag panel
@@ -274,6 +284,9 @@ bool MainWindow::openTsx(const QString &path)
     mapCombo_->clear();
     currentUsages_.clear();
     usageView_->clearUsage();
+    wasComplete_=false;                       // a fresh tileset: tag first, review later
+    if(reviewCheck_!=nullptr)
+        reviewCheck_->setChecked(false);      // -> overlay off (refreshGuard re-enables if 100%)
     selC0_=selR0_=selC1_=selR1_=-1;
     derivedFromMaps_=false;
     derivedLayer_.clear();
@@ -519,6 +532,29 @@ void MainWindow::onCategoryChanged(const QString &category)
         categoryDescLabel_->setText(categoryDescription(category));
     if(terrainGroup_!=nullptr)
         terrainGroup_->setVisible(category=="terrain");   // inner/outer only for terrain
+}
+
+void MainWindow::onToggleGroups(bool on)
+{
+    view_->setShowGroups(on);
+}
+
+// Confirm the whole tileset: every tag accepted (yellow -> green), saved, and the
+// folder advances to the next tileset.  Refuses while tiles are still untagged.
+void MainWindow::onConfirmTileset()
+{
+    const TagModel::Counts cnt=model_->progress();
+    if(cnt.untagged>0)
+    {
+        statusBar()->showMessage(tr("%1 tile(s) still untagged — tag every tile before confirming").arg(cnt.untagged),6000);
+        return;
+    }
+    model_->markAllVerified();   // accept all the guesses
+    view_->refresh();
+    refreshGuard();
+    updateTitle();
+    statusBar()->showMessage(tr("✓ tileset confirmed & saved — next tileset"),4000);
+    onNextUntagged();            // all green now -> saves + opens the next tileset
 }
 
 // Make a terrain-texture name available in BOTH dropdowns so the next terrain can
@@ -803,6 +839,19 @@ void MainWindow::refreshGuard()
                              .arg(pct).arg(c.verified).arg(c.toReview).arg(c.untagged));
         guardLabel_->setStyleSheet(c.untagged>0 ? "color:#c02020;" : "color:#b08000;");
     }
+
+    // every TILE has a category (none red) -> enter REVIEW: animated group outlines,
+    // so the human checks the tagged data, then Confirm to save & go to the next.
+    const bool allTagged=(c.untagged==0);
+    if(allTagged && !wasComplete_)
+    {
+        wasComplete_=true;
+        if(reviewCheck_!=nullptr)
+            reviewCheck_->setChecked(true);   // -> onToggleGroups turns the overlay on
+        statusBar()->showMessage(tr("all tiles tagged — review the animated groups, edit if needed, then ‘Confirm tileset → next’"),8000);
+    }
+    else if(!allTagged)
+        wasComplete_=false;
 }
 
 void MainWindow::updateTitle()

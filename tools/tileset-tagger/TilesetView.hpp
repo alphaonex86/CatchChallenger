@@ -14,6 +14,8 @@
 #include <vector>
 
 class TagModel;
+class QPainter;
+class QTimer;
 
 class TilesetView : public QWidget {
     Q_OBJECT
@@ -22,6 +24,7 @@ public:
     void setModel(TagModel *model);     // not owned
     void refresh();                     // repaint after the model changed
     void setShowStates(bool on);
+    void setShowGroups(bool on);  // REVIEW mode: category-colour fills + animated group outlines
     void setZoom(double z);     // fractional so the sheet can fill the window AND shrink to fit
     double zoom() const;
     void selectCell(int col,int row);          // programmatic single selection (replaces)
@@ -44,10 +47,17 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
 
+private slots:
+    void onGroupTick();        // animate the review-mode group outlines
+
 private:
     TagModel *model_;
     double zoom_;
     bool showStates_;
+    bool showGroups_;          // review mode (category fills + animated outlines)
+    QTimer *groupTimer_;
+    int groupPhase_;
+    void paintGroupReview(QPainter &p,double tw,double th,int cols,int n);
     bool selecting_;          // a drag is in progress
     bool additive_;           // Ctrl/Shift held at drag start -> add to the selection
     int dragC0_;              // live rubber-band rectangle while selecting_
