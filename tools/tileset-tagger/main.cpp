@@ -1400,6 +1400,7 @@ static int runWfc(const QStringList &args)
     const int W = args.size()>2 ? args.at(2).toInt() : 30;
     const int H = args.size()>3 ? args.at(3).toInt() : 30;
     const unsigned int seed = args.size()>4 ? args.at(4).toUInt() : 1234u;
+    const int cohesion = args.size()>5 ? args.at(5).toInt() : 1;   // >1 = favour the left/up neighbour's category (bigger blocks)
     // LEARN from the model maps' TOPMOST-category grids
     std::map<std::string,int> catId;
     std::vector<std::string> cats;
@@ -1464,13 +1465,17 @@ static int runWfc(const QStringList &args)
             if(best<0)
                 break;   // all cells decided
             // collapse: pick a possible category weighted by frequency
+            // cohesion: boost categories matching the already-placed left/up neighbour
+            int lc=-1,uc=-1;
+            if(best%W>0 && rem[best-1]==1) { int z=0; while(z<K) { if(dom[best-1][z]) { lc=z; break; } z++; } }
+            if(best/W>0 && rem[best-W]==1) { int z=0; while(z<K) { if(dom[best-W][z]) { uc=z; break; } z++; } }
             long tot=0;
             int k=0;
-            while(k<K) { if(dom[best][k]) tot+=freq[k]+1; k++; }
+            while(k<K) { if(dom[best][k]) { long w=freq[k]+1; if(k==lc) w*=cohesion; if(k==uc) w*=cohesion; tot+=w; } k++; }
             long pick=(long)(rng()%(unsigned long)(tot>0?tot:1));
             int chosen=-1;
             k=0;
-            while(k<K) { if(dom[best][k]) { pick-=(freq[k]+1); if(pick<0) { chosen=k; break; } } k++; }
+            while(k<K) { if(dom[best][k]) { long w=freq[k]+1; if(k==lc) w*=cohesion; if(k==uc) w*=cohesion; pick-=w; if(pick<0) { chosen=k; break; } } k++; }
             if(chosen<0) { contradiction=true; break; }
             k=0;
             while(k<K) { dom[best][k]=(k==chosen)?1:0; k++; }
