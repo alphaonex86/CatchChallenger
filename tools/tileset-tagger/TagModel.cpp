@@ -202,6 +202,16 @@ void TagModel::markVerified(const std::vector<int> &tileIds)
     }
 }
 
+void TagModel::markAllVerified()
+{
+    std::unordered_map<int,TileTag>::iterator it=tags_.begin();
+    while(it!=tags_.end())
+    {
+        it->second.attributes.erase("auto");
+        ++it;
+    }
+}
+
 std::vector<int> TagModel::unverifiedTiles() const
 {
     std::vector<int> out;

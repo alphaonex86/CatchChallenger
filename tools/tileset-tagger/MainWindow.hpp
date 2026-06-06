@@ -46,6 +46,8 @@ private slots:
     void onSelection(int tileCount);
     void onSelectionFinished(int tileCount);
     void onCategoryChanged(const QString &category);   // show the category's description
+    void onToggleGroups(bool on);    // review mode: animated group outlines
+    void onConfirmTileset();         // confirm every tag + save + go to next tileset
     void onMapPicked(int index);
     void onToggleUntagged(bool on);
     void onNextUntagged();        // jump to the next tile needing attention (red or yellow)
@@ -72,9 +74,11 @@ private:
     QCheckBox *hMidRepeat_;
     QCheckBox *vRepeat_;
     QCheckBox *vMidRepeat_;
+    QCheckBox *reviewCheck_;        // toggle the animated group-review overlay
     QLabel *selLabel_;
     QLabel *detectedLabel_;
     QLabel *guardLabel_;
+    bool wasComplete_;              // one-shot: fire the "all tagged" review banner once
     std::vector<MapUsageIndex::Usage> currentUsages_;
     // logical info auto-DERIVED from the maps (not tagged by hand) — attached at
     // Tag time so the generator has it for free.

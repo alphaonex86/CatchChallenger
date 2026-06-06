@@ -1,10 +1,13 @@
 #include "TilesetView.hpp"
 #include "TagModel.hpp"
+#include "MapDecoder.hpp"   // categoryColor() for the review fills
 
 #include <QColor>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QPen>
+#include <QTimer>
 #include <QWheelEvent>
 
 TilesetView::TilesetView(QWidget *parent) :
@@ -12,6 +15,9 @@ TilesetView::TilesetView(QWidget *parent) :
     model_(nullptr),
     zoom_(3.0),
     showStates_(true),
+    showGroups_(false),
+    groupTimer_(new QTimer(this)),
+    groupPhase_(0),
     selecting_(false),
     additive_(false),
     dragC0_(0),
@@ -20,6 +26,24 @@ TilesetView::TilesetView(QWidget *parent) :
     dragR1_(0),
     selected_()
 {
+    groupTimer_->setInterval(110);
+    connect(groupTimer_,&QTimer::timeout,this,&TilesetView::onGroupTick);
+}
+
+void TilesetView::setShowGroups(bool on)
+{
+    showGroups_=on;
+    if(on)
+        groupTimer_->start();
+    else
+        groupTimer_->stop();
+    update();
+}
+
+void TilesetView::onGroupTick()
+{
+    groupPhase_=(groupPhase_+1)%32;
+    update();
 }
 
 void TilesetView::setModel(TagModel *model)
@@ -180,6 +204,60 @@ void TilesetView::emitSelection(bool finished)
         emit selectionFinished(n);
 }
 
+// REVIEW overlay: paint each tagged tile in its category's semantic colour and
+// outline every CONTIGUOUS same-category group with an animated marching-ant
+// border (an edge is drawn only where the neighbour is a different category or
+// untagged).  Lets the human see the tagged DATA as groups before confirming.
+void TilesetView::paintGroupReview(QPainter &p,double tw,double th,int cols,int n)
+{
+    int id=0;
+    while(id<n)
+    {
+        const TagModel::TileTag &tag=model_->tagOf(id);
+        if(!tag.category.empty())
+        {
+            const int c=id%cols;
+            const int r=id/cols;
+            QColor col=MapDecoder::categoryColor(tag.category);
+            col.setAlpha(120);
+            p.fillRect(QRect(qRound(c*tw),qRound(r*th),qRound(tw),qRound(th)),col);
+        }
+        id++;
+    }
+    QPen dark(QColor(0,0,0,170),2);
+    QPen dash(QColor(255,255,255),2,Qt::DashLine);
+    dash.setDashOffset(groupPhase_);
+    id=0;
+    while(id<n)
+    {
+        const std::string cat=model_->tagOf(id).category;
+        if(!cat.empty())
+        {
+            const int c=id%cols;
+            const int r=id/cols;
+            const int x0=qRound(c*tw);
+            const int y0=qRound(r*th);
+            const int x1=qRound((c+1)*tw);
+            const int y1=qRound((r+1)*th);
+            const bool left  = (c==0)       || model_->tagOf(id-1).category!=cat;
+            const bool right = (c==cols-1)  || model_->tagOf(id+1).category!=cat;
+            const bool up    = (r==0)       || model_->tagOf(id-cols).category!=cat;
+            const bool down  = (id+cols>=n) || model_->tagOf(id+cols).category!=cat;
+            int pass=0;
+            while(pass<2)
+            {
+                p.setPen(pass==0 ? dark : dash);
+                if(left)  p.drawLine(x0,y0,x0,y1);
+                if(right) p.drawLine(x1,y0,x1,y1);
+                if(up)    p.drawLine(x0,y0,x1,y0);
+                if(down)  p.drawLine(x0,y1,x1,y1);
+                pass++;
+            }
+        }
+        id++;
+    }
+}
+
 void TilesetView::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
@@ -219,8 +297,13 @@ void TilesetView::paintEvent(QPaintEvent *)
     const int cols=model_->columns();
     const int n=model_->tileCount();
 
-    // three-state overlay (toggleable): red=untagged, yellow=to-review, green=verified
-    if(showStates_)
+    // REVIEW mode = category-colour fills + animated outlines around each tag group;
+    // otherwise the plain three-state (red/yellow/green) overlay.
+    if(showGroups_)
+    {
+        paintGroupReview(p,tw,th,cols,n);
+    }
+    else if(showStates_)
     {
         int id=0;
         while(id<n)

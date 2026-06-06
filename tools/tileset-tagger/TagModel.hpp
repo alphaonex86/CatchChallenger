@@ -57,6 +57,7 @@ public:
     // Accept the auto-guesses on these tiles as correct: drop the `auto=guess`
     // flag (yellow -> verified) without changing the category.
     void markVerified(const std::vector<int> &tileIds);
+    void markAllVerified();   // confirm EVERY tag (drop auto=guess) — the review "save all"
 
     // Review progression over the whole tileset.
     struct Counts { int verified; int toReview; int untagged; };
