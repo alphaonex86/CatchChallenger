@@ -55,7 +55,9 @@ std::vector<int> TilesetView::selectedTiles() const
     std::set<int>::const_iterator it=selected_.cbegin();
     while(it!=selected_.cend())
     {
-        if(*it>=0 && *it<model_->tileCount())
+        // EMPTY (transparent) tiles are not real tiles: exclude them so selecting
+        // one tags nothing and shows no map.
+        if(*it>=0 && *it<model_->tileCount() && model_->tileHasPixels(*it))
             ids.push_back(*it);   // std::set iterates ascending
         ++it;
     }
