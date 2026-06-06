@@ -10,16 +10,26 @@
 #include <QDomDocument>
 #include <QImage>
 #include <QString>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 class TagModel {
 public:
+    // A tile's tag: a primary CATEGORY (table, tree-canopy, building-wall, ...)
+    // plus free-form ATTRIBUTES — name (groups the tiles of one multi-tile item),
+    // size ("2x2"), and behaviour flags like horizontalRepeat / verticalRepeat
+    // (a fence tiles sideways, water repeats both ways).  Every attribute is
+    // stored as its own <property> in the .tsx, so new ones cost nothing.
     struct TileTag {
-        std::string category;   // "" => untagged
-        std::string name;       // groups the tiles of one multi-tile item
-        std::string size;       // e.g. "2x2"; "" if unset
+        std::string category;                          // "" => untagged
+        std::map<std::string,std::string> attributes;  // name, size, horizontalRepeat, ...
+        std::string attr(const std::string &key) const
+        {
+            std::map<std::string,std::string>::const_iterator it=attributes.find(key);
+            return it==attributes.cend() ? std::string() : it->second;
+        }
     };
 
     TagModel();
@@ -37,10 +47,10 @@ public:
     int tileHeight() const;
     const QImage &image() const;
 
-    // Tag every id in tileIds with (category,name,size).  An empty category
-    // CLEARS the tag.  Marks the document dirty.
+    // Tag every id in tileIds with a category + attributes (name, size,
+    // horizontalRepeat, ...).  An empty category CLEARS the tag.
     void tagTiles(const std::vector<int> &tileIds, const std::string &category,
-                  const std::string &name, const std::string &size);
+                  const std::map<std::string,std::string> &attributes);
     // Convenience: a rectangle (inclusive tile coords) -> the tile ids it covers.
     std::vector<int> tilesInRect(int col0, int row0, int col1, int row1) const;
 
@@ -66,6 +76,10 @@ private:
 
     QDomElement tilesetElement();
     QDomElement ensureTileElement(int id);          // find or create <tile id=...>
+    // remove the <property> entries this tool manages (category + the known
+    // attribute vocabulary + any key in extraKeys) so save() can rewrite them
+    // cleanly while leaving foreign engine/Tiled properties intact.
+    void stripManagedProperties(QDomElement props, const std::map<std::string,std::string> *extraKeys);
 };
 
 #endif // TILESETTAGGER_TAGMODEL_HPP

@@ -1,0 +1,53 @@
+#ifndef TILESETTAGGER_MAINWINDOW_HPP
+#define TILESETTAGGER_MAINWINDOW_HPP
+
+// The tagger window: a tileset canvas (TilesetView) + a side panel with NO
+// free-text input (error-prone).  Everything is a fixed QComboBox or a QCheckBox:
+//   - Category: a curated combo (the owner requests new entries, we add them).
+//   - Repeat flags: checkboxes (horizontalRepeat, horizontalMiddleRepeat, ...).
+//   - Size and the item-group name are AUTO-DERIVED from the selected rectangle.
+// The window title + a red label always show the untagged-pixel count (the guard).
+
+#include <QMainWindow>
+
+class TagModel;
+class TilesetView;
+class QComboBox;
+class QCheckBox;
+class QLabel;
+
+class MainWindow : public QMainWindow {
+    Q_OBJECT
+public:
+    MainWindow();
+    ~MainWindow();
+    bool openTsx(const QString &path);
+
+private slots:
+    void onOpen();
+    void onTag();
+    void onClearTag();
+    void onSave();
+    void onSelection(int col0,int row0,int col1,int row1,int tileCount);
+    void onToggleUntagged(bool on);
+    void onNextUntagged();
+
+private:
+    TagModel *model_;
+    TilesetView *view_;
+    QComboBox *categoryBox_;
+    QCheckBox *hRepeat_;
+    QCheckBox *hMidRepeat_;
+    QCheckBox *vRepeat_;
+    QCheckBox *vMidRepeat_;
+    QLabel *selLabel_;
+    QLabel *guardLabel_;
+    int selC0_;
+    int selR0_;
+    int selC1_;
+    int selR1_;
+    void refreshGuard();
+    void updateTitle();
+};
+
+#endif // TILESETTAGGER_MAINWINDOW_HPP
