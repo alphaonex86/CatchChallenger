@@ -82,6 +82,7 @@ private:
     QLabel *guardLabel_;
     bool wasComplete_;              // one-shot: fire the "all tagged" review banner once
     std::vector<MapUsageIndex::Usage> currentUsages_;
+    int currentGroupNum_;          // group number of the current selection (-1 = none)
     // logical info auto-DERIVED from the maps (not tagged by hand) — attached at
     // Tag time so the generator has it for free.
     QString derivedLayer_;
