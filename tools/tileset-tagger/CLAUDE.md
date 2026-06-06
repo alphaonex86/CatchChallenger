@@ -7,6 +7,9 @@ equivalent maps on the partial tileset. Design: `../map-procedural-generation/le
 * MODEL map datapack = `datapack-pkmn/map/main/gen2/` (100+ .tmx over 14 tilesets `tileset/normal1..15.tsx`+`animations.tsx`, johto+kanto). PARTIAL (target) datapack = official `CatchChallenger-datapack/`: target tileset (read-only input) = `map/tileset/` (12 .tsx); generated maps OUTPUT = `map/main/generated/` (only writable path there, owner-authorized; ref tilesets by relative path).
 * `datapack-pkmn/` is a LOCAL-only external reference dataset — never commit/redistribute/ship it or its contents; learn only abstract STRUCTURE/RULES from it; generated output + the target datapack must be ORIGINAL. (See root CLAUDE.md.)
 
+## THE GOAL — discover EVERY logic, generalize, transfer
+A tileset GENERATES layered maps; each map cell `(x,y,z=layer)` is governed by several DISTINCT logics that each must be discovered AND generalized: (1) a tile's x,y arrangement WITHIN the tileset (incl. SIMILAR-tile links = same object on a different background, `TagModel::detectSimilarGroups`); (2) the map's x,y cell-adjacency; (3) the z/layer-depth ordering; (4) the layer-NAME semantics; (5) how a tileset tile relates to map (x,y,z)+layer-name. Tagging EVERY tile is what makes cross-logic PATTERN DETECTION possible. End goal: learn these patterns from a tagged MODEL datapack, GENERALIZE them, then apply the SAME logic to ANOTHER datapack's tileset list to generate its maps.
+
 ## Human role — keep it MINIMAL
 The pipeline AUTO-detects/tags/learns/generates; the human's WHOLE job is only:
 1. MODEL tileset: FIX the FEW tag-detection ERRORS (auto-tag first, correct only the wrong ones — never hand-tag from scratch).
