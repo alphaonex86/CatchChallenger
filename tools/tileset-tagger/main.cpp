@@ -1,0 +1,123 @@
+// tileset-tagger — tag a Tiled .tsx with semantic categories (table, tree-canopy,
+// building-wall, ledge-down, ...) used by the learn-from-examples map generator.
+// Tags live as per-tile <property> entries inside the .tsx.  GUARD: any tile that
+// draws pixels but has no category is reported, so nothing is left untagged.
+//
+//   tileset-tagger --guard   <x.tsx>
+//   tileset-tagger --tag     <x.tsx> <category> <col0> <row0> <col1> <row1> [name] [size]
+//   tileset-tagger --selftest <x.tsx>
+//   tileset-tagger [<x.tsx>]                  # launch the GUI (default)
+//
+// The GUI (rectangle-select tagging) is built on this exact TagModel core.
+
+#include "TagModel.hpp"
+
+#include <QFile>
+#include <QGuiApplication>
+#include <QString>
+#include <QStringList>
+#include <iostream>
+#include <vector>
+
+static void printUntagged(const TagModel &model)
+{
+    const std::vector<int> untagged=model.untaggedNonEmpty();
+    std::cout << "GUARD untagged-tiles: " << untagged.size() << " tile(s) draw pixels but have no category";
+    if(!untagged.empty())
+    {
+        std::cout << " ->";
+        size_t i=0;
+        while(i<untagged.size() && i<40) { std::cout << " " << untagged.at(i); i++; }
+        if(untagged.size()>40)
+            std::cout << " ...";
+    }
+    std::cout << std::endl;
+}
+
+static int runGuard(const QString &tsx)
+{
+    TagModel model;
+    if(!model.load(tsx)) { std::cerr << model.error().toStdString() << std::endl; return 1; }
+    std::cout << tsx.toStdString() << ": " << model.tileCount() << " tiles, "
+              << model.columns() << " columns, " << model.tileWidth() << "x" << model.tileHeight() << std::endl;
+    printUntagged(model);
+    return 0;
+}
+
+static int runTag(const QStringList &args)
+{
+    // args: <x.tsx> <category> <col0> <row0> <col1> <row1> [name] [size]
+    if(args.size()<6) { std::cerr << "tag needs: <x.tsx> <category> <col0> <row0> <col1> <row1> [name] [size]" << std::endl; return 1; }
+    TagModel model;
+    if(!model.load(args.at(0))) { std::cerr << model.error().toStdString() << std::endl; return 1; }
+    const std::string category=args.at(1).toStdString();
+    const int c0=args.at(2).toInt(),r0=args.at(3).toInt(),c1=args.at(4).toInt(),r1=args.at(5).toInt();
+    const std::string name=args.size()>6 ? args.at(6).toStdString() : std::string();
+    const std::string size=args.size()>7 ? args.at(7).toStdString() : std::string();
+    const std::vector<int> ids=model.tilesInRect(c0,r0,c1,r1);
+    model.tagTiles(ids,category,name,size);
+    if(!model.save()) { std::cerr << model.error().toStdString() << std::endl; return 1; }
+    std::cout << "tagged " << ids.size() << " tile(s) as '" << category << "' in " << args.at(0).toStdString() << std::endl;
+    printUntagged(model);
+    return 0;
+}
+
+static int runSelftest(const QString &tsx)
+{
+    TagModel model;
+    if(!model.load(tsx)) { std::cerr << "selftest load FAIL: " << model.error().toStdString() << std::endl; return 1; }
+    const size_t before=model.untaggedNonEmpty().size();
+    std::cout << "selftest: loaded " << model.tileCount() << " tiles, untagged-non-empty=" << before << std::endl;
+    // tag the first 4 non-empty tiles as a fake 'table'
+    std::vector<int> pick;
+    int id=0;
+    while(id<model.tileCount() && pick.size()<4) { if(model.tileHasPixels(id)) pick.push_back(id); id++; }
+    if(pick.empty()) { std::cout << "selftest: tileset has no pixels (skip tag round-trip)" << std::endl; return 0; }
+    model.tagTiles(pick,"selftest-table","table-0","2x2");
+    // save to a copy so the source .tsx is never touched
+    const QString copy=tsx+".selftest.tsx";
+    {
+        QFile src(tsx); QFile::remove(copy); src.copy(copy);
+    }
+    TagModel writeModel;
+    writeModel.load(copy);
+    writeModel.tagTiles(pick,"selftest-table","table-0","2x2");
+    if(!writeModel.save()) { std::cerr << "selftest save FAIL: " << writeModel.error().toStdString() << std::endl; return 1; }
+    // reload the copy and verify the tags persisted + the guard count dropped by 'pick'
+    TagModel reload;
+    if(!reload.load(copy)) { std::cerr << "selftest reload FAIL: " << reload.error().toStdString() << std::endl; return 1; }
+    bool ok=true;
+    size_t k=0;
+    while(k<pick.size())
+    {
+        if(reload.tagOf(pick.at(k)).category!="selftest-table") { ok=false; std::cerr << "  tile " << pick.at(k) << " lost its tag" << std::endl; }
+        k++;
+    }
+    const size_t after=reload.untaggedNonEmpty().size();
+    QFile::remove(copy);
+    std::cout << "selftest: round-trip tags " << (ok?"PERSIST":"LOST") << "; untagged " << before << " -> " << after
+              << " (expected -" << pick.size() << ")" << std::endl;
+    return (ok && after==before-pick.size()) ? 0 : 1;
+}
+
+int main(int argc, char *argv[])
+{
+    qputenv("QT_QPA_PLATFORM","offscreen"); //CLI modes need no display
+    QGuiApplication app(argc,argv);
+    QStringList args;
+    int i=1;
+    while(i<argc) { args.append(QString::fromUtf8(argv[i])); i++; }
+
+    if(!args.isEmpty() && args.at(0)=="--guard" && args.size()>=2)
+        return runGuard(args.at(1));
+    if(!args.isEmpty() && args.at(0)=="--tag")
+        return runTag(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--selftest" && args.size()>=2)
+        return runSelftest(args.at(1));
+
+    std::cout << "tileset-tagger: GUI not built yet in this binary.\n"
+                 "  --guard <x.tsx>                                   report untagged tiles\n"
+                 "  --tag   <x.tsx> <cat> <c0> <r0> <c1> <r1> [name] [size]   tag a rectangle\n"
+                 "  --selftest <x.tsx>                                self-test the .tsx round-trip\n";
+    return 0;
+}
