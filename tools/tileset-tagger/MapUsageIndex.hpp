@@ -47,6 +47,16 @@ public:
         int ledgeCells;
     };
 
+    // Per-tile stats for the whole tileset, from ONE scan of the maps — for the
+    // --suggest bootstrap (auto-tag the unambiguous terrain).
+    struct TileStat {
+        std::map<std::string,int> layerCounts;   // placement layer -> count
+        int total;
+        int walkableCells;
+        int blockedCells;
+        int ledgeCells;
+    };
+
     MapUsageIndex();
     ~MapUsageIndex();
 
@@ -59,6 +69,8 @@ public:
     // descending usage count.  Also fills the aggregate stats (see lastStats()).
     std::vector<Usage> findUsages(const std::vector<int> &tileIds);
     const GroupStats &lastStats() const;   // stats from the last findUsages()
+    // One scan of all maps -> per-tile-id placement layer + effective walkability.
+    std::map<int,TileStat> analyzeAllTiles();
 
     // Composite-render a map's tile layers to an image (cached).
     QImage render(const QString &mapPath);

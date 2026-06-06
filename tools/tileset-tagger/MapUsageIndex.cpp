@@ -314,6 +314,99 @@ QImage MapUsageIndex::render(const QString &mapPath)
     return img;
 }
 
+std::map<int,MapUsageIndex::TileStat> MapUsageIndex::analyzeAllTiles()
+{
+    std::map<int,TileStat> out;
+    size_t ci=0;
+    while(ci<candidates_.size())
+    {
+        Tiled::Map *m=mapFor(candidates_.at(ci));
+        if(m!=nullptr)
+        {
+            Tiled::Tileset *target=nullptr;
+            const QVector<Tiled::SharedTileset> &tss=m->tilesets();
+            int t=0;
+            while(t<tss.size())
+            {
+                const QString fn=QFileInfo(tss.at(t)->fileName()).canonicalFilePath();
+                if(!fn.isEmpty() && fn==tsxCanonical_)
+                    target=tss.at(t).data();
+                t++;
+            }
+            if(target!=nullptr)
+            {
+                std::vector<Tiled::TileLayer*> layers;
+                collectTileLayers(m->layers(),layers);
+                Tiled::TileLayer *Lwalk=nullptr,*Lcoll=nullptr,*Ldirt=nullptr;
+                Tiled::TileLayer *Lll=nullptr,*Llr=nullptr,*Llt=nullptr,*Llb=nullptr;
+                std::vector<Tiled::TileLayer*> monsterLayers;
+                size_t sl=0;
+                while(sl<layers.size())
+                {
+                    Tiled::TileLayer *L=layers.at(sl);
+                    const QString n=L->name();
+                    if(n=="Walkable") Lwalk=L;
+                    else if(n=="Collisions") Lcoll=L;
+                    else if(n=="Dirt") Ldirt=L;
+                    else if(n=="LedgesLeft") Lll=L;
+                    else if(n=="LedgesRight") Llr=L;
+                    else if(n=="LedgesTop" || n=="LedgesUp") Llt=L;
+                    else if(n=="LedgesBottom" || n=="LedgesDown") Llb=L;
+                    else if(n=="Grass" || n=="OnGrass" || n=="Water" || n=="Lava") monsterLayers.push_back(L);
+                    sl++;
+                }
+                size_t li=0;
+                while(li<layers.size())
+                {
+                    Tiled::TileLayer *tl=layers.at(li);
+                    const int w=tl->width();
+                    const int h=tl->height();
+                    const std::string layerName=tl->name().toStdString();
+                    int y=0;
+                    while(y<h)
+                    {
+                        int x=0;
+                        while(x<w)
+                        {
+                            const Tiled::Cell &c=tl->cellAt(x,y);
+                            if(!c.isEmpty() && c.tileset()==target)
+                            {
+                                TileStat &s=out[c.tileId()];
+                                s.total++;
+                                s.layerCounts[layerName]++;
+                                const int gx=tl->x()+x;
+                                const int gy=tl->y()+y;
+                                if(cellHasTile(Ldirt,gx,gy) || cellHasTile(Lll,gx,gy) ||
+                                   cellHasTile(Llr,gx,gy) || cellHasTile(Llt,gx,gy) || cellHasTile(Llb,gx,gy))
+                                    s.ledgeCells++;
+                                else
+                                {
+                                    bool monster=false;
+                                    size_t mi=0;
+                                    while(mi<monsterLayers.size() && !monster)
+                                    {
+                                        if(cellHasTile(monsterLayers.at(mi),gx,gy)) monster=true;
+                                        mi++;
+                                    }
+                                    if((cellHasTile(Lwalk,gx,gy) || monster) && !cellHasTile(Lcoll,gx,gy))
+                                        s.walkableCells++;
+                                    else
+                                        s.blockedCells++;
+                                }
+                            }
+                            x++;
+                        }
+                        y++;
+                    }
+                    li++;
+                }
+            }
+        }
+        ci++;
+    }
+    return out;
+}
+
 const MapUsageIndex::GroupStats &MapUsageIndex::lastStats() const { return lastStats_; }
 
 const QString &MapUsageIndex::error() const { return error_; }
