@@ -49,7 +49,7 @@ void TilesetView::selectCell(int col,int row)
     hasSelection_=true;
     selecting_=false;
     update();
-    emitSelection();
+    emitSelection(true);
 }
 
 QRect TilesetView::cellPixelRect(int col,int row) const
@@ -96,7 +96,7 @@ void TilesetView::cellAt(const QPoint &pt,int &col,int &row) const
         row=rows-1;
 }
 
-void TilesetView::emitSelection()
+void TilesetView::emitSelection(bool finished)
 {
     int c0 = selCol0_<selCol1_ ? selCol0_ : selCol1_;
     int c1 = selCol0_<selCol1_ ? selCol1_ : selCol0_;
@@ -104,6 +104,8 @@ void TilesetView::emitSelection()
     int r1 = selRow0_<selRow1_ ? selRow1_ : selRow0_;
     const int n=(int)model_->tilesInRect(c0,r0,c1,r1).size();
     emit selectionChanged(c0,r0,c1,r1,n);
+    if(finished)
+        emit selectionFinished(c0,r0,c1,r1,n);
 }
 
 void TilesetView::paintEvent(QPaintEvent *)
@@ -181,7 +183,7 @@ void TilesetView::mousePressEvent(QMouseEvent *event)
         selecting_=true;
         hasSelection_=true;
         update();
-        emitSelection();
+        emitSelection(false);
     }
 }
 
@@ -191,7 +193,7 @@ void TilesetView::mouseMoveEvent(QMouseEvent *event)
     {
         cellAt(event->position().toPoint(),selCol1_,selRow1_);
         update();
-        emitSelection();
+        emitSelection(false);
     }
 }
 
@@ -202,6 +204,6 @@ void TilesetView::mouseReleaseEvent(QMouseEvent *event)
         cellAt(event->position().toPoint(),selCol1_,selRow1_);
         selecting_=false;
         update();
-        emitSelection();
+        emitSelection(true);
     }
 }

@@ -7,6 +7,9 @@ cmake_minimum_required(VERSION 3.20)
 project(tileset_tagger LANGUAGES C CXX)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
+# vendored libtiled (catchchallenger_tiled): decodes .tmx layers (base64 +
+# zstd/zlib/csv) so the tool can show where a tile group is used on real maps.
+include(${CC_REPO_ROOT}/client/libqtcatchchallenger/libtiled.cmake)
 
 find_package(Qt6 COMPONENTS Core Xml Gui Widgets REQUIRED)
 
@@ -15,9 +18,12 @@ add_executable(tileset-tagger
     TagModel.cpp
     TilesetView.cpp
     MainWindow.cpp
+    MapUsageIndex.cpp
+    MapUsageView.cpp
 )
 
 target_link_libraries(tileset-tagger PRIVATE
+    catchchallenger_tiled
     Qt6::Core
     Qt6::Xml
     Qt6::Gui
