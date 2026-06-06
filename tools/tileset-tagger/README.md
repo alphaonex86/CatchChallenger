@@ -112,9 +112,11 @@ tileset-tagger --genmap  <struct.json> <tileset-dir> <out.tmx> [W H seed]   # ge
    ```
    It **auto-tags on open** (no separate step). **Maximise** the window and the
    tileset expands to fill it; **Zoom +/−** or **Ctrl+mouse-wheel** to resize tiles.
-2. **REVIEW each tile to "verified".** Tiles are coloured by state:
-   **red** = untagged · **yellow** = an auto-guess to review · **faint tint** =
-   verified. For a correct yellow guess, drag a rectangle over it and click
+2. **REVIEW each tile to "verified".** A transparency **checkerboard** (grey
+   half-tile squares) sits behind the sheet so transparent tile parts read clearly,
+   and tiles are overlaid by state: **red** = untagged · **yellow** = auto-guess to
+   review · **green** = verified (toggle the overlay with the *show state colours*
+   checkbox to see raw art). For a correct yellow guess, drag a rectangle over it and click
    **Mark selection verified** (keeps the category, turns it tinted). For a wrong
    guess, pick the right **category** and **Tag**. **Mark selection verified**
    applies the current category + checkboxes as verified **and auto-advances to the

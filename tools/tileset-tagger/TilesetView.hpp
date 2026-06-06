@@ -16,7 +16,7 @@ public:
     explicit TilesetView(QWidget *parent=nullptr);
     void setModel(TagModel *model);     // not owned
     void refresh();                     // repaint after the model changed
-    void setShowUntagged(bool on);
+    void setShowStates(bool on);
     void setZoom(int z);
     int zoom() const;
     void selectCell(int col,int row);   // programmatic selection (jump-to-untagged)
@@ -39,7 +39,7 @@ protected:
 private:
     TagModel *model_;
     int zoom_;
-    bool showUntagged_;
+    bool showStates_;
     bool selecting_;
     bool hasSelection_;
     int selCol0_;

@@ -126,7 +126,7 @@ MainWindow::MainWindow() :
     line3->setFrameShape(QFrame::HLine);
     lay->addWidget(line3);
 
-    QCheckBox *showUntagged=new QCheckBox(tr("highlight untagged (red)"),panel);
+    QCheckBox *showUntagged=new QCheckBox(tr("show state colours (✗ red · ⚠ yellow · ✓ green)"),panel);
     showUntagged->setChecked(true);
     lay->addWidget(showUntagged);
     guardLabel_=new QLabel(panel);
@@ -579,7 +579,7 @@ void MainWindow::onMapPicked(int index)
 
 void MainWindow::onToggleUntagged(bool on)
 {
-    view_->setShowUntagged(on);
+    view_->setShowStates(on);
 }
 
 void MainWindow::onNextUntagged()
