@@ -27,7 +27,7 @@ static QStringList tagCategories()
 {
     QStringList c;
     c << "ground" << "path" << "sand" << "grass-short" << "grass-tall"
-      << "water" << "water-edge" << "waterfall"
+      << "water" << "water-edge" << "waterfall" << "lava"
       << "ledge-down" << "ledge-up" << "ledge-left" << "ledge-right"
       << "cliff" << "rock" << "tree-trunk" << "tree-canopy" << "bush" << "flower"
       << "building-wall" << "building-roof" << "door" << "window" << "stairs" << "sign" << "fence"
@@ -44,7 +44,10 @@ MainWindow::MainWindow() :
     usage_(new MapUsageIndex()),
     usageView_(new MapUsageView()),
     categoryBox_(nullptr),
+    layerBox_(nullptr),
     mapCombo_(nullptr),
+    walkable_(nullptr),
+    animated_(nullptr),
     hRepeat_(nullptr),
     hMidRepeat_(nullptr),
     vRepeat_(nullptr),
@@ -71,10 +74,26 @@ MainWindow::MainWindow() :
     QPushButton *openBtn=new QPushButton(tr("Open .tsx…"),panel);
     lay->addWidget(openBtn);
 
-    lay->addWidget(new QLabel(tr("Category:"),panel));
+    lay->addWidget(new QLabel(tr("Category (what it is):"),panel));
     categoryBox_=new QComboBox(panel);
     categoryBox_->addItems(tagCategories());     // fixed list, NOT editable
     lay->addWidget(categoryBox_);
+
+    lay->addWidget(new QLabel(tr("Engine layer:"),panel));
+    layerBox_=new QComboBox(panel);
+    layerBox_->addItem("walkable");
+    layerBox_->addItem("grass");
+    layerBox_->addItem("water");
+    layerBox_->addItem("lava");
+    layerBox_->addItem("ledge");
+    layerBox_->addItem("collision");
+    layerBox_->addItem("over");
+    lay->addWidget(layerBox_);
+
+    walkable_=new QCheckBox(tr("walkable (player can stand on it)"),panel);
+    animated_=new QCheckBox(tr("animated"),panel);
+    lay->addWidget(walkable_);
+    lay->addWidget(animated_);
 
     QFrame *line=new QFrame(panel);
     line->setFrameShape(QFrame::HLine);
@@ -198,7 +217,11 @@ void MainWindow::onTag()
     const int h=selR1_-selR0_+1;
     std::map<std::string,std::string> attrs;
     attrs["size"]=std::to_string(w)+"x"+std::to_string(h);
-    attrs["name"]=category+"@"+std::to_string(selC0_)+","+std::to_string(selR0_);
+    attrs["group"]=category+"@"+std::to_string(selC0_)+","+std::to_string(selR0_);
+    attrs["layer"]=layerBox_->currentText().toStdString();
+    attrs["walkable"]= walkable_->isChecked() ? "true" : "false";
+    if(animated_->isChecked())
+        attrs["animated"]="true";
     if(hRepeat_->isChecked())
         attrs["horizontalRepeat"]="true";
     if(hMidRepeat_->isChecked())
@@ -272,6 +295,7 @@ void MainWindow::onSelectionFinished(int col0,int row0,int col1,int row1,int)
         i++;
     }
     mapCombo_->blockSignals(false);
+    prefillFromUsage(ids);   // guess category/layer/walkable/repeats for validation
     if(currentUsages_.empty())
     {
         usageView_->clearUsage();
@@ -282,6 +306,75 @@ void MainWindow::onSelectionFinished(int col0,int row0,int col1,int row1,int)
         mapCombo_->setCurrentIndex(0);
         onMapPicked(0);
     }
+}
+
+// Map a CatchChallenger engine layer name to (layer-enum, category-guess,
+// walkable) — used to PRE-FILL the controls from where the tiles really sit.
+static void layerToGuess(const QString &rawLayer,QString &layerVal,QString &category,bool &walkable)
+{
+    const QString L=rawLayer.toLower();
+    walkable=true;
+    if(L.contains("water")) { layerVal="water"; category="water"; walkable=false; }
+    else if(L.contains("lava")) { layerVal="lava"; category="lava"; walkable=false; }
+    else if(L.contains("collision")) { layerVal="collision"; category="building-wall"; walkable=false; }
+    else if(L.contains("walkbehind") || L=="over" || L=="back") { layerVal="over"; category="tree-canopy"; walkable=true; }
+    else if(L.contains("ledge"))
+    {
+        layerVal="ledge";
+        walkable=true;
+        if(L.contains("down")) category="ledge-down";
+        else if(L.contains("up")) category="ledge-up";
+        else if(L.contains("left")) category="ledge-left";
+        else if(L.contains("right")) category="ledge-right";
+        else category="ledge-down";
+    }
+    else if(L.contains("grass")) { layerVal="grass"; category="grass-tall"; walkable=true; }
+    else if(L.contains("dirt")) { layerVal="walkable"; category="path"; walkable=true; }
+    else { layerVal="walkable"; category="ground"; walkable=true; }
+}
+
+static void setComboTo(QComboBox *box,const QString &text)
+{
+    const int i=box->findText(text);
+    if(i>=0)
+        box->setCurrentIndex(i);
+}
+
+void MainWindow::prefillFromUsage(const std::vector<int> &ids)
+{
+    const MapUsageIndex::GroupStats &st=usage_->lastStats();
+    if(st.totalCells<=0)
+        return;     // not used anywhere: leave the controls as the user left them
+
+    // dominant engine layer across all maps
+    QString domLayer;
+    int best=-1;
+    std::map<std::string,int>::const_iterator it=st.layerCounts.begin();
+    while(it!=st.layerCounts.cend())
+    {
+        if(it->second>best) { best=it->second; domLayer=QString::fromStdString(it->first); }
+        ++it;
+    }
+    QString layerVal;
+    QString category;
+    bool walkable=true;
+    layerToGuess(domLayer,layerVal,category,walkable);
+    setComboTo(categoryBox_,category);
+    setComboTo(layerBox_,layerVal);
+    walkable_->setChecked(walkable);
+
+    // repeat flags: the SAME tile recurs in >=30% of the group's cells
+    hRepeat_->setChecked(st.horizontalRepeatCells*100 >= st.totalCells*30);
+    vRepeat_->setChecked(st.verticalRepeatCells*100 >= st.totalCells*30);
+
+    // animated if any selected tile carries an animation property
+    bool anim=false;
+    size_t k=0;
+    while(k<ids.size() && !anim) { if(model_->tileAnimated(ids.at(k))) anim=true; k++; }
+    animated_->setChecked(anim);
+
+    statusBar()->showMessage(tr("pre-filled from '%1' layer — validate or edit, then Tag")
+                             .arg(domLayer.isEmpty()?tr("?"):domLayer),5000);
 }
 
 void MainWindow::onMapPicked(int index)

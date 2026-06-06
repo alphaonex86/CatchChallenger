@@ -57,7 +57,7 @@ static int runTag(const QStringList &args)
     const std::string category=args.at(1).toStdString();
     const int c0=args.at(2).toInt(),r0=args.at(3).toInt(),c1=args.at(4).toInt(),r1=args.at(5).toInt();
     std::map<std::string,std::string> attrs;
-    if(args.size()>6 && !args.at(6).isEmpty()) attrs["name"]=args.at(6).toStdString();
+    if(args.size()>6 && !args.at(6).isEmpty()) attrs["group"]=args.at(6).toStdString();
     if(args.size()>7 && !args.at(7).isEmpty()) attrs["size"]=args.at(7).toStdString();
     const std::vector<int> ids=model.tilesInRect(c0,r0,c1,r1);
     model.tagTiles(ids,category,attrs);
@@ -128,6 +128,23 @@ static int runUsage(const QStringList &args)
         std::cout << "  " << u.mapLabel.toStdString() << "  " << u.cells.size() << " cell(s)  ("
                   << u.mapW << "x" << u.mapH << ")" << std::endl;
         i++;
+    }
+    // PRE-FILL inference data: which engine layer dominates + same-tile runs.
+    const MapUsageIndex::GroupStats &st=index.lastStats();
+    std::string domLayer;
+    int best=-1;
+    std::map<std::string,int>::const_iterator li=st.layerCounts.begin();
+    while(li!=st.layerCounts.cend())
+    {
+        if(li->second>best) { best=li->second; domLayer=li->first; }
+        ++li;
+    }
+    if(st.totalCells>0)
+    {
+        std::cout << "prefill: dominant layer '" << domLayer << "'  ("
+                  << (best*100/st.totalCells) << "% of " << st.totalCells << " cells)"
+                  << "  hRepeat=" << (st.horizontalRepeatCells*100/st.totalCells) << "%"
+                  << "  vRepeat=" << (st.verticalRepeatCells*100/st.totalCells) << "%" << std::endl;
     }
     if(!usages.empty())
     {
