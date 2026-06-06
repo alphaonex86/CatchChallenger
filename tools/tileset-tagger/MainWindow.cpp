@@ -134,6 +134,7 @@ MainWindow::MainWindow() :
     guardLabel_(nullptr),
     wasComplete_(false),
     currentUsages_(),
+    currentGroupNum_(-1),
     derivedLayer_(),
     derivedWalkable_(-1),
     derivedFromMaps_(false),
@@ -614,17 +615,23 @@ void MainWindow::onSelection(int tileCount)
     QString grp;
     if(!selIds.empty())
         grp=QString::fromStdString(model_->tagOf(selIds.front()).attr("group"));
+    // the group NUMBER: an existing tag's anchor, else this selection's future anchor.
+    if(!grp.isEmpty())
+        currentGroupNum_=groupNumberOf(grp,model_->columns());
+    else if(selC0_>=0)
+        currentGroupNum_=selR0_*model_->columns()+selC0_;
+    else
+        currentGroupNum_=-1;
     if(selC0_<0)
         selLabel_->setText(tr("no selection — drag tiles (Ctrl/Shift+drag adds, Ctrl+click toggles)"));
     else if(!grp.isEmpty())
     {
-        const int num=groupNumberOf(grp,model_->columns());
-        selLabel_->setText(tr("selection: %1 tile(s)  ·  group #%2").arg(tileCount).arg(num));
-        statusBar()->showMessage(tr("selected group #%1   (%2)").arg(num).arg(grp),5000);
+        selLabel_->setText(tr("selection: %1 tile(s)  ·  group #%2").arg(tileCount).arg(currentGroupNum_));
+        statusBar()->showMessage(tr("selected group #%1   (%2)").arg(currentGroupNum_).arg(grp),5000);
     }
     else
-        selLabel_->setText(tr("selection: %1 tile(s)  (bbox %2x%3 — new group)")
-                           .arg(tileCount).arg(selC1_-selC0_+1).arg(selR1_-selR0_+1));
+        selLabel_->setText(tr("selection: %1 tile(s)  ·  new group #%2")
+                           .arg(tileCount).arg(currentGroupNum_));
 }
 
 void MainWindow::onCategoryChanged(const QString &category)
@@ -885,7 +892,13 @@ void MainWindow::onMapPicked(int index)
     const MapUsageIndex::Usage &u=currentUsages_.at(index);
     const QImage img=usage_->render(u.mapPath);
     usageView_->setUsage(img,u.cells,u.tileW,u.tileH);   // fits the whole map; marching ants mark every cell
-    statusBar()->showMessage(tr("'%1' uses the group in %2 cell(s)").arg(u.mapLabel).arg((int)u.cells.size()),4000);
+    QString lbl=u.mapLabel;
+    if(lbl.endsWith(".tmx",Qt::CaseInsensitive))
+        lbl.chop(4);
+    // KEEP the group number in the message (persistent, timeout 0) so the selected
+    // group stays identifiable even after a map loads.
+    statusBar()->showMessage(tr("group #%1 · used in '%2' (%3 cell(s))")
+                             .arg(currentGroupNum_).arg(lbl).arg((int)u.cells.size()),0);
 }
 
 void MainWindow::onToggleUntagged(bool on)
