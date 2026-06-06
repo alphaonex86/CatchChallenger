@@ -169,27 +169,6 @@ static int runUsage(const QStringList &args)
     return 0;
 }
 
-// the unambiguous terrain layers map visual==logical 1:1; everything else
-// (wall/cliff/tree on Collisions, roof/canopy on WalkBehind, ground/path on
-// Walkable) is visually ambiguous and left for the human.
-static QString unambiguousCategory(const QString &layer,QString &normLayer)
-{
-    const QString L=layer.toLower();
-    if(L.contains("water")) { normLayer="water"; return "water"; }
-    if(L.contains("lava")) { normLayer="lava"; return "lava"; }
-    if(L.contains("ledge"))
-    {
-        normLayer="ledge";
-        if(L.contains("down")) return "ledge-down";
-        if(L.contains("up")) return "ledge-up";
-        if(L.contains("left")) return "ledge-left";
-        if(L.contains("right")) return "ledge-right";
-        return "ledge-down";
-    }
-    if(L=="grass") { normLayer="grass"; return "grass-tall"; }   // tall-grass layer (not OnGrass)
-    return QString();   // ambiguous -> human
-}
-
 static int suggestOne(const QString &tsx)
 {
     TagModel model;
@@ -197,33 +176,33 @@ static int suggestOne(const QString &tsx)
     MapUsageIndex index;
     index.build(tsx);
     const std::map<int,MapUsageIndex::TileStat> stats=index.analyzeAllTiles();
-    int applied=0,ambiguous=0,alreadyTagged=0;
+    int sure=0,guess=0,alreadyTagged=0;
     std::map<int,MapUsageIndex::TileStat>::const_iterator it=stats.begin();
     while(it!=stats.cend())
     {
         const int id=it->first;
         const MapUsageIndex::TileStat &s=it->second;
         if(!model.tagOf(id).category.empty()) { alreadyTagged++; ++it; continue; }
-        QString dom;
-        int best=-1;
-        std::map<std::string,int>::const_iterator l=s.layerCounts.begin();
-        while(l!=s.layerCounts.cend()) { if(l->second>best) { best=l->second; dom=QString::fromStdString(l->first); } ++l; }
-        QString norm;
-        const QString cat=unambiguousCategory(dom,norm);
-        if(cat.isEmpty()) { ambiguous++; ++it; continue; }
+        std::string norm;
+        bool walk=true,high=true;
+        const std::string cat=MapUsageIndex::suggestCategory(s,model.tileGreenish(id),norm,walk,high);
+        if(cat.empty()) { ++it; continue; }
         std::map<std::string,std::string> attrs;
-        attrs["layer"]=norm.toStdString();
-        attrs["walkable"]= (s.walkableCells+s.ledgeCells)>=s.blockedCells ? "true" : "false";
+        attrs["layer"]=norm;
+        attrs["walkable"]= walk ? "true" : "false";
+        if(!high)
+            attrs["auto"]="guess";        // low-confidence -> flag for human review
         std::vector<int> one;
         one.push_back(id);
-        model.tagTiles(one,cat.toStdString(),attrs);
-        applied++;
+        model.tagTiles(one,cat,attrs);
+        if(high) sure++; else guess++;
         ++it;
     }
     if(!model.save()) { std::cerr << model.error().toStdString() << std::endl; return 1; }
     const size_t remaining=model.untaggedNonEmpty().size();
-    std::cout << QFileInfo(tsx).fileName().toStdString() << ": +" << applied << " terrain auto-tagged ("
-              << index.candidateCount() << " maps), " << remaining << " left for the human" << std::endl;
+    std::cout << QFileInfo(tsx).fileName().toStdString() << ": " << sure << " sure + " << guess
+              << " to-review auto-tagged (" << index.candidateCount() << " maps), "
+              << remaining << " untagged" << std::endl;
     return 0;
 }
 

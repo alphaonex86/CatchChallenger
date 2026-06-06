@@ -60,6 +60,7 @@ public:
     const TileTag &tagOf(int tileId) const;
     bool tileHasPixels(int tileId) const;          // any non-transparent pixel?
     bool tileAnimated(int tileId) const;           // carries an animation property?
+    bool tileGreenish(int tileId) const;           // green-dominant art (vegetation hint)
     std::vector<int> untaggedNonEmpty() const;     // the GUARD: pixels but no category
     std::vector<std::string> categoriesUsed() const;
 

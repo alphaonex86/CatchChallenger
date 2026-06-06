@@ -138,9 +138,14 @@ void TilesetView::paintEvent(QPaintEvent *)
         const TagModel::TileTag &tag=model_->tagOf(id);
         if(!tag.category.empty())
         {
-            QColor col=categoryColor(tag.category);
-            col.setAlpha(70);
-            p.fillRect(cell,col);
+            if(tag.attr("auto")=="guess")
+                p.fillRect(cell,QColor(255,210,0,110));   // to-review auto-guess (yellow)
+            else
+            {
+                QColor col=categoryColor(tag.category);
+                col.setAlpha(70);
+                p.fillRect(cell,col);
+            }
         }
         else if(showUntagged_ && model_->tileHasPixels(id))
         {

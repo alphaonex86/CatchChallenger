@@ -351,25 +351,6 @@ static void setComboTo(QComboBox *box,const QString &text)
         box->setCurrentIndex(i);
 }
 
-// unambiguous terrain layer -> category (visual==logical); "" = leave to human.
-static QString unambiguousCategoryFor(const QString &layer,QString &normLayer)
-{
-    const QString L=layer.toLower();
-    if(L.contains("water")) { normLayer="water"; return "water"; }
-    if(L.contains("lava")) { normLayer="lava"; return "lava"; }
-    if(L.contains("ledge"))
-    {
-        normLayer="ledge";
-        if(L.contains("down")) return "ledge-down";
-        if(L.contains("up")) return "ledge-up";
-        if(L.contains("left")) return "ledge-left";
-        if(L.contains("right")) return "ledge-right";
-        return "ledge-down";
-    }
-    if(L=="grass") { normLayer="grass"; return "grass-tall"; }
-    return QString();
-}
-
 void MainWindow::onSuggest()
 {
     if(usage_->candidateCount()==0)
@@ -379,7 +360,7 @@ void MainWindow::onSuggest()
     }
     QApplication::setOverrideCursor(Qt::WaitCursor);
     const std::map<int,MapUsageIndex::TileStat> stats=usage_->analyzeAllTiles();
-    int applied=0;
+    int sure=0,guess=0;
     std::map<int,MapUsageIndex::TileStat>::const_iterator it=stats.begin();
     while(it!=stats.cend())
     {
@@ -387,21 +368,20 @@ void MainWindow::onSuggest()
         const MapUsageIndex::TileStat &s=it->second;
         if(model_->tagOf(id).category.empty())
         {
-            QString dom;
-            int best=-1;
-            std::map<std::string,int>::const_iterator l=s.layerCounts.begin();
-            while(l!=s.layerCounts.cend()) { if(l->second>best) { best=l->second; dom=QString::fromStdString(l->first); } ++l; }
-            QString norm;
-            const QString cat=unambiguousCategoryFor(dom,norm);
-            if(!cat.isEmpty())
+            std::string norm;
+            bool walk=true,high=true;
+            const std::string cat=MapUsageIndex::suggestCategory(s,model_->tileGreenish(id),norm,walk,high);
+            if(!cat.empty())
             {
                 std::map<std::string,std::string> attrs;
-                attrs["layer"]=norm.toStdString();
-                attrs["walkable"]= (s.walkableCells+s.ledgeCells)>=s.blockedCells ? "true" : "false";
+                attrs["layer"]=norm;
+                attrs["walkable"]= walk ? "true" : "false";
+                if(!high)
+                    attrs["auto"]="guess";   // low-confidence -> shown yellow for review
                 std::vector<int> one;
                 one.push_back(id);
-                model_->tagTiles(one,cat.toStdString(),attrs);
-                applied++;
+                model_->tagTiles(one,cat,attrs);
+                if(high) sure++; else guess++;
             }
         }
         ++it;
@@ -410,7 +390,7 @@ void MainWindow::onSuggest()
     view_->refresh();
     refreshGuard();
     updateTitle();
-    statusBar()->showMessage(tr("suggested %1 terrain tile(s) (water/grass/ledge/lava) — set the rest by eye, then Save").arg(applied),6000);
+    statusBar()->showMessage(tr("auto-tagged %1 sure + %2 to-review (yellow) — fix the wrong guesses, then Save").arg(sure).arg(guess),7000);
 }
 
 void MainWindow::prefillFromUsage(const std::vector<int> &ids)

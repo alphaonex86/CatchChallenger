@@ -97,18 +97,20 @@ tileset-tagger --suggest  <x.tsx | tileset-dir>         # bootstrap: auto-tag th
 
 ## How to start
 
-1. **Bootstrap the terrain** for every tileset in one go (auto-tags
-   water/grass/ledge/lava from the maps — the unambiguous part):
+1. **Auto-tag** every tileset in one go — from the maps, the tool tags each used
+   tile with a best guess (terrain exactly; walls/trees/ground/roofs by layer +
+   colour):
    ```
    tileset-tagger --suggest /home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen2/tileset
    tileset-tagger --suggest /home/user/Desktop/CatchChallenger/CatchChallenger-datapack/map/tileset
    ```
    (or click **Suggest terrain** per tileset in the GUI). Tags go to the sidecar.
-2. **Open each tileset** in the GUI and tag what's still **red** — the visually
-   ambiguous tiles (wall vs cliff vs tree, ground vs path, roof vs canopy) that
-   only a human can name. Drag a rectangle over an object, watch the **Map usage**
-   panel to see it in situ, accept/fix the pre-filled category, **Tag**. **Jump to
-   next untagged** walks the rest. **Save** when the red count hits 0.
+2. **Open each tileset** in the GUI and FIX the few wrong guesses. Tiles are
+   coloured: **yellow** = a low-confidence guess to review, faint tint = confident,
+   **red** = untagged (tiles never used on a map). Skim the yellow ones; where a
+   guess is wrong (a cliff tagged `building-wall`, a roof tagged `tree-canopy`),
+   drag a rectangle over the cluster, pick the right **category**, **Tag**. The
+   **Map usage** panel shows each in situ. **Save** when done.
 3. Do the model tilesets (`gen2/tileset/`) and the target (`map/tileset/`); then
    the generator learns from the model and composes onto the target.
 
