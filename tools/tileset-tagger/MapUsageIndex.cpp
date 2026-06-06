@@ -4,6 +4,7 @@
 #include "layer.h"
 #include "map.h"
 #include "mapreader.h"
+#include "orthogonalrenderer.h"
 #include "tile.h"
 #include "tilelayer.h"
 #include "tileset.h"
@@ -285,6 +286,12 @@ QImage MapUsageIndex::render(const QString &mapPath)
     QImage img(m->width()*tw,m->height()*th,QImage::Format_ARGB32_Premultiplied);
     img.fill(QColor(28,28,38));
     QPainter p(&img);
+    // Render with libtiled's OWN OrthogonalRenderer (exactly what Tiled draws):
+    // it applies per-cell FLIP flags (H/V/anti-diagonal), tile draw-offsets and
+    // tile sizes — the manual drawPixmap loop ignored all of that, so flipped
+    // tiles (very common in these maps: mirrored trees/cliffs/roofs) came out
+    // wrong.  Composite every visible tile layer bottom-to-top.
+    Tiled::OrthogonalRenderer renderer(m);
     std::vector<Tiled::TileLayer*> layers;
     collectTileLayers(m->layers(),layers);
     size_t li=0;
@@ -292,28 +299,7 @@ QImage MapUsageIndex::render(const QString &mapPath)
     {
         Tiled::TileLayer *tl=layers.at(li);
         if(tl->isVisible())
-        {
-            const int w=tl->width();
-            const int h=tl->height();
-            int y=0;
-            while(y<h)
-            {
-                int x=0;
-                while(x<w)
-                {
-                    const Tiled::Cell &c=tl->cellAt(x,y);
-                    Tiled::Tile *tile=c.tile();
-                    if(tile!=nullptr)
-                    {
-                        const QPixmap &pm=tile->image();
-                        if(!pm.isNull())
-                            p.drawPixmap((tl->x()+x)*tw,(tl->y()+y)*th,pm);
-                    }
-                    x++;
-                }
-                y++;
-            }
-        }
+            renderer.drawTileLayer(&p,tl);
         li++;
     }
     p.end();

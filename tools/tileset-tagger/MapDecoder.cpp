@@ -5,6 +5,7 @@
 #include "layer.h"
 #include "map.h"
 #include "mapreader.h"
+#include "orthogonalrenderer.h"
 #include "tile.h"
 #include "tilelayer.h"
 #include "tileset.h"
@@ -114,29 +115,18 @@ bool MapDecoder::decode(const QString &mapPath, Result &out, QString &error)
     out.categoryRender=QImage(out.w*tw,out.h*th,QImage::Format_ARGB32_Premultiplied);
     out.categoryRender.fill(QColor(28,28,38));
 
-    // real render: composite all visible tile layers bottom-to-top
+    // real render: composite all visible tile layers bottom-to-top, using libtiled's
+    // OWN renderer (handles per-cell FLIP flags + the single-image tileset sub-rect +
+    // tile offsets — the manual drawPixmap loop got all of that wrong).
     {
         QPainter rp(&out.realRender);
+        Tiled::OrthogonalRenderer renderer(m.get());
         size_t li=0;
         while(li<layers.size())
         {
             Tiled::TileLayer *tl=layers.at(li);
             if(tl->isVisible())
-            {
-                int y=0;
-                while(y<tl->height())
-                {
-                    int x=0;
-                    while(x<tl->width())
-                    {
-                        Tiled::Tile *tile=tl->cellAt(x,y).tile();
-                        if(tile!=nullptr && !tile->image().isNull())
-                            rp.drawPixmap((tl->x()+x)*tw,(tl->y()+y)*th,tile->image());
-                        x++;
-                    }
-                    y++;
-                }
-            }
+                renderer.drawTileLayer(&rp,tl);
             li++;
         }
     }
