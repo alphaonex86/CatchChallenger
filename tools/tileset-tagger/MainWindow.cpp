@@ -36,6 +36,7 @@ static QStringList tagCategories()
       << "interior-floor" << "interior-wall" << "carpet" << "counter"
       << "table" << "chair" << "bed" << "shelf" << "bookshelf" << "fridge"
       << "computer" << "tv" << "plant-pot" << "decoration";
+    c.sort();   // alphabetical, easy to find
     return c;
 }
 
@@ -77,7 +78,7 @@ MainWindow::MainWindow() :
     QWidget *panel=new QWidget(dock);
     QVBoxLayout *lay=new QVBoxLayout(panel);
 
-    QPushButton *openBtn=new QPushButton(tr("Open .tsx…"),panel);
+    QPushButton *openBtn=new QPushButton(tr("Open tileset folder…"),panel);
     lay->addWidget(openBtn);
 
     // The tag is the VISUAL identity of the tile — what it looks like. The
@@ -115,10 +116,8 @@ MainWindow::MainWindow() :
 
     selLabel_=new QLabel(tr("no selection"),panel);
     lay->addWidget(selLabel_);
-    QPushButton *tagBtn=new QPushButton(tr("Tag selection"),panel);
-    QPushButton *verifyBtn=new QPushButton(tr("Mark selection verified (accept guesses)"),panel);
+    QPushButton *verifyBtn=new QPushButton(tr("✓ Verify selection → next  (apply + advance)"),panel);
     QPushButton *clearBtn=new QPushButton(tr("Clear tag on selection"),panel);
-    lay->addWidget(tagBtn);
     lay->addWidget(verifyBtn);
     lay->addWidget(clearBtn);
 
@@ -167,7 +166,6 @@ MainWindow::MainWindow() :
     addDockWidget(Qt::BottomDockWidgetArea,usageDock);
 
     connect(openBtn,&QPushButton::clicked,this,&MainWindow::onOpen);
-    connect(tagBtn,&QPushButton::clicked,this,&MainWindow::onTag);
     connect(verifyBtn,&QPushButton::clicked,this,&MainWindow::onVerify);
     connect(clearBtn,&QPushButton::clicked,this,&MainWindow::onClearTag);
     connect(saveBtn,&QPushButton::clicked,this,&MainWindow::onSave);
@@ -296,9 +294,9 @@ void MainWindow::onZoomOut() { view_->setZoom(view_->zoom()-1); }
 
 void MainWindow::onOpen()
 {
-    const QString path=QFileDialog::getOpenFileName(this,tr("Open tileset"),QString(),tr("Tiled tileset (*.tsx)"));
-    if(!path.isEmpty())
-        openTsx(path);
+    const QString dir=QFileDialog::getExistingDirectory(this,tr("Open a tileset folder"));
+    if(!dir.isEmpty())
+        openPath(dir);
 }
 
 // Apply the current category + control settings to the selection as a VERIFIED
@@ -369,7 +367,8 @@ void MainWindow::onVerify()
         statusBar()->showMessage(tr("select a tile/rectangle first"),5000);
         return;
     }
-    statusBar()->showMessage(tr("✓ verified %1 tile(s) as '%2' — moving to next").arg(n).arg(categoryBox_->currentText()),5000);
+    model_->save();                 // auto-persist so no work is lost (Save is optional)
+    statusBar()->showMessage(tr("✓ verified %1 tile(s) as '%2' (saved) — moving to next").arg(n).arg(categoryBox_->currentText()),5000);
     onNextUntagged();               // auto-advance to the next tile needing attention
 }
 
@@ -409,7 +408,11 @@ void MainWindow::onSelectionFinished(int col0,int row0,int col1,int row1,int)
         return;
     }
     QApplication::setOverrideCursor(Qt::WaitCursor);
-    currentUsages_=usage_->findUsages(ids);
+    // search the map for the FIRST tile of the selection only — a whole group (or an
+    // animated tile whose other frames aren't placed) still locates via its anchor.
+    std::vector<int> searchIds;
+    searchIds.push_back(ids.front());
+    currentUsages_=usage_->findUsages(searchIds);
     QApplication::restoreOverrideCursor();
     size_t i=0;
     while(i<currentUsages_.size())
