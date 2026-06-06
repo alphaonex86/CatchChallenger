@@ -93,6 +93,20 @@ static QString categoryDescription(const QString &c)
     return QObject::tr("Furniture/appliance object — decorative & blocked, NOT a wall. Pick exactly its tile(s); 1+ tiles.");
 }
 
+// A unique NUMBER (within the tileset) for a group: its anchor tile id, parsed
+// from the `group` attr "category@col,row" -> row*cols+col.  Small, stable (same
+// group -> same number every time), tileset-local.  -1 if it can't be parsed.
+static int groupNumberOf(const QString &groupAttr,int cols)
+{
+    const int at=groupAttr.lastIndexOf(QChar('@'));
+    if(at<0 || cols<1)
+        return -1;
+    const QStringList cr=groupAttr.mid(at+1).split(QChar(','));   // "col,row"
+    if(cr.size()!=2)
+        return -1;
+    return cr.at(1).toInt()*cols + cr.at(0).toInt();
+}
+
 MainWindow::MainWindow() :
     QMainWindow(),
     model_(new TagModel()),
@@ -557,12 +571,13 @@ void MainWindow::onVerify()
         statusBar()->showMessage(tr("select a tile/rectangle first"),5000);
         return;
     }
-    // the group just created (same id form as the saved 'group' attr) — captured now
-    // because onNextUntagged() moves the selection (and selC0_/selR0_) away.
+    // the group just created — its unique number + attr, captured NOW because
+    // onNextUntagged() moves the selection (and selC0_/selR0_) away.
     const QString grp=categoryBox_->currentText()+"@"+QString::number(selC0_)+","+QString::number(selR0_);
+    const int num=selR0_*model_->columns()+selC0_;
     model_->save();                 // auto-persist so no work is lost (Save is optional)
     onNextUntagged();               // auto-advance to the next tile needing attention
-    statusBar()->showMessage(tr("✓ created group %1  (%2 tile(s), saved) → next").arg(grp).arg(n),5000);
+    statusBar()->showMessage(tr("✓ created group #%1  (%2 tile(s), saved) → next").arg(num).arg(n),5000);
 }
 
 void MainWindow::onSave()
@@ -603,8 +618,9 @@ void MainWindow::onSelection(int tileCount)
         selLabel_->setText(tr("no selection — drag tiles (Ctrl/Shift+drag adds, Ctrl+click toggles)"));
     else if(!grp.isEmpty())
     {
-        selLabel_->setText(tr("selection: %1 tile(s)  ·  group: %2").arg(tileCount).arg(grp));
-        statusBar()->showMessage(tr("selected group: %1").arg(grp),5000);
+        const int num=groupNumberOf(grp,model_->columns());
+        selLabel_->setText(tr("selection: %1 tile(s)  ·  group #%2").arg(tileCount).arg(num));
+        statusBar()->showMessage(tr("selected group #%1   (%2)").arg(num).arg(grp),5000);
     }
     else
         selLabel_->setText(tr("selection: %1 tile(s)  (bbox %2x%3 — new group)")
@@ -678,7 +694,10 @@ void MainWindow::onSelectionFinished(int)
     while(i<currentUsages_.size())
     {
         const MapUsageIndex::Usage &u=currentUsages_.at(i);
-        mapCombo_->addItem(tr("%1  (%2 cells)").arg(u.mapLabel).arg((int)u.cells.size()));
+        QString lbl=u.mapLabel;                       // drop the ".tmx" — just the map name
+        if(lbl.endsWith(".tmx",Qt::CaseInsensitive))
+            lbl.chop(4);
+        mapCombo_->addItem(lbl);
         i++;
     }
     mapCombo_->blockSignals(false);
