@@ -1822,7 +1822,12 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
     unsigned int index=0;
 
     QString name = "building-"+QString::number(id);
-    unsigned int floorCount = 1 + ((double)rand()/RAND_MAX)*1.337;
+    //Generic houses are SINGLE-floor — multi-floor (floor-N folders) is reserved
+    //for big/special buildings, not plain houses (owner feedback: a building-N
+    //must not be a multi-floor building).  Keep the rand() draw so the
+    //deterministic building-placement stream downstream is unchanged.
+    ((void)((double)rand()/RAND_MAX));
+    unsigned int floorCount = 1;
     if(mainDoors.size() > 0){
         for(unsigned int i=0; i<floorCount; i++){
             Tiled::Map* room = new Tiled::Map(mapTemplate.tiledMap->orientation(),
@@ -2146,6 +2151,41 @@ void LoadMapAll::generateRoomContent(Tiled::Map &roomMap, const SettingsAll::Set
         }
 
         delete [] spots;
+    }
+
+    //---- Random townsfolk NPC: an interior must NOT be empty (owner feedback).
+    //generateRoom's writer turns any "bot" object in the Object group into an
+    //inline <bot> with a themed one-line message (botStepXml/BotKind_text), so a
+    //house feels lived-in.  Placed on a free floor tile, random skin + facing.
+    {
+        Tiled::ObjectGroup* objGroup=LoadMap::searchObjectGroupByName(roomMap,"Object");
+        Tiled::TileLayer* coll=LoadMap::searchTileLayerByName(roomMap,"Collisions");
+        Tiled::Tileset* invis=LoadMap::searchTilesetByName(roomMap,"invisible");
+        const int floorRows=roomMap.height()-wall.height-3; //walkable band (excl. back furniture row + bottom exit)
+        if(objGroup!=NULL && coll!=NULL && invis!=NULL && !setting.botSkins.empty() && floorRows>0)
+        {
+            int bx=-1,by=-1,tries=0;
+            while(tries<40 && bx<0)
+            {
+                const int tx=1+rand()%(roomMap.width()-2);
+                const int ty=wall.height+1+rand()%floorRows;
+                if(coll->cellAt(tx,ty).tile()==NULL && walkable->cellAt(tx,ty).tile()!=NULL)
+                { bx=tx; by=ty; }
+                tries++;
+            }
+            if(bx>=0)
+            {
+                const int tw=roomMap.tileWidth(), th=roomMap.tileHeight();
+                //object Y carries the engine's -1 tile correction, so add 1 row
+                Tiled::MapObject* npc=new Tiled::MapObject("","bot",QPointF(bx*tw,(by+1)*th),QSizeF(tw,th));
+                npc->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
+                static const char* const lookDirs[4]={"bottom","top","left","right"};
+                npc->setProperty("lookAt",lookDirs[rand()%4]);
+                Tiled::Cell botCell; botCell.setTile(invis->tileAt(0));
+                npc->setCell(botCell);
+                objGroup->addObject(npc);
+            }
+        }
     }
 
     for(Tiled::SharedTileset t: roomMap.tilesets()){
