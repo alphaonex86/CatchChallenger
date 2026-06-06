@@ -13,18 +13,19 @@ TilesetView::TilesetView(QWidget *parent) :
     zoom_(3.0),
     showStates_(true),
     selecting_(false),
-    hasSelection_(false),
-    selCol0_(0),
-    selRow0_(0),
-    selCol1_(0),
-    selRow1_(0)
+    additive_(false),
+    dragC0_(0),
+    dragR0_(0),
+    dragC1_(0),
+    dragR1_(0),
+    selected_()
 {
 }
 
 void TilesetView::setModel(TagModel *model)
 {
     model_=model;
-    hasSelection_=false;
+    selected_.clear();
     resize(sizeHint());   // a non-resizable scroll child must be resized explicitly
     updateGeometry();
     update();
@@ -34,14 +35,90 @@ void TilesetView::refresh() { update(); }
 
 void TilesetView::selectCell(int col,int row)
 {
-    selCol0_=col;
-    selRow0_=row;
-    selCol1_=col;
-    selRow1_=row;
-    hasSelection_=true;
+    selected_.clear();
+    if(model_!=nullptr)
+    {
+        const int id=row*model_->columns()+col;
+        if(id>=0)
+            selected_.insert(id);
+    }
     selecting_=false;
     update();
     emitSelection(true);
+}
+
+std::vector<int> TilesetView::selectedTiles() const
+{
+    std::vector<int> ids;
+    if(model_==nullptr)
+        return ids;
+    std::set<int>::const_iterator it=selected_.cbegin();
+    while(it!=selected_.cend())
+    {
+        if(*it>=0 && *it<model_->tileCount())
+            ids.push_back(*it);   // std::set iterates ascending
+        ++it;
+    }
+    return ids;
+}
+
+bool TilesetView::hasSelection() const { return !selected_.empty(); }
+
+void TilesetView::selectionBounds(int &c0,int &r0,int &c1,int &r1) const
+{
+    if(selected_.empty() || model_==nullptr)
+    {
+        c0=r0=c1=r1=-1;
+        return;
+    }
+    const int cols=model_->columns();
+    c0=cols; r0=2147483647; c1=-1; r1=-1;
+    std::set<int>::const_iterator it=selected_.cbegin();
+    while(it!=selected_.cend())
+    {
+        const int c=(*it)%cols;
+        const int r=(*it)/cols;
+        if(c<c0) c0=c;
+        if(c>c1) c1=c;
+        if(r<r0) r0=r;
+        if(r>r1) r1=r;
+        ++it;
+    }
+}
+
+// Fold the live rubber-band rectangle into the committed selection.  Ctrl/Shift+
+// click on a single already-selected cell REMOVES it (toggle); otherwise the
+// rectangle's cells are added (additive_) or replace the selection.
+void TilesetView::commitDrag()
+{
+    if(model_==nullptr)
+        return;
+    int c0 = dragC0_<dragC1_ ? dragC0_ : dragC1_;
+    int c1 = dragC0_<dragC1_ ? dragC1_ : dragC0_;
+    int r0 = dragR0_<dragR1_ ? dragR0_ : dragR1_;
+    int r1 = dragR0_<dragR1_ ? dragR1_ : dragR0_;
+    const int cols=model_->columns();
+    const bool singleCell=(c0==c1 && r0==r1);
+    if(!additive_)
+        selected_.clear();
+    int r=r0;
+    while(r<=r1)
+    {
+        int c=c0;
+        while(c<=c1)
+        {
+            const int id=r*cols+c;
+            if(c>=0 && c<cols && id>=0)
+            {
+                if(additive_ && singleCell && selected_.find(id)!=selected_.end())
+                    selected_.erase(id);
+                else
+                    selected_.insert(id);
+            }
+            c++;
+        }
+        r++;
+    }
 }
 
 QRect TilesetView::cellPixelRect(int col,int row) const
@@ -95,14 +172,10 @@ void TilesetView::cellAt(const QPoint &pt,int &col,int &row) const
 
 void TilesetView::emitSelection(bool finished)
 {
-    int c0 = selCol0_<selCol1_ ? selCol0_ : selCol1_;
-    int c1 = selCol0_<selCol1_ ? selCol1_ : selCol0_;
-    int r0 = selRow0_<selRow1_ ? selRow0_ : selRow1_;
-    int r1 = selRow0_<selRow1_ ? selRow1_ : selRow0_;
-    const int n=(int)model_->tilesInRect(c0,r0,c1,r1).size();
-    emit selectionChanged(c0,r0,c1,r1,n);
+    const int n=(int)selectedTiles().size();
+    emit selectionChanged(n);
     if(finished)
-        emit selectionFinished(c0,r0,c1,r1,n);
+        emit selectionFinished(n);
 }
 
 void TilesetView::paintEvent(QPaintEvent *)
@@ -179,13 +252,25 @@ void TilesetView::paintEvent(QPaintEvent *)
         while(gy<=img.height()) { p.drawLine(0,qRound(gy*zoom_),iw,qRound(gy*zoom_)); gy+=model_->tileHeight(); }
     }
 
-    // selection rectangle
-    if(hasSelection_)
+    // committed selection: fill every selected cell (works for non-rectangular sets)
     {
-        const int c0 = selCol0_<selCol1_ ? selCol0_ : selCol1_;
-        const int c1 = selCol0_<selCol1_ ? selCol1_ : selCol0_;
-        const int r0 = selRow0_<selRow1_ ? selRow0_ : selRow1_;
-        const int r1 = selRow0_<selRow1_ ? selRow1_ : selRow0_;
+        std::set<int>::const_iterator it=selected_.cbegin();
+        while(it!=selected_.cend())
+        {
+            const int c=(*it)%cols;
+            const int r=(*it)/cols;
+            const QRect cell(qRound(c*tw),qRound(r*th),qRound(tw),qRound(th));
+            p.fillRect(cell,QColor(90,170,255,80));
+            ++it;
+        }
+    }
+    // live rubber-band while dragging (outline of the rectangle being added/replaced)
+    if(selecting_)
+    {
+        const int c0 = dragC0_<dragC1_ ? dragC0_ : dragC1_;
+        const int c1 = dragC0_<dragC1_ ? dragC1_ : dragC0_;
+        const int r0 = dragR0_<dragR1_ ? dragR0_ : dragR1_;
+        const int r1 = dragR0_<dragR1_ ? dragR1_ : dragR0_;
         const QRect sel(qRound(c0*tw),qRound(r0*th),qRound((c1-c0+1)*tw),qRound((r1-r0+1)*th));
         p.setPen(QPen(QColor(90,170,255),2));
         p.setBrush(QColor(90,170,255,45));
@@ -212,14 +297,17 @@ void TilesetView::mousePressEvent(QMouseEvent *event)
         return;
     if(event->button()==Qt::LeftButton)
     {
+        // Ctrl or Shift = ADD to the selection (build a non-rectangular pick);
+        // plain = start a fresh rectangle.
+        additive_ = (event->modifiers() & (Qt::ControlModifier|Qt::ShiftModifier)) != 0;
+        if(!additive_)
+            selected_.clear();   // clear NOW so the old selection vanishes as the new drag starts
         const QPoint pos=event->position().toPoint();
-        cellAt(pos,selCol0_,selRow0_);
-        selCol1_=selCol0_;
-        selRow1_=selRow0_;
+        cellAt(pos,dragC0_,dragR0_);
+        dragC1_=dragC0_;
+        dragR1_=dragR0_;
         selecting_=true;
-        hasSelection_=true;
         update();
-        emitSelection(false);
     }
 }
 
@@ -227,9 +315,8 @@ void TilesetView::mouseMoveEvent(QMouseEvent *event)
 {
     if(selecting_)
     {
-        cellAt(event->position().toPoint(),selCol1_,selRow1_);
+        cellAt(event->position().toPoint(),dragC1_,dragR1_);
         update();
-        emitSelection(false);
     }
 }
 
@@ -237,8 +324,9 @@ void TilesetView::mouseReleaseEvent(QMouseEvent *event)
 {
     if(selecting_ && event->button()==Qt::LeftButton)
     {
-        cellAt(event->position().toPoint(),selCol1_,selRow1_);
+        cellAt(event->position().toPoint(),dragC1_,dragR1_);
         selecting_=false;
+        commitDrag();
         update();
         emitSelection(true);
     }

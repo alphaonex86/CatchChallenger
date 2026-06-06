@@ -11,6 +11,7 @@
 #include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFormLayout>
 #include <QResizeEvent>
 #include <QFrame>
 #include <QHBoxLayout>
@@ -29,7 +30,8 @@
 static QStringList tagCategories()
 {
     QStringList c;
-    c << "ground" << "path" << "sand" << "grass-short" << "grass-tall"
+    c << "terrain"
+      << "ground" << "path" << "sand" << "grass-short" << "grass-tall"
       << "water" << "water-edge" << "waterfall" << "lava"
       << "ledge-down" << "ledge-up" << "ledge-left" << "ledge-right"
       << "cliff" << "rock" << "tree-trunk" << "tree-canopy" << "bush" << "flower"
@@ -41,6 +43,55 @@ static QStringList tagCategories()
     return c;
 }
 
+// The "terrain" inner/outer texture vocabulary (a terrain tile is a transition
+// from an INNER fill to an OUTER surround — a Wang/auto-tile block).
+static QStringList terrainTextures()
+{
+    QStringList c;
+    c << "grass" << "tall-grass" << "sand" << "dirt" << "gravel" << "brick"
+      << "stone" << "path" << "wood" << "floor" << "carpet" << "water"
+      << "snow" << "lava" << "cliff";
+    return c;
+}
+
+// A single-tile object, or a MULTI-TILE block that scales (a terrain/auto-tile
+// set)?  This is what the owner wanted spelled out so "grass-tall" isn't mistaken
+// for one animated tile.  Shown live under the category combo.
+static QString categoryDescription(const QString &c)
+{
+    if(c=="terrain")  return QObject::tr("MULTI-TILE auto-tiling block that SCALES to fill an area: a transition from an INNER fill to an OUTER surround. Set the inner & outer texture below. Select the whole block (use Ctrl/Shift+drag to add the border tiles).");
+    if(c=="ground")   return QObject::tr("MULTI-TILE base ground terrain (walkable). Fill an area — select the whole block, not one tile.");
+    if(c=="path")     return QObject::tr("MULTI-TILE path/road terrain (walkable), with edges & corners. Fill a strip.");
+    if(c=="sand")     return QObject::tr("MULTI-TILE sand terrain (walkable), with edges to grass/water. Fill an area.");
+    if(c=="grass-short") return QObject::tr("MULTI-TILE short-grass GROUND — decorative, walkable, NO encounters. Fill an area.");
+    if(c=="grass-tall")  return QObject::tr("MULTI-TILE TALL grass = monster-encounter zone. Fill a rigid rectangle (base + grass border = ONE terrain). NOT a single animated tile.");
+    if(c=="water")    return QObject::tr("MULTI-TILE water terrain (blocked surf zone), animated, with shore edges. Fill an area.");
+    if(c=="lava")     return QObject::tr("MULTI-TILE lava terrain (blocked hazard), animated. Fill an area.");
+    if(c=="interior-floor") return QObject::tr("MULTI-TILE indoor floor (walkable). Fill a room.");
+    if(c=="carpet")   return QObject::tr("MULTI-TILE rug/carpet floor (walkable), with a border. Fill an area.");
+    if(c=="water-edge") return QObject::tr("Border tiles where water meets land (edges & corners). A MULTI-TILE set, not a fill.");
+    if(c=="waterfall")  return QObject::tr("Animated waterfall — a vertical strip (top/middle/bottom). MULTI-TILE.");
+    if(c=="cliff")    return QObject::tr("Cliff face between two heights (blocked). A MULTI-TILE vertical/edge set.");
+    if(c.startsWith("ledge")) return QObject::tr("One-way jump ledge. A row/column of edge tiles (MULTI-TILE); the engine makes it one-way.");
+    if(c=="fence")    return QObject::tr("Fence/railing (blocked). A line of edge tiles (MULTI-TILE).");
+    if(c=="tree-trunk")  return QObject::tr("Lower TRUNK of a tree (blocked). Usually under a tree-canopy. 1+ tiles.");
+    if(c=="tree-canopy") return QObject::tr("Upper LEAVES of a tree, drawn ABOVE the player. 1+ tiles.");
+    if(c=="bush")     return QObject::tr("Small bush/shrub object. 1+ tiles.");
+    if(c=="flower")   return QObject::tr("Decorative flowers (walkable). Usually 1 tile, often animated.");
+    if(c=="rock")     return QObject::tr("Rock/boulder object (blocked). 1+ tiles.");
+    if(c=="building-wall") return QObject::tr("WALL/face of a building (blocked) — the solid body. MULTI-TILE. Not furniture/decoration.");
+    if(c=="building-roof") return QObject::tr("ROOF of a building, often drawn above the player. MULTI-TILE.");
+    if(c=="door")     return QObject::tr("A door (becomes an entrance/teleport). Usually 1 tile (sometimes 1×2).");
+    if(c=="window")   return QObject::tr("A building window (decorative, blocked). Usually 1 tile.");
+    if(c=="stairs")   return QObject::tr("Stairs/steps. 1+ tiles.");
+    if(c=="sign")     return QObject::tr("A readable sign/board (blocked). Usually 1 tile.");
+    if(c=="interior-wall") return QObject::tr("Indoor wall (blocked). MULTI-TILE.");
+    if(c=="counter")  return QObject::tr("Shop/room counter (blocked). 1+ tiles.");
+    if(c=="decoration") return QObject::tr("Generic decorative object — use when nothing more specific fits. 1+ tiles.");
+    // table/chair/bed/shelf/bookshelf/fridge/computer/tv/plant-pot
+    return QObject::tr("Furniture/appliance object — decorative & blocked, NOT a wall. Pick exactly its tile(s); 1+ tiles.");
+}
+
 MainWindow::MainWindow() :
     QMainWindow(),
     model_(new TagModel()),
@@ -50,6 +101,10 @@ MainWindow::MainWindow() :
     usageView_(new MapUsageView()),
     openBtn_(nullptr),
     categoryBox_(nullptr),
+    categoryDescLabel_(nullptr),
+    terrainGroup_(nullptr),
+    innerBox_(nullptr),
+    outerBox_(nullptr),
     mapCombo_(nullptr),
     animated_(nullptr),
     hRepeat_(nullptr),
@@ -94,6 +149,32 @@ MainWindow::MainWindow() :
     categoryBox_=new QComboBox(panel);
     categoryBox_->addItems(tagCategories());     // fixed list, NOT editable
     lay->addWidget(categoryBox_);
+
+    // live description of the picked category (single-tile vs multi-tile terrain…)
+    categoryDescLabel_=new QLabel(panel);
+    categoryDescLabel_->setWordWrap(true);
+    categoryDescLabel_->setStyleSheet("color:#bbb; font-style:italic;");
+    lay->addWidget(categoryDescLabel_);
+
+    // terrain inner/outer texture pickers — only meaningful for the "terrain"
+    // category.  EDITABLE (free text) so you can name any terrain AND reuse an
+    // existing name to LINK two terrains (terrain A outer == terrain B inner);
+    // typed names are remembered in the dropdown so links stay typo-consistent.
+    terrainGroup_=new QWidget(panel);
+    QFormLayout *tForm=new QFormLayout(terrainGroup_);
+    tForm->setContentsMargins(0,0,0,0);
+    innerBox_=new QComboBox(terrainGroup_);
+    innerBox_->setEditable(true);
+    innerBox_->setInsertPolicy(QComboBox::InsertAlphabetically);
+    innerBox_->addItems(terrainTextures());
+    outerBox_=new QComboBox(terrainGroup_);
+    outerBox_->setEditable(true);
+    outerBox_->setInsertPolicy(QComboBox::InsertAlphabetically);
+    outerBox_->addItems(terrainTextures());
+    tForm->addRow(tr("inner / fill (free text, reuse to link):"),innerBox_);
+    tForm->addRow(tr("outer / border (free text, reuse to link):"),outerBox_);
+    lay->addWidget(terrainGroup_);
+    terrainGroup_->setVisible(false);
 
     animated_=new QCheckBox(tr("animated"),panel);
     lay->addWidget(animated_);
@@ -167,6 +248,8 @@ MainWindow::MainWindow() :
     connect(view_,&TilesetView::selectionChanged,this,&MainWindow::onSelection);
     connect(view_,&TilesetView::selectionFinished,this,&MainWindow::onSelectionFinished);
     connect(mapCombo_,SIGNAL(currentIndexChanged(int)),this,SLOT(onMapPicked(int)));
+    connect(categoryBox_,&QComboBox::currentTextChanged,this,&MainWindow::onCategoryChanged);
+    onCategoryChanged(categoryBox_->currentText());   // initial description
 
     resize(1320,860);   // room for: left map dock + central tileset + right tag panel
     refreshGuard();
@@ -331,7 +414,7 @@ int MainWindow::applySelection()
     if(selC0_<0)
         return -1;
     const std::string category=categoryBox_->currentText().toStdString();
-    const std::vector<int> ids=model_->tilesInRect(selC0_,selR0_,selC1_,selR1_);
+    const std::vector<int> ids=view_->selectedTiles();   // the exact (maybe non-rect) set
     if(ids.empty())
         return 0;
     const int w=selC1_-selC0_+1;
@@ -345,6 +428,17 @@ int MainWindow::applySelection()
             attrs["layer"]=derivedLayer_.toStdString();
         if(derivedWalkable_>=0)
             attrs["walkable"]= derivedWalkable_==1 ? "true" : "false";
+    }
+    if(category=="terrain")   // a terrain records its inner fill + outer border texture
+    {
+        const QString in=innerBox_->currentText().trimmed();
+        const QString out=outerBox_->currentText().trimmed();
+        attrs["inner"]=in.toStdString();
+        attrs["outer"]=out.toStdString();
+        // remember both names in BOTH dropdowns so the next terrain can reuse them
+        // to LINK (this terrain's outer == the neighbour terrain's inner).
+        rememberTexture(in);
+        rememberTexture(out);
     }
     if(animated_->isChecked())
         attrs["animated"]="true";
@@ -374,9 +468,9 @@ void MainWindow::onTag()
 
 void MainWindow::onClearTag()
 {
-    if(selC0_<0)
+    const std::vector<int> ids=view_->selectedTiles();
+    if(ids.empty())
         return;
-    const std::vector<int> ids=model_->tilesInRect(selC0_,selR0_,selC1_,selR1_);
     const std::map<std::string,std::string> none;
     model_->tagTiles(ids,std::string(),none);
     model_->save();           // save on each change
@@ -409,21 +503,40 @@ void MainWindow::onSave()
     updateTitle();
 }
 
-void MainWindow::onSelection(int col0,int row0,int col1,int row1,int tileCount)
+void MainWindow::onSelection(int tileCount)
 {
-    selC0_=col0;
-    selR0_=row0;
-    selC1_=col1;
-    selR1_=row1;
-    selLabel_->setText(tr("selection: cols %1..%2 rows %3..%4  (%5x%6 = %7 tiles)")
-                       .arg(col0).arg(col1).arg(row0).arg(row1)
-                       .arg(col1-col0+1).arg(row1-row0+1).arg(tileCount));
+    view_->selectionBounds(selC0_,selR0_,selC1_,selR1_);   // bbox of the (maybe non-rect) set
+    if(selC0_<0)
+        selLabel_->setText(tr("no selection — drag tiles (Ctrl/Shift+drag adds, Ctrl+click toggles)"));
+    else
+        selLabel_->setText(tr("selection: %1 tile(s)  (bbox %2x%3)")
+                           .arg(tileCount).arg(selC1_-selC0_+1).arg(selR1_-selR0_+1));
 }
 
-void MainWindow::onSelectionFinished(int col0,int row0,int col1,int row1,int)
+void MainWindow::onCategoryChanged(const QString &category)
+{
+    if(categoryDescLabel_!=nullptr)
+        categoryDescLabel_->setText(categoryDescription(category));
+    if(terrainGroup_!=nullptr)
+        terrainGroup_->setVisible(category=="terrain");   // inner/outer only for terrain
+}
+
+// Make a terrain-texture name available in BOTH dropdowns so the next terrain can
+// reuse it to link (terrain A outer == terrain B inner).  Keeps the current text.
+void MainWindow::rememberTexture(const QString &name)
+{
+    if(name.isEmpty())
+        return;
+    if(innerBox_!=nullptr && innerBox_->findText(name)<0)
+        innerBox_->addItem(name);
+    if(outerBox_!=nullptr && outerBox_->findText(name)<0)
+        outerBox_->addItem(name);
+}
+
+void MainWindow::onSelectionFinished(int)
 {
     // step 2: find where this group of tiles is used across the maps.
-    const std::vector<int> ids=model_->tilesInRect(col0,row0,col1,row1);
+    const std::vector<int> ids=view_->selectedTiles();
     mapCombo_->blockSignals(true);
     mapCombo_->clear();
     currentUsages_.clear();
@@ -463,6 +576,15 @@ void MainWindow::onSelectionFinished(int col0,int row0,int col1,int row1,int)
             hMidRepeat_->setChecked(existing.attr("horizontalMiddleRepeat")=="true");
             vRepeat_->setChecked(existing.attr("verticalRepeat")=="true");
             vMidRepeat_->setChecked(existing.attr("verticalMiddleRepeat")=="true");
+            if(existing.category=="terrain")   // restore saved inner/outer terrain link
+            {
+                const QString in=QString::fromStdString(existing.attr("inner"));
+                const QString out=QString::fromStdString(existing.attr("outer"));
+                rememberTexture(in);
+                rememberTexture(out);
+                innerBox_->setCurrentText(in);
+                outerBox_->setCurrentText(out);
+            }
         }
     }
     if(currentUsages_.empty())
