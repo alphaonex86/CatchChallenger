@@ -20,6 +20,7 @@ add_executable(tileset-tagger
     MainWindow.cpp
     MapUsageIndex.cpp
     MapUsageView.cpp
+    MapDecoder.cpp
 )
 
 target_link_libraries(tileset-tagger PRIVATE

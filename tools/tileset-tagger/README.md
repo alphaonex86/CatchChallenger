@@ -94,6 +94,7 @@ tileset-tagger --selftest <x.tsx>                       # tag round-trip + guard
 tileset-tagger --usage    <x.tsx> <c0> <r0> <c1> <r1>   # list maps using that tile group
 tileset-tagger --suggest  <x.tsx | tileset-dir>         # auto-tag (terrain + structure)
 tileset-tagger --classify <x.tsx>                       # dry-run: print what suggest would tag
+tileset-tagger --decode   <map.tmx | map-dir> <out.png | out-dir>   # render real | category side-by-side
 ```
 
 ## How to start
