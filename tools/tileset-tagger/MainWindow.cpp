@@ -286,7 +286,7 @@ MainWindow::MainWindow() :
     lay->addWidget(reviewCheck_);
     QPushButton *confirmBtn=new QPushButton(tr("✓ Confirm tileset → save & next tileset"),panel);
     confirmBtn->setToolTip(tr("Accept every tag (yellow → green), save, and open the next tileset "
-                              "in the folder.  Refused while any tile is still untagged."));
+                              "in the folder — even if some tiles are left unidentified."));
     lay->addWidget(confirmBtn);
 
     QCheckBox *showUntagged=new QCheckBox(tr("show state colours (✗ red · ⚠ yellow · ✓ green)"),panel);
@@ -685,22 +685,26 @@ void MainWindow::onSuggestFromTags()
     statusBar()->showMessage(tr("filled %1 untagged tile(s) from your tags (yellow — review them)").arg(n),6000);
 }
 
-// Confirm the whole tileset: every tag accepted (yellow -> green), saved, and the
-// folder advances to the next tileset.  Refuses while tiles are still untagged.
+// Confirm the tileset: accept every tag (yellow -> green), save, and ALWAYS advance
+// to the next tileset — even if some tiles are left UNIDENTIFIED (you tagged what you
+// could).  The unidentified tiles just stay untagged.
 void MainWindow::onConfirmTileset()
 {
     const TagModel::Counts cnt=model_->progress();
-    if(cnt.untagged>0)
-    {
-        statusBar()->showMessage(tr("%1 tile(s) still untagged — tag every tile before confirming").arg(cnt.untagged),6000);
-        return;
-    }
-    model_->markAllVerified();   // accept all the guesses
+    model_->markAllVerified();   // accept the guesses; untagged tiles are left as-is
+    model_->save();
     view_->refresh();
     refreshGuard();
     updateTitle();
-    statusBar()->showMessage(tr("✓ tileset confirmed & saved — next tileset"),4000);
-    onNextUntagged();            // all green now -> saves + opens the next tileset
+    if(cnt.untagged>0)
+        statusBar()->showMessage(tr("confirmed — %1 tile(s) left UNIDENTIFIED; moving to the next tileset").arg(cnt.untagged),6000);
+    else
+        statusBar()->showMessage(tr("✓ tileset fully confirmed & saved — next tileset"),4000);
+    if(!tsxQueue_.isEmpty())     // folder mode: jump to the next tileset regardless
+    {
+        tsxIndex_++;
+        openNextIncomplete();
+    }
 }
 
 // Make a terrain-texture name available in BOTH dropdowns so the next terrain can
