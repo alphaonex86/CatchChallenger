@@ -47,15 +47,20 @@ cmake --build /tmp/tagger-build -j32
   | `verticalRepeat` / `verticalMiddleRepeat` | you (checkbox) | same, vertically |
   | `size` | auto | `WxH` of the selected rectangle |
   | `group` | auto | groups the tiles of one placed item |
-  | `layer` | **auto from maps** | engine layer (walkable/grass/water/ledge/collision/over) |
-  | `walkable` | **auto from maps** | player can stand on it |
+  | `layer` | **auto from maps** | the layer the tile is *drawn on* (walkable/grass/water/ledge/collision/over) |
+  | `walkable` | **auto from maps** | player can stand on it — see below |
 * **Pre-filled, you just validate.** Selecting a rectangle reads where those exact
-  tiles are used on the real maps: the **dominant engine layer** is shown as
-  read-only "from maps: …" and attached automatically as `layer`/`walkable`, and
-  also gives a soft starting guess for the visual `category` (you set the real
-  one). **Same-tile run detection** ticks the repeat flags. You **Tag** to accept
-  or adjust the category first. Groups used on no map keep their derived info
-  blank — you pick the category by eye.
+  tiles are used on the real maps: the layer the tile is *drawn on* gives `layer`
+  + a soft starting guess for the visual `category` (you set the real one), and
+  **same-tile run detection** ticks the repeat flags. You **Tag** to accept or
+  adjust the category. Groups used on no map keep their derived info blank.
+* **`walkable` respects layer cancellation.** A tile can be drawn on `Walkable`
+  yet sit under a `Collisions` tile in the same cell — the engine blocks it
+  (`Map_loaderMain.cpp`: `(walkable||zone) && !collisions`). So `walkable` is
+  computed from each usage cell's **effective** code with the engine precedence
+  **Dirt > Ledges > Collisions-cancels-Walkable > Grass/Water/Lava zone >
+  blocked**, not from the drawn-on layer. The read-only line shows it, e.g.
+  *"drawn on 'Walkable' · effective BLOCKED (walk 26% / blocked 73% / ledge 0%)"*.
 * **Jump to next untagged** walks you through what's left.
 * **Save .tsx** writes the tags back surgically (foreign engine/Tiled properties
   on a tile, e.g. `animation`, are preserved).

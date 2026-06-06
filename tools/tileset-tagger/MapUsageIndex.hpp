@@ -35,10 +35,16 @@ public:
     // tag controls (the dominant engine layer tells us what the tiles are; the
     // same-tile run counts tell us if they tile horizontally/vertically).
     struct GroupStats {
-        std::map<std::string,int> layerCounts;   // engine layer name -> cell count
+        std::map<std::string,int> layerCounts;   // PLACEMENT layer name -> cell count
         int totalCells;
         int horizontalRepeatCells;               // cells whose right neighbour is the SAME tile
         int verticalRepeatCells;                 // cells whose down neighbour is the SAME tile
+        // EFFECTIVE walkability per the engine precedence (Map_loaderMain.cpp:
+        // Dirt>Ledges>Collisions>Walkable|zone>blocked — Collisions cancels Walkable),
+        // computed by reading ALL layers at each usage cell.
+        int walkableCells;
+        int blockedCells;
+        int ledgeCells;
     };
 
     MapUsageIndex();

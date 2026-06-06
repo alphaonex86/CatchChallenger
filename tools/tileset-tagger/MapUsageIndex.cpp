@@ -26,6 +26,20 @@ MapUsageIndex::MapUsageIndex() :
     lastStats_.totalCells=0;
     lastStats_.horizontalRepeatCells=0;
     lastStats_.verticalRepeatCells=0;
+    lastStats_.walkableCells=0;
+    lastStats_.blockedCells=0;
+    lastStats_.ledgeCells=0;
+}
+
+// A structural layer has a tile at (x,y)?  Mirrors the engine reading the
+// Walkable/Collisions/... binary (a non-empty cell == the byte is non-zero).
+static bool cellHasTile(Tiled::TileLayer *layer,int x,int y)
+{
+    if(layer==nullptr)
+        return false;
+    if(x<0 || y<0 || x>=layer->width() || y>=layer->height())
+        return false;
+    return !layer->cellAt(x,y).isEmpty();
 }
 
 MapUsageIndex::~MapUsageIndex()
@@ -111,6 +125,9 @@ std::vector<MapUsageIndex::Usage> MapUsageIndex::findUsages(const std::vector<in
     lastStats_.totalCells=0;
     lastStats_.horizontalRepeatCells=0;
     lastStats_.verticalRepeatCells=0;
+    lastStats_.walkableCells=0;
+    lastStats_.blockedCells=0;
+    lastStats_.ledgeCells=0;
     if(ids.empty())
         return out;
 
@@ -143,6 +160,26 @@ std::vector<MapUsageIndex::Usage> MapUsageIndex::findUsages(const std::vector<in
                 u.tileH=m->tileHeight();
                 std::vector<Tiled::TileLayer*> layers;
                 collectTileLayers(m->layers(),layers);
+                // gather the structural layers ONCE so we can compute each usage
+                // cell's EFFECTIVE walkability with the engine precedence below.
+                Tiled::TileLayer *Lwalk=nullptr,*Lcoll=nullptr,*Ldirt=nullptr;
+                Tiled::TileLayer *Lll=nullptr,*Llr=nullptr,*Llt=nullptr,*Llb=nullptr;
+                std::vector<Tiled::TileLayer*> monsterLayers;
+                size_t sl=0;
+                while(sl<layers.size())
+                {
+                    Tiled::TileLayer *L=layers.at(sl);
+                    const QString n=L->name();
+                    if(n=="Walkable") Lwalk=L;
+                    else if(n=="Collisions") Lcoll=L;
+                    else if(n=="Dirt") Ldirt=L;
+                    else if(n=="LedgesLeft") Lll=L;
+                    else if(n=="LedgesRight") Llr=L;
+                    else if(n=="LedgesTop" || n=="LedgesUp") Llt=L;
+                    else if(n=="LedgesBottom" || n=="LedgesDown") Llb=L;
+                    else if(n=="Grass" || n=="OnGrass" || n=="Water" || n=="Lava") monsterLayers.push_back(L);
+                    sl++;
+                }
                 size_t li=0;
                 while(li<layers.size())
                 {
@@ -160,9 +197,31 @@ std::vector<MapUsageIndex::Usage> MapUsageIndex::findUsages(const std::vector<in
                             if(!c.isEmpty() && c.tileset()==target && ids.find(c.tileId())!=ids.end())
                             {
                                 u.cells.push_back(QPoint(tl->x()+x,tl->y()+y));
-                                // stats for pre-fill: dominant layer + same-tile runs
+                                // stats for pre-fill: PLACEMENT layer + same-tile runs
                                 lastStats_.totalCells++;
                                 lastStats_.layerCounts[layerName]++;
+                                // EFFECTIVE walkability at this cell, engine precedence
+                                // (Map_loaderMain.cpp): Dirt/Ledges first, then
+                                // Collisions cancels Walkable|zone, else blocked.
+                                const int gx=tl->x()+x;
+                                const int gy=tl->y()+y;
+                                if(cellHasTile(Ldirt,gx,gy) || cellHasTile(Lll,gx,gy) ||
+                                   cellHasTile(Llr,gx,gy) || cellHasTile(Llt,gx,gy) || cellHasTile(Llb,gx,gy))
+                                    lastStats_.ledgeCells++;
+                                else
+                                {
+                                    bool monster=false;
+                                    size_t mi=0;
+                                    while(mi<monsterLayers.size() && !monster)
+                                    {
+                                        if(cellHasTile(monsterLayers.at(mi),gx,gy)) monster=true;
+                                        mi++;
+                                    }
+                                    if((cellHasTile(Lwalk,gx,gy) || monster) && !cellHasTile(Lcoll,gx,gy))
+                                        lastStats_.walkableCells++;
+                                    else
+                                        lastStats_.blockedCells++;
+                                }
                                 if(x+1<w)
                                 {
                                     const Tiled::Cell &rc=tl->cellAt(x+1,y);
