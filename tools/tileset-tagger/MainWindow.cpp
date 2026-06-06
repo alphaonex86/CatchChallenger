@@ -379,8 +379,14 @@ void MainWindow::prefillFromUsage(const std::vector<int> &ids)
     }
     QString layerVal;
     QString categoryGuess;
-    bool walkable=true;
-    layerToGuess(domLayer,layerVal,categoryGuess,walkable);
+    bool layerWalkHint=true;
+    layerToGuess(domLayer,layerVal,categoryGuess,layerWalkHint);
+
+    // WALKABLE comes from the engine's EFFECTIVE per-cell precedence (Collisions
+    // cancels Walkable), NOT from the placement layer — that is the whole point
+    // of Map_loaderMain.cpp's else-if chain. Ledges count as (one-way) walkable.
+    const int walkN=st.walkableCells+st.ledgeCells;
+    const bool walkable= walkN>=st.blockedCells;
 
     derivedFromMaps_=true;
     derivedLayer_=layerVal;
@@ -394,10 +400,12 @@ void MainWindow::prefillFromUsage(const std::vector<int> &ids)
     hRepeat_->setChecked(st.horizontalRepeatCells*100 >= st.totalCells*30);
     vRepeat_->setChecked(st.verticalRepeatCells*100 >= st.totalCells*30);
 
-    detectedLabel_->setText(tr("from maps: layer=%1 · %2 · %3% of cells on this layer")
+    detectedLabel_->setText(tr("from maps: drawn on '%1' · effective %2 (walk %3% / blocked %4% / ledge %5%)")
                             .arg(domLayer)
-                            .arg(walkable?tr("walkable"):tr("not walkable"))
-                            .arg(best*100/st.totalCells));
+                            .arg(walkable?tr("WALKABLE"):tr("BLOCKED"))
+                            .arg(st.walkableCells*100/st.totalCells)
+                            .arg(st.blockedCells*100/st.totalCells)
+                            .arg(st.ledgeCells*100/st.totalCells));
     statusBar()->showMessage(tr("category pre-guessed from layer '%1' — set what it LOOKS like, then Tag").arg(domLayer),5000);
 }
 

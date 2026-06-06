@@ -141,10 +141,14 @@ static int runUsage(const QStringList &args)
     }
     if(st.totalCells>0)
     {
-        std::cout << "prefill: dominant layer '" << domLayer << "'  ("
+        std::cout << "prefill: drawn-on layer '" << domLayer << "'  ("
                   << (best*100/st.totalCells) << "% of " << st.totalCells << " cells)"
                   << "  hRepeat=" << (st.horizontalRepeatCells*100/st.totalCells) << "%"
                   << "  vRepeat=" << (st.verticalRepeatCells*100/st.totalCells) << "%" << std::endl;
+        std::cout << "effective (engine precedence): walkable=" << (st.walkableCells*100/st.totalCells)
+                  << "%  blocked=" << (st.blockedCells*100/st.totalCells)
+                  << "%  ledge=" << (st.ledgeCells*100/st.totalCells) << "%"
+                  << "  -> " << ((st.walkableCells+st.ledgeCells>=st.blockedCells)?"WALKABLE":"BLOCKED") << std::endl;
     }
     if(!usages.empty())
     {
