@@ -20,6 +20,8 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QPainter>
 #include <QString>
 #include <QStringList>
@@ -236,6 +238,134 @@ static int runClassify(const QStringList &args)
     return 0;
 }
 
+// top-N (count,name) pairs of a histogram, descending.
+static std::vector<std::pair<long,std::string> > topOf(const std::map<std::string,long> &h,size_t n)
+{
+    std::vector<std::pair<long,std::string> > v;
+    std::map<std::string,long>::const_iterator it=h.begin();
+    while(it!=h.cend()) { v.push_back(std::make_pair(it->second,it->first)); ++it; }
+    std::sort(v.rbegin(),v.rend());
+    if(v.size()>n)
+        v.resize(n);
+    return v;
+}
+
+static int runLearn(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "learn needs: <map-dir> <rules.json>" << std::endl; return 1; }
+    std::map<std::string,long> catCount;
+    std::map<std::string,std::map<std::string,long> > rightOf,downOf;   // [A][B] = B is right/below A
+    long total=0;
+    int nmaps=0;
+    MapDecoder dec;
+    QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    while(it.hasNext())
+    {
+        const QString tmx=it.next();
+        MapDecoder::Result r;
+        QString err;
+        if(!dec.decode(tmx,r,err))
+            continue;
+        nmaps++;
+        int y=0;
+        while(y<r.h)
+        {
+            int x=0;
+            while(x<r.w)
+            {
+                const std::string &a=r.categoryGrid.at(x+y*r.w);
+                if(!a.empty())
+                {
+                    catCount[a]++;
+                    total++;
+                    if(x+1<r.w) { const std::string &b=r.categoryGrid.at((x+1)+y*r.w); if(!b.empty()) rightOf[a][b]++; }
+                    if(y+1<r.h) { const std::string &b=r.categoryGrid.at(x+(y+1)*r.w); if(!b.empty()) downOf[a][b]++; }
+                }
+                x++;
+            }
+            y++;
+        }
+    }
+    if(total==0) { std::cerr << "learn: no decodable maps under " << args.at(0).toStdString() << std::endl; return 1; }
+
+    // write rules.json
+    {
+        QJsonObject cats;
+        std::map<std::string,long>::const_iterator c=catCount.begin();
+        while(c!=catCount.cend()) { cats.insert(QString::fromStdString(c->first),(double)c->second); ++c; }
+        QJsonObject jright,jdown;
+        std::map<std::string,std::map<std::string,long> >::const_iterator a=rightOf.begin();
+        while(a!=rightOf.cend())
+        {
+            QJsonObject row;
+            std::map<std::string,long>::const_iterator b=a->second.begin();
+            while(b!=a->second.cend()) { row.insert(QString::fromStdString(b->first),(double)b->second); ++b; }
+            jright.insert(QString::fromStdString(a->first),row);
+            ++a;
+        }
+        a=downOf.begin();
+        while(a!=downOf.cend())
+        {
+            QJsonObject row;
+            std::map<std::string,long>::const_iterator b=a->second.begin();
+            while(b!=a->second.cend()) { row.insert(QString::fromStdString(b->first),(double)b->second); ++b; }
+            jdown.insert(QString::fromStdString(a->first),row);
+            ++a;
+        }
+        QJsonObject root;
+        root.insert("maps",nmaps);
+        root.insert("cells",(double)total);
+        root.insert("categories",cats);
+        root.insert("rightOf",jright);
+        root.insert("downOf",jdown);
+        QFile out(args.at(1));
+        if(!out.open(QIODevice::WriteOnly|QIODevice::Truncate)) { std::cerr << "cannot write " << args.at(1).toStdString() << std::endl; return 1; }
+        out.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+        out.close();
+    }
+
+    // human-readable summary (sanity check the learned rules)
+    std::cout << "learned from " << nmaps << " maps, " << total << " cells, "
+              << catCount.size() << " categories -> " << args.at(1).toStdString() << std::endl;
+    const std::vector<std::pair<long,std::string> > top=topOf(catCount,12);
+    std::cout << "top categories:";
+    size_t i=0;
+    while(i<top.size()) { std::cout << " " << top.at(i).second << "(" << (top.at(i).first*100/total) << "%)"; i++; }
+    std::cout << std::endl;
+    std::cout << "dominant neighbours (right → / down ↓):" << std::endl;
+    i=0;
+    while(i<top.size())
+    {
+        const std::string &cat=top.at(i).second;
+        const std::vector<std::pair<long,std::string> > r=topOf(rightOf[cat],3);
+        const std::vector<std::pair<long,std::string> > d=topOf(downOf[cat],3);
+        std::cout << "  " << cat << "  → ";
+        size_t k=0; while(k<r.size()) { std::cout << r.at(k).second << " "; k++; }
+        std::cout << "  ↓ ";
+        k=0; while(k<d.size()) { std::cout << d.at(k).second << " "; k++; }
+        std::cout << std::endl;
+        i++;
+    }
+    // hard constraints: pairs of common categories that are NEVER adjacent
+    std::cout << "never-adjacent (hard constraints) among the top categories:" << std::endl;
+    int shown=0;
+    size_t ai=0;
+    while(ai<top.size() && shown<14)
+    {
+        size_t bi=ai+1;
+        while(bi<top.size() && shown<14)
+        {
+            const std::string &A=top.at(ai).second;
+            const std::string &B=top.at(bi).second;
+            const long n = rightOf[A][B]+rightOf[B][A]+downOf[A][B]+downOf[B][A];
+            if(n==0) { std::cout << "  " << A << " | " << B << std::endl; shown++; }
+            bi++;
+        }
+        ai++;
+    }
+    return 0;
+}
+
 static int decodeOne(const QString &mapPath,const QString &outPng)
 {
     MapDecoder dec;
@@ -319,7 +449,7 @@ int main(int argc, char *argv[])
     const bool cli = !args.isEmpty()
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
-            || args.at(0)=="--decode");
+            || args.at(0)=="--decode" || args.at(0)=="--learn");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -339,6 +469,8 @@ int main(int argc, char *argv[])
         return runClassify(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--decode")
         return runDecode(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--learn")
+        return runLearn(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;
