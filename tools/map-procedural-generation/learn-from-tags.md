@@ -10,7 +10,7 @@ learn and the target the reproducibility guard round-trips against.
 * generated maps OUTPUT = `map/main/generated/` — the ONLY writable path in that datapack (owner-authorized); generated `.tmx` reference `map/tileset/` by relative path. Dev/iteration may stage to tmpfs first.
 
 Goal (owner): stop hand-coding placement rules. Instead **tag every tile** of both
-the hand-made (Pokémon-style) tilesets and the official tileset with a shared
+the hand-made model tilesets and the official tileset with a shared
 semantic vocabulary, **learn the rules** that the hand-made maps obey *in terms of
 those tags*, **translate** the rules onto the official tileset, and **generate**
 maps of the same quality.
@@ -20,7 +20,7 @@ with `building-roof` on the row above and `door` at the bottom-centre" is
 tileset-independent, so it replays on any tileset that carries those categories.
 
 ```
-   tagged .tsx (pokemon)          tagged .tsx (official)
+   tagged .tsx (model)            tagged .tsx (official)
             |                              |
             v                              v
    .tmx maps --> [category grid] --> LEARN rules ---> GENERATE --> new .tmx
@@ -62,7 +62,7 @@ tileset-independent, so it replays on any tileset that carries those categories.
 
 ## THE GUARD (owner, stated twice): replay-identical
 
-> the software has to be able to generate the SAME/IDENTICAL pokemon map when the
+> the software has to be able to generate the SAME/IDENTICAL model map when the
 > correct random numbers are used.
 
 This is the completeness proof of the rule-set. The generator must be a pure
@@ -89,7 +89,7 @@ uncovered case. Generation with the recorded stream then reproduces the map.
 
 ## Transfer to a partial datapack (model → partial)
 
-The model datapack (pokemon) is complete; the partial datapack (official) is being
+The model datapack is complete; the partial datapack (official) is being
 built. After both tilesets are tagged and the detection is confirmed:
 
 1. **Request the missing tiles, proportional to the model.** Count tagged items
