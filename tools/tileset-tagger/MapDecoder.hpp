@@ -9,6 +9,7 @@
 // A map uses several tilesets; each cell's gid resolves to (tileset, tileId), and
 // the category comes from that tileset's sidecar tags (one TagModel per tileset).
 
+#include <QColor>
 #include <QImage>
 #include <QString>
 #include <string>
@@ -30,6 +31,10 @@ public:
     };
     // Returns false + sets error on failure.
     bool decode(const QString &mapPath, Result &out, QString &error);
+
+    // semantic colour for a category (grass green, water blue, …); shared with
+    // the generator's render. Unknown categories get a stable hash colour.
+    static QColor categoryColor(const std::string &cat);
 };
 
 #endif // TILESETTAGGER_MAPDECODER_HPP

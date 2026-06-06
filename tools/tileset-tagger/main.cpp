@@ -25,11 +25,13 @@
 #include <QPainter>
 #include <QString>
 #include <QStringList>
+#include <algorithm>
+#include <cstdlib>
 #include <iostream>
 #include <map>
+#include <random>
 #include <set>
 #include <string>
-#include <algorithm>
 #include <vector>
 
 static void printUntagged(const TagModel &model)
@@ -364,6 +366,156 @@ static int runLearn(const QStringList &args)
         }
         ai++;
     }
+    return 0;
+}
+
+// ---- generator (A): rigid rectangles from the learned structure --------------
+static void parseWxH(const std::string &k,int &w,int &h)
+{
+    const size_t p=k.find('x');
+    if(p==std::string::npos) { w=2; h=2; return; }
+    w=std::atoi(k.substr(0,p).c_str());
+    h=std::atoi(k.substr(p+1).c_str());
+    if(w<1) w=1;
+    if(h<1) h=1;
+}
+
+static std::string sampleSize(const std::map<std::string,long> &hist,std::mt19937 &rng)
+{
+    long total=0;
+    std::map<std::string,long>::const_iterator it=hist.begin();
+    while(it!=hist.cend()) { total+=it->second; ++it; }
+    if(total<=0)
+        return "2x2";
+    std::uniform_int_distribution<long> d(0,total-1);
+    long r=d(rng);
+    it=hist.begin();
+    while(it!=hist.cend()) { if(r<it->second) return it->first; r-=it->second; ++it; }
+    return hist.begin()->first;
+}
+
+static bool loadStruct(const QString &path,std::map<std::string,long> &buildingSizes,
+                       std::map<std::string,std::map<std::string,long> > &zoneSizes)
+{
+    QFile f(path);
+    if(!f.open(QIODevice::ReadOnly))
+        return false;
+    const QJsonDocument jd=QJsonDocument::fromJson(f.readAll());
+    f.close();
+    if(!jd.isObject())
+        return false;
+    const QJsonObject root=jd.object();
+    const QJsonObject bsz=root.value("buildings").toObject().value("sizes").toObject();
+    QJsonObject::const_iterator b=bsz.constBegin();
+    while(b!=bsz.constEnd()) { buildingSizes[b.key().toStdString()]=(long)b.value().toDouble(); ++b; }
+    const QJsonObject zones=root.value("zones").toObject();
+    QJsonObject::const_iterator z=zones.constBegin();
+    while(z!=zones.constEnd())
+    {
+        const QJsonObject szs=z.value().toObject().value("sizes").toObject();
+        QJsonObject::const_iterator s=szs.constBegin();
+        while(s!=szs.constEnd()) { zoneSizes[z.key().toStdString()][s.key().toStdString()]=(long)s.value().toDouble(); ++s; }
+        ++z;
+    }
+    return true;
+}
+
+static bool rectFree(const std::vector<char> &occ,int W,int H,int x,int y,int w,int h)
+{
+    if(x<0 || y<0 || x+w>W || y+h>H)
+        return false;
+    int j=0;
+    while(j<h) { int i=0; while(i<w) { if(occ[(x+i)+(y+j)*W]!=0) return false; i++; } j++; }
+    return true;
+}
+
+static void fillRect(std::vector<std::string> &grid,std::vector<char> &occ,int W,int x,int y,int w,int h,const std::string &cat)
+{
+    int j=0;
+    while(j<h) { int i=0; while(i<w) { const int c=(x+i)+(y+j)*W; grid[c]=cat; occ[c]=1; i++; } j++; }
+}
+
+static int runGenerate(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "generate needs: <struct.json> <out.png> [W H seed]" << std::endl; return 1; }
+    std::map<std::string,long> buildingSizes;
+    std::map<std::string,std::map<std::string,long> > zoneSizes;
+    if(!loadStruct(args.at(0),buildingSizes,zoneSizes)) { std::cerr << "cannot load " << args.at(0).toStdString() << std::endl; return 1; }
+    const int W = args.size()>2 ? args.at(2).toInt() : 40;
+    const int H = args.size()>3 ? args.at(3).toInt() : 30;
+    const unsigned seed = args.size()>4 ? (unsigned)args.at(4).toUInt() : 1u;
+    std::mt19937 rng(seed);
+
+    const std::string base = zoneSizes.count("grass-tall")>0 ? "grass-tall" : "ground";
+    std::vector<std::string> grid(W*H,base);
+    std::vector<char> occ(W*H,0);
+
+    // tree border (the enclosed overworld look)
+    {
+        int y=0;
+        while(y<H) { int x=0; while(x<W) { if(x<2||y<2||x>=W-2||y>=H-2) { grid[x+y*W]="tree-trunk"; occ[x+y*W]=1; } x++; } y++; }
+    }
+
+    // helper-free placement of N rectangles of a zone category, sampled sizes
+    const char *zonePlace[3]={"water","grass-short","tree-trunk"};
+    const int zoneN[3]={ (W*H)/600+1, (W*H)/300+1, (W*H)/250+1 };
+    int zk=0;
+    while(zk<3)
+    {
+        if(zoneSizes.count(zonePlace[zk])>0)
+        {
+            int placed=0;
+            int tries=0;
+            while(placed<zoneN[zk] && tries<zoneN[zk]*20)
+            {
+                int w=2,h=2;
+                parseWxH(sampleSize(zoneSizes[zonePlace[zk]],rng),w,h);
+                if(w<=W-4 && h<=H-4)
+                {
+                    std::uniform_int_distribution<int> dx(2,W-2-w),dy(2,H-2-h);
+                    const int x=dx(rng),y=dy(rng);
+                    if(rectFree(occ,W,H,x,y,w,h)) { fillRect(grid,occ,W,x,y,w,h,zonePlace[zk]); placed++; }
+                }
+                tries++;
+            }
+        }
+        zk++;
+    }
+
+    // buildings: wall block, roof on the top row, door at the bottom-centre
+    {
+        const int nBuild=(W*H)/200+2;
+        int placed=0,tries=0;
+        while(placed<nBuild && tries<nBuild*30)
+        {
+            int w=4,h=2;
+            parseWxH(sampleSize(buildingSizes,rng),w,h);
+            if(w>=2 && h>=2 && w<=W-6 && h<=H-6)
+            {
+                std::uniform_int_distribution<int> dx(3,W-3-w),dy(3,H-3-h);
+                const int x=dx(rng),y=dy(rng);
+                if(rectFree(occ,W,H,x,y,w,h))
+                {
+                    fillRect(grid,occ,W,x,y,w,h,"building-wall");
+                    int i=0; while(i<w) { grid[(x+i)+y*W]="building-roof"; i++; }   // top row roof
+                    grid[(x+w/2)+(y+h-1)*W]="door";                                  // door bottom-centre
+                    placed++;
+                }
+            }
+            tries++;
+        }
+    }
+
+    // render
+    const int cell=12;
+    QImage img(W*cell,H*cell,QImage::Format_ARGB32);
+    {
+        QPainter p(&img);
+        int y=0;
+        while(y<H) { int x=0; while(x<W) { p.fillRect(x*cell,y*cell,cell,cell,MapDecoder::categoryColor(grid[x+y*W])); x++; } y++; }
+    }
+    if(!img.save(args.at(1))) { std::cerr << "cannot write " << args.at(1).toStdString() << std::endl; return 1; }
+    std::cout << "generated " << W << "x" << H << " (seed " << seed << ") -> " << args.at(1).toStdString() << std::endl;
     return 0;
 }
 
@@ -800,7 +952,7 @@ int main(int argc, char *argv[])
     const bool cli = !args.isEmpty()
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
-            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure");
+            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -826,6 +978,8 @@ int main(int argc, char *argv[])
         return runVerify(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--structure")
         return runStructure(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--generate")
+        return runGenerate(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;
