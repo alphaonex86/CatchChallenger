@@ -1731,6 +1731,12 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
     Tiled::Tileset* invis=LoadMap::searchTilesetByName(worldMap,"invisible");
     if(objGroup==NULL || walk==NULL || coll==NULL || invis==NULL || setting.botSkins.empty())
         return;
+    //decoration: scatter animated flower tufts on the open ground (OnGrass layer,
+    //non-collision) so a town is not a bare field.  tile 320 of the animations
+    //sheet is the flower (see template/flowers.tmx).
+    Tiled::TileLayer* onGrass=LoadMap::searchTileLayerByName(worldMap,"OnGrass");
+    Tiled::Tileset* anim=LoadMap::searchTilesetByName(worldMap,"animations.tsx");
+    Tiled::Tile* flower=(anim!=NULL) ? anim->tileAt(320) : NULL;
     const int tw=worldMap.tileWidth(), th=worldMap.tileHeight();
     unsigned int ci=0;
     while(ci<cities.size())
@@ -1758,6 +1764,25 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
             npc->setCell(cell);
             objGroup->addObject(npc);
             placed++;
+        }
+        //flower tufts
+        if(onGrass!=NULL && flower!=NULL)
+        {
+            const int fwant=10+rand()%14; //10..23 tufts
+            int fplaced=0, ftries=0;
+            while(fplaced<fwant && ftries<400)
+            {
+                ftries++;
+                const int tx=x0+2+rand()%((int)mapWidth-4);
+                const int ty=y0+2+rand()%((int)mapHeight-4);
+                if(tx<0 || ty<0 || tx>=worldMap.width() || ty>=worldMap.height())
+                    continue;
+                if(walk->cellAt(tx,ty).tile()==NULL || coll->cellAt(tx,ty).tile()!=NULL
+                        || onGrass->cellAt(tx,ty).tile()!=NULL)
+                    continue;
+                onGrass->setCell(tx,ty,Tiled::Cell(flower));
+                fplaced++;
+            }
         }
         ci++;
     }
