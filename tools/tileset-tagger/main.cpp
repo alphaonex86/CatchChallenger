@@ -532,6 +532,72 @@ static std::string categoryToLayer(const std::string &cat)
     return "Walkable";   // ground/path/sand/grass-short/door/stairs/flower/interior-*
 }
 
+// AUTO-TILING context: per (tileset .tsx canonical path, tileId) -> for each of the
+// 4 directions (N,E,S,W) the count of each neighbour CATEGORY, learned from the
+// maps. A grass tile usually seen with water to the east scores high where the
+// generated grid has water to the east -> the right shore/edge tile is chosen.
+typedef std::map<std::pair<std::string,int>,std::vector<std::map<std::string,long> > > ContextModel;
+
+static void learnContext(const QString &mapsDir,ContextModel &ctx)
+{
+    MapDecoder dec;
+    QDirIterator it(mapsDir,QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    while(it.hasNext())
+    {
+        MapDecoder::Result r;
+        QString err;
+        if(!dec.decode(it.next(),r,err))
+            continue;
+        const int w=r.w,h=r.h;
+        int y=0;
+        while(y<h)
+        {
+            int x=0;
+            while(x<w)
+            {
+                const std::string &canon=r.topTilesetCanon.at(x+y*w);
+                const int id=r.topTileId.at(x+y*w);
+                if(!canon.empty() && id>=0)
+                {
+                    std::vector<std::map<std::string,long> > &v=ctx[std::make_pair(canon,id)];
+                    if(v.empty())
+                        v.resize(4);
+                    if(y>0)   { const std::string &n=r.categoryGrid.at(x+(y-1)*w); if(!n.empty()) v[0][n]++; }
+                    if(x+1<w) { const std::string &n=r.categoryGrid.at((x+1)+y*w); if(!n.empty()) v[1][n]++; }
+                    if(y+1<h) { const std::string &n=r.categoryGrid.at(x+(y+1)*w); if(!n.empty()) v[2][n]++; }
+                    if(x>0)   { const std::string &n=r.categoryGrid.at((x-1)+y*w); if(!n.empty()) v[3][n]++; }
+                }
+                x++;
+            }
+            y++;
+        }
+    }
+}
+
+static double contextScore(const ContextModel &ctx,const std::pair<std::string,int> &key,const std::string nb[4])
+{
+    ContextModel::const_iterator it=ctx.find(key);
+    if(it==ctx.cend())
+        return -1.0;   // tile never observed -> untrained
+    double s=0.0;
+    int d=0;
+    while(d<4)
+    {
+        const std::map<std::string,long> &dm=it->second.at(d);
+        long tot=0;
+        std::map<std::string,long>::const_iterator m=dm.begin();
+        while(m!=dm.cend()) { tot+=m->second; ++m; }
+        if(tot>0)
+        {
+            std::map<std::string,long>::const_iterator f=dm.find(nb[d]);
+            const long match = f!=dm.cend() ? f->second : 0;
+            s += (double)match/(double)tot;
+        }
+        d++;
+    }
+    return s;
+}
+
 static int runGenMap(const QStringList &args)
 {
     // <struct.json> <tileset-dir> <out.tmx> [W H seed]
@@ -584,15 +650,17 @@ static int runGenMap(const QStringList &args)
             delete tm;
         ti++;
     }
-    // keep the top 4 most-used tiles per category
+    // keep the top 24 most-used tiles per category (enough to include edge/variant
+    // tiles for the auto-tiler), with a parallel usage list for tie-breaking.
     std::map<std::string,std::vector<std::pair<int,int> > > catTiles;
+    std::map<std::string,std::vector<long> > catUsage;
     {
         std::map<std::string,std::vector<std::pair<long,std::pair<int,int> > > >::iterator c=catCand.begin();
         while(c!=catCand.end())
         {
             std::sort(c->second.rbegin(),c->second.rend());
             size_t k=0;
-            while(k<c->second.size() && k<4) { catTiles[c->first].push_back(c->second.at(k).second); k++; }
+            while(k<c->second.size() && k<24) { catTiles[c->first].push_back(c->second.at(k).second); catUsage[c->first].push_back(c->second.at(k).first); k++; }
             ++c;
         }
     }
@@ -630,7 +698,20 @@ static int runGenMap(const QStringList &args)
         }
     }
 
-    // distribute gids into per-layer grids, sampling among the candidates per cell
+    // canonical .tsx path per loaded tileset (for context lookup)
+    std::vector<std::string> canonOf(tsxAbs.size());
+    {
+        size_t i=0;
+        while(i<tsxAbs.size()) { canonOf[i]=QFileInfo(tsxAbs.at(i)).canonicalFilePath().toStdString(); i++; }
+    }
+    // learn the auto-tiling context from the maps near the tileset dir (its parent
+    // holds main/ for the official set, johto//kanto/ for the model set).
+    ContextModel ctx;
+    learnContext(QDir(args.at(1)).absoluteFilePath(".."),ctx);
+
+    // distribute gids into per-layer grids; AUTO-TILE by picking, per cell, the
+    // candidate whose learned 4-neighbour context best matches the generated
+    // neighbourhood (tie -> the more-used tile).
     std::map<std::string,std::vector<int> > layers;
     int y=0;
     while(y<H)
@@ -643,12 +724,24 @@ static int runGenMap(const QStringList &args)
             if(!cat.empty() && gi!=catGids.cend() && !gi->second.empty())
             {
                 const std::vector<int> &gids=gi->second;
-                const unsigned hh=(unsigned)((x*73856093)^(y*19349663));
+                const std::vector<std::pair<int,int> > &cands=catTiles[cat];
+                const std::vector<long> &uses=catUsage[cat];
+                std::string nb[4];
+                nb[0] = y>0   ? grid.at(x+(y-1)*W) : std::string();
+                nb[1] = x+1<W ? grid.at((x+1)+y*W) : std::string();
+                nb[2] = y+1<H ? grid.at(x+(y+1)*W) : std::string();
+                nb[3] = x>0   ? grid.at((x-1)+y*W) : std::string();
                 int pick=0;
-                // mostly the canonical fill tile; only light variety — category
-                // tiles are NOT freely interchangeable (edges/variants), so heavy
-                // sampling looks noisy until proper auto-tiling/edge tiles exist.
-                if(gids.size()>1 && (hh%100)>=85) pick=1+(int)((hh/100)%(gids.size()-1));
+                double bestScore=-2.0;
+                long bestUse=-1;
+                size_t k=0;
+                while(k<cands.size() && k<gids.size())
+                {
+                    const double sc=contextScore(ctx,std::make_pair(canonOf.at(cands.at(k).first),cands.at(k).second),nb);
+                    const long use = k<uses.size() ? uses.at(k) : 0;
+                    if(sc>bestScore || (sc==bestScore && use>bestUse)) { bestScore=sc; bestUse=use; pick=(int)k; }
+                    k++;
+                }
                 const std::string ln=categoryToLayer(cat);
                 if(layers.find(ln)==layers.cend())
                     layers[ln]=std::vector<int>(W*H,0);

@@ -10,6 +10,7 @@
 #include "tileset.h"
 
 #include <QColor>
+#include <QFileInfo>
 #include <QPainter>
 #include <map>
 #include <memory>
@@ -82,6 +83,8 @@ bool MapDecoder::decode(const QString &mapPath, Result &out, QString &error)
     out.tagged=0;
     out.untagged=0;
     out.categoryGrid.assign(out.w*out.h,std::string());
+    out.topTilesetCanon.assign(out.w*out.h,std::string());
+    out.topTileId.assign(out.w*out.h,-1);
 
     // one TagModel per tileset (loads that tileset's sidecar tags)
     std::vector<TagModel*> owned;
@@ -161,6 +164,11 @@ bool MapDecoder::decode(const QString &mapPath, Result &out, QString &error)
                         if(!c.isEmpty())
                         {
                             hadTile=true;
+                            if(c.tileset()!=nullptr)
+                            {
+                                out.topTilesetCanon[x+y*out.w]=QFileInfo(c.tileset()->fileName()).canonicalFilePath().toStdString();
+                                out.topTileId[x+y*out.w]=c.tileId();
+                            }
                             std::map<Tiled::Tileset*,TagModel*>::iterator it=tags.find(c.tileset());
                             if(it!=tags.end())
                                 cat=it->second->tagOf(c.tileId()).category;
