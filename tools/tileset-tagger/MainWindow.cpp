@@ -46,6 +46,7 @@ MainWindow::MainWindow() :
     view_(new TilesetView()),
     usage_(new MapUsageIndex()),
     usageView_(new MapUsageView()),
+    usageScroll_(nullptr),
     openBtn_(nullptr),
     categoryBox_(nullptr),
     mapCombo_(nullptr),
@@ -70,6 +71,7 @@ MainWindow::MainWindow() :
 {
     QScrollArea *scroll=new QScrollArea(this);
     scroll->setWidget(view_);
+    scroll->setAlignment(Qt::AlignCenter);   // centre the sheet when smaller than the viewport
     scroll->setBackgroundRole(QPalette::Dark);
     view_->setModel(model_);
     setCentralWidget(scroll);
@@ -148,7 +150,11 @@ MainWindow::MainWindow() :
     uTop->addWidget(mapCombo_);
     uTop->addStretch(1);
     uLay->addLayout(uTop);
-    uLay->addWidget(usageView_,1);
+    usageScroll_=new QScrollArea(usagePanel);
+    usageScroll_->setWidget(usageView_);
+    usageScroll_->setAlignment(Qt::AlignCenter);     // centre the map when smaller than the panel
+    usageScroll_->setBackgroundRole(QPalette::Dark);
+    uLay->addWidget(usageScroll_,1);
     usageDock->setWidget(usagePanel);
     addDockWidget(Qt::BottomDockWidgetArea,usageDock);
 
@@ -597,6 +603,11 @@ void MainWindow::onMapPicked(int index)
     const MapUsageIndex::Usage &u=currentUsages_.at(index);
     const QImage img=usage_->render(u.mapPath);
     usageView_->setUsage(img,u.cells,u.tileW,u.tileH);
+    if(usageScroll_!=nullptr)
+    {
+        const QPoint c=usageView_->firstHighlightCenter();   // centre on the used cell
+        usageScroll_->ensureVisible(c.x(),c.y(),usageScroll_->viewport()->width()/2,usageScroll_->viewport()->height()/2);
+    }
     statusBar()->showMessage(tr("'%1' uses the group in %2 cell(s)").arg(u.mapLabel).arg((int)u.cells.size()),4000);
 }
 
