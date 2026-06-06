@@ -5,8 +5,8 @@ learn-from-examples map generator can read the same meaning from any tileset
 (the hand-made model tilesets *and* the official set). Tags are work data,
 so they are stored **out of the datapack** in an XDG sidecar — the datapack stays
 the read-only source of truth (so you can tag `CatchChallenger-datapack/` too).
-Tag files live at
-`~/.local/share/catchchallenger/datapack-<sha256(abs datapack path)>/tileset-<sha256(abs .tsx path)>.json`.
+Tag files live in the tool's own app subdir (isolated from the client's data)
+`~/.local/share/CatchChallenger/tileset-tagger/datapack-<sha256(abs datapack path)>/tileset-<sha256(abs .tsx path)>.json`.
 
 ## Why
 

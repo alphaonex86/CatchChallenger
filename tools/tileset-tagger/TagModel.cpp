@@ -156,10 +156,13 @@ bool TagModel::load(const QString &tsxPath)
         tile=tile.nextSiblingElement("tile");
     }
 
-    // sidecar location (OUT of the datapack), then load existing tags from it
+    // sidecar location (OUT of the datapack), then load existing tags from it.
+    // Own app subdir under the project's org dir (Qt org/app convention) so it is
+    // ISOLATED from the client's data (~/.local/share/CatchChallenger/client*) —
+    // never the bare org dir, and never a near-duplicate name.
     const QString root=datapackRootOf(tsxPath);
     sidecarDir_=QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
-                +"/catchchallenger/datapack-"+sha256Hex(QFileInfo(root).absoluteFilePath());
+                +"/CatchChallenger/tileset-tagger/datapack-"+sha256Hex(QFileInfo(root).absoluteFilePath());
     tagFilePath_=sidecarDir_+"/tileset-"+sha256Hex(QFileInfo(tsxPath).absoluteFilePath())+".json";
     loadSidecarTags();
 
