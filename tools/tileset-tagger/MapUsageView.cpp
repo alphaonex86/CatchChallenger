@@ -22,9 +22,10 @@ MapUsageView::MapUsageView(QWidget *parent) :
     timer_->setInterval(110);
     connect(timer_,&QTimer::timeout,this,&MapUsageView::onTick);
     setMinimumHeight(240);
+    setMinimumWidth(220);   // a tall LEFT dock: keep it wide enough to read the map
 }
 
-QSize MapUsageView::sizeHint() const { return QSize(520,340); }
+QSize MapUsageView::sizeHint() const { return QSize(300,460); }   // narrow+tall left dock; leaves the centre room
 
 QPoint MapUsageView::firstHighlightCenter() const
 {

@@ -1,7 +1,7 @@
 #ifndef TILESETTAGGER_TILESETVIEW_HPP
 #define TILESETTAGGER_TILESETVIEW_HPP
 
-// The tileset canvas: paints the .tsx image at an integer zoom with a tile grid,
+// The tileset canvas: paints the .tsx image at a (fractional) zoom with a tile grid,
 // tints tagged tiles by category colour, highlights untagged-non-empty tiles in
 // red (the owner's "reminder"), and lets the user rubber-band a rectangle of
 // tiles to tag.  Pure painting + mouse; the data lives in TagModel.
@@ -17,8 +17,8 @@ public:
     void setModel(TagModel *model);     // not owned
     void refresh();                     // repaint after the model changed
     void setShowStates(bool on);
-    void setZoom(int z);
-    int zoom() const;
+    void setZoom(double z);     // fractional so the sheet can fill the window AND shrink to fit
+    double zoom() const;
     void selectCell(int col,int row);   // programmatic selection (jump-to-untagged)
     QRect cellPixelRect(int col,int row) const;
     QSize sizeHint() const override;
@@ -38,7 +38,7 @@ protected:
 
 private:
     TagModel *model_;
-    int zoom_;
+    double zoom_;
     bool showStates_;
     bool selecting_;
     bool hasSelection_;

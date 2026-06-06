@@ -8,6 +8,7 @@
 #include <QComboBox>
 #include <QDir>
 #include <QDockWidget>
+#include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QResizeEvent>
@@ -43,6 +44,7 @@ static QStringList tagCategories()
 MainWindow::MainWindow() :
     QMainWindow(),
     model_(new TagModel()),
+    scroll_(nullptr),
     view_(new TilesetView()),
     usage_(new MapUsageIndex()),
     usageView_(new MapUsageView()),
@@ -74,6 +76,8 @@ MainWindow::MainWindow() :
     scroll->setBackgroundRole(QPalette::Dark);
     view_->setModel(model_);
     setCentralWidget(scroll);
+    scroll_=scroll;
+    scroll_->viewport()->installEventFilter(this);   // refit exactly when the viewport resizes
 
     QDockWidget *dock=new QDockWidget(tr("Tag"),this);
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
@@ -138,22 +142,23 @@ MainWindow::MainWindow() :
     dock->setWidget(panel);
     addDockWidget(Qt::RightDockWidgetArea,dock);
 
-    // bottom dock: "where is this group used on the maps" (step 2 of tagging)
+    // LEFT dock: "where is this group used on the maps" (step 2 of tagging).  Left
+    // (tall) — NOT bottom (wide+short) — because the maps are mostly tall/narrow
+    // routes; a tall panel shows the whole map readably, like Tiled's left map view.
     QDockWidget *usageDock=new QDockWidget(tr("Map usage"),this);
     QWidget *usagePanel=new QWidget(usageDock);
     QVBoxLayout *uLay=new QVBoxLayout(usagePanel);
     QHBoxLayout *uTop=new QHBoxLayout();
     uTop->addWidget(new QLabel(tr("Used on map:"),usagePanel));
     mapCombo_=new QComboBox(usagePanel);
-    mapCombo_->setMinimumWidth(280);
-    uTop->addWidget(mapCombo_);
-    uTop->addStretch(1);
+    mapCombo_->setMinimumWidth(200);
+    uTop->addWidget(mapCombo_,1);
     uLay->addLayout(uTop);
     // The view fits the WHOLE map into itself (smooth-scaled overview, like Tiled's
     // full-map panel), so it goes straight in the dock — no scroll area / cropping.
     uLay->addWidget(usageView_,1);
     usageDock->setWidget(usagePanel);
-    addDockWidget(Qt::BottomDockWidgetArea,usageDock);
+    addDockWidget(Qt::LeftDockWidgetArea,usageDock);
 
     connect(openBtn_,&QPushButton::clicked,this,&MainWindow::onOpen);
     connect(verifyBtn,&QPushButton::clicked,this,&MainWindow::onVerify);
@@ -163,7 +168,7 @@ MainWindow::MainWindow() :
     connect(view_,&TilesetView::selectionFinished,this,&MainWindow::onSelectionFinished);
     connect(mapCombo_,SIGNAL(currentIndexChanged(int)),this,SLOT(onMapPicked(int)));
 
-    resize(1100,820);
+    resize(1320,860);   // room for: left map dock + central tileset + right tag panel
     refreshGuard();
     updateTitle();
 }
@@ -274,22 +279,33 @@ void MainWindow::openNextIncomplete()
 
 void MainWindow::fitViewToWindow()
 {
-    QScrollArea *scroll=qobject_cast<QScrollArea*>(centralWidget());
-    if(scroll==nullptr || model_->image().isNull() || model_->image().width()<=0 || model_->image().height()<=0)
+    if(scroll_==nullptr || model_->image().isNull() || model_->image().width()<=0 || model_->image().height()<=0)
         return;
-    // fit the WHOLE sheet in the viewport (both dimensions) so every tile is visible,
-    // biggest integer zoom that fits.
-    const int zw=scroll->viewport()->width()/model_->image().width();
-    const int zh=scroll->viewport()->height()/model_->image().height();
-    int z = zw<zh ? zw : zh;
-    if(z<1) z=1;
+    // Fit the WHOLE sheet in the viewport (both dimensions) so every tile is visible
+    // AND the sheet fills the space — a FRACTIONAL scale: a 512px sheet in a ~900px
+    // viewport becomes ~1.7x (fills it), and if a dock steals height it shrinks below
+    // 1x so nothing is cut.  A small margin keeps it off the scrollbars.
+    const double m=8.0;
+    const double sw=(scroll_->viewport()->width()-m)/(double)model_->image().width();
+    const double sh=(scroll_->viewport()->height()-m)/(double)model_->image().height();
+    double z = sw<sh ? sw : sh;
+    if(z<0.1) z=0.1;
     view_->setZoom(z);
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
-    fitViewToWindow();   // expand the tileset when the window grows/maximises
+    fitViewToWindow();   // first pass; eventFilter does the authoritative refit
+}
+
+bool MainWindow::eventFilter(QObject *watched,QEvent *event)
+{
+    // The central area (scroll viewport) is laid out AFTER MainWindow::resizeEvent,
+    // so the viewport size is only final here -> this is where the fit is correct.
+    if(scroll_!=nullptr && watched==scroll_->viewport() && event->type()==QEvent::Resize)
+        fitViewToWindow();
+    return QMainWindow::eventFilter(watched,event);
 }
 
 void MainWindow::onZoomIn()  { view_->setZoom(view_->zoom()+1); }
