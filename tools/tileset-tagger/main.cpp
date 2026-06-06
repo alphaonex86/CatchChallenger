@@ -73,28 +73,29 @@ static int runSelftest(const QString &tsx)
     if(!model.load(tsx)) { std::cerr << "selftest load FAIL: " << model.error().toStdString() << std::endl; return 1; }
     const size_t before=model.untaggedNonEmpty().size();
     std::cout << "selftest: loaded " << model.tileCount() << " tiles, untagged-non-empty=" << before << std::endl;
-    // tag the first 4 non-empty tiles as a fake 'table'
+    // tag 4 currently-UNTAGGED non-empty tiles so the guard count drops by exactly 4
+    const std::vector<int> untagged=model.untaggedNonEmpty();
     std::vector<int> pick;
-    int id=0;
-    while(id<model.tileCount() && pick.size()<4) { if(model.tileHasPixels(id)) pick.push_back(id); id++; }
-    if(pick.empty()) { std::cout << "selftest: tileset has no pixels (skip tag round-trip)" << std::endl; return 0; }
+    size_t pi=0;
+    while(pi<untagged.size() && pick.size()<4) { pick.push_back(untagged.at(pi)); pi++; }
+    if(pick.empty()) { std::cout << "selftest: no untagged tiles with pixels (skip tag round-trip)" << std::endl; return 0; }
     std::map<std::string,std::string> attrs;
-    attrs["name"]="table-0";
+    attrs["group"]="table-0";
     attrs["size"]="2x2";
     attrs["horizontalRepeat"]="true";
+    // tags go to the SIDECAR (out of the datapack) — back up any real tag file and
+    // restore it so the selftest never disturbs the user's tags.
+    const QString tagFile=model.tagFilePath();
+    const bool had=QFile::exists(tagFile);
+    QByteArray backup;
+    if(had) { QFile f(tagFile); if(f.open(QIODevice::ReadOnly)) { backup=f.readAll(); f.close(); } }
+    std::cout << "selftest: sidecar " << tagFile.toStdString() << std::endl;
+
     model.tagTiles(pick,"selftest-table",attrs);
-    // save to a copy so the source .tsx is never touched
-    const QString copy=tsx+".selftest.tsx";
-    {
-        QFile src(tsx); QFile::remove(copy); src.copy(copy);
-    }
-    TagModel writeModel;
-    writeModel.load(copy);
-    writeModel.tagTiles(pick,"selftest-table",attrs);
-    if(!writeModel.save()) { std::cerr << "selftest save FAIL: " << writeModel.error().toStdString() << std::endl; return 1; }
-    // reload the copy and verify the tags persisted + the guard count dropped by 'pick'
+    if(!model.save()) { std::cerr << "selftest save FAIL: " << model.error().toStdString() << std::endl; return 1; }
+    // reload from the sidecar and verify tags persisted + the guard count dropped
     TagModel reload;
-    if(!reload.load(copy)) { std::cerr << "selftest reload FAIL: " << reload.error().toStdString() << std::endl; return 1; }
+    if(!reload.load(tsx)) { std::cerr << "selftest reload FAIL: " << reload.error().toStdString() << std::endl; return 1; }
     bool ok=true;
     size_t k=0;
     while(k<pick.size())
@@ -103,10 +104,15 @@ static int runSelftest(const QString &tsx)
         k++;
     }
     const size_t after=reload.untaggedNonEmpty().size();
-    QFile::remove(copy);
+
+    // restore the datapack sidecar to its pre-test state
+    if(had) { QFile f(tagFile); if(f.open(QIODevice::WriteOnly|QIODevice::Truncate)) { f.write(backup); f.close(); } }
+    else QFile::remove(tagFile);
+
+    const bool dropOk = pick.size()<=before && after==before-pick.size();
     std::cout << "selftest: round-trip tags " << (ok?"PERSIST":"LOST") << "; untagged " << before << " -> " << after
-              << " (expected -" << pick.size() << ")" << std::endl;
-    return (ok && after==before-pick.size()) ? 0 : 1;
+              << " (expected -" << pick.size() << "); .tsx untouched" << std::endl;
+    return (ok && dropOk) ? 0 : 1;
 }
 
 static int runUsage(const QStringList &args)

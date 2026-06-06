@@ -10,6 +10,7 @@ compose equivalent maps on the partial tileset. Design: `../map-procedural-gener
 * VISUAL info (`category` = what the tile LOOKS like) is tagged by the human, but PRE-FILLED from how the tile is used on the maps (a soft guess to confirm or edit). Categories like "table"; attributes like `horizontalRepeat`, `horizontalMiddleRepeat` (centre repeats, borders fixed), vertical*.
 * SUPPORT mis-detected / mis-labelled tags: the human can always override the pre-fill, and when detection is uncertain or CONFLICTS (same tile used as two incompatible roles, category vs layer mismatch, item count/size below the model) the tool REPORTS the problem to the human to fix — never silently guess.
 * A 100%-transparent tile is NEVER tagged or placed.
+* Tags (and any derived/work data) are stored OUT of the datapack in the XDG sidecar `~/.local/share/catchchallenger/datapack-<sha256(abs datapack root path)>/tileset-<sha256(abs .tsx path)>.json` — the `.tsx`/datapack is read-only (per root CLAUDE.md), so `CatchChallenger-datapack/` can be tagged too.
 
 ## Learn the model structure (from the tagged model datapack)
 Compose the PRECISE map structure from the model maps, expressed in tags: which tile is RANDOM among N visual equivalents (e.g. grass = random of 3), the average building SIZE and how it is STRUCTURED (wall+roof+door layout), terrain detection (biome zones, edges, corners), and which rules are HARD (always hold) vs RANDOM (distributions).

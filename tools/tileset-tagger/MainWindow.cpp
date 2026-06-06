@@ -128,7 +128,7 @@ MainWindow::MainWindow() :
     QPushButton *nextBtn=new QPushButton(tr("Jump to next untagged"),panel);
     lay->addWidget(nextBtn);
 
-    QPushButton *saveBtn=new QPushButton(tr("Save .tsx"),panel);
+    QPushButton *saveBtn=new QPushButton(tr("Save tags"),panel);
     lay->addWidget(saveBtn);
     lay->addStretch(1);
 
@@ -264,7 +264,7 @@ void MainWindow::onSave()
         QMessageBox::warning(this,tr("Save failed"),model_->error());
         return;
     }
-    statusBar()->showMessage(tr("saved"),3000);
+    statusBar()->showMessage(tr("saved tags to %1 (datapack untouched)").arg(model_->tagFilePath()),5000);
     updateTitle();
 }
 

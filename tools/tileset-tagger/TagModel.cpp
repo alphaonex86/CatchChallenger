@@ -1,13 +1,40 @@
 #include "TagModel.hpp"
 
+#include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QTextStream>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QStandardPaths>
+
+// The datapack stays the READ-ONLY source of truth: tags are work data and live
+// OUT of the datapack, under ~/.local/share/catchchallenger/datapack-<sha256(abs
+// datapack root path)>/ (per root CLAUDE.md). One tag file per tileset.
+
+// datapack root = the parent of the ancestor "map" dir; else the .tsx's own dir.
+static QString datapackRootOf(const QString &tsxPath)
+{
+    QDir walk=QFileInfo(tsxPath).absoluteDir();
+    while(walk.cdUp())
+    {
+        if(walk.dirName()=="map")
+            return QFileInfo(walk.absolutePath()).absolutePath();
+    }
+    return QFileInfo(tsxPath).absolutePath();
+}
+
+static QString sha256Hex(const QString &s)
+{
+    return QString::fromLatin1(QCryptographicHash::hash(s.toUtf8(),QCryptographicHash::Sha256).toHex());
+}
 
 TagModel::TagModel() :
     tsxPath_(),
     imagePath_(),
+    sidecarDir_(),
+    tagFilePath_(),
     doc_(),
     image_(),
     tileWidth_(16),
@@ -24,6 +51,38 @@ TagModel::TagModel() :
 QDomElement TagModel::tilesetElement()
 {
     return doc_.documentElement(); // <tileset>
+}
+
+void TagModel::loadSidecarTags()
+{
+    tags_.clear();
+    QFile f(tagFilePath_);
+    if(!f.open(QIODevice::ReadOnly))
+        return;                 // no tags yet — fine
+    const QByteArray raw=f.readAll();
+    f.close();
+    const QJsonDocument jd=QJsonDocument::fromJson(raw);
+    if(!jd.isObject())
+        return;
+    const QJsonObject tiles=jd.object().value("tiles").toObject();
+    QJsonObject::const_iterator it=tiles.constBegin();
+    while(it!=tiles.constEnd())
+    {
+        const int id=it.key().toInt();
+        const QJsonObject o=it.value().toObject();
+        TileTag tag;
+        tag.category=o.value("category").toString().toStdString();
+        const QJsonObject attrs=o.value("attributes").toObject();
+        QJsonObject::const_iterator a=attrs.constBegin();
+        while(a!=attrs.constEnd())
+        {
+            tag.attributes[a.key().toStdString()]=a.value().toString().toStdString();
+            ++a;
+        }
+        if(id>=0 && !tag.category.empty())
+            tags_[id]=tag;
+        ++it;
+    }
 }
 
 bool TagModel::load(const QString &tsxPath)
@@ -76,7 +135,8 @@ bool TagModel::load(const QString &tsxPath)
     if(columns_<1)
         columns_=1;
 
-    // read existing category/name/size tags
+    // read ONLY the foreign animation hint from the .tsx (read-only) — tags do NOT
+    // live in the datapack; they come from the sidecar below.
     QDomElement tile=tileset.firstChildElement("tile");
     while(!tile.isNull())
     {
@@ -84,45 +144,27 @@ bool TagModel::load(const QString &tsxPath)
         QDomElement props=tile.firstChildElement("properties");
         if(id>=0 && !props.isNull())
         {
-            TileTag tag;
             QDomElement prop=props.firstChildElement("property");
             while(!prop.isNull())
             {
                 const QString n=prop.attribute("name");
-                const QString v=prop.attribute("value");
-                if(n=="category")
-                    tag.category=v.toStdString();
-                else
-                    tag.attributes[n.toStdString()]=v.toStdString();
                 if(n=="animation" || n=="frames")
-                    animatedTiles_.insert(id);   // foreign anim hint -> pre-fill 'animated'
+                    animatedTiles_.insert(id);
                 prop=prop.nextSiblingElement("property");
             }
-            // a tile is OURS only if it carries a category; otherwise its
-            // properties are foreign (engine/Tiled) and we leave them untouched.
-            if(!tag.category.empty())
-                tags_[id]=tag;
         }
         tile=tile.nextSiblingElement("tile");
     }
+
+    // sidecar location (OUT of the datapack), then load existing tags from it
+    const QString root=datapackRootOf(tsxPath);
+    sidecarDir_=QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
+                +"/catchchallenger/datapack-"+sha256Hex(QFileInfo(root).absoluteFilePath());
+    tagFilePath_=sidecarDir_+"/tileset-"+sha256Hex(QFileInfo(tsxPath).absoluteFilePath())+".json";
+    loadSidecarTags();
+
     error_.clear();
     return true;
-}
-
-QDomElement TagModel::ensureTileElement(int id)
-{
-    QDomElement tileset=tilesetElement();
-    QDomElement tile=tileset.firstChildElement("tile");
-    while(!tile.isNull())
-    {
-        if(tile.attribute("id","-1").toInt()==id)
-            return tile;
-        tile=tile.nextSiblingElement("tile");
-    }
-    QDomElement created=doc_.createElement("tile");
-    created.setAttribute("id",id);
-    tileset.appendChild(created);
-    return created;
 }
 
 void TagModel::tagTiles(const std::vector<int> &tileIds, const std::string &category,
@@ -234,98 +276,40 @@ std::vector<std::string> TagModel::categoriesUsed() const
     return cats;
 }
 
-static bool isKnownTagKey(const QString &n)
-{
-    // the attribute vocabulary this tool owns; foreign properties are NOT here
-    // and are preserved across save.  (legacy "name" kept so old tags get cleaned)
-    return n=="category" || n=="group" || n=="name" || n=="size"
-        || n=="layer" || n=="walkable" || n=="animated"
-        || n=="horizontalRepeat" || n=="horizontalMiddleRepeat"
-        || n=="verticalRepeat" || n=="verticalMiddleRepeat"
-        || n=="terrain";
-}
-
-void TagModel::stripManagedProperties(QDomElement props, const std::map<std::string,std::string> *extraKeys)
-{
-    if(props.isNull())
-        return;
-    std::vector<QDomElement> doomed;
-    QDomElement prop=props.firstChildElement("property");
-    while(!prop.isNull())
-    {
-        const QString n=prop.attribute("name");
-        bool managed=isKnownTagKey(n);
-        if(!managed && extraKeys!=nullptr && extraKeys->find(n.toStdString())!=extraKeys->cend())
-            managed=true;
-        if(managed)
-            doomed.push_back(prop);
-        prop=prop.nextSiblingElement("property");
-    }
-    size_t i=0;
-    while(i<doomed.size()) { props.removeChild(doomed.at(i)); i++; }
-}
-
 bool TagModel::save()
 {
-    QDomElement tileset=tilesetElement();
-
-    // 1. clean stale tag properties off tiles that are no longer tagged (so
-    //    un-tagging in the GUI actually removes the category from the file).
-    QDomElement tile=tileset.firstChildElement("tile");
-    while(!tile.isNull())
-    {
-        const int id=tile.attribute("id","-1").toInt();
-        if(id>=0 && tags_.find(id)==tags_.cend())
-        {
-            QDomElement props=tile.firstChildElement("properties");
-            stripManagedProperties(props,nullptr);
-            if(!props.isNull() && props.firstChildElement("property").isNull())
-                tile.removeChild(props); // drop the now-empty <properties>
-        }
-        tile=tile.nextSiblingElement("tile");
-    }
-
-    // 2. write the tagged tiles: category first, then each attribute.
+    // tags go to the sidecar JSON — NEVER into the datapack .tsx.
+    QDir().mkpath(sidecarDir_);
+    QJsonObject tiles;
     std::unordered_map<int,TileTag>::const_iterator it=tags_.begin();
     while(it!=tags_.cend())
     {
-        const int id=it->first;
         const TileTag &tag=it->second;
-        QDomElement t=ensureTileElement(id);
-        QDomElement props=t.firstChildElement("properties");
-        if(props.isNull())
-        {
-            props=doc_.createElement("properties");
-            t.insertBefore(props,t.firstChild());
-        }
-        stripManagedProperties(props,&tag.attributes);
-        QDomElement cat=doc_.createElement("property");
-        cat.setAttribute("name","category");
-        cat.setAttribute("value",QString::fromStdString(tag.category));
-        props.appendChild(cat);
+        QJsonObject o;
+        o.insert("category",QString::fromStdString(tag.category));
+        QJsonObject attrs;
         std::map<std::string,std::string>::const_iterator a=tag.attributes.begin();
         while(a!=tag.attributes.cend())
         {
             if(!a->second.empty())
-            {
-                QDomElement p=doc_.createElement("property");
-                p.setAttribute("name",QString::fromStdString(a->first));
-                p.setAttribute("value",QString::fromStdString(a->second));
-                props.appendChild(p);
-            }
+                attrs.insert(QString::fromStdString(a->first),QString::fromStdString(a->second));
             ++a;
         }
+        o.insert("attributes",attrs);
+        tiles.insert(QString::number(it->first),o);
         ++it;
     }
+    QJsonObject root;
+    root.insert("tileset",QFileInfo(tsxPath_).absoluteFilePath());
+    root.insert("tiles",tiles);
 
-    QFile out(tsxPath_);
+    QFile out(tagFilePath_);
     if(!out.open(QIODevice::WriteOnly|QIODevice::Truncate))
     {
-        error_="cannot write "+tsxPath_;
+        error_="cannot write "+tagFilePath_;
         return false;
     }
-    QTextStream ts(&out);
-    doc_.save(ts,1);
+    out.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
     out.close();
     error_.clear();
     return true;
@@ -336,4 +320,6 @@ int TagModel::columns() const { return columns_; }
 int TagModel::tileWidth() const { return tileWidth_; }
 int TagModel::tileHeight() const { return tileHeight_; }
 const QImage &TagModel::image() const { return image_; }
+const QString &TagModel::tagFilePath() const { return tagFilePath_; }
+const QString &TagModel::sidecarDir() const { return sidecarDir_; }
 const QString &TagModel::error() const { return error_; }
