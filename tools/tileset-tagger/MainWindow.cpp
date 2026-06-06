@@ -130,22 +130,8 @@ MainWindow::MainWindow() :
     showUntagged->setChecked(true);
     lay->addWidget(showUntagged);
     guardLabel_=new QLabel(panel);
+    guardLabel_->setWordWrap(true);
     lay->addWidget(guardLabel_);
-    QPushButton *suggestBtn=new QPushButton(tr("Suggest terrain (auto-tag water/grass/ledge)"),panel);
-    lay->addWidget(suggestBtn);
-    QPushButton *nextBtn=new QPushButton(tr("Jump to next to-verify (red/yellow)"),panel);
-    lay->addWidget(nextBtn);
-
-    QHBoxLayout *zoomRow=new QHBoxLayout();
-    QPushButton *zoomOutBtn=new QPushButton(tr("Zoom −"),panel);
-    QPushButton *zoomInBtn=new QPushButton(tr("Zoom +"),panel);
-    zoomRow->addWidget(new QLabel(tr("Tile size:"),panel));
-    zoomRow->addWidget(zoomOutBtn);
-    zoomRow->addWidget(zoomInBtn);
-    lay->addLayout(zoomRow);
-
-    QPushButton *saveBtn=new QPushButton(tr("Save tags"),panel);
-    lay->addWidget(saveBtn);
     lay->addStretch(1);
 
     dock->setWidget(panel);
@@ -169,11 +155,6 @@ MainWindow::MainWindow() :
     connect(openBtn_,&QPushButton::clicked,this,&MainWindow::onOpen);
     connect(verifyBtn,&QPushButton::clicked,this,&MainWindow::onVerify);
     connect(clearBtn,&QPushButton::clicked,this,&MainWindow::onClearTag);
-    connect(saveBtn,&QPushButton::clicked,this,&MainWindow::onSave);
-    connect(suggestBtn,&QPushButton::clicked,this,&MainWindow::onSuggest);
-    connect(nextBtn,&QPushButton::clicked,this,&MainWindow::onNextUntagged);
-    connect(zoomInBtn,&QPushButton::clicked,this,&MainWindow::onZoomIn);
-    connect(zoomOutBtn,&QPushButton::clicked,this,&MainWindow::onZoomOut);
     connect(showUntagged,&QCheckBox::toggled,this,&MainWindow::onToggleUntagged);
     connect(view_,&TilesetView::selectionChanged,this,&MainWindow::onSelection);
     connect(view_,&TilesetView::selectionFinished,this,&MainWindow::onSelectionFinished);
@@ -219,9 +200,23 @@ bool MainWindow::openTsx(const QString &path)
         updateTitle();
     }
     fitViewToWindow();
+    // position on the FIRST tile needing attention so the human reviews IN ORDER
+    // (no jump button — verify auto-advances to the next from here).
+    const std::vector<int> todo=model_->unverifiedTiles();
     QScrollArea *scroll=qobject_cast<QScrollArea*>(centralWidget());
-    if(scroll!=nullptr)
-        scroll->ensureVisible(0,0,0,0);   // show the top-left of the sheet
+    if(!todo.empty())
+    {
+        const int cols=model_->columns();
+        const int id=todo.at(0);
+        view_->selectCell(id%cols,id/cols);
+        if(scroll!=nullptr)
+        {
+            const QRect c=view_->cellPixelRect(id%cols,id/cols);
+            scroll->ensureVisible(c.center().x(),c.center().y(),c.width(),c.height());
+        }
+    }
+    else if(scroll!=nullptr)
+        scroll->ensureVisible(0,0,0,0);
     return true;
 }
 
@@ -361,6 +356,7 @@ void MainWindow::onClearTag()
     const std::vector<int> ids=model_->tilesInRect(selC0_,selR0_,selC1_,selR1_);
     const std::map<std::string,std::string> none;
     model_->tagTiles(ids,std::string(),none);
+    model_->save();           // save on each change
     view_->refresh();
     refreshGuard();
     updateTitle();
@@ -430,6 +426,22 @@ void MainWindow::onSelectionFinished(int col0,int row0,int col1,int row1,int)
     }
     mapCombo_->blockSignals(false);
     prefillFromUsage(ids);   // guess category/layer/walkable/repeats for validation
+    // If the anchor tile is ALREADY tagged, show its SAVED values instead of the
+    // guess — so re-selecting a tile you fixed doesn't look like it was lost.
+    {
+        const TagModel::TileTag &existing=model_->tagOf(ids.front());
+        if(!existing.category.empty())
+        {
+            const int ci=categoryBox_->findText(QString::fromStdString(existing.category));
+            if(ci>=0)
+                categoryBox_->setCurrentIndex(ci);
+            animated_->setChecked(existing.attr("animated")=="true");
+            hRepeat_->setChecked(existing.attr("horizontalRepeat")=="true");
+            hMidRepeat_->setChecked(existing.attr("horizontalMiddleRepeat")=="true");
+            vRepeat_->setChecked(existing.attr("verticalRepeat")=="true");
+            vMidRepeat_->setChecked(existing.attr("verticalMiddleRepeat")=="true");
+        }
+    }
     if(currentUsages_.empty())
     {
         usageView_->clearUsage();
@@ -499,21 +511,22 @@ void MainWindow::onSuggest()
                 std::map<std::string,std::string> attrs;
                 attrs["layer"]=norm;
                 attrs["walkable"]= walk ? "true" : "false";
-                if(!high)
-                    attrs["auto"]="guess";   // low-confidence -> shown yellow for review
+                attrs["auto"]="guess";   // EVERY guess is to-review (human validates all)
+                (void)high;
                 std::vector<int> one;
                 one.push_back(id);
                 model_->tagTiles(one,cat,attrs);
-                if(high) sure++; else guess++;
+                guess++;
             }
         }
         ++it;
     }
+    (void)sure;
     QApplication::restoreOverrideCursor();
     view_->refresh();
     refreshGuard();
     updateTitle();
-    statusBar()->showMessage(tr("auto-tagged %1 sure + %2 to-review (yellow) — fix the wrong guesses, then Save").arg(sure).arg(guess),7000);
+    statusBar()->showMessage(tr("auto-suggested %1 tile(s) to review — validate each one").arg(guess),7000);
 }
 
 void MainWindow::prefillFromUsage(const std::vector<int> &ids)
