@@ -1,9 +1,10 @@
 # tileset-tagger + learn-from-tags — rules
 
 Combine with the root CLAUDE.md. The tagger feeds a data-driven map generator:
-tag the MODEL datapack (pokemon) and the PARTIAL datapack (official) tilesets with
-ONE visual vocabulary, learn the model maps' rules in terms of those tags, then
-compose equivalent maps on the partial tileset. Design: `../map-procedural-generation/learn-from-tags.md`.
+tag the MODEL datapack and the PARTIAL datapack tilesets with ONE visual
+vocabulary, learn the model maps' rules in terms of those tags, then compose
+equivalent maps on the partial tileset. Design: `../map-procedural-generation/learn-from-tags.md`.
+* MODEL map datapack = `datapack-pkmn/map/main/gen2/` (183 .tmx over 14 tilesets `tileset/normal1..15.tsx`+`animations.tsx`, johto+kanto). PARTIAL (target) datapack = official `CatchChallenger-datapack/`.
 
 ## Tag model: LOGICAL (auto) vs VISUAL (human)
 * LOGICAL info is DERIVED from the model maps, NEVER hand-tagged: which layer a tile is drawn on, the layer ORDER, and that some layers CANCEL others (Collisions cancels Walkable). Authoritative files: draw/render order = `client/libqtcatchchallenger/maprender/MapVisualiserOrder.cpp`; walkability precedence = `general/base/Map_loaderMain.cpp` (per-cell else-if: Dirt(249) > LedgesLeft/Right/Top/Bottom(250-253) > `(Walkable||monsterZone)&&!Collisions`(0) > blocked(254); same-named layers OR-merge; Grass/Water/Lava are monster-collision zones = walkable). `walkable`/`layer` come from the EFFECTIVE per-cell code, not the drawn-on layer.

@@ -1,5 +1,11 @@
 # Learn-from-tags: data-driven map generation
 
+**MODEL datapack = `datapack-pkmn/map/main/gen2/`** (owner) — 183 `.tmx` maps
+(johto + kanto) over 14 tilesets (`tileset/normal1..15.tsx` + `animations.tsx`),
+with `informations.xml` / `zone/` / `quests/`. This is the corpus whose rules we
+learn and the target the reproducibility guard round-trips against. The PARTIAL
+(target) datapack is the official `CatchChallenger-datapack/`.
+
 Goal (owner): stop hand-coding placement rules. Instead **tag every tile** of both
 the hand-made (Pokémon-style) tilesets and the official tileset with a shared
 semantic vocabulary, **learn the rules** that the hand-made maps obey *in terms of
