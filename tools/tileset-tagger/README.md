@@ -104,22 +104,26 @@ tileset-tagger --genmap  <struct.json> <tileset-dir> <out.tmx> [W H seed]   # ge
 
 ## How to start
 
-1. **Just open a tileset** — it **auto-tags on open** (no separate step). From the
-   maps it best-guesses every used tile (terrain exactly; walls/trees/ground/roofs
-   by layer + colour):
+1. **Open a tileset — or a whole folder.** A `.tsx` opens that tileset; a
+   **directory** walks every `.tsx` in it, opening the first not-fully-verified one
+   and moving to the next when you finish (already-verified tilesets are skipped):
    ```
-   tileset-tagger /home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen2/tileset/normal1.tsx
+   tileset-tagger /home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen2/tileset/
    ```
+   It **auto-tags on open** (no separate step). **Maximise** the window and the
+   tileset expands to fill it; **Zoom +/−** or **Ctrl+mouse-wheel** to resize tiles.
 2. **REVIEW each tile to "verified".** Tiles are coloured by state:
    **red** = untagged · **yellow** = an auto-guess to review · **faint tint** =
    verified. For a correct yellow guess, drag a rectangle over it and click
    **Mark selection verified** (keeps the category, turns it tinted). For a wrong
-   guess, pick the right **category** and **Tag** (also verifies). The **Map usage**
-   panel shows each in situ. **Jump to next to-verify** walks the red/yellow tiles
-   in order, advancing each click. A **progression list** is always shown — the
-   panel reads `progress P% — ✓ verified · ⚠ review · ✗ untagged` and the window
-   title shows `verified N/Total`. **Save** when done (tags go to the sidecar;
-   the datapack is untouched). Headless: `--guard <x.tsx>` prints the same counts.
+   guess, pick the right **category** and **Tag**. **Mark selection verified**
+   applies the current category + checkboxes as verified **and auto-advances to the
+   next** red/yellow tile (status shows for 5s). The **Map usage** panel shows each
+   in situ. A **progression list** is always shown — the panel reads
+   `progress P% — ✓ verified · ⚠ review · ✗ untagged`, the window title shows
+   `verified N/Total`. When a tileset hits 100% it **auto-saves and opens the next**
+   in the folder. Headless: `--guard <x.tsx>` prints the same counts. Tags go to the
+   sidecar; the datapack is untouched.
 3. Do the model tilesets (`gen2/tileset/`) and the target (`map/tileset/`); then
    the generator learns from the model and composes onto the target.
 

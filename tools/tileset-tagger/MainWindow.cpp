@@ -6,9 +6,11 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDir>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QResizeEvent>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -60,7 +62,9 @@ MainWindow::MainWindow() :
     selC0_(-1),
     selR0_(-1),
     selC1_(-1),
-    selR1_(-1)
+    selR1_(-1),
+    tsxQueue_(),
+    tsxIndex_(0)
 {
     QScrollArea *scroll=new QScrollArea(this);
     scroll->setWidget(view_);
@@ -132,6 +136,14 @@ MainWindow::MainWindow() :
     QPushButton *nextBtn=new QPushButton(tr("Jump to next to-verify (red/yellow)"),panel);
     lay->addWidget(nextBtn);
 
+    QHBoxLayout *zoomRow=new QHBoxLayout();
+    QPushButton *zoomOutBtn=new QPushButton(tr("Zoom −"),panel);
+    QPushButton *zoomInBtn=new QPushButton(tr("Zoom +"),panel);
+    zoomRow->addWidget(new QLabel(tr("Tile size:"),panel));
+    zoomRow->addWidget(zoomOutBtn);
+    zoomRow->addWidget(zoomInBtn);
+    lay->addLayout(zoomRow);
+
     QPushButton *saveBtn=new QPushButton(tr("Save tags"),panel);
     lay->addWidget(saveBtn);
     lay->addStretch(1);
@@ -161,6 +173,8 @@ MainWindow::MainWindow() :
     connect(saveBtn,&QPushButton::clicked,this,&MainWindow::onSave);
     connect(suggestBtn,&QPushButton::clicked,this,&MainWindow::onSuggest);
     connect(nextBtn,&QPushButton::clicked,this,&MainWindow::onNextUntagged);
+    connect(zoomInBtn,&QPushButton::clicked,this,&MainWindow::onZoomIn);
+    connect(zoomOutBtn,&QPushButton::clicked,this,&MainWindow::onZoomOut);
     connect(showUntagged,&QCheckBox::toggled,this,&MainWindow::onToggleUntagged);
     connect(view_,&TilesetView::selectionChanged,this,&MainWindow::onSelection);
     connect(view_,&TilesetView::selectionFinished,this,&MainWindow::onSelectionFinished);
@@ -205,8 +219,80 @@ bool MainWindow::openTsx(const QString &path)
         refreshGuard();
         updateTitle();
     }
+    fitViewToWindow();
+    QScrollArea *scroll=qobject_cast<QScrollArea*>(centralWidget());
+    if(scroll!=nullptr)
+        scroll->ensureVisible(0,0,0,0);   // show the top-left of the sheet
     return true;
 }
+
+void MainWindow::openPath(const QString &path)
+{
+    QFileInfo fi(path);
+    if(fi.isDir())
+    {
+        QDir d(path);
+        const QStringList names=d.entryList(QStringList()<<"*.tsx",QDir::Files,QDir::Name);
+        tsxQueue_.clear();
+        int i=0;
+        while(i<names.size()) { tsxQueue_.append(d.absoluteFilePath(names.at(i))); i++; }
+        tsxIndex_=0;
+        if(tsxQueue_.isEmpty())
+        {
+            statusBar()->showMessage(tr("no .tsx files in %1").arg(path),5000);
+            return;
+        }
+        openNextIncomplete();
+    }
+    else
+    {
+        tsxQueue_.clear();
+        tsxIndex_=0;
+        openTsx(path);
+    }
+}
+
+void MainWindow::openNextIncomplete()
+{
+    while(tsxIndex_<tsxQueue_.size())
+    {
+        if(openTsx(tsxQueue_.at(tsxIndex_)))
+        {
+            const TagModel::Counts c=model_->progress();
+            if(c.untagged==0 && c.toReview==0)
+            {
+                tsxIndex_++;          // already fully verified -> skip
+                continue;
+            }
+            statusBar()->showMessage(tr("tileset %1/%2: %3 — %4 to review/tag")
+                                     .arg(tsxIndex_+1).arg(tsxQueue_.size())
+                                     .arg(QFileInfo(tsxQueue_.at(tsxIndex_)).fileName())
+                                     .arg(c.toReview+c.untagged),0);
+            return;
+        }
+        tsxIndex_++;                  // failed to load -> skip
+    }
+    QMessageBox::information(this,tr("Done"),tr("All %1 tileset(s) in the folder are fully verified.").arg(tsxQueue_.size()));
+}
+
+void MainWindow::fitViewToWindow()
+{
+    QScrollArea *scroll=qobject_cast<QScrollArea*>(centralWidget());
+    if(scroll==nullptr || model_->image().isNull() || model_->image().width()<=0)
+        return;
+    int z=scroll->viewport()->width()/model_->image().width();   // fill the width
+    if(z<2) z=2;
+    view_->setZoom(z);
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    fitViewToWindow();   // expand the tileset when the window grows/maximises
+}
+
+void MainWindow::onZoomIn()  { view_->setZoom(view_->zoom()+1); }
+void MainWindow::onZoomOut() { view_->setZoom(view_->zoom()-1); }
 
 void MainWindow::onOpen()
 {
@@ -215,25 +301,21 @@ void MainWindow::onOpen()
         openTsx(path);
 }
 
-void MainWindow::onTag()
+// Apply the current category + control settings to the selection as a VERIFIED
+// tag (no auto=guess flag).  Returns the number of tiles tagged.
+int MainWindow::applySelection()
 {
     if(selC0_<0)
-    {
-        statusBar()->showMessage(tr("select a rectangle first"),3000);
-        return;
-    }
+        return -1;
     const std::string category=categoryBox_->currentText().toStdString();
     const std::vector<int> ids=model_->tilesInRect(selC0_,selR0_,selC1_,selR1_);
     if(ids.empty())
-        return;
-    // size + item-group name are DERIVED from the rectangle (no typing).
+        return 0;
     const int w=selC1_-selC0_+1;
     const int h=selR1_-selR0_+1;
     std::map<std::string,std::string> attrs;
     attrs["size"]=std::to_string(w)+"x"+std::to_string(h);
     attrs["group"]=category+"@"+std::to_string(selC0_)+","+std::to_string(selR0_);
-    // logical role is DERIVED from the maps, not tagged by hand — attach it only
-    // when the maps actually showed us where these tiles are used.
     if(derivedFromMaps_)
     {
         if(!derivedLayer_.isEmpty())
@@ -251,11 +333,20 @@ void MainWindow::onTag()
         attrs["verticalRepeat"]="true";
     if(vMidRepeat_->isChecked())
         attrs["verticalMiddleRepeat"]="true";
-    model_->tagTiles(ids,category,attrs);
+    model_->tagTiles(ids,category,attrs);   // tagTiles writes no auto flag => verified
     view_->refresh();
     refreshGuard();
     updateTitle();
-    statusBar()->showMessage(tr("tagged %1 tile(s) as '%2'").arg((int)ids.size()).arg(QString::fromStdString(category)),3000);
+    return (int)ids.size();
+}
+
+void MainWindow::onTag()
+{
+    const int n=applySelection();
+    if(n<0)
+        statusBar()->showMessage(tr("select a rectangle first"),5000);
+    else if(n>0)
+        statusBar()->showMessage(tr("tagged %1 tile(s) as '%2' (verified)").arg(n).arg(categoryBox_->currentText()),5000);
 }
 
 void MainWindow::onClearTag()
@@ -272,17 +363,14 @@ void MainWindow::onClearTag()
 
 void MainWindow::onVerify()
 {
-    if(selC0_<0)
+    const int n=applySelection();   // apply the current category + checkboxes, verified
+    if(n<0)
     {
-        statusBar()->showMessage(tr("select the yellow guesses to accept first"),3000);
+        statusBar()->showMessage(tr("select a tile/rectangle first"),5000);
         return;
     }
-    const std::vector<int> ids=model_->tilesInRect(selC0_,selR0_,selC1_,selR1_);
-    model_->markVerified(ids);     // yellow -> verified (keeps the category)
-    view_->refresh();
-    refreshGuard();
-    updateTitle();
-    statusBar()->showMessage(tr("marked %1 tile(s) verified").arg((int)ids.size()),3000);
+    statusBar()->showMessage(tr("✓ verified %1 tile(s) as '%2' — moving to next").arg(n).arg(categoryBox_->currentText()),5000);
+    onNextUntagged();               // auto-advance to the next tile needing attention
 }
 
 void MainWindow::onSave()
@@ -500,7 +588,14 @@ void MainWindow::onNextUntagged()
     const std::vector<int> todo=model_->unverifiedTiles();
     if(todo.empty())
     {
-        statusBar()->showMessage(tr("all tiles verified — nothing left to review"),3000);
+        if(!tsxQueue_.isEmpty())
+        {
+            onSave();              // persist this finished tileset
+            tsxIndex_++;
+            openNextIncomplete();  // move on to the next tileset in the folder
+        }
+        else
+            statusBar()->showMessage(tr("all tiles verified — nothing left to review"),5000);
         return;
     }
     const int cols=model_->columns();

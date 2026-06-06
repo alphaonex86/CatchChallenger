@@ -18,6 +18,7 @@ public:
     void refresh();                     // repaint after the model changed
     void setShowUntagged(bool on);
     void setZoom(int z);
+    int zoom() const;
     void selectCell(int col,int row);   // programmatic selection (jump-to-untagged)
     QRect cellPixelRect(int col,int row) const;
     QSize sizeHint() const override;
@@ -30,6 +31,7 @@ signals:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
