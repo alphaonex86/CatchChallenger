@@ -199,6 +199,11 @@ int main(int argc, char *argv[])
                 t.start();
                 LoadMapAll::addRoadContent(tiledMap, config);
                 qDebug("add road content took %lld ms", t.elapsed());
+                t.start();
+                //flavour townsfolk on the open city ground (after buildings so they
+                //land on free tiles); emitted into each city's .xml at split time.
+                LoadMapAll::addCityTownsfolk(tiledMap, config, config.mapWidth, config.mapHeight);
+                qDebug("add city townsfolk took %lld ms", t.elapsed());
                 //TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
             if(config.displaycity)
@@ -315,12 +320,15 @@ int main(int argc, char *argv[])
                 const uint32_t x=city.x;
                 const uint32_t y=city.y;
                 const std::string &file=cityLowerCaseName+"/"+cityLowerCaseName+".tmx";
+                //inline <bot> defs for the townsfolk that landed in this city chunk
+                const std::string cityBotXml=LoadMapAll::emitCityBotsForChunk(tiledMap,x,y,singleMapWitdh,singleMapHeight,config).toStdString();
                 if(!PartialMap::save(tiledMap,
                                  x*singleMapWitdh,y*singleMapHeight,
                                  x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                  file,
                                  newRecuesPoints,
-                                 "city",cityLowerCaseName,city.name
+                                 "city",cityLowerCaseName,city.name,
+                                 cityBotXml
                                  ))
                 {
                     std::cerr << "Unable to write " << file << "" << std::endl;

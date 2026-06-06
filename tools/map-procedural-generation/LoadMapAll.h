@@ -188,6 +188,16 @@ public:
                                         const unsigned int &chunkTileX, const unsigned int &chunkTileY,
                                         const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
                                         const RoadIndex &roadIndex, const SettingsAll::SettingsExtra &setting);
+    //scatter a few flavour townsfolk (text NPCs) on the open ground of every city,
+    //so a town is not an empty field (owner feedback).
+    static void addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting,
+                                 const unsigned int mapWidth, const unsigned int mapHeight);
+    //inline <bot> defs (text) for the city chunk: renumbers the chunk's world bot
+    //objects to local ids — the engine reads bots only from the map's own .xml.
+    static QString emitCityBotsForChunk(Tiled::Map &worldMap,
+                                        const unsigned int &chunkTileX, const unsigned int &chunkTileY,
+                                        const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
+                                        const SettingsAll::SettingsExtra &setting);
     static Tiled::Tile* fetchTile(Tiled::Map &worldMap, QString data);
     static void generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate& mapTemplate, const unsigned int id, const uint32_t &x, const uint32_t &y,
                              const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone, const SettingsAll::SettingsExtra &setting, RoomSettings &roomSettings);
