@@ -3,10 +3,15 @@
 
 // The tileset canvas: paints the .tsx image at a (fractional) zoom with a tile grid,
 // tints tagged tiles by category colour, highlights untagged-non-empty tiles in
-// red (the owner's "reminder"), and lets the user rubber-band a rectangle of
-// tiles to tag.  Pure painting + mouse; the data lives in TagModel.
+// red (the owner's "reminder"), and lets the user select tiles to tag.  Selection
+// is a SET of cells (not a single rectangle), so a building whose tiles are
+// interleaved with another object's can be picked exactly: plain drag REPLACES,
+// Ctrl/Shift+drag ADDS a rectangle, Ctrl/Shift+click TOGGLES one cell.
+// Pure painting + mouse; the data lives in TagModel.
 
 #include <QWidget>
+#include <set>
+#include <vector>
 
 class TagModel;
 
@@ -19,15 +24,18 @@ public:
     void setShowStates(bool on);
     void setZoom(double z);     // fractional so the sheet can fill the window AND shrink to fit
     double zoom() const;
-    void selectCell(int col,int row);   // programmatic selection (jump-to-untagged)
+    void selectCell(int col,int row);          // programmatic single selection (replaces)
+    std::vector<int> selectedTiles() const;    // the selected tile ids, ascending
+    bool hasSelection() const;
+    void selectionBounds(int &c0,int &r0,int &c1,int &r1) const;  // bbox of the selection
     QRect cellPixelRect(int col,int row) const;
     QSize sizeHint() const override;
 
 signals:
-    void selectionChanged(int col0,int row0,int col1,int row1,int tileCount);
-    // emitted once the drag ends (or on programmatic selectCell) — use this for
-    // the heavy map-usage scan so it does not run on every drag-move.
-    void selectionFinished(int col0,int row0,int col1,int row1,int tileCount);
+    void selectionChanged(int tileCount);
+    // emitted once the drag/click ends (or on programmatic selectCell) — use this
+    // for the heavy map-usage scan so it does not run on every drag-move.
+    void selectionFinished(int tileCount);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -40,13 +48,15 @@ private:
     TagModel *model_;
     double zoom_;
     bool showStates_;
-    bool selecting_;
-    bool hasSelection_;
-    int selCol0_;
-    int selRow0_;
-    int selCol1_;
-    int selRow1_;
+    bool selecting_;          // a drag is in progress
+    bool additive_;           // Ctrl/Shift held at drag start -> add to the selection
+    int dragC0_;              // live rubber-band rectangle while selecting_
+    int dragR0_;
+    int dragC1_;
+    int dragR1_;
+    std::set<int> selected_;  // committed selection: tile ids
     void cellAt(const QPoint &pt,int &col,int &row) const;
+    void commitDrag();        // fold the live rubber-band into selected_
     void emitSelection(bool finished);
 };
 

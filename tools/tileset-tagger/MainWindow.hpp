@@ -43,8 +43,9 @@ private slots:
     void onTag();
     void onClearTag();
     void onSave();
-    void onSelection(int col0,int row0,int col1,int row1,int tileCount);
-    void onSelectionFinished(int col0,int row0,int col1,int row1,int tileCount);
+    void onSelection(int tileCount);
+    void onSelectionFinished(int tileCount);
+    void onCategoryChanged(const QString &category);   // show the category's description
     void onMapPicked(int index);
     void onToggleUntagged(bool on);
     void onNextUntagged();        // jump to the next tile needing attention (red or yellow)
@@ -61,6 +62,10 @@ private:
     MapUsageView *usageView_;
     QPushButton *openBtn_;
     QComboBox *categoryBox_;
+    QLabel *categoryDescLabel_;     // human description of the selected category
+    QWidget *terrainGroup_;         // inner/outer texture pickers (only for "terrain")
+    QComboBox *innerBox_;           // terrain INNER (fill) texture
+    QComboBox *outerBox_;           // terrain OUTER (border) texture
     QComboBox *mapCombo_;
     QCheckBox *animated_;
     QCheckBox *hRepeat_;
@@ -84,6 +89,7 @@ private:
     int tsxIndex_;                // current position in tsxQueue_
     void refreshGuard();
     void updateTitle();
+    void rememberTexture(const QString &name);   // add a terrain texture to both combos (for linking)
     void prefillFromUsage(const std::vector<int> &ids);   // guess tag from the maps
     int applySelection();         // apply current settings to the selection, verified
     void openNextIncomplete();    // open the next not-fully-verified tileset in the queue
