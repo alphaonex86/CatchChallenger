@@ -6,6 +6,13 @@ vocabulary, learn the model maps' rules in terms of those tags, then compose
 equivalent maps on the partial tileset. Design: `../map-procedural-generation/learn-from-tags.md`.
 * MODEL map datapack = `datapack-pkmn/map/main/gen2/` (183 .tmx over 14 tilesets `tileset/normal1..15.tsx`+`animations.tsx`, johto+kanto). PARTIAL (target) datapack = official `CatchChallenger-datapack/`: target tileset (read-only input) = `map/tileset/` (12 .tsx); generated maps OUTPUT = `map/main/generated/` (only writable path there, owner-authorized; ref tilesets by relative path).
 
+## Workflow (end to end)
+1. TAG both tileset sets (tags → sidecar): model `gen2/tileset/` (14 .tsx) + target `CatchChallenger-datapack/map/tileset/` (12 .tsx). Drive each tileset's untagged-with-pixels count to 0.
+2. INVENTORY-DIFF the tagged sets per category: list what the target is MISSING vs the model (proportional, ≥~80%) and REQUEST those from the human (count/size). Names differ (model `normal*` vs target `t1/t2/t3/building-small/inside-*`) so match by TAG, not filename.
+3. DECODE the 183 model maps to tileset-agnostic CATEGORY grids (resolve gids through the tagged tilesets, keep the engine layer role).
+4. LEARN hard + random rules + structure from the grids.
+5. GENERATE onto the target tileset → `map/main/generated/`. GATE: reproducibility (a real gen2 map round-trips to identity from recorded non-random choices) + human rating (≥4/5 on ~10 typical maps).
+
 ## Tag model: LOGICAL (auto) vs VISUAL (human)
 * LOGICAL info is DERIVED from the model maps, NEVER hand-tagged: which layer a tile is drawn on, the layer ORDER, and that some layers CANCEL others (Collisions cancels Walkable). Authoritative files: draw/render order = `client/libqtcatchchallenger/maprender/MapVisualiserOrder.cpp`; walkability precedence = `general/base/Map_loaderMain.cpp` (per-cell else-if: Dirt(249) > LedgesLeft/Right/Top/Bottom(250-253) > `(Walkable||monsterZone)&&!Collisions`(0) > blocked(254); same-named layers OR-merge; Grass/Water/Lava are monster-collision zones = walkable). `walkable`/`layer` come from the EFFECTIVE per-cell code, not the drawn-on layer.
 * VISUAL info (`category` = what the tile LOOKS like) is tagged by the human, but PRE-FILLED from how the tile is used on the maps (a soft guess to confirm or edit). Categories like "table"; attributes like `horizontalRepeat`, `horizontalMiddleRepeat` (centre repeats, borders fixed), vertical*.
