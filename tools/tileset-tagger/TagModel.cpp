@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QStandardPaths>
+#include <cstdlib>
 
 // The datapack stays the READ-ONLY source of truth: tags are work data and live
 // OUT of the datapack, under ~/.local/share/catchchallenger/datapack-<sha256(abs
@@ -107,11 +108,122 @@ static int animationFrameCount(const QString &value)
     return 1;
 }
 
+// Detect SIMILAR-GROUP links (in MEMORY only — no tag merge, the tileset is never
+// touched): two NON-EMPTY tiles are the SAME object on a different background when
+// >=70% of their pixels match (within tolerance) over the OVERLAP — the pixels where
+// BOTH have content.  So an object baked on a terrain and the same object on a
+// transparent background link up.  Useful later to reason about map<->tileset
+// relations.  Pairwise within the tileset.
+void TagModel::detectSimilarGroups()
+{
+    similar_.clear();
+    if(image_.isNull() || columns_<1 || tileWidth_<1 || tileHeight_<1)
+        return;
+    const int tw=tileWidth_,th=tileHeight_,npx=tw*th;
+    const QImage cur=image_.convertToFormat(QImage::Format_ARGB32);
+    // gather each NON-EMPTY tile's RGB block + an alpha>0 mask
+    std::vector<int> ids;
+    std::vector<std::vector<unsigned char> > rgb;
+    std::vector<std::vector<char> > op;
+    int id=0;
+    while(id<tileCount_)
+    {
+        const int x0=(id%columns_)*tw;
+        const int y0=(id/columns_)*th;
+        if(x0+tw<=cur.width() && y0+th<=cur.height())
+        {
+            std::vector<unsigned char> c(npx*3);
+            std::vector<char> a(npx,0);
+            bool empty=true;
+            int k=0,p=0,yy=0;
+            while(yy<th)
+            {
+                const QRgb *line=reinterpret_cast<const QRgb*>(cur.scanLine(y0+yy));
+                int xx=0;
+                while(xx<tw)
+                {
+                    const QRgb px=line[x0+xx];
+                    c[k++]=qRed(px); c[k++]=qGreen(px); c[k++]=qBlue(px);
+                    if(qAlpha(px)!=0) { a[p]=1; empty=false; }
+                    p++; xx++;
+                }
+                yy++;
+            }
+            if(!empty) { ids.push_back(id); rgb.push_back(c); op.push_back(a); }
+        }
+        id++;
+    }
+    const int TOL=18;
+    const int MINOVERLAP=npx*32/256;   // a real shared region
+    const int CAP=8;                   // keep the strongest few links per tile
+    size_t i=0;
+    while(i<ids.size())
+    {
+        size_t j=i+1;
+        while(j<ids.size())
+        {
+            const std::vector<unsigned char> &A=rgb[i];
+            const std::vector<unsigned char> &B=rgb[j];
+            const std::vector<char> &oa=op[i];
+            const std::vector<char> &ob=op[j];
+            int overlap=0,match=0,p=0;
+            while(p<npx)
+            {
+                if(oa[p] && ob[p])
+                {
+                    overlap++;
+                    const int q=p*3;
+                    if(std::abs((int)A[q]-(int)B[q])<=TOL
+                       && std::abs((int)A[q+1]-(int)B[q+1])<=TOL
+                       && std::abs((int)A[q+2]-(int)B[q+2])<=TOL)
+                        match++;
+                }
+                p++;
+            }
+            if(overlap>=MINOVERLAP && match*100>=overlap*70)
+            {
+                const int pct=match*100/overlap;
+                Similar sa; sa.tileId=ids[j]; sa.percent=pct; similar_[ids[i]].push_back(sa);
+                Similar sb; sb.tileId=ids[i]; sb.percent=pct; similar_[ids[j]].push_back(sb);
+            }
+            j++;
+        }
+        i++;
+    }
+    // keep the strongest CAP links per tile (insertion sort desc; lists are short)
+    std::unordered_map<int,std::vector<Similar> >::iterator it=similar_.begin();
+    while(it!=similar_.end())
+    {
+        std::vector<Similar> &v=it->second;
+        size_t a=1;
+        while(a<v.size())
+        {
+            const Similar key=v[a];
+            size_t b=a;
+            while(b>0 && v[b-1].percent<key.percent) { v[b]=v[b-1]; b--; }
+            v[b]=key;
+            a++;
+        }
+        if((int)v.size()>CAP)
+            v.resize(CAP);
+        ++it;
+    }
+}
+
+const std::vector<TagModel::Similar> &TagModel::similarTo(int tileId) const
+{
+    static const std::vector<Similar> empty;
+    std::unordered_map<int,std::vector<Similar> >::const_iterator it=similar_.find(tileId);
+    return it==similar_.cend() ? empty : it->second;
+}
+int TagModel::similarCount() const { return (int)similar_.size(); }
+
 bool TagModel::load(const QString &tsxPath)
 {
     tsxPath_=tsxPath;
     tags_.clear();
     animatedTiles_.clear();
+    similar_.clear();
     QFile file(tsxPath);
     if(!file.open(QIODevice::ReadOnly))
     {
@@ -203,6 +315,7 @@ bool TagModel::load(const QString &tsxPath)
         }
         tile=tile.nextSiblingElement("tile");
     }
+    detectSimilarGroups();   // in-memory same-object-different-bg links
 
     // sidecar location (OUT of the datapack), then load existing tags from it.
     // Own app subdir under the project's org dir (Qt org/app convention) so it is

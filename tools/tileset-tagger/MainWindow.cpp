@@ -622,16 +622,25 @@ void MainWindow::onSelection(int tileCount)
         currentGroupNum_=selR0_*model_->columns()+selC0_;
     else
         currentGroupNum_=-1;
+    // in-memory SIMILAR links of the anchor tile (same object, different background)
+    QString simStr;
+    if(!selIds.empty())
+    {
+        const std::vector<TagModel::Similar> &sim=model_->similarTo(selIds.front());
+        size_t z=0;
+        while(z<sim.size() && z<4) { simStr+=QString(" #%1(%2%)").arg(sim.at(z).tileId).arg(sim.at(z).percent); z++; }
+    }
+    const QString simSuffix = simStr.isEmpty() ? QString() : tr("   ~similar:%1").arg(simStr);
     if(selC0_<0)
         selLabel_->setText(tr("no selection — drag tiles (Ctrl/Shift+drag adds, Ctrl+click toggles)"));
     else if(!grp.isEmpty())
     {
-        selLabel_->setText(tr("selection: %1 tile(s)  ·  group #%2").arg(tileCount).arg(currentGroupNum_));
-        statusBar()->showMessage(tr("selected group #%1   (%2)").arg(currentGroupNum_).arg(grp),5000);
+        selLabel_->setText(tr("selection: %1 tile(s)  ·  group #%2%3").arg(tileCount).arg(currentGroupNum_).arg(simSuffix));
+        statusBar()->showMessage(tr("selected group #%1   (%2)%3").arg(currentGroupNum_).arg(grp).arg(simSuffix),5000);
     }
     else
-        selLabel_->setText(tr("selection: %1 tile(s)  ·  new group #%2")
-                           .arg(tileCount).arg(currentGroupNum_));
+        selLabel_->setText(tr("selection: %1 tile(s)  ·  new group #%2%3")
+                           .arg(tileCount).arg(currentGroupNum_).arg(simSuffix));
 }
 
 void MainWindow::onCategoryChanged(const QString &category)
