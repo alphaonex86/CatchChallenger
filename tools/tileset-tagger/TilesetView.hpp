@@ -24,6 +24,9 @@ public:
 
 signals:
     void selectionChanged(int col0,int row0,int col1,int row1,int tileCount);
+    // emitted once the drag ends (or on programmatic selectCell) — use this for
+    // the heavy map-usage scan so it does not run on every drag-move.
+    void selectionFinished(int col0,int row0,int col1,int row1,int tileCount);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -42,7 +45,7 @@ private:
     int selCol1_;
     int selRow1_;
     void cellAt(const QPoint &pt,int &col,int &row) const;
-    void emitSelection();
+    void emitSelection(bool finished);
 };
 
 #endif // TILESETTAGGER_TILESETVIEW_HPP

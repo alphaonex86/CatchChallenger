@@ -1,13 +1,16 @@
 #include "MainWindow.hpp"
+#include "MapUsageView.hpp"
 #include "TagModel.hpp"
 #include "TilesetView.hpp"
 
+#include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFrame>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>
@@ -38,13 +41,17 @@ MainWindow::MainWindow() :
     QMainWindow(),
     model_(new TagModel()),
     view_(new TilesetView()),
+    usage_(new MapUsageIndex()),
+    usageView_(new MapUsageView()),
     categoryBox_(nullptr),
+    mapCombo_(nullptr),
     hRepeat_(nullptr),
     hMidRepeat_(nullptr),
     vRepeat_(nullptr),
     vMidRepeat_(nullptr),
     selLabel_(nullptr),
     guardLabel_(nullptr),
+    currentUsages_(),
     selC0_(-1),
     selR0_(-1),
     selC1_(-1),
@@ -112,6 +119,21 @@ MainWindow::MainWindow() :
     dock->setWidget(panel);
     addDockWidget(Qt::RightDockWidgetArea,dock);
 
+    // bottom dock: "where is this group used on the maps" (step 2 of tagging)
+    QDockWidget *usageDock=new QDockWidget(tr("Map usage"),this);
+    QWidget *usagePanel=new QWidget(usageDock);
+    QVBoxLayout *uLay=new QVBoxLayout(usagePanel);
+    QHBoxLayout *uTop=new QHBoxLayout();
+    uTop->addWidget(new QLabel(tr("Used on map:"),usagePanel));
+    mapCombo_=new QComboBox(usagePanel);
+    mapCombo_->setMinimumWidth(280);
+    uTop->addWidget(mapCombo_);
+    uTop->addStretch(1);
+    uLay->addLayout(uTop);
+    uLay->addWidget(usageView_,1);
+    usageDock->setWidget(usagePanel);
+    addDockWidget(Qt::BottomDockWidgetArea,usageDock);
+
     connect(openBtn,&QPushButton::clicked,this,&MainWindow::onOpen);
     connect(tagBtn,&QPushButton::clicked,this,&MainWindow::onTag);
     connect(clearBtn,&QPushButton::clicked,this,&MainWindow::onClearTag);
@@ -119,6 +141,8 @@ MainWindow::MainWindow() :
     connect(nextBtn,&QPushButton::clicked,this,&MainWindow::onNextUntagged);
     connect(showUntagged,&QCheckBox::toggled,this,&MainWindow::onToggleUntagged);
     connect(view_,&TilesetView::selectionChanged,this,&MainWindow::onSelection);
+    connect(view_,&TilesetView::selectionFinished,this,&MainWindow::onSelectionFinished);
+    connect(mapCombo_,SIGNAL(currentIndexChanged(int)),this,SLOT(onMapPicked(int)));
 
     resize(1100,820);
     refreshGuard();
@@ -128,6 +152,7 @@ MainWindow::MainWindow() :
 MainWindow::~MainWindow()
 {
     delete model_;
+    delete usage_;
 }
 
 bool MainWindow::openTsx(const QString &path)
@@ -138,8 +163,13 @@ bool MainWindow::openTsx(const QString &path)
         return false;
     }
     view_->setModel(model_);
+    usage_->build(path);
+    mapCombo_->clear();
+    currentUsages_.clear();
+    usageView_->clearUsage();
     selC0_=selR0_=selC1_=selR1_=-1;
     selLabel_->setText(tr("no selection"));
+    statusBar()->showMessage(tr("%1 map(s) reference this tileset").arg(usage_->candidateCount()),4000);
     refreshGuard();
     updateTitle();
     return true;
@@ -216,6 +246,52 @@ void MainWindow::onSelection(int col0,int row0,int col1,int row1,int tileCount)
     selLabel_->setText(tr("selection: cols %1..%2 rows %3..%4  (%5x%6 = %7 tiles)")
                        .arg(col0).arg(col1).arg(row0).arg(row1)
                        .arg(col1-col0+1).arg(row1-row0+1).arg(tileCount));
+}
+
+void MainWindow::onSelectionFinished(int col0,int row0,int col1,int row1,int)
+{
+    // step 2: find where this group of tiles is used across the maps.
+    const std::vector<int> ids=model_->tilesInRect(col0,row0,col1,row1);
+    mapCombo_->blockSignals(true);
+    mapCombo_->clear();
+    currentUsages_.clear();
+    if(usage_->candidateCount()==0 || ids.empty())
+    {
+        mapCombo_->blockSignals(false);
+        usageView_->clearUsage();
+        return;
+    }
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    currentUsages_=usage_->findUsages(ids);
+    QApplication::restoreOverrideCursor();
+    size_t i=0;
+    while(i<currentUsages_.size())
+    {
+        const MapUsageIndex::Usage &u=currentUsages_.at(i);
+        mapCombo_->addItem(tr("%1  (%2 cells)").arg(u.mapLabel).arg((int)u.cells.size()));
+        i++;
+    }
+    mapCombo_->blockSignals(false);
+    if(currentUsages_.empty())
+    {
+        usageView_->clearUsage();
+        statusBar()->showMessage(tr("this group is not used on any map"),3000);
+    }
+    else
+    {
+        mapCombo_->setCurrentIndex(0);
+        onMapPicked(0);
+    }
+}
+
+void MainWindow::onMapPicked(int index)
+{
+    if(index<0 || index>=(int)currentUsages_.size())
+        return;
+    const MapUsageIndex::Usage &u=currentUsages_.at(index);
+    const QImage img=usage_->render(u.mapPath);
+    usageView_->setUsage(img,u.cells,u.tileW,u.tileH);
+    statusBar()->showMessage(tr("'%1' uses the group in %2 cell(s)").arg(u.mapLabel).arg((int)u.cells.size()),4000);
 }
 
 void MainWindow::onToggleUntagged(bool on)

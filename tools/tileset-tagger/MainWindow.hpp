@@ -8,10 +8,14 @@
 //   - Size and the item-group name are AUTO-DERIVED from the selected rectangle.
 // The window title + a red label always show the untagged-pixel count (the guard).
 
+#include "MapUsageIndex.hpp"
+
 #include <QMainWindow>
+#include <vector>
 
 class TagModel;
 class TilesetView;
+class MapUsageView;
 class QComboBox;
 class QCheckBox;
 class QLabel;
@@ -29,19 +33,25 @@ private slots:
     void onClearTag();
     void onSave();
     void onSelection(int col0,int row0,int col1,int row1,int tileCount);
+    void onSelectionFinished(int col0,int row0,int col1,int row1,int tileCount);
+    void onMapPicked(int index);
     void onToggleUntagged(bool on);
     void onNextUntagged();
 
 private:
     TagModel *model_;
     TilesetView *view_;
+    MapUsageIndex *usage_;
+    MapUsageView *usageView_;
     QComboBox *categoryBox_;
+    QComboBox *mapCombo_;
     QCheckBox *hRepeat_;
     QCheckBox *hMidRepeat_;
     QCheckBox *vRepeat_;
     QCheckBox *vMidRepeat_;
     QLabel *selLabel_;
     QLabel *guardLabel_;
+    std::vector<MapUsageIndex::Usage> currentUsages_;
     int selC0_;
     int selR0_;
     int selC1_;

@@ -12,6 +12,7 @@
 
 #include "TagModel.hpp"
 #include "MainWindow.hpp"
+#include "MapUsageIndex.hpp"
 
 #include <QApplication>
 #include <QFile>
@@ -108,13 +109,44 @@ static int runSelftest(const QString &tsx)
     return (ok && after==before-pick.size()) ? 0 : 1;
 }
 
+static int runUsage(const QStringList &args)
+{
+    // args: <x.tsx> <col0> <row0> <col1> <row1>
+    if(args.size()<5) { std::cerr << "usage needs: <x.tsx> <c0> <r0> <c1> <r1>" << std::endl; return 1; }
+    TagModel model;
+    if(!model.load(args.at(0))) { std::cerr << model.error().toStdString() << std::endl; return 1; }
+    const std::vector<int> ids=model.tilesInRect(args.at(1).toInt(),args.at(2).toInt(),args.at(3).toInt(),args.at(4).toInt());
+    MapUsageIndex index;
+    index.build(args.at(0));
+    std::cout << index.candidateCount() << " map(s) reference " << args.at(0).toStdString() << std::endl;
+    const std::vector<MapUsageIndex::Usage> usages=index.findUsages(ids);
+    std::cout << "group of " << ids.size() << " tile(s) is used on " << usages.size() << " map(s):" << std::endl;
+    size_t i=0;
+    while(i<usages.size() && i<30)
+    {
+        const MapUsageIndex::Usage &u=usages.at(i);
+        std::cout << "  " << u.mapLabel.toStdString() << "  " << u.cells.size() << " cell(s)  ("
+                  << u.mapW << "x" << u.mapH << ")" << std::endl;
+        i++;
+    }
+    if(!usages.empty())
+    {
+        // exercise the compositor on the top map (what the GUI would render)
+        const QImage img=index.render(usages.at(0).mapPath);
+        std::cout << "render(" << usages.at(0).mapLabel.toStdString() << ") -> "
+                  << img.width() << "x" << img.height() << " px"
+                  << (img.isNull() ? " [NULL]" : "") << std::endl;
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     QStringList args;
     int i=1;
     while(i<argc) { args.append(QString::fromUtf8(argv[i])); i++; }
     const bool cli = !args.isEmpty()
-        && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest");
+        && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest" || args.at(0)=="--usage");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -126,6 +158,8 @@ int main(int argc, char *argv[])
         return runTag(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--selftest" && args.size()>=2)
         return runSelftest(args.at(1));
+    if(!args.isEmpty() && args.at(0)=="--usage")
+        return runUsage(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;

@@ -54,9 +54,9 @@ bool TagModel::load(const QString &tsxPath)
     tileWidth_=tileset.attribute("tilewidth","16").toInt();
     tileHeight_=tileset.attribute("tileheight","16").toInt();
     tileCount_=tileset.attribute("tilecount","0").toInt();
-    columns_=tileset.attribute("columns","1").toInt();
-    if(columns_<1)
-        columns_=1;
+    // old minimal CC tilesets omit columns/tilecount; derive them from the image
+    // below. 0 here means "unknown, derive".
+    columns_=tileset.attribute("columns","0").toInt();
 
     // resolve and load the referenced image (relative to the .tsx directory)
     QDomElement image=tileset.firstChildElement("image");
@@ -66,9 +66,13 @@ bool TagModel::load(const QString &tsxPath)
         imagePath_=QDir(QFileInfo(tsxPath).absolutePath()).absoluteFilePath(src);
         if(!image_.load(imagePath_))
             image_=QImage(); // guard becomes a no-op rather than failing the whole load
+        if(columns_<1 && !image_.isNull() && tileWidth_>0)
+            columns_=image_.width()/tileWidth_;
         if(tileCount_<=0 && !image_.isNull() && tileWidth_>0 && tileHeight_>0)
             tileCount_=(image_.width()/tileWidth_)*(image_.height()/tileHeight_);
     }
+    if(columns_<1)
+        columns_=1;
 
     // read existing category/name/size tags
     QDomElement tile=tileset.firstChildElement("tile");

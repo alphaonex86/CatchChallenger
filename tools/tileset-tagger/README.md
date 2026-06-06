@@ -41,6 +41,21 @@ cmake --build /tmp/tagger-build -j32
 * **Save .tsx** writes the tags back surgically (foreign engine/Tiled properties
   on a tile, e.g. `animation`, are preserved).
 
+### Two-step tagging — see a group in situ before naming it
+
+Tagging is much easier when you can see what a tile actually *is* on a real map:
+
+1. **Select** a rectangle of tiles in the tileset (step 1).
+2. The **Map usage** panel (bottom) lists every map that uses that group and, for
+   the chosen map, renders it with the usage cells outlined by **animated
+   marching-ant rectangles** (step 2). Contiguous placements (a whole house, a
+   sign) collapse into one rectangle; scattered ground tiles show many.
+
+The **Used on map** combo is sorted by usage count, so the map where the group is
+most prominent comes first. Now you can see "ah, these four tiles are the roof of
+a house" and tag them correctly. Map decoding (base64 + zstd/zlib/csv) and
+rendering use the vendored libtiled, so every datapack map format works.
+
 When you need a category that isn't in the combo, ask and it gets added to the
 curated list in `MainWindow.cpp` (`tagCategories()`).
 
@@ -50,6 +65,7 @@ curated list in `MainWindow.cpp` (`tagCategories()`).
 tileset-tagger --guard    <x.tsx>                       # report untagged-with-pixels
 tileset-tagger --tag      <x.tsx> <cat> <c0> <r0> <c1> <r1> [name] [size]
 tileset-tagger --selftest <x.tsx>                       # tag round-trip + guard self-check
+tileset-tagger --usage    <x.tsx> <c0> <r0> <c1> <r1>   # list maps using that tile group
 ```
 
 `TagModel` (in `TagModel.{hpp,cpp}`) is the GUI-free, unit-tested core: load the
