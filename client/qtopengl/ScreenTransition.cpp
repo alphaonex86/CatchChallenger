@@ -983,6 +983,13 @@ void ScreenTransition::goToMap()
         std::cerr << "CliClientOptions: --closewhenonmap, exiting in 1s" << std::endl;
         QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
     }
+    //--test-dialogoverflow: push a long text into the dialog and self-check it
+    //never overflows (the --test-clicksign hook lives in the shared map controller)
+    if(CliClientOptions::dialogOverflowTest)
+    {
+        std::cerr << "CliClientOptions: --test-dialogoverflow, checking dialog wordwrap/scroll" << std::endl;
+        overmap->runDialogOverflowSelfTest();
+    }
     if(CliClientOptions::closeWhenOnMapAfter>0 && !closeWhenOnMapAfterTimer_.isActive())
     {
         std::cerr << "CliClientOptions: --closewhenonmapafter=" << CliClientOptions::closeWhenOnMapAfter

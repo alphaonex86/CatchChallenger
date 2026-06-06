@@ -177,7 +177,33 @@ private:
     std::vector<PathResolved> pathList;
 public:
     void eventOnMap(CatchChallenger::MapEvent event, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE x, COORD_TYPE y);
+private:
+    //--test-clicksign self-test state (see runClickSignSelfTest())
+    bool signSelfTestStarted;
+    CATCHCHALLENGER_TYPE_MAPID signTestMap;
+    uint8_t signTestX,signTestY;
+    QTimer signSelfTestTimeoutTimer;
+    //true if the player can stand on (x,y): some orthogonal neighbour can move
+    //into it (water/lava/collisions -> not standable). Used to retarget a click
+    //on a non-standable Sign/NPC tile to its nearest standable neighbour.
+    bool tileStandable(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &x,const int &y,const int &mw,const int &mh);
+    //For a click on a non-standable tile (Sign/NPC/wall), find the orthogonal
+    //neighbour the player can actually WALK to (reachable on foot, BFS from the
+    //player) that is nearest the player, so the click leads up to the right side
+    //of the sign. Returns false when the sign has no foot-reachable neighbour.
+    bool reachableClickNeighbor(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &cx,const int &cy,const int &px,const int &py,int &outX,int &outY);
+protected:
+    //once-on-map hook: launches the --test-clicksign self-test when requested
+    virtual void afterMapDisplayed() override;
 private slots:
+    //--test-clicksign: click the nearest sign, then verify (via actionOn) that
+    //the player walked up to it, faced it and opened it like Enter was pressed
+    void runClickSignSelfTest();
+    void signSelfTestActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
+    void signSelfTestTimeout();
+    //--autosolo=DX,DY: click the tile at player+(DX,DY) and report the outcome
+    void runAutosoloClick();
+    void autosoloClickActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void moveOtherPlayerStepSlot();
     void moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer);
     void finalOtherPlayerStep(OtherPlayer &otherPlayer);

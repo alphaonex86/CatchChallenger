@@ -11,6 +11,7 @@
 #include "../above/Warehouse.hpp"
 #include <iostream>
 #include <QDesktopServices>
+#include <QUrl>
 
 bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
 {

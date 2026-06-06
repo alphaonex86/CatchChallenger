@@ -145,6 +145,10 @@ private slots:
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void closeWhenOnMapAfterToggle();
+    //--test-dialogoverflow self-test: push a huge text into the dialog then
+    //verify (after a layout pass) it word-wrapped and stayed inside the widget
+    void runDialogOverflowSelfTest();
+    void dialogOverflowSelfTestCheck();
     void setEvents(const std::vector<std::pair<uint8_t, uint8_t> > &events);
     void newEvent(const uint8_t &event,const uint8_t &event_value);
     void forcedEvent(const uint8_t &event,const uint8_t &event_value);

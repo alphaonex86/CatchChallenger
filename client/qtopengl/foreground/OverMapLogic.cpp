@@ -23,6 +23,7 @@
 #include "Battle.hpp"
 #include <iostream>
 #include <QBuffer>
+#include <QCoreApplication>
 #if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
 #include "../../../server/qt/InternalServer.hpp"
 #endif
@@ -67,7 +68,6 @@ OverMapLogic::OverMapLogic()
         abort();
     if(!connect(&updater_page_zonecatch,&QTimer::timeout, this,&OverMapLogic::updatePageZoneCatch))
         abort();
-
 }
 
 void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
@@ -224,6 +224,46 @@ void OverMapLogic::setIG_dialog(QString text,QString name)
     this->IG_dialog_nameString=name;
     this->IG_dialog_text->setHtml(text);
     this->IG_dialog_name->setHtml(name);
+}
+
+void OverMapLogic::runDialogOverflowSelfTest()
+{
+    //a deliberately oversized, server-style message: long unbreakable tokens
+    //(to exercise wrap-anywhere) plus many lines (a tall body)
+    QString longText;
+    int line=0;
+    while(line<80)
+    {
+        longText+=QStringLiteral("Line %1: the quick brown fox jumps over the lazy dog, "
+                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnop "
+                                 "verylongunbreakabletokenwithoutanyspaces_%1_end.<br/>").arg(line);
+        line++;
+    }
+    setIG_dialog(longText,QStringLiteral("TestSign"));
+    //let the scene paint a few frames so OverMap::paint() lays the dialog out
+    QTimer::singleShot(1500,this,&OverMapLogic::dialogOverflowSelfTestCheck);
+}
+
+void OverMapLogic::dialogOverflowSelfTestCheck()
+{
+    //The body is word-wrapped to IG_dialog_text->textWidth(); verify the rendered
+    //text actually wrapped (its width stays within that wrap width) and stays
+    //inside the dialog box, so long server text never spills out the side.
+    const int wrapWidth=static_cast<int>(IG_dialog_text->textWidth());
+    const int docW=static_cast<int>(IG_dialog_text->boundingRect().width());
+    const int docH=static_cast<int>(IG_dialog_text->boundingRect().height());
+    const int boxW=IG_dialog_textBack->width();
+    const bool dialogVisible=IG_dialog_textBack->isVisible();
+    const bool wrapped=(wrapWidth>0 && docW<=wrapWidth+2);
+    const bool fitsBox=(docW<=boxW+1);
+    const bool ok=dialogVisible && wrapped && fitsBox;
+    std::cerr << "[OVERFLOWTEST] qtopengl wrapWidth=" << wrapWidth
+              << " doc=" << docW << "x" << docH
+              << " box=" << boxW
+              << " wrapped=" << (wrapped?"yes":"no")
+              << " fitsBox=" << (fitsBox?"yes":"no")
+              << " -> " << (ok?"PASS":"FAIL") << std::endl;
+    QCoreApplication::exit(ok?0:3);
 }
 
 void OverMapLogic::connectAllSignals()

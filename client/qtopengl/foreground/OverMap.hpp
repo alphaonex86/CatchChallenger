@@ -80,6 +80,9 @@ protected:
     QGraphicsTextItem *playersCount;
 
     ImagesStrechMiddle *chatBack;
+    //chat log: a plain QGraphicsTextItem (pure scene rendering — works on every
+    //platform incl. Android/OpenGL ES). setTextWidth() word-wraps it to the chat
+    //box width so server text never spills past the right edge.
     QGraphicsTextItem *chatText;
     LineEdit *chatInput;
     ComboBox *chatType;
@@ -99,6 +102,10 @@ protected:
 
     ImagesStrechMiddle *IG_dialog_textBack;
     QGraphicsTextItem *IG_dialog_name;
+    //Sign/NPC dialog body: a plain QGraphicsTextItem (pure scene rendering — works
+    //on every platform incl. Android/OpenGL ES). setTextWidth() word-wraps it to
+    //the dialog width (bounded by the window), so server text never spills out the
+    //side; the dialog box height grows to fit the wrapped text, capped to the window.
     QGraphicsTextItem *IG_dialog_text;
     CustomButton *IG_dialog_quit;
     QString IG_dialog_nameString;

@@ -27,6 +27,10 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     MapVisualiser(debugTags,useCache,openGL)
 {
     wasPathFindingUsed=false;
+    clickInteractTargetValid=false;
+    clickInteractTargetMap=0;
+    clickInteractTargetX=0;
+    clickInteractTargetY=0;
     blocked=false;
     inMove=false;
     teleportedOnPush=false;
@@ -1105,7 +1109,12 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             if(wasPathFindingUsed)
             {
                 if(keyPressed.empty())
+                {
+                    //arrived via a click: if we stopped next to the clicked
+                    //Sign/NPC tile, face it, then open it like Enter
+                    faceClickInteractTargetIfAdjacent();
                     parseAction();
+                }
                 wasPathFindingUsed=false;
             }
         }
@@ -1196,6 +1205,56 @@ void MapVisualiserPlayer::stopAndSend()
         default:
         break;
     }
+    emit send_player_direction(direction);
+}
+
+void MapVisualiserPlayer::faceClickInteractTargetIfAdjacent()
+{
+    if(!clickInteractTargetValid)
+        return;
+    //consume the pending target whatever happens below
+    clickInteractTargetValid=false;
+    //only same-map targets: cross-map signs fall back to the last-move facing
+    if(clickInteractTargetMap!=current_map)
+        return;
+    const int dx=static_cast<int>(clickInteractTargetX)-static_cast<int>(x);
+    const int dy=static_cast<int>(clickInteractTargetY)-static_cast<int>(y);
+    //must be orthogonally adjacent (the player stopped next to the clicked
+    //Sign/NPC tile). Diagonals / same tile / far away -> keep current facing.
+    CatchChallenger::Direction lookDirection;
+    uint8_t baseTile;
+    if(dx==0 && dy==-1)
+    {
+        lookDirection=CatchChallenger::Direction_look_at_top;
+        baseTile=1;
+    }
+    else if(dx==0 && dy==1)
+    {
+        lookDirection=CatchChallenger::Direction_look_at_bottom;
+        baseTile=7;
+    }
+    else if(dx==-1 && dy==0)
+    {
+        lookDirection=CatchChallenger::Direction_look_at_left;
+        baseTile=10;
+    }
+    else if(dx==1 && dy==0)
+    {
+        lookDirection=CatchChallenger::Direction_look_at_right;
+        baseTile=4;
+    }
+    else
+        return;
+    direction=lookDirection;
+    //turn the player sprite to face the clicked tile (same base-tile indices
+    //used by nextPathStepInternal()/finalPlayerStep())
+    if(playerMapObject!=nullptr && !playerTileset.isNull())
+    {
+        Tiled::Cell cell=playerMapObject->cell();
+        cell.setTile(playerTileset->tileAt(baseTile));
+        playerMapObject->setCell(cell);
+    }
+    //let the server / other players see the new facing
     emit send_player_direction(direction);
 }
 
@@ -1645,6 +1704,7 @@ void MapVisualiserPlayer::resetAll()
     keyPressed.clear();
     blocked=false;
     wasPathFindingUsed=false;
+    clickInteractTargetValid=false;
     inMove=false;
     MapVisualiser::resetAll();
     lastAction.restart();
@@ -1876,7 +1936,13 @@ void MapVisualiserPlayer::mapDisplayedSlot(const CATCHCHALLENGER_TYPE_MAPID &map
     {
         emit currentMapLoaded();
         loadPlayerFromCurrentMap();
+        //hook for once-on-map self-tests (overridden in MapControllerMP)
+        afterMapDisplayed();
     }
+}
+
+void MapVisualiserPlayer::afterMapDisplayed()
+{
 }
 
 uint8_t MapVisualiserPlayer::getX()
@@ -2234,11 +2300,19 @@ void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &p
                     std::cout << "this->current_map==current_map && this->x==x && this->y==y stopAndSend" << std::endl;
                     stopAndSend();
                     parseStop();
-                }
-                if(keyPressed.empty())
-                {
-                    std::cout << "this->current_map==current_map && this->x==x && this->y==y !keyPressed" << std::endl;
-                    parseAction();
+                    //No actual walk (already on/next to the clicked tile): face the
+                    //clicked Sign/NPC and open it like Enter right here. When a real
+                    //walk DID start (nextPathStep()==true) we must NOT do it now —
+                    //the player is still on the source tile, far from the sign, so
+                    //faceClickInteractTargetIfAdjacent() would just consume the
+                    //pending target without orienting and parseAction()'s flood
+                    //guard would then block the real one. finalPlayerStep() runs
+                    //both on arrival instead (the target stays pending).
+                    if(keyPressed.empty())
+                    {
+                        faceClickInteractTargetIfAdjacent();
+                        parseAction();
+                    }
                 }
             }
             else

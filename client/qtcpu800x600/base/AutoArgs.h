@@ -22,6 +22,13 @@ public:
     static int closeWhenOnMapAfter;
     static bool dropSendDataAfterOnMap;
     static bool autosolo;
+    // --autosolo=DX,DY: once on the map, click the tile at player+(DX,DY).
+    static bool autosoloClick;
+    static int autosoloClickDx,autosoloClickDy;
+    // TEST-ONLY: --test-clicksign / --test-dialogoverflow. Mirrored into the
+    // shared CliClientOptions so the map controller / dialog self-tests run.
+    static bool clickSignTest;
+    static bool dialogOverflowTest;
     static QString mainDatapackCodeOverride;
     // --take-screenshot=PATH: render the first frame after the map
     // is reached (or, on a no-autosolo run, 2 s after launch — the

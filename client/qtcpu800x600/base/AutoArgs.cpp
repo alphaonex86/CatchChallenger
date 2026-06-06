@@ -14,6 +14,11 @@ bool AutoArgs::closeWhenOnMap=false;
 int AutoArgs::closeWhenOnMapAfter=0;
 bool AutoArgs::dropSendDataAfterOnMap=false;
 bool AutoArgs::autosolo=false;
+bool AutoArgs::autosoloClick=false;
+int AutoArgs::autosoloClickDx=0;
+int AutoArgs::autosoloClickDy=0;
+bool AutoArgs::clickSignTest=false;
+bool AutoArgs::dialogOverflowTest=false;
 QString AutoArgs::mainDatapackCodeOverride;
 QString AutoArgs::takeScreenshotPath;
 
@@ -42,6 +47,10 @@ void AutoArgs::printHelp(const char *progName)
         << "  --dropsenddataafteronmap   Drop outgoing traffic after the first map is loaded.\n"
         << "  --autosolo                 Load the first savegame, enter the game; on 10s\n"
         << "                             timeout dump character/current map and close.\n"
+        << "  --autosolo=DX,DY           Like --autosolo, then click the tile at player+(DX,DY)\n"
+        << "                             (e.g. --autosolo=+1,-5) — walk to it, face & open a sign there.\n"
+        << "  --test-clicksign           TEST: click the nearest sign, walk+face+open it, then quit.\n"
+        << "  --test-dialogoverflow      TEST: show a long dialog text, assert no overflow, then quit.\n"
         << "  --main-datapack-code=CODE  Override the autosolo maincode under\n"
         << "                             datapack/internal/map/main/ (default: first dir).\n"
         << "  --take-screenshot=PATH     Render the first map frame (or, with no\n"
@@ -68,6 +77,34 @@ void AutoArgs::parse(int &argc, char *argv[])
         if(std::strcmp(arg,"--autosolo")==0)
         {
             autosolo=true;
+            i++;
+            continue;
+        }
+        if(std::strncmp(arg,"--autosolo=",11)==0)
+        {
+            autosolo=true;
+            const char * const spec=arg+11;
+            const char * const comma=std::strchr(spec,',');
+            if(comma!=nullptr)
+            {
+                autosoloClick=true;
+                autosoloClickDx=std::atoi(spec);
+                autosoloClickDy=std::atoi(comma+1);
+            }
+            else
+                std::cerr << "--autosolo=DX,DY requires two comma-separated integers" << std::endl;
+            i++;
+            continue;
+        }
+        if(std::strcmp(arg,"--test-clicksign")==0)
+        {
+            clickSignTest=true;
+            i++;
+            continue;
+        }
+        if(std::strcmp(arg,"--test-dialogoverflow")==0)
+        {
+            dialogOverflowTest=true;
             i++;
             continue;
         }

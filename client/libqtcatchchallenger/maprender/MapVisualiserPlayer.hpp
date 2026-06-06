@@ -129,6 +129,16 @@ protected:
     std::unordered_set<int> keyAccepted;
     bool clip;
 
+    //Click-to-interact: when the player clicks a tile (e.g. a Sign/NPC, which
+    //sits on a collision tile), pathfinding routes the player ADJACENT to it.
+    //We remember the clicked tile here so that, once the path completes, the
+    //player turns to FACE that tile and parseAction() opens it like Enter was
+    //pressed. Set by MapControllerMP::eventOnMap() on a simple click; consumed
+    //by faceClickInteractTargetIfAdjacent(); cleared on manual move / reset.
+    bool clickInteractTargetValid;
+    CATCHCHALLENGER_TYPE_MAPID clickInteractTargetMap;
+    uint8_t clickInteractTargetX,clickInteractTargetY;
+
     //grass
     bool haveGrassCurrentObject;
     Tiled::MapObject * grassCurrentObject;
@@ -172,12 +182,20 @@ protected slots:
     virtual void unloadMonsterFromCurrentMap();
     virtual void parseStop();
     virtual void parseAction();
+    //If a click-to-interact target was recorded and the player ended up
+    //orthogonally adjacent to it (the usual case for a Sign/NPC on a collision
+    //tile), turn to face it (sprite + send_player_direction) so the following
+    //parseAction() acts on that tile. Always consumes the pending target.
+    void faceClickInteractTargetIfAdjacent();
     void stopAndSend();
 
     //void setAnimationTilset(std::string animationTilset);
     virtual void resetAll();
     virtual bool canGoTo(const CatchChallenger::Direction &direction,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision);
     void mapDisplayedSlot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    //called from mapDisplayedSlot() once the current map is shown; default is a
+    //no-op, MapControllerMP overrides it to run the --test-clicksign self-test
+    virtual void afterMapDisplayed();
     virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject);
 
     void resetMonsterTile();
