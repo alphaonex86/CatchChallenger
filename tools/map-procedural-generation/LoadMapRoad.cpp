@@ -1947,6 +1947,10 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
 
 #ifdef TILED_CSV
         nextHopMap->setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+#else
+        //canonical datapack encoding: base64 + zstd (like the hand-made
+        //gen2/johto reference), smaller than the libtiled default zlib.
+        nextHopMap->setLayerDataFormat(Tiled::Map::Base64Zstandard);
 #endif
 
         nextHopMap->setProperties(Tiled::Properties());
