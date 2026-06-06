@@ -48,6 +48,7 @@ private slots:
     void onCategoryChanged(const QString &category);   // show the category's description
     void onToggleGroups(bool on);    // review mode: animated group outlines
     void onConfirmTileset();         // confirm every tag + save + go to next tileset
+    void onSuggestFromTags();        // KNN: fill untagged tiles from the nearest tagged tile
     void onMapPicked(int index);
     void onToggleUntagged(bool on);
     void onNextUntagged();        // jump to the next tile needing attention (red or yellow)
