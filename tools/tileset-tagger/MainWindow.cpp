@@ -112,8 +112,10 @@ MainWindow::MainWindow() :
     selLabel_=new QLabel(tr("no selection"),panel);
     lay->addWidget(selLabel_);
     QPushButton *tagBtn=new QPushButton(tr("Tag selection"),panel);
+    QPushButton *verifyBtn=new QPushButton(tr("Mark selection verified (accept guesses)"),panel);
     QPushButton *clearBtn=new QPushButton(tr("Clear tag on selection"),panel);
     lay->addWidget(tagBtn);
+    lay->addWidget(verifyBtn);
     lay->addWidget(clearBtn);
 
     QFrame *line3=new QFrame(panel);
@@ -127,7 +129,7 @@ MainWindow::MainWindow() :
     lay->addWidget(guardLabel_);
     QPushButton *suggestBtn=new QPushButton(tr("Suggest terrain (auto-tag water/grass/ledge)"),panel);
     lay->addWidget(suggestBtn);
-    QPushButton *nextBtn=new QPushButton(tr("Jump to next untagged"),panel);
+    QPushButton *nextBtn=new QPushButton(tr("Jump to next to-verify (red/yellow)"),panel);
     lay->addWidget(nextBtn);
 
     QPushButton *saveBtn=new QPushButton(tr("Save tags"),panel);
@@ -154,6 +156,7 @@ MainWindow::MainWindow() :
 
     connect(openBtn,&QPushButton::clicked,this,&MainWindow::onOpen);
     connect(tagBtn,&QPushButton::clicked,this,&MainWindow::onTag);
+    connect(verifyBtn,&QPushButton::clicked,this,&MainWindow::onVerify);
     connect(clearBtn,&QPushButton::clicked,this,&MainWindow::onClearTag);
     connect(saveBtn,&QPushButton::clicked,this,&MainWindow::onSave);
     connect(suggestBtn,&QPushButton::clicked,this,&MainWindow::onSuggest);
@@ -265,6 +268,21 @@ void MainWindow::onClearTag()
     view_->refresh();
     refreshGuard();
     updateTitle();
+}
+
+void MainWindow::onVerify()
+{
+    if(selC0_<0)
+    {
+        statusBar()->showMessage(tr("select the yellow guesses to accept first"),3000);
+        return;
+    }
+    const std::vector<int> ids=model_->tilesInRect(selC0_,selR0_,selC1_,selR1_);
+    model_->markVerified(ids);     // yellow -> verified (keeps the category)
+    view_->refresh();
+    refreshGuard();
+    updateTitle();
+    statusBar()->showMessage(tr("marked %1 tile(s) verified").arg((int)ids.size()),3000);
 }
 
 void MainWindow::onSave()
@@ -478,14 +496,22 @@ void MainWindow::onToggleUntagged(bool on)
 
 void MainWindow::onNextUntagged()
 {
-    const std::vector<int> untagged=model_->untaggedNonEmpty();
-    if(untagged.empty())
+    // walk everything needing attention: untagged (red) then to-review (yellow)
+    const std::vector<int> todo=model_->unverifiedTiles();
+    if(todo.empty())
     {
-        statusBar()->showMessage(tr("no untagged tiles — all done"),3000);
+        statusBar()->showMessage(tr("all tiles verified — nothing left to review"),3000);
         return;
     }
     const int cols=model_->columns();
-    const int id=untagged.at(0);
+    int id=todo.at(0);
+    // prefer the next one AFTER the current selection, so repeated clicks advance
+    if(selC0_>=0)
+    {
+        const int cur=selR0_*cols+selC0_;
+        size_t i=0;
+        while(i<todo.size()) { if(todo.at(i)>cur) { id=todo.at(i); break; } i++; }
+    }
     const int col=id%cols;
     const int row=id/cols;
     view_->selectCell(col,row);
@@ -495,29 +521,33 @@ void MainWindow::onNextUntagged()
         const QRect cell=view_->cellPixelRect(col,row);
         scroll->ensureVisible(cell.center().x(),cell.center().y(),cell.width(),cell.height());
     }
-    statusBar()->showMessage(tr("%1 untagged tile(s) left — jumped to tile %2").arg((int)untagged.size()).arg(id),4000);
+    statusBar()->showMessage(tr("%1 tile(s) to review left — jumped to tile %2").arg((int)todo.size()).arg(id),4000);
 }
 
 void MainWindow::refreshGuard()
 {
-    const int n=(int)model_->untaggedNonEmpty().size();
-    if(n==0)
+    const TagModel::Counts c=model_->progress();
+    const int total=c.verified+c.toReview+c.untagged;
+    const int pct = total>0 ? c.verified*100/total : 100;
+    if(c.untagged==0 && c.toReview==0)
     {
-        guardLabel_->setText(tr("✓ every drawn tile is tagged"));
-        guardLabel_->setStyleSheet("color:#2a8a2a;");
+        guardLabel_->setText(tr("✓ all %1 tiles verified (100%)").arg(c.verified));
+        guardLabel_->setStyleSheet("color:#2a8a2a; font-weight:bold;");
     }
     else
     {
-        guardLabel_->setText(tr("⚠ %1 tile(s) draw pixels but are UNTAGGED").arg(n));
-        guardLabel_->setStyleSheet("color:#c02020; font-weight:bold;");
+        guardLabel_->setText(tr("progress %1%  —  ✓ verified %2 · ⚠ review %3 · ✗ untagged %4")
+                             .arg(pct).arg(c.verified).arg(c.toReview).arg(c.untagged));
+        guardLabel_->setStyleSheet(c.untagged>0 ? "color:#c02020;" : "color:#b08000;");
     }
 }
 
 void MainWindow::updateTitle()
 {
-    const int n=(int)model_->untaggedNonEmpty().size();
+    const TagModel::Counts c=model_->progress();
+    const int total=c.verified+c.toReview+c.untagged;
     QString name=tr("(no file)");
     if(model_->tileCount()>0 && !model_->image().isNull())
         name=QString("%1 tiles").arg(model_->tileCount());
-    setWindowTitle(tr("tileset-tagger — %1 — %2 untagged").arg(name).arg(n));
+    setWindowTitle(tr("tileset-tagger — %1 — verified %2/%3").arg(name).arg(c.verified).arg(total));
 }

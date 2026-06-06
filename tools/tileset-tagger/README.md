@@ -110,12 +110,16 @@ tileset-tagger --genmap  <struct.json> <tileset-dir> <out.tmx> [W H seed]   # ge
    ```
    tileset-tagger /home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen2/tileset/normal1.tsx
    ```
-2. **FIX the few wrong guesses.** Tiles are coloured: **yellow** = a low-confidence
-   guess to review, faint tint = confident, **red** = untagged (tiles never used on
-   a map). Skim the yellow ones; where a guess is wrong (a cliff guessed
-   `building-wall`, a roof guessed `tree-canopy`), drag a rectangle over the
-   cluster, pick the right **category**, **Tag**. The **Map usage** panel shows each
-   in situ. **Save** when done (tags go to the sidecar; the datapack is untouched).
+2. **REVIEW each tile to "verified".** Tiles are coloured by state:
+   **red** = untagged · **yellow** = an auto-guess to review · **faint tint** =
+   verified. For a correct yellow guess, drag a rectangle over it and click
+   **Mark selection verified** (keeps the category, turns it tinted). For a wrong
+   guess, pick the right **category** and **Tag** (also verifies). The **Map usage**
+   panel shows each in situ. **Jump to next to-verify** walks the red/yellow tiles
+   in order, advancing each click. A **progression list** is always shown — the
+   panel reads `progress P% — ✓ verified · ⚠ review · ✗ untagged` and the window
+   title shows `verified N/Total`. **Save** when done (tags go to the sidecar;
+   the datapack is untouched). Headless: `--guard <x.tsx>` prints the same counts.
 3. Do the model tilesets (`gen2/tileset/`) and the target (`map/tileset/`); then
    the generator learns from the model and composes onto the target.
 

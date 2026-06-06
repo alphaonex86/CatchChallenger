@@ -56,6 +56,10 @@ static int runGuard(const QString &tsx)
     if(!model.load(tsx)) { std::cerr << model.error().toStdString() << std::endl; return 1; }
     std::cout << tsx.toStdString() << ": " << model.tileCount() << " tiles, "
               << model.columns() << " columns, " << model.tileWidth() << "x" << model.tileHeight() << std::endl;
+    const TagModel::Counts c=model.progress();
+    const int total=c.verified+c.toReview+c.untagged;
+    std::cout << "progress: " << (total>0?c.verified*100/total:100) << "%  verified=" << c.verified
+              << "  to-review=" << c.toReview << "  untagged=" << c.untagged << std::endl;
     printUntagged(model);
     return 0;
 }
