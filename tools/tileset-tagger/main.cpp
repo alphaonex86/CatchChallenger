@@ -436,13 +436,38 @@ static void fillRect(std::vector<std::string> &grid,std::vector<char> &occ,int W
     while(j<h) { int i=0; while(i<w) { const int c=(x+i)+(y+j)*W; grid[c]=cat; occ[c]=1; i++; } j++; }
 }
 
-// Synthesise a category grid STRUCTURE-FIRST from the learned size distributions.
+// Place N rectangles of a zone category, sizes sampled from the learned dist.
+static void placeZone(std::vector<std::string> &grid,std::vector<char> &occ,int W,int H,
+                      const std::map<std::string,std::map<std::string,long> > &zoneSizes,
+                      const std::string &cat,int n,std::mt19937 &rng)
+{
+    std::map<std::string,std::map<std::string,long> >::const_iterator zit=zoneSizes.find(cat);
+    if(zit==zoneSizes.cend())
+        return;
+    int placed=0,tries=0;
+    while(placed<n && tries<n*25)
+    {
+        int w=2,h=2;
+        parseWxH(sampleSize(zit->second,rng),w,h);
+        if(w>=1 && h>=1 && w<=W-4 && h<=H-4)
+        {
+            std::uniform_int_distribution<int> dx(2,W-2-w),dy(2,H-2-h);
+            const int x=dx(rng),y=dy(rng);
+            if(rectFree(occ,W,H,x,y,w,h)) { fillRect(grid,occ,W,x,y,w,h,cat); placed++; }
+        }
+        tries++;
+    }
+}
+
+// Synthesise a category grid STRUCTURE-FIRST: walkable ground base, a path cross,
+// then rigid rectangular water / tall-grass / building / tree features.
 static std::vector<std::string> generateGrid(const std::map<std::string,long> &buildingSizes,
                                              const std::map<std::string,std::map<std::string,long> > &zoneSizes,
                                              int W,int H,unsigned seed)
 {
     std::mt19937 rng(seed);
-    const std::string base = zoneSizes.count("grass-tall")>0 ? "grass-tall" : "ground";
+    const std::string base = zoneSizes.count("grass-short")>0 ? "grass-short" : "ground";
+    const std::string path = zoneSizes.count("path")>0 ? "path" : base;
     std::vector<std::string> grid(W*H,base);
     std::vector<char> occ(W*H,0);
 
@@ -452,30 +477,17 @@ static std::vector<std::string> generateGrid(const std::map<std::string,long> &b
         while(y<H) { int x=0; while(x<W) { if(x<2||y<2||x>=W-2||y>=H-2) { grid[x+y*W]="tree-trunk"; occ[x+y*W]=1; } x++; } y++; }
     }
 
-    const char *zonePlace[3]={"water","grass-short","tree-trunk"};
-    const int zoneN[3]={ (W*H)/600+1, (W*H)/300+1, (W*H)/250+1 };
-    int zk=0;
-    while(zk<3)
+    // a path cross gives the town a road structure (kept clear so it stays walkable)
     {
-        std::map<std::string,std::map<std::string,long> >::const_iterator zit=zoneSizes.find(zonePlace[zk]);
-        if(zit!=zoneSizes.cend())
-        {
-            int placed=0,tries=0;
-            while(placed<zoneN[zk] && tries<zoneN[zk]*20)
-            {
-                int w=2,h=2;
-                parseWxH(sampleSize(zit->second,rng),w,h);
-                if(w<=W-4 && h<=H-4)
-                {
-                    std::uniform_int_distribution<int> dx(2,W-2-w),dy(2,H-2-h);
-                    const int x=dx(rng),y=dy(rng);
-                    if(rectFree(occ,W,H,x,y,w,h)) { fillRect(grid,occ,W,x,y,w,h,zonePlace[zk]); placed++; }
-                }
-                tries++;
-            }
-        }
-        zk++;
+        const int ry=H/2,rx=W/2;
+        int x=2;
+        while(x<W-2) { grid[x+ry*W]=path; grid[x+(ry+1)*W]=path; occ[x+ry*W]=1; occ[x+(ry+1)*W]=1; x++; }
+        int y=2;
+        while(y<H-2) { grid[rx+y*W]=path; grid[(rx+1)+y*W]=path; occ[rx+y*W]=1; occ[(rx+1)+y*W]=1; y++; }
     }
+
+    placeZone(grid,occ,W,H,zoneSizes,"water",(W*H)/700+1,rng);
+    placeZone(grid,occ,W,H,zoneSizes,"grass-tall",(W*H)/250+1,rng);
 
     // buildings: wall block, roof on the top row, door at the bottom-centre
     {
@@ -500,6 +512,8 @@ static std::vector<std::string> generateGrid(const std::map<std::string,long> &b
             tries++;
         }
     }
+
+    placeZone(grid,occ,W,H,zoneSizes,"tree-trunk",(W*H)/300+1,rng);
     return grid;
 }
 
@@ -536,10 +550,9 @@ static int runGenMap(const QStringList &args)
     std::vector<TagModel*> models;
     std::vector<int> tileCounts;
     std::vector<QString> tsxAbs;
-    // category -> the CANONICAL (most-used-on-maps) tile: its (modelIdx, tileId).
-    // Using map usage picks terra's main grass tile over an animation frame.
-    std::map<std::string,std::pair<int,int> > catTile;
-    std::map<std::string,long> bestUsage;
+    // category -> CANDIDATE tiles (usage, (modelIdx, tileId)). We keep the top few
+    // most-used tiles per category and sample among them per cell for TEXTURE.
+    std::map<std::string,std::vector<std::pair<long,std::pair<int,int> > > > catCand;
     int ti=0;
     while(ti<tsxs.size())
     {
@@ -562,12 +575,7 @@ static int runGenMap(const QStringList &args)
                 {
                     std::map<int,MapUsageIndex::TileStat>::const_iterator s=stats.find(id);
                     const long use = s!=stats.cend() ? s->second.total : 0;
-                    std::map<std::string,long>::const_iterator bu=bestUsage.find(cat);
-                    if(bu==bestUsage.cend() || use>bu->second)
-                    {
-                        catTile[cat]=std::make_pair(idx,id);
-                        bestUsage[cat]=use;
-                    }
+                    catCand[cat].push_back(std::make_pair(use,std::make_pair(idx,id)));
                 }
                 id++;
             }
@@ -576,6 +584,18 @@ static int runGenMap(const QStringList &args)
             delete tm;
         ti++;
     }
+    // keep the top 4 most-used tiles per category
+    std::map<std::string,std::vector<std::pair<int,int> > > catTiles;
+    {
+        std::map<std::string,std::vector<std::pair<long,std::pair<int,int> > > >::iterator c=catCand.begin();
+        while(c!=catCand.end())
+        {
+            std::sort(c->second.rbegin(),c->second.rend());
+            size_t k=0;
+            while(k<c->second.size() && k<4) { catTiles[c->first].push_back(c->second.at(k).second); k++; }
+            ++c;
+        }
+    }
 
     // categories the grid uses; which are missing from the official set
     std::set<std::string> used;
@@ -583,21 +603,34 @@ static int runGenMap(const QStringList &args)
     while(g<grid.size()) { if(!grid.at(g).empty()) used.insert(grid.at(g)); g++; }
     std::vector<std::string> missing;
     std::set<std::string>::const_iterator u=used.begin();
-    while(u!=used.cend()) { if(catTile.find(*u)==catTile.cend()) missing.push_back(*u); ++u; }
+    while(u!=used.cend()) { if(catTiles.find(*u)==catTiles.cend()) missing.push_back(*u); ++u; }
 
-    // firstgids for the tilesets actually used
+    // firstgids for the tilesets used by any kept tile
     std::set<int> usedTs;
-    u=used.begin();
-    while(u!=used.cend()) { std::map<std::string,std::pair<int,int> >::const_iterator it=catTile.find(*u); if(it!=catTile.cend()) usedTs.insert(it->second.first); ++u; }
+    {
+        std::map<std::string,std::vector<std::pair<int,int> > >::const_iterator c=catTiles.begin();
+        while(c!=catTiles.cend())
+        {
+            if(used.count(c->first)>0) { size_t k=0; while(k<c->second.size()) { usedTs.insert(c->second.at(k).first); k++; } }
+            ++c;
+        }
+    }
     std::map<int,int> firstgid;
     int run=1;
     std::set<int>::const_iterator ts=usedTs.begin();
     while(ts!=usedTs.cend()) { firstgid[*ts]=run; run+=tileCounts.at(*ts); ++ts; }
-    std::map<std::string,int> catGid;
-    std::map<std::string,std::pair<int,int> >::const_iterator ct=catTile.begin();
-    while(ct!=catTile.cend()) { if(usedTs.count(ct->second.first)>0) catGid[ct->first]=firstgid[ct->second.first]+ct->second.second; ++ct; }
+    std::map<std::string,std::vector<int> > catGids;
+    {
+        std::map<std::string,std::vector<std::pair<int,int> > >::const_iterator c=catTiles.begin();
+        while(c!=catTiles.cend())
+        {
+            size_t k=0;
+            while(k<c->second.size()) { const std::pair<int,int> &t=c->second.at(k); if(usedTs.count(t.first)>0) catGids[c->first].push_back(firstgid[t.first]+t.second); k++; }
+            ++c;
+        }
+    }
 
-    // distribute gids into per-layer grids
+    // distribute gids into per-layer grids, sampling among the candidates per cell
     std::map<std::string,std::vector<int> > layers;
     int y=0;
     while(y<H)
@@ -606,13 +639,20 @@ static int runGenMap(const QStringList &args)
         while(x<W)
         {
             const std::string &cat=grid.at(x+y*W);
-            std::map<std::string,int>::const_iterator gi=catGid.find(cat);
-            if(!cat.empty() && gi!=catGid.cend())
+            std::map<std::string,std::vector<int> >::const_iterator gi=catGids.find(cat);
+            if(!cat.empty() && gi!=catGids.cend() && !gi->second.empty())
             {
+                const std::vector<int> &gids=gi->second;
+                const unsigned hh=(unsigned)((x*73856093)^(y*19349663));
+                int pick=0;
+                // mostly the canonical fill tile; only light variety — category
+                // tiles are NOT freely interchangeable (edges/variants), so heavy
+                // sampling looks noisy until proper auto-tiling/edge tiles exist.
+                if(gids.size()>1 && (hh%100)>=85) pick=1+(int)((hh/100)%(gids.size()-1));
                 const std::string ln=categoryToLayer(cat);
                 if(layers.find(ln)==layers.cend())
                     layers[ln]=std::vector<int>(W*H,0);
-                layers[ln][x+y*W]=gi->second;
+                layers[ln][x+y*W]=gids.at(pick);
             }
             x++;
         }
@@ -664,7 +704,7 @@ static int runGenMap(const QStringList &args)
     while(m<models.size()) { delete models.at(m); m++; }
 
     std::cout << "genmap " << W << "x" << H << " (seed " << seed << ") -> " << args.at(2).toStdString()
-              << "  using " << usedTs.size() << " tileset(s), " << catGid.size() << " categories mapped" << std::endl;
+              << "  using " << usedTs.size() << " tileset(s), " << catGids.size() << " categories mapped" << std::endl;
     if(!missing.empty())
     {
         std::cout << "  MISSING from the official tileset (add tiles + tag these): ";
