@@ -1359,6 +1359,170 @@ static int runSuggest(const QStringList &args)
     return suggestOne(args.at(0));
 }
 
+// --- Wave Function Collapse (example-based, coherent-by-construction) ----------
+// Learns 4-direction category adjacency from the MODEL maps, then generates a new
+// category grid where every neighbour pair is one the model actually used.  An
+// ALTERNATIVE to the structure-first generator, to compare.
+static int wfcCatIndex(std::map<std::string,int> &m,std::vector<std::string> &v,const std::string &c)
+{
+    std::map<std::string,int>::iterator it=m.find(c);
+    if(it!=m.end())
+        return it->second;
+    const int id=(int)v.size();
+    m[c]=id;
+    v.push_back(c);
+    return id;
+}
+// Restrict neighbour domain ndom to categories b reachable from srcdom via adj[a][b].
+static bool wfcRestrict(const std::vector<char> &srcdom,std::vector<char> &ndom,int &nrem,
+                        const std::vector<std::vector<char> > &adj,int K,bool &contradiction)
+{
+    bool changed=false;
+    int b=0;
+    while(b<K)
+    {
+        if(ndom[b])
+        {
+            bool ok=false;
+            int a=0;
+            while(a<K) { if(srcdom[a] && adj[a][b]) { ok=true; break; } a++; }
+            if(!ok) { ndom[b]=0; nrem--; changed=true; }
+        }
+        b++;
+    }
+    if(nrem==0)
+        contradiction=true;
+    return changed;
+}
+static int runWfc(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "wfc needs: <model-map-dir> <out.png> [W H seed]" << std::endl; return 1; }
+    const int W = args.size()>2 ? args.at(2).toInt() : 30;
+    const int H = args.size()>3 ? args.at(3).toInt() : 30;
+    const unsigned int seed = args.size()>4 ? args.at(4).toUInt() : 1234u;
+    // LEARN from the model maps' TOPMOST-category grids
+    std::map<std::string,int> catId;
+    std::vector<std::string> cats;
+    wfcCatIndex(catId,cats,std::string());   // 0 = empty/none
+    struct G { int w; int h; std::vector<int> c; };
+    std::vector<G> gs;
+    QDirIterator dit(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    while(dit.hasNext())
+    {
+        MapDecoder dec;
+        MapDecoder::Result r;
+        QString err;
+        if(dec.decode(dit.next(),r,err))
+        {
+            G g; g.w=r.w; g.h=r.h; g.c.resize(r.w*r.h);
+            int i=0;
+            while(i<r.w*r.h) { g.c[i]=wfcCatIndex(catId,cats,r.categoryGrid[i]); i++; }
+            gs.push_back(g);
+        }
+    }
+    const int K=(int)cats.size();
+    if(K<2) { std::cerr << "WFC: no tagged categories in " << args.at(0).toStdString() << std::endl; return 1; }
+    std::vector<std::vector<char> > rightOK(K,std::vector<char>(K,0)),downOK(K,std::vector<char>(K,0));
+    std::vector<std::vector<char> > leftOK(K,std::vector<char>(K,0)),upOK(K,std::vector<char>(K,0));
+    std::vector<long> freq(K,0);
+    size_t gi=0;
+    while(gi<gs.size())
+    {
+        const G &g=gs.at(gi);
+        int y=0;
+        while(y<g.h)
+        {
+            int x=0;
+            while(x<g.w)
+            {
+                const int a=g.c[x+y*g.w];
+                freq[a]++;
+                if(x+1<g.w) { const int b=g.c[(x+1)+y*g.w]; rightOK[a][b]=1; leftOK[b][a]=1; }
+                if(y+1<g.h) { const int b=g.c[x+(y+1)*g.w]; downOK[a][b]=1; upOK[b][a]=1; }
+                x++;
+            }
+            y++;
+        }
+        gi++;
+    }
+    // GENERATE WxH, restart on contradiction
+    std::vector<int> result(W*H,0);
+    bool done=false;
+    int attempt=0;
+    while(attempt<60 && !done)
+    {
+        std::mt19937 rng(seed+(unsigned int)attempt);
+        std::vector<std::vector<char> > dom(W*H,std::vector<char>(K,1));
+        std::vector<int> rem(W*H,K);
+        bool contradiction=false;
+        while(!contradiction)
+        {
+            // lowest-entropy uncollapsed cell
+            int best=-1,bestRem=K+1;
+            int c=0;
+            while(c<W*H) { if(rem[c]>1 && rem[c]<bestRem) { bestRem=rem[c]; best=c; } c++; }
+            if(best<0)
+                break;   // all cells decided
+            // collapse: pick a possible category weighted by frequency
+            long tot=0;
+            int k=0;
+            while(k<K) { if(dom[best][k]) tot+=freq[k]+1; k++; }
+            long pick=(long)(rng()%(unsigned long)(tot>0?tot:1));
+            int chosen=-1;
+            k=0;
+            while(k<K) { if(dom[best][k]) { pick-=(freq[k]+1); if(pick<0) { chosen=k; break; } } k++; }
+            if(chosen<0) { contradiction=true; break; }
+            k=0;
+            while(k<K) { dom[best][k]=(k==chosen)?1:0; k++; }
+            rem[best]=1;
+            // propagate
+            std::vector<int> work;
+            work.push_back(best);
+            while(!work.empty() && !contradiction)
+            {
+                const int cur=work.back();
+                work.pop_back();
+                const int cx=cur%W,cy=cur/W;
+                if(cx+1<W && wfcRestrict(dom[cur],dom[cur+1],rem[cur+1],rightOK,K,contradiction)) work.push_back(cur+1);
+                if(!contradiction && cx>0   && wfcRestrict(dom[cur],dom[cur-1],rem[cur-1],leftOK,K,contradiction)) work.push_back(cur-1);
+                if(!contradiction && cy+1<H && wfcRestrict(dom[cur],dom[cur+W],rem[cur+W],downOK,K,contradiction)) work.push_back(cur+W);
+                if(!contradiction && cy>0   && wfcRestrict(dom[cur],dom[cur-W],rem[cur-W],upOK,K,contradiction))   work.push_back(cur-W);
+            }
+        }
+        if(!contradiction)
+        {
+            bool ok=true;
+            int c=0;
+            while(c<W*H) { int sel=-1,k=0; while(k<K) { if(dom[c][k]) { sel=k; break; } k++; } if(sel<0) { ok=false; break; } result[c]=sel; c++; }
+            if(ok)
+                done=true;
+        }
+        attempt++;
+    }
+    if(!done) { std::cerr << "WFC: no solution after 60 attempts (adjacency too constrained)" << std::endl; return 1; }
+    QImage img(W*16,H*16,QImage::Format_ARGB32);
+    img.fill(QColor(28,28,38));
+    QPainter p(&img);
+    int yy=0;
+    while(yy<H)
+    {
+        int xx=0;
+        while(xx<W)
+        {
+            const std::string &cat=cats.at(result[xx+yy*W]);
+            if(!cat.empty())
+                p.fillRect(xx*16,yy*16,16,16,MapDecoder::categoryColor(cat));
+            xx++;
+        }
+        yy++;
+    }
+    p.end();
+    if(!img.save(args.at(1))) { std::cerr << "cannot write " << args.at(1).toStdString() << std::endl; return 1; }
+    std::cout << "WFC " << W << "x" << H << " from " << gs.size() << " model map(s), " << (K-1) << " categories, attempt "
+              << attempt << " -> " << args.at(1).toStdString() << std::endl;
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     QStringList args;
@@ -1368,7 +1532,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--maptensor");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--maptensor" || args.at(0)=="--wfc");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -1388,6 +1552,8 @@ int main(int argc, char *argv[])
         return runEvalSuggest(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--maptensor")
         return runMapTensor(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--wfc")
+        return runWfc(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
         return runClassify(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--decode")
