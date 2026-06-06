@@ -33,7 +33,7 @@ static QStringList tagCategories()
     c << "terrain"
       << "ground" << "path" << "sand" << "grass-short" << "grass-tall"
       << "water" << "water-edge" << "waterfall" << "lava"
-      << "ledge-down" << "ledge-up" << "ledge-left" << "ledge-right"
+      << "ledge-down" << "ledge-up" << "ledge-left" << "ledge-right" << "ledge-blocking"
       << "cliff" << "rock" << "tree-trunk" << "tree-canopy" << "bush" << "flower"
       << "building-wall" << "building-roof" << "door" << "window" << "stairs" << "sign" << "fence"
       << "interior-floor" << "interior-wall" << "carpet" << "counter"
@@ -72,7 +72,8 @@ static QString categoryDescription(const QString &c)
     if(c=="water-edge") return QObject::tr("Border tiles where water meets land (edges & corners). A MULTI-TILE set, not a fill.");
     if(c=="waterfall")  return QObject::tr("Animated waterfall — a vertical strip (top/middle/bottom). MULTI-TILE.");
     if(c=="cliff")    return QObject::tr("Cliff face between two heights (blocked). A MULTI-TILE vertical/edge set.");
-    if(c.startsWith("ledge")) return QObject::tr("One-way jump ledge. A row/column of edge tiles (MULTI-TILE); the engine makes it one-way.");
+    if(c=="ledge-blocking") return QObject::tr("A BLOCKING ledge edge — you canNOT cross it (a height drop/wall edge), unlike the one-way jump ledges. A MULTI-TILE edge set.");
+    if(c.startsWith("ledge")) return QObject::tr("One-way JUMP ledge. A row/column of edge tiles (MULTI-TILE); the engine makes it one-way (down/up/left/right).");
     if(c=="fence")    return QObject::tr("Fence/railing (blocked). A line of edge tiles (MULTI-TILE).");
     if(c=="tree-trunk")  return QObject::tr("Lower TRUNK of a tree (blocked). Usually under a tree-canopy. 1+ tiles.");
     if(c=="tree-canopy") return QObject::tr("Upper LEAVES of a tree, drawn ABOVE the player. 1+ tiles.");
