@@ -15,6 +15,7 @@
 #include "../map-procedural-generation-terrain/TransitionTerrain.h"
 #include "../map-procedural-generation-terrain/Settings.h"
 #include "../map-procedural-generation-terrain/MapPlants.h"
+#include "../map-procedural-generation-terrain/MapBrush.h"
 #include "../map-procedural-generation-terrain/MiniMap.h"
 #include "SettingsAll.h"
 #include "LoadMapAll.h"
@@ -211,6 +212,41 @@ int main(int argc, char *argv[])
             }
             if(config.dovegetation)
             {
+                //Keep towns readable like the hand-made reference (open interior +
+                //a tree-wall border): pre-mask every CITY chunk in the vegetation
+                //mask so addVegetation (which only OR-s the mask, never clears it)
+                //scatters NO trees inside a town.  The terrain forest already
+                //carved around the town stays as the wall; only the cluttering
+                //interior clumps are suppressed.
+                if(MapBrush::mapMask!=NULL)
+                {
+                    //Mask only the INTERIOR of a city chunk, leaving a border ring
+                    //unmasked so vegetation still grows a tree WALL around the town
+                    //(like the reference) while the centre stays open for the
+                    //buildings/paths.
+                    const unsigned int mw=config.mapWidth, mh=config.mapHeight;
+                    const unsigned int ring=5; //tiles of tree border kept on each edge
+                    const unsigned int Wt=(unsigned int)tiledMap.width(), Ht=(unsigned int)tiledMap.height();
+                    unsigned int ty=0;
+                    while(ty<Ht)
+                    {
+                        unsigned int tx=0;
+                        while(tx<Wt)
+                        {
+                            if(LoadMapAll::haveCityEntry(LoadMapAll::citiesCoordToIndex, tx/mw, ty/mh))
+                            {
+                                const unsigned int lx=tx%mw, ly=ty%mh;
+                                if(lx>=ring && lx<mw-ring && ly>=ring && ly<mh-ring)
+                                {
+                                    const unsigned int bit=tx+ty*Wt;
+                                    MapBrush::mapMask[bit/8]|=(1<<(7-bit%8));
+                                }
+                            }
+                            tx++;
+                        }
+                        ty++;
+                    }
+                }
                 t.start();
                 MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
                 qDebug("Vegetation took %lld ms", t.elapsed());
