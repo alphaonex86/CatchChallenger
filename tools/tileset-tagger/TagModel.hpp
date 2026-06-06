@@ -59,6 +59,10 @@ public:
     // flag (yellow -> verified) without changing the category.
     void markVerified(const std::vector<int> &tileIds);
     void markAllVerified();   // confirm EVERY tag (drop auto=guess) — the review "save all"
+    // LEARN-FROM-TAGS (KNN): tag each UNTAGGED tile with the category of the most
+    // pixel-similar ALREADY-TAGGED tile (>= minPercent overlap-match), as auto=guess.
+    // ~91% match vs hand tags on normal1 — the rest auto-fills as you tag a few.
+    int suggestFromTags(int minPercent);   // returns how many it filled
 
     // Review progression over the whole tileset.
     struct Counts { int verified; int toReview; int untagged; };

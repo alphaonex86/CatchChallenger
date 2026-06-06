@@ -210,6 +210,97 @@ void TagModel::detectSimilarGroups()
     }
 }
 
+int TagModel::suggestFromTags(int minPercent)
+{
+    if(image_.isNull() || columns_<1 || tileWidth_<1 || tileHeight_<1)
+        return 0;
+    const int tw=tileWidth_,th=tileHeight_,npx=tw*th;
+    const QImage cur=image_.convertToFormat(QImage::Format_ARGB32);
+    // extract every NON-EMPTY tile's RGB + alpha mask, parallel arrays
+    std::vector<int> ids;
+    std::vector<std::vector<unsigned char> > rgb;
+    std::vector<std::vector<char> > op;
+    int id=0;
+    while(id<tileCount_)
+    {
+        const int x0=(id%columns_)*tw;
+        const int y0=(id/columns_)*th;
+        if(x0+tw<=cur.width() && y0+th<=cur.height())
+        {
+            std::vector<unsigned char> c(npx*3);
+            std::vector<char> a(npx,0);
+            bool empty=true;
+            int k=0,p=0,yy=0;
+            while(yy<th)
+            {
+                const QRgb *line=reinterpret_cast<const QRgb*>(cur.scanLine(y0+yy));
+                int xx=0;
+                while(xx<tw)
+                {
+                    const QRgb px=line[x0+xx];
+                    c[k++]=qRed(px); c[k++]=qGreen(px); c[k++]=qBlue(px);
+                    if(qAlpha(px)!=0) { a[p]=1; empty=false; }
+                    p++; xx++;
+                }
+                yy++;
+            }
+            if(!empty) { ids.push_back(id); rgb.push_back(c); op.push_back(a); }
+        }
+        id++;
+    }
+    const int TOL=18;
+    const int MINOVERLAP=npx*32/256;
+    int filled=0;
+    size_t ui=0;
+    while(ui<ids.size())
+    {
+        if(tags_.find(ids[ui])==tags_.end())   // untagged tile
+        {
+            int bestPct=-1;
+            std::string bestCat;
+            size_t ti=0;
+            while(ti<ids.size())
+            {
+                std::unordered_map<int,TileTag>::iterator tg=tags_.find(ids[ti]);
+                if(tg!=tags_.end() && !tg->second.category.empty())
+                {
+                    int overlap=0,match=0,p=0;
+                    while(p<npx)
+                    {
+                        if(op[ui][p] && op[ti][p])
+                        {
+                            overlap++;
+                            const int q=p*3;
+                            if(std::abs((int)rgb[ui][q]-(int)rgb[ti][q])<=TOL
+                               && std::abs((int)rgb[ui][q+1]-(int)rgb[ti][q+1])<=TOL
+                               && std::abs((int)rgb[ui][q+2]-(int)rgb[ti][q+2])<=TOL)
+                                match++;
+                        }
+                        p++;
+                    }
+                    if(overlap>=MINOVERLAP)
+                    {
+                        const int pct=match*100/overlap;
+                        if(pct>bestPct) { bestPct=pct; bestCat=tg->second.category; }
+                    }
+                }
+                ti++;
+            }
+            if(bestPct>=minPercent && !bestCat.empty())
+            {
+                TileTag tag;
+                tag.category=bestCat;
+                tag.attributes["auto"]="guess";
+                tag.attributes["knn"]=std::to_string(bestPct);
+                tags_[ids[ui]]=tag;
+                filled++;
+            }
+        }
+        ui++;
+    }
+    return filled;
+}
+
 const std::vector<TagModel::Similar> &TagModel::similarTo(int tileId) const
 {
     static const std::vector<Similar> empty;
