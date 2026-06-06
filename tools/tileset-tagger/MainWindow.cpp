@@ -35,9 +35,9 @@ static QStringList tagCategories()
       << "water" << "water-edge" << "waterfall" << "lava"
       << "ledge-down" << "ledge-up" << "ledge-left" << "ledge-right" << "ledge-blocking"
       << "cliff" << "rock" << "tree-trunk" << "tree-canopy" << "bush" << "flower"
-      << "building-wall" << "building-roof" << "door" << "window" << "stairs" << "sign" << "fence"
-      << "interior-floor" << "interior-wall" << "carpet" << "counter"
-      << "table" << "chair" << "bed" << "shelf" << "bookshelf" << "fridge"
+      << "building" << "building-wall" << "building-roof" << "door" << "cave-exit" << "window" << "stairs" << "sign" << "fence"
+      << "floor" << "interior-floor" << "interior-wall" << "carpet" << "rug" << "counter"
+      << "table" << "chair" << "sofa" << "bed" << "shelf" << "bookshelf" << "fridge"
       << "computer" << "tv" << "plant-pot" << "decoration";
     c.sort();   // alphabetical, easy to find
     return c;
@@ -80,9 +80,13 @@ static QString categoryDescription(const QString &c)
     if(c=="bush")     return QObject::tr("Small bush/shrub object. 1+ tiles.");
     if(c=="flower")   return QObject::tr("Decorative flowers (walkable). Usually 1 tile, often animated.");
     if(c=="rock")     return QObject::tr("Rock/boulder object (blocked). 1+ tiles.");
+    if(c=="building") return QObject::tr("A whole BUILDING / its exterior (blocked). MULTI-TILE. Use building-wall vs building-roof for the wall and roof parts.");
     if(c=="building-wall") return QObject::tr("WALL/face of a building (blocked) — the solid body. MULTI-TILE. Not furniture/decoration.");
     if(c=="building-roof") return QObject::tr("ROOF of a building, often drawn above the player. MULTI-TILE.");
     if(c=="door")     return QObject::tr("A door (becomes an entrance/teleport). Usually 1 tile (sometimes 1×2).");
+    if(c=="cave-exit") return QObject::tr("A cave entrance/exit — the opening in a cliff that warps in/out (becomes a teleport). 1+ tiles.");
+    if(c=="floor")    return QObject::tr("Plain FLOOR (walkable) — indoor or a platform. Fill an area. (interior-floor = a specific room's floor; ground = outdoor.)");
+    if(c=="rug")      return QObject::tr("A rug/mat on the floor (walkable decoration). 1+ tiles. (carpet = a larger fitted floor covering.)");
     if(c=="window")   return QObject::tr("A building window (decorative, blocked). Usually 1 tile.");
     if(c=="stairs")   return QObject::tr("Stairs/steps. 1+ tiles.");
     if(c=="sign")     return QObject::tr("A readable sign/board (blocked). Usually 1 tile.");
