@@ -18,6 +18,7 @@ public:
     explicit MapUsageView(QWidget *parent=nullptr);
     void setUsage(const QImage &mapImage,const std::vector<QPoint> &cells,int tileW,int tileH);
     void clearUsage();
+    QPoint firstHighlightCenter() const;   // pixel centre of the first used cell (native coords)
     QSize sizeHint() const override;
 
 protected:

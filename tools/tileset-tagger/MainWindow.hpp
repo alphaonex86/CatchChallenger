@@ -21,6 +21,7 @@ class QComboBox;
 class QCheckBox;
 class QLabel;
 class QPushButton;
+class QScrollArea;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -54,6 +55,7 @@ private:
     TilesetView *view_;
     MapUsageIndex *usage_;
     MapUsageView *usageView_;
+    QScrollArea *usageScroll_;
     QPushButton *openBtn_;
     QComboBox *categoryBox_;
     QComboBox *mapCombo_;

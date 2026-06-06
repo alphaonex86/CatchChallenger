@@ -23,7 +23,15 @@ MapUsageView::MapUsageView(QWidget *parent) :
     setMinimumHeight(240);
 }
 
-QSize MapUsageView::sizeHint() const { return QSize(520,340); }
+QSize MapUsageView::sizeHint() const { return map_.isNull() ? QSize(520,340) : map_.size(); }
+
+QPoint MapUsageView::firstHighlightCenter() const
+{
+    if(rects_.empty())
+        return QPoint(map_.width()/2,map_.height()/2);
+    const QRect &r=rects_.front();
+    return QPoint(r.x()*tileW_+r.width()*tileW_/2, r.y()*tileH_+r.height()*tileH_/2);
+}
 
 void MapUsageView::clearUsage()
 {
@@ -84,6 +92,7 @@ void MapUsageView::setUsage(const QImage &mapImage,const std::vector<QPoint> &ce
         timer_->start();
     else
         timer_->stop();
+    updateGeometry();   // native size changed -> let the scroll area resize
     update();
 }
 
@@ -104,30 +113,15 @@ void MapUsageView::paintEvent(QPaintEvent *)
         return;
     }
 
-    // fit the map into the widget, centred (no upscale beyond 4x for tiny maps)
-    if(map_.width()<=0 || map_.height()<=0)
-        return;
-    double s=(double)width()/map_.width();
-    const double sy=(double)height()/map_.height();
-    if(sy<s)
-        s=sy;
-    if(s>4.0)
-        s=4.0;
-    if(s<=0.0)
-        s=1.0;
-    const double ox=(width()-map_.width()*s)/2.0;
-    const double oy=(height()-map_.height()*s)/2.0;
-    p.setRenderHint(QPainter::SmoothPixmapTransform,false);
-    p.drawImage(QRectF(ox,oy,map_.width()*s,map_.height()*s),map_);
+    // draw the map at NATIVE 1:1 — exactly Tiled's pixel output, no scaling/aliasing
+    // (the surrounding scroll area handles overflow + centring).
+    p.drawImage(0,0,map_);
 
     size_t i=0;
     while(i<rects_.size())
     {
         const QRect r=rects_.at(i);
-        const QRectF wr(ox+r.x()*tileW_*s,
-                        oy+r.y()*tileH_*s,
-                        r.width()*tileW_*s,
-                        r.height()*tileH_*s);
+        const QRect wr(r.x()*tileW_,r.y()*tileH_,r.width()*tileW_,r.height()*tileH_);
         p.fillRect(wr,QColor(255,90,40,70));
         // marching ants: solid dark under-stroke + animated white dashes over it
         p.setPen(QPen(QColor(0,0,0,200),2));
