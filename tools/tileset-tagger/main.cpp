@@ -25,6 +25,7 @@
 #include <QPainter>
 #include <QString>
 #include <QStringList>
+#include <QTextStream>
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
@@ -435,17 +436,12 @@ static void fillRect(std::vector<std::string> &grid,std::vector<char> &occ,int W
     while(j<h) { int i=0; while(i<w) { const int c=(x+i)+(y+j)*W; grid[c]=cat; occ[c]=1; i++; } j++; }
 }
 
-static int runGenerate(const QStringList &args)
+// Synthesise a category grid STRUCTURE-FIRST from the learned size distributions.
+static std::vector<std::string> generateGrid(const std::map<std::string,long> &buildingSizes,
+                                             const std::map<std::string,std::map<std::string,long> > &zoneSizes,
+                                             int W,int H,unsigned seed)
 {
-    if(args.size()<2) { std::cerr << "generate needs: <struct.json> <out.png> [W H seed]" << std::endl; return 1; }
-    std::map<std::string,long> buildingSizes;
-    std::map<std::string,std::map<std::string,long> > zoneSizes;
-    if(!loadStruct(args.at(0),buildingSizes,zoneSizes)) { std::cerr << "cannot load " << args.at(0).toStdString() << std::endl; return 1; }
-    const int W = args.size()>2 ? args.at(2).toInt() : 40;
-    const int H = args.size()>3 ? args.at(3).toInt() : 30;
-    const unsigned seed = args.size()>4 ? (unsigned)args.at(4).toUInt() : 1u;
     std::mt19937 rng(seed);
-
     const std::string base = zoneSizes.count("grass-tall")>0 ? "grass-tall" : "ground";
     std::vector<std::string> grid(W*H,base);
     std::vector<char> occ(W*H,0);
@@ -456,20 +452,19 @@ static int runGenerate(const QStringList &args)
         while(y<H) { int x=0; while(x<W) { if(x<2||y<2||x>=W-2||y>=H-2) { grid[x+y*W]="tree-trunk"; occ[x+y*W]=1; } x++; } y++; }
     }
 
-    // helper-free placement of N rectangles of a zone category, sampled sizes
     const char *zonePlace[3]={"water","grass-short","tree-trunk"};
     const int zoneN[3]={ (W*H)/600+1, (W*H)/300+1, (W*H)/250+1 };
     int zk=0;
     while(zk<3)
     {
-        if(zoneSizes.count(zonePlace[zk])>0)
+        std::map<std::string,std::map<std::string,long> >::const_iterator zit=zoneSizes.find(zonePlace[zk]);
+        if(zit!=zoneSizes.cend())
         {
-            int placed=0;
-            int tries=0;
+            int placed=0,tries=0;
             while(placed<zoneN[zk] && tries<zoneN[zk]*20)
             {
                 int w=2,h=2;
-                parseWxH(sampleSize(zoneSizes[zonePlace[zk]],rng),w,h);
+                parseWxH(sampleSize(zit->second,rng),w,h);
                 if(w<=W-4 && h<=H-4)
                 {
                     std::uniform_int_distribution<int> dx(2,W-2-w),dy(2,H-2-h);
@@ -497,14 +492,199 @@ static int runGenerate(const QStringList &args)
                 if(rectFree(occ,W,H,x,y,w,h))
                 {
                     fillRect(grid,occ,W,x,y,w,h,"building-wall");
-                    int i=0; while(i<w) { grid[(x+i)+y*W]="building-roof"; i++; }   // top row roof
-                    grid[(x+w/2)+(y+h-1)*W]="door";                                  // door bottom-centre
+                    int i=0; while(i<w) { grid[(x+i)+y*W]="building-roof"; i++; }
+                    grid[(x+w/2)+(y+h-1)*W]="door";
                     placed++;
                 }
             }
             tries++;
         }
     }
+    return grid;
+}
+
+// category -> the CatchChallenger engine layer the tile is placed on.
+static std::string categoryToLayer(const std::string &cat)
+{
+    if(cat=="water" || cat=="water-edge" || cat=="waterfall" || cat=="lava") return "Water";
+    if(cat=="grass-tall") return "Grass";
+    if(cat=="ledge-down") return "LedgesBottom";
+    if(cat=="ledge-up") return "LedgesTop";
+    if(cat=="ledge-left") return "LedgesLeft";
+    if(cat=="ledge-right") return "LedgesRight";
+    if(cat=="tree-canopy" || cat=="building-roof") return "WalkBehind";
+    if(cat=="building-wall" || cat=="cliff" || cat=="rock" || cat=="tree-trunk"
+       || cat=="fence" || cat=="sign" || cat=="bush" || cat=="window") return "Collisions";
+    return "Walkable";   // ground/path/sand/grass-short/door/stairs/flower/interior-*
+}
+
+static int runGenMap(const QStringList &args)
+{
+    // <struct.json> <tileset-dir> <out.tmx> [W H seed]
+    if(args.size()<3) { std::cerr << "genmap needs: <struct.json> <tileset-dir> <out.tmx> [W H seed]" << std::endl; return 1; }
+    std::map<std::string,long> buildingSizes;
+    std::map<std::string,std::map<std::string,long> > zoneSizes;
+    if(!loadStruct(args.at(0),buildingSizes,zoneSizes)) { std::cerr << "cannot load " << args.at(0).toStdString() << std::endl; return 1; }
+    const int W = args.size()>3 ? args.at(3).toInt() : 40;
+    const int H = args.size()>4 ? args.at(4).toInt() : 30;
+    const unsigned seed = args.size()>5 ? (unsigned)args.at(5).toUInt() : 1u;
+    const std::vector<std::string> grid=generateGrid(buildingSizes,zoneSizes,W,H,seed);
+
+    // load the official tilesets + their sidecar tags; category -> first (tileset,tileId)
+    QDir tdir(args.at(1));
+    const QStringList tsxs=tdir.entryList(QStringList()<<"*.tsx",QDir::Files,QDir::Name);
+    std::vector<TagModel*> models;
+    std::vector<int> tileCounts;
+    std::vector<QString> tsxAbs;
+    // category -> the CANONICAL (most-used-on-maps) tile: its (modelIdx, tileId).
+    // Using map usage picks terra's main grass tile over an animation frame.
+    std::map<std::string,std::pair<int,int> > catTile;
+    std::map<std::string,long> bestUsage;
+    int ti=0;
+    while(ti<tsxs.size())
+    {
+        TagModel *tm=new TagModel();
+        const QString abs=tdir.absoluteFilePath(tsxs.at(ti));
+        if(tm->load(abs))
+        {
+            const int idx=(int)models.size();
+            models.push_back(tm);
+            tileCounts.push_back(tm->tileCount());
+            tsxAbs.push_back(abs);
+            MapUsageIndex ui;
+            ui.build(abs);
+            const std::map<int,MapUsageIndex::TileStat> stats=ui.analyzeAllTiles();
+            int id=0;
+            while(id<tm->tileCount())
+            {
+                const std::string &cat=tm->tagOf(id).category;
+                if(!cat.empty())
+                {
+                    std::map<int,MapUsageIndex::TileStat>::const_iterator s=stats.find(id);
+                    const long use = s!=stats.cend() ? s->second.total : 0;
+                    std::map<std::string,long>::const_iterator bu=bestUsage.find(cat);
+                    if(bu==bestUsage.cend() || use>bu->second)
+                    {
+                        catTile[cat]=std::make_pair(idx,id);
+                        bestUsage[cat]=use;
+                    }
+                }
+                id++;
+            }
+        }
+        else
+            delete tm;
+        ti++;
+    }
+
+    // categories the grid uses; which are missing from the official set
+    std::set<std::string> used;
+    size_t g=0;
+    while(g<grid.size()) { if(!grid.at(g).empty()) used.insert(grid.at(g)); g++; }
+    std::vector<std::string> missing;
+    std::set<std::string>::const_iterator u=used.begin();
+    while(u!=used.cend()) { if(catTile.find(*u)==catTile.cend()) missing.push_back(*u); ++u; }
+
+    // firstgids for the tilesets actually used
+    std::set<int> usedTs;
+    u=used.begin();
+    while(u!=used.cend()) { std::map<std::string,std::pair<int,int> >::const_iterator it=catTile.find(*u); if(it!=catTile.cend()) usedTs.insert(it->second.first); ++u; }
+    std::map<int,int> firstgid;
+    int run=1;
+    std::set<int>::const_iterator ts=usedTs.begin();
+    while(ts!=usedTs.cend()) { firstgid[*ts]=run; run+=tileCounts.at(*ts); ++ts; }
+    std::map<std::string,int> catGid;
+    std::map<std::string,std::pair<int,int> >::const_iterator ct=catTile.begin();
+    while(ct!=catTile.cend()) { if(usedTs.count(ct->second.first)>0) catGid[ct->first]=firstgid[ct->second.first]+ct->second.second; ++ct; }
+
+    // distribute gids into per-layer grids
+    std::map<std::string,std::vector<int> > layers;
+    int y=0;
+    while(y<H)
+    {
+        int x=0;
+        while(x<W)
+        {
+            const std::string &cat=grid.at(x+y*W);
+            std::map<std::string,int>::const_iterator gi=catGid.find(cat);
+            if(!cat.empty() && gi!=catGid.cend())
+            {
+                const std::string ln=categoryToLayer(cat);
+                if(layers.find(ln)==layers.cend())
+                    layers[ln]=std::vector<int>(W*H,0);
+                layers[ln][x+y*W]=gi->second;
+            }
+            x++;
+        }
+        y++;
+    }
+
+    // write the .tmx (CSV layers, relative tileset refs) into map/main/generated/
+    const QString outDir=QFileInfo(args.at(2)).absolutePath();
+    QDir().mkpath(outDir);
+    QFile out(args.at(2));
+    if(!out.open(QIODevice::WriteOnly|QIODevice::Truncate)) { std::cerr << "cannot write " << args.at(2).toStdString() << std::endl; return 1; }
+    QTextStream w(&out);
+    w << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    w << "<map version=\"1.10\" orientation=\"orthogonal\" renderorder=\"right-down\" width=\"" << W
+      << "\" height=\"" << H << "\" tilewidth=\"16\" tileheight=\"16\" infinite=\"0\" nextlayerid=\"99\" nextobjectid=\"1\">\n";
+    ts=usedTs.begin();
+    while(ts!=usedTs.cend())
+    {
+        const QString rel=QDir(outDir).relativeFilePath(tsxAbs.at(*ts));
+        w << " <tileset firstgid=\"" << firstgid[*ts] << "\" source=\"" << rel << "\"/>\n";
+        ++ts;
+    }
+    const char *order[9]={"Walkable","Grass","Water","LedgesBottom","LedgesTop","LedgesLeft","LedgesRight","Collisions","WalkBehind"};
+    int lid=1,oi=0;
+    while(oi<9)
+    {
+        std::map<std::string,std::vector<int> >::const_iterator lit=layers.find(order[oi]);
+        if(lit!=layers.cend())
+        {
+            w << " <layer id=\"" << lid << "\" name=\"" << order[oi] << "\" width=\"" << W << "\" height=\"" << H << "\">\n";
+            w << "  <data encoding=\"csv\">\n";
+            int yy=0;
+            while(yy<H)
+            {
+                int xx=0;
+                while(xx<W) { w << lit->second.at(xx+yy*W); if(!(yy==H-1 && xx==W-1)) w << ","; xx++; }
+                w << "\n";
+                yy++;
+            }
+            w << "</data>\n </layer>\n";
+            lid++;
+        }
+        oi++;
+    }
+    w << "</map>\n";
+    out.close();
+
+    size_t m=0;
+    while(m<models.size()) { delete models.at(m); m++; }
+
+    std::cout << "genmap " << W << "x" << H << " (seed " << seed << ") -> " << args.at(2).toStdString()
+              << "  using " << usedTs.size() << " tileset(s), " << catGid.size() << " categories mapped" << std::endl;
+    if(!missing.empty())
+    {
+        std::cout << "  MISSING from the official tileset (add tiles + tag these): ";
+        size_t i=0;
+        while(i<missing.size()) { std::cout << missing.at(i) << " "; i++; }
+        std::cout << std::endl;
+    }
+    return 0;
+}
+
+static int runGenerate(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "generate needs: <struct.json> <out.png> [W H seed]" << std::endl; return 1; }
+    std::map<std::string,long> buildingSizes;
+    std::map<std::string,std::map<std::string,long> > zoneSizes;
+    if(!loadStruct(args.at(0),buildingSizes,zoneSizes)) { std::cerr << "cannot load " << args.at(0).toStdString() << std::endl; return 1; }
+    const int W = args.size()>2 ? args.at(2).toInt() : 40;
+    const int H = args.size()>3 ? args.at(3).toInt() : 30;
+    const unsigned seed = args.size()>4 ? (unsigned)args.at(4).toUInt() : 1u;
+    const std::vector<std::string> grid=generateGrid(buildingSizes,zoneSizes,W,H,seed);
 
     // render
     const int cell=12;
@@ -952,7 +1132,7 @@ int main(int argc, char *argv[])
     const bool cli = !args.isEmpty()
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
-            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate");
+            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -980,6 +1160,8 @@ int main(int argc, char *argv[])
         return runStructure(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--generate")
         return runGenerate(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--genmap")
+        return runGenMap(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;
