@@ -43,6 +43,7 @@ public:
     bool save();
     const QString &tagFilePath() const;   // sidecar tag file for this tileset
     const QString &sidecarDir() const;    // datapack sidecar directory
+    const QString &tsxPath() const;       // the loaded .tsx path (for the window title)
 
     int tileCount() const;
     int columns() const;

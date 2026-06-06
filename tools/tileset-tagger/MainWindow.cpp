@@ -557,9 +557,12 @@ void MainWindow::onVerify()
         statusBar()->showMessage(tr("select a tile/rectangle first"),5000);
         return;
     }
+    // the group just created (same id form as the saved 'group' attr) — captured now
+    // because onNextUntagged() moves the selection (and selC0_/selR0_) away.
+    const QString grp=categoryBox_->currentText()+"@"+QString::number(selC0_)+","+QString::number(selR0_);
     model_->save();                 // auto-persist so no work is lost (Save is optional)
-    statusBar()->showMessage(tr("✓ verified %1 tile(s) as '%2' (saved) — moving to next").arg(n).arg(categoryBox_->currentText()),5000);
     onNextUntagged();               // auto-advance to the next tile needing attention
+    statusBar()->showMessage(tr("✓ created group %1  (%2 tile(s), saved) → next").arg(grp).arg(n),5000);
 }
 
 void MainWindow::onSave()
@@ -591,10 +594,20 @@ void MainWindow::onSelection(int tileCount)
         randomized_->setChecked(false);
         composed_->setChecked(false);
     }
+    // surface the GROUP of the anchor tile (if already tagged) — in the label and a
+    // 5s status flash, so you can see which group a tile belongs to.
+    QString grp;
+    if(!selIds.empty())
+        grp=QString::fromStdString(model_->tagOf(selIds.front()).attr("group"));
     if(selC0_<0)
         selLabel_->setText(tr("no selection — drag tiles (Ctrl/Shift+drag adds, Ctrl+click toggles)"));
+    else if(!grp.isEmpty())
+    {
+        selLabel_->setText(tr("selection: %1 tile(s)  ·  group: %2").arg(tileCount).arg(grp));
+        statusBar()->showMessage(tr("selected group: %1").arg(grp),5000);
+    }
     else
-        selLabel_->setText(tr("selection: %1 tile(s)  (bbox %2x%3)")
+        selLabel_->setText(tr("selection: %1 tile(s)  (bbox %2x%3 — new group)")
                            .arg(tileCount).arg(selC1_-selC0_+1).arg(selR1_-selR0_+1));
 }
 
@@ -933,8 +946,8 @@ void MainWindow::updateTitle()
 {
     const TagModel::Counts c=model_->progress();
     const int total=c.verified+c.toReview+c.untagged;
-    QString name=tr("(no file)");
+    QString name=tr("tileset-tagger");
     if(model_->tileCount()>0 && !model_->image().isNull())
-        name=QString("%1 tiles").arg(model_->tileCount());
-    setWindowTitle(tr("tileset-tagger — %1 — verified %2/%3").arg(name).arg(c.verified).arg(total));
+        name=QFileInfo(model_->tsxPath()).fileName();   // the TILESET name, e.g. animations.tsx
+    setWindowTitle(tr("%1 — verified %2/%3").arg(name).arg(c.verified).arg(total));
 }
