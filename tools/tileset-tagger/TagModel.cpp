@@ -475,5 +475,6 @@ int TagModel::tileWidth() const { return tileWidth_; }
 int TagModel::tileHeight() const { return tileHeight_; }
 const QImage &TagModel::image() const { return image_; }
 const QString &TagModel::tagFilePath() const { return tagFilePath_; }
+const QString &TagModel::tsxPath() const { return tsxPath_; }
 const QString &TagModel::sidecarDir() const { return sidecarDir_; }
 const QString &TagModel::error() const { return error_; }
