@@ -1,6 +1,6 @@
 # Learn-from-tags: data-driven map generation
 
-**MODEL datapack = `datapack-pkmn/map/main/gen2/`** (owner) — 183 `.tmx` maps
+**MODEL datapack = `datapack-pkmn/map/main/gen2/`** (owner) — 100+ `.tmx` maps
 (johto + kanto) over 14 tilesets (`tileset/normal1..15.tsx` + `animations.tsx`),
 with `informations.xml` / `zone/` / `quests/`. This is the corpus whose rules we
 learn and the target the reproducibility guard round-trips against.
