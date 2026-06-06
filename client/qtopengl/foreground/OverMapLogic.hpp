@@ -27,6 +27,7 @@ class Shop;
 class Factory;
 class Trade;
 class Warehouse;
+class QUrl;
 
 class OverMapLogic : public OverMap
 {
@@ -88,6 +89,10 @@ public:
     };
 public slots:
     void connectAllSignals();
+    //--test-dialogoverflow self-test: push a huge text into the dialog then
+    //verify (after a paint cycle) it word-wrapped and stayed inside the widget
+    void runDialogOverflowSelfTest();
+    void dialogOverflowSelfTestCheck();
     void selectObject(const ObjectType &objectType);
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void lastReplyTime(const uint32_t &time);

@@ -6,9 +6,11 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
 #include "QMap_client.hpp"
+#include "../CliClientOptions.hpp"
 #include <iostream>
 #include <QDebug>
 #include <QFileInfo>
+#include <QCoreApplication>
 
 QFont MapControllerMP::playerpseudofont;
 QPixmap * MapControllerMP::imgForPseudoAdmin=NULL;
@@ -34,6 +36,14 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     player_informations_is_set=false;
     pendingInitialPlayerLoad=false;
     chatHelloSent=false;
+
+    signSelfTestStarted=false;
+    signTestMap=0;
+    signTestX=0;
+    signTestY=0;
+    signSelfTestTimeoutTimer.setSingleShot(true);
+    if(!connect(&signSelfTestTimeoutTimer,&QTimer::timeout,this,&MapControllerMP::signSelfTestTimeout))
+        abort();
 
     resetAll();
 
@@ -1029,6 +1039,106 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
     return CatchChallenger::Direction_look_at_bottom;
 }
 
+bool MapControllerMP::tileStandable(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &x,const int &y,const int &mw,const int &mh)
+{
+    if(x<0 || x>=mw || y<0 || y>=mh)
+        return false;
+    //A tile is standable if some orthogonal neighbour can MOVE INTO it. canGoTo()
+    //checks the destination's enterability (collisions, ledges, water/lava needing
+    //an item), so a Sign/NPC/water/wall tile returns false from every neighbour.
+    if(x+1<mw && canGoTo(CatchChallenger::Direction_move_at_left,mapIndex,static_cast<COORD_TYPE>(x+1),static_cast<COORD_TYPE>(y),true))
+        return true;
+    if(x-1>=0 && canGoTo(CatchChallenger::Direction_move_at_right,mapIndex,static_cast<COORD_TYPE>(x-1),static_cast<COORD_TYPE>(y),true))
+        return true;
+    if(y+1<mh && canGoTo(CatchChallenger::Direction_move_at_top,mapIndex,static_cast<COORD_TYPE>(x),static_cast<COORD_TYPE>(y+1),true))
+        return true;
+    if(y-1>=0 && canGoTo(CatchChallenger::Direction_move_at_bottom,mapIndex,static_cast<COORD_TYPE>(x),static_cast<COORD_TYPE>(y-1),true))
+        return true;
+    return false;
+}
+
+bool MapControllerMP::reachableClickNeighbor(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &cx,const int &cy,const int &px,const int &py,int &outX,int &outY)
+{
+    const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    const int mw=lm.width;
+    const int mh=lm.height;
+    if(mw<=0 || mh<=0 || px<0 || px>=mw || py<0 || py>=mh)
+        return false;
+    const CatchChallenger::Direction mv[4]={CatchChallenger::Direction_move_at_left,
+                                            CatchChallenger::Direction_move_at_right,
+                                            CatchChallenger::Direction_move_at_top,
+                                            CatchChallenger::Direction_move_at_bottom};
+    const int dxx[4]={-1,1,0,0};
+    const int dyy[4]={0,0,-1,1};
+    //BFS the tiles the player can WALK to (same per-step check as real movement)
+    std::vector<bool> reach(static_cast<size_t>(mw)*static_cast<size_t>(mh),false);
+    std::vector<std::pair<int,int> > queue;
+    queue.push_back(std::pair<int,int>(px,py));
+    reach[static_cast<size_t>(px)+static_cast<size_t>(py)*static_cast<size_t>(mw)]=true;
+    size_t head=0;
+    while(head<queue.size())
+    {
+        const int qx=queue.at(head).first;
+        const int qy=queue.at(head).second;
+        head++;
+        int k=0;
+        while(k<4)
+        {
+            const int tx=qx+dxx[k];
+            const int ty=qy+dyy[k];
+            if(tx>=0 && tx<mw && ty>=0 && ty<mh)
+            {
+                const size_t idx=static_cast<size_t>(tx)+static_cast<size_t>(ty)*static_cast<size_t>(mw);
+                if(!reach[idx] && canGoTo(mv[k],mapIndex,static_cast<COORD_TYPE>(qx),static_cast<COORD_TYPE>(qy),true))
+                {
+                    reach[idx]=true;
+                    queue.push_back(std::pair<int,int>(tx,ty));
+                }
+            }
+            k++;
+        }
+    }
+    //among the clicked tile's 4 neighbours, the reachable one nearest the player —
+    //but never a teleporter tile (the player would warp away instead of standing
+    //next to the sign to read it)
+    bool found=false;
+    int bestDist=0;
+    int k=0;
+    while(k<4)
+    {
+        const int nx=cx+dxx[k];
+        const int ny=cy+dyy[k];
+        if(nx>=0 && nx<mw && ny>=0 && ny<mh
+           && reach[static_cast<size_t>(nx)+static_cast<size_t>(ny)*static_cast<size_t>(mw)])
+        {
+            bool isTeleporter=false;
+            size_t ti=0;
+            while(ti<lm.teleporters.size())
+            {
+                if(lm.teleporters.at(ti).source_x==nx && lm.teleporters.at(ti).source_y==ny)
+                {
+                    isTeleporter=true;
+                    break;
+                }
+                ti++;
+            }
+            if(!isTeleporter)
+            {
+                const int dist=(nx>px?nx-px:px-nx)+(ny>py?ny-py:py-ny);
+                if(!found || dist<bestDist)
+                {
+                    found=true;
+                    bestDist=dist;
+                    outX=nx;
+                    outY=ny;
+                }
+            }
+        }
+        k++;
+    }
+    return found;
+}
+
 void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE x, COORD_TYPE y)
 {
     const std::pair<uint8_t,uint8_t> pos(getPos());
@@ -1039,15 +1149,224 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHA
         if(keyAccepted.empty() || (keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend() && keyAccepted.size()))
         {
             MapVisualiser::eventOnMap(event,mapIndex,x,y);
-            pathFinding.searchPath(QtDatapackClientLoader::datapackLoader->get_mapList(),mapIndex,x,y,current_map,thisx,thisy,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>());
-            if(pathList.empty())
+            //Remember the clicked tile so that, on arrival,
+            //faceClickInteractTargetIfAdjacent() turns the player toward it and
+            //parseAction() opens it like Enter was pressed.
+            clickInteractTargetValid=true;
+            clickInteractTargetMap=mapIndex;
+            clickInteractTargetX=x;
+            clickInteractTargetY=y;
+            //A Sign/NPC sits on a NON-enterable tile, and the pathfinder cannot
+            //route onto a blocked tile, so clicking the sign itself would find no
+            //path. When the clicked tile is not standable, walk to the foot-
+            //REACHABLE orthogonal neighbour nearest the player instead;
+            //faceClickInteractTargetIfAdjacent() then turns the player to face the
+            //clicked sign on arrival. Using reachability (not just nearest by
+            //distance) is essential: the closest standable side may be across
+            //water/walls, which would send the player to a disconnected tile.
+            COORD_TYPE targetX=x,targetY=y;
+            if(mapIndex==current_map)
             {
-                while(pathList.size()>1)
-                    pathList.pop_back();
-                //pathList.clear();
+                const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(current_map);
+                const int mw=lm.width;
+                const int mh=lm.height;
+                if(!tileStandable(current_map,x,y,mw,mh))
+                {
+                    int nX=0,nY=0;
+                    if(reachableClickNeighbor(current_map,x,y,thisx,thisy,nX,nY))
+                    {
+                        targetX=static_cast<COORD_TYPE>(nX);
+                        targetY=static_cast<COORD_TYPE>(nY);
+                    }
+                }
+            }
+            if(mapIndex==current_map && targetX==thisx && targetY==thisy)
+            {
+                //Already standing next to the clicked sign: no walk needed (the
+                //pathfinder no-ops on a same-tile request). Face the sign and open
+                //it like Enter was pressed.
+                if(keyPressed.empty())
+                {
+                    faceClickInteractTargetIfAdjacent();
+                    parseAction();
+                }
+            }
+            else
+            {
+                pathFinding.searchPath(QtDatapackClientLoader::datapackLoader->get_mapList(),mapIndex,targetX,targetY,current_map,thisx,thisy,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>());
+                if(pathList.empty())
+                {
+                    while(pathList.size()>1)
+                        pathList.pop_back();
+                    //pathList.clear();
+                }
             }
         }
     }
+}
+
+void MapControllerMP::afterMapDisplayed()
+{
+    if(signSelfTestStarted)
+        return;
+    //let the player fully settle on the map before injecting the click
+    if(CliClientOptions::clickSignTest)
+    {
+        signSelfTestStarted=true;
+        QTimer::singleShot(500,this,&MapControllerMP::runClickSignSelfTest);
+    }
+    else if(CliClientOptions::autosoloClick)
+    {
+        signSelfTestStarted=true;
+        QTimer::singleShot(500,this,&MapControllerMP::runAutosoloClick);
+    }
+}
+
+void MapControllerMP::runAutosoloClick()
+{
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+    {
+        std::cerr << "[CLICKTEST] current map not loaded" << std::endl;
+        return;
+    }
+    const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(current_map);
+    const int mw=lm.width;
+    const int mh=lm.height;
+    const std::pair<COORD_TYPE,COORD_TYPE> pos(getPos());
+    const int px=pos.first;
+    const int py=pos.second;
+    int tx=px+CliClientOptions::autosoloClickDx;
+    int ty=py+CliClientOptions::autosoloClickDy;
+    if(tx<0)
+        tx=0;
+    if(tx>=mw)
+        tx=mw-1;
+    if(ty<0)
+        ty=0;
+    if(ty>=mh)
+        ty=mh-1;
+    signTestMap=current_map;
+    signTestX=static_cast<uint8_t>(tx);
+    signTestY=static_cast<uint8_t>(ty);
+    const CatchChallenger::Bot * const bot=QtDatapackClientLoader::datapackLoader->getBot(current_map,signTestX,signTestY);
+    std::cerr << "[CLICKTEST] map " << current_map << ": click offset (" << CliClientOptions::autosoloClickDx << ","
+              << CliClientOptions::autosoloClickDy << ") -> tile (" << tx << "," << ty << ")"
+              << (bot!=nullptr?" (sign/NPC)":"") << " from player (" << px << "," << py << ")" << std::endl;
+    if(!connect(this,&MapVisualiserPlayer::actionOn,this,&MapControllerMP::autosoloClickActionOn,Qt::UniqueConnection))
+        abort();
+    //inject the click exactly as PreparedLayer::mouseReleaseEvent() would
+    eventOnMap(CatchChallenger::MapEvent_SimpleClick,current_map,signTestX,signTestY);
+}
+
+void MapControllerMP::autosoloClickActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    Q_UNUSED(map);
+    const std::pair<COORD_TYPE,COORD_TYPE> pos(getPos());
+    const bool onClicked=(mapIndex==signTestMap && x==signTestX && y==signTestY);
+    std::cerr << "[CLICKTEST] result: player now (" << (int)pos.first << "," << (int)pos.second
+              << "), faced/acted on (" << (int)x << "," << (int)y << ") -> "
+              << (onClicked?"walked up to the clicked tile, ORIENTED toward it and TRIGGERED it (like Enter)"
+                           :"acted on a different tile (the clicked tile was walkable / not a sign)")
+              << std::endl;
+}
+
+void MapControllerMP::runClickSignSelfTest()
+{
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+    {
+        std::cerr << "[SIGNTEST] FAIL current map not loaded" << std::endl;
+        QCoreApplication::exit(3);
+        return;
+    }
+    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
+    const int mw=logicalMap.width;
+    const int mh=logicalMap.height;
+    const std::pair<COORD_TYPE,COORD_TYPE> pos(getPos());
+    const int px=pos.first;
+    const int py=pos.second;
+    if(mw<=0 || mh<=0 || px<0 || px>=mw || py<0 || py>=mh)
+    {
+        std::cerr << "[SIGNTEST] FAIL bad map size / player out of range" << std::endl;
+        QCoreApplication::exit(3);
+        return;
+    }
+    //Find a Sign/NPC-like tile to click: a NON-standable tile whose foot-reachable
+    //non-teleporter stop tile (chosen by the SAME reachableClickNeighbor() the
+    //click handler uses) is FARTHEST from the player, so the click exercises the
+    //longest walk this map allows. NOTE: a cramped autosolo spawn may only reach
+    //signs that are already adjacent (a 0-tile walk); the multi-tile walk is
+    //exercised by real gameplay on roomier maps.
+    bool found=false;
+    int bestDist=0;
+    int bestX=0,bestY=0;
+    int by2=0;
+    while(by2<mh)
+    {
+        int bx2=0;
+        while(bx2<mw)
+        {
+            if(!tileStandable(current_map,bx2,by2,mw,mh))
+            {
+                int nX=0,nY=0;
+                if(reachableClickNeighbor(current_map,bx2,by2,px,py,nX,nY))
+                {
+                    const int dist=(nX>px?nX-px:px-nX)+(nY>py?nY-py:py-nY);
+                    if(!found || dist>bestDist)
+                    {
+                        found=true;
+                        bestDist=dist;
+                        bestX=bx2;
+                        bestY=by2;
+                    }
+                }
+            }
+            bx2++;
+        }
+        by2++;
+    }
+    if(!found)
+    {
+        std::cerr << "[SIGNTEST] FAIL no reachable sign on map " << current_map << std::endl;
+        QCoreApplication::exit(3);
+        return;
+    }
+    signTestMap=current_map;
+    signTestX=static_cast<uint8_t>(bestX);
+    signTestY=static_cast<uint8_t>(bestY);
+    const CatchChallenger::Bot * const bot=QtDatapackClientLoader::datapackLoader->getBot(current_map,signTestX,signTestY);
+    std::cerr << "[SIGNTEST] clicking interactable at (" << bestX << "," << bestY << ")"
+              << (bot!=nullptr?" (sign/NPC)":"") << " from player (" << px << "," << py
+              << "), expected walk distance=" << bestDist << std::endl;
+    //verify the outcome via actionOn (emitted when parseAction() acts on the tile
+    //the player faces) plus a fallback timeout covering the walk
+    if(!connect(this,&MapVisualiserPlayer::actionOn,this,&MapControllerMP::signSelfTestActionOn,Qt::UniqueConnection))
+        abort();
+    signSelfTestTimeoutTimer.start(20000);
+    //inject the click exactly as PreparedLayer::mouseReleaseEvent() would
+    eventOnMap(CatchChallenger::MapEvent_SimpleClick,current_map,signTestX,signTestY);
+}
+
+void MapControllerMP::signSelfTestActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    Q_UNUSED(map);
+    signSelfTestTimeoutTimer.stop();
+    const std::pair<COORD_TYPE,COORD_TYPE> pos(getPos());
+    const bool ok=(mapIndex==signTestMap && x==signTestX && y==signTestY);
+    if(ok)
+        std::cerr << "[SIGNTEST] PASS player walked to (" << (int)pos.first << "," << (int)pos.second
+                  << "), faced and acted on the clicked tile (" << (int)x << "," << (int)y
+                  << ") like Enter was pressed" << std::endl;
+    else
+        std::cerr << "[SIGNTEST] FAIL acted on (" << (int)x << "," << (int)y << ") not the clicked tile ("
+                  << (int)signTestX << "," << (int)signTestY << ")" << std::endl;
+    QCoreApplication::exit(ok?0:3);
+}
+
+void MapControllerMP::signSelfTestTimeout()
+{
+    std::cerr << "[SIGNTEST] FAIL timeout: never reached/opened the sign at ("
+              << (int)signTestX << "," << (int)signTestY << ")" << std::endl;
+    QCoreApplication::exit(3);
 }
 
 bool MapControllerMP::nextPathStep()//true if have step
@@ -1093,5 +1412,7 @@ void MapControllerMP::keyPressParse()
 {
     pathFinding.cancel();
     pathList.clear();
+    //manual keyboard movement cancels any pending click-to-interact target
+    clickInteractTargetValid=false;
     MapVisualiserPlayerWithFight::keyPressParse();
 }

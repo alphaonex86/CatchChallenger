@@ -17,6 +17,21 @@
 #include <QHeaderView>
 #include <iostream>
 #include <QDesktopServices>
+#include <QTextDocument>
+#include <QTextOption>
+#include <QColor>
+
+//Configure a QGraphicsTextItem used as an overlay text body (pure scene
+//rendering — works on Android/OpenGL ES, unlike an embedded QWidget). The wrap
+//mode breaks even inside a long unbreakable token, so once setTextWidth() is
+//given the text can never spill past that width.
+static void configureOverlayText(QGraphicsTextItem *t,const QString &textColor)
+{
+    t->setDefaultTextColor(QColor(textColor));
+    QTextOption opt=t->document()->defaultTextOption();
+    opt.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+    t->document()->setDefaultTextOption(opt);
+}
 
 OverMap::OverMap()
 {
@@ -37,6 +52,7 @@ OverMap::OverMap()
 
     chatBack=new ImagesStrechMiddle(8,":/CC/images/interface/chatBackground.png",this);
     chatText=new QGraphicsTextItem(this);
+    configureOverlayText(chatText,QStringLiteral("#fff"));
     chatInput=new LineEdit(this);
     chatType=new ComboBox(this);
     chatType->setZValue(5);
@@ -89,6 +105,7 @@ OverMap::OverMap()
     IG_dialog_textBack=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
     IG_dialog_name=new QGraphicsTextItem(IG_dialog_textBack);
     IG_dialog_text=new QGraphicsTextItem(IG_dialog_textBack);
+    configureOverlayText(IG_dialog_text,QStringLiteral("#000"));
     IG_dialog_quit=new CustomButton(":/CC/images/interface/closedialog.png",IG_dialog_textBack);
 
     tipBack=new ImagesStrechMiddle(8,":/CC/images/interface/chatBackground.png",this);
@@ -363,6 +380,9 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
         y-=3+chatBack->height();
         chatBack->setPos(space,y);
+        //word-wrap the chat log to the chat box width (one "space" padding) so
+        //server text never spills past the right edge of the box
+        chatText->setTextWidth(chatBack->width()-2*static_cast<int>(space));
         chatText->setPos(space+space,y+space);
     }
     if(labelSlow->isVisible())
@@ -465,42 +485,52 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     }
 
     IG_dialog_textBack->setVisible(!IG_dialog_textString.isEmpty());
-    IG_dialog_name->setVisible(IG_dialog_textBack->isVisible());
+    IG_dialog_name->setVisible(IG_dialog_textBack->isVisible() && !IG_dialog_nameString.isEmpty());
     IG_dialog_text->setVisible(IG_dialog_textBack->isVisible());
     IG_dialog_quit->setVisible(IG_dialog_textBack->isVisible());
     if(IG_dialog_textBack->isVisible())
     {
-        const QRectF &b1=IG_dialog_name->boundingRect();
-        const QRectF &b2=IG_dialog_text->boundingRect();
-        int width=b2.width();
-        int height=b1.height()+10+b2.height();
-        if(w->width()<800 || w->height()<600)
-        {
-            if(width<350)
-                width=350;
-            if(height<200)
-                height=200;
-            IG_dialog_quit->setSize(84/3,93/3);
-        }
-        else
-        {
-            if(width<600)
-                width=600;
-            if(height<400)
-                height=400;
-            IG_dialog_quit->setSize(84/2,93/2);
-        }
-        IG_dialog_textBack->setSize(width,height);
+        const int border=static_cast<int>(IG_dialog_textBack->currentBorderSize());
+        const bool smallScreen=(w->width()<800 || w->height()<600);
+        IG_dialog_quit->setSize(smallScreen?84/3:84/2,smallScreen?93/3:93/2);
 
-        int x=w->width()/2-IG_dialog_textBack->width()/2;
-        int y=w->height()/2-IG_dialog_textBack->height()/2;
+        //Dialog box width, never wider than the window.
+        int boxWidth=smallScreen?350:600;
+        if(boxWidth>w->width()-2*static_cast<int>(space))
+            boxWidth=w->width()-2*static_cast<int>(space);
+        int innerWidth=boxWidth-2*border;
+        if(innerWidth<40)
+            innerWidth=40;
+
+        //Word-wrap the name and the body to the inner width so server text can
+        //never spill past the side of the dialog.
+        IG_dialog_name->setTextWidth(innerWidth);
+        IG_dialog_text->setTextWidth(innerWidth);
+        const int nameHeight=IG_dialog_nameString.isEmpty()?0:
+                    (static_cast<int>(IG_dialog_name->boundingRect().height())+static_cast<int>(space));
+        const int docHeight=static_cast<int>(IG_dialog_text->boundingRect().height());
+
+        //Box grows to fit the wrapped text but is capped to the window (so the box
+        //never goes off-screen), with a per-screen-size minimum so a one-liner
+        //still looks like a dialog.
+        int boxHeight=2*border+nameHeight+docHeight;
+        const int maxBoxHeight=w->height()-2*static_cast<int>(space);
+        const int minBoxHeight=smallScreen?200:400;
+        if(boxHeight<minBoxHeight)
+            boxHeight=minBoxHeight;
+        if(boxHeight>maxBoxHeight)
+            boxHeight=maxBoxHeight;
+        IG_dialog_textBack->setSize(boxWidth,boxHeight);
+
+        const int x=w->width()/2-IG_dialog_textBack->width()/2;
+        const int y=w->height()/2-IG_dialog_textBack->height()/2;
         IG_dialog_textBack->setPos(x,y);
         if(IG_dialog_nameString.isEmpty())
-            IG_dialog_text->setPos(IG_dialog_textBack->currentBorderSize(),IG_dialog_textBack->currentBorderSize());
+            IG_dialog_text->setPos(border,border);
         else
         {
-            IG_dialog_name->setPos(IG_dialog_textBack->currentBorderSize(),IG_dialog_textBack->currentBorderSize());
-            IG_dialog_text->setPos(IG_dialog_textBack->currentBorderSize(),IG_dialog_textBack->currentBorderSize()+space+IG_dialog_name->boundingRect().height());
+            IG_dialog_name->setPos(border,border);
+            IG_dialog_text->setPos(border,border+nameHeight);
         }
         IG_dialog_quit->setPos(IG_dialog_textBack->width()-IG_dialog_quit->width(),0);
     }
@@ -833,6 +863,7 @@ void OverMap::updateChat()
         index++;
     }
     chatText->setHtml(nameHtml);
+    //the chat box is laid out (and anchored to the bottom) in paint()
 }
 
 void OverMap::removeNumberForFlood()

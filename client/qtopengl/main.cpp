@@ -211,6 +211,10 @@ int main(int argc, char *argv[])
                     << "  --closewhenonmapafter=N    On map: toggle direction each 1s, quit after N seconds.\n"
                     << "  --dropsenddataafteronmap   Drop outgoing traffic after the first map is loaded.\n"
                     << "  --autosolo                 Load the first savegame and enter the game.\n"
+                    << "  --autosolo=DX,DY           Like --autosolo, then click the tile at player+(DX,DY)\n"
+                    << "                             (e.g. --autosolo=+1,-5) — walk to it, face & open a sign there.\n"
+                    << "  --test-clicksign           TEST: click the nearest sign, walk+face+open it, then quit.\n"
+                    << "  --test-dialogoverflow      TEST: show a long dialog text, assert no overflow, then quit.\n"
                     << "  --fixed                    Freeze the animated background (no parallax)\n"
                     << "                             so --take-screenshot produces deterministic PNGs.\n"
                     << "  --take-screenshot=PATH     On map: write rendered viewport to PATH and exit\n"
@@ -254,6 +258,23 @@ int main(int argc, char *argv[])
                 CliClientOptions::dropSendDataAfterOnMap=true;
             else if(arg==QStringLiteral("--autosolo"))
                 CliClientOptions::autosolo=true;
+            else if(arg.startsWith(QStringLiteral("--autosolo=")))
+            {
+                CliClientOptions::autosolo=true;
+                const QStringList parts=arg.mid(11).split(QLatin1Char(','));
+                if(parts.size()==2)
+                {
+                    CliClientOptions::autosoloClick=true;
+                    CliClientOptions::autosoloClickDx=parts.at(0).toInt();
+                    CliClientOptions::autosoloClickDy=parts.at(1).toInt();
+                }
+                else
+                    std::cerr << "--autosolo=DX,DY requires two comma-separated integers" << std::endl;
+            }
+            else if(arg==QStringLiteral("--test-clicksign"))
+                CliClientOptions::clickSignTest=true;
+            else if(arg==QStringLiteral("--test-dialogoverflow"))
+                CliClientOptions::dialogOverflowTest=true;
             else if(arg==QStringLiteral("--fixed"))
                 CliClientOptions::fixedBackground=true;
             else if(arg.startsWith(QStringLiteral("--take-screenshot=")))

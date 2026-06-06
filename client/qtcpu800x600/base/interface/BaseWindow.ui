@@ -502,8 +502,14 @@ color: rgb(0, 0, 0);
             <widget class="QFrame" name="IG_dialog">
              <property name="minimumSize">
               <size>
-               <width>100</width>
-               <height>100</height>
+               <width>320</width>
+               <height>140</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>620</width>
+               <height>460</height>
               </size>
              </property>
              <property name="styleSheet">
@@ -601,43 +607,66 @@ border-image: url(:/images/empty.png);
                </layout>
               </item>
               <item>
-               <spacer name="verticalSpacer_9">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QLabel" name="IG_dialog_text">
+               <widget class="QScrollArea" name="IG_dialog_scroll">
                 <property name="styleSheet">
-                 <string notr="true">#IG_dialog_text{color: rgb(0, 0, 0);}</string>
+                 <string notr="true">#IG_dialog_scroll, #IG_dialog_scrollContents { background: transparent; border: none; }</string>
                 </property>
-                <property name="textFormat">
-                 <enum>Qt::TextFormat::RichText</enum>
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
                 </property>
-                <property name="wordWrap">
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <!-- AlwaysOn: reserve the scrollbar track so the word-wrapped
+                      QLabel keeps a constant width and never has its right edge
+                      clipped under the scrollbar when long text makes it appear.
+                      The thumb only fills the track when the text is taller than
+                      the box. -->
+                 <enum>Qt::ScrollBarAlwaysOn</enum>
+                </property>
+                <property name="sizeAdjustPolicy">
+                 <enum>QAbstractScrollArea::AdjustToContents</enum>
+                </property>
+                <property name="widgetResizable">
                  <bool>true</bool>
                 </property>
+                <widget class="QWidget" name="IG_dialog_scrollContents">
+                 <layout class="QVBoxLayout" name="IG_dialog_scrollLayout">
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="IG_dialog_text">
+                    <property name="styleSheet">
+                     <string notr="true">#IG_dialog_text{color: rgb(0, 0, 0); background: transparent;}</string>
+                    </property>
+                    <property name="textFormat">
+                     <enum>Qt::TextFormat::RichText</enum>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="wordWrap">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
                </widget>
-              </item>
-              <item>
-               <spacer name="verticalSpacer_10">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
              </layout>
             </widget>

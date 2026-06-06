@@ -173,16 +173,17 @@ void PathFinding::searchPath(const std::vector<CatchChallenger::CommonMap> &mapL
 
 bool PathFinding::canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const uint8_t &x, const uint8_t &y)
 {
+    // A tile outside the map (or in a zero-size/empty neighbour map reached via
+    // mismatched border offsets) is by definition NOT walkable. Border-crossing
+    // math in canMove() can compute an out-of-range coordinate (e.g. clicking a
+    // far sign whose path skirts a not-fully-loaded neighbour); returning false
+    // makes the A* skirt it instead of aborting the whole process. This used to
+    // abort() unconditionally, which crashed the real client (the assert ships in
+    // non-HARDENED builds too), not just the self-test.
     if(x>=simplifiedMapForPathFinding.width)
-    {
-        std::cerr << "can go out of border x" << std::endl;
-        abort();
-    }
+        return false;
     if(y>=simplifiedMapForPathFinding.height)
-    {
-        std::cerr << "can go out of border y" << std::endl;
-        abort();
-    }
+        return false;
     const uint8_t &var=simplifiedMapForPathFinding.simplifiedMap[x+y*(simplifiedMapForPathFinding.width)];
     return var==255 || var<200;
 }

@@ -35,6 +35,14 @@ int main(int argc, char *argv[])
         // for deterministic facing.
         CliClientOptions::takeScreenshotPath=AutoArgs::takeScreenshotPath;
     }
+    // Mirror the TEST-ONLY flags into the shared CliClientOptions: the click-to-
+    // sign self-test lives in the shared map controller and the dialog-overflow
+    // self-test reads CliClientOptions, so both clients route through it.
+    CliClientOptions::clickSignTest=AutoArgs::clickSignTest;
+    CliClientOptions::dialogOverflowTest=AutoArgs::dialogOverflowTest;
+    CliClientOptions::autosoloClick=AutoArgs::autosoloClick;
+    CliClientOptions::autosoloClickDx=AutoArgs::autosoloClickDx;
+    CliClientOptions::autosoloClickDy=AutoArgs::autosoloClickDy;
     QApplication a(argc, argv);
     a.setApplicationName("client-qtcpu800x600");
     a.setOrganizationName("CatchChallenger");

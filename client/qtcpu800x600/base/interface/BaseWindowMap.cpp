@@ -8,6 +8,8 @@
 #include <QTimer>
 #include <QCoreApplication>
 #include <QKeyEvent>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <iostream>
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QMediaDevices>
@@ -247,6 +249,13 @@ void BaseWindow::currentMapLoaded()
         std::cerr << "AutoArgs: --closewhenonmap, exiting in 1s" << std::endl;
         QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
     }
+    //--test-dialogoverflow: push a long text into the dialog and self-check it
+    //never overflows (the --test-clicksign hook lives in the shared map controller)
+    if(AutoArgs::dialogOverflowTest)
+    {
+        std::cerr << "AutoArgs: --test-dialogoverflow, checking dialog wordwrap/scroll" << std::endl;
+        runDialogOverflowSelfTest();
+    }
     if(AutoArgs::closeWhenOnMapAfter>0 && !closeWhenOnMapAfterTimer_.isActive())
     {
         std::cerr << "AutoArgs: --closewhenonmapafter=" << AutoArgs::closeWhenOnMapAfter
@@ -412,6 +421,46 @@ void BaseWindow::currentMapLoaded()
                 mapController->setColor(Qt::transparent);
         }
     }
+}
+
+void BaseWindow::runDialogOverflowSelfTest()
+{
+    //a deliberately oversized, server-style message: long unbreakable tokens
+    //(to exercise wrap-anywhere) plus many lines (to force the vertical scrollbar)
+    QString longText;
+    int line=0;
+    while(line<80)
+    {
+        longText+=QStringLiteral("Line %1: the quick brown fox jumps over the lazy dog, "
+                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnop "
+                                 "verylongunbreakabletokenwithoutanyspaces_%1_end.<br/>").arg(line);
+        line++;
+    }
+    ui->IG_dialog_text->setText(longText);
+    ui->IG_dialog->setVisible(true);
+    //let the layout settle (word-wrap + scroll-area resize), then measure
+    QTimer::singleShot(1500,this,&BaseWindow::dialogOverflowSelfTestCheck);
+}
+
+void BaseWindow::dialogOverflowSelfTestCheck()
+{
+    QScrollArea * const scroll=ui->IG_dialog_scroll;
+    const int viewportW=scroll->viewport()->width();
+    const int viewportH=scroll->viewport()->height();
+    const int contentW=ui->IG_dialog_text->width();
+    const int contentH=ui->IG_dialog_text->height();
+    const bool vbar=(scroll->verticalScrollBar()->maximum()>0) || scroll->verticalScrollBar()->isVisible();
+    const bool fitsWidth=(contentW<=viewportW+1);
+    const bool fitsHeightOrScroll=(contentH<=viewportH+1) || vbar;
+    const bool dialogVisible=ui->IG_dialog->isVisible();
+    const bool ok=dialogVisible && fitsWidth && fitsHeightOrScroll;
+    std::cerr << "[OVERFLOWTEST] qtcpu800x600 viewport=" << viewportW << "x" << viewportH
+              << " content=" << contentW << "x" << contentH
+              << " vScrollbar=" << (vbar?"yes":"no")
+              << " fitsWidth=" << (fitsWidth?"yes":"no")
+              << " fitsHeightOrScroll=" << (fitsHeightOrScroll?"yes":"no")
+              << " -> " << (ok?"PASS":"FAIL") << std::endl;
+    QCoreApplication::exit(ok?0:3);
 }
 
 void BaseWindow::closeWhenOnMapAfterToggle()

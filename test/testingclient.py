@@ -971,6 +971,9 @@ def main():
     # ═══════════════════════════════════════════════════════════════
     # 2 + 3. DATAPACK SETUP + SOLO (iterate each datapack + maincode)
     # ═══════════════════════════════════════════════════════════════
+    # The click-on-sign + dialog word-wrap/scroll interaction tests are
+    # map-/datapack-agnostic, so run them only once (on the first staged combo).
+    interaction_done = False
     for dp_path in DATAPACKS:
         dp_name = os.path.basename(dp_path)
         maincodes = detect_maincodes(dp_path)
@@ -1020,6 +1023,44 @@ def main():
                                f"qtopengl solo come back ({dp_name} {mc})",
                                timeout=CLIENT_SOLO_TIMEOUT,
                            success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+
+            # ── Interaction tests (run once, on the first staged combo) ──
+            # (a) click on a sign → the player walks up to it, turns to FACE it
+            #     and opens it like Enter was pressed (map-render behaviour).
+            # (b) a long server text in the Sign/NPC dialog never spills out of
+            #     the widget: it word-wraps within the width and gets a vertical
+            #     scrollbar when taller than the (window-bounded) dialog.
+            # Both self-check inside the client and emit a PASS/FAIL marker; they
+            # need no pre-made savegame (--autosolo creates one and enters the map).
+            if not interaction_done and (dp_cpu or dp_gl):
+                interaction_done = True
+                print(f"\n{C_CYAN}--- Client interaction: click-on-sign + dialog wordwrap/scroll ---{C_RESET}\n")
+                if cpu_ok and dp_cpu:
+                    if should_run("qtcpu800x600 click-on-sign walk+face+open", failed_cases):
+                        run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                                   ["--autosolo", "--test-clicksign"],
+                                   "qtcpu800x600 click-on-sign walk+face+open",
+                                   timeout=CLIENT_SOLO_TIMEOUT,
+                                   success_marker="[SIGNTEST] PASS")
+                    if should_run("qtcpu800x600 dialog text wordwrap+scroll no-overflow", failed_cases):
+                        run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                                   ["--autosolo", "--test-dialogoverflow"],
+                                   "qtcpu800x600 dialog text wordwrap+scroll no-overflow",
+                                   timeout=CLIENT_SOLO_TIMEOUT,
+                                   success_marker="-> PASS")
+                if gl_ok and dp_gl:
+                    if should_run("qtopengl click-on-sign walk+face+open", failed_cases):
+                        run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                                   ["--autosolo", "--test-clicksign"],
+                                   "qtopengl click-on-sign walk+face+open",
+                                   timeout=CLIENT_SOLO_TIMEOUT,
+                                   success_marker="[SIGNTEST] PASS")
+                    if should_run("qtopengl dialog text wordwrap+scroll no-overflow", failed_cases):
+                        run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                                   ["--autosolo", "--test-dialogoverflow"],
+                                   "qtopengl dialog text wordwrap+scroll no-overflow",
+                                   timeout=CLIENT_SOLO_TIMEOUT,
+                                   success_marker="-> PASS")
 
     # ═══════════════════════════════════════════════════════════════
     # 4. MULTIPLAYER ON SERVER

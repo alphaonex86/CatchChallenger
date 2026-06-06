@@ -67,6 +67,27 @@ public:
     // testingmap4client.py to force the "test" maincode fixture.
     static QString mainDatapackCodeOverride;
 
+    // TEST-ONLY: --autosolo=DX,DY — once on the map, simulate a click on the tile
+    // at the player's position + (DX,DY). Lets you build a predefined scenario:
+    // pick an offset landing on a Sign/NPC to watch the player walk up to it, turn
+    // to FACE it and open it. Emits "[CLICKTEST] ..." markers; does NOT quit
+    // (combine with --closewhenonmapafter=N to auto-exit).
+    static bool autosoloClick;
+    static int autosoloClickDx,autosoloClickDy;
+
+    // TEST-ONLY: once on the map, find the nearest Sign/NPC, simulate a click
+    // on it and verify the player walks up to it, turns to FACE it and opens it
+    // like Enter was pressed. Emits "[SIGNTEST] ..." markers (PASS/FAIL) and
+    // quits. Drives the click-to-sign behaviour test for both clients.
+    static bool clickSignTest;
+
+    // TEST-ONLY: once on the map, push a very long, server-style text into the
+    // Sign/NPC dialog and verify it never spills out of the widget — it must
+    // word-wrap within the width, stay inside the (window-bounded) dialog and
+    // show a vertical scrollbar when taller than the dialog. Emits
+    // "[OVERFLOWTEST] ..." markers (PASS/FAIL) and quits.
+    static bool dialogOverflowTest;
+
     // Freeze the animated CCBackground (clouds drifting, grass swaying,
     // tree-front / tree-back parallax cycles). The background is still
     // drawn but every per-frame timer is stopped, so repeated runs of
