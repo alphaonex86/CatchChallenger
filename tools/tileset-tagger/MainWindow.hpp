@@ -55,7 +55,6 @@ private:
     TilesetView *view_;
     MapUsageIndex *usage_;
     MapUsageView *usageView_;
-    QScrollArea *usageScroll_;
     QPushButton *openBtn_;
     QComboBox *categoryBox_;
     QComboBox *mapCombo_;

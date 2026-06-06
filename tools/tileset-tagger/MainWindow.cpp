@@ -46,7 +46,6 @@ MainWindow::MainWindow() :
     view_(new TilesetView()),
     usage_(new MapUsageIndex()),
     usageView_(new MapUsageView()),
-    usageScroll_(nullptr),
     openBtn_(nullptr),
     categoryBox_(nullptr),
     mapCombo_(nullptr),
@@ -150,11 +149,9 @@ MainWindow::MainWindow() :
     uTop->addWidget(mapCombo_);
     uTop->addStretch(1);
     uLay->addLayout(uTop);
-    usageScroll_=new QScrollArea(usagePanel);
-    usageScroll_->setWidget(usageView_);
-    usageScroll_->setAlignment(Qt::AlignCenter);     // centre the map when smaller than the panel
-    usageScroll_->setBackgroundRole(QPalette::Dark);
-    uLay->addWidget(usageScroll_,1);
+    // The view fits the WHOLE map into itself (smooth-scaled overview, like Tiled's
+    // full-map panel), so it goes straight in the dock — no scroll area / cropping.
+    uLay->addWidget(usageView_,1);
     usageDock->setWidget(usagePanel);
     addDockWidget(Qt::BottomDockWidgetArea,usageDock);
 
@@ -278,10 +275,14 @@ void MainWindow::openNextIncomplete()
 void MainWindow::fitViewToWindow()
 {
     QScrollArea *scroll=qobject_cast<QScrollArea*>(centralWidget());
-    if(scroll==nullptr || model_->image().isNull() || model_->image().width()<=0)
+    if(scroll==nullptr || model_->image().isNull() || model_->image().width()<=0 || model_->image().height()<=0)
         return;
-    int z=scroll->viewport()->width()/model_->image().width();   // fill the width
-    if(z<2) z=2;
+    // fit the WHOLE sheet in the viewport (both dimensions) so every tile is visible,
+    // biggest integer zoom that fits.
+    const int zw=scroll->viewport()->width()/model_->image().width();
+    const int zh=scroll->viewport()->height()/model_->image().height();
+    int z = zw<zh ? zw : zh;
+    if(z<1) z=1;
     view_->setZoom(z);
 }
 
@@ -602,12 +603,7 @@ void MainWindow::onMapPicked(int index)
         return;
     const MapUsageIndex::Usage &u=currentUsages_.at(index);
     const QImage img=usage_->render(u.mapPath);
-    usageView_->setUsage(img,u.cells,u.tileW,u.tileH);
-    if(usageScroll_!=nullptr)
-    {
-        const QPoint c=usageView_->firstHighlightCenter();   // centre on the used cell
-        usageScroll_->ensureVisible(c.x(),c.y(),usageScroll_->viewport()->width()/2,usageScroll_->viewport()->height()/2);
-    }
+    usageView_->setUsage(img,u.cells,u.tileW,u.tileH);   // fits the whole map; marching ants mark the cells
     statusBar()->showMessage(tr("'%1' uses the group in %2 cell(s)").arg(u.mapLabel).arg((int)u.cells.size()),4000);
 }
 
