@@ -35,10 +35,11 @@ static QStringList tagCategories()
       << "water" << "water-edge" << "waterfall" << "lava"
       << "ledge-down" << "ledge-up" << "ledge-left" << "ledge-right" << "ledge-blocking"
       << "cliff" << "rock" << "tree-trunk" << "tree-canopy" << "bush" << "flower"
-      << "building" << "building-wall" << "building-roof" << "door" << "cave-exit" << "window" << "stairs" << "sign" << "fence"
+      << "building" << "building-wall" << "building-roof" << "door"
+      << "cave-exit" << "cave-entry" << "cave-hole" << "window" << "frame" << "stairs" << "sign" << "fence"
       << "floor" << "interior-floor" << "interior-wall" << "carpet" << "rug" << "counter"
-      << "table" << "chair" << "sofa" << "bed" << "shelf" << "bookshelf" << "fridge"
-      << "computer" << "tv" << "plant-pot" << "decoration";
+      << "furniture" << "table" << "chair" << "sofa" << "bed" << "shelf" << "bookshelf" << "fridge"
+      << "computer" << "tv" << "plant-pot" << "decoration" << "outdoor-decoration";
     c.sort();   // alphabetical, easy to find
     return c;
 }
@@ -84,7 +85,12 @@ static QString categoryDescription(const QString &c)
     if(c=="building-wall") return QObject::tr("WALL/face of a building (blocked) — the solid body. MULTI-TILE. Not furniture/decoration.");
     if(c=="building-roof") return QObject::tr("ROOF of a building, often drawn above the player. MULTI-TILE.");
     if(c=="door")     return QObject::tr("A door (becomes an entrance/teleport). Usually 1 tile (sometimes 1×2).");
-    if(c=="cave-exit") return QObject::tr("A cave entrance/exit — the opening in a cliff that warps in/out (becomes a teleport). 1+ tiles.");
+    if(c=="cave-exit") return QObject::tr("A cave EXIT — the opening (inside) that warps back out (teleport). 1+ tiles.");
+    if(c=="cave-entry") return QObject::tr("A cave ENTRANCE — the opening in a cliff you enter from outside (teleport). 1+ tiles.");
+    if(c=="cave-hole") return QObject::tr("A HOLE in the cave floor — drops/warps to a lower level. 1+ tiles.");
+    if(c=="frame")    return QObject::tr("A picture/wall frame or border decoration (blocked). 1+ tiles.");
+    if(c=="furniture") return QObject::tr("Generic FURNITURE (blocked, decorative) — use when it is not a specific table/chair/sofa/bed/shelf. 1+ tiles.");
+    if(c=="outdoor-decoration") return QObject::tr("Decorative OUTDOOR object — statue, fountain, pole, lamp… (usually blocked). 1+ tiles. (decoration = generic/indoor.)");
     if(c=="floor")    return QObject::tr("Plain FLOOR (walkable) — indoor or a platform. Fill an area. (interior-floor = a specific room's floor; ground = outdoor.)");
     if(c=="rug")      return QObject::tr("A rug/mat on the floor (walkable decoration). 1+ tiles. (carpet = a larger fitted floor covering.)");
     if(c=="window")   return QObject::tr("A building window (decorative, blocked). Usually 1 tile.");
