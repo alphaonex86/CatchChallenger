@@ -12,17 +12,21 @@
 
 #include "TagModel.hpp"
 #include "MainWindow.hpp"
+#include "MapDecoder.hpp"
 #include "MapUsageIndex.hpp"
 
 #include <QApplication>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QPainter>
 #include <QString>
 #include <QStringList>
 #include <iostream>
 #include <map>
 #include <string>
+#include <algorithm>
 #include <vector>
 
 static void printUntagged(const TagModel &model)
@@ -232,6 +236,64 @@ static int runClassify(const QStringList &args)
     return 0;
 }
 
+static int decodeOne(const QString &mapPath,const QString &outPng)
+{
+    MapDecoder dec;
+    MapDecoder::Result r;
+    QString err;
+    if(!dec.decode(mapPath,r,err)) { std::cerr << "decode FAIL " << mapPath.toStdString() << ": " << err.toStdString() << std::endl; return 1; }
+    // side-by-side: real | category
+    const int gap=8;
+    QImage combined(r.realRender.width()+gap+r.categoryRender.width(),
+                    r.realRender.height(),QImage::Format_ARGB32);
+    combined.fill(QColor(0,0,0));
+    {
+        QPainter p(&combined);
+        p.drawImage(0,0,r.realRender);
+        p.drawImage(r.realRender.width()+gap,0,r.categoryRender);
+    }
+    if(!combined.save(outPng)) { std::cerr << "cannot write " << outPng.toStdString() << std::endl; return 1; }
+    const int cov = r.totalDrawn>0 ? r.tagged*100/r.totalDrawn : 0;
+    std::cout << QFileInfo(mapPath).fileName().toStdString() << ": " << r.w << "x" << r.h
+              << "  coverage " << cov << "% (" << r.tagged << " tagged / " << r.untagged << " untagged of "
+              << r.totalDrawn << " drawn)  -> " << outPng.toStdString() << std::endl;
+    // top categories by cell count, to cross-check the render
+    std::map<std::string,int> hist;
+    size_t gi=0;
+    while(gi<r.categoryGrid.size()) { if(!r.categoryGrid.at(gi).empty()) hist[r.categoryGrid.at(gi)]++; gi++; }
+    std::vector<std::pair<int,std::string> > top;
+    std::map<std::string,int>::const_iterator hit=hist.begin();
+    while(hit!=hist.cend()) { top.push_back(std::make_pair(hit->second,hit->first)); ++hit; }
+    std::sort(top.rbegin(),top.rend());
+    std::cout << "   ";
+    size_t k=0;
+    while(k<top.size() && k<8) { std::cout << top.at(k).second << "=" << top.at(k).first << "  "; k++; }
+    std::cout << std::endl;
+    return 0;
+}
+
+static int runDecode(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "decode needs: <map.tmx | map-dir> <out.png | out-dir>" << std::endl; return 1; }
+    const QFileInfo fi(args.at(0));
+    if(fi.isDir())
+    {
+        QDir().mkpath(args.at(1));
+        QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+        int rc=0,n=0;
+        while(it.hasNext())
+        {
+            const QString tmx=it.next();
+            const QString png=args.at(1)+"/"+QFileInfo(tmx).completeBaseName()+".png";
+            if(decodeOne(tmx,png)!=0) rc=1;
+            n++;
+        }
+        std::cout << "decoded " << n << " map(s) -> " << args.at(1).toStdString() << std::endl;
+        return rc;
+    }
+    return decodeOne(args.at(0),args.at(1));
+}
+
 static int runSuggest(const QStringList &args)
 {
     if(args.isEmpty()) { std::cerr << "suggest needs: <x.tsx | tileset-dir>" << std::endl; return 1; }
@@ -256,7 +318,8 @@ int main(int argc, char *argv[])
     while(i<argc) { args.append(QString::fromUtf8(argv[i])); i++; }
     const bool cli = !args.isEmpty()
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
-            || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify");
+            || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
+            || args.at(0)=="--decode");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -274,6 +337,8 @@ int main(int argc, char *argv[])
         return runSuggest(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
         return runClassify(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--decode")
+        return runDecode(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;
