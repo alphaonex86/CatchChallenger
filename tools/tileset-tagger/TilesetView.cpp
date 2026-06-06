@@ -10,7 +10,7 @@
 TilesetView::TilesetView(QWidget *parent) :
     QWidget(parent),
     model_(nullptr),
-    zoom_(3),
+    zoom_(3.0),
     showStates_(true),
     selecting_(false),
     hasSelection_(false),
@@ -25,6 +25,7 @@ void TilesetView::setModel(TagModel *model)
 {
     model_=model;
     hasSelection_=false;
+    resize(sizeHint());   // a non-resizable scroll child must be resized explicitly
     updateGeometry();
     update();
 }
@@ -47,39 +48,40 @@ QRect TilesetView::cellPixelRect(int col,int row) const
 {
     if(model_==nullptr)
         return QRect();
-    const int tw=model_->tileWidth()*zoom_;
-    const int th=model_->tileHeight()*zoom_;
-    return QRect(col*tw,row*th,tw,th);
+    const double tw=model_->tileWidth()*zoom_;
+    const double th=model_->tileHeight()*zoom_;
+    return QRect(qRound(col*tw),qRound(row*th),qRound(tw),qRound(th));
 }
 
 void TilesetView::setShowStates(bool on) { showStates_=on; update(); }
 
-void TilesetView::setZoom(int z)
+void TilesetView::setZoom(double z)
 {
-    if(z<1)
-        z=1;
-    if(z>24)
-        z=24;
+    if(z<0.1)
+        z=0.1;
+    if(z>24.0)
+        z=24.0;
     zoom_=z;
+    resize(sizeHint());   // grow/shrink the widget so the scroll area shows the new zoom
     updateGeometry();
     update();
 }
 
-int TilesetView::zoom() const { return zoom_; }
+double TilesetView::zoom() const { return zoom_; }
 
 QSize TilesetView::sizeHint() const
 {
     if(model_==nullptr || model_->image().isNull())
         return QSize(320,320);
-    return model_->image().size()*zoom_;
+    return QSize(qRound(model_->image().width()*zoom_),qRound(model_->image().height()*zoom_));
 }
 
 void TilesetView::cellAt(const QPoint &pt,int &col,int &row) const
 {
-    const int tw=model_->tileWidth()*zoom_;
-    const int th=model_->tileHeight()*zoom_;
-    col = tw>0 ? pt.x()/tw : 0;
-    row = th>0 ? pt.y()/th : 0;
+    const double tw=model_->tileWidth()*zoom_;
+    const double th=model_->tileHeight()*zoom_;
+    col = tw>0.0 ? (int)(pt.x()/tw) : 0;
+    row = th>0.0 ? (int)(pt.y()/th) : 0;
     if(col<0)
         col=0;
     if(row<0)
@@ -114,12 +116,12 @@ void TilesetView::paintEvent(QPaintEvent *)
         return;
     }
     const QImage &img=model_->image();
-    const int iw=img.width()*zoom_;
-    const int ih=img.height()*zoom_;
+    const int iw=qRound(img.width()*zoom_);
+    const int ih=qRound(img.height()*zoom_);
 
     // transparency checkerboard (light/dark grey), squares = HALF the zoomed tile,
     // so the transparent parts of each tile read clearly against it.
-    int sq=(model_->tileWidth()*zoom_)/2;
+    int sq=qRound(model_->tileWidth()*zoom_/2.0);
     if(sq<4)
         sq=4;
     int cy=0;
@@ -137,8 +139,8 @@ void TilesetView::paintEvent(QPaintEvent *)
     }
     p.drawImage(QRect(0,0,iw,ih),img);   // transparent pixels show the checkerboard
 
-    const int tw=model_->tileWidth()*zoom_;
-    const int th=model_->tileHeight()*zoom_;
+    const double tw=model_->tileWidth()*zoom_;
+    const double th=model_->tileHeight()*zoom_;
     const int cols=model_->columns();
     const int n=model_->tileCount();
 
@@ -150,7 +152,7 @@ void TilesetView::paintEvent(QPaintEvent *)
         {
             const int c=id%cols;
             const int r=id/cols;
-            const QRect cell(c*tw,r*th,tw,th);
+            const QRect cell(qRound(c*tw),qRound(r*th),qRound(tw),qRound(th));
             const TagModel::TileTag &tag=model_->tagOf(id);
             if(!tag.category.empty())
             {
@@ -167,12 +169,15 @@ void TilesetView::paintEvent(QPaintEvent *)
         }
     }
 
-    // grid
-    p.setPen(QColor(0,0,0,70));
-    int gx=0;
-    while(gx<=img.width()) { p.drawLine(gx*zoom_,0,gx*zoom_,ih); gx+=model_->tileWidth(); }
-    int gy=0;
-    while(gy<=img.height()) { p.drawLine(0,gy*zoom_,iw,gy*zoom_); gy+=model_->tileHeight(); }
+    // grid (only when tiles are big enough that lines help, not on a shrunk sheet)
+    if(tw>=6.0)
+    {
+        p.setPen(QColor(0,0,0,70));
+        int gx=0;
+        while(gx<=img.width()) { p.drawLine(qRound(gx*zoom_),0,qRound(gx*zoom_),ih); gx+=model_->tileWidth(); }
+        int gy=0;
+        while(gy<=img.height()) { p.drawLine(0,qRound(gy*zoom_),iw,qRound(gy*zoom_)); gy+=model_->tileHeight(); }
+    }
 
     // selection rectangle
     if(hasSelection_)
@@ -181,7 +186,7 @@ void TilesetView::paintEvent(QPaintEvent *)
         const int c1 = selCol0_<selCol1_ ? selCol1_ : selCol0_;
         const int r0 = selRow0_<selRow1_ ? selRow0_ : selRow1_;
         const int r1 = selRow0_<selRow1_ ? selRow1_ : selRow0_;
-        const QRect sel(c0*tw,r0*th,(c1-c0+1)*tw,(r1-r0+1)*th);
+        const QRect sel(qRound(c0*tw),qRound(r0*th),qRound((c1-c0+1)*tw),qRound((r1-r0+1)*th));
         p.setPen(QPen(QColor(90,170,255),2));
         p.setBrush(QColor(90,170,255,45));
         p.drawRect(sel);
@@ -190,10 +195,11 @@ void TilesetView::paintEvent(QPaintEvent *)
 
 void TilesetView::wheelEvent(QWheelEvent *event)
 {
-    // Ctrl+wheel zooms; plain wheel scrolls (let the scroll area handle it)
+    // Ctrl+wheel zooms (multiplicative so it feels even at any scale); plain wheel
+    // scrolls (let the scroll area handle it)
     if(event->modifiers() & Qt::ControlModifier)
     {
-        setZoom(zoom_ + (event->angleDelta().y()>0 ? 1 : -1));
+        setZoom(zoom_ * (event->angleDelta().y()>0 ? 1.15 : 1.0/1.15));
         event->accept();
     }
     else

@@ -34,6 +34,9 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    // refit when the SCROLL VIEWPORT actually resizes (maximise lays the central
+    // area out AFTER MainWindow::resizeEvent, so reading the viewport there is stale)
+    bool eventFilter(QObject *watched,QEvent *event) override;
 
 private slots:
     void onOpen();
@@ -52,6 +55,7 @@ private slots:
 
 private:
     TagModel *model_;
+    QScrollArea *scroll_;       // central viewport host (watched for resizes)
     TilesetView *view_;
     MapUsageIndex *usage_;
     MapUsageView *usageView_;
