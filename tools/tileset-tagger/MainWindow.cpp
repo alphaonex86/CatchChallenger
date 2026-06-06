@@ -108,6 +108,7 @@ MainWindow::MainWindow() :
     mapCombo_(nullptr),
     animated_(nullptr),
     randomized_(nullptr),
+    composed_(nullptr),
     hRepeat_(nullptr),
     hMidRepeat_(nullptr),
     vRepeat_(nullptr),
@@ -183,6 +184,9 @@ MainWindow::MainWindow() :
     // a manual choice; shown read-only for reference.
     animated_=new QCheckBox(tr("animated (from tileset)"),panel);
     animated_->setEnabled(false);
+    animated_->setToolTip(tr("Read-only: auto-detected from the tileset's animation property "
+                             "(the frames are consecutive tiles).  Shown only for a multi-tile "
+                             "(frames) selection — you don't set this by hand."));
     lay->addWidget(animated_);
 
     // randomized variant GROUP: interchangeable look-alike tiles (e.g. grass variants).
@@ -192,6 +196,15 @@ MainWindow::MainWindow() :
     randomized_->setToolTip(tr("A group of interchangeable look-alike tiles.  Maps store the FIRST tile only "
                                "(better compression); the engine randomly draws one of the variants."));
     lay->addWidget(randomized_);
+
+    // composed: several UNIQUE tiles that together form ONE bigger figure (building,
+    // fountain…) — keep their fixed relative arrangement + borders.  When OFF, the
+    // tiles are placed by the normal tiling rules (terrain edges / variants / singly).
+    composed_=new QCheckBox(tr("composed (unique tiles forming one figure)"),panel);
+    composed_->setToolTip(tr("Several UNIQUE tiles that compose one bigger figure (e.g. a building).  "
+                             "The generator keeps their exact relative arrangement and borders, "
+                             "instead of arranging them by tiling rules."));
+    lay->addWidget(composed_);
 
     detectedLabel_=new QLabel(panel);
     detectedLabel_->setWordWrap(true);
@@ -203,9 +216,17 @@ MainWindow::MainWindow() :
     lay->addWidget(line);
     lay->addWidget(new QLabel(tr("Repeat behaviour (visual):"),panel));
     hRepeat_=new QCheckBox(tr("horizontalRepeat"),panel);
+    hRepeat_->setToolTip(tr("The tile/group tiles seamlessly side-by-side to fill a WIDER area "
+                            "(every column may repeat)."));
     hMidRepeat_=new QCheckBox(tr("horizontalMiddleRepeat"),panel);
+    hMidRepeat_->setToolTip(tr("Only the MIDDLE columns repeat to stretch horizontally; the left & "
+                               "right border columns stay fixed (e.g. a fence/wall with fixed ends)."));
     vRepeat_=new QCheckBox(tr("verticalRepeat"),panel);
+    vRepeat_->setToolTip(tr("The tile/group tiles seamlessly stacked to fill a TALLER area "
+                            "(every row may repeat)."));
     vMidRepeat_=new QCheckBox(tr("verticalMiddleRepeat"),panel);
+    vMidRepeat_->setToolTip(tr("Only the MIDDLE rows repeat to stretch vertically; the top & bottom "
+                               "border rows stay fixed (e.g. a wall with a fixed roof and base)."));
     lay->addWidget(hRepeat_);
     lay->addWidget(hMidRepeat_);
     lay->addWidget(vRepeat_);
@@ -228,11 +249,18 @@ MainWindow::MainWindow() :
 
     // REVIEW: animated group outlines + confirm-all-and-advance (auto-on when 100% tagged)
     reviewCheck_=new QCheckBox(tr("review groups (animated outlines)"),panel);
+    reviewCheck_->setToolTip(tr("Tint each tile by its category and ring every tag GROUP with an "
+                                "animated outline, so you can review the tagged data as groups.  "
+                                "Turns on automatically once every tile is tagged."));
     lay->addWidget(reviewCheck_);
     QPushButton *confirmBtn=new QPushButton(tr("✓ Confirm tileset → save & next tileset"),panel);
+    confirmBtn->setToolTip(tr("Accept every tag (yellow → green), save, and open the next tileset "
+                              "in the folder.  Refused while any tile is still untagged."));
     lay->addWidget(confirmBtn);
 
     QCheckBox *showUntagged=new QCheckBox(tr("show state colours (✗ red · ⚠ yellow · ✓ green)"),panel);
+    showUntagged->setToolTip(tr("Tint tiles by review state: red = untagged, yellow = auto-guess "
+                                "to review, green = verified.  Off = see the bare tileset."));
     showUntagged->setChecked(true);
     lay->addWidget(showUntagged);
     guardLabel_=new QLabel(panel);
@@ -481,6 +509,8 @@ int MainWindow::applySelection()
         attrs["randomized"]="true";
         attrs["randomFirst"]=std::to_string(ids.front());
     }
+    if(composed_->isChecked() && multi)
+        attrs["composed"]="true";   // keep the group's fixed arrangement (one figure)
     if(hRepeat_->isChecked())
         attrs["horizontalRepeat"]="true";
     if(hMidRepeat_->isChecked())
@@ -554,8 +584,12 @@ void MainWindow::onSelection(int tileCount)
     while(ai<selIds.size() && !anim) { if(model_->tileAnimated(selIds.at(ai))) anim=true; ai++; }
     animated_->setChecked(anim && multi);
     randomized_->setEnabled(multi);
+    composed_->setEnabled(multi);
     if(!multi)
+    {
         randomized_->setChecked(false);
+        composed_->setChecked(false);
+    }
     if(selC0_<0)
         selLabel_->setText(tr("no selection — drag tiles (Ctrl/Shift+drag adds, Ctrl+click toggles)"));
     else
@@ -646,6 +680,7 @@ void MainWindow::onSelectionFinished(int)
                 categoryBox_->setCurrentIndex(ci);
             // animated stays DERIVED from the tileset (set in onSelection), not from the tag
             randomized_->setChecked(existing.attr("randomized")=="true");
+            composed_->setChecked(existing.attr("composed")=="true");
             hRepeat_->setChecked(existing.attr("horizontalRepeat")=="true");
             hMidRepeat_->setChecked(existing.attr("horizontalMiddleRepeat")=="true");
             vRepeat_->setChecked(existing.attr("verticalRepeat")=="true");

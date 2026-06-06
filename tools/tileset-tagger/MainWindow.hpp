@@ -71,6 +71,7 @@ private:
     QComboBox *mapCombo_;
     QCheckBox *animated_;
     QCheckBox *randomized_;         // variant group: maps store the 1st tile, engine randomizes
+    QCheckBox *composed_;           // unique tiles forming ONE fixed figure (keep arrangement)
     QCheckBox *hRepeat_;
     QCheckBox *hMidRepeat_;
     QCheckBox *vRepeat_;
