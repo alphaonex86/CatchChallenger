@@ -2,7 +2,7 @@
 
 A small Qt6 GUI to tag a Tiled `.tsx` tileset with **semantic categories** so the
 learn-from-examples map generator can read the same meaning from any tileset
-(the hand-made Pokémon-style tilesets *and* the official set). Tags are work data,
+(the hand-made model tilesets *and* the official set). Tags are work data,
 so they are stored **out of the datapack** in an XDG sidecar — the datapack stays
 the read-only source of truth (so you can tag `CatchChallenger-datapack/` too).
 Tag files live at

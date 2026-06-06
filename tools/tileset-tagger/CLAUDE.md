@@ -5,7 +5,7 @@ tag the MODEL datapack and the PARTIAL datapack tilesets with ONE visual
 vocabulary, learn the model maps' rules in terms of those tags, then compose
 equivalent maps on the partial tileset. Design: `../map-procedural-generation/learn-from-tags.md`.
 * MODEL map datapack = `datapack-pkmn/map/main/gen2/` (100+ .tmx over 14 tilesets `tileset/normal1..15.tsx`+`animations.tsx`, johto+kanto). PARTIAL (target) datapack = official `CatchChallenger-datapack/`: target tileset (read-only input) = `map/tileset/` (12 .tsx); generated maps OUTPUT = `map/main/generated/` (only writable path there, owner-authorized; ref tilesets by relative path).
-* COPYRIGHT: `datapack-pkmn/` is third-party copyrighted (Pokémon — Nintendo/Game Freak), LOCAL-only — never commit/redistribute/ship it or its assets/names; learn only STRUCTURE/RULES from it. Output + target datapack must be ORIGINAL/trademark-free. (Full rule in root CLAUDE.md.)
+* `datapack-pkmn/` is a LOCAL-only external reference dataset — never commit/redistribute/ship it or its contents; learn only abstract STRUCTURE/RULES from it; generated output + the target datapack must be ORIGINAL. (See root CLAUDE.md.)
 
 ## Workflow (end to end)
 1. TAG both tileset sets (tags → sidecar): model `gen2/tileset/` (14 .tsx) + target `CatchChallenger-datapack/map/tileset/` (12 .tsx). Drive each tileset's untagged-with-pixels count to 0.
