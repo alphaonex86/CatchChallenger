@@ -97,6 +97,7 @@ tileset-tagger --classify <x.tsx>                       # dry-run: print what su
 tileset-tagger --decode   <map.tmx | map-dir> <out.png | out-dir>   # render real | category side-by-side
 tileset-tagger --learn    <map-dir> <rules.json>                    # learn the category adjacency model
 tileset-tagger --verify   <map-dir> <rules.json> [threshold]        # reproducibility guard (replay == real)
+tileset-tagger --structure <map-dir> <struct.json>                  # learn building templates + feature-zone sizes
 ```
 
 ## How to start

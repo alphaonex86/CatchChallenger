@@ -27,6 +27,7 @@
 #include <QStringList>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <algorithm>
 #include <vector>
@@ -366,6 +367,171 @@ static int runLearn(const QStringList &args)
     return 0;
 }
 
+// ---- structure learning (B): rigid rectangular zones + building templates ---
+struct Comp { int minx; int miny; int maxx; int maxy; int count; };
+
+static std::vector<Comp> components(const std::vector<std::string> &grid,int w,int h,const std::set<std::string> &cats)
+{
+    std::vector<char> seen(w*h,0);
+    std::vector<Comp> out;
+    int idx=0;
+    while(idx<w*h)
+    {
+        if(seen[idx]==0 && grid.at(idx).size()>0 && cats.count(grid.at(idx))>0)
+        {
+            std::vector<int> st;
+            st.push_back(idx);
+            seen[idx]=1;
+            Comp c;
+            c.minx=c.maxx=idx%w;
+            c.miny=c.maxy=idx/w;
+            c.count=0;
+            while(!st.empty())
+            {
+                const int p=st.back();
+                st.pop_back();
+                c.count++;
+                const int px=p%w,py=p/w;
+                if(px<c.minx) c.minx=px;
+                if(px>c.maxx) c.maxx=px;
+                if(py<c.miny) c.miny=py;
+                if(py>c.maxy) c.maxy=py;
+                const int nb[4]={px>0?p-1:-1, px<w-1?p+1:-1, py>0?p-w:-1, py<h-1?p+w:-1};
+                int k=0;
+                while(k<4)
+                {
+                    const int q=nb[k];
+                    if(q>=0 && seen[q]==0 && grid.at(q).size()>0 && cats.count(grid.at(q))>0) { seen[q]=1; st.push_back(q); }
+                    k++;
+                }
+            }
+            out.push_back(c);
+        }
+        idx++;
+    }
+    return out;
+}
+
+static std::string sizeKey(const Comp &c)
+{
+    return std::to_string(c.maxx-c.minx+1)+"x"+std::to_string(c.maxy-c.miny+1);
+}
+
+static int runStructure(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "structure needs: <map-dir> <struct.json>" << std::endl; return 1; }
+    std::set<std::string> buildingCats;
+    buildingCats.insert("building-wall");
+    buildingCats.insert("building-roof");
+    buildingCats.insert("door");
+    buildingCats.insert("window");
+    const char *zoneCatsArr[8]={"water","grass-tall","grass-short","sand","ground","path","cliff","tree-trunk"};
+
+    long nBuildings=0;
+    long fillSum=0;        // for avg rectangle-fill of buildings
+    std::map<std::string,long> buildingSizes;
+    std::map<std::string,std::map<std::string,long> > zoneSizes;
+    std::map<std::string,long> zoneCounts;
+    int nmaps=0;
+    MapDecoder dec;
+    QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    while(it.hasNext())
+    {
+        const QString tmx=it.next();
+        MapDecoder::Result r;
+        QString err;
+        if(!dec.decode(tmx,r,err))
+            continue;
+        nmaps++;
+        const std::vector<Comp> bc=components(r.categoryGrid,r.w,r.h,buildingCats);
+        size_t i=0;
+        while(i<bc.size())
+        {
+            const Comp &c=bc.at(i);
+            if(c.count>=4)
+            {
+                nBuildings++;
+                buildingSizes[sizeKey(c)]++;
+                const int area=(c.maxx-c.minx+1)*(c.maxy-c.miny+1);
+                if(area>0) fillSum += c.count*100/area;
+            }
+            i++;
+        }
+        int z=0;
+        while(z<8)
+        {
+            std::set<std::string> one;
+            one.insert(zoneCatsArr[z]);
+            const std::vector<Comp> zc=components(r.categoryGrid,r.w,r.h,one);
+            size_t j=0;
+            while(j<zc.size())
+            {
+                if(zc.at(j).count>=4) { zoneCounts[zoneCatsArr[z]]++; zoneSizes[zoneCatsArr[z]][sizeKey(zc.at(j))]++; }
+                j++;
+            }
+            z++;
+        }
+    }
+    if(nmaps==0) { std::cerr << "structure: no decodable maps" << std::endl; return 1; }
+
+    // write struct.json
+    {
+        QJsonObject bsz;
+        std::map<std::string,long>::const_iterator b=buildingSizes.begin();
+        while(b!=buildingSizes.cend()) { bsz.insert(QString::fromStdString(b->first),(double)b->second); ++b; }
+        QJsonObject buildings;
+        buildings.insert("count",(double)nBuildings);
+        buildings.insert("avgRectFillPercent", nBuildings>0 ? (double)(fillSum/nBuildings) : 0.0);
+        buildings.insert("sizes",bsz);
+        QJsonObject zones;
+        std::map<std::string,std::map<std::string,long> >::const_iterator zc=zoneSizes.begin();
+        while(zc!=zoneSizes.cend())
+        {
+            QJsonObject szrow;
+            std::map<std::string,long>::const_iterator s=zc->second.begin();
+            while(s!=zc->second.cend()) { szrow.insert(QString::fromStdString(s->first),(double)s->second); ++s; }
+            QJsonObject zob;
+            zob.insert("count",(double)zoneCounts[zc->first]);
+            zob.insert("sizes",szrow);
+            zones.insert(QString::fromStdString(zc->first),zob);
+            ++zc;
+        }
+        QJsonObject root;
+        root.insert("maps",nmaps);
+        root.insert("buildings",buildings);
+        root.insert("zones",zones);
+        QFile out(args.at(1));
+        if(!out.open(QIODevice::WriteOnly|QIODevice::Truncate)) { std::cerr << "cannot write " << args.at(1).toStdString() << std::endl; return 1; }
+        out.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+        out.close();
+    }
+
+    // summary
+    std::cout << "structure from " << nmaps << " maps -> " << args.at(1).toStdString() << std::endl;
+    std::cout << "buildings: " << nBuildings << " instances, avg rect-fill "
+              << (nBuildings>0 ? fillSum/nBuildings : 0) << "%  top sizes:";
+    const std::vector<std::pair<long,std::string> > bt=topOf(buildingSizes,6);
+    size_t i=0;
+    while(i<bt.size()) { std::cout << " " << bt.at(i).second << "(" << bt.at(i).first << ")"; i++; }
+    std::cout << std::endl;
+    std::cout << "feature zones (count, top sizes):" << std::endl;
+    int z=0;
+    while(z<8)
+    {
+        const std::string cat=zoneCatsArr[z];
+        if(zoneCounts.count(cat)>0)
+        {
+            std::cout << "  " << cat << ": " << zoneCounts[cat] << "  ";
+            const std::vector<std::pair<long,std::string> > zt=topOf(zoneSizes[cat],5);
+            size_t k=0;
+            while(k<zt.size()) { std::cout << zt.at(k).second << "(" << zt.at(k).first << ") "; k++; }
+            std::cout << std::endl;
+        }
+        z++;
+    }
+    return 0;
+}
+
 // ---- reproducibility guard -------------------------------------------------
 // The generator visits cells in raster order; at each cell the ALLOWED set is the
 // categories compatible with the already-placed left + up neighbours per the
@@ -634,7 +800,7 @@ int main(int argc, char *argv[])
     const bool cli = !args.isEmpty()
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
-            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify");
+            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -658,6 +824,8 @@ int main(int argc, char *argv[])
         return runLearn(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--verify")
         return runVerify(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--structure")
+        return runStructure(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;
