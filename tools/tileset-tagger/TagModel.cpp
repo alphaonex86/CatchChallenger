@@ -85,6 +85,28 @@ void TagModel::loadSidecarTags()
     }
 }
 
+// Parse the frame COUNT out of a CC "animation" property value like "100ms;6frames"
+// (also "6frames", "frames=6"): the animation spans that many CONSECUTIVE tiles.
+static int animationFrameCount(const QString &value)
+{
+    const QStringList parts=value.split(QChar(';'));
+    int i=0;
+    while(i<parts.size())
+    {
+        const QString t=parts.at(i).trimmed();
+        if(t.contains("frame",Qt::CaseInsensitive))
+        {
+            QString digits;
+            int j=0;
+            while(j<t.size()) { if(t.at(j).isDigit()) digits.append(t.at(j)); j++; }
+            if(!digits.isEmpty())
+                return digits.toInt();
+        }
+        i++;
+    }
+    return 1;
+}
+
 bool TagModel::load(const QString &tsxPath)
 {
     tsxPath_=tsxPath;
@@ -141,16 +163,42 @@ bool TagModel::load(const QString &tsxPath)
     while(!tile.isNull())
     {
         const int id=tile.attribute("id","-1").toInt();
-        QDomElement props=tile.firstChildElement("properties");
-        if(id>=0 && !props.isNull())
+        if(id>=0)
         {
-            QDomElement prop=props.firstChildElement("property");
-            while(!prop.isNull())
+            // (a) standard Tiled animation: <tile><animation><frame tileid=.../></animation>
+            QDomElement anim=tile.firstChildElement("animation");
+            if(!anim.isNull())
             {
-                const QString n=prop.attribute("name");
-                if(n=="animation" || n=="frames")
-                    animatedTiles_.insert(id);
-                prop=prop.nextSiblingElement("property");
+                animatedTiles_.insert(id);
+                QDomElement fr=anim.firstChildElement("frame");
+                while(!fr.isNull())
+                {
+                    const int fid=fr.attribute("tileid","-1").toInt();
+                    if(fid>=0)
+                        animatedTiles_.insert(fid);
+                    fr=fr.nextSiblingElement("frame");
+                }
+            }
+            // (b) CC convention: an "animation"/"frames" PROPERTY on the ANCHOR tile,
+            // value "100ms;6frames" — the animation spans N CONSECUTIVE tiles, so mark
+            // every frame animated (not just the anchor).
+            QDomElement props=tile.firstChildElement("properties");
+            if(!props.isNull())
+            {
+                QDomElement prop=props.firstChildElement("property");
+                while(!prop.isNull())
+                {
+                    const QString n=prop.attribute("name");
+                    if(n=="animation" || n=="frames")
+                    {
+                        int frames=animationFrameCount(prop.attribute("value"));
+                        if(frames<1)
+                            frames=1;
+                        int f=0;
+                        while(f<frames) { animatedTiles_.insert(id+f); f++; }
+                    }
+                    prop=prop.nextSiblingElement("property");
+                }
             }
         }
         tile=tile.nextSiblingElement("tile");
