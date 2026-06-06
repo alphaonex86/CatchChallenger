@@ -1682,6 +1682,87 @@ QString LoadMapAll::emitRoadBotsForChunk(Tiled::Map &worldMap,
     return out;
 }
 
+QString LoadMapAll::emitCityBotsForChunk(Tiled::Map &worldMap,
+                                         const unsigned int &chunkTileX, const unsigned int &chunkTileY,
+                                         const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
+                                         const SettingsAll::SettingsExtra &setting)
+{
+    QString out;
+    Tiled::ObjectGroup *objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
+    if(objectLayer==NULL)
+        return out;
+    const unsigned int x0=chunkTileX*singleMapWidth;
+    const unsigned int y0=chunkTileY*singleMapHeight;
+    const unsigned int x1=x0+singleMapWidth;
+    const unsigned int y1=y0+singleMapHeight;
+    const QList<Tiled::MapObject*> &objects=objectLayer->objects();
+    unsigned int localBotId=1;
+    unsigned int index=0;
+    while(index<(unsigned int)objects.size())
+    {
+        Tiled::MapObject *object=objects.at(index);
+        if(object->type()=="bot")
+        {
+            const unsigned int tileX=(unsigned int)(object->x())/worldMap.tileWidth();
+            const unsigned int tileY=(unsigned int)(object->y())/worldMap.tileHeight();
+            if(tileX>=x0 && tileX<x1 && tileY>=y0 && tileY<y1)
+            {
+                Tiled::Properties properties=object->properties();
+                properties["id"]=QString::number(localBotId);
+                object->setProperties(properties);
+                //townsfolk: a plain text bot with a themed one-liner (no fight)
+                out+=botStepXml(localBotId,BotKind_text,std::to_string(localBotId),
+                                properties.value("lookAt").toString(),setting,
+                                std::vector<RoadMonster>(),0);
+                localBotId++;
+            }
+        }
+        index++;
+    }
+    return out;
+}
+
+void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting,
+                                  const unsigned int mapWidth, const unsigned int mapHeight)
+{
+    Tiled::ObjectGroup* objGroup=LoadMap::searchObjectGroupByName(worldMap,"Object");
+    Tiled::TileLayer* walk=LoadMap::searchTileLayerByName(worldMap,"Walkable");
+    Tiled::TileLayer* coll=LoadMap::searchTileLayerByName(worldMap,"Collisions");
+    Tiled::Tileset* invis=LoadMap::searchTilesetByName(worldMap,"invisible");
+    if(objGroup==NULL || walk==NULL || coll==NULL || invis==NULL || setting.botSkins.empty())
+        return;
+    const int tw=worldMap.tileWidth(), th=worldMap.tileHeight();
+    unsigned int ci=0;
+    while(ci<cities.size())
+    {
+        const City &city=cities.at(ci);
+        const int x0=(int)(city.x*mapWidth), y0=(int)(city.y*mapHeight);
+        const int wanted=3+rand()%3; //3..5 townsfolk per town
+        int placed=0, tries=0;
+        while(placed<wanted && tries<300)
+        {
+            tries++;
+            const int tx=x0+2+rand()%((int)mapWidth-4);
+            const int ty=y0+2+rand()%((int)mapHeight-4);
+            if(tx<0 || ty<0 || tx>=worldMap.width() || ty>=worldMap.height())
+                continue;
+            //open ground only: walkable and not a wall/building/tree
+            if(walk->cellAt(tx,ty).tile()==NULL || coll->cellAt(tx,ty).tile()!=NULL)
+                continue;
+            //object Y carries the engine's -1 tile correction, so add 1 row
+            Tiled::MapObject* npc=new Tiled::MapObject("","bot",QPointF(tx*tw,(ty+1)*th),QSizeF(tw,th));
+            npc->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
+            static const char* const dirs[4]={"bottom","top","left","right"};
+            npc->setProperty("lookAt",dirs[rand()%4]);
+            Tiled::Cell cell; cell.setTile(invis->tileAt(0));
+            npc->setCell(cell);
+            objGroup->addObject(npc);
+            placed++;
+        }
+        ci++;
+    }
+}
+
 Tiled::Tile *LoadMapAll::fetchTile(Tiled::Map &worldMap, QString data)
 {
     QStringList tileData = data.split("/");
