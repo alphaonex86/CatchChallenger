@@ -246,6 +246,28 @@ static int runClassify(const QStringList &args)
     return 0;
 }
 
+// dry-run per-tile heuristic prediction (id<TAB>category<TAB>sure|guess), no write —
+// for evaluating the auto-tagger against hand tags.
+static int runEvalSuggest(const QStringList &args)
+{
+    if(args.isEmpty()) { std::cerr << "evalsuggest needs: <x.tsx>" << std::endl; return 1; }
+    TagModel model;
+    if(!model.load(args.at(0))) { std::cerr << model.error().toStdString() << std::endl; return 1; }
+    MapUsageIndex index;
+    index.build(args.at(0));
+    const std::map<int,MapUsageIndex::TileStat> stats=index.analyzeAllTiles();
+    std::map<int,MapUsageIndex::TileStat>::const_iterator it=stats.begin();
+    while(it!=stats.cend())
+    {
+        std::string norm;
+        bool walk=true,high=true;
+        const std::string cat=MapUsageIndex::suggestCategory(it->second,model.tileGreenish(it->first),norm,walk,high);
+        std::cout << it->first << "\t" << (cat.empty()?std::string("?"):cat) << "\t" << (high?"sure":"guess") << std::endl;
+        ++it;
+    }
+    return 0;
+}
+
 // top-N (count,name) pairs of a histogram, descending.
 static std::vector<std::pair<long,std::string> > topOf(const std::map<std::string,long> &h,size_t n)
 {
@@ -1269,7 +1291,8 @@ int main(int argc, char *argv[])
     const bool cli = !args.isEmpty()
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
-            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap");
+            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
+            || args.at(0)=="--evalsuggest");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -1285,6 +1308,8 @@ int main(int argc, char *argv[])
         return runUsage(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--suggest")
         return runSuggest(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--evalsuggest")
+        return runEvalSuggest(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
         return runClassify(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--decode")
