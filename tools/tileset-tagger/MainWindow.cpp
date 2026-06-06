@@ -467,12 +467,14 @@ int MainWindow::applySelection()
     }
     // animated DERIVED from the .tsx (any selected tile that is an animation frame),
     // never from a manual checkbox.
+    // animated/randomized require a GROUP (2+ tiles) — frames / variants.
+    const bool multi = ids.size()>=2;
     bool anim=false;
     size_t ai=0;
     while(ai<ids.size() && !anim) { if(model_->tileAnimated(ids.at(ai))) anim=true; ai++; }
-    if(anim)
+    if(anim && multi)
         attrs["animated"]="true";
-    if(randomized_->isChecked())
+    if(randomized_->isChecked() && multi)
     {
         // mark the whole group a randomized variant set; the FIRST tile (the group's
         // lowest id) is the one maps store — recorded so the generator can find it.
@@ -543,12 +545,17 @@ void MainWindow::onSave()
 void MainWindow::onSelection(int tileCount)
 {
     view_->selectionBounds(selC0_,selR0_,selC1_,selR1_);   // bbox of the (maybe non-rect) set
-    // reflect the DERIVED animated state of the selection (read-only indicator)
+    // animated/randomized are GROUP properties — only meaningful for 2+ tiles (an
+    // animation needs several frames; a randomized set needs several variants).
     const std::vector<int> selIds=view_->selectedTiles();
+    const bool multi = selIds.size()>=2;
     bool anim=false;
     size_t ai=0;
     while(ai<selIds.size() && !anim) { if(model_->tileAnimated(selIds.at(ai))) anim=true; ai++; }
-    animated_->setChecked(anim);
+    animated_->setChecked(anim && multi);
+    randomized_->setEnabled(multi);
+    if(!multi)
+        randomized_->setChecked(false);
     if(selC0_<0)
         selLabel_->setText(tr("no selection — drag tiles (Ctrl/Shift+drag adds, Ctrl+click toggles)"));
     else
@@ -745,11 +752,12 @@ void MainWindow::prefillFromUsage(const std::vector<int> &ids)
 {
     const MapUsageIndex::GroupStats &st=usage_->lastStats();
 
-    // animated is a property of the tileset art, known regardless of map usage
+    // animated is a property of the tileset art (multi-frame), known regardless of
+    // map usage — only meaningful for a 2+ tile selection.
     bool anim=false;
     size_t k=0;
     while(k<ids.size() && !anim) { if(model_->tileAnimated(ids.at(k))) anim=true; k++; }
-    animated_->setChecked(anim);
+    animated_->setChecked(anim && ids.size()>=2);
 
     if(st.totalCells<=0)
     {
