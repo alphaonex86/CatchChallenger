@@ -44,17 +44,19 @@ MainWindow::MainWindow() :
     usage_(new MapUsageIndex()),
     usageView_(new MapUsageView()),
     categoryBox_(nullptr),
-    layerBox_(nullptr),
     mapCombo_(nullptr),
-    walkable_(nullptr),
     animated_(nullptr),
     hRepeat_(nullptr),
     hMidRepeat_(nullptr),
     vRepeat_(nullptr),
     vMidRepeat_(nullptr),
     selLabel_(nullptr),
+    detectedLabel_(nullptr),
     guardLabel_(nullptr),
     currentUsages_(),
+    derivedLayer_(),
+    derivedWalkable_(-1),
+    derivedFromMaps_(false),
     selC0_(-1),
     selR0_(-1),
     selC1_(-1),
@@ -74,31 +76,26 @@ MainWindow::MainWindow() :
     QPushButton *openBtn=new QPushButton(tr("Open .tsx…"),panel);
     lay->addWidget(openBtn);
 
-    lay->addWidget(new QLabel(tr("Category (what it is):"),panel));
+    // The tag is the VISUAL identity of the tile — what it looks like. The
+    // logical role (walkable / collision / water) is NOT tagged by hand: it is
+    // derived from the maps and shown below for reference only.
+    lay->addWidget(new QLabel(tr("Category (what it looks like):"),panel));
     categoryBox_=new QComboBox(panel);
     categoryBox_->addItems(tagCategories());     // fixed list, NOT editable
     lay->addWidget(categoryBox_);
 
-    lay->addWidget(new QLabel(tr("Engine layer:"),panel));
-    layerBox_=new QComboBox(panel);
-    layerBox_->addItem("walkable");
-    layerBox_->addItem("grass");
-    layerBox_->addItem("water");
-    layerBox_->addItem("lava");
-    layerBox_->addItem("ledge");
-    layerBox_->addItem("collision");
-    layerBox_->addItem("over");
-    lay->addWidget(layerBox_);
-
-    walkable_=new QCheckBox(tr("walkable (player can stand on it)"),panel);
     animated_=new QCheckBox(tr("animated"),panel);
-    lay->addWidget(walkable_);
     lay->addWidget(animated_);
+
+    detectedLabel_=new QLabel(panel);
+    detectedLabel_->setWordWrap(true);
+    detectedLabel_->setStyleSheet("color:#888;");
+    lay->addWidget(detectedLabel_);
 
     QFrame *line=new QFrame(panel);
     line->setFrameShape(QFrame::HLine);
     lay->addWidget(line);
-    lay->addWidget(new QLabel(tr("Repeat behaviour:"),panel));
+    lay->addWidget(new QLabel(tr("Repeat behaviour (visual):"),panel));
     hRepeat_=new QCheckBox(tr("horizontalRepeat"),panel);
     hMidRepeat_=new QCheckBox(tr("horizontalMiddleRepeat"),panel);
     vRepeat_=new QCheckBox(tr("verticalRepeat"),panel);
@@ -187,7 +184,11 @@ bool MainWindow::openTsx(const QString &path)
     currentUsages_.clear();
     usageView_->clearUsage();
     selC0_=selR0_=selC1_=selR1_=-1;
+    derivedFromMaps_=false;
+    derivedLayer_.clear();
+    derivedWalkable_=-1;
     selLabel_->setText(tr("no selection"));
+    detectedLabel_->clear();
     statusBar()->showMessage(tr("%1 map(s) reference this tileset").arg(usage_->candidateCount()),4000);
     refreshGuard();
     updateTitle();
@@ -218,8 +219,15 @@ void MainWindow::onTag()
     std::map<std::string,std::string> attrs;
     attrs["size"]=std::to_string(w)+"x"+std::to_string(h);
     attrs["group"]=category+"@"+std::to_string(selC0_)+","+std::to_string(selR0_);
-    attrs["layer"]=layerBox_->currentText().toStdString();
-    attrs["walkable"]= walkable_->isChecked() ? "true" : "false";
+    // logical role is DERIVED from the maps, not tagged by hand — attach it only
+    // when the maps actually showed us where these tiles are used.
+    if(derivedFromMaps_)
+    {
+        if(!derivedLayer_.isEmpty())
+            attrs["layer"]=derivedLayer_.toStdString();
+        if(derivedWalkable_>=0)
+            attrs["walkable"]= derivedWalkable_==1 ? "true" : "false";
+    }
     if(animated_->isChecked())
         attrs["animated"]="true";
     if(hRepeat_->isChecked())
@@ -343,10 +351,24 @@ static void setComboTo(QComboBox *box,const QString &text)
 void MainWindow::prefillFromUsage(const std::vector<int> &ids)
 {
     const MapUsageIndex::GroupStats &st=usage_->lastStats();
-    if(st.totalCells<=0)
-        return;     // not used anywhere: leave the controls as the user left them
 
-    // dominant engine layer across all maps
+    // animated is a property of the tileset art, known regardless of map usage
+    bool anim=false;
+    size_t k=0;
+    while(k<ids.size() && !anim) { if(model_->tileAnimated(ids.at(k))) anim=true; k++; }
+    animated_->setChecked(anim);
+
+    if(st.totalCells<=0)
+    {
+        // not used on any map: no logical info to derive, no category hint.
+        derivedFromMaps_=false;
+        derivedLayer_.clear();
+        derivedWalkable_=-1;
+        detectedLabel_->setText(tr("from maps: not used anywhere — pick the category by eye"));
+        return;
+    }
+
+    // dominant engine layer across all maps -> the LOGICAL role (derived, not tagged)
     QString domLayer;
     int best=-1;
     std::map<std::string,int>::const_iterator it=st.layerCounts.begin();
@@ -356,25 +378,27 @@ void MainWindow::prefillFromUsage(const std::vector<int> &ids)
         ++it;
     }
     QString layerVal;
-    QString category;
+    QString categoryGuess;
     bool walkable=true;
-    layerToGuess(domLayer,layerVal,category,walkable);
-    setComboTo(categoryBox_,category);
-    setComboTo(layerBox_,layerVal);
-    walkable_->setChecked(walkable);
+    layerToGuess(domLayer,layerVal,categoryGuess,walkable);
 
-    // repeat flags: the SAME tile recurs in >=30% of the group's cells
+    derivedFromMaps_=true;
+    derivedLayer_=layerVal;
+    derivedWalkable_= walkable ? 1 : 0;
+
+    // category is the VISUAL identity: the layer gives only a soft starting guess
+    // (Collisions could be a wall, a cliff or a tree-trunk) — the human confirms.
+    setComboTo(categoryBox_,categoryGuess);
+
+    // repeat flags are visual: the SAME tile recurs in >=30% of the group's cells
     hRepeat_->setChecked(st.horizontalRepeatCells*100 >= st.totalCells*30);
     vRepeat_->setChecked(st.verticalRepeatCells*100 >= st.totalCells*30);
 
-    // animated if any selected tile carries an animation property
-    bool anim=false;
-    size_t k=0;
-    while(k<ids.size() && !anim) { if(model_->tileAnimated(ids.at(k))) anim=true; k++; }
-    animated_->setChecked(anim);
-
-    statusBar()->showMessage(tr("pre-filled from '%1' layer — validate or edit, then Tag")
-                             .arg(domLayer.isEmpty()?tr("?"):domLayer),5000);
+    detectedLabel_->setText(tr("from maps: layer=%1 · %2 · %3% of cells on this layer")
+                            .arg(domLayer)
+                            .arg(walkable?tr("walkable"):tr("not walkable"))
+                            .arg(best*100/st.totalCells));
+    statusBar()->showMessage(tr("category pre-guessed from layer '%1' — set what it LOOKS like, then Tag").arg(domLayer),5000);
 }
 
 void MainWindow::onMapPicked(int index)

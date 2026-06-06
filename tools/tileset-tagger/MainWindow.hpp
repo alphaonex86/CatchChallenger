@@ -44,17 +44,21 @@ private:
     MapUsageIndex *usage_;
     MapUsageView *usageView_;
     QComboBox *categoryBox_;
-    QComboBox *layerBox_;
     QComboBox *mapCombo_;
-    QCheckBox *walkable_;
     QCheckBox *animated_;
     QCheckBox *hRepeat_;
     QCheckBox *hMidRepeat_;
     QCheckBox *vRepeat_;
     QCheckBox *vMidRepeat_;
     QLabel *selLabel_;
+    QLabel *detectedLabel_;
     QLabel *guardLabel_;
     std::vector<MapUsageIndex::Usage> currentUsages_;
+    // logical info auto-DERIVED from the maps (not tagged by hand) — attached at
+    // Tag time so the generator has it for free.
+    QString derivedLayer_;
+    int derivedWalkable_;        // -1 unknown, 0 no, 1 yes
+    bool derivedFromMaps_;
     int selC0_;
     int selR0_;
     int selC1_;
