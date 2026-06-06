@@ -86,12 +86,12 @@ bool TagModel::load(const QString &tsxPath)
                 const QString v=prop.attribute("value");
                 if(n=="category")
                     tag.category=v.toStdString();
-                else if(n=="name")
-                    tag.name=v.toStdString();
-                else if(n=="size")
-                    tag.size=v.toStdString();
+                else
+                    tag.attributes[n.toStdString()]=v.toStdString();
                 prop=prop.nextSiblingElement("property");
             }
+            // a tile is OURS only if it carries a category; otherwise its
+            // properties are foreign (engine/Tiled) and we leave them untouched.
             if(!tag.category.empty())
                 tags_[id]=tag;
         }
@@ -118,7 +118,7 @@ QDomElement TagModel::ensureTileElement(int id)
 }
 
 void TagModel::tagTiles(const std::vector<int> &tileIds, const std::string &category,
-                        const std::string &name, const std::string &size)
+                        const std::map<std::string,std::string> &attributes)
 {
     size_t i=0;
     while(i<tileIds.size())
@@ -130,8 +130,7 @@ void TagModel::tagTiles(const std::vector<int> &tileIds, const std::string &cate
         {
             TileTag tag;
             tag.category=category;
-            tag.name=name;
-            tag.size=size;
+            tag.attributes=attributes;
             tags_[id]=tag;
         }
         i++;
@@ -222,50 +221,85 @@ std::vector<std::string> TagModel::categoriesUsed() const
     return cats;
 }
 
+static bool isKnownTagKey(const QString &n)
+{
+    // the attribute vocabulary this tool owns; foreign properties are NOT here
+    // and are preserved across save.
+    return n=="category" || n=="name" || n=="size"
+        || n=="horizontalRepeat" || n=="horizontalMiddleRepeat"
+        || n=="verticalRepeat" || n=="verticalMiddleRepeat"
+        || n=="terrain";
+}
+
+void TagModel::stripManagedProperties(QDomElement props, const std::map<std::string,std::string> *extraKeys)
+{
+    if(props.isNull())
+        return;
+    std::vector<QDomElement> doomed;
+    QDomElement prop=props.firstChildElement("property");
+    while(!prop.isNull())
+    {
+        const QString n=prop.attribute("name");
+        bool managed=isKnownTagKey(n);
+        if(!managed && extraKeys!=nullptr && extraKeys->find(n.toStdString())!=extraKeys->cend())
+            managed=true;
+        if(managed)
+            doomed.push_back(prop);
+        prop=prop.nextSiblingElement("property");
+    }
+    size_t i=0;
+    while(i<doomed.size()) { props.removeChild(doomed.at(i)); i++; }
+}
+
 bool TagModel::save()
 {
-    // sync the in-memory tags into the DOM
+    QDomElement tileset=tilesetElement();
+
+    // 1. clean stale tag properties off tiles that are no longer tagged (so
+    //    un-tagging in the GUI actually removes the category from the file).
+    QDomElement tile=tileset.firstChildElement("tile");
+    while(!tile.isNull())
+    {
+        const int id=tile.attribute("id","-1").toInt();
+        if(id>=0 && tags_.find(id)==tags_.cend())
+        {
+            QDomElement props=tile.firstChildElement("properties");
+            stripManagedProperties(props,nullptr);
+            if(!props.isNull() && props.firstChildElement("property").isNull())
+                tile.removeChild(props); // drop the now-empty <properties>
+        }
+        tile=tile.nextSiblingElement("tile");
+    }
+
+    // 2. write the tagged tiles: category first, then each attribute.
     std::unordered_map<int,TileTag>::const_iterator it=tags_.begin();
     while(it!=tags_.cend())
     {
         const int id=it->first;
         const TileTag &tag=it->second;
-        QDomElement tile=ensureTileElement(id);
-        QDomElement props=tile.firstChildElement("properties");
+        QDomElement t=ensureTileElement(id);
+        QDomElement props=t.firstChildElement("properties");
         if(props.isNull())
         {
             props=doc_.createElement("properties");
-            tile.insertBefore(props,tile.firstChild());
+            t.insertBefore(props,t.firstChild());
         }
-        // upsert each property
-        const char *names[3]={"category","name","size"};
-        const std::string values[3]={tag.category,tag.name,tag.size};
-        int p=0;
-        while(p<3)
+        stripManagedProperties(props,&tag.attributes);
+        QDomElement cat=doc_.createElement("property");
+        cat.setAttribute("name","category");
+        cat.setAttribute("value",QString::fromStdString(tag.category));
+        props.appendChild(cat);
+        std::map<std::string,std::string>::const_iterator a=tag.attributes.begin();
+        while(a!=tag.attributes.cend())
         {
-            QDomElement prop=props.firstChildElement("property");
-            QDomElement found;
-            while(!prop.isNull())
+            if(!a->second.empty())
             {
-                if(prop.attribute("name")==names[p]) { found=prop; break; }
-                prop=prop.nextSiblingElement("property");
+                QDomElement p=doc_.createElement("property");
+                p.setAttribute("name",QString::fromStdString(a->first));
+                p.setAttribute("value",QString::fromStdString(a->second));
+                props.appendChild(p);
             }
-            if(values[p].empty())
-            {
-                if(!found.isNull())
-                    props.removeChild(found);
-            }
-            else
-            {
-                if(found.isNull())
-                {
-                    found=doc_.createElement("property");
-                    found.setAttribute("name",names[p]);
-                    props.appendChild(found);
-                }
-                found.setAttribute("value",QString::fromStdString(values[p]));
-            }
-            p++;
+            ++a;
         }
         ++it;
     }

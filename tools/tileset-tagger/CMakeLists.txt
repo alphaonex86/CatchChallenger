@@ -13,6 +13,8 @@ find_package(Qt6 COMPONENTS Core Xml Gui Widgets REQUIRED)
 add_executable(tileset-tagger
     main.cpp
     TagModel.cpp
+    TilesetView.cpp
+    MainWindow.cpp
 )
 
 target_link_libraries(tileset-tagger PRIVATE
