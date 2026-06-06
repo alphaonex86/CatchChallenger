@@ -95,6 +95,8 @@ tileset-tagger --usage    <x.tsx> <c0> <r0> <c1> <r1>   # list maps using that t
 tileset-tagger --suggest  <x.tsx | tileset-dir>         # auto-tag (terrain + structure)
 tileset-tagger --classify <x.tsx>                       # dry-run: print what suggest would tag
 tileset-tagger --decode   <map.tmx | map-dir> <out.png | out-dir>   # render real | category side-by-side
+tileset-tagger --learn    <map-dir> <rules.json>                    # learn the category adjacency model
+tileset-tagger --verify   <map-dir> <rules.json> [threshold]        # reproducibility guard (replay == real)
 ```
 
 ## How to start
