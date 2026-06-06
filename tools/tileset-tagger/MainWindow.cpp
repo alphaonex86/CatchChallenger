@@ -107,6 +107,7 @@ MainWindow::MainWindow() :
     outerBox_(nullptr),
     mapCombo_(nullptr),
     animated_(nullptr),
+    randomized_(nullptr),
     hRepeat_(nullptr),
     hMidRepeat_(nullptr),
     vRepeat_(nullptr),
@@ -183,6 +184,14 @@ MainWindow::MainWindow() :
     animated_=new QCheckBox(tr("animated (from tileset)"),panel);
     animated_->setEnabled(false);
     lay->addWidget(animated_);
+
+    // randomized variant GROUP: interchangeable look-alike tiles (e.g. grass variants).
+    // Maps store only the FIRST tile of the group (so long runs of one gid compress
+    // well) and the engine randomly swaps in the variants at draw time.
+    randomized_=new QCheckBox(tr("randomized (variants — maps use the 1st tile)"),panel);
+    randomized_->setToolTip(tr("A group of interchangeable look-alike tiles.  Maps store the FIRST tile only "
+                               "(better compression); the engine randomly draws one of the variants."));
+    lay->addWidget(randomized_);
 
     detectedLabel_=new QLabel(panel);
     detectedLabel_->setWordWrap(true);
@@ -463,6 +472,13 @@ int MainWindow::applySelection()
     while(ai<ids.size() && !anim) { if(model_->tileAnimated(ids.at(ai))) anim=true; ai++; }
     if(anim)
         attrs["animated"]="true";
+    if(randomized_->isChecked())
+    {
+        // mark the whole group a randomized variant set; the FIRST tile (the group's
+        // lowest id) is the one maps store — recorded so the generator can find it.
+        attrs["randomized"]="true";
+        attrs["randomFirst"]=std::to_string(ids.front());
+    }
     if(hRepeat_->isChecked())
         attrs["horizontalRepeat"]="true";
     if(hMidRepeat_->isChecked())
@@ -622,6 +638,7 @@ void MainWindow::onSelectionFinished(int)
             if(ci>=0)
                 categoryBox_->setCurrentIndex(ci);
             // animated stays DERIVED from the tileset (set in onSelection), not from the tag
+            randomized_->setChecked(existing.attr("randomized")=="true");
             hRepeat_->setChecked(existing.attr("horizontalRepeat")=="true");
             hMidRepeat_->setChecked(existing.attr("horizontalMiddleRepeat")=="true");
             vRepeat_->setChecked(existing.attr("verticalRepeat")=="true");
