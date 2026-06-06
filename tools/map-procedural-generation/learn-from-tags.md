@@ -78,6 +78,31 @@ generator emit the category actually present in the real map; if no draw can
 (the rule set offers no option matching reality), that decision is logged as an
 uncovered case. Generation with the recorded stream then reproduces the map.
 
+## Transfer to a partial datapack (model → partial)
+
+The model datapack (pokemon) is complete; the partial datapack (official) is being
+built. After both tilesets are tagged and the detection is confirmed:
+
+1. **Request the missing tiles, proportional to the model.** Count tagged items
+   per (category, sub-context) in the model and require the partial set to provide
+   at least ~80%: if the model has 5 `table` (2 of them indoor), the partial set
+   must provide ≥4 tables (≥1 indoor). Ask the human for each shortfall by
+   category / count / size. A category with no partial tile blocks any rule that
+   needs it.
+2. **Compose the new maps**, gated by the reproducibility guard AND a human
+   rating: regenerate the MODEL maps from the MODEL tileset with the recorded
+   (non-random) choices and round-trip to identity; then rate ~10 typical
+   generated maps — most must score ≥4/5 to ship. The rating notes feed back into
+   tuning the rules (a human-noted system).
+
+## Detection problems → report, don't guess
+
+When a tile's role is ambiguous or conflicting (used as two incompatible logical
+roles across maps, category vs derived layer mismatch, a 100%-transparent tile, an
+item whose partial-set count/size is below the model), the tool flags it for the
+human to fix instead of silently picking. 100%-transparent tiles are never tagged
+or placed.
+
 ## Status
 
 * Stage 1 tool (`tools/tileset-tagger/`) — **built, verified, pushed**.

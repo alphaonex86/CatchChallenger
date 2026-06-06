@@ -11,6 +11,7 @@ Before starting a task, always check for a CLAUDE.md file in the current working
 * `tools/gba2catchchallenger/CLAUDE.md` — Gen3 ROM→datapack converter: sub-datapack overlays (families/diff-only) and the tileset model (32-wide dominant blocks, near-dup fold, gap-fill, region subfolders, composite vs decompose, Wang sets).
 * `tools/map-procedural-generation-terrain/CLAUDE.md` — THE standalone base terrain generator (Voronoi biomes + grid-aligned vegetation → one big CSV `all.tmx`); RIGID rectangular features; run-staging.
 * `tools/map-procedural-generation/CLAUDE.md` — content/assembly stage: chunks the terrain `all.tmx` into per-map zlib tmx + adds cities/roads/bots/encounters/interiors; staging to `dest/`, zlib-not-zstd render-verify, name/dialog content rules.
+* `tools/tileset-tagger/CLAUDE.md` — learn-from-tags pipeline: tag tilesets with a visual vocabulary (logical layer/walkable auto-derived from the maps via the Collisions-cancels-Walkable precedence; visual category human-tagged but pre-filled), report mis-detections, then learn the model structure and transfer to a partial datapack (request missing items proportionally; reproducibility + human-rating gate).
 
 * **CMake project layout — one binary per CMakeLists.txt.**
   There is **NO root `CMakeLists.txt`**. Each binary has its own self-contained `CMakeLists.txt` compiling **exactly one** executable. Library subdirs are INTERFACE libs pulled in via `add_subdirectory`.
