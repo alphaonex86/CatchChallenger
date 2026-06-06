@@ -31,27 +31,31 @@ cmake --build /tmp/tagger-build -j32
 * The sheet is shown with a tile grid. **Untagged tiles that draw pixels are
   flagged red** — the reminder that nothing is forgotten. The window title and a
   panel label always show the remaining untagged count.
+* **You tag the VISUAL identity; the logical role is derived from the maps.**
+  Walkable / collision / water are already encoded in the maps (which engine
+  layer a tile sits on), so you never tag those by hand — the tool reads them.
+  What a map *can't* tell you is what a tile *looks like* (a cliff, a tree-trunk
+  and a wall are all just "Collisions"), so that — the **category** — is your job.
 * **No free-text input** (error-prone): every field is a fixed combo or a
-  checkbox. The tag properties (all written into the `.tsx`):
-  | property | control | meaning |
+  checkbox. Tag properties written into the `.tsx`:
+  | property | source | meaning |
   |---|---|---|
-  | `category` | combo | what it is (ground, grass-tall, building-wall, table…) |
-  | `layer` | combo | engine layer it belongs to (walkable/grass/water/lava/ledge/collision/over) |
-  | `walkable` | checkbox | the player can stand on it |
-  | `animated` | checkbox | it animates |
-  | `horizontalRepeat` | checkbox | tiles sideways |
-  | `horizontalMiddleRepeat` | checkbox | centre repeats, borders fixed |
-  | `verticalRepeat` / `verticalMiddleRepeat` | checkbox | same, vertically |
+  | `category` | you (combo) | what it **looks like** (tree-canopy, building-roof, table…) |
+  | `animated` | auto/you | the tile art animates |
+  | `horizontalRepeat` | you (checkbox) | tiles sideways |
+  | `horizontalMiddleRepeat` | you (checkbox) | centre repeats, borders fixed |
+  | `verticalRepeat` / `verticalMiddleRepeat` | you (checkbox) | same, vertically |
   | `size` | auto | `WxH` of the selected rectangle |
   | `group` | auto | groups the tiles of one placed item |
-* **Pre-filled, you just validate.** When you select a rectangle, the tool reads
-  where those exact tiles are used on the real maps and pre-fills every control:
-  the **dominant engine layer** decides category/layer/walkable (a tile mostly on
-  `Collisions` → `building-wall`, not walkable; on `LedgesDown` → `ledge-down`),
-  and **same-tile run detection** ticks the repeat flags (a ground tile that
-  recurs both ways → both repeats; a wall that recurs sideways → horizontalRepeat).
-  You **Tag** to accept, or fix a control first. Groups not used on any map are
-  left untouched.
+  | `layer` | **auto from maps** | engine layer (walkable/grass/water/ledge/collision/over) |
+  | `walkable` | **auto from maps** | player can stand on it |
+* **Pre-filled, you just validate.** Selecting a rectangle reads where those exact
+  tiles are used on the real maps: the **dominant engine layer** is shown as
+  read-only "from maps: …" and attached automatically as `layer`/`walkable`, and
+  also gives a soft starting guess for the visual `category` (you set the real
+  one). **Same-tile run detection** ticks the repeat flags. You **Tag** to accept
+  or adjust the category first. Groups used on no map keep their derived info
+  blank — you pick the category by eye.
 * **Jump to next untagged** walks you through what's left.
 * **Save .tsx** writes the tags back surgically (foreign engine/Tiled properties
   on a tile, e.g. `animation`, are preserved).
