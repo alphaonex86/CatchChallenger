@@ -20,6 +20,7 @@ class MapUsageView;
 class QComboBox;
 class QCheckBox;
 class QLabel;
+class QPushButton;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -28,6 +29,7 @@ public:
     ~MainWindow();
     bool openTsx(const QString &path);
     void openPath(const QString &path);   // a .tsx OR a directory of tilesets
+    void hideOpenButton();                // when the folder came from the CLI
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -52,6 +54,7 @@ private:
     TilesetView *view_;
     MapUsageIndex *usage_;
     MapUsageView *usageView_;
+    QPushButton *openBtn_;
     QComboBox *categoryBox_;
     QComboBox *mapCombo_;
     QCheckBox *animated_;

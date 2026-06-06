@@ -46,6 +46,7 @@ MainWindow::MainWindow() :
     view_(new TilesetView()),
     usage_(new MapUsageIndex()),
     usageView_(new MapUsageView()),
+    openBtn_(nullptr),
     categoryBox_(nullptr),
     mapCombo_(nullptr),
     animated_(nullptr),
@@ -78,8 +79,8 @@ MainWindow::MainWindow() :
     QWidget *panel=new QWidget(dock);
     QVBoxLayout *lay=new QVBoxLayout(panel);
 
-    QPushButton *openBtn=new QPushButton(tr("Open tileset folder…"),panel);
-    lay->addWidget(openBtn);
+    openBtn_=new QPushButton(tr("Open tileset folder…"),panel);
+    lay->addWidget(openBtn_);
 
     // The tag is the VISUAL identity of the tile — what it looks like. The
     // logical role (walkable / collision / water) is NOT tagged by hand: it is
@@ -165,7 +166,7 @@ MainWindow::MainWindow() :
     usageDock->setWidget(usagePanel);
     addDockWidget(Qt::BottomDockWidgetArea,usageDock);
 
-    connect(openBtn,&QPushButton::clicked,this,&MainWindow::onOpen);
+    connect(openBtn_,&QPushButton::clicked,this,&MainWindow::onOpen);
     connect(verifyBtn,&QPushButton::clicked,this,&MainWindow::onVerify);
     connect(clearBtn,&QPushButton::clicked,this,&MainWindow::onClearTag);
     connect(saveBtn,&QPushButton::clicked,this,&MainWindow::onSave);
@@ -291,6 +292,12 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::onZoomIn()  { view_->setZoom(view_->zoom()+1); }
 void MainWindow::onZoomOut() { view_->setZoom(view_->zoom()-1); }
+
+void MainWindow::hideOpenButton()
+{
+    if(openBtn_!=nullptr)
+        openBtn_->hide();
+}
 
 void MainWindow::onOpen()
 {
