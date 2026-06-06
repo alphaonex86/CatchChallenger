@@ -178,7 +178,10 @@ MainWindow::MainWindow() :
     lay->addWidget(terrainGroup_);
     terrainGroup_->setVisible(false);
 
-    animated_=new QCheckBox(tr("animated"),panel);
+    // animated is a FACT of the tileset (the .tsx animation property) — DERIVED, not
+    // a manual choice; shown read-only for reference.
+    animated_=new QCheckBox(tr("animated (from tileset)"),panel);
+    animated_->setEnabled(false);
     lay->addWidget(animated_);
 
     detectedLabel_=new QLabel(panel);
@@ -453,7 +456,12 @@ int MainWindow::applySelection()
         rememberTexture(in);
         rememberTexture(out);
     }
-    if(animated_->isChecked())
+    // animated DERIVED from the .tsx (any selected tile that is an animation frame),
+    // never from a manual checkbox.
+    bool anim=false;
+    size_t ai=0;
+    while(ai<ids.size() && !anim) { if(model_->tileAnimated(ids.at(ai))) anim=true; ai++; }
+    if(anim)
         attrs["animated"]="true";
     if(hRepeat_->isChecked())
         attrs["horizontalRepeat"]="true";
@@ -519,6 +527,12 @@ void MainWindow::onSave()
 void MainWindow::onSelection(int tileCount)
 {
     view_->selectionBounds(selC0_,selR0_,selC1_,selR1_);   // bbox of the (maybe non-rect) set
+    // reflect the DERIVED animated state of the selection (read-only indicator)
+    const std::vector<int> selIds=view_->selectedTiles();
+    bool anim=false;
+    size_t ai=0;
+    while(ai<selIds.size() && !anim) { if(model_->tileAnimated(selIds.at(ai))) anim=true; ai++; }
+    animated_->setChecked(anim);
     if(selC0_<0)
         selLabel_->setText(tr("no selection — drag tiles (Ctrl/Shift+drag adds, Ctrl+click toggles)"));
     else
@@ -607,7 +621,7 @@ void MainWindow::onSelectionFinished(int)
             const int ci=categoryBox_->findText(QString::fromStdString(existing.category));
             if(ci>=0)
                 categoryBox_->setCurrentIndex(ci);
-            animated_->setChecked(existing.attr("animated")=="true");
+            // animated stays DERIVED from the tileset (set in onSelection), not from the tag
             hRepeat_->setChecked(existing.attr("horizontalRepeat")=="true");
             hMidRepeat_->setChecked(existing.attr("horizontalMiddleRepeat")=="true");
             vRepeat_->setChecked(existing.attr("verticalRepeat")=="true");
