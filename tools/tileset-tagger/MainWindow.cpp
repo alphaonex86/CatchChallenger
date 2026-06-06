@@ -48,6 +48,7 @@ MainWindow::MainWindow() :
     view_(new TilesetView()),
     usage_(new MapUsageIndex()),
     usageView_(new MapUsageView()),
+    usageScroll_(nullptr),
     openBtn_(nullptr),
     categoryBox_(nullptr),
     mapCombo_(nullptr),
@@ -154,9 +155,13 @@ MainWindow::MainWindow() :
     mapCombo_->setMinimumWidth(200);
     uTop->addWidget(mapCombo_,1);
     uLay->addLayout(uTop);
-    // The view fits the WHOLE map into itself (smooth-scaled overview, like Tiled's
-    // full-map panel), so it goes straight in the dock — no scroll area / cropping.
-    uLay->addWidget(usageView_,1);
+    // Native-1:1 crisp render (Tiled-exact pixels), scrolled — the tall LEFT dock
+    // shows most of a route at once; we auto-scroll to the used cells.
+    usageScroll_=new QScrollArea(usagePanel);
+    usageScroll_->setWidget(usageView_);
+    usageScroll_->setAlignment(Qt::AlignCenter);
+    usageScroll_->setBackgroundRole(QPalette::Dark);
+    uLay->addWidget(usageScroll_,1);
     usageDock->setWidget(usagePanel);
     addDockWidget(Qt::LeftDockWidgetArea,usageDock);
 
@@ -619,7 +624,12 @@ void MainWindow::onMapPicked(int index)
         return;
     const MapUsageIndex::Usage &u=currentUsages_.at(index);
     const QImage img=usage_->render(u.mapPath);
-    usageView_->setUsage(img,u.cells,u.tileW,u.tileH);   // fits the whole map; marching ants mark the cells
+    usageView_->setUsage(img,u.cells,u.tileW,u.tileH);   // native 1:1; marching ants mark the cells
+    if(usageScroll_!=nullptr)
+    {
+        const QPoint c=usageView_->firstHighlightCenter();   // bring the used cells into view
+        usageScroll_->ensureVisible(c.x(),c.y(),usageScroll_->viewport()->width()/2,usageScroll_->viewport()->height()/2);
+    }
     statusBar()->showMessage(tr("'%1' uses the group in %2 cell(s)").arg(u.mapLabel).arg((int)u.cells.size()),4000);
 }
 
