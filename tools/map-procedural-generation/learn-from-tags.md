@@ -3,8 +3,11 @@
 **MODEL datapack = `datapack-pkmn/map/main/gen2/`** (owner) — 183 `.tmx` maps
 (johto + kanto) over 14 tilesets (`tileset/normal1..15.tsx` + `animations.tsx`),
 with `informations.xml` / `zone/` / `quests/`. This is the corpus whose rules we
-learn and the target the reproducibility guard round-trips against. The PARTIAL
-(target) datapack is the official `CatchChallenger-datapack/`.
+learn and the target the reproducibility guard round-trips against.
+
+**PARTIAL (target) datapack = official `CatchChallenger-datapack/`:**
+* target TILESET (read-only input) = `map/tileset/` (12 `.tsx`: `t1..t3`, `building-small`, `inside-*`, `animations`, …) — tag it (tags to the sidecar, never modify the `.tsx`).
+* generated maps OUTPUT = `map/main/generated/` — the ONLY writable path in that datapack (owner-authorized); generated `.tmx` reference `map/tileset/` by relative path. Dev/iteration may stage to tmpfs first.
 
 Goal (owner): stop hand-coding placement rules. Instead **tag every tile** of both
 the hand-made (Pokémon-style) tilesets and the official tileset with a shared
