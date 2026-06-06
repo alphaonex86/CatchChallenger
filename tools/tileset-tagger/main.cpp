@@ -1304,6 +1304,9 @@ int main(int argc, char *argv[])
     MainWindow window;
     window.show();
     if(!args.isEmpty() && !args.at(0).startsWith("--"))
+    {
+        window.hideOpenButton();   // folder/file came from the CLI -> no Open button
         window.openPath(args.at(0));
+    }
     return app.exec();
 }
