@@ -1300,10 +1300,10 @@ int main(int argc, char *argv[])
     if(!args.isEmpty() && args.at(0)=="--genmap")
         return runGenMap(args.mid(1));
 
-    // GUI: optional first arg is a .tsx to open.
+    // GUI: optional first arg is a .tsx OR a directory of tilesets.
     MainWindow window;
-    if(!args.isEmpty() && !args.at(0).startsWith("--"))
-        window.openTsx(args.at(0));
     window.show();
+    if(!args.isEmpty() && !args.at(0).startsWith("--"))
+        window.openPath(args.at(0));
     return app.exec();
 }

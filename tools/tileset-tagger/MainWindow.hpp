@@ -11,6 +11,7 @@
 #include "MapUsageIndex.hpp"
 
 #include <QMainWindow>
+#include <QStringList>
 #include <vector>
 
 class TagModel;
@@ -26,6 +27,10 @@ public:
     MainWindow();
     ~MainWindow();
     bool openTsx(const QString &path);
+    void openPath(const QString &path);   // a .tsx OR a directory of tilesets
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     void onOpen();
@@ -37,8 +42,10 @@ private slots:
     void onMapPicked(int index);
     void onToggleUntagged(bool on);
     void onNextUntagged();        // jump to the next tile needing attention (red or yellow)
-    void onVerify();              // accept the selected yellow guesses as verified
+    void onVerify();              // apply the current settings as verified + advance
     void onSuggest();   // bootstrap: auto-tag the unambiguous terrain
+    void onZoomIn();
+    void onZoomOut();
 
 private:
     TagModel *model_;
@@ -65,9 +72,14 @@ private:
     int selR0_;
     int selC1_;
     int selR1_;
+    QStringList tsxQueue_;        // when a directory is opened: all .tsx to tag
+    int tsxIndex_;                // current position in tsxQueue_
     void refreshGuard();
     void updateTitle();
     void prefillFromUsage(const std::vector<int> &ids);   // guess tag from the maps
+    int applySelection();         // apply current settings to the selection, verified
+    void openNextIncomplete();    // open the next not-fully-verified tileset in the queue
+    void fitViewToWindow();       // scale the tileset to the viewport width
 };
 
 #endif // TILESETTAGGER_MAINWINDOW_HPP

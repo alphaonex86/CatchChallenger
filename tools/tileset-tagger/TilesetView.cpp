@@ -5,6 +5,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QWheelEvent>
 
 // stable colour per category name (FNV-1a hash -> hue) so tagged tiles are
 // visually grouped on the sheet.
@@ -67,10 +68,14 @@ void TilesetView::setZoom(int z)
 {
     if(z<1)
         z=1;
+    if(z>24)
+        z=24;
     zoom_=z;
     updateGeometry();
     update();
 }
+
+int TilesetView::zoom() const { return zoom_; }
 
 QSize TilesetView::sizeHint() const
 {
@@ -173,6 +178,18 @@ void TilesetView::paintEvent(QPaintEvent *)
         p.setBrush(QColor(90,170,255,45));
         p.drawRect(sel);
     }
+}
+
+void TilesetView::wheelEvent(QWheelEvent *event)
+{
+    // Ctrl+wheel zooms; plain wheel scrolls (let the scroll area handle it)
+    if(event->modifiers() & Qt::ControlModifier)
+    {
+        setZoom(zoom_ + (event->angleDelta().y()>0 ? 1 : -1));
+        event->accept();
+    }
+    else
+        QWidget::wheelEvent(event);
 }
 
 void TilesetView::mousePressEvent(QMouseEvent *event)
