@@ -22,9 +22,13 @@ public:
         int h;
         int tileW;
         int tileH;
-        std::vector<std::string> categoryGrid;   // size w*h; "" = no category
+        std::vector<std::string> categoryGrid;   // size w*h; "" = no category (TOPMOST cell)
         std::vector<std::string> topTilesetCanon; // canonical .tsx path of the top tile per cell ("" = none)
         std::vector<int> topTileId;               // tileId of the top tile per cell (-1 = none)
+        // PER-LAYER (the z axis): layerNames[z] + layerGrids[z][x+y*w] = category ("" none).
+        // This is the (x,y,z) category tensor for learning map<->tileset structure.
+        std::vector<std::string> layerNames;
+        std::vector<std::vector<std::string> > layerGrids;
         QImage realRender;                        // the map as drawn
         QImage categoryRender;                    // each cell = its category colour
         int totalDrawn;                           // cells with any tile

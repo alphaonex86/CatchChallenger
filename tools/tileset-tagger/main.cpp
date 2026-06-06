@@ -20,6 +20,7 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QPainter>
@@ -266,6 +267,81 @@ static int runEvalSuggest(const QStringList &args)
         ++it;
     }
     return 0;
+}
+
+// Export ONE map as its (x,y,z) CATEGORY TENSOR: per-layer grid of category indices
+// (keyed to a "categories" list) — the learning input for map<->tileset structure.
+static int mapTensorOne(const QString &mapPath,const QString &outPath)
+{
+    MapDecoder dec;
+    MapDecoder::Result r;
+    QString err;
+    if(!dec.decode(mapPath,r,err)) { std::cerr << "decode FAIL " << mapPath.toStdString() << ": " << err.toStdString() << std::endl; return 1; }
+    std::map<std::string,int> catIdx;
+    std::vector<std::string> cats;
+    cats.push_back(std::string());            // index 0 = "" (no category)
+    catIdx[std::string()]=0;
+    QJsonArray layersArr;
+    size_t z=0;
+    while(z<r.layerGrids.size())
+    {
+        const std::vector<std::string> &g=r.layerGrids.at(z);
+        QJsonArray grid;
+        size_t i=0;
+        while(i<g.size())
+        {
+            std::map<std::string,int>::iterator it=catIdx.find(g.at(i));
+            int idx;
+            if(it==catIdx.end()) { idx=(int)cats.size(); catIdx[g.at(i)]=idx; cats.push_back(g.at(i)); }
+            else idx=it->second;
+            grid.append(idx);
+            i++;
+        }
+        QJsonObject lo;
+        lo["name"]=QString::fromStdString(r.layerNames.at(z));
+        lo["z"]=(int)z;
+        lo["grid"]=grid;          // row-major, length w*h, value = category index
+        layersArr.append(lo);
+        z++;
+    }
+    QJsonArray catsArr;
+    size_t c=0;
+    while(c<cats.size()) { catsArr.append(QString::fromStdString(cats.at(c))); c++; }
+    QJsonObject root;
+    root["map"]=QFileInfo(mapPath).fileName();
+    root["w"]=r.w; root["h"]=r.h; root["tileW"]=r.tileW; root["tileH"]=r.tileH;
+    root["categories"]=catsArr;
+    root["layers"]=layersArr;
+    QFile f(outPath);
+    if(!f.open(QIODevice::WriteOnly)) { std::cerr << "cannot write " << outPath.toStdString() << std::endl; return 1; }
+    f.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
+    f.close();
+    std::cout << QFileInfo(mapPath).fileName().toStdString() << ": " << r.w << "x" << r.h << "x" << r.layerGrids.size()
+              << " tensor (" << (cats.size()-1) << " categories, " << r.tagged << "/" << r.totalDrawn << " tagged) -> "
+              << outPath.toStdString() << std::endl;
+    return 0;
+}
+
+static int runMapTensor(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "maptensor needs: <map.tmx | map-dir> <out.json | out-dir>" << std::endl; return 1; }
+    QFileInfo fi(args.at(0));
+    if(fi.isDir())
+    {
+        QDir outDir(args.at(1));
+        if(!outDir.exists()) QDir().mkpath(args.at(1));
+        QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+        int n=0,rc=0;
+        while(it.hasNext())
+        {
+            const QString tmx=it.next();
+            const QString out=outDir.absoluteFilePath(QFileInfo(tmx).completeBaseName()+".json");
+            if(mapTensorOne(tmx,out)!=0) rc=1; else n++;
+        }
+        std::cout << "exported " << n << " map tensor(s) -> " << args.at(1).toStdString() << std::endl;
+        return rc;
+    }
+    return mapTensorOne(args.at(0),args.at(1));
 }
 
 // top-N (count,name) pairs of a histogram, descending.
@@ -1292,7 +1368,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--maptensor");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -1310,6 +1386,8 @@ int main(int argc, char *argv[])
         return runSuggest(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--evalsuggest")
         return runEvalSuggest(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--maptensor")
+        return runMapTensor(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
         return runClassify(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--decode")
