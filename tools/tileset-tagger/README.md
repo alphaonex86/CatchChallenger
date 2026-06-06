@@ -99,6 +99,7 @@ tileset-tagger --learn    <map-dir> <rules.json>                    # learn the 
 tileset-tagger --verify   <map-dir> <rules.json> [threshold]        # reproducibility guard (replay == real)
 tileset-tagger --structure <map-dir> <struct.json>                  # learn building templates + feature-zone sizes
 tileset-tagger --generate <struct.json> <out.png> [W H seed]        # synthesise a rigid-rectangular category map
+tileset-tagger --genmap  <struct.json> <tileset-dir> <out.tmx> [W H seed]   # generate + map to real tiles -> .tmx
 ```
 
 ## How to start
