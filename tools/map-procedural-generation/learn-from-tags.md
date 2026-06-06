@@ -101,8 +101,16 @@ built. After both tilesets are tagged and the detection is confirmed:
 2. **Compose the new maps**, gated by the reproducibility guard AND a human
    rating: regenerate the MODEL maps from the MODEL tileset with the recorded
    (non-random) choices and round-trip to identity; then rate ~10 typical
-   generated maps — most must score ≥4/5 to ship. The rating notes feed back into
-   tuning the rules (a human-noted system).
+   generated maps — shown MULTIPLE-at-once in a grid so several are rated in one
+   shot — most must score ≥4/5 to ship. The rating notes feed back into tuning the
+   rules (a human-noted system).
+
+## The human's whole job is small
+Auto-detection/learning/generation do the work. The human only: (1) fix the FEW
+tag-detection errors on the model tileset, (2) add missing content + fix the few
+errors on the target tileset, (3) batch-rate generated maps until the algorithm is
+tuned. Make detection cover enough that only a few fixes remain — extend the
+auto-tagger, never push bulk tagging onto the human.
 
 ## Detection problems → report, don't guess
 
