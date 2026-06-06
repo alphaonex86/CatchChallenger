@@ -366,6 +366,191 @@ static int runLearn(const QStringList &args)
     return 0;
 }
 
+// ---- reproducibility guard -------------------------------------------------
+// The generator visits cells in raster order; at each cell the ALLOWED set is the
+// categories compatible with the already-placed left + up neighbours per the
+// learned adjacency rules (count >= threshold). encode() walks a real map the same
+// way and records, per cell, the index of the real category in its allowed set
+// (the "choice"); replay() re-runs the generator with those choices and must
+// reproduce the map IDENTICALLY. coverage = % cells the rules could choose.
+
+static bool loadRules(const QString &path,std::vector<std::string> &catList,
+                      std::map<std::string,std::map<std::string,long> > &rightOf,
+                      std::map<std::string,std::map<std::string,long> > &downOf)
+{
+    QFile f(path);
+    if(!f.open(QIODevice::ReadOnly))
+        return false;
+    const QJsonDocument jd=QJsonDocument::fromJson(f.readAll());
+    f.close();
+    if(!jd.isObject())
+        return false;
+    const QJsonObject root=jd.object();
+    const QJsonObject cats=root.value("categories").toObject();
+    QJsonObject::const_iterator c=cats.constBegin();
+    while(c!=cats.constEnd()) { catList.push_back(c.key().toStdString()); ++c; }
+    std::sort(catList.begin(),catList.end());
+    const char *dirs[2]={"rightOf","downOf"};
+    int d=0;
+    while(d<2)
+    {
+        const QJsonObject mat=root.value(dirs[d]).toObject();
+        std::map<std::string,std::map<std::string,long> > &dst = d==0 ? rightOf : downOf;
+        QJsonObject::const_iterator a=mat.constBegin();
+        while(a!=mat.constEnd())
+        {
+            const QJsonObject row=a.value().toObject();
+            QJsonObject::const_iterator b=row.constBegin();
+            while(b!=row.constEnd()) { dst[a.key().toStdString()][b.key().toStdString()]=(long)b.value().toDouble(); ++b; }
+            ++a;
+        }
+        d++;
+    }
+    return true;
+}
+
+static long adjCount(const std::map<std::string,std::map<std::string,long> > &m,
+                     const std::string &a,const std::string &b)
+{
+    std::map<std::string,std::map<std::string,long> >::const_iterator it=m.find(a);
+    if(it==m.cend())
+        return 0;
+    std::map<std::string,long>::const_iterator jt=it->second.find(b);
+    return jt==it->second.cend() ? 0 : jt->second;
+}
+
+static std::vector<std::string> allowedAt(const std::vector<std::string> &grid,int x,int y,int w,
+                                          const std::vector<std::string> &catList,
+                                          const std::map<std::string,std::map<std::string,long> > &rightOf,
+                                          const std::map<std::string,std::map<std::string,long> > &downOf,long threshold)
+{
+    const std::string left = x>0 ? grid.at((x-1)+y*w) : std::string();
+    const std::string up   = y>0 ? grid.at(x+(y-1)*w) : std::string();
+    std::vector<std::string> out;
+    size_t i=0;
+    while(i<catList.size())
+    {
+        const std::string &C=catList.at(i);
+        bool ok=true;
+        if(!left.empty() && adjCount(rightOf,left,C)<threshold) ok=false;       // empty neighbour = border, no constraint
+        if(ok && !up.empty() && adjCount(downOf,up,C)<threshold) ok=false;
+        if(ok) out.push_back(C);
+        i++;
+    }
+    return out;
+}
+
+static int runVerify(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "verify needs: <map-dir> <rules.json> [threshold]" << std::endl; return 1; }
+    const long threshold = args.size()>2 ? args.at(2).toLong() : 1;
+    std::vector<std::string> catList;
+    std::map<std::string,std::map<std::string,long> > rightOf,downOf;
+    if(!loadRules(args.at(1),catList,rightOf,downOf)) { std::cerr << "cannot load rules " << args.at(1).toStdString() << std::endl; return 1; }
+
+    MapDecoder dec;
+    QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    int nmaps=0,identicalMaps=0;
+    long totalCells=0,coveredCells=0;
+    std::map<std::string,long> gapPairs;     // "L>C" / "U/C" adjacency the threshold pruned
+    while(it.hasNext())
+    {
+        const QString tmx=it.next();
+        MapDecoder::Result r;
+        QString err;
+        if(!dec.decode(tmx,r,err))
+            continue;
+        nmaps++;
+        const int w=r.w,h=r.h;
+        // encode (place real cats; record choice index in the allowed set)
+        std::vector<int> choice(w*h,-2);          // -2 empty, -1 escape, >=0 allowed index
+        std::vector<std::string> escapeCat;
+        long mapCovered=0,mapCells=0;
+        {
+            int y=0;
+            while(y<h)
+            {
+                int x=0;
+                while(x<w)
+                {
+                    const std::string &C=r.categoryGrid.at(x+y*w);
+                    if(!C.empty())
+                    {
+                        mapCells++;
+                        const std::vector<std::string> allow=allowedAt(r.categoryGrid,x,y,w,catList,rightOf,downOf,threshold);
+                        int k=-1,j=0;
+                        while(j<(int)allow.size()) { if(allow.at(j)==C) { k=j; break; } j++; }
+                        if(k>=0) { choice[x+y*w]=k; mapCovered++; }
+                        else
+                        {
+                            choice[x+y*w]=-1;
+                            escapeCat.push_back(C);
+                            // record which adjacency the pruned rules could not admit
+                            if(x>0) gapPairs[r.categoryGrid.at((x-1)+y*w)+" → "+C]++;
+                            else if(y>0) gapPairs[r.categoryGrid.at(x+(y-1)*w)+" ↓ "+C]++;
+                        }
+                    }
+                    x++;
+                }
+                y++;
+            }
+        }
+        // replay (reconstruct from the choices; must equal the real grid)
+        std::vector<std::string> recon(w*h);
+        size_t escI=0;
+        bool identical=true;
+        {
+            int y=0;
+            while(y<h)
+            {
+                int x=0;
+                while(x<w)
+                {
+                    const int ch=choice[x+y*w];
+                    std::string out;
+                    if(ch==-2)
+                        out=std::string();
+                    else if(ch==-1)
+                        out = escI<escapeCat.size() ? escapeCat.at(escI++) : std::string();
+                    else
+                    {
+                        const std::vector<std::string> allow=allowedAt(recon,x,y,w,catList,rightOf,downOf,threshold);
+                        out = ch<(int)allow.size() ? allow.at(ch) : std::string("?");
+                    }
+                    recon[x+y*w]=out;
+                    if(out!=r.categoryGrid.at(x+y*w))
+                        identical=false;
+                    x++;
+                }
+                y++;
+            }
+        }
+        if(identical)
+            identicalMaps++;
+        else
+            std::cerr << "  NOT IDENTICAL (framework bug): " << QFileInfo(tmx).fileName().toStdString() << std::endl;
+        totalCells+=mapCells;
+        coveredCells+=mapCovered;
+    }
+    if(nmaps==0) { std::cerr << "verify: no decodable maps" << std::endl; return 1; }
+
+    const int idPct = identicalMaps*100/nmaps;
+    const long covPct = totalCells>0 ? coveredCells*100/totalCells : 0;
+    std::cout << "REPRODUCIBILITY GUARD (threshold=" << threshold << "):" << std::endl;
+    std::cout << "  identical replay: " << identicalMaps << "/" << nmaps << " maps (" << idPct << "%)"
+              << (idPct==100 ? "  [SOUND]" : "  [FRAMEWORK BUG]") << std::endl;
+    std::cout << "  rule coverage: " << covPct << "% of " << totalCells << " cells chosen by the rules ("
+              << (totalCells-coveredCells) << " escapes)" << std::endl;
+    if(!gapPairs.empty())
+    {
+        const std::vector<std::pair<long,std::string> > top=topOf(gapPairs,8);
+        std::cout << "  top adjacencies the threshold could not admit:" << std::endl;
+        size_t i=0;
+        while(i<top.size()) { std::cout << "    " << top.at(i).second << " (" << top.at(i).first << ")" << std::endl; i++; }
+    }
+    return 0;
+}
+
 static int decodeOne(const QString &mapPath,const QString &outPng)
 {
     MapDecoder dec;
@@ -449,7 +634,7 @@ int main(int argc, char *argv[])
     const bool cli = !args.isEmpty()
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
-            || args.at(0)=="--decode" || args.at(0)=="--learn");
+            || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -471,6 +656,8 @@ int main(int argc, char *argv[])
         return runDecode(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--learn")
         return runLearn(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--verify")
+        return runVerify(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;
