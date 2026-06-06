@@ -105,19 +105,20 @@ void MapUsageView::paintEvent(QPaintEvent *)
     }
 
     // fit the map into the widget, centred (no upscale beyond 4x for tiny maps)
+    if(map_.width()<=0 || map_.height()<=0)
+        return;
     double s=(double)width()/map_.width();
     const double sy=(double)height()/map_.height();
     if(sy<s)
         s=sy;
     if(s>4.0)
         s=4.0;
+    if(s<=0.0)
+        s=1.0;
     const double ox=(width()-map_.width()*s)/2.0;
     const double oy=(height()-map_.height()*s)/2.0;
+    p.setRenderHint(QPainter::SmoothPixmapTransform,false);
     p.drawImage(QRectF(ox,oy,map_.width()*s,map_.height()*s),map_);
-
-    // dim the rest so the highlights pop
-    p.fillRect(rect(),QColor(0,0,0,90));
-    p.drawImage(QRectF(ox,oy,map_.width()*s,map_.height()*s),map_,QRectF(0,0,map_.width(),map_.height()));
 
     size_t i=0;
     while(i<rects_.size())
