@@ -108,6 +108,41 @@ bool MapDecoder::decode(const QString &mapPath, Result &out, QString &error)
     std::vector<Tiled::TileLayer*> layers;
     collectTileLayers(m->layers(),layers);
 
+    // PER-LAYER (z) category grids — the (x,y,z) tensor (bottom layer = z 0).
+    {
+        size_t L=0;
+        while(L<layers.size())
+        {
+            Tiled::TileLayer *tl=layers.at(L);
+            out.layerNames.push_back(tl->name().toStdString());
+            std::vector<std::string> grid(out.w*out.h);
+            int y=0;
+            while(y<out.h)
+            {
+                int x=0;
+                while(x<out.w)
+                {
+                    const int lx=x-tl->x();
+                    const int ly=y-tl->y();
+                    if(lx>=0 && ly>=0 && lx<tl->width() && ly<tl->height())
+                    {
+                        const Tiled::Cell &c=tl->cellAt(lx,ly);
+                        if(!c.isEmpty())
+                        {
+                            std::map<Tiled::Tileset*,TagModel*>::iterator it=tags.find(c.tileset());
+                            if(it!=tags.end())
+                                grid[x+y*out.w]=it->second->tagOf(c.tileId()).category;
+                        }
+                    }
+                    x++;
+                }
+                y++;
+            }
+            out.layerGrids.push_back(grid);
+            L++;
+        }
+    }
+
     const int tw=out.tileW;
     const int th=out.tileH;
     out.realRender=QImage(out.w*tw,out.h*th,QImage::Format_ARGB32_Premultiplied);
