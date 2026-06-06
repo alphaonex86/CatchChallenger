@@ -15,7 +15,9 @@
 #include "MapUsageIndex.hpp"
 
 #include <QApplication>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QString>
 #include <QStringList>
 #include <iostream>
@@ -167,13 +169,89 @@ static int runUsage(const QStringList &args)
     return 0;
 }
 
+// the unambiguous terrain layers map visual==logical 1:1; everything else
+// (wall/cliff/tree on Collisions, roof/canopy on WalkBehind, ground/path on
+// Walkable) is visually ambiguous and left for the human.
+static QString unambiguousCategory(const QString &layer,QString &normLayer)
+{
+    const QString L=layer.toLower();
+    if(L.contains("water")) { normLayer="water"; return "water"; }
+    if(L.contains("lava")) { normLayer="lava"; return "lava"; }
+    if(L.contains("ledge"))
+    {
+        normLayer="ledge";
+        if(L.contains("down")) return "ledge-down";
+        if(L.contains("up")) return "ledge-up";
+        if(L.contains("left")) return "ledge-left";
+        if(L.contains("right")) return "ledge-right";
+        return "ledge-down";
+    }
+    if(L=="grass") { normLayer="grass"; return "grass-tall"; }   // tall-grass layer (not OnGrass)
+    return QString();   // ambiguous -> human
+}
+
+static int suggestOne(const QString &tsx)
+{
+    TagModel model;
+    if(!model.load(tsx)) { std::cerr << model.error().toStdString() << std::endl; return 1; }
+    MapUsageIndex index;
+    index.build(tsx);
+    const std::map<int,MapUsageIndex::TileStat> stats=index.analyzeAllTiles();
+    int applied=0,ambiguous=0,alreadyTagged=0;
+    std::map<int,MapUsageIndex::TileStat>::const_iterator it=stats.begin();
+    while(it!=stats.cend())
+    {
+        const int id=it->first;
+        const MapUsageIndex::TileStat &s=it->second;
+        if(!model.tagOf(id).category.empty()) { alreadyTagged++; ++it; continue; }
+        QString dom;
+        int best=-1;
+        std::map<std::string,int>::const_iterator l=s.layerCounts.begin();
+        while(l!=s.layerCounts.cend()) { if(l->second>best) { best=l->second; dom=QString::fromStdString(l->first); } ++l; }
+        QString norm;
+        const QString cat=unambiguousCategory(dom,norm);
+        if(cat.isEmpty()) { ambiguous++; ++it; continue; }
+        std::map<std::string,std::string> attrs;
+        attrs["layer"]=norm.toStdString();
+        attrs["walkable"]= (s.walkableCells+s.ledgeCells)>=s.blockedCells ? "true" : "false";
+        std::vector<int> one;
+        one.push_back(id);
+        model.tagTiles(one,cat.toStdString(),attrs);
+        applied++;
+        ++it;
+    }
+    if(!model.save()) { std::cerr << model.error().toStdString() << std::endl; return 1; }
+    const size_t remaining=model.untaggedNonEmpty().size();
+    std::cout << QFileInfo(tsx).fileName().toStdString() << ": +" << applied << " terrain auto-tagged ("
+              << index.candidateCount() << " maps), " << remaining << " left for the human" << std::endl;
+    return 0;
+}
+
+static int runSuggest(const QStringList &args)
+{
+    if(args.isEmpty()) { std::cerr << "suggest needs: <x.tsx | tileset-dir>" << std::endl; return 1; }
+    const QFileInfo fi(args.at(0));
+    if(fi.isDir())
+    {
+        QDir d(args.at(0));
+        const QStringList tsxs=d.entryList(QStringList()<<"*.tsx",QDir::Files,QDir::Name);
+        std::cout << "suggest: " << tsxs.size() << " tileset(s) in " << args.at(0).toStdString() << std::endl;
+        int rc=0,k=0;
+        while(k<tsxs.size()) { if(suggestOne(d.absoluteFilePath(tsxs.at(k)))!=0) rc=1; k++; }
+        std::cout << "done — open each in the GUI to set the visually-ambiguous categories." << std::endl;
+        return rc;
+    }
+    return suggestOne(args.at(0));
+}
+
 int main(int argc, char *argv[])
 {
     QStringList args;
     int i=1;
     while(i<argc) { args.append(QString::fromUtf8(argv[i])); i++; }
     const bool cli = !args.isEmpty()
-        && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest" || args.at(0)=="--usage");
+        && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
+            || args.at(0)=="--usage" || args.at(0)=="--suggest");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -187,6 +265,8 @@ int main(int argc, char *argv[])
         return runSelftest(args.at(1));
     if(!args.isEmpty() && args.at(0)=="--usage")
         return runUsage(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--suggest")
+        return runSuggest(args.mid(1));
 
     // GUI: optional first arg is a .tsx to open.
     MainWindow window;

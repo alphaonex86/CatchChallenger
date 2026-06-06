@@ -125,6 +125,8 @@ MainWindow::MainWindow() :
     lay->addWidget(showUntagged);
     guardLabel_=new QLabel(panel);
     lay->addWidget(guardLabel_);
+    QPushButton *suggestBtn=new QPushButton(tr("Suggest terrain (auto-tag water/grass/ledge)"),panel);
+    lay->addWidget(suggestBtn);
     QPushButton *nextBtn=new QPushButton(tr("Jump to next untagged"),panel);
     lay->addWidget(nextBtn);
 
@@ -154,6 +156,7 @@ MainWindow::MainWindow() :
     connect(tagBtn,&QPushButton::clicked,this,&MainWindow::onTag);
     connect(clearBtn,&QPushButton::clicked,this,&MainWindow::onClearTag);
     connect(saveBtn,&QPushButton::clicked,this,&MainWindow::onSave);
+    connect(suggestBtn,&QPushButton::clicked,this,&MainWindow::onSuggest);
     connect(nextBtn,&QPushButton::clicked,this,&MainWindow::onNextUntagged);
     connect(showUntagged,&QCheckBox::toggled,this,&MainWindow::onToggleUntagged);
     connect(view_,&TilesetView::selectionChanged,this,&MainWindow::onSelection);
@@ -346,6 +349,68 @@ static void setComboTo(QComboBox *box,const QString &text)
     const int i=box->findText(text);
     if(i>=0)
         box->setCurrentIndex(i);
+}
+
+// unambiguous terrain layer -> category (visual==logical); "" = leave to human.
+static QString unambiguousCategoryFor(const QString &layer,QString &normLayer)
+{
+    const QString L=layer.toLower();
+    if(L.contains("water")) { normLayer="water"; return "water"; }
+    if(L.contains("lava")) { normLayer="lava"; return "lava"; }
+    if(L.contains("ledge"))
+    {
+        normLayer="ledge";
+        if(L.contains("down")) return "ledge-down";
+        if(L.contains("up")) return "ledge-up";
+        if(L.contains("left")) return "ledge-left";
+        if(L.contains("right")) return "ledge-right";
+        return "ledge-down";
+    }
+    if(L=="grass") { normLayer="grass"; return "grass-tall"; }
+    return QString();
+}
+
+void MainWindow::onSuggest()
+{
+    if(usage_->candidateCount()==0)
+    {
+        statusBar()->showMessage(tr("no maps reference this tileset — nothing to suggest"),3000);
+        return;
+    }
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    const std::map<int,MapUsageIndex::TileStat> stats=usage_->analyzeAllTiles();
+    int applied=0;
+    std::map<int,MapUsageIndex::TileStat>::const_iterator it=stats.begin();
+    while(it!=stats.cend())
+    {
+        const int id=it->first;
+        const MapUsageIndex::TileStat &s=it->second;
+        if(model_->tagOf(id).category.empty())
+        {
+            QString dom;
+            int best=-1;
+            std::map<std::string,int>::const_iterator l=s.layerCounts.begin();
+            while(l!=s.layerCounts.cend()) { if(l->second>best) { best=l->second; dom=QString::fromStdString(l->first); } ++l; }
+            QString norm;
+            const QString cat=unambiguousCategoryFor(dom,norm);
+            if(!cat.isEmpty())
+            {
+                std::map<std::string,std::string> attrs;
+                attrs["layer"]=norm.toStdString();
+                attrs["walkable"]= (s.walkableCells+s.ledgeCells)>=s.blockedCells ? "true" : "false";
+                std::vector<int> one;
+                one.push_back(id);
+                model_->tagTiles(one,cat.toStdString(),attrs);
+                applied++;
+            }
+        }
+        ++it;
+    }
+    QApplication::restoreOverrideCursor();
+    view_->refresh();
+    refreshGuard();
+    updateTitle();
+    statusBar()->showMessage(tr("suggested %1 terrain tile(s) (water/grass/ledge/lava) — set the rest by eye, then Save").arg(applied),6000);
 }
 
 void MainWindow::prefillFromUsage(const std::vector<int> &ids)

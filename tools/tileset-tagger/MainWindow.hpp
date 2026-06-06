@@ -37,6 +37,7 @@ private slots:
     void onMapPicked(int index);
     void onToggleUntagged(bool on);
     void onNextUntagged();
+    void onSuggest();   // bootstrap: auto-tag the unambiguous terrain
 
 private:
     TagModel *model_;
