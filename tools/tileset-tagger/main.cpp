@@ -825,7 +825,8 @@ static double tileOpaqueFrac(TagModel *tm,int id)
 // layers, write CSV layers + relative tileset refs.  Shared by the struct-based
 // (--genmap) and the coherent WFC (--genwfc) front-ends.
 static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
-                            const QString &tilesetDir,const QString &outPath,unsigned seed);
+                            const QString &tilesetDir,const QString &outPath,unsigned seed,
+                            const std::vector<std::pair<int,int> > &bots=std::vector<std::pair<int,int> >());
 
 static int runGenMap(const QStringList &args)
 {
@@ -841,7 +842,8 @@ static int runGenMap(const QStringList &args)
     return writeTmxFromGrid(grid,W,H,args.at(1),args.at(2),seed);
 }
 static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
-                            const QString &tilesetDir,const QString &outPath,unsigned seed)
+                            const QString &tilesetDir,const QString &outPath,unsigned seed,
+                            const std::vector<std::pair<int,int> > &bots)
 {
     // load the official tilesets + their sidecar tags; category -> first (tileset,tileId)
     QDir tdir(tilesetDir);
@@ -940,6 +942,14 @@ static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
             if(used.count(c->first)>0) { size_t k=0; while(k<c->second.size()) { usedTs.insert(c->second.at(k).first); k++; } }
             ++c;
         }
+    }
+    // bot markers come from invisible.tsx (tile 0) — ensure it gets a firstgid + ref
+    int invisibleIdx=-1;
+    if(!bots.empty())
+    {
+        size_t ii=0;
+        while(ii<tsxAbs.size()) { if(QFileInfo(tsxAbs.at(ii)).fileName()=="invisible.tsx") { invisibleIdx=(int)ii; break; } ii++; }
+        if(invisibleIdx>=0) usedTs.insert(invisibleIdx);
     }
     std::map<int,int> firstgid;
     int run=1;
@@ -1047,6 +1057,23 @@ static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
             lid++;
         }
         oi++;
+    }
+    // bots: the Object group with invisible.tsx markers (type="bot" + id property,
+    // matching the sibling <map>.xml the caller writes).
+    if(!bots.empty() && invisibleIdx>=0)
+    {
+        w << " <objectgroup id=\"90\" name=\"Object\">\n";
+        size_t b=0;
+        while(b<bots.size())
+        {
+            const int bx=bots.at(b).first, by=bots.at(b).second;
+            w << "  <object id=\"" << (b+1) << "\" type=\"bot\" gid=\"" << firstgid[invisibleIdx]
+              << "\" x=\"" << bx*16 << "\" y=\"" << (by+1)*16 << "\" width=\"16\" height=\"16\">\n";
+            w << "   <properties><property name=\"id\" type=\"int\" value=\"" << (b+1) << "\"/></properties>\n";
+            w << "  </object>\n";
+            b++;
+        }
+        w << " </objectgroup>\n";
     }
     w << "</map>\n";
     out.close();
@@ -2300,6 +2327,7 @@ static int runGenCity(const QStringList &args)
     {
         std::mt19937 rng(seed0+(unsigned int)i*131u);
         std::vector<std::string> grid(W*H,std::string("ground"));
+        std::vector<std::pair<int,int> > botCand;   // road cell in front of each door
         const int margin=3, PLOTW=8, PLOTH=7;
         int py=margin;
         while(py+PLOTH<=H-margin)
@@ -2328,6 +2356,8 @@ static int runGenCity(const QStringList &args)
                 // door opening at the bottom-centre (path onto the road)
                 const int dx=bx+bw/2, dy=by+bh-1;
                 if(dx<W && dy<H) grid[dx+dy*W]=std::string("path");
+                const int broady=py+PLOTH-1;       // the road row in front of this door
+                if(dx<W && broady<H) botCand.push_back(std::pair<int,int>(dx,broady));
                 x+=PLOTW;
             }
             // horizontal road below this building row
@@ -2341,9 +2371,36 @@ static int runGenCity(const QStringList &args)
         int vy=margin;
         while(vy<H-margin) { if(grid[vc+vy*W]=="ground") grid[vc+vy*W]=std::string("path"); vy++; }
 
+        // place a bot in front of ~1 in 3 buildings (an NPC standing on the street)
+        std::vector<std::pair<int,int> > bots;
+        {
+            size_t k=0;
+            while(k<botCand.size()) { if(rng()%3==0 && bots.size()<12) bots.push_back(botCand[k]); k++; }
+        }
         const QString outPath=QDir(args.at(2)).absoluteFilePath(QString("city-%1.tmx").arg(i,2,10,QChar('0')));
-        if(writeTmxFromGrid(grid,W,H,args.at(1),outPath,seed0+(unsigned int)i)==0)
+        if(writeTmxFromGrid(grid,W,H,args.at(1),outPath,seed0+(unsigned int)i,bots)==0)
+        {
+            // sibling <map>.xml with one generic NPC dialog per bot id
+            const QString xmlPath=QDir(args.at(2)).absoluteFilePath(QString("city-%1.xml").arg(i,2,10,QChar('0')));
+            QFile xf(xmlPath);
+            if(xf.open(QIODevice::WriteOnly|QIODevice::Truncate))
+            {
+                QTextStream xw(&xf);
+                xw << "<map zone=\"generated\" type=\"city\">\n";
+                xw << " <name>Generated City " << i << "</name>\n";
+                size_t b=0;
+                while(b<bots.size())
+                {
+                    xw << " <bot id=\"" << (b+1) << "\">\n";
+                    xw << "  <step type=\"text\"><text><![CDATA[Welcome to our town!]]></text></step>\n";
+                    xw << " </bot>\n";
+                    b++;
+                }
+                xw << "</map>\n";
+                xf.close();
+            }
             made++;
+        }
         i++;
     }
     std::cout << "gencity: " << made << " city map(s) -> " << args.at(2).toStdString() << std::endl;
