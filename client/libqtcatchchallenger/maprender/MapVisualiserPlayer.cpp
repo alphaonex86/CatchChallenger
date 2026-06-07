@@ -27,6 +27,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     MapVisualiser(debugTags,useCache,openGL)
 {
     wasPathFindingUsed=false;
+    firstSpawnDone=false;
     clickInteractTargetValid=false;
     clickInteractTargetMap=0;
     clickInteractTargetX=0;
@@ -705,6 +706,24 @@ void MapVisualiserPlayer::moveStepSlot()
                           << " from map=" << std::to_string(pre_map) << "(" << std::to_string(pre_x) << "," << std::to_string(pre_y) << ")"
                           << " -> map=" << std::to_string(current_map) << "(" << std::to_string(x) << "," << std::to_string(y) << ")"
                           << std::endl;
+                //easy-to-grep move trace: one line per tile, tagged with the input
+                //source (keyboard vs a mouse/pathfinding walk via wasPathFindingUsed)
+                {
+                    const char *moveDirName="?";
+                    switch(direction)
+                    {
+                        case CatchChallenger::Direction_move_at_top:    moveDirName="up";    break;
+                        case CatchChallenger::Direction_move_at_bottom: moveDirName="down";  break;
+                        case CatchChallenger::Direction_move_at_left:   moveDirName="left";  break;
+                        case CatchChallenger::Direction_move_at_right:  moveDirName="right"; break;
+                        default: break;
+                    }
+                    std::cerr << "[MOVE] " << (wasPathFindingUsed?"mouse/pathfinding":"keyboard")
+                              << " " << moveDirName << ": map " << std::to_string(pre_map)
+                              << "(" << std::to_string(pre_x) << "," << std::to_string(pre_y) << ") -> map "
+                              << std::to_string(current_map) << "(" << std::to_string(x) << "," << std::to_string(y) << ")"
+                              << std::endl;
+                }
                 direction=CatchChallenger::MoveOnTheMap::directionToDirectionLook(direction);
             }
             break;
@@ -802,6 +821,11 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
             if(current_teleport.source_x==x && current_teleport.source_y==y)
             {
                 std::cerr << "  -> MATCH: teleporting to map=" << std::to_string(current_teleport.mapIndex)
+                          << "(" << std::to_string(current_teleport.destination_x) << "," << std::to_string(current_teleport.destination_y) << ")"
+                          << std::endl;
+                //easy-to-grep teleport trace (a move via a door / teleport tile)
+                std::cerr << "[TELEPORT] map " << std::to_string(current_map) << "(" << std::to_string(x) << "," << std::to_string(y)
+                          << ") -> map " << std::to_string(current_teleport.mapIndex)
                           << "(" << std::to_string(current_teleport.destination_x) << "," << std::to_string(current_teleport.destination_y) << ")"
                           << std::endl;
                 isTeleported=true;
@@ -1755,6 +1779,7 @@ void MapVisualiserPlayer::resetAll()
     keyPressed.clear();
     blocked=false;
     wasPathFindingUsed=false;
+    firstSpawnDone=false;
     clickInteractTargetValid=false;
     clickInteractPushValid=false;
     inMove=false;
@@ -1846,6 +1871,17 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
     std::cerr << "MapVisualiserPlayer::loadPlayerFromCurrentMap() current_map=" << current_map << " x=" << std::to_string(x) << " y=" << std::to_string(y) << " centerOnPlayer=" << centerOnPlayer << std::endl;
     std::cerr << "[CENTER DEBUG] centerOnPlayer=" << (centerOnPlayer ? "TRUE" : "FALSE") << std::endl;
+    //easy-to-grep: the very first placement is the SPAWN point; later placements
+    //(after a door/teleport) are map entries.
+    if(!firstSpawnDone)
+    {
+        firstSpawnDone=true;
+        std::cerr << "[SPAWN] player spawned on map " << std::to_string(current_map)
+                  << " at (" << std::to_string(x) << "," << std::to_string(y) << ")" << std::endl;
+    }
+    else
+        std::cerr << "[ENTERMAP] player on map " << std::to_string(current_map)
+                  << " at (" << std::to_string(x) << "," << std::to_string(y) << ")" << std::endl;
     if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
     {
         std::cerr << "MapVisualiserPlayer::loadPlayerFromCurrentMap() all_map has no current_map=" << current_map << std::endl;

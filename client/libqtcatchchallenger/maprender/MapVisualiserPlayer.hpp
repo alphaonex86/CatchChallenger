@@ -87,6 +87,9 @@ private:
     //std::string mLastLocation;last displayed info?
     bool blocked;
     bool wasPathFindingUsed;
+    //false until the first [SPAWN] line is printed (later map placements are
+    //logged as [ENTERMAP]); reset on resetAll() so a new game re-spawns
+    bool firstSpawnDone;
     //monster
     std::vector<CatchChallenger::Direction> pendingMonsterMoves;
     Tiled::MapObject * monsterMapObject;
