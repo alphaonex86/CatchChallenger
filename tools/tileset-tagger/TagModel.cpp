@@ -254,7 +254,11 @@ int TagModel::suggestFromTags(int minPercent)
     size_t ui=0;
     while(ui<ids.size())
     {
-        if(tags_.find(ids[ui])==tags_.end())   // untagged tile
+        // refine tiles that are NOT human-verified: untagged OR an auto-guess
+        // (heuristic/KNN) — leave the human's verified tags untouched.
+        std::unordered_map<int,TileTag>::iterator cur=tags_.find(ids[ui]);
+        const bool needs = (cur==tags_.end()) || (cur->second.attr("auto")=="guess");
+        if(needs)
         {
             int bestPct=-1;
             std::string bestCat;
@@ -262,7 +266,8 @@ int TagModel::suggestFromTags(int minPercent)
             while(ti<ids.size())
             {
                 std::unordered_map<int,TileTag>::iterator tg=tags_.find(ids[ti]);
-                if(tg!=tags_.end() && !tg->second.category.empty())
+                // reference set = VERIFIED tags only (no auto flag) — the human's truth
+                if(tg!=tags_.end() && !tg->second.category.empty() && tg->second.attr("auto")!="guess")
                 {
                     int overlap=0,match=0,p=0;
                     while(p<npx)
