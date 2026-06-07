@@ -470,6 +470,11 @@ def main():
     # has no real keepalive — so this needs a real server.
     run_server_interaction_test(dp_name, failed_cases)
 
+    # Drive a live client over its QLocalServer automation socket and replay the
+    # inputs that used to crash the server (/trade <unknown>) and the client
+    # (out-of-fight fight spam -> re-entrant use-after-free). Both are fixed.
+    run_channel_crash_regression_test(dp_name, failed_cases)
+
     summary()
 
 
@@ -538,6 +543,172 @@ def run_server_interaction_test(dp_name, failed_cases):
         for line in out[-25:]:
             print(f"  | {line}")
     stop_server()
+
+
+def _channel_connect(candidate_paths, settle=4.0):
+    """Try each AF_UNIX candidate path; return the first socket that connects and
+    answers GETSTATE with 'STATE'. None if none work within `settle` seconds. The
+    client's QLocalServer socket lives at <TMPDIR>/CatchChallenger-Client-<n>-<uid>;
+    we isolate TMPDIR per-test so slot 0 is ours, but probe a few slots + /tmp as a
+    fallback in case TMPDIR is not honoured by QDir::tempPath()."""
+    import socket as _s, time as _t
+    deadline = _t.time() + settle
+    while _t.time() < deadline:
+        for p in candidate_paths:
+            if not os.path.exists(p):
+                continue
+            sk = None
+            try:
+                sk = _s.socket(_s.AF_UNIX, _s.SOCK_STREAM)
+                sk.settimeout(1.5)
+                sk.connect(p)
+                sk.sendall(b"GETSTATE\n")
+                _t.sleep(0.3)
+                if "STATE" in sk.recv(4096).decode(errors="replace"):
+                    return sk
+                sk.close()
+            except Exception:
+                if sk is not None:
+                    try: sk.close()
+                    except Exception: pass
+        _t.sleep(0.3)
+    return None
+
+
+def _channel_cmd(sk, line, wait=0.5):
+    """Send one newline-terminated command, return the (stripped) reply text."""
+    import time as _t
+    sk.sendall((line + "\n").encode())
+    _t.sleep(wait)
+    buf = b""
+    try:
+        while True:
+            d = sk.recv(4096)
+            if not d:
+                break
+            buf += d
+            if b"\n" in buf:
+                break
+    except Exception:
+        pass
+    return buf.decode(errors="replace").strip()
+
+
+def run_channel_crash_regression_test(dp_name, failed_cases):
+    """Drive a live client over its QLocalServer automation socket against the
+    local server-filedb, replaying the exact inputs that used to crash:
+      - "/trade <unknown>"      -> server ClientList::isNull() out-of-range abort
+      - out-of-fight fight spam -> client re-entrant use-after-free (freed client)
+    Both are fixed; this is the regression guard. PASS iff the server stays up
+    (process alive) after the bad /trade AND the client never SIGSEGVs / throws
+    std::out_of_range under gdb while being driven."""
+    import tempfile, time
+    case = "QLocalServer channel crash-regression vs local server"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- Channel crash-regression (vs local server-filedb): {dp_name} {MAINCODE} ---{C_RESET}\n")
+    setup_server_datapack(SERVER_BUILD, DATAPACK_SRC, MAINCODE)
+    db_dir = os.path.join(SERVER_BUILD, "database")
+    if os.path.isdir(db_dir):
+        shutil.rmtree(db_dir)
+    cache_file = os.path.join(SERVER_BUILD, "datapack-cache.bin")
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+    set_http_datapack_mirror(SERVER_BUILD, "")
+    set_map_visibility_minimize(SERVER_BUILD, "cpu")
+    srv = start_server(SERVER_BUILD)
+    if srv is None:
+        log_fail(case, "server did not start")
+        return
+    if not assert_port_or_fail(SERVER_HOST, int(SERVER_PORT), log_fail,
+                               "channel-crash tcp probe"):
+        stop_server()
+        log_fail(case, "tcp probe failed")
+        return
+    tmpdir = tempfile.mkdtemp(prefix="cc-test-chan-")
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    env["XDG_CONFIG_HOME"] = os.path.join(tmpdir, "config")
+    env["XDG_DATA_HOME"] = os.path.join(tmpdir, "data")
+    # isolate the QLocalServer socket so a parallel client can't steal slot 0
+    env["TMPDIR"] = tmpdir
+    app_name = "CatchChallenger/client-qtcpu800x600"
+    cache_name = f"argument-{SERVER_HOST}-{_config['server_port']}"
+    cache_dir = os.path.join(tmpdir, "data", app_name, "datapack", cache_name)
+    shutil.copytree(os.path.join(SERVER_BUILD, "datapack"), cache_dir,
+                    ignore=shutil.ignore_patterns(".git"))
+    conf_dir = os.path.join(tmpdir, "config", "CatchChallenger")
+    os.makedirs(conf_dir, exist_ok=True)
+    with open(os.path.join(conf_dir, "client-qtcpu800x600.conf"), "w") as f:
+        f.write("[General]\nkey=testChanKey\n")
+    # NO --test flag: the client stays on the map so we can drive it via the socket
+    args = ["--host", SERVER_HOST, "--port", SERVER_PORT,
+            "--autologin", "--character", CHAR_A]
+    log_info("connecting client (qtcpu800x600) for the channel crash-regression run")
+    proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
+    # wait for the client to reach the map
+    on_map = False
+    deadline = time.time() + diagnostic.scale_timeout(DIAG, 150)
+    while time.time() < deadline:
+        if any("MapVisualiserPlayer::mapDisplayedSlot()" in l for l in out):
+            on_map = True
+            break
+        if done.is_set():
+            break
+        time.sleep(0.5)
+    if not on_map:
+        kill_client(proc)
+        stop_server()
+        log_fail(case, f"client never reached the map; early_fail={fail[0]}")
+        for line in out[-25:]:
+            print(f"  | {line}")
+        return
+    uid = os.getuid()
+    candidates = ([os.path.join(tmpdir, f"CatchChallenger-Client-{n}-{uid}") for n in range(4)] +
+                  [os.path.join("/tmp", f"CatchChallenger-Client-{n}-{uid}") for n in range(4)])
+    sk = _channel_connect(candidates)
+    if sk is None:
+        kill_client(proc)
+        stop_server()
+        log_fail(case, "could not connect to the client's QLocalServer automation socket")
+        return
+    # --- sequence 1: the server /trade crash (must NOT abort the server) ---
+    _channel_cmd(sk, "GETSTATE")
+    log_info('sending "/trade <unknown>" (used to abort the server)')
+    _channel_cmd(sk, "TRADEREQUEST ZzNoSuchPlayer123")
+    time.sleep(1.5)
+    server_alive = (srv.poll() is None)
+    # --- sequence 2: out-of-fight fight spam (must NOT crash the client) ---
+    log_info("spamming fight actions out of fight (used to use-after-free the client)")
+    for c in ["FIGHTSKILL 5", "FIGHTCHANGEMONSTER 0", "FIGHTITEM 1 0",
+              "FIGHTITEM 7", "FIGHTESCAPE", "FIGHTACCEPT"]:
+        _channel_cmd(sk, c, wait=0.3)
+    time.sleep(1.5)
+    try: sk.close()
+    except Exception: pass
+    # give gdb a moment to print any crash backtrace, then reap the client
+    time.sleep(1.0)
+    if proc.poll() is None:
+        kill_client(proc)
+    text = "\n".join(out)
+    # Match only ACTUAL gdb crash events. run_client_async runs the client under
+    # `gdb ... -ex 'break __throw_out_of_range'`, so gdb echoes a breakpoint-setup
+    # line containing "__throw_out_of_range" into the captured output even on a
+    # clean run — a naive substring match on that string false-positives. A real
+    # crash shows "received signal SIG..." (SIGSEGV/SIGABRT) or "hit Breakpoint"
+    # (the std::out_of_range breakpoint actually fired), neither of which appears
+    # in gdb's setup output.
+    crashed = any(m in text for m in (
+        "received signal SIGSEGV", "received signal SIGABRT", "hit Breakpoint"))
+    stop_server()
+    if crashed:
+        log_fail(case, "client crashed under gdb during the abusive channel sequence")
+        for line in out[-30:]:
+            print(f"  | {line}")
+    elif not server_alive:
+        log_fail(case, "server died on '/trade <unknown>' (isNull out-of-range abort)")
+    else:
+        log_pass(case, "server survived /trade<unknown>; client survived out-of-fight fight spam")
 
 
 def run_multiplayer_test(dp_name, minimize_mode):
