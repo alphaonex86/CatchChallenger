@@ -86,6 +86,7 @@ ScreenTransition::ScreenTransition() :
     connexionManager=nullptr;
     ccmap=nullptr;
     overmap=nullptr;
+    remoteControlListener=nullptr;
     m=nullptr;
     o=nullptr;
     d=nullptr;
@@ -380,6 +381,15 @@ void ScreenTransition::setAbove(ScreenInput *widget)
         connect(widget,&ScreenInput::setForeground,this,&ScreenTransition::setForegroundInGame,Qt::UniqueConnection);
         mScene->addItem(m_aboveStack);
     }
+}
+
+void ScreenTransition::setRemoteControl(LocalListener *localListener)
+{
+    remoteControlListener=localListener;
+    //If a map is already up (controller re-attach mid-session), wire it now;
+    //otherwise goToMap() will wire the controller when it (re)creates ccmap.
+    if(remoteControlListener!=nullptr && ccmap!=nullptr)
+        ccmap->mapController.wireRemoteControl(remoteControlListener);
 }
 
 void ScreenTransition::loadingFinished()
@@ -887,6 +897,12 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
             abort();
     }
     ccmap->setVar(connexionManager);
+    //Re-wire the QLocalServer automation channel to the freshly (re)created
+    //mapController. The old ccmap (and its mapController) was just deleted, so its
+    //prior connections are gone; UniqueConnection inside wireRemoteControl makes
+    //this idempotent if goToMap() ever runs without a delete.
+    if(remoteControlListener!=nullptr)
+        ccmap->mapController.wireRemoteControl(remoteControlListener);
 
     if(overmap!=nullptr)
     {

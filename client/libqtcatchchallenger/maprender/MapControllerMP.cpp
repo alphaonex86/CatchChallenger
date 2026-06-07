@@ -8,6 +8,7 @@
 #include "QMap_client.hpp"
 #include "../libcatchchallenger/ClientVariable.hpp"
 #include "../CliClientOptions.hpp"
+#include "../LocalListener.hpp"
 #include <iostream>
 #include <QDebug>
 #include <QFileInfo>
@@ -15,6 +16,7 @@
 #include <QApplication>
 #include <QMouseEvent>
 #include <QKeyEvent>
+#include <QStringList>
 #include <QtMath>
 
 QFont MapControllerMP::playerpseudofont;
@@ -1354,14 +1356,116 @@ void MapControllerMP::postClickAtTile(const int &tileX,const int &tileY)
     //(pixel -> zoomed view -> scene -> PreparedLayer item -> tile) instead of
     //the old tile-coordinate shortcut. A press is needed before the release so
     //QGraphicsView sets the item as the mouse grabber for the release.
-    const QPointF vpPt=QPointF(mapFromScene(tileCenterScenePos(tileX,tileY)));
-    const QPointF globalPt=QPointF(viewport()->mapToGlobal(vpPt.toPoint()));
+    const QPoint vpPt=mapFromScene(tileCenterScenePos(tileX,tileY));
+    postClickAtPixel(vpPt.x(),vpPt.y());
+}
+
+void MapControllerMP::postClickAtPixel(const int &px,const int &py)
+{
+    //A press is needed before the release so QGraphicsView sets the item under
+    //the cursor as the mouse grabber for the release.
+    const QPointF vpPt(px,py);
+    const QPointF globalPt=QPointF(viewport()->mapToGlobal(QPoint(px,py)));
     QMouseEvent press(QEvent::MouseButtonPress,vpPt,globalPt,
                       Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
     QApplication::sendEvent(viewport(),&press);
     QMouseEvent release(QEvent::MouseButtonRelease,vpPt,globalPt,
                         Qt::LeftButton,Qt::NoButton,Qt::NoModifier);
     QApplication::sendEvent(viewport(),&release);
+}
+
+int MapControllerMP::remoteKeyNameToQt(const QString &name) const
+{
+    const QString n=name.toUpper();
+    if(n==QStringLiteral("UP"))     return Qt::Key_Up;
+    if(n==QStringLiteral("DOWN"))   return Qt::Key_Down;
+    if(n==QStringLiteral("LEFT"))   return Qt::Key_Left;
+    if(n==QStringLiteral("RIGHT"))  return Qt::Key_Right;
+    if(n==QStringLiteral("RETURN") || n==QStringLiteral("ENTER")) return Qt::Key_Return;
+    if(n==QStringLiteral("ESCAPE") || n==QStringLiteral("ESC"))   return Qt::Key_Escape;
+    if(n==QStringLiteral("SPACE"))  return Qt::Key_Space;
+    return 0;
+}
+
+void MapControllerMP::remoteAction(const QString &line)
+{
+    const QStringList parts=line.trimmed().split(QLatin1Char(' '),Qt::SkipEmptyParts);
+    if(parts.isEmpty())
+        return;
+    const QString verb=parts.at(0).toUpper();
+    if(verb==QStringLiteral("KEY") && parts.size()>=2)
+    {
+        const int key=remoteKeyNameToQt(parts.at(1));
+        if(key==0)
+            emit remoteReply(QStringLiteral("ERROR unknown key ")+parts.at(1));
+        else
+        {
+            synthKey(key);
+            emit remoteReply(QStringLiteral("OK KEY ")+parts.at(1).toUpper());
+        }
+    }
+    else if(verb==QStringLiteral("CLICKTILE") && parts.size()>=3)
+    {
+        bool ok1=false,ok2=false;
+        const int x=parts.at(1).toInt(&ok1);
+        const int y=parts.at(2).toInt(&ok2);
+        if(!ok1 || !ok2)
+            emit remoteReply(QStringLiteral("ERROR bad CLICKTILE args"));
+        else
+        {
+            postClickAtTile(x,y);
+            emit remoteReply(QStringLiteral("OK CLICKTILE %1 %2").arg(x).arg(y));
+        }
+    }
+    else if(verb==QStringLiteral("CLICKPIXEL") && parts.size()>=3)
+    {
+        bool ok1=false,ok2=false;
+        const int px=parts.at(1).toInt(&ok1);
+        const int py=parts.at(2).toInt(&ok2);
+        if(!ok1 || !ok2)
+            emit remoteReply(QStringLiteral("ERROR bad CLICKPIXEL args"));
+        else
+        {
+            postClickAtPixel(px,py);
+            emit remoteReply(QStringLiteral("OK CLICKPIXEL %1 %2").arg(px).arg(py));
+        }
+    }
+    else if(verb==QStringLiteral("GETSTATE"))
+    {
+        const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());
+        emit remoteReply(QStringLiteral("STATE map=%1 x=%2 y=%3 dir=%4")
+                         .arg(static_cast<int>(current_map))
+                         .arg(static_cast<int>(p.first))
+                         .arg(static_cast<int>(p.second))
+                         .arg(static_cast<int>(getDirection())));
+    }
+    else if(verb==QStringLiteral("GETINVENTORY"))
+    {
+        QString out=QStringLiteral("INVENTORY");
+        if(client!=nullptr)
+        {
+            const std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items=client->get_player_informations().items;
+            std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>::const_iterator it=items.cbegin();
+            while(it!=items.cend())
+            {
+                out+=QStringLiteral(" %1:%2").arg(static_cast<int>(it->first)).arg(static_cast<qulonglong>(it->second));
+                ++it;
+            }
+        }
+        emit remoteReply(out);
+    }
+    else
+        emit remoteReply(QStringLiteral("ERROR unknown command ")+verb);
+}
+
+void MapControllerMP::wireRemoteControl(LocalListener *localListener)
+{
+    if(localListener==nullptr)
+        return;
+    if(!connect(localListener,&LocalListener::actionReceived,this,&MapControllerMP::remoteAction,Qt::UniqueConnection))
+        abort();
+    if(!connect(this,&MapControllerMP::remoteReply,localListener,&LocalListener::sendReply,Qt::UniqueConnection))
+        abort();
 }
 
 void MapControllerMP::runClickSignSelfTest()

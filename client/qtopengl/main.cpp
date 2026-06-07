@@ -382,6 +382,10 @@ int main(int argc, char *argv[])
     //Options::options.loadVar();
 
     ScreenTransition s;
+    //QLocalServer automation channel: external controllers / tests send
+    //KEY/CLICKTILE/CLICKPIXEL/GETSTATE/GETINVENTORY to this instance's socket.
+    //ScreenTransition re-wires it to each ccmap->mapController it (re)creates.
+    s.setRemoteControl(&localListener);
     s.setWindowTitle(QObject::tr("CatchChallenger loading..."));
     /*QScreen *screen = QApplication::screens().at(0);
     s.setMinimumSize(QSize(screen->availableSize().width(),

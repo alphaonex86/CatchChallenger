@@ -329,6 +329,12 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 }
 
+void MainWindow::wireRemoteControl(LocalListener *localListener)
+{
+    if(baseWindow!=nullptr && baseWindow->mapController!=nullptr)
+        baseWindow->mapController->wireRemoteControl(localListener);
+}
+
 MainWindow::~MainWindow()
 {
     #ifndef CATCHCHALLENGER_NOAUDIO

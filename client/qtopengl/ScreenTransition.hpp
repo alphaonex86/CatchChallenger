@@ -26,6 +26,7 @@ class ConnexionInfo;
 class CCMap;
 class OverMapLogic;
 class InternalServer;
+class LocalListener;
 
 class ScreenTransition : public QGraphicsView
 {
@@ -37,6 +38,9 @@ public:
     void setForeground(ScreenInput *widget);
     void setForegroundInGame(ScreenInput *widget);
     void setAbove(ScreenInput *widget);//first plan popup
+    //Remember the per-instance QLocalServer automation channel so every (re)created
+    //ccmap gets its mapController re-wired to it in goToMap().
+    void setRemoteControl(LocalListener *localListener);
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -104,6 +108,9 @@ private:
     CharacterList *characterList;
     CCMap *ccmap;
     OverMapLogic *overmap;
+    //Per-instance automation channel (owned by main()); re-wired to each fresh
+    //ccmap->mapController in goToMap(). nullptr when no controller attached.
+    LocalListener *remoteControlListener;
     std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
 
     uint8_t waitRenderTime;
