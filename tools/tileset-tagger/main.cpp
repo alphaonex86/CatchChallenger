@@ -207,6 +207,7 @@ static int suggestOne(const QString &tsx)
         const int id=it->first;
         const MapUsageIndex::TileStat &s=it->second;
         if(!model.tagOf(id).category.empty()) { alreadyTagged++; ++it; continue; }
+        if(!model.tileHasPixels(id)) { ++it; continue; }   // never auto-tag a 100%-transparent tile
         std::string norm;
         bool walk=true,high=true;
         const std::string cat=MapUsageIndex::suggestCategory(s,model.tileGreenish(id),norm,walk,high);
@@ -1564,6 +1565,43 @@ static int runDecode(const QStringList &args)
     return decodeOne(args.at(0),args.at(1));
 }
 
+// Drop any tag sitting on a 100%-transparent tile (cleans up a prior auto-detect
+// that mis-tagged transparent map markers).  Preserves all real-pixel tags.
+static int dropTransparentOne(const QString &tsx)
+{
+    TagModel m;
+    if(!m.load(tsx)) { std::cerr << m.error().toStdString() << std::endl; return 1; }
+    std::vector<int> clear;
+    int id=0;
+    while(id<m.tileCount())
+    {
+        if(!m.tagOf(id).category.empty() && !m.tileHasPixels(id)) clear.push_back(id);
+        id++;
+    }
+    if(!clear.empty())
+    {
+        m.tagTiles(clear,std::string(),std::map<std::string,std::string>());   // empty category = clear
+        m.save();
+        std::cout << QFileInfo(tsx).fileName().toStdString() << ": dropped " << clear.size() << " transparent-tile tag(s)" << std::endl;
+    }
+    return 0;
+}
+static int runDropTransparent(const QStringList &args)
+{
+    if(args.isEmpty()) { std::cerr << "droptransparent needs: <x.tsx | tileset-dir>" << std::endl; return 1; }
+    const QFileInfo fi(args.at(0));
+    if(fi.isDir())
+    {
+        QStringList tsxs;
+        QDirIterator it(args.at(0),QStringList()<<"*.tsx",QDir::Files,QDirIterator::Subdirectories);
+        while(it.hasNext()) tsxs.append(it.next());
+        tsxs.sort();
+        int rc=0,k=0;
+        while(k<tsxs.size()) { if(dropTransparentOne(tsxs.at(k))!=0) rc=1; k++; }
+        return rc;
+    }
+    return dropTransparentOne(args.at(0));
+}
 static int runSuggest(const QStringList &args)
 {
     if(args.isEmpty()) { std::cerr << "suggest needs: <x.tsx | tileset-dir>" << std::endl; return 1; }
@@ -2589,7 +2627,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--gencity" || args.at(0)=="--genhouse" || args.at(0)=="--catlayers" || args.at(0)=="--usedtiles");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--gencity" || args.at(0)=="--genhouse" || args.at(0)=="--catlayers" || args.at(0)=="--droptransparent" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -2605,6 +2643,8 @@ int main(int argc, char *argv[])
         return runUsage(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--suggest")
         return runSuggest(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--droptransparent")
+        return runDropTransparent(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--evalsuggest")
         return runEvalSuggest(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--evalknn")
