@@ -539,7 +539,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                            if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
                                                break;
                                            if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
-                                               std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                               std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
                                            else
                                               map_to_send.botsFightTrigger[botOnMap.point]=searchID;
                                            parsedRange++;
@@ -554,7 +554,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                            if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
                                                break;
                                            if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
-                                               std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                               std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
                                            else
                                               map_to_send.botsFightTrigger[botOnMap.point]=searchID;
                                            parsedRange++;
@@ -569,7 +569,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                            if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
                                                break;
                                            if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
-                                               std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                               std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
                                            else
                                               map_to_send.botsFightTrigger[botOnMap.point]=searchID;
                                            parsedRange++;
@@ -584,7 +584,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                            if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
                                                break;
                                            if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
-                                               std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                               std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
                                            else
                                               map_to_send.botsFightTrigger[botOnMap.point]=searchID;
                                            parsedRange++;
@@ -593,21 +593,21 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                }
                            }
                            else
-                               std::cerr << file << " bot id " << searchID << " map layer not loaded" << std::endl;//the map is loaded before the bot?
+                               std::cerr << file << " bot id " << std::to_string(searchID) << " map layer not loaded" << std::endl;//the map is loaded before the bot?
                         }
                        else
                        {
                            if(buffers!=nullptr)
                                buffers->unknownBotStepBuffer.push_back({botOnMap.point.first,botOnMap.point.second,step});
                            else
-                               std::cerr << file << " bot id " << searchID << " bot step not found: " << step->Attribute("type") << std::endl;//the map is loaded before the bot?
+                               std::cerr << file << " bot id " << std::to_string(searchID) << " bot step not found: " << step->Attribute("type") << std::endl;//the map is loaded before the bot?
                        }
                     }
                     step = step->NextSiblingElement("step");
                 }
             }
             else
-                std::cerr << file << " bot id " << searchID << " is not found" << std::endl;
+                std::cerr << file << " bot id " << std::to_string(searchID) << " is not found" << std::endl;
         }
         bot = bot->NextSiblingElement("bot");
     }
