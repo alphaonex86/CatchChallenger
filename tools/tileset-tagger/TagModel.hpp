@@ -126,6 +126,7 @@ private:
                                const std::vector<std::string> &refCat,
                                const std::vector<std::vector<unsigned char> > &rgb,
                                const std::vector<std::vector<char> > &op,
+                               const std::vector<int> &refRole,int targetRole,
                                int npx,int minPercent,int k,int &bestPctOut);
 };
 
