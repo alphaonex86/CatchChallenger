@@ -19,6 +19,7 @@ int AutoArgs::autosoloClickDx=0;
 int AutoArgs::autosoloClickDy=0;
 bool AutoArgs::clickSignTest=false;
 bool AutoArgs::clickDoorTest=false;
+bool AutoArgs::keyboardTest=false;
 bool AutoArgs::dialogOverflowTest=false;
 QString AutoArgs::mainDatapackCodeOverride;
 QString AutoArgs::takeScreenshotPath;
@@ -53,6 +54,8 @@ void AutoArgs::printHelp(const char *progName)
         << "  --test-clicksign           TEST: click the nearest sign, walk+face+open it, then quit.\n"
         << "  --test-clickdoor           TEST: click a door->other map, click next to the return\n"
         << "                             teleport (push)->back on the original map, then quit.\n"
+        << "  --test-keyboard            TEST: ARROW-key walk to a sign + ENTER to open (ESCAPE to\n"
+        << "                             close), then arrow-walk into a door and back to the city.\n"
         << "  --test-dialogoverflow      TEST: show a long dialog text, assert no overflow, then quit.\n"
         << "  --main-datapack-code=CODE  Override the autosolo maincode under\n"
         << "                             datapack/internal/map/main/ (default: first dir).\n"
@@ -108,6 +111,12 @@ void AutoArgs::parse(int &argc, char *argv[])
         if(std::strcmp(arg,"--test-clickdoor")==0)
         {
             clickDoorTest=true;
+            i++;
+            continue;
+        }
+        if(std::strcmp(arg,"--test-keyboard")==0)
+        {
+            keyboardTest=true;
             i++;
             continue;
         }

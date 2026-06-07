@@ -276,6 +276,9 @@ BaseWindow::BaseWindow() :
         abort();
     if(!connect(mapController,&MapController::actionOnNothing,       this,&BaseWindow::actionOnNothing,Qt::QueuedConnection))
         abort();
+    //Escape on the map closes an open Sign/NPC dialog (same as "no action here")
+    if(!connect(mapController,&MapController::escapePressed,         this,&BaseWindow::actionOnNothing,Qt::QueuedConnection))
+        abort();
     if(!connect(mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn,Qt::QueuedConnection))
         abort();
     if(!connect(mapController,&MapController::error,                 this,&BaseWindow::error))

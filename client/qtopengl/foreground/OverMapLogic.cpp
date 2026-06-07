@@ -88,6 +88,9 @@ void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
         abort();
     if(!connect(ccmap,&CCMap::actionOnNothing,this,&OverMapLogic::actionOnNothing))
         abort();
+    //Escape on the map closes an open Sign/NPC dialog
+    if(!connect(ccmap,&CCMap::escapePressed,this,&OverMap::IG_dialog_close))
+        abort();
     if(!connect(ccmap,&CCMap::blockedOn,this,&OverMapLogic::blockedOn))
         abort();
     if(!connect(ccmap,&CCMap::error,this,&OverMapLogic::error))

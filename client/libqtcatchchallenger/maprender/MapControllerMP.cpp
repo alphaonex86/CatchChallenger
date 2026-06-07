@@ -14,6 +14,7 @@
 #include <QCoreApplication>
 #include <QApplication>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <QtMath>
 
 QFont MapControllerMP::playerpseudofont;
@@ -54,6 +55,21 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     doorDestMap=0;
     doorTestTimeoutTimer.setSingleShot(true);
     if(!connect(&doorTestTimeoutTimer,&QTimer::timeout,this,&MapControllerMP::doorTestTimeout))
+        abort();
+
+    kbPhase=0;
+    kbOrigMap=0;
+    kbIndoorMap=0;
+    kbNavMap=0;
+    kbSignX=0;
+    kbSignY=0;
+    kbSignOpened=false;
+    kbPathStep=0;
+    kbTimer.setSingleShot(true);
+    if(!connect(&kbTimer,&QTimer::timeout,this,&MapControllerMP::kbTick))
+        abort();
+    kbTimeoutTimer.setSingleShot(true);
+    if(!connect(&kbTimeoutTimer,&QTimer::timeout,this,&MapControllerMP::keyboardTestTimeout))
         abort();
 
     resetAll();
@@ -1250,6 +1266,13 @@ void MapControllerMP::afterMapDisplayed()
         signSelfTestStarted=true;
         QTimer::singleShot(500,this,&MapControllerMP::runAutosoloClick);
     }
+    else if(CliClientOptions::keyboardTest)
+    {
+        //start once; the kbTick() state machine then drives itself through the
+        //map changes (it survives the door/return teleports).
+        signSelfTestStarted=true;
+        QTimer::singleShot(800,this,&MapControllerMP::runKeyboardSelfTest);
+    }
 }
 
 void MapControllerMP::runAutosoloClick()
@@ -1736,6 +1759,382 @@ void MapControllerMP::doorTestTimeout()
     std::cerr << "[DOORTEST] FAIL timeout in phase " << doorTestPhase
               << " (current map " << (int)current_map << ", orig " << (int)doorOrigMap
               << ", dest " << (int)doorDestMap << ")" << std::endl;
+    QCoreApplication::exit(3);
+}
+
+//──────────────────────── --test-keyboard ────────────────────────
+//The keyboard run is a tick-driven state machine; these are its phases.
+enum KbPhase : int {
+    Kb_FindSign=0, Kb_NavSign, Kb_FaceSign, Kb_Enter, Kb_WaitSign, Kb_Escape,
+    Kb_FindDoor, Kb_NavDoor, Kb_FindReturn, Kb_NavBack
+};
+
+int MapControllerMP::dirToKey(const CatchChallenger::Direction &d) const
+{
+    switch(d)
+    {
+        case CatchChallenger::Direction_move_at_left:  return Qt::Key_Left;
+        case CatchChallenger::Direction_move_at_right: return Qt::Key_Right;
+        case CatchChallenger::Direction_move_at_top:   return Qt::Key_Up;
+        case CatchChallenger::Direction_move_at_bottom:return Qt::Key_Down;
+        default: return Qt::Key_Up;
+    }
+}
+
+void MapControllerMP::synthKey(const int &key)
+{
+    //feed the key straight into the shared keyPressEvent path (arrows move, Enter
+    //opens a sign via parseAction(), Escape emits escapePressed()); press+release
+    //so a held-key continuous move never starts — one tile per arrow.
+    QKeyEvent press(QEvent::KeyPress,key,Qt::NoModifier);
+    QKeyEvent release(QEvent::KeyRelease,key,Qt::NoModifier);
+    keyPressEvent(&press);
+    keyReleaseEvent(&release);
+}
+
+bool MapControllerMP::computeKeyboardPath(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &fromX,const int &fromY,const int &toX,const int &toY,std::vector<CatchChallenger::Direction> &dirs,std::vector<std::pair<uint8_t,uint8_t> > &pos)
+{
+    dirs.clear();
+    pos.clear();
+    const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    const int mw=lm.width;
+    const int mh=lm.height;
+    if(mw<=0 || mh<=0 || fromX<0 || fromX>=mw || fromY<0 || fromY>=mh || toX<0 || toX>=mw || toY<0 || toY>=mh)
+        return false;
+    pos.push_back(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(fromX),static_cast<uint8_t>(fromY)));
+    if(fromX==toX && fromY==toY)
+        return true;
+    const CatchChallenger::Direction mv[4]={CatchChallenger::Direction_move_at_left,
+                                            CatchChallenger::Direction_move_at_right,
+                                            CatchChallenger::Direction_move_at_top,
+                                            CatchChallenger::Direction_move_at_bottom};
+    const int dxx[4]={-1,1,0,0};
+    const int dyy[4]={0,0,-1,1};
+    const bool prevSilent=canGoToSilent;
+    canGoToSilent=true;
+    const size_t total=static_cast<size_t>(mw)*static_cast<size_t>(mh);
+    std::vector<int> parent(total,-1);
+    std::vector<CatchChallenger::Direction> parentDir(total,CatchChallenger::Direction_move_at_top);
+    std::vector<bool> visited(total,false);
+    std::vector<std::pair<int,int> > queue;
+    queue.push_back(std::pair<int,int>(fromX,fromY));
+    visited[static_cast<size_t>(fromX)+static_cast<size_t>(fromY)*static_cast<size_t>(mw)]=true;
+    size_t head=0;
+    bool reached=false;
+    while(head<queue.size() && !reached)
+    {
+        const int qx=queue.at(head).first;
+        const int qy=queue.at(head).second;
+        head++;
+        int k=0;
+        while(k<4)
+        {
+            const int tx=qx+dxx[k];
+            const int ty=qy+dyy[k];
+            if(tx>=0 && tx<mw && ty>=0 && ty<mh)
+            {
+                const size_t idx=static_cast<size_t>(tx)+static_cast<size_t>(ty)*static_cast<size_t>(mw);
+                if(!visited[idx] && canGoTo(mv[k],mapIndex,static_cast<COORD_TYPE>(qx),static_cast<COORD_TYPE>(qy),true))
+                {
+                    visited[idx]=true;
+                    parent[idx]=qx+qy*mw;
+                    parentDir[idx]=mv[k];
+                    if(tx==toX && ty==toY)
+                    {
+                        reached=true;
+                        break;
+                    }
+                    queue.push_back(std::pair<int,int>(tx,ty));
+                }
+            }
+            k++;
+        }
+    }
+    canGoToSilent=prevSilent;
+    if(!reached)
+        return false;
+    //walk parents back from the target, collecting directions, then reverse
+    std::vector<CatchChallenger::Direction> rev;
+    int cur=toX+toY*mw;
+    while(cur!=fromX+fromY*mw)
+    {
+        rev.push_back(parentDir[static_cast<size_t>(cur)]);
+        cur=parent[static_cast<size_t>(cur)];
+    }
+    int i=static_cast<int>(rev.size())-1;
+    int cx=fromX,cy=fromY;
+    while(i>=0)
+    {
+        const CatchChallenger::Direction d=rev.at(static_cast<size_t>(i));
+        dirs.push_back(d);
+        if(d==CatchChallenger::Direction_move_at_left) cx--;
+        else if(d==CatchChallenger::Direction_move_at_right) cx++;
+        else if(d==CatchChallenger::Direction_move_at_top) cy--;
+        else if(d==CatchChallenger::Direction_move_at_bottom) cy++;
+        pos.push_back(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(cx),static_cast<uint8_t>(cy)));
+        i--;
+    }
+    return true;
+}
+
+bool MapControllerMP::kbStartNavTo(const int &toX,const int &toY)
+{
+    const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());
+    kbNavMap=current_map;
+    kbPathStep=0;
+    return computeKeyboardPath(current_map,p.first,p.second,toX,toY,kbPath,kbPathPos);
+}
+
+bool MapControllerMP::kbNavStep()
+{
+    if(kbPathStep>=kbPath.size())
+        return true;
+    const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());
+    const std::pair<uint8_t,uint8_t> &expected=kbPathPos.at(kbPathStep+1);
+    if(p.first==expected.first && p.second==expected.second)
+    {
+        kbPathStep++;
+        return kbPathStep>=kbPath.size();
+    }
+    //turn toward / move one tile in the step direction (one synthKey == turn OR
+    //move; the next tick takes the other half)
+    synthKey(dirToKey(kbPath.at(kbPathStep)));
+    return false;
+}
+
+bool MapControllerMP::findNearestSign(int &signX,int &signY,int &neighX,int &neighY)
+{
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+        return false;
+    const QMap_client * const mapFull=CatchChallenger::QMap_client::all_map.at(current_map);
+    const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(current_map);
+    const int mw=lm.width;
+    const int mh=lm.height;
+    const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());
+    const int px=p.first;
+    const int py=p.second;
+    Q_UNUSED(mapFull);
+    bool found=false;
+    int bestDist=0;
+    //A Sign/NPC sits on a NON-standable tile; facing it and pressing Enter makes
+    //parseAction() emit actionOn (the emit is unconditional for any in-map faced
+    //tile). Same interactables as the click-on-sign test; pick the NEAREST so the
+    //keyboard walk is short.
+    int by=0;
+    while(by<mh)
+    {
+        int bx=0;
+        while(bx<mw)
+        {
+            if(!tileStandable(current_map,bx,by,mw,mh))
+            {
+                int nX=0,nY=0;
+                if(reachableClickNeighbor(current_map,bx,by,px,py,nX,nY))
+                {
+                    const int dist=(nX>px?nX-px:px-nX)+(nY>py?nY-py:py-nY);
+                    if(!found || dist<bestDist)
+                    {
+                        found=true;
+                        bestDist=dist;
+                        signX=bx;
+                        signY=by;
+                        neighX=nX;
+                        neighY=nY;
+                    }
+                }
+            }
+            bx++;
+        }
+        by++;
+    }
+    return found;
+}
+
+void MapControllerMP::runKeyboardSelfTest()
+{
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+    {
+        std::cerr << "[KEYBOARDTEST] FAIL current map not loaded" << std::endl;
+        QCoreApplication::exit(3);
+        return;
+    }
+    if(!connect(this,&MapVisualiserPlayer::actionOn,this,&MapControllerMP::keyboardSignActionOn,Qt::UniqueConnection))
+        abort();
+    kbPhase=Kb_FindSign;
+    kbTimeoutTimer.start(60000);
+    std::cerr << "[KEYBOARDTEST] start on map " << (int)current_map << std::endl;
+    kbTick();
+}
+
+void MapControllerMP::keyboardSignActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    Q_UNUSED(map);
+    if(mapIndex==current_map && x==kbSignX && y==kbSignY)
+        kbSignOpened=true;
+}
+
+void MapControllerMP::kbTick()
+{
+    //wait out any running step animation before issuing the next key
+    if(playerIsMoving())
+    {
+        kbTimer.start(40);
+        return;
+    }
+    const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());
+    bool reschedule=true;
+    switch(kbPhase)
+    {
+        case Kb_FindSign:
+        {
+            int sx=0,sy=0,nX=0,nY=0;
+            if(!findNearestSign(sx,sy,nX,nY))
+            {
+                std::cerr << "[KEYBOARDTEST] FAIL no reachable sign on map " << (int)current_map << std::endl;
+                QCoreApplication::exit(3);
+                return;
+            }
+            kbSignX=static_cast<uint8_t>(sx);
+            kbSignY=static_cast<uint8_t>(sy);
+            std::cerr << "[KEYBOARDTEST] arrow-walking to the sign at (" << sx << "," << sy
+                      << "), foot tile (" << nX << "," << nY << ") from (" << (int)p.first << "," << (int)p.second << ")" << std::endl;
+            if(!kbStartNavTo(nX,nY))
+            {
+                std::cerr << "[KEYBOARDTEST] FAIL no keyboard path to the sign" << std::endl;
+                QCoreApplication::exit(3);
+                return;
+            }
+            kbPhase=Kb_NavSign;
+        }
+        break;
+        case Kb_NavSign:
+            if(kbNavStep())
+                kbPhase=Kb_FaceSign;
+        break;
+        case Kb_FaceSign:
+        {
+            //turn to FACE the sign (it is blocked, so the arrow only turns)
+            const int dx=static_cast<int>(kbSignX)-static_cast<int>(p.first);
+            const int dy=static_cast<int>(kbSignY)-static_cast<int>(p.second);
+            CatchChallenger::Direction toward=CatchChallenger::Direction_move_at_top;
+            if(dx==1 && dy==0) toward=CatchChallenger::Direction_move_at_right;
+            else if(dx==-1 && dy==0) toward=CatchChallenger::Direction_move_at_left;
+            else if(dx==0 && dy==1) toward=CatchChallenger::Direction_move_at_bottom;
+            else if(dx==0 && dy==-1) toward=CatchChallenger::Direction_move_at_top;
+            synthKey(dirToKey(toward));
+            kbPhase=Kb_Enter;
+        }
+        break;
+        case Kb_Enter:
+            kbSignOpened=false;
+            synthKey(Qt::Key_Return);//parseAction() -> actionOn on the faced sign
+            kbPhase=Kb_WaitSign;
+        break;
+        case Kb_WaitSign:
+            if(kbSignOpened)
+            {
+                std::cerr << "[KEYBOARDTEST] PASS-sign: walked to the sign with arrows and opened it (" << (int)kbSignX
+                          << "," << (int)kbSignY << ") with Enter" << std::endl;
+                kbPhase=Kb_Escape;
+            }
+        break;
+        case Kb_Escape:
+            synthKey(Qt::Key_Escape);//emit escapePressed() -> client closes the dialog
+            std::cerr << "[KEYBOARDTEST] pressed Escape to close the dialog" << std::endl;
+            kbPhase=Kb_FindDoor;
+        break;
+        case Kb_FindDoor:
+        {
+            uint8_t sx=0,sy=0;
+            CATCHCHALLENGER_TYPE_MAPID dest=65535;
+            bool isPush=false;
+            int nX=-1,nY=-1;
+            if(!pickReachableTeleporter(current_map,p.first,p.second,65535,sx,sy,dest,isPush,nX,nY))
+            {
+                std::cerr << "[KEYBOARDTEST] FAIL no reachable door on map " << (int)current_map << std::endl;
+                QCoreApplication::exit(3);
+                return;
+            }
+            kbOrigMap=current_map;
+            std::cerr << "[KEYBOARDTEST] arrow-walking into the door at (" << (int)sx << "," << (int)sy
+                      << ") -> map " << (int)dest << std::endl;
+            if(!kbStartNavTo(sx,sy))
+            {
+                std::cerr << "[KEYBOARDTEST] FAIL no keyboard path to the door" << std::endl;
+                QCoreApplication::exit(3);
+                return;
+            }
+            kbPhase=Kb_NavDoor;
+        }
+        break;
+        case Kb_NavDoor:
+            if(current_map!=kbNavMap)
+            {
+                kbIndoorMap=current_map;
+                std::cerr << "[KEYBOARDTEST] PASS-door: walked into the door with arrows, now indoors (map "
+                          << (int)kbOrigMap << " -> " << (int)kbIndoorMap << ")" << std::endl;
+                kbPhase=Kb_FindReturn;
+            }
+            else
+                kbNavStep();
+        break;
+        case Kb_FindReturn:
+        {
+            uint8_t sx=0,sy=0;
+            CATCHCHALLENGER_TYPE_MAPID dest=65535;
+            bool isPush=false;
+            int nX=-1,nY=-1;
+            bool ok=pickReachableTeleporter(current_map,p.first,p.second,kbOrigMap,sx,sy,dest,isPush,nX,nY);
+            if(!ok)
+                ok=pickReachableTeleporter(current_map,p.first,p.second,65535,sx,sy,dest,isPush,nX,nY);
+            if(!ok)
+            {
+                std::cerr << "[KEYBOARDTEST] FAIL no return teleport on map " << (int)current_map << std::endl;
+                QCoreApplication::exit(3);
+                return;
+            }
+            std::cerr << "[KEYBOARDTEST] arrow-walking back to the city via teleport (" << (int)sx << "," << (int)sy
+                      << ") -> map " << (int)dest << std::endl;
+            if(!kbStartNavTo(sx,sy))
+            {
+                std::cerr << "[KEYBOARDTEST] FAIL no keyboard path to the return teleport" << std::endl;
+                QCoreApplication::exit(3);
+                return;
+            }
+            kbPhase=Kb_NavBack;
+        }
+        break;
+        case Kb_NavBack:
+            if(current_map!=kbNavMap)
+            {
+                kbTimeoutTimer.stop();
+                if(current_map==kbOrigMap)
+                {
+                    std::cerr << "[KEYBOARDTEST] PASS came back from indoor to the city (map "
+                              << (int)kbIndoorMap << " -> " << (int)kbOrigMap << ") with the arrow keys" << std::endl;
+                    QCoreApplication::exit(0);
+                }
+                else
+                    std::cerr << "[KEYBOARDTEST] FAIL return led to map " << (int)current_map
+                              << " not the city " << (int)kbOrigMap << std::endl;
+                if(current_map!=kbOrigMap)
+                    QCoreApplication::exit(3);
+                return;
+            }
+            else
+                kbNavStep();
+        break;
+        default:
+        break;
+    }
+    if(reschedule)
+        kbTimer.start(40);
+}
+
+void MapControllerMP::keyboardTestTimeout()
+{
+    std::cerr << "[KEYBOARDTEST] FAIL timeout in phase " << kbPhase
+              << " (current map " << (int)current_map << ", sign opened " << (kbSignOpened?"yes":"no") << ")" << std::endl;
     QCoreApplication::exit(3);
 }
 

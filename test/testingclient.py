@@ -1030,6 +1030,9 @@ def main():
             # (b) click on a door (teleporter) → walk onto it and PASS to the
             #     other map; then click next to the return teleport and PUSH in
             #     to come back on the original map (round-trip teleport).
+            # (b2) the KEYBOARD counterpart: ARROW-walk to a sign + ENTER to open
+            #     (ESCAPE to close), then arrow-walk into a door to go indoors and
+            #     back onto the return teleport to come back to the city.
             # (c) a long server text in the Sign/NPC dialog never spills out of
             #     the widget: it word-wraps within the width and gets a vertical
             #     scrollbar when taller than the (window-bounded) dialog.
@@ -1051,6 +1054,12 @@ def main():
                                    "qtcpu800x600 click-on-door round-trip teleport",
                                    timeout=CLIENT_SOLO_TIMEOUT,
                                    success_marker="[DOORTEST] PASS came back")
+                    if should_run("qtcpu800x600 keyboard sign+door round-trip", failed_cases):
+                        run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                                   ["--autosolo", "--test-keyboard"],
+                                   "qtcpu800x600 keyboard sign+door round-trip",
+                                   timeout=CLIENT_SOLO_TIMEOUT,
+                                   success_marker="[KEYBOARDTEST] PASS came back")
                     if should_run("qtcpu800x600 dialog text wordwrap+scroll no-overflow", failed_cases):
                         run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
                                    ["--autosolo", "--test-dialogoverflow"],
@@ -1070,6 +1079,12 @@ def main():
                                    "qtopengl click-on-door round-trip teleport",
                                    timeout=CLIENT_SOLO_TIMEOUT,
                                    success_marker="[DOORTEST] PASS came back")
+                    if should_run("qtopengl keyboard sign+door round-trip", failed_cases):
+                        run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                                   ["--autosolo", "--test-keyboard"],
+                                   "qtopengl keyboard sign+door round-trip",
+                                   timeout=CLIENT_SOLO_TIMEOUT,
+                                   success_marker="[KEYBOARDTEST] PASS came back")
                     if should_run("qtopengl dialog text wordwrap+scroll no-overflow", failed_cases):
                         run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
                                    ["--autosolo", "--test-dialogoverflow"],

@@ -95,6 +95,9 @@ private:
     COORD_TYPE monster_x,monster_y;
 
 protected:
+    //true while a tile-step animation is in progress (read-only for subclasses;
+    //used by the --test-keyboard walk to wait between synthesised arrow presses)
+    bool playerIsMoving() const { return inMove; }
     CatchChallenger::Api_protocol_Qt * client;
     //datapack
     bool mHaveTheDatapack;
@@ -220,6 +223,8 @@ protected slots:
     void stopMove();
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
+    //Escape pressed on the map: ask the client to close any open Sign/NPC dialog.
+    void escapePressed();
     void stopped_in_front_of(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOnNothing();

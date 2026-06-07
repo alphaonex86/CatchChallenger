@@ -217,6 +217,28 @@ private:
     //Drive a click to a teleporter: ON the source for a door, or NEXT TO it (and
     //queue a push onto the source on arrival) for a push wall.
     void clickTeleporter(const uint8_t &srcX,const uint8_t &srcY,const bool &isPush,const int &neighX,const int &neighY);
+    //--test-keyboard state: the keyboard sign+door run is a tick-driven state
+    //machine that synthesises ARROW / ENTER / ESCAPE key events.
+    int kbPhase;
+    CATCHCHALLENGER_TYPE_MAPID kbOrigMap,kbIndoorMap,kbNavMap;
+    uint8_t kbSignX,kbSignY;
+    bool kbSignOpened;
+    std::vector<CatchChallenger::Direction> kbPath;
+    std::vector<std::pair<uint8_t,uint8_t> > kbPathPos;
+    size_t kbPathStep;
+    QTimer kbTimer;
+    QTimer kbTimeoutTimer;
+    //BFS a same-map walk path from (fromX,fromY) to (toX,toY): the move-direction
+    //of each step plus the tile reached after it (pos[0]=start). Silent probe.
+    bool computeKeyboardPath(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &fromX,const int &fromY,const int &toX,const int &toY,std::vector<CatchChallenger::Direction> &dirs,std::vector<std::pair<uint8_t,uint8_t> > &pos);
+    //synthesise a key press+release straight into the shared keyPressEvent path
+    void synthKey(const int &key);
+    int dirToKey(const CatchChallenger::Direction &d) const;
+    //advance the current keyboard walk by one tick; true once the target is reached
+    bool kbNavStep();
+    bool kbStartNavTo(const int &toX,const int &toY);
+    //nearest reachable Sign/NPC and the foot tile next to it (for the keyboard run)
+    bool findNearestSign(int &signX,int &signY,int &neighX,int &neighY);
 protected:
     //once-on-map hook: launches the --test-clicksign self-test when requested
     virtual void afterMapDisplayed() override;
@@ -233,6 +255,12 @@ private slots:
     //then click next to the return teleport (push) to come back on the orig map
     void runClickDoorSelfTest();
     void doorTestTimeout();
+    //--test-keyboard: ARROW-walk to a sign + ENTER to open (+ ESCAPE to close),
+    //then ARROW-walk into a door and back to the city. Tick-driven (kbTick()).
+    void runKeyboardSelfTest();
+    void kbTick();
+    void keyboardSignActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
+    void keyboardTestTimeout();
     //--autosolo=DX,DY: click the tile at player+(DX,DY) and report the outcome
     void runAutosoloClick();
     void autosoloClickActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);

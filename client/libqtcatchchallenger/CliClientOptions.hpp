@@ -88,6 +88,12 @@ public:
     // "[DOORTEST] ..." markers (PASS/FAIL) and quits.
     static bool clickDoorTest;
 
+    // TEST-ONLY: KEYBOARD-driven counterpart of the click tests — walk with the
+    // ARROW keys to a sign and press ENTER to open it (then ESCAPE to close), then
+    // walk with the arrows onto a door to go indoors and back onto the return
+    // teleport to come back to the city. Emits "[KEYBOARDTEST] ..." markers.
+    static bool keyboardTest;
+
     // TEST-ONLY: once on the map, push a very long, server-style text into the
     // Sign/NPC dialog and verify it never spills out of the widget — it must
     // word-wrap within the width, stay inside the (window-bounded) dialog and
