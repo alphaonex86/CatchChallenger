@@ -368,6 +368,7 @@ std::map<int,MapUsageIndex::TileStat> MapUsageIndex::analyzeAllTiles()
                 const int mw=m->width();
                 const int mh=m->height();
                 std::vector<int> compSize(mw*mh,0);   // 0 = not-object, >0 = blob size
+                std::vector<char> compHasOver(mw*mh,0);   // 1 = this blob contains a roof/over tile
                 {
                     std::vector<char> obj(mw*mh,0);
                     int yy=0;
@@ -408,8 +409,11 @@ std::map<int,MapUsageIndex::TileStat> MapUsageIndex::analyzeAllTiles()
                                 }
                             }
                             const int sz=(int)cells.size();
+                            char hasOver=0;
+                            size_t co=0;
+                            while(co<cells.size()) { const int cc=cells.at(co); if(anyHasTile(overLayers,cc%mw,cc/mw)) { hasOver=1; break; } co++; }
                             size_t ck=0;
-                            while(ck<cells.size()) { compSize[cells.at(ck)]=sz; ck++; }
+                            while(ck<cells.size()) { compSize[cells.at(ck)]=sz; compHasOver[cells.at(ck)]=hasOver; ck++; }
                         }
                         idx++;
                     }
@@ -462,6 +466,7 @@ std::map<int,MapUsageIndex::TileStat> MapUsageIndex::analyzeAllTiles()
                                 {
                                     s.blobSizeSum+=compSize[gx+gy*mw];
                                     s.blobCount++;
+                                    if(compHasOver[gx+gy*mw]) s.blobWithOver++;
                                 }
                             }
                             x++;
@@ -526,14 +531,17 @@ std::string MapUsageIndex::suggestCategory(const TileStat &s,bool greenish,
     if(!walkable)
     {
         normLayer="collision";
+        // a blob that CONTAINS a roof/over tile is a building mass, not terrain — this
+        // is what separates building-small/town walls (huge but roofed) from a real cliff.
+        const bool roofedBlob = s.total>0 && s.blobWithOver*2>=s.total;
         if(greenish)
             return tinyBlob ? "bush" : "tree-trunk";        // vegetation
-        if(roofAbove)
-            return "building-wall";                          // capped by a roof ⇒ building
+        if(roofAbove || roofedBlob)
+            return "building-wall";                          // capped/roofed ⇒ building
         if(tinyBlob)
             return "rock";                                   // small isolated ⇒ rock/sign
         if(hugeBlob)
-            return "cliff";                                  // large sprawling ⇒ cliff/mountain
+            return "cliff";                                  // large sprawling, NO roof ⇒ cliff/mountain
         return "building-wall";                              // medium discrete ⇒ building
     }
 
