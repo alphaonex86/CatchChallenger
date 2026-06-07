@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
     // self-test reads CliClientOptions, so both clients route through it.
     CliClientOptions::clickSignTest=AutoArgs::clickSignTest;
     CliClientOptions::clickDoorTest=AutoArgs::clickDoorTest;
+    CliClientOptions::keyboardTest=AutoArgs::keyboardTest;
     CliClientOptions::dialogOverflowTest=AutoArgs::dialogOverflowTest;
     CliClientOptions::autosoloClick=AutoArgs::autosoloClick;
     CliClientOptions::autosoloClickDx=AutoArgs::autosoloClickDx;

@@ -216,6 +216,8 @@ int main(int argc, char *argv[])
                     << "  --test-clicksign           TEST: click the nearest sign, walk+face+open it, then quit.\n"
                     << "  --test-clickdoor           TEST: click a door->other map, click next to the return\n"
                     << "                             teleport (push)->back on the original map, then quit.\n"
+                    << "  --test-keyboard            TEST: ARROW-key walk to a sign + ENTER to open (ESCAPE to\n"
+                    << "                             close), then arrow-walk into a door and back to the city.\n"
                     << "  --test-dialogoverflow      TEST: show a long dialog text, assert no overflow, then quit.\n"
                     << "  --fixed                    Freeze the animated background (no parallax)\n"
                     << "                             so --take-screenshot produces deterministic PNGs.\n"
@@ -277,6 +279,8 @@ int main(int argc, char *argv[])
                 CliClientOptions::clickSignTest=true;
             else if(arg==QStringLiteral("--test-clickdoor"))
                 CliClientOptions::clickDoorTest=true;
+            else if(arg==QStringLiteral("--test-keyboard"))
+                CliClientOptions::keyboardTest=true;
             else if(arg==QStringLiteral("--test-dialogoverflow"))
                 CliClientOptions::dialogOverflowTest=true;
             else if(arg==QStringLiteral("--fixed"))

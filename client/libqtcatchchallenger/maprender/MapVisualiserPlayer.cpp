@@ -184,6 +184,14 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
         return;
     }
 
+    //Escape closes an open Sign/NPC dialog (handled client-side); not a movement
+    //key, so deal with it before the keyAccepted gate.
+    if(event->key()==Qt::Key_Escape)
+    {
+        emit escapePressed();
+        return;
+    }
+
     //ignore the no arrow key
     if(keyAccepted.find(event->key())==keyAccepted.cend())
     {

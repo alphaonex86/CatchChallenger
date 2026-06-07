@@ -29,6 +29,7 @@ public:
     // shared CliClientOptions so the map controller / dialog self-tests run.
     static bool clickSignTest;
     static bool clickDoorTest;
+    static bool keyboardTest;
     static bool dialogOverflowTest;
     static QString mainDatapackCodeOverride;
     // --take-screenshot=PATH: render the first frame after the map

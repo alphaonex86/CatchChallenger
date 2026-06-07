@@ -42,6 +42,7 @@ signals:
     void stopped_in_front_of(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOn(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOnNothing();
+    void escapePressed();
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void wildFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
