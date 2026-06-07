@@ -25,13 +25,6 @@ protected:
     char * botAlreadyBeaten;
     uint32_t repel_step;
     Tiled::SharedTileset fightCollisionBot;
-    //When true, canGoTo() answers walkable/not WITHOUT firing the user-facing
-    //feedback signals (blockedOn / teleportConditionNotRespected). Click-to-walk
-    //PROBES every nearby tile with canGoTo() to find a reachable foot tile next
-    //to a sign; without this guard each probed water/lava tile pops a spurious
-    //"You can't enter without the correct item" tip. Real movement steps leave
-    //it false so a genuine bump still gives feedback.
-    bool canGoToSilent;
 signals:
     void repelEffectIsOver() const;
     void teleportConditionNotRespected(const std::string &text) const;

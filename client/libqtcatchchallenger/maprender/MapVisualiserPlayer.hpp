@@ -98,6 +98,15 @@ protected:
     //true while a tile-step animation is in progress (read-only for subclasses;
     //used by the --test-keyboard walk to wait between synthesised arrow presses)
     bool playerIsMoving() const { return inMove; }
+    //When true, canGoTo() answers walkable/not WITHOUT the user-facing feedback
+    //(blockedOn / teleportConditionNotRespected emits) AND without the per-call
+    //"MoveOnTheMap::canGoTo returned false" cerr trace. Click-to-walk PROBES the
+    //whole reachable map with canGoTo() to find the foot tile next to a sign;
+    //unguarded, every blocked tile both pops a spurious "can't enter" tip and
+    //flushes a cerr line — hundreds per click, which in a debug build stalls the
+    //Qt event loop long enough for the server to drop the connection. Real
+    //movement steps leave it false so a genuine bump still gives feedback.
+    bool canGoToSilent;
     CatchChallenger::Api_protocol_Qt * client;
     //datapack
     bool mHaveTheDatapack;
