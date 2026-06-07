@@ -2187,7 +2187,9 @@ void LoadMapAll::generateRoomContent(Tiled::Map &roomMap, const SettingsAll::Set
 
     // Random Furnitures
     {
-        std::shuffle(room.limitations.begin(), room.limitations.end(), std::mt19937{std::random_device{}()});
+        // Deterministic per config.seed: rand() is seeded by srand(config.seed) (main.cpp).
+        // random_device here made interior furniture/bot placement non-reproducible per seed.
+        std::shuffle(room.limitations.begin(), room.limitations.end(), std::mt19937{(std::mt19937::result_type)rand()});
         bool* spots = new bool[roomMap.width()];
         memset(spots, false, roomMap.width());
 
