@@ -4,7 +4,9 @@
 #include "grouplayer.h"
 #include "layer.h"
 #include "map.h"
+#include "mapobject.h"
 #include "mapreader.h"
+#include "objectgroup.h"
 #include "orthogonalrenderer.h"
 #include "tile.h"
 #include "tilelayer.h"
@@ -67,6 +69,38 @@ static void collectTileLayers(const QList<Tiled::Layer*> &layers,std::vector<Til
     }
 }
 
+// Walk every object group (recursing into group layers): count type="bot" objects
+// and collect the "map" destination of each warp (Moving) object.
+static void collectObjects(const QList<Tiled::Layer*> &layers,int &botCount,std::vector<std::string> &warps)
+{
+    int i=0;
+    while(i<layers.size())
+    {
+        Tiled::Layer *l=layers.at(i);
+        if(l->isObjectGroup())
+        {
+            const QList<Tiled::MapObject*> &objs=static_cast<Tiled::ObjectGroup*>(l)->objects();
+            int o=0;
+            while(o<objs.size())
+            {
+                Tiled::MapObject *ob=objs.at(o);
+                if(ob->type()==QLatin1String("bot"))
+                    botCount++;
+                if(ob->hasProperty(QStringLiteral("map")))
+                {
+                    const QString d=ob->propertyAsString(QStringLiteral("map"));
+                    if(!d.isEmpty())
+                        warps.push_back(d.toStdString());
+                }
+                o++;
+            }
+        }
+        else if(l->isGroupLayer())
+            collectObjects(static_cast<Tiled::GroupLayer*>(l)->layers(),botCount,warps);
+        i++;
+    }
+}
+
 bool MapDecoder::decode(const QString &mapPath, Result &out, QString &error)
 {
     Tiled::MapReader reader;
@@ -83,6 +117,8 @@ bool MapDecoder::decode(const QString &mapPath, Result &out, QString &error)
     out.totalDrawn=0;
     out.tagged=0;
     out.untagged=0;
+    out.botCount=0;
+    out.warpTargets.clear();
     out.categoryGrid.assign(out.w*out.h,std::string());
     out.topTilesetCanon.assign(out.w*out.h,std::string());
     out.topTileId.assign(out.w*out.h,-1);
@@ -107,6 +143,7 @@ bool MapDecoder::decode(const QString &mapPath, Result &out, QString &error)
 
     std::vector<Tiled::TileLayer*> layers;
     collectTileLayers(m->layers(),layers);
+    collectObjects(m->layers(),out.botCount,out.warpTargets);
 
     // PER-LAYER (z) category grids — the (x,y,z) tensor (bottom layer = z 0).
     {

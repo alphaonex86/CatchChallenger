@@ -34,6 +34,8 @@ public:
         int totalDrawn;                           // cells with any tile
         int tagged;                               // cells whose top tile is tagged
         int untagged;                             // cells with a tile but no tag
+        int botCount;                             // Object-group objects of type "bot"
+        std::vector<std::string> warpTargets;     // Moving-group "map" property values (basenames)
     };
     // Returns false + sets error on failure.
     bool decode(const QString &mapPath, Result &out, QString &error);

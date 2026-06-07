@@ -2298,12 +2298,99 @@ static int runGenWfc(const QStringList &args)
     std::cout << "genwfc: " << made << " coherent map(s) -> " << args.at(2).toStdString() << std::endl;
     return rc;
 }
+// LEARN from the model maps (capped scan): building footprint sizes, bots-per-
+// building (from the Object groups), and interior room sizes (small maps whose
+// clearly-indoor categories outnumber outdoor ones).  Shared by --gencity/--genhouse.
+static void learnCityStats(const QString &modelDir,std::vector<std::pair<int,int> > &sizes,
+                           std::vector<std::pair<int,int> > &interiorSizes,double &botsPerBuilding)
+{
+    std::set<std::string> bcats;
+    bcats.insert("building-wall"); bcats.insert("building-roof"); bcats.insert("door"); bcats.insert("window");
+    std::set<std::string> outdoorCats;
+    {
+        const char *out[11]={"grass-short","grass-tall","water","tree-trunk","tree-canopy","cliff","sand","bush","flower","ledge-down","lava"};
+        int k=0; while(k<11){ outdoorCats.insert(out[k]); k++; }
+    }
+    long totBuildings=0, totBots=0;
+    MapDecoder dec;
+    int scanned=0;
+    QDirIterator it(modelDir,QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    while(it.hasNext() && scanned<500)
+    {
+        MapDecoder::Result r;
+        QString err;
+        if(dec.decode(it.next(),r,err))
+        {
+            scanned++;
+            const std::vector<Comp> bc=components(r.categoryGrid,r.w,r.h,bcats);
+            long nb=0;
+            size_t k=0;
+            while(k<bc.size())
+            {
+                const Comp &c=bc[k];
+                if(c.count>=4)
+                {
+                    nb++;
+                    const int bw=c.maxx-c.minx+1, bh=c.maxy-c.miny+1;
+                    if(bw>=3 && bw<=8 && bh>=3 && bh<=8) sizes.push_back(std::pair<int,int>(bw,bh));
+                }
+                k++;
+            }
+            totBuildings+=nb;
+            totBots+=r.botCount;
+            // interior = a small map with essentially NO outdoor terrain but some wall
+            // structure (the model's rooms are walls+floor, not interior-* categories).
+            if(r.w<=24 && r.h<=24 && r.totalDrawn>=20 && nb>0)
+            {
+                long outd=0;
+                size_t g=0;
+                while(g<r.categoryGrid.size()) { if(outdoorCats.count(r.categoryGrid[g])>0) outd++; g++; }
+                if(outd<5) interiorSizes.push_back(std::pair<int,int>(r.w,r.h));
+            }
+        }
+    }
+    if(sizes.empty()) { const int dw[3]={4,5,6}, dh[3]={4,4,5}; int k=0; while(k<3){ sizes.push_back(std::pair<int,int>(dw[k],dh[k])); k++; } }
+    if(interiorSizes.empty()) interiorSizes.push_back(std::pair<int,int>(11,8));
+    botsPerBuilding = totBuildings>0 ? (double)totBots/(double)totBuildings : 0.4;
+    if(botsPerBuilding<0.0) botsPerBuilding=0.0;
+    if(botsPerBuilding>1.5) botsPerBuilding=1.5;
+    std::cout << "learned " << sizes.size() << " footprint(s), " << interiorSizes.size()
+              << " interior size(s), bots/building=" << botsPerBuilding
+              << " (" << totBots << " bots / " << totBuildings << " buildings, " << scanned << " maps)" << std::endl;
+}
+
+// Build a small interior room (wall border + ground floor + a bottom exit) wired to
+// teleport back to `backMap` at (backX,backY).  Returns the entry tile (just above
+// the exit) so the outdoor door can target it.  Writes <name>.tmx + <name>.xml.
+static void emitInterior(const QString &tilesetDir,const QString &outDir,const QString &name,
+                         int IW,int IH,const QString &backMap,int backX,int backY,unsigned seed,
+                         int &entryX,int &entryY)
+{
+    if(IW<7) IW=7; if(IW>20) IW=20; if(IH<6) IH=6; if(IH>20) IH=20;
+    const int exitX=IW/2, exitY=IH-1;
+    entryX=exitX; entryY=IH-2;
+    std::vector<std::string> in(IW*IH,std::string("ground"));
+    int yy=0;
+    while(yy<IH)
+    {
+        int xx=0;
+        while(xx<IW) { if(xx==0||xx==IW-1||yy==0||yy==IH-1) in[xx+yy*IW]=std::string("building-wall"); xx++; }
+        yy++;
+    }
+    in[exitX+exitY*IW]=std::string("path");
+    std::vector<GenWarp> inWarps;
+    GenWarp ex; ex.x=exitX; ex.y=exitY; ex.type="teleport on it"; ex.dest=backMap.toStdString(); ex.destX=backX; ex.destY=backY;
+    inWarps.push_back(ex);
+    writeTmxFromGrid(in,IW,IH,tilesetDir,QDir(outDir).absoluteFilePath(name+".tmx"),seed,std::vector<std::pair<int,int> >(),inWarps);
+    QFile ixf(QDir(outDir).absoluteFilePath(name+".xml"));
+    if(ixf.open(QIODevice::WriteOnly|QIODevice::Truncate)) { QTextStream xw(&ixf); xw << "<map zone=\"generated\" type=\"house\">\n <name>House</name>\n</map>\n"; ixf.close(); }
+}
+
 // Generate CITY maps only — the structures the terrain generator can't invent.
 // Terrain (grass/water/routes) stays the job of map-procedural-generation-terrain;
-// here we learn the building FOOTPRINTS from the model and lay a rigid town: ground
-// + roads + building rectangles (roof on top, wall body, a door opening onto the
-// road).  Real target tiles via the shared writeTmxFromGrid.  (Bots + interiors:
-// next increment — they need the target's interior tilesets tagged.)
+// here we learn building FOOTPRINTS + bot density + interior sizes from the model
+// and lay a rigid town: ground + roads + buildings (roof/wall/door), bots on the
+// streets, and a wired interior per city.  Real target tiles via writeTmxFromGrid.
 static int runGenCity(const QStringList &args)
 {
     if(args.size()<3) { std::cerr << "gencity needs: <model-map-dir> <target-tileset-dir> <out-dir> [count W H seed]" << std::endl; return 1; }
@@ -2312,43 +2399,9 @@ static int runGenCity(const QStringList &args)
     const int H = args.size()>5 ? args.at(5).toInt() : 40;
     const unsigned int seed0 = args.size()>6 ? args.at(6).toUInt() : 1234u;
 
-    // 1) LEARN building footprint sizes from the model (bounding boxes of building
-    //    blobs >=4 cells, clamped to a plausible house range).
-    std::set<std::string> bcats;
-    bcats.insert("building-wall"); bcats.insert("building-roof"); bcats.insert("door"); bcats.insert("window");
-    std::vector<std::pair<int,int> > sizes;
-    {
-        MapDecoder dec;
-        int scanned=0;
-        QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
-        while(it.hasNext() && scanned<500)
-        {
-            MapDecoder::Result r;
-            QString err;
-            if(dec.decode(it.next(),r,err))
-            {
-                scanned++;
-                const std::vector<Comp> bc=components(r.categoryGrid,r.w,r.h,bcats);
-                size_t k=0;
-                while(k<bc.size())
-                {
-                    const Comp &c=bc[k];
-                    if(c.count>=4)
-                    {
-                        const int bw=c.maxx-c.minx+1, bh=c.maxy-c.miny+1;
-                        if(bw>=3 && bw<=8 && bh>=3 && bh<=8) sizes.push_back(std::pair<int,int>(bw,bh));
-                    }
-                    k++;
-                }
-            }
-        }
-    }
-    if(sizes.empty())
-    {
-        const int dw[3]={4,5,6}, dh[3]={4,4,5};
-        int k=0; while(k<3) { sizes.push_back(std::pair<int,int>(dw[k],dh[k])); k++; }
-    }
-    std::cout << "gencity: learned " << sizes.size() << " building footprint(s) from the model" << std::endl;
+    std::vector<std::pair<int,int> > sizes, interiorSizes;
+    double botsPerBuilding=0.4;
+    std::cout << "gencity: "; learnCityStats(args.at(0),sizes,interiorSizes,botsPerBuilding);
 
     QDir().mkpath(args.at(2));
     int made=0,i=0;
@@ -2402,51 +2455,31 @@ static int runGenCity(const QStringList &args)
         int vy=margin;
         while(vy<H-margin) { if(grid[vc+vy*W]=="ground") grid[vc+vy*W]=std::string("path"); vy++; }
 
-        // place a bot in front of ~1 in 3 buildings (an NPC standing on the street)
+        // place bots at the LEARNED bots-per-building rate, evenly spread on the streets
         std::vector<std::pair<int,int> > bots;
         {
-            size_t k=0;
-            while(k<botCand.size()) { if(rng()%3==0 && bots.size()<12) bots.push_back(botCand[k]); k++; }
+            int N=(int)(botCand.size()*botsPerBuilding+0.5);
+            if(N<0) N=0;
+            if(N>(int)botCand.size()) N=(int)botCand.size();
+            int p=0;
+            while(p<N) { const size_t idx=(size_t)((long)p*(long)botCand.size()/N); if(idx<botCand.size()) bots.push_back(botCand[idx]); p++; }
         }
-        // INTERIOR: one shared room per city (walls border + ground floor + a bottom
-        // exit).  Each building door teleports in; the room's exit teleports back out.
+        // INTERIOR: one shared room per city, wired both ways (door->in, exit->street).
         const QString cityName=QString("city-%1").arg(i,2,10,QChar('0'));
         const QString insideName=cityName+"-inside";
-        const int IW=11, IH=8;
-        const int exitX=IW/2, exitY=IH-1, entryY=IH-2;
-        {
-            std::vector<std::string> in(IW*IH,std::string("ground"));   // floor
-            int yy=0;
-            while(yy<IH)
-            {
-                int xx=0;
-                while(xx<IW)
-                {
-                    if(xx==0||xx==IW-1||yy==0||yy==IH-1) in[xx+yy*IW]=std::string("building-wall");   // walls
-                    xx++;
-                }
-                yy++;
-            }
-            in[exitX+exitY*IW]=std::string("path");   // exit opening in the bottom wall
-            // exit warp -> back to the city, onto the road in front of the first door
-            std::vector<GenWarp> inWarps;
-            const int backX = doors.empty()? W/2 : doors[0].first;
-            const int backY = (doors.empty()? margin : doors[0].second)+1;
-            GenWarp ex; ex.x=exitX; ex.y=exitY; ex.type="teleport on it"; ex.dest=cityName.toStdString(); ex.destX=backX; ex.destY=backY;
-            inWarps.push_back(ex);
-            const QString inPath=QDir(args.at(2)).absoluteFilePath(insideName+".tmx");
-            writeTmxFromGrid(in,IW,IH,args.at(1),inPath,seed0+(unsigned int)i+7u,std::vector<std::pair<int,int> >(),inWarps);
-            QFile ixf(QDir(args.at(2)).absoluteFilePath(insideName+".xml"));
-            if(ixf.open(QIODevice::WriteOnly|QIODevice::Truncate)) { QTextStream xw(&ixf); xw << "<map zone=\"generated\" type=\"house\">\n <name>House</name>\n</map>\n"; ixf.close(); }
-        }
-        // each outdoor door -> teleport into the interior (entry just above the exit)
+        const std::pair<int,int> isz=interiorSizes[rng()%interiorSizes.size()];
+        const int backX = doors.empty()? W/2 : doors[0].first;
+        const int backY = (doors.empty()? margin : doors[0].second)+1;
+        int entryX=0,entryY=0;
+        emitInterior(args.at(1),args.at(2),insideName,isz.first,isz.second,cityName,backX,backY,seed0+(unsigned int)i+7u,entryX,entryY);
+        // each outdoor door -> teleport into the interior (the learned entry tile)
         std::vector<GenWarp> warps;
         {
             size_t k=0;
             while(k<doors.size())
             {
                 GenWarp g; g.x=doors[k].first; g.y=doors[k].second; g.type="teleport on it";
-                g.dest=insideName.toStdString(); g.destX=exitX; g.destY=entryY;
+                g.dest=insideName.toStdString(); g.destX=entryX; g.destY=entryY;
                 warps.push_back(g);
                 k++;
             }
@@ -2480,6 +2513,62 @@ static int runGenCity(const QStringList &args)
     std::cout << "gencity: " << made << " city map(s) -> " << args.at(2).toStdString() << std::endl;
     return 0;
 }
+// Generate standalone ROUTE HOUSES — a single small building on a ground plot with a
+// path down to the route edge, its own interior, and (sometimes) a bot.  Meant to be
+// dropped onto a route by the terrain/assembly generator.
+static int runGenHouse(const QStringList &args)
+{
+    if(args.size()<3) { std::cerr << "genhouse needs: <model-map-dir> <target-tileset-dir> <out-dir> [count seed]" << std::endl; return 1; }
+    const int count = args.size()>3 ? args.at(3).toInt() : 4;
+    const unsigned int seed0 = args.size()>4 ? args.at(4).toUInt() : 1234u;
+    std::vector<std::pair<int,int> > sizes, interiorSizes;
+    double botsPerBuilding=0.4;
+    std::cout << "genhouse: "; learnCityStats(args.at(0),sizes,interiorSizes,botsPerBuilding);
+    QDir().mkpath(args.at(2));
+    int made=0,i=0;
+    while(i<count)
+    {
+        std::mt19937 rng(seed0+(unsigned int)i*137u);
+        const std::pair<int,int> &sz=sizes[rng()%sizes.size()];
+        const int bw=sz.first, bh=sz.second;
+        const int W=bw+8, H=bh+8;          // ground margin around the house
+        std::vector<std::string> grid(W*H,std::string("ground"));
+        const int bx=(W-bw)/2, by=3;
+        int yy=0;
+        while(yy<bh) { int xx=0; while(xx<bw) { grid[(bx+xx)+(by+yy)*W]=(yy==0)?std::string("building-roof"):std::string("building-wall"); xx++; } yy++; }
+        const int dx=bx+bw/2, dy=by+bh-1;
+        grid[dx+dy*W]=std::string("path");
+        int py=dy+1;
+        while(py<H) { grid[dx+py*W]=std::string("path"); py++; }   // path down to the route edge
+        const QString houseName=QString("house-%1").arg(i,2,10,QChar('0'));
+        const QString insideName=houseName+"-inside";
+        const std::pair<int,int> isz=interiorSizes[rng()%interiorSizes.size()];
+        int entryX=0,entryY=0;
+        emitInterior(args.at(1),args.at(2),insideName,isz.first,isz.second,houseName,dx,dy+1,seed0+(unsigned int)i+9u,entryX,entryY);
+        std::vector<GenWarp> warps;
+        GenWarp g; g.x=dx; g.y=dy; g.type="teleport on it"; g.dest=insideName.toStdString(); g.destX=entryX; g.destY=entryY;
+        warps.push_back(g);
+        std::vector<std::pair<int,int> > bots;
+        if(botsPerBuilding>=0.5) bots.push_back(std::pair<int,int>(dx+1<W?dx+1:dx,dy+1<H?dy+1:dy));
+        const QString outPath=QDir(args.at(2)).absoluteFilePath(houseName+".tmx");
+        if(writeTmxFromGrid(grid,W,H,args.at(1),outPath,seed0+(unsigned int)i,bots,warps)==0)
+        {
+            QFile xf(QDir(args.at(2)).absoluteFilePath(houseName+".xml"));
+            if(xf.open(QIODevice::WriteOnly|QIODevice::Truncate))
+            {
+                QTextStream xw(&xf);
+                xw << "<map zone=\"generated\" type=\"route\">\n <name>Route House</name>\n";
+                if(!bots.empty()) xw << " <bot id=\"1\"><step type=\"text\"><text><![CDATA[Hi there!]]></text></step></bot>\n";
+                xw << "</map>\n";
+                xf.close();
+            }
+            made++;
+        }
+        i++;
+    }
+    std::cout << "genhouse: " << made << " route house(s) -> " << args.at(2).toStdString() << std::endl;
+    return 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -2490,7 +2579,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--gencity" || args.at(0)=="--catlayers" || args.at(0)=="--usedtiles");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--gencity" || args.at(0)=="--genhouse" || args.at(0)=="--catlayers" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -2522,6 +2611,8 @@ int main(int argc, char *argv[])
         return runGenWfc(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--gencity")
         return runGenCity(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--genhouse")
+        return runGenHouse(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--usedtiles")
         return runUsedTiles(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
