@@ -21,6 +21,7 @@
 #include "mapreader.h"
 #include "tilelayer.h"
 #include "tileset.h"
+#include <cstdio>
 #include <memory>
 
 #include <QApplication>
@@ -274,6 +275,91 @@ static int runEvalSuggest(const QStringList &args)
         std::cout << it->first << "\t" << (cat.empty()?std::string("?"):cat) << "\t" << (high?"sure":"guess") << std::endl;
         ++it;
     }
+    return 0;
+}
+
+// Measure the KNN auto-detect by LEAVE-ONE-OUT over the VERIFIED tags: predict
+// each verified tile from the others, count hits.  Sweeps k x minPercent so the
+// defaults (k=3, minPercent>=55) can be tuned on real data.  No write.
+static int runEvalKnn(const QStringList &args)
+{
+    if(args.isEmpty()) { std::cerr << "evalknn needs: <x.tsx | tileset-dir>" << std::endl; return 1; }
+    QStringList tsx;
+    QFileInfo fi(args.at(0));
+    if(fi.isDir())
+    {
+        QDirIterator it(args.at(0),QStringList()<<"*.tsx",QDir::Files,QDirIterator::Subdirectories);
+        while(it.hasNext()) tsx.append(it.next());
+        tsx.sort();
+    }
+    else
+        tsx.append(args.at(0));
+    const int ks[3]={1,3,5};
+    const int mps[4]={45,55,65,75};
+    // accumulate correct/total/abstain per (k,mp) across all tilesets
+    int accCorrect[3][4],accTotal[3][4],accAbstain[3][4];
+    int a=0; while(a<3){int b=0;while(b<4){accCorrect[a][b]=0;accTotal[a][b]=0;accAbstain[a][b]=0;b++;}a++;}
+    int loaded=0;
+    int ti=0;
+    while(ti<tsx.size())
+    {
+        TagModel model;
+        if(model.load(tsx.at(ti)))
+        {
+            const TagModel::Counts c=model.progress();
+            if(c.verified>0)
+            {
+                loaded++;
+                int ki=0;
+                while(ki<3)
+                {
+                    int mi=0;
+                    while(mi<4)
+                    {
+                        int correct=0,total=0,abstain=0;
+                        model.knnSelfAccuracy(mps[mi],ks[ki],correct,total,abstain);
+                        accCorrect[ki][mi]+=correct; accTotal[ki][mi]+=total; accAbstain[ki][mi]+=abstain;
+                        mi++;
+                    }
+                    ki++;
+                }
+                if(tsx.size()>1)
+                {
+                    int correct=0,total=0,abstain=0;
+                    model.knnSelfAccuracy(55,3,correct,total,abstain);
+                    const int pct=total>0?correct*100/total:0;
+                    std::cout << QFileInfo(tsx.at(ti)).fileName().toStdString() << "\tk3/55: "
+                              << correct << "/" << total << " = " << pct << "%  (abstain " << abstain << ")" << std::endl;
+                }
+            }
+        }
+        ti++;
+    }
+    if(loaded==0) { std::cerr << "no tileset with verified tags found" << std::endl; return 1; }
+    std::cout << "\n== leave-one-out KNN accuracy over " << loaded << " tileset(s), "
+              << "correct / (total - abstain) ==" << std::endl;
+    std::cout << "         ";
+    int mi=0; while(mi<4){ std::cout << "  >=" << mps[mi] << "%"; mi++; } std::cout << std::endl;
+    int ki=0;
+    while(ki<3)
+    {
+        std::cout << "  k=" << ks[ki] << "   ";
+        mi=0;
+        while(mi<4)
+        {
+            const int answered=accTotal[ki][mi]-accAbstain[ki][mi];
+            const int pct=answered>0?accCorrect[ki][mi]*100/answered:0;
+            char buf[16]; std::snprintf(buf,sizeof(buf),"   %3d%%",pct);
+            std::cout << buf;
+            mi++;
+        }
+        std::cout << std::endl;
+        ki++;
+    }
+    // also report coverage (answered fraction) for the recommended cell
+    const int ansR=accTotal[1][1]-accAbstain[1][1];
+    std::cout << "  (k=3 >=55%: answered " << ansR << "/" << accTotal[1][1]
+              << " = " << (accTotal[1][1]>0?ansR*100/accTotal[1][1]:0) << "% coverage)" << std::endl;
     return 0;
 }
 
@@ -1618,7 +1704,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--usedtiles");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -1636,6 +1722,8 @@ int main(int argc, char *argv[])
         return runSuggest(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--evalsuggest")
         return runEvalSuggest(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--evalknn")
+        return runEvalKnn(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--maptensor")
         return runMapTensor(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--wfc")

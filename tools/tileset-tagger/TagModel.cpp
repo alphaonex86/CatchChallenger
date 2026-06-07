@@ -210,16 +210,15 @@ void TagModel::detectSimilarGroups()
     }
 }
 
-int TagModel::suggestFromTags(int minPercent)
+void TagModel::extractTiles(std::vector<int> &ids,
+                            std::vector<std::vector<unsigned char> > &rgb,
+                            std::vector<std::vector<char> > &op) const
 {
+    ids.clear(); rgb.clear(); op.clear();
     if(image_.isNull() || columns_<1 || tileWidth_<1 || tileHeight_<1)
-        return 0;
+        return;
     const int tw=tileWidth_,th=tileHeight_,npx=tw*th;
     const QImage cur=image_.convertToFormat(QImage::Format_ARGB32);
-    // extract every NON-EMPTY tile's RGB + alpha mask, parallel arrays
-    std::vector<int> ids;
-    std::vector<std::vector<unsigned char> > rgb;
-    std::vector<std::vector<char> > op;
     int id=0;
     while(id<tileCount_)
     {
@@ -248,8 +247,109 @@ int TagModel::suggestFromTags(int minPercent)
         }
         id++;
     }
+}
+
+// k-NN: rank every reference tile by overlap-match% (pixels where BOTH have
+// content, RGB within TOL), keep the top-k that clear minPercent, then VOTE —
+// each neighbour weights its category by its %.  k=3 voting beats best-1 (it
+// shrugs off a single freak match) — the measured benchmark winner.
+std::string TagModel::knnVote(size_t ui,const std::vector<size_t> &refs,
+                              const std::vector<std::string> &refCat,
+                              const std::vector<std::vector<unsigned char> > &rgb,
+                              const std::vector<std::vector<char> > &op,
+                              int npx,int minPercent,int k,int &bestPctOut)
+{
     const int TOL=18;
     const int MINOVERLAP=npx*32/256;
+    bestPctOut=-1;
+    std::vector<std::pair<int,std::string> > scored;   // (pct, category), candidates
+    size_t r=0;
+    while(r<refs.size())
+    {
+        const size_t ti=refs[r];
+        if(ti!=ui)   // leave-one-out: never score a tile against itself
+        {
+            int overlap=0,match=0,p=0;
+            while(p<npx)
+            {
+                if(op[ui][p] && op[ti][p])
+                {
+                    overlap++;
+                    const int q=p*3;
+                    if(std::abs((int)rgb[ui][q]-(int)rgb[ti][q])<=TOL
+                       && std::abs((int)rgb[ui][q+1]-(int)rgb[ti][q+1])<=TOL
+                       && std::abs((int)rgb[ui][q+2]-(int)rgb[ti][q+2])<=TOL)
+                        match++;
+                }
+                p++;
+            }
+            if(overlap>=MINOVERLAP)
+            {
+                const int pct=match*100/overlap;
+                if(pct>=minPercent)
+                    scored.push_back(std::pair<int,std::string>(pct,refCat[r]));
+            }
+        }
+        r++;
+    }
+    if(scored.empty())
+        return std::string();
+    // partial selection-sort: bring the top-k highest % to the front
+    const int kk=(k<(int)scored.size())?k:(int)scored.size();
+    int sel=0;
+    while(sel<kk)
+    {
+        int best=sel,j=sel+1;
+        while(j<(int)scored.size()) { if(scored[j].first>scored[best].first) best=j; j++; }
+        std::pair<int,std::string> tmp=scored[sel]; scored[sel]=scored[best]; scored[best]=tmp;
+        sel++;
+    }
+    // weighted vote among the top-k; tie-break on the higher peak %
+    std::map<std::string,int> weight,peak;
+    int n=0;
+    while(n<kk)
+    {
+        weight[scored[n].second]+=scored[n].first;
+        if(scored[n].first>peak[scored[n].second]) peak[scored[n].second]=scored[n].first;
+        n++;
+    }
+    std::string winner;
+    int bestW=-1,bestPeak=-1;
+    std::map<std::string,int>::iterator wi=weight.begin();
+    while(wi!=weight.end())
+    {
+        const int pk=peak[wi->first];
+        if(wi->second>bestW || (wi->second==bestW && pk>bestPeak))
+        { bestW=wi->second; bestPeak=pk; winner=wi->first; }
+        ++wi;
+    }
+    bestPctOut=peak[winner];
+    return winner;
+}
+
+int TagModel::suggestFromTags(int minPercent)
+{
+    std::vector<int> ids;
+    std::vector<std::vector<unsigned char> > rgb;
+    std::vector<std::vector<char> > op;
+    extractTiles(ids,rgb,op);
+    if(ids.empty())
+        return 0;
+    const int npx=tileWidth_*tileHeight_;
+    // reference set = VERIFIED tags only (no auto flag) — the human's truth
+    std::vector<size_t> refs;
+    std::vector<std::string> refCat;
+    size_t i=0;
+    while(i<ids.size())
+    {
+        std::unordered_map<int,TileTag>::iterator tg=tags_.find(ids[i]);
+        if(tg!=tags_.end() && !tg->second.category.empty() && tg->second.attr("auto")!="guess")
+        { refs.push_back(i); refCat.push_back(tg->second.category); }
+        i++;
+    }
+    if(refs.empty())
+        return 0;
+    const int K=3;
     int filled=0;
     size_t ui=0;
     while(ui<ids.size())
@@ -260,43 +360,14 @@ int TagModel::suggestFromTags(int minPercent)
         const bool needs = (cur==tags_.end()) || (cur->second.attr("auto")=="guess");
         if(needs)
         {
-            int bestPct=-1;
-            std::string bestCat;
-            size_t ti=0;
-            while(ti<ids.size())
-            {
-                std::unordered_map<int,TileTag>::iterator tg=tags_.find(ids[ti]);
-                // reference set = VERIFIED tags only (no auto flag) — the human's truth
-                if(tg!=tags_.end() && !tg->second.category.empty() && tg->second.attr("auto")!="guess")
-                {
-                    int overlap=0,match=0,p=0;
-                    while(p<npx)
-                    {
-                        if(op[ui][p] && op[ti][p])
-                        {
-                            overlap++;
-                            const int q=p*3;
-                            if(std::abs((int)rgb[ui][q]-(int)rgb[ti][q])<=TOL
-                               && std::abs((int)rgb[ui][q+1]-(int)rgb[ti][q+1])<=TOL
-                               && std::abs((int)rgb[ui][q+2]-(int)rgb[ti][q+2])<=TOL)
-                                match++;
-                        }
-                        p++;
-                    }
-                    if(overlap>=MINOVERLAP)
-                    {
-                        const int pct=match*100/overlap;
-                        if(pct>bestPct) { bestPct=pct; bestCat=tg->second.category; }
-                    }
-                }
-                ti++;
-            }
-            if(bestPct>=minPercent && !bestCat.empty())
+            int pct=-1;
+            const std::string cat=knnVote(ui,refs,refCat,rgb,op,npx,minPercent,K,pct);
+            if(!cat.empty())
             {
                 TileTag tag;
-                tag.category=bestCat;
+                tag.category=cat;
                 tag.attributes["auto"]="guess";
-                tag.attributes["knn"]=std::to_string(bestPct);
+                tag.attributes["knn"]=std::to_string(pct);
                 tags_[ids[ui]]=tag;
                 filled++;
             }
@@ -304,6 +375,40 @@ int TagModel::suggestFromTags(int minPercent)
         ui++;
     }
     return filled;
+}
+
+void TagModel::knnSelfAccuracy(int minPercent,int k,int &correct,int &total,int &abstain) const
+{
+    correct=0; total=0; abstain=0;
+    std::vector<int> ids;
+    std::vector<std::vector<unsigned char> > rgb;
+    std::vector<std::vector<char> > op;
+    extractTiles(ids,rgb,op);
+    if(ids.empty())
+        return;
+    const int npx=tileWidth_*tileHeight_;
+    std::vector<size_t> refs;
+    std::vector<std::string> refCat;
+    size_t i=0;
+    while(i<ids.size())
+    {
+        std::unordered_map<int,TileTag>::const_iterator tg=tags_.find(ids[i]);
+        if(tg!=tags_.cend() && !tg->second.category.empty() && tg->second.attr("auto")!="guess")
+        { refs.push_back(i); refCat.push_back(tg->second.category); }
+        i++;
+    }
+    size_t r=0;
+    while(r<refs.size())
+    {
+        int pct=-1;
+        const std::string pred=knnVote(refs[r],refs,refCat,rgb,op,npx,minPercent,k,pct);
+        total++;
+        if(pred.empty())
+            abstain++;
+        else if(pred==refCat[r])
+            correct++;
+        r++;
+    }
 }
 
 const std::vector<TagModel::Similar> &TagModel::similarTo(int tileId) const

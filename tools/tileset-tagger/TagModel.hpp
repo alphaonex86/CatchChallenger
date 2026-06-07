@@ -64,6 +64,11 @@ public:
     // ~91% match vs hand tags on normal1 — the rest auto-fills as you tag a few.
     int suggestFromTags(int minPercent);   // returns how many it filled
 
+    // Leave-one-out KNN accuracy over the VERIFIED tags (measurement only, no
+    // write): predict each verified tile from the OTHERS and count hits.  Used to
+    // tune k / minPercent.  abstain = no neighbour reached minPercent.
+    void knnSelfAccuracy(int minPercent,int k,int &correct,int &total,int &abstain) const;
+
     // Review progression over the whole tileset.
     struct Counts { int verified; int toReview; int untagged; };
     Counts progress() const;
@@ -109,6 +114,19 @@ private:
     QDomElement tilesetElement();
     void loadSidecarTags();                          // read tags_ from tagFilePath_
     void detectSimilarGroups();                      // in-memory same-object-different-bg links
+
+    // KNN pixel cache: every NON-EMPTY tile's id + RGB(npx*3) + alpha mask(npx).
+    void extractTiles(std::vector<int> &ids,
+                      std::vector<std::vector<unsigned char> > &rgb,
+                      std::vector<std::vector<char> > &op) const;
+    // Predict tile `ui`'s category from reference tiles `refs` (indices into the
+    // extractTiles arrays, their categories in `refCat`): top-k by overlap-match%,
+    // % is the vote weight.  "" if none reaches minPercent.  bestPctOut=winner peak%.
+    static std::string knnVote(size_t ui,const std::vector<size_t> &refs,
+                               const std::vector<std::string> &refCat,
+                               const std::vector<std::vector<unsigned char> > &rgb,
+                               const std::vector<std::vector<char> > &op,
+                               int npx,int minPercent,int k,int &bestPctOut);
 };
 
 #endif // TILESETTAGGER_TAGMODEL_HPP
