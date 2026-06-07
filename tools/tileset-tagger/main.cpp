@@ -794,6 +794,39 @@ static double contextScore(const ContextModel &ctx,const std::pair<std::string,i
     return s;
 }
 
+// Fraction of a tile that is substantially opaque (alpha>=128).  Used to reject
+// transparent fragments a noisy heuristic may have mis-tagged (e.g. building edges
+// tagged "cliff") so the generator never places an invisible tile.
+static double tileOpaqueFrac(TagModel *tm,int id)
+{
+    const QImage &img=tm->image();
+    if(img.isNull() || tm->columns()<1 || tm->tileWidth()<1 || tm->tileHeight()<1)
+        return 0.0;
+    const int tw=tm->tileWidth(), th=tm->tileHeight();
+    const int x0=(id%tm->columns())*tw, y0=(id/tm->columns())*th;
+    if(x0+tw>img.width() || y0+th>img.height())
+        return 0.0;
+    const QImage c=img.convertToFormat(QImage::Format_ARGB32);
+    long opaque=0,total=0;
+    int y=0;
+    while(y<th)
+    {
+        const QRgb *line=reinterpret_cast<const QRgb*>(c.scanLine(y0+y));
+        int x=0;
+        while(x<tw) { if(qAlpha(line[x0+x])>=128) opaque++; total++; x++; }
+        y++;
+    }
+    return total>0 ? (double)opaque/(double)total : 0.0;
+}
+
+// Turn a CATEGORY grid (one category string per cell, "" = empty) into a valid
+// engine .tmx on the target tileset: resolve each category to its REAL tagged
+// tiles, auto-tile by learned neighbour context, distribute into the named engine
+// layers, write CSV layers + relative tileset refs.  Shared by the struct-based
+// (--genmap) and the coherent WFC (--genwfc) front-ends.
+static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
+                            const QString &tilesetDir,const QString &outPath,unsigned seed);
+
 static int runGenMap(const QStringList &args)
 {
     // <struct.json> <tileset-dir> <out.tmx> [W H seed]
@@ -805,9 +838,13 @@ static int runGenMap(const QStringList &args)
     const int H = args.size()>4 ? args.at(4).toInt() : 30;
     const unsigned seed = args.size()>5 ? (unsigned)args.at(5).toUInt() : 1u;
     const std::vector<std::string> grid=generateGrid(buildingSizes,zoneSizes,W,H,seed);
-
+    return writeTmxFromGrid(grid,W,H,args.at(1),args.at(2),seed);
+}
+static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
+                            const QString &tilesetDir,const QString &outPath,unsigned seed)
+{
     // load the official tilesets + their sidecar tags; category -> first (tileset,tileId)
-    QDir tdir(args.at(1));
+    QDir tdir(tilesetDir);
     const QStringList tsxs=tdir.entryList(QStringList()<<"*.tsx",QDir::Files,QDir::Name);
     std::vector<TagModel*> models;
     std::vector<int> tileCounts;
@@ -833,7 +870,7 @@ static int runGenMap(const QStringList &args)
             while(id<tm->tileCount())
             {
                 const std::string &cat=tm->tagOf(id).category;
-                if(!cat.empty())
+                if(!cat.empty() && tileOpaqueFrac(tm,id)>=0.5)   // skip transparent fragments (mis-tagged building edges etc.)
                 {
                     std::map<int,MapUsageIndex::TileStat>::const_iterator s=stats.find(id);
                     const long use = s!=stats.cend() ? s->second.total : 0;
@@ -858,6 +895,31 @@ static int runGenMap(const QStringList &args)
             size_t k=0;
             while(k<c->second.size() && k<24) { catTiles[c->first].push_back(c->second.at(k).second); catUsage[c->first].push_back(c->second.at(k).first); k++; }
             ++c;
+        }
+    }
+    // a few model categories have no exact target equivalent (the target splits them
+    // finer, or lacks them) -> alias to the closest present category so those cells
+    // get a real tile instead of a hole.  ALIAS{generic -> {fallbacks}}.
+    {
+        const char *aliases[4][4]={
+            {"terrain","ground","grass-short","path"},     // generic fill -> walkable ground
+            {"building","building-wall","cliff","rock"},    // whole building -> its wall
+            {"bush","grass-tall","grass-short","tree-trunk"},
+            {"flower","grass-short","ground","path"}};
+        int a=0;
+        while(a<4)
+        {
+            if(catTiles.find(aliases[a][0])==catTiles.cend())
+            {
+                int gi=1;
+                while(gi<4)
+                {
+                    std::map<std::string,std::vector<std::pair<int,int> > >::iterator it=catTiles.find(aliases[a][gi]);
+                    if(it!=catTiles.cend()) { catTiles[aliases[a][0]]=it->second; catUsage[aliases[a][0]]=catUsage[aliases[a][gi]]; break; }
+                    gi++;
+                }
+            }
+            a++;
         }
     }
 
@@ -903,7 +965,7 @@ static int runGenMap(const QStringList &args)
     // learn the auto-tiling context from the maps near the tileset dir (its parent
     // holds main/ for the official set, johto//kanto/ for the model set).
     ContextModel ctx;
-    learnContext(QDir(args.at(1)).absoluteFilePath(".."),ctx);
+    learnContext(QDir(tilesetDir).absoluteFilePath(".."),ctx);
 
     // distribute gids into per-layer grids; AUTO-TILE by picking, per cell, the
     // candidate whose learned 4-neighbour context best matches the generated
@@ -949,10 +1011,10 @@ static int runGenMap(const QStringList &args)
     }
 
     // write the .tmx (CSV layers, relative tileset refs) into map/main/generated/
-    const QString outDir=QFileInfo(args.at(2)).absolutePath();
+    const QString outDir=QFileInfo(outPath).absolutePath();
     QDir().mkpath(outDir);
-    QFile out(args.at(2));
-    if(!out.open(QIODevice::WriteOnly|QIODevice::Truncate)) { std::cerr << "cannot write " << args.at(2).toStdString() << std::endl; return 1; }
+    QFile out(outPath);
+    if(!out.open(QIODevice::WriteOnly|QIODevice::Truncate)) { std::cerr << "cannot write " << outPath.toStdString() << std::endl; return 1; }
     QTextStream w(&out);
     w << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     w << "<map version=\"1.10\" orientation=\"orthogonal\" renderorder=\"right-down\" width=\"" << W
@@ -992,7 +1054,7 @@ static int runGenMap(const QStringList &args)
     size_t m=0;
     while(m<models.size()) { delete models.at(m); m++; }
 
-    std::cout << "genmap " << W << "x" << H << " (seed " << seed << ") -> " << args.at(2).toStdString()
+    std::cout << "genmap " << W << "x" << H << " (seed " << seed << ") -> " << outPath.toStdString()
               << "  using " << usedTs.size() << " tileset(s), " << catGids.size() << " categories mapped" << std::endl;
     if(!missing.empty())
     {
@@ -1897,23 +1959,18 @@ static void wfcPropagate(int P,int W,int H,const std::vector<std::vector<int> > 
         }
     }
 }
-static int runWfcOverlap(const QStringList &args)
+// Generate a coherent WxH category-id grid (result, values index cats[]) via the
+// overlapping-pattern model.  Fills catId/cats/gs and reports mode ("AC4"/"greedy")
+// + pattern count.  Reused by --wfco (PNG) and --genmap (.tmx).
+static bool wfcGenerateGrid(const QString &modelDir,int N,int W,int H,unsigned int seed,
+                            std::map<std::string,int> &catId,std::vector<std::string> &cats,
+                            std::vector<WfcGrid> &gs,std::vector<int> &result,std::string &modeOut,int &Pout)
 {
-    if(args.size()<2) { std::cerr << "wfco needs: <model-map-dir> <out.png> [N W H seed]" << std::endl; return 1; }
-    int N = args.size()>2 ? args.at(2).toInt() : 2;   // 2x2 = best coherence/cost on the model data
-    if(N<2) N=2;
-    if(N>4) N=4;
-    const int W = args.size()>3 ? args.at(3).toInt() : 30;
-    const int H = args.size()>4 ? args.at(4).toInt() : 30;
-    const unsigned int seed = args.size()>5 ? args.at(5).toUInt() : 1234u;
-
-    std::map<std::string,int> catId;
-    std::vector<std::string> cats;
-    std::vector<WfcGrid> gs;
-    wfcLoadModel(args.at(0),catId,cats,gs);
+    if(gs.empty())   // reuse a pre-decoded model across many generated maps
+        wfcLoadModel(modelDir,catId,cats,gs);
     const int K=(int)cats.size();
-    if(K<2) { std::cerr << "WFCo: no tagged categories in " << args.at(0).toStdString() << std::endl; return 1; }
-    if(K>255) { std::cerr << "WFCo: " << K << " categories > 255 (byte signatures)" << std::endl; return 1; }
+    if(K<2) { std::cerr << "WFCo: no tagged categories in " << modelDir.toStdString() << std::endl; return false; }
+    if(K>255) { std::cerr << "WFCo: " << K << " categories > 255 (byte signatures)" << std::endl; return false; }
 
     // 1) extract NxN patterns + weights
     std::map<std::vector<int>,int> patIndex;
@@ -1942,11 +1999,12 @@ static int runWfcOverlap(const QStringList &args)
         gi++;
     }
     const int P=(int)pats.size();
-    if(P<1) { std::cerr << "WFCo: model maps smaller than " << N << "x" << N << std::endl; return 1; }
+    Pout=P;
+    if(P<1) { std::cerr << "WFCo: model maps smaller than " << N << "x" << N << std::endl; return false; }
     // memory guard: compat is W*H*P*4 ints
     const double cells=(double)W*H;
     if(cells*P*4.0 > 6.0e8) { std::cerr << "WFCo: " << P << " patterns x " << W << "x" << H
-        << " too big; use smaller N or W/H" << std::endl; return 1; }
+        << " too big; use smaller N or W/H" << std::endl; return false; }
 
     // 2) index patterns by edge signatures (cols/rows as a byte string) so
     //    compatibility is built without an O(P^2) scan.
@@ -2017,7 +2075,7 @@ static int runWfcOverlap(const QStringList &args)
     std::vector<long> sumW(NC,totW);
     std::vector<int> compat((size_t)NC*P*4,0);
     std::vector<std::pair<int,int> > banStack;
-    std::vector<int> result(W*H,0);
+    result.assign(W*H,0);
 
     bool solved=false;
     int attempt=0;
@@ -2099,6 +2157,28 @@ static int runWfcOverlap(const QStringList &args)
         }
     }
 
+    modeOut=mode;
+    return true;
+}
+static int runWfcOverlap(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "wfco needs: <model-map-dir> <out.png> [N W H seed]" << std::endl; return 1; }
+    int N = args.size()>2 ? args.at(2).toInt() : 2;   // 2x2 = best coherence/cost on the model data
+    if(N<2) N=2;
+    if(N>4) N=4;
+    const int W = args.size()>3 ? args.at(3).toInt() : 30;
+    const int H = args.size()>4 ? args.at(4).toInt() : 30;
+    const unsigned int seed = args.size()>5 ? args.at(5).toUInt() : 1234u;
+
+    std::map<std::string,int> catId;
+    std::vector<std::string> cats;
+    std::vector<WfcGrid> gs;
+    std::vector<int> result;
+    std::string mode;
+    int P=0;
+    if(!wfcGenerateGrid(args.at(0),N,W,H,seed,catId,cats,gs,result,mode,P))
+        return 1;
+
     std::set<std::vector<int> > model2x2;
     wfcBuild2x2(gs,model2x2);
     const double coh=wfcCoherence(result,W,H,model2x2);
@@ -2123,9 +2203,41 @@ static int runWfcOverlap(const QStringList &args)
     if(!img.save(args.at(1))) { std::cerr << "cannot write " << args.at(1).toStdString() << std::endl; return 1; }
     char cohbuf[32]; std::snprintf(cohbuf,sizeof(cohbuf),"%.1f",coh);
     std::cout << "WFCo(" << N << "x" << N << " overlap, " << mode << ") " << W << "x" << H << " from " << gs.size()
-              << " model map(s), " << P << " patterns, " << (K-1) << " categories"
+              << " model map(s), " << P << " patterns, " << ((int)cats.size()-1) << " categories"
               << ", coherence " << cohbuf << "% -> " << args.at(1).toStdString() << std::endl;
     return 0;
+}
+// Generate COUNT coherent maps (overlapping WFC grid -> real .tmx on the target
+// tileset) into an output dir.  The end-to-end transfer: learn structure from the
+// model maps, place the target's REAL tagged tiles, write engine .tmx files.
+static int runGenWfc(const QStringList &args)
+{
+    if(args.size()<3) { std::cerr << "genwfc needs: <model-map-dir> <target-tileset-dir> <out-dir> [count W H seed]" << std::endl; return 1; }
+    const int count = args.size()>3 ? args.at(3).toInt() : 4;
+    const int W = args.size()>4 ? args.at(4).toInt() : 40;
+    const int H = args.size()>5 ? args.at(5).toInt() : 40;
+    const unsigned int seed0 = args.size()>6 ? args.at(6).toUInt() : 1234u;
+    QDir().mkpath(args.at(2));
+    std::map<std::string,int> catId;
+    std::vector<std::string> cats;
+    std::vector<WfcGrid> gs;                 // decoded once, reused for every map
+    int made=0,rc=0,i=0;
+    while(i<count)
+    {
+        std::vector<int> idgrid;
+        std::string mode;
+        int P=0;
+        if(!wfcGenerateGrid(args.at(0),2,W,H,seed0+(unsigned int)i*101u,catId,cats,gs,idgrid,mode,P))
+            return 1;
+        std::vector<std::string> grid(idgrid.size());
+        size_t c=0;
+        while(c<idgrid.size()) { grid[c]=cats.at(idgrid[c]); c++; }
+        const QString outPath=QDir(args.at(2)).absoluteFilePath(QString("wfc-%1.tmx").arg(i,2,10,QChar('0')));
+        if(writeTmxFromGrid(grid,W,H,args.at(1),outPath,seed0+(unsigned int)i)!=0) rc=1; else made++;
+        i++;
+    }
+    std::cout << "genwfc: " << made << " coherent map(s) -> " << args.at(2).toStdString() << std::endl;
+    return rc;
 }
 
 int main(int argc, char *argv[])
@@ -2137,7 +2249,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--catlayers" || args.at(0)=="--usedtiles");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--catlayers" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -2165,6 +2277,8 @@ int main(int argc, char *argv[])
         return runWfcOverlap(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--catlayers")
         return runCatLayers(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--genwfc")
+        return runGenWfc(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--usedtiles")
         return runUsedTiles(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
