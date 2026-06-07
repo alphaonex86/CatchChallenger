@@ -189,7 +189,15 @@ public:
     //  SENDCHAT <local|all|clan|pm|system|system_important> <text...>
     //  GETCHAT  -> "CHATMSG <channel> <pseudo> <text>" per buffered line, then
     //              "OK GETCHAT <count>"; drains the buffer.
-    //Answers/errors come back via remoteReply(); trade/fight are later stages.
+    //Stage 3 (trade):
+    //  TRADEREQUEST <pseudo>      (sends the "/trade <pseudo>" chat command)
+    //  TRADEACCEPT | TRADEREFUSE  (answer an incoming request)
+    //  TRADEADDCASH <n> | TRADEADDITEM <id> <qty> | TRADEADDMONSTER <pos>
+    //  TRADEFINISH | TRADECANCEL
+    //  GETTRADE -> "TRADEEVENT <REQUESTED|ACCEPTED|CANCELED|FINISHED|VALIDATED|
+    //              ADDCASH|ADDITEM|ADDMONSTER> ..." per buffered event, then
+    //              "OK GETTRADE <count>"; drains the buffer.
+    //Answers/errors come back via remoteReply(); fight is a later stage.
     void remoteAction(const QString &line);
     //Connect this controller to the per-instance QLocalServer automation channel:
     //localListener.actionReceived -> remoteAction, remoteReply -> sendReply. Call
@@ -204,10 +212,12 @@ private:
     //chat-channel name <-> Chat_type id; -1 from FromName on an unknown channel
     int remoteChatTypeFromName(const QString &name) const;
     QString remoteChatTypeName(const uint8_t &chatType) const;
-    //append one formatted chat line to remoteChatLog (capped at 256 entries)
-    void rememberRemoteChat(const std::string &line);
+    //append one formatted line to an event buffer (capped at 256 entries)
+    void rememberRemoteEvent(std::vector<std::string> &log,const std::string &line);
     //GETCHAT drains this buffer of received chat/system lines
     std::vector<std::string> remoteChatLog;
+    //GETTRADE drains this buffer of received trade events
+    std::vector<std::string> remoteTradeLog;
     //--test-clicksign self-test state (see runClickSignSelfTest())
     bool signSelfTestStarted;
     CATCHCHALLENGER_TYPE_MAPID signTestMap;
@@ -278,6 +288,15 @@ private slots:
     //QLocalServer automation channel (stage 2): buffer chat / system lines for GETCHAT
     void remoteChatReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &player_type);
     void remoteSystemReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text);
+    //QLocalServer automation channel (stage 3): buffer trade events for GETTRADE
+    void remoteTradeRequested(const std::string &pseudo,const uint8_t &skinInt);
+    void remoteTradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt);
+    void remoteTradeCanceledByOther();
+    void remoteTradeFinishedByOther();
+    void remoteTradeValidatedByTheServer();
+    void remoteTradeAddTradeCash(const uint64_t &cash);
+    void remoteTradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity);
+    void remoteTradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
     //--test-clicksign: click the nearest sign, then verify (via actionOn) that
     //the player walked up to it, faced it and opened it like Enter was pressed
     void runClickSignSelfTest();

@@ -117,6 +117,23 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::Qtnew_system_text, this,&MapControllerMP::remoteSystemReceived,Qt::QueuedConnection))
         abort();
+    //QLocalServer automation channel (stage 3): buffer trade events for GETTRADE
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeRequested,        this,&MapControllerMP::remoteTradeRequested,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeAcceptedByOther,  this,&MapControllerMP::remoteTradeAcceptedByOther,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeCanceledByOther,  this,&MapControllerMP::remoteTradeCanceledByOther,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeFinishedByOther,  this,&MapControllerMP::remoteTradeFinishedByOther,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeValidatedByTheServer,this,&MapControllerMP::remoteTradeValidatedByTheServer,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeAddTradeCash,     this,&MapControllerMP::remoteTradeAddTradeCash,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeAddTradeObject,   this,&MapControllerMP::remoteTradeAddTradeObject,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeAddTradeMonster,  this,&MapControllerMP::remoteTradeAddTradeMonster,Qt::QueuedConnection))
+        abort();
     #endif
 }
 
@@ -1489,6 +1506,74 @@ void MapControllerMP::remoteAction(const QString &line)
         emit remoteReply(QStringLiteral("OK GETCHAT %1").arg(static_cast<qulonglong>(remoteChatLog.size())));
         remoteChatLog.clear();
     }
+    else if(verb==QStringLiteral("TRADEREQUEST") && parts.size()>=2)
+    {
+        if(client==nullptr)
+            emit remoteReply(QStringLiteral("ERROR not connected"));
+        else
+        {
+            //a trade is initiated by the "/trade <pseudo>" chat command, which the
+            //server parses (ClientNetworkReadMessage); send it as a local message.
+            client->sendChatText(CatchChallenger::Chat_type_local,std::string("/trade ")+parts.at(1).toStdString());
+            emit remoteReply(QStringLiteral("OK TRADEREQUEST ")+parts.at(1));
+        }
+    }
+    else if(verb==QStringLiteral("TRADEACCEPT"))
+    {
+        if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->tradeAccepted(); emit remoteReply(QStringLiteral("OK TRADEACCEPT")); }
+    }
+    else if(verb==QStringLiteral("TRADEREFUSE"))
+    {
+        if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->tradeRefused(); emit remoteReply(QStringLiteral("OK TRADEREFUSE")); }
+    }
+    else if(verb==QStringLiteral("TRADEADDCASH") && parts.size()>=2)
+    {
+        bool ok=false;
+        const qulonglong cash=parts.at(1).toULongLong(&ok);
+        if(!ok) emit remoteReply(QStringLiteral("ERROR bad TRADEADDCASH arg"));
+        else if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->addTradeCash(static_cast<uint64_t>(cash)); emit remoteReply(QStringLiteral("OK TRADEADDCASH %1").arg(cash)); }
+    }
+    else if(verb==QStringLiteral("TRADEADDITEM") && parts.size()>=3)
+    {
+        bool ok1=false,ok2=false;
+        const uint item=parts.at(1).toUInt(&ok1);
+        const uint qty=parts.at(2).toUInt(&ok2);
+        if(!ok1 || !ok2) emit remoteReply(QStringLiteral("ERROR bad TRADEADDITEM args"));
+        else if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->addObject(static_cast<CATCHCHALLENGER_TYPE_ITEM>(item),qty); emit remoteReply(QStringLiteral("OK TRADEADDITEM %1 %2").arg(item).arg(qty)); }
+    }
+    else if(verb==QStringLiteral("TRADEADDMONSTER") && parts.size()>=2)
+    {
+        bool ok=false;
+        const uint pos=parts.at(1).toUInt(&ok);
+        if(!ok) emit remoteReply(QStringLiteral("ERROR bad TRADEADDMONSTER arg"));
+        else if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->addMonsterByPosition(static_cast<uint8_t>(pos)); emit remoteReply(QStringLiteral("OK TRADEADDMONSTER %1").arg(pos)); }
+    }
+    else if(verb==QStringLiteral("TRADEFINISH"))
+    {
+        if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->tradeFinish(); emit remoteReply(QStringLiteral("OK TRADEFINISH")); }
+    }
+    else if(verb==QStringLiteral("TRADECANCEL"))
+    {
+        if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->tradeCanceled(); emit remoteReply(QStringLiteral("OK TRADECANCEL")); }
+    }
+    else if(verb==QStringLiteral("GETTRADE"))
+    {
+        std::size_t i=0;
+        while(i<remoteTradeLog.size())
+        {
+            emit remoteReply(QStringLiteral("TRADEEVENT ")+QString::fromStdString(remoteTradeLog.at(i)));
+            ++i;
+        }
+        emit remoteReply(QStringLiteral("OK GETTRADE %1").arg(static_cast<qulonglong>(remoteTradeLog.size())));
+        remoteTradeLog.clear();
+    }
     else
         emit remoteReply(QStringLiteral("ERROR unknown command ")+verb);
 }
@@ -1528,7 +1613,7 @@ void MapControllerMP::remoteChatReceived(const CatchChallenger::Chat_type &chat_
     line+=pseudo.empty()?std::string("-"):pseudo;
     line+=' ';
     line+=text;
-    rememberRemoteChat(line);
+    rememberRemoteEvent(remoteChatLog,line);
 }
 
 void MapControllerMP::remoteSystemReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text)
@@ -1536,15 +1621,57 @@ void MapControllerMP::remoteSystemReceived(const CatchChallenger::Chat_type &cha
     std::string line=remoteChatTypeName(chat_type).toStdString();
     line+=" - ";
     line+=text;
-    rememberRemoteChat(line);
+    rememberRemoteEvent(remoteChatLog,line);
 }
 
-void MapControllerMP::rememberRemoteChat(const std::string &line)
+void MapControllerMP::rememberRemoteEvent(std::vector<std::string> &log,const std::string &line)
 {
     //bound the buffer so a long un-drained session can't grow without limit
-    if(remoteChatLog.size()>=256)
-        remoteChatLog.erase(remoteChatLog.begin());
-    remoteChatLog.push_back(line);
+    if(log.size()>=256)
+        log.erase(log.begin());
+    log.push_back(line);
+}
+
+void MapControllerMP::remoteTradeRequested(const std::string &pseudo,const uint8_t &skinInt)
+{
+    (void)skinInt;
+    rememberRemoteEvent(remoteTradeLog,std::string("REQUESTED ")+pseudo);
+}
+
+void MapControllerMP::remoteTradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt)
+{
+    (void)skinInt;
+    rememberRemoteEvent(remoteTradeLog,std::string("ACCEPTED ")+pseudo);
+}
+
+void MapControllerMP::remoteTradeCanceledByOther()
+{
+    rememberRemoteEvent(remoteTradeLog,std::string("CANCELED"));
+}
+
+void MapControllerMP::remoteTradeFinishedByOther()
+{
+    rememberRemoteEvent(remoteTradeLog,std::string("FINISHED"));
+}
+
+void MapControllerMP::remoteTradeValidatedByTheServer()
+{
+    rememberRemoteEvent(remoteTradeLog,std::string("VALIDATED"));
+}
+
+void MapControllerMP::remoteTradeAddTradeCash(const uint64_t &cash)
+{
+    rememberRemoteEvent(remoteTradeLog,std::string("ADDCASH ")+std::to_string(cash));
+}
+
+void MapControllerMP::remoteTradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity)
+{
+    rememberRemoteEvent(remoteTradeLog,std::string("ADDITEM ")+std::to_string(item)+" "+std::to_string(quantity));
+}
+
+void MapControllerMP::remoteTradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster)
+{
+    rememberRemoteEvent(remoteTradeLog,std::string("ADDMONSTER ")+std::to_string(monster.monster)+" level "+std::to_string(monster.level));
 }
 
 void MapControllerMP::wireRemoteControl(LocalListener *localListener)
