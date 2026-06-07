@@ -956,14 +956,20 @@ bool checkEmptyRoad( const SettingsAll::SettingsExtra &setting, int tx, int ty){
     return false;
 }
 
-bool checkTerrain(const std::vector<LoadMap::Terrain*> &terrains, const Tiled::Map &worldMap, unsigned int tx, unsigned int ty, const QStringList &mountainTerrain){
+// terrainLayers[i]/terrainIsMountain[i] are pre-resolved ONCE per addRoadContent (parallel to
+// terrains): searchTileLayerByName is a linear name scan and mountainTerrain.contains a QString
+// search, both independent of (tx,ty); doing them here ran ~9x per cell x |terrains| and dominated
+// findChunk/QString cost.  Pre-resolution is byte-for-byte identical (same layer pointers).
+bool checkTerrain(const std::vector<LoadMap::Terrain*> &terrains, const std::vector<Tiled::TileLayer*> &terrainLayers, const std::vector<char> &terrainIsMountain, unsigned int tx, unsigned int ty){
 
-    for(LoadMap::Terrain* terrain:terrains){
-        if(LoadMap::searchTileLayerByName(worldMap, terrain->tmp_layerString)->cellAt(tx, ty).tile() == terrain->tile){
-            if(mountainTerrain.contains(terrain->terrainName)){
+    unsigned int i=0;
+    while(i<terrains.size()){
+        if(terrainLayers[i]->cellAt(tx, ty).tile() == terrains[i]->tile){
+            if(terrainIsMountain[i]){
                 return false;
             }
         }
+        i++;
     }
 
     return true;
@@ -1111,6 +1117,20 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
         }
     }
 
+    // Pre-resolve each terrain's layer pointer + mountain flag ONCE (used by checkTerrain ~9x/cell
+    // and the type==0x3 grass test below). Both are (tx,ty)-independent; resolving per-cell was the
+    // bulk of addRoadContent's findChunk/QString cost. Same pointers -> identical output.
+    std::vector<Tiled::TileLayer*> terrainLayers = std::vector<Tiled::TileLayer*>();
+    std::vector<char> terrainIsMountain = std::vector<char>();
+    {
+        unsigned int i=0;
+        while(i<terrains.size()){
+            terrainLayers.push_back(LoadMap::searchTileLayerByName(worldMap, terrains[i]->tmp_layerString));
+            terrainIsMountain.push_back(mountainTerrain.contains(terrains[i]->terrainName) ? 1 : 0);
+            i++;
+        }
+    }
+
     while(y<h)
     {
         unsigned int x=0;
@@ -1138,46 +1158,46 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                             if(bitMask/8>=maxMapSize)
                                 abort();
                             MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                        }else if(!checkTerrain(terrains, worldMap, tx, ty, mountainTerrain)){
+                        }else if(!checkTerrain(terrains, terrainLayers, terrainIsMountain, tx, ty)){
                             uint8_t to_type_match=0;
                             if(tx>0 && ty>0)
                             {
-                                if(checkEmptyRoad(setting, tx-1, ty-1) || checkTerrain(terrains, worldMap, tx-1, ty-1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx-1, ty-1) || checkTerrain(terrains, terrainLayers, terrainIsMountain, tx-1, ty-1))
                                     to_type_match|=1;
                             }
                             if(ty>0)
                             {
-                                if(checkEmptyRoad(setting, tx, ty-1)|| checkTerrain(terrains, worldMap, tx, ty-1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx, ty-1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx, ty-1))
                                     to_type_match|=2;
                             }
                             if((int)tx<(worldMap.width()-1) && ty>0)
                             {
-                                if(checkEmptyRoad(setting, tx+1, ty-1)|| checkTerrain(terrains, worldMap, tx+1, ty-1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx+1, ty-1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx+1, ty-1))
                                     to_type_match|=4;
                             }
                             if(tx>0)
                             {
-                                if(checkEmptyRoad(setting, tx-1, ty)|| checkTerrain(terrains, worldMap, tx-1, ty, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx-1, ty)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx-1, ty))
                                     to_type_match|=8;
                             }
                             if((int)tx<(worldMap.width()-1))
                             {
-                                if(checkEmptyRoad(setting, tx+1, ty)|| checkTerrain(terrains, worldMap, tx+1, ty, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx+1, ty)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx+1, ty))
                                     to_type_match|=16;
                             }
                             if(tx>0 && (int)ty<(worldMap.height()-1))
                             {
-                                if(checkEmptyRoad(setting, tx-1, ty+1)|| checkTerrain(terrains, worldMap, tx-1, ty+1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx-1, ty+1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx-1, ty+1))
                                     to_type_match|=32;
                             }
                             if((int)ty<(worldMap.height()-1))
                             {
-                                if(checkEmptyRoad(setting, tx, ty+1)|| checkTerrain(terrains, worldMap, tx, ty+1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx, ty+1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx, ty+1))
                                     to_type_match|=64;
                             }
                             if((int)tx<(worldMap.width()-1) && (int)ty<(worldMap.height()-1))
                             {
-                                if(checkEmptyRoad(setting, tx+1, ty+1)|| checkTerrain(terrains, worldMap, tx+1, ty+1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx+1, ty+1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx+1, ty+1))
                                     to_type_match|=128;
                             }
 
@@ -1239,8 +1259,10 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 layer->setCell(tx, ty, empty);
                             }
                         } else if(!isCity && type == 0x3){
-                            for(LoadMap::Terrain* terrain:terrains){
-                                if(LoadMap::searchTileLayerByName(worldMap, terrain->tmp_layerString)->cellAt(tx, ty).tile() == terrain->tile){
+                            unsigned int ti=0;
+                            while(ti<terrains.size()){
+                                LoadMap::Terrain* terrain=terrains[ti];
+                                if(terrainLayers[ti]->cellAt(tx, ty).tile() == terrain->tile){
                                     if(grassTiles.find(terrain->terrainName.toStdString()) != grassTiles.end()){
                                         //Fill the whole grass ZONE: a solid rectangular block of tall
                                         //grass is the intended Pokemon style (grid-aligned, like the
@@ -1251,6 +1273,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                     }
                                     break;
                                 }
+                                ti++;
                             }
                         }
 
@@ -1495,46 +1518,46 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     for(unsigned int dy=0; dy<mapHeight; dy++){
                         const unsigned int tx = dx + mapWidth * x;
                         const unsigned int ty = dy + mapHeight * y;
-                        if(!checkTerrain(terrains, worldMap, tx, ty, mountainTerrain)){
+                        if(!checkTerrain(terrains, terrainLayers, terrainIsMountain, tx, ty)){
                             uint8_t to_type_match=0;
                             if(tx>0 && ty>0)
                             {
-                                if(checkEmptyRoad(setting, tx-1, ty-1) || checkTerrain(terrains, worldMap, tx-1, ty-1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx-1, ty-1) || checkTerrain(terrains, terrainLayers, terrainIsMountain, tx-1, ty-1))
                                     to_type_match|=1;
                             }
                             if(ty>0)
                             {
-                                if(checkEmptyRoad(setting, tx, ty-1)|| checkTerrain(terrains, worldMap, tx, ty-1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx, ty-1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx, ty-1))
                                     to_type_match|=2;
                             }
                             if((int)tx<(worldMap.width()-1) && ty>0)
                             {
-                                if(checkEmptyRoad(setting, tx+1, ty-1)|| checkTerrain(terrains, worldMap, tx+1, ty-1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx+1, ty-1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx+1, ty-1))
                                     to_type_match|=4;
                             }
                             if(tx>0)
                             {
-                                if(checkEmptyRoad(setting, tx-1, ty)|| checkTerrain(terrains, worldMap, tx-1, ty, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx-1, ty)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx-1, ty))
                                     to_type_match|=8;
                             }
                             if((int)tx<(worldMap.width()-1))
                             {
-                                if(checkEmptyRoad(setting, tx+1, ty)|| checkTerrain(terrains, worldMap, tx+1, ty, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx+1, ty)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx+1, ty))
                                     to_type_match|=16;
                             }
                             if(tx>0 && (int)ty<(worldMap.height()-1))
                             {
-                                if(checkEmptyRoad(setting, tx-1, ty+1)|| checkTerrain(terrains, worldMap, tx-1, ty+1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx-1, ty+1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx-1, ty+1))
                                     to_type_match|=32;
                             }
                             if((int)ty<(worldMap.height()-1))
                             {
-                                if(checkEmptyRoad(setting, tx, ty+1)|| checkTerrain(terrains, worldMap, tx, ty+1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx, ty+1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx, ty+1))
                                     to_type_match|=64;
                             }
                             if((int)tx<(worldMap.width()-1) && (int)ty<(worldMap.height()-1))
                             {
-                                if(checkEmptyRoad(setting, tx+1, ty+1)|| checkTerrain(terrains, worldMap, tx+1, ty+1, mountainTerrain))
+                                if(checkEmptyRoad(setting, tx+1, ty+1)|| checkTerrain(terrains, terrainLayers, terrainIsMountain, tx+1, ty+1))
                                     to_type_match|=128;
                             }
 
