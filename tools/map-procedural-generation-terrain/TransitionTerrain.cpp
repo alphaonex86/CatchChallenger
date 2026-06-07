@@ -1,5 +1,6 @@
 #include "TransitionTerrain.h"
 #include "MapBrush.h"
+#include <libtiled/tilelayer.h>
 
 #include <iostream>
 
@@ -19,51 +20,66 @@ int findLayerIndexByName(const Tiled::Map *map, const QString &targetLayerName) 
 
 typedef VoronioForTiledMapTmx vd;
 
+// Local chunk cache: Tiled keeps a layer in 16x16 chunks and hashes the chunk coord
+// on EVERY cellAt (the profiler's #1 hot spot: findChunk -> QHash<QPoint>).  A 3x3
+// neighbour read sits in one chunk almost always, so caching the last chunk pointer
+// turns ~9 QHash lookups into ~1.  cachedTile returns EXACTLY cellAt(x,y).tile()
+// (same findChunk + chunk->cellAt(x&MASK,y&MASK); empty chunk -> Cell::empty -> NULL),
+// so the output is bit-identical.  Read-only within one call -> no rehash hazard.
+struct ChunkCache { const Tiled::Chunk *chunk; int cx; int cy; ChunkCache():chunk(NULL),cx(-1000000),cy(-1000000){} };
+static inline Tiled::Tile *cachedTile(const Tiled::TileLayer *L,ChunkCache &c,int x,int y)
+{
+    const int kx=x >> Tiled::CHUNK_BITS;
+    const int ky=y >> Tiled::CHUNK_BITS;
+    if(kx!=c.cx || ky!=c.cy) { c.chunk=L->findChunk(x,y); c.cx=kx; c.cy=ky; }
+    return c.chunk ? c.chunk->cellAt(x & Tiled::CHUNK_MASK,y & Tiled::CHUNK_MASK).tile() : NULL;
+}
 uint16_t TransitionTerrain::layerMask(const Tiled::TileLayer * const terrainLayer,const unsigned int &x,const unsigned int &y,Tiled::Tile *tile,const bool XORop)
 {
     const unsigned int &w=terrainLayer->width();
     const unsigned int &h=terrainLayer->height();
+    ChunkCache cc;
     uint16_t to_type_match=0;//9 bits used-1=8bit, the center bit is the current tile
     if(x>0 && y>0)
     {
-        if((terrainLayer->cellAt(x-1,y-1).tile()!=tile) ^ XORop)
+        if((cachedTile(terrainLayer,cc,x-1,y-1)!=tile) ^ XORop)
             to_type_match|=1;
     }
     if(y>0)
     {
-        if((terrainLayer->cellAt(x,y-1).tile()!=tile) ^ XORop)
+        if((cachedTile(terrainLayer,cc,x,y-1)!=tile) ^ XORop)
             to_type_match|=2;
     }
     if(x<(w-1) && y>0)
     {
-        if((terrainLayer->cellAt(x+1,y-1).tile()!=tile) ^ XORop)
+        if((cachedTile(terrainLayer,cc,x+1,y-1)!=tile) ^ XORop)
             to_type_match|=4;
     }
     if(x>0)
     {
-        if((terrainLayer->cellAt(x-1,y).tile()!=tile) ^ XORop)
+        if((cachedTile(terrainLayer,cc,x-1,y)!=tile) ^ XORop)
             to_type_match|=8;
     }
-    if((terrainLayer->cellAt(x,y).tile()!=tile) ^ XORop)
+    if((cachedTile(terrainLayer,cc,x,y)!=tile) ^ XORop)
         to_type_match|=16;
     if(x<(w-1))
     {
-        if((terrainLayer->cellAt(x+1,y).tile()!=tile) ^ XORop)
+        if((cachedTile(terrainLayer,cc,x+1,y)!=tile) ^ XORop)
             to_type_match|=32;
     }
     if(x>0 && y<(h-1))
     {
-        if((terrainLayer->cellAt(x-1,y+1).tile()!=tile) ^ XORop)
+        if((cachedTile(terrainLayer,cc,x-1,y+1)!=tile) ^ XORop)
             to_type_match|=64;
     }
     if(y<(h-1))
     {
-        if((terrainLayer->cellAt(x,y+1).tile()!=tile) ^ XORop)
+        if((cachedTile(terrainLayer,cc,x,y+1)!=tile) ^ XORop)
             to_type_match|=128;
     }
     if(x<(w-1) && y<(h-1))
     {
-        if((terrainLayer->cellAt(x+1,y+1).tile()!=tile) ^ XORop)
+        if((cachedTile(terrainLayer,cc,x+1,y+1)!=tile) ^ XORop)
             to_type_match|=256;
     }
     return to_type_match;
