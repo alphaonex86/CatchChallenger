@@ -185,7 +185,11 @@ public:
     //  CLICKPIXEL <px> <py>                           -> click that viewport pixel
     //  GETSTATE                                       -> reply "STATE map=.. x=.. y=.. dir=.."
     //  GETINVENTORY                                   -> reply "INVENTORY <id>:<qty> ..."
-    //Answers/errors come back via remoteReply(); chat/trade/fight are later stages.
+    //Stage 2 (chat):
+    //  SENDCHAT <local|all|clan|pm|system|system_important> <text...>
+    //  GETCHAT  -> "CHATMSG <channel> <pseudo> <text>" per buffered line, then
+    //              "OK GETCHAT <count>"; drains the buffer.
+    //Answers/errors come back via remoteReply(); trade/fight are later stages.
     void remoteAction(const QString &line);
     //Connect this controller to the per-instance QLocalServer automation channel:
     //localListener.actionReceived -> remoteAction, remoteReply -> sendReply. Call
@@ -197,6 +201,13 @@ signals:
     void remoteReply(const QString &line);
 private:
     int remoteKeyNameToQt(const QString &name) const;
+    //chat-channel name <-> Chat_type id; -1 from FromName on an unknown channel
+    int remoteChatTypeFromName(const QString &name) const;
+    QString remoteChatTypeName(const uint8_t &chatType) const;
+    //append one formatted chat line to remoteChatLog (capped at 256 entries)
+    void rememberRemoteChat(const std::string &line);
+    //GETCHAT drains this buffer of received chat/system lines
+    std::vector<std::string> remoteChatLog;
     //--test-clicksign self-test state (see runClickSignSelfTest())
     bool signSelfTestStarted;
     CATCHCHALLENGER_TYPE_MAPID signTestMap;
@@ -264,6 +275,9 @@ protected:
     //once-on-map hook: launches the --test-clicksign self-test when requested
     virtual void afterMapDisplayed() override;
 private slots:
+    //QLocalServer automation channel (stage 2): buffer chat / system lines for GETCHAT
+    void remoteChatReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &player_type);
+    void remoteSystemReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text);
     //--test-clicksign: click the nearest sign, then verify (via actionOn) that
     //the player walked up to it, faced it and opened it like Enter was pressed
     void runClickSignSelfTest();

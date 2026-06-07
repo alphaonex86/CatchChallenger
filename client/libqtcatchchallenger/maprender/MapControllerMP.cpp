@@ -110,6 +110,13 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::QthaveCharacter,              this,&MapControllerMP::loadCurrentPlayer,Qt::QueuedConnection))
         abort();
+    //QLocalServer automation channel (stage 2): buffer every chat / system line the
+    //server delivers so a controller can drain them with GETCHAT. Independent of the
+    //real chat UI's own connections; harmless when no controller is attached.
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::Qtnew_chat_text,   this,&MapControllerMP::remoteChatReceived,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::Qtnew_system_text, this,&MapControllerMP::remoteSystemReceived,Qt::QueuedConnection))
+        abort();
     #endif
 }
 
@@ -1454,8 +1461,90 @@ void MapControllerMP::remoteAction(const QString &line)
         }
         emit remoteReply(out);
     }
+    else if(verb==QStringLiteral("SENDCHAT") && parts.size()>=3)
+    {
+        const int chatType=remoteChatTypeFromName(parts.at(1));
+        if(chatType<0)
+            emit remoteReply(QStringLiteral("ERROR unknown chat channel ")+parts.at(1));
+        else if(client==nullptr)
+            emit remoteReply(QStringLiteral("ERROR not connected"));
+        else
+        {
+            //text = everything after "SENDCHAT <channel> " (keep inner spaces)
+            const int sp1=line.indexOf(QLatin1Char(' '));
+            const int sp2=line.indexOf(QLatin1Char(' '),sp1+1);
+            const QString text=line.mid(sp2+1);
+            client->sendChatText(static_cast<CatchChallenger::Chat_type>(chatType),text.toStdString());
+            emit remoteReply(QStringLiteral("OK SENDCHAT ")+parts.at(1).toLower());
+        }
+    }
+    else if(verb==QStringLiteral("GETCHAT"))
+    {
+        std::size_t i=0;
+        while(i<remoteChatLog.size())
+        {
+            emit remoteReply(QStringLiteral("CHATMSG ")+QString::fromStdString(remoteChatLog.at(i)));
+            ++i;
+        }
+        emit remoteReply(QStringLiteral("OK GETCHAT %1").arg(static_cast<qulonglong>(remoteChatLog.size())));
+        remoteChatLog.clear();
+    }
     else
         emit remoteReply(QStringLiteral("ERROR unknown command ")+verb);
+}
+
+int MapControllerMP::remoteChatTypeFromName(const QString &name) const
+{
+    const QString n=name.toLower();
+    if(n==QStringLiteral("local"))            return CatchChallenger::Chat_type_local;
+    if(n==QStringLiteral("all"))              return CatchChallenger::Chat_type_all;
+    if(n==QStringLiteral("clan"))             return CatchChallenger::Chat_type_clan;
+    if(n==QStringLiteral("pm"))               return CatchChallenger::Chat_type_pm;
+    if(n==QStringLiteral("system"))           return CatchChallenger::Chat_type_system;
+    if(n==QStringLiteral("system_important")) return CatchChallenger::Chat_type_system_important;
+    return -1;
+}
+
+QString MapControllerMP::remoteChatTypeName(const uint8_t &chatType) const
+{
+    switch(chatType)
+    {
+        case CatchChallenger::Chat_type_local:            return QStringLiteral("local");
+        case CatchChallenger::Chat_type_all:              return QStringLiteral("all");
+        case CatchChallenger::Chat_type_clan:             return QStringLiteral("clan");
+        case CatchChallenger::Chat_type_pm:               return QStringLiteral("pm");
+        case CatchChallenger::Chat_type_system:           return QStringLiteral("system");
+        case CatchChallenger::Chat_type_system_important: return QStringLiteral("system_important");
+        default:                                          return QStringLiteral("unknown");
+    }
+}
+
+void MapControllerMP::remoteChatReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &player_type)
+{
+    (void)player_type;
+    //format "<channel> <pseudo> <text>"; '-' pseudo when empty
+    std::string line=remoteChatTypeName(chat_type).toStdString();
+    line+=' ';
+    line+=pseudo.empty()?std::string("-"):pseudo;
+    line+=' ';
+    line+=text;
+    rememberRemoteChat(line);
+}
+
+void MapControllerMP::remoteSystemReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text)
+{
+    std::string line=remoteChatTypeName(chat_type).toStdString();
+    line+=" - ";
+    line+=text;
+    rememberRemoteChat(line);
+}
+
+void MapControllerMP::rememberRemoteChat(const std::string &line)
+{
+    //bound the buffer so a long un-drained session can't grow without limit
+    if(remoteChatLog.size()>=256)
+        remoteChatLog.erase(remoteChatLog.begin());
+    remoteChatLog.push_back(line);
 }
 
 void MapControllerMP::wireRemoteControl(LocalListener *localListener)
