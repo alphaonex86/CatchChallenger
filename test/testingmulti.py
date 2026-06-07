@@ -461,7 +461,83 @@ def main():
     for minimize_mode in MINIMIZE_MODES:
         run_multiplayer_test(dp_name, minimize_mode)
 
+    # ── 3. single-client interaction run against the LOCAL server ─────
+    # Reproduces the "kicked from server" report locally: one client connects
+    # over a real TCP socket and runs the keyboard sign+door round-trip, which
+    # probes the whole reachable map on every click. If that probe stalls the
+    # Qt event loop (the old per-click canGoTo cerr flood), the server drops the
+    # client mid-run. The embedded-solo --test-keyboard can't catch this — it
+    # has no real keepalive — so this needs a real server.
+    run_server_interaction_test(dp_name, failed_cases)
+
     summary()
+
+
+def run_server_interaction_test(dp_name, failed_cases):
+    """One client vs the local server-filedb over real TCP, running the keyboard
+    sign+door round-trip self-test. PASS only if it walks to a sign and opens it
+    (Enter), closes (Escape), goes through a door and comes back — WITHOUT being
+    dropped by the server. The heavy per-click map probe must stay event-loop
+    friendly; the old canGoTo cerr flood stalled it and got the client kicked."""
+    import tempfile
+    case = "keyboard sign+door round-trip vs local server"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- Server interaction (keyboard, vs local server-filedb): {dp_name} {MAINCODE} ---{C_RESET}\n")
+    setup_server_datapack(SERVER_BUILD, DATAPACK_SRC, MAINCODE)
+    db_dir = os.path.join(SERVER_BUILD, "database")
+    if os.path.isdir(db_dir):
+        shutil.rmtree(db_dir)
+    cache_file = os.path.join(SERVER_BUILD, "datapack-cache.bin")
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+    set_http_datapack_mirror(SERVER_BUILD, "")
+    set_map_visibility_minimize(SERVER_BUILD, "cpu")
+    if start_server(SERVER_BUILD) is None:
+        log_fail(case, "server did not start")
+        return
+    if not assert_port_or_fail(SERVER_HOST, int(SERVER_PORT), log_fail,
+                               "interaction tcp probe"):
+        stop_server()
+        log_fail(case, "tcp probe failed")
+        return
+    tmpdir = tempfile.mkdtemp(prefix="cc-test-kb-")
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    env["XDG_CONFIG_HOME"] = os.path.join(tmpdir, "config")
+    env["XDG_DATA_HOME"] = os.path.join(tmpdir, "data")
+    app_name = "CatchChallenger/client-qtcpu800x600"
+    cache_name = f"argument-{SERVER_HOST}-{_config['server_port']}"
+    cache_dir = os.path.join(tmpdir, "data", app_name, "datapack", cache_name)
+    shutil.copytree(os.path.join(SERVER_BUILD, "datapack"), cache_dir,
+                    ignore=shutil.ignore_patterns(".git"))
+    conf_dir = os.path.join(tmpdir, "config", "CatchChallenger")
+    os.makedirs(conf_dir, exist_ok=True)
+    with open(os.path.join(conf_dir, "client-qtcpu800x600.conf"), "w") as f:
+        f.write("[General]\nkey=testKBKey\n")
+    args = ["--host", SERVER_HOST, "--port", SERVER_PORT,
+            "--autologin", "--character", CHAR_A, "--test-keyboard"]
+    log_info("connecting client (qtcpu800x600) for the keyboard interaction run")
+    proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
+    done.wait(timeout=diagnostic.scale_timeout(DIAG, 150))
+    if proc.poll() is None:
+        kill_client(proc)
+    text = "\n".join(out)
+    if "[KEYBOARDTEST] PASS came back" in text:
+        log_pass(case, "arrow-walk sign+Enter+Escape, door round-trip, no kick")
+    elif fail[0] is not None:
+        log_fail(case, f"client dropped by server mid-interaction: {fail[0]}")
+        for line in out[-25:]:
+            print(f"  | {line}")
+    elif "Connection closed by the server" in text:
+        log_fail(case, "kicked: 'Connection closed by the server' during interaction")
+        for line in out[-25:]:
+            print(f"  | {line}")
+    else:
+        log_fail(case, "no '[KEYBOARDTEST] PASS came back' marker")
+        for line in out[-25:]:
+            print(f"  | {line}")
+    stop_server()
 
 
 def run_multiplayer_test(dp_name, minimize_mode):
