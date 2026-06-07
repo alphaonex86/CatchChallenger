@@ -1027,10 +1027,13 @@ def main():
             # ── Interaction tests (run once, on the first staged combo) ──
             # (a) click on a sign → the player walks up to it, turns to FACE it
             #     and opens it like Enter was pressed (map-render behaviour).
-            # (b) a long server text in the Sign/NPC dialog never spills out of
+            # (b) click on a door (teleporter) → walk onto it and PASS to the
+            #     other map; then click next to the return teleport and PUSH in
+            #     to come back on the original map (round-trip teleport).
+            # (c) a long server text in the Sign/NPC dialog never spills out of
             #     the widget: it word-wraps within the width and gets a vertical
             #     scrollbar when taller than the (window-bounded) dialog.
-            # Both self-check inside the client and emit a PASS/FAIL marker; they
+            # All self-check inside the client and emit a PASS/FAIL marker; they
             # need no pre-made savegame (--autosolo creates one and enters the map).
             if not interaction_done and (dp_cpu or dp_gl):
                 interaction_done = True
@@ -1042,6 +1045,12 @@ def main():
                                    "qtcpu800x600 click-on-sign walk+face+open",
                                    timeout=CLIENT_SOLO_TIMEOUT,
                                    success_marker="[SIGNTEST] PASS")
+                    if should_run("qtcpu800x600 click-on-door round-trip teleport", failed_cases):
+                        run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                                   ["--autosolo", "--test-clickdoor"],
+                                   "qtcpu800x600 click-on-door round-trip teleport",
+                                   timeout=CLIENT_SOLO_TIMEOUT,
+                                   success_marker="[DOORTEST] PASS came back")
                     if should_run("qtcpu800x600 dialog text wordwrap+scroll no-overflow", failed_cases):
                         run_client(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
                                    ["--autosolo", "--test-dialogoverflow"],
@@ -1055,6 +1064,12 @@ def main():
                                    "qtopengl click-on-sign walk+face+open",
                                    timeout=CLIENT_SOLO_TIMEOUT,
                                    success_marker="[SIGNTEST] PASS")
+                    if should_run("qtopengl click-on-door round-trip teleport", failed_cases):
+                        run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                                   ["--autosolo", "--test-clickdoor"],
+                                   "qtopengl click-on-door round-trip teleport",
+                                   timeout=CLIENT_SOLO_TIMEOUT,
+                                   success_marker="[DOORTEST] PASS came back")
                     if should_run("qtopengl dialog text wordwrap+scroll no-overflow", failed_cases):
                         run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
                                    ["--autosolo", "--test-dialogoverflow"],

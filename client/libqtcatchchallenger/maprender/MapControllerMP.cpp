@@ -49,6 +49,13 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     if(!connect(&signSelfTestTimeoutTimer,&QTimer::timeout,this,&MapControllerMP::signSelfTestTimeout))
         abort();
 
+    doorTestPhase=0;
+    doorOrigMap=0;
+    doorDestMap=0;
+    doorTestTimeoutTimer.setSingleShot(true);
+    if(!connect(&doorTestTimeoutTimer,&QTimer::timeout,this,&MapControllerMP::doorTestTimeout))
+        abort();
+
     resetAll();
 
     scaleSize=1;
@@ -1223,6 +1230,13 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHA
 
 void MapControllerMP::afterMapDisplayed()
 {
+    if(CliClientOptions::clickDoorTest)
+    {
+        //re-entrant: the door round-trip advances on every current-map display
+        //(initial spawn, then after each teleport). Settle before each step.
+        QTimer::singleShot(500,this,&MapControllerMP::runClickDoorSelfTest);
+        return;
+    }
     if(signSelfTestStarted)
         return;
     //let the player fully settle on the map before injecting the click
@@ -1472,6 +1486,256 @@ void MapControllerMP::signSelfTestTimeout()
 {
     std::cerr << "[SIGNTEST] FAIL timeout: never reached/opened the sign at ("
               << (int)signTestX << "," << (int)signTestY << ")" << std::endl;
+    QCoreApplication::exit(3);
+}
+
+void MapControllerMP::computeReachableSet(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &px,const int &py,std::vector<bool> &reach,int &mw,int &mh)
+{
+    const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    mw=lm.width;
+    mh=lm.height;
+    reach.assign(static_cast<size_t>(mw>0?mw:0)*static_cast<size_t>(mh>0?mh:0),false);
+    if(mw<=0 || mh<=0 || px<0 || px>=mw || py<0 || py>=mh)
+        return;
+    const CatchChallenger::Direction mv[4]={CatchChallenger::Direction_move_at_left,
+                                            CatchChallenger::Direction_move_at_right,
+                                            CatchChallenger::Direction_move_at_top,
+                                            CatchChallenger::Direction_move_at_bottom};
+    const int dxx[4]={-1,1,0,0};
+    const int dyy[4]={0,0,-1,1};
+    //probe SILENTLY: never pop "you can't enter ..." while mapping reachability
+    const bool prevSilent=canGoToSilent;
+    canGoToSilent=true;
+    std::vector<std::pair<int,int> > queue;
+    queue.push_back(std::pair<int,int>(px,py));
+    reach[static_cast<size_t>(px)+static_cast<size_t>(py)*static_cast<size_t>(mw)]=true;
+    size_t head=0;
+    while(head<queue.size())
+    {
+        const int qx=queue.at(head).first;
+        const int qy=queue.at(head).second;
+        head++;
+        int k=0;
+        while(k<4)
+        {
+            const int tx=qx+dxx[k];
+            const int ty=qy+dyy[k];
+            if(tx>=0 && tx<mw && ty>=0 && ty<mh)
+            {
+                const size_t idx=static_cast<size_t>(tx)+static_cast<size_t>(ty)*static_cast<size_t>(mw);
+                if(!reach[idx] && canGoTo(mv[k],mapIndex,static_cast<COORD_TYPE>(qx),static_cast<COORD_TYPE>(qy),true))
+                {
+                    reach[idx]=true;
+                    queue.push_back(std::pair<int,int>(tx,ty));
+                }
+            }
+            k++;
+        }
+    }
+    canGoToSilent=prevSilent;
+}
+
+bool MapControllerMP::pickReachableTeleporter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &px,const int &py,const CATCHCHALLENGER_TYPE_MAPID &requireDest,uint8_t &srcX,uint8_t &srcY,CATCHCHALLENGER_TYPE_MAPID &destMap,bool &isPush,int &neighX,int &neighY)
+{
+    const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    int mw=0,mh=0;
+    std::vector<bool> reach;
+    computeReachableSet(mapIndex,px,py,reach,mw,mh);
+    if(mw<=0 || mh<=0)
+        return false;
+    const int dxx[4]={-1,1,0,0};
+    const int dyy[4]={0,0,-1,1};
+    bool found=false;
+    int bestDist=0;
+    size_t ti=0;
+    while(ti<lm.teleporters.size())
+    {
+        const CatchChallenger::Teleporter &tp=lm.teleporters.at(ti);
+        const int sx=tp.source_x;
+        const int sy=tp.source_y;
+        const bool destOk=(requireDest==65535 || tp.mapIndex==requireDest);
+        if(destOk && sx>=0 && sx<mw && sy>=0 && sy<mh)
+        {
+            const bool srcReach=reach[static_cast<size_t>(sx)+static_cast<size_t>(sy)*static_cast<size_t>(mw)];
+            //nearest reachable orthogonal neighbour (so we can stand next to it
+            //and push in even when we don't want to click the source directly)
+            int nX=-1,nY=-1,nBest=0;
+            int k=0;
+            while(k<4)
+            {
+                const int nx=sx+dxx[k];
+                const int ny=sy+dyy[k];
+                if(nx>=0 && nx<mw && ny>=0 && ny<mh
+                   && reach[static_cast<size_t>(nx)+static_cast<size_t>(ny)*static_cast<size_t>(mw)])
+                {
+                    const int nd=(nx>px?nx-px:px-nx)+(ny>py?ny-py:py-ny);
+                    if(nX<0 || nd<nBest)
+                    {
+                        nBest=nd;
+                        nX=nx;
+                        nY=ny;
+                    }
+                }
+                k++;
+            }
+            std::cerr << "[DOORTEST]  teleporter src=(" << sx << "," << sy << ") -> map " << (int)tp.mapIndex
+                      << " srcReachable=" << (srcReach?"yes":"no") << " reachNeighbour="
+                      << (nX>=0?"yes":"no") << std::endl;
+            if(srcReach || nX>=0)
+            {
+                const int dist=(sx>px?sx-px:px-sx)+(sy>py?sy-py:py-sy);
+                if(!found || dist<bestDist)
+                {
+                    found=true;
+                    bestDist=dist;
+                    srcX=static_cast<uint8_t>(sx);
+                    srcY=static_cast<uint8_t>(sy);
+                    destMap=tp.mapIndex;
+                    //push when we can't (or won't) stand on the source; a reachable
+                    //neighbour is required to push
+                    isPush=(!srcReach && nX>=0);
+                    neighX=nX;
+                    neighY=nY;
+                }
+            }
+        }
+        ti++;
+    }
+    return found;
+}
+
+void MapControllerMP::clickTeleporter(const uint8_t &srcX,const uint8_t &srcY,const bool &isPush,const int &neighX,const int &neighY)
+{
+    if(!isPush)
+    {
+        //DOOR: click straight on the teleporter tile; the pathfinder routes the
+        //player onto it (the source is walkable) and finalPlayerStepTeleported()
+        //swaps the map.
+        std::cerr << "[DOORTEST] clicking ON the door tile (" << (int)srcX << "," << (int)srcY << ")" << std::endl;
+        postClickAtTile(srcX,srcY);
+    }
+    else
+    {
+        //PUSH wall: arm the pending push onto the teleporter source.
+        clickInteractPushValid=true;
+        clickInteractPushMap=current_map;
+        clickInteractPushX=srcX;
+        clickInteractPushY=srcY;
+        const std::pair<uint8_t,uint8_t> pos(getPos());
+        const int adx=(srcX>pos.first?srcX-pos.first:pos.first-srcX);
+        const int ady=(srcY>pos.second?srcY-pos.second:pos.second-srcY);
+        if((adx==1 && ady==0) || (adx==0 && ady==1))
+        {
+            //the door dropped us right next to the return teleport: push in NOW
+            //(clicking our own tile would hit the player sprite, not the map).
+            std::cerr << "[DOORTEST] already next to the teleport (" << (int)srcX << "," << (int)srcY
+                      << "): pushing in" << std::endl;
+            pushTeleportIfAdjacent();
+        }
+        else
+        {
+            //walk up to the reachable neighbour, then push onto the source on arrival
+            std::cerr << "[DOORTEST] clicking NEXT TO the teleport at neighbour (" << neighX << "," << neighY
+                      << ") then pushing onto (" << (int)srcX << "," << (int)srcY << ")" << std::endl;
+            postClickAtTile(neighX,neighY);
+        }
+    }
+}
+
+void MapControllerMP::runClickDoorSelfTest()
+{
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+        return;
+    const std::pair<COORD_TYPE,COORD_TYPE> pos(getPos());
+    const int px=pos.first;
+    const int py=pos.second;
+    if(doorTestPhase==0)
+    {
+        //── Phase 0: on the spawn map, click a DOOR and pass to the other map.
+        doorTestPhase=1;
+        doorOrigMap=current_map;
+        std::cerr << "[DOORTEST] phase0 on map " << (int)current_map << " player (" << px << "," << py
+                  << "): looking for a reachable door" << std::endl;
+        uint8_t sx=0,sy=0;
+        CATCHCHALLENGER_TYPE_MAPID dest=65535;
+        bool isPush=false;
+        int nX=-1,nY=-1;
+        if(!pickReachableTeleporter(current_map,px,py,65535,sx,sy,dest,isPush,nX,nY))
+        {
+            std::cerr << "[DOORTEST] FAIL no reachable door/teleporter on the spawn map " << (int)current_map << std::endl;
+            QCoreApplication::exit(3);
+            return;
+        }
+        doorDestMap=dest;
+        std::cerr << "[DOORTEST] door at (" << (int)sx << "," << (int)sy << ") -> map " << (int)dest << std::endl;
+        doorTestTimeoutTimer.start(20000);
+        //forward leg uses the DOOR interaction (click straight on it)
+        clickTeleporter(sx,sy,false,nX,nY);
+    }
+    else if(doorTestPhase==1)
+    {
+        //wait until we actually arrived on the door's destination map
+        if(current_map==doorOrigMap)
+            return;
+        if(current_map!=doorDestMap)
+        {
+            std::cerr << "[DOORTEST] FAIL door led to map " << (int)current_map << " not the expected " << (int)doorDestMap << std::endl;
+            QCoreApplication::exit(3);
+            return;
+        }
+        std::cerr << "[DOORTEST] PASS-1 clicked the door and passed from map " << (int)doorOrigMap
+                  << " to map " << (int)doorDestMap << std::endl;
+        //── Phase 1: find the RETURN teleport (back to the original map) and click
+        //   NEXT TO it, pushing in, to come back.
+        doorTestPhase=2;
+        uint8_t sx=0,sy=0;
+        CATCHCHALLENGER_TYPE_MAPID dest=65535;
+        bool isPush=false;
+        int nX=-1,nY=-1;
+        bool ok=pickReachableTeleporter(current_map,px,py,doorOrigMap,sx,sy,dest,isPush,nX,nY);
+        if(!ok)
+            //no direct return found: accept ANY reachable teleporter as the way back
+            ok=pickReachableTeleporter(current_map,px,py,65535,sx,sy,dest,isPush,nX,nY);
+        if(!ok)
+        {
+            std::cerr << "[DOORTEST] FAIL no return teleport on map " << (int)current_map << std::endl;
+            QCoreApplication::exit(3);
+            return;
+        }
+        //force the PUSH interaction (click next to it) when a neighbour is reachable
+        if(nX>=0)
+            isPush=true;
+        std::cerr << "[DOORTEST] return teleport at (" << (int)sx << "," << (int)sy << ") -> map " << (int)dest
+                  << " via " << (isPush?"PUSH (click next to)":"DOOR (click on)") << std::endl;
+        doorTestTimeoutTimer.start(20000);
+        clickTeleporter(sx,sy,isPush,nX,nY);
+    }
+    else if(doorTestPhase==2)
+    {
+        //wait until we actually left the destination map
+        if(current_map==doorDestMap)
+            return;
+        doorTestTimeoutTimer.stop();
+        if(current_map==doorOrigMap)
+        {
+            std::cerr << "[DOORTEST] PASS came back to the original map " << (int)doorOrigMap
+                      << " by pushing into the return teleport" << std::endl;
+            QCoreApplication::exit(0);
+        }
+        else
+        {
+            std::cerr << "[DOORTEST] FAIL return teleport led to map " << (int)current_map
+                      << " not the original " << (int)doorOrigMap << std::endl;
+            QCoreApplication::exit(3);
+        }
+    }
+}
+
+void MapControllerMP::doorTestTimeout()
+{
+    std::cerr << "[DOORTEST] FAIL timeout in phase " << doorTestPhase
+              << " (current map " << (int)current_map << ", orig " << (int)doorOrigMap
+              << ", dest " << (int)doorDestMap << ")" << std::endl;
     QCoreApplication::exit(3);
 }
 

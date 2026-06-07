@@ -31,6 +31,10 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     clickInteractTargetMap=0;
     clickInteractTargetX=0;
     clickInteractTargetY=0;
+    clickInteractPushValid=false;
+    clickInteractPushMap=0;
+    clickInteractPushX=0;
+    clickInteractPushY=0;
     blocked=false;
     inMove=false;
     teleportedOnPush=false;
@@ -1110,10 +1114,14 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             {
                 if(keyPressed.empty())
                 {
-                    //arrived via a click: if we stopped next to the clicked
-                    //Sign/NPC tile, face it, then open it like Enter
-                    faceClickInteractTargetIfAdjacent();
-                    parseAction();
+                    //arrived via a click next to a teleport we want to ENTER:
+                    //push one step onto it (map swap). Otherwise, if we stopped
+                    //next to the clicked Sign/NPC tile, face it and open it.
+                    if(!pushTeleportIfAdjacent())
+                    {
+                        faceClickInteractTargetIfAdjacent();
+                        parseAction();
+                    }
                 }
                 wasPathFindingUsed=false;
             }
@@ -1256,6 +1264,40 @@ void MapVisualiserPlayer::faceClickInteractTargetIfAdjacent()
     }
     //let the server / other players see the new facing
     emit send_player_direction(direction);
+}
+
+bool MapVisualiserPlayer::pushTeleportIfAdjacent()
+{
+    if(!clickInteractPushValid)
+        return false;
+    //consume the pending push whatever happens below
+    clickInteractPushValid=false;
+    if(clickInteractPushMap!=current_map)
+        return false;
+    const int dx=static_cast<int>(clickInteractPushX)-static_cast<int>(x);
+    const int dy=static_cast<int>(clickInteractPushY)-static_cast<int>(y);
+    CatchChallenger::Direction moveDirection;
+    if(dx==0 && dy==-1)
+        moveDirection=CatchChallenger::Direction_move_at_top;
+    else if(dx==0 && dy==1)
+        moveDirection=CatchChallenger::Direction_move_at_bottom;
+    else if(dx==-1 && dy==0)
+        moveDirection=CatchChallenger::Direction_move_at_left;
+    else if(dx==1 && dy==0)
+        moveDirection=CatchChallenger::Direction_move_at_right;
+    else
+        //not orthogonally adjacent to the teleporter: nothing to push into
+        return false;
+    //the teleporter source tile is walkable, so a normal step lands on it and
+    //finalPlayerStep()/finalPlayerStepTeleported() performs the map swap
+    if(!canGoTo(moveDirection,current_map,x,y,true))
+        return false;
+    direction=moveDirection;
+    inMove=true;
+    moveStep=1;
+    moveStepSlot();
+    emit send_player_direction(direction);
+    return true;
 }
 
 void MapVisualiserPlayer::parseAction()
@@ -1705,6 +1747,7 @@ void MapVisualiserPlayer::resetAll()
     blocked=false;
     wasPathFindingUsed=false;
     clickInteractTargetValid=false;
+    clickInteractPushValid=false;
     inMove=false;
     MapVisualiser::resetAll();
     lastAction.restart();
@@ -2310,8 +2353,11 @@ void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &p
                     //both on arrival instead (the target stays pending).
                     if(keyPressed.empty())
                     {
-                        faceClickInteractTargetIfAdjacent();
-                        parseAction();
+                        if(!pushTeleportIfAdjacent())
+                        {
+                            faceClickInteractTargetIfAdjacent();
+                            parseAction();
+                        }
                     }
                 }
             }

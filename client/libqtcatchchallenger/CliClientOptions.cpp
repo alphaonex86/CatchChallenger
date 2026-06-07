@@ -16,5 +16,6 @@ bool CliClientOptions::autosoloClick=false;
 int CliClientOptions::autosoloClickDx=0;
 int CliClientOptions::autosoloClickDy=0;
 bool CliClientOptions::clickSignTest=false;
+bool CliClientOptions::clickDoorTest=false;
 bool CliClientOptions::dialogOverflowTest=false;
 bool CliClientOptions::fixedBackground=false;
