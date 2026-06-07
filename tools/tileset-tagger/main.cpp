@@ -1997,7 +1997,7 @@ static int runWfcOverlap(const QStringList &args)
                 size_t i=0;
                 while(i<fromLeft->size()) { if(s.find((*fromLeft)[i])!=s.cend()) cand.push_back((*fromLeft)[i]); i++; }
                 if(cand.empty())
-                    cand=*fromLeft;                  // relax: honour the left edge only
+                    cand = (rng()&1u) ? *fromLeft : *fromUp;   // relax to ONE edge, side chosen at random (no horizontal streak bias)
             }
             else if(fromLeft!=nullptr) cand=*fromLeft;
             else if(fromUp!=nullptr)   cand=*fromUp;
