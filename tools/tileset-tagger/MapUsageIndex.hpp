@@ -60,6 +60,7 @@ public:
         int solidBelow;      // cells with a Collisions tile directly below
         long blobSizeSum;    // sum of the object-blob (Collisions∪over) size per cell
         int blobCount;       // cells counted into blobSizeSum  (avg = sum/count)
+        int blobWithOver;    // cells whose blob CONTAINS a roof/over tile (=> building, not cliff)
     };
 
     MapUsageIndex();
