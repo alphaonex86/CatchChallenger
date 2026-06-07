@@ -1030,9 +1030,9 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         return;
     }
     map_entry.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_file_database_id);
-    if(map_entry.mapIndex>=65535)
+    if(map_entry.mapIndex>=MapVisibilityAlgorithm::flat_map_list.size())
     {
-        std::cerr << "map_entry.mapIndex>=65535 (stale cache for current mainDatapackCode), kicking client at "
+        std::cerr << "map_entry.mapIndex out of range vs flat_map_list.size() (stale cache for current mainDatapackCode), kicking client at "
                   << __FILE__ << ":" << __LINE__ << std::endl;
         disconnectClient();
         return;
@@ -1046,9 +1046,9 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         return;
     }
     rescue.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_file_database_id);
-    if(rescue.mapIndex>=65535)
+    if(rescue.mapIndex>=MapVisibilityAlgorithm::flat_map_list.size())
     {
-        std::cerr << "rescue.mapIndex>=65535 (stale cache for current mainDatapackCode), kicking client at "
+        std::cerr << "rescue.mapIndex out of range vs flat_map_list.size() (stale cache for current mainDatapackCode), kicking client at "
                   << __FILE__ << ":" << __LINE__ << std::endl;
         disconnectClient();
         return;
@@ -1062,9 +1062,9 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         return;
     }
     unvalidated_rescue.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_file_database_id);
-    if(unvalidated_rescue.mapIndex>=65535)
+    if(unvalidated_rescue.mapIndex>=MapVisibilityAlgorithm::flat_map_list.size())
     {
-        std::cerr << "unvalidated_rescue.mapIndex>=65535 (stale cache for current mainDatapackCode), kicking client at "
+        std::cerr << "unvalidated_rescue.mapIndex out of range vs flat_map_list.size() (stale cache for current mainDatapackCode), kicking client at "
                   << __FILE__ << ":" << __LINE__ << std::endl;
         disconnectClient();
         return;
@@ -1083,9 +1083,9 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         return;
     }
     mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
-    if(mapIndex>=65535)
+    if(mapIndex>=MapVisibilityAlgorithm::flat_map_list.size())
     {
-        std::cerr << "mapIndex>=65535 (stale cache for current mainDatapackCode), kicking client at "
+        std::cerr << "mapIndex out of range vs flat_map_list.size() (stale cache for current mainDatapackCode), kicking client at "
                   << __FILE__ << ":" << __LINE__ << std::endl;
         disconnectClient();
         return;
@@ -1128,9 +1128,9 @@ void Client::parseServerPart(hps::StreamInputBuffer& buf) {
             abort();
         }
         const CATCHCHALLENGER_TYPE_MAPID internalId=DictionaryServer::dictionary_map_database_to_internal.at(db_id);
-        if(internalId>=65535)
+        if(internalId>=MapVisibilityAlgorithm::flat_map_list.size())
         {
-            std::cerr << "parseServerPart mapData internalId>=65535, stale mainDatapackCode? " << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << "parseServerPart mapData internalId out of range vs flat_map_list.size(), stale mainDatapackCode? " << __FILE__ << ":" << __LINE__ << std::endl;
             abort();
         }
         mapData[internalId]=std::move(value);
