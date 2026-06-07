@@ -282,7 +282,15 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
         const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(extraText);
+        //player not found: a missing brace here used to fall through to
+        //isNull(PLAYER_INDEX_FOR_CONNECTED_MAX) -> out-of-range abort (HARDENED) /
+        //std::out_of_range (prod). Any "/trade <offline-or-unknown>" crashed the
+        //server. Mirror the correct /battle guard: bail out on not-found, then on self.
         if(indexConnected==PLAYER_INDEX_FOR_CONNECTED_MAX)
+        {
+            receiveSystemText(extraText+" is not connected");
+            return;
+        }
         if(public_and_private_informations.public_informations.pseudo==extraText)
         {
             receiveSystemText("You can't trade with yourself");
