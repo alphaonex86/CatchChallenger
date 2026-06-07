@@ -964,8 +964,11 @@ bool checkTerrain(const std::vector<LoadMap::Terrain*> &terrains, const std::vec
 
     unsigned int i=0;
     while(i<terrains.size()){
-        if(terrainLayers[i]->cellAt(tx, ty).tile() == terrains[i]->tile){
-            if(terrainIsMountain[i]){
+        // Only a MOUNTAIN terrain can change the result (return false). A non-mountain match was
+        // discarded by the original inner if, so its cellAt was pure dead work -> skip it. The
+        // cellAt (findChunk QHash lookup) was the dominant cost, and checkTerrain runs ~9x/cell.
+        if(terrainIsMountain[i]){
+            if(terrainLayers[i]->cellAt(tx, ty).tile() == terrains[i]->tile){
                 return false;
             }
         }
@@ -1131,6 +1134,18 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
         }
     }
 
+    // Pre-fetch the mountain road-border tiles once (indexTile is 0..mountainTile.size()-1). The
+    // inner loop did mountainTile.at(indexTile).toInt() (QString parse) + tileAt (QMap lookup) per
+    // road-border cell; the tile set is tiny and fixed -> resolve once. Same tiles -> identical.
+    std::vector<Tiled::Tile*> mountainTiles = std::vector<Tiled::Tile*>();
+    {
+        int i=0;
+        while(i<mountainTile.size()){
+            mountainTiles.push_back(mountainTsx->tileAt(mountainTile.at(i).toInt()));
+            i++;
+        }
+    }
+
     while(y<h)
     {
         unsigned int x=0;
@@ -1236,7 +1251,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 else if(to_type_match&4)
                                     indexTile=10;
 
-                                mountainLayer->setCell(tx,ty,Tiled::Cell(mountainTsx->tileAt(mountainTile.at(indexTile).toInt())));
+                                mountainLayer->setCell(tx,ty,Tiled::Cell(mountainTiles.at(indexTile)));
                             }
                         }
 
@@ -1596,7 +1611,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 else if(to_type_match&4)
                                     indexTile=10;
 
-                                mountainLayer->setCell(tx,ty,Tiled::Cell(mountainTsx->tileAt(mountainTile.at(indexTile).toInt())));
+                                mountainLayer->setCell(tx,ty,Tiled::Cell(mountainTiles.at(indexTile)));
                             }
                         }
                     }
