@@ -77,18 +77,30 @@ void MapUsageIndex::build(const QString &tsxPath)
     rendered_.clear();
     error_.clear();
 
-    // map root = the ancestor directory named "map" (the .tsx lives under
-    // map/.../tileset/), else the .tsx's own directory.
+    // Scope of the usage scan: a tileset inside a "tileset/" dir is used only by the
+    // maps in its SIBLING tree, so scan the PARENT of "tileset/".  A per-label ROM
+    // tileset map/main/firered/tileset/ -> scan firered/ (fast, and correct: only
+    // firered maps use it); the shared official map/tileset/ -> scan map/ (all maps).
+    // Falls back to the nearest ancestor named "map".
     QDir dir=QFileInfo(tsxPath).absoluteDir();
     QString root=dir.absolutePath();
-    QDir walk=dir;
-    bool found=false;
-    while(!found && walk.cdUp())
+    if(dir.dirName()=="tileset")
     {
-        if(walk.dirName()=="map")
+        QDir gp=dir;
+        if(gp.cdUp())
+            root=gp.absolutePath();
+    }
+    else
+    {
+        QDir walk=dir;
+        bool found=false;
+        while(!found && walk.cdUp())
         {
-            root=walk.absolutePath();
-            found=true;
+            if(walk.dirName()=="map")
+            {
+                root=walk.absolutePath();
+                found=true;
+            }
         }
     }
 
