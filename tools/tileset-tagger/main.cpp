@@ -1561,6 +1561,74 @@ static bool wfcRestrict(const std::vector<char> &srcdom,std::vector<char> &ndom,
         contradiction=true;
     return changed;
 }
+// Shared model loader for the WFC variants: decode every model .tmx to its
+// TOPMOST-category grid, each category string mapped to a small int id.
+struct WfcGrid { int w; int h; std::vector<int> c; };
+static void wfcLoadModel(const QString &dir,std::map<std::string,int> &catId,
+                         std::vector<std::string> &cats,std::vector<WfcGrid> &gs)
+{
+    wfcCatIndex(catId,cats,std::string());   // 0 = empty/none
+    QDirIterator dit(dir,QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    while(dit.hasNext())
+    {
+        MapDecoder dec;
+        MapDecoder::Result r;
+        QString err;
+        if(dec.decode(dit.next(),r,err))
+        {
+            WfcGrid g; g.w=r.w; g.h=r.h; g.c.resize(r.w*r.h);
+            int i=0;
+            while(i<r.w*r.h) { g.c[i]=wfcCatIndex(catId,cats,r.categoryGrid[i]); i++; }
+            gs.push_back(g);
+        }
+    }
+}
+// The set of 2x2 category blocks the model actually uses — the coherence yardstick.
+static void wfcBuild2x2(const std::vector<WfcGrid> &gs,std::set<std::vector<int> > &out)
+{
+    size_t gi=0;
+    while(gi<gs.size())
+    {
+        const WfcGrid &g=gs.at(gi);
+        int y=0;
+        while(y+1<g.h)
+        {
+            int x=0;
+            while(x+1<g.w)
+            {
+                std::vector<int> b(4);
+                b[0]=g.c[x+y*g.w]; b[1]=g.c[(x+1)+y*g.w];
+                b[2]=g.c[x+(y+1)*g.w]; b[3]=g.c[(x+1)+(y+1)*g.w];
+                out.insert(b);
+                x++;
+            }
+            y++;
+        }
+        gi++;
+    }
+}
+// Fraction (%) of the WxH result's 2x2 windows that exist in the model set —
+// higher = more coherent (fewer neighbour pairings the model never used).
+static double wfcCoherence(const std::vector<int> &grid,int W,int H,const std::set<std::vector<int> > &model2x2)
+{
+    long tot=0,ok=0;
+    int y=0;
+    while(y+1<H)
+    {
+        int x=0;
+        while(x+1<W)
+        {
+            std::vector<int> b(4);
+            b[0]=grid[x+y*W]; b[1]=grid[(x+1)+y*W];
+            b[2]=grid[x+(y+1)*W]; b[3]=grid[(x+1)+(y+1)*W];
+            tot++;
+            if(model2x2.find(b)!=model2x2.cend()) ok++;
+            x++;
+        }
+        y++;
+    }
+    return tot>0?(double)ok*100.0/(double)tot:0.0;
+}
 static int runWfc(const QStringList &args)
 {
     if(args.size()<2) { std::cerr << "wfc needs: <model-map-dir> <out.png> [W H seed]" << std::endl; return 1; }
@@ -1571,23 +1639,8 @@ static int runWfc(const QStringList &args)
     // LEARN from the model maps' TOPMOST-category grids
     std::map<std::string,int> catId;
     std::vector<std::string> cats;
-    wfcCatIndex(catId,cats,std::string());   // 0 = empty/none
-    struct G { int w; int h; std::vector<int> c; };
-    std::vector<G> gs;
-    QDirIterator dit(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
-    while(dit.hasNext())
-    {
-        MapDecoder dec;
-        MapDecoder::Result r;
-        QString err;
-        if(dec.decode(dit.next(),r,err))
-        {
-            G g; g.w=r.w; g.h=r.h; g.c.resize(r.w*r.h);
-            int i=0;
-            while(i<r.w*r.h) { g.c[i]=wfcCatIndex(catId,cats,r.categoryGrid[i]); i++; }
-            gs.push_back(g);
-        }
-    }
+    std::vector<WfcGrid> gs;
+    wfcLoadModel(args.at(0),catId,cats,gs);
     const int K=(int)cats.size();
     if(K<2) { std::cerr << "WFC: no tagged categories in " << args.at(0).toStdString() << std::endl; return 1; }
     std::vector<std::vector<char> > rightOK(K,std::vector<char>(K,0)),downOK(K,std::vector<char>(K,0));
@@ -1596,7 +1649,7 @@ static int runWfc(const QStringList &args)
     size_t gi=0;
     while(gi<gs.size())
     {
-        const G &g=gs.at(gi);
+        const WfcGrid &g=gs.at(gi);
         int y=0;
         while(y<g.h)
         {
@@ -1672,6 +1725,9 @@ static int runWfc(const QStringList &args)
         attempt++;
     }
     if(!done) { std::cerr << "WFC: no solution after 60 attempts (adjacency too constrained)" << std::endl; return 1; }
+    std::set<std::vector<int> > model2x2;
+    wfcBuild2x2(gs,model2x2);
+    const double coh=wfcCoherence(result,W,H,model2x2);
     QImage img(W*16,H*16,QImage::Format_ARGB32);
     img.fill(QColor(28,28,38));
     QPainter p(&img);
@@ -1690,8 +1746,300 @@ static int runWfc(const QStringList &args)
     }
     p.end();
     if(!img.save(args.at(1))) { std::cerr << "cannot write " << args.at(1).toStdString() << std::endl; return 1; }
-    std::cout << "WFC " << W << "x" << H << " from " << gs.size() << " model map(s), " << (K-1) << " categories, attempt "
-              << attempt << " -> " << args.at(1).toStdString() << std::endl;
+    char cohbuf[32]; std::snprintf(cohbuf,sizeof(cohbuf),"%.1f",coh);
+    std::cout << "WFC(single-tile) " << W << "x" << H << " from " << gs.size() << " model map(s), " << (K-1)
+              << " categories, attempt " << attempt << ", coherence " << cohbuf << "% (2x2 windows seen in model) -> "
+              << args.at(1).toStdString() << std::endl;
+    return 0;
+}
+
+// --- Overlapping-pattern WFC (the fix for the "mushy" single-tile model) ------
+// Learn every NxN category PATTERN the model uses; two patterns may be neighbours
+// only if they AGREE on their (N-1)-wide overlap.  Patterns encode local SHAPE, so
+// whole buildings / grass blobs reproduce instead of per-cell noise.  AC-4
+// propagation (per-cell, per-pattern, per-direction support counters).
+static void wfcBanPattern(int cell,int p,int P,
+    std::vector<char> &possible,std::vector<int> &nPoss,std::vector<long> &sumW,const std::vector<long> &weight,
+    std::vector<int> &compat,std::vector<std::pair<int,int> > &banStack,bool &contradiction)
+{
+    const size_t base=(size_t)cell*P+p;
+    if(!possible[base])
+        return;
+    possible[base]=0;
+    int d=0; while(d<4) { compat[base*4+d]=0; d++; }
+    nPoss[cell]--;
+    sumW[cell]-=weight[p];
+    if(nPoss[cell]==0)
+        contradiction=true;
+    banStack.push_back(std::pair<int,int>(cell,p));
+}
+static void wfcPropagate(int P,int W,int H,const std::vector<std::vector<int> > *prop,
+    std::vector<char> &possible,std::vector<int> &nPoss,std::vector<long> &sumW,const std::vector<long> &weight,
+    std::vector<int> &compat,std::vector<std::pair<int,int> > &banStack,bool &contradiction)
+{
+    const int opp[4]={1,0,3,2};
+    const int ddx[4]={1,-1,0,0};
+    const int ddy[4]={0,0,1,-1};
+    while(!banStack.empty() && !contradiction)
+    {
+        const std::pair<int,int> e=banStack.back();
+        banStack.pop_back();
+        const int cell=e.first, p=e.second;
+        const int cx=cell%W, cy=cell/W;
+        int d=0;
+        while(d<4)
+        {
+            const int nx=cx+ddx[d], ny=cy+ddy[d];
+            if(nx>=0 && ny>=0 && nx<W && ny<H)
+            {
+                const int ncell=nx+ny*W;
+                const std::vector<int> &lst=prop[d][p];   // patterns p supported as its d-neighbour
+                size_t i=0;
+                while(i<lst.size())
+                {
+                    const int t=lst[i];
+                    int &cc=compat[((size_t)ncell*P+t)*4+opp[d]];   // t at ncell, support from the `cell` side
+                    if(cc>0)
+                    {
+                        cc--;
+                        if(cc==0 && possible[(size_t)ncell*P+t])
+                            wfcBanPattern(ncell,t,P,possible,nPoss,sumW,weight,compat,banStack,contradiction);
+                    }
+                    i++;
+                }
+            }
+            d++;
+        }
+    }
+}
+static int runWfcOverlap(const QStringList &args)
+{
+    if(args.size()<2) { std::cerr << "wfco needs: <model-map-dir> <out.png> [N W H seed]" << std::endl; return 1; }
+    int N = args.size()>2 ? args.at(2).toInt() : 2;   // 2x2 = best coherence/cost on the model data
+    if(N<2) N=2;
+    if(N>4) N=4;
+    const int W = args.size()>3 ? args.at(3).toInt() : 30;
+    const int H = args.size()>4 ? args.at(4).toInt() : 30;
+    const unsigned int seed = args.size()>5 ? args.at(5).toUInt() : 1234u;
+
+    std::map<std::string,int> catId;
+    std::vector<std::string> cats;
+    std::vector<WfcGrid> gs;
+    wfcLoadModel(args.at(0),catId,cats,gs);
+    const int K=(int)cats.size();
+    if(K<2) { std::cerr << "WFCo: no tagged categories in " << args.at(0).toStdString() << std::endl; return 1; }
+    if(K>255) { std::cerr << "WFCo: " << K << " categories > 255 (byte signatures)" << std::endl; return 1; }
+
+    // 1) extract NxN patterns + weights
+    std::map<std::vector<int>,int> patIndex;
+    std::vector<std::vector<int> > pats;
+    std::vector<long> weight;
+    size_t gi=0;
+    while(gi<gs.size())
+    {
+        const WfcGrid &g=gs.at(gi);
+        int y=0;
+        while(y+N<=g.h)
+        {
+            int x=0;
+            while(x+N<=g.w)
+            {
+                std::vector<int> pat(N*N);
+                int dy=0;
+                while(dy<N) { int dx=0; while(dx<N) { pat[dy*N+dx]=g.c[(x+dx)+(y+dy)*g.w]; dx++; } dy++; }
+                std::map<std::vector<int>,int>::iterator it=patIndex.find(pat);
+                if(it==patIndex.end()) { const int id=(int)pats.size(); patIndex[pat]=id; pats.push_back(pat); weight.push_back(1); }
+                else weight[it->second]++;
+                x++;
+            }
+            y++;
+        }
+        gi++;
+    }
+    const int P=(int)pats.size();
+    if(P<1) { std::cerr << "WFCo: model maps smaller than " << N << "x" << N << std::endl; return 1; }
+    // memory guard: compat is W*H*P*4 ints
+    const double cells=(double)W*H;
+    if(cells*P*4.0 > 6.0e8) { std::cerr << "WFCo: " << P << " patterns x " << W << "x" << H
+        << " too big; use smaller N or W/H" << std::endl; return 1; }
+
+    // 2) index patterns by edge signatures (cols/rows as a byte string) so
+    //    compatibility is built without an O(P^2) scan.
+    std::map<std::string,std::vector<int> > byLeft,byRight,byTop,byBottom;
+    int pp=0;
+    while(pp<P)
+    {
+        const std::vector<int> &pat=pats[pp];
+        std::string L,R,T,B;
+        int r=0;
+        while(r<N)
+        {
+            int c=0;
+            while(c<N)
+            {
+                const char ch=(char)pat[r*N+c];
+                if(c<N-1) L.push_back(ch);   // cols 0..N-2
+                if(c>0)   R.push_back(ch);    // cols 1..N-1
+                if(r<N-1) T.push_back(ch);    // rows 0..N-2
+                if(r>0)   B.push_back(ch);    // rows 1..N-1
+                c++;
+            }
+            r++;
+        }
+        byLeft[L].push_back(pp); byRight[R].push_back(pp); byTop[T].push_back(pp); byBottom[B].push_back(pp);
+        pp++;
+    }
+    // propagator[d][p] = patterns allowed as the d-neighbour of p (0=R 1=L 2=D 3=U)
+    std::vector<std::vector<int> > prop[4];
+    int d0=0; while(d0<4) { prop[d0].assign(P,std::vector<int>()); d0++; }
+    pp=0;
+    while(pp<P)
+    {
+        const std::vector<int> &pat=pats[pp];
+        std::string L,R,T,B;
+        int r=0;
+        while(r<N)
+        {
+            int c=0;
+            while(c<N)
+            {
+                const char ch=(char)pat[r*N+c];
+                if(c<N-1) L.push_back(ch);
+                if(c>0)   R.push_back(ch);
+                if(r<N-1) T.push_back(ch);
+                if(r>0)   B.push_back(ch);
+                c++;
+            }
+            r++;
+        }
+        std::map<std::string,std::vector<int> >::iterator it;
+        it=byLeft.find(R);   if(it!=byLeft.end())   prop[0][pp]=it->second;   // RIGHT nb: its LEFT cols == my RIGHT cols
+        it=byRight.find(L);  if(it!=byRight.end())  prop[1][pp]=it->second;   // LEFT  nb: its RIGHT cols == my LEFT cols
+        it=byTop.find(B);    if(it!=byTop.end())    prop[2][pp]=it->second;   // DOWN  nb: its TOP rows == my BOTTOM rows
+        it=byBottom.find(T); if(it!=byBottom.end()) prop[3][pp]=it->second;   // UP    nb: its BOTTOM rows == my TOP rows
+        pp++;
+    }
+
+    // base support counts depend only on (p,d): compat init = |prop[opp[d]][p]|
+    const int opp[4]={1,0,3,2};
+    std::vector<int> base(P*4);
+    pp=0; while(pp<P) { int d=0; while(d<4) { base[pp*4+d]=(int)prop[opp[d]][pp].size(); d++; } pp++; }
+    long totW=0; pp=0; while(pp<P) { totW+=weight[pp]; pp++; }
+
+    const int NC=W*H;
+    std::vector<char> possible((size_t)NC*P,1);
+    std::vector<int> nPoss(NC,P);
+    std::vector<long> sumW(NC,totW);
+    std::vector<int> compat((size_t)NC*P*4,0);
+    std::vector<std::pair<int,int> > banStack;
+    std::vector<int> result(W*H,0);
+
+    bool solved=false;
+    int attempt=0;
+    while(attempt<6 && !solved)
+    {
+        std::mt19937 rng(seed+(unsigned int)attempt);
+        std::fill(possible.begin(),possible.end(),(char)1);
+        { int c=0; while(c<NC) { nPoss[c]=P; sumW[c]=totW; c++; } }
+        { int c=0; while(c<NC) { int q=0; while(q<P) { int d=0; while(d<4) { compat[((size_t)c*P+q)*4+d]=base[q*4+d]; d++; } q++; } c++; } }
+        banStack.clear();
+        bool contradiction=false;
+        while(!contradiction)
+        {
+            // lowest-count uncollapsed cell
+            int best=-1,bestN=P+1;
+            int c=0;
+            while(c<NC) { if(nPoss[c]>1 && nPoss[c]<bestN) { bestN=nPoss[c]; best=c; } c++; }
+            if(best<0)
+                break;   // every cell collapsed
+            // weighted random pick among the cell's remaining patterns
+            long pick=(long)(rng()%(unsigned long)(sumW[best]>0?sumW[best]:1));
+            int chosen=-1;
+            pp=0;
+            while(pp<P) { if(possible[(size_t)best*P+pp]) { pick-=weight[pp]; if(pick<0) { chosen=pp; break; } } pp++; }
+            if(chosen<0) { contradiction=true; break; }
+            pp=0;
+            while(pp<P) { if(pp!=chosen && possible[(size_t)best*P+pp]) wfcBanPattern(best,pp,P,possible,nPoss,sumW,weight,compat,banStack,contradiction); pp++; }
+            wfcPropagate(P,W,H,prop,possible,nPoss,sumW,weight,compat,banStack,contradiction);
+        }
+        if(!contradiction)
+        {
+            bool ok=true;
+            int c=0;
+            while(c<NC) { int sel=-1,q=0; while(q<P) { if(possible[(size_t)c*P+q]) { sel=q; break; } q++; } if(sel<0) { ok=false; break; } result[c]=pats[sel][0]; c++; }
+            if(ok)
+                solved=true;
+        }
+        attempt++;
+    }
+    const char *mode = solved ? "AC4" : "greedy";
+    if(!solved)
+    {
+        // GREEDY scanline fallback (always succeeds when strict WFC contradicts):
+        // each cell picks a pattern compatible with its already-placed LEFT
+        // (allowed RIGHT-neighbours) and UP (allowed DOWN-neighbours), weighted by
+        // frequency; relax to one-sided / any if the intersection is empty, so it
+        // never dead-ends.  Coherence stays high because each step honours overlap.
+        std::mt19937 rng(seed+777u);
+        std::vector<int> chosenPat(NC,-1);
+        int c=0;
+        while(c<NC)
+        {
+            const int x=c%W, y=c/W;
+            const std::vector<int> *fromLeft=nullptr;
+            const std::vector<int> *fromUp=nullptr;
+            if(x>0 && chosenPat[c-1]>=0) fromLeft=&prop[0][chosenPat[c-1]];
+            if(y>0 && chosenPat[c-W]>=0) fromUp=&prop[2][chosenPat[c-W]];
+            std::vector<int> cand;
+            if(fromLeft!=nullptr && fromUp!=nullptr)
+            {
+                std::set<int> s(fromUp->begin(),fromUp->end());
+                size_t i=0;
+                while(i<fromLeft->size()) { if(s.find((*fromLeft)[i])!=s.cend()) cand.push_back((*fromLeft)[i]); i++; }
+                if(cand.empty())
+                    cand=*fromLeft;                  // relax: honour the left edge only
+            }
+            else if(fromLeft!=nullptr) cand=*fromLeft;
+            else if(fromUp!=nullptr)   cand=*fromUp;
+            if(cand.empty()) { int q=0; while(q<P) { cand.push_back(q); q++; } }   // first cell / fully relaxed
+            long tot=0; size_t i=0;
+            while(i<cand.size()) { tot+=weight[cand[i]]; i++; }
+            long pick=(long)(rng()%(unsigned long)(tot>0?tot:1));
+            int sel=cand[0];
+            i=0;
+            while(i<cand.size()) { pick-=weight[cand[i]]; if(pick<0) { sel=cand[i]; break; } i++; }
+            chosenPat[c]=sel;
+            result[c]=pats[sel][0];
+            c++;
+        }
+    }
+
+    std::set<std::vector<int> > model2x2;
+    wfcBuild2x2(gs,model2x2);
+    const double coh=wfcCoherence(result,W,H,model2x2);
+
+    QImage img(W*16,H*16,QImage::Format_ARGB32);
+    img.fill(QColor(28,28,38));
+    QPainter p(&img);
+    int yy=0;
+    while(yy<H)
+    {
+        int xx=0;
+        while(xx<W)
+        {
+            const std::string &cat=cats.at(result[xx+yy*W]);
+            if(!cat.empty())
+                p.fillRect(xx*16,yy*16,16,16,MapDecoder::categoryColor(cat));
+            xx++;
+        }
+        yy++;
+    }
+    p.end();
+    if(!img.save(args.at(1))) { std::cerr << "cannot write " << args.at(1).toStdString() << std::endl; return 1; }
+    char cohbuf[32]; std::snprintf(cohbuf,sizeof(cohbuf),"%.1f",coh);
+    std::cout << "WFCo(" << N << "x" << N << " overlap, " << mode << ") " << W << "x" << H << " from " << gs.size()
+              << " model map(s), " << P << " patterns, " << (K-1) << " categories"
+              << ", coherence " << cohbuf << "% -> " << args.at(1).toStdString() << std::endl;
     return 0;
 }
 
@@ -1704,7 +2052,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--usedtiles");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -1728,6 +2076,8 @@ int main(int argc, char *argv[])
         return runMapTensor(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--wfc")
         return runWfc(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--wfco")
+        return runWfcOverlap(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--usedtiles")
         return runUsedTiles(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
