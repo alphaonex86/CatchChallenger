@@ -69,6 +69,13 @@ public:
     // tune k / minPercent.  abstain = no neighbour reached minPercent.
     void knnSelfAccuracy(int minPercent,int k,int &correct,int &total,int &abstain) const;
 
+    // LEARN feature weights instead of hand-tuning: append one row per pair of
+    // VERIFIED tiles — the linked-data feature vector (see featureNames()) + the
+    // same-category label — so a classifier can discover which features have impact.
+    static int featureCount();
+    static const char *featureName(int i);
+    void appendPairwiseFeatures(std::vector<std::vector<float> > &X,std::vector<char> &y) const;
+
     // Review progression over the whole tileset.
     struct Counts { int verified; int toReview; int untagged; };
     Counts progress() const;
