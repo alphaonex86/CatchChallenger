@@ -1526,6 +1526,91 @@ static int runUsedTiles(const QStringList &args)
     return 0;
 }
 
+// LEARN the category -> engine-LAYER mapping from the model maps (the input the
+// category-grid -> .tmx bridge needs to decompose a generated category grid into
+// the engine's named layers).  For every tagged cell, count which layer NAME it is
+// drawn on; the dominant layer is the category's canonical layer, and the engine's
+// walkability precedence (Collisions/WalkBehind = blocked/above-player, the rest
+// walkable) then follows.  Pure analysis — emits no datapack assets.
+static void catLayersSortDesc(std::vector<std::pair<long,std::string> > &v)
+{
+    size_t a=1;
+    while(a<v.size())
+    {
+        const std::pair<long,std::string> key=v[a];
+        size_t b=a;
+        while(b>0 && v[b-1].first<key.first) { v[b]=v[b-1]; b--; }
+        v[b]=key;
+        a++;
+    }
+}
+static int runCatLayers(const QStringList &args)
+{
+    if(args.isEmpty()) { std::cerr << "catlayers needs: <model-map-dir> [out.json]" << std::endl; return 1; }
+    std::map<std::string,std::map<std::string,long> > catLayer;   // category -> layerName -> count
+    std::map<std::string,long> catTotal;
+    int nmaps=0;
+    QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+    while(it.hasNext())
+    {
+        MapDecoder dec;
+        MapDecoder::Result r;
+        QString err;
+        if(dec.decode(it.next(),r,err))
+        {
+            nmaps++;
+            size_t z=0;
+            while(z<r.layerGrids.size())
+            {
+                const std::string &ln=r.layerNames.at(z);
+                const std::vector<std::string> &g=r.layerGrids.at(z);
+                size_t i=0;
+                while(i<g.size()) { if(!g[i].empty()) { catLayer[g[i]][ln]++; catTotal[g[i]]++; } i++; }
+                z++;
+            }
+        }
+    }
+    if(nmaps==0) { std::cerr << "no maps decoded in " << args.at(0).toStdString() << std::endl; return 1; }
+    // order categories by total cell count, desc
+    std::vector<std::pair<long,std::string> > order;
+    std::map<std::string,long>::iterator ct=catTotal.begin();
+    while(ct!=catTotal.end()) { order.push_back(std::pair<long,std::string>(ct->second,ct->first)); ++ct; }
+    catLayersSortDesc(order);
+    QJsonObject out;
+    std::cout << "category -> engine layer (" << nmaps << " maps, dominant layer = canonical):" << std::endl;
+    size_t o=0;
+    while(o<order.size())
+    {
+        const std::string &cat=order[o].second;
+        const long total=order[o].first;
+        // sort this category's layers desc
+        std::vector<std::pair<long,std::string> > ls;
+        std::map<std::string,long>::iterator l=catLayer[cat].begin();
+        while(l!=catLayer[cat].end()) { ls.push_back(std::pair<long,std::string>(l->second,l->first)); ++l; }
+        catLayersSortDesc(ls);
+        std::string line;
+        size_t k=0;
+        while(k<ls.size() && k<3)
+        {
+            const int pct=(int)(ls[k].first*100/total);
+            if(!line.empty()) line+=", ";
+            line+=ls[k].second+" "+std::to_string(pct)+"%";
+            k++;
+        }
+        char buf[24]; std::snprintf(buf,sizeof(buf),"%-18s",cat.c_str());
+        std::cout << "  " << buf << " " << total << "\t" << line << std::endl;
+        out[QString::fromStdString(cat)]=QString::fromStdString(ls.empty()?std::string():ls[0].second);
+        o++;
+    }
+    if(args.size()>1)
+    {
+        QFile f(args.at(1));
+        if(f.open(QIODevice::WriteOnly)) { f.write(QJsonDocument(out).toJson(QJsonDocument::Indented)); f.close();
+            std::cout << "canonical category->layer map -> " << args.at(1).toStdString() << std::endl; }
+    }
+    return 0;
+}
+
 // --- Wave Function Collapse (example-based, coherent-by-construction) ----------
 // Learns 4-direction category adjacency from the MODEL maps, then generates a new
 // category grid where every neighbour pair is one the model actually used.  An
@@ -2052,7 +2137,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--usedtiles");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--catlayers" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -2078,6 +2163,8 @@ int main(int argc, char *argv[])
         return runWfc(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--wfco")
         return runWfcOverlap(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--catlayers")
+        return runCatLayers(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--usedtiles")
         return runUsedTiles(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
