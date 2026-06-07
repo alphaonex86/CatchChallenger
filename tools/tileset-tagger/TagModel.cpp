@@ -273,11 +273,13 @@ std::string TagModel::knnVote(size_t ui,const std::vector<size_t> &refs,
                               const std::vector<std::vector<unsigned char> > &rgb,
                               const std::vector<std::vector<char> > &op,
                               const std::vector<int> &refRole,int targetRole,
+                              const std::vector<int> &ids,int columns,
                               int npx,int minPercent,int k,int &bestPctOut)
 {
     const int TOL=18;
     const int THRA=128;                 // alpha >= THRA == opaque (RGB trustworthy)
     const int LAYERPEN=12;              // %/layer cost when target & ref sit on different z-layers
+    const int SPATIALR=5, SPATIALMAX=8; // tileset-sheet proximity bonus (object-clustered layout)
     const int MINUNION=npx*32/256;
     bestPctOut=-1;
     std::vector<std::pair<int,std::string> > scored;   // (pct, category), candidates
@@ -315,6 +317,17 @@ std::string TagModel::knnVote(size_t ui,const std::vector<size_t> &refs,
                 // stack = bigger cost — the alpha silhouette is layer-relative.
                 if(targetRole>=0 && refRole[r]>=0 && targetRole!=refRole[r])
                     pct -= LAYERPEN*std::abs(targetRole-refRole[r]);
+                // tileset SPATIAL proximity: the sheet is laid out by object (same-
+                // object tiles packed together), so a verified tile CLOSE in the sheet
+                // is extra evidence for the same category.
+                if(columns>0)
+                {
+                    const int dc=std::abs(ids[ui]%columns - ids[refs[r]]%columns);
+                    const int dr=std::abs(ids[ui]/columns - ids[refs[r]]/columns);
+                    const int sheetDist = dc>dr?dc:dr;     // Chebyshev distance in the sheet
+                    if(sheetDist<SPATIALR)
+                        pct += SPATIALMAX*(SPATIALR-sheetDist)/SPATIALR;
+                }
                 if(pct>=minPercent)
                     scored.push_back(std::pair<int,std::string>(pct,refCat[r]));
             }
@@ -392,7 +405,7 @@ int TagModel::suggestFromTags(int minPercent)
         {
             int pct=-1;
             const int targetRole = (cur!=tags_.end()) ? layerRole(cur->second.attr("layer")) : -1;
-            const std::string cat=knnVote(ui,refs,refCat,rgb,op,refRole,targetRole,npx,minPercent,K,pct);
+            const std::string cat=knnVote(ui,refs,refCat,rgb,op,refRole,targetRole,ids,columns_,npx,minPercent,K,pct);
             if(!cat.empty())
             {
                 TileTag tag;
@@ -433,7 +446,7 @@ void TagModel::knnSelfAccuracy(int minPercent,int k,int &correct,int &total,int 
     while(r<refs.size())
     {
         int pct=-1;
-        const std::string pred=knnVote(refs[r],refs,refCat,rgb,op,refRole,(int)refRole[r],npx,minPercent,k,pct);
+        const std::string pred=knnVote(refs[r],refs,refCat,rgb,op,refRole,(int)refRole[r],ids,columns_,npx,minPercent,k,pct);
         total++;
         if(pred.empty())
             abstain++;
