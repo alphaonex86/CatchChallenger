@@ -6,11 +6,15 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
 #include "QMap_client.hpp"
+#include "../libcatchchallenger/ClientVariable.hpp"
 #include "../CliClientOptions.hpp"
 #include <iostream>
 #include <QDebug>
 #include <QFileInfo>
 #include <QCoreApplication>
+#include <QApplication>
+#include <QMouseEvent>
+#include <QtMath>
 
 QFont MapControllerMP::playerpseudofont;
 QPixmap * MapControllerMP::imgForPseudoAdmin=NULL;
@@ -1046,15 +1050,22 @@ bool MapControllerMP::tileStandable(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,c
     //A tile is standable if some orthogonal neighbour can MOVE INTO it. canGoTo()
     //checks the destination's enterability (collisions, ledges, water/lava needing
     //an item), so a Sign/NPC/water/wall tile returns false from every neighbour.
+    //Probe SILENTLY: canGoTo() otherwise fires blockedOn("you can't enter without
+    //the correct item") for every water/lava tile we test, flooding the player
+    //with spurious tips on a single click.
+    const bool prevSilent=canGoToSilent;
+    canGoToSilent=true;
+    bool standable=false;
     if(x+1<mw && canGoTo(CatchChallenger::Direction_move_at_left,mapIndex,static_cast<COORD_TYPE>(x+1),static_cast<COORD_TYPE>(y),true))
-        return true;
-    if(x-1>=0 && canGoTo(CatchChallenger::Direction_move_at_right,mapIndex,static_cast<COORD_TYPE>(x-1),static_cast<COORD_TYPE>(y),true))
-        return true;
-    if(y+1<mh && canGoTo(CatchChallenger::Direction_move_at_top,mapIndex,static_cast<COORD_TYPE>(x),static_cast<COORD_TYPE>(y+1),true))
-        return true;
-    if(y-1>=0 && canGoTo(CatchChallenger::Direction_move_at_bottom,mapIndex,static_cast<COORD_TYPE>(x),static_cast<COORD_TYPE>(y-1),true))
-        return true;
-    return false;
+        standable=true;
+    else if(x-1>=0 && canGoTo(CatchChallenger::Direction_move_at_right,mapIndex,static_cast<COORD_TYPE>(x-1),static_cast<COORD_TYPE>(y),true))
+        standable=true;
+    else if(y+1<mh && canGoTo(CatchChallenger::Direction_move_at_top,mapIndex,static_cast<COORD_TYPE>(x),static_cast<COORD_TYPE>(y+1),true))
+        standable=true;
+    else if(y-1>=0 && canGoTo(CatchChallenger::Direction_move_at_bottom,mapIndex,static_cast<COORD_TYPE>(x),static_cast<COORD_TYPE>(y-1),true))
+        standable=true;
+    canGoToSilent=prevSilent;
+    return standable;
 }
 
 bool MapControllerMP::reachableClickNeighbor(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &cx,const int &cy,const int &px,const int &py,int &outX,int &outY)
@@ -1070,7 +1081,11 @@ bool MapControllerMP::reachableClickNeighbor(const CATCHCHALLENGER_TYPE_MAPID &m
                                             CatchChallenger::Direction_move_at_bottom};
     const int dxx[4]={-1,1,0,0};
     const int dyy[4]={0,0,-1,1};
-    //BFS the tiles the player can WALK to (same per-step check as real movement)
+    //BFS the tiles the player can WALK to (same per-step check as real movement),
+    //but SILENTLY: probing water/lava tiles with canGoTo() would otherwise fire a
+    //blockedOn("you can't enter without the correct item") tip for each one.
+    const bool prevSilent=canGoToSilent;
+    canGoToSilent=true;
     std::vector<bool> reach(static_cast<size_t>(mw)*static_cast<size_t>(mh),false);
     std::vector<std::pair<int,int> > queue;
     queue.push_back(std::pair<int,int>(px,py));
@@ -1136,6 +1151,7 @@ bool MapControllerMP::reachableClickNeighbor(const CATCHCHALLENGER_TYPE_MAPID &m
         }
         k++;
     }
+    canGoToSilent=prevSilent;
     return found;
 }
 
@@ -1270,6 +1286,47 @@ void MapControllerMP::autosoloClickActionOn(CatchChallenger::Map_client *map, co
               << std::endl;
 }
 
+QPointF MapControllerMP::tileCenterScenePos(const int &tileX,const int &tileY) const
+{
+    //The current map is drawn at scene origin (0,0), tile pixel size =
+    //CLIENT_BASE_TILE_SIZE; the centre of tile (tx,ty) is the click target.
+    const double half=static_cast<double>(CLIENT_BASE_TILE_SIZE)/2.0;
+    return QPointF(static_cast<double>(tileX)*CLIENT_BASE_TILE_SIZE+half,
+                   static_cast<double>(tileY)*CLIENT_BASE_TILE_SIZE+half);
+}
+
+bool MapControllerMP::resolveTileAtZoom(const int &tileX,const int &tileY,int &outX,int &outY)
+{
+    //Reproduce the REAL on-device click maths: the sign's tile centre is mapped
+    //to a viewport pixel through the ZOOMED QGraphicsView transform, then mapped
+    //back to the scene, then turned into a tile the SAME way PreparedLayer does
+    //(qCeil(pos/tileSize)-1). If the zoom transform is off, the round trip lands
+    //on a neighbouring tile — typically the water/lava tile next to the sign,
+    //which is why the device says "you can't enter without the correct item".
+    const QPoint vpPt=mapFromScene(tileCenterScenePos(tileX,tileY));
+    const QPointF back=mapToScene(vpPt);
+    outX=static_cast<int>(qCeil(back.x()/static_cast<double>(CLIENT_BASE_TILE_SIZE))-1);
+    outY=static_cast<int>(qCeil(back.y()/static_cast<double>(CLIENT_BASE_TILE_SIZE))-1);
+    return true;
+}
+
+void MapControllerMP::postClickAtTile(const int &tileX,const int &tileY)
+{
+    //Inject a REAL left-click at the viewport pixel the sign occupies under the
+    //current zoom, so the event travels the full device path
+    //(pixel -> zoomed view -> scene -> PreparedLayer item -> tile) instead of
+    //the old tile-coordinate shortcut. A press is needed before the release so
+    //QGraphicsView sets the item as the mouse grabber for the release.
+    const QPointF vpPt=QPointF(mapFromScene(tileCenterScenePos(tileX,tileY)));
+    const QPointF globalPt=QPointF(viewport()->mapToGlobal(vpPt.toPoint()));
+    QMouseEvent press(QEvent::MouseButtonPress,vpPt,globalPt,
+                      Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+    QApplication::sendEvent(viewport(),&press);
+    QMouseEvent release(QEvent::MouseButtonRelease,vpPt,globalPt,
+                        Qt::LeftButton,Qt::NoButton,Qt::NoModifier);
+    QApplication::sendEvent(viewport(),&release);
+}
+
 void MapControllerMP::runClickSignSelfTest()
 {
     if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
@@ -1337,13 +1394,62 @@ void MapControllerMP::runClickSignSelfTest()
     std::cerr << "[SIGNTEST] clicking interactable at (" << bestX << "," << bestY << ")"
               << (bot!=nullptr?" (sign/NPC)":"") << " from player (" << px << "," << py
               << "), expected walk distance=" << bestDist << std::endl;
+    //── Zoom robustness: the on-device tap goes through the ZOOMED view, so the
+    //   sign's pixel must map back to the sign's tile at EVERY zoom level. A
+    //   wrong mapping lands the tap on the water/lava tile beside the sign and
+    //   the engine answers "you can't enter without the correct item".
+    {
+        bool zoomOk=true;
+        int zoom=1;
+        while(zoom<=4)
+        {
+            setScale(static_cast<float>(zoom));
+            centerOnPlayerTile();
+            int rx=-1,ry=-1;
+            resolveTileAtZoom(bestX,bestY,rx,ry);
+            const bool match=(rx==bestX && ry==bestY);
+            std::cerr << "[SIGNTEST] zoom=" << zoom << ": sign tile (" << bestX << "," << bestY
+                      << ") on-screen pixel resolves to (" << rx << "," << ry << ")"
+                      << (match?" MATCH":" MISMATCH") << std::endl;
+            if(!match)
+                zoomOk=false;
+            zoom++;
+        }
+        if(!zoomOk)
+        {
+            std::cerr << "[SIGNTEST] FAIL zoom-dependent click mis-resolves: the sign's pixel "
+                         "lands on the wrong tile, which on-device triggers \"you can't enter "
+                         "without the correct item\"" << std::endl;
+            QCoreApplication::exit(3);
+            return;
+        }
+    }
+    //── Full interaction at a fixed mid zoom, driven by a REAL dispatched click
+    //   (the device path: pixel -> zoomed view -> scene -> tile), not the tile-
+    //   coordinate shortcut: walk to the sign, FACE it, open it like Enter.
+    setScale(2.0f);
+    centerOnPlayerTile();
     //verify the outcome via actionOn (emitted when parseAction() acts on the tile
     //the player faces) plus a fallback timeout covering the walk
     if(!connect(this,&MapVisualiserPlayer::actionOn,this,&MapControllerMP::signSelfTestActionOn,Qt::UniqueConnection))
         abort();
+    //catch "you can't enter ..." the instant a walk step is refused, rather than
+    //waiting out the whole timeout
+    if(!connect(this,&MapVisualiserPlayer::blockedOn,this,&MapControllerMP::signSelfTestBlockedOn,Qt::UniqueConnection))
+        abort();
     signSelfTestTimeoutTimer.start(20000);
-    //inject the click exactly as PreparedLayer::mouseReleaseEvent() would
-    eventOnMap(CatchChallenger::MapEvent_SimpleClick,current_map,signTestX,signTestY);
+    postClickAtTile(bestX,bestY);
+}
+
+void MapControllerMP::signSelfTestBlockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
+{
+    signSelfTestTimeoutTimer.stop();
+    const char *why="the zone";
+    if(blockOnVar==MapVisualiserPlayer::BlockedOn_ZoneItem)
+        why="a zone needing an item (water/lava) next to the sign";
+    std::cerr << "[SIGNTEST] FAIL blocked walking to the sign: you can't enter " << why
+              << " — the click routed the player into a blocked tile" << std::endl;
+    QCoreApplication::exit(3);
 }
 
 void MapControllerMP::signSelfTestActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
