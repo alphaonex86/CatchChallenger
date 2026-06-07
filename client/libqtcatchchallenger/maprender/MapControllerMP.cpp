@@ -43,6 +43,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     player_informations_is_set=false;
     pendingInitialPlayerLoad=false;
     chatHelloSent=false;
+    remoteActionInProgress=false;
 
     signSelfTestStarted=false;
     signTestMap=0;
@@ -89,6 +90,15 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
 {
     this->client=client;
     #if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
+    //Null our cached `client` the instant the Api_protocol_Qt is deleted. A
+    //newError() (e.g. a fight action sent out of fight) calls
+    //client->tryDisconnect(), which can tear the autosolo session down and delete
+    //the client while the map controller is still alive; without this, the
+    //automation channel (and any null-checked path) would dereference a freed
+    //vtable. Default (direct) connection -> runs synchronously inside ~QObject,
+    //before the next command is processed.
+    if(!QObject::connect(client,&QObject::destroyed,this,&MapControllerMP::clientDestroyedSlot))
+        abort();
     //connect the map controler
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qthave_current_player_info,   this,&MapControllerMP::have_current_player_info,Qt::QueuedConnection))
         abort();
@@ -133,6 +143,15 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
     if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeAddTradeObject,   this,&MapControllerMP::remoteTradeAddTradeObject,Qt::QueuedConnection))
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QttradeAddTradeMonster,  this,&MapControllerMP::remoteTradeAddTradeMonster,Qt::QueuedConnection))
+        abort();
+    //QLocalServer automation channel (stage 4): buffer fight events for GETFIGHT
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QtbattleRequested,       this,&MapControllerMP::remoteBattleRequested,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QtbattleAcceptedByOther, this,&MapControllerMP::remoteBattleAcceptedByOther,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QtbattleCanceledByOther, this,&MapControllerMP::remoteBattleCanceledByOther,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_protocol_Qt::QtsendBattleReturn,      this,&MapControllerMP::remoteSendBattleReturn,Qt::QueuedConnection))
         abort();
     #endif
 }
@@ -1413,6 +1432,31 @@ int MapControllerMP::remoteKeyNameToQt(const QString &name) const
 
 void MapControllerMP::remoteAction(const QString &line)
 {
+    //Re-entrancy guard. A command can spin a NESTED event loop — e.g. a fight
+    //action sent out of fight -> Api_protocol::useSkill() -> newError() ->
+    //client->tryDisconnect() + a modal QMessageBox::critical(). While that modal
+    //loop runs, the next buffered socket command would re-enter remoteAction
+    //against a client that is mid-teardown (its deleteLater() fires when the
+    //nested loop yields) -> use-after-free / call through a freed vtable.
+    //Serialise instead: queue every command and run them one at a time from the
+    //outermost call. The drain runs synchronously, before control returns to the
+    //event loop, so a pending deleteLater() cannot free the client between
+    //commands.
+    remoteActionPending.push_back(line);
+    if(remoteActionInProgress)
+        return;
+    remoteActionInProgress=true;
+    while(!remoteActionPending.empty())
+    {
+        const QString next=remoteActionPending.front();
+        remoteActionPending.erase(remoteActionPending.begin());
+        remoteActionExecute(next);
+    }
+    remoteActionInProgress=false;
+}
+
+void MapControllerMP::remoteActionExecute(const QString &line)
+{
     const QStringList parts=line.trimmed().split(QLatin1Char(' '),Qt::SkipEmptyParts);
     if(parts.isEmpty())
         return;
@@ -1574,6 +1618,76 @@ void MapControllerMP::remoteAction(const QString &line)
         emit remoteReply(QStringLiteral("OK GETTRADE %1").arg(static_cast<qulonglong>(remoteTradeLog.size())));
         remoteTradeLog.clear();
     }
+    else if(verb==QStringLiteral("FIGHTREQUEST") && parts.size()>=2)
+    {
+        if(client==nullptr)
+            emit remoteReply(QStringLiteral("ERROR not connected"));
+        else
+        {
+            //a PvP fight is initiated by the "/battle <pseudo>" chat command
+            client->sendChatText(CatchChallenger::Chat_type_local,std::string("/battle ")+parts.at(1).toStdString());
+            emit remoteReply(QStringLiteral("OK FIGHTREQUEST ")+parts.at(1));
+        }
+    }
+    else if(verb==QStringLiteral("FIGHTACCEPT"))
+    {
+        if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->battleAccepted(); emit remoteReply(QStringLiteral("OK FIGHTACCEPT")); }
+    }
+    else if(verb==QStringLiteral("FIGHTREFUSE"))
+    {
+        if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->battleRefused(); emit remoteReply(QStringLiteral("OK FIGHTREFUSE")); }
+    }
+    else if(verb==QStringLiteral("FIGHTSKILL") && parts.size()>=2)
+    {
+        bool ok=false;
+        const uint skill=parts.at(1).toUInt(&ok);
+        if(!ok) emit remoteReply(QStringLiteral("ERROR bad FIGHTSKILL arg"));
+        else if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->useSkill(static_cast<CATCHCHALLENGER_TYPE_SKILL>(skill)); emit remoteReply(QStringLiteral("OK FIGHTSKILL %1").arg(skill)); }
+    }
+    else if(verb==QStringLiteral("FIGHTCHANGEMONSTER") && parts.size()>=2)
+    {
+        bool ok=false;
+        const uint pos=parts.at(1).toUInt(&ok);
+        if(!ok) emit remoteReply(QStringLiteral("ERROR bad FIGHTCHANGEMONSTER arg"));
+        else if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->changeOfMonsterInFightByPosition(static_cast<uint8_t>(pos)); emit remoteReply(QStringLiteral("OK FIGHTCHANGEMONSTER %1").arg(pos)); }
+    }
+    else if(verb==QStringLiteral("FIGHTITEM") && parts.size()>=2)
+    {
+        bool ok1=false;
+        const uint item=parts.at(1).toUInt(&ok1);
+        if(!ok1) emit remoteReply(QStringLiteral("ERROR bad FIGHTITEM arg"));
+        else if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else if(parts.size()>=3)
+        {
+            //use the item on a specific team monster (capture ball, potion, ...)
+            bool ok2=false;
+            const uint pos=parts.at(2).toUInt(&ok2);
+            if(!ok2) emit remoteReply(QStringLiteral("ERROR bad FIGHTITEM monster arg"));
+            else { client->useObjectOnMonsterByPosition(static_cast<CATCHCHALLENGER_TYPE_ITEM>(item),static_cast<uint8_t>(pos)); emit remoteReply(QStringLiteral("OK FIGHTITEM %1 %2").arg(item).arg(pos)); }
+        }
+        else { client->useObject(static_cast<CATCHCHALLENGER_TYPE_ITEM>(item)); emit remoteReply(QStringLiteral("OK FIGHTITEM %1").arg(item)); }
+    }
+    else if(verb==QStringLiteral("FIGHTESCAPE"))
+    {
+        if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
+        else { client->sendTryEscape(); emit remoteReply(QStringLiteral("OK FIGHTESCAPE")); }
+    }
+    else if(verb==QStringLiteral("GETFIGHT"))
+    {
+        std::size_t i=0;
+        while(i<remoteFightLog.size())
+        {
+            emit remoteReply(QStringLiteral("FIGHTEVENT ")+QString::fromStdString(remoteFightLog.at(i)));
+            ++i;
+        }
+        const int inFight=(client!=nullptr && client->isInFight())?1:0;
+        emit remoteReply(QStringLiteral("OK GETFIGHT inFight=%1 count=%2").arg(inFight).arg(static_cast<qulonglong>(remoteFightLog.size())));
+        remoteFightLog.clear();
+    }
     else
         emit remoteReply(QStringLiteral("ERROR unknown command ")+verb);
 }
@@ -1624,6 +1738,14 @@ void MapControllerMP::remoteSystemReceived(const CatchChallenger::Chat_type &cha
     rememberRemoteEvent(remoteChatLog,line);
 }
 
+void MapControllerMP::clientDestroyedSlot(QObject *obj)
+{
+    //only null if the destroyed object IS our current client (a replaced client
+    //from a new character selection must not clear the new pointer)
+    if(static_cast<QObject*>(client)==obj)
+        client=nullptr;
+}
+
 void MapControllerMP::rememberRemoteEvent(std::vector<std::string> &log,const std::string &line)
 {
     //bound the buffer so a long un-drained session can't grow without limit
@@ -1672,6 +1794,28 @@ void MapControllerMP::remoteTradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM 
 void MapControllerMP::remoteTradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster)
 {
     rememberRemoteEvent(remoteTradeLog,std::string("ADDMONSTER ")+std::to_string(monster.monster)+" level "+std::to_string(monster.level));
+}
+
+void MapControllerMP::remoteBattleRequested(const std::string &pseudo,const uint8_t &skinInt)
+{
+    (void)skinInt;
+    rememberRemoteEvent(remoteFightLog,std::string("REQUESTED ")+pseudo);
+}
+
+void MapControllerMP::remoteBattleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const CatchChallenger::PublicPlayerMonster &publicPlayerMonster)
+{
+    (void)skinId;(void)stat;(void)monsterPlace;
+    rememberRemoteEvent(remoteFightLog,std::string("ACCEPTED ")+pseudo+" monster "+std::to_string(publicPlayerMonster.monster));
+}
+
+void MapControllerMP::remoteBattleCanceledByOther()
+{
+    rememberRemoteEvent(remoteFightLog,std::string("CANCELED"));
+}
+
+void MapControllerMP::remoteSendBattleReturn(const std::vector<CatchChallenger::Skill::AttackReturn> &attackReturn)
+{
+    rememberRemoteEvent(remoteFightLog,std::string("ATTACKRETURN ")+std::to_string(attackReturn.size()));
 }
 
 void MapControllerMP::wireRemoteControl(LocalListener *localListener)

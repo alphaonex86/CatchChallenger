@@ -197,7 +197,14 @@ public:
     //  GETTRADE -> "TRADEEVENT <REQUESTED|ACCEPTED|CANCELED|FINISHED|VALIDATED|
     //              ADDCASH|ADDITEM|ADDMONSTER> ..." per buffered event, then
     //              "OK GETTRADE <count>"; drains the buffer.
-    //Answers/errors come back via remoteReply(); fight is a later stage.
+    //Stage 4 (fight):
+    //  FIGHTREQUEST <pseudo>      (sends the "/battle <pseudo>" chat command)
+    //  FIGHTACCEPT | FIGHTREFUSE  (answer an incoming battle request)
+    //  FIGHTSKILL <skillId> | FIGHTCHANGEMONSTER <pos> | FIGHTESCAPE
+    //  FIGHTITEM <itemId> [monsterPos]   (use item, optionally on a team monster)
+    //  GETFIGHT -> "FIGHTEVENT <REQUESTED|ACCEPTED|CANCELED|ATTACKRETURN> ..." per
+    //              buffered event, then "OK GETFIGHT inFight=<0|1> count=<n>".
+    //Answers/errors come back via remoteReply().
     void remoteAction(const QString &line);
     //Connect this controller to the per-instance QLocalServer automation channel:
     //localListener.actionReceived -> remoteAction, remoteReply -> sendReply. Call
@@ -208,6 +215,13 @@ signals:
     //LocalListener::sendReply).
     void remoteReply(const QString &line);
 private:
+    //the actual command dispatch; always reached through remoteAction()'s
+    //re-entrancy guard, never called directly
+    void remoteActionExecute(const QString &line);
+    //re-entrancy guard state for remoteAction(): true while a command runs,
+    //pending holds commands that arrived during a nested event loop
+    bool remoteActionInProgress;
+    std::vector<QString> remoteActionPending;
     int remoteKeyNameToQt(const QString &name) const;
     //chat-channel name <-> Chat_type id; -1 from FromName on an unknown channel
     int remoteChatTypeFromName(const QString &name) const;
@@ -218,6 +232,8 @@ private:
     std::vector<std::string> remoteChatLog;
     //GETTRADE drains this buffer of received trade events
     std::vector<std::string> remoteTradeLog;
+    //GETFIGHT drains this buffer of received fight events
+    std::vector<std::string> remoteFightLog;
     //--test-clicksign self-test state (see runClickSignSelfTest())
     bool signSelfTestStarted;
     CATCHCHALLENGER_TYPE_MAPID signTestMap;
@@ -285,6 +301,8 @@ protected:
     //once-on-map hook: launches the --test-clicksign self-test when requested
     virtual void afterMapDisplayed() override;
 private slots:
+    //null the cached `client` pointer when the Api_protocol_Qt is destroyed
+    void clientDestroyedSlot(QObject *obj);
     //QLocalServer automation channel (stage 2): buffer chat / system lines for GETCHAT
     void remoteChatReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &player_type);
     void remoteSystemReceived(const CatchChallenger::Chat_type &chat_type,const std::string &text);
@@ -297,6 +315,11 @@ private slots:
     void remoteTradeAddTradeCash(const uint64_t &cash);
     void remoteTradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity);
     void remoteTradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
+    //QLocalServer automation channel (stage 4): buffer fight events for GETFIGHT
+    void remoteBattleRequested(const std::string &pseudo,const uint8_t &skinInt);
+    void remoteBattleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const CatchChallenger::PublicPlayerMonster &publicPlayerMonster);
+    void remoteBattleCanceledByOther();
+    void remoteSendBattleReturn(const std::vector<CatchChallenger::Skill::AttackReturn> &attackReturn);
     //--test-clicksign: click the nearest sign, then verify (via actionOn) that
     //the player walked up to it, faced it and opened it like Enter was pressed
     void runClickSignSelfTest();
