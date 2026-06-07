@@ -256,14 +256,28 @@ void TagModel::extractTiles(std::vector<int> &ids,
 // transparent in the other is a SILHOUETTE mismatch and lowers the score, so an
 // overlay tile no longer matches a full-square wall just because their opaque
 // overlap happens to share RGB.  k=3 voting beats best-1 (shrugs off a freak match).
+// z-role of a tile's dominant draw layer (bottom 0 .. top 4); -1 = unknown.  The
+// alpha silhouette only has meaning in the layer stack, so a tile's layer and its
+// DISTANCE in z discriminate categories that happen to share RGBA.
+static int layerRole(const std::string &l)
+{
+    if(l=="walkable" || l=="dirt") return 0;
+    if(l=="grass" || l=="water" || l=="lava") return 1;
+    if(l=="ledge") return 2;
+    if(l=="collision") return 3;
+    if(l=="over") return 4;
+    return -1;
+}
 std::string TagModel::knnVote(size_t ui,const std::vector<size_t> &refs,
                               const std::vector<std::string> &refCat,
                               const std::vector<std::vector<unsigned char> > &rgb,
                               const std::vector<std::vector<char> > &op,
+                              const std::vector<int> &refRole,int targetRole,
                               int npx,int minPercent,int k,int &bestPctOut)
 {
     const int TOL=18;
     const int THRA=128;                 // alpha >= THRA == opaque (RGB trustworthy)
+    const int LAYERPEN=12;              // %/layer cost when target & ref sit on different z-layers
     const int MINUNION=npx*32/256;
     bestPctOut=-1;
     std::vector<std::pair<int,std::string> > scored;   // (pct, category), candidates
@@ -296,7 +310,11 @@ std::string TagModel::knnVote(size_t ui,const std::vector<size_t> &refs,
             }
             if(uni>=MINUNION)
             {
-                const int pct=match*100/uni;
+                int pct=match*100/uni;
+                // layer (z-order) penalty: same draw layer = no cost; farther in the
+                // stack = bigger cost — the alpha silhouette is layer-relative.
+                if(targetRole>=0 && refRole[r]>=0 && targetRole!=refRole[r])
+                    pct -= LAYERPEN*std::abs(targetRole-refRole[r]);
                 if(pct>=minPercent)
                     scored.push_back(std::pair<int,std::string>(pct,refCat[r]));
             }
@@ -350,12 +368,13 @@ int TagModel::suggestFromTags(int minPercent)
     // reference set = VERIFIED tags only (no auto flag) — the human's truth
     std::vector<size_t> refs;
     std::vector<std::string> refCat;
+    std::vector<int> refRole;
     size_t i=0;
     while(i<ids.size())
     {
         std::unordered_map<int,TileTag>::iterator tg=tags_.find(ids[i]);
         if(tg!=tags_.end() && !tg->second.category.empty() && tg->second.attr("auto")!="guess")
-        { refs.push_back(i); refCat.push_back(tg->second.category); }
+        { refs.push_back(i); refCat.push_back(tg->second.category); refRole.push_back(layerRole(tg->second.attr("layer"))); }
         i++;
     }
     if(refs.empty())
@@ -372,7 +391,8 @@ int TagModel::suggestFromTags(int minPercent)
         if(needs)
         {
             int pct=-1;
-            const std::string cat=knnVote(ui,refs,refCat,rgb,op,npx,minPercent,K,pct);
+            const int targetRole = (cur!=tags_.end()) ? layerRole(cur->second.attr("layer")) : -1;
+            const std::string cat=knnVote(ui,refs,refCat,rgb,op,refRole,targetRole,npx,minPercent,K,pct);
             if(!cat.empty())
             {
                 TileTag tag;
@@ -400,19 +420,20 @@ void TagModel::knnSelfAccuracy(int minPercent,int k,int &correct,int &total,int 
     const int npx=tileWidth_*tileHeight_;
     std::vector<size_t> refs;
     std::vector<std::string> refCat;
+    std::vector<int> refRole;
     size_t i=0;
     while(i<ids.size())
     {
         std::unordered_map<int,TileTag>::const_iterator tg=tags_.find(ids[i]);
         if(tg!=tags_.cend() && !tg->second.category.empty() && tg->second.attr("auto")!="guess")
-        { refs.push_back(i); refCat.push_back(tg->second.category); }
+        { refs.push_back(i); refCat.push_back(tg->second.category); refRole.push_back(layerRole(tg->second.attr("layer"))); }
         i++;
     }
     size_t r=0;
     while(r<refs.size())
     {
         int pct=-1;
-        const std::string pred=knnVote(refs[r],refs,refCat,rgb,op,npx,minPercent,k,pct);
+        const std::string pred=knnVote(refs[r],refs,refCat,rgb,op,refRole,(int)refRole[r],npx,minPercent,k,pct);
         total++;
         if(pred.empty())
             abstain++;
