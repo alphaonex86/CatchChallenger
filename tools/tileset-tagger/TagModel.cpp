@@ -238,7 +238,8 @@ void TagModel::extractTiles(std::vector<int> &ids,
                 {
                     const QRgb px=line[x0+xx];
                     c[k++]=qRed(px); c[k++]=qGreen(px); c[k++]=qBlue(px);
-                    if(qAlpha(px)!=0) { a[p]=1; empty=false; }
+                    a[p]=(char)qAlpha(px);   // keep the ALPHA byte: the silhouette is a KNN signal
+                    if(qAlpha(px)!=0) empty=false;
                     p++; xx++;
                 }
                 yy++;
@@ -249,10 +250,12 @@ void TagModel::extractTiles(std::vector<int> &ids,
     }
 }
 
-// k-NN: rank every reference tile by overlap-match% (pixels where BOTH have
-// content, RGB within TOL), keep the top-k that clear minPercent, then VOTE —
-// each neighbour weights its category by its %.  k=3 voting beats best-1 (it
-// shrugs off a single freak match) — the measured benchmark winner.
+// k-NN: rank every reference tile by RGBA-match% over the UNION of opaque pixels,
+// keep the top-k that clear minPercent, then VOTE — each neighbour weights its
+// category by its %.  Alpha is the 4th channel: a pixel opaque in one tile but
+// transparent in the other is a SILHOUETTE mismatch and lowers the score, so an
+// overlay tile no longer matches a full-square wall just because their opaque
+// overlap happens to share RGB.  k=3 voting beats best-1 (shrugs off a freak match).
 std::string TagModel::knnVote(size_t ui,const std::vector<size_t> &refs,
                               const std::vector<std::string> &refCat,
                               const std::vector<std::vector<unsigned char> > &rgb,
@@ -260,7 +263,8 @@ std::string TagModel::knnVote(size_t ui,const std::vector<size_t> &refs,
                               int npx,int minPercent,int k,int &bestPctOut)
 {
     const int TOL=18;
-    const int MINOVERLAP=npx*32/256;
+    const int THRA=128;                 // alpha >= THRA == opaque (RGB trustworthy)
+    const int MINUNION=npx*32/256;
     bestPctOut=-1;
     std::vector<std::pair<int,std::string> > scored;   // (pct, category), candidates
     size_t r=0;
@@ -269,23 +273,30 @@ std::string TagModel::knnVote(size_t ui,const std::vector<size_t> &refs,
         const size_t ti=refs[r];
         if(ti!=ui)   // leave-one-out: never score a tile against itself
         {
-            int overlap=0,match=0,p=0;
+            int uni=0,match=0,p=0;
             while(p<npx)
             {
-                if(op[ui][p] && op[ti][p])
+                const int a1=(int)(unsigned char)op[ui][p];
+                const int a2=(int)(unsigned char)op[ti][p];
+                const bool o1=a1>=THRA, o2=a2>=THRA;
+                if(o1 || o2)   // UNION: opaque in EITHER tile — the silhouette counts
                 {
-                    overlap++;
-                    const int q=p*3;
-                    if(std::abs((int)rgb[ui][q]-(int)rgb[ti][q])<=TOL
-                       && std::abs((int)rgb[ui][q+1]-(int)rgb[ti][q+1])<=TOL
-                       && std::abs((int)rgb[ui][q+2]-(int)rgb[ti][q+2])<=TOL)
-                        match++;
+                    uni++;
+                    bool m = std::abs(a1-a2)<=TOL;       // alpha = 4th channel (handles soft edges too)
+                    if(m && o1 && o2)                    // both opaque -> RGB must also match
+                    {
+                        const int q=p*3;
+                        m = std::abs((int)rgb[ui][q]-(int)rgb[ti][q])<=TOL
+                            && std::abs((int)rgb[ui][q+1]-(int)rgb[ti][q+1])<=TOL
+                            && std::abs((int)rgb[ui][q+2]-(int)rgb[ti][q+2])<=TOL;
+                    }
+                    if(m) match++;
                 }
                 p++;
             }
-            if(overlap>=MINOVERLAP)
+            if(uni>=MINUNION)
             {
-                const int pct=match*100/overlap;
+                const int pct=match*100/uni;
                 if(pct>=minPercent)
                     scored.push_back(std::pair<int,std::string>(pct,refCat[r]));
             }
