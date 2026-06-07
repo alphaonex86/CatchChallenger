@@ -837,7 +837,9 @@ void MainWindow::onSuggest()
     {
         const int id=it->first;
         const MapUsageIndex::TileStat &s=it->second;
-        if(model_->tagOf(id).category.empty())
+        // never auto-tag a 100%-transparent tile, even if a map places it (markers,
+        // fully-transparent over-tiles) — a tag there carries no visual meaning.
+        if(model_->tagOf(id).category.empty() && model_->tileHasPixels(id))
         {
             std::string norm;
             bool walk=true,high=true;
