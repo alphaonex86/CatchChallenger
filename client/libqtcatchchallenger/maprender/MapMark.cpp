@@ -19,13 +19,25 @@ MapMark::MapMark(Tiled::MapObject *mapObject) :
         abort();
 }
 
+void MapMark::detachObject()
+{
+    if(m_mapObject==NULL)
+        return;
+    //The click marker may outlive its map: walking through a door / border
+    //unloads the source map, whose ObjectGroupItem erases itself from
+    //objectGroupLink (ObjectGroupItem::~ObjectGroupItem). The Tiled object itself
+    //survives in the cached old map, so it is still readable, but its group is
+    //gone — at() would throw std::out_of_range and crash the next click / the
+    //animation timer. find() and skip: no graphics item left to detach from.
+    std::unordered_map<Tiled::ObjectGroup *,ObjectGroupItem *>::const_iterator it=ObjectGroupItem::objectGroupLink.find(m_mapObject->objectGroup());
+    if(it!=ObjectGroupItem::objectGroupLink.cend())
+        it->second->removeObject(m_mapObject);
+    m_mapObject=NULL;
+}
+
 MapMark::~MapMark()
 {
-    if(m_mapObject!=NULL)
-    {
-        ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
-        m_mapObject=NULL;
-    }
+    detachObject();
 }
 
 Tiled::MapObject *MapMark::mapObject()
@@ -50,15 +62,13 @@ void MapMark::updateTheFrame()
     if(cell.tile()->tileset()==NULL)
     {
         qDebug() << "Tileset NULL at mark";
-        ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
-        m_mapObject=NULL;
+        detachObject();
         timer.stop();
         return;
     }
     if(cell.tile()->id()>=cell.tile()->tileset()->tileCount())
     {
-        ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
-        m_mapObject=NULL;
+        detachObject();
         timer.stop();
         return;
     }
@@ -67,8 +77,7 @@ void MapMark::updateTheFrame()
         cell.setTile(cell.tile()->tileset()->tileAt(cell.tile()->id()+1));
         if(cell.tile()==NULL)
         {
-            ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
-            m_mapObject=NULL;
+            detachObject();
             timer.stop();
             return;
         }

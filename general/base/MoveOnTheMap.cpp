@@ -235,6 +235,13 @@ bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint
 
 uint8_t MoveOnTheMap::getMapZoneCode(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
+    //Bounds-check like getLedge()/isWalkableWithDirection(): a teleporter can land
+    //the player on a destination out of the new map (a datapack quirk — see the
+    //"bug is TP in colision" note in generateWildFightIfCollision()). Without this
+    //guard the .at() throws std::out_of_range and aborts the whole server on the
+    //move. 254 is >= map.zones.size(), so the caller treats it as "no wild zone".
+    if(x>=map.width || y>=map.height || static_cast<size_t>(x)+static_cast<size_t>(y)*static_cast<size_t>(map.width)>=map.flat_simplified_map.size())
+        return 254;
     return map.flat_simplified_map.at(x+y*map.width);
 }
 

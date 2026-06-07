@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
     // sign self-test lives in the shared map controller and the dialog-overflow
     // self-test reads CliClientOptions, so both clients route through it.
     CliClientOptions::clickSignTest=AutoArgs::clickSignTest;
+    CliClientOptions::clickDoorTest=AutoArgs::clickDoorTest;
     CliClientOptions::dialogOverflowTest=AutoArgs::dialogOverflowTest;
     CliClientOptions::autosoloClick=AutoArgs::autosoloClick;
     CliClientOptions::autosoloClickDx=AutoArgs::autosoloClickDx;

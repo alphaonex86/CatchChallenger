@@ -15,6 +15,9 @@ public:
 private slots:
     void updateTheFrame();
 private:
+    //detach m_mapObject from its ObjectGroupItem and null it — safe even when the
+    //map (and its objectGroupLink entry) was already unloaded under the marker.
+    void detachObject();
     Tiled::MapObject *m_mapObject;
     QTimer timer;
 };

@@ -201,6 +201,22 @@ private:
     //--test-clicksign: inject a REAL left-click at the viewport pixel of tile
     //(tx,ty), travelling the full device path (pixel->zoomed view->scene->tile).
     void postClickAtTile(const int &tileX,const int &tileY);
+    //--test-clickdoor state: the door round-trip is a state machine advanced on
+    //each current-map display (spawn -> teleport to dest -> teleport back).
+    int doorTestPhase;
+    CATCHCHALLENGER_TYPE_MAPID doorOrigMap,doorDestMap;
+    QTimer doorTestTimeoutTimer;
+    //BFS the tiles the player can WALK to on mapIndex (silent canGoTo probe).
+    void computeReachableSet(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &px,const int &py,std::vector<bool> &reach,int &mw,int &mh);
+    //Find a teleporter (door) on mapIndex usable from the player: source tile
+    //itself reachable (a DOOR -> click ON it) else a reachable orthogonal
+    //neighbour (a PUSH wall -> click NEXT to it and step in). requireDest!=65535
+    //restricts to teleporters landing on that map (used to find the return door).
+    //Returns the source tile, destination map, push flag and (push) the neighbour.
+    bool pickReachableTeleporter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &px,const int &py,const CATCHCHALLENGER_TYPE_MAPID &requireDest,uint8_t &srcX,uint8_t &srcY,CATCHCHALLENGER_TYPE_MAPID &destMap,bool &isPush,int &neighX,int &neighY);
+    //Drive a click to a teleporter: ON the source for a door, or NEXT TO it (and
+    //queue a push onto the source on arrival) for a push wall.
+    void clickTeleporter(const uint8_t &srcX,const uint8_t &srcY,const bool &isPush,const int &neighX,const int &neighY);
 protected:
     //once-on-map hook: launches the --test-clicksign self-test when requested
     virtual void afterMapDisplayed() override;
@@ -213,6 +229,10 @@ private slots:
     //--test-clicksign: a walk step was refused (e.g. item-gated water/lava) ->
     //report "you can't enter ..." as a FAIL immediately instead of timing out
     void signSelfTestBlockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
+    //--test-clickdoor: round-trip state machine — click a door to the other map,
+    //then click next to the return teleport (push) to come back on the orig map
+    void runClickDoorSelfTest();
+    void doorTestTimeout();
     //--autosolo=DX,DY: click the tile at player+(DX,DY) and report the outcome
     void runAutosoloClick();
     void autosoloClickActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);

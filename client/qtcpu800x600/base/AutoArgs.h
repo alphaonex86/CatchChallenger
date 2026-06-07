@@ -28,6 +28,7 @@ public:
     // TEST-ONLY: --test-clicksign / --test-dialogoverflow. Mirrored into the
     // shared CliClientOptions so the map controller / dialog self-tests run.
     static bool clickSignTest;
+    static bool clickDoorTest;
     static bool dialogOverflowTest;
     static QString mainDatapackCodeOverride;
     // --take-screenshot=PATH: render the first frame after the map

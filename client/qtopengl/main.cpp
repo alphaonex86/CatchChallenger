@@ -214,6 +214,8 @@ int main(int argc, char *argv[])
                     << "  --autosolo=DX,DY           Like --autosolo, then click the tile at player+(DX,DY)\n"
                     << "                             (e.g. --autosolo=+1,-5) — walk to it, face & open a sign there.\n"
                     << "  --test-clicksign           TEST: click the nearest sign, walk+face+open it, then quit.\n"
+                    << "  --test-clickdoor           TEST: click a door->other map, click next to the return\n"
+                    << "                             teleport (push)->back on the original map, then quit.\n"
                     << "  --test-dialogoverflow      TEST: show a long dialog text, assert no overflow, then quit.\n"
                     << "  --fixed                    Freeze the animated background (no parallax)\n"
                     << "                             so --take-screenshot produces deterministic PNGs.\n"
@@ -273,6 +275,8 @@ int main(int argc, char *argv[])
             }
             else if(arg==QStringLiteral("--test-clicksign"))
                 CliClientOptions::clickSignTest=true;
+            else if(arg==QStringLiteral("--test-clickdoor"))
+                CliClientOptions::clickDoorTest=true;
             else if(arg==QStringLiteral("--test-dialogoverflow"))
                 CliClientOptions::dialogOverflowTest=true;
             else if(arg==QStringLiteral("--fixed"))

@@ -18,6 +18,7 @@ bool AutoArgs::autosoloClick=false;
 int AutoArgs::autosoloClickDx=0;
 int AutoArgs::autosoloClickDy=0;
 bool AutoArgs::clickSignTest=false;
+bool AutoArgs::clickDoorTest=false;
 bool AutoArgs::dialogOverflowTest=false;
 QString AutoArgs::mainDatapackCodeOverride;
 QString AutoArgs::takeScreenshotPath;
@@ -50,6 +51,8 @@ void AutoArgs::printHelp(const char *progName)
         << "  --autosolo=DX,DY           Like --autosolo, then click the tile at player+(DX,DY)\n"
         << "                             (e.g. --autosolo=+1,-5) — walk to it, face & open a sign there.\n"
         << "  --test-clicksign           TEST: click the nearest sign, walk+face+open it, then quit.\n"
+        << "  --test-clickdoor           TEST: click a door->other map, click next to the return\n"
+        << "                             teleport (push)->back on the original map, then quit.\n"
         << "  --test-dialogoverflow      TEST: show a long dialog text, assert no overflow, then quit.\n"
         << "  --main-datapack-code=CODE  Override the autosolo maincode under\n"
         << "                             datapack/internal/map/main/ (default: first dir).\n"
@@ -99,6 +102,12 @@ void AutoArgs::parse(int &argc, char *argv[])
         if(std::strcmp(arg,"--test-clicksign")==0)
         {
             clickSignTest=true;
+            i++;
+            continue;
+        }
+        if(std::strcmp(arg,"--test-clickdoor")==0)
+        {
+            clickDoorTest=true;
             i++;
             continue;
         }

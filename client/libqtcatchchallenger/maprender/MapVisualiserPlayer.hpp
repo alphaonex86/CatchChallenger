@@ -139,6 +139,15 @@ protected:
     CATCHCHALLENGER_TYPE_MAPID clickInteractTargetMap;
     uint8_t clickInteractTargetX,clickInteractTargetY;
 
+    //"click NEXT to a teleport then push in": when the click leads up to a tile
+    //adjacent to a teleporter we want to ENTER (not just face — a door/push wall),
+    //the player takes one more step ONTO the teleporter source on arrival, which
+    //triggers finalPlayerStepTeleported(). Set by clickTeleporter(); consumed by
+    //pushTeleportIfAdjacent() in the same arrival hook as the sign-facing.
+    bool clickInteractPushValid;
+    CATCHCHALLENGER_TYPE_MAPID clickInteractPushMap;
+    uint8_t clickInteractPushX,clickInteractPushY;
+
     //grass
     bool haveGrassCurrentObject;
     Tiled::MapObject * grassCurrentObject;
@@ -187,6 +196,11 @@ protected slots:
     //tile), turn to face it (sprite + send_player_direction) so the following
     //parseAction() acts on that tile. Always consumes the pending target.
     void faceClickInteractTargetIfAdjacent();
+    //If a "push into a teleport" target was recorded and the player ended up
+    //orthogonally adjacent to it, take one more step ONTO the teleporter source
+    //so finalPlayerStepTeleported() fires. Returns true if a push step was taken
+    //(so the caller skips the sign-facing/parseAction path). Consumes the target.
+    bool pushTeleportIfAdjacent();
     void stopAndSend();
 
     //void setAnimationTilset(std::string animationTilset);

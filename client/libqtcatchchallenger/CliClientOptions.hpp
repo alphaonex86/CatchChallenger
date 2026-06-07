@@ -81,6 +81,13 @@ public:
     // quits. Drives the click-to-sign behaviour test for both clients.
     static bool clickSignTest;
 
+    // TEST-ONLY: once on the map, find a reachable door (teleporter), click it
+    // and verify the player walks onto it and PASSES to the destination map;
+    // then on that map find the return teleporter, click NEXT to it and push
+    // into it, and verify the player COMES BACK to the original map. Emits
+    // "[DOORTEST] ..." markers (PASS/FAIL) and quits.
+    static bool clickDoorTest;
+
     // TEST-ONLY: once on the map, push a very long, server-style text into the
     // Sign/NPC dialog and verify it never spills out of the widget — it must
     // word-wrap within the width, stay inside the (window-bounded) dialog and
