@@ -682,7 +682,7 @@ void MainWindow::onSuggestFromTags()
     view_->refresh();
     refreshGuard();
     updateTitle();
-    statusBar()->showMessage(tr("filled %1 untagged tile(s) from your tags (yellow — review them)").arg(n),6000);
+    statusBar()->showMessage(tr("KNN: (re)guessed %1 non-verified tile(s) from your VERIFIED tags (yellow — review)").arg(n),6000);
 }
 
 // Confirm the tileset: accept every tag (yellow -> green), save, and ALWAYS advance
