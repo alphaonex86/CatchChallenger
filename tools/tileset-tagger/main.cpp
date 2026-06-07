@@ -1504,11 +1504,14 @@ static int runSuggest(const QStringList &args)
     const QFileInfo fi(args.at(0));
     if(fi.isDir())
     {
-        QDir d(args.at(0));
-        const QStringList tsxs=d.entryList(QStringList()<<"*.tsx",QDir::Files,QDir::Name);
-        std::cout << "suggest: " << tsxs.size() << " tileset(s) in " << args.at(0).toStdString() << std::endl;
+        // recurse: a datapack has per-label/region tileset subfolders
+        QStringList tsxs;
+        QDirIterator it(args.at(0),QStringList()<<"*.tsx",QDir::Files,QDirIterator::Subdirectories);
+        while(it.hasNext()) tsxs.append(it.next());
+        tsxs.sort();
+        std::cout << "suggest: " << tsxs.size() << " tileset(s) under " << args.at(0).toStdString() << std::endl;
         int rc=0,k=0;
-        while(k<tsxs.size()) { if(suggestOne(d.absoluteFilePath(tsxs.at(k)))!=0) rc=1; k++; }
+        while(k<tsxs.size()) { if(suggestOne(tsxs.at(k))!=0) rc=1; k++; }
         std::cout << "done — open each in the GUI to set the visually-ambiguous categories." << std::endl;
         return rc;
     }
