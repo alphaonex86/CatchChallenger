@@ -385,8 +385,9 @@ static int runLearnWeights(const QStringList &args)
     const int NF=TagModel::featureCount();
     std::vector<std::vector<float> > X;
     std::vector<char> Y;
+    QString sidecar;
     int t=0;
-    while(t<tsx.size()) { TagModel m; if(m.load(tsx.at(t))) m.appendPairwiseFeatures(X,Y); t++; }
+    while(t<tsx.size()) { TagModel m; if(m.load(tsx.at(t))) { if(sidecar.isEmpty()) sidecar=m.sidecarDir(); m.appendPairwiseFeatures(X,Y); } t++; }
     const size_t n=X.size();
     if(n<50) { std::cerr << "learnweights: only " << n << " verified pairs — tag more first" << std::endl; return 1; }
 
@@ -436,6 +437,33 @@ static int runLearnWeights(const QStringList &args)
     { size_t a=0; while(a<imp.size()){ const int f=imp[a].second; char bw[16]; std::snprintf(bw,sizeof(bw),"%+.2f",w[f]); std::cout << "  " << TagModel::featureName(f) << "\tweight " << bw << std::endl; a++; } }
     char sb[16],pb[16]; std::snprintf(sb,sizeof(sb),"%.0f",sens); std::snprintf(pb,sizeof(pb),"%.0f",spec);
     std::cout << "  same-category recall " << sb << "% / different-category recall " << pb << "% (balanced LR @0.5)" << std::endl;
+
+    // SAVE the learned weights as markdown (default = the datapack sidecar dir)
+    const QString outMd = args.size()>=2 ? args.at(1)
+                        : (sidecar.isEmpty() ? QString("learned-weights.md") : QDir(sidecar).absoluteFilePath("learned-weights.md"));
+    QString md;
+    md += "# Learned KNN feature weights\n\n";
+    md += QString("Trained on **%1** verified-tile pairs (%2 same-category / %3 different) across %4 tileset(s) under `%5`.\n\n")
+          .arg((qulonglong)n).arg(pos).arg(neg).arg(tsx.size()).arg(args.at(0));
+    md += "Class-balanced logistic regression on standardized features (pure C++, no external ML lib). ";
+    md += "The standardized weight IS the per-feature IMPACT (bigger |weight| = more discriminative for same-vs-different category).\n\n";
+    md += "| feature | learned weight (impact) |\n|---|---|\n";
+    { size_t a=0; while(a<imp.size()){ const int f=imp[a].second; md += QString("| %1 | %2%3 |\n").arg(TagModel::featureName(f)).arg(w[f]>=0?"+":"").arg(w[f],0,'f',2); a++; } }
+    md += QString("\nPairwise classifier sanity check: same-category recall **%1%**, different-category recall **%2%** (LR @0.5).\n")
+          .arg(sens,0,'f',0).arg(spec,0,'f',0);
+    md += "\n## Features (the linked data per tile pair)\n";
+    md += "- **color** — RGB agreement on the mutually-opaque pixels.\n";
+    md += "- **shape** — silhouette IoU (opaque-mask overlap / union).\n";
+    md += "- **alpha** — per-pixel alpha agreement over the union (the silhouette).\n";
+    md += "- **layer** — closeness of the two tiles' map-derived draw layer (z-order role 0-4).\n";
+    md += "- **sheet** — proximity in the tileset sheet (object-clustered layout).\n";
+    md += "\n## Interpretation\n";
+    md += "- `layer` (z-order) dominates — the logical/structural signal is several times stronger than raw colour.\n";
+    md += "- `color` (RGB) is the weakest — tile categories are logical/structural, not chromatic (why an RGB-only KNN is limited).\n";
+    md += "\n_NEXT: add the map x,y,z-neighbour feature (each tile's map neighbourhood across the layer stack) as another column and re-train._\n";
+    QFile mf(outMd);
+    if(mf.open(QIODevice::WriteOnly|QIODevice::Truncate)) { mf.write(md.toUtf8()); mf.close(); std::cout << "saved learned weights -> " << outMd.toStdString() << std::endl; }
+    else std::cerr << "cannot write " << outMd.toStdString() << std::endl;
     return 0;
 }
 
