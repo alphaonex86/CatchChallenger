@@ -13,6 +13,7 @@
 namespace CatchChallenger {
 class Api_protocol_Qt;
 }
+class LocalListener;
 
 class DLL_PUBLIC MapControllerMP : public MapVisualiserPlayerWithFight
 {
@@ -177,7 +178,25 @@ private:
     std::vector<PathResolved> pathList;
 public:
     void eventOnMap(CatchChallenger::MapEvent event, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE x, COORD_TYPE y);
+    //── QLocalServer automation channel (stage 1: input + state) ──
+    //Execute ONE text command from the control socket. Supported now:
+    //  KEY <Up|Down|Left|Right|Return|Escape|Space>   -> synthesised key event
+    //  CLICKTILE <x> <y>                              -> click that map tile
+    //  CLICKPIXEL <px> <py>                           -> click that viewport pixel
+    //  GETSTATE                                       -> reply "STATE map=.. x=.. y=.. dir=.."
+    //  GETINVENTORY                                   -> reply "INVENTORY <id>:<qty> ..."
+    //Answers/errors come back via remoteReply(); chat/trade/fight are later stages.
+    void remoteAction(const QString &line);
+    //Connect this controller to the per-instance QLocalServer automation channel:
+    //localListener.actionReceived -> remoteAction, remoteReply -> sendReply. Call
+    //once from the client once both the map controller and LocalListener exist.
+    void wireRemoteControl(LocalListener *localListener);
+signals:
+    //Reply or pushed event for the QLocalServer controller (wired to
+    //LocalListener::sendReply).
+    void remoteReply(const QString &line);
 private:
+    int remoteKeyNameToQt(const QString &name) const;
     //--test-clicksign self-test state (see runClickSignSelfTest())
     bool signSelfTestStarted;
     CATCHCHALLENGER_TYPE_MAPID signTestMap;
@@ -201,6 +220,8 @@ private:
     //--test-clicksign: inject a REAL left-click at the viewport pixel of tile
     //(tx,ty), travelling the full device path (pixel->zoomed view->scene->tile).
     void postClickAtTile(const int &tileX,const int &tileY);
+    //inject a REAL left-click at an absolute viewport pixel (CLICKPIXEL command)
+    void postClickAtPixel(const int &px,const int &py);
     //--test-clickdoor state: the door round-trip is a state machine advanced on
     //each current-map display (spawn -> teleport to dest -> teleport back).
     int doorTestPhase;

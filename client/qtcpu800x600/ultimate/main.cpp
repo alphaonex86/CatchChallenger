@@ -75,6 +75,9 @@ int main(int argc, char *argv[])
     MainWindow w;
     if(w.toQuit)
         return 523;
+    //QLocalServer automation channel: external controllers / tests can now send
+    //KEY/CLICKTILE/CLICKPIXEL/GETSTATE/GETINVENTORY to this instance's socket.
+    w.wireRemoteControl(&localListener);
     if(!AutoArgs::takeScreenshotPath.isEmpty())
         //Screenshot regression needs the window painted before grab().
         w.show();

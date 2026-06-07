@@ -41,6 +41,7 @@
 namespace Ui {
     class MainWindow;
 }
+class LocalListener;
 
 class AddOrEditServer;
 
@@ -79,6 +80,9 @@ public:
     ~MainWindow();
     bool toQuit;
     bool errorInProgress;
+    //Wire the per-instance QLocalServer automation channel to the map controller
+    //(KEY/CLICK/GETSTATE/... -> remoteAction; remoteReply -> sendReply).
+    void wireRemoteControl(LocalListener *localListener);
 protected:
     void changeEvent(QEvent *e);
 private slots:
