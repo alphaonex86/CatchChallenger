@@ -1051,16 +1051,26 @@ static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
         if(lit!=layers.cend())
         {
             w << " <layer id=\"" << lid << "\" name=\"" << order[oi] << "\" width=\"" << W << "\" height=\"" << H << "\">\n";
-            w << "  <data encoding=\"csv\">\n";
-            int yy=0;
-            while(yy<H)
+            // base64 + zlib: the ENGINE (Map_loaderMain.cpp) only accepts base64 with
+            // zlib/zstd — CSV renders in libtiled but FAILS to load in the game.  Tiled
+            // stores each cell as a 4-byte little-endian gid, row-major.
+            QByteArray raw;
+            raw.resize(W*H*4);
             {
-                int xx=0;
-                while(xx<W) { w << lit->second.at(xx+yy*W); if(!(yy==H-1 && xx==W-1)) w << ","; xx++; }
-                w << "\n";
-                yy++;
+                int c=0;
+                while(c<W*H)
+                {
+                    const unsigned int gid=(unsigned int)lit->second.at(c);
+                    raw[c*4+0]=(char)(gid&0xFF);
+                    raw[c*4+1]=(char)((gid>>8)&0xFF);
+                    raw[c*4+2]=(char)((gid>>16)&0xFF);
+                    raw[c*4+3]=(char)((gid>>24)&0xFF);
+                    c++;
+                }
             }
-            w << "</data>\n </layer>\n";
+            QByteArray z=qCompress(raw);
+            if(z.size()>4) z=z.mid(4);   // strip Qt's 4-byte length prefix -> a standard zlib stream
+            w << "  <data encoding=\"base64\" compression=\"zlib\">" << z.toBase64() << "</data>\n </layer>\n";
             lid++;
         }
         oi++;
