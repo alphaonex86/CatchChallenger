@@ -2242,6 +2242,113 @@ static int runGenWfc(const QStringList &args)
     std::cout << "genwfc: " << made << " coherent map(s) -> " << args.at(2).toStdString() << std::endl;
     return rc;
 }
+// Generate CITY maps only — the structures the terrain generator can't invent.
+// Terrain (grass/water/routes) stays the job of map-procedural-generation-terrain;
+// here we learn the building FOOTPRINTS from the model and lay a rigid town: ground
+// + roads + building rectangles (roof on top, wall body, a door opening onto the
+// road).  Real target tiles via the shared writeTmxFromGrid.  (Bots + interiors:
+// next increment — they need the target's interior tilesets tagged.)
+static int runGenCity(const QStringList &args)
+{
+    if(args.size()<3) { std::cerr << "gencity needs: <model-map-dir> <target-tileset-dir> <out-dir> [count W H seed]" << std::endl; return 1; }
+    const int count = args.size()>3 ? args.at(3).toInt() : 4;
+    const int W = args.size()>4 ? args.at(4).toInt() : 40;
+    const int H = args.size()>5 ? args.at(5).toInt() : 40;
+    const unsigned int seed0 = args.size()>6 ? args.at(6).toUInt() : 1234u;
+
+    // 1) LEARN building footprint sizes from the model (bounding boxes of building
+    //    blobs >=4 cells, clamped to a plausible house range).
+    std::set<std::string> bcats;
+    bcats.insert("building-wall"); bcats.insert("building-roof"); bcats.insert("door"); bcats.insert("window");
+    std::vector<std::pair<int,int> > sizes;
+    {
+        MapDecoder dec;
+        int scanned=0;
+        QDirIterator it(args.at(0),QStringList()<<"*.tmx",QDir::Files,QDirIterator::Subdirectories);
+        while(it.hasNext() && scanned<500)
+        {
+            MapDecoder::Result r;
+            QString err;
+            if(dec.decode(it.next(),r,err))
+            {
+                scanned++;
+                const std::vector<Comp> bc=components(r.categoryGrid,r.w,r.h,bcats);
+                size_t k=0;
+                while(k<bc.size())
+                {
+                    const Comp &c=bc[k];
+                    if(c.count>=4)
+                    {
+                        const int bw=c.maxx-c.minx+1, bh=c.maxy-c.miny+1;
+                        if(bw>=3 && bw<=8 && bh>=3 && bh<=8) sizes.push_back(std::pair<int,int>(bw,bh));
+                    }
+                    k++;
+                }
+            }
+        }
+    }
+    if(sizes.empty())
+    {
+        const int dw[3]={4,5,6}, dh[3]={4,4,5};
+        int k=0; while(k<3) { sizes.push_back(std::pair<int,int>(dw[k],dh[k])); k++; }
+    }
+    std::cout << "gencity: learned " << sizes.size() << " building footprint(s) from the model" << std::endl;
+
+    QDir().mkpath(args.at(2));
+    int made=0,i=0;
+    while(i<count)
+    {
+        std::mt19937 rng(seed0+(unsigned int)i*131u);
+        std::vector<std::string> grid(W*H,std::string("ground"));
+        const int margin=3, PLOTW=8, PLOTH=7;
+        int py=margin;
+        while(py+PLOTH<=H-margin)
+        {
+            int x=margin;
+            while(x+PLOTW<=W-margin)
+            {
+                const std::pair<int,int> &sz=sizes[rng()%sizes.size()];
+                int bw=sz.first, bh=sz.second;
+                if(bw>PLOTW-1) bw=PLOTW-1;
+                if(bh>PLOTH-1) bh=PLOTH-1;
+                const int bx=x+(PLOTW-bw)/2, by=py;
+                int yy=0;
+                while(yy<bh)
+                {
+                    int xx=0;
+                    while(xx<bw)
+                    {
+                        const int gx=bx+xx, gy=by+yy;
+                        if(gx<W && gy<H)
+                            grid[gx+gy*W] = (yy==0) ? std::string("building-roof") : std::string("building-wall");
+                        xx++;
+                    }
+                    yy++;
+                }
+                // door opening at the bottom-centre (path onto the road)
+                const int dx=bx+bw/2, dy=by+bh-1;
+                if(dx<W && dy<H) grid[dx+dy*W]=std::string("path");
+                x+=PLOTW;
+            }
+            // horizontal road below this building row
+            const int ry=py+PLOTH-1;
+            int rx=margin;
+            while(rx<W-margin) { if(ry<H) grid[rx+ry*W]=std::string("path"); rx++; }
+            py+=PLOTH;
+        }
+        // vertical main road, only over ground (never carve through a building)
+        const int vc=W/2;
+        int vy=margin;
+        while(vy<H-margin) { if(grid[vc+vy*W]=="ground") grid[vc+vy*W]=std::string("path"); vy++; }
+
+        const QString outPath=QDir(args.at(2)).absoluteFilePath(QString("city-%1.tmx").arg(i,2,10,QChar('0')));
+        if(writeTmxFromGrid(grid,W,H,args.at(1),outPath,seed0+(unsigned int)i)==0)
+            made++;
+        i++;
+    }
+    std::cout << "gencity: " << made << " city map(s) -> " << args.at(2).toStdString() << std::endl;
+    return 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -2252,7 +2359,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--catlayers" || args.at(0)=="--usedtiles");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--gencity" || args.at(0)=="--catlayers" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -2282,6 +2389,8 @@ int main(int argc, char *argv[])
         return runCatLayers(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--genwfc")
         return runGenWfc(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--gencity")
+        return runGenCity(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--usedtiles")
         return runUsedTiles(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--classify")
