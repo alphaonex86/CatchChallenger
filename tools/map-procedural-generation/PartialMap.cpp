@@ -39,37 +39,54 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
 
     //add external tileset
     std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset; // TODO: Need to convert to SharedTileset
+    // Cache the decoded sub-map tileset per WORLD tileset INSTANCE. readTileset->loadImage
+    // (QPixmap::fromImage + tile/QMap rebuild) was ~the ENTIRE cost of save, and it re-ran for every
+    // chunk on the same handful of tilesets. Keying by the world instance pointer (NOT the file path)
+    // preserves the world's duplicate-path tilesets (e.g. two "invisible") as DISTINCT cached entries,
+    // so per-chunk firstgids and the written <tileset> refs stay byte-identical (a path key would
+    // collapse the two "invisible" -> firstgid shift -> abort). All sub-maps live at the same depth
+    // (official/<dir>/<file>.tmx) so the tileset relative path is uniform -> the once-set fileName is
+    // correct for every chunk (md5-verified). A SharedTileset may live in many maps; each fresh
+    // per-chunk sub-map adds it exactly once.
+    static std::unordered_map<const Tiled::Tileset *,Tiled::SharedTileset> subTilesetCache;
     unsigned int indexTileset=0;
     while(indexTileset<(unsigned int)world.tilesetCount())
     {
         const Tiled::SharedTileset tileset=world.tilesetAt(indexTileset);
-        QString tilesetFileName=tileset->fileName();
-        if(tilesetFileName.isEmpty())
+        Tiled::SharedTileset tilesetBase;
+        std::unordered_map<const Tiled::Tileset *,Tiled::SharedTileset>::const_iterator cacheIt=subTilesetCache.find(tileset.get());
+        if(cacheIt!=subTilesetCache.cend())
+            tilesetBase=cacheIt->second;
+        else
         {
-            std::cerr << "tileset->fileName() is empty, internal tileset not supported" << std::endl;
-            abort();
-        }
-        if(appendPath)
-            if(!QFile::exists(tilesetFileName))
+            QString tilesetFileName=tileset->fileName();
+            if(tilesetFileName.isEmpty())
             {
-                QString pathAppend=QCoreApplication::applicationDirPath()+"/dest/map/main/official/";
-                if(!tilesetFileName.startsWith("/"))
-                    tilesetFileName=pathAppend+tilesetFileName;
+                std::cerr << "tileset->fileName() is empty, internal tileset not supported" << std::endl;
+                abort();
             }
-        QString tilesetPath(QFileInfo(tilesetFileName).absoluteFilePath());
+            if(appendPath)
+                if(!QFile::exists(tilesetFileName))
+                {
+                    QString pathAppend=QCoreApplication::applicationDirPath()+"/dest/map/main/official/";
+                    if(!tilesetFileName.startsWith("/"))
+                        tilesetFileName=pathAppend+tilesetFileName;
+                }
+            QString tilesetPath(QFileInfo(tilesetFileName).absoluteFilePath());
 
-        Tiled::MapReader reader;
-        Tiled::SharedTileset tilesetBase=reader.readTileset(tilesetPath);
-        if(tilesetBase==NULL)
-        {
-            std::cerr << "File not found: " << tilesetPath.toStdString() << std::endl;
-            abort();
+            Tiled::MapReader reader;
+            tilesetBase=reader.readTileset(tilesetPath);
+            if(tilesetBase==NULL)
+            {
+                std::cerr << "File not found: " << tilesetPath.toStdString() << std::endl;
+                abort();
+            }
+            tilesetBase->setFileName(mapDir.relativeFilePath(tilesetPath));
+            subTilesetCache[tileset.get()]=tilesetBase;
+            PartialMap_tilesets_hack.push_back(tilesetBase);
         }
         tiledMap.addTileset(tilesetBase);
-        tilesetBase->setFileName(mapDir.relativeFilePath(tilesetPath));
-
         PartialMap_tilesets_hack.push_back(tileset);
-        PartialMap_tilesets_hack.push_back(tilesetBase);
 
         templateTilesetToMapTileset[tileset.get()]=tilesetBase.get(); // TODO: Need to convert to SharedTileset
         indexTileset++;
