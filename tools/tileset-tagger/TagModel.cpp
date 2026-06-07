@@ -456,6 +456,89 @@ void TagModel::knnSelfAccuracy(int minPercent,int k,int &correct,int &total,int 
     }
 }
 
+int TagModel::featureCount() { return 5; }
+const char *TagModel::featureName(int i)
+{
+    static const char *n[5]={"color","shape","alpha","layer","sheet"};
+    return (i>=0 && i<5) ? n[i] : "?";
+}
+// Emit one training row per pair of VERIFIED tiles: the LINKED-DATA feature vector
+// (visual color/shape/alpha + logical layer z + tileset spatial) and the same-
+// category label.  A classifier over these rows LEARNS which feature has impact,
+// instead of us hand-tuning weights.
+void TagModel::appendPairwiseFeatures(std::vector<std::vector<float> > &X,std::vector<char> &y) const
+{
+    std::vector<int> ids;
+    std::vector<std::vector<unsigned char> > rgb;
+    std::vector<std::vector<char> > op;
+    extractTiles(ids,rgb,op);
+    if(ids.empty() || columns_<1)
+        return;
+    const int npx=tileWidth_*tileHeight_;
+    const int TOL=18, THRA=128;
+    std::vector<size_t> v;
+    std::vector<std::string> vcat;
+    std::vector<int> vrole,vcol,vrow;
+    size_t i=0;
+    while(i<ids.size())
+    {
+        std::unordered_map<int,TileTag>::const_iterator tg=tags_.find(ids[i]);
+        if(tg!=tags_.cend() && !tg->second.category.empty() && tg->second.attr("auto")!="guess")
+        {
+            v.push_back(i); vcat.push_back(tg->second.category);
+            vrole.push_back(layerRole(tg->second.attr("layer")));
+            vcol.push_back(ids[i]%columns_); vrow.push_back(ids[i]/columns_);
+        }
+        i++;
+    }
+    size_t a=0;
+    while(a<v.size())
+    {
+        size_t b=a+1;
+        while(b<v.size())
+        {
+            const size_t ia=v[a], ib=v[b];
+            int overlap=0,uni=0,cmatch=0,aagree=0,p=0;
+            while(p<npx)
+            {
+                const int a1=(int)(unsigned char)op[ia][p];
+                const int a2=(int)(unsigned char)op[ib][p];
+                const bool o1=a1>=THRA, o2=a2>=THRA;
+                if(o1||o2)
+                {
+                    uni++;
+                    if(std::abs(a1-a2)<=TOL) aagree++;
+                    if(o1 && o2)
+                    {
+                        overlap++;
+                        const int q=p*3;
+                        if(std::abs((int)rgb[ia][q]-(int)rgb[ib][q])<=TOL
+                           && std::abs((int)rgb[ia][q+1]-(int)rgb[ib][q+1])<=TOL
+                           && std::abs((int)rgb[ia][q+2]-(int)rgb[ib][q+2])<=TOL) cmatch++;
+                    }
+                }
+                p++;
+            }
+            if(uni>0)
+            {
+                std::vector<float> f(5);
+                f[0]= overlap>0 ? (float)cmatch/(float)overlap : 0.0f;   // color  (RGB agreement on overlap)
+                f[1]= (float)overlap/(float)uni;                          // shape  (silhouette IoU)
+                f[2]= (float)aagree/(float)uni;                           // alpha  (silhouette agreement)
+                const int dr=(vrole[a]>=0 && vrole[b]>=0) ? std::abs(vrole[a]-vrole[b]) : 2;
+                f[3]= 1.0f-(float)dr/4.0f;                                // layer  (z-order closeness)
+                int dc=std::abs(vcol[a]-vcol[b]), dw=std::abs(vrow[a]-vrow[b]);
+                int cheb=dc>dw?dc:dw; if(cheb>10) cheb=10;
+                f[4]= 1.0f-(float)cheb/10.0f;                             // sheet  (tileset proximity)
+                X.push_back(f);
+                y.push_back(vcat[a]==vcat[b] ? (char)1 : (char)0);
+            }
+            b++;
+        }
+        a++;
+    }
+}
+
 const std::vector<TagModel::Similar> &TagModel::similarTo(int tileId) const
 {
     static const std::vector<Similar> empty;

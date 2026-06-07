@@ -21,6 +21,7 @@
 #include "mapreader.h"
 #include "tilelayer.h"
 #include "tileset.h"
+#include <cmath>
 #include <cstdio>
 #include <memory>
 
@@ -361,6 +362,80 @@ static int runEvalKnn(const QStringList &args)
     const int ansR=accTotal[1][1]-accAbstain[1][1];
     std::cout << "  (k=3 >=55%: answered " << ansR << "/" << accTotal[1][1]
               << " = " << (accTotal[1][1]>0?ansR*100/accTotal[1][1]:0) << "% coverage)" << std::endl;
+    return 0;
+}
+
+// LEARN which linked-data feature actually has IMPACT (instead of hand-tuning the
+// KNN weights): gather one row per pair of VERIFIED tiles (feature vector + same-
+// category label) and train a class-balanced logistic regression.  The standardized
+// weights ARE the per-feature importance.  This is the "training phase".
+static int runLearnWeights(const QStringList &args)
+{
+    if(args.isEmpty()) { std::cerr << "learnweights needs: <tsx | tileset-dir>" << std::endl; return 1; }
+    QStringList tsx;
+    const QFileInfo fi(args.at(0));
+    if(fi.isDir())
+    {
+        QDirIterator it(args.at(0),QStringList()<<"*.tsx",QDir::Files,QDirIterator::Subdirectories);
+        while(it.hasNext()) tsx.append(it.next());
+        tsx.sort();
+    }
+    else tsx.append(args.at(0));
+
+    const int NF=TagModel::featureCount();
+    std::vector<std::vector<float> > X;
+    std::vector<char> Y;
+    int t=0;
+    while(t<tsx.size()) { TagModel m; if(m.load(tsx.at(t))) m.appendPairwiseFeatures(X,Y); t++; }
+    const size_t n=X.size();
+    if(n<50) { std::cerr << "learnweights: only " << n << " verified pairs — tag more first" << std::endl; return 1; }
+
+    // standardize features so the learned weights are directly comparable (importance)
+    std::vector<double> mean(NF,0.0), sd(NF,0.0);
+    { size_t i=0; while(i<n){ int f=0; while(f<NF){ mean[f]+=X[i][f]; f++; } i++; } int f=0; while(f<NF){ mean[f]/=(double)n; f++; } }
+    { size_t i=0; while(i<n){ int f=0; while(f<NF){ const double d=X[i][f]-mean[f]; sd[f]+=d*d; f++; } i++; } int f=0; while(f<NF){ sd[f]=std::sqrt(sd[f]/(double)n); if(sd[f]<1e-6) sd[f]=1e-6; f++; } }
+
+    long pos=0; { size_t i=0; while(i<n){ pos+=Y[i]; i++; } }
+    const long neg=(long)n-pos;
+    const double wpos = pos>0 ? (double)n/(2.0*(double)pos) : 1.0;
+    const double wneg = neg>0 ? (double)n/(2.0*(double)neg) : 1.0;
+
+    // logistic regression, full-batch gradient descent
+    std::vector<double> w(NF,0.0); double b=0.0;
+    const double lr=0.3; const int EP=400;
+    int ep=0;
+    while(ep<EP)
+    {
+        std::vector<double> gw(NF,0.0); double gb=0.0;
+        size_t i=0;
+        while(i<n)
+        {
+            double z=b; int f=0; while(f<NF){ z += w[f]*((X[i][f]-mean[f])/sd[f]); f++; }
+            const double pr=1.0/(1.0+std::exp(-z));
+            const double cw = Y[i]?wpos:wneg;
+            const double err=(pr-(double)Y[i])*cw;
+            f=0; while(f<NF){ gw[f]+= err*((X[i][f]-mean[f])/sd[f]); f++; }
+            gb+=err;
+            i++;
+        }
+        int f=0; while(f<NF){ w[f]-= lr*gw[f]/(double)n; f++; } b-= lr*gb/(double)n;
+        ep++;
+    }
+
+    long tp=0,tn=0,fp=0,fn=0;
+    { size_t i=0; while(i<n){ double z=b; int f=0; while(f<NF){ z+=w[f]*((X[i][f]-mean[f])/sd[f]); f++; } const int pred=(1.0/(1.0+std::exp(-z)))>=0.5?1:0; if(Y[i]){ if(pred) tp++; else fn++; } else { if(pred) fp++; else tn++; } i++; } }
+    const double sens=(tp+fn)>0?100.0*(double)tp/(double)(tp+fn):0.0;
+    const double spec=(tn+fp)>0?100.0*(double)tn/(double)(tn+fp):0.0;
+
+    // feature importance = |standardized weight|, sorted desc
+    std::vector<std::pair<double,int> > imp;
+    { int f=0; while(f<NF){ imp.push_back(std::pair<double,int>(std::abs(w[f]),f)); f++; } }
+    { size_t a=1; while(a<imp.size()){ const std::pair<double,int> key=imp[a]; size_t c=a; while(c>0 && imp[c-1].first<key.first){ imp[c]=imp[c-1]; c--; } imp[c]=key; a++; } }
+    std::cout << "learned feature IMPACT from " << n << " verified pairs (" << pos << " same / " << neg << " diff), "
+              << tsx.size() << " tileset(s):" << std::endl;
+    { size_t a=0; while(a<imp.size()){ const int f=imp[a].second; char bw[16]; std::snprintf(bw,sizeof(bw),"%+.2f",w[f]); std::cout << "  " << TagModel::featureName(f) << "\tweight " << bw << std::endl; a++; } }
+    char sb[16],pb[16]; std::snprintf(sb,sizeof(sb),"%.0f",sens); std::snprintf(pb,sizeof(pb),"%.0f",spec);
+    std::cout << "  same-category recall " << sb << "% / different-category recall " << pb << "% (balanced LR @0.5)" << std::endl;
     return 0;
 }
 
@@ -2627,7 +2702,7 @@ int main(int argc, char *argv[])
         && (args.at(0)=="--guard" || args.at(0)=="--tag" || args.at(0)=="--selftest"
             || args.at(0)=="--usage" || args.at(0)=="--suggest" || args.at(0)=="--classify"
             || args.at(0)=="--decode" || args.at(0)=="--learn" || args.at(0)=="--verify" || args.at(0)=="--structure" || args.at(0)=="--generate" || args.at(0)=="--genmap"
-            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--gencity" || args.at(0)=="--genhouse" || args.at(0)=="--catlayers" || args.at(0)=="--droptransparent" || args.at(0)=="--usedtiles");
+            || args.at(0)=="--evalsuggest" || args.at(0)=="--evalknn" || args.at(0)=="--learnweights" || args.at(0)=="--maptensor" || args.at(0)=="--wfc" || args.at(0)=="--wfco" || args.at(0)=="--genwfc" || args.at(0)=="--gencity" || args.at(0)=="--genhouse" || args.at(0)=="--catlayers" || args.at(0)=="--droptransparent" || args.at(0)=="--usedtiles");
     if(cli)
         qputenv("QT_QPA_PLATFORM","offscreen"); //headless: no display needed
 
@@ -2649,6 +2724,8 @@ int main(int argc, char *argv[])
         return runEvalSuggest(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--evalknn")
         return runEvalKnn(args.mid(1));
+    if(!args.isEmpty() && args.at(0)=="--learnweights")
+        return runLearnWeights(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--maptensor")
         return runMapTensor(args.mid(1));
     if(!args.isEmpty() && args.at(0)=="--wfc")
