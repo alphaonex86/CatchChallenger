@@ -819,14 +819,20 @@ static double tileOpaqueFrac(TagModel *tm,int id)
     return total>0 ? (double)opaque/(double)total : 0.0;
 }
 
+// A teleport/door warp placed in the Moving objectgroup: a marker at tile (x,y)
+// that sends the player to tile (destX,destY) of map `dest` (basename, no ext).
+struct GenWarp { int x; int y; std::string type; std::string dest; int destX; int destY; };
+
 // Turn a CATEGORY grid (one category string per cell, "" = empty) into a valid
 // engine .tmx on the target tileset: resolve each category to its REAL tagged
 // tiles, auto-tile by learned neighbour context, distribute into the named engine
 // layers, write CSV layers + relative tileset refs.  Shared by the struct-based
-// (--genmap) and the coherent WFC (--genwfc) front-ends.
+// (--genmap) and the coherent WFC (--genwfc) front-ends.  Optional bots -> Object
+// group, warps -> Moving group (both via invisible.tsx markers).
 static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
                             const QString &tilesetDir,const QString &outPath,unsigned seed,
-                            const std::vector<std::pair<int,int> > &bots=std::vector<std::pair<int,int> >());
+                            const std::vector<std::pair<int,int> > &bots=std::vector<std::pair<int,int> >(),
+                            const std::vector<GenWarp> &warps=std::vector<GenWarp>());
 
 static int runGenMap(const QStringList &args)
 {
@@ -843,7 +849,8 @@ static int runGenMap(const QStringList &args)
 }
 static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
                             const QString &tilesetDir,const QString &outPath,unsigned seed,
-                            const std::vector<std::pair<int,int> > &bots)
+                            const std::vector<std::pair<int,int> > &bots,
+                            const std::vector<GenWarp> &warps)
 {
     // load the official tilesets + their sidecar tags; category -> first (tileset,tileId)
     QDir tdir(tilesetDir);
@@ -943,9 +950,9 @@ static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
             ++c;
         }
     }
-    // bot markers come from invisible.tsx (tile 0) — ensure it gets a firstgid + ref
+    // bot/warp markers come from invisible.tsx (tiles 0-3) — ensure it gets a firstgid + ref
     int invisibleIdx=-1;
-    if(!bots.empty())
+    if(!bots.empty() || !warps.empty())
     {
         size_t ii=0;
         while(ii<tsxAbs.size()) { if(QFileInfo(tsxAbs.at(ii)).fileName()=="invisible.tsx") { invisibleIdx=(int)ii; break; } ii++; }
@@ -1072,6 +1079,28 @@ static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
             w << "   <properties><property name=\"id\" type=\"int\" value=\"" << (b+1) << "\"/></properties>\n";
             w << "  </object>\n";
             b++;
+        }
+        w << " </objectgroup>\n";
+    }
+    // warps: the Moving group (teleport/door markers, invisible.tsx tile 2) with the
+    // map/x/y destination properties — wires the outdoor doors to the interiors.
+    if(!warps.empty() && invisibleIdx>=0)
+    {
+        const int wgid=firstgid[invisibleIdx]+2;
+        w << " <objectgroup id=\"91\" name=\"Moving\">\n";
+        size_t k=0;
+        while(k<warps.size())
+        {
+            const GenWarp &g=warps.at(k);
+            w << "  <object id=\"" << (1000+k) << "\" type=\"" << QString::fromStdString(g.type) << "\" gid=\"" << wgid
+              << "\" x=\"" << g.x*16 << "\" y=\"" << (g.y+1)*16 << "\" width=\"16\" height=\"16\">\n";
+            w << "   <properties>\n";
+            w << "    <property name=\"map\" type=\"file\" value=\"" << QString::fromStdString(g.dest) << "\"/>\n";
+            w << "    <property name=\"x\" type=\"int\" value=\"" << g.destX << "\"/>\n";
+            w << "    <property name=\"y\" type=\"int\" value=\"" << g.destY << "\"/>\n";
+            w << "   </properties>\n";
+            w << "  </object>\n";
+            k++;
         }
         w << " </objectgroup>\n";
     }
@@ -2328,6 +2357,7 @@ static int runGenCity(const QStringList &args)
         std::mt19937 rng(seed0+(unsigned int)i*131u);
         std::vector<std::string> grid(W*H,std::string("ground"));
         std::vector<std::pair<int,int> > botCand;   // road cell in front of each door
+        std::vector<std::pair<int,int> > doors;      // the door opening of each building
         const int margin=3, PLOTW=8, PLOTH=7;
         int py=margin;
         while(py+PLOTH<=H-margin)
@@ -2358,6 +2388,7 @@ static int runGenCity(const QStringList &args)
                 if(dx<W && dy<H) grid[dx+dy*W]=std::string("path");
                 const int broady=py+PLOTH-1;       // the road row in front of this door
                 if(dx<W && broady<H) botCand.push_back(std::pair<int,int>(dx,broady));
+                if(dx<W && dy<H) doors.push_back(std::pair<int,int>(dx,dy));
                 x+=PLOTW;
             }
             // horizontal road below this building row
@@ -2377,8 +2408,51 @@ static int runGenCity(const QStringList &args)
             size_t k=0;
             while(k<botCand.size()) { if(rng()%3==0 && bots.size()<12) bots.push_back(botCand[k]); k++; }
         }
-        const QString outPath=QDir(args.at(2)).absoluteFilePath(QString("city-%1.tmx").arg(i,2,10,QChar('0')));
-        if(writeTmxFromGrid(grid,W,H,args.at(1),outPath,seed0+(unsigned int)i,bots)==0)
+        // INTERIOR: one shared room per city (walls border + ground floor + a bottom
+        // exit).  Each building door teleports in; the room's exit teleports back out.
+        const QString cityName=QString("city-%1").arg(i,2,10,QChar('0'));
+        const QString insideName=cityName+"-inside";
+        const int IW=11, IH=8;
+        const int exitX=IW/2, exitY=IH-1, entryY=IH-2;
+        {
+            std::vector<std::string> in(IW*IH,std::string("ground"));   // floor
+            int yy=0;
+            while(yy<IH)
+            {
+                int xx=0;
+                while(xx<IW)
+                {
+                    if(xx==0||xx==IW-1||yy==0||yy==IH-1) in[xx+yy*IW]=std::string("building-wall");   // walls
+                    xx++;
+                }
+                yy++;
+            }
+            in[exitX+exitY*IW]=std::string("path");   // exit opening in the bottom wall
+            // exit warp -> back to the city, onto the road in front of the first door
+            std::vector<GenWarp> inWarps;
+            const int backX = doors.empty()? W/2 : doors[0].first;
+            const int backY = (doors.empty()? margin : doors[0].second)+1;
+            GenWarp ex; ex.x=exitX; ex.y=exitY; ex.type="teleport on it"; ex.dest=cityName.toStdString(); ex.destX=backX; ex.destY=backY;
+            inWarps.push_back(ex);
+            const QString inPath=QDir(args.at(2)).absoluteFilePath(insideName+".tmx");
+            writeTmxFromGrid(in,IW,IH,args.at(1),inPath,seed0+(unsigned int)i+7u,std::vector<std::pair<int,int> >(),inWarps);
+            QFile ixf(QDir(args.at(2)).absoluteFilePath(insideName+".xml"));
+            if(ixf.open(QIODevice::WriteOnly|QIODevice::Truncate)) { QTextStream xw(&ixf); xw << "<map zone=\"generated\" type=\"house\">\n <name>House</name>\n</map>\n"; ixf.close(); }
+        }
+        // each outdoor door -> teleport into the interior (entry just above the exit)
+        std::vector<GenWarp> warps;
+        {
+            size_t k=0;
+            while(k<doors.size())
+            {
+                GenWarp g; g.x=doors[k].first; g.y=doors[k].second; g.type="teleport on it";
+                g.dest=insideName.toStdString(); g.destX=exitX; g.destY=entryY;
+                warps.push_back(g);
+                k++;
+            }
+        }
+        const QString outPath=QDir(args.at(2)).absoluteFilePath(cityName+".tmx");
+        if(writeTmxFromGrid(grid,W,H,args.at(1),outPath,seed0+(unsigned int)i,bots,warps)==0)
         {
             // sibling <map>.xml with one generic NPC dialog per bot id
             const QString xmlPath=QDir(args.at(2)).absoluteFilePath(QString("city-%1.xml").arg(i,2,10,QChar('0')));
