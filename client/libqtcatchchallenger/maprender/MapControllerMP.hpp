@@ -192,6 +192,15 @@ private:
     //player) that is nearest the player, so the click leads up to the right side
     //of the sign. Returns false when the sign has no foot-reachable neighbour.
     bool reachableClickNeighbor(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &cx,const int &cy,const int &px,const int &py,int &outX,int &outY);
+    //scene-pixel centre of tile (tx,ty) (current map at scene origin, 16px tiles)
+    QPointF tileCenterScenePos(const int &tileX,const int &tileY) const;
+    //--test-clicksign zoom check: map the sign tile's centre to a viewport pixel
+    //through the current ZOOM and back to a tile (PreparedLayer's qCeil maths) —
+    //outX/outY must equal the sign tile or the on-device tap hits the wrong tile.
+    bool resolveTileAtZoom(const int &tileX,const int &tileY,int &outX,int &outY);
+    //--test-clicksign: inject a REAL left-click at the viewport pixel of tile
+    //(tx,ty), travelling the full device path (pixel->zoomed view->scene->tile).
+    void postClickAtTile(const int &tileX,const int &tileY);
 protected:
     //once-on-map hook: launches the --test-clicksign self-test when requested
     virtual void afterMapDisplayed() override;
@@ -201,6 +210,9 @@ private slots:
     void runClickSignSelfTest();
     void signSelfTestActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void signSelfTestTimeout();
+    //--test-clicksign: a walk step was refused (e.g. item-gated water/lava) ->
+    //report "you can't enter ..." as a FAIL immediately instead of timing out
+    void signSelfTestBlockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     //--autosolo=DX,DY: click the tile at player+(DX,DY) and report the outcome
     void runAutosoloClick();
     void autosoloClickActionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);

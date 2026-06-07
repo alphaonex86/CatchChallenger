@@ -17,6 +17,7 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
     repel_step=0;
     fightCollisionBot=NULL;
     botAlreadyBeaten=NULL;
+    canGoToSilent=false;
 }
 
 MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
@@ -210,7 +211,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                        case CatchChallenger::MapConditionType_Item:
                             if(playerItems.find(teleporter.condition.data.item)==playerItems.cend())
                             {
-                                if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                if(!canGoToSilent && index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
                                     emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
                                 return false;
                             }
@@ -218,13 +219,13 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                         case CatchChallenger::MapConditionType_Quest:
                             if(playerQuests.find(teleporter.condition.data.quest)==playerQuests.cend())
                             {
-                                if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                if(!canGoToSilent && index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
                                     emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
                                 return false;
                             }
                             if(!playerQuests.at(teleporter.condition.data.quest).finish_one_time)
                             {
-                                if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                if(!canGoToSilent && index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
                                     emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
                                 return false;
                             }
@@ -246,7 +247,8 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                 {
                     if(!client->getAbleToFight())
                     {
-                        emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
+                        if(!canGoToSilent)
+                            emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
                         return false;
                     }
                 }
@@ -269,12 +271,14 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     {
                         if(!client->getAbleToFight())
                         {
-                            emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
+                            if(!canGoToSilent)
+                                emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
                             return false;
                         }
                         if(!client->canDoRandomFight(commonMap,lx,ly))
                         {
-                            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+                            if(!canGoToSilent)
+                                emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                             return false;
                         }
                     }
@@ -283,7 +287,8 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
             }
             index++;
         }
-        emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneItem);
+        if(!canGoToSilent)
+            emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneItem);
         return false;
     }
     return true;
