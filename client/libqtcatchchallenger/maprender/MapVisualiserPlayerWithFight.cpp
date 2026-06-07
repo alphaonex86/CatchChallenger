@@ -17,7 +17,6 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
     repel_step=0;
     fightCollisionBot=NULL;
     botAlreadyBeaten=NULL;
-    canGoToSilent=false;
 }
 
 MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()

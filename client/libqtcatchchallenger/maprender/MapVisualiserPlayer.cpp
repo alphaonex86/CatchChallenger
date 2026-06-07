@@ -35,6 +35,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     clickInteractPushMap=0;
     clickInteractPushX=0;
     clickInteractPushY=0;
+    canGoToSilent=false;
     blocked=false;
     inMove=false;
     teleportedOnPush=false;
@@ -1789,17 +1790,21 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, c
     {
         if(!CatchChallenger::MoveOnTheMap::canGoTo(mapList,direction,logicalMap,lx,ly,checkCollision && !clip))
         {
-            std::cerr << "MapVisualiserPlayer::canGoTo() MoveOnTheMap::canGoTo returned false dir=" << std::to_string(direction)
-                      << " map=" << std::to_string(mapIndex) << " pos=(" << std::to_string(lx) << "," << std::to_string(ly) << ") checkCollision="
-                      << (checkCollision && !clip) << std::endl;
+            //silent during click-to-walk reachability probing (canGoToSilent),
+            //else this floods the console hundreds of lines per click
+            if(!canGoToSilent)
+                std::cerr << "MapVisualiserPlayer::canGoTo() MoveOnTheMap::canGoTo returned false dir=" << std::to_string(direction)
+                          << " map=" << std::to_string(mapIndex) << " pos=(" << std::to_string(lx) << "," << std::to_string(ly) << ") checkCollision="
+                          << (checkCollision && !clip) << std::endl;
             return false;
         }
         if(!CatchChallenger::MoveOnTheMap::move(mapList,direction,tempMapIndex,lx,ly,checkCollision && !clip))
             return false;
         if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)==CatchChallenger::QMap_client::all_map.cend())
         {
-            std::cerr << "MapVisualiserPlayer::canGoTo() destination map " << std::to_string(tempMapIndex)
-                      << " not in all_map (pos=" << std::to_string(lx) << "," << std::to_string(ly) << "), blocking move" << std::endl;
+            if(!canGoToSilent)
+                std::cerr << "MapVisualiserPlayer::canGoTo() destination map " << std::to_string(tempMapIndex)
+                          << " not in all_map (pos=" << std::to_string(lx) << "," << std::to_string(ly) << "), blocking move" << std::endl;
             return false;
         }
         const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
