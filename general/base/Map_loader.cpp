@@ -756,6 +756,22 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
     return monsterTypeList;
 }
 
+//sort key = path with the ".tmx" suffix stripped: the map ids come from the
+//stripped-name sort of map_name_to_do_id below, and since '-'(0x2D) < '.'(0x2E),
+//"house-2.tmx" sorts before "house.tmx" while "house" < "house-2" — a plain
+//path sort would load flat_map_list in an order that diverges from the id
+//order, and every teleport/border link past the flip would land on the wrong map
+static bool compareMapPathStripTmx(const std::string &a,const std::string &b)
+{
+    std::string sa=a;
+    std::string sb=b;
+    if(stringEndsWith(sa,".tmx"))
+        sa.resize(sa.size()-4);
+    if(stringEndsWith(sb,".tmx"))
+        sb.resize(sb.size()-4);
+    return sa<sb;
+}
+
 void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep,std::vector<MapLoadBuffers> *mapLoadBuffers)
 {
     Map_loader map_temp;
@@ -773,7 +789,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         break;
         case S_IFDIR:
             returnList=FacilityLibGeneral::listFolder(datapack_mapPath);
-            std::sort(returnList.begin(), returnList.end());
+            std::sort(returnList.begin(), returnList.end(), compareMapPathStripTmx);
         break;
         default:
             std::cerr << datapack_mapPath << " exists but is not file or folder, is: " << std::to_string(buffer.st_mode) << std::endl;
