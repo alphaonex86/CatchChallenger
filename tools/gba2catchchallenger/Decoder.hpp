@@ -30,6 +30,11 @@ struct DecodedWarp {
     uint8_t destGroup;
     uint8_t destMap;
     uint8_t destWarpId;
+    // Destination tile resolved from the dest map's warp[destWarpId] by
+    // Decoder::finalizeMaps (split chunks shift these; writers use them
+    // instead of re-reading the dest warp list, whose indices a split breaks).
+    uint8_t destX;
+    uint8_t destY;
 };
 
 struct DecodedConnection {
@@ -61,9 +66,13 @@ struct DecodedSign {
 struct DecodedMap {
     uint8_t group;
     uint8_t map;
+    uint8_t origMap;         // ROM map id (== map, except extra split chunks)
     int32_t width;
     int32_t height;
     uint32_t blocksPtr;      // file offset of the width*height u16 block grid
+    // In-memory block grid for a split chunk (empty => read the ROM at
+    // blocksPtr).  Always read cells through blockAt().
+    std::vector<uint16_t> blocksOverride;
     uint32_t primaryTileset;  // file offset of the primary Tileset struct
     uint32_t secondaryTileset;// file offset of the secondary Tileset struct (0 if none)
     uint8_t regionSection;
@@ -77,6 +86,9 @@ struct DecodedMap {
 
     DecodedMap();
 
+    // u16 block at (x,y): the in-memory override (split chunks) or the ROM.
+    uint16_t blockAt(const GbaRom &rom, uint32_t x, uint32_t y) const;
+
     // Relative datapack path (without extension), e.g. "group-03/map-00".
     std::string relativePath() const;
 };
@@ -87,6 +99,16 @@ public:
 
     // Decode every map.  Returns false when gMapGroups looks wrong.
     bool decodeAll();
+
+    // Post-decode normalisation for the CC engine, run once after decodeAll:
+    //  * resolve every warp's destination warp-id to absolute (destX,destY),
+    //  * keep ONE connection per map side (largest shared edge) and drop the
+    //    non-reciprocal leftovers — the engine has one border slot per side,
+    //  * split maps larger than the engine's 127-tile coordinate limit into
+    //    chunks along the long axis (in-memory block copies, warps/NPCs/signs
+    //    distributed, incoming warps/connections retargeted, chunks linked by
+    //    synthetic border connections).
+    void finalizeMaps();
 
     const std::vector<DecodedMap> &maps() const;
 
@@ -105,6 +127,9 @@ public:
     std::string warpClassAt(const DecodedMap &m, const DecodedWarp &w) const;
 
 private:
+    void resolveWarpDestinations();
+    void pruneConnections();
+    void splitOversizedMaps();
     DecodedMap decodeMap(uint8_t group, uint8_t map, uint32_t headerOffset);
     void decodeEvents(uint32_t eventsOffset, DecodedMap &out);
     void decodeConnections(uint32_t connectionsOffset, DecodedMap &out);

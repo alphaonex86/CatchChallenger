@@ -1478,7 +1478,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
                 int xx=0;
                 while(xx<W)
                 {
-                    uint16_t blk=rom_.u16(mp->blocksPtr+(static_cast<uint32_t>(yy)*W+xx)*2);
+                    uint16_t blk=mp->blockAt(rom_,xx,yy);
                     collFlag[static_cast<uint16_t>(blk&0x3FF)] |= ((blk>>10)&0x3) ? 1 : 2;
                     xx++;
                 }
@@ -1802,7 +1802,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             int x=0;
             while(x<W)
             {
-                uint16_t m=static_cast<uint16_t>(rom_.u16(mp->blocksPtr+(static_cast<uint32_t>(y)*W+x)*2)&0x3FF);
+                uint16_t m=static_cast<uint16_t>(mp->blockAt(rom_,x,y)&0x3FF);
                 if(metaGroundImg.find(m)!=metaGroundImg.cend())
                     metaContexts[m].insert(contextKey(*mp,x,y));
                 x++;
@@ -1838,7 +1838,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
             int x=0;
             while(x<W)
             {
-                uint16_t m=static_cast<uint16_t>(rom_.u16(mp->blocksPtr+(static_cast<uint32_t>(y)*W+x)*2)&0x3FF);
+                uint16_t m=static_cast<uint16_t>(mp->blockAt(rom_,x,y)&0x3FF);
                 std::unordered_map<uint16_t,QImage>::const_iterator gi=metaGroundImg.find(m);
                 if(gi!=metaGroundImg.cend())
                 {
@@ -1941,7 +1941,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
                 while(xx<W)
                 {
                     int g=cellTi[pmi][static_cast<size_t>(yy)*W+xx];
-                    uint16_t m=static_cast<uint16_t>(rom_.u16(mp->blocksPtr+(static_cast<uint32_t>(yy)*W+xx)*2)&0x3FF);
+                    uint16_t m=static_cast<uint16_t>(mp->blockAt(rom_,xx,yy)&0x3FF);
                     std::unordered_map<uint16_t,int>::const_iterator ol=overLocal.find(m);
                     int vis=-1;
                     if(ol!=overLocal.cend() && ol->second>=0)
@@ -2004,7 +2004,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
                 while(xx<W)
                 {
                     int g=cellTi[pmi][static_cast<size_t>(yy)*W+xx];
-                    uint16_t m=static_cast<uint16_t>(rom_.u16(mp->blocksPtr+(static_cast<uint32_t>(yy)*W+xx)*2)&0x3FF);
+                    uint16_t m=static_cast<uint16_t>(mp->blockAt(rom_,xx,yy)&0x3FF);
                     std::unordered_map<uint16_t,int>::const_iterator ol=overLocal.find(m);
                     if(ol!=overLocal.cend() && ol->second>=0 && g>=0 && !visGround[static_cast<size_t>(g)])
                         cellHid[pmi][static_cast<size_t>(yy)*W+xx]=g;
@@ -2388,7 +2388,7 @@ bool TilesetBuilder::prepare(const std::vector<DecodedMap> &maps, const Naming &
             uint32_t y=0;
             while(y<H)
             {
-                uint16_t m=rom_.u16(map.blocksPtr+(y*W+x)*2) & 0x3FF;
+                uint16_t m=map.blockAt(rom_,x,y) & 0x3FF;
                 if(m<metaInPrim)
                 {
                     if(seenPrimary[map.primaryTileset].insert(m).second)
@@ -2548,20 +2548,19 @@ uint32_t TilesetBuilder::secondaryBase(const DecodedMap &map) const
 uint64_t TilesetBuilder::contextKey(const DecodedMap &map, int x, int y) const
 {
     int W=static_cast<int>(map.width), H=static_cast<int>(map.height);
-    uint32_t bp=map.blocksPtr;
     const uint64_t NONE=0x7FF; // metatiles are <0x400, so this never collides
-    uint64_t m =rom_.u16(bp+(static_cast<uint32_t>(y)*W+x)*2)&0x3FF;
-    uint64_t up   =(y>0)   ? (rom_.u16(bp+(static_cast<uint32_t>(y-1)*W+x)*2)&0x3FF) : NONE;
-    uint64_t down =(y+1<H) ? (rom_.u16(bp+(static_cast<uint32_t>(y+1)*W+x)*2)&0x3FF) : NONE;
-    uint64_t left =(x>0)   ? (rom_.u16(bp+(static_cast<uint32_t>(y)*W+x-1)*2)&0x3FF) : NONE;
-    uint64_t right=(x+1<W) ? (rom_.u16(bp+(static_cast<uint32_t>(y)*W+x+1)*2)&0x3FF) : NONE;
+    uint64_t m =map.blockAt(rom_,x,y)&0x3FF;
+    uint64_t up   =(y>0)   ? (map.blockAt(rom_,x,y-1)&0x3FF) : NONE;
+    uint64_t down =(y+1<H) ? (map.blockAt(rom_,x,y+1)&0x3FF) : NONE;
+    uint64_t left =(x>0)   ? (map.blockAt(rom_,x-1,y)&0x3FF) : NONE;
+    uint64_t right=(x+1<W) ? (map.blockAt(rom_,x+1,y)&0x3FF) : NONE;
     return m | (up<<11) | (down<<22) | (left<<33) | (right<<44);
 }
 
 uint32_t TilesetBuilder::groundGid(const DecodedMap &map, int x, int y) const
 {
     int W=static_cast<int>(map.width);
-    uint16_t m=static_cast<uint16_t>(rom_.u16(map.blocksPtr+(static_cast<uint32_t>(y)*W+x)*2)&0x3FF);
+    uint16_t m=static_cast<uint16_t>(map.blockAt(rom_,x,y)&0x3FF);
     uint32_t metaInPrim=rom_.game().metatilesInPrimary;
     bool primary=(m<metaInPrim);
     const TilePool *p=primary ? primaryPool(map) : secondaryPool(map);

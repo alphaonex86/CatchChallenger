@@ -259,7 +259,7 @@ void CCWriter::layerVisibilityGuard(const DecodedMap &map,
         {
             if(walkbehind[c]!=0)
             {
-                uint16_t mt=static_cast<uint16_t>(rom_.u16(map.blocksPtr+static_cast<uint32_t>(c)*2)&0x3FF);
+                uint16_t mt=static_cast<uint16_t>(map.blockAt(rom_,c%static_cast<uint32_t>(map.width),c/static_cast<uint32_t>(map.width))&0x3FF);
                 if(tilesets_.overOpaque(map,mt))
                     masking[c]=1;
             }
@@ -567,7 +567,7 @@ void CCWriter::writeMap(const DecodedMap &map)
     uint32_t c=0;
     while(c<cells)
     {
-        uint16_t block=rom_.u16(map.blocksPtr+c*2);
+        uint16_t block=map.blockAt(rom_,c%static_cast<uint32_t>(map.width),c/static_cast<uint32_t>(map.width));
         uint16_t metatile=block & 0x3FF;
         uint8_t collisionBits=static_cast<uint8_t>((block>>10) & 0x3);
         uint32_t g=tilesets_.groundGid(map,static_cast<int>(c%map.width),static_cast<int>(c/map.width));
@@ -736,19 +736,20 @@ void CCWriter::writeMap(const DecodedMap &map)
     {
         const DecodedWarp &warp=map.warps[wi];
         const DecodedMap *dest=decoder_.find(warp.destGroup,warp.destMap);
-        if(dest!=nullptr && dest->width>0)
+        // A warp whose SOURCE is outside the map grid is unusable (RSE has a
+        // few, e.g. the Slateport ferry pads at x==width): the loader would
+        // drop the object with a warning, so skip it cleanly here.
+        if(dest!=nullptr && dest->width>0 && warp.x<w && warp.y<h)
         {
-            uint8_t tx=0,ty=0;
-            if(warp.destWarpId<dest->warps.size())
-            {
-                tx=dest->warps[warp.destWarpId].x;
-                ty=dest->warps[warp.destWarpId].y;
-            }
-            else if(!dest->warps.empty())
-            {
-                tx=dest->warps[0].x;
-                ty=dest->warps[0].y;
-            }
+            // Destination resolved by Decoder::finalizeMaps (split-safe: the
+            // dest map's own warp indices are meaningless after a chunk split).
+            // Clamp into the destination grid: a handful of ROM warps point a
+            // tile past the edge (or at a 1x1 dummy layout) and the engine
+            // rejects an out-of-range target ("tp is out of range").
+            uint8_t tx=warp.destX;
+            uint8_t ty=warp.destY;
+            if(tx>=dest->width) tx=static_cast<uint8_t>(dest->width-1);
+            if(ty>=dest->height) ty=static_cast<uint8_t>(dest->height-1);
             int px=static_cast<int>(warp.x)*16;
             int py=(static_cast<int>(warp.y)+1)*16;
             // Classify the warp from the behaviour of the metatile it sits on:
@@ -762,7 +763,7 @@ void CCWriter::writeMap(const DecodedMap &map)
             uint32_t warpGid=teleportGid;
             if(warp.x<w && warp.y<h)
             {
-                uint16_t wmeta=static_cast<uint16_t>(rom_.u16(map.blocksPtr+(static_cast<uint32_t>(warp.y)*w+warp.x)*2) & 0x3FF);
+                uint16_t wmeta=static_cast<uint16_t>(map.blockAt(rom_,warp.x,warp.y) & 0x3FF);
                 uint16_t wbeh=tilesets_.behavior(map,wmeta);
                 warpKind=decoder_.warpType(wbeh);
                 if(warpKind=="door")
@@ -808,8 +809,27 @@ void CCWriter::writeMap(const DecodedMap &map)
             else                       { type="border-right";  thisDim=static_cast<int>(h); neighDim=dest->height; tx=static_cast<int>(w)-1; }
             int halfO=(O>=0) ? (O+1)/2 : -((-O)/2);
             int ov=(thisDim+neighDim)/4+halfO;
+            // The marker must stay INSIDE this map (the loader drops an object
+            // past the edge: "Object out of the map") AND the mirrored marker
+            // (ov-O) inside the neighbour, so alignment difference stays = O.
+            // Clamping into the shared validity interval is symmetric: both
+            // maps compute the same interval shifted by O, and clamp commutes
+            // with the shift — the pair difference survives.
+            {
+                int lo=(O>0)?O:0;
+                int hi=thisDim-1;
+                if(neighDim-1+O<hi)
+                    hi=neighDim-1+O;
+                if(lo<=hi)
+                {
+                    if(ov<lo) ov=lo;
+                    if(ov>hi) ov=hi;
+                }
+            }
             if(ov<0)
                 ov=0;
+            if(ov>thisDim-1)
+                ov=thisDim-1;
             if(horizontal)
                 tx=ov;
             else
@@ -838,7 +858,7 @@ void CCWriter::writeMap(const DecodedMap &map)
             uint32_t x=0;
             while(x<w)
             {
-                uint16_t block=rom_.u16(map.blocksPtr+(y*w+x)*2);
+                uint16_t block=map.blockAt(rom_,x,y);
                 if(((block>>10)&0x3)==0)
                 {
                     uint32_t dx=(x>cx0)?x-cx0:cx0-x;
@@ -945,7 +965,7 @@ void CCWriter::writeStart()
         uint32_t cx=0;
         while(cx<w)
         {
-            uint16_t block=rom_.u16(startMap->blocksPtr+(cy*w+cx)*2);
+            uint16_t block=startMap->blockAt(rom_,cx,cy);
             uint8_t collisionBits=static_cast<uint8_t>((block>>10) & 0x3);
             if(collisionBits==0)
             {
@@ -1019,6 +1039,32 @@ static void emitWildList(std::ostream &out, const char *tag, const std::vector<W
     }
     if(order.empty())
         return;
+    // The engine REJECTS a list whose luck does not sum to exactly 100
+    // (FightLoader "total luck is not egal to 100").  Slots with an empty
+    // species are skipped above, so the slot weights may no longer reach 100:
+    // rescale proportionally (min 1) and put the rounding remainder on the
+    // biggest entry.
+    {
+        int total=0;
+        size_t k=0;
+        while(k<order.size()) { total+=luck[order[k]]; k++; }
+        if(total!=100 && total>0)
+        {
+            int newTotal=0;
+            size_t maxIdx=0;
+            k=0;
+            while(k<order.size())
+            {
+                int l=(luck[order[k]]*100+total/2)/total;
+                if(l<1) l=1;
+                luck[order[k]]=l;
+                newTotal+=l;
+                if(l>luck[order[maxIdx]]) maxIdx=k;
+                k++;
+            }
+            luck[order[maxIdx]]+=100-newTotal;
+        }
+    }
     out << " <" << tag << ">\n";
     size_t k=0;
     while(k<order.size())
@@ -1117,7 +1163,7 @@ bool CCWriter::writeSubOverlay(const std::string &mainDir)
         // The sibling's own wild blocks, produced by the SAME emitter as the main
         // run — so an unchanged encounter list is byte-identical to the main file.
         std::ostringstream gs,ws;
-        const WildSet *wild=wild_.find(map.group,map.map);
+        const WildSet *wild=wild_.find(map.group,map.origMap);
         if(wild!=nullptr)
         {
             emitWildList(gs,"grass",wild->land);
@@ -1195,7 +1241,7 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     out << " <name>" << name << "</name>\n";
 
     // Wild encounters ("monster on map").
-    const WildSet *wild=wild_.find(map.group,map.map);
+    const WildSet *wild=wild_.find(map.group,map.origMap);
     if(wild!=nullptr)
     {
         emitWildList(out,"grass",wild->land);
