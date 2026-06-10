@@ -47,6 +47,11 @@
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+// The REAL packed sendedStatus slot type (one uint32_t per slot) shared
+// with MapVisibilityAlgorithm::tempDenseBuffer — dependency-free header,
+// so the stub ClientWithMap uses the production type instead of keeping
+// a drift-prone mirror.
+#include "../../server/base/MapManagement/DensePlayerState.hpp"
 
 // CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE is used by stub MapServer's
 // localChatDrop[] member; the same constant lives in VariableServer.hpp
@@ -171,13 +176,9 @@ private:
 class ClientWithMap : public Client
 {
 public:
-    struct SendedStatus
-    {
-        uint32_t characterId_db;
-        //mirror production ClientWithMap::SendedStatus: x | y<<8 | direction<<16
-        uint32_t xyd;
-    };
-    std::vector<SendedStatus> sendedStatus;
+    //same packed one-uint32_t-per-slot type as production sendedStatus
+    //(see DensePlayerState.hpp include above)
+    std::vector<DensePlayerState> sendedStatus;
     CATCHCHALLENGER_TYPE_MAPID sendedMap;
 
     ClientWithMap();
