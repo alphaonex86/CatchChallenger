@@ -1254,7 +1254,42 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHA
                 const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(current_map);
                 const int mw=lm.width;
                 const int mh=lm.height;
-                if(!tileStandable(current_map,x,y,mw,mh))
+                //"teleport on push" exit: the clicked tile is a teleporter source
+                //sitting on a COLLISION tile (you LEAVE by pushing into it). The
+                //pathfinder can never stand on it, so arm the push and walk to a
+                //reachable neighbour; on arrival (or right now when already next
+                //to it) pushTeleportIfAdjacent() steps in and the map swaps.
+                //A walkable DOOR teleporter stays on the normal flow below: the
+                //pathfinder routes straight onto it.
+                bool isPushTeleporter=false;
+                {
+                    size_t ti=0;
+                    while(ti<lm.teleporters.size())
+                    {
+                        if(lm.teleporters.at(ti).source_x==x && lm.teleporters.at(ti).source_y==y)
+                        {
+                            //direction only matters for ledges, never a teleporter source
+                            if(!CatchChallenger::MoveOnTheMap::isWalkableWithDirection(lm,x,y,CatchChallenger::Direction_move_at_bottom))
+                                isPushTeleporter=true;
+                            break;
+                        }
+                        ti++;
+                    }
+                }
+                if(isPushTeleporter)
+                {
+                    clickInteractPushValid=true;
+                    clickInteractPushMap=current_map;
+                    clickInteractPushX=x;
+                    clickInteractPushY=y;
+                    int nX=0,nY=0;
+                    if(reachableClickNeighbor(current_map,x,y,thisx,thisy,nX,nY))
+                    {
+                        targetX=static_cast<COORD_TYPE>(nX);
+                        targetY=static_cast<COORD_TYPE>(nY);
+                    }
+                }
+                else if(!tileStandable(current_map,x,y,mw,mh))
                 {
                     int nX=0,nY=0;
                     if(reachableClickNeighbor(current_map,x,y,thisx,thisy,nX,nY))
@@ -1267,12 +1302,16 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHA
             if(mapIndex==current_map && targetX==thisx && targetY==thisy)
             {
                 //Already standing next to the clicked sign: no walk needed (the
-                //pathfinder no-ops on a same-tile request). Face the sign and open
-                //it like Enter was pressed.
+                //pathfinder no-ops on a same-tile request). Push into the clicked
+                //teleport-on-push exit if one was armed above, else face the sign
+                //and open it like Enter was pressed.
                 if(keyPressed.empty())
                 {
-                    faceClickInteractTargetIfAdjacent();
-                    parseAction();
+                    if(!pushTeleportIfAdjacent())
+                    {
+                        faceClickInteractTargetIfAdjacent();
+                        parseAction();
+                    }
                 }
             }
             else

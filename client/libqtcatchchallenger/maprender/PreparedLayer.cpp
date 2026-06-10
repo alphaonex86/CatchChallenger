@@ -7,12 +7,21 @@ PreparedLayer::PreparedLayer(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QGraphic
     mapIndex(mapIndex)
 {
     setAcceptHoverEvents(true);
+    //see below: clicks must land on transparent map pixels too
+    setShapeMode(QGraphicsPixmapItem::BoundingRectShape);
 }
 
 PreparedLayer::PreparedLayer(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const QPixmap &pixmap, QGraphicsItem *parent) :
     QGraphicsPixmapItem(pixmap,parent),
     mapIndex(mapIndex)
 {
+    //The default MaskShape hit-tests against the pixmap's alpha mask, so a
+    //click on a TRANSPARENT map pixel (a tile empty on every layer — e.g. the
+    //void around a building interior, where "teleport on push" exits often
+    //sit) hits NO item at all and no MapEvent_SimpleClick is ever emitted.
+    //Hit-test against the full layer rect instead: the tile maths in
+    //mouseReleaseEvent() resolves the clicked tile the same way either way.
+    setShapeMode(QGraphicsPixmapItem::BoundingRectShape);
 }
 
 void PreparedLayer::hoverMoveEvent(QGraphicsSceneHoverEvent * event)
