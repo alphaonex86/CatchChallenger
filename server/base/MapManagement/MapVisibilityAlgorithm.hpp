@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_H
 
 #include "../MapServer.hpp"
+#include "DensePlayerState.hpp"
 
 #include <vector>
 
@@ -34,16 +35,10 @@ public:
     //to prevent allocate memory
     static char tempBigBufferForChanges[1+4+1+255*(1+1+1+1)];
     static char tempBigBufferForRemove[1+4+1+255];
-    // Dense buffer for pre-composed player states (x, y, db_id, direction)
-    // aligned same as SendedStatus for fast comparison
-    struct DensePlayerState {
-        uint32_t db_id;
-        //same packed layout as ClientWithMap::SendedStatus::xyd
-        //(x | (y<<8) | (direction<<16), high byte 0): 8 bytes, no padding,
-        //so the diff loop can compare a slot with a single 32-bit (xyd) or
-        //64-bit (db_id+xyd) compare and SIMD can scan it byte-exactly.
-        uint32_t xyd;
-    };
+    // Dense buffer of pre-composed packed player slots, one uint32_t per
+    // slot (see DensePlayerState.hpp). ClientWithMap::sendedStatus uses
+    // the SAME type, so the per-recipient diff is one 32-bit compare per
+    // slot and the sent-state refresh is a flat memcpy of this snapshot.
     static DensePlayerState tempDenseBuffer[255];
 
     /* WHY HERE?
