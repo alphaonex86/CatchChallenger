@@ -94,41 +94,83 @@ bool SkinGen::ensure(const std::string &category, const std::string &skinName,
     QDir().mkpath(QString::fromStdString(dir));
     const QString base = QString::fromStdString(dir) + "/";
 
-    // trainer.png : a single overworld frame (top-left of a 4-col x 2-row grid
-    // guess) tiled into the 3x4 (16x24) CatchChallenger walk-sheet.
-    QImage owFrame;
-    if(!ow.isNull())
-    {
-        const int cw = ow.width() >= 4 ? ow.width() / 4 : ow.width();
-        const int ch = ow.height() >= 2 ? ow.height() / 2 : ow.height();
-        owFrame = cropAlpha(ow.copy(0, 0, cw, ch));
-    }
-    const QImage cell = fit(owFrame, 16, 24);
+    // trainer.png : convert the Tuxemon walk sheet into the CatchChallenger one.
+    // Tuxemon (tuxemon/map/view.py): 3 columns = walk1, idle, walk2 and 4 rows =
+    // front, left, right, back (frames 16x32 in a 48x128 sheet).  CC
+    // (MapVisualiserPlayer, 16x24 cells, idle = middle tile 1/4/7/10): rows =
+    // up, right, down, left.  Columns match, only the rows are remapped.  The
+    // frames are cropped with ONE shared alpha box (a per-frame box would make
+    // the walk cycle wobble) and bottom-anchored in the 16x24 cell.
     QImage trainer(48, 96, QImage::Format_ARGB32);
     trainer.fill(Qt::transparent);
-    int r = 0;
-    while(r < 4)
+    if(!ow.isNull() && ow.width() >= 3 && ow.height() >= 4)
     {
-        int c = 0;
-        while(c < 3)
+        const int fw = ow.width() / 3;
+        const int fh = ow.height() / 4;
+        // shared alpha bounding box over the whole sheet (frame-relative)
+        int bx0 = fw, by0 = fh, bx1 = -1, by1 = -1;
+        int r = 0;
+        while(r < 4)
         {
-            int y = 0;
-            while(y < 24) { int x = 0; while(x < 16) { trainer.setPixel(c * 16 + x, r * 24 + y, cell.pixel(x, y)); ++x; } ++y; }
-            ++c;
+            int c = 0;
+            while(c < 3)
+            {
+                int x0, y0, x1, y1;
+                if(alphaBox(ow.copy(c * fw, r * fh, fw, fh), x0, y0, x1, y1))
+                {
+                    if(x0 < bx0) bx0 = x0; if(y0 < by0) by0 = y0;
+                    if(x1 > bx1) bx1 = x1; if(y1 > by1) by1 = y1;
+                }
+                ++c;
+            }
+            ++r;
         }
-        ++r;
+        if(bx1 < bx0) { bx0 = 0; by0 = 0; bx1 = fw - 1; by1 = fh - 1; }
+        // Tuxemon row (front,left,right,back) -> CC row (up,right,down,left)
+        const int ccRowOfTux[4] = {2, 3, 1, 0};
+        r = 0;
+        while(r < 4)
+        {
+            int c = 0;
+            while(c < 3)
+            {
+                QImage frame = ow.copy(c * fw + bx0, r * fh + by0, bx1 - bx0 + 1, by1 - by0 + 1);
+                QImage s = frame;
+                if(s.width() > 16 || s.height() > 24)
+                    s = s.scaled(16, 24, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                const int ox = (16 - s.width()) / 2;
+                const int oy = 24 - s.height(); // feet on the tile
+                const int rr = ccRowOfTux[r];
+                int y = 0;
+                while(y < s.height())
+                {
+                    int x = 0;
+                    while(x < s.width())
+                    {
+                        trainer.setPixel(c * 16 + ox + x, rr * 24 + oy + y, s.pixel(x, y));
+                        ++x;
+                    }
+                    ++y;
+                }
+                ++c;
+            }
+            ++r;
+        }
     }
     trainer.save(base + "trainer.png", "PNG");
     trainer.save(base + "swim.png", "PNG");
 
-    // front/back : a battle frame fit to 80x80.
-    QImage bf = battle;
+    // front/back : the Tuxemon combat sheet is two frames side by side,
+    // LEFT = back, RIGHT = front (tuxemon/entity/sheet.py CombatSheet).
+    QImage frontSrc = battle;
+    QImage backSrc = battle;
     if(!battle.isNull() && battle.width() >= battle.height() * 3 / 2)
-        bf = battle.copy(0, 0, battle.width() / 2, battle.height());
-    bf = cropAlpha(bf);
-    const QImage front = fit(bf, 80, 80);
-    front.save(base + "front.png", "PNG");
-    front.mirrored(true, false).save(base + "back.png", "PNG");
+    {
+        backSrc = battle.copy(0, 0, battle.width() / 2, battle.height());
+        frontSrc = battle.copy(battle.width() / 2, 0, battle.width() - battle.width() / 2, battle.height());
+    }
+    fit(cropAlpha(frontSrc), 80, 80).save(base + "front.png", "PNG");
+    fit(cropAlpha(backSrc), 80, 80).save(base + "back.png", "PNG");
 
     ++generated_;
     return true;
