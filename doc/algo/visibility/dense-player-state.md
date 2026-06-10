@@ -1,4 +1,14 @@
-# DensePlayerState — 32-bit packed slot state for min_network()
+# DensePlayerState — packed slot state for min_network()
+
+**Build flag:** the packed 32-bit layout described below is OPT-IN via
+`-DCATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID` (see general/DEFINES.md).
+The DEFAULT build keeps the 8-byte `{db_id, xyd}` pair with the FULL
+32-bit database id, so "a different character replaced this slot" is
+detected exactly. Both layouts live in DensePlayerState.hpp behind the
+same inline helpers (set/setEmpty/isEmpty/isEqual/isSameCharacter/
+wireChangeWord/getX/getY); min_network() itself is layout-agnostic.
+The benchmark champion tracks the default layout; benchmark the
+truncated one by adding the define to the harness build.
 
 `MapVisibilityAlgorithm::min_network()` (server/base/MapManagement) sends
 each recipient only the players that changed since the last tick. That

@@ -54,21 +54,13 @@
 
 using namespace CatchChallenger;
 
-//Pack one map slot into a single 32-bit word: x | y<<8 | direction<<16 |
-//(database_id low byte)<<24 — see DensePlayerState.hpp for the layout and the
-//db-id truncation tradeoff. Endian-neutral: composed with shifts and the bytes
-//are re-extracted with shifts when written to the wire, never type-punned.
-static inline uint32_t packDense(const COORD_TYPE &x,const COORD_TYPE &y,const Direction &direction,const uint32_t &database_id)
-{
-    return (uint32_t)x | ((uint32_t)y<<8) | ((uint32_t)direction<<16) | ((database_id&0xff)<<24);
-}
-
 //tempDenseBuffer (the per-tick snapshot) and ClientWithMap::sendedStatus (the
 //per-recipient last-sent state) are the SAME DensePlayerState type, so the
-//diff loop compares a slot as one 32-bit word and the sent-state is refreshed
-//with a single flat memcpy of the dense snapshot.
-static_assert(sizeof(DensePlayerState)==4,
-              "DensePlayerState must be exactly one 32-bit word per slot");
+//diff loop compares a slot with one isEqual() and the sent-state is refreshed
+//with a single flat memcpy of the dense snapshot. The slot layout (full
+//8-byte db id, or 4-byte truncated via
+//CATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID) lives entirely in
+//DensePlayerState.hpp — this file only uses its inline helpers.
 
 //to prevent allocate memory
 char MapVisibilityAlgorithm::tempBigBufferForChanges[];
@@ -330,11 +322,11 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
             #ifdef CATCHCHALLENGER_TESTING
             assertXYInRange(c.getX(),c.getY(),"min_network_dense_build");
             #endif
-            tempDenseBuffer[dense_idx].whole=packDense(c.getX(),c.getY(),c.getLastDirection(),c.getPlayerId());
+            tempDenseBuffer[dense_idx].set(c.getX(),c.getY(),static_cast<uint8_t>(c.getLastDirection()),c.getPlayerId());
         }
         else
         {
-            tempDenseBuffer[dense_idx].whole=0xffffffff;//empty slot marker
+            tempDenseBuffer[dense_idx].setEmpty();
         }
         dense_idx++;
     }
@@ -371,8 +363,8 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                         }
                         clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                         //populate sendedStatus from the shared dense buffer (current state).
-                        //The new sent-state IS the dense snapshot; empty slots carry
-                        //whole==0xffffffff. memcpy is internally vectorised.
+                        //The new sent-state IS the dense snapshot; empty slots carry the
+                        //canonical setEmpty() marker. memcpy is internally vectorised.
                         clientWithMap.sendedStatus.resize(dense_size);
                         if(dense_size>0)
                             memcpy(clientWithMap.sendedStatus.data(),tempDenseBuffer,dense_size*sizeof(DensePlayerState));
@@ -410,32 +402,31 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             //slot is within sendedStatus range -> can compare with last-sent state
                             if(index<ss_size)
                             {
-                                const uint32_t sent_w=clientWithMap.sendedStatus[index].whole;
-                                const uint32_t dense_w=tempDenseBuffer[index].whole;
-                                if(dense_w==sent_w)
+                                const DensePlayerState &sent=clientWithMap.sendedStatus[index];
+                                const DensePlayerState &dense=tempDenseBuffer[index];
+                                if(dense.isEqual(sent))
                                 {
-                                }//no change, nothing to send: ONE 32-bit compare covers
-                                 //x+y+direction+db-id-low-byte AND the empty==empty case
+                                }//no change, nothing to send: one compare covers
+                                 //x+y+direction+db-id AND the empty==empty case
+                                 //(setEmpty() is canonical)
                                 else
                                 {
                                     //slot emptied since last send -> 0x69 remove entry.
-                                    //(sent_w!=dense_w here, so the recipient still has a
+                                    //(dense!=sent here, so the recipient still has a
                                     //player in this slot; the already-removed-last-tick
                                     //case is swallowed by the equality fast path above.)
-                                    if(dense_w==0xffffffff)
+                                    if(dense.isEmpty())
                                     {
                                         MapVisibilityAlgorithm::tempBigBufferForRemove[1+4+1+removeCount]=static_cast<uint8_t>(index);
                                         removeCount++;
                                     }
                                     //slot was empty at last send, or a DIFFERENT character
-                                    //moved in (db-id low byte differs) -> full re-insert.
-                                    //The empty checks MUST run before the db-byte compare:
-                                    //the empty marker's high byte is 0xff, which a live id
-                                    //ending in 0xff would alias.
-                                    else if(sent_w==0xffffffff || ((dense_w^sent_w)&0xff000000)!=0)
+                                    //moved in -> full re-insert. The empty checks MUST run
+                                    //before isSameCharacter(): see DensePlayerState.hpp.
+                                    else if(sent.isEmpty() || !dense.isSameCharacter(sent))
                                     {
                                         #ifdef CATCHCHALLENGER_TESTING
-                                        assertXYInRange(static_cast<COORD_TYPE>(dense_w),static_cast<COORD_TYPE>(dense_w>>8),"min_network_path2_replaced");
+                                        assertXYInRange(dense.getX(),dense.getY(),"min_network_path2_replaced");
                                         #endif
                                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;//local slot
                                         posOutput+=1;
@@ -446,16 +437,15 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                     else
                                     {
                                         #ifdef CATCHCHALLENGER_TESTING
-                                        assertXYInRange(static_cast<COORD_TYPE>(dense_w),static_cast<COORD_TYPE>(dense_w>>8),"min_network_path2_change");
+                                        assertXYInRange(dense.getX(),dense.getY(),"min_network_path2_change");
                                         #endif
-                                        //only send partial changes: slot + x + y + direction (4 bytes per entry).
-                                        //The 0x66 wire entry is the byte sequence [slot][x][y][direction];
-                                        //compose it in a register from the packed word (slot | x<<8 | y<<16 |
-                                        //direction<<24 = slot | (dense_w low 24 bits)<<8) and flush with ONE
-                                        //32-bit little-endian store instead of 4 byte stores. htole32+memcpy
-                                        //keeps it endian-neutral, no integer punning.
+                                        //only send partial changes: slot + x + y + direction (4 bytes per
+                                        //entry). The 0x66 wire entry is the byte sequence
+                                        //[slot][x][y][direction]; compose it in a register
+                                        //(wireChangeWord) and flush with ONE 32-bit little-endian store
+                                        //instead of 4 byte stores. htole32+memcpy keeps it endian-neutral.
                                         char *ce=MapVisibilityAlgorithm::tempBigBufferForChanges+(1+4+1)+changesCount*(1+1+1+1);
-                                        {const uint32_t _tmp_le=(htole32(((dense_w&0x00ffffff)<<8)|index));memcpy(ce,&_tmp_le,sizeof(_tmp_le));}
+                                        {const uint32_t _tmp_le=(htole32(dense.wireChangeWord(static_cast<uint8_t>(index))));memcpy(ce,&_tmp_le,sizeof(_tmp_le));}
                                         changesCount++;
                                     }
                                 }
@@ -464,7 +454,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                             else
                             {
                                 const DensePlayerState &dense=tempDenseBuffer[index];
-                                if(dense.whole!=0xffffffff)
+                                if(!dense.isEmpty())
                                 {
                                     //new player in a slot we haven't seen before -> full insert
                                     {

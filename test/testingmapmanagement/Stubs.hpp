@@ -47,8 +47,9 @@
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-// The REAL packed sendedStatus slot type (one uint32_t per slot) shared
-// with MapVisibilityAlgorithm::tempDenseBuffer — dependency-free header,
+// The REAL sendedStatus slot type shared with MapVisibilityAlgorithm::
+// tempDenseBuffer (layout toggled by
+// CATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID) — dependency-free header,
 // so the stub ClientWithMap uses the production type instead of keeping
 // a drift-prone mirror.
 #include "../../server/base/MapManagement/DensePlayerState.hpp"
@@ -176,7 +177,7 @@ private:
 class ClientWithMap : public Client
 {
 public:
-    //same packed one-uint32_t-per-slot type as production sendedStatus
+    //same slot type as production sendedStatus
     //(see DensePlayerState.hpp include above)
     std::vector<DensePlayerState> sendedStatus;
     CATCHCHALLENGER_TYPE_MAPID sendedMap;
