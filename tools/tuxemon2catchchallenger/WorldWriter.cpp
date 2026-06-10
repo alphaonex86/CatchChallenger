@@ -2,9 +2,12 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QProcess>
 #include <QString>
 #include <QStringList>
+#include <QImage>
+#include <QPainter>
 
 #include <fstream>
 #include <iostream>
@@ -107,6 +110,8 @@ void WorldWriter::writeReputation()
     std::ofstream o(outRoot_ + "/player/reputation.xml");
     o << "<reputations>\n";
     o << "    <reputation type=\"nation\">\n";
+    o << "        <name>Nation</name>\n";
+    o << "        <name lang=\"fr\">Nation</name>\n";
     o << "        <level point=\"-500\"><text>Outlaw</text></level>\n";
     o << "        <level point=\"-100\"><text>Suspect</text></level>\n";
     o << "        <level point=\"0\"><text>Citizen</text></level>\n";
@@ -139,6 +144,89 @@ void WorldWriter::writeLayers(int captureItemId)
     o << "    <monstersCollision monsterType=\"cave\" background=\"fight/cave/\" type=\"walkOn\"/>\n";
     o << "    <monstersCollision item=\"" << captureItemId << "\" tile=\"swim\" background=\"fight/water/\" layer=\"Water\" type=\"walkOn\" monsterType=\"water\"/>\n";
     o << "</layers>\n";
+}
+
+void WorldWriter::writeVisualCategory()
+{
+    QDir().mkpath(QString::fromStdString(outRoot_ + "/map"));
+    std::ofstream o(outRoot_ + "/map/visualcategory.xml");
+    o << "<visual>\n";
+    o << "    <category id=\"indoor\"/>\n";
+    o << "    <category id=\"outdoor\">\n";
+    o << "        <event id=\"day\" value=\"night\" color=\"#000099\" alpha=\"50\"/>\n";
+    o << "    </category>\n";
+    o << "    <category id=\"city\">\n";
+    o << "        <event id=\"day\" value=\"night\" color=\"#000099\" alpha=\"50\"/>\n";
+    o << "    </category>\n";
+    o << "    <category id=\"cave\" color=\"#000000\" alpha=\"60\"/>\n";
+    o << "</visual>\n";
+}
+
+// Pick a Tuxemon combat background for a terrain, falling back to any *.png.
+static QString pickCombatBg(const QString &combatDir, const QStringList &preferred)
+{
+    int i = 0;
+    while(i < preferred.size())
+    {
+        const QString p = combatDir + "/" + preferred.at(i);
+        if(QFile::exists(p))
+            return p;
+        ++i;
+    }
+    QDir d(combatDir);
+    QStringList f;
+    f << "*_background.png" << "*.png";
+    const QStringList all = d.entryList(f, QDir::Files, QDir::Name);
+    if(!all.isEmpty())
+        return combatDir + "/" + all.first();
+    return QString();
+}
+
+// A soft semi-transparent ellipse used as a battle platform placeholder.
+static void writePlatform(const QString &path, int w, int h)
+{
+    QImage img(w, h, QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    QPainter p(&img);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setPen(Qt::NoPen);
+    p.setBrush(QColor(0, 0, 0, 70));
+    p.drawEllipse(2, 2, w - 4, h - 4);
+    p.end();
+    img.save(path, "PNG");
+}
+
+void WorldWriter::writeFightBackgrounds()
+{
+    const QString combat = QString::fromStdString(modRoot_ + "/gfx/ui/combat");
+    // (terrain folder, preferred Tuxemon background names)
+    struct Bg { const char *dir; QStringList pref; };
+    Bg terrains[] = {
+        {"grass",      QStringList() << "grass_background.png" << "forest_background.png" << "meadow_background.png"},
+        {"grassnight", QStringList() << "grass_background.png" << "forest_background.png"},
+        {"cave",       QStringList() << "cave_background.png" << "cavern_background.png"},
+        {"water",      QStringList() << "beach_background.png" << "ocean_background.png" << "lake_background.png"},
+    };
+    int i = 0;
+    while(i < 4)
+    {
+        const std::string dir = outRoot_ + "/map/fight/" + terrains[i].dir;
+        QDir().mkpath(QString::fromStdString(dir));
+        const QString bg = pickCombatBg(combat, terrains[i].pref);
+        if(!bg.isEmpty())
+        {
+            const QString dst = QString::fromStdString(dir) + "/background.png";
+            QFile::remove(dst);
+            QFile::copy(bg, dst);
+        }
+        writePlatform(QString::fromStdString(dir) + "/plateform-background.png", 160, 48);
+        writePlatform(QString::fromStdString(dir) + "/plateform-front.png", 160, 48);
+        ++i;
+    }
+    // grass also has a foreground overlay in the official datapack
+    QImage fg(16, 16, QImage::Format_ARGB32);
+    fg.fill(Qt::transparent);
+    fg.save(QString::fromStdString(outRoot_ + "/map/fight/grass/foreground.png"), "PNG");
 }
 
 // ffmpeg-transcode one Tuxemon track to opus (best effort).
@@ -244,6 +332,8 @@ void WorldWriter::writeAll()
     writeReputation();
     writeEvent();
     writeLayers(captureItem);
+    writeVisualCategory();
+    writeFightBackgrounds();
     writeMusic();
     writeRegionInfo();
     writeRegionStart();

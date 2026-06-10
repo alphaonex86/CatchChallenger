@@ -34,6 +34,8 @@ private:
     void writeReputation();
     void writeEvent();
     void writeLayers(int captureItemId);
+    void writeVisualCategory();
+    void writeFightBackgrounds();
     void writeMusic();
     void writeRegionInfo();
     void writeRegionStart();
