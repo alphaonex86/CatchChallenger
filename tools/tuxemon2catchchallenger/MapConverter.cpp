@@ -136,40 +136,116 @@ static bool anyTile(const std::vector<uint32_t> &g)
     return false;
 }
 
-// ── tileset copy ────────────────────────────────────────────────────────────
-void MapConverter::copyTileset(const std::string &tsxBasename)
+// ── tileset filename sanitisation ────────────────────────────────────────────
+// Datapack files are synced/checksummed only when their path is [a-z0-9._/-]
+// (FacilityLibGeneral::getSuffixAndValidatePathFromFS).  Tuxemon tileset files
+// have uppercase/spaces/punctuation, so rename them to a valid form.
+static std::string sanitizeFsBase(const std::string &name)
 {
-    if(copiedTilesets_.find(tsxBasename) != copiedTilesets_.end())
-        return;
-    copiedTilesets_.insert(tsxBasename);
+    const std::size_t dot = name.rfind('.');
+    const std::string base = dot == std::string::npos ? name : name.substr(0, dot);
+    const std::string ext  = dot == std::string::npos ? std::string() : name.substr(dot + 1);
+    std::string out;
+    std::size_t i = 0;
+    while(i < base.size())
+    {
+        char c = base[i];
+        if(c >= 'A' && c <= 'Z') c = (char)(c - 'A' + 'a');
+        if((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-')
+            out.push_back(c);
+        else
+            out.push_back('_');
+        ++i;
+    }
+    if(out.empty()) out = "t";
+    std::string e;
+    i = 0;
+    while(i < ext.size()) { char c = ext[i]; if(c >= 'A' && c <= 'Z') c = (char)(c - 'A' + 'a'); if(c >= 'a' && c <= 'z') e.push_back(c); ++i; }
+    return e.empty() ? out : out + "." + e;
+}
+
+std::string MapConverter::uniqueTilesetFile(const std::string &origBasename)
+{
+    std::string san = sanitizeFsBase(origBasename);
+    if(usedTilesetFiles_.find(san) == usedTilesetFiles_.end())
+    {
+        usedTilesetFiles_.insert(san);
+        return san;
+    }
+    const std::size_t dot = san.rfind('.');
+    const std::string base = dot == std::string::npos ? san : san.substr(0, dot);
+    const std::string ext  = dot == std::string::npos ? std::string() : san.substr(dot);
+    int n = 2;
+    while(true)
+    {
+        const std::string cand = base + "-" + std::to_string(n) + ext;
+        if(usedTilesetFiles_.find(cand) == usedTilesetFiles_.end())
+        {
+            usedTilesetFiles_.insert(cand);
+            return cand;
+        }
+        ++n;
+    }
+}
+
+// Copy one referenced image (resolved against baseDir) under a sanitised name,
+// deduped by original basename; returns the written name.
+static std::string copyImageSan(const std::string &baseDir, const std::string &srcRel,
+                                const std::string &tilesetDir,
+                                std::unordered_map<std::string,std::string> &imgSan,
+                                MapConverter *self,
+                                std::string (MapConverter::*uniq)(const std::string&))
+{
+    const std::string orig = QFileInfo(QString::fromUtf8(srcRel.c_str())).fileName().toStdString();
+    std::unordered_map<std::string,std::string>::const_iterator it = imgSan.find(orig);
+    if(it != imgSan.end())
+        return it->second;
+    const std::string san = (self->*uniq)(orig);
+    imgSan[orig] = san;
+    const QString from = QString::fromStdString(baseDir) + "/" + QString::fromUtf8(srcRel.c_str());
+    const QString to = QString::fromStdString(tilesetDir) + "/" + QString::fromStdString(san);
+    QFile::remove(to);
+    QFile::copy(QFileInfo(from).absoluteFilePath(), to);
+    return san;
+}
+
+// ── tileset copy ────────────────────────────────────────────────────────────
+std::string MapConverter::copyTileset(const std::string &tsxBasename)
+{
+    std::unordered_map<std::string,std::string>::const_iterator done = tsxSan_.find(tsxBasename);
+    if(done != tsxSan_.end())
+        return done->second;
 
     const std::string srcTsx = modRoot_ + "/gfx/tilesets/" + tsxBasename;
     tinyxml2::XMLDocument doc;
     if(doc.LoadFile(srcTsx.c_str()) != tinyxml2::XML_SUCCESS)
     {
         std::cerr << "  warning: cannot read tileset " << srcTsx << std::endl;
-        return;
+        tsxSan_[tsxBasename] = std::string();
+        return std::string();
     }
     tinyxml2::XMLElement *ts = doc.RootElement();
     if(ts == NULL)
-        return;
+    {
+        tsxSan_[tsxBasename] = std::string();
+        return std::string();
+    }
 
     QDir().mkpath(QString::fromStdString(tilesetDir_));
+    const std::string sanTsx = uniqueTilesetFile(tsxBasename);
+    tsxSan_[tsxBasename] = sanTsx;
+    const std::string imgBaseDir = modRoot_ + "/gfx/tilesets";
 
-    // Copy every referenced image (single <image> and per-tile <image>),
-    // rewriting the source attribute to the bare basename next to the .tsx.
+    // Copy every referenced image (single <image> and per-tile <image>) under a
+    // sanitised name and point the source at it.
     tinyxml2::XMLElement *img = ts->FirstChildElement("image");
     while(img != NULL)
     {
         const char *src = img->Attribute("source");
         if(src != NULL)
         {
-            const QString base = QFileInfo(QString::fromUtf8(src)).fileName();
-            const QString from = QString::fromStdString(modRoot_ + "/gfx/tilesets/") + QString::fromUtf8(src);
-            const QString to = QString::fromStdString(tilesetDir_) + "/" + base;
-            QFile::remove(to);
-            QFile::copy(QFileInfo(from).absoluteFilePath(), to);
-            img->SetAttribute("source", base.toStdString().c_str());
+            const std::string san = copyImageSan(imgBaseDir, src, tilesetDir_, imgSan_, this, &MapConverter::uniqueTilesetFile);
+            img->SetAttribute("source", san.c_str());
         }
         img = img->NextSiblingElement("image");
     }
@@ -182,19 +258,16 @@ void MapConverter::copyTileset(const std::string &tsxBasename)
             const char *src = ti->Attribute("source");
             if(src != NULL)
             {
-                const QString base = QFileInfo(QString::fromUtf8(src)).fileName();
-                const QString from = QString::fromStdString(modRoot_ + "/gfx/tilesets/") + QString::fromUtf8(src);
-                const QString to = QString::fromStdString(tilesetDir_) + "/" + base;
-                QFile::remove(to);
-                QFile::copy(QFileInfo(from).absoluteFilePath(), to);
-                ti->SetAttribute("source", base.toStdString().c_str());
+                const std::string san = copyImageSan(imgBaseDir, src, tilesetDir_, imgSan_, this, &MapConverter::uniqueTilesetFile);
+                ti->SetAttribute("source", san.c_str());
             }
             ti = ti->NextSiblingElement("image");
         }
         tile = tile->NextSiblingElement("tile");
     }
 
-    doc.SaveFile((tilesetDir_ + "/" + tsxBasename).c_str());
+    doc.SaveFile((tilesetDir_ + "/" + sanTsx).c_str());
+    return sanTsx;
 }
 
 std::string MapConverter::materializeInline(void *tilesetElement, const std::string &mapDirAbs)
@@ -205,30 +278,28 @@ std::string MapConverter::materializeInline(void *tilesetElement, const std::str
     if(name == NULL || img == NULL || img->Attribute("source") == NULL)
         return std::string();
 
-    const std::string tsxBase = std::string(name) + ".tsx";
-    const QString imgSrc = QString::fromUtf8(img->Attribute("source"));
-    const QString imgBase = QFileInfo(imgSrc).fileName();
+    // dedup by the inline tileset's own (original) name
+    const std::string origKey = std::string("inline:") + name;
+    std::unordered_map<std::string,std::string>::const_iterator done = tsxSan_.find(origKey);
+    if(done != tsxSan_.end())
+        return done->second;
 
-    if(copiedTilesets_.find(tsxBase) == copiedTilesets_.end())
-    {
-        copiedTilesets_.insert(tsxBase);
-        QDir().mkpath(QString::fromStdString(tilesetDir_));
-        // image source is relative to the source map's directory
-        const QString from = QString::fromStdString(mapDirAbs) + "/" + imgSrc;
-        const QString to = QString::fromStdString(tilesetDir_) + "/" + imgBase;
-        QFile::remove(to);
-        QFile::copy(QFileInfo(from).absoluteFilePath(), to);
+    const std::string imgSrc = img->Attribute("source");
+    QDir().mkpath(QString::fromStdString(tilesetDir_));
+    const std::string sanTsx = uniqueTilesetFile(std::string(name) + ".tsx");
+    tsxSan_[origKey] = sanTsx;
+    // image source is relative to the source map's directory
+    const std::string sanImg = copyImageSan(mapDirAbs, imgSrc, tilesetDir_, imgSan_, this, &MapConverter::uniqueTilesetFile);
 
-        std::ofstream t(tilesetDir_ + "/" + tsxBase);
-        t << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        t << "<tileset version=\"1.10\" name=\"" << name << "\" tilewidth=\""
-          << ts->IntAttribute("tilewidth", 16) << "\" tileheight=\"" << ts->IntAttribute("tileheight", 16)
-          << "\" tilecount=\"" << ts->IntAttribute("tilecount") << "\" columns=\"" << ts->IntAttribute("columns") << "\">\n";
-        t << " <image source=\"" << imgBase.toStdString() << "\" width=\"" << img->IntAttribute("width")
-          << "\" height=\"" << img->IntAttribute("height") << "\"/>\n";
-        t << "</tileset>\n";
-    }
-    return tsxBase;
+    std::ofstream t(tilesetDir_ + "/" + sanTsx);
+    t << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    t << "<tileset version=\"1.10\" name=\"" << name << "\" tilewidth=\""
+      << ts->IntAttribute("tilewidth", 16) << "\" tileheight=\"" << ts->IntAttribute("tileheight", 16)
+      << "\" tilecount=\"" << ts->IntAttribute("tilecount") << "\" columns=\"" << ts->IntAttribute("columns") << "\">\n";
+    t << " <image source=\"" << sanImg << "\" width=\"" << img->IntAttribute("width")
+      << "\" height=\"" << img->IntAttribute("height") << "\"/>\n";
+    t << "</tileset>\n";
+    return sanTsx;
 }
 
 // Read an object's <properties> into a flat name->value map.
@@ -512,8 +583,9 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         if(src != NULL)
         {
             const std::string base = QFileInfo(QString::fromUtf8(src)).fileName().toStdString();
-            tilesets.push_back(std::make_pair(firstgid, base));
-            copyTileset(base);
+            const std::string san = copyTileset(base);
+            if(!san.empty())
+                tilesets.push_back(std::make_pair(firstgid, san));
         }
         else
         {
@@ -617,6 +689,16 @@ bool MapConverter::convertOne(const std::string &tmxPath)
                         wp.dest = dest;
                         wp.dx = QString::fromStdString(a[2]).toInt();
                         wp.dy = QString::fromStdString(a[3]).toInt();
+                        // clamp destination into the target map (Tuxemon source
+                        // sometimes points past the edge -> engine "out of range")
+                        std::unordered_map<std::string,std::pair<int,int> >::const_iterator dim = mapDims_.find(dest);
+                        if(dim != mapDims_.end())
+                        {
+                            if(wp.dx >= dim->second.first)  wp.dx = dim->second.first - 1;
+                            if(wp.dy >= dim->second.second) wp.dy = dim->second.second - 1;
+                        }
+                        if(wp.dx < 0) wp.dx = 0;
+                        if(wp.dy < 0) wp.dy = 0;
                         warps.push_back(wp);
                     }
                     else if(verb == "random_encounter" && !a.empty())
@@ -838,10 +920,17 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     if(!warps.empty())
     {
         o << " <objectgroup name=\"Moving\">\n";
+        std::vector<std::pair<int,int> > seenWarp; // dedup by source tile
         std::size_t wi = 0;
         while(wi < warps.size())
         {
             const Warp &wp = warps[wi];
+            const std::pair<int,int> key(wp.srcTx, wp.srcTy);
+            bool dup = false;
+            std::size_t q = 0;
+            while(q < seenWarp.size()) { if(seenWarp[q] == key) dup = true; ++q; }
+            if(dup) { ++wi; continue; }
+            seenWarp.push_back(key);
             const int px = wp.srcTx * 16;
             const int py = (wp.srcTy + 1) * 16; // loader does y/16 - 1
             o << "  <object type=\"teleport on it\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
@@ -937,6 +1026,22 @@ int MapConverter::convertAll()
     QStringList filters;
     filters << "*.tmx";
     const QFileInfoList files = mdir.entryInfoList(filters, QDir::Files, QDir::Name);
+
+    // pre-pass: record every map's size so warp destinations can be clamped
+    int pi = 0;
+    while(pi < files.size())
+    {
+        const std::string slug = files.at(pi).completeBaseName().toStdString();
+        tinyxml2::XMLDocument d;
+        if(d.LoadFile(files.at(pi).absoluteFilePath().toStdString().c_str()) == tinyxml2::XML_SUCCESS)
+        {
+            tinyxml2::XMLElement *r = d.RootElement();
+            if(r != NULL)
+                mapDims_[slug] = std::make_pair((int)r->IntAttribute("width"), (int)r->IntAttribute("height"));
+        }
+        ++pi;
+    }
+
     int ok = 0, fail = 0;
     int i = 0;
     while(i < files.size())
@@ -948,7 +1053,7 @@ int MapConverter::convertAll()
         ++i;
     }
     std::cerr << "Maps: " << ok << " converted, " << fail << " skipped; "
-              << copiedTilesets_.size() << " tilesets, " << warpsTotal_ << " warps, "
+              << usedTilesetFiles_.size() << " tileset files, " << warpsTotal_ << " warps, "
               << collisionCells_ << " collision cells, " << encounterZones_ << " maps with encounters, "
               << botsTotal_ << " bots." << std::endl;
     return ok;
