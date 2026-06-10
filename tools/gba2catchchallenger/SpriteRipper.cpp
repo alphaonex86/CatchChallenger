@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-SpriteRipper::SpriteRipper() : frontTable_(0), backTable_(0), paletteTable_(0) {}
+SpriteRipper::SpriteRipper() : frontTable_(0), backTable_(0), paletteTable_(0), itemIconTable_(0) {}
 
 // Does the ROM pointer stored at file offset ptrFieldOffset target an LZ77
 // header (0x10)?  (GbaRom::pointer reads the pointer AT the given file offset.)
@@ -40,6 +40,30 @@ static uint32_t findPicTable(const GbaRom &rom, uint32_t tagOff, uint32_t startA
     return 0;
 }
 
+// gItemIconTable: a run of {u32 image->LZ77, u32 palette ptr} pairs.  Several
+// shorter coincidental runs exist, so pick the LONGEST (the real ~376-entry one).
+static uint32_t findItemIconTable(const GbaRom &rom)
+{
+    uint32_t best = 0, bestRun = 0;
+    uint32_t o = 0;
+    while(o + 8 <= rom.size())
+    {
+        uint32_t run = 0, p = o;
+        while(p + 8 <= rom.size())
+        {
+            bool a = false, b = false;
+            const uint32_t img = rom.pointer(p, &a);
+            const uint32_t pal = rom.pointer(p + 4, &b);
+            if(a && b && img < rom.size() && rom.u8(img) == 0x10)
+            { ++run; p += 8; }
+            else break;
+        }
+        if(run > bestRun) { bestRun = run; best = o; }
+        o += (run > 0) ? run * 8 : 4;   // skip past a run we already scored
+    }
+    return bestRun >= 100 ? best : 0;
+}
+
 bool SpriteRipper::locate(const GbaRom &rom)
 {
     frontTable_ = findPicTable(rom, 6, 0);                       // {ptr,u16 size,u16 tag}
@@ -47,9 +71,66 @@ bool SpriteRipper::locate(const GbaRom &rom)
     // back table: the next front-like table after the front one
     if(frontTable_ != 0)
         backTable_ = findPicTable(rom, 6, frontTable_ + 8);
+    itemIconTable_ = findItemIconTable(rom);
     std::cerr << "SpriteRipper: front=" << std::hex << frontTable_ << " back=" << backTable_
-              << " palette=" << paletteTable_ << std::dec << std::endl;
+              << " palette=" << paletteTable_ << " itemIcons=" << itemIconTable_ << std::dec << std::endl;
     return frontTable_ != 0 && paletteTable_ != 0;
+}
+
+// Decode a 4bpp GBA tile image (cols x rows tiles) + 16-colour BGR555 palette.
+static QImage decodeTiles(const std::vector<uint8_t> &tiles, const std::vector<uint8_t> &pal, int cols, int rows)
+{
+    QImage img(cols * 8, rows * 8, QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    if(pal.size() < 32)
+        return img;
+    QRgb colors[16];
+    int i = 0;
+    while(i < 16)
+    {
+        const uint16_t c = (uint16_t)(pal[i * 2] | (pal[i * 2 + 1] << 8));
+        colors[i] = (i == 0) ? qRgba(0, 0, 0, 0)
+                  : qRgba((c & 0x1F) * 255 / 31, ((c >> 5) & 0x1F) * 255 / 31, ((c >> 10) & 0x1F) * 255 / 31, 255);
+        ++i;
+    }
+    const int nt = cols * rows;
+    int tile = 0;
+    while(tile < nt && (std::size_t)(tile + 1) * 32 <= tiles.size())
+    {
+        const int tx = (tile % cols) * 8, ty = (tile / cols) * 8;
+        int py = 0;
+        while(py < 8) { int px = 0; while(px < 8) {
+            const uint8_t byte = tiles[(std::size_t)tile * 32 + py * 4 + px / 2];
+            img.setPixel(tx + px, ty + py, colors[(px & 1) ? (byte >> 4) : (byte & 0xF)]); ++px; } ++py; }
+        ++tile;
+    }
+    return img;
+}
+
+bool SpriteRipper::writeItemIcon(const GbaRom &rom, const std::string &outRoot, int itemId) const
+{
+    if(itemIconTable_ == 0)
+        return false;
+    bool a = false, b = false;
+    const uint32_t imgPtr = rom.pointer(itemIconTable_ + (uint32_t)itemId * 8, &a);
+    const uint32_t palPtr = rom.pointer(itemIconTable_ + (uint32_t)itemId * 8 + 4, &b);
+    if(!a || !b)
+        return false;
+    const std::vector<uint8_t> tiles = rom.lz77(imgPtr);
+    std::vector<uint8_t> pal = rom.lz77(palPtr);
+    if(pal.size() < 32) {                 // palette may be a raw 32-byte block
+        pal.clear();
+        const uint8_t *p = rom.raw(palPtr, 32);
+        if(p != NULL) { int k = 0; while(k < 32) { pal.push_back(p[k]); ++k; } }
+    }
+    if(tiles.empty() || pal.size() < 32)
+        return false;
+    // item icons are 24x24 stored in a 32x32 (4x4 tile) OBJ; decode + crop
+    const QImage full = decodeTiles(tiles, pal, 4, 4);
+    QImage icon = full.copy(0, 0, 24, 24);
+    const std::string dir = outRoot + "/items";
+    QDir().mkpath(QString::fromStdString(dir));
+    return icon.save(QString::fromStdString(dir) + "/icon-" + QString::number(itemId) + ".png", "PNG");
 }
 
 // Decode a 64x64 4bpp GBA tile image + 16-colour BGR555 palette into ARGB32.

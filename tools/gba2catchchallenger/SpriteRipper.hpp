@@ -21,10 +21,16 @@ public:
     // Returns false when the sprite can't be decoded.
     bool writeSpecies(const GbaRom &rom, const std::string &outRoot, int speciesId) const;
 
+    // Write an item icon to <outRoot>/items/icon-<itemId>.png (gItemIconTable:
+    // {u32 image->LZ77, u32 palette->LZ77} pairs).  False if not decodable.
+    bool writeItemIcon(const GbaRom &rom, const std::string &outRoot, int itemId) const;
+    bool haveItemIcons() const { return itemIconTable_ != 0; }
+
 private:
     uint32_t frontTable_;   // gMonFrontPicTable ({u32 data,u16 size,u16 tag})
     uint32_t backTable_;    // gMonBackPicTable (same layout); 0 => mirror front
     uint32_t paletteTable_; // gMonPaletteTable ({u32 data,u16 tag,u16})
+    uint32_t itemIconTable_;// gItemIconTable ({u32 image,u32 palette} pairs)
 };
 
 #endif // GBA2CC_SPRITERIPPER_HPP
