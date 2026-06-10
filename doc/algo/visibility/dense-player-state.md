@@ -92,8 +92,20 @@ Baseline: champion bc24abf4-era (8-byte slot pair). Candidates
   node-rows, callgrind instructions +7..+13%. The byte view re-loads
   bytes from memory for the db compare and the wire write; the shift
   version derives everything from the word already in a register.
-* **SIMD** (SSE2 skip-equal prescan): +41% slower — double-reads the
-  arrays; see benchmark history. Data layout beats SIMD here.
+* **SIMD prescan, re-tested on the packed 32-bit layout** (2026-06-10,
+  owner-set 40%-movers workload, byte-identical output verified): SSE2
+  4-slot group-equal skip −4..−6%, the same prescan via generic
+  constant-size memcmp(16) −7..−15% — both SLOWER than the scalar
+  isEqual() loop. At 40% movement a 4-slot group is all-equal only
+  0.6^4≈13% of the time: the prescan pays its compare on ~87% of groups
+  then walks them scalar anyway, plus a badly-predicted branch. A skip
+  strategy needs <~15% movement to break even. (The original 8-byte
+  layout SSE2 prescan was +41% slower; the layout improved the ratio
+  but not the sign.)
+* **Whole-snapshot memcmp gate per recipient** (skip the diff when
+  nothing changed): −3..−12% at 40% movers — it only hits when NO
+  player moved (probability 0.6^N ≈ never for N≥5), so on ~every tick
+  it is a pure second scan on top of the diff.
 * **Collapsing the per-recipient diff into one shared broadcast**:
   rejected by design — that is what min_CPU is for; min_network exists
   to minimise network per recipient.

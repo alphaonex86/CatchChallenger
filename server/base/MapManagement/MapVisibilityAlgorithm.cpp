@@ -61,6 +61,16 @@ using namespace CatchChallenger;
 //8-byte db id, or 4-byte truncated via
 //CATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID) lives entirely in
 //DensePlayerState.hpp — this file only uses its inline helpers.
+//
+//SIMD / skip-gate re-test on this packed layout (2026-06-10, owner-set 40%
+//movers workload, all byte-identical output): SSE2 4-slot prescan −4..−6%,
+//generic memcmp(16) group prescan −7..−15%, whole-snapshot memcmp gate
+//−3..−12% — ALL slower than the plain scalar isEqual() loop. At 40% movement
+//a 4-slot group is all-equal only 0.6^4≈13% of the time, so a prescan pays
+//its compare on ~87% of groups and then walks them scalar anyway; the
+//whole-snapshot gate hits only when NO player moved (0.6^N). Don't re-add
+//without first changing the workload model (a skip strategy needs <15%
+//movement to break even).
 
 //to prevent allocate memory
 char MapVisibilityAlgorithm::tempBigBufferForChanges[];

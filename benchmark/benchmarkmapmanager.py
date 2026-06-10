@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """benchmarkmapmanager.py -- benchmark MapVisibilityAlgorithm::min_network().
 
-Workload: typical "mostly move" tick mix (>90% of ticks change only the
-direction; ~5% of ticks insert+remove one player) at 7 player counts:
-5, 10, 20, 50, 100, 200, 300. Determinism: seeded LCG, no rand/clock,
-x,y are populated at startup and never touched again -- only direction
-changes per tick.
+Workload: production-like move mix — each tick a deterministic 40% of
+the players change direction (MOVE_PCT; LCG draw per player) and ~5% of
+ticks insert+remove one player — at 7 player counts: 5, 10, 20, 50,
+100, 200, 300. Determinism: seeded LCG, no rand/clock, x,y are
+populated at startup and never touched again -- only direction changes
+per tick.
 
 One-command target -- per benchmark/CLAUDE.md, run with no args, 1h
 timeout. Builds the C++ harness (benchmarkmapmanager/), runs every
@@ -54,6 +55,12 @@ BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkmapmanager")
 PLAYER_COUNTS = [5, 10, 20, 50, 100, 200, 300]
 SEED          = 0x5EED
 INSREM_PCT    = 5
+# Deterministic % of players changing direction per tick (owner-set
+# 2026-06-10: was effectively 100, which made every slot differ every
+# tick and so made any skip-equal optimisation unmeasurable). Changing
+# this value invalidates champion/history comparability — re-baseline
+# the champion after any change.
+MOVE_PCT      = 40
 RUN_REPEATS   = 3        # warmup + 3 measured wall passes per cell
 
 # Fixed-TIME model (benchmark/CLAUDE.md): the wall-time / throughput
@@ -144,7 +151,8 @@ def _mode_args(profiler):
 
 def run_one(bin_path, profiler="rusage", players_arg=None):
     cmd = [bin_path, *_mode_args(profiler),
-           "--seed", str(SEED), "--insrem-pct", str(INSREM_PCT)]
+           "--seed", str(SEED), "--insrem-pct", str(INSREM_PCT),
+           "--move-pct", str(MOVE_PCT)]
     if players_arg is not None:
         for p in players_arg:
             cmd += ["--players", str(p)]
@@ -292,7 +300,8 @@ def _runtime_cmd_string(profiler="rusage"):
     work_dir. Per-profiler workload mode: fixed-time (--ms) for throughput
     profilers, fixed-iteration (--ticks) for callgrind."""
     parts = [f"./{BIN_NAME}", *_mode_args(profiler),
-             "--seed", str(SEED), "--insrem-pct", str(INSREM_PCT)]
+             "--seed", str(SEED), "--insrem-pct", str(INSREM_PCT),
+             "--move-pct", str(MOVE_PCT)]
     return " ".join(parts)
 
 
