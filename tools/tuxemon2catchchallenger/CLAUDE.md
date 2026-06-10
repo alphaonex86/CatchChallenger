@@ -30,7 +30,13 @@ out of tree (`/tmp/tux2cc-build`).
   rebalance, edit `DatapackWriter::computeStats` only; keep it documented.
 * **Maps** (`MapConverter`): keep Tuxemon gids verbatim (fidelity is checked) —
   only re-home each cell onto `Walkable`/`Collisions`/`WalkBehind` and re-encode
-  base64+zlib.  Engine collision: a cell with a `Walkable` tile AND no
+  base64+zlib.  Output layout is gen2-style `map/main/tuxemon/<region>/<location>/<slug>`
+  (region = `scenario` map property else nearest via warp graph else `other`;
+  location = nearest outdoor map via warp graph, so a town + its interiors share
+  one folder); warp `map` props are folder-relative; the converter installs
+  `map/invisible.png|.tsx` (embedded, byte-identical to the official one;
+  `InvisibleAsset.hpp` = `xxd -i invisible.png`) and gives warp/bot objects a
+  `gid` into it (+2 teleport, +0 bot) so they are visible in Tiled.  Engine collision: a cell with a `Walkable` tile AND no
   `Collisions` tile is passable; a `Collisions` tile blocks.  Handle BOTH
   external `<tileset source>` and INLINE `<tileset><image></tileset>` (37 maps
   use inline — materialise them as `.tsx`).  Warp object Y must be

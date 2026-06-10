@@ -2,7 +2,10 @@
 #define TUXEMON2CC_MAPCONVERTER_HPP
 
 // Converts the Tuxemon Tiled maps (maps/*.tmx, 16px) into CatchChallenger maps
-// under <out>/map/main/tuxemon/.  Tuxemon already ships proper external .tsx
+// under <out>/map/main/tuxemon/<region>/<location>/ (the datapack-pkmn gen2
+// layout: region = the map's "scenario" property, location = the outdoor map a
+// building belongs to, found through the warp graph — a town and its interiors
+// share one folder).  Tuxemon already ships proper external .tsx
 // tilesets, so the tile gids are kept verbatim; the work is:
 //   * decode each tile layer (csv or base64+zlib),
 //   * rasterise the "Collisions" object-group rectangles to a blocked grid,
@@ -12,6 +15,9 @@
 //   * turn the "transition_teleport" events into CatchChallenger warp objects,
 //   * copy the referenced tilesets (.tsx + image) once and repath them.
 // Output tile layers use base64+zlib (the datapack convention).
+// Warp and bot objects carry a gid into the shared <out>/map/invisible.tsx
+// marker tileset (installed from the embedded copy) so they are visible in
+// Tiled: firstgid+0 = bot, +2 = door/teleport — the gen2 reference scheme.
 
 #include "TuxemonDb.hpp"
 #include "Localization.hpp"
@@ -32,7 +38,8 @@ public:
     // Convert every maps/*.tmx; returns the number of maps written.
     int convertAll();
 
-    // A walkable start location chosen across the converted maps (for start.xml).
+    // A walkable start location chosen across the converted maps (for start.xml),
+    // as a path relative to map/main/tuxemon/ ("region/location/slug").
     const std::string &startMap() const { return startMap_; }
     int startX() const { return startX_; }
     int startY() const { return startY_; }
@@ -50,6 +57,11 @@ private:
     // Datapack filenames must be [a-z0-9._/-] only (the sync/checksum path drops
     // others).  Sanitise a basename and make it unique within the tileset dir.
     std::string uniqueTilesetFile(const std::string &origBasename);
+    // Pre-pass: read every map's size/scenario/inside/warps and derive
+    // relDir_ (slug -> "region/location") through the warp graph.
+    void computeLayout();
+    // Install <out>/map/invisible.png + invisible.tsx from the embedded copy.
+    void writeInvisibleTileset();
 
     const TuxemonDb &db_;
     const DatapackWriter &dw_;
@@ -63,7 +75,9 @@ private:
     std::unordered_map<std::string,std::string> tsxSan_;   // orig .tsx basename -> written name
     std::unordered_map<std::string,std::string> imgSan_;   // orig image basename -> written name
     std::unordered_set<std::string> usedTilesetFiles_;     // all written names (collision guard)
+    std::unordered_map<std::string,int> tsxCount_;          // written .tsx name -> tilecount (for the invisible firstgid)
     std::unordered_map<std::string,std::pair<int,int> > mapDims_; // slug -> (w,h) for warp clamping
+    std::unordered_map<std::string,std::string> relDir_;    // slug -> "region/location" under map/main/tuxemon/
     int warpsTotal_;
     int collisionCells_;
     int botsTotal_;
