@@ -798,6 +798,29 @@ static int sharedObjectMask(const QImage &x, const QImage &y, int maxDiff, std::
     return best;
 }
 
+// Map a tileCategory (see catOf below: 0 background,1 building,2 water,3 grass,
+// 4 ledge,5 overlay) to a coarse LAYOUT BAND so similar OBJECTS cluster into the
+// same gen2-like zone of the sheet: band 0 = terrain/nature (background+water+
+// grass+ledge, the walkable autotile families), band 1 = buildings (collidable),
+// band 2 = overlays (above-player roof/tree tops).  Unknown -> terrain.
+static int bandForCat(int cat)
+{
+    if(cat==1) return 1;
+    if(cat==5) return 2;
+    return 0;
+}
+
+// A multi-tile block queued for the skyline packer, keyed (band, then tallest,
+// then widest) so blocks pack band-by-band into horizontal zones.
+struct LayoutBlock { int band; int negH; int negW; size_t unit; };
+static bool layoutBlockLess(const LayoutBlock &a, const LayoutBlock &b)
+{
+    if(a.band!=b.band) return a.band<b.band;
+    if(a.negH!=b.negH) return a.negH<b.negH;
+    if(a.negW!=b.negW) return a.negW<b.negW;
+    return a.unit<b.unit;
+}
+
 // 2-D adjacency layout for ONE tile set (grounds, or the WalkBehind/over tiles).
 // cellTi[map][y*W+x] = the tile index used at that map cell (-1 = none).  Tiles
 // that are CONSISTENTLY each other's immediate map-neighbour are packed as rigid
@@ -1022,7 +1045,7 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
     std::unordered_map<int,uint32_t> tilePos;
     std::vector<std::vector<int> > grid;
     std::vector<int> singles; // free 1x1 tiles -> fill gaps
-    std::vector<std::pair<std::pair<int,int>,size_t> > blocks; // ((-h,-w), unit) -> sort tallest/widest first
+    std::vector<LayoutBlock> blocks; // banded, then tallest/widest first
     {
         size_t ui=0;
         while(ui<units.size())
@@ -1035,17 +1058,46 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
                         singles.push_back(units[ui][0]);
                 }
                 else
-                    blocks.push_back(std::make_pair(std::make_pair(-unitH[ui],-unitW[ui]),ui));
+                {
+                    // Band a whole OBJECT (block) by the MAJORITY category of its
+                    // tiles so the block stays intact yet lands in its zone (a
+                    // building+roof block has mostly building tiles -> band 1).
+                    int votes[3]={0,0,0};
+                    size_t bi=0;
+                    while(bi<units[ui].size())
+                    {
+                        int ti=units[ui][bi];
+                        int c=(ti>=0 && ti<static_cast<int>(catOf.size()))?catOf[static_cast<size_t>(ti)]:99;
+                        votes[bandForCat(c)]++;
+                        bi++;
+                    }
+                    int band=0;
+                    if(votes[1]>votes[band]) band=1;
+                    if(votes[2]>votes[band]) band=2;
+                    LayoutBlock lb; lb.band=band; lb.negH=-unitH[ui]; lb.negW=-unitW[ui]; lb.unit=ui;
+                    blocks.push_back(lb);
+                }
             }
             ui++;
         }
     }
-    std::sort(blocks.begin(),blocks.end());
+    std::sort(blocks.begin(),blocks.end(),layoutBlockLess);
     std::vector<int> skyline(static_cast<size_t>(COLS),0);
+    int curBand=-1;
     size_t bk=0;
     while(bk<blocks.size())
     {
-        size_t u=blocks[bk].second;
+        if(blocks[bk].band!=curBand)
+        {
+            // Start each category band on a fresh FLAT baseline (raise every
+            // column to the current max) so the bands read as separate horizontal
+            // zones, like the hand-made gen2 sheets.  catOf empty (hidden pass) =>
+            // every block band 0 => no reset, identical to the old single-zone pack.
+            curBand=blocks[bk].band;
+            int mx=0; size_t k=0; while(k<skyline.size()){ if(skyline[k]>mx)mx=skyline[k]; k++; }
+            k=0; while(k<skyline.size()){ skyline[k]=mx; k++; }
+        }
+        size_t u=blocks[bk].unit;
         int w=unitW[u],h=unitH[u];
         if(w>COLS) w=COLS;
         int bestX=0,bestY=1<<29;
@@ -1127,9 +1179,13 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
     // scattering.  (Sort by (category, tile) pairs to avoid a custom comparator.)
     if(!catOf.empty())
     {
-        std::vector<std::pair<int,int> > sk;
+        // Sort by (band, category, tile): the raster-fill below runs top-to-bottom,
+        // and the bands packed top-to-bottom, so band-0 singles fill the terrain
+        // zone's gaps first, then buildings, then overlays — keeping singles in the
+        // same zone as their kin.
+        std::vector<std::pair<std::pair<int,int>,int> > sk;
         size_t z=0;
-        while(z<singles.size()){ int ti=singles[z]; int c=(ti>=0 && ti<static_cast<int>(catOf.size()))?catOf[static_cast<size_t>(ti)]:99; sk.push_back(std::make_pair(c,ti)); z++; }
+        while(z<singles.size()){ int ti=singles[z]; int c=(ti>=0 && ti<static_cast<int>(catOf.size()))?catOf[static_cast<size_t>(ti)]:99; sk.push_back(std::make_pair(std::make_pair(bandForCat(c),c),ti)); z++; }
         std::sort(sk.begin(),sk.end());
         z=0; while(z<sk.size()){ singles[z]=sk[z].second; z++; }
     }
