@@ -116,25 +116,25 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     uint8_t directionInt,playerTypeInt;
                     directionInt=directionAndPlayerType & 0x0F;
                     playerTypeInt=directionAndPlayerType & 0xF0;
+                    //the server disables cache coherency on the player
+                    //visibility cache to improve performance: an insert can
+                    //arrive with corrupted values. The entry SIZE is intact
+                    //(no protocol desync), so don't parseError()/disconnect:
+                    //finish parsing the entry, then silently drop it.
+                    bool dropCorruptedEntry=false;
                     if(directionInt<1 || directionInt>8)
                     {
-                        parseError("Protocol wrong or corrupted","direction have wrong value: "+
-                                   std::to_string(directionInt)+", at main ident: "+
-                                   std::to_string(packetCode)+", directionAndPlayerType: "+
-                                   std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
-                                   ", data: "+binarytoHexa(data,size));
-                        return false;
+                        std::cerr << "drop player insert with corrupted direction: " << std::to_string(directionInt)
+                                  << ", simplifiedIndex: " << std::to_string(simplifiedIndex) << std::endl;
+                        dropCorruptedEntry=true;
                     }
                     Direction direction=(Direction)directionInt;
                     Player_type playerType=(Player_type)playerTypeInt;
                     if(playerType!=Player_type_normal && playerType!=Player_type_premium && playerType!=Player_type_gm && playerType!=Player_type_dev)
                     {
-                        parseError("Protocol wrong or corrupted","direction have wrong value: "+
-                                   std::to_string(playerType)+", at main ident: "+
-                                   std::to_string(packetCode)+", directionAndPlayerType: "+
-                                   std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
-                                   ", data: "+binarytoHexa(data,size));
-                        return false;
+                        std::cerr << "drop player insert with corrupted player type: " << std::to_string(playerTypeInt)
+                                  << ", simplifiedIndex: " << std::to_string(simplifiedIndex) << std::endl;
+                        dropCorruptedEntry=true;
                     }
                     public_informations.type=playerType;
 
@@ -159,11 +159,11 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                             pos+=pseudoSize;
                             if(public_informations.pseudo.empty())
                             {
-                                parseError("Protocol wrong or corrupted","UTF8 decoding failed for pseudo: "+public_informations.pseudo+
-                                           ", rawData: "+binarytoHexa(data+pos,pseudoSize)+", line: "+
-                                           std::string(__FILE__)+":"+std::to_string(__LINE__)
-                                           );
-                                return false;
+                                //corrupted pseudo (see cache coherency comment above): drop the entry, keep the session
+                                std::cerr << "drop player insert with corrupted pseudo, rawData: "
+                                          << binarytoHexa(data+pos-pseudoSize,pseudoSize)
+                                          << ", simplifiedIndex: " << std::to_string(simplifiedIndex) << std::endl;
+                                dropCorruptedEntry=true;
                             }
                         }
                     }
@@ -190,7 +190,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     pos+=sizeof(uint16_t);
                     public_informations.monsterId=monsterId;
 
-                    if(simplifiedIndex!=playerExcludeIndex)
+                    if(simplifiedIndex!=playerExcludeIndex && !dropCorruptedEntry)
                     {
                         /*if(last_direction_is_set==false)//to work with reemit
                         {
@@ -270,10 +270,16 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 moveListSize=data[pos];
                 pos+=sizeof(uint8_t);
                 int index_sub_loop=0;
+                //the server disables cache coherency on the player visibility
+                //cache to improve performance: a move can arrive with
+                //corrupted values. The entry SIZE is intact (no protocol
+                //desync), so don't parseError()/disconnect: finish parsing
+                //the entry, then silently drop this player's movement.
+                bool dropCorruptedEntry=false;
                 if(moveListSize==0)
                 {
-                    parseError("Protocol wrong or corrupted","move size == 0 with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                    return false;
+                    std::cerr << "drop player move with empty move list, playerId: " << std::to_string(playerId) << std::endl;
+                    dropCorruptedEntry=true;
                 }
                 while(index_sub_loop<moveListSize)
                 {
@@ -286,11 +292,17 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     pos+=sizeof(uint8_t);
                     directionInt=data[pos];
                     pos+=sizeof(uint8_t);
+                    if(directionInt<1 || directionInt>8)
+                    {
+                        std::cerr << "drop player move with corrupted direction: " << std::to_string(directionInt)
+                                  << ", playerId: " << std::to_string(playerId) << std::endl;
+                        dropCorruptedEntry=true;
+                    }
                     new_movement.second=(Direction)directionInt;
                     movement.push_back(new_movement);
                     index_sub_loop++;
                 }
-                if(playerId!=playerExcludeIndex)
+                if(playerId!=playerExcludeIndex && !dropCorruptedEntry)
                     move_player(playerId,movement);
                 index++;
             }
@@ -484,14 +496,19 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 pos+=sizeof(uint8_t);
                 if(directionInt<1 || directionInt>8)
                 {
-                    parseError("Protocol wrong or corrupted","direction have wrong value: "+std::to_string(directionInt)+
-                               ", at main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                    return false;
+                    //corrupted reinsert (server cache coherency disabled to
+                    //improve performance): the entry size is intact, silently
+                    //drop only this entry and keep parsing
+                    std::cerr << "drop player reinsert with corrupted direction: " << std::to_string(directionInt)
+                              << ", playerIndex: " << std::to_string(playerIndex) << std::endl;
                 }
-                Direction direction=(Direction)directionInt;
+                else
+                {
+                    Direction direction=(Direction)directionInt;
 
-                if(playerIndex!=playerExcludeIndex)
-                    reinsert_player(playerIndex,x,y,direction);
+                    if(playerIndex!=playerExcludeIndex)
+                        reinsert_player(playerIndex,x,y,direction);
+                }
                 index_sub_loop++;
             }
         }
@@ -575,12 +592,18 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     pos+=sizeof(uint8_t);
                     if(directionInt<1 || directionInt>8)
                     {
-                        parseError("Protocol wrong or corrupted","direction have wrong value: %1"+std::to_string(directionInt)+", at main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
+                        //corrupted reinsert (server cache coherency disabled
+                        //to improve performance): the entry size is intact,
+                        //silently drop only this entry and keep parsing
+                        std::cerr << "drop player full reinsert with corrupted direction: " << std::to_string(directionInt)
+                                  << ", simplifiedId: " << std::to_string(simplifiedId) << std::endl;
                     }
-                    Direction direction=(Direction)directionInt;
+                    else
+                    {
+                        Direction direction=(Direction)directionInt;
 
-                    full_reinsert_player(simplifiedId,mapId,x,y,direction);
+                        full_reinsert_player(simplifiedId,mapId,x,y,direction);
+                    }
                     index_sub_loop++;
                 }
                 index++;

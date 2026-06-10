@@ -114,10 +114,13 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
     }
     if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
-        /// \bug here pass after delete a party, create a new
-        emit error("insert_player_final(): mapId="+std::to_string(mapId)+" >= maps.size()="+
-                   std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size())+
-                   " simplifiedIndex="+std::to_string(simplifiedIndex));
+        //the server disables cache coherency on the player visibility cache
+        //to improve performance: an insert can arrive with a corrupted mapId
+        //(also seen after delete a party + create a new one). Not fatal:
+        //silently drop it instead of emit error() which disconnects.
+        std::cerr << "MapControllerMP::insert_player_final(): drop insert with corrupted mapId=" << mapId
+                  << " >= maps.size()=" << QtDatapackClientLoader::datapackLoader->get_maps().size()
+                  << " simplifiedIndex=" << std::to_string(simplifiedIndex) << std::endl;
         return true;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -129,14 +132,17 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
     //other player
     //else
     {
-        /*if(otherPlayerList.find(simplifiedIndex)!=otherPlayerList.cend())
+        if(otherPlayerList.find(simplifiedIndex)!=otherPlayerList.cend())
         {
-            qDebug() << QStringLiteral("Other player (%1) already loaded on the map").arg(simplifiedIndex);
-            //return true;-> ignored to fix temporally, but need remove at map unload
-
-            //clean other player
-            remove_player_final(simplifiedIndex,false);
-        }*/
+            //the server can re-send an insert for an id already on the map
+            //(cache coherency disabled server side to improve performance):
+            //overwriting otherPlayerList[simplifiedIndex] below would leak
+            //the timers/sprites and leave stale otherPlayerListByTimer
+            //entries; clean the old entry first, the new insert is the
+            //authoritative one
+            qDebug() << QStringLiteral("Other player (%1) already loaded on the map, drop the old entry").arg(simplifiedIndex);
+            remove_player_final(simplifiedIndex,inReplayMode);
+        }
 
         OtherPlayer otherPlayer;
         otherPlayer.playerMapObject=nullptr;
@@ -212,6 +218,22 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
                 delayedActions.push_back(multiplex);
             }
             return false;
+        }
+        {
+            //the server disables cache coherency on the player visibility
+            //cache to improve performance: the insert position can be
+            //corrupted. Out-of-map coords would corrupt the scene and the
+            //later move computations: silently drop, a later reinsert will
+            //fix the view
+            const CatchChallenger::QMap_client * const map_client=CatchChallenger::QMap_client::all_map.at(mapId);
+            if(map_client->tiledMap==nullptr ||
+                    (int)x>=map_client->tiledMap->width() || (int)y>=map_client->tiledMap->height())
+            {
+                std::cerr << "MapControllerMP::insert_player_final(): drop insert out of map bounds: mapId=" << mapId
+                          << " x=" << std::to_string(x) << " y=" << std::to_string(y)
+                          << " simplifiedIndex=" << std::to_string(simplifiedIndex) << std::endl;
+                return true;
+            }
         }
         /// \todo do a player cache here
         //the player skin
@@ -361,8 +383,17 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
             }
             break;
             default:
+                //corrupted direction (server cache coherency disabled to
+                //improve performance): silently drop the insert. Unregister
+                //the tilesets registered above so MapItem::validTilesets_
+                //don't keep stale entries alive forever
+                if(otherPlayer.playerTileset)
+                    MapItem::validTilesets_.erase(otherPlayer.playerTileset.data());
+                if(otherPlayer.labelTileset)
+                    MapItem::validTilesets_.erase(otherPlayer.labelTileset.data());
                 delete otherPlayer.playerMapObject;
-                //delete otherPlayer.playerTileset;
+                if(otherPlayer.labelMapObject!=NULL)
+                    delete otherPlayer.labelMapObject;
                 qDebug() << QStringLiteral("The direction send by the server is wrong");
             return true;
         }
@@ -991,6 +1022,28 @@ bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &
     if(mapId==0)
         qDebug() << QStringLiteral("supected NULL map then error");
 
+    //the server disables cache coherency on the player visibility cache to
+    //improve performance: the reinsert can arrive corrupted. Validate BEFORE
+    //touching the entry, else it ends half mutated with wrong data: silently
+    //drop, the player stays at its last known good position
+    if(direction<CatchChallenger::Direction_look_at_top || direction>CatchChallenger::Direction_move_at_left)
+    {
+        std::cerr << "MapControllerMP::reinsert_player_final(): drop reinsert with corrupted direction: "
+                  << std::to_string(direction) << " simplifiedIndex=" << std::to_string(simplifiedIndex) << std::endl;
+        return true;
+    }
+    {
+        const CatchChallenger::QMap_client * const map_client=CatchChallenger::QMap_client::all_map.at(mapId);
+        if(map_client->tiledMap==nullptr ||
+                (int)x>=map_client->tiledMap->width() || (int)y>=map_client->tiledMap->height())
+        {
+            std::cerr << "MapControllerMP::reinsert_player_final(): drop reinsert out of map bounds: mapId=" << mapId
+                      << " x=" << std::to_string(x) << " y=" << std::to_string(y)
+                      << " simplifiedIndex=" << std::to_string(simplifiedIndex) << std::endl;
+            return true;
+        }
+    }
+
     OtherPlayer &otherPlayer=otherPlayerList[simplifiedIndex];
     if(otherPlayer.x==x && otherPlayer.y==y && otherPlayer.direction==direction)
     {
@@ -1050,8 +1103,10 @@ bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &
         }
         break;
         default:
-            delete otherPlayer.playerMapObject;
-            //delete otherPlayer.playerTileset;
+            //unreachable: direction validated before mutating the entry.
+            //Never delete otherPlayer.playerMapObject here: the entry stays
+            //into otherPlayerList, a delete would leave a dangling pointer
+            //used at the next move/remove
             qDebug() << QStringLiteral("The direction send by the server is wrong");
         return true;
     }
