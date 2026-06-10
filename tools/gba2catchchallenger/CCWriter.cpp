@@ -1187,6 +1187,10 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     out << "<map type=\"" << type << "\"";
     if(!zone.empty())
         out << " zone=\"" << zone << "\"";
+    // per-map background music: the ROM's BGM id, ripped to music/song-<id>.opus
+    // (the file is written by the --all / music pass; absent => no music).
+    if(map.music!=0 && map.music!=0xFFFF)
+        out << " backgroundsound=\"music/song-" << map.music << ".opus\"";
     out << ">\n";
     out << " <name>" << name << "</name>\n";
 
