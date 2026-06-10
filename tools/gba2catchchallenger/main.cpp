@@ -197,7 +197,7 @@ static void autodetectTilesetSplit(GbaRom &rom, const std::vector<DecodedMap> &m
                 int32_t x=0;
                 while(x<m.width)
                 {
-                    uint16_t id=rom.u16(m.blocksPtr+static_cast<uint32_t>(y*m.width+x)*2)&0x3FF;
+                    uint16_t id=m.blockAt(rom,static_cast<uint32_t>(x),static_cast<uint32_t>(y))&0x3FF;
                     int c=0;
                     while(c<2)
                     {
@@ -300,6 +300,10 @@ int main(int argc, char *argv[])
         std::cerr << "Map decoding failed" << std::endl;
         return 1;
     }
+
+    // Engine-fit normalisation: resolve warp targets to coordinates, keep one
+    // reciprocal connection per map side, split >127-tile maps into chunks.
+    decoder.finalizeMaps();
 
     // Correct the tileset split for expanded-tileset hacks (no-op on retail ROMs):
     // decides primary/secondary metatile routing, so it must run before tilesets.

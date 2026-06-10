@@ -192,15 +192,23 @@ void FullWriter::writeItems()
     std::ofstream o(outRoot_ + "/items/items.xml");
     o << "<!-- Generated from gItems + gItemIconTable -->\n<items>\n";
     int icons = 0;
+    int firstIcon = -1; // fallback image for the few items past the icon table
     std::size_t i = 0;
     while(i < data_.items().size())
     {
         const Gen3Item &it = data_.items()[i];
         ++i;
         const bool haveIcon = ripper.haveItemIcons() && ripper.writeItemIcon(rom_, outRoot_, it.id);
-        if(haveIcon) ++icons;
+        if(haveIcon)
+        {
+            ++icons;
+            if(firstIcon < 0) firstIcon = it.id;
+        }
         o << "    <item price=\"" << it.price << "\" id=\"" << it.id << "\"";
-        if(haveIcon) o << " image=\"icon-" << it.id << ".png\"";
+        if(haveIcon)
+            o << " image=\"icon-" << it.id << ".png\"";
+        else if(firstIcon >= 0)
+            o << " image=\"icon-" << firstIcon << ".png\""; // the client wants an image attribute
         o << ">\n        <name>" << xmlEscape(it.name) << "</name>\n    </item>\n";
     }
     o << "</items>\n";

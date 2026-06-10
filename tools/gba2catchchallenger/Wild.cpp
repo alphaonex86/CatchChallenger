@@ -4,7 +4,9 @@
 #include <iostream>
 
 // Standard Gen3 per-slot encounter weights (percent), summing to 100.
-static const int kLandWeights[12]={20,20,10,10,10,10,5,5,5,5,4,1};
+// (Slots 8-11 are 4,4,1,1 — a 5,5,4,1 tail sums to 105 and the engine then
+// DROPS the whole encounter list: "total luck is not egal to 100".)
+static const int kLandWeights[12]={20,20,10,10,10,10,5,5,4,4,1,1};
 static const int kWaterWeights[5]={60,30,5,4,1};
 
 Wild::Wild(const GbaRom &rom) :
