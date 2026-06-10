@@ -1,7 +1,8 @@
 // HEADLESS: yes
-// Benchmark: MapVisibilityAlgorithm::min_network() under a typical
-//            mostly-move workload (>90% direction changes, <10%
-//            insert+remove), parameterised by player count.
+// Benchmark: MapVisibilityAlgorithm::min_network() under a move-mix
+//            workload (--move-pct % of players change direction per
+//            tick, default 100; <10% of ticks insert+remove),
+//            parameterised by player count.
 // Metrics emitted (one stdout line per scenario):
 //   BENCH players=N ticks=T total_ns=X median_tick_ns=Y p95_tick_ns=Z
 //                bytes_sent=B inserts=I removes=R
@@ -123,23 +124,27 @@ static Direction dir_of(uint32_t r)
 }
 
 // One scenario = one player count + one tick count + one ratio.
-// Per the brief: most ticks change ONLY direction (x/y stay fixed at
-// startup values), <10% of ticks include one insert+remove pair to
-// exercise the diff path's "slot replaced" / "remove" / "new slot"
-// branches without changing the number of map clients.
-// One tick's workload PREP: rotate every player's direction (mostly-move) +
-// the <insrem_pct>% insert/remove perturbation + clearCaptured. Factored out
-// so the timed (latency-sampled) and untimed (throughput) paths share it
-// without a lambda (CLAUDE.md: no lambdas). min_network() is timed by the
-// caller, NOT here, so the latency window stays exactly around min_network.
+// Per the brief: each tick rotates the direction of move_pct% of the
+// players (deterministic LCG draw per player; x/y stay fixed at startup
+// values), and <10% of ticks include one insert+remove pair to exercise
+// the diff path's "slot replaced" / "remove" / "new slot" branches
+// without changing the number of map clients. move_pct==100 keeps the
+// historical behaviour AND the exact historical LCG stream (the per-
+// player draw is short-circuited away).
+// One tick's workload PREP is factored out so the timed (latency-
+// sampled) and untimed (throughput) paths share it without a lambda
+// (CLAUDE.md: no lambdas). min_network() is timed by the caller, NOT
+// here, so the latency window stays exactly around min_network.
 static void prepare_tick(Bench &b, Lcg &rng, unsigned int insrem_pct,
+                         unsigned int move_pct,
                          uint64_t &inserts_total, uint64_t &removes_total)
 {
     for(unsigned int i = 0; i < b.owned.size(); i++)
     {
         ClientWithMap *c = b.owned[i];
         if(!c) continue;
-        c->setDirection(dir_of(rng.next()));
+        if(move_pct >= 100 || rng.mod(100) < move_pct)
+            c->setDirection(dir_of(rng.next()));
     }
     if(insrem_pct > 0 && rng.mod(100) < insrem_pct)
     {
@@ -172,7 +177,7 @@ static void prepare_tick(Bench &b, Lcg &rng, unsigned int insrem_pct,
 //                   count -- a wall budget would make the count vary).
 static int run_scenario(unsigned int players, unsigned int ticks,
                         unsigned int seed, unsigned int insrem_pct,
-                        uint64_t budget_ms)
+                        unsigned int move_pct, uint64_t budget_ms)
 {
     Bench b;
     Lcg rng(seed);
@@ -223,7 +228,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         // (header-free; no source markers needed).
         while(t < ticks)
         {
-            prepare_tick(b, rng, insrem_pct, inserts_total, removes_total);
+            prepare_tick(b, rng, insrem_pct, move_pct, inserts_total, removes_total);
             auto t0 = std::chrono::steady_clock::now();
             b.mva.min_network(1);
             auto t1 = std::chrono::steady_clock::now();
@@ -254,7 +259,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         const unsigned int CALIB = 4;                    // tiny calib burst
         for(unsigned int k = 0; k < CALIB; k++)
         {
-            prepare_tick(b, rng, insrem_pct, inserts_total, removes_total);
+            prepare_tick(b, rng, insrem_pct, move_pct, inserts_total, removes_total);
             b.mva.min_network(1);
             bytes_total += b.totalBytesAndClear();
             t++;
@@ -272,7 +277,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         while(std::chrono::steady_clock::now() - loop_start < budget)
         {
             // ONE latency-sampled tick (t0..t1 brackets only min_network).
-            prepare_tick(b, rng, insrem_pct, inserts_total, removes_total);
+            prepare_tick(b, rng, insrem_pct, move_pct, inserts_total, removes_total);
             auto t0 = std::chrono::steady_clock::now();
             b.mva.min_network(1);
             auto t1 = std::chrono::steady_clock::now();
@@ -282,7 +287,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
             // (check_every - 1) UNTIMED ticks -- zero clock reads.
             for(unsigned int k = 1; k < check_every; k++)
             {
-                prepare_tick(b, rng, insrem_pct, inserts_total, removes_total);
+                prepare_tick(b, rng, insrem_pct, move_pct, inserts_total, removes_total);
                 b.mva.min_network(1);
                 bytes_total += b.totalBytesAndClear();
                 t++;
@@ -313,6 +318,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
               << " ticks="   << ticks_done
               << " duration_ms=" << elapsed_ms
               << " ticks_per_s=" << ticks_per_s
+              << " move_pct=" << move_pct
               << " warm_ns=" << warm_ns
               << " bytes_warm=" << bytes_warm
               << " total_ns=" << total
@@ -328,7 +334,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
 static void usage()
 {
     std::cerr << "usage: benchmark_min_network [--players N]... "
-                 "[--ms BUDGET_MS | --ticks T] [--seed S] [--insrem-pct P]\n"
+                 "[--ms BUDGET_MS | --ticks T] [--seed S] [--insrem-pct P] [--move-pct M]\n"
                  "  --ms BUDGET_MS  fixed-time: run each player-count for "
                  "BUDGET_MS wall-ms, report ticks completed (default)\n"
                  "  --ticks T       fixed-iteration: run exactly T ticks "
@@ -349,6 +355,7 @@ int main(int argc, char **argv)
     uint64_t     budget_ms  = 0;          // >0 => fixed-time mode
     unsigned int seed       = 0x5EEDu;
     unsigned int insrem_pct = 5;          // 5% of ticks insert+remove
+    unsigned int move_pct   = 100;        // % of players changing direction per tick
     std::vector<unsigned int> overridden;
 
     for(int i = 1; i < argc; i++)
@@ -359,6 +366,7 @@ int main(int argc, char **argv)
         else if(a == "--ticks" && i+1 < argc)      { ticks = static_cast<unsigned int>(std::atoi(argv[++i])); }
         else if(a == "--seed"  && i+1 < argc)      { seed  = static_cast<unsigned int>(std::strtoul(argv[++i], nullptr, 0)); }
         else if(a == "--insrem-pct" && i+1 < argc) { insrem_pct = static_cast<unsigned int>(std::atoi(argv[++i])); }
+        else if(a == "--move-pct" && i+1 < argc)   { move_pct = static_cast<unsigned int>(std::atoi(argv[++i])); }
         else if(a == "-h" || a == "--help")        { usage(); return 0; }
         else                                       { usage(); return 2; }
     }
@@ -372,7 +380,7 @@ int main(int argc, char **argv)
     for(unsigned int p : players_list)
     {
         if(p == 0) continue;
-        rc |= run_scenario(p, ticks, seed, insrem_pct, budget_ms);
+        rc |= run_scenario(p, ticks, seed, insrem_pct, move_pct, budget_ms);
     }
     return rc;
 }
