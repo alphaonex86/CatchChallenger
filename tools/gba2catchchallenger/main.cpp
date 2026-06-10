@@ -8,6 +8,8 @@
 // <label>/tileset/ (label is "firered", "ruby", ... derived from the ROM).
 
 #include "CCWriter.hpp"
+#include "Gen3Data.hpp"
+#include "FullWriter.hpp"
 #include "DatapackBase.hpp"
 #include "Decoder.hpp"
 #include "Gba.hpp"
@@ -243,9 +245,17 @@ int main(int argc, char *argv[])
     if(gba.empty())
         gba=argValue(args,"--gda"); // accept the documented alias
 
+    // --all <path>: write a SELF-CONTAINED datapack — the maps as usual PLUS the
+    // full game DB (monsters/skill/type/items + music) at the datapack root.
+    const std::string allPath=argValue(args,"--all");
+    const bool fullDatapack=!allPath.empty();
+    if(fullDatapack && datapack.empty())
+        datapack=allPath;
+
     if(datapack.empty() || gba.empty())
     {
         std::cerr << "Usage: gba2catchchallenger --datapack <datapack-root> --gba <rom.gba>" << std::endl;
+        std::cerr << "       gba2catchchallenger --all <datapack-root> --gba <rom.gba>   (whole datapack)" << std::endl;
         return 1;
     }
 
@@ -346,6 +356,20 @@ int main(int argc, char *argv[])
         CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins);
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
+    }
+
+    // --all: also emit the full game DB (monsters/skill/type/items) at the
+    // datapack ROOT so the maps' by-name wild/trainer/shop references resolve.
+    if(fullDatapack)
+    {
+        Gen3Data gen3;
+        if(gen3.decode(rom))
+        {
+            FullWriter full(rom,gen3,datapack);
+            full.writeAll();
+        }
+        else
+            std::cerr << "Warning: --all could not decode the Gen3 game DB; wrote maps only." << std::endl;
     }
 
     std::cout << "Done." << std::endl;

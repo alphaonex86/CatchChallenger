@@ -29,6 +29,9 @@ add_executable(gba2catchchallenger
     OverworldSprite.cpp
     SkinResolver.cpp
     CCWriter.cpp
+    Gen3Data.cpp
+    FullWriter.cpp
+    SpriteRipper.cpp
     DatapackBase.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackClientLoader.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackChecksum.cpp
