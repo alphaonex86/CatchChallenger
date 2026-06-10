@@ -44,7 +44,7 @@ only.
 | `gfx/sprites/battle/<slug>-sheet.png`  | `monsters/<id>/{front,back,small}.png` |
 | `item/*.yaml` + `gfx/items/*.png`      | `items/items.xml` + `items/tuxemon/*.png` |
 | `l18n/{en_US,fr_FR}/…/base.po`         | `<name>`/`<description>` (en + `lang="fr"`) |
-| `maps/*.tmx` + `gfx/tilesets/*`        | `map/main/tuxemon/<slug>.tmx` + `.xml` + `tileset/` |
+| `maps/*.tmx` + `gfx/tilesets/*`        | `map/main/tuxemon/<region>/<location>/<slug>.tmx` + `.xml` + shared `tileset/` |
 | `db/encounter/*` + `random_encounter` events | map `.xml` `<grass>`/`<grassNight>` + a `Grass` layer |
 | `db/npc/*` + `create_npc`/`add_monster`/`set_economy` events | map `.tmx` `bot` objects + `.xml` `<bot>` (text/fight/shop/sell) |
 | `db/economy/*`                         | shop `<product>` lists                       |
@@ -91,6 +91,14 @@ Tuxemon versions — is preserved automatically for later support.
   Tile layers are re-emitted as base64+zlib.  `transition_teleport` events
   become `teleport on it` warp objects (with the loader's `-1` object-Y offset).
   Inline tilesets are materialised as external `.tsx`.
+  Maps are organised the official-datapack way, `<region>/<location>/<slug>`:
+  region = the map's `scenario` property (else the nearest one through the warp
+  graph, else `other`), location = the nearest *outdoor* map in the warp graph,
+  so a town and its interiors share one folder.  Warp `map` properties are
+  emitted relative to the source map's folder.  The engine marker tileset
+  `map/invisible.png`/`.tsx` (byte-identical to the official one) is installed
+  and every warp/bot object carries a `gid` into it (`firstgid+2` teleport,
+  `+0` bot) so they are visible in Tiled, like the gen2 reference maps.
 
 ## Verification
 

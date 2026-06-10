@@ -1,4 +1,5 @@
 #include "MapConverter.hpp"
+#include "InvisibleAsset.hpp"
 
 #include <tinyxml2.h>
 #include <zlib.h>
@@ -15,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <vector>
 
 namespace tuxemon {
@@ -236,6 +238,25 @@ std::string MapConverter::copyTileset(const std::string &tsxBasename)
     tsxSan_[tsxBasename] = sanTsx;
     const std::string imgBaseDir = modRoot_ + "/gfx/tilesets";
 
+    // tilecount, so the invisible marker tileset can be placed after the last gid
+    {
+        int count = ts->IntAttribute("tilecount");
+        if(count <= 0)
+        {
+            tinyxml2::XMLElement *cimg = ts->FirstChildElement("image");
+            const int tw = ts->IntAttribute("tilewidth", 16);
+            const int th = ts->IntAttribute("tileheight", 16);
+            if(cimg != NULL && tw > 0 && th > 0)
+                count = (cimg->IntAttribute("width") / tw) * (cimg->IntAttribute("height") / th);
+        }
+        if(count <= 0)
+        {
+            tinyxml2::XMLElement *ct = ts->FirstChildElement("tile");
+            while(ct != NULL) { ++count; ct = ct->NextSiblingElement("tile"); }
+        }
+        tsxCount_[sanTsx] = count;
+    }
+
     // Copy every referenced image (single <image> and per-tile <image>) under a
     // sanitised name and point the source at it.
     tinyxml2::XMLElement *img = ts->FirstChildElement("image");
@@ -288,6 +309,17 @@ std::string MapConverter::materializeInline(void *tilesetElement, const std::str
     QDir().mkpath(QString::fromStdString(tilesetDir_));
     const std::string sanTsx = uniqueTilesetFile(std::string(name) + ".tsx");
     tsxSan_[origKey] = sanTsx;
+    {
+        int count = ts->IntAttribute("tilecount");
+        if(count <= 0)
+        {
+            const int tw = ts->IntAttribute("tilewidth", 16);
+            const int th = ts->IntAttribute("tileheight", 16);
+            if(tw > 0 && th > 0)
+                count = (img->IntAttribute("width") / tw) * (img->IntAttribute("height") / th);
+        }
+        tsxCount_[sanTsx] = count;
+    }
     // image source is relative to the source map's directory
     const std::string sanImg = copyImageSan(mapDirAbs, imgSrc, tilesetDir_, imgSan_, this, &MapConverter::uniqueTilesetFile);
 
@@ -317,6 +349,89 @@ static void readProps(tinyxml2::XMLElement *obj, std::map<std::string,std::strin
             out[n] = v;
         p = p->NextSiblingElement("property");
     }
+}
+
+// ── output layout (region/location folders, gen2-style) ────────────────────
+// One pre-pass record per source map.
+struct MapMeta {
+    int w, h;
+    bool inside;
+    std::string scenario;
+    std::vector<std::string> warpDests;
+    MapMeta() : w(0), h(0), inside(false) {}
+};
+
+typedef std::map<std::string, std::set<std::string> > AdjGraph; // sorted = deterministic
+
+// BFS from `start` through the warp graph to the nearest map that is outdoor
+// (wantOutdoor) or that carries a scenario (!wantOutdoor); "" when none is
+// reachable.  visitedOut (optional) receives the whole connected component.
+static std::string bfsNearest(const std::string &start,
+                              const std::map<std::string,MapMeta> &meta,
+                              const AdjGraph &adj, bool wantOutdoor,
+                              std::set<std::string> *visitedOut)
+{
+    std::set<std::string> seen;
+    std::vector<std::string> queue;
+    queue.push_back(start);
+    seen.insert(start);
+    std::string found;
+    std::size_t qi = 0;
+    while(qi < queue.size())
+    {
+        const std::string cur = queue[qi];
+        ++qi;
+        if(found.empty())
+        {
+            std::map<std::string,MapMeta>::const_iterator m = meta.find(cur);
+            if(m != meta.end())
+            {
+                if(wantOutdoor ? !m->second.inside : !m->second.scenario.empty())
+                {
+                    found = cur;
+                    if(visitedOut == NULL)
+                        break; // component not requested, done
+                }
+            }
+        }
+        AdjGraph::const_iterator a = adj.find(cur);
+        if(a != adj.end())
+        {
+            std::set<std::string>::const_iterator n = a->second.begin();
+            while(n != a->second.end())
+            {
+                if(seen.find(*n) == seen.end())
+                {
+                    seen.insert(*n);
+                    queue.push_back(*n);
+                }
+                ++n;
+            }
+        }
+    }
+    if(visitedOut != NULL)
+        *visitedOut = seen;
+    return found;
+}
+
+// Path of map `slug` living in `toDir`, relative to a map living in `fromDir`
+// (both dirs relative to map/main/tuxemon/, no trailing slash, no extension).
+static std::string relMapPath(const std::string &fromDir, const std::string &toDir,
+                              const std::string &slug)
+{
+    if(fromDir == toDir)
+        return slug;
+    const QStringList f = QString::fromStdString(fromDir).split('/');
+    const QStringList t = QString::fromStdString(toDir).split('/');
+    int common = 0;
+    while(common < f.size() && common < t.size() && f.at(common) == t.at(common))
+        ++common;
+    std::string out;
+    int i = common;
+    while(i < f.size()) { out += "../"; ++i; }
+    i = common;
+    while(i < t.size()) { out += t.at(i).toStdString() + "/"; ++i; }
+    return out + slug;
 }
 
 // ── per-map conversion ──────────────────────────────────────────────────────
@@ -572,6 +687,15 @@ bool MapConverter::convertOne(const std::string &tmxPath)
 
     const std::string slug = QFileInfo(QString::fromStdString(tmxPath)).completeBaseName().toStdString();
 
+    // output folder: map/main/tuxemon/<region>/<location>/ (from the pre-pass)
+    std::string relDir = "other/" + slug;
+    {
+        std::unordered_map<std::string,std::string>::const_iterator rd = relDir_.find(slug);
+        if(rd != relDir_.end())
+            relDir = rd->second;
+    }
+    const std::string outDir = mapDir_ + "/" + relDir;
+
     // tilesets (firstgid, basename) — external <tileset source> and inline ones
     const std::string mapDirAbs = QFileInfo(QString::fromStdString(tmxPath)).absolutePath().toStdString();
     std::vector<std::pair<uint32_t,std::string> > tilesets;
@@ -807,25 +931,40 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         if(bestCell >= 0 && score > startScore_)
         {
             startScore_ = score;
-            startMap_ = slug;
+            startMap_ = relDir + "/" + slug;
             startX_ = bestCell % w;
             startY_ = bestCell / w;
         }
     }
 
     // ── emit the CatchChallenger .tmx ──
-    QDir().mkpath(QString::fromStdString(mapDir_));
-    std::ofstream o(mapDir_ + "/" + slug + ".tmx");
+    QDir().mkpath(QString::fromStdString(outDir));
+    std::ofstream o(outDir + "/" + slug + ".tmx");
     o << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     o << "<map version=\"1.10\" orientation=\"orthogonal\" renderorder=\"right-down\" width=\""
       << w << "\" height=\"" << h << "\" tilewidth=\"16\" tileheight=\"16\" infinite=\"0\">\n";
     std::size_t ti = 0;
     while(ti < tilesets.size())
     {
-        o << " <tileset firstgid=\"" << tilesets[ti].first << "\" source=\"tileset/"
+        o << " <tileset firstgid=\"" << tilesets[ti].first << "\" source=\"../../tileset/"
           << tilesets[ti].second << "\"/>\n";
         ++ti;
     }
+    // marker tileset placed after the last used gid: bot/teleport objects carry
+    // a gid into it so they are visible in Tiled (the gen2 reference scheme)
+    uint32_t invisibleFirstGid = 1;
+    ti = 0;
+    while(ti < tilesets.size())
+    {
+        int count = 1024; // unknown tilecount: stay safely past it
+        std::unordered_map<std::string,int>::const_iterator tc = tsxCount_.find(tilesets[ti].second);
+        if(tc != tsxCount_.end() && tc->second > 0)
+            count = tc->second;
+        if(tilesets[ti].first + (uint32_t)count > invisibleFirstGid)
+            invisibleFirstGid = tilesets[ti].first + (uint32_t)count;
+        ++ti;
+    }
+    o << " <tileset firstgid=\"" << invisibleFirstGid << "\" source=\"../../../../invisible.tsx\"/>\n";
 
     int layerId = 1;
     // Split each ground layer by behaviour: Collisions (blocked), Grass (wild
@@ -933,9 +1072,15 @@ bool MapConverter::convertOne(const std::string &tmxPath)
             seenWarp.push_back(key);
             const int px = wp.srcTx * 16;
             const int py = (wp.srcTy + 1) * 16; // loader does y/16 - 1
-            o << "  <object type=\"teleport on it\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
+            // destination path relative to this map's folder
+            std::string destPath = wp.dest;
+            std::unordered_map<std::string,std::string>::const_iterator dd = relDir_.find(wp.dest);
+            if(dd != relDir_.end())
+                destPath = relMapPath(relDir, dd->second, wp.dest);
+            o << "  <object type=\"teleport on it\" gid=\"" << (invisibleFirstGid + 2)
+              << "\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
             o << "   <properties>\n";
-            o << "    <property name=\"map\" value=\"" << wp.dest << "\"/>\n";
+            o << "    <property name=\"map\" value=\"" << destPath << "\"/>\n";
             o << "    <property name=\"x\" value=\"" << wp.dx << "\"/>\n";
             o << "    <property name=\"y\" value=\"" << wp.dy << "\"/>\n";
             o << "   </properties>\n";
@@ -972,7 +1117,8 @@ bool MapConverter::convertOne(const std::string &tmxPath)
             botSkin[b] = skinName;
             const int px = np.x * 16;
             const int py = (np.y + 1) * 16;
-            o << "  <object type=\"bot\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
+            o << "  <object type=\"bot\" gid=\"" << invisibleFirstGid
+              << "\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
             o << "   <properties>\n";
             o << "    <property name=\"id\" type=\"int\" value=\"" << (b + 1) << "\"/>\n";
             o << "    <property name=\"skin\" value=\"" << skinName << "\"/>\n";
@@ -1011,13 +1157,176 @@ bool MapConverter::convertOne(const std::string &tmxPath)
                 type = "indoor";
         }
     }
-    std::ofstream ox(mapDir_ + "/" + slug + ".xml");
+    std::ofstream ox(outDir + "/" + slug + ".xml");
     ox << "<map type=\"" << type << "\">\n";
     ox << " <name>" << slug << "</name>\n";
     writeGrass(ox, encZones, db_, dw_);
     writeBots(ox, bots, botSkin, db_, dw_, l10n_);
     ox << "</map>\n";
     return true;
+}
+
+// Pre-pass: read every source map's size, scenario/inside properties and warp
+// targets, then derive relDir_ ("region/location") — region from the scenario
+// (else the nearest one through the warp graph, else "other"), location from
+// the nearest outdoor map so a town and its interiors share one folder.
+void MapConverter::computeLayout()
+{
+    std::map<std::string,MapMeta> meta;
+    QDir mdir(QString::fromStdString(modRoot_ + "/maps"));
+    QStringList filters;
+    filters << "*.tmx";
+    const QFileInfoList files = mdir.entryInfoList(filters, QDir::Files, QDir::Name);
+    int fi = 0;
+    while(fi < files.size())
+    {
+        const std::string slug = files.at(fi).completeBaseName().toStdString();
+        ++fi;
+        tinyxml2::XMLDocument d;
+        if(d.LoadFile(mdir.absoluteFilePath(QString::fromStdString(slug) + ".tmx").toStdString().c_str()) != tinyxml2::XML_SUCCESS)
+            continue;
+        tinyxml2::XMLElement *r = d.RootElement();
+        if(r == NULL)
+            continue;
+        MapMeta mm;
+        mm.w = (int)r->IntAttribute("width");
+        mm.h = (int)r->IntAttribute("height");
+        tinyxml2::XMLElement *props = r->FirstChildElement("properties");
+        if(props != NULL)
+        {
+            tinyxml2::XMLElement *p = props->FirstChildElement("property");
+            while(p != NULL)
+            {
+                const char *n = p->Attribute("name");
+                const char *v = p->Attribute("value");
+                if(n != NULL && v != NULL)
+                {
+                    if(std::strcmp(n, "scenario") == 0)
+                        mm.scenario = v;
+                    else if(std::strcmp(n, "inside") == 0 && std::strcmp(v, "true") == 0)
+                        mm.inside = true;
+                }
+                p = p->NextSiblingElement("property");
+            }
+        }
+        // warp targets (transition_teleport actions on any object)
+        tinyxml2::XMLElement *og = r->FirstChildElement("objectgroup");
+        while(og != NULL)
+        {
+            tinyxml2::XMLElement *obj = og->FirstChildElement("object");
+            while(obj != NULL)
+            {
+                std::map<std::string,std::string> oprops;
+                readProps(obj, oprops);
+                std::map<std::string,std::string>::const_iterator it = oprops.begin();
+                while(it != oprops.end())
+                {
+                    if(it->first.rfind("act", 0) == 0)
+                    {
+                        std::string verb;
+                        std::vector<std::string> a;
+                        splitAction(it->second, verb, a);
+                        if(verb == "transition_teleport" && a.size() >= 4)
+                        {
+                            std::string dest = a[1];
+                            const std::size_t dot = dest.rfind(".tmx");
+                            if(dot != std::string::npos) dest = dest.substr(0, dot);
+                            mm.warpDests.push_back(dest);
+                        }
+                    }
+                    ++it;
+                }
+                obj = obj->NextSiblingElement("object");
+            }
+            og = og->NextSiblingElement("objectgroup");
+        }
+        mapDims_[slug] = std::make_pair(mm.w, mm.h);
+        meta[slug] = mm;
+    }
+
+    // undirected warp graph between existing maps
+    AdjGraph adj;
+    std::map<std::string,MapMeta>::const_iterator mi = meta.begin();
+    while(mi != meta.end())
+    {
+        std::size_t wi = 0;
+        while(wi < mi->second.warpDests.size())
+        {
+            const std::string &dest = mi->second.warpDests[wi];
+            if(dest != mi->first && meta.find(dest) != meta.end())
+            {
+                adj[mi->first].insert(dest);
+                adj[dest].insert(mi->first);
+            }
+            ++wi;
+        }
+        ++mi;
+    }
+
+    std::map<std::string,std::string> anchorDir; // anchor slug -> "region/location"
+    std::map<std::string,std::string> locUsed;   // "region/location" -> anchor (collision guard)
+    mi = meta.begin();
+    while(mi != meta.end())
+    {
+        const std::string &slug = mi->first;
+        std::set<std::string> component;
+        std::string anchor = bfsNearest(slug, meta, adj, true, &component);
+        if(anchor.empty())
+        {
+            // indoor-only component: group it under its smallest slug
+            anchor = slug;
+            std::set<std::string>::const_iterator v = component.begin();
+            while(v != component.end()) { if(*v < anchor) anchor = *v; ++v; }
+        }
+        if(anchorDir.find(anchor) == anchorDir.end())
+        {
+            std::string region = meta[anchor].scenario;
+            if(region.empty())
+            {
+                const std::string near = bfsNearest(anchor, meta, adj, false, NULL);
+                if(!near.empty())
+                    region = meta[near].scenario;
+            }
+            if(region.empty())
+                region = "other";
+            region = sanitizeFsBase(region);
+            // location: the anchor slug, with the redundant region prefix stripped
+            std::string loc = anchor;
+            if(loc.size() > region.size() + 1 && loc.compare(0, region.size() + 1, region + "_") == 0)
+                loc = loc.substr(region.size() + 1);
+            std::string dir = region + "/" + sanitizeFsBase(loc);
+            if(locUsed.find(dir) != locUsed.end())
+            {
+                // stripped name collides with another location: keep the full slug
+                dir = region + "/" + sanitizeFsBase(anchor);
+                int n = 2;
+                while(locUsed.find(dir) != locUsed.end())
+                {
+                    dir = region + "/" + sanitizeFsBase(anchor) + "-" + std::to_string(n);
+                    ++n;
+                }
+            }
+            locUsed[dir] = anchor;
+            anchorDir[anchor] = dir;
+        }
+        relDir_[slug] = anchorDir[anchor];
+        ++mi;
+    }
+}
+
+// Install the engine marker tileset (same bytes as the official datapack's
+// map/invisible.*) so warp/bot objects can carry a visible gid in Tiled.
+void MapConverter::writeInvisibleTileset()
+{
+    QDir().mkpath(QString::fromStdString(outRoot_ + "/map"));
+    std::ofstream png(outRoot_ + "/map/invisible.png", std::ios::binary);
+    png.write(reinterpret_cast<const char*>(kInvisiblePng), kInvisiblePngLen);
+    png.close();
+    std::ofstream tsx(outRoot_ + "/map/invisible.tsx");
+    tsx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    tsx << "<tileset name=\"invisible.tsx\" tilewidth=\"16\" tileheight=\"16\">\n";
+    tsx << " <image source=\"invisible.png\" trans=\"000000\" width=\"64\" height=\"64\"/>\n";
+    tsx << "</tileset>\n";
 }
 
 int MapConverter::convertAll()
@@ -1027,20 +1336,9 @@ int MapConverter::convertAll()
     filters << "*.tmx";
     const QFileInfoList files = mdir.entryInfoList(filters, QDir::Files, QDir::Name);
 
-    // pre-pass: record every map's size so warp destinations can be clamped
-    int pi = 0;
-    while(pi < files.size())
-    {
-        const std::string slug = files.at(pi).completeBaseName().toStdString();
-        tinyxml2::XMLDocument d;
-        if(d.LoadFile(files.at(pi).absoluteFilePath().toStdString().c_str()) == tinyxml2::XML_SUCCESS)
-        {
-            tinyxml2::XMLElement *r = d.RootElement();
-            if(r != NULL)
-                mapDims_[slug] = std::make_pair((int)r->IntAttribute("width"), (int)r->IntAttribute("height"));
-        }
-        ++pi;
-    }
+    // pre-pass: map sizes (warp clamping) + the region/location output layout
+    computeLayout();
+    writeInvisibleTileset();
 
     int ok = 0, fail = 0;
     int i = 0;
