@@ -91,10 +91,15 @@ Tuxemon versions — is preserved automatically for later support.
   Tile layers are re-emitted as base64+zlib.  `transition_teleport` events
   become `teleport on it` warp objects (with the loader's `-1` object-Y offset).
   Inline tilesets are materialised as external `.tsx`.
-  Maps are organised the official-datapack way, `<region>/<location>/<slug>`:
+  Maps are organised the official-datapack way, `<region>/<location>/<base>`:
   region = the map's `scenario` property (else the nearest one through the warp
   graph, else `other`), location = the nearest *outdoor* map in the warp graph,
-  so a town and its interiors share one folder.  Warp `map` properties are
+  so a town and its interiors share one folder.  File names are shortened the
+  gen2 way (`flower-city/center.tmx`, not `flower-city/spyder_flower_center.tmx`)
+  by stripping the region and location token prefixes and dashing the rest —
+  everything is derived from the source data (scenario property + warp graph +
+  token comparison), nothing is hardcoded, so new upstream maps and scenarios
+  lay out automatically.  Warp `map` properties are
   emitted relative to the source map's folder.  The engine marker tileset
   `map/invisible.png`/`.tsx` (byte-identical to the official one) is installed
   and every warp/bot object carries a `gid` into it (`firstgid+2` teleport,
