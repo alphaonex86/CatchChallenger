@@ -32,6 +32,7 @@ add_executable(gba2catchchallenger
     Gen3Data.cpp
     FullWriter.cpp
     SpriteRipper.cpp
+    M4aRipper.cpp
     DatapackBase.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackClientLoader.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackChecksum.cpp

@@ -10,6 +10,7 @@
 #include "CCWriter.hpp"
 #include "Gen3Data.hpp"
 #include "FullWriter.hpp"
+#include "M4aRipper.hpp"
 #include "DatapackBase.hpp"
 #include "Decoder.hpp"
 #include "Gba.hpp"
@@ -21,7 +22,11 @@
 #include "Wild.hpp"
 
 #include <QDir>
+#include <QFile>
+#include <QString>
 #include <QGuiApplication>
+#include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
@@ -252,10 +257,16 @@ int main(int argc, char *argv[])
     if(fullDatapack && datapack.empty())
         datapack=allPath;
 
-    if(datapack.empty() || gba.empty())
+    const std::string ripSong=argValue(args,"--ripsong");
+    if(datapack.empty() && ripSong.empty())
     {
         std::cerr << "Usage: gba2catchchallenger --datapack <datapack-root> --gba <rom.gba>" << std::endl;
         std::cerr << "       gba2catchchallenger --all <datapack-root> --gba <rom.gba>   (whole datapack)" << std::endl;
+        return 1;
+    }
+    if(gba.empty())
+    {
+        std::cerr << "Missing --gba <rom.gba>" << std::endl;
         return 1;
     }
 
@@ -264,6 +275,17 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Failed to load/identify ROM: " << gba << std::endl;
         return 1;
+    }
+
+    // --ripsong <id>: debug — render one song to /tmp/song-<id>.opus and exit.
+    if(!ripSong.empty())
+    {
+        M4aRipper m4a;
+        if(!m4a.locate(rom)) { std::cerr << "no song table" << std::endl; return 1; }
+        const int id=std::atoi(ripSong.c_str());
+        const std::string out="/tmp/song-"+ripSong+".opus";
+        std::cerr << "rip song " << id << " -> " << (m4a.writeOpus(rom,id,out) ? out : std::string("FAILED")) << std::endl;
+        return 0;
     }
     std::cout << "ROM: " << rom.game().code << " v" << (int)rom.game().version
               << " -> label '" << rom.game().label << "'" << std::endl;
@@ -356,6 +378,56 @@ int main(int argc, char *argv[])
         CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins);
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
+
+        // Rip the maps' background music to opus (the per-map backgroundsound the
+        // map writer emits = music/song-<id>.opus).  Most-used songs first, capped.
+        M4aRipper m4a;
+        if(m4a.locate(rom))
+        {
+            std::map<uint16_t,int> use;
+            std::map<std::string,std::map<uint16_t,int> > byType;
+            size_t mi=0;
+            while(mi<decoder.maps().size())
+            {
+                const uint16_t mu=decoder.maps()[mi].music;
+                const uint8_t mt=decoder.maps()[mi].mapType;
+                if(mu!=0 && mu!=0xFFFF)
+                {
+                    use[mu]++;
+                    std::string ct = (mt==1||mt==2)?"city":((mt>=8)?"indoor":"outdoor");
+                    byType[ct][mu]++;
+                }
+                ++mi;
+            }
+            QDir().mkpath(QString::fromStdString(datapack+"/music"));
+            std::vector<std::pair<int,uint16_t> > order;
+            std::map<uint16_t,int>::const_iterator it=use.begin();
+            while(it!=use.end()) { order.push_back(std::make_pair(-it->second,it->first)); ++it; }
+            std::sort(order.begin(),order.end());
+            int ripped=0; const int cap=64; size_t oi=0;
+            while(oi<order.size() && ripped<cap)
+            {
+                const uint16_t id=order[oi].second; ++oi;
+                if(m4a.writeOpus(rom,id,datapack+"/music/song-"+std::to_string(id)+".opus",16.0)) ++ripped;
+            }
+            std::cout << "Music: ripped " << ripped << "/" << use.size() << " songs." << std::endl;
+            // type-fallback map/music.xml (dominant ripped BGM per coarse type)
+            QDir().mkpath(QString::fromStdString(datapack+"/map"));
+            std::ofstream mx((datapack+"/map/music.xml").c_str());
+            mx << "<musics>\n";
+            const char *types[]={"city","indoor","outdoor","cave"};
+            int ty=0;
+            while(ty<4)
+            {
+                const std::string key = std::string(types[ty])=="cave"?"outdoor":types[ty];
+                uint16_t best=0; int bc=-1;
+                std::map<uint16_t,int>::const_iterator b=byType[key].begin();
+                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(datapack+"/music/song-"+std::to_string(b->first)+".opus"))) { bc=b->second; best=b->first; } ++b; }
+                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">music/song-" << best << ".opus</map>\n";
+                ++ty;
+            }
+            mx << "</musics>\n";
+        }
     }
 
     // --all: also emit the full game DB (monsters/skill/type/items) at the
