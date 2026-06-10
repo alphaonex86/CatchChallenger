@@ -13,6 +13,11 @@
 //   * copy the referenced tilesets (.tsx + image) once and repath them.
 // Output tile layers use base64+zlib (the datapack convention).
 
+#include "TuxemonDb.hpp"
+#include "Localization.hpp"
+#include "DatapackWriter.hpp"
+#include "SkinGen.hpp"
+
 #include <string>
 #include <unordered_set>
 
@@ -20,7 +25,9 @@ namespace tuxemon {
 
 class MapConverter {
 public:
-    MapConverter(const std::string &modRoot, const std::string &outRoot);
+    MapConverter(const std::string &modRoot, const std::string &outRoot,
+                 const TuxemonDb &db, const DatapackWriter &dw,
+                 const Localization &l10n, SkinGen &skins);
     // Convert every maps/*.tmx; returns the number of maps written.
     int convertAll();
 
@@ -39,6 +46,10 @@ private:
     // source map's directory.  Returns the written .tsx basename ("" on failure).
     std::string materializeInline(void *tilesetElement, const std::string &mapDirAbs);
 
+    const TuxemonDb &db_;
+    const DatapackWriter &dw_;
+    const Localization &l10n_;
+    SkinGen &skins_;
     std::string modRoot_;
     std::string outRoot_;
     std::string mapDir_;     // <out>/map/main/tuxemon
@@ -46,6 +57,8 @@ private:
     std::unordered_set<std::string> copiedTilesets_;
     int warpsTotal_;
     int collisionCells_;
+    int botsTotal_;
+    int encounterZones_;
     std::string startMap_;
     int startX_;
     int startY_;
