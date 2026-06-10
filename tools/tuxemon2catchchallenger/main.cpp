@@ -8,6 +8,7 @@
 #include "TuxemonDb.hpp"
 #include "Localization.hpp"
 #include "DatapackWriter.hpp"
+#include "MapConverter.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -60,6 +61,9 @@ int main(int argc, char *argv[])
         std::cerr << "Failed to write the datapack." << std::endl;
         return 1;
     }
+
+    tuxemon::MapConverter maps(modRoot, outRoot);
+    maps.convertAll();
 
     std::cout << "Done." << std::endl;
     return 0;
