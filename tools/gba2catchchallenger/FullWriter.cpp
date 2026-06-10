@@ -3,6 +3,8 @@
 
 #include <QDir>
 #include <QString>
+#include <QImage>
+#include <QPainter>
 
 #include <fstream>
 #include <iostream>
@@ -221,6 +223,110 @@ void FullWriter::writeSprites()
     std::cerr << "FullWriter: " << ok << " sprites extracted, " << miss << " missing." << std::endl;
 }
 
+int FullWriter::firstSpeciesId() const
+{
+    return data_.species().empty() ? 1 : data_.species().front().id;
+}
+
+// A placeholder player skin (valid dimensions) so the start profile resolves.
+// front/back are the species' starter sprite tinted; trainer/swim a simple figure.
+void FullWriter::writePlayerSkin()
+{
+    const std::string dir = outRoot_ + "/skin/fighter/player";
+    QDir().mkpath(QString::fromStdString(dir));
+    const QString base = QString::fromStdString(dir) + "/";
+    QImage front(80, 80, QImage::Format_ARGB32);
+    front.fill(Qt::transparent);
+    QPainter p(&front);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setBrush(QColor(70, 110, 200, 255)); p.setPen(Qt::NoPen);
+    p.drawEllipse(24, 8, 32, 32);                 // head
+    p.drawRoundedRect(20, 36, 40, 40, 8, 8);      // body
+    p.end();
+    front.save(base + "front.png", "PNG");
+    front.mirrored(true, false).save(base + "back.png", "PNG");
+    QImage trainer(48, 96, QImage::Format_ARGB32);
+    trainer.fill(Qt::transparent);
+    QPainter t(&trainer);
+    t.setRenderHint(QPainter::Antialiasing, true);
+    int r = 0;
+    while(r < 4) { t.setBrush(QColor(70,110,200,255)); t.setPen(Qt::NoPen); t.drawEllipse(16, r*24+2, 16, 10); t.drawRect(14, r*24+12, 20, 11); ++r; }
+    t.end();
+    trainer.save(base + "trainer.png", "PNG");
+    trainer.save(base + "swim.png", "PNG");
+}
+
+void FullWriter::writeCompleteness()
+{
+    writePlayerSkin();
+    const int starter = firstSpeciesId();
+
+    QDir().mkpath(QString::fromStdString(outRoot_ + "/player"));
+    {
+        std::ofstream o(outRoot_ + "/player/start.xml");
+        o << "<profile>\n    <start id=\"Normal\">\n";
+        o << "        <name>Trainer</name>\n        <description>Start a new adventure</description>\n";
+        o << "        <forcedskin value=\"player\"/>\n        <cash value=\"3000\"/>\n";
+        o << "        <monstergroup>\n            <monster id=\"" << starter << "\" level=\"5\" captured_with=\"4\"/>\n        </monstergroup>\n";
+        o << "        <reputation type=\"nation\" level=\"1\"/>\n";
+        o << "        <item quantity=\"5\" id=\"4\"/>\n";   // Poke Ball
+        o << "    </start>\n</profile>\n";
+    }
+    {
+        std::ofstream o(outRoot_ + "/player/reputation.xml");
+        o << "<reputations>\n    <reputation type=\"nation\">\n        <name>Nation</name>\n";
+        o << "        <level point=\"-500\"><text>Outlaw</text></level>\n";
+        o << "        <level point=\"0\"><text>Citizen</text></level>\n";
+        o << "        <level point=\"500\"><text>Champion</text></level>\n";
+        o << "    </reputation>\n</reputations>\n";
+    }
+    {
+        std::ofstream o(outRoot_ + "/player/event.xml");
+        o << "<events>\n    <event id=\"day\">\n        <value>day</value>\n        <value>night</value>\n    </event>\n</events>\n";
+    }
+    QDir().mkpath(QString::fromStdString(outRoot_ + "/map"));
+    {
+        std::ofstream o(outRoot_ + "/map/layers.xml");
+        o << "<layers zoom=\"4\">\n";
+        o << "    <monstersCollision monsterType=\"grass\" background=\"fight/grass/\" layer=\"Grass\" type=\"walkOn\"/>\n";
+        o << "    <monstersCollision monsterType=\"cave\" background=\"fight/cave/\" type=\"walkOn\"/>\n";
+        o << "    <monstersCollision item=\"4\" tile=\"swim\" background=\"fight/water/\" layer=\"Water\" type=\"walkOn\" monsterType=\"water\"/>\n";
+        o << "</layers>\n";
+    }
+    {
+        std::ofstream o(outRoot_ + "/map/visualcategory.xml");
+        o << "<visual>\n    <category id=\"indoor\"/>\n    <category id=\"outdoor\">\n";
+        o << "        <event id=\"day\" value=\"night\" color=\"#000099\" alpha=\"50\"/>\n    </category>\n";
+        o << "    <category id=\"city\"><event id=\"day\" value=\"night\" color=\"#000099\" alpha=\"50\"/></category>\n";
+        o << "    <category id=\"cave\" color=\"#000000\" alpha=\"60\"/>\n</visual>\n";
+    }
+    // fight backgrounds (placeholder platforms; background is solid)
+    const char *terr[] = {"grass","cave","water"};
+    int ti = 0;
+    while(ti < 3)
+    {
+        const std::string d = outRoot_ + "/map/fight/" + terr[ti];
+        QDir().mkpath(QString::fromStdString(d));
+        QImage bg(240, 160, QImage::Format_ARGB32);
+        bg.fill(ti == 1 ? QColor(40,30,50) : (ti == 2 ? QColor(60,110,170) : QColor(110,170,90)));
+        bg.save(QString::fromStdString(d) + "/background.png", "PNG");
+        QImage plat(160, 48, QImage::Format_ARGB32); plat.fill(Qt::transparent);
+        QPainter pp(&plat); pp.setRenderHint(QPainter::Antialiasing,true); pp.setPen(Qt::NoPen);
+        pp.setBrush(QColor(0,0,0,70)); pp.drawEllipse(2,2,156,44); pp.end();
+        plat.save(QString::fromStdString(d) + "/plateform-background.png", "PNG");
+        plat.save(QString::fromStdString(d) + "/plateform-front.png", "PNG");
+        ++ti;
+    }
+    QDir().mkpath(QString::fromStdString(outRoot_ + "/plants"));
+    { std::ofstream o(outRoot_ + "/plants/plants.xml"); o << "<plants>\n</plants>\n"; }
+    QDir().mkpath(QString::fromStdString(outRoot_ + "/crafting"));
+    { std::ofstream o(outRoot_ + "/crafting/recipes.xml"); o << "<recipes>\n</recipes>\n"; }
+    QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters/buff"));
+    { std::ofstream o(outRoot_ + "/monsters/buff/buff.xml"); o << "<buffs>\n</buffs>\n"; }
+
+    std::cerr << "FullWriter: wrote completeness files (start/reputation/event/layers/visualcategory/fight-bg)" << std::endl;
+}
+
 bool FullWriter::writeAll()
 {
     writeTypes();
@@ -228,6 +334,7 @@ bool FullWriter::writeAll()
     writeMonsters();
     writeItems();
     writeSprites();
+    writeCompleteness();
     std::cerr << "FullWriter: wrote " << data_.species().size() << " monsters, "
               << data_.moves().size() << " skills, " << data_.items().size()
               << " items, " << Gen3Data::typeCount() << " types at " << outRoot_ << std::endl;
