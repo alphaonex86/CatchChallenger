@@ -15,9 +15,10 @@ namespace tuxemon {
 Shape::Shape() : hp(5), melee(5), ranged(5), armour(5), dodge(5), speed(5) {}
 MoveEntry::MoveEntry() : level(0) {}
 Evolution::Evolution() : atLevel(0) {}
-Monster::Monster() : txmnId(0), heightCm(0), weightKg(0), catchRate(100.0), genderMale(0.5), genderFemale(0.5) {}
-Technique::Technique() : techId(0), power(1.0), accuracy(1.0), potency(0.0), targetSelf(false) {}
-Item::Item() : cost(-1), consumable(true) {}
+Monster::Monster() : txmnId(0), heightCm(0), weightKg(0), catchRate(100.0),
+    lowerCatchResistance(1.0), upperCatchResistance(1.0), genderMale(0.5), genderFemale(0.5) {}
+Technique::Technique() : techId(0), power(1.0), accuracy(1.0), potency(0.0), recharge(0), targetSelf(false) {}
+Item::Item() : cost(-1), consumable(true), throwable(false), resellable(false) {}
 Status::Status() : condId(0), persists(false), stepValue(0.0), stepInterval(0) {}
 TuxemonDb::TuxemonDb() {}
 
@@ -50,6 +51,22 @@ static int nodeInt(const YAML::Node &n, int def)
         try { return n.as<int>(); } catch(...) { return def; }
     }
     return def;
+}
+
+// Read a YAML sequence of scalars into a string vector.
+static void readStrList(const YAML::Node &node, std::vector<std::string> &out)
+{
+    if(node && node.IsSequence())
+    {
+        std::size_t i = 0;
+        while(i < node.size())
+        {
+            const std::string s = nodeStr(node[i], "");
+            if(!s.empty())
+                out.push_back(s);
+            ++i;
+        }
+    }
 }
 
 // Read a {type, parameters:[...]} list (techniques, items, statuses share it).
@@ -151,9 +168,14 @@ void TuxemonDb::loadMonsters(const std::string &dir)
         }
         m.shape = nodeStr(n["shape"], "");
         m.stage = nodeStr(n["stage"], "basic");
+        m.species = nodeStr(n["species"], "");
         m.heightCm = nodeInt(n["height"], 0);
         m.weightKg = nodeInt(n["weight"], 0);
         m.catchRate = nodeDouble(n["catch_rate"], 100.0);
+        m.lowerCatchResistance = nodeDouble(n["lower_catch_resistance"], 1.0);
+        m.upperCatchResistance = nodeDouble(n["upper_catch_resistance"], 1.0);
+        readStrList(n["tags"], m.tags);
+        readStrList(n["terrains"], m.terrains);
 
         const YAML::Node types = n["types"];
         if(types && types.IsSequence())
@@ -207,6 +229,7 @@ void TuxemonDb::loadMonsters(const std::string &dir)
             }
         }
 
+        m.raw = n;
         monsters_.push_back(m);
     }
 }
@@ -232,6 +255,10 @@ void TuxemonDb::loadTechniques(const std::string &dir)
         t.power = nodeDouble(n["power"], 1.0);
         t.accuracy = nodeDouble(n["accuracy"], 1.0);
         t.potency = nodeDouble(n["potency"], 0.0);
+        t.recharge = nodeInt(n["recharge"], 0);
+        t.range = nodeStr(n["range"], "");
+        t.sort = nodeStr(n["sort"], "");
+        t.category = nodeStr(n["category"], "");
 
         const YAML::Node types = n["types"];
         if(types && types.IsSequence())
@@ -251,6 +278,7 @@ void TuxemonDb::loadTechniques(const std::string &dir)
             t.targetSelf = (nodeStr(target["own_monster"], "false") == "true");
 
         t.effects = readEffects(n["effects"]);
+        t.raw = n;
         techniques_.push_back(t);
     }
 }
@@ -281,8 +309,13 @@ void TuxemonDb::loadItems(const std::string &dir)
         const YAML::Node beh = n["behaviors"];
         if(beh && beh["consumable"])
             it.consumable = (nodeStr(beh["consumable"], "false") == "true");
+        if(beh && beh["throwable"])
+            it.throwable = (nodeStr(beh["throwable"], "false") == "true");
+        if(beh && beh["resellable"])
+            it.resellable = (nodeStr(beh["resellable"], "false") == "true");
 
         it.effects = readEffects(n["effects"]);
+        it.raw = n;
         items_.push_back(it);
     }
 }
@@ -323,6 +356,7 @@ void TuxemonDb::loadElements(const std::string &dir)
                 ++i;
             }
         }
+        el.raw = n;
         elements_.push_back(el);
     }
 }
@@ -346,6 +380,7 @@ void TuxemonDb::loadStatuses(const std::string &dir)
             continue;
         s.condId = nodeInt(n["cond_id"], 0);
         s.category = nodeStr(n["category"], "neutral");
+        s.sort = nodeStr(n["sort"], "");
         s.stepType = nodeStr(n["step_effect_type"], "");
         s.stepValue = nodeDouble(n["step_effect_value"], 0.0);
         s.stepInterval = nodeInt(n["step_interval"], 0);
@@ -355,6 +390,7 @@ void TuxemonDb::loadStatuses(const std::string &dir)
             s.persists = (nodeStr(beh["persists_after_combat"], "false") == "true");
 
         s.effects = readEffects(n["effects"]);
+        s.raw = n;
         statuses_.push_back(s);
     }
 }

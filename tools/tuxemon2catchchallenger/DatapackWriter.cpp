@@ -1,6 +1,8 @@
 #include "DatapackWriter.hpp"
 #include "SpriteExtractor.hpp"
 
+#include <yaml-cpp/yaml.h>
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -59,6 +61,80 @@ static bool approx(double a, double b)
     return std::fabs(a - b) < 0.01;
 }
 
+// Make a YAML key a valid XML element name.
+static std::string sanitizeTag(const std::string &k)
+{
+    std::string t;
+    std::size_t i = 0;
+    while(i < k.size())
+    {
+        const char c = k[i];
+        if(std::isalnum((unsigned char)c) || c == '_' || c == '-')
+            t.push_back(c);
+        else
+            t.push_back('_');
+        ++i;
+    }
+    if(t.empty())
+        t = "x";
+    if(std::isdigit((unsigned char)t[0]))
+        t = "_" + t;
+    return t;
+}
+
+// Recursively dump a YAML node as nested XML.  Generic: every Tuxemon field
+// (including ones added in future Tuxemon versions) is preserved automatically.
+// The engine ignores the enclosing <tuxemon> element entirely.
+static void dumpYaml(std::ofstream &o, const std::string &indent,
+                     const std::string &key, const YAML::Node &n)
+{
+    const std::string tag = sanitizeTag(key);
+    if(!n.IsDefined() || n.IsNull())
+    {
+        o << indent << "<" << tag << "/>\n";
+        return;
+    }
+    if(n.IsScalar())
+    {
+        o << indent << "<" << tag << ">" << xmlEscape(n.Scalar()) << "</" << tag << ">\n";
+        return;
+    }
+    if(n.IsSequence())
+    {
+        o << indent << "<" << tag << ">\n";
+        std::size_t i = 0;
+        while(i < n.size()) { dumpYaml(o, indent + "  ", "item", n[i]); ++i; }
+        o << indent << "</" << tag << ">\n";
+        return;
+    }
+    if(n.IsMap())
+    {
+        o << indent << "<" << tag << ">\n";
+        YAML::const_iterator it = n.begin();
+        while(it != n.end())
+        {
+            dumpYaml(o, indent + "  ", it->first.Scalar(), it->second);
+            ++it;
+        }
+        o << indent << "</" << tag << ">\n";
+    }
+}
+
+// Emit the whole raw Tuxemon record under a <tuxemon> element (engine-ignored).
+static void writeTuxemon(std::ofstream &o, const std::string &indent, const YAML::Node &raw)
+{
+    if(!raw.IsDefined() || !raw.IsMap())
+        return;
+    o << indent << "<tuxemon>\n";
+    YAML::const_iterator it = raw.begin();
+    while(it != raw.end())
+    {
+        dumpYaml(o, indent + "    ", it->first.Scalar(), it->second);
+        ++it;
+    }
+    o << indent << "</tuxemon>\n";
+}
+
 // A display colour for each Tuxemon element (cosmetic; the engine only needs
 // the type names to match).
 static const char *colorFor(const std::string &slug)
@@ -112,6 +188,15 @@ int DatapackWriter::monsterId(const std::string &slug) const
 {
     std::unordered_map<std::string,int>::const_iterator it = monsterToId_.find(slug);
     return it == monsterToId_.end() ? -1 : it->second;
+}
+int DatapackWriter::idForItem(const std::string &slug) const
+{
+    std::unordered_map<std::string,int>::const_iterator it = itemToId_.find(slug);
+    return it == itemToId_.end() ? -1 : it->second;
+}
+int DatapackWriter::idForMonster(const std::string &slug) const
+{
+    return monsterId(slug);
 }
 
 // ── id maps ─────────────────────────────────────────────────────────────────
@@ -221,6 +306,7 @@ void DatapackWriter::writeTypes()
             o << "        <multiplicator number=\"0.5\" to=\"" << weak << "\"/>\n";
         if(!immune.empty())
             o << "        <multiplicator number=\"0\" to=\"" << immune << "\"/>\n";
+        writeTuxemon(o, "        ", el.raw);
         o << "    </type>\n";
         ++e;
     }
@@ -284,6 +370,7 @@ void DatapackWriter::writeBuffs()
         }
         o << "            </level>\n";
         o << "        </effect>\n";
+        writeTuxemon(o, "        ", st.raw);
         o << "    </buff>\n";
         ++s;
     }
@@ -381,6 +468,7 @@ void DatapackWriter::writeSkills()
 
         o << "            </level>\n";
         o << "        </effect>\n";
+        writeTuxemon(o, "        ", tech.raw);
         o << "    </skill>\n";
         ++t;
     }
@@ -513,6 +601,8 @@ void DatapackWriter::writeMonsters()
         }
 
         writeNameDesc(o, "        ", m.slug, true);
+        // Full raw Tuxemon record (engine-ignored), preserved for later support.
+        writeTuxemon(o, "        ", m.raw);
         o << "    </monster>\n";
     }
     o << "</monsters>\n";
@@ -608,6 +698,7 @@ void DatapackWriter::writeItems()
             o << "        <buff remove=\"all\"/>\n";
         // else: a plain item (stone, key item, berry) with no effect element.
 
+        writeTuxemon(o, "        ", it.raw);
         o << "    </item>\n";
     }
     o << "</items>\n";

@@ -30,6 +30,10 @@ public:
 
     bool writeAll();
 
+    // Public id lookups (valid after writeAll); -1 when unknown.
+    int idForItem(const std::string &slug) const;
+    int idForMonster(const std::string &slug) const;
+
 private:
     void buildIdMaps();
 
