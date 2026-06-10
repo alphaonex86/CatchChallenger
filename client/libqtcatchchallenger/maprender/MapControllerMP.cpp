@@ -332,6 +332,10 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
 {
     std::cout << "MapControllerMP::loadOtherPlayerFromMap();" << std::endl;
     Q_UNUSED(display);
+    //duplicate simplified id (server cache coherency off) can deliver an entry
+    //without sprite: visual-only, skip silently instead of dereferencing NULL
+    if(otherPlayer.playerMapObject==NULL)
+        return;
     if(CatchChallenger::QMap_client::all_map.find(otherPlayer.presumed_map)==CatchChallenger::QMap_client::all_map.cend())
     {
         std::cout << "MapControllerMP::loadOtherPlayerFromMap(); not found otherPlayer.presumed_map" << std::endl;
@@ -389,8 +393,7 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
             else
             {
                 MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.y);
-                if(otherPlayer.labelMapObject!=NULL)
-                    MapObjectItem::objectLink.at(otherPlayer.labelMapObject)->setZValue(otherPlayer.y);
+                MapObjectItem::setZValueIfLinked(otherPlayer.labelMapObject,otherPlayer.y);
             }
         }
     }
@@ -410,6 +413,11 @@ void MapControllerMP::loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlay
         qDebug() << QStringLiteral("all_map have not the current map: %1").arg(QString::number(tempPlayer.current_monster_map));
         return;
     }
+    //the group below comes from current_map, not current_monster_map: with a
+    //duplicate simplified id (server cache coherency off) the two can diverge
+    //while current_map is not loaded — all_map.at() would throw, skip silently
+    if(CatchChallenger::QMap_client::all_map.find(tempPlayer.current_map)==CatchChallenger::QMap_client::all_map.cend())
+        return;
     {
         Tiled::ObjectGroup *currentGroup=tempPlayer.monsterMapObject->objectGroup();
         if(currentGroup!=NULL)
@@ -426,7 +434,7 @@ void MapControllerMP::loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlay
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.monster_x-0.5,tempPlayer.monster_y+1));
-        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
+        MapObjectItem::setZValueIfLinked(tempPlayer.monsterMapObject,tempPlayer.monster_y);
     }
 }
 
@@ -475,6 +483,10 @@ void MapControllerMP::unloadOtherPlayerFromMap(const OtherPlayer &otherPlayer)
 
 void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::OtherPlayer &tempPlayer)
 {
+    //no monster sprite (or garbled entry from a duplicate simplified id —
+    //server cache coherency off): nothing to unload, skip silently
+    if(tempPlayer.monsterMapObject==NULL)
+        return;
     //monster
     {
         Tiled::ObjectGroup *currentGroup=tempPlayer.monsterMapObject->objectGroup();
@@ -858,7 +870,16 @@ void MapControllerMP::doMoveOtherAnimation()
         return;
     }
     const uint16_t &simplifiedId=otherPlayerListByAnimationTimer.at(timer);
-    moveOtherPlayerStepSlotWithPlayer(otherPlayerList[simplifiedId]);
+    //see moveOtherPlayerStepSlot(): duplicate simplified id (server cache
+    //coherency off) can leave a stale timer mapping; otherPlayerList[] would
+    //default-construct a garbage entry — drop silently instead
+    if(otherPlayerList.find(simplifiedId)==otherPlayerList.cend())
+    {
+        otherPlayerListByAnimationTimer.erase(timer);
+        timer->stop();
+        return;
+    }
+    moveOtherPlayerStepSlotWithPlayer(otherPlayerList.at(simplifiedId));
 }
 
 void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)

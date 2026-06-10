@@ -20,7 +20,18 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         return;
     }
     const uint16_t &simplifiedId=otherPlayerListByTimer.at(timer);
-    OtherPlayer &otherPlayer=otherPlayerList[simplifiedId];
+    //the server runs the player visibility cache without coherency to improve
+    //performance: two players can carry the same simplified id, so a remove/
+    //re-insert sequence can leave this timer mapped to an id no longer in
+    //otherPlayerList. otherPlayerList[simplifiedId] would then default-
+    //construct a garbage entry (uninitialized pointers): drop silently instead
+    if(otherPlayerList.find(simplifiedId)==otherPlayerList.cend())
+    {
+        otherPlayerListByTimer.erase(timer);
+        timer->stop();
+        return;
+    }
+    OtherPlayer &otherPlayer=otherPlayerList.at(simplifiedId);
     switch(otherPlayer.presumed_direction)
     {
         case CatchChallenger::Direction_move_at_right:
@@ -32,7 +43,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         return;
     }
 //    std::cout << "MapControllerMP::moveOtherPlayerStepSlot(): " << std::to_string(otherPlayer.presumed_direction) << std::endl;
-    moveOtherPlayerStepSlotWithPlayer(otherPlayerList[simplifiedId]);
+    moveOtherPlayerStepSlotWithPlayer(otherPlayer);
 }
 
 void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer)
@@ -180,7 +191,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 }
                 break;
                 case 1:
-                MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(qCeil(otherPlayer.monsterMapObject->y()));
+                MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,qCeil(otherPlayer.monsterMapObject->y()));
                 break;
                 //transition step
                 case 2:
@@ -280,8 +291,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         }
         break;
         case 1:
-        if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)!=MapObjectItem::objectLink.cend())
-            MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(qCeil(otherPlayer.playerMapObject->y()));
+        MapObjectItem::setZValueIfLinked(otherPlayer.playerMapObject,qCeil(otherPlayer.playerMapObject->y()));
         break;
         //transition step
         case 2:
@@ -353,7 +363,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             if(otherPlayer.monsterMapObject!=NULL)
             {
                 otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x-0.5,(float)otherPlayer.monster_y+1));
-                MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
+                MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,otherPlayer.monster_y);
             }
             else
                 otherPlayer.pendingMonsterMoves.clear();
@@ -400,8 +410,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         if(otherPlayer.labelMapObject!=NULL)
             otherPlayer.labelMapObject->setPosition(QPointF(static_cast<qreal>(x)-static_cast<qreal>(otherPlayer.labelTileset->tileWidth())
                                                             /2/16+0.5,y+1-1.4));
-        if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)!=MapObjectItem::objectLink.cend())
-            MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(y);
+        MapObjectItem::setZValueIfLinked(otherPlayer.playerMapObject,y);
 
         //check if one arrow key is pressed to continue to move into this direction
         if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_left)

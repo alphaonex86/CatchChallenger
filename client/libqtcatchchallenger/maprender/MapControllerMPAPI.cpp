@@ -463,7 +463,7 @@ bool MapControllerMP::move_otherMonster(MapControllerMP::OtherPlayer &otherPlaye
             else
             {
                 otherPlayer.monsterMapObject->setPosition(QPointF(otherPlayer.monster_x-0.5,otherPlayer.monster_y+1));
-                MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
+                MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,otherPlayer.monster_y);
             }
             otherPlayer.current_monster_map=previous_different_map_index;
             otherPlayer.monster_x=previous_different_x;
@@ -705,10 +705,9 @@ bool MapControllerMP::move_player_final(const uint8_t &id, const std::vector<std
         otherPlayerList.at(id).labelMapObject->setPosition(QPointF(static_cast<qreal>(otherPlayer.presumed_x)-
              static_cast<qreal>(otherPlayer.labelTileset->tileWidth())/2/16+0.5,
              static_cast<qreal>(otherPlayer.presumed_y)+1-1.4));
-        MapObjectItem::objectLink.at(otherPlayer.labelMapObject)->setZValue(otherPlayer.presumed_y);
+        MapObjectItem::setZValueIfLinked(otherPlayer.labelMapObject,otherPlayer.presumed_y);
     }
-    if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)!=MapObjectItem::objectLink.cend())
-        MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.presumed_y);
+    MapObjectItem::setZValueIfLinked(otherPlayer.playerMapObject,otherPlayer.presumed_y);
 
     //start moving into the right direction
     switch(otherPlayer.presumed_direction)
@@ -1114,8 +1113,7 @@ bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &
     if(otherPlayer.playerMapObject!=NULL)
     {
         otherPlayer.playerMapObject->setPosition(QPointF(otherPlayer.x,otherPlayer.y+1));
-        if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)!=MapObjectItem::objectLink.cend())
-            MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.y);
+        MapObjectItem::setZValueIfLinked(otherPlayer.playerMapObject,otherPlayer.y);
         if(otherPlayer.labelMapObject!=NULL)
             otherPlayer.labelMapObject->setPosition(QPointF(static_cast<qreal>(x)-static_cast<qreal>(otherPlayer.labelTileset->tileWidth())
                                                             /2/16+0.5,y+1-1.4));
@@ -1149,7 +1147,7 @@ bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &
                         if(old_map!=new_map)
                             unloadOtherMonsterFromCurrentMap(otherPlayer);
                         otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x-0.5,(float)otherPlayer.monster_y+1));
-                        MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
+                        MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,otherPlayer.monster_y);
                         if(old_map!=new_map)
                             loadOtherMonsterFromCurrentMap(otherPlayer);
                     }
@@ -1178,7 +1176,7 @@ bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &
                         if(old_map!=new_map)
                             unloadOtherMonsterFromCurrentMap(otherPlayer);
                         otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x-0.5,(float)otherPlayer.monster_y+1));
-                        MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
+                        MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,otherPlayer.monster_y);
                         if(old_map!=new_map)
                             loadOtherMonsterFromCurrentMap(otherPlayer);
                     }
@@ -1210,7 +1208,7 @@ bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &
                         if(old_map!=new_map)
                             unloadOtherMonsterFromCurrentMap(otherPlayer);
                         otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x-0.5,(float)otherPlayer.monster_y+1));
-                        MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
+                        MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,otherPlayer.monster_y);
                         if(old_map!=new_map)
                             loadOtherMonsterFromCurrentMap(otherPlayer);
                     }
@@ -1239,7 +1237,7 @@ bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &
                         if(old_map!=new_map)
                             unloadOtherMonsterFromCurrentMap(otherPlayer);
                         otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x-0.5,(float)otherPlayer.monster_y+1));
-                        MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
+                        MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,otherPlayer.monster_y);
                         if(old_map!=new_map)
                             loadOtherMonsterFromCurrentMap(otherPlayer);
                     }
@@ -1306,7 +1304,7 @@ bool MapControllerMP::reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &
     if(otherPlayer.monsterMapObject!=NULL)
     {
         otherPlayer.monsterMapObject->setPosition(QPointF((float)x-0.5,(float)y+1));
-        MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(y);
+        MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,y);
         otherPlayer.monsterMapObject->setVisible(false);
     }
     #endif

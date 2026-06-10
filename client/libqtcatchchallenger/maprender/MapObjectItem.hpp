@@ -30,6 +30,13 @@ public:
 
     //the link tiled with viewer
     static std::unordered_map<Tiled::MapObject *,MapObjectItem *> objectLink;
+
+    //the server runs the player visibility cache without coherency to improve
+    //performance: two players can carry the same simplified id, and the
+    //resulting load/unload sequences can leave a MapObject not (or no longer)
+    //linked to its item. The Z fix is visual-only: silently skip in that case
+    //instead of objectLink.at() throwing (which would crash the client).
+    static void setZValueIfLinked(Tiled::MapObject *object,const qreal &z);
 };
 
 #endif
