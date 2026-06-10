@@ -414,6 +414,73 @@ static std::string bfsNearest(const std::string &start,
     return found;
 }
 
+// "_"-token helpers for the gen2-style short dashed names — everything is
+// derived from the source data (scenario + anchor slug), nothing hardcoded.
+static std::vector<std::string> splitTokens(const std::string &s)
+{
+    std::vector<std::string> out;
+    std::string cur;
+    std::size_t i = 0;
+    while(i < s.size())
+    {
+        if(s[i] == '_')
+        {
+            if(!cur.empty()) { out.push_back(cur); cur.clear(); }
+        }
+        else
+            cur.push_back(s[i]);
+        ++i;
+    }
+    if(!cur.empty())
+        out.push_back(cur);
+    return out;
+}
+
+static std::string joinDash(const std::vector<std::string> &t)
+{
+    std::string out;
+    std::size_t i = 0;
+    while(i < t.size())
+    {
+        if(!out.empty()) out += "-";
+        out += t[i];
+        ++i;
+    }
+    return out;
+}
+
+static std::size_t commonPrefixLen(const std::vector<std::string> &a,
+                                   const std::vector<std::string> &b)
+{
+    std::size_t n = 0;
+    while(n < a.size() && n < b.size() && a[n] == b[n])
+        ++n;
+    return n;
+}
+
+// Reserve `base` (else base-2, base-3, …) within the per-folder name set.
+static std::string uniqueInDir(const std::string &dir, const std::string &base,
+                               std::map<std::string,std::set<std::string> > &used)
+{
+    std::set<std::string> &names = used[dir];
+    if(names.find(base) == names.end())
+    {
+        names.insert(base);
+        return base;
+    }
+    int n = 2;
+    while(true)
+    {
+        const std::string cand = base + "-" + std::to_string(n);
+        if(names.find(cand) == names.end())
+        {
+            names.insert(cand);
+            return cand;
+        }
+        ++n;
+    }
+}
+
 // Path of map `slug` living in `toDir`, relative to a map living in `fromDir`
 // (both dirs relative to map/main/tuxemon/, no trailing slash, no extension).
 static std::string relMapPath(const std::string &fromDir, const std::string &toDir,
@@ -687,12 +754,17 @@ bool MapConverter::convertOne(const std::string &tmxPath)
 
     const std::string slug = QFileInfo(QString::fromStdString(tmxPath)).completeBaseName().toStdString();
 
-    // output folder: map/main/tuxemon/<region>/<location>/ (from the pre-pass)
+    // output folder + short file name: map/main/tuxemon/<region>/<location>/
+    // <base>.tmx (from the pre-pass)
     std::string relDir = "other/" + slug;
+    std::string fileBase = slug;
     {
         std::unordered_map<std::string,std::string>::const_iterator rd = relDir_.find(slug);
         if(rd != relDir_.end())
             relDir = rd->second;
+        std::unordered_map<std::string,std::string>::const_iterator fb = fileBase_.find(slug);
+        if(fb != fileBase_.end())
+            fileBase = fb->second;
     }
     const std::string outDir = mapDir_ + "/" + relDir;
 
@@ -931,7 +1003,7 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         if(bestCell >= 0 && score > startScore_)
         {
             startScore_ = score;
-            startMap_ = relDir + "/" + slug;
+            startMap_ = relDir + "/" + fileBase;
             startX_ = bestCell % w;
             startY_ = bestCell / w;
         }
@@ -939,7 +1011,7 @@ bool MapConverter::convertOne(const std::string &tmxPath)
 
     // ── emit the CatchChallenger .tmx ──
     QDir().mkpath(QString::fromStdString(outDir));
-    std::ofstream o(outDir + "/" + slug + ".tmx");
+    std::ofstream o(outDir + "/" + fileBase + ".tmx");
     o << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     o << "<map version=\"1.10\" orientation=\"orthogonal\" renderorder=\"right-down\" width=\""
       << w << "\" height=\"" << h << "\" tilewidth=\"16\" tileheight=\"16\" infinite=\"0\">\n";
@@ -1072,11 +1144,12 @@ bool MapConverter::convertOne(const std::string &tmxPath)
             seenWarp.push_back(key);
             const int px = wp.srcTx * 16;
             const int py = (wp.srcTy + 1) * 16; // loader does y/16 - 1
-            // destination path relative to this map's folder
+            // destination path relative to this map's folder, short name
             std::string destPath = wp.dest;
             std::unordered_map<std::string,std::string>::const_iterator dd = relDir_.find(wp.dest);
-            if(dd != relDir_.end())
-                destPath = relMapPath(relDir, dd->second, wp.dest);
+            std::unordered_map<std::string,std::string>::const_iterator db = fileBase_.find(wp.dest);
+            if(dd != relDir_.end() && db != fileBase_.end())
+                destPath = relMapPath(relDir, dd->second, db->second);
             o << "  <object type=\"teleport on it\" gid=\"" << (invisibleFirstGid + 2)
               << "\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
             o << "   <properties>\n";
@@ -1135,11 +1208,11 @@ bool MapConverter::convertOne(const std::string &tmxPath)
 
     // sidecar <map>.xml: type + name + grass encounters + bot definitions
     std::string type = "outdoor";
+    std::map<std::string,std::string> mp;
     tinyxml2::XMLElement *mprops = map->FirstChildElement("properties");
     if(mprops != NULL)
     {
         tinyxml2::XMLElement *p = mprops->FirstChildElement("property");
-        std::map<std::string,std::string> mp;
         while(p != NULL)
         {
             if(p->Attribute("name") != NULL && p->Attribute("value") != NULL)
@@ -1157,9 +1230,14 @@ bool MapConverter::convertOne(const std::string &tmxPath)
                 type = "indoor";
         }
     }
-    std::ofstream ox(outDir + "/" + slug + ".xml");
+    std::ofstream ox(outDir + "/" + fileBase + ".xml");
     ox << "<map type=\"" << type << "\">\n";
-    ox << " <name>" << slug << "</name>\n";
+    // display name from the Tuxemon catalogue (nameEn title-cases the slug
+    // when untranslated), keyed by the map's own slug property when present
+    std::string dispSlug = slug;
+    if(mp.find("slug") != mp.end() && !mp["slug"].empty())
+        dispSlug = mp["slug"];
+    ox << " <name>" << xmlEsc(l10n_.nameEn(dispSlug)) << "</name>\n";
     writeGrass(ox, encZones, db_, dw_);
     writeBots(ox, bots, botSkin, db_, dw_, l10n_);
     ox << "</map>\n";
@@ -1263,8 +1341,10 @@ void MapConverter::computeLayout()
         ++mi;
     }
 
-    std::map<std::string,std::string> anchorDir; // anchor slug -> "region/location"
-    std::map<std::string,std::string> locUsed;   // "region/location" -> anchor (collision guard)
+    // phase 1: anchor of every map (itself when outdoor, else the nearest
+    // outdoor map through the warp graph; indoor-only component -> its
+    // smallest slug)
+    std::map<std::string,std::string> anchorOf; // slug -> anchor slug
     mi = meta.begin();
     while(mi != meta.end())
     {
@@ -1273,44 +1353,87 @@ void MapConverter::computeLayout()
         std::string anchor = bfsNearest(slug, meta, adj, true, &component);
         if(anchor.empty())
         {
-            // indoor-only component: group it under its smallest slug
             anchor = slug;
             std::set<std::string>::const_iterator v = component.begin();
             while(v != component.end()) { if(*v < anchor) anchor = *v; ++v; }
         }
-        if(anchorDir.find(anchor) == anchorDir.end())
-        {
-            std::string region = meta[anchor].scenario;
-            if(region.empty())
-            {
-                const std::string near = bfsNearest(anchor, meta, adj, false, NULL);
-                if(!near.empty())
-                    region = meta[near].scenario;
-            }
-            if(region.empty())
-                region = "other";
-            region = sanitizeFsBase(region);
-            // location: the anchor slug, with the redundant region prefix stripped
-            std::string loc = anchor;
-            if(loc.size() > region.size() + 1 && loc.compare(0, region.size() + 1, region + "_") == 0)
-                loc = loc.substr(region.size() + 1);
-            std::string dir = region + "/" + sanitizeFsBase(loc);
-            if(locUsed.find(dir) != locUsed.end())
-            {
-                // stripped name collides with another location: keep the full slug
-                dir = region + "/" + sanitizeFsBase(anchor);
-                int n = 2;
-                while(locUsed.find(dir) != locUsed.end())
-                {
-                    dir = region + "/" + sanitizeFsBase(anchor) + "-" + std::to_string(n);
-                    ++n;
-                }
-            }
-            locUsed[dir] = anchor;
-            anchorDir[anchor] = dir;
-        }
-        relDir_[slug] = anchorDir[anchor];
+        anchorOf[slug] = anchor;
         ++mi;
+    }
+
+    // phase 2: one folder per anchor — region/location, both dashed; the
+    // anchor map itself is named after the location (gen2: violet-city/
+    // violet-city.tmx).  Token prefixes are stripped, never hardcoded names.
+    std::map<std::string,std::string> anchorDir;                       // anchor -> "region/location"
+    std::map<std::string,std::vector<std::string> > anchorRegionTok;   // anchor -> region tokens
+    std::map<std::string,std::vector<std::string> > anchorLocTok;      // anchor -> location tokens
+    std::set<std::string> locUsed;                                     // taken "region/location" dirs
+    std::map<std::string,std::set<std::string> > usedNames;            // dir -> taken file basenames
+    std::map<std::string,std::string>::const_iterator ai = anchorOf.begin();
+    while(ai != anchorOf.end())
+    {
+        const std::string &anchor = ai->second;
+        ++ai;
+        if(anchorDir.find(anchor) != anchorDir.end())
+            continue;
+        std::string regionRaw = meta[anchor].scenario;
+        if(regionRaw.empty())
+        {
+            const std::string near = bfsNearest(anchor, meta, adj, false, NULL);
+            if(!near.empty())
+                regionRaw = meta[near].scenario;
+        }
+        if(regionRaw.empty())
+            regionRaw = "other";
+        const std::vector<std::string> regionTok = splitTokens(regionRaw);
+        const std::string region = sanitizeFsBase(joinDash(regionTok));
+        // location: the anchor slug minus the region token prefix
+        std::vector<std::string> locTok = splitTokens(anchor);
+        if(commonPrefixLen(locTok, regionTok) == regionTok.size() && locTok.size() > regionTok.size())
+            locTok.erase(locTok.begin(), locTok.begin() + (long)regionTok.size());
+        std::string dir = region + "/" + sanitizeFsBase(joinDash(locTok));
+        if(locUsed.find(dir) != locUsed.end())
+        {
+            // stripped name collides with another location: keep the full slug
+            locTok = splitTokens(anchor);
+            dir = region + "/" + sanitizeFsBase(joinDash(locTok));
+            int n = 2;
+            while(locUsed.find(dir) != locUsed.end())
+            {
+                dir = region + "/" + sanitizeFsBase(joinDash(locTok)) + "-" + std::to_string(n);
+                ++n;
+            }
+        }
+        locUsed.insert(dir);
+        anchorDir[anchor] = dir;
+        anchorRegionTok[anchor] = regionTok;
+        anchorLocTok[anchor] = locTok;
+        relDir_[anchor] = dir;
+        fileBase_[anchor] = uniqueInDir(dir, sanitizeFsBase(joinDash(locTok)), usedNames);
+    }
+
+    // phase 3: short file name for every non-anchor map — strip the region
+    // token prefix, then the tokens shared with the location (gen2:
+    // violet-city/gym.tmx, not violet-city/violet-city-gym.tmx)
+    std::map<std::string,std::string>::const_iterator si = anchorOf.begin();
+    while(si != anchorOf.end())
+    {
+        const std::string &slug = si->first;
+        const std::string &anchor = si->second;
+        ++si;
+        if(slug == anchor)
+            continue;
+        const std::string &dir = anchorDir[anchor];
+        relDir_[slug] = dir;
+        std::vector<std::string> t = splitTokens(slug);
+        const std::vector<std::string> &rt = anchorRegionTok[anchor];
+        if(commonPrefixLen(t, rt) == rt.size() && t.size() > rt.size())
+            t.erase(t.begin(), t.begin() + (long)rt.size());
+        const std::vector<std::string> &lt = anchorLocTok[anchor];
+        const std::size_t c = commonPrefixLen(t, lt);
+        if(c > 0 && c < t.size())
+            t.erase(t.begin(), t.begin() + (long)c);
+        fileBase_[slug] = uniqueInDir(dir, sanitizeFsBase(joinDash(t)), usedNames);
     }
 }
 

@@ -5,7 +5,12 @@
 // under <out>/map/main/tuxemon/<region>/<location>/ (the datapack-pkmn gen2
 // layout: region = the map's "scenario" property, location = the outdoor map a
 // building belongs to, found through the warp graph — a town and its interiors
-// share one folder).  Tuxemon already ships proper external .tsx
+// share one folder).  File names are shortened the gen2 way (location/gym.tmx,
+// not location/scenario_town_gym.tmx) by stripping the region and location
+// token prefixes from each slug — everything is DERIVED from the source data
+// (scenario property + warp graph + token comparison), nothing is hardcoded,
+// so new upstream maps/scenarios lay out automatically.
+// Tuxemon already ships proper external .tsx
 // tilesets, so the tile gids are kept verbatim; the work is:
 //   * decode each tile layer (csv or base64+zlib),
 //   * rasterise the "Collisions" object-group rectangles to a blocked grid,
@@ -78,6 +83,7 @@ private:
     std::unordered_map<std::string,int> tsxCount_;          // written .tsx name -> tilecount (for the invisible firstgid)
     std::unordered_map<std::string,std::pair<int,int> > mapDims_; // slug -> (w,h) for warp clamping
     std::unordered_map<std::string,std::string> relDir_;    // slug -> "region/location" under map/main/tuxemon/
+    std::unordered_map<std::string,std::string> fileBase_;  // slug -> output file basename (short, gen2-style)
     int warpsTotal_;
     int collisionCells_;
     int botsTotal_;
