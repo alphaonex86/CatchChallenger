@@ -22,6 +22,9 @@ private:
     void writeMonsters();
     void writeItems();
     void writeSprites();
+    void writeCompleteness();   // start/reputation/event/layers/visualcategory/...
+    void writePlayerSkin();
+    int firstSpeciesId() const; // a valid starter species id
 
     const GbaRom &rom_;
     const Gen3Data &data_;

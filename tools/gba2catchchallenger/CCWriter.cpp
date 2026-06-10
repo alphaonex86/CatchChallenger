@@ -545,6 +545,11 @@ void CCWriter::writeMap(const DecodedMap &map)
     std::vector<uint32_t> ledgeLeft(cells,0);
     std::vector<uint32_t> ledgeRight(cells,0);
     bool anyGrass=false,anyWater=false,anyLedge=false;
+    // Per-direction ledge presence: a map with only (say) up-ledges must NOT emit
+    // empty LedgesLeft/Right layers — an all-zero layer renders nothing, so hiding
+    // it in Tiled changes no pixel (it would fail the render-visibility guard) and
+    // just bloats the .tmx.  anyLedge stays the OR (used by the visibility guard).
+    bool anyLedgeUp=false,anyLedgeDown=false,anyLedgeLeft=false,anyLedgeRight=false;
 
     // DISJOINT real-tile layers (no generated markers): every cell's REAL
     // below-player tile (groundGid) goes to EXACTLY ONE layer chosen by its
@@ -577,19 +582,19 @@ void CCWriter::writeMap(const DecodedMap &map)
         }
         else if(t==Terrain::LedgeUp)
         {
-            ledgeUp[c]=g; anyLedge=true;
+            ledgeUp[c]=g; anyLedge=true; anyLedgeUp=true;
         }
         else if(t==Terrain::LedgeDown)
         {
-            ledgeDown[c]=g; anyLedge=true;
+            ledgeDown[c]=g; anyLedge=true; anyLedgeDown=true;
         }
         else if(t==Terrain::LedgeLeft)
         {
-            ledgeLeft[c]=g; anyLedge=true;
+            ledgeLeft[c]=g; anyLedge=true; anyLedgeLeft=true;
         }
         else if(t==Terrain::LedgeRight)
         {
-            ledgeRight[c]=g; anyLedge=true;
+            ledgeRight[c]=g; anyLedge=true; anyLedgeRight=true;
         }
         else if(t==Terrain::Grass)
         {
@@ -682,14 +687,25 @@ void CCWriter::writeMap(const DecodedMap &map)
         out << " <layer id=\"" << layerId++ << "\" name=\"Water\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(water) << "</data>\n </layer>\n";
     }
-    if(anyLedge)
+    // Each ledge direction is emitted ONLY when it actually has tiles (a typical
+    // town has no ledges at all; a route may have only one or two directions).
+    if(anyLedgeUp)
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"LedgesUp\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeUp) << "</data>\n </layer>\n";
+    }
+    if(anyLedgeDown)
+    {
         out << " <layer id=\"" << layerId++ << "\" name=\"LedgesDown\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeDown) << "</data>\n </layer>\n";
+    }
+    if(anyLedgeLeft)
+    {
         out << " <layer id=\"" << layerId++ << "\" name=\"LedgesLeft\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeLeft) << "</data>\n </layer>\n";
+    }
+    if(anyLedgeRight)
+    {
         out << " <layer id=\"" << layerId++ << "\" name=\"LedgesRight\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeRight) << "</data>\n </layer>\n";
     }
