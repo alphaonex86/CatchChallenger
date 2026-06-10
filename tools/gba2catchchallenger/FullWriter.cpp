@@ -187,18 +187,24 @@ void FullWriter::writeMonsters()
 void FullWriter::writeItems()
 {
     QDir().mkpath(QString::fromStdString(outRoot_ + "/items"));
+    SpriteRipper ripper;
+    ripper.locate(rom_);
     std::ofstream o(outRoot_ + "/items/items.xml");
-    o << "<!-- Generated from gItems -->\n<items>\n";
+    o << "<!-- Generated from gItems + gItemIconTable -->\n<items>\n";
+    int icons = 0;
     std::size_t i = 0;
     while(i < data_.items().size())
     {
         const Gen3Item &it = data_.items()[i];
         ++i;
-        o << "    <item price=\"" << it.price << "\" id=\"" << it.id << "\">\n";
-        o << "        <name>" << xmlEscape(it.name) << "</name>\n";
-        o << "    </item>\n";
+        const bool haveIcon = ripper.haveItemIcons() && ripper.writeItemIcon(rom_, outRoot_, it.id);
+        if(haveIcon) ++icons;
+        o << "    <item price=\"" << it.price << "\" id=\"" << it.id << "\"";
+        if(haveIcon) o << " image=\"icon-" << it.id << ".png\"";
+        o << ">\n        <name>" << xmlEscape(it.name) << "</name>\n    </item>\n";
     }
     o << "</items>\n";
+    std::cerr << "FullWriter: " << icons << " item icons extracted." << std::endl;
 }
 
 // ── monster battle sprites ──
