@@ -154,3 +154,17 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         mMapObject->setPosition(realPos);
     }
 }
+
+void MapObjectItem::setZValueIfLinked(Tiled::MapObject *object,const qreal &z)
+{
+    //see the declaration: silently skip when not linked (visual-only fix),
+    //never throw out of objectLink.at()
+    if(object==NULL)
+        return;
+    if(objectLink.find(object)==objectLink.cend())
+        return;
+    MapObjectItem * const item=objectLink.at(object);
+    if(item==NULL)
+        return;
+    item->setZValue(z);
+}
