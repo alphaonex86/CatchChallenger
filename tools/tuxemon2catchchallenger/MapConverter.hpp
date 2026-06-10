@@ -20,6 +20,7 @@
 
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace tuxemon {
 
@@ -39,12 +40,16 @@ public:
 private:
     bool convertOne(const std::string &tmxPath);
     // Copy an externally-referenced tileset (.tsx + its image) into the shared
-    // tileset dir.
-    void copyTileset(const std::string &tsxBasename);
+    // tileset dir, sanitising the filenames.  Returns the written (sanitised)
+    // .tsx basename to reference from the map.
+    std::string copyTileset(const std::string &tsxBasename);
     // Materialise an embedded (inline) <tileset> (no source attribute) as an
     // external .tsx + copied image, relative image source resolved against the
     // source map's directory.  Returns the written .tsx basename ("" on failure).
     std::string materializeInline(void *tilesetElement, const std::string &mapDirAbs);
+    // Datapack filenames must be [a-z0-9._/-] only (the sync/checksum path drops
+    // others).  Sanitise a basename and make it unique within the tileset dir.
+    std::string uniqueTilesetFile(const std::string &origBasename);
 
     const TuxemonDb &db_;
     const DatapackWriter &dw_;
@@ -55,6 +60,10 @@ private:
     std::string mapDir_;     // <out>/map/main/tuxemon
     std::string tilesetDir_; // <out>/map/main/tuxemon/tileset
     std::unordered_set<std::string> copiedTilesets_;
+    std::unordered_map<std::string,std::string> tsxSan_;   // orig .tsx basename -> written name
+    std::unordered_map<std::string,std::string> imgSan_;   // orig image basename -> written name
+    std::unordered_set<std::string> usedTilesetFiles_;     // all written names (collision guard)
+    std::unordered_map<std::string,std::pair<int,int> > mapDims_; // slug -> (w,h) for warp clamping
     int warpsTotal_;
     int collisionCells_;
     int botsTotal_;

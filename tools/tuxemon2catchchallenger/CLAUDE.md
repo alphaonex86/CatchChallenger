@@ -51,7 +51,22 @@ out of tree (`/tmp/tux2cc-build`).
   event region → a `Grass` layer + `<grass>`/`<grassNight>`, luck normalised to
   sum 100) and bots (`create_npc`/`add_monster`/`set_economy`/`open_shop`/
   `translated_dialog` events → `bot` objects + `<bot>` text/fight/shop/sell steps).
-* **Verify with the FULL singleton + buffers.**  `/tmp/tuxverify` calls
+* **Datapack filenames MUST be `[a-z0-9._/-]` only** (no uppercase/space/punct).
+  `FacilityLibGeneral::getSuffixAndValidatePathFromFS` (used by the gateway +
+  ClientHeavyLoad SYNC paths) silently DROPS other names, so a tileset called
+  `My_Sheet (BW).png` loads locally but never reaches a networked client →
+  broken map.  `MapConverter::uniqueTilesetFile`/`sanitizeFsBase` rename every
+  copied/materialised tileset (.tsx + image) and rewrite the references.  Tuxemon
+  map slugs are already valid; tileset names are NOT.
+* **Verify with the FULL singleton + buffers + map-link.**  Also run
+  `Map_loader::loadAllMapsAndLink(flat, mapdir+"/", semi, mapPathToId, NULL, &bufs)`
+  (real server init: border/warp linking + map-id assignment) — it flags
+  out-of-range teleport destinations and duplicate teleport triggers; the
+  converter clamps warp dests to the target map size (pre-pass `mapDims_`) and
+  dedups warps by source tile.  Also run the CLIENT loader (`/tmp/tuxclient`,
+  subclass `DatapackClientLoader`) — it wants `map/visualcategory.xml`, a
+  reputation `<name>`, and the `map/fight/<terrain>/` backgrounds layers.xml
+  references.  `/tmp/tuxverify` calls
   `CommonDatapack::commonDatapack.parseDatapack(dp + "/")` (TRAILING SLASH — the
   engine concatenates `dp+"skin/"`), then `tryLoadMap(..., &buf)` with a
   `MapLoadBuffers` (else text/sell bot steps emit benign "step not found"
