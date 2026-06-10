@@ -39,6 +39,8 @@ add_executable(tuxemon2catchchallenger
     SpriteExtractor.cpp
     DatapackWriter.cpp
     MapConverter.cpp
+    SkinGen.cpp
+    WorldWriter.cpp
     ${CC_REPO_ROOT_LOCAL}/general/tinyXML2/tinyxml2.cpp
 )
 

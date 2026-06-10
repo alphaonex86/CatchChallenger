@@ -20,7 +20,8 @@
 namespace tuxemon {
 
 MapConverter::MapConverter(const std::string &modRoot, const std::string &outRoot)
-    : modRoot_(modRoot), outRoot_(outRoot), warpsTotal_(0), collisionCells_(0)
+    : modRoot_(modRoot), outRoot_(outRoot), warpsTotal_(0), collisionCells_(0),
+      startX_(0), startY_(0), startScore_(-1)
 {
     mapDir_ = outRoot_ + "/map/main/tuxemon";
     tilesetDir_ = mapDir_ + "/tileset";
@@ -386,6 +387,43 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     std::size_t bi = 0;
     while(bi < blocked.size()) { if(blocked[bi]) ++collisionCells_; ++bi; }
     warpsTotal_ += (int)warps.size();
+
+    // Track a good walkable start location (prefer town/city maps with a
+    // walkable cell near the centre).
+    {
+        int walkCount = 0, bestCell = -1, bestDist = 1 << 30;
+        const int cx = w / 2, cy = h / 2;
+        int yy = 0;
+        while(yy < h)
+        {
+            int xx = 0;
+            while(xx < w)
+            {
+                const std::size_t i = (std::size_t)xx + (std::size_t)yy * w;
+                bool ground = false;
+                std::size_t gl = 0;
+                while(gl < groundLayers.size()) { if((groundLayers[gl][i] & kGidMask) != 0) ground = true; ++gl; }
+                if(ground && !blocked[i])
+                {
+                    ++walkCount;
+                    const int d = (xx - cx) * (xx - cx) + (yy - cy) * (yy - cy);
+                    if(d < bestDist) { bestDist = d; bestCell = (int)i; }
+                }
+                ++xx;
+            }
+            ++yy;
+        }
+        int score = walkCount;
+        if(slug.find("town") != std::string::npos || slug.find("city") != std::string::npos)
+            score += 100000;
+        if(bestCell >= 0 && score > startScore_)
+        {
+            startScore_ = score;
+            startMap_ = slug;
+            startX_ = bestCell % w;
+            startY_ = bestCell / w;
+        }
+    }
 
     // ── emit the CatchChallenger .tmx ──
     QDir().mkpath(QString::fromStdString(mapDir_));

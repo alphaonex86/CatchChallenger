@@ -9,6 +9,8 @@
 #include "Localization.hpp"
 #include "DatapackWriter.hpp"
 #include "MapConverter.hpp"
+#include "SkinGen.hpp"
+#include "WorldWriter.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -64,6 +66,12 @@ int main(int argc, char *argv[])
 
     tuxemon::MapConverter maps(modRoot, outRoot);
     maps.convertAll();
+
+    tuxemon::SkinGen skins(modRoot, outRoot);
+    tuxemon::WorldWriter world(db, l10n, modRoot, outRoot, skins, writer,
+                               maps.startMap(), maps.startX(), maps.startY());
+    world.writeAll();
+    std::cerr << "Skins generated: " << skins.count() << std::endl;
 
     std::cout << "Done." << std::endl;
     return 0;

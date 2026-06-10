@@ -24,6 +24,11 @@ public:
     // Convert every maps/*.tmx; returns the number of maps written.
     int convertAll();
 
+    // A walkable start location chosen across the converted maps (for start.xml).
+    const std::string &startMap() const { return startMap_; }
+    int startX() const { return startX_; }
+    int startY() const { return startY_; }
+
 private:
     bool convertOne(const std::string &tmxPath);
     // Copy an externally-referenced tileset (.tsx + its image) into the shared
@@ -41,6 +46,10 @@ private:
     std::unordered_set<std::string> copiedTilesets_;
     int warpsTotal_;
     int collisionCells_;
+    std::string startMap_;
+    int startX_;
+    int startY_;
+    int startScore_;
 };
 
 } // namespace tuxemon

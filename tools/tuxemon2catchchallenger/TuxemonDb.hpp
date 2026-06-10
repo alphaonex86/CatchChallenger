@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 
+#include <yaml-cpp/node/node.h>
+
 namespace tuxemon {
 
 // Body shape -> 6 base attributes on a 0..10 scale (shape/shapes.yaml).
@@ -40,16 +42,22 @@ struct Evolution {
 struct Monster {
     std::string slug;
     int txmnId;           // unique numeric id, reused as the CC monster id
+    std::string species;
     std::vector<std::string> types; // element slugs (1 or 2 used)
     std::string shape;    // shape slug
     std::string stage;    // basic / stage1 / stage2
     int heightCm;         // height in cm (cosmetic)
     int weightKg;         // weight in kg (cosmetic)
     double catchRate;     // 0..100ish
+    double lowerCatchResistance;
+    double upperCatchResistance;
     double genderMale;    // gender weight
     double genderFemale;
+    std::vector<std::string> tags;
+    std::vector<std::string> terrains;
     std::vector<MoveEntry> moveset;
     std::vector<Evolution> evolutions;
+    YAML::Node raw;
     Monster();
 };
 
@@ -65,9 +73,14 @@ struct Technique {
     double power;         // damage multiplier (~0.5..2)
     double accuracy;      // 0..1 (negative => unset, treat as 1)
     double potency;       // secondary-effect chance 0..1
+    int recharge;         // turns to recharge
+    std::string range;    // reliable / reach / ranged
+    std::string sort;     // damage / meta / ...
+    std::string category; // simple / basic / ...
     std::vector<std::string> types; // element slugs
     bool targetSelf;      // own_monster true
     std::vector<Effect> effects;
+    YAML::Node raw;
     Technique();
 };
 
@@ -78,7 +91,10 @@ struct Item {
     long cost;            // shop price (<0 => unset)
     std::string sprite;   // gfx/items/<x>.png (relative to the mod root)
     bool consumable;
+    bool throwable;
+    bool resellable;
     std::vector<Effect> effects;
+    YAML::Node raw;
     Item();
 };
 
@@ -91,17 +107,20 @@ struct Matchup {
 struct Element {
     std::string slug;
     std::vector<Matchup> matchups;
+    YAML::Node raw;
 };
 
 struct Status {
     std::string slug;
     int condId;
     std::string category; // negative / positive / neutral
+    std::string sort;     // meta / ...
     bool persists;        // persists_after_combat
     std::string stepType; // flat_damage / percent_damage / ""
     double stepValue;
     int stepInterval;
     std::vector<Effect> effects; // e.g. type=burnt params=[8,weakest]
+    YAML::Node raw;
     Status();
 };
 
