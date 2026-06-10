@@ -1,6 +1,8 @@
 #include "MapConverter.hpp"
 #include "InvisibleAsset.hpp"
 
+#include <yaml-cpp/yaml.h>
+
 #include <tinyxml2.h>
 #include <zlib.h>
 
@@ -734,6 +736,160 @@ static void writeBots(std::ofstream &ox, const std::vector<const NpcPlace*> &bot
     }
 }
 
+// ── shared event interpreter ───────────────────────────────────────────────
+// One Tuxemon event = a property set (actN/condN/behavN) anchored at a pixel
+// rect.  Used by BOTH encodings: TMX object properties AND the sidecar
+// <map>.yaml events (newer Tuxemon moved 62 maps' events there).
+struct EventSink {
+    std::vector<Warp> *warps;
+    std::vector<EncZone> *encZones;
+    std::map<std::string,NpcPlace> *npcMap;
+    const std::unordered_map<std::string,std::pair<int,int> > *mapDims;
+};
+
+static void processEventProps(const std::map<std::string,std::string> &props,
+                              int ox, int oy, int ow, int oh, EventSink &sink)
+{
+    // determine the event's "subject" NPC (for dialogue) from a
+    // behav "talk <slug>" or a create_npc/char_talk action
+    std::string subject;
+    std::vector<std::string> pendingDialog;
+    std::map<std::string,std::string>::const_iterator it = props.begin();
+    while(it != props.end())
+    {
+        const std::string &key = it->first;
+        const std::string &val = it->second;
+        if(key.rfind("behav", 0) == 0 && val.rfind("talk ", 0) == 0)
+            subject = val.substr(5);
+        if(key.rfind("act", 0) == 0)
+        {
+            std::string verb;
+            std::vector<std::string> a;
+            splitAction(val, verb, a);
+            if(verb == "transition_teleport" && a.size() >= 4)
+            {
+                Warp wp;
+                wp.srcTx = ox / 16; wp.srcTy = oy / 16;
+                std::string dest = a[1];
+                const std::size_t dot = dest.rfind(".tmx");
+                if(dot != std::string::npos) dest = dest.substr(0, dot);
+                wp.dest = dest;
+                wp.dx = QString::fromStdString(a[2]).toInt();
+                wp.dy = QString::fromStdString(a[3]).toInt();
+                // clamp destination into the target map (Tuxemon source
+                // sometimes points past the edge -> engine "out of range")
+                std::unordered_map<std::string,std::pair<int,int> >::const_iterator dim = sink.mapDims->find(dest);
+                if(dim != sink.mapDims->cend())
+                {
+                    if(wp.dx >= dim->second.first)  wp.dx = dim->second.first - 1;
+                    if(wp.dy >= dim->second.second) wp.dy = dim->second.second - 1;
+                }
+                if(wp.dx < 0) wp.dx = 0;
+                if(wp.dy < 0) wp.dy = 0;
+                sink.warps->push_back(wp);
+            }
+            else if(verb == "random_encounter" && !a.empty())
+            {
+                EncZone z;
+                z.x0 = ox / 16; z.y0 = oy / 16;
+                z.x1 = (ox + ow + 15) / 16; z.y1 = (oy + oh + 15) / 16;
+                z.slug = a[0];
+                sink.encZones->push_back(z);
+            }
+            else if(verb == "create_npc" && a.size() >= 3)
+            {
+                NpcPlace &np = (*sink.npcMap)[a[0]];
+                np.slug = a[0];
+                np.x = QString::fromStdString(a[1]).toInt();
+                np.y = QString::fromStdString(a[2]).toInt();
+                if(a.size() >= 4) np.facing = a[3];
+                if(subject.empty()) subject = a[0];
+            }
+            else if(verb == "char_face" && a.size() >= 2)
+                (*sink.npcMap)[a[0]].facing = a[1];
+            else if(verb == "set_economy" && a.size() >= 2)
+            {
+                (*sink.npcMap)[a[0]].economy = a[1];
+                (*sink.npcMap)[a[0]].shop = true;
+            }
+            else if(verb == "open_shop" && !a.empty())
+                (*sink.npcMap)[a[0]].shop = true;
+            else if(verb == "add_monster" && a.size() >= 3)
+                (*sink.npcMap)[a[2]].party.push_back(std::make_pair(a[0], QString::fromStdString(a[1]).toInt()));
+            else if(verb == "char_talk" && !a.empty())
+                subject = a[0];
+            else if((verb == "translated_dialog" || verb == "translated_translation" || verb == "dialog") && !a.empty())
+                pendingDialog.push_back(a[0]);
+        }
+        ++it;
+    }
+    if(!subject.empty() && !pendingDialog.empty())
+    {
+        NpcPlace &np = (*sink.npcMap)[subject];
+        if(np.slug.empty()) np.slug = subject;
+        std::size_t di = 0;
+        while(di < pendingDialog.size()) { np.dialog.push_back(pendingDialog[di]); ++di; }
+    }
+}
+
+// Feed the sidecar <map>.yaml events (x/y/width/height in TILES, actions/
+// conditions/behav as lists) through the same interpreter.
+static void loadYamlEvents(const std::string &tmxPath, EventSink &sink)
+{
+    std::string ypath = tmxPath;
+    const std::size_t dot = ypath.rfind(".tmx");
+    if(dot == std::string::npos)
+        return;
+    ypath = ypath.substr(0, dot) + ".yaml";
+    if(!QFile::exists(QString::fromStdString(ypath)))
+        return;
+    YAML::Node root;
+    try { root = YAML::LoadFile(ypath); }
+    catch(...) { std::cerr << "  warning: unreadable map yaml " << ypath << std::endl; return; }
+    YAML::Node evs = root["events"];
+    if(!evs || !evs.IsMap())
+        return;
+    YAML::Node::const_iterator e = evs.begin();
+    while(e != evs.end())
+    {
+        const YAML::Node &ev = e->second;
+        ++e;
+        if(!ev.IsMap())
+            continue;
+        const int x = ev["x"] ? ev["x"].as<int>(0) : 0;
+        const int y = ev["y"] ? ev["y"].as<int>(0) : 0;
+        const int w = ev["width"] ? ev["width"].as<int>(1) : 1;
+        const int h = ev["height"] ? ev["height"].as<int>(1) : 1;
+        std::map<std::string,std::string> props;
+        int n = 1;
+        if(ev["actions"] && ev["actions"].IsSequence())
+        {
+            YAML::Node::const_iterator a = ev["actions"].begin();
+            while(a != ev["actions"].end())
+            {
+                props["act" + std::to_string(n)] = a->as<std::string>(std::string());
+                ++n; ++a;
+            }
+        }
+        if(ev["behav"])
+        {
+            if(ev["behav"].IsSequence())
+            {
+                n = 1;
+                YAML::Node::const_iterator b = ev["behav"].begin();
+                while(b != ev["behav"].end())
+                {
+                    props["behav" + std::to_string(n)] = b->as<std::string>(std::string());
+                    ++n; ++b;
+                }
+            }
+            else if(ev["behav"].IsScalar())
+                props["behav1"] = ev["behav"].as<std::string>(std::string());
+        }
+        processEventProps(props, x * 16, y * 16, w * 16, h * 16, sink);
+    }
+}
+
 bool MapConverter::convertOne(const std::string &tmxPath)
 {
     tinyxml2::XMLDocument doc;
@@ -824,6 +980,11 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     std::vector<Warp> warps;
     std::vector<EncZone> encZones;
     std::map<std::string,NpcPlace> npcMap;
+    EventSink sink;
+    sink.warps = &warps;
+    sink.encZones = &encZones;
+    sink.npcMap = &npcMap;
+    sink.mapDims = &mapDims_;
     tinyxml2::XMLElement *og = map->FirstChildElement("objectgroup");
     while(og != NULL)
     {
@@ -858,91 +1019,13 @@ bool MapConverter::convertOne(const std::string &tmxPath)
 
             std::map<std::string,std::string> props;
             readProps(obj, props);
-
-            // determine the event's "subject" NPC (for dialogue) from a
-            // behav "talk <slug>" or a create_npc/char_talk action
-            std::string subject;
-            std::vector<std::string> pendingDialog;
-            std::map<std::string,std::string>::const_iterator it = props.begin();
-            while(it != props.end())
-            {
-                const std::string &key = it->first;
-                const std::string &val = it->second;
-                if(key.rfind("behav", 0) == 0 && val.rfind("talk ", 0) == 0)
-                    subject = val.substr(5);
-                if(key.rfind("act", 0) == 0)
-                {
-                    std::string verb;
-                    std::vector<std::string> a;
-                    splitAction(val, verb, a);
-                    if(verb == "transition_teleport" && a.size() >= 4)
-                    {
-                        Warp wp;
-                        wp.srcTx = ox / 16; wp.srcTy = oy / 16;
-                        std::string dest = a[1];
-                        const std::size_t dot = dest.rfind(".tmx");
-                        if(dot != std::string::npos) dest = dest.substr(0, dot);
-                        wp.dest = dest;
-                        wp.dx = QString::fromStdString(a[2]).toInt();
-                        wp.dy = QString::fromStdString(a[3]).toInt();
-                        // clamp destination into the target map (Tuxemon source
-                        // sometimes points past the edge -> engine "out of range")
-                        std::unordered_map<std::string,std::pair<int,int> >::const_iterator dim = mapDims_.find(dest);
-                        if(dim != mapDims_.end())
-                        {
-                            if(wp.dx >= dim->second.first)  wp.dx = dim->second.first - 1;
-                            if(wp.dy >= dim->second.second) wp.dy = dim->second.second - 1;
-                        }
-                        if(wp.dx < 0) wp.dx = 0;
-                        if(wp.dy < 0) wp.dy = 0;
-                        warps.push_back(wp);
-                    }
-                    else if(verb == "random_encounter" && !a.empty())
-                    {
-                        EncZone z;
-                        z.x0 = ox / 16; z.y0 = oy / 16;
-                        z.x1 = (ox + ow + 15) / 16; z.y1 = (oy + oh + 15) / 16;
-                        z.slug = a[0];
-                        encZones.push_back(z);
-                    }
-                    else if(verb == "create_npc" && a.size() >= 3)
-                    {
-                        NpcPlace &np = npcMap[a[0]];
-                        np.slug = a[0];
-                        np.x = QString::fromStdString(a[1]).toInt();
-                        np.y = QString::fromStdString(a[2]).toInt();
-                        if(a.size() >= 4) np.facing = a[3];
-                        if(subject.empty()) subject = a[0];
-                    }
-                    else if(verb == "char_face" && a.size() >= 2)
-                        npcMap[a[0]].facing = a[1];
-                    else if(verb == "set_economy" && a.size() >= 2)
-                    {
-                        npcMap[a[0]].economy = a[1];
-                        npcMap[a[0]].shop = true;
-                    }
-                    else if(verb == "open_shop" && !a.empty())
-                        npcMap[a[0]].shop = true;
-                    else if(verb == "add_monster" && a.size() >= 3)
-                        npcMap[a[2]].party.push_back(std::make_pair(a[0], QString::fromStdString(a[1]).toInt()));
-                    else if(verb == "char_talk" && !a.empty())
-                        subject = a[0];
-                    else if((verb == "translated_dialog" || verb == "translated_translation" || verb == "dialog") && !a.empty())
-                        pendingDialog.push_back(a[0]);
-                }
-                ++it;
-            }
-            if(!subject.empty() && !pendingDialog.empty())
-            {
-                NpcPlace &np = npcMap[subject];
-                if(np.slug.empty()) np.slug = subject;
-                std::size_t di = 0;
-                while(di < pendingDialog.size()) { np.dialog.push_back(pendingDialog[di]); ++di; }
-            }
+            processEventProps(props, ox, oy, ow, oh, sink);
             obj = obj->NextSiblingElement("object");
         }
         og = og->NextSiblingElement("objectgroup");
     }
+    // newer Tuxemon keeps part of the events in a sidecar <map>.yaml
+    loadYamlEvents(tmxPath, sink);
 
     // Build the grass-encounter mask: cells inside a random_encounter zone that
     // are walkable become a "Grass" monster-collision layer (wild encounters).
@@ -1317,6 +1400,25 @@ void MapConverter::computeLayout()
                 obj = obj->NextSiblingElement("object");
             }
             og = og->NextSiblingElement("objectgroup");
+        }
+        // warps from the sidecar <map>.yaml events too (the location grouping
+        // follows the warp graph, so the yaml-event maps must contribute)
+        {
+            std::vector<Warp> yw;
+            std::vector<EncZone> yz;
+            std::map<std::string,NpcPlace> yn;
+            EventSink ysink;
+            ysink.warps = &yw;
+            ysink.encZones = &yz;
+            ysink.npcMap = &yn;
+            ysink.mapDims = &mapDims_;
+            loadYamlEvents(mdir.absoluteFilePath(QString::fromStdString(slug) + ".tmx").toStdString(), ysink);
+            std::size_t yi = 0;
+            while(yi < yw.size())
+            {
+                mm.warpDests.push_back(yw[yi].dest);
+                ++yi;
+            }
         }
         mapDims_[slug] = std::make_pair(mm.w, mm.h);
         meta[slug] = mm;

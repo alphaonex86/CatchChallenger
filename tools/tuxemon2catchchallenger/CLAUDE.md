@@ -51,6 +51,17 @@ out of tree (`/tmp/tux2cc-build`).
   unless `CommonDatapack`'s item+monster name tables are non-empty
   (`set_tempNameToItemId/MonsterId`) — populate them first.  Require
   263/263 load, 0 failures.
+* **Events live in TWO encodings:** TMX object properties AND a sidecar
+  `<map>.yaml` (`events:` -> x/y/width/height in TILES + actions/conditions/
+  behav lists — 62 maps, e.g. eclipse banks).  Both feed the SAME interpreter
+  (`processEventProps`/`loadYamlEvents`); the layout pre-pass reads yaml warps
+  too (location grouping follows the warp graph).  Monster battle sheets are
+  COMBINED (tuxemon/db.py MonsterSpritesModel): front (0,0,64,64), back
+  (64,0,64,64) — a REAL pose, not a mirror — menu1 (0,64,24,24) -> small.png
+  (32x32); rects per-monster overridable via the raw `sprites:` node.  NPC walk
+  sheets: 3 cols (walk1, idle, walk2) x 4 rows (front,left,right,back) of
+  16x32; CC trainer.png rows are up,right,down,left with idle in the middle
+  column (tiles 1/4/7/10).  Combat sheets: LEFT=back, RIGHT=front.
 * **Dynamic data preservation.**  The full raw Tuxemon YAML per entity is dumped
   generically under an engine-ignored `<tuxemon>` element (`writeTuxemon`/`dumpYaml`
   in DatapackWriter) — NEVER hand-pick fields; new Tuxemon attributes must carry

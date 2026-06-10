@@ -705,6 +705,17 @@ void DatapackWriter::writeItems()
 }
 
 // ── sprites ──────────────────────────────────────────────────────────────────
+// Read one "<name>_rect: [x,y,w,h]" override from the monster's raw sprites
+// node, falling back to the engine default (tuxemon/db.py MonsterSpritesModel).
+static SheetRect sheetRectOf(const YAML::Node &sprites, const char *name,
+                             const SheetRect &def)
+{
+    if(sprites && sprites[name] && sprites[name].IsSequence() && sprites[name].size() == 4)
+        return SheetRect(sprites[name][0].as<int>(), sprites[name][1].as<int>(),
+                         sprites[name][2].as<int>(), sprites[name][3].as<int>());
+    return def;
+}
+
 void DatapackWriter::writeSprites()
 {
     const std::string battleDir = modRoot_ + "/gfx/sprites/battle";
@@ -716,7 +727,14 @@ void DatapackWriter::writeSprites()
         ++i;
         const std::string sheet = battleDir + "/" + m.slug + "-sheet.png";
         const std::string outDir = outRoot_ + "/monsters/" + std::to_string(m.txmnId);
-        if(SpriteExtractor::extract(sheet, outDir))
+        // combined-sheet regions (tuxemon/db.py defaults, per-monster overridable)
+        YAML::Node sprites;
+        if(m.raw && m.raw["sprites"])
+            sprites = m.raw["sprites"];
+        const SheetRect front = sheetRectOf(sprites, "front_rect", SheetRect(0, 0, 64, 64));
+        const SheetRect back  = sheetRectOf(sprites, "back_rect",  SheetRect(64, 0, 64, 64));
+        const SheetRect menu1 = sheetRectOf(sprites, "menu1_rect", SheetRect(0, 64, 24, 24));
+        if(SpriteExtractor::extract(sheet, outDir, front, back, menu1))
             ++ok;
         else
             ++miss;
