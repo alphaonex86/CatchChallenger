@@ -20,7 +20,24 @@ Monster::Monster() : txmnId(0), heightCm(0), weightKg(0), catchRate(100.0),
 Technique::Technique() : techId(0), power(1.0), accuracy(1.0), potency(0.0), recharge(0), targetSelf(false) {}
 Item::Item() : cost(-1), consumable(true), throwable(false), resellable(false) {}
 Status::Status() : condId(0), persists(false), stepValue(0.0), stepInterval(0) {}
+EncounterMonster::EncounterMonster() : minLevel(1), maxLevel(1), rate(1.0), daytime(-1) {}
 TuxemonDb::TuxemonDb() {}
+
+const Encounter *TuxemonDb::encounter(const std::string &slug) const
+{
+    std::map<std::string,Encounter>::const_iterator it = encounters_.find(slug);
+    return it == encounters_.end() ? NULL : &it->second;
+}
+const Npc *TuxemonDb::npc(const std::string &slug) const
+{
+    std::map<std::string,Npc>::const_iterator it = npcs_.find(slug);
+    return it == npcs_.end() ? NULL : &it->second;
+}
+const Economy *TuxemonDb::economy(const std::string &slug) const
+{
+    std::map<std::string,Economy>::const_iterator it = economies_.find(slug);
+    return it == economies_.end() ? NULL : &it->second;
+}
 
 // ── small yaml helpers (avoid throwing on missing/odd keys) ───────────────
 static std::string nodeStr(const YAML::Node &n, const std::string &def)
@@ -395,6 +412,141 @@ void TuxemonDb::loadStatuses(const std::string &dir)
     }
 }
 
+// ── encounters ──────────────────────────────────────────────────────────────
+void TuxemonDb::loadEncounters(const std::string &dir)
+{
+    const QFileInfoList files = yamlFiles(dir);
+    int idx = 0;
+    while(idx < files.size())
+    {
+        const std::string path = files.at(idx).absoluteFilePath().toStdString();
+        ++idx;
+        YAML::Node n;
+        try { n = YAML::LoadFile(path); } catch(...) { continue; }
+        Encounter enc;
+        enc.slug = nodeStr(n["slug"], "");
+        if(enc.slug.empty())
+            continue;
+        const YAML::Node ms = n["monsters"];
+        if(ms && ms.IsSequence())
+        {
+            std::size_t i = 0;
+            while(i < ms.size())
+            {
+                const YAML::Node e = ms[i];
+                EncounterMonster em;
+                em.slug = nodeStr(e["monster"], "");
+                const YAML::Node lr = e["level_range"];
+                if(lr && lr.IsSequence() && lr.size() >= 2)
+                {
+                    em.minLevel = nodeInt(lr[0], 1);
+                    em.maxLevel = nodeInt(lr[1], em.minLevel);
+                }
+                em.rate = nodeDouble(e["encounter_rate"], 1.0);
+                const YAML::Node vars = e["variables"];
+                if(vars && vars.IsSequence())
+                {
+                    std::size_t j = 0;
+                    while(j < vars.size())
+                    {
+                        if(nodeStr(vars[j]["key"], "") == "daytime")
+                            em.daytime = (nodeStr(vars[j]["value"], "") == "true") ? 1 : 0;
+                        ++j;
+                    }
+                }
+                if(!em.slug.empty())
+                    enc.monsters.push_back(em);
+                ++i;
+            }
+        }
+        encounters_[enc.slug] = enc;
+    }
+}
+
+// ── npcs ────────────────────────────────────────────────────────────────────
+void TuxemonDb::loadNpcs(const std::string &dir)
+{
+    const QFileInfoList files = yamlFiles(dir);
+    int idx = 0;
+    while(idx < files.size())
+    {
+        const std::string path = files.at(idx).absoluteFilePath().toStdString();
+        ++idx;
+        YAML::Node n;
+        try { n = YAML::LoadFile(path); } catch(...) { continue; }
+        // an npc file may be a single mapping or a sequence of npc entries
+        std::vector<YAML::Node> entries;
+        if(n.IsSequence())
+        {
+            std::size_t i = 0;
+            while(i < n.size()) { entries.push_back(n[i]); ++i; }
+        }
+        else
+            entries.push_back(n);
+        std::size_t k = 0;
+        while(k < entries.size())
+        {
+            const YAML::Node e = entries[k];
+            ++k;
+            Npc np;
+            np.slug = nodeStr(e["slug"], "");
+            if(np.slug.empty())
+                continue;
+            const YAML::Node tpl = e["template"];
+            if(tpl)
+            {
+                np.spriteName = nodeStr(tpl["sprite_name"], "");
+                np.combatSheet = nodeStr(tpl["combat_sheet"], "");
+            }
+            if(np.spriteName.empty())
+                np.spriteName = np.slug;
+            npcs_[np.slug] = np;
+        }
+    }
+}
+
+// ── economy (shops) ──────────────────────────────────────────────────────────
+void TuxemonDb::loadEconomy(const std::string &dir)
+{
+    const QFileInfoList files = yamlFiles(dir);
+    int idx = 0;
+    while(idx < files.size())
+    {
+        const std::string path = files.at(idx).absoluteFilePath().toStdString();
+        ++idx;
+        YAML::Node n;
+        try { n = YAML::LoadFile(path); } catch(...) { continue; }
+        std::vector<YAML::Node> entries;
+        if(n.IsSequence()) { std::size_t i = 0; while(i < n.size()) { entries.push_back(n[i]); ++i; } }
+        else entries.push_back(n);
+        std::size_t k = 0;
+        while(k < entries.size())
+        {
+            const YAML::Node e = entries[k];
+            ++k;
+            Economy ec;
+            ec.slug = nodeStr(e["slug"], "");
+            if(ec.slug.empty())
+                continue;
+            const YAML::Node items = e["items"];
+            if(items && items.IsSequence())
+            {
+                std::size_t i = 0;
+                while(i < items.size())
+                {
+                    EconomyItem ei;
+                    ei.slug = nodeStr(items[i]["slug"], "");
+                    ei.price = nodeInt(items[i]["price"], 0);
+                    if(!ei.slug.empty())
+                        ec.items.push_back(ei);
+                    ++i;
+                }
+            }
+            economies_[ec.slug] = ec;
+        }
+    }
+}
+
 // ── orchestration ───────────────────────────────────────────────────────────
 bool TuxemonDb::load(const std::string &modRoot)
 {
@@ -407,12 +559,18 @@ bool TuxemonDb::load(const std::string &modRoot)
     loadTechniques(db + "/technique");
     loadItems(db + "/item");
     loadMonsters(db + "/monster");
+    loadEncounters(db + "/encounter");
+    loadNpcs(db + "/npc");
+    loadEconomy(db + "/economy");
 
     std::cerr << "Loaded: " << elements_.size() << " elements, "
               << statuses_.size() << " statuses, "
               << techniques_.size() << " techniques, "
               << items_.size() << " items, "
-              << monsters_.size() << " monsters." << std::endl;
+              << monsters_.size() << " monsters, "
+              << encounters_.size() << " encounters, "
+              << npcs_.size() << " npcs, "
+              << economies_.size() << " economies." << std::endl;
 
     return !monsters_.empty() && !techniques_.empty() && !elements_.empty();
 }

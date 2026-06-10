@@ -124,6 +124,38 @@ struct Status {
     Status();
 };
 
+// One wild-spawn entry of an encounter table.
+struct EncounterMonster {
+    std::string slug;
+    int minLevel;
+    int maxLevel;
+    double rate;
+    int daytime;          // 1 day-only, 0 night-only, -1 any
+    EncounterMonster();
+};
+
+struct Encounter {
+    std::string slug;
+    std::vector<EncounterMonster> monsters;
+};
+
+// A Tuxemon NPC template (placed on maps via create_npc).
+struct Npc {
+    std::string slug;
+    std::string spriteName;   // overworld sprite (sprites/<x>.png)
+    std::string combatSheet;  // battle sheet (gfx/sprites/player/<x>.png)
+};
+
+// A shop product list (referenced by set_economy).
+struct EconomyItem {
+    std::string slug;
+    int price;
+};
+struct Economy {
+    std::string slug;
+    std::vector<EconomyItem> items;
+};
+
 class TuxemonDb {
 public:
     TuxemonDb();
@@ -137,6 +169,11 @@ public:
     const std::vector<Status>    &statuses()   const { return statuses_; }
     const std::map<std::string,Shape> &shapes() const { return shapes_; }
 
+    // NULL when the slug is unknown.
+    const Encounter *encounter(const std::string &slug) const;
+    const Npc *npc(const std::string &slug) const;
+    const Economy *economy(const std::string &slug) const;
+
 private:
     bool loadShapes(const std::string &file);
     void loadMonsters(const std::string &dir);
@@ -144,6 +181,9 @@ private:
     void loadItems(const std::string &dir);
     void loadElements(const std::string &dir);
     void loadStatuses(const std::string &dir);
+    void loadEncounters(const std::string &dir);
+    void loadNpcs(const std::string &dir);
+    void loadEconomy(const std::string &dir);
 
     std::vector<Monster>   monsters_;
     std::vector<Technique> techniques_;
@@ -151,6 +191,9 @@ private:
     std::vector<Element>   elements_;
     std::vector<Status>    statuses_;
     std::map<std::string,Shape> shapes_;
+    std::map<std::string,Encounter> encounters_;
+    std::map<std::string,Npc> npcs_;
+    std::map<std::string,Economy> economies_;
 };
 
 } // namespace tuxemon

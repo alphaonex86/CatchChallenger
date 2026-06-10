@@ -45,6 +45,17 @@ only.
 | `item/*.yaml` + `gfx/items/*.png`      | `items/items.xml` + `items/tuxemon/*.png` |
 | `l18n/{en_US,fr_FR}/…/base.po`         | `<name>`/`<description>` (en + `lang="fr"`) |
 | `maps/*.tmx` + `gfx/tilesets/*`        | `map/main/tuxemon/<slug>.tmx` + `.xml` + `tileset/` |
+| `db/encounter/*` + `random_encounter` events | map `.xml` `<grass>`/`<grassNight>` + a `Grass` layer |
+| `db/npc/*` + `create_npc`/`add_monster`/`set_economy` events | map `.tmx` `bot` objects + `.xml` `<bot>` (text/fight/shop/sell) |
+| `db/economy/*`                         | shop `<product>` lists                       |
+| `sprites/*` + `gfx/sprites/player/*`   | `skin/fighter/player/` + `skin/bot/<npc>/`   |
+| `music/*.ogg`/`*.mp3` (ffmpeg)         | `music/*.opus` + `map/music.xml`             |
+| `mod.yaml`                             | `player/start.xml` + `map/main/tuxemon/start.xml` (startable profile) |
+
+The whole raw Tuxemon record for each monster/skill/item/buff/type is *also*
+emitted verbatim under an engine-ignored `<tuxemon>` element (a generic
+recursive YAML→XML dump), so any Tuxemon field — including ones added in future
+Tuxemon versions — is preserved automatically for later support.
 
 ### Mapping decisions
 
@@ -83,26 +94,28 @@ only.
 
 ## Verification
 
-The generated datapack loads cleanly through the **real** engine parsers,
-end to end:
+The full datapack loads cleanly through the **real** engine, end to end —
+`CommonDatapack::parseDatapack` (skins, reputation, plants, crafting, profiles,
+layers + the whole DB) then `Map_loader::tryLoadMap` over every map, with
+**zero warnings**:
 
-* DB (`FightLoader::loadTypes/loadMonsterBuff/loadMonsterSkill/loadMonster`,
-  `DatapackGeneralLoader::loadItems`): 13 types, 35 buffs, 275 skills, 219 items,
-  28 traps, 393 monsters, **zero warnings**.
-* Maps (`Map_loader::tryLoadMap` over every map): **263/263 load, 0 failures**,
-  123 318 walkable cells, 51 628 blocked, 890 teleports.  Only `start_tuxemon`
-  has no walkable cell (it is an empty 8×8 placeholder in the source).
+* DB: 13 types, 35 buffs, 275 skills, 219 items (28 traps), 393 monsters,
+  1 skin, 1 reputation, **1 startable profile** (validated starter monster +
+  capture item + skin), 3 monster-collision layers.
+* Maps: **263/263 load, 0 failures**, 890 teleports, ~120 000 walkable cells,
+  ~52 000 blocked, **1 954 wild-encounter cells** over 42 maps, **606 bots**.
+  Only `start_tuxemon` has no walkable cell (an empty 8×8 placeholder in source).
 
-XML is well-formed; gid fidelity vs the source maps is exact (no tile lost).
+XML is well-formed; map gid fidelity vs the source is exact (no tile lost); maps
+render correctly with libtiled (including materialised inline tilesets and the
+grass encounter layer).
 
-## Not yet converted (further phases)
+## Known simplifications
 
-* **Wild encounters** (`db/encounter/*.yaml`).  The `<grass>`/`<water>` monster
-  lists in the per-map `.xml` are not emitted yet — Tuxemon keys encounters by a
-  separate region table rather than tagging grass cells in the `.tmx`, so this
-  needs encounter-zone↔map matching.
-* **NPCs / trainers / shops** (`db/npc/*.yaml`, Tuxemon event `act`/`cond`
-  dialogue).  Bots are not emitted; only teleport warps are extracted from the
-  event system.  Ledges and one-way collision are flattened to plain blocks.
-* **Crafting / plants / reputation / profiles** — no Tuxemon equivalent; the
-  engine treats their absence as empty.
+* **Ledges / one-way collision** are flattened to plain blocks.
+* **Dialogue** is the concatenated Tuxemon `translated_dialog` text; the richer
+  branching event logic (`cond`/`act` graphs) is not modelled — but the raw data
+  is preserved in the maps for later use.
+* **Trainer skins** reuse the NPC overworld sprite; battle front/back are a
+  best-effort frame extraction (Tuxemon sprite-sheet layouts vary).
+* **Crafting / plants** have no Tuxemon equivalent and are emitted empty.

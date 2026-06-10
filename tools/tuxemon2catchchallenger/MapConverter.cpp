@@ -19,8 +19,11 @@
 
 namespace tuxemon {
 
-MapConverter::MapConverter(const std::string &modRoot, const std::string &outRoot)
-    : modRoot_(modRoot), outRoot_(outRoot), warpsTotal_(0), collisionCells_(0),
+MapConverter::MapConverter(const std::string &modRoot, const std::string &outRoot,
+                           const TuxemonDb &db, const DatapackWriter &dw,
+                           const Localization &l10n, SkinGen &skins)
+    : db_(db), dw_(dw), l10n_(l10n), skins_(skins), modRoot_(modRoot), outRoot_(outRoot),
+      warpsTotal_(0), collisionCells_(0), botsTotal_(0), encounterZones_(0),
       startX_(0), startY_(0), startScore_(-1)
 {
     mapDir_ = outRoot_ + "/map/main/tuxemon";
@@ -247,6 +250,236 @@ static void readProps(tinyxml2::XMLElement *obj, std::map<std::string,std::strin
 
 // ── per-map conversion ──────────────────────────────────────────────────────
 struct Warp { int srcTx, srcTy; std::string dest; int dx, dy; };
+struct EncZone { int x0, y0, x1, y1; std::string slug; };
+struct NpcPlace {
+    std::string slug;
+    int x, y;
+    std::string facing;
+    std::string economy;
+    bool shop;
+    std::vector<std::pair<std::string,int> > party; // monster slug, level
+    std::vector<std::string> dialog;                // l18n msgids
+    NpcPlace() : x(0), y(0), shop(false) {}
+};
+
+static std::string facingToLookAt(const std::string &f)
+{
+    if(f == "up")    return "top";
+    if(f == "down")  return "bottom";
+    if(f == "left")  return "left";
+    if(f == "right") return "right";
+    return "bottom";
+}
+
+static std::string sanitizeName(const std::string &s)
+{
+    std::string t;
+    std::size_t i = 0;
+    while(i < s.size())
+    {
+        const char c = s[i];
+        if(std::isalnum((unsigned char)c) || c == '_' || c == '-')
+            t.push_back(c);
+        ++i;
+    }
+    if(t.empty()) t = "npc";
+    return t;
+}
+
+// Escape text for a CDATA block (only "]]>" is illegal inside).
+static std::string cdataSafe(std::string s)
+{
+    std::size_t p;
+    while((p = s.find("]]>")) != std::string::npos)
+        s.replace(p, 3, "]] >");
+    return s;
+}
+
+// "create_npc foo,3,4" -> verb="create_npc", args=["foo","3","4"]
+static void splitAction(const std::string &value, std::string &verb, std::vector<std::string> &args)
+{
+    const std::size_t sp = value.find(' ');
+    verb = sp == std::string::npos ? value : value.substr(0, sp);
+    args.clear();
+    if(sp != std::string::npos)
+    {
+        const QStringList parts = QString::fromStdString(value.substr(sp + 1)).split(',');
+        int i = 0;
+        while(i < parts.size()) { args.push_back(parts.at(i).trimmed().toStdString()); ++i; }
+    }
+}
+
+static std::string xmlEsc(const std::string &s)
+{
+    std::string out;
+    std::size_t i = 0;
+    while(i < s.size())
+    {
+        const char c = s[i];
+        if(c == '&') out += "&amp;";
+        else if(c == '<') out += "&lt;";
+        else if(c == '>') out += "&gt;";
+        else if(c == '"') out += "&quot;";
+        else out.push_back(c);
+        ++i;
+    }
+    return out;
+}
+
+struct GrassAgg { int minL, maxL; double weight; };
+
+// Emit one wild-encounter list, normalising luck to sum exactly 100.
+static void emitGrassList(std::ofstream &ox, const char *tag, const std::map<int,GrassAgg> &m)
+{
+    if(m.empty())
+        return;
+    double sum = 0;
+    std::map<int,GrassAgg>::const_iterator it = m.begin();
+    while(it != m.end()) { sum += it->second.weight > 0 ? it->second.weight : 1.0; ++it; }
+    if(sum <= 0)
+        return;
+    std::vector<std::pair<int,int> > luck; // id, luck
+    int total = 0, maxIdx = 0, maxLuck = -1;
+    it = m.begin();
+    int k = 0;
+    while(it != m.end())
+    {
+        const double wgt = it->second.weight > 0 ? it->second.weight : 1.0;
+        int l = (int)(wgt / sum * 100.0 + 0.5);
+        if(l < 1) l = 1;
+        luck.push_back(std::make_pair(it->first, l));
+        total += l;
+        if(l > maxLuck) { maxLuck = l; maxIdx = k; }
+        ++k; ++it;
+    }
+    luck[maxIdx].second += (100 - total);
+    if(luck[maxIdx].second < 1) luck[maxIdx].second = 1;
+    ox << " <" << tag << ">\n";
+    std::size_t j = 0;
+    it = m.begin();
+    while(j < luck.size())
+    {
+        std::map<int,GrassAgg>::const_iterator e = m.find(luck[j].first);
+        ox << "  <monster id=\"" << luck[j].first << "\" minLevel=\"" << e->second.minL
+           << "\" maxLevel=\"" << e->second.maxL << "\" luck=\"" << luck[j].second << "\"/>\n";
+        ++j;
+    }
+    ox << " </" << tag << ">\n";
+}
+
+static void aggAdd(std::map<int,GrassAgg> &m, int id, int minL, int maxL, double w)
+{
+    std::map<int,GrassAgg>::iterator it = m.find(id);
+    if(it == m.end())
+    {
+        GrassAgg g; g.minL = minL; g.maxL = maxL; g.weight = w;
+        m[id] = g;
+    }
+    else
+    {
+        if(minL < it->second.minL) it->second.minL = minL;
+        if(maxL > it->second.maxL) it->second.maxL = maxL;
+        it->second.weight += w;
+    }
+}
+
+static void writeGrass(std::ofstream &ox, const std::vector<EncZone> &zones,
+                       const TuxemonDb &db, const DatapackWriter &dw)
+{
+    std::map<int,GrassAgg> day, night;
+    std::size_t z = 0;
+    while(z < zones.size())
+    {
+        const Encounter *enc = db.encounter(zones[z].slug);
+        ++z;
+        if(enc == NULL)
+            continue;
+        std::size_t i = 0;
+        while(i < enc->monsters.size())
+        {
+            const EncounterMonster &em = enc->monsters[i];
+            ++i;
+            const int id = dw.idForMonster(em.slug);
+            if(id < 0)
+                continue;
+            if(em.daytime != 0) aggAdd(day, id, em.minLevel, em.maxLevel, em.rate);   // day or both
+            if(em.daytime != 1) aggAdd(night, id, em.minLevel, em.maxLevel, em.rate); // night or both
+        }
+    }
+    emitGrassList(ox, "grass", day);
+    emitGrassList(ox, "grassNight", night);
+}
+
+static void writeBots(std::ofstream &ox, const std::vector<const NpcPlace*> &bots,
+                      const std::vector<std::string> &skins,
+                      const TuxemonDb &db, const DatapackWriter &dw, const Localization &l10n)
+{
+    std::size_t b = 0;
+    while(b < bots.size())
+    {
+        const NpcPlace &np = *bots[b];
+        const int id = (int)b + 1;
+        ++b;
+        ox << " <bot id=\"" << id << "\">\n";
+        ox << "  <name>" << xmlEsc(l10n.nameEn(np.slug)) << "</name>\n";
+
+        const Economy *eco = np.economy.empty() ? NULL : db.economy(np.economy);
+        if(np.shop && eco != NULL && !eco->items.empty())
+        {
+            ox << "  <step id=\"1\" type=\"text\">\n";
+            ox << "   <text><![CDATA[Welcome!<br /><a href=\"2\">Buy</a><br /><a href=\"3\">Sell</a>]]></text>\n";
+            ox << "  </step>\n";
+            ox << "  <step shop=\"" << id << "\" id=\"2\" type=\"shop\">\n";
+            std::size_t i = 0;
+            while(i < eco->items.size())
+            {
+                const int iid = dw.idForItem(eco->items[i].slug);
+                if(iid >= 0)
+                    ox << "   <product item=\"" << iid << "\" overridePrice=\"" << eco->items[i].price << "\"/>\n";
+                ++i;
+            }
+            ox << "  </step>\n";
+            ox << "  <step shop=\"" << id << "\" id=\"3\" type=\"sell\"/>\n";
+        }
+        else if(!np.party.empty())
+        {
+            ox << "  <step type=\"fight\" id=\"1\">\n";
+            ox << "   <start><![CDATA[Let's battle!]]></start>\n";
+            ox << "   <win><![CDATA[You won!]]></win>\n";
+            long cash = 0;
+            std::size_t i = 0;
+            while(i < np.party.size())
+            {
+                const int mid = dw.idForMonster(np.party[i].first);
+                if(mid >= 0)
+                {
+                    ox << "   <monster id=\"" << mid << "\" level=\"" << np.party[i].second << "\"/>\n";
+                    cash += 30L * np.party[i].second;
+                }
+                ++i;
+            }
+            ox << "   <gain cash=\"" << cash << "\"/>\n";
+            ox << "  </step>\n";
+        }
+        else
+        {
+            std::string text;
+            std::size_t i = 0;
+            while(i < np.dialog.size())
+            {
+                if(!text.empty()) text += "<br />";
+                text += l10n.nameEn(np.dialog[i]);
+                ++i;
+            }
+            if(text.empty())
+                text = "...";
+            ox << "  <step type=\"text\" id=\"1\">\n";
+            ox << "   <text><![CDATA[" << cdataSafe(text) << "]]></text>\n";
+            ox << "  </step>\n";
+        }
+        ox << " </bot>\n";
+    }
+}
 
 bool MapConverter::convertOne(const std::string &tmxPath)
 {
@@ -317,9 +550,12 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         layer = layer->NextSiblingElement("layer");
     }
 
-    // collision rectangles + teleport warps from the object groups
+    // collision rectangles, teleport warps, encounter zones and NPCs from the
+    // object groups (Tuxemon encodes everything as cond/act event properties).
     std::vector<bool> blocked((std::size_t)w * h, false);
     std::vector<Warp> warps;
+    std::vector<EncZone> encZones;
+    std::map<std::string,NpcPlace> npcMap;
     tinyxml2::XMLElement *og = map->FirstChildElement("objectgroup");
     while(og != NULL)
     {
@@ -332,12 +568,12 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         tinyxml2::XMLElement *obj = og->FirstChildElement("object");
         while(obj != NULL)
         {
+            const int ox = (int)obj->IntAttribute("x");
+            const int oy = (int)obj->IntAttribute("y");
+            const int ow = obj->IntAttribute("width") > 0 ? (int)obj->IntAttribute("width") : 16;
+            const int oh = obj->IntAttribute("height") > 0 ? (int)obj->IntAttribute("height") : 16;
             if(isCollision)
             {
-                const int ox = (int)obj->IntAttribute("x");
-                const int oy = (int)obj->IntAttribute("y");
-                const int ow = obj->IntAttribute("width") > 0 ? (int)obj->IntAttribute("width") : 16;
-                const int oh = obj->IntAttribute("height") > 0 ? (int)obj->IntAttribute("height") : 16;
                 int ty = oy / 16;
                 while(ty < (oy + oh + 15) / 16 && ty < h)
                 {
@@ -351,38 +587,108 @@ bool MapConverter::convertOne(const std::string &tmxPath)
                     ++ty;
                 }
             }
-            // teleport: any property act* == "transition_teleport player,<map>,<x>,<y>,..."
+
             std::map<std::string,std::string> props;
             readProps(obj, props);
+
+            // determine the event's "subject" NPC (for dialogue) from a
+            // behav "talk <slug>" or a create_npc/char_talk action
+            std::string subject;
+            std::vector<std::string> pendingDialog;
             std::map<std::string,std::string>::const_iterator it = props.begin();
             while(it != props.end())
             {
-                if(it->first.rfind("act", 0) == 0 &&
-                   it->second.rfind("transition_teleport", 0) == 0)
+                const std::string &key = it->first;
+                const std::string &val = it->second;
+                if(key.rfind("behav", 0) == 0 && val.rfind("talk ", 0) == 0)
+                    subject = val.substr(5);
+                if(key.rfind("act", 0) == 0)
                 {
-                    const QStringList parts = QString::fromStdString(it->second).split(',');
-                    if(parts.size() >= 4)
+                    std::string verb;
+                    std::vector<std::string> a;
+                    splitAction(val, verb, a);
+                    if(verb == "transition_teleport" && a.size() >= 4)
                     {
                         Warp wp;
-                        wp.srcTx = (int)obj->IntAttribute("x") / 16;
-                        wp.srcTy = (int)obj->IntAttribute("y") / 16;
-                        std::string dest = parts.at(1).trimmed().toStdString();
+                        wp.srcTx = ox / 16; wp.srcTy = oy / 16;
+                        std::string dest = a[1];
                         const std::size_t dot = dest.rfind(".tmx");
-                        if(dot != std::string::npos)
-                            dest = dest.substr(0, dot);
+                        if(dot != std::string::npos) dest = dest.substr(0, dot);
                         wp.dest = dest;
-                        wp.dx = parts.at(2).trimmed().toInt();
-                        wp.dy = parts.at(3).trimmed().toInt();
+                        wp.dx = QString::fromStdString(a[2]).toInt();
+                        wp.dy = QString::fromStdString(a[3]).toInt();
                         warps.push_back(wp);
-                        break; // one teleport per object
                     }
+                    else if(verb == "random_encounter" && !a.empty())
+                    {
+                        EncZone z;
+                        z.x0 = ox / 16; z.y0 = oy / 16;
+                        z.x1 = (ox + ow + 15) / 16; z.y1 = (oy + oh + 15) / 16;
+                        z.slug = a[0];
+                        encZones.push_back(z);
+                    }
+                    else if(verb == "create_npc" && a.size() >= 3)
+                    {
+                        NpcPlace &np = npcMap[a[0]];
+                        np.slug = a[0];
+                        np.x = QString::fromStdString(a[1]).toInt();
+                        np.y = QString::fromStdString(a[2]).toInt();
+                        if(a.size() >= 4) np.facing = a[3];
+                        if(subject.empty()) subject = a[0];
+                    }
+                    else if(verb == "char_face" && a.size() >= 2)
+                        npcMap[a[0]].facing = a[1];
+                    else if(verb == "set_economy" && a.size() >= 2)
+                    {
+                        npcMap[a[0]].economy = a[1];
+                        npcMap[a[0]].shop = true;
+                    }
+                    else if(verb == "open_shop" && !a.empty())
+                        npcMap[a[0]].shop = true;
+                    else if(verb == "add_monster" && a.size() >= 3)
+                        npcMap[a[2]].party.push_back(std::make_pair(a[0], QString::fromStdString(a[1]).toInt()));
+                    else if(verb == "char_talk" && !a.empty())
+                        subject = a[0];
+                    else if((verb == "translated_dialog" || verb == "translated_translation" || verb == "dialog") && !a.empty())
+                        pendingDialog.push_back(a[0]);
                 }
                 ++it;
+            }
+            if(!subject.empty() && !pendingDialog.empty())
+            {
+                NpcPlace &np = npcMap[subject];
+                if(np.slug.empty()) np.slug = subject;
+                std::size_t di = 0;
+                while(di < pendingDialog.size()) { np.dialog.push_back(pendingDialog[di]); ++di; }
             }
             obj = obj->NextSiblingElement("object");
         }
         og = og->NextSiblingElement("objectgroup");
     }
+
+    // Build the grass-encounter mask: cells inside a random_encounter zone that
+    // are walkable become a "Grass" monster-collision layer (wild encounters).
+    std::vector<bool> grass((std::size_t)w * h, false);
+    std::size_t zi = 0;
+    while(zi < encZones.size())
+    {
+        const EncZone &z = encZones[zi];
+        ++zi;
+        int ty = z.y0;
+        while(ty < z.y1 && ty < h)
+        {
+            int tx = z.x0;
+            while(tx < z.x1 && tx < w)
+            {
+                if(tx >= 0 && ty >= 0)
+                    grass[(std::size_t)tx + (std::size_t)ty * w] = true;
+                ++tx;
+            }
+            ++ty;
+        }
+    }
+    if(!encZones.empty())
+        ++encounterZones_;
 
     std::size_t bi = 0;
     while(bi < blocked.size()) { if(blocked[bi]) ++collisionCells_; ++bi; }
@@ -440,19 +746,22 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     }
 
     int layerId = 1;
-    // Split each ground layer into Walkable (passable) + Collisions (blocked).
+    // Split each ground layer by behaviour: Collisions (blocked), Grass (wild
+    // encounter zone, walkable), else Walkable.
     std::size_t gl = 0;
     while(gl < groundLayers.size())
     {
         std::vector<uint32_t> walk((std::size_t)w * h, 0);
         std::vector<uint32_t> coll((std::size_t)w * h, 0);
+        std::vector<uint32_t> grassL((std::size_t)w * h, 0);
         std::size_t i = 0;
         while(i < walk.size())
         {
             if((groundLayers[gl][i] & kGidMask) != 0)
             {
-                if(blocked[i]) coll[i] = groundLayers[gl][i];
-                else           walk[i] = groundLayers[gl][i];
+                if(blocked[i])      coll[i]   = groundLayers[gl][i];
+                else if(grass[i])   grassL[i] = groundLayers[gl][i];
+                else                walk[i]   = groundLayers[gl][i];
             }
             ++i;
         }
@@ -460,6 +769,12 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         {
             o << " <layer id=\"" << layerId++ << "\" name=\"Walkable\" width=\"" << w << "\" height=\"" << h << "\">\n";
             o << "  <data encoding=\"base64\" compression=\"zlib\">" << encodeLayer(walk) << "</data>\n";
+            o << " </layer>\n";
+        }
+        if(anyTile(grassL))
+        {
+            o << " <layer id=\"" << layerId++ << "\" name=\"Grass\" width=\"" << w << "\" height=\"" << h << "\">\n";
+            o << "  <data encoding=\"base64\" compression=\"zlib\">" << encodeLayer(grassL) << "</data>\n";
             o << " </layer>\n";
         }
         if(anyTile(coll))
@@ -540,10 +855,50 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         }
         o << " </objectgroup>\n";
     }
+
+    // Bots: assign ids 1..255 to the placed NPCs, generate a skin per NPC sprite.
+    std::vector<const NpcPlace*> bots;
+    {
+        std::map<std::string,NpcPlace>::const_iterator it = npcMap.begin();
+        while(it != npcMap.end())
+        {
+            if(!it->second.slug.empty() && bots.size() < 255)
+                bots.push_back(&it->second);
+            ++it;
+        }
+    }
+    std::vector<std::string> botSkin(bots.size());
+    if(!bots.empty())
+    {
+        o << " <objectgroup name=\"Object\">\n";
+        std::size_t b = 0;
+        while(b < bots.size())
+        {
+            const NpcPlace &np = *bots[b];
+            std::string sprite = np.slug, sheet;
+            const Npc *npd = db_.npc(np.slug);
+            if(npd != NULL) { sprite = npd->spriteName; sheet = npd->combatSheet; }
+            const std::string skinName = sanitizeName(sprite);
+            skins_.ensure("bot", skinName, sprite, sheet);
+            botSkin[b] = skinName;
+            const int px = np.x * 16;
+            const int py = (np.y + 1) * 16;
+            o << "  <object type=\"bot\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
+            o << "   <properties>\n";
+            o << "    <property name=\"id\" type=\"int\" value=\"" << (b + 1) << "\"/>\n";
+            o << "    <property name=\"skin\" value=\"" << skinName << "\"/>\n";
+            o << "    <property name=\"lookAt\" value=\"" << facingToLookAt(np.facing) << "\"/>\n";
+            o << "   </properties>\n";
+            o << "  </object>\n";
+            ++b;
+        }
+        o << " </objectgroup>\n";
+    }
     o << "</map>\n";
     o.close();
+    botsTotal_ += (int)bots.size();
 
-    // sidecar <map>.xml (type + name)
+    // sidecar <map>.xml: type + name + grass encounters + bot definitions
     std::string type = "outdoor";
     tinyxml2::XMLElement *mprops = map->FirstChildElement("properties");
     if(mprops != NULL)
@@ -570,6 +925,8 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     std::ofstream ox(mapDir_ + "/" + slug + ".xml");
     ox << "<map type=\"" << type << "\">\n";
     ox << " <name>" << slug << "</name>\n";
+    writeGrass(ox, encZones, db_, dw_);
+    writeBots(ox, bots, botSkin, db_, dw_, l10n_);
     ox << "</map>\n";
     return true;
 }
@@ -592,7 +949,8 @@ int MapConverter::convertAll()
     }
     std::cerr << "Maps: " << ok << " converted, " << fail << " skipped; "
               << copiedTilesets_.size() << " tilesets, " << warpsTotal_ << " warps, "
-              << collisionCells_ << " collision cells." << std::endl;
+              << collisionCells_ << " collision cells, " << encounterZones_ << " maps with encounters, "
+              << botsTotal_ << " bots." << std::endl;
     return ok;
 }
 

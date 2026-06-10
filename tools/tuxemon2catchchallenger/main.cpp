@@ -64,10 +64,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    tuxemon::MapConverter maps(modRoot, outRoot);
+    tuxemon::SkinGen skins(modRoot, outRoot);
+    tuxemon::MapConverter maps(modRoot, outRoot, db, writer, l10n, skins);
     maps.convertAll();
 
-    tuxemon::SkinGen skins(modRoot, outRoot);
     tuxemon::WorldWriter world(db, l10n, modRoot, outRoot, skins, writer,
                                maps.startMap(), maps.startX(), maps.startY());
     world.writeAll();
