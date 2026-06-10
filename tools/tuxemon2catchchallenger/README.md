@@ -44,6 +44,7 @@ only.
 | `gfx/sprites/battle/<slug>-sheet.png`  | `monsters/<id>/{front,back,small}.png` |
 | `item/*.yaml` + `gfx/items/*.png`      | `items/items.xml` + `items/tuxemon/*.png` |
 | `l18n/{en_US,fr_FR}/…/base.po`         | `<name>`/`<description>` (en + `lang="fr"`) |
+| `maps/*.tmx` + `gfx/tilesets/*`        | `map/main/tuxemon/<slug>.tmx` + `.xml` + `tileset/` |
 
 ### Mapping decisions
 
@@ -70,22 +71,38 @@ only.
 * **Items.**  `category: capture` → `<trap>` (rate from cost), `heal` effect →
   `<hp add>`, a remove/cure effect → `<buff remove="all">`, otherwise a plain
   item (stones, key items, berries) with no effect element.
+* **Maps.**  Tuxemon already ships proper external/inline `.tsx` tilesets, so
+  the tile gids are kept verbatim and the tilesets are copied once into
+  `map/main/tuxemon/tileset/`.  The work is re-homing each cell's tile onto the
+  layer-name collision model: the `Collisions` object-group rectangles are
+  rasterised to a blocked grid, and each cell's tile goes to a `Walkable` layer
+  (passable) or a `Collisions` layer (blocked), over-tiles to `WalkBehind`.
+  Tile layers are re-emitted as base64+zlib.  `transition_teleport` events
+  become `teleport on it` warp objects (with the loader's `-1` object-Y offset).
+  Inline tilesets are materialised as external `.tsx`.
 
 ## Verification
 
-The generated datapack loads cleanly through the **real** engine parsers
-(`FightLoader::loadTypes/loadMonsterBuff/loadMonsterSkill/loadMonster`,
-`DatapackGeneralLoader::loadItems`): 13 types, 35 buffs, 275 skills, 219 items,
-28 traps, 393 monsters, **zero warnings**.  XML is well-formed (`xmllint`).
+The generated datapack loads cleanly through the **real** engine parsers,
+end to end:
 
-## Not yet converted (next phase)
+* DB (`FightLoader::loadTypes/loadMonsterBuff/loadMonsterSkill/loadMonster`,
+  `DatapackGeneralLoader::loadItems`): 13 types, 35 buffs, 275 skills, 219 items,
+  28 traps, 393 monsters, **zero warnings**.
+* Maps (`Map_loader::tryLoadMap` over every map): **263/263 load, 0 failures**,
+  123 318 walkable cells, 51 628 blocked, 890 teleports.  Only `start_tuxemon`
+  has no walkable cell (it is an empty 8×8 placeholder in the source).
 
-* **Maps** (`maps/*.tmx` + `gfx/tilesets/*.tsx`).  Tuxemon maps are 16px Tiled
-  maps with object-group collisions; CatchChallenger uses layer-name collision
-  semantics (`Walkable`/`Collisions`/`Grass`/`Water`/ledges) + `Moving`/`Object`
-  groups and warp/bot object contracts.  This is a separate subsystem (see
-  `tools/gba2catchchallenger` for the analogous map pipeline).
-* **Wild encounters** (`db/encounter/*.yaml`) — belong in the per-map `<map>.xml`
-  `<grass>`/`<water>` sections, so they follow the map stage.
+XML is well-formed; gid fidelity vs the source maps is exact (no tile lost).
+
+## Not yet converted (further phases)
+
+* **Wild encounters** (`db/encounter/*.yaml`).  The `<grass>`/`<water>` monster
+  lists in the per-map `.xml` are not emitted yet — Tuxemon keys encounters by a
+  separate region table rather than tagging grass cells in the `.tmx`, so this
+  needs encounter-zone↔map matching.
+* **NPCs / trainers / shops** (`db/npc/*.yaml`, Tuxemon event `act`/`cond`
+  dialogue).  Bots are not emitted; only teleport warps are extracted from the
+  event system.  Ledges and one-way collision are flattened to plain blocks.
 * **Crafting / plants / reputation / profiles** — no Tuxemon equivalent; the
   engine treats their absence as empty.

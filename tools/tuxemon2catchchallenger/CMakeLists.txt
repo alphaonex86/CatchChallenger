@@ -10,6 +10,7 @@ project(tuxemon2catchchallenger LANGUAGES C CXX)
 include(${CMAKE_CURRENT_LIST_DIR}/../../general/CCCommon.cmake)
 
 find_package(Qt6 COMPONENTS Core Gui REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # yaml-cpp: prefer the system package (provides the imported target yaml-cpp).
 # Fall back to a bare find_library so the build still works on hosts that ship
@@ -27,18 +28,29 @@ if(NOT TARGET yaml-cpp)
         INTERFACE_LINK_LIBRARIES "${YAMLCPP_LIBRARY}")
 endif()
 
+# tinyxml2: reuse the vendored copy to parse the Tuxemon .tmx maps (self-contained,
+# no link dependency).
+set(CC_REPO_ROOT_LOCAL ${CMAKE_CURRENT_LIST_DIR}/../..)
+
 add_executable(tuxemon2catchchallenger
     main.cpp
     TuxemonDb.cpp
     Localization.cpp
     SpriteExtractor.cpp
     DatapackWriter.cpp
+    MapConverter.cpp
+    ${CC_REPO_ROOT_LOCAL}/general/tinyXML2/tinyxml2.cpp
+)
+
+target_include_directories(tuxemon2catchchallenger PRIVATE
+    ${CC_REPO_ROOT_LOCAL}/general/tinyXML2
 )
 
 target_link_libraries(tuxemon2catchchallenger PRIVATE
     Qt6::Core
     Qt6::Gui
     yaml-cpp
+    ZLIB::ZLIB
 )
 
 # Linker driver: use the test-link-verified accelerator CCCommon.cmake picked.

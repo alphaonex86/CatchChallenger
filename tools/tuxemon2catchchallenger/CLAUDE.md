@@ -28,5 +28,16 @@ out of tree (`/tmp/tux2cc-build`).
   collision (`id number already set`).
 * **Stats are a heuristic** (shape 0..10 → level-100 stats × stage).  If asked to
   rebalance, edit `DatapackWriter::computeStats` only; keep it documented.
+* **Maps** (`MapConverter`): keep Tuxemon gids verbatim (fidelity is checked) —
+  only re-home each cell onto `Walkable`/`Collisions`/`WalkBehind` and re-encode
+  base64+zlib.  Engine collision: a cell with a `Walkable` tile AND no
+  `Collisions` tile is passable; a `Collisions` tile blocks.  Handle BOTH
+  external `<tileset source>` and INLINE `<tileset><image></tileset>` (37 maps
+  use inline — materialise them as `.tsx`).  Warp object Y must be
+  `(tile_y+1)*16` (loader does `y/16 - 1`).  Verify maps by loading EVERY one
+  through `Map_loader::tryLoadMap` (extend `/tmp/tuxverify`); the loader aborts
+  unless `CommonDatapack`'s item+monster name tables are non-empty
+  (`set_tempNameToItemId/MonsterId`) — populate them first.  Require
+  263/263 load, 0 failures.
 * Project style here too: no lambdas (use named compare fns), no `auto`, prefer
   `while`, init members in the constructor.
