@@ -869,6 +869,12 @@ tools-only when references concentrate in one of those subtrees.
   - `server/cli/main-unix.cpp`
   - `server/base/VariableServer.hpp`
 
+### `CATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID`
+- **Scope:** server-only — server: base (min_network visibility diff); also picked up by `test/testingmapmanagement` and `benchmark/benchmarkmapmanager` builds
+- **Description:** Opt-in slot layout for the `min_network()` per-recipient visibility diff (`DensePlayerState`). **Default OFF**: each slot is the 8-byte `{db_id, xyd}` pair and the full 32-bit character database id is compared, so "a different character replaced this slot" is detected exactly. **Defined**: each slot packs into ONE 32-bit word (`x | y<<8 | direction<<16 | (db_id&0xff)<<24`) — halves snapshot + sent-state memory, single-compare diff, measured +5..+63% min_network throughput across the fleet — at the cost of the db id truncated to its low 8 bits (a same-low-byte slot replacement within one tick is sent as a move instead of a re-insert until the next map change; ~1/256 of an already-rare event). See `doc/algo/visibility/dense-player-state.md`.
+- **Used in:**
+  - `server/base/MapManagement/DensePlayerState.hpp`
+
 
 ## Crypto / token
 

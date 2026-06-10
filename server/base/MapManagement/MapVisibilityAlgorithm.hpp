@@ -35,10 +35,12 @@ public:
     //to prevent allocate memory
     static char tempBigBufferForChanges[1+4+1+255*(1+1+1+1)];
     static char tempBigBufferForRemove[1+4+1+255];
-    // Dense buffer of pre-composed packed player slots, one uint32_t per
-    // slot (see DensePlayerState.hpp). ClientWithMap::sendedStatus uses
-    // the SAME type, so the per-recipient diff is one 32-bit compare per
-    // slot and the sent-state refresh is a flat memcpy of this snapshot.
+    // Dense buffer of pre-composed player slots (layout — full 8-byte db
+    // id, or one uint32_t per slot with
+    // CATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID — in DensePlayerState.hpp).
+    // ClientWithMap::sendedStatus uses the SAME type, so the per-recipient
+    // diff is one isEqual() per slot and the sent-state refresh is a flat
+    // memcpy of this snapshot.
     static DensePlayerState tempDenseBuffer[255];
 
     /* WHY HERE?

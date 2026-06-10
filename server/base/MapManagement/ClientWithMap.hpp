@@ -15,10 +15,10 @@ class ClientWithMap : public Client
 public:
     ClientWithMap(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
 public:
-    //max 255 size. SAME packed one-uint32_t-per-slot type as
-    //MapVisibilityAlgorithm::tempDenseBuffer (see DensePlayerState.hpp), so
-    //the per-tick diff is a single 32-bit compare per slot and the refresh
-    //after a send is a flat memcpy of the dense snapshot.
+    //max 255 size. SAME slot type as MapVisibilityAlgorithm::tempDenseBuffer
+    //(layout toggled by CATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID, see
+    //DensePlayerState.hpp), so the per-tick diff is one isEqual() per slot
+    //and the refresh after a send is a flat memcpy of the dense snapshot.
     std::vector<DensePlayerState> sendedStatus;
     CATCHCHALLENGER_TYPE_MAPID sendedMap;//see mapIndex
 };
