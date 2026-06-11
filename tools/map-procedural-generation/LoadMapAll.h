@@ -215,6 +215,13 @@ public:
     };
     static std::vector<CitySign> citySigns;
     static void reassertCitySigns(Tiled::Map &worldMap);
+    //world-tile footprints of the placed city buildings: the avenue/path paint
+    //must NEVER overwrite a building tile
+    struct BuildingRect
+    {
+        unsigned int x,y,w,h;
+    };
+    static std::vector<BuildingRect> cityBuildingRects;
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
