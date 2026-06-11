@@ -150,7 +150,10 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
         info.animWaterTile=508;
         info.animWaterTileCount=4;
         info.animWaterFrames=5;
-        info.animWaterMs=133;
+        // FRLG's TilesetAnim_General advances one frame every 16 GBA frames
+        // (~268ms), the same cadence as RSE — 133 (8 frames) played twice too
+        // fast in Tiled and in the client.
+        info.animWaterMs=267;
         info.animWaterArray=0x3A76D0;
         info.doorTable=0x35B648; // gDoorAnimGraphicsTable (stride 12)
         // Sevii Islands minimap: sections 0x8f (ONE ISLAND) .. 0xc3 (EMBER SPA);
