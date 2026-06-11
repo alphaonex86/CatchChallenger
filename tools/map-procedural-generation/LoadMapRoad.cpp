@@ -27,6 +27,7 @@ LoadMapAll::RoadMountain LoadMapAll::mountain;
 LoadMapAll::CityGround LoadMapAll::cityGroundBig;
 LoadMapAll::CityGround LoadMapAll::cityGroundMedium;
 std::vector<LoadMapAll::CitySign> LoadMapAll::citySigns;
+std::vector<LoadMapAll::BuildingRect> LoadMapAll::cityBuildingRects;
 std::map<std::pair<uint16_t,uint16_t>,LoadMapAll::CavePlan> LoadMapAll::cavePlans;
 
 //re-assert the city signs AFTER vegetation: a tree canopy lands on WalkBehind
@@ -665,6 +666,15 @@ static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
         const SettingsAll::SettingsExtra &setting, LoadMapAll::RoomSettings &rs, int &buildingId,
         const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters)
 {
+    //remember the footprint: the avenue/path paint must never touch its tiles
+    {
+        LoadMapAll::BuildingRect buildingRect;
+        buildingRect.x=x*mapWidth+pos.first;
+        buildingRect.y=y*mapHeight+pos.second;
+        buildingRect.w=temp.width;
+        buildingRect.h=temp.height;
+        LoadMapAll::cityBuildingRects.push_back(buildingRect);
+    }
     if(facadeOnly)
         LoadMapAll::brushFacade(temp,worldMap,x*mapWidth+pos.first,y*mapHeight+pos.second);
     else if(slotBaseName.empty())
@@ -1621,6 +1631,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
 
     citySigns.clear();
+    cityBuildingRects.clear();
     cavePlans.clear();
     //per-type recolored gym tilesets into dest/map/tileset/ (and the blue base)
     generateGymTilesets(setting);
@@ -2203,11 +2214,17 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     //std::pair<uint8_t,uint8_t> pos(rand() % setting.mapWidth, rand() % setting.mapHeight);
                                     unsigned int bx = pos.first/scale;
                                     unsigned int by = pos.second/scale;
+                                    //cover EVERY cell the footprint touches: at an odd
+                                    //position the last tile row/column spills one cell
+                                    //further than ceil(size/scale) from the start cell —
+                                    //that uncovered cell let the door paths route THROUGH
+                                    //the building and the avenue paint erased its tiles
+                                    const unsigned int ex=(pos.first+temp.width+scale-1)/scale;
+                                    const unsigned int ey=(pos.second+temp.height+scale-1)/scale;
 
-                                    if(bx+ceil((double)temp.width/scale) < scaleWidth
-                                            && by+ceil((double)temp.height/scale) < scaleHeight){
-                                        for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
-                                            for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
+                                    if(ex < scaleWidth && ey < scaleHeight){
+                                        for(unsigned int tx = bx; tx<ex; tx++){
+                                            for(unsigned int ty = by; ty<ey; ty++){
                                                 if(map[tx+ty*scaleWidth]!= 1){
                                                     valid =false;
                                                 }
@@ -2218,8 +2235,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     }
 
                                     if(valid){
-                                        for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
-                                            for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
+                                        for(unsigned int tx = bx; tx<ex; tx++){
+                                            for(unsigned int ty = by; ty<ey; ty++){
                                                 map[tx+ty*scaleWidth] = 0;
                                             }
                                         }
@@ -2242,24 +2259,26 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                             placeCityBuilding(worldMap,temp,slotKind,slotBaseName,facadeOnly,
                                                               x,y,mapWidth,mapHeight,pos,*city,cityLowerCaseName,
                                                               setting,rs,buildingId,gymTypeName,gymTypeMonsters);
+                                            zone->type = 5;
+                                            //mark the footprint BEFORE the door path: the
+                                            //route must never cross the building cells
+                                            for(unsigned int tx = bx; tx<ex; tx++){
+                                                for(unsigned int ty = by; ty<ey; ty++){
+                                                    map[tx+ty*scaleWidth] = 5;
+                                                }
+                                            }
                                             if(!facadeOnly)
                                             {
                                                 cityDoorFrontsFree(lots,temp,pos.first,pos.second,true);
                                                 connectDoorFrontsToAvenue(lots,temp,pos.first,pos.second);
-                                            }
-                                            zone->type = 5;
-                                            for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
-                                                for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
-                                                    map[tx+ty*scaleWidth] = 5;
-                                                }
                                             }
                                             break;
                                         }
 
                                         zone->type = 1;
 
-                                        for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
-                                            for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
+                                        for(unsigned int tx = bx; tx<ex; tx++){
+                                            for(unsigned int ty = by; ty<ey; ty++){
                                                 map[tx+ty*scaleWidth] = 1;
                                             }
                                         }
@@ -2416,6 +2435,53 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                         signX[signCount]=(int)vx0*(int)scale-1;
                                         signY[signCount]=(int)mapHeight-3;
                                         signCount++;
+                                    }
+                                    //a MEDIUM city gets exactly ONE sign, at the
+                                    //entrance toward the LOWEST-level neighbor
+                                    //(where the players come from, see the level map)
+                                    if(isMediumCity && signCount>1)
+                                    {
+                                        const int neighborDx[4]={-1,1,0,0};
+                                        const int neighborDy[4]={0,0,-1,1};
+                                        const Orientation neighborOrientation[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
+                                        int bestSide=-1;
+                                        unsigned int bestLevel=0;
+                                        int neighborSide=0;
+                                        int slotCursor=0;
+                                        int slotOfSide[4]={-1,-1,-1,-1};
+                                        //signX/signY were filled in the same left,right,top,bottom order
+                                        while(neighborSide<4)
+                                        {
+                                            const bool bandOk=(neighborSide<2) ? haveHorizontalBand : haveVerticalBand;
+                                            if(bandOk && (zoneOrientation&neighborOrientation[neighborSide])!=0)
+                                            {
+                                                slotOfSide[neighborSide]=slotCursor;
+                                                slotCursor++;
+                                                const int nx=(int)x+neighborDx[neighborSide];
+                                                const int ny=(int)y+neighborDy[neighborSide];
+                                                unsigned int neighborLevel=255;
+                                                if(nx>=0 && ny>=0)
+                                                {
+                                                    if(haveCityEntry(citiesCoordToIndex,nx,ny))
+                                                        neighborLevel=cities.at(citiesCoordToIndex.at(nx).at(ny)).level;
+                                                    else if(roadCoordToIndex.find((uint16_t)nx)!=roadCoordToIndex.cend()
+                                                            && roadCoordToIndex.at((uint16_t)nx).find((uint16_t)ny)!=roadCoordToIndex.at((uint16_t)nx).cend())
+                                                        neighborLevel=roadCoordToIndex.at((uint16_t)nx).at((uint16_t)ny).level;
+                                                }
+                                                if(bestSide<0 || neighborLevel<bestLevel)
+                                                {
+                                                    bestSide=neighborSide;
+                                                    bestLevel=neighborLevel;
+                                                }
+                                            }
+                                            neighborSide++;
+                                        }
+                                        if(bestSide>=0 && slotOfSide[bestSide]>=0)
+                                        {
+                                            signX[0]=signX[slotOfSide[bestSide]];
+                                            signY[0]=signY[slotOfSide[bestSide]];
+                                            signCount=1;
+                                        }
                                     }
                                     int signIndex=0;
                                     while(signIndex<signCount)
@@ -3024,8 +3090,22 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                         }
 
                         //city avenue: rigid paved band, fill on Walkable + the
-                        //template's border ring on OnGrass at the band perimeter
-                        if(isCity && type==CITY_AVENUE_CODE && paintGround!=NULL && paintGround->valid){
+                        //template's border ring on OnGrass at the band perimeter.
+                        //NEVER paint a tile that belongs to a placed building.
+                        bool insideBuilding=false;
+                        if(isCity && type==CITY_AVENUE_CODE)
+                        {
+                            unsigned int rectIndex=0;
+                            while(rectIndex<cityBuildingRects.size() && !insideBuilding)
+                            {
+                                const BuildingRect &buildingRect=cityBuildingRects.at(rectIndex);
+                                if(tx>=buildingRect.x && tx<buildingRect.x+buildingRect.w
+                                        && ty>=buildingRect.y && ty<buildingRect.y+buildingRect.h)
+                                    insideBuilding=true;
+                                rectIndex++;
+                            }
+                        }
+                        if(isCity && type==CITY_AVENUE_CODE && !insideBuilding && paintGround!=NULL && paintGround->valid){
                             if(waterLayer==NULL || waterLayer->cellAt(tx,ty).tile()==NULL){
                                 colliLayer->setCell(tx,ty,empty);
                                 grassLayer->setCell(tx,ty,empty);
