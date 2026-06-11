@@ -39,6 +39,7 @@
 #include <QTime>
 #include <QDebug>
 #include <QElapsedTimer>
+#include <QThreadPool>
 #include <iostream>
 
 int main(int argc, char *argv[])
@@ -143,6 +144,8 @@ int main(int argc, char *argv[])
             }
             index++;
         }
+        //the png encode runs on the thread pool, wait the queued saves
+        QThreadPool::globalInstance()->waitForDone();
         qDebug() << QString("Done into: %1s").arg(time.elapsed()/1000);
         return 0;
     }
@@ -250,6 +253,7 @@ int main(int argc, char *argv[])
         if(arguments.size()==1)
         {
             w.viewMap(renderAll,fileToOpen,destination);
+            QThreadPool::globalInstance()->waitForDone();
             w.show();
             w.setWindowIcon(QIcon(QStringLiteral(":/icon.png")));
             return a.exec();
@@ -257,6 +261,8 @@ int main(int argc, char *argv[])
         else
         {
             w.viewMap(renderAll,fileToOpen,destination);
+            //the png encode runs on the thread pool, wait the queued save
+            QThreadPool::globalInstance()->waitForDone();
             return 0;
         }
     }

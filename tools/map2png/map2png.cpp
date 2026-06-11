@@ -17,6 +17,8 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QFileDialog>
+#include <QThreadPool>
+#include <QSemaphore>
 
 #include "../../general/base/MoveOnTheMap.hpp"
 #include <tile.h>
@@ -29,6 +31,23 @@ QRegularExpression MapVisualiserOrder::regexMs=QRegularExpression(QStringLiteral
 QRegularExpression MapVisualiserOrder::regexFrames=QRegularExpression(QStringLiteral("^[0-9]{1,3}frames$"));
 QRegularExpression MapVisualiserOrder::regexTrigger=QRegularExpression("^start:([0-9]+)ms;([0-9]+)frames;leave:([0-9]+)ms;([0-9]+)frames;?(.*)$");
 QRegularExpression MapVisualiserOrder::regexTriggerAgain=QRegularExpression("^again:([0-9]+)ms;([0-9]+)frames;?(.*)$");
+
+// Bounds the queued-but-not-yet-written images so a fast render loop can't
+// pile hundreds of QImage into RAM when the encoders lag behind.
+static QSemaphore pngSaveQueueSlots(16);
+
+PngSaveTask::PngSaveTask(const QImage &image,const QString &destination) :
+    image(image),
+    destination(destination)
+{
+}
+
+void PngSaveTask::run()
+{
+    if(!image.save(destination))
+        qDebug() << QStringLiteral("Unable to save the image")+destination;
+    pngSaveQueueSlots.release();
+}
 
 MapVisualiserOrder::MapVisualiserOrder()
 {
@@ -1103,8 +1122,12 @@ void Map2Png::viewMap(const bool &renderAll,const QString &fileName,const QStrin
     if(!destination.isEmpty())
     {
         QDir().mkpath(QFileInfo(destination).absolutePath());
-        if(!newImage.save(destination))
-            qDebug() << QStringLiteral("Unable to save the image")+destination;
+        painter.end();
+        pngSaveQueueSlots.acquire();
+        // autoDelete (default true): the pool frees the task after run().
+        // main() does QThreadPool::globalInstance()->waitForDone() before
+        // exiting so every queued image reaches the disk.
+        QThreadPool::globalInstance()->start(new PngSaveTask(newImage,destination));
     }
 }
 
