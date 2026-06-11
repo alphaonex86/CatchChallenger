@@ -1724,16 +1724,19 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 {
                     if((unsigned int)(rand()%100)<setting.cavePercent)
                     {
-                        //the cave is NEVER dropped: the chunk is SEALED with a
-                        //cliff ring along its whole perimeter (CC borders are
-                        //crossable along the full edge) and each road connection
-                        //gets a walled POCKET bay — the cave is the unique way
-                        //through. On FLAT terrain (no cliff near the bay) the
-                        //mouth is a small ROCK OUTCROP standing in the pocket;
-                        //near a cliff it stays embedded in the pocket wall.
+                        //the cave is NEVER dropped, and there is NO artificial
+                        //cliff ring (owner: ugly): walking straight inward from
+                        //the border, the FIRST natural cliff hosts the mouth;
+                        //on flat ground a small rock outcrop stands in a
+                        //vegetation-free clearing instead. The surrounding
+                        //terrain/vegetation does the sealing naturally.
                         CavePlan plan;
                         plan.depth=1;
                         const int mid[4]={(int)mapHeight/2,(int)mapHeight/2,(int)mapWidth/2,(int)mapWidth/2};
+                        const int dirX[4]={1,-1,0,0};
+                        const int dirY[4]={0,0,1,-1};
+                        const int borderX[4]={0,(int)mapWidth-1,(int)mapWidth/2,(int)mapWidth/2};
+                        const int borderY[4]={(int)mapHeight/2,(int)mapHeight/2,0,(int)mapHeight-1};
                         int side=0;
                         while(side<4)
                         {
@@ -1744,33 +1747,38 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             {
                                 planSide.used=1;
                                 planSide.floor=0;
-                                //cliff near? scan the NATURAL terrain of the bay zone
-                                bool cliffNear=false;
+                                //first natural cliff on the straight approach line?
+                                int mouthStep=-1;
                                 {
-                                    int perp=-4;
-                                    while(perp<=4 && !cliffNear)
+                                    int step=1;
+                                    while(step<=12 && mouthStep<0)
                                     {
-                                        int depthStep=0;
-                                        while(depthStep<=7 && !cliffNear)
-                                        {
-                                            int lx,ly;
-                                            if(side==0){ lx=depthStep; ly=mid[0]+perp; }
-                                            else if(side==1){ lx=(int)mapWidth-1-depthStep; ly=mid[1]+perp; }
-                                            else if(side==2){ lx=mid[2]+perp; ly=depthStep; }
-                                            else { lx=mid[3]+perp; ly=(int)mapHeight-1-depthStep; }
-                                            if(lx>=0 && ly>=0 && lx<(int)mapWidth && ly<(int)mapHeight)
-                                                if(colliLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()!=NULL)
-                                                    cliffNear=true;
-                                            depthStep++;
-                                        }
-                                        perp++;
+                                        const int lx=borderX[side]+dirX[side]*step;
+                                        const int ly=borderY[side]+dirY[side]*step;
+                                        if(lx<1 || ly<1 || lx>=(int)mapWidth-1 || ly>=(int)mapHeight-1)
+                                            break;
+                                        if(waterLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()!=NULL)
+                                            break;//water ahead: stand the outcrop before it
+                                        if(colliLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()!=NULL)
+                                            mouthStep=step;
+                                        step++;
                                     }
                                 }
-                                planSide.outcrop=cliffNear ? 0 : 1;
-                                if(planSide.outcrop!=0)
+                                if(mouthStep>0)
                                 {
-                                    //small rock outcrop in a DEEPER pocket, the mouth
+                                    //mouth embedded in the natural cliff
+                                    planSide.outcrop=0;
+                                    planSide.mouthKind=(side==2) ? 2 : 1;//from the top the player sees the cliff top
+                                    planSide.mouthX=borderX[side]+dirX[side]*mouthStep;
+                                    planSide.mouthY=borderY[side]+dirY[side]*mouthStep;
+                                    planSide.landX=borderX[side]+dirX[side]*(mouthStep-1);
+                                    planSide.landY=borderY[side]+dirY[side]*(mouthStep-1);
+                                }
+                                else
+                                {
+                                    //small rock outcrop on the flat ground, the mouth
                                     //(always south-facing) on its bottom line middle
+                                    planSide.outcrop=1;
                                     planSide.mouthKind=1;
                                     if(side==0)
                                     {
@@ -1794,44 +1802,6 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     }
                                     planSide.landX=planSide.mouthX;
                                     planSide.landY=planSide.mouthY+1;
-                                }
-                                else
-                                {
-                                    if(side==0)//left pocket: mouth in its top wall, faces bottom
-                                    {
-                                        planSide.mouthKind=1;
-                                        planSide.mouthX=2;
-                                        planSide.mouthY=mid[0]-3;
-                                    }
-                                    else if(side==1)//right pocket
-                                    {
-                                        planSide.mouthKind=1;
-                                        planSide.mouthX=(int)mapWidth-3;
-                                        planSide.mouthY=mid[1]-3;
-                                    }
-                                    else if(side==2)//top pocket: the player sees the cliff TOP
-                                    {
-                                        planSide.mouthKind=2;
-                                        planSide.mouthX=mid[2];
-                                        planSide.mouthY=4;
-                                    }
-                                    else//bottom pocket
-                                    {
-                                        planSide.mouthKind=1;
-                                        planSide.mouthX=mid[3];
-                                        planSide.mouthY=(int)mapHeight-5;
-                                    }
-                                    //the cell in front of the mouth, inside the pocket
-                                    if(planSide.mouthKind==1)
-                                    {
-                                        planSide.landX=planSide.mouthX;
-                                        planSide.landY=planSide.mouthY+1;
-                                    }
-                                    else
-                                    {
-                                        planSide.landX=planSide.mouthX;
-                                        planSide.landY=planSide.mouthY-1;
-                                    }
                                 }
                             }
                             side++;
@@ -3176,12 +3146,11 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     }
                 }
 
-                //CAVE chunk overworld: the chunk is SEALED by a cliff ring on
-                //its whole perimeter (the engine crosses borders along the full
-                //edge); each road connection has a cliff-walled POCKET bay open
-                //to the border, and the only way through is the MOUTH in the
-                //pocket wall (entranceTile when the cliff faces bottom, the
-                //terra-19 style entranceTopTile when the player sees its top)
+                //CAVE chunk overworld: NO artificial cliff (owner: ugly).
+                //Each road connection gets a vegetation-free clearing on the
+                //approach; the mouth is either embedded in the FIRST natural
+                //cliff on the approach line, or a small rock outcrop standing
+                //on the flat ground; the terrain/vegetation seals naturally.
                 if(chunkIsCave && caveTilesOk
                         && cavePlans.find(std::pair<uint16_t,uint16_t>(x,y))!=cavePlans.cend()){
                     Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
@@ -3192,134 +3161,10 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     if(movingGroup!=NULL && entranceTile!=NULL && entranceTopTile!=NULL && !caveBase.empty())
                     {
                         const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
-                        const int midRow=(int)mapHeight/2;
-                        const int midColumn=(int)mapWidth/2;
-                        //wall cells marked first, ring tiles resolved by a second
-                        //pass so each gets the edge matching its real neighbors
-                        std::vector<unsigned char> wallCell(mapWidth*mapHeight,0);
-                        std::vector<unsigned char> floorCell(mapWidth*mapHeight,0);
-                        //perimeter ring, except the pocket bays
-                        {
-                            int lx=0;
-                            while(lx<(int)mapWidth)
-                            {
-                                wallCell[lx+0*mapWidth]=1;
-                                wallCell[lx+(mapHeight-1)*mapWidth]=1;
-                                lx++;
-                            }
-                            int ly=0;
-                            while(ly<(int)mapHeight)
-                            {
-                                wallCell[0+ly*mapWidth]=1;
-                                wallCell[(mapWidth-1)+ly*mapWidth]=1;
-                                ly++;
-                            }
-                        }
-                        int side=0;
-                        while(side<4)
-                        {
-                            const CavePlanSide &planSide=plan.sides[side];
-                            if(planSide.used!=0)
-                            {
-                                //pocket geometry: bay open at the border middle,
-                                //floor pocket, C-shaped wall sealing it inside;
-                                //an OUTCROP mouth needs a deeper pocket so the
-                                //rock structure stands free inside it
-                                const int depthLimit=(planSide.outcrop!=0) ? 6 : 4;
-                                int perp=-3;
-                                while(perp<=3)
-                                {
-                                    int depthStep=0;
-                                    while(depthStep<=depthLimit)
-                                    {
-                                        int lx,ly;
-                                        if(side==0){ lx=depthStep; ly=midRow+perp; }
-                                        else if(side==1){ lx=(int)mapWidth-1-depthStep; ly=midRow+perp; }
-                                        else if(side==2){ lx=midColumn+perp; ly=depthStep; }
-                                        else { lx=midColumn+perp; ly=(int)mapHeight-1-depthStep; }
-                                        const unsigned int cell=lx+ly*mapWidth;
-                                        if(perp==-3 || perp==3 || depthStep==depthLimit)
-                                            wallCell[cell]=1;//pocket wall (and overrides the bay)
-                                        else
-                                        {
-                                            wallCell[cell]=0;//the bay stays open to the border
-                                            floorCell[cell]=1;
-                                        }
-                                        depthStep++;
-                                    }
-                                    perp++;
-                                }
-                            }
-                            side++;
-                        }
-                        //paint: clear the pocket floors, wall placeholder
-                        {
-                            unsigned int ly=0;
-                            while(ly<mapHeight)
-                            {
-                                unsigned int lx=0;
-                                while(lx<mapWidth)
-                                {
-                                    const unsigned int tx=x*mapWidth+lx;
-                                    const unsigned int ty=y*mapHeight+ly;
-                                    const unsigned int cell=lx+ly*mapWidth;
-                                    if(wallCell[cell]!=0 || floorCell[cell]!=0)
-                                    {
-                                        colliLayer->setCell(tx,ty,empty);
-                                        grassLayer->setCell(tx,ty,empty);
-                                        if(onGrassLayer!=NULL)
-                                            onGrassLayer->setCell(tx,ty,empty);
-                                        if(waterLayer!=NULL)
-                                            waterLayer->setCell(tx,ty,empty);
-                                        if(wallCell[cell]!=0)
-                                            colliLayer->setCell(tx,ty,Tiled::Cell(mountainTiles.at(0)));
-                                        //no vegetation on the walls or in the pockets
-                                        const unsigned int bitMask=tx+ty*worldMap.width();
-                                        if(bitMask/8<maxMapSize)
-                                            MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                    }
-                                    lx++;
-                                }
-                                ly++;
-                            }
-                        }
-                        //second pass: give each wall cell the cliff edge matching
-                        //its walkable neighbors (same ring as the terrain mountains)
-                        {
-                            unsigned int ly=0;
-                            while(ly<mapHeight)
-                            {
-                                unsigned int lx=0;
-                                while(lx<mapWidth)
-                                {
-                                    if(wallCell[lx+ly*mapWidth]!=0)
-                                    {
-                                        const unsigned int tx=x*mapWidth+lx;
-                                        const unsigned int ty=y*mapHeight+ly;
-                                        uint8_t walkableMask=0;
-                                        const int neighborDx[8]={-1,0,1,-1,1,-1,0,1};
-                                        const int neighborDy[8]={-1,-1,-1,0,0,1,1,1};
-                                        const uint8_t neighborBit[8]={1,2,4,8,16,32,64,128};
-                                        int neighbor=0;
-                                        while(neighbor<8)
-                                        {
-                                            const int ntx=(int)tx+neighborDx[neighbor];
-                                            const int nty=(int)ty+neighborDy[neighbor];
-                                            if(ntx>=0 && nty>=0 && ntx<worldMap.width() && nty<worldMap.height())
-                                                if(colliLayer->cellAt(ntx,nty).tile()==NULL
-                                                        && (waterLayer==NULL || waterLayer->cellAt(ntx,nty).tile()==NULL))
-                                                    walkableMask|=neighborBit[neighbor];
-                                            neighbor++;
-                                        }
-                                        if(walkableMask!=0 && mountainTiles.size()>=12)
-                                            colliLayer->setCell(tx,ty,Tiled::Cell(mountainTiles.at(mountainBorderTileIndex(walkableMask))));
-                                    }
-                                    lx++;
-                                }
-                                ly++;
-                            }
-                        }
-                        //the mouths + the teleports into each side's floor;
+                        const int dirX[4]={1,-1,0,0};
+                        const int dirY[4]={0,0,1,-1};
+                        const int borderX[4]={0,(int)mapWidth-1,(int)mapWidth/2,(int)mapWidth/2};
+                        const int borderY[4]={(int)mapHeight/2,(int)mapHeight/2,0,(int)mapHeight-1};
                         //the 9-tile rock block builds the flat-terrain outcrops
                         std::vector<Tiled::Tile *> rockTiles;
                         {
@@ -3333,18 +3178,53 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 wallTileIndex++;
                             }
                         }
-                        int mouthSide=0;
-                        while(mouthSide<4)
+                        int side=0;
+                        while(side<4)
                         {
-                            const CavePlanSide &planSide=plan.sides[mouthSide];
+                            const CavePlanSide &planSide=plan.sides[side];
                             if(planSide.used!=0)
                             {
+                                //clear the APPROACH from the border to the mouth
+                                //front: a 3-wide band, obstacles removed and
+                                //vegetation masked so the mouth stays reachable
+                                int approachDepth;
+                                if(planSide.outcrop!=0)
+                                    approachDepth=5;
+                                else
+                                    approachDepth=
+                                            (dirX[side]!=0)
+                                            ? ((int)planSide.landX-borderX[side])*dirX[side]
+                                            : ((int)planSide.landY-borderY[side])*dirY[side];
+                                int step=0;
+                                while(step<=approachDepth)
+                                {
+                                    int perp=-1;
+                                    while(perp<=1)
+                                    {
+                                        const int lx=borderX[side]+dirX[side]*step+dirY[side]*perp;
+                                        const int ly=borderY[side]+dirY[side]*step+dirX[side]*perp;
+                                        if(lx>=0 && ly>=0 && lx<(int)mapWidth && ly<(int)mapHeight)
+                                        {
+                                            const unsigned int tx=x*mapWidth+lx;
+                                            const unsigned int ty=y*mapHeight+ly;
+                                            colliLayer->setCell(tx,ty,empty);
+                                            grassLayer->setCell(tx,ty,empty);
+                                            if(waterLayer!=NULL)
+                                                waterLayer->setCell(tx,ty,empty);
+                                            const unsigned int bitMask=tx+ty*worldMap.width();
+                                            if(bitMask/8<maxMapSize)
+                                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                        }
+                                        perp++;
+                                    }
+                                    step++;
+                                }
                                 const unsigned int htx=x*mapWidth+planSide.mouthX;
                                 const unsigned int hty=y*mapHeight+planSide.mouthY;
                                 if(planSide.outcrop!=0 && !rockTiles.empty())
                                 {
-                                    //small rock outcrop standing in the pocket: the
-                                    //3x3 block, mouth on its bottom line at the middle
+                                    //small rock outcrop standing free: the 3x3
+                                    //block, mouth on its bottom line at the middle
                                     int blockRow=0;
                                     while(blockRow<3)
                                     {
@@ -3388,7 +3268,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 hole->setCell(holeCell);
                                 movingGroup->addObject(hole);
                             }
-                            mouthSide++;
+                            side++;
                         }
                     }
                 }
