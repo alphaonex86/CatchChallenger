@@ -806,6 +806,8 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
 
                         RoadIndex roadIndex;
                         roadIndex.roadIndex=roadIntIndex;
+                        roadIndex.level=0;
+                        roadIndex.isCave=false;
 
                         //left tile
                         if(x>0)
@@ -916,7 +918,8 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             LoadMapAll::RoadIndex &roadIndex=q.second;
             unsigned int tempLevel=(levelmap.Get({(float)x,(float)y},levelmapscale)+1.0)/2.0*(levelmapmax-levelmapmin)+levelmapmin;
             int temp_roadIndex=tempLevel-(minLevel-levelmapmin);
-            if(roadIndex.level<levelmapmin)
+            //clamp the calibrated level (was reading the not-yet-set roadIndex.level)
+            if(temp_roadIndex<(int)levelmapmin)
                 temp_roadIndex=levelmapmin;
             if(temp_roadIndex>255)
             {

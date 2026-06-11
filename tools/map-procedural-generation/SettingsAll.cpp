@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
+#include <QXmlStreamReader>
 
 void SettingsAll::putDefaultSettings(QSettings &settings)
 {
@@ -29,7 +30,34 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     if(!settings.contains("levelmapmax"))
         settings.setValue("levelmapmax",50);
 
+    settings.beginGroup("city");
+    settings.beginGroup("big");
+    if(!settings.contains("template"))
+        settings.setValue("template","city-big");
+    if(!settings.contains("useAsBase"))
+        settings.setValue("useAsBase",false);
+    if(!settings.contains("signTiles"))
+        settings.setValue("signTiles","");
+    settings.endGroup();
+    settings.beginGroup("medium");
+    if(!settings.contains("template"))
+        settings.setValue("template","city-medium");
+    if(!settings.contains("useAsBase"))
+        settings.setValue("useAsBase",false);
+    if(!settings.contains("signTiles"))
+        settings.setValue("signTiles","");
+    settings.endGroup();
+    settings.endGroup();
+
     settings.beginGroup("road");
+    settings.beginGroup("cave");
+    if(!settings.contains("percent"))
+        settings.setValue("percent",15);
+    if(!settings.contains("wallTile"))
+        settings.setValue("wallTile","");
+    if(!settings.contains("floorTile"))
+        settings.setValue("floorTile","");
+    settings.endGroup();
     settings.beginGroup("ledge");
     if(!settings.contains("doledge"))
         settings.setValue("doledge",true);
@@ -42,7 +70,7 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     if(!settings.contains("ledgechance"))
         settings.setValue("ledgechance",0.7);
     if(!settings.contains("tsx"))
-        settings.setValue("tsx","tileset/t1.tsx");
+        settings.setValue("tsx","main/tileset/t1.tsx");
     settings.endGroup();
 
     settings.beginGroup("bot");
@@ -119,6 +147,12 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("gymTrainerSkin","smith");
     if(!settings.contains("gymLeaderSkin"))
         settings.setValue("gymLeaderSkin","soldier");
+    //gym type list: "type[:#color]->Monster1,Monster2;type2->..." (monster NAMES);
+    //colors come from the datapack monsters/type.xml (or inline after ':')
+    if(!settings.contains("gymTypes"))
+        settings.setValue("gymTypes","");
+    if(!settings.contains("typeXml"))
+        settings.setValue("typeXml","");
     settings.endGroup();
 
     settings.beginGroup("wildMonsters");
@@ -146,7 +180,47 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.levelmapmin=settings.value("levelmapmin").toUInt();
     config.levelmapmax=settings.value("levelmapmax").toUInt();
 
+    settings.beginGroup("city");
+    settings.beginGroup("big");
+    config.cityBigTemplate=settings.value("template","city-big").toString();
+    config.cityBigUseAsBase=settings.value("useAsBase",false).toBool();
+    config.cityBigSignTiles.clear();
+    {
+        const QStringList signList=settings.value("signTiles","").toString().split(",");
+        unsigned int indexSign=0;
+        while(indexSign<(unsigned int)signList.size())
+        {
+            const std::string signTile=signList.at(indexSign).trimmed().toStdString();
+            if(!signTile.empty())
+                config.cityBigSignTiles.push_back(signTile);
+            indexSign++;
+        }
+    }
+    settings.endGroup();
+    settings.beginGroup("medium");
+    config.cityMediumTemplate=settings.value("template","city-medium").toString();
+    config.cityMediumUseAsBase=settings.value("useAsBase",false).toBool();
+    config.cityMediumSignTiles.clear();
+    {
+        const QStringList signList=settings.value("signTiles","").toString().split(",");
+        unsigned int indexSign=0;
+        while(indexSign<(unsigned int)signList.size())
+        {
+            const std::string signTile=signList.at(indexSign).trimmed().toStdString();
+            if(!signTile.empty())
+                config.cityMediumSignTiles.push_back(signTile);
+            indexSign++;
+        }
+    }
+    settings.endGroup();
+    settings.endGroup();
+
     settings.beginGroup("road");
+    settings.beginGroup("cave");
+    config.cavePercent=settings.value("percent",15).toUInt();
+    config.caveWallTile=settings.value("wallTile","").toString();
+    config.caveFloorTile=settings.value("floorTile","").toString();
+    settings.endGroup();
     settings.beginGroup("ledge");
     config.doledge=settings.value("doledge").toBool();
     config.ledgeleft=settings.value("ledgeleft").toUInt();
@@ -293,6 +367,86 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.shopSkin=settings.value("shopSkin","bankier").toString().toStdString();
     config.gymTrainerSkin=settings.value("gymTrainerSkin","smith").toString().toStdString();
     config.gymLeaderSkin=settings.value("gymLeaderSkin","soldier").toString().toStdString();
+    config.gymTypeNames.clear();
+    config.gymTypeColors.clear();
+    config.gymTypeMonsters.clear();
+    {
+        //"type[:#color]->Monster1,Monster2;type2->..."
+        const QStringList typeList=settings.value("gymTypes","").toString().split(";");
+        unsigned int indexType=0;
+        while(indexType<(unsigned int)typeList.size())
+        {
+            const QString &typeEntry=typeList.at(indexType).trimmed();
+            if(!typeEntry.isEmpty())
+            {
+                const QStringList typeSplit=typeEntry.split("->");
+                if(typeSplit.size()==2)
+                {
+                    QString typeName=typeSplit.at(0).trimmed();
+                    QString typeColor;
+                    const int colonPos=typeName.indexOf(":");
+                    if(colonPos>=0)
+                    {
+                        typeColor=typeName.mid(colonPos+1).trimmed();
+                        typeName=typeName.left(colonPos).trimmed();
+                    }
+                    std::vector<std::string> typeMonsters;
+                    const QStringList monsterList=typeSplit.at(1).split(",");
+                    unsigned int indexMonster=0;
+                    while(indexMonster<(unsigned int)monsterList.size())
+                    {
+                        const std::string monsterName=monsterList.at(indexMonster).trimmed().toLower().toStdString();
+                        if(!monsterName.empty())
+                            typeMonsters.push_back(monsterName);
+                        indexMonster++;
+                    }
+                    if(!typeName.isEmpty() && !typeMonsters.empty())
+                    {
+                        config.gymTypeNames.push_back(typeName.toLower().toStdString());
+                        config.gymTypeColors.push_back(typeColor);
+                        config.gymTypeMonsters.push_back(typeMonsters);
+                    }
+                }
+                else
+                    qDebug() << "Syntaxe error into gymTypes entry: " << typeEntry;
+            }
+            indexType++;
+        }
+    }
+    config.typeXml=settings.value("typeXml","").toString();
+    if(!config.typeXml.isEmpty() && !config.gymTypeNames.empty())
+    {
+        //type colors from the datapack monsters/type.xml: <type name="fire" color="#f38233"/>
+        QFile typeFile(config.typeXml);
+        if(typeFile.open(QIODevice::ReadOnly))
+        {
+            QXmlStreamReader xml(&typeFile);
+            while(!xml.atEnd())
+            {
+                if(xml.readNext()==QXmlStreamReader::StartElement)
+                {
+                    if(xml.name().toString()=="type")
+                    {
+                        const std::string typeName=xml.attributes().value("name").toString().toLower().toStdString();
+                        const QString typeColor=xml.attributes().value("color").toString();
+                        if(!typeName.empty() && !typeColor.isEmpty())
+                        {
+                            unsigned int indexType=0;
+                            while(indexType<config.gymTypeNames.size())
+                            {
+                                if(config.gymTypeNames.at(indexType)==typeName)
+                                    config.gymTypeColors[indexType]=typeColor;
+                                indexType++;
+                            }
+                        }
+                    }
+                }
+            }
+            typeFile.close();
+        }
+        else
+            std::cerr << "typeXml configured but not readable: " << config.typeXml.toStdString() << std::endl;
+    }
     settings.endGroup();
 
     settings.beginGroup("wildMonsters");
@@ -309,6 +463,13 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
             if(monsterId!=0)
             {
                 settings.beginGroup(idString);
+                if(settings.contains("name"))
+                {
+                    //display name: generated xml emits it lowercase instead of the id
+                    const std::string monsterName=settings.value("name").toString().trimmed().toLower().toStdString();
+                    if(!monsterName.empty())
+                        config.monsterNames[monsterId]=monsterName;
+                }
                 if(settings.contains("heightmoisurelist"))
                 {
                     QStringList heightmoisurelist=settings.value("heightmoisurelist").toString().split(";");

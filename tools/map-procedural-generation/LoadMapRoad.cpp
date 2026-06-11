@@ -16,10 +16,309 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QSettings>
+#include <QFile>
+#include <QImage>
+#include <QColor>
 
 unsigned int ** LoadMapAll::roadData = NULL;
 int LoadMapAll::botId = 0;
 LoadMapAll::RoadMountain LoadMapAll::mountain;
+LoadMapAll::CityGround LoadMapAll::cityGroundBig;
+LoadMapAll::CityGround LoadMapAll::cityGroundMedium;
+
+//scale-map codes for the city avenue: walkable (bit 0 set) so the entrance
+//pathing checks still pass, but not 1 so no building/bot lands on the path
+#define CITY_AVENUE_CODE 0x0B
+
+QString LoadMapAll::monsterRef(const uint16_t &monsterId, const SettingsAll::SettingsExtra &setting)
+{
+    const std::map<uint16_t,std::string>::const_iterator it=setting.monsterNames.find(monsterId);
+    if(it!=setting.monsterNames.cend())
+        return QString::fromStdString(it->second);
+    return QString::number(monsterId);
+}
+
+bool LoadMapAll::isCaveChunk(const unsigned int &x, const unsigned int &y)
+{
+    if(roadCoordToIndex.find(x)==roadCoordToIndex.cend())
+        return false;
+    const std::unordered_map<uint16_t,RoadIndex> &subEntry=roadCoordToIndex.at(x);
+    if(subEntry.find(y)==subEntry.cend())
+        return false;
+    return subEntry.at(y).isCave;
+}
+
+//translate a template-map cell to the matching WORLD tileset cell
+static Tiled::Cell worldCellFromTemplate(const MapBrush::MapTemplate &mapTemplate, const Tiled::Cell &cell)
+{
+    Tiled::Cell out;
+    if(cell.isEmpty())
+        return out;
+    Tiled::Tileset * const worldTileset=mapTemplate.templateTilesetToMapTileset.at(cell.tile()->tileset());
+    out.setTile(worldTileset->tileAt(cell.tile()->id()));
+    return out;
+}
+
+//derive the avenue ground from a city template tmx: the most used Walkable tile
+//is the path fill, the OnGrass bounding ring gives the 3x3 border set
+static void deriveCityGround(const MapBrush::MapTemplate &mapTemplate, LoadMapAll::CityGround &ground)
+{
+    ground.valid=false;
+    Tiled::TileLayer * const walk=LoadMap::searchTileLayerByName(*mapTemplate.tiledMap,"Walkable");
+    if(walk==NULL)
+        return;
+    std::map<Tiled::Tile*,unsigned int> fillCount;
+    int ty=0;
+    while(ty<mapTemplate.tiledMap->height())
+    {
+        int tx=0;
+        while(tx<mapTemplate.tiledMap->width())
+        {
+            Tiled::Tile * const tile=walk->cellAt(tx,ty).tile();
+            if(tile!=NULL)
+            {
+                if(fillCount.find(tile)==fillCount.cend())
+                    fillCount[tile]=1;
+                else
+                    fillCount[tile]++;
+            }
+            tx++;
+        }
+        ty++;
+    }
+    Tiled::Tile *fillTile=NULL;
+    unsigned int bestCount=0;
+    for(const std::pair<Tiled::Tile* const,unsigned int> &entry : fillCount)
+    {
+        if(entry.second>bestCount)
+        {
+            bestCount=entry.second;
+            fillTile=entry.first;
+        }
+    }
+    if(fillTile==NULL)
+        return;
+    {
+        Tiled::Cell fillCell;
+        fillCell.setTile(fillTile);
+        ground.fill=worldCellFromTemplate(mapTemplate,fillCell);
+    }
+    //border ring from the OnGrass bounding box corners/edges
+    Tiled::TileLayer * const onGrass=LoadMap::searchTileLayerByName(*mapTemplate.tiledMap,"OnGrass");
+    if(onGrass!=NULL)
+    {
+        int x0=-1,y0=-1,x1=-1,y1=-1;
+        ty=0;
+        while(ty<mapTemplate.tiledMap->height())
+        {
+            int tx=0;
+            while(tx<mapTemplate.tiledMap->width())
+            {
+                if(onGrass->cellAt(tx,ty).tile()!=NULL)
+                {
+                    if(x0<0 || tx<x0) x0=tx;
+                    if(x1<0 || tx>x1) x1=tx;
+                    if(y0<0 || ty<y0) y0=ty;
+                    if(y1<0 || ty>y1) y1=ty;
+                }
+                tx++;
+            }
+            ty++;
+        }
+        if(x0>=0 && x1>x0 && y1>y0)
+        {
+            ground.border[0][0]=worldCellFromTemplate(mapTemplate,onGrass->cellAt(x0,y0));
+            ground.border[0][1]=worldCellFromTemplate(mapTemplate,onGrass->cellAt(x0+1,y0));
+            ground.border[0][2]=worldCellFromTemplate(mapTemplate,onGrass->cellAt(x1,y0));
+            ground.border[1][0]=worldCellFromTemplate(mapTemplate,onGrass->cellAt(x0,y0+1));
+            ground.border[1][2]=worldCellFromTemplate(mapTemplate,onGrass->cellAt(x1,y0+1));
+            ground.border[2][0]=worldCellFromTemplate(mapTemplate,onGrass->cellAt(x0,y1));
+            ground.border[2][1]=worldCellFromTemplate(mapTemplate,onGrass->cellAt(x0+1,y1));
+            ground.border[2][2]=worldCellFromTemplate(mapTemplate,onGrass->cellAt(x1,y1));
+        }
+    }
+    ground.valid=true;
+}
+
+//perform ONE city building placement at an already validated position: facade
+//brush, plain house with interior, or key building (heal/shop/gym) chain
+static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
+        const LoadMapAll::BotKind slotKind, const std::string &slotBaseName, const bool facadeOnly,
+        const unsigned int x, const unsigned int y,
+        const unsigned int mapWidth, const unsigned int mapHeight,
+        const std::pair<uint8_t,uint8_t> &pos,
+        LoadMapAll::City &city, const std::string &cityLowerCaseName,
+        const SettingsAll::SettingsExtra &setting, LoadMapAll::RoomSettings &rs, int &buildingId,
+        const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters)
+{
+    if(facadeOnly)
+        LoadMapAll::brushFacade(temp,worldMap,x*mapWidth+pos.first,y*mapHeight+pos.second);
+    else if(slotBaseName.empty())
+    {
+        LoadMapAll::generateRoom(worldMap,temp,buildingId,x,y,pos,city,cityLowerCaseName,setting,rs);
+        buildingId++;
+    }
+    else
+    {
+        //a key building (heal/shop/gym). For a gym build a VALID
+        //monster pool from an adjacent road tile (the city tile
+        //itself has none) — never .at() the city coord; if no
+        //adjacent pool exists botStepXml falls back to a text bot.
+        std::vector<LoadMapAll::RoadMonster> buildingPool;
+        const uint8_t buildingLevel=city.level;
+        std::string desc="Building";
+        if(slotKind==LoadMapAll::BotKind_heal)
+            desc="Heal";
+        else if(slotKind==LoadMapAll::BotKind_shop)
+            desc="Shop";
+        else if(slotKind==LoadMapAll::BotKind_fight)
+        {
+            desc="Gym";
+            if(!gymTypeName.empty())
+                desc="Gym ("+gymTypeName+")";
+            const int nbx[4]={(int)x-1,(int)x+1,(int)x,(int)x};
+            const int nby[4]={(int)y,(int)y,(int)y-1,(int)y+1};
+            int n=0;
+            while(n<4 && buildingPool.empty())
+            {
+                const int nx=nbx[n];
+                const int ny=nby[n];
+                if(nx>=0 && ny>=0
+                        && LoadMapAll::roadCoordToIndex.find((uint16_t)nx)!=LoadMapAll::roadCoordToIndex.cend()
+                        && LoadMapAll::roadCoordToIndex.at((uint16_t)nx).find((uint16_t)ny)!=LoadMapAll::roadCoordToIndex.at((uint16_t)nx).cend())
+                {
+                    const LoadMapAll::RoadIndex &adjacent=LoadMapAll::roadCoordToIndex.at((uint16_t)nx).at((uint16_t)ny);
+                    if(!adjacent.roadMonsters.empty())
+                        buildingPool=adjacent.roadMonsters;
+                }
+                n++;
+            }
+        }
+        LoadMapAll::addBuildingChain(slotBaseName,desc,temp,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName,slotKind,setting,buildingPool,buildingLevel,gymTypeName,gymTypeMonsters);
+    }
+}
+
+void LoadMapAll::brushFacade(const MapBrush::MapTemplate &mapTemplate, Tiled::Map &worldMap,
+                             const int &tileX, const int &tileY)
+{
+    //hide the door objects: brushTheMap skips objects whose cell has no tile, so
+    //the facade is drawn without any working door (no content behind it)
+    std::vector<Tiled::MapObject*> doors=getDoorsListAndTp(mapTemplate.tiledMap);
+    std::vector<Tiled::Cell> oldCells;
+    unsigned int index=0;
+    while(index<doors.size())
+    {
+        oldCells.push_back(doors.at(index)->cell());
+        doors.at(index)->setCell(Tiled::Cell());
+        index++;
+    }
+    MapBrush::brushTheMap(worldMap,mapTemplate,tileX,tileY,MapBrush::mapMask,true);
+    index=0;
+    while(index<doors.size())
+    {
+        doors.at(index)->setCell(oldCells.at(index));
+        index++;
+    }
+}
+
+static void writeGymTsx(const QString &destDir, const QString &fileName, const QString &tilesetName)
+{
+    QFile tsx(destDir+fileName+".tsx");
+    if(tsx.open(QFile::WriteOnly))
+    {
+        const QString content("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                              "<tileset name=\""+tilesetName+"\" tilewidth=\"16\" tileheight=\"16\">\n"
+                              " <image source=\""+fileName+".png\"/>\n"
+                              "</tileset>\n");
+        const QByteArray contentData(content.toUtf8());
+        tsx.write(contentData.constData(),contentData.size());
+        tsx.close();
+    }
+    else
+    {
+        std::cerr << "Unable to write " << (destDir+fileName+".tsx").toStdString() << std::endl;
+        abort();
+    }
+}
+
+void LoadMapAll::generateGymTilesets(const SettingsAll::SettingsExtra &setting)
+{
+    if(setting.gymTypeNames.empty())
+        return;
+    //blue gym sprite sheet: the building on top, then the recolorable parts
+    //(roof + door) drawn again exactly 128px below their building position
+    QString srcPath("tileset/gym.png");
+    if(!QFile::exists(srcPath))
+        srcPath=QCoreApplication::applicationDirPath()+"/../../tileset/gym.png";
+    QImage src(srcPath);
+    if(src.isNull())
+    {
+        std::cerr << "tileset/gym.png not found, gym keeps the default building look" << std::endl;
+        return;
+    }
+    src=src.convertToFormat(QImage::Format_ARGB32);
+    const int overlayOffset=128;
+    if(src.height()<=overlayOffset)
+    {
+        std::cerr << "tileset/gym.png has no recolor overlay part (height<=128)" << std::endl;
+        return;
+    }
+    const QString destDir=QCoreApplication::applicationDirPath()+"/dest/map/tileset/";
+    //stage the base (blue) building so the gym-building template tileset resolves.
+    //File name gym-base.* (NOT gym.*): a "tileset/gym.tsx" relative ref would also
+    //resolve against the tool's OWN source tileset/ from the run CWD and leak an
+    //out-of-datapack path into the written maps. Internal name stays "gym" (the
+    //per-type tileset swap matches on it).
+    src.copy(0,0,src.width(),overlayOffset).save(destDir+"gym-base.png");
+    writeGymTsx(destDir,"gym-base","gym");
+    unsigned int indexType=0;
+    while(indexType<setting.gymTypeNames.size())
+    {
+        const QString &color=setting.gymTypeColors.at(indexType);
+        if(!color.isEmpty())
+        {
+            const QColor typeColor(color);
+            int typeH=0,typeS=0,typeV=0;
+            typeColor.getHsv(&typeH,&typeS,&typeV);
+            QImage out=src.copy(0,0,src.width(),overlayOffset);
+            int oy=overlayOffset;
+            while(oy<src.height())
+            {
+                int ox=0;
+                while(ox<src.width())
+                {
+                    const QRgb pixel=src.pixel(ox,oy);
+                    if(qAlpha(pixel)>0)
+                    {
+                        QColor c(pixel);
+                        int h=0,s=0,v=0;
+                        c.getHsv(&h,&s,&v);
+                        //tint: hue/saturation of the type color, brightness of the
+                        //sprite, so outlines stay dark and white details stay white
+                        int outS=s;
+                        if(s>80)
+                            outS=typeS;
+                        int outV=v*typeV/240;
+                        if(outV>255)
+                            outV=255;
+                        const QColor outColor=QColor::fromHsv(typeH,outS,outV,qAlpha(pixel));
+                        out.setPixel(ox,oy-overlayOffset,outColor.rgba());
+                    }
+                    ox++;
+                }
+                oy++;
+            }
+            const QString typeName=QString::fromStdString(setting.gymTypeNames.at(indexType));
+            if(!out.save(destDir+"gym-"+typeName+".png"))
+            {
+                std::cerr << "Unable to write " << (destDir+"gym-"+typeName+".png").toStdString() << std::endl;
+                abort();
+            }
+            writeGymTsx(destDir,"gym-"+typeName,"gym-"+typeName);
+        }
+        indexType++;
+    }
+}
 
 struct LedgeMarker
 {
@@ -568,6 +867,42 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
     loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
 
+    //per-type recolored gym tilesets into dest/map/tileset/ (and the blue base)
+    generateGymTilesets(setting);
+    //gym building template (typed facade); falls back to building-big-1 when absent
+    MapBrush::MapTemplate mapTemplategym;
+    bool haveGymTemplate=false;
+    if(QFile::exists("template/gym-building/gym-building.tmx")
+            && QFile::exists(QCoreApplication::applicationDirPath()+"/dest/map/tileset/gym-base.tsx"))
+    {
+        //pre-add the staged blue gym tileset so the template matches the dest copy
+        LoadMap::readTileset("tileset/gym-base.tsx",&worldMap);
+        loadMapTemplate("gym-building/",mapTemplategym,"gym-building",mapWidth,mapHeight,worldMap);
+        haveGymTemplate=true;
+    }
+    //world tileset per gym type, added on first use
+    std::map<std::string,Tiled::Tileset*> gymTypeWorldTilesets;
+
+    //city avenue/plaza path terrain comes from an editable template tmx ([city])
+    cityGroundBig.valid=false;
+    cityGroundMedium.valid=false;
+    MapBrush::MapTemplate mapTemplateCityBig;
+    MapBrush::MapTemplate mapTemplateCityMedium;
+    bool haveCityBigTemplate=false;
+    bool haveCityMediumTemplate=false;
+    if(!setting.cityBigTemplate.isEmpty() && QFile::exists("template/"+setting.cityBigTemplate+".tmx"))
+    {
+        loadMapTemplate("",mapTemplateCityBig,setting.cityBigTemplate,mapWidth,mapHeight,worldMap);
+        deriveCityGround(mapTemplateCityBig,cityGroundBig);
+        haveCityBigTemplate=true;
+    }
+    if(!setting.cityMediumTemplate.isEmpty() && QFile::exists("template/"+setting.cityMediumTemplate+".tmx"))
+    {
+        loadMapTemplate("",mapTemplateCityMedium,setting.cityMediumTemplate,mapWidth,mapHeight,worldMap);
+        deriveCityGround(mapTemplateCityMedium,cityGroundMedium);
+        haveCityMediumTemplate=true;
+    }
+
     if(water != NULL && water->tile != NULL){
         waterTile.setTile(water->tile);
     }else{
@@ -585,6 +920,17 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
             const bool isCity=haveCityEntry(citiesCoordToIndex,x,y);
 
             if((zoneOrientation&(Orientation_bottom|Orientation_left|Orientation_right|Orientation_top)) != 0){
+
+                //a configurable percent of road chunks becomes a CAVE: the open
+                //ground is walled in so the player has to cross the corridor
+                if(!isCity && setting.cavePercent>0
+                        && !setting.caveWallTile.isEmpty() && !setting.caveFloorTile.isEmpty()
+                        && roadCoordToIndex.find(x)!=roadCoordToIndex.cend()
+                        && roadCoordToIndex.at(x).find(y)!=roadCoordToIndex.at(x).cend())
+                {
+                    if((unsigned int)(rand()%100)<setting.cavePercent)
+                        roadCoordToIndex[x][y].isCave=true;
+                }
 
                 unsigned int* map = new unsigned int[scaleWidth * scaleHeight];
                 roadData[x+y*w] = map;
@@ -639,11 +985,86 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             city = &c;
                     }
 
-                    // City buildings: a heal center first, an optional gym (reuses
-                    // building-big-1) for non-small cities, an optional shop, then
-                    // a few houses. templateKind / templateBaseName run parallel to
-                    // templates and drive per-slot bot generation. baseName "" means
-                    // a plain house (handled by generateRoom).
+                    //---- avenue: a rigid paved band crossing the town between its
+                    //entrances (medium: just the avenue; big: + aligned buildings,
+                    //plaza patches and signs). Path terrain comes from the city
+                    //template tmx (see settings [city]).
+                    const bool isBigCity=(city!=NULL && city->type==CityType_big);
+                    const bool isMediumCity=(city!=NULL && city->type==CityType_medium);
+                    const bool avenueGroundOk=(isBigCity && cityGroundBig.valid)
+                            || (isMediumCity && cityGroundMedium.valid);
+                    bool haveHorizontalBand=false;
+                    bool haveVerticalBand=false;
+                    const unsigned int hy0=scaleHeight/2-1, hy1=scaleHeight/2;
+                    const unsigned int vx0=scaleWidth/2-1, vx1=scaleWidth/2;
+                    if(avenueGroundOk)
+                    {
+                        if((zoneOrientation&(Orientation_left|Orientation_right))!=0)
+                        {
+                            haveHorizontalBand=true;
+                            unsigned int cx0=0, cx1=scaleWidth-1;
+                            if((zoneOrientation&Orientation_left)==0)
+                                cx0=vx0;
+                            if((zoneOrientation&Orientation_right)==0)
+                                cx1=vx1;
+                            unsigned int cx=cx0;
+                            while(cx<=cx1)
+                            {
+                                map[cx+hy0*scaleWidth]=CITY_AVENUE_CODE;
+                                map[cx+hy1*scaleWidth]=CITY_AVENUE_CODE;
+                                cx++;
+                            }
+                        }
+                        if((zoneOrientation&(Orientation_top|Orientation_bottom))!=0)
+                        {
+                            haveVerticalBand=true;
+                            unsigned int cy0=0, cy1=scaleHeight-1;
+                            if((zoneOrientation&Orientation_top)==0)
+                                cy0=hy0;
+                            if((zoneOrientation&Orientation_bottom)==0)
+                                cy1=hy1;
+                            unsigned int cy=cy0;
+                            while(cy<=cy1)
+                            {
+                                map[vx0+cy*scaleWidth]=CITY_AVENUE_CODE;
+                                map[vx1+cy*scaleWidth]=CITY_AVENUE_CODE;
+                                cy++;
+                            }
+                        }
+                        //use the template tmx directly as base terrain: brushed
+                        //centered, so the owner can shape the city ground in Tiled
+                        const bool useAsBase=isBigCity ? setting.cityBigUseAsBase : setting.cityMediumUseAsBase;
+                        const bool haveTemplate=isBigCity ? haveCityBigTemplate : haveCityMediumTemplate;
+                        if(useAsBase && haveTemplate)
+                        {
+                            const MapBrush::MapTemplate &cityTemplate=isBigCity ? mapTemplateCityBig : mapTemplateCityMedium;
+                            const int templateW=cityTemplate.tiledMap->width();
+                            const int templateH=cityTemplate.tiledMap->height();
+                            const int patchX=(int)(mapWidth-templateW)/2;
+                            const int patchY=(int)(mapHeight-templateH)/2;
+                            MapBrush::brushTheMap(worldMap,cityTemplate,x*mapWidth+patchX,y*mapHeight+patchY,MapBrush::mapMask,true);
+                            unsigned int cy=patchY/scale;
+                            while(cy<(unsigned int)(patchY+templateH+(int)scale-1)/scale && cy<scaleHeight)
+                            {
+                                unsigned int cx=patchX/scale;
+                                while(cx<(unsigned int)(patchX+templateW+(int)scale-1)/scale && cx<scaleWidth)
+                                {
+                                    //keep the avenue band paintable over the patch
+                                    if(map[cx+cy*scaleWidth]!=CITY_AVENUE_CODE)
+                                        map[cx+cy*scaleWidth]=5;
+                                    cx++;
+                                }
+                                cy++;
+                            }
+                        }
+                    }
+
+                    // City buildings: a heal center first, an optional gym for
+                    // non-small cities, an optional shop, then a few houses.
+                    // templateKind / templateBaseName run parallel to templates
+                    // and drive per-slot bot generation. baseName "" means a
+                    // plain house (handled by generateRoom, or a doorless facade
+                    // in a big city).
                     QList<MapBrush::MapTemplate> templates = QList<MapBrush::MapTemplate>();
                     std::vector<BotKind> templateKind;
                     std::vector<std::string> templateBaseName;
@@ -652,8 +1073,43 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     templateKind.push_back(BotKind_heal);
                     templateBaseName.push_back("building-heal");
 
+                    //each gym picks a type: part of the trainer monsters come from
+                    //the type pool and the gym facade is recolored with the type
+                    //color (gym-<type> tileset generated into dest/map/tileset/)
+                    std::string gymTypeName;
+                    std::vector<std::string> gymTypeMonsters;
                     if(setting.doGym && city!=NULL && city->type!=CityType_small){
-                        templates.push_back(mapTemplatebuildingbig1);
+                        MapBrush::MapTemplate gymTemplate=haveGymTemplate ? mapTemplategym : mapTemplatebuildingbig1;
+                        if(!setting.gymTypeNames.empty())
+                        {
+                            const unsigned int gymTypeIndex=rand()%setting.gymTypeNames.size();
+                            gymTypeName=setting.gymTypeNames.at(gymTypeIndex);
+                            gymTypeMonsters=setting.gymTypeMonsters.at(gymTypeIndex);
+                            if(haveGymTemplate && !setting.gymTypeColors.at(gymTypeIndex).isEmpty())
+                            {
+                                //swap the blue gym tileset for the type-colored one
+                                Tiled::Tileset *typeTileset=NULL;
+                                if(gymTypeWorldTilesets.find(gymTypeName)!=gymTypeWorldTilesets.cend())
+                                    typeTileset=gymTypeWorldTilesets.at(gymTypeName);
+                                else if(QFile::exists(QCoreApplication::applicationDirPath()+"/dest/map/tileset/gym-"+QString::fromStdString(gymTypeName)+".tsx"))
+                                {
+                                    typeTileset=LoadMap::readTileset("tileset/gym-"+QString::fromStdString(gymTypeName)+".tsx",&worldMap);
+                                    gymTypeWorldTilesets[gymTypeName]=typeTileset;
+                                }
+                                if(typeTileset!=NULL)
+                                {
+                                    unsigned int indexTileset=0;
+                                    while(indexTileset<(unsigned int)gymTemplate.tiledMap->tilesetCount())
+                                    {
+                                        Tiled::SharedTileset templateTileset=gymTemplate.tiledMap->tilesetAt(indexTileset);
+                                        if(templateTileset->name()=="gym")
+                                            gymTemplate.templateTilesetToMapTileset[templateTileset.get()]=typeTileset;
+                                        indexTileset++;
+                                    }
+                                }
+                            }
+                        }
+                        templates.push_back(gymTemplate);
                         templateKind.push_back(BotKind_fight);
                         templateBaseName.push_back("gym");
                     }
@@ -664,7 +1120,13 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         templateBaseName.push_back("building-shop");
                     }
 
-                    int building = rand()%4 + 2;
+                    //a big city has more buildings, aligned around the avenue;
+                    //most of them are doorless facades (no content)
+                    int building;
+                    if(isBigCity)
+                        building = rand()%4 + 4;
+                    else
+                        building = rand()%4 + 2;
 
                     for(int i=0; i<building; i++){
                         switch (rand()%3) {
@@ -756,14 +1218,88 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         }
 
                         int buildingId=1;
+                        bool interiorHouseDone=false;
 
                         unsigned int templateIndex=0;
                         while(templateIndex<(unsigned int)templates.size()){
                             MapBrush::MapTemplate &temp=templates[templateIndex];
                             const BotKind slotKind=templateKind.at(templateIndex);
                             const std::string &slotBaseName=templateBaseName.at(templateIndex);
-                            int i;
+                            //big city: most plain houses are doorless facades (no content)
+                            bool facadeOnly=false;
+                            if(isBigCity && slotBaseName.empty())
+                            {
+                                if(interiorHouseDone)
+                                    facadeOnly=true;
+                                else
+                                    interiorHouseDone=true;
+                            }
+                            bool placed=false;
+                            //big city: align the buildings on the avenue, the door
+                            //row sits exactly on the band edge
+                            if(isBigCity && haveHorizontalBand)
+                            {
+                                const int bandTopTile=(int)hy0*(int)scale;
+                                const int bandBottomTile=((int)hy1+1)*(int)scale;
+                                int side=0;
+                                while(side<2 && !placed)
+                                {
+                                    int posY;
+                                    if(side==0)
+                                        posY=bandTopTile-(int)temp.height;//door opens on the avenue
+                                    else
+                                        posY=bandBottomTile;
+                                    if(posY>=2 && posY+(int)temp.height<=(int)mapHeight-2)
+                                    {
+                                        int posX=4;
+                                        while(posX+(int)temp.width<(int)mapWidth-4 && !placed)
+                                        {
+                                            bool valid=true;
+                                            const unsigned int bx=posX/(int)scale;
+                                            const unsigned int by=posY/(int)scale;
+                                            const unsigned int ex=(posX+(int)temp.width+(int)scale-1)/(int)scale;
+                                            const unsigned int ey=(posY+(int)temp.height+(int)scale-1)/(int)scale;
+                                            unsigned int cy=by;
+                                            while(cy<ey && valid)
+                                            {
+                                                unsigned int cx=bx;
+                                                while(cx<ex && valid)
+                                                {
+                                                    if(map[cx+cy*scaleWidth]!=1)
+                                                        valid=false;
+                                                    cx++;
+                                                }
+                                                cy++;
+                                            }
+                                            if(valid)
+                                            {
+                                                const std::pair<uint8_t,uint8_t> alignedPos(posX,posY);
+                                                placeCityBuilding(worldMap,temp,slotKind,slotBaseName,facadeOnly,
+                                                                  x,y,mapWidth,mapHeight,alignedPos,*city,cityLowerCaseName,
+                                                                  setting,rs,buildingId,gymTypeName,gymTypeMonsters);
+                                                cy=by;
+                                                while(cy<ey)
+                                                {
+                                                    unsigned int cx=bx;
+                                                    while(cx<ex)
+                                                    {
+                                                        map[cx+cy*scaleWidth]=5;
+                                                        cx++;
+                                                    }
+                                                    cy++;
+                                                }
+                                                placed=true;
+                                            }
+                                            else
+                                                posX+=2;
+                                        }
+                                    }
+                                    side++;
+                                }
+                            }
+                            int i=0;
                             int limit = 500;
+                            if(!placed)
                             for(i=0; i<limit; i++){
                                 double index = rand() / (double) RAND_MAX;
                                 ZoneMarker* zone = zones[(1-index*index)*zones.size()];
@@ -805,43 +1341,9 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                         }
 
                                         if(valid){
-                                            if(slotBaseName.empty()){
-                                                generateRoom(worldMap, temp, buildingId++, x, y, pos, *city, cityLowerCaseName, setting, rs);
-                                            }else{
-                                                //a key building (heal/shop/gym). For a gym build a VALID
-                                                //monster pool from an adjacent road tile (the city tile
-                                                //itself has none) — never .at() the city coord; if no
-                                                //adjacent pool exists botStepXml falls back to a text bot.
-                                                std::vector<RoadMonster> buildingPool;
-                                                const uint8_t buildingLevel=city->level;
-                                                std::string desc="Building";
-                                                if(slotKind==BotKind_heal)
-                                                    desc="Heal";
-                                                else if(slotKind==BotKind_shop)
-                                                    desc="Shop";
-                                                else if(slotKind==BotKind_fight)
-                                                {
-                                                    desc="Gym";
-                                                    const int nbx[4]={(int)x-1,(int)x+1,(int)x,(int)x};
-                                                    const int nby[4]={(int)y,(int)y,(int)y-1,(int)y+1};
-                                                    int n=0;
-                                                    while(n<4 && buildingPool.empty())
-                                                    {
-                                                        const int nx=nbx[n];
-                                                        const int ny=nby[n];
-                                                        if(nx>=0 && ny>=0
-                                                                && roadCoordToIndex.find((uint16_t)nx)!=roadCoordToIndex.cend()
-                                                                && roadCoordToIndex.at((uint16_t)nx).find((uint16_t)ny)!=roadCoordToIndex.at((uint16_t)nx).cend())
-                                                        {
-                                                            const RoadIndex &adjacent=roadCoordToIndex.at((uint16_t)nx).at((uint16_t)ny);
-                                                            if(!adjacent.roadMonsters.empty())
-                                                                buildingPool=adjacent.roadMonsters;
-                                                        }
-                                                        n++;
-                                                    }
-                                                }
-                                                addBuildingChain(slotBaseName,desc, temp, worldMap, x, y, mapWidth, mapHeight, pos, *city, cityLowerCaseName, slotKind, setting, buildingPool, buildingLevel);
-                                            }
+                                            placeCityBuilding(worldMap,temp,slotKind,slotBaseName,facadeOnly,
+                                                              x,y,mapWidth,mapHeight,pos,*city,cityLowerCaseName,
+                                                              setting,rs,buildingId,gymTypeName,gymTypeMonsters);
                                             zone->type = 5;
                                             for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
                                                 for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
@@ -862,7 +1364,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 }
                             }
 
-                            if(i >= limit && slotKind == BotKind_heal){
+                            if(!placed && i >= limit && slotKind == BotKind_heal){
                                 Tiled::ObjectGroup* moving = LoadMap::searchObjectGroupByName(worldMap, "Moving");
 
                                 qreal point_x = (x+.5)*mapWidth;
@@ -885,6 +1387,134 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 moving->addObject(rescue);
                             }
                             templateIndex++;
+                        }
+
+                        //big city: plaza patches — the city template tmx brushed as
+                        //"alternative floor" islands on free ground
+                        if(isBigCity && haveCityBigTemplate && !setting.cityBigUseAsBase)
+                        {
+                            const int templateW=mapTemplateCityBig.tiledMap->width();
+                            const int templateH=mapTemplateCityBig.tiledMap->height();
+                            int patches=1+rand()%2;
+                            while(patches>0)
+                            {
+                                int tries=0;
+                                bool patchPlaced=false;
+                                while(tries<40 && !patchPlaced)
+                                {
+                                    const int patchX=2+rand()%((int)mapWidth-templateW-4);
+                                    const int patchY=2+rand()%((int)mapHeight-templateH-4);
+                                    bool valid=true;
+                                    const unsigned int bx=patchX/(int)scale;
+                                    const unsigned int by=patchY/(int)scale;
+                                    const unsigned int ex=(patchX+templateW+(int)scale-1)/(int)scale;
+                                    const unsigned int ey=(patchY+templateH+(int)scale-1)/(int)scale;
+                                    unsigned int cy=by;
+                                    while(cy<ey && valid)
+                                    {
+                                        unsigned int cx=bx;
+                                        while(cx<ex && valid)
+                                        {
+                                            if(map[cx+cy*scaleWidth]!=1)
+                                                valid=false;
+                                            cx++;
+                                        }
+                                        cy++;
+                                    }
+                                    if(valid)
+                                    {
+                                        MapBrush::brushTheMap(worldMap,mapTemplateCityBig,x*mapWidth+patchX,y*mapHeight+patchY,MapBrush::mapMask,true);
+                                        cy=by;
+                                        while(cy<ey)
+                                        {
+                                            unsigned int cx=bx;
+                                            while(cx<ex)
+                                            {
+                                                map[cx+cy*scaleWidth]=5;
+                                                cx++;
+                                            }
+                                            cy++;
+                                        }
+                                        patchPlaced=true;
+                                    }
+                                    tries++;
+                                }
+                                patches--;
+                            }
+                        }
+
+                        //signs near the border at the avenue entrances; ONE sign
+                        //style per city, picked from the per-city-type tile list
+                        {
+                            const std::vector<std::string> *signTiles=NULL;
+                            if(isBigCity && !setting.cityBigSignTiles.empty())
+                                signTiles=&setting.cityBigSignTiles;
+                            else if(isMediumCity && !setting.cityMediumSignTiles.empty())
+                                signTiles=&setting.cityMediumSignTiles;
+                            if(signTiles!=NULL && (haveHorizontalBand || haveVerticalBand))
+                            {
+                                Tiled::Tile * const signTile=fetchTile(worldMap,QString::fromStdString(signTiles->at(rand()%signTiles->size())));
+                                Tiled::TileLayer * const signColliLayer=LoadMap::searchTileLayerByName(worldMap,"Collisions");
+                                Tiled::TileLayer * const signWaterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
+                                if(signTile!=NULL && signColliLayer!=NULL)
+                                {
+                                    //one sign per entrance, beside the band, near the border
+                                    int signX[4];
+                                    int signY[4];
+                                    int signCount=0;
+                                    if(haveHorizontalBand && (zoneOrientation&Orientation_left)!=0)
+                                    {
+                                        signX[signCount]=2;
+                                        signY[signCount]=(int)hy0*(int)scale-1;
+                                        signCount++;
+                                    }
+                                    if(haveHorizontalBand && (zoneOrientation&Orientation_right)!=0)
+                                    {
+                                        signX[signCount]=(int)mapWidth-3;
+                                        signY[signCount]=(int)hy0*(int)scale-1;
+                                        signCount++;
+                                    }
+                                    if(haveVerticalBand && (zoneOrientation&Orientation_top)!=0)
+                                    {
+                                        signX[signCount]=(int)vx0*(int)scale-1;
+                                        signY[signCount]=2;
+                                        signCount++;
+                                    }
+                                    if(haveVerticalBand && (zoneOrientation&Orientation_bottom)!=0)
+                                    {
+                                        signX[signCount]=(int)vx0*(int)scale-1;
+                                        signY[signCount]=(int)mapHeight-3;
+                                        signCount++;
+                                    }
+                                    int signIndex=0;
+                                    while(signIndex<signCount)
+                                    {
+                                        const int lx=signX[signIndex];
+                                        const int ly=signY[signIndex];
+                                        const unsigned int tx=x*mapWidth+lx;
+                                        const unsigned int ty=y*mapHeight+ly;
+                                        const unsigned int cellCode=map[(lx/(int)scale)+(ly/(int)scale)*scaleWidth];
+                                        //free ground only, never on water or a building
+                                        if((cellCode==0 || cellCode==1)
+                                                && (signWaterLayer==NULL || signWaterLayer->cellAt(tx,ty).tile()==NULL))
+                                        {
+                                            signColliLayer->setCell(tx,ty,Tiled::Cell(signTile));
+                                            map[(lx/(int)scale)+(ly/(int)scale)*scaleWidth]=5;
+                                            Tiled::MapObject *signBot=new Tiled::MapObject("","bot",
+                                                QPointF(tx*worldMap.tileWidth(),(ty+1)*worldMap.tileHeight()),
+                                                QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                                            signBot->setProperty("lookAt","bottom");
+                                            //no skin: the sign tile is the visual, the bot only carries the text
+                                            signBot->setProperty("signtext","Welcome to "+QString::fromStdString(city->name)+"!");
+                                            Tiled::Cell signCell;
+                                            signCell.setTile(invis->tileAt(0));
+                                            signBot->setCell(signCell);
+                                            objectLayer->addObject(signBot);
+                                        }
+                                        signIndex++;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -938,6 +1568,12 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     LoadMapAll::deleteMapList(mapTemplatebuilding1);
     LoadMapAll::deleteMapList(mapTemplatebuilding2);
     LoadMapAll::deleteMapList(mapTemplatebuildingbig1);
+    if(haveGymTemplate)
+        LoadMapAll::deleteMapList(mapTemplategym);
+    if(haveCityBigTemplate)
+        LoadMapAll::deleteMapList(mapTemplateCityBig);
+    if(haveCityMediumTemplate)
+        LoadMapAll::deleteMapList(mapTemplateCityMedium);
 }
 
 bool checkEmptyRoad( const SettingsAll::SettingsExtra &setting, int tx, int ty){
@@ -996,6 +1632,23 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
     Tiled::TileLayer *lleftLayer=LoadMap::searchTileLayerByName(worldMap,"LedgesLeft");
     Tiled::TileLayer *lrighLayer=LoadMap::searchTileLayerByName(worldMap,"LedgesRight");
     Tiled::TileLayer *grassLayer=LoadMap::searchTileLayerByName(worldMap,"Grass");
+    Tiled::TileLayer *waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
+    Tiled::TileLayer *onGrassLayer=LoadMap::searchTileLayerByName(worldMap,"OnGrass");
+    //cave conversion tiles ([road] cave\wallTile / cave\floorTile)
+    Tiled::Cell caveWallCell;
+    Tiled::Cell caveFloorCell;
+    bool caveTilesOk=false;
+    if(!setting.caveWallTile.isEmpty() && !setting.caveFloorTile.isEmpty())
+    {
+        Tiled::Tile * const caveWallTile=fetchTile(worldMap,setting.caveWallTile);
+        Tiled::Tile * const caveFloorTile=fetchTile(worldMap,setting.caveFloorTile);
+        if(caveWallTile!=NULL && caveFloorTile!=NULL)
+        {
+            caveWallCell.setTile(caveWallTile);
+            caveFloorCell.setTile(caveFloorTile);
+            caveTilesOk=true;
+        }
+    }
     const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
     const Tiled::Tileset * const mainTileset=LoadMap::searchTilesetByName(worldMap,"t1.tsx");
     Tiled::Cell newCell;
@@ -1159,6 +1812,20 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
             if((zoneOrientation&(Orientation_bottom|Orientation_left|Orientation_right|Orientation_top)) != 0){
                 map = LoadMapAll::roadData[x+y*w];
 
+                //avenue ground of this city size (derived from the city template)
+                const LoadMapAll::CityGround *paintGround=NULL;
+                if(isCity)
+                {
+                    const City &paintCity=cities.at(citiesCoordToIndex.at(x).at(y));
+                    if(paintCity.type==CityType_big)
+                        paintGround=&cityGroundBig;
+                    else if(paintCity.type==CityType_medium)
+                        paintGround=&cityGroundMedium;
+                }
+                bool chunkIsCave=false;
+                if(!isCity && caveTilesOk)
+                    chunkIsCave=isCaveChunk(x,y);
+
                 // Paint the road
                 const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
 
@@ -1292,11 +1959,67 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                             }
                         }
 
+                        //city avenue: rigid paved band, fill on Walkable + the
+                        //template's border ring on OnGrass at the band perimeter
+                        if(isCity && type==CITY_AVENUE_CODE && paintGround!=NULL && paintGround->valid){
+                            if(waterLayer==NULL || waterLayer->cellAt(tx,ty).tile()==NULL){
+                                colliLayer->setCell(tx,ty,empty);
+                                grassLayer->setCell(tx,ty,empty);
+                                walkLayer->setCell(tx,ty,paintGround->fill);
+                                if(onGrassLayer!=NULL){
+                                    bool upIn=true,downIn=true,leftIn=true,rightIn=true;
+                                    if(dy>0)
+                                        upIn=(map[(dx/scale)+((dy-1)/scale)*scaleWidth]==CITY_AVENUE_CODE);
+                                    if(dy<mapHeight-1)
+                                        downIn=(map[(dx/scale)+((dy+1)/scale)*scaleWidth]==CITY_AVENUE_CODE);
+                                    if(dx>0)
+                                        leftIn=(map[((dx-1)/scale)+(dy/scale)*scaleWidth]==CITY_AVENUE_CODE);
+                                    if(dx<mapWidth-1)
+                                        rightIn=(map[((dx+1)/scale)+(dy/scale)*scaleWidth]==CITY_AVENUE_CODE);
+                                    unsigned int borderRow=1,borderCol=1;
+                                    if(!upIn)
+                                        borderRow=0;
+                                    else if(!downIn)
+                                        borderRow=2;
+                                    if(!leftIn)
+                                        borderCol=0;
+                                    else if(!rightIn)
+                                        borderCol=2;
+                                    if(borderRow!=1 || borderCol!=1){
+                                        const Tiled::Cell &borderCell=paintGround->border[borderRow][borderCol];
+                                        if(!borderCell.isEmpty())
+                                            onGrassLayer->setCell(tx,ty,borderCell);
+                                        else
+                                            onGrassLayer->setCell(tx,ty,empty);
+                                    }else
+                                        onGrassLayer->setCell(tx,ty,empty);
+                                }
+                            }
+                        }
+
+                        //CAVE chunk: everything off the corridor is walled, the
+                        //corridor itself gets the cave floor (overwrites whatever
+                        //the normal road pass painted above)
+                        if(chunkIsCave){
+                            if(type!=0 && type!=0x9){
+                                colliLayer->setCell(tx,ty,empty);
+                                grassLayer->setCell(tx,ty,empty);
+                                if(onGrassLayer!=NULL)
+                                    onGrassLayer->setCell(tx,ty,empty);
+                                if(waterLayer==NULL || waterLayer->cellAt(tx,ty).tile()==NULL)
+                                    walkLayer->setCell(tx,ty,caveFloorCell);
+                            }else{
+                                colliLayer->setCell(tx,ty,caveWallCell);
+                                if(onGrassLayer!=NULL)
+                                    onGrassLayer->setCell(tx,ty,empty);
+                            }
+                        }
+
                     }
                 }
 
-                // Ledges
-                if(!isCity && setting.doledge){
+                // Ledges (a cave corridor gets none)
+                if(!isCity && !chunkIsCave && setting.doledge){
                     unsigned int size = mapHeight * mapWidth / 4;
                     std::vector<LedgeMarker> possibleLedge;
 
@@ -1711,7 +2434,8 @@ QString LoadMapAll::emitRoadBotsForChunk(Tiled::Map &worldMap,
                 object->setProperties(properties);
                 out+=botStepXml(localBotId,BotKind_fight,std::to_string(localBotId),
                                 properties.value("lookAt").toString(),setting,
-                                roadIndex.roadMonsters,roadIndex.level);
+                                roadIndex.roadMonsters,roadIndex.level,
+                                std::string(),std::vector<std::string>());
                 localBotId++;
             }
         }
@@ -1747,11 +2471,28 @@ QString LoadMapAll::emitCityBotsForChunk(Tiled::Map &worldMap,
             {
                 Tiled::Properties properties=object->properties();
                 properties["id"]=QString::number(localBotId);
-                object->setProperties(properties);
-                //townsfolk: a plain text bot with a themed one-liner (no fight)
-                out+=botStepXml(localBotId,BotKind_text,std::to_string(localBotId),
-                                properties.value("lookAt").toString(),setting,
-                                std::vector<RoadMonster>(),0);
+                if(properties.contains("signtext"))
+                {
+                    //a sign: one text step with the city welcome message; the
+                    //property is generator-internal, drop it from the tmx object
+                    QString signText=properties.value("signtext").toString();
+                    properties.remove("signtext");
+                    object->setProperties(properties);
+                    signText.replace("]]>","]]&gt;");
+                    out+="  <bot id=\""+QString::number(localBotId)+"\">\n"
+                         "    <name>Sign</name>\n"
+                         "    <step id=\"1\" type=\"text\"><text><![CDATA["+signText+"]]></text></step>\n"
+                         "  </bot>\n";
+                }
+                else
+                {
+                    object->setProperties(properties);
+                    //townsfolk: a plain text bot with a themed one-liner (no fight)
+                    out+=botStepXml(localBotId,BotKind_text,std::to_string(localBotId),
+                                    properties.value("lookAt").toString(),setting,
+                                    std::vector<RoadMonster>(),0,
+                                    std::string(),std::vector<std::string>());
+                }
                 localBotId++;
             }
         }
@@ -1781,6 +2522,10 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
     {
         const City &city=cities.at(ci);
         const int x0=(int)(city.x*mapWidth), y0=(int)(city.y*mapHeight);
+        //scale map of this chunk: used to keep flower tufts off the paved avenue
+        unsigned int *chunkMap=NULL;
+        if(mapPathDirection[city.x+city.y*setting.mapXCount]!=0)
+            chunkMap=roadData[city.x+city.y*setting.mapXCount];
         const int wanted=3+rand()%3; //3..5 townsfolk per town
         int placed=0, tries=0;
         while(placed<wanted && tries<300)
@@ -1818,6 +2563,8 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
                 if(walk->cellAt(tx,ty).tile()==NULL || coll->cellAt(tx,ty).tile()!=NULL
                         || onGrass->cellAt(tx,ty).tile()!=NULL)
                     continue;
+                if(chunkMap!=NULL && chunkMap[((tx-x0)/2)+((ty-y0)/2)*((int)mapWidth/2)]==CITY_AVENUE_CODE)
+                    continue;
                 onGrass->setCell(tx,ty,Tiled::Cell(flower));
                 fplaced++;
             }
@@ -1846,12 +2593,13 @@ Tiled::Tile *LoadMapAll::fetchTile(Tiled::Map &worldMap, QString data)
 
 QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, const std::string &name,
                                const QString &lookAt, const SettingsAll::SettingsExtra &setting,
-                               const std::vector<RoadMonster> &monsterPool, const uint8_t &level)
+                               const std::vector<RoadMonster> &monsterPool, const uint8_t &level,
+                               const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters)
 {
     BotKind realKind=kind;
     //a fight bot with no usable monster pool degrades to a plain text bot so we
     //never emit an invalid <monster id> (engine would log "monster not found").
-    if((realKind==BotKind_fight || realKind==BotKind_leader) && monsterPool.empty())
+    if((realKind==BotKind_fight || realKind==BotKind_leader) && monsterPool.empty() && gymTypeMonsters.empty())
         realKind=BotKind_text;
 
     QString out="  <bot id=\""+QString::number(id)+"\"";
@@ -1911,11 +2659,27 @@ QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, cons
             int indexMonster=0;
             while(indexMonster<monsterCount)
             {
-                const unsigned int selected=rand()%monsterPool.size();
+                //in a typed gym part of the team comes from the type pool, and
+                //the leader's last monster (the ace) always does
+                bool useGymPool=false;
+                if(!gymTypeMonsters.empty())
+                {
+                    if(monsterPool.empty())
+                        useGymPool=true;
+                    else if(leader && indexMonster==monsterCount-1)
+                        useGymPool=true;
+                    else
+                        useGymPool=(rand()%2==0);
+                }
                 int monsterLevel=level*(95+rand()%10)/100;
                 if(monsterLevel<1)
                     monsterLevel=1;
-                monsterXml+="      <monster id=\""+QString::number(monsterPool.at(selected).monsterId)+"\" level=\""+QString::number(monsterLevel)+"\"/>\n";
+                QString monsterId;
+                if(useGymPool)
+                    monsterId=QString::fromStdString(gymTypeMonsters.at(rand()%gymTypeMonsters.size()));
+                else
+                    monsterId=monsterRef(monsterPool.at(rand()%monsterPool.size()).monsterId,setting);
+                monsterXml+="      <monster id=\""+monsterId+"\" level=\""+QString::number(monsterLevel)+"\"/>\n";
                 reward+=monsterLevel*monsterLevel;
                 indexMonster++;
             }
@@ -1926,7 +2690,12 @@ QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, cons
                 out+=" leader=\"true\"";//engine ignores it; kept for datapack parity
             out+=">\n";
             if(leader)
-                out+="      <start><![CDATA[I am the leader here. Prove your worth!]]></start>\n";
+            {
+                if(!gymTypeName.empty())
+                    out+="      <start><![CDATA[I am the leader here. My "+QString::fromStdString(gymTypeName)+" team will test you!]]></start>\n";
+                else
+                    out+="      <start><![CDATA[I am the leader here. Prove your worth!]]></start>\n";
+            }
             else
                 out+="      <start><![CDATA[You look strong - let's battle!]]></start>\n";
             out+="      <win><![CDATA[Well fought.]]></win>\n";
@@ -2074,7 +2843,8 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
                         npc->setProperties(npcProperties);
                         botXml+=botStepXml(localBotId,BotKind_text,std::to_string(localBotId),
                                            npcProperties.value("lookAt").toString(),setting,
-                                           std::vector<RoadMonster>(),0);
+                                           std::vector<RoadMonster>(),0,
+                                           std::string(),std::vector<std::string>());
                         localBotId++;
                     }
                     indexNpc++;

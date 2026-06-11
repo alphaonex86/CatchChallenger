@@ -104,6 +104,8 @@ public:
 
         std::vector<RoadMonster> roadMonsters;
         std::vector<RoadBot> roadBot;
+        //chunk converted to a cave (walled corridor, cave encounters)
+        bool isCave;
     };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
     struct Zone
@@ -148,7 +150,29 @@ public:
     };
     static QString botStepXml(const unsigned int &id, const BotKind &kind, const std::string &name,
                               const QString &lookAt, const SettingsAll::SettingsExtra &setting,
-                              const std::vector<RoadMonster> &monsterPool, const uint8_t &level);
+                              const std::vector<RoadMonster> &monsterPool, const uint8_t &level,
+                              const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters);
+    //lowercase monster name when configured ([wildMonsters] <id>\name), else the id
+    static QString monsterRef(const uint16_t &monsterId, const SettingsAll::SettingsExtra &setting);
+    static bool isCaveChunk(const unsigned int &x, const unsigned int &y);
+    //recolor the gym tileset blue parts with each gym type color and write
+    //gym-<type>.png/.tsx into dest/map/tileset/ (the lower sprite parts sit exactly
+    //128px below their position in the building and act as the recolor mask)
+    static void generateGymTilesets(const SettingsAll::SettingsExtra &setting);
+    //brush only the building exterior, skipping its door objects: a facade
+    //building without content (big city filler)
+    static void brushFacade(const MapBrush::MapTemplate &mapTemplate, Tiled::Map &worldMap,
+                            const int &tileX, const int &tileY);
+    //avenue/plaza ground derived from a city template tmx: Walkable fill tile +
+    //OnGrass 3x3 border ring, translated to WORLD tileset cells
+    struct CityGround
+    {
+        Tiled::Cell fill;
+        Tiled::Cell border[3][3];//[y][x], center unused
+        bool valid;
+    };
+    static CityGround cityGroundBig;
+    static CityGround cityGroundMedium;
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
@@ -174,7 +198,8 @@ public:
     static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
                                  const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone,
                                  const BotKind &botKind, const SettingsAll::SettingsExtra &setting,
-                                 const std::vector<RoadMonster> &monsterPool, const uint8_t &level);
+                                 const std::vector<RoadMonster> &monsterPool, const uint8_t &level,
+                                 const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters);
 
     /**
      * @brief addRoadContent Populate road between the city
