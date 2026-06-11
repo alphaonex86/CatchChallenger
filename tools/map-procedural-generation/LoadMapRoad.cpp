@@ -286,8 +286,8 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
             while(side<4)
             {
                 const CavePlanSide &planSide=plan.sides[side];
-                //top-style exit: the walk-up GAP sits one below the door
-                if(planSide.used!=0 && planSide.floor==level && planSide.mouthKind==2)
+                //top-style exit (the TOP side): the walk-up GAP sits one below the door
+                if(planSide.used!=0 && planSide.floor==level && side==2)
                     floorGrid[planSide.exitX+(planSide.exitY+1)*singleMapWidth]=1;
                 side++;
             }
@@ -369,10 +369,10 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                 {
                     const int exitX=planSide.exitX;
                     const int exitY=planSide.exitY;
-                    if(planSide.mouthKind==1)
-                        colliLayer->setCell(x0+exitX,y0+exitY,Tiled::Cell(exitBottomTile));
-                    else
+                    if(side==2)
                         colliLayer->setCell(x0+exitX,y0+exitY,Tiled::Cell(exitTopTile));
+                    else
+                        colliLayer->setCell(x0+exitX,y0+exitY,Tiled::Cell(exitBottomTile));
                     Tiled::MapObject *exitObject=new Tiled::MapObject("","teleport on push",
                         QPointF((x0+exitX)*worldMap.tileWidth(),(y0+exitY+1)*worldMap.tileHeight()),
                         QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
@@ -1727,8 +1727,10 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         //the cave is NEVER dropped: the chunk is SEALED with a
                         //cliff ring along its whole perimeter (CC borders are
                         //crossable along the full edge) and each road connection
-                        //gets a walled POCKET bay whose only way through is the
-                        //mouth in the pocket wall — bypass impossible by design
+                        //gets a walled POCKET bay — the cave is the unique way
+                        //through. On FLAT terrain (no cliff near the bay) the
+                        //mouth is a small ROCK OUTCROP standing in the pocket;
+                        //near a cliff it stays embedded in the pocket wall.
                         CavePlan plan;
                         plan.depth=1;
                         const int mid[4]={(int)mapHeight/2,(int)mapHeight/2,(int)mapWidth/2,(int)mapWidth/2};
@@ -1742,40 +1744,94 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             {
                                 planSide.used=1;
                                 planSide.floor=0;
-                                if(side==0)//left pocket: mouth in its top wall, faces bottom
+                                //cliff near? scan the NATURAL terrain of the bay zone
+                                bool cliffNear=false;
                                 {
+                                    int perp=-4;
+                                    while(perp<=4 && !cliffNear)
+                                    {
+                                        int depthStep=0;
+                                        while(depthStep<=7 && !cliffNear)
+                                        {
+                                            int lx,ly;
+                                            if(side==0){ lx=depthStep; ly=mid[0]+perp; }
+                                            else if(side==1){ lx=(int)mapWidth-1-depthStep; ly=mid[1]+perp; }
+                                            else if(side==2){ lx=mid[2]+perp; ly=depthStep; }
+                                            else { lx=mid[3]+perp; ly=(int)mapHeight-1-depthStep; }
+                                            if(lx>=0 && ly>=0 && lx<(int)mapWidth && ly<(int)mapHeight)
+                                                if(colliLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()!=NULL)
+                                                    cliffNear=true;
+                                            depthStep++;
+                                        }
+                                        perp++;
+                                    }
+                                }
+                                planSide.outcrop=cliffNear ? 0 : 1;
+                                if(planSide.outcrop!=0)
+                                {
+                                    //small rock outcrop in a DEEPER pocket, the mouth
+                                    //(always south-facing) on its bottom line middle
                                     planSide.mouthKind=1;
-                                    planSide.mouthX=2;
-                                    planSide.mouthY=mid[0]-3;
-                                }
-                                else if(side==1)//right pocket
-                                {
-                                    planSide.mouthKind=1;
-                                    planSide.mouthX=(int)mapWidth-3;
-                                    planSide.mouthY=mid[1]-3;
-                                }
-                                else if(side==2)//top pocket: the player sees the cliff TOP
-                                {
-                                    planSide.mouthKind=2;
-                                    planSide.mouthX=mid[2];
-                                    planSide.mouthY=4;
-                                }
-                                else//bottom pocket
-                                {
-                                    planSide.mouthKind=1;
-                                    planSide.mouthX=mid[3];
-                                    planSide.mouthY=(int)mapHeight-5;
-                                }
-                                //the cell in front of the mouth, inside the pocket
-                                if(planSide.mouthKind==1)
-                                {
+                                    if(side==0)
+                                    {
+                                        planSide.mouthX=3;
+                                        planSide.mouthY=mid[0];
+                                    }
+                                    else if(side==1)
+                                    {
+                                        planSide.mouthX=(int)mapWidth-4;
+                                        planSide.mouthY=mid[1];
+                                    }
+                                    else if(side==2)
+                                    {
+                                        planSide.mouthX=mid[2];
+                                        planSide.mouthY=3;
+                                    }
+                                    else
+                                    {
+                                        planSide.mouthX=mid[3];
+                                        planSide.mouthY=(int)mapHeight-4;
+                                    }
                                     planSide.landX=planSide.mouthX;
                                     planSide.landY=planSide.mouthY+1;
                                 }
                                 else
                                 {
-                                    planSide.landX=planSide.mouthX;
-                                    planSide.landY=planSide.mouthY-1;
+                                    if(side==0)//left pocket: mouth in its top wall, faces bottom
+                                    {
+                                        planSide.mouthKind=1;
+                                        planSide.mouthX=2;
+                                        planSide.mouthY=mid[0]-3;
+                                    }
+                                    else if(side==1)//right pocket
+                                    {
+                                        planSide.mouthKind=1;
+                                        planSide.mouthX=(int)mapWidth-3;
+                                        planSide.mouthY=mid[1]-3;
+                                    }
+                                    else if(side==2)//top pocket: the player sees the cliff TOP
+                                    {
+                                        planSide.mouthKind=2;
+                                        planSide.mouthX=mid[2];
+                                        planSide.mouthY=4;
+                                    }
+                                    else//bottom pocket
+                                    {
+                                        planSide.mouthKind=1;
+                                        planSide.mouthX=mid[3];
+                                        planSide.mouthY=(int)mapHeight-5;
+                                    }
+                                    //the cell in front of the mouth, inside the pocket
+                                    if(planSide.mouthKind==1)
+                                    {
+                                        planSide.landX=planSide.mouthX;
+                                        planSide.landY=planSide.mouthY+1;
+                                    }
+                                    else
+                                    {
+                                        planSide.landX=planSide.mouthX;
+                                        planSide.landY=planSide.mouthY-1;
+                                    }
                                 }
                             }
                             side++;
@@ -2570,7 +2626,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             {
                                 plan.sides[side].floor=rand()%plan.depth;
                                 const bool mirrored=(plan.sides[side].floor%2!=0);
-                                const bool topStyle=(plan.sides[side].mouthKind==2);
+                                const bool topStyle=(side==2);//the TOP side exits upward
                                 int bestX=-1,bestY=-1,bestPrimary=0,bestSecondary=0;
                                 int ly=2;
                                 while(ly<(int)mapHeight)
@@ -3166,12 +3222,15 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                             if(planSide.used!=0)
                             {
                                 //pocket geometry: bay open at the border middle,
-                                //floor pocket, C-shaped wall sealing it inside
+                                //floor pocket, C-shaped wall sealing it inside;
+                                //an OUTCROP mouth needs a deeper pocket so the
+                                //rock structure stands free inside it
+                                const int depthLimit=(planSide.outcrop!=0) ? 6 : 4;
                                 int perp=-3;
                                 while(perp<=3)
                                 {
                                     int depthStep=0;
-                                    while(depthStep<=4)
+                                    while(depthStep<=depthLimit)
                                     {
                                         int lx,ly;
                                         if(side==0){ lx=depthStep; ly=midRow+perp; }
@@ -3179,7 +3238,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                         else if(side==2){ lx=midColumn+perp; ly=depthStep; }
                                         else { lx=midColumn+perp; ly=(int)mapHeight-1-depthStep; }
                                         const unsigned int cell=lx+ly*mapWidth;
-                                        if(perp==-3 || perp==3 || depthStep==4)
+                                        if(perp==-3 || perp==3 || depthStep==depthLimit)
                                             wallCell[cell]=1;//pocket wall (and overrides the bay)
                                         else
                                         {
@@ -3260,7 +3319,20 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 ly++;
                             }
                         }
-                        //the mouths + the teleports into each side's floor
+                        //the mouths + the teleports into each side's floor;
+                        //the 9-tile rock block builds the flat-terrain outcrops
+                        std::vector<Tiled::Tile *> rockTiles;
+                        {
+                            const QStringList wallTileList=setting.caveWallTile.split(",");
+                            int wallTileIndex=0;
+                            while(wallTileIndex<wallTileList.size())
+                            {
+                                Tiled::Tile * const tile=fetchTile(worldMap,wallTileList.at(wallTileIndex).trimmed());
+                                if(tile!=NULL)
+                                    rockTiles.push_back(tile);
+                                wallTileIndex++;
+                            }
+                        }
                         int mouthSide=0;
                         while(mouthSide<4)
                         {
@@ -3269,6 +3341,35 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                             {
                                 const unsigned int htx=x*mapWidth+planSide.mouthX;
                                 const unsigned int hty=y*mapHeight+planSide.mouthY;
+                                if(planSide.outcrop!=0 && !rockTiles.empty())
+                                {
+                                    //small rock outcrop standing in the pocket: the
+                                    //3x3 block, mouth on its bottom line at the middle
+                                    int blockRow=0;
+                                    while(blockRow<3)
+                                    {
+                                        int blockColumn=0;
+                                        while(blockColumn<3)
+                                        {
+                                            const unsigned int btx=htx-1+blockColumn;
+                                            const unsigned int bty=hty-2+blockRow;
+                                            Tiled::Tile *blockTile=rockTiles.front();
+                                            if(rockTiles.size()>=9)
+                                                blockTile=rockTiles.at(blockRow*3+blockColumn);
+                                            colliLayer->setCell(btx,bty,Tiled::Cell(blockTile));
+                                            grassLayer->setCell(btx,bty,empty);
+                                            if(onGrassLayer!=NULL)
+                                                onGrassLayer->setCell(btx,bty,empty);
+                                            if(waterLayer!=NULL)
+                                                waterLayer->setCell(btx,bty,empty);
+                                            const unsigned int bitMask=btx+bty*worldMap.width();
+                                            if(bitMask/8<maxMapSize)
+                                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                            blockColumn++;
+                                        }
+                                        blockRow++;
+                                    }
+                                }
                                 if(planSide.mouthKind==1)
                                     colliLayer->setCell(htx,hty,Tiled::Cell(entranceTile));
                                 else

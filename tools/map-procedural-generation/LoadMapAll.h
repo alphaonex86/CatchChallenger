@@ -117,6 +117,9 @@ public:
     {
         uint8_t used;//0 = side absent or no mouth found
         uint8_t mouthKind;//1 = cliff faces bottom (entranceTile), 2 = cliff faces top (entranceTopTile)
+        //1 = the mouth is a small ROCK OUTCROP standing in the pocket (flat
+        //terrain, no cliff near); 0 = the mouth is embedded in the pocket wall
+        uint8_t outcrop;
         uint8_t mouthX,mouthY;//overworld mouth, chunk-local tiles (on the cliff collision)
         uint8_t landX,landY;//overworld cell in front of the mouth (exit landing)
         uint8_t floor;//interior floor this side connects to
