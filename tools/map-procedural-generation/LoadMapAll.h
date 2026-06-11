@@ -106,6 +106,10 @@ public:
         std::vector<RoadBot> roadBot;
         //chunk converted to a cave (walled corridor, cave encounters)
         bool isCave;
+        //overworld landing tile in front of each mouth (side order: left,right,
+        //top,bottom; 255 = side unused) — the interior exits teleport there
+        uint8_t caveLandX[4];
+        uint8_t caveLandY[4];
     };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
     struct Zone
