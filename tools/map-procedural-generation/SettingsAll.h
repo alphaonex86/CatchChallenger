@@ -109,7 +109,10 @@ public:
         unsigned int cavePercent;
         QString caveWallTile;
         QString caveFloorTile;
-        QString caveEntranceTile;
+        QString caveEntranceTile;//mouth ON a cliff facing bottom
+        QString caveEntranceTopTile;//mouth ON a cliff facing top (terra 19 style)
+        QString caveExitBottomTile;//interior exit to the bottom, on the ring line, push (terra 402)
+        QString caveExitTopTile;//interior exit to the top, walkable gap in the ring, on-it (terra 403)
         QString caveStairDownTile;
         QString caveStairUpTile;
         QString caveItemTile;

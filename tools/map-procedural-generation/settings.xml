@@ -53,6 +53,12 @@ cave\percent=15
 cave\wallTile="t1.tsx/640,t1.tsx/641,t1.tsx/642,t1.tsx/672,t1.tsx/673,t1.tsx/674,t1.tsx/704,t1.tsx/705,t1.tsx/706"
 cave\floorTile=Terra/38
 cave\entranceTile=t1.tsx/749
+; mouth when the cliff faces top; interior exits embedded in the ring line:
+; exitBottomTile = push to leave toward the bottom, exitTopTile = walkable
+; gap, walk onto it to leave toward the top
+cave\entranceTopTile=Terra/19
+cave\exitBottomTile=Terra/402
+cave\exitTopTile=Terra/403
 cave\stairDownTile=rename/194
 cave\stairUpTile=rename/193
 cave\itemTile=rename/161

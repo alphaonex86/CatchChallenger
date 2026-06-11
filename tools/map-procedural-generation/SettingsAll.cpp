@@ -59,6 +59,12 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("floorTile","");
     if(!settings.contains("entranceTile"))
         settings.setValue("entranceTile","");
+    if(!settings.contains("entranceTopTile"))
+        settings.setValue("entranceTopTile","");
+    if(!settings.contains("exitBottomTile"))
+        settings.setValue("exitBottomTile","");
+    if(!settings.contains("exitTopTile"))
+        settings.setValue("exitTopTile","");
     if(!settings.contains("stairDownTile"))
         settings.setValue("stairDownTile","");
     if(!settings.contains("stairUpTile"))
@@ -235,6 +241,9 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.caveWallTile=settings.value("wallTile","").toString();
     config.caveFloorTile=settings.value("floorTile","").toString();
     config.caveEntranceTile=settings.value("entranceTile","").toString();
+    config.caveEntranceTopTile=settings.value("entranceTopTile","").toString();
+    config.caveExitBottomTile=settings.value("exitBottomTile","").toString();
+    config.caveExitTopTile=settings.value("exitTopTile","").toString();
     config.caveStairDownTile=settings.value("stairDownTile","").toString();
     config.caveStairUpTile=settings.value("stairUpTile","").toString();
     config.caveItemTile=settings.value("itemTile","").toString();
