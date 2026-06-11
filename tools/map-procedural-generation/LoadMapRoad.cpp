@@ -3279,11 +3279,13 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
     if(objGroup==NULL || walk==NULL || coll==NULL || invis==NULL || setting.botSkins.empty())
         return;
     //decoration: scatter animated flower tufts on the open ground (OnGrass layer,
-    //non-collision) so a town is not a bare field.  tile 320 of the animations
-    //sheet is the flower (see template/flowers.tmx).
+    //non-collision) so a town is not a bare field.  tiles 320 (red) and 352
+    //(blue) of the animations sheet are 4-frame animated flowers (legacy
+    //"animation" property for the engine + standard Tiled <animation>).
     Tiled::TileLayer* onGrass=LoadMap::searchTileLayerByName(worldMap,"OnGrass");
     Tiled::Tileset* anim=LoadMap::searchTilesetByName(worldMap,"animations.tsx");
-    Tiled::Tile* flower=(anim!=NULL) ? anim->tileAt(320) : NULL;
+    Tiled::Tile* flowerRed=(anim!=NULL) ? anim->tileAt(320) : NULL;
+    Tiled::Tile* flowerBlue=(anim!=NULL) ? anim->tileAt(352) : NULL;
     const int tw=worldMap.tileWidth(), th=worldMap.tileHeight();
     unsigned int ci=0;
     while(ci<cities.size())
@@ -3316,9 +3318,16 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
             objGroup->addObject(npc);
             placed++;
         }
-        //flower tufts
-        if(onGrass!=NULL && flower!=NULL)
+        //flower tufts: each town leans red or blue with a few of the other color
+        if(onGrass!=NULL && flowerRed!=NULL)
         {
+            Tiled::Tile* mainFlower=flowerRed;
+            Tiled::Tile* otherFlower=flowerBlue;
+            if(flowerBlue!=NULL && rand()%2==0)
+            {
+                mainFlower=flowerBlue;
+                otherFlower=flowerRed;
+            }
             const int fwant=10+rand()%14; //10..23 tufts
             int fplaced=0, ftries=0;
             while(fplaced<fwant && ftries<400)
@@ -3333,6 +3342,9 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
                     continue;
                 if(chunkMap!=NULL && chunkMap[((tx-x0)/2)+((ty-y0)/2)*((int)mapWidth/2)]==CITY_AVENUE_CODE)
                     continue;
+                Tiled::Tile* flower=mainFlower;
+                if(otherFlower!=NULL && rand()%4==0)
+                    flower=otherFlower;
                 onGrass->setCell(tx,ty,Tiled::Cell(flower));
                 fplaced++;
             }
