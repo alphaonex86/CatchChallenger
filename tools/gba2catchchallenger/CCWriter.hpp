@@ -20,6 +20,19 @@
 #include <unordered_set>
 #include <vector>
 
+// How an item-on-map reference is resolved (gen2-style "object" objects):
+//  * self-contained (--all): the ROM's own numeric id (items.xml ships it),
+//  * overlay: match the Gen3 item NAME against the base datapack's items.xml
+//    (the engine keys tempNameToItemId on the lowercase <name>) -> base id,
+//  * else: emit the lowercase NAME itself — the ball stays visible in Tiled
+//    and the engine auto-resolves it once the datapack defines the item.
+struct ItemResolver {
+    bool selfContained;
+    std::unordered_map<uint16_t,std::string> gen3Name; // gen3 id -> lowercase name
+    std::unordered_map<std::string,uint16_t> baseByName; // base lowercase name -> base id
+    ItemResolver();
+};
+
 class CCWriter {
 public:
     CCWriter(const GbaRom &rom,
@@ -29,7 +42,7 @@ public:
              const Wild &wild,
              const std::string &fireredDir,
              SkinResolver &skins,
-             const std::unordered_set<uint16_t> &validItems);
+             const ItemResolver &items);
 
     bool writeAll();
 
@@ -92,6 +105,8 @@ private:
     // the ROM, like gen2's pokeball tile normal1.tsx#101) — the gid every
     // ground/hidden item object shows in the Tiled editor.
     void ensureItemTileset(uint8_t graphicsId);
+    // Numeric id / name / "" for the item property (see ItemResolver).
+    std::string itemRefOf(int gen3Id, bool *byName);
 
     const GbaRom &rom_;
     const Decoder &decoder_;
@@ -114,8 +129,9 @@ private:
     std::vector<std::string> renderInvisibleList_;
     bool itemTilesetWritten_;                  // tileset/items.tsx emitted
     int itemsTotal_;                           // ground+hidden items emitted
-    int itemsDropped_;                         // refs to items the datapack lacks
-    std::unordered_set<uint16_t> validItems_;  // ids an item object may reference
+    int itemsDropped_;                         // refs without even a name (skipped)
+    int itemsByName_;                          // emitted by name, not yet in items.xml
+    ItemResolver items_;
 };
 
 #endif // GBA2CC_CCWRITER_HPP
