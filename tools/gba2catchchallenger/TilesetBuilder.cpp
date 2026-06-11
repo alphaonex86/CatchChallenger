@@ -600,7 +600,8 @@ static void emitWangSet(std::ostream &tsx, const QImage &sheet, int columns, uin
 }
 
 static void writeTsx(const std::string &dir, const std::string &name, int columns, const QImage &sheet,
-                     uint32_t tilecount, const std::unordered_map<int,std::string> &anims)
+                     uint32_t tilecount, const std::unordered_map<int,std::string> &anims,
+                     const std::unordered_set<int> &editorAnims)
 {
     std::ofstream tsx(dir+"/"+name+".tsx");
     if(tsx)
@@ -619,7 +620,28 @@ static void writeTsx(const std::string &dir, const std::string &name, int column
         while(k<ids.size())
         {
             tsx << " <tile id=\"" << ids[k] << "\">\n  <properties>\n   <property name=\"animation\" value=\""
-                << anims.at(ids[k]) << "\"/>\n  </properties>\n </tile>\n";
+                << anims.at(ids[k]) << "\"/>\n  </properties>\n";
+            // Ambient animations (water/flowers/lava — NOT doors, those only run
+            // on player action) also get the standard Tiled <animation> so the
+            // editor previews the loop.  Frames sit right after the base tile
+            // (one animation per row in the global anim sheet).
+            if(editorAnims.find(ids[k])!=editorAnims.cend())
+            {
+                int ms=0,nf=0;
+                if(std::sscanf(anims.at(ids[k]).c_str(),"%dms;%dframes",&ms,&nf)==2 && nf>1)
+                {
+                    if(ms<=0) ms=100;
+                    tsx << "  <animation>\n";
+                    int fr=0;
+                    while(fr<nf)
+                    {
+                        tsx << "   <frame tileid=\"" << (ids[k]+fr) << "\" duration=\"" << ms << "\"/>\n";
+                        fr++;
+                    }
+                    tsx << "  </animation>\n";
+                }
+            }
+            tsx << " </tile>\n";
             k++;
         }
         emitWangSet(tsx,sheet,columns,tilecount,anims);
@@ -1339,7 +1361,7 @@ TilesetBuilder::TilesetBuilder(const GbaRom &rom, const std::string &tilesetDir)
 // Register an animation in the ONE global anim collection, de-duplicated by frame
 // content and laid out 1 ANIMATION PER ROW (padded to globalAnimCols_).  Returns the
 // global index of its first frame.
-int TilesetBuilder::registerGlobalAnim(const std::vector<QImage> &frames, const std::string &animStr)
+int TilesetBuilder::registerGlobalAnim(const std::vector<QImage> &frames, const std::string &animStr, bool ambient)
 {
     std::string key;
     size_t f=0;
@@ -1351,7 +1373,11 @@ int TilesetBuilder::registerGlobalAnim(const std::vector<QImage> &frames, const 
     }
     std::unordered_map<std::string,int>::const_iterator it=globalAnimSeen_.find(key);
     if(it!=globalAnimSeen_.cend())
+    {
+        if(ambient)
+            globalAnimAmbient_.insert(it->second); // ambient wins on a dedup hit
         return it->second;
+    }
     QImage pad(16,16,QImage::Format_ARGB32);
     pad.fill(Qt::transparent);
     while(globalAnims_.size()%static_cast<size_t>(globalAnimCols_)!=0) globalAnims_.push_back(pad); // new row
@@ -1360,6 +1386,8 @@ int TilesetBuilder::registerGlobalAnim(const std::vector<QImage> &frames, const 
     while(f<frames.size()) { globalAnims_.push_back(frames[f].convertToFormat(QImage::Format_ARGB32)); f++; }
     globalAnimSeen_[key]=first;
     globalAnimStr_[first]=animStr;
+    if(ambient)
+        globalAnimAmbient_.insert(first);
     return first;
 }
 
@@ -1381,16 +1409,21 @@ void TilesetBuilder::emitGlobalAnim()
         uint32_t c=0;
         while(c<cnt){ blitTile(sheet,cols,c,globalAnims_[startCell+c]); c++; }
         std::unordered_map<int,std::string> localAnims;
+        std::unordered_set<int> localAmbient;
         std::unordered_map<int,std::string>::const_iterator it=globalAnimStr_.cbegin();
         while(it!=globalAnimStr_.cend())
         {
             if(it->first>=static_cast<int>(startCell) && it->first<static_cast<int>(startCell+cnt))
+            {
                 localAnims[it->first-static_cast<int>(startCell)]=it->second;
+                if(globalAnimAmbient_.find(it->first)!=globalAnimAmbient_.cend())
+                    localAmbient.insert(it->first-static_cast<int>(startCell));
+            }
             ++it;
         }
         std::string name="anim_"+std::to_string(s);
         sheet.save(QString::fromStdString(tilesetDir_+"/"+name+".png"),"PNG");
-        writeTsx(tilesetDir_,name,cols,sheet,cnt,localAnims);
+        writeTsx(tilesetDir_,name,cols,sheet,cnt,localAnims,localAmbient);
         s++;
     }
     if(total>0)
@@ -2061,7 +2094,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         std::vector<QImage> frames;
         int f=0;
         while(f<waterFrames) { frames.push_back(ts.renderMetatileFrame(id,f).convertToFormat(QImage::Format_ARGB32)); f++; }
-        pool.animGlobal[id]=registerGlobalAnim(frames,animStr);
+        pool.animGlobal[id]=registerGlobalAnim(frames,animStr,true); // water/flowers/lava self-loop
         i++;
     }
     // Door open-animation frames (closed -> open states); fall back to a 2-frame
@@ -2084,7 +2117,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         }
         size_t fr=0;
         while(fr<dframes.size()) { dframes[fr]=dframes[fr].convertToFormat(QImage::Format_ARGB32); fr++; }
-        pool.animGlobal[id]=registerGlobalAnim(dframes,dstr);
+        pool.animGlobal[id]=registerGlobalAnim(dframes,dstr,false); // doors animate on action only
         i++;
     }
 
@@ -2208,7 +2241,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         }
         std::string name=baseName+segs[sg].suffix;
         sheet.save(QString::fromStdString(outDir+"/"+name+".png"),"PNG");
-        writeTsx(outDir,name,segCols,sheet,cnt,localAnims);
+        writeTsx(outDir,name,segCols,sheet,cnt,localAnims,std::unordered_set<int>());
         sg++;
     }
 
