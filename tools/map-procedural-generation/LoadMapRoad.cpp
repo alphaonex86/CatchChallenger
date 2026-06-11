@@ -1831,6 +1831,100 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 {
                     if((unsigned int)(rand()%100)<setting.cavePercent)
                     {
+                        //OPEN SPACE test: flood the walkable ground from the chunk
+                        //center; when more than 90% of the border is reachable
+                        //without collision on the path, nothing can force the
+                        //player through the cave — disable it for this chunk
+                        bool openSpace=false;
+                        {
+                            std::vector<unsigned char> reached(mapWidth*mapHeight,0);
+                            std::vector<unsigned int> queue;
+                            //start at the center (or the first walkable cell near it)
+                            int startX=-1,startY=-1;
+                            {
+                                int radius=0;
+                                while(radius<6 && startX<0)
+                                {
+                                    int offsetY=-radius;
+                                    while(offsetY<=radius && startX<0)
+                                    {
+                                        int offsetX=-radius;
+                                        while(offsetX<=radius && startX<0)
+                                        {
+                                            const int lx=(int)mapWidth/2+offsetX;
+                                            const int ly=(int)mapHeight/2+offsetY;
+                                            if(colliLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()==NULL
+                                                    && waterLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()==NULL)
+                                            {
+                                                startX=lx;
+                                                startY=ly;
+                                            }
+                                            offsetX++;
+                                        }
+                                        offsetY++;
+                                    }
+                                    radius++;
+                                }
+                            }
+                            if(startX>=0)
+                            {
+                                reached[startX+startY*mapWidth]=1;
+                                queue.push_back(startX+startY*mapWidth);
+                                unsigned int queueIndex=0;
+                                while(queueIndex<queue.size())
+                                {
+                                    const unsigned int current=queue.at(queueIndex);
+                                    const int cx=current%mapWidth;
+                                    const int cy=current/mapWidth;
+                                    const int nextDx[4]={0,0,-1,1};
+                                    const int nextDy[4]={-1,1,0,0};
+                                    int direction=0;
+                                    while(direction<4)
+                                    {
+                                        const int nx=cx+nextDx[direction];
+                                        const int ny=cy+nextDy[direction];
+                                        if(nx>=0 && ny>=0 && nx<(int)mapWidth && ny<(int)mapHeight)
+                                        {
+                                            const unsigned int next=nx+ny*mapWidth;
+                                            if(reached[next]==0
+                                                    && colliLayer->cellAt(x*mapWidth+nx,y*mapHeight+ny).tile()==NULL
+                                                    && waterLayer->cellAt(x*mapWidth+nx,y*mapHeight+ny).tile()==NULL)
+                                            {
+                                                reached[next]=1;
+                                                queue.push_back(next);
+                                            }
+                                        }
+                                        direction++;
+                                    }
+                                    queueIndex++;
+                                }
+                                unsigned int borderTotal=0,borderReached=0;
+                                int ly=0;
+                                while(ly<(int)mapHeight)
+                                {
+                                    int lx=0;
+                                    while(lx<(int)mapWidth)
+                                    {
+                                        if(lx==0 || ly==0 || lx==(int)mapWidth-1 || ly==(int)mapHeight-1)
+                                        {
+                                            borderTotal++;
+                                            if(reached[lx+ly*mapWidth]!=0)
+                                                borderReached++;
+                                        }
+                                        lx++;
+                                    }
+                                    ly++;
+                                }
+                                if(borderReached*100>borderTotal*90)
+                                    openSpace=true;
+                            }
+                        }
+                        if(openSpace)
+                        {
+                            //chunk stays a normal open road, no cave
+                        }
+                        else
+                        {
                         //the cave is NEVER dropped, and there is NO artificial
                         //cliff ring (owner: ugly): walking straight inward from
                         //the border, the FIRST natural cliff hosts the mouth;
@@ -1942,6 +2036,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         }
                         roadCoordToIndex[x][y].isCave=true;
                         cavePlans[std::pair<uint16_t,uint16_t>(x,y)]=plan;
+                        }
                     }
                 }
 
