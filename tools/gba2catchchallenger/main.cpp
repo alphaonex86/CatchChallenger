@@ -11,6 +11,7 @@
 
 #include <tinyxml2.h>
 #include <unordered_set>
+#include <cctype>
 #include "Gen3Data.hpp"
 #include "FullWriter.hpp"
 #include "M4aRipper.hpp"
@@ -362,26 +363,34 @@ int main(int argc, char *argv[])
     if(!gi.isSub())
         QDir().mkpath(QString::fromStdString(outDir+"/quests"));
 
-    // Item objects must reference an EXISTING item: validate against the
-    // ROM-extracted table (--all mode writes it as items/items.xml) or, in
-    // overlay mode, against the BASE datapack's items.xml — an unknown id
-    // would dangle in the engine.
+    // Item-on-map references (see ItemResolver): the ROM item NAMES drive the
+    // resolution — numeric id when self-contained (--all), the base datapack's
+    // id on a name match, else the lowercase name itself (visible in Tiled,
+    // auto-resolves once the datapack's items.xml defines the item).
     Gen3Data gen3;
-    bool gen3ok=false;
-    if(fullDatapack)
-        gen3ok=gen3.decode(rom);
-    std::unordered_set<uint16_t> validItems;
-    if(gen3ok)
+    const bool gen3ok=gen3.decode(rom);
+    ItemResolver itemResolver;
+    itemResolver.selfContained=(fullDatapack && gen3ok);
     {
         std::size_t ii=0;
         while(ii<gen3.items().size())
         {
-            validItems.insert(static_cast<uint16_t>(gen3.items()[ii].id));
+            const Gen3Item &it=gen3.items()[ii];
             ii++;
+            std::string lname=it.name;
+            std::size_t ci=0;
+            while(ci<lname.size())
+            {
+                lname[ci]=static_cast<char>(std::tolower(static_cast<unsigned char>(lname[ci])));
+                ci++;
+            }
+            itemResolver.gen3Name[static_cast<uint16_t>(it.id)]=lname;
         }
     }
-    else
+    if(!itemResolver.selfContained)
     {
+        // base datapack item names, keyed the way the engine keys
+        // tempNameToItemId: lowercase default-language <name>
         tinyxml2::XMLDocument d;
         if(d.LoadFile((datapack+"/items/items.xml").c_str())==tinyxml2::XML_SUCCESS && d.RootElement()!=nullptr)
         {
@@ -389,8 +398,20 @@ int main(int argc, char *argv[])
             while(it!=nullptr)
             {
                 const int id=it->IntAttribute("id",-1);
-                if(id>=0)
-                    validItems.insert(static_cast<uint16_t>(id));
+                tinyxml2::XMLElement *name=it->FirstChildElement("name");
+                while(name!=nullptr && name->Attribute("lang")!=nullptr)
+                    name=name->NextSiblingElement("name");
+                if(id>=0 && name!=nullptr && name->GetText()!=nullptr)
+                {
+                    std::string lname=name->GetText();
+                    std::size_t ci=0;
+                    while(ci<lname.size())
+                    {
+                        lname[ci]=static_cast<char>(std::tolower(static_cast<unsigned char>(lname[ci])));
+                        ci++;
+                    }
+                    itemResolver.baseByName[lname]=static_cast<uint16_t>(id);
+                }
                 it=it->NextSiblingElement("item");
             }
         }
@@ -402,7 +423,7 @@ int main(int argc, char *argv[])
         // main; only the changed wild-encounter sections are written.  TilesetBuilder
         // is constructed but never prepared (unused by the overlay path).
         TilesetBuilder tilesets(rom,tilesetDir);
-        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,validItems);
+        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,itemResolver);
         writer.writeSubOverlay(mainDir);
     }
     else
@@ -416,7 +437,7 @@ int main(int argc, char *argv[])
         // Bot skins: extracted overworld sprites are matched against existing skins
         // (~10% per-channel tolerance, content-cropped) and reused, else added.
         skins.loadExisting();
-        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,validItems);
+        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,itemResolver);
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
 

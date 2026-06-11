@@ -25,6 +25,11 @@
 #include <maprenderer.h>
 #include <orthogonalrenderer.h>
 
+ItemResolver::ItemResolver() :
+    selfContained(false)
+{
+}
+
 CCWriter::CCWriter(const GbaRom &rom,
                    const Decoder &decoder,
                    const TilesetBuilder &tilesets,
@@ -32,7 +37,7 @@ CCWriter::CCWriter(const GbaRom &rom,
                    const Wild &wild,
                    const std::string &fireredDir,
                    SkinResolver &skins,
-                   const std::unordered_set<uint16_t> &validItems) :
+                   const ItemResolver &items) :
     rom_(rom),
     decoder_(decoder),
     tilesets_(tilesets),
@@ -50,8 +55,33 @@ CCWriter::CCWriter(const GbaRom &rom,
     itemTilesetWritten_(false),
     itemsTotal_(0),
     itemsDropped_(0),
-    validItems_(validItems)
+    itemsByName_(0),
+    items_(items)
 {
+}
+
+// Resolve a Gen3 item id to the reference string for the "item" property:
+// numeric id (self-contained or name-matched in the base) or the lowercase
+// name as a future-proof fallback.  Empty = unknown id, skip the object.
+std::string CCWriter::itemRefOf(int gen3Id, bool *byName)
+{
+    *byName=false;
+    std::unordered_map<uint16_t,std::string>::const_iterator nm=
+        items_.gen3Name.find(static_cast<uint16_t>(gen3Id));
+    if(items_.selfContained)
+    {
+        if(nm==items_.gen3Name.cend())
+            return std::string(); // not in the ROM's own item table
+        return std::to_string(gen3Id);
+    }
+    if(nm==items_.gen3Name.cend() || nm->second.empty())
+        return std::string();
+    std::unordered_map<std::string,uint16_t>::const_iterator base=
+        items_.baseByName.find(nm->second);
+    if(base!=items_.baseByName.cend())
+        return std::to_string(base->second);
+    *byName=true;
+    return nm->second;
 }
 
 // Render the map's tile layers (all of them, or all but hideIndex) with libtiled,
@@ -362,8 +392,8 @@ bool CCWriter::writeAll()
     writeStart();
     writeZones();
     std::cout << "CCWriter: wrote " << maps.size() << " maps to " << fireredDir_
-              << " (" << itemsTotal_ << " items on map, " << itemsDropped_
-              << " dropped: item not in the datapack)" << std::endl;
+              << " (" << itemsTotal_ << " items on map, " << itemsByName_
+              << " by name pending items.xml, " << itemsDropped_ << " dropped)" << std::endl;
     if(guardMasked_==0)
         std::cout << "CCWriter GUARD layer-visibility: PASS (" << guardLayers_
                   << " tile layers, each visible when toggled)" << std::endl;
@@ -576,7 +606,7 @@ void CCWriter::writeMap(const DecodedMap &map)
     // finditem macro; hidden items are bg-events kind>=5 carrying the item id.
     // Both become CC "object" items — the hidden ones with visible=false but
     // the SAME ball gid (the gen2 convention), so the editor still shows them.
-    struct GroundItem { int x; int y; int item; bool visible; };
+    struct GroundItem { int x; int y; std::string itemRef; bool visible; };
     std::vector<GroundItem> mapItems;
     {
         size_t ii=0;
@@ -585,18 +615,25 @@ void CCWriter::writeMap(const DecodedMap &map)
             const DecodedNpc &np=map.npcs[ii];
             ii++;
             const int it=Gen3Script::findItemOf(rom_,np.scriptPtr);
-            if(it>0 && validItems_.find(static_cast<uint16_t>(it))==validItems_.cend())
-                itemsDropped_++; // the (base) datapack does not define this item
-            else if(it>0 && np.x>=0 && np.y>=0 &&
+            if(it>0 && np.x>=0 && np.y>=0 &&
                static_cast<uint32_t>(np.x)<w && static_cast<uint32_t>(np.y)<h)
             {
-                GroundItem gi;
-                gi.x=np.x;
-                gi.y=np.y;
-                gi.item=it;
-                gi.visible=true;
-                mapItems.push_back(gi);
-                ensureItemTileset(np.graphicsId);
+                bool byName=false;
+                const std::string ref=itemRefOf(it,&byName);
+                if(ref.empty())
+                    itemsDropped_++; // not even a name for this id
+                else
+                {
+                    if(byName)
+                        itemsByName_++;
+                    GroundItem gi;
+                    gi.x=np.x;
+                    gi.y=np.y;
+                    gi.itemRef=ref;
+                    gi.visible=true;
+                    mapItems.push_back(gi);
+                    ensureItemTileset(np.graphicsId);
+                }
             }
         }
         ii=0;
@@ -606,17 +643,24 @@ void CCWriter::writeMap(const DecodedMap &map)
             ii++;
             // kind 7 = BG_EVENT_HIDDEN_ITEM exactly (8 = RSE secret base,
             // whose data field is NOT an item id)
-            if(sg.kind==7 && sg.itemId>0 && validItems_.find(sg.itemId)==validItems_.cend())
-                itemsDropped_++;
-            else if(sg.kind==7 && sg.itemId>0 && sg.x>=0 && sg.y>=0 &&
+            if(sg.kind==7 && sg.itemId>0 && sg.x>=0 && sg.y>=0 &&
                static_cast<uint32_t>(sg.x)<w && static_cast<uint32_t>(sg.y)<h)
             {
-                GroundItem gi;
-                gi.x=sg.x;
-                gi.y=sg.y;
-                gi.item=sg.itemId;
-                gi.visible=false;
-                mapItems.push_back(gi);
+                bool byName=false;
+                const std::string ref=itemRefOf(sg.itemId,&byName);
+                if(ref.empty())
+                    itemsDropped_++;
+                else
+                {
+                    if(byName)
+                        itemsByName_++;
+                    GroundItem gi;
+                    gi.x=sg.x;
+                    gi.y=sg.y;
+                    gi.itemRef=ref;
+                    gi.visible=false;
+                    mapItems.push_back(gi);
+                }
             }
         }
     }
@@ -1010,7 +1054,12 @@ void CCWriter::writeMap(const DecodedMap &map)
                 out << " gid=\"" << itemGid << "\"";
             out << " x=\"" << gi.x*16 << "\" y=\"" << (gi.y+1)*16 << "\" width=\"16\" height=\"16\">\n";
             out << "   <properties>\n";
-            out << "    <property name=\"item\" type=\"int\" value=\"" << gi.item << "\"/>\n";
+            const bool numeric=!gi.itemRef.empty() &&
+                gi.itemRef.find_first_not_of("0123456789")==std::string::npos;
+            if(numeric)
+                out << "    <property name=\"item\" type=\"int\" value=\"" << gi.itemRef << "\"/>\n";
+            else
+                out << "    <property name=\"item\" value=\"" << gi.itemRef << "\"/>\n";
             if(!gi.visible)
                 out << "    <property name=\"visible\" type=\"bool\" value=\"false\"/>\n";
             out << "   </properties>\n  </object>\n";
