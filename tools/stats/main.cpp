@@ -184,7 +184,12 @@ int main(int argc, char *argv[])
     epoll_event events[MAXEVENTS];
 
     if(!UnixServerStats::unixServerStats.tryListen(unixSocketPath.c_str()))
+    {
+        //fatal: without the unix socket the website can't read the game server status,
+        //better die here so the supervisor restarts us than run half-alive forever
         std::cerr << "Unable to listen the unix socket, file: " << unixSocketPath << std::endl;
+        return EXIT_FAILURE;
+    }
 
     /* The event loop */
     std::vector<std::pair<void *,BaseClassSwitch::EventLoopObjectType> > elementsToDelete;
