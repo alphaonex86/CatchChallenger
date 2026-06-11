@@ -51,6 +51,12 @@ out of tree (`/tmp/tux2cc-build`).
   unless `CommonDatapack`'s item+monster name tables are non-empty
   (`set_tempNameToItemId/MonsterId`) — populate them first.  Require
   263/263 load, 0 failures.
+* **Teleports are PER-TILE:** an event rect spanning several tiles (2-wide
+  stairs, whole-edge transitions — ~118 events) emits one warp per covered
+  tile; additionally a 1x1 warp EXTENDS onto the neighbour tile when it
+  continues the same multi-tile graphic (same layer, consecutive gid, bounded
+  run of exactly two, overlay above a non-empty lower layer, walkable, not
+  already a warp) — the author often marks only one tile of a 2-tile stair.
 * **Events live in TWO encodings:** TMX object properties AND a sidecar
   `<map>.yaml` (`events:` -> x/y/width/height in TILES + actions/conditions/
   behav lists — 62 maps, e.g. eclipse banks).  Both feed the SAME interpreter

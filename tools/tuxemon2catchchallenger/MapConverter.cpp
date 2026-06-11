@@ -769,7 +769,6 @@ static void processEventProps(const std::map<std::string,std::string> &props,
             if(verb == "transition_teleport" && a.size() >= 4)
             {
                 Warp wp;
-                wp.srcTx = ox / 16; wp.srcTy = oy / 16;
                 std::string dest = a[1];
                 const std::size_t dot = dest.rfind(".tmx");
                 if(dot != std::string::npos) dest = dest.substr(0, dot);
@@ -786,7 +785,24 @@ static void processEventProps(const std::map<std::string,std::string> &props,
                 }
                 if(wp.dx < 0) wp.dx = 0;
                 if(wp.dy < 0) wp.dy = 0;
-                sink.warps->push_back(wp);
+                // the event rect may span several tiles (2-wide stairs,
+                // 3-wide doorways, whole-edge transitions): a CC teleport is
+                // per-tile, so emit one warp on EVERY covered tile
+                const int tx0 = ox / 16, ty0 = oy / 16;
+                const int tx1 = (ox + ow + 15) / 16, ty1 = (oy + oh + 15) / 16;
+                int ty = ty0;
+                while(ty < ty1)
+                {
+                    int tx = tx0;
+                    while(tx < tx1)
+                    {
+                        wp.srcTx = tx;
+                        wp.srcTy = ty;
+                        sink.warps->push_back(wp);
+                        ++tx;
+                    }
+                    ++ty;
+                }
             }
             else if(verb == "random_encounter" && !a.empty())
             {
@@ -1026,6 +1042,77 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     }
     // newer Tuxemon keeps part of the events in a sidecar <map>.yaml
     loadYamlEvents(tmxPath, sink);
+
+    // Two-tile stair/door graphics: the Tuxemon author often marks only ONE
+    // tile of a two-tile staircase as the teleport (eclipse banks).  Extend a
+    // warp onto the adjacent tile when it continues the SAME multi-tile
+    // graphic: same layer, consecutive gid, bounded run of exactly two, drawn
+    // over a non-empty lower layer (an overlay, not the base floor), the
+    // neighbour inside the map, walkable, and not already a warp source.
+    {
+        std::vector<const std::vector<uint32_t>*> stack;
+        std::size_t si = 0;
+        while(si < groundLayers.size()) { stack.push_back(&groundLayers[si]); ++si; }
+        si = 0;
+        while(si < overLayers.size()) { stack.push_back(&overLayers[si]); ++si; }
+        const std::size_t warpCount = warps.size(); // do not extend extensions
+        std::size_t wi2 = 0;
+        while(wi2 < warpCount)
+        {
+            const Warp wp = warps[wi2];
+            ++wi2;
+            const int x = wp.srcTx, y = wp.srcTy;
+            if(x < 0 || y < 0 || x >= (int)w || y >= (int)h)
+                continue;
+            // first layer with a tile here that sits ABOVE another tiled layer
+            std::size_t li = 0;
+            while(li < stack.size())
+            {
+                const std::vector<uint32_t> &g = *stack[li];
+                const uint32_t gid = g[(std::size_t)y * w + x] & kGidMask;
+                if(gid != 0)
+                {
+                    bool lower = false;
+                    std::size_t lj = 0;
+                    while(lj < li) { if(((*stack[lj])[(std::size_t)y * w + x] & kGidMask) != 0) lower = true; ++lj; }
+                    if(lower)
+                    {
+                        int d = -1;
+                        while(d <= 1)
+                        {
+                            if(d != 0)
+                            {
+                                const int nx = x + d;
+                                const uint32_t ngid = gid + (uint32_t)d;
+                                const uint32_t atN  = (nx >= 0 && nx < (int)w) ? (g[(std::size_t)y * w + nx] & kGidMask) : 0;
+                                // run must be exactly the two tiles (bounded)
+                                const int bx = x - d, bn = nx + d;
+                                const uint32_t atB  = (bx >= 0 && bx < (int)w) ? (g[(std::size_t)y * w + bx] & kGidMask) : 0;
+                                const uint32_t atBn = (bn >= 0 && bn < (int)w) ? (g[(std::size_t)y * w + bn] & kGidMask) : 0;
+                                if(nx >= 0 && nx < (int)w && ngid != 0 &&
+                                   atN == ngid && atB != gid - (uint32_t)d && atBn != ngid + (uint32_t)d &&
+                                   !blocked[(std::size_t)y * w + nx])
+                                {
+                                    bool taken = false;
+                                    std::size_t q = 0;
+                                    while(q < warps.size()) { if(warps[q].srcTx == nx && warps[q].srcTy == y) taken = true; ++q; }
+                                    if(!taken)
+                                    {
+                                        Warp ext = wp;
+                                        ext.srcTx = nx;
+                                        warps.push_back(ext);
+                                    }
+                                }
+                            }
+                            ++d;
+                        }
+                        break; // only the first overlay layer decides
+                    }
+                }
+                ++li;
+            }
+        }
+    }
 
     // Build the grass-encounter mask: cells inside a random_encounter zone that
     // are walkable become a "Grass" monster-collision layer (wild encounters).
