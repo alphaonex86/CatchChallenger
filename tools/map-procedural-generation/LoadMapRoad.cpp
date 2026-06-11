@@ -344,11 +344,14 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                     }
                     const int lx=tx-x0;
                     const int ly=ty-y0;
-                    //floor everywhere: ring/rock tiles have transparent parts
-                    //and must sit on cave ground, not on the void
+                    //floor everywhere: ring tiles have transparent parts and
+                    //must sit on cave ground, not on the void
                     walkLayer->setCell(tx,ty,Tiled::Cell(floorTile));
                     if(floorGrid[lx+ly*singleMapWidth]==0)
                     {
+                        //only the BORDER of the blocked zone carries collision
+                        //(like the overworld mountains); the enclosed mass stays
+                        //plain ground, unreachable behind the ring
                         uint8_t walkableMask=0;
                         const int neighborDx[8]={-1,0,1,-1,1,-1,0,1};
                         const int neighborDy[8]={-1,-1,-1,0,0,1,1,1};
@@ -363,12 +366,15 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                                     walkableMask|=neighborBit[neighbor];
                             neighbor++;
                         }
-                        Tiled::Tile *blockTile=wallTile;
-                        if(walkableMask!=0 && mountainRingTiles.size()>=12)
-                            blockTile=mountainRingTiles.at(mountainBorderTileIndex(walkableMask));
-                        else if(wallTiles.size()>=9)
-                            blockTile=wallTiles.at((ly%3)*3+(lx%3));
-                        colliLayer->setCell(tx,ty,Tiled::Cell(blockTile));
+                        if(walkableMask!=0)
+                        {
+                            Tiled::Tile *blockTile=wallTile;
+                            if(mountainRingTiles.size()>=12)
+                                blockTile=mountainRingTiles.at(mountainBorderTileIndex(walkableMask));
+                            else if(wallTiles.size()>=9)
+                                blockTile=wallTiles.at((ly%3)*3+(lx%3));
+                            colliLayer->setCell(tx,ty,Tiled::Cell(blockTile));
+                        }
                     }
                     tx++;
                 }
@@ -469,7 +475,7 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                 tries++;
                 const int lx=4+rand()%((int)singleMapWidth-8);
                 const int ly=4+rand()%((int)singleMapHeight-8);
-                if(walkLayer->cellAt(x0+lx,y0+ly).tile()!=NULL
+                if(floorGrid[lx+ly*singleMapWidth]!=0
                         && colliLayer->cellAt(x0+lx,y0+ly).tile()==NULL)
                 {
                     Tiled::MapObject *bot=new Tiled::MapObject("","bot",
@@ -508,7 +514,7 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                 tries++;
                 const int lx=4+rand()%((int)singleMapWidth-8);
                 const int ly=4+rand()%((int)singleMapHeight-8);
-                if(walkLayer->cellAt(x0+lx,y0+ly).tile()!=NULL
+                if(floorGrid[lx+ly*singleMapWidth]!=0
                         && colliLayer->cellAt(x0+lx,y0+ly).tile()==NULL)
                 {
                     Tiled::MapObject *item=new Tiled::MapObject("","object",
@@ -2884,6 +2890,9 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                         py--;
                                     }
                                 }
+                                //NO dirt path: the approach stays NATURAL ground —
+                                //just clear obstacles and keep vegetation off so
+                                //the mouth is reachable from the border
                                 unsigned int pathIndex=0;
                                 while(pathIndex<pathCells.size())
                                 {
@@ -2895,12 +2904,8 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                         const unsigned int ty=y*mapHeight+ly;
                                         colliLayer->setCell(tx,ty,empty);
                                         grassLayer->setCell(tx,ty,empty);
-                                        if(onGrassLayer!=NULL)
-                                            onGrassLayer->setCell(tx,ty,empty);
                                         if(waterLayer!=NULL)
                                             waterLayer->setCell(tx,ty,empty);
-                                        walkLayer->setCell(tx,ty,caveFloorCell);
-                                        //no vegetation over the path
                                         const unsigned int bitMask=tx+ty*worldMap.width();
                                         if(bitMask/8>=maxMapSize)
                                             abort();
