@@ -787,6 +787,16 @@ static bool cityDoorFrontsFree(AvenueLotState &lots, MapBrush::MapTemplate &temp
             //keep later buildings off the doorstep, but stay walkable for pathing
             if(lots.map[cell]==0 || lots.map[cell]==1)
                 lots.map[cell]=0x0F;
+            //and keep the VEGETATION off it too: a tree planted on the doorstep
+            //blocked the entrance (mapMask is only OR-ed, never cleared)
+            {
+                const unsigned int tx=lots.chunkX*lots.mapWidth+frontX;
+                const unsigned int ty=lots.chunkY*lots.mapHeight+frontY;
+                const unsigned int maxMapSize=(lots.worldMap->width()*lots.worldMap->height()/8+1);
+                const unsigned int bitMask=tx+ty*lots.worldMap->width();
+                if(bitMask/8<maxMapSize)
+                    MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+            }
         }
         else if(lots.map[cell]!=CITY_AVENUE_CODE)
         {
@@ -801,6 +811,85 @@ static bool cityDoorFrontsFree(AvenueLotState &lots, MapBrush::MapTemplate &temp
         doorIndex++;
     }
     return true;
+}
+
+//every doored building must be linked to the city's MAIN PATH: BFS on the
+//scale grid from each door front to the nearest avenue cell, then mark the
+//route as avenue so the paint pass draws the path (and nothing builds on it)
+static void connectDoorFrontsToAvenue(AvenueLotState &lots, MapBrush::MapTemplate &temp,
+                                      const int posX, const int posY)
+{
+    const std::vector<Tiled::MapObject*> doorList=LoadMapAll::getDoorsListAndTp(temp.tiledMap);
+    unsigned int doorIndex=0;
+    while(doorIndex<doorList.size())
+    {
+        const int frontX=posX+(int)(doorList.at(doorIndex)->x()/lots.worldMap->tileWidth());
+        const int frontY=posY+(int)(doorList.at(doorIndex)->y()/lots.worldMap->tileHeight());
+        if(frontX>=0 && frontY>=0 && frontX<(int)lots.mapWidth && frontY<(int)lots.mapHeight)
+        {
+            const unsigned int cellCount=lots.scaleWidth*lots.scaleHeight;
+            const unsigned int startCell=(frontX/(int)lots.scale)+(frontY/(int)lots.scale)*lots.scaleWidth;
+            std::vector<int> parent(cellCount,-2);//-2 unseen, -1 start
+            std::vector<unsigned int> queue;
+            parent[startCell]=-1;
+            queue.push_back(startCell);
+            int foundCell=-1;
+            unsigned int queueIndex=0;
+            while(queueIndex<queue.size() && foundCell<0)
+            {
+                const unsigned int current=queue.at(queueIndex);
+                if(lots.map[current]==CITY_AVENUE_CODE)
+                    foundCell=current;
+                else
+                {
+                    const int cx=current%lots.scaleWidth;
+                    const int cy=current/lots.scaleWidth;
+                    const int nextDx[4]={0,0,-1,1};
+                    const int nextDy[4]={-1,1,0,0};
+                    int direction=0;
+                    while(direction<4)
+                    {
+                        const int nx=cx+nextDx[direction];
+                        const int ny=cy+nextDy[direction];
+                        if(nx>=0 && ny>=0 && nx<(int)lots.scaleWidth && ny<(int)lots.scaleHeight)
+                        {
+                            const unsigned int next=nx+ny*lots.scaleWidth;
+                            if(parent[next]==-2)
+                            {
+                                const unsigned int code=lots.map[next];
+                                //cross only open ground or existing paths
+                                if(code==0 || code==1 || code==0x9 || code==0x0F || code==CITY_AVENUE_CODE)
+                                {
+                                    if(lots.lotObstacle[next]==0 || code==CITY_AVENUE_CODE)
+                                    {
+                                        parent[next]=current;
+                                        queue.push_back(next);
+                                    }
+                                }
+                            }
+                        }
+                        direction++;
+                    }
+                }
+                queueIndex++;
+            }
+            //mark the route as avenue: painted as path, protected from buildings
+            if(foundCell>=0)
+            {
+                int walkCell=foundCell;
+                while(walkCell>=0)
+                {
+                    if(lots.map[walkCell]!=5 && lots.map[walkCell]!=CITY_AVENUE_CODE)
+                        lots.map[walkCell]=CITY_AVENUE_CODE;
+                    const int parentCell=parent[walkCell];
+                    walkCell=(parentCell==-1) ? -3 : parentCell;
+                    if(walkCell==-3)
+                        break;
+                }
+            }
+        }
+        doorIndex++;
+    }
 }
 
 static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
@@ -874,7 +963,10 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
                             cy++;
                         }
                         if(!facadeOnly)
+                        {
                             cityDoorFrontsFree(lots,temp,posX,posY,true);
+                            connectDoorFrontsToAvenue(lots,temp,posX,posY);
+                        }
                         if(goRight)
                             rightCursor=posX+(int)temp.width+1;
                         else
@@ -2063,7 +2155,10 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                                               x,y,mapWidth,mapHeight,pos,*city,cityLowerCaseName,
                                                               setting,rs,buildingId,gymTypeName,gymTypeMonsters);
                                             if(!facadeOnly)
+                                            {
                                                 cityDoorFrontsFree(lots,temp,pos.first,pos.second,true);
+                                                connectDoorFrontsToAvenue(lots,temp,pos.first,pos.second);
+                                            }
                                             zone->type = 5;
                                             for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
                                                 for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
@@ -3481,6 +3576,23 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
     Tiled::Tileset* anim=LoadMap::searchTilesetByName(worldMap,"animations.tsx");
     Tiled::Tile* flowerRed=(anim!=NULL) ? anim->tileAt(320) : NULL;
     Tiled::Tile* flowerBlue=(anim!=NULL) ? anim->tileAt(352) : NULL;
+    //flowers only grow on walkable GRASS ground (never on pavement/sand/snow)
+    std::unordered_set<Tiled::Tile*> grassGroundTiles;
+    {
+        int height=0;
+        while(height<5)
+        {
+            int moisure=0;
+            while(moisure<6)
+            {
+                const LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
+                if(terrain.tile!=NULL && terrain.terrainName.compare(QString("grass"),Qt::CaseInsensitive)==0)
+                    grassGroundTiles.insert(terrain.tile);
+                moisure++;
+            }
+            height++;
+        }
+    }
     const int tw=worldMap.tileWidth(), th=worldMap.tileHeight();
     unsigned int ci=0;
     while(ci<cities.size())
@@ -3534,6 +3646,8 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
                     continue;
                 if(walk->cellAt(tx,ty).tile()==NULL || coll->cellAt(tx,ty).tile()!=NULL
                         || onGrass->cellAt(tx,ty).tile()!=NULL)
+                    continue;
+                if(grassGroundTiles.find(walk->cellAt(tx,ty).tile())==grassGroundTiles.cend())
                     continue;
                 if(chunkMap!=NULL && chunkMap[((tx-x0)/2)+((ty-y0)/2)*((int)mapWidth/2)]==CITY_AVENUE_CODE)
                     continue;
