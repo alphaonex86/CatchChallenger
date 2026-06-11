@@ -22,7 +22,8 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                                   const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
                                   const std::pair<uint8_t, uint8_t> pos, const City &city,const std::string &zone,
                                   const BotKind &botKind, const SettingsAll::SettingsExtra &setting,
-                                  const std::vector<RoadMonster> &monsterPool, const uint8_t &level)
+                                  const std::vector<RoadMonster> &monsterPool, const uint8_t &level,
+                                  const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters)
 {
     bool ok=false;
     //tile inside the entrance floor where stepping through the door drops the
@@ -182,7 +183,7 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                     npcGroup->addObject(npc);
                     injectedBots.push_back(npc);
                     botXml+=botStepXml(localBotId,toPlace.at(placeIndex).first,std::to_string(localBotId),
-                                       "bottom",setting,monsterPool,level);
+                                       "bottom",setting,monsterPool,level,gymTypeName,gymTypeMonsters);
                     localBotId++;
                     placeIndex++;
                 }

@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QDir>
 #include <iostream>
+#include <algorithm>
 
 #include <libtiled/mapwriter.h>
 #include <libtiled/mapobject.h>
@@ -31,6 +32,20 @@ std::vector<std::unique_ptr<Tiled::Map>> LoadMap_map_hack;
 
 /*To do: Tree/Grass, Rivers
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
+
+//one start point per city in the lowest 10% of the level range
+struct CityStart
+{
+    std::string cityName;
+    PartialMap::RecuesPoint point;
+    uint8_t level;
+};
+static bool cityStartLess(const CityStart &a, const CityStart &b)
+{
+    if(a.level!=b.level)
+        return a.level<b.level;
+    return a.cityName<b.cityName;
+}
 /*template<typename T, size_t C, size_t R>  Matrix { std::array<T, C*R> };
  * operator[](int c, int r) { return arr[C*r+c]; }*/
 
@@ -247,6 +262,13 @@ int main(int argc, char *argv[])
                                     MapBrush::mapMask[bit/8]|=(1<<(7-bit%8));
                                 }
                             }
+                            else if(LoadMapAll::isCaveChunk(tx/mw, ty/mh))
+                            {
+                                //a cave chunk is fully enclosed rock: no vegetation
+                                //at all, border included
+                                const unsigned int bit=tx+ty*Wt;
+                                MapBrush::mapMask[bit/8]|=(1<<(7-bit%8));
+                            }
                             tx++;
                         }
                         ty++;
@@ -305,7 +327,10 @@ int main(int argc, char *argv[])
         }
         //do tmx split
         t.start();
-        PartialMap::RecuesPoint startPoint;
+        //one start point per city whose level falls in the LOWEST 10% of the
+        //level range; the lowest-level one is the "Normal" profile start
+        std::vector<CityStart> cityStarts;
+        const float startLevelLimit=(float)config.levelmapmin+(float)(config.levelmapmax-config.levelmapmin)*0.10f;
         std::vector<PartialMap::RecuesPoint> recuesPoints;
         {
             const unsigned int singleMapWitdh=tiledMap.width()/config.mapXCount;
@@ -334,14 +359,24 @@ int main(int argc, char *argv[])
                     std::cerr << "Unable to write " << file << "" << std::endl;
                     abort();
                 }
-                if(config.levelmapmin==city.level)
+                if((float)city.level<=startLevelLimit)
                 {
                     if(newRecuesPoints.empty())
                     {
-                        std::cerr << "newRecuesPoints empty for city (abort)" << std::endl;
-                        abort();
+                        if(config.levelmapmin==city.level)
+                        {
+                            std::cerr << "newRecuesPoints empty for city (abort)" << std::endl;
+                            abort();
+                        }
                     }
-                    startPoint=newRecuesPoints.front();
+                    else
+                    {
+                        CityStart cityStart;
+                        cityStart.cityName=cityLowerCaseName;
+                        cityStart.point=newRecuesPoints.front();
+                        cityStart.level=city.level;
+                        cityStarts.push_back(cityStart);
+                    }
                 }
                 recuesPoints.insert(recuesPoints.cend(),newRecuesPoints.cbegin(),newRecuesPoints.cend());
                 if(LoadMapAll::zones.find(cityLowerCaseName)==LoadMapAll::zones.cend())
@@ -432,31 +467,44 @@ int main(int argc, char *argv[])
                         std::string additionalXmlInfo;
                         if(!roadIndex.roadMonsters.empty())
                         {
-                            additionalXmlInfo+="  <grass>\n";
+                            //a cave chunk uses the engine's cave encounter group
+                            const std::string encounterTag=roadIndex.isCave ? "cave" : "grass";
+                            additionalXmlInfo+="  <"+encounterTag+">\n";
                             unsigned int roadMonsterIndex=0;
                             while(roadMonsterIndex<roadIndex.roadMonsters.size())
                             {
                                 const LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters.at(roadMonsterIndex);
-                                additionalXmlInfo+="    <monster id=\""+std::to_string(roadMonster.monsterId)+
-                                        "\" minLevel=\""+std::to_string(roadMonster.minLevel)+
-                                        "\" maxLevel=\""+std::to_string(roadMonster.maxLevel)+
-                                        "\" luck=\""+std::to_string(roadMonster.luck)+
-                                        "\"/>\n";
+                                //monster by lowercase NAME when known; min==max collapses to level=
+                                additionalXmlInfo+="    <monster id=\""+LoadMapAll::monsterRef(roadMonster.monsterId,config).toStdString()+"\"";
+                                if(roadMonster.minLevel==roadMonster.maxLevel)
+                                    additionalXmlInfo+=" level=\""+std::to_string(roadMonster.minLevel)+"\"";
+                                else
+                                    additionalXmlInfo+=" minLevel=\""+std::to_string(roadMonster.minLevel)+
+                                            "\" maxLevel=\""+std::to_string(roadMonster.maxLevel)+"\"";
+                                additionalXmlInfo+=" luck=\""+std::to_string(roadMonster.luck)+"\"/>\n";
                                 roadMonsterIndex++;
                             }
-                            additionalXmlInfo+="  </grass>\n";
+                            additionalXmlInfo+="  </"+encounterTag+">\n";
                         }
                         //inline trainer <bot> defs for this chunk (renumbers the
                         //chunk's world bot objects to local ids) — the engine reads
                         //bots only from the map's own .xml.
                         additionalXmlInfo+=LoadMapAll::emitRoadBotsForChunk(tiledMap,x,y,singleMapWitdh,singleMapHeight,roadIndex,config).toStdString();
+                        std::string mapType="outdoor";
+                        std::string mapExtraAttributes;
+                        if(roadIndex.isCave)
+                        {
+                            mapType="cave";
+                            //darkness tint of an enclosed area (target.md §map type)
+                            mapExtraAttributes=" color=\"#000000\" alpha=\"60\"";
+                        }
                         if(!PartialMap::save(tiledMap,
                                          x*singleMapWitdh,y*singleMapHeight,
                                          x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                          file,
                                          recuesPoints,
-                                         "outdoor",zoneName,"Road "+std::to_string(roadIndex.roadIndex+1),
-                                         additionalXmlInfo
+                                         mapType,zoneName,"Road "+std::to_string(roadIndex.roadIndex+1),
+                                         additionalXmlInfo,true,true,mapExtraAttributes
                                          ))
                         {
                             std::cerr << "Unable to write " << file << "" << std::endl;
@@ -481,21 +529,33 @@ int main(int argc, char *argv[])
         QFile start(QCoreApplication::applicationDirPath()+"/dest/map/main/official/start.xml");
         if(start.open(QFile::WriteOnly))
         {
-            //const PartialMap::RecuesPoint &startPoint=recuesPoints.front();
-            /*if(recuesPoints.empty())
+            if(cityStarts.empty())
             {
-                std::cerr << "recuesPoints.empty() then can't do start.xml (abort)" << std::endl;
+                std::cerr << "no city start point found (abort)" << std::endl;
                 abort();
-            }*/
+            }
+            //lowest level first (then by name): that one is the "Normal" profile;
+            //the other low-level cities are extra profiles named after the city
+            //(active once a matching profile id exists in player/start.xml)
+            std::sort(cityStarts.begin(),cityStarts.end(),cityStartLess);
             QString content("<!--\n"
                             "/!\\ warning, directly put this information into db\n"
                             "/!\\ not check if x,y is into the range of the map\n"
                             "-->\n"
-                            "<profile>\n"
-                            "  <start id=\"Normal\">\n"
-                            "    <map x=\""+QString::number(startPoint.x)+"\" y=\""+QString::number(startPoint.y)+"\" file=\""+QString::fromStdString(startPoint.map)+"\"/>\n"
-                            "  </start>\n"
-                            "</profile>");
+                            "<profile>\n");
+            unsigned int indexStart=0;
+            while(indexStart<cityStarts.size())
+            {
+                const CityStart &cityStart=cityStarts.at(indexStart);
+                QString startId("Normal");
+                if(indexStart>0)
+                    startId=QString::fromStdString(cityStart.cityName);
+                content+="  <start id=\""+startId+"\">\n"
+                         "    <map x=\""+QString::number(cityStart.point.x)+"\" y=\""+QString::number(cityStart.point.y)+"\" file=\""+QString::fromStdString(cityStart.point.map)+"\"/>\n"
+                         "  </start>\n";
+                indexStart++;
+            }
+            content+="</profile>";
             QByteArray contentData(content.toUtf8());
             start.write(contentData.constData(),contentData.size());
             start.close();

@@ -32,8 +32,8 @@ levelmapmin=2
 levelmapscale=0.05
 mapHeight=40
 mapWidth=40
-mapXCount=6
-mapYCount=6
+mapXCount=64
+mapYCount=64
 maxCityLinks=3
 miniMapDivisor=4.0
 scale_City=3
@@ -42,6 +42,16 @@ scale_TerrainMoisure=0.1
 scale_Zone=0.1
 seed=400
 tileStep=4
+
+[city]
+; pkmn scaffold: the CC city templates/tiles do not exist in this datapack,
+; leave empty (no avenue/signs) until pkmn templates are made
+big\template=
+big\useAsBase=false
+big\signTiles=
+medium\template=
+medium\useAsBase=false
+medium\signTiles=
 
 [plants]
 ; tree-*.tmx templates reference CC tilesets internally -> wrong tree art for
@@ -52,6 +62,10 @@ tree-2\heightmoisurelist="1,1;1,2;1,3;1,4;1,5;1,6;2,1;2,2;2,3;2,4;2,5;2,6"
 tree-2\tmx=tree-2
 
 [road]
+; pkmn scaffold: no cave tiles decoded yet, feature off
+cave\percent=0
+cave\wallTile=
+cave\floorTile=
 bot\cashbase=100
 bot\cashexp=1.5
 bot\cashmonster=0.2
@@ -164,6 +178,8 @@ water\tsx=normal18.tsx
 [terrainGroup]
 
 [building]
+gymTypes="fire:#f38233->Charmander;water:#2E9EF3->Squirtle;grass:#71DA5E->Bulbasaur;electric:#FFEC10->Pikachu"
+typeXml=
 ; PKMN item ids from items.xml (95=Acro Bike, 96=Bicycle, 98=Escape Rope,
 ; 102=Honey, 107=Poke Doll) -> all valid sellables.
 ; *Skin = a folder NAME under skin/fighter or skin/bot (NOT a numeric index).
@@ -179,6 +195,10 @@ shopItems="95,96,98,102,107"
 shopSkin=boy
 
 [wildMonsters]
+1\name=Bulbasaur
+4\name=Charmander
+7\name=Squirtle
+25\name=Pikachu
 0\comment=key is the id
 0\heightmoisurelist=
 1\heightmoisurelist="1,1->10,10;1,2->10,10;1,3->10,10;1,4->10,10;1,5->10,10;1,6->10,10;2,1->10,10;2,2->10,10;2,3->10,10;2,4->10,10;2,5->10,10;2,6->10,10;3,1->10,10;3,2->10,10;3,3->10,10;3,4->10,10;3,5->10,10;3,6->10,10"

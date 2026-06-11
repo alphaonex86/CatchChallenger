@@ -19,7 +19,8 @@ extern std::vector<Tiled::SharedTileset> PartialMap_tilesets_hack;
 bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY,
                       const unsigned int &maxX, const unsigned int &maxY, const std::string &file, std::vector<RecuesPoint> &recuesPoints,
                       const std::string &type,const std::string &zone,const std::string &name,
-                      const std::string &additionalXmlInfo,const bool writeAdditionalData,const bool appendPath)
+                      const std::string &additionalXmlInfo,const bool writeAdditionalData,const bool appendPath,
+                      const std::string &mapExtraAttributes)
 {
     const unsigned int mapWidth=maxX-minX;
     const unsigned int mapHeight=maxY-minY;
@@ -66,12 +67,34 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
                 abort();
             }
             if(appendPath)
-                if(!QFile::exists(tilesetFileName))
+                if(!tilesetFileName.startsWith("/"))
                 {
-                    QString pathAppend=QCoreApplication::applicationDirPath()+"/dest/map/main/official/";
-                    if(!tilesetFileName.startsWith("/"))
-                        tilesetFileName=pathAppend+tilesetFileName;
+                    //resolve a RELATIVE tileset path against the official dir FIRST
+                    //(CWD resolution is ambiguous: e.g. ../../tileset/ also exists in
+                    //the tool's own source tree and leaked out-of-datapack paths into
+                    //the chunks); cleanPath: an embedded ".." would break the later
+                    //mapDir.relativeFilePath and emit a wrong-depth reference.
+                    const QString pathAppend=QCoreApplication::applicationDirPath()+"/dest/map/main/official/";
+                    const QString officialResolved=QDir::cleanPath(pathAppend+tilesetFileName);
+                    if(QFile::exists(officialResolved))
+                        tilesetFileName=officialResolved;
+                    else if(!QFile::exists(tilesetFileName))
+                        tilesetFileName=officialResolved;//official-anchored for the error message
                 }
+            if(appendPath)
+            {
+                //map/main/tileset/ is only a RUN-STAGING convenience (settings use
+                //main/tileset/ paths); the final datapack only has map/tileset/, so
+                //remap to the canonical copy before the reference is written
+                const QString mainTilesetDir=QDir::cleanPath(QCoreApplication::applicationDirPath()+"/dest/map/main/tileset")+"/";
+                const QString cleanedTilesetFileName=QDir::cleanPath(tilesetFileName);
+                if(cleanedTilesetFileName.startsWith(mainTilesetDir))
+                {
+                    const QString canonical=QCoreApplication::applicationDirPath()+"/dest/map/tileset/"+cleanedTilesetFileName.mid(mainTilesetDir.size());
+                    if(QFile::exists(canonical))
+                        tilesetFileName=canonical;
+                }
+            }
             QString tilesetPath(QFileInfo(tilesetFileName).absoluteFilePath());
 
             Tiled::MapReader reader;
@@ -229,7 +252,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         QFile xmlinfo(xmlPath);
         if(xmlinfo.open(QFile::WriteOnly))
         {
-            QString content("<map type=\""+QString::fromStdString(type)+"\"");
+            QString content("<map type=\""+QString::fromStdString(type)+"\""+QString::fromStdString(mapExtraAttributes));
             if(!zone.empty())
                 content+=" zone=\""+QString::fromStdString(zone)+"\"";
             content+=">\n"

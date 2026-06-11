@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="9" height="8" tilewidth="16" tileheight="16" infinite="0" nextobjectid="2">
+ <tileset firstgid="1" source="../../tileset/gym.tsx"/>
+ <tileset firstgid="1025" source="../../tileset/invisible.tsx"/>
+ <layer name="Collisions" width="9" height="8">
+  <data encoding="base64" compression="zlib">
+   eJwNwwVSAgEAAMATlC6lkTJJg7Aoafj/i9id2asgCEKGvfbGiFFjxk2YNGXajFlz3npn3oJFS5atWLXmvXUbNm3Z9sFHn3z2xVc7du3Zd+DQN9/98NORYydO/fLbH3/9c+bchUtX/rt249adew8ePXn2AvYtCkU=
+  </data>
+ </layer>
+ <objectgroup name="Moving">
+  <object id="1" type="teleport on push" gid="1027" x="64" y="128" width="16" height="16">
+   <properties>
+    <property name="map" value="floor-0"/>
+    <property name="x" value="5"/>
+    <property name="y" value="10"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

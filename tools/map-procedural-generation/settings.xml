@@ -12,8 +12,8 @@ levelmapmin=2
 levelmapscale=0.05
 mapHeight=44
 mapWidth=44
-mapXCount=9
-mapYCount=9
+mapXCount=64
+mapYCount=64
 maxCityLinks=3
 miniMapDivisor=4.0
 scale_City=3
@@ -23,6 +23,19 @@ scale_Zone=0.1
 seed=400
 tileStep=4
 
+[city]
+; avenue/plaza path terrain comes from these template tmx (template/<name>.tmx):
+; Walkable fill tile = path terrain, OnGrass 3x3 ring = border. Edit the tmx in
+; Tiled to change the terrain. useAsBase=true brushes the tmx itself, centered,
+; as the city base ground. signTiles = "tileset/idx" list; ONE style is picked
+; per city (signs near the border at the avenue entrances).
+big\template=city-big
+big\useAsBase=false
+big\signTiles="t1.tsx/100,t1.tsx/103"
+medium\template=city-medium
+medium\useAsBase=false
+medium\signTiles="t1.tsx/100"
+
 [plants]
 tree-1\heightmoisurelist="3,1;3,2;3,3;3,4;3,5;3,6"
 tree-1\tmx=tree-1
@@ -30,6 +43,11 @@ tree-2\heightmoisurelist="1,1;1,2;1,3;1,4;1,5;1,6;2,1;2,2;2,3;2,4;2,5;2,6"
 tree-2\tmx=tree-2
 
 [road]
+; cave\*: this percent of road chunks becomes a CAVE (corridor walled with
+; wallTile, ground floorTile, map type=cave + cave encounters)
+cave\percent=15
+cave\wallTile=Terra/20
+cave\floorTile=Terra/38
 bot\cashbase=100
 bot\cashexp=1.5
 bot\cashmonster=0.2
@@ -41,8 +59,8 @@ ledge\ledgebottom=740
 ledge\ledgechance=0.7
 ledge\ledgeleft=808
 ledge\ledgeright=810
-ledge\tsx=tileset/t1.tsx
-region\extratileset=wood->tileset/wood.tsx
+ledge\tsx=main/tileset/t1.tsx
+region\extratileset=wood->main/tileset/wood.tsx
 region\grass="grass->wood/320;mountain->wood/160;snow->wood/32"
 region\initialregion=300
 region\mountain_layer=Collisions
@@ -92,7 +110,7 @@ furniture\fridge\width=1
 furniture\fridge\offsetY=-1
 limitation\fridge\chance=0.8
 limitation\screen\chance=0.8
-tileset="terra->tileset/inside-terra.tsx,mobilier->tileset/inside-mobilier.tsx,invisible->tileset/invisible.tsx,invisible->tileset/t1.tsx"
+tileset="terra->main/tileset/inside-terra.tsx,mobilier->main/tileset/inside-mobilier.tsx,invisible->main/tileset/invisible.tsx,invisible->main/tileset/t1.tsx"
 walls\orange\layer="OnGrass"
 walls\orange\tiles="terra/3,terra/35"
 walls\gym\layer="OnGrass"
@@ -125,58 +143,65 @@ grass\layer=Walkable
 grass\outsideBorder=true
 grass\tileId=0
 grass\transition_tile="579,580,581,613,645,644,643,611,582,583,615,614"
-grass\transition_tsx=tileset/terra.tsx
-grass\tsx=tileset/terra.tsx
+grass\transition_tsx=main/tileset/terra.tsx
+grass\tsx=main/tileset/terra.tsx
 grass2\heightmoisurelist="1,5;1,6"
 grass2\layer=Walkable
 grass2\outsideBorder=true
 grass2\tileId=289
 grass2\transition_tile="256,257,258,290,322,321,320,288,259,260,292,291"
-grass2\transition_tsx=tileset/t1.tsx
-grass2\tsx=tileset/t1.tsx
+grass2\transition_tsx=main/tileset/t1.tsx
+grass2\tsx=main/tileset/t1.tsx
 mountain\heightmoisurelist="4,1;4,2;4,3"
 mountain\layer=Walkable
 mountain\outsideBorder=true
 mountain\tileId=353
 mountain\transition_tile="320,321,322,354,386,385,384,352,323,324,356,355"
-mountain\transition_tsx=tileset/terra.tsx
-mountain\tsx=tileset/terra.tsx
+mountain\transition_tsx=main/tileset/terra.tsx
+mountain\tsx=main/tileset/terra.tsx
 sand\heightmoisurelist="1,1"
 sand\layer=Walkable
 sand\outsideBorder=true
 sand\tileId=230
 sand\transition_tile="197,198,199,231,263,262,261,229,195,196,228,227"
-sand\transition_tsx=tileset/terra.tsx
-sand\tsx=tileset/terra.tsx
+sand\transition_tsx=main/tileset/terra.tsx
+sand\tsx=main/tileset/terra.tsx
 sand2\heightmoisurelist="2,1;3,1;3,2"
 sand2\layer=Walkable
 sand2\outsideBorder=true
 sand2\tileId=65
 sand2\transition_tile="293,294,295,327,359,358,357,325,387,388,420,419"
-sand2\transition_tsx=tileset/terra.tsx
-sand2\tsx=tileset/terra.tsx
+sand2\transition_tsx=main/tileset/terra.tsx
+sand2\tsx=main/tileset/terra.tsx
 snow\heightmoisurelist="4,4;4,5;4,6"
 snow\layer=Walkable
 snow\outsideBorder=true
 snow\tileId=134
 snow\transition_tile="101,102,103,135,167,166,165,133,131,132,164,163"
-snow\transition_tsx=tileset/terra.tsx
-snow\tsx=tileset/terra.tsx
+snow\transition_tsx=main/tileset/terra.tsx
+snow\tsx=main/tileset/terra.tsx
 water\heightmoisurelist="0,1;0,2;0,3;0,4;0,5;0,6"
 water\layer=Water
 water\outsideBorder=false
 water\tileId=192
 water\transition_tile="184,185,186,218,250,249,248,216,281,282,314,313"
-water\transition_tsx=tileset/terra.tsx
-water\tsx=tileset/animations.tsx
+water\transition_tsx=main/tileset/terra.tsx
+water\tsx=main/tileset/animations.tsx
 
 [terrainGroup]
 snowmountain\height=4
 snowmountain\layer=Collisions
 snowmountain\transition_tile="21,22,23,55,87,86,85,53,82,83,115,114"
-snowmountain\transition_tsx=tileset/terra.tsx
+snowmountain\transition_tsx=main/tileset/terra.tsx
 
 [wildMonsters]
+; name: display name of the id; generated xml then references the monster by
+; its lowercase name instead of the numeric id (the engine resolves both)
+1\name="Panthera fira"
+2\name=Elofly
+3\name=Conileaf
+8\name=Cochini
+22\name=Chenipode
 0\comment=key is the id
 0\heightmoisurelist=
 1\heightmoisurelist="1,1->10,10;1,2->10,10;1,3->10,10;1,4->10,10;1,5->10,10;1,6->10,10;2,1->10,10;2,2->10,10;2,3->10,10;2,4->10,10;2,5->10,10;2,6->10,10;3,1->10,10;3,2->10,10;3,3->10,10;3,4->10,10;3,5->10,10;3,6->10,10;4,1->10,10;4,2->10,10;4,3->10,10;4,4->10,10;4,5->10,10;4,6->10,10;5,1->10,10;5,2->10,10;5,3->10,10;5,4->10,10;5,5->10,10;5,6->10,10"
@@ -186,6 +211,13 @@ snowmountain\transition_tsx=tileset/terra.tsx
 8\heightmoisurelist="2,1->10,2;2,2->10,2;2,3->10,2;2,4->10,2;2,5->10,2;2,6->10,2"
 
 [building]
+; gymTypes: each gym picks one type; part of the trainer teams comes from the
+; type monster pool and the gym facade is recolored with the type color
+; (gym-<type> tileset generated into dest/map/tileset/ from tileset/gym.png).
+; Colors copied from CatchChallenger-datapack/monsters/type.xml; typeXml can
+; point to that file to read them at runtime instead.
+gymTypes="fire:#f38233->Panthera fira,Vivicinder;water:#2E9EF3->Dinoflop,Pharfan,Rhinocarpe;plant:#71DA5E->Conileaf,Viviphyta,Cowpignon;poison:#B46DC5->Chenipode,Exapode,Snaki;electric:#FFEC10->Coleorus,Vivitron;stone:#BF904E->Polyrock,Selket,Galnec"
+typeXml=
 ; key-building / bot generation (CatchChallenger-datapack).
 ; shopItems = numeric item ids that exist in items/items.xml.
 ; *Skin = a folder NAME under skin/bot (or skin/fighter), NOT an index.

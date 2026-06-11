@@ -1,6 +1,7 @@
 #include "LoadMap.h"
 
 #include <QDir>
+#include <QFile>
 #include <QCoreApplication>
 #include <iostream>
 
@@ -53,12 +54,23 @@ Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
 {
     QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
 
+    //canonical datapack tileset dir is map/tileset/; map/main/tileset/ is only a
+    //run-staging convenience (settings paths) and does not exist in the final
+    //datapack — written map references must point at the canonical copy
+    QString tsxResolved=tsx;
+    if(tsxResolved.startsWith("main/tileset/"))
+    {
+        const QString canonical="tileset/"+tsxResolved.mid(QString("main/tileset/").size());
+        if(QFile::exists(QCoreApplication::applicationDirPath()+"/dest/map/"+canonical))
+            tsxResolved=canonical;
+    }
+
     Tiled::MapReader reader;
-    Tiled::SharedTileset tilesetBase=reader.readTileset(QCoreApplication::applicationDirPath()+"/dest/map/"+tsx);
+    Tiled::SharedTileset tilesetBase=reader.readTileset(QCoreApplication::applicationDirPath()+"/dest/map/"+tsxResolved);
     if(tilesetBase==NULL)
     {
         std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString()
-                  << "/dest/map/" << tsx.toStdString() << " " << reader.errorString().toStdString() << std::endl;
+                  << "/dest/map/" << tsxResolved.toStdString() << " " << reader.errorString().toStdString() << std::endl;
         abort();
     }
     /*if(tilesetBase->tileWidth()!=tiledMap->tileWidth())
@@ -74,7 +86,7 @@ Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
     tiledMap->addTileset(tilesetBase);
 
     // FIX Libtiled v1.3.5: Tiled::SharedTileset.getFileName() no longer returns file path for some reason
-    QString tsx_abs_path = QCoreApplication::applicationDirPath()+"/dest/map/"+tsx;
+    QString tsx_abs_path = QCoreApplication::applicationDirPath()+"/dest/map/"+tsxResolved;
     QString tsx_relative_path = mapDir.relativeFilePath(tsx_abs_path);
 
     tilesetBase->setFileName(tsx_relative_path);
@@ -335,7 +347,7 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
 
     //add invisible tileset
     QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
-    QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/map/tileset/invisible.tsx").absoluteFilePath());
+    QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/map/main/tileset/invisible.tsx").absoluteFilePath());
     Tiled::MapReader reader;
     Tiled::SharedTileset tilesetBase=reader.readTileset(tilesetPath);
     if(tilesetBase==NULL)
