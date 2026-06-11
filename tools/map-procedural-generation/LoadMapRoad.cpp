@@ -1716,130 +1716,64 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 {
                     if((unsigned int)(rand()%100)<setting.cavePercent)
                     {
-                        //side order: left,right,top,bottom — border middle points
-                        const int sideBorderX[4]={0,(int)mapWidth-1,(int)mapWidth/2,(int)mapWidth/2};
-                        const int sideBorderY[4]={(int)mapHeight/2,(int)mapHeight/2,0,(int)mapHeight-1};
-                        const Orientation sideOrientation[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
-                        const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                        //the cave is NEVER dropped: the chunk is SEALED with a
+                        //cliff ring along its whole perimeter (CC borders are
+                        //crossable along the full edge) and each road connection
+                        //gets a walled POCKET bay whose only way through is the
+                        //mouth in the pocket wall — bypass impossible by design
                         CavePlan plan;
                         plan.depth=1;
-                        {
-                            int side=0;
-                            while(side<4)
-                            {
-                                plan.sides[side].used=0;
-                                side++;
-                            }
-                        }
-                        bool planOk=true;
-                        //region label per tile: 0 unseen, 1.. = the side that reached it
-                        std::vector<unsigned char> region(mapWidth*mapHeight,0);
-                        std::vector<int> parent(mapWidth*mapHeight,-1);
+                        const int mid[4]={(int)mapHeight/2,(int)mapHeight/2,(int)mapWidth/2,(int)mapWidth/2};
                         int side=0;
-                        while(side<4 && planOk)
+                        while(side<4)
                         {
+                            CavePlanSide &planSide=plan.sides[side];
+                            planSide.used=0;
+                            const Orientation sideOrientation[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
                             if((zoneOrientation&sideOrientation[side])!=0)
                             {
-                                const int startX=sideBorderX[side];
-                                const int startY=sideBorderY[side];
-                                const unsigned int startCell=startX+startY*mapWidth;
-                                const bool startBlocked=
-                                        colliLayer->cellAt(x*mapWidth+startX,y*mapHeight+startY).tile()!=NULL
-                                        || waterLayer->cellAt(x*mapWidth+startX,y*mapHeight+startY).tile()!=NULL;
-                                if(startBlocked)
-                                    planOk=false;//the connection point itself is not open
-                                else if(region[startCell]!=0)
-                                    planOk=false;//reachable from another side: the cave could be bypassed
+                                planSide.used=1;
+                                planSide.floor=0;
+                                if(side==0)//left pocket: mouth in its top wall, faces bottom
+                                {
+                                    planSide.mouthKind=1;
+                                    planSide.mouthX=2;
+                                    planSide.mouthY=mid[0]-3;
+                                }
+                                else if(side==1)//right pocket
+                                {
+                                    planSide.mouthKind=1;
+                                    planSide.mouthX=(int)mapWidth-3;
+                                    planSide.mouthY=mid[1]-3;
+                                }
+                                else if(side==2)//top pocket: the player sees the cliff TOP
+                                {
+                                    planSide.mouthKind=2;
+                                    planSide.mouthX=mid[2];
+                                    planSide.mouthY=4;
+                                }
+                                else//bottom pocket
+                                {
+                                    planSide.mouthKind=1;
+                                    planSide.mouthX=mid[3];
+                                    planSide.mouthY=(int)mapHeight-5;
+                                }
+                                //the cell in front of the mouth, inside the pocket
+                                if(planSide.mouthKind==1)
+                                {
+                                    planSide.landX=planSide.mouthX;
+                                    planSide.landY=planSide.mouthY+1;
+                                }
                                 else
                                 {
-                                    //flood this side's open region and find the FIRST cliff
-                                    //collision reachable above (mouth, cliff faces bottom) or
-                                    //below (mouth, cliff faces top) a region cell
-                                    std::vector<unsigned int> queue;
-                                    region[startCell]=side+1;
-                                    parent[startCell]=-2;//start marker
-                                    queue.push_back(startCell);
-                                    int mouthFront=-1;
-                                    uint8_t mouthKind=0;
-                                    unsigned int queueIndex=0;
-                                    while(queueIndex<queue.size())
-                                    {
-                                        const unsigned int current=queue.at(queueIndex);
-                                        const int cx=current%mapWidth;
-                                        const int cy=current/mapWidth;
-                                        if(mouthFront<0)
-                                        {
-                                            if(cy>0 && colliLayer->cellAt(x*mapWidth+cx,y*mapHeight+cy-1).tile()!=NULL
-                                                    && (waterLayer->cellAt(x*mapWidth+cx,y*mapHeight+cy-1).tile()==NULL))
-                                            {
-                                                mouthFront=current;
-                                                mouthKind=1;//cliff above the player: its face looks bottom
-                                            }
-                                            else if(cy<(int)mapHeight-1 && colliLayer->cellAt(x*mapWidth+cx,y*mapHeight+cy+1).tile()!=NULL
-                                                    && (waterLayer->cellAt(x*mapWidth+cx,y*mapHeight+cy+1).tile()==NULL))
-                                            {
-                                                mouthFront=current;
-                                                mouthKind=2;//cliff below: the player sees its top
-                                            }
-                                        }
-                                        const int nextDx[4]={0,0,-1,1};
-                                        const int nextDy[4]={-1,1,0,0};
-                                        int direction=0;
-                                        while(direction<4)
-                                        {
-                                            const int nx=cx+nextDx[direction];
-                                            const int ny=cy+nextDy[direction];
-                                            if(nx>=0 && ny>=0 && nx<(int)mapWidth && ny<(int)mapHeight)
-                                            {
-                                                const unsigned int next=nx+ny*mapWidth;
-                                                if(region[next]==0
-                                                        && colliLayer->cellAt(x*mapWidth+nx,y*mapHeight+ny).tile()==NULL
-                                                        && waterLayer->cellAt(x*mapWidth+nx,y*mapHeight+ny).tile()==NULL)
-                                                {
-                                                    region[next]=side+1;
-                                                    parent[next]=current;
-                                                    queue.push_back(next);
-                                                }
-                                            }
-                                            direction++;
-                                        }
-                                        queueIndex++;
-                                    }
-                                    if(mouthFront<0)
-                                        planOk=false;//no cliff to host the mouth on this side
-                                    else
-                                    {
-                                        CavePlanSide &planSide=plan.sides[side];
-                                        planSide.used=1;
-                                        planSide.mouthKind=mouthKind;
-                                        planSide.landX=mouthFront%mapWidth;
-                                        planSide.landY=mouthFront/mapWidth;
-                                        planSide.mouthX=planSide.landX;
-                                        planSide.mouthY=(mouthKind==1) ? planSide.landY-1 : planSide.landY+1;
-                                        planSide.floor=0;
-                                        //no vegetation on the approach: mask the BFS path
-                                        int walkCell=mouthFront;
-                                        while(walkCell>=0)
-                                        {
-                                            const unsigned int tx=x*mapWidth+walkCell%mapWidth;
-                                            const unsigned int ty=y*mapHeight+walkCell/mapWidth;
-                                            const unsigned int bitMask=tx+ty*worldMap.width();
-                                            if(bitMask/8<maxMapSize)
-                                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                            walkCell=parent.at(walkCell);
-                                            if(walkCell==-2)
-                                                walkCell=-1;
-                                        }
-                                    }
+                                    planSide.landX=planSide.mouthX;
+                                    planSide.landY=planSide.mouthY-1;
                                 }
                             }
                             side++;
                         }
-                        if(planOk)
-                        {
-                            roadCoordToIndex[x][y].isCave=true;
-                            cavePlans[std::pair<uint16_t,uint16_t>(x,y)]=plan;
-                        }
+                        roadCoordToIndex[x][y].isCave=true;
+                        cavePlans[std::pair<uint16_t,uint16_t>(x,y)]=plan;
                     }
                 }
 
@@ -3144,11 +3078,12 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     }
                 }
 
-                //CAVE chunk overworld: NATURAL terrain only. The mouths sit
-                //directly ON the cliff collision line found at plan time: the
-                //entrance tile when the cliff faces bottom, the top-pit tile
-                //(terra 19 style) when the cliff faces top. No breach: the
-                //cliff stays closed, the only way through is the cave.
+                //CAVE chunk overworld: the chunk is SEALED by a cliff ring on
+                //its whole perimeter (the engine crosses borders along the full
+                //edge); each road connection has a cliff-walled POCKET bay open
+                //to the border, and the only way through is the MOUTH in the
+                //pocket wall (entranceTile when the cliff faces bottom, the
+                //terra-19 style entranceTopTile when the player sees its top)
                 if(chunkIsCave && caveTilesOk
                         && cavePlans.find(std::pair<uint16_t,uint16_t>(x,y))!=cavePlans.cend()){
                     Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
@@ -3158,10 +3093,136 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     const CavePlan &plan=cavePlans.at(std::pair<uint16_t,uint16_t>(x,y));
                     if(movingGroup!=NULL && entranceTile!=NULL && entranceTopTile!=NULL && !caveBase.empty())
                     {
+                        const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                        const int midRow=(int)mapHeight/2;
+                        const int midColumn=(int)mapWidth/2;
+                        //wall cells marked first, ring tiles resolved by a second
+                        //pass so each gets the edge matching its real neighbors
+                        std::vector<unsigned char> wallCell(mapWidth*mapHeight,0);
+                        std::vector<unsigned char> floorCell(mapWidth*mapHeight,0);
+                        //perimeter ring, except the pocket bays
+                        {
+                            int lx=0;
+                            while(lx<(int)mapWidth)
+                            {
+                                wallCell[lx+0*mapWidth]=1;
+                                wallCell[lx+(mapHeight-1)*mapWidth]=1;
+                                lx++;
+                            }
+                            int ly=0;
+                            while(ly<(int)mapHeight)
+                            {
+                                wallCell[0+ly*mapWidth]=1;
+                                wallCell[(mapWidth-1)+ly*mapWidth]=1;
+                                ly++;
+                            }
+                        }
                         int side=0;
                         while(side<4)
                         {
                             const CavePlanSide &planSide=plan.sides[side];
+                            if(planSide.used!=0)
+                            {
+                                //pocket geometry: bay open at the border middle,
+                                //floor pocket, C-shaped wall sealing it inside
+                                int perp=-3;
+                                while(perp<=3)
+                                {
+                                    int depthStep=0;
+                                    while(depthStep<=4)
+                                    {
+                                        int lx,ly;
+                                        if(side==0){ lx=depthStep; ly=midRow+perp; }
+                                        else if(side==1){ lx=(int)mapWidth-1-depthStep; ly=midRow+perp; }
+                                        else if(side==2){ lx=midColumn+perp; ly=depthStep; }
+                                        else { lx=midColumn+perp; ly=(int)mapHeight-1-depthStep; }
+                                        const unsigned int cell=lx+ly*mapWidth;
+                                        if(perp==-3 || perp==3 || depthStep==4)
+                                            wallCell[cell]=1;//pocket wall (and overrides the bay)
+                                        else
+                                        {
+                                            wallCell[cell]=0;//the bay stays open to the border
+                                            floorCell[cell]=1;
+                                        }
+                                        depthStep++;
+                                    }
+                                    perp++;
+                                }
+                            }
+                            side++;
+                        }
+                        //paint: clear the pocket floors, wall placeholder
+                        {
+                            unsigned int ly=0;
+                            while(ly<mapHeight)
+                            {
+                                unsigned int lx=0;
+                                while(lx<mapWidth)
+                                {
+                                    const unsigned int tx=x*mapWidth+lx;
+                                    const unsigned int ty=y*mapHeight+ly;
+                                    const unsigned int cell=lx+ly*mapWidth;
+                                    if(wallCell[cell]!=0 || floorCell[cell]!=0)
+                                    {
+                                        colliLayer->setCell(tx,ty,empty);
+                                        grassLayer->setCell(tx,ty,empty);
+                                        if(onGrassLayer!=NULL)
+                                            onGrassLayer->setCell(tx,ty,empty);
+                                        if(waterLayer!=NULL)
+                                            waterLayer->setCell(tx,ty,empty);
+                                        if(wallCell[cell]!=0)
+                                            colliLayer->setCell(tx,ty,Tiled::Cell(mountainTiles.at(0)));
+                                        //no vegetation on the walls or in the pockets
+                                        const unsigned int bitMask=tx+ty*worldMap.width();
+                                        if(bitMask/8<maxMapSize)
+                                            MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                    }
+                                    lx++;
+                                }
+                                ly++;
+                            }
+                        }
+                        //second pass: give each wall cell the cliff edge matching
+                        //its walkable neighbors (same ring as the terrain mountains)
+                        {
+                            unsigned int ly=0;
+                            while(ly<mapHeight)
+                            {
+                                unsigned int lx=0;
+                                while(lx<mapWidth)
+                                {
+                                    if(wallCell[lx+ly*mapWidth]!=0)
+                                    {
+                                        const unsigned int tx=x*mapWidth+lx;
+                                        const unsigned int ty=y*mapHeight+ly;
+                                        uint8_t walkableMask=0;
+                                        const int neighborDx[8]={-1,0,1,-1,1,-1,0,1};
+                                        const int neighborDy[8]={-1,-1,-1,0,0,1,1,1};
+                                        const uint8_t neighborBit[8]={1,2,4,8,16,32,64,128};
+                                        int neighbor=0;
+                                        while(neighbor<8)
+                                        {
+                                            const int ntx=(int)tx+neighborDx[neighbor];
+                                            const int nty=(int)ty+neighborDy[neighbor];
+                                            if(ntx>=0 && nty>=0 && ntx<worldMap.width() && nty<worldMap.height())
+                                                if(colliLayer->cellAt(ntx,nty).tile()==NULL
+                                                        && (waterLayer==NULL || waterLayer->cellAt(ntx,nty).tile()==NULL))
+                                                    walkableMask|=neighborBit[neighbor];
+                                            neighbor++;
+                                        }
+                                        if(walkableMask!=0 && mountainTiles.size()>=12)
+                                            colliLayer->setCell(tx,ty,Tiled::Cell(mountainTiles.at(mountainBorderTileIndex(walkableMask))));
+                                    }
+                                    lx++;
+                                }
+                                ly++;
+                            }
+                        }
+                        //the mouths + the teleports into each side's floor
+                        int mouthSide=0;
+                        while(mouthSide<4)
+                        {
+                            const CavePlanSide &planSide=plan.sides[mouthSide];
                             if(planSide.used!=0)
                             {
                                 const unsigned int htx=x*mapWidth+planSide.mouthX;
@@ -3170,8 +3231,6 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                     colliLayer->setCell(htx,hty,Tiled::Cell(entranceTile));
                                 else
                                     colliLayer->setCell(htx,hty,Tiled::Cell(entranceTopTile));
-                                //pushing into the mouth enters the side's floor,
-                                //landing in front of the matching interior exit
                                 std::string targetMap=caveBase;
                                 if(planSide.floor>0)
                                     targetMap+="-"+std::to_string(planSide.floor+1);
@@ -3186,7 +3245,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 hole->setCell(holeCell);
                                 movingGroup->addObject(hole);
                             }
-                            side++;
+                            mouthSide++;
                         }
                     }
                 }
