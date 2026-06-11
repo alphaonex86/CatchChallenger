@@ -155,6 +155,16 @@ public:
     //lowercase monster name when configured ([wildMonsters] <id>\name), else the id
     static QString monsterRef(const uint16_t &monsterId, const SettingsAll::SettingsExtra &setting);
     static bool isCaveChunk(const unsigned int &x, const unsigned int &y);
+    //interior map base name of a cave chunk, e.g. "2-cave" (same folder as the chunk)
+    static std::string caveInteriorBaseName(const unsigned int &x, const unsigned int &y);
+    //paint the cave corridor over the chunk region of the WORLD map and write it as
+    //the separate <chunk>-cave.tmx interior (type=cave, encounters + trainers);
+    //call AFTER the natural overworld chunk has been saved — the region is consumed
+    static bool writeCaveInterior(Tiled::Map &worldMap,
+                                  const unsigned int &chunkX, const unsigned int &chunkY,
+                                  const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
+                                  const RoadIndex &roadIndex, const SettingsAll::SettingsExtra &setting,
+                                  const std::string &overworldFile, const std::string &zoneName);
     //recolor the gym tileset blue parts with each gym type color and write
     //gym-<type>.png/.tsx into dest/map/tileset/ (the lower sprite parts sit exactly
     //128px below their position in the building and act as the recolor mask)
@@ -173,6 +183,15 @@ public:
     };
     static CityGround cityGroundBig;
     static CityGround cityGroundMedium;
+    //city sign cells: re-asserted AFTER vegetation so a tree canopy (WalkBehind)
+    //or any later decoration can never hide a sign
+    struct CitySign
+    {
+        unsigned int x,y;
+        Tiled::Cell cell;
+    };
+    static std::vector<CitySign> citySigns;
+    static void reassertCitySigns(Tiled::Map &worldMap);
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,

@@ -57,6 +57,20 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("wallTile","");
     if(!settings.contains("floorTile"))
         settings.setValue("floorTile","");
+    if(!settings.contains("entranceTile"))
+        settings.setValue("entranceTile","");
+    if(!settings.contains("stairDownTile"))
+        settings.setValue("stairDownTile","");
+    if(!settings.contains("stairUpTile"))
+        settings.setValue("stairUpTile","");
+    if(!settings.contains("itemTile"))
+        settings.setValue("itemTile","");
+    if(!settings.contains("maxDepth"))
+        settings.setValue("maxDepth",3);
+    if(!settings.contains("itemPercent"))
+        settings.setValue("itemPercent",60);
+    if(!settings.contains("items"))
+        settings.setValue("items","");
     settings.endGroup();
     settings.beginGroup("ledge");
     if(!settings.contains("doledge"))
@@ -220,6 +234,27 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.cavePercent=settings.value("percent",15).toUInt();
     config.caveWallTile=settings.value("wallTile","").toString();
     config.caveFloorTile=settings.value("floorTile","").toString();
+    config.caveEntranceTile=settings.value("entranceTile","").toString();
+    config.caveStairDownTile=settings.value("stairDownTile","").toString();
+    config.caveStairUpTile=settings.value("stairUpTile","").toString();
+    config.caveItemTile=settings.value("itemTile","").toString();
+    config.caveMaxDepth=settings.value("maxDepth",3).toUInt();
+    if(config.caveMaxDepth<1)
+        config.caveMaxDepth=1;
+    config.caveItemPercent=settings.value("itemPercent",60).toUInt();
+    config.caveItems.clear();
+    {
+        const QStringList caveItemsList=settings.value("items","").toString().split(",");
+        unsigned int indexItem=0;
+        while(indexItem<(unsigned int)caveItemsList.size())
+        {
+            bool ok=false;
+            const unsigned int itemId=caveItemsList.at(indexItem).trimmed().toUInt(&ok);
+            if(ok)
+                config.caveItems.push_back(itemId);
+            indexItem++;
+        }
+    }
     settings.endGroup();
     settings.beginGroup("ledge");
     config.doledge=settings.value("doledge").toBool();

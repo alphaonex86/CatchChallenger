@@ -99,10 +99,23 @@ public:
         std::vector<std::string> cityBigSignTiles;
         std::vector<std::string> cityMediumSignTiles;
 
-        //[road] cave\*: percent of road chunks turned into a cave (walled corridor)
+        //[road] cave\*: percent of road chunks turned into a cave. The overworld
+        //keeps its NATURAL terrain — only a small pocket + the cave mouth
+        //(entranceTile) appears at each road connection; the walled corridor is a
+        //separate <chunk>-cave.tmx interior map reached through the mouth.
+        //wallTile may be a comma list of 9 tiles (3x3 repeating block).
+        //Some caves go DEEPER (up to maxDepth levels linked by stair tiles, +2
+        //monster levels per floor) and may hold ground items (itemTile visual).
         unsigned int cavePercent;
         QString caveWallTile;
         QString caveFloorTile;
+        QString caveEntranceTile;
+        QString caveStairDownTile;
+        QString caveStairUpTile;
+        QString caveItemTile;
+        unsigned int caveMaxDepth;
+        unsigned int caveItemPercent;
+        std::vector<unsigned int> caveItems;
 
         //[building] gymTypes="type[:#color]->Mon1,Mon2;...": each gym picks a type;
         //some trainer monsters are replaced by that type's pool, and the gym tileset

@@ -262,13 +262,8 @@ int main(int argc, char *argv[])
                                     MapBrush::mapMask[bit/8]|=(1<<(7-bit%8));
                                 }
                             }
-                            else if(LoadMapAll::isCaveChunk(tx/mw, ty/mh))
-                            {
-                                //a cave chunk is fully enclosed rock: no vegetation
-                                //at all, border included
-                                const unsigned int bit=tx+ty*Wt;
-                                MapBrush::mapMask[bit/8]|=(1<<(7-bit%8));
-                            }
+                            //cave chunk: NATURAL vegetation everywhere (the cave is
+                            //interior-only); its mouth pockets are masked at carve time
                             tx++;
                         }
                         ty++;
@@ -276,6 +271,8 @@ int main(int argc, char *argv[])
                 }
                 t.start();
                 MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
+                //a tree canopy (WalkBehind) must never hide a city sign
+                LoadMapAll::reassertCitySigns(tiledMap);
                 qDebug("Vegetation took %lld ms", t.elapsed());
             }
             t.start();
@@ -465,11 +462,12 @@ int main(int argc, char *argv[])
                         }
 
                         std::string additionalXmlInfo;
-                        if(!roadIndex.roadMonsters.empty())
+                        //a cave chunk overworld is natural terrain: no tall grass,
+                        //no encounters, no trainers — all of that lives in the
+                        //separate -cave interior map
+                        if(!roadIndex.roadMonsters.empty() && !roadIndex.isCave)
                         {
-                            //a cave chunk uses the engine's cave encounter group
-                            const std::string encounterTag=roadIndex.isCave ? "cave" : "grass";
-                            additionalXmlInfo+="  <"+encounterTag+">\n";
+                            additionalXmlInfo+="  <grass>\n";
                             unsigned int roadMonsterIndex=0;
                             while(roadMonsterIndex<roadIndex.roadMonsters.size())
                             {
@@ -484,31 +482,34 @@ int main(int argc, char *argv[])
                                 additionalXmlInfo+=" luck=\""+std::to_string(roadMonster.luck)+"\"/>\n";
                                 roadMonsterIndex++;
                             }
-                            additionalXmlInfo+="  </"+encounterTag+">\n";
+                            additionalXmlInfo+="  </grass>\n";
                         }
                         //inline trainer <bot> defs for this chunk (renumbers the
                         //chunk's world bot objects to local ids) — the engine reads
                         //bots only from the map's own .xml.
                         additionalXmlInfo+=LoadMapAll::emitRoadBotsForChunk(tiledMap,x,y,singleMapWitdh,singleMapHeight,roadIndex,config).toStdString();
-                        std::string mapType="outdoor";
-                        std::string mapExtraAttributes;
-                        if(roadIndex.isCave)
-                        {
-                            mapType="cave";
-                            //darkness tint of an enclosed area (target.md §map type)
-                            mapExtraAttributes=" color=\"#000000\" alpha=\"60\"";
-                        }
                         if(!PartialMap::save(tiledMap,
                                          x*singleMapWitdh,y*singleMapHeight,
                                          x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                          file,
                                          recuesPoints,
-                                         mapType,zoneName,"Road "+std::to_string(roadIndex.roadIndex+1),
-                                         additionalXmlInfo,true,true,mapExtraAttributes
+                                         "outdoor",zoneName,"Road "+std::to_string(roadIndex.roadIndex+1),
+                                         additionalXmlInfo
                                          ))
                         {
                             std::cerr << "Unable to write " << file << "" << std::endl;
                             abort();
+                        }
+                        //the cave interior: painted over the (already saved) region
+                        //and written as <chunk>-cave.tmx, reached through the mouth
+                        if(roadIndex.isCave)
+                        {
+                            if(!LoadMapAll::writeCaveInterior(tiledMap,x,y,singleMapWitdh,singleMapHeight,
+                                                              roadIndex,config,file,zoneName))
+                            {
+                                std::cerr << "Unable to write the cave interior of " << file << std::endl;
+                                abort();
+                            }
                         }
                     }
                     else
