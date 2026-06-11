@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class Naming;
@@ -150,7 +151,10 @@ private:
     // Register an animation (its frames + "<ms>ms;<n>frames") in the global anim
     // collection (de-duplicated by frame content, laid out 1 animation per row);
     // returns the GLOBAL index of its first frame.
-    int registerGlobalAnim(const std::vector<QImage> &frames, const std::string &animStr);
+    // ambient = loops on its own (water/flowers/lava): gets a standard Tiled
+    // <animation> in the .tsx so the editor previews it.  A door does NOT (it
+    // only animates on player action).
+    int registerGlobalAnim(const std::vector<QImage> &frames, const std::string &animStr, bool ambient);
     void emitGlobalAnim();
 
     const GbaRom &rom_;
@@ -160,6 +164,7 @@ private:
     std::vector<QImage> globalAnims_;                      // ONE shared anim tileset
     std::unordered_map<std::string,int> globalAnimSeen_;   // frame-sequence -> first index
     std::unordered_map<int,std::string> globalAnimStr_;    // first index -> "<ms>ms;<n>frames"
+    std::unordered_set<int> globalAnimAmbient_;             // first indices that self-loop (not doors)
     int globalAnimCols_;                                   // anim sheet width (1 anim/row)
     mutable std::map<uint64_t,Gen3Tileset *> cache_;
     mutable std::map<std::pair<uint64_t,uint16_t>,bool> overOpaqueCache_;
