@@ -1747,21 +1747,48 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             {
                                 planSide.used=1;
                                 planSide.floor=0;
-                                //first natural cliff on the straight approach line?
+                                //first natural cliff on the approach? The mouth may
+                                //NEVER sit on a cliff CORNER: both flank neighbors
+                                //(perpendicular to the approach) must be cliff too;
+                                //a corner blocks that line, try the parallel ones
                                 int mouthStep=-1;
+                                int mouthPerp=0;
                                 {
-                                    int step=1;
-                                    while(step<=12 && mouthStep<0)
+                                    const int perpOrder[3]={0,-1,1};
+                                    int perpIndex=0;
+                                    while(perpIndex<3 && mouthStep<0)
                                     {
-                                        const int lx=borderX[side]+dirX[side]*step;
-                                        const int ly=borderY[side]+dirY[side]*step;
-                                        if(lx<1 || ly<1 || lx>=(int)mapWidth-1 || ly>=(int)mapHeight-1)
-                                            break;
-                                        if(waterLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()!=NULL)
-                                            break;//water ahead: stand the outcrop before it
-                                        if(colliLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()!=NULL)
-                                            mouthStep=step;
-                                        step++;
+                                        const int perp=perpOrder[perpIndex];
+                                        bool lineBlocked=false;
+                                        int step=1;
+                                        while(step<=12 && mouthStep<0 && !lineBlocked)
+                                        {
+                                            const int lx=borderX[side]+dirX[side]*step+dirY[side]*perp;
+                                            const int ly=borderY[side]+dirY[side]*step+dirX[side]*perp;
+                                            if(lx<1 || ly<1 || lx>=(int)mapWidth-1 || ly>=(int)mapHeight-1)
+                                                break;
+                                            if(waterLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()!=NULL)
+                                                break;//water ahead: stand the outcrop before it
+                                            if(colliLayer->cellAt(x*mapWidth+lx,y*mapHeight+ly).tile()!=NULL)
+                                            {
+                                                const int flankAx=lx+dirY[side];
+                                                const int flankAy=ly+dirX[side];
+                                                const int flankBx=lx-dirY[side];
+                                                const int flankBy=ly-dirX[side];
+                                                if(flankAx>=0 && flankAy>=0 && flankAx<(int)mapWidth && flankAy<(int)mapHeight
+                                                        && flankBx>=0 && flankBy>=0 && flankBx<(int)mapWidth && flankBy<(int)mapHeight
+                                                        && colliLayer->cellAt(x*mapWidth+flankAx,y*mapHeight+flankAy).tile()!=NULL
+                                                        && colliLayer->cellAt(x*mapWidth+flankBx,y*mapHeight+flankBy).tile()!=NULL)
+                                                {
+                                                    mouthStep=step;
+                                                    mouthPerp=perp;
+                                                }
+                                                else
+                                                    lineBlocked=true;//corner piece: cannot pass it
+                                            }
+                                            step++;
+                                        }
+                                        perpIndex++;
                                     }
                                 }
                                 if(mouthStep>0)
@@ -1769,10 +1796,10 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     //mouth embedded in the natural cliff
                                     planSide.outcrop=0;
                                     planSide.mouthKind=(side==2) ? 2 : 1;//from the top the player sees the cliff top
-                                    planSide.mouthX=borderX[side]+dirX[side]*mouthStep;
-                                    planSide.mouthY=borderY[side]+dirY[side]*mouthStep;
-                                    planSide.landX=borderX[side]+dirX[side]*(mouthStep-1);
-                                    planSide.landY=borderY[side]+dirY[side]*(mouthStep-1);
+                                    planSide.mouthX=borderX[side]+dirX[side]*mouthStep+dirY[side]*mouthPerp;
+                                    planSide.mouthY=borderY[side]+dirY[side]*mouthStep+dirX[side]*mouthPerp;
+                                    planSide.landX=borderX[side]+dirX[side]*(mouthStep-1)+dirY[side]*mouthPerp;
+                                    planSide.landY=borderY[side]+dirY[side]*(mouthStep-1)+dirX[side]*mouthPerp;
                                 }
                                 else
                                 {
@@ -2607,17 +2634,25 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                         bool candidate=false;
                                         if(topStyle)
                                         {
-                                            //the GAP: blocked, floor below, blocked above (door)
+                                            //the GAP: blocked, floor below, blocked above (door);
+                                            //gap AND door flanked by wall (never a corner)
                                             candidate=!caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly)
                                                     && caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly+1)
                                                     && !caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly-1)
+                                                    && !caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx-1,ly)
+                                                    && !caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx+1,ly)
+                                                    && !caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx-1,ly-1)
+                                                    && !caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx+1,ly-1)
                                                     && ly-1>=1;
                                         }
                                         else
                                         {
-                                            //the DOOR: blocked, floor directly above
+                                            //the DOOR: blocked, floor directly above,
+                                            //flanked by wall on both sides (never a corner)
                                             candidate=!caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly)
-                                                    && caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly-1);
+                                                    && caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly-1)
+                                                    && !caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx-1,ly)
+                                                    && !caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx+1,ly);
                                         }
                                         if(candidate)
                                         {
