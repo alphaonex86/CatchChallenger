@@ -19,6 +19,7 @@
 #include <QFileDialog>
 #include <QThreadPool>
 #include <QSemaphore>
+#include <QThread>
 
 #include "../../general/base/MoveOnTheMap.hpp"
 #include <tile.h>
@@ -34,7 +35,10 @@ QRegularExpression MapVisualiserOrder::regexTriggerAgain=QRegularExpression("^ag
 
 // Bounds the queued-but-not-yet-written images so a fast render loop can't
 // pile hundreds of QImage into RAM when the encoders lag behind.
-static QSemaphore pngSaveQueueSlots(16);
+// Sized from the runtime CPU count (QThreadPool::globalInstance() spawns
+// idealThreadCount() workers): one slot per encoder thread plus one queued
+// behind it, so every core stays fed without unbounded buffering.
+static QSemaphore pngSaveQueueSlots(QThread::idealThreadCount()*2);
 
 PngSaveTask::PngSaveTask(const QImage &image,const QString &destination) :
     image(image),
