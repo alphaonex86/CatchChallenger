@@ -59,6 +59,8 @@ public:
         CityType type;
         std::unordered_map<uint16_t,std::vector<Orientation> > nearRoad;//road number, Orientation
         uint8_t level;
+        //element type matched from the surrounding terrain (gym type follows it)
+        std::string elementType;
     };
     struct CityInternal
     {

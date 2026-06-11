@@ -1692,6 +1692,113 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
         haveCityMediumTemplate=true;
     }
 
+    //assign an ELEMENT TYPE to every city from its surrounding terrain (water
+    //city by the sea, stone in the mountains, plant in the grass...) while
+    //keeping the per-type counts balanced; the gym type follows the city type
+    if(!setting.gymTypeNames.empty() && !cities.empty())
+    {
+        std::vector<unsigned int> typeCount(setting.gymTypeNames.size(),0);
+        //similar ratio of each type: a terrain match only wins while its type
+        //is under the per-type quota, the rest goes to the least used types
+        const unsigned int typeQuota=(cities.size()+setting.gymTypeNames.size()-1)/setting.gymTypeNames.size();
+        unsigned int cityIndex=0;
+        while(cityIndex<cities.size())
+        {
+            City &city=cities[cityIndex];
+            //terrain profile of the chunk plus a 4-tile margin (the coast counts)
+            std::map<std::string,unsigned int> terrainCount;
+            {
+                const int x0=(int)(city.x*mapWidth)-4;
+                const int y0=(int)(city.y*mapHeight)-4;
+                const int x1=(int)((city.x+1)*mapWidth)+4;
+                const int y1=(int)((city.y+1)*mapHeight)+4;
+                int sampleY=y0;
+                while(sampleY<y1)
+                {
+                    int sampleX=x0;
+                    while(sampleX<x1)
+                    {
+                        if(sampleX>=0 && sampleY>=0 && sampleX<worldMap.width() && sampleY<worldMap.height())
+                        {
+                            //terrain by VORONOI zone (the layer tiles may sit on
+                            //transition groups at this stage): same lookup as the
+                            //terrain painter, terrainList[height][moisure-1]
+                            const unsigned int zoneIndex=VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex[sampleX+sampleY*worldMap.width()].index;
+                            const VoronioForTiledMapTmx::PolygonZone &zone=VoronioForTiledMapTmx::voronoiMap.zones.at(zoneIndex);
+                            if(zone.height<5 && zone.moisure>=1 && zone.moisure<=6)
+                                terrainCount[LoadMap::terrainList[zone.height][zone.moisure-1].terrainName.toLower().toStdString()]++;
+                        }
+                        sampleX+=2;
+                    }
+                    sampleY+=2;
+                }
+            }
+            //score the configured types by their terrain keywords; among the
+            //matching ones take the least used (similar ratio of each type)
+            int bestType=-1;
+            unsigned int bestScore=0,bestUsed=0;
+            unsigned int mappingIndex=0;
+            while(mappingIndex<setting.cityTypeTerrains.size())
+            {
+                const std::string &mappedType=setting.cityTypeTerrains.at(mappingIndex).first;
+                int typeIndex=-1;
+                {
+                    unsigned int gymIndex=0;
+                    while(gymIndex<setting.gymTypeNames.size())
+                    {
+                        if(setting.gymTypeNames.at(gymIndex)==mappedType)
+                            typeIndex=gymIndex;
+                        gymIndex++;
+                    }
+                }
+                if(typeIndex>=0)
+                {
+                    unsigned int score=0;
+                    const std::vector<std::string> &keywords=setting.cityTypeTerrains.at(mappingIndex).second;
+                    for(const std::pair<const std::string,unsigned int> &entry : terrainCount)
+                    {
+                        unsigned int keywordIndex=0;
+                        while(keywordIndex<keywords.size())
+                        {
+                            if(entry.first.find(keywords.at(keywordIndex))!=std::string::npos)
+                            {
+                                score+=entry.second;
+                                break;
+                            }
+                            keywordIndex++;
+                        }
+                    }
+                    if(score>0 && typeCount.at(typeIndex)<typeQuota)
+                    {
+                        if(bestType<0
+                                || typeCount.at(typeIndex)<bestUsed
+                                || (typeCount.at(typeIndex)==bestUsed && score>bestScore))
+                        {
+                            bestType=typeIndex;
+                            bestScore=score;
+                            bestUsed=typeCount.at(typeIndex);
+                        }
+                    }
+                }
+                mappingIndex++;
+            }
+            if(bestType<0)
+            {
+                //no terrain match: the least used type keeps the global ratio
+                unsigned int typeIndex=0;
+                while(typeIndex<typeCount.size())
+                {
+                    if(bestType<0 || typeCount.at(typeIndex)<typeCount.at(bestType))
+                        bestType=typeIndex;
+                    typeIndex++;
+                }
+            }
+            city.elementType=setting.gymTypeNames.at(bestType);
+            typeCount[bestType]++;
+            cityIndex++;
+        }
+    }
+
     if(water != NULL && water->tile != NULL){
         waterTile.setTile(water->tile);
     }else{
@@ -1988,7 +2095,17 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         MapBrush::MapTemplate gymTemplate=haveGymTemplate ? mapTemplategym : mapTemplatebuildingbig1;
                         if(!setting.gymTypeNames.empty())
                         {
-                            const unsigned int gymTypeIndex=rand()%setting.gymTypeNames.size();
+                            //the gym type MATCHES the city element type
+                            unsigned int gymTypeIndex=0;
+                            {
+                                unsigned int gymIndex=0;
+                                while(gymIndex<setting.gymTypeNames.size())
+                                {
+                                    if(setting.gymTypeNames.at(gymIndex)==city->elementType)
+                                        gymTypeIndex=gymIndex;
+                                    gymIndex++;
+                                }
+                            }
                             gymTypeName=setting.gymTypeNames.at(gymTypeIndex);
                             gymTypeMonsters=setting.gymTypeMonsters.at(gymTypeIndex);
                             if(haveGymTemplate && !setting.gymTypeColors.at(gymTypeIndex).isEmpty())

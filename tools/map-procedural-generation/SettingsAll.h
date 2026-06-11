@@ -126,6 +126,11 @@ public:
         std::vector<std::string> gymTypeNames;
         std::vector<QString> gymTypeColors;//"" = no recolored tileset for that type
         std::vector<std::vector<std::string> > gymTypeMonsters;
+        //[building] cityTypeTerrains="type->terrainKeyword,..;..": a city takes the
+        //ELEMENT TYPE whose terrain keywords match its surroundings (water city by
+        //the sea, stone in the mountains, plant in the grass...), counts kept
+        //balanced; the gym type always matches the city type
+        std::vector<std::pair<std::string,std::vector<std::string> > > cityTypeTerrains;
         //optional datapack monsters/type.xml: when set, type colors are read from it
         QString typeXml;
 

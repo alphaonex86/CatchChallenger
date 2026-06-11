@@ -171,6 +171,8 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     //colors come from the datapack monsters/type.xml (or inline after ':')
     if(!settings.contains("gymTypes"))
         settings.setValue("gymTypes","");
+    if(!settings.contains("cityTypeTerrains"))
+        settings.setValue("cityTypeTerrains","");
     if(!settings.contains("typeXml"))
         settings.setValue("typeXml","");
     settings.endGroup();
@@ -453,6 +455,39 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
                 }
                 else
                     qDebug() << "Syntaxe error into gymTypes entry: " << typeEntry;
+            }
+            indexType++;
+        }
+    }
+    config.cityTypeTerrains.clear();
+    {
+        //"type->terrainKeyword,terrainKeyword;type2->..."
+        const QStringList typeList=settings.value("cityTypeTerrains","").toString().split(";");
+        unsigned int indexType=0;
+        while(indexType<(unsigned int)typeList.size())
+        {
+            const QString &typeEntry=typeList.at(indexType).trimmed();
+            if(!typeEntry.isEmpty())
+            {
+                const QStringList typeSplit=typeEntry.split("->");
+                if(typeSplit.size()==2)
+                {
+                    const std::string typeName=typeSplit.at(0).trimmed().toLower().toStdString();
+                    std::vector<std::string> keywords;
+                    const QStringList keywordList=typeSplit.at(1).split(",");
+                    unsigned int indexKeyword=0;
+                    while(indexKeyword<(unsigned int)keywordList.size())
+                    {
+                        const std::string keyword=keywordList.at(indexKeyword).trimmed().toLower().toStdString();
+                        if(!keyword.empty())
+                            keywords.push_back(keyword);
+                        indexKeyword++;
+                    }
+                    if(!typeName.empty() && !keywords.empty())
+                        config.cityTypeTerrains.push_back(std::pair<std::string,std::vector<std::string> >(typeName,keywords));
+                }
+                else
+                    qDebug() << "Syntaxe error into cityTypeTerrains entry: " << typeEntry;
             }
             indexType++;
         }
