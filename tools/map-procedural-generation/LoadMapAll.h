@@ -12,6 +12,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <map>
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -106,11 +107,29 @@ public:
         std::vector<RoadBot> roadBot;
         //chunk converted to a cave (walled corridor, cave encounters)
         bool isCave;
-        //overworld landing tile in front of each mouth (side order: left,right,
-        //top,bottom; 255 = side unused) — the interior exits teleport there
-        uint8_t caveLandX[4];
-        uint8_t caveLandY[4];
     };
+    //plan of one cave chunk, decided at selection time: the chunk qualifies only
+    //when its road connections are SEPARATED by the natural terrain (cliffs) so
+    //the cave cannot be bypassed; each side enters through a mouth placed ON the
+    //cliff collision line and lands on its own floor (crossing may require going
+    //deeper through the stairs)
+    struct CavePlanSide
+    {
+        uint8_t used;//0 = side absent or no mouth found
+        uint8_t mouthKind;//1 = cliff faces bottom (entranceTile), 2 = cliff faces top (entranceTopTile)
+        uint8_t mouthX,mouthY;//overworld mouth, chunk-local tiles (on the cliff collision)
+        uint8_t landX,landY;//overworld cell in front of the mouth (exit landing)
+        uint8_t floor;//interior floor this side connects to
+        uint8_t exitX,exitY;//interior exit cell on the ring line (floor frame)
+        uint8_t exitLandX,exitLandY;//interior cell in front of the exit (entry landing)
+    };
+    struct CavePlan
+    {
+        uint8_t depth;
+        std::vector<std::pair<uint8_t,uint8_t> > stairCells;
+        CavePlanSide sides[4];//side order: left,right,top,bottom
+    };
+    static std::map<std::pair<uint16_t,uint16_t>,CavePlan> cavePlans;
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
     struct Zone
     {

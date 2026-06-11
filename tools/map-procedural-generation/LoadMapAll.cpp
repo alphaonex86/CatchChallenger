@@ -808,15 +808,6 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                         roadIndex.roadIndex=roadIntIndex;
                         roadIndex.level=0;
                         roadIndex.isCave=false;
-                        {
-                            int side=0;
-                            while(side<4)
-                            {
-                                roadIndex.caveLandX[side]=255;
-                                roadIndex.caveLandY[side]=255;
-                                side++;
-                            }
-                        }
 
                         //left tile
                         if(x>0)
