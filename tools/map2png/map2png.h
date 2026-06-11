@@ -56,6 +56,8 @@
 #include <QWidget>
 #include <QSet>
 #include <QMultiMap>
+#include <QRunnable>
+#include <QImage>
 
 namespace Tiled {
 class Map;
@@ -67,6 +69,19 @@ class MapRenderer;
 class Map_full;
 class TriggerAnimation;
 class MapDoor;
+
+// PNG deflate is >80% of a batch render's CPU time: encode/write on the
+// global QThreadPool while the main thread loads and renders the next map.
+// QImage is implicitly shared, the task holds its own reference.
+class PngSaveTask : public QRunnable
+{
+public:
+    PngSaveTask(const QImage &image,const QString &destination);
+    void run();
+private:
+    QImage image;
+    QString destination;
+};
 
 class MapVisualiserOrder
 {
