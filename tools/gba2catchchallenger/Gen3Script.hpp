@@ -45,6 +45,10 @@ public:
     // File offset of a sign script's displayed text (its loadpointer/msgbox
     // target), or 0 if none found.  Used only for SIGN bots, not NPC dialogue.
     uint32_t signTextOffset(uint32_t scriptOffset) const;
+    // The item id when the script is the Gen3 item-ball "finditem" macro
+    // (setorcopyvar VAR_0x8000,item; setorcopyvar VAR_0x8001,qty;
+    // callstd STD_FIND_ITEM) — -1 otherwise.  Identifies ground item balls.
+    static int findItemOf(const GbaRom &rom, uint32_t scriptOffset);
     std::vector<PartyMon> party(uint16_t trainerId) const;
     // Trainer's personal name (gTrainers[id]+0x04), Title-cased, or "" if blank.
     std::string trainerName(uint16_t trainerId) const;

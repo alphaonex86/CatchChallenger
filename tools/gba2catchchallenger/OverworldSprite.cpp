@@ -149,6 +149,41 @@ static void pasteCell(QImage &sheet, int col, int row, const QImage &cell)
     }
 }
 
+QImage OverworldSprite::renderStatic(const GbaRom &rom, uint8_t graphicsId)
+{
+    const GameInfo &g=rom.game();
+    if(g.owGfxPointers==0 || graphicsId>=g.owGfxCount)
+        return QImage();
+    bool ok=false;
+    uint32_t infoPtr=rom.pointer(g.owGfxPointers+static_cast<uint32_t>(graphicsId)*4,&ok);
+    if(!ok)
+        return QImage();
+    int width=rom.s16(infoPtr+0x08);
+    int height=rom.s16(infoPtr+0x0A);
+    if(width<8 || height<8 || width>64 || height>64)
+        return QImage();
+    uint16_t palTag=rom.u16(infoPtr+0x02);
+    uint32_t imagesPtr=rom.pointer(infoPtr+0x1C,&ok);
+    if(!ok)
+        return QImage();
+    uint32_t palette[16];
+    uint32_t palOff=findPalette(rom,palTag);
+    int i=0;
+    while(i<16)
+    {
+        uint16_t c=(palOff!=0) ? rom.u16(palOff+static_cast<uint32_t>(i)*2) : 0;
+        uint32_t r=(c & 0x1F);
+        uint32_t gg=((c>>5) & 0x1F);
+        uint32_t b=((c>>10) & 0x1F);
+        r=(r<<3)|(r>>2);
+        gg=(gg<<3)|(gg>>2);
+        b=(b<<3)|(b>>2);
+        palette[i]=0xFF000000u | (r<<16) | (gg<<8) | b;
+        i++;
+    }
+    return decodeFrame(rom,imagesPtr,0,width,height,palette);
+}
+
 QImage OverworldSprite::render(const GbaRom &rom, uint8_t graphicsId)
 {
     const GameInfo &g=rom.game();

@@ -18,6 +18,10 @@ public:
     // Null image when out of range/invalid.
     static QImage render(const GbaRom &rom, uint8_t graphicsId);
 
+    // Render graphicsId's FIRST frame at its native size, no character filter
+    // (for static object-event graphics like the 16x16 item ball).
+    static QImage renderStatic(const GbaRom &rom, uint8_t graphicsId);
+
 private:
     // Locate the palette data (file offset) whose tag matches; 0 when absent.
     static uint32_t findPalette(const GbaRom &rom, uint16_t tag);

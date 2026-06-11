@@ -45,7 +45,9 @@ CCWriter::CCWriter(const GbaRom &rom,
     guardTopMaps_(0),
     guardTopCover_(0),
     renderLayers_(0),
-    renderInvisible_(0)
+    renderInvisible_(0),
+    itemTilesetWritten_(false),
+    itemsTotal_(0)
 {
 }
 
@@ -356,7 +358,8 @@ bool CCWriter::writeAll()
     writeInformations();
     writeStart();
     writeZones();
-    std::cout << "CCWriter: wrote " << maps.size() << " maps to " << fireredDir_ << std::endl;
+    std::cout << "CCWriter: wrote " << maps.size() << " maps to " << fireredDir_
+              << " (" << itemsTotal_ << " items on map)" << std::endl;
     if(guardMasked_==0)
         std::cout << "CCWriter GUARD layer-visibility: PASS (" << guardLayers_
                   << " tile layers, each visible when toggled)" << std::endl;
@@ -512,6 +515,39 @@ void CCWriter::renderVisibilityGuard()
         while(k<renderInvisibleList_.size()){ std::cout << "  " << renderInvisibleList_[k] << std::endl; k++; }
     }
 }
+void CCWriter::ensureItemTileset(uint8_t graphicsId)
+{
+    if(itemTilesetWritten_)
+        return;
+    QImage ball=OverworldSprite::renderStatic(rom_,graphicsId);
+    if(ball.isNull())
+        return;
+    QImage tile(16,16,QImage::Format_ARGB32);
+    tile.fill(Qt::transparent);
+    int y=0;
+    while(y<16 && y<ball.height())
+    {
+        int x=0;
+        while(x<16 && x<ball.width())
+        {
+            tile.setPixel(x,y,ball.pixel(x,y));
+            x++;
+        }
+        y++;
+    }
+    QDir().mkpath(QString::fromStdString(fireredDir_+"/tileset"));
+    tile.save(QString::fromStdString(fireredDir_+"/tileset/items.png"),"PNG");
+    std::ofstream tsx(fireredDir_+"/tileset/items.tsx");
+    if(tsx)
+    {
+        tsx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        tsx << "<tileset name=\"items\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"1\" columns=\"1\">\n";
+        tsx << " <image source=\"items.png\" width=\"16\" height=\"16\"/>\n";
+        tsx << "</tileset>\n";
+    }
+    itemTilesetWritten_=true;
+}
+
 void CCWriter::writeMap(const DecodedMap &map)
 {
     uint32_t w=static_cast<uint32_t>(map.width);
@@ -530,6 +566,50 @@ void CCWriter::writeMap(const DecodedMap &map)
     uint32_t rescueGid=invFirst+1;
     uint32_t teleportGid=invFirst+2;
     uint32_t borderGid=invFirst+3;
+    const uint32_t itemGid=invFirst+16; // tileset/items.tsx right after the 16 marker tiles
+
+    // Ground items: Gen3 item balls are object-events whose whole script is the
+    // finditem macro; hidden items are bg-events kind>=5 carrying the item id.
+    // Both become CC "object" items — the hidden ones with visible=false but
+    // the SAME ball gid (the gen2 convention), so the editor still shows them.
+    struct GroundItem { int x; int y; int item; bool visible; };
+    std::vector<GroundItem> mapItems;
+    {
+        size_t ii=0;
+        while(ii<map.npcs.size())
+        {
+            const DecodedNpc &np=map.npcs[ii];
+            ii++;
+            const int it=Gen3Script::findItemOf(rom_,np.scriptPtr);
+            if(it>0 && np.x>=0 && np.y>=0 &&
+               static_cast<uint32_t>(np.x)<w && static_cast<uint32_t>(np.y)<h)
+            {
+                GroundItem gi;
+                gi.x=np.x;
+                gi.y=np.y;
+                gi.item=it;
+                gi.visible=true;
+                mapItems.push_back(gi);
+                ensureItemTileset(np.graphicsId);
+            }
+        }
+        ii=0;
+        while(ii<map.signs.size())
+        {
+            const DecodedSign &sg=map.signs[ii];
+            ii++;
+            if(sg.kind>=5 && sg.itemId>0 && sg.itemId<512 && sg.x>=0 && sg.y>=0 &&
+               static_cast<uint32_t>(sg.x)<w && static_cast<uint32_t>(sg.y)<h)
+            {
+                GroundItem gi;
+                gi.x=sg.x;
+                gi.y=sg.y;
+                gi.item=sg.itemId;
+                gi.visible=false;
+                mapItems.push_back(gi);
+            }
+        }
+    }
 
     // Build the layers.
     std::vector<uint32_t> walkable(cells,0);
@@ -673,6 +753,8 @@ void CCWriter::writeMap(const DecodedMap &map)
     // Referenced READ-ONLY; the converter never writes outside map/main/<label>/.
     std::string invRel=tsPre.substr(0,tsPre.size()>=8 ? tsPre.size()-8 : 0)+"../../invisible.tsx";
     out << " <tileset firstgid=\"" << invFirst << "\" source=\"" << invRel << "\"/>\n";
+    if(!mapItems.empty() && itemTilesetWritten_)
+        out << " <tileset firstgid=\"" << itemGid << "\" source=\"" << tsPre << "items.tsx\"/>\n";
 
     int layerId=1;
     out << " <layer id=\"" << layerId++ << "\" name=\"Walkable\" width=\"" << w << "\" height=\"" << h << "\">\n";
@@ -904,6 +986,26 @@ void CCWriter::writeMap(const DecodedMap &map)
         }
         out << "   </properties>\n  </object>\n";
         bi++;
+    }
+    // Ground/hidden items (gen2 convention: type "object", the ball gid, an
+    // "item" int property; hidden ones add visible=false).
+    {
+        size_t ii=0;
+        while(ii<mapItems.size())
+        {
+            const GroundItem &gi=mapItems[ii];
+            ii++;
+            out << "  <object id=\"" << nextObjectId++ << "\" type=\"object\"";
+            if(itemTilesetWritten_)
+                out << " gid=\"" << itemGid << "\"";
+            out << " x=\"" << gi.x*16 << "\" y=\"" << (gi.y+1)*16 << "\" width=\"16\" height=\"16\">\n";
+            out << "   <properties>\n";
+            out << "    <property name=\"item\" type=\"int\" value=\"" << gi.item << "\"/>\n";
+            if(!gi.visible)
+                out << "    <property name=\"visible\" type=\"bool\" value=\"false\"/>\n";
+            out << "   </properties>\n  </object>\n";
+            itemsTotal_++;
+        }
     }
     out << " </objectgroup>\n";
 

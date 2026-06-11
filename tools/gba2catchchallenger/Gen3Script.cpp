@@ -393,3 +393,16 @@ uint32_t Gen3Script::signTextOffset(uint32_t scriptOffset) const
     }
     return 0;
 }
+
+int Gen3Script::findItemOf(const GbaRom &rom, uint32_t scriptOffset)
+{
+    // 1A 00 80 ii ii 1A 01 80 qq qq 09 01 : the whole item-ball script.
+    const uint8_t *p=rom.raw(scriptOffset,12);
+    if(p==nullptr)
+        return -1;
+    if(p[0]==0x1A && p[1]==0x00 && p[2]==0x80 &&
+       p[5]==0x1A && p[6]==0x01 && p[7]==0x80 &&
+       p[10]==0x09 && p[11]==0x01)
+        return static_cast<int>(p[3] | (p[4]<<8));
+    return -1;
+}

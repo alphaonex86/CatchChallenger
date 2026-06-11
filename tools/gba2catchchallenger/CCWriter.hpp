@@ -86,6 +86,10 @@ private:
     // Pick a CatchChallenger skin string for a Gen3 overworld graphics id:
     // extract the sprite, reuse/add via the resolver (cached per graphics id).
     std::string skinFor(uint8_t graphicsId);
+    // Write tileset/items.png|.tsx once (the 16x16 item-ball sprite ripped from
+    // the ROM, like gen2's pokeball tile normal1.tsx#101) — the gid every
+    // ground/hidden item object shows in the Tiled editor.
+    void ensureItemTileset(uint8_t graphicsId);
 
     const GbaRom &rom_;
     const Decoder &decoder_;
@@ -106,6 +110,8 @@ private:
     int renderLayers_;                         // tile layers rendered-tested
     int renderInvisible_;                      // layers whose hide changed nothing
     std::vector<std::string> renderInvisibleList_;
+    bool itemTilesetWritten_;                  // tileset/items.tsx emitted
+    int itemsTotal_;                           // ground+hidden items emitted
 };
 
 #endif // GBA2CC_CCWRITER_HPP
