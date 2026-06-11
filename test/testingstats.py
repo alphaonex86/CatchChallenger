@@ -20,7 +20,12 @@ Flow:
   9. Read connectedPlayer count → expect 0 (verifies count DECREASED).
  10. Stop the stats tool, check the server is still alive (didn't
      crash on stats-client disconnect).
- 11. Stop the server, check valgrind exit code (0 = clean,
+ 11. Re-run stats with an unbindable unix socket path → the binary
+     must EXIT NON-ZERO (regression: it used to warn and keep running
+     without a listener, so the supervisor never restarted it and
+     official-server.html showed "Unknown state" / no Game server
+     status behind a stale socket forever).
+ 12. Stop the server, check valgrind exit code (0 = clean,
      23 = memory errors).
 """
 import sys
@@ -322,13 +327,18 @@ def server_is_alive():
 
 
 # ── stats side ──────────────────────────────────────────────────────────────
-def write_stats_settings():
+def write_stats_settings(sock_override=None):
     """Seed stats-client.xml in STATS_BUILD with a host/port pointing
     at our server and the same shared token. Also pick a unix socket
-    path under tmpfs so two parallel runs don't collide."""
+    path under tmpfs so two parallel runs don't collide.
+    sock_override: force an alternative unixSocket path (used by the
+    listen-failure case to point at an unbindable location)."""
     xml = os.path.join(STATS_BUILD, "stats-client.xml")
     ensure_dir(STATS_BUILD)
-    sock_path = os.path.join(STATS_BUILD, "catchchallenger-stats.sock")
+    if sock_override is None:
+        sock_path = os.path.join(STATS_BUILD, "catchchallenger-stats.sock")
+    else:
+        sock_path = sock_override
     out_path  = os.path.join(STATS_BUILD, "gameserver.json")
     # Drop a stale socket so tryListen() doesn't refuse to bind.
     if os.path.exists(sock_path):
@@ -490,6 +500,58 @@ def refresh_stats_snapshot(json_path):
     return wait_for_stats_connected(json_path, STATS_READY_TIMEOUT)
 
 
+def run_stats_listen_failure_case():
+    """Regression for the official-server.html outage: tryListen()
+    failure on the unix socket must be FATAL. The old code only
+    printed a warning and kept the daemon running without a listener,
+    so the supervisor saw a live pid, never restarted it, and the
+    website got 'Connection refused' on the stale socket forever
+    (= 'Unknown state', no Game server status line).
+    Point unixSocket into a non-existent directory so bind() fails
+    with ENOENT, then require the binary to exit non-zero quickly.
+    Needs the game server still up: the binary connects to it BEFORE
+    reaching tryListen(), and a connect failure would also exit
+    non-zero — which would make this case pass for the wrong reason."""
+    if not server_is_alive():
+        log_fail("stats fatal on listen failure",
+                 "game server not alive, case would be meaningless")
+        return
+    binary = os.path.join(STATS_BUILD, STATS_BIN)
+    bad_sock = os.path.join(STATS_BUILD, "no-such-dir",
+                            "catchchallenger-stats.sock")
+    write_stats_settings(sock_override=bad_sock)
+    args = NICE_PREFIX + [binary]
+    diagnostic.record_cmd(args, STATS_BUILD)
+    log_info(f"starting stats with unbindable socket: {bad_sock}")
+    proc = subprocess.Popen(
+        args, cwd=STATS_BUILD,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        preexec_fn=process_helpers.setsid_and_pdeathsig)
+    try:
+        out, _ = proc.communicate(timeout=STATS_READY_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        _kill_proc(proc)
+        log_fail("stats fatal on listen failure",
+                 f"still running {STATS_READY_TIMEOUT}s after unbindable "
+                 f"socket (old warn-and-continue behaviour)")
+        return
+    text = out.decode(errors="replace")
+    if proc.returncode != 0 and "Unable to listen the unix socket" in text:
+        log_pass("stats fatal on listen failure",
+                 f"exited rc={proc.returncode} with listen error")
+    elif proc.returncode != 0:
+        log_fail("stats fatal on listen failure",
+                 f"exited rc={proc.returncode} but without the listen "
+                 f"error message (died for another reason?)")
+        for l in text.splitlines()[-15:]:
+            print(f"  | {l}")
+    else:
+        log_fail("stats fatal on listen failure",
+                 "exited rc=0 despite unbindable unix socket")
+        for l in text.splitlines()[-15:]:
+            print(f"  | {l}")
+
+
 # ── client side ─────────────────────────────────────────────────────────────
 def run_client_until_on_map():
     """Spawn qtcpu800x600 with --host/--port pointing at the file_db
@@ -586,7 +648,7 @@ def main():
         log_info("all previously passed (delete failed.json to re-run)")
         return
 
-    total_expected[0] = 12  # rough estimate
+    total_expected[0] = 13  # rough estimate
 
     # 1. Build the three binaries.
     if not build_project(SERVER_PRO, SERVER_BUILD, "server-filedb"):
@@ -706,7 +768,10 @@ def main():
         log_fail("server alive after stats disconnect",
                  f"server exited rc={server_proc.returncode}")
 
-    # 11. Stop the server, harvest valgrind exit code (last log line).
+    # 11. Listen-failure must be fatal (official-server.html regression).
+    run_stats_listen_failure_case()
+
+    # 12. Stop the server, harvest valgrind exit code (last log line).
     stop_server_under_valgrind("server final stop")
 
     summary()
