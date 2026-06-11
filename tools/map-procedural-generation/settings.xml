@@ -233,7 +233,10 @@ snowmountain\transition_tsx=main/tileset/terra.tsx
 ; (gym-<type> tileset generated into dest/map/tileset/ from tileset/gym.png).
 ; Colors copied from CatchChallenger-datapack/monsters/type.xml; typeXml can
 ; point to that file to read them at runtime instead.
-gymTypes="fire:#f38233->Panthera fira,Vivicinder;water:#2E9EF3->Dinoflop,Pharfan,Rhinocarpe;plant:#71DA5E->Conileaf,Viviphyta,Cowpignon;poison:#B46DC5->Chenipode,Exapode,Snaki;electric:#FFEC10->Coleorus,Vivitron;stone:#BF904E->Polyrock,Selket,Galnec"
+gymTypes="fire:#f38233->Panthera fira,Vivicinder;water:#2E9EF3->Dinoflop,Pharfan,Rhinocarpe;plant:#71DA5E->Conileaf,Viviphyta,Cowpignon;poison:#B46DC5->Chenipode,Exapode,Snaki;electric:#FFEC10->Coleorus,Vivitron;stone:#BF904E->Polyrock,Selket,Galnec;ice:#75E7F3->Toufigel"
+; a city takes the type whose terrain keywords match its surroundings; the
+; gym type follows the city type; counts stay balanced across the world
+cityTypeTerrains="water->water;stone->mountain,sand;plant->grass;ice->snow"
 typeXml=
 ; key-building / bot generation (CatchChallenger-datapack).
 ; shopItems = numeric item ids that exist in items/items.xml.

@@ -189,6 +189,7 @@ water\tsx=normal18.tsx
 
 [building]
 gymTypes="fire:#f38233->Charmander;water:#2E9EF3->Squirtle;grass:#71DA5E->Bulbasaur;electric:#FFEC10->Pikachu"
+cityTypeTerrains="water->water;grass->grass"
 typeXml=
 ; PKMN item ids from items.xml (95=Acro Bike, 96=Bicycle, 98=Escape Rope,
 ; 102=Honey, 107=Poke Doll) -> all valid sellables.
