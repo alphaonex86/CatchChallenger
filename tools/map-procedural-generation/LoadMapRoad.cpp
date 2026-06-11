@@ -62,6 +62,19 @@ static void preloadTilesetOfTileRef(Tiled::Map &worldMap, const QString &tileRef
 static bool worldHasTilesetNamed(Tiled::Map &worldMap, const QString &name);
 static unsigned int mountainBorderTileIndex(const uint8_t to_type_match);
 
+//walkable corridor test of a cave FLOOR at tile resolution, matching the
+//interior floorGrid exactly (mirror per floor + sealed border line)
+static bool caveFloorAtTile(const unsigned int *map, const unsigned int scale, const unsigned int scaleWidth,
+                            const int mapWidth, const int mapHeight, const bool mirrored,
+                            const int lx, const int ly)
+{
+    if(lx<1 || ly<1 || lx>=mapWidth-1 || ly>=mapHeight-1)
+        return false;
+    const int baseX=mirrored ? mapWidth-1-lx : lx;
+    const unsigned int type=map[(baseX/(int)scale)+(ly/(int)scale)*scaleWidth];
+    return type!=0 && type!=0x9;
+}
+
 QString LoadMapAll::monsterRef(const uint16_t &monsterId, const SettingsAll::SettingsExtra &setting)
 {
     const std::map<uint16_t,std::string>::const_iterator it=setting.monsterNames.find(monsterId);
@@ -273,8 +286,9 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
             while(side<4)
             {
                 const CavePlanSide &planSide=plan.sides[side];
+                //top-style exit: the walk-up GAP sits one below the door
                 if(planSide.used!=0 && planSide.floor==level && planSide.mouthKind==2)
-                    floorGrid[planSide.exitX+planSide.exitY*singleMapWidth]=1;
+                    floorGrid[planSide.exitX+(planSide.exitY+1)*singleMapWidth]=1;
                 side++;
             }
         }
@@ -340,10 +354,12 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
         std::vector<Tiled::MapObject*> levelMovingObjects;
         std::vector<Tiled::MapObject*> levelBotObjects;
 
-        //exits of this floor: embedded in the ring line. A side that entered
-        //through a bottom-facing cliff mouth leaves the same way (exit-bottom
-        //tile, push); a top side leaves through the walkable gap (exit-top
-        //tile, teleport on it). Both land in front of the overworld mouth.
+        //exits of this floor: the DOOR sits ON the cliff collision at the
+        //extremity it serves (push to use). Top exit: exitTopTile one above
+        //the walk-up gap (the topmost collision accessible); bottom exit:
+        //exitBottomTile with the floor directly above it (the bottommost
+        //collision accessible, often the sealed border line itself). Both
+        //land in front of the overworld mouth.
         {
             int side=0;
             while(side<4)
@@ -353,19 +369,11 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                 {
                     const int exitX=planSide.exitX;
                     const int exitY=planSide.exitY;
-                    std::string trigger="teleport on it";
                     if(planSide.mouthKind==1)
-                    {
-                        //exit to the bottom: stays ON the collision line, push
                         colliLayer->setCell(x0+exitX,y0+exitY,Tiled::Cell(exitBottomTile));
-                        trigger="teleport on push";
-                    }
                     else
-                    {
-                        //exit to the top: walkable gap in the ring, walk onto it
-                        walkLayer->setCell(x0+exitX,y0+exitY,Tiled::Cell(exitTopTile));
-                    }
-                    Tiled::MapObject *exitObject=new Tiled::MapObject("",QString::fromStdString(trigger),
+                        colliLayer->setCell(x0+exitX,y0+exitY,Tiled::Cell(exitTopTile));
+                    Tiled::MapObject *exitObject=new Tiled::MapObject("","teleport on push",
                         QPointF((x0+exitX)*worldMap.tileWidth(),(y0+exitY+1)*worldMap.tileHeight()),
                         QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
                     exitObject->setProperty("map",QString::fromStdString(overworldBase));
@@ -2547,9 +2555,13 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         if(plan.stairCells.size()+1<(unsigned int)plan.depth)
                             plan.depth=plan.stairCells.size()+1;
                     }
-                    //per side: a floor and an exit cell ON the ring line of that
-                    //floor (a blocked cell whose south neighbor is corridor),
-                    //closest to the side's border
+                    //per side: a floor and an exit DOOR on the cliff collision
+                    //of that floor, at the extremity the side serves:
+                    // - top side: the TOPMOST collision accessible — the door
+                    //   (exitTopTile) sits one above a walk-up gap in the ring
+                    // - bottom/left/right: the BOTTOMMOST collision accessible —
+                    //   the door (exitBottomTile) is a ring cell with the floor
+                    //   directly above it (the sealed border line counts)
                     {
                         int side=0;
                         while(side<4)
@@ -2558,30 +2570,48 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             {
                                 plan.sides[side].floor=rand()%plan.depth;
                                 const bool mirrored=(plan.sides[side].floor%2!=0);
-                                const int sideBorderX[4]={0,(int)mapWidth-1,(int)mapWidth/2,(int)mapWidth/2};
-                                const int sideBorderY[4]={(int)mapHeight/2,(int)mapHeight/2,0,(int)mapHeight-1};
-                                int bestX=-1,bestY=-1,bestDistance=0;
+                                const bool topStyle=(plan.sides[side].mouthKind==2);
+                                int bestX=-1,bestY=-1,bestPrimary=0,bestSecondary=0;
                                 int ly=2;
-                                while(ly<(int)mapHeight-2)
+                                while(ly<(int)mapHeight)
                                 {
-                                    int lx=2;
-                                    while(lx<(int)mapWidth-2)
+                                    int lx=1;
+                                    while(lx<(int)mapWidth-1)
                                     {
-                                        const int baseX=mirrored ? (int)mapWidth-1-lx : lx;
-                                        const unsigned int cell=(baseX/(int)scale)+(ly/(int)scale)*scaleWidth;
-                                        const unsigned int cellUnder=(baseX/(int)scale)+((ly+1)/(int)scale)*scaleWidth;
-                                        const bool cellFloor=(map[cell]!=0 && map[cell]!=0x9);
-                                        const bool underFloor=(map[cellUnder]!=0 && map[cellUnder]!=0x9);
-                                        if(!cellFloor && underFloor && ly+1<(int)mapHeight-2)
+                                        bool candidate=false;
+                                        if(topStyle)
                                         {
-                                            const int distance=
-                                                    ((lx>sideBorderX[side]) ? lx-sideBorderX[side] : sideBorderX[side]-lx)
-                                                    +((ly>sideBorderY[side]) ? ly-sideBorderY[side] : sideBorderY[side]-ly);
-                                            if(bestX<0 || distance<bestDistance)
+                                            //the GAP: blocked, floor below, blocked above (door)
+                                            candidate=!caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly)
+                                                    && caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly+1)
+                                                    && !caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly-1)
+                                                    && ly-1>=1;
+                                        }
+                                        else
+                                        {
+                                            //the DOOR: blocked, floor directly above
+                                            candidate=!caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly)
+                                                    && caveFloorAtTile(map,scale,scaleWidth,mapWidth,mapHeight,mirrored,lx,ly-1);
+                                        }
+                                        if(candidate)
+                                        {
+                                            //top: minimal row; others: maximal row; then
+                                            //the column nearest the side it serves
+                                            const int primary=topStyle ? ly : -ly;
+                                            int secondary;
+                                            if(side==0)
+                                                secondary=lx;
+                                            else if(side==1)
+                                                secondary=(int)mapWidth-1-lx;
+                                            else
+                                                secondary=(lx>(int)mapWidth/2) ? lx-(int)mapWidth/2 : (int)mapWidth/2-lx;
+                                            if(bestX<0 || primary<bestPrimary
+                                                    || (primary==bestPrimary && secondary<bestSecondary))
                                             {
                                                 bestX=lx;
                                                 bestY=ly;
-                                                bestDistance=distance;
+                                                bestPrimary=primary;
+                                                bestSecondary=secondary;
                                             }
                                         }
                                         lx++;
@@ -2590,10 +2620,22 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 }
                                 if(bestX>=0)
                                 {
-                                    plan.sides[side].exitX=bestX;
-                                    plan.sides[side].exitY=bestY;
-                                    plan.sides[side].exitLandX=bestX;
-                                    plan.sides[side].exitLandY=bestY+1;
+                                    if(topStyle)
+                                    {
+                                        //door above the gap; land below the gap
+                                        plan.sides[side].exitX=bestX;
+                                        plan.sides[side].exitY=bestY-1;
+                                        plan.sides[side].exitLandX=bestX;
+                                        plan.sides[side].exitLandY=bestY+1;
+                                    }
+                                    else
+                                    {
+                                        //the door itself; land on the floor above it
+                                        plan.sides[side].exitX=bestX;
+                                        plan.sides[side].exitY=bestY;
+                                        plan.sides[side].exitLandX=bestX;
+                                        plan.sides[side].exitLandY=bestY-1;
+                                    }
                                 }
                                 else
                                     plan.sides[side].used=0;//no exit spot: side dropped
