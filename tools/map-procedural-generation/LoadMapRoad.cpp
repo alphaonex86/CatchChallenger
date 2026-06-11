@@ -57,6 +57,8 @@ void LoadMapAll::reassertCitySigns(Tiled::Map &worldMap)
 #define CITY_AVENUE_CODE 0x0B
 
 static void preloadTilesetOfTileRef(Tiled::Map &worldMap, const QString &tileRef);
+static bool worldHasTilesetNamed(Tiled::Map &worldMap, const QString &name);
+static unsigned int mountainBorderTileIndex(const uint8_t to_type_match);
 
 QString LoadMapAll::monsterRef(const uint16_t &monsterId, const SettingsAll::SettingsExtra &setting)
 {
@@ -178,6 +180,22 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
     Tiled::Tile * const stairDownTile=setting.caveStairDownTile.isEmpty() ? NULL : fetchTile(worldMap,setting.caveStairDownTile);
     Tiled::Tile * const stairUpTile=setting.caveStairUpTile.isEmpty() ? NULL : fetchTile(worldMap,setting.caveStairUpTile);
     Tiled::Tile * const itemTile=setting.caveItemTile.isEmpty() ? NULL : fetchTile(worldMap,setting.caveItemTile);
+    //the blocked zone is edged like the overworld mountains: the same Terra
+    //ring tiles ([road] region\mountain_tile/mountain_tsx) face the corridor
+    std::vector<Tiled::Tile *> mountainRingTiles;
+    {
+        const QStringList mountainTileList=mountain.tile.split(",");
+        if(mountainTileList.size()>=12 && worldHasTilesetNamed(worldMap,mountain.tsx))
+        {
+            const Tiled::Tileset * const mountainTsx=LoadMap::searchTilesetByName(worldMap,mountain.tsx);
+            int mountainTileIndex=0;
+            while(mountainTileIndex<mountainTileList.size())
+            {
+                mountainRingTiles.push_back(mountainTsx->tileAt(mountainTileList.at(mountainTileIndex).toInt()));
+                mountainTileIndex++;
+            }
+        }
+    }
 
     std::string overworldBase=overworldFile;
     {
@@ -260,7 +278,55 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
     while(level<depth)
     {
         const bool mirrored=(level%2!=0);
-        //wipe every tile layer of the region, then paint this floor
+        //the actual floor of this level: the (mirrored) corridor, plus the
+        //entrance straights on the ground floor
+        std::vector<unsigned char> floorGrid(singleMapWidth*singleMapHeight,0);
+        {
+            unsigned int ly=0;
+            while(ly<singleMapHeight)
+            {
+                unsigned int lx=0;
+                while(lx<singleMapWidth)
+                {
+                    unsigned int baseX=lx;
+                    if(mirrored)
+                        baseX=singleMapWidth-1-lx;
+                    const unsigned int type=map[(baseX/scale)+(ly/scale)*scaleWidth];
+                    if(type!=0 && type!=0x9)
+                        floorGrid[lx+ly*singleMapWidth]=1;
+                    lx++;
+                }
+                ly++;
+            }
+            if(level==0)
+            {
+                int side=0;
+                while(side<4)
+                {
+                    if((zoneOrientation&orientationOf[side])!=0)
+                    {
+                        int step=0;
+                        while(step<=4)
+                        {
+                            int perp=-1;
+                            while(perp<=1)
+                            {
+                                const int lx=borderX[side]+dirX[side]*step+dirY[side]*perp;
+                                const int ly=borderY[side]+dirY[side]*step+dirX[side]*perp;
+                                if(lx>=0 && ly>=0 && lx<(int)singleMapWidth && ly<(int)singleMapHeight)
+                                    floorGrid[lx+ly*singleMapWidth]=1;
+                                perp++;
+                            }
+                            step++;
+                        }
+                    }
+                    side++;
+                }
+            }
+        }
+        //wipe every tile layer of the region, then paint this floor: ground
+        //everywhere, mountain-style ring on the blocked cells that FACE the
+        //corridor (same look as the overworld mountains), rock block deeper in
         {
             unsigned int ty=y0;
             while(ty<y0+singleMapHeight)
@@ -276,21 +342,33 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                             static_cast<Tiled::TileLayer *>(layer)->setCell(tx,ty,Tiled::Cell());
                         layerIndex++;
                     }
-                    unsigned int lx=tx-x0;
-                    const unsigned int ly=ty-y0;
-                    if(mirrored)
-                        lx=singleMapWidth-1-lx;
-                    const unsigned int type=map[(lx/scale)+(ly/scale)*scaleWidth];
-                    //floor everywhere: the rock blocks have transparent corners
+                    const int lx=tx-x0;
+                    const int ly=ty-y0;
+                    //floor everywhere: ring/rock tiles have transparent parts
                     //and must sit on cave ground, not on the void
                     walkLayer->setCell(tx,ty,Tiled::Cell(floorTile));
-                    if(type==0 || type==0x9)
+                    if(floorGrid[lx+ly*singleMapWidth]==0)
                     {
-                        //3x3 repeating rock block when 9 tiles are configured
-                        Tiled::Tile *patternTile=wallTile;
-                        if(wallTiles.size()>=9)
-                            patternTile=wallTiles.at(((ty-y0)%3)*3+((tx-x0)%3));
-                        colliLayer->setCell(tx,ty,Tiled::Cell(patternTile));
+                        uint8_t walkableMask=0;
+                        const int neighborDx[8]={-1,0,1,-1,1,-1,0,1};
+                        const int neighborDy[8]={-1,-1,-1,0,0,1,1,1};
+                        const uint8_t neighborBit[8]={1,2,4,8,16,32,64,128};
+                        int neighbor=0;
+                        while(neighbor<8)
+                        {
+                            const int nx=lx+neighborDx[neighbor];
+                            const int ny=ly+neighborDy[neighbor];
+                            if(nx>=0 && ny>=0 && nx<(int)singleMapWidth && ny<(int)singleMapHeight)
+                                if(floorGrid[nx+ny*singleMapWidth]!=0)
+                                    walkableMask|=neighborBit[neighbor];
+                            neighbor++;
+                        }
+                        Tiled::Tile *blockTile=wallTile;
+                        if(walkableMask!=0 && mountainRingTiles.size()>=12)
+                            blockTile=mountainRingTiles.at(mountainBorderTileIndex(walkableMask));
+                        else if(wallTiles.size()>=9)
+                            blockTile=wallTiles.at((ly%3)*3+(lx%3));
+                        colliLayer->setCell(tx,ty,Tiled::Cell(blockTile));
                     }
                     tx++;
                 }
@@ -302,7 +380,7 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
         std::vector<Tiled::MapObject*> levelMovingObjects;
         std::vector<Tiled::MapObject*> levelBotObjects;
 
-        //floor 0 only: entrance straights + exits back to the overworld pockets
+        //floor 0 only: exits back to the overworld in front of each mouth
         if(level==0)
         {
             int side=0;
@@ -310,28 +388,16 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
             {
                 if((zoneOrientation&orientationOf[side])!=0)
                 {
-                    int step=0;
-                    while(step<=4)
-                    {
-                        int perp=-1;
-                        while(perp<=1)
-                        {
-                            const int lx=borderX[side]+dirX[side]*step+dirY[side]*perp;
-                            const int ly=borderY[side]+dirY[side]*step+dirX[side]*perp;
-                            if(lx>=0 && ly>=0 && lx<(int)singleMapWidth && ly<(int)singleMapHeight)
-                            {
-                                colliLayer->setCell(x0+lx,y0+ly,Tiled::Cell());
-                                walkLayer->setCell(x0+lx,y0+ly,Tiled::Cell(floorTile));
-                            }
-                            perp++;
-                        }
-                        step++;
-                    }
                     //walking onto the border cell exits in front of the overworld mouth
                     const int exitX=borderX[side];
                     const int exitY=borderY[side];
-                    const int landX=borderX[side]+dirX[side]*2;
-                    const int landY=borderY[side]+dirY[side]*2;
+                    int landX=borderX[side]+dirX[side]*2;
+                    int landY=borderY[side]+dirY[side]*2;
+                    if(roadIndex.caveLandX[side]!=255)
+                    {
+                        landX=roadIndex.caveLandX[side];
+                        landY=roadIndex.caveLandY[side];
+                    }
                     Tiled::MapObject *exitObject=new Tiled::MapObject("","teleport on it",
                         QPointF((x0+exitX)*worldMap.tileWidth(),(y0+exitY+1)*worldMap.tileHeight()),
                         QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
@@ -2712,13 +2778,28 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
 
                 //CAVE chunk overworld: NATURAL terrain only (no road, no walls —
                 //the corridor lives in the separate <chunk>-cave.tmx interior).
-                //Just a small floor pocket + the cave mouth at each road
-                //connection; pushing into the mouth teleports inside.
+                //At each road connection a ROCK OUTCROP (the t1 3x3 block,
+                //middle column repeated horizontally / middle row vertically,
+                //random 3..6 x 3..6) with the mouth tile on its bottom line at
+                //the middle; a floor path links the border to the mouth front.
                 if(chunkIsCave && caveTilesOk){
                     Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
                     Tiled::Tile * const entranceTile=fetchTile(worldMap,setting.caveEntranceTile);
+                    //the same 9-tile block as the interior walls shapes the outcrop
+                    std::vector<Tiled::Tile *> rockTiles;
+                    {
+                        const QStringList wallTileList=setting.caveWallTile.split(",");
+                        int wallTileIndex=0;
+                        while(wallTileIndex<wallTileList.size())
+                        {
+                            Tiled::Tile * const tile=fetchTile(worldMap,wallTileList.at(wallTileIndex).trimmed());
+                            if(tile!=NULL)
+                                rockTiles.push_back(tile);
+                            wallTileIndex++;
+                        }
+                    }
                     const std::string caveBase=caveInteriorBaseName(x,y);
-                    if(movingGroup!=NULL && entranceTile!=NULL && !caveBase.empty())
+                    if(movingGroup!=NULL && entranceTile!=NULL && !caveBase.empty() && !rockTiles.empty())
                     {
                         const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
                         //d = direction INTO the map from the border, b = border middle
@@ -2727,59 +2808,168 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                         const int borderX[4]={0,(int)mapWidth-1,(int)mapWidth/2,(int)mapWidth/2};
                         const int borderY[4]={(int)mapHeight/2,(int)mapHeight/2,0,(int)mapHeight-1};
                         const Orientation orientationOf[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
+                        LoadMapAll::RoadIndex &caveRoadIndex=roadCoordToIndex[x][y];
                         int side=0;
                         while(side<4)
                         {
                             if((zoneOrientation&orientationOf[side])!=0)
                             {
-                                //3x3 floor pocket from the border + the mouth one step deeper
-                                int step=0;
-                                while(step<=3)
+                                const int structureW=3+rand()%4;
+                                const int structureH=3+rand()%4;
+                                //mouth M (bottom line, middle) + its front cell F
+                                int mouthX,mouthY;
+                                if(side==0)//left: path runs on the border row
                                 {
-                                    int perp=-1;
-                                    while(perp<=1)
+                                    mouthX=4;
+                                    mouthY=borderY[side]-1;
+                                }
+                                else if(side==1)//right
+                                {
+                                    mouthX=(int)mapWidth-5;
+                                    mouthY=borderY[side]-1;
+                                }
+                                else if(side==2)//top: outcrop beside the path column
+                                {
+                                    mouthX=borderX[side]+1+structureW/2;
+                                    mouthY=structureH;
+                                }
+                                else//bottom
+                                {
+                                    mouthX=borderX[side];
+                                    mouthY=(int)mapHeight-5;
+                                }
+                                const int frontX=mouthX;
+                                const int frontY=mouthY+1;
+                                //the floor path from the border to the mouth front
+                                std::vector<std::pair<int,int> > pathCells;
+                                if(side==0)
+                                {
+                                    int px=0;
+                                    while(px<=frontX)
                                     {
-                                        const int lx=borderX[side]+dirX[side]*step+dirY[side]*perp;
-                                        const int ly=borderY[side]+dirY[side]*step+dirX[side]*perp;
+                                        pathCells.push_back(std::pair<int,int>(px,frontY-1+1));//border row
+                                        px++;
+                                    }
+                                }
+                                else if(side==1)
+                                {
+                                    int px=(int)mapWidth-1;
+                                    while(px>=frontX)
+                                    {
+                                        pathCells.push_back(std::pair<int,int>(px,frontY-1+1));
+                                        px--;
+                                    }
+                                }
+                                else if(side==2)
+                                {
+                                    int py=0;
+                                    while(py<=frontY)
+                                    {
+                                        pathCells.push_back(std::pair<int,int>(borderX[side],py));
+                                        py++;
+                                    }
+                                    int px=borderX[side];
+                                    while(px<=frontX)
+                                    {
+                                        pathCells.push_back(std::pair<int,int>(px,frontY));
+                                        px++;
+                                    }
+                                }
+                                else
+                                {
+                                    int py=(int)mapHeight-1;
+                                    while(py>=frontY)
+                                    {
+                                        pathCells.push_back(std::pair<int,int>(borderX[side],py));
+                                        py--;
+                                    }
+                                }
+                                unsigned int pathIndex=0;
+                                while(pathIndex<pathCells.size())
+                                {
+                                    const int lx=pathCells.at(pathIndex).first;
+                                    const int ly=pathCells.at(pathIndex).second;
+                                    if(lx>=0 && ly>=0 && lx<(int)mapWidth && ly<(int)mapHeight)
+                                    {
+                                        const unsigned int tx=x*mapWidth+lx;
+                                        const unsigned int ty=y*mapHeight+ly;
+                                        colliLayer->setCell(tx,ty,empty);
+                                        grassLayer->setCell(tx,ty,empty);
+                                        if(onGrassLayer!=NULL)
+                                            onGrassLayer->setCell(tx,ty,empty);
+                                        if(waterLayer!=NULL)
+                                            waterLayer->setCell(tx,ty,empty);
+                                        walkLayer->setCell(tx,ty,caveFloorCell);
+                                        //no vegetation over the path
+                                        const unsigned int bitMask=tx+ty*worldMap.width();
+                                        if(bitMask/8>=maxMapSize)
+                                            abort();
+                                        MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                    }
+                                    pathIndex++;
+                                }
+                                //the rock outcrop: corners fixed, middle column/row repeated
+                                const int structX0=mouthX-structureW/2;
+                                const int structY0=mouthY-structureH+1;
+                                int sy=0;
+                                while(sy<structureH)
+                                {
+                                    int sx=0;
+                                    while(sx<structureW)
+                                    {
+                                        const int lx=structX0+sx;
+                                        const int ly=structY0+sy;
                                         if(lx>=0 && ly>=0 && lx<(int)mapWidth && ly<(int)mapHeight)
                                         {
                                             const unsigned int tx=x*mapWidth+lx;
                                             const unsigned int ty=y*mapHeight+ly;
-                                            colliLayer->setCell(tx,ty,empty);
+                                            int row=1;
+                                            if(sy==0)
+                                                row=0;
+                                            else if(sy==structureH-1)
+                                                row=2;
+                                            int column=1;
+                                            if(sx==0)
+                                                column=0;
+                                            else if(sx==structureW-1)
+                                                column=2;
+                                            Tiled::Tile *rockTile=rockTiles.front();
+                                            if(rockTiles.size()>=9)
+                                                rockTile=rockTiles.at(row*3+column);
+                                            //the mouth replaces the bottom-middle tile
+                                            if(lx==mouthX && ly==mouthY)
+                                                rockTile=entranceTile;
+                                            colliLayer->setCell(tx,ty,Tiled::Cell(rockTile));
                                             grassLayer->setCell(tx,ty,empty);
                                             if(onGrassLayer!=NULL)
                                                 onGrassLayer->setCell(tx,ty,empty);
                                             if(waterLayer!=NULL)
                                                 waterLayer->setCell(tx,ty,empty);
-                                            walkLayer->setCell(tx,ty,caveFloorCell);
-                                            //no vegetation over the pocket/mouth
                                             const unsigned int bitMask=tx+ty*worldMap.width();
                                             if(bitMask/8>=maxMapSize)
                                                 abort();
                                             MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
                                         }
-                                        perp++;
+                                        sx++;
                                     }
-                                    step++;
+                                    sy++;
                                 }
-                                //the mouth: blocked entrance tile + teleport on push
-                                const int holeX=borderX[side]+dirX[side]*3;
-                                const int holeY=borderY[side]+dirY[side]*3;
-                                const int landX=borderX[side]+dirX[side]*2;
-                                const int landY=borderY[side]+dirY[side]*2;
-                                const unsigned int htx=x*mapWidth+holeX;
-                                const unsigned int hty=y*mapHeight+holeY;
-                                colliLayer->setCell(htx,hty,Tiled::Cell(entranceTile));
+                                //push into the mouth to enter; the interior exit
+                                //lands back on the front cell
+                                const unsigned int htx=x*mapWidth+mouthX;
+                                const unsigned int hty=y*mapHeight+mouthY;
                                 Tiled::MapObject *hole=new Tiled::MapObject("","teleport on push",
                                     QPointF(htx*worldMap.tileWidth(),(hty+1)*worldMap.tileHeight()),
                                     QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
                                 hole->setProperty("map",QString::fromStdString(caveBase));
-                                hole->setProperty("x",QString::number(landX));
-                                hole->setProperty("y",QString::number(landY));
+                                hole->setProperty("x",QString::number(borderX[side]+dirX[side]*2));
+                                hole->setProperty("y",QString::number(borderY[side]+dirY[side]*2));
                                 Tiled::Cell holeCell;
                                 holeCell.setTile(invisibleTileset->tileAt(2));
                                 hole->setCell(holeCell);
                                 movingGroup->addObject(hole);
+                                caveRoadIndex.caveLandX[side]=(uint8_t)frontX;
+                                caveRoadIndex.caveLandY[side]=(uint8_t)frontY;
                             }
                             side++;
                         }
@@ -3351,6 +3541,45 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
         }
         ci++;
     }
+}
+
+//overworld mountain border convention: which of the 12 ring tiles to use for a
+//blocked cell given the 8-neighbor walkable mask (same mapping as the
+//to_type_match logic of addRoadContent)
+static unsigned int mountainBorderTileIndex(const uint8_t to_type_match)
+{
+    unsigned int indexTile=0;
+    if(to_type_match&2)
+    {
+        if(to_type_match&8)
+            indexTile=0;
+        else if(to_type_match&16)
+            indexTile=2;
+        else
+            indexTile=1;
+    }
+    else if(to_type_match&64)
+    {
+        if(to_type_match&8)
+            indexTile=6;
+        else if(to_type_match&16)
+            indexTile=4;
+        else
+            indexTile=5;
+    }
+    else if(to_type_match&8)
+        indexTile=7;
+    else if(to_type_match&16)
+        indexTile=3;
+    else if(to_type_match&128)
+        indexTile=8;
+    else if(to_type_match&32)
+        indexTile=9;
+    else if(to_type_match&1)
+        indexTile=11;
+    else if(to_type_match&4)
+        indexTile=10;
+    return indexTile;
 }
 
 //the cave stair/item tiles may reference a tileset (e.g. rename.tsx) that the
