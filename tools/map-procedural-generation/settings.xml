@@ -46,8 +46,19 @@ tree-2\tmx=tree-2
 ; cave\*: this percent of road chunks becomes a CAVE (corridor walled with
 ; wallTile, ground floorTile, map type=cave + cave encounters)
 cave\percent=15
-cave\wallTile=Terra/20
+; wall = 3x3 repeating rock block (9 tiles), entrance = the cave mouth tile;
+; maxDepth: a cave may chain up to N floors (stairDown/stairUp tiles, +2
+; monster levels per floor); itemPercent chance per floor of one ground item
+; from the items id list (itemTile is the visual)
+cave\wallTile="t1.tsx/640,t1.tsx/641,t1.tsx/642,t1.tsx/672,t1.tsx/673,t1.tsx/674,t1.tsx/704,t1.tsx/705,t1.tsx/706"
 cave\floorTile=Terra/38
+cave\entranceTile=t1.tsx/749
+cave\stairDownTile=rename/194
+cave\stairUpTile=rename/193
+cave\itemTile=rename/161
+cave\maxDepth=3
+cave\itemPercent=60
+cave\items="1,2,3"
 bot\cashbase=100
 bot\cashexp=1.5
 bot\cashmonster=0.2

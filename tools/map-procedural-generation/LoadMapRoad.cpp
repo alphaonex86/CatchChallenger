@@ -1,4 +1,5 @@
 #include "LoadMapAll.h"
+#include "PartialMap.h"
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
 
@@ -25,10 +26,37 @@ int LoadMapAll::botId = 0;
 LoadMapAll::RoadMountain LoadMapAll::mountain;
 LoadMapAll::CityGround LoadMapAll::cityGroundBig;
 LoadMapAll::CityGround LoadMapAll::cityGroundMedium;
+std::vector<LoadMapAll::CitySign> LoadMapAll::citySigns;
+
+//re-assert the city signs AFTER vegetation: a tree canopy lands on WalkBehind
+//and could hide a sign placed near the town border (tree-wall band)
+void LoadMapAll::reassertCitySigns(Tiled::Map &worldMap)
+{
+    Tiled::TileLayer * const colliLayer=LoadMap::searchTileLayerByName(worldMap,"Collisions");
+    Tiled::TileLayer * const walkBehindLayer=LoadMap::searchTileLayerByName(worldMap,"WalkBehind");
+    Tiled::TileLayer * const onGrassLayer=LoadMap::searchTileLayerByName(worldMap,"OnGrass");
+    Tiled::TileLayer * const grassLayer=LoadMap::searchTileLayerByName(worldMap,"Grass");
+    unsigned int index=0;
+    while(index<citySigns.size())
+    {
+        const CitySign &sign=citySigns.at(index);
+        if(colliLayer!=NULL)
+            colliLayer->setCell(sign.x,sign.y,sign.cell);
+        if(walkBehindLayer!=NULL)
+            walkBehindLayer->setCell(sign.x,sign.y,Tiled::Cell());
+        if(onGrassLayer!=NULL)
+            onGrassLayer->setCell(sign.x,sign.y,Tiled::Cell());
+        if(grassLayer!=NULL)
+            grassLayer->setCell(sign.x,sign.y,Tiled::Cell());
+        index++;
+    }
+}
 
 //scale-map codes for the city avenue: walkable (bit 0 set) so the entrance
 //pathing checks still pass, but not 1 so no building/bot lands on the path
 #define CITY_AVENUE_CODE 0x0B
+
+static void preloadTilesetOfTileRef(Tiled::Map &worldMap, const QString &tileRef);
 
 QString LoadMapAll::monsterRef(const uint16_t &monsterId, const SettingsAll::SettingsExtra &setting)
 {
@@ -46,6 +74,460 @@ bool LoadMapAll::isCaveChunk(const unsigned int &x, const unsigned int &y)
     if(subEntry.find(y)==subEntry.cend())
         return false;
     return subEntry.at(y).isCave;
+}
+
+//mirror of the main.cpp split naming, with the "-cave" suffix (same folder)
+std::string LoadMapAll::caveInteriorBaseName(const unsigned int &x, const unsigned int &y)
+{
+    if(roadCoordToIndex.find(x)==roadCoordToIndex.cend())
+        return std::string();
+    const std::unordered_map<uint16_t,RoadIndex> &subEntry=roadCoordToIndex.at(x);
+    if(subEntry.find(y)==subEntry.cend())
+        return std::string();
+    const RoadIndex &roadIndex=subEntry.at(y);
+    const Road &road=roads.at(roadIndex.roadIndex);
+    if(road.haveOnlySegmentNearCity)
+    {
+        if(roadIndex.cityIndex.empty())
+            return std::string();
+        const RoadToCity &cityIndex=roadIndex.cityIndex.front();
+        return "road-"+std::to_string(roadIndex.roadIndex+1)+
+                "-"+orientationToString(reverseOrientation(cityIndex.orientation))+"-cave";
+    }
+    const unsigned int indexCoord=vectorindexOf(road.coords,std::pair<uint16_t,uint16_t>(x,y));
+    return std::to_string(indexCoord+1)+"-cave";
+}
+
+bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
+                                   const unsigned int &chunkX, const unsigned int &chunkY,
+                                   const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
+                                   const RoadIndex &roadIndex, const SettingsAll::SettingsExtra &setting,
+                                   const std::string &overworldFile, const std::string &zoneName)
+{
+    //the no-go zone may be a 3x3 repeating rock block (9-tile comma list)
+    std::vector<Tiled::Tile *> wallTiles;
+    {
+        const QStringList wallTileList=setting.caveWallTile.split(",");
+        int wallTileIndex=0;
+        while(wallTileIndex<wallTileList.size())
+        {
+            Tiled::Tile * const tile=fetchTile(worldMap,wallTileList.at(wallTileIndex).trimmed());
+            if(tile!=NULL)
+                wallTiles.push_back(tile);
+            wallTileIndex++;
+        }
+    }
+    Tiled::Tile * const wallTile=wallTiles.empty() ? NULL : wallTiles.front();
+    Tiled::Tile * const floorTile=fetchTile(worldMap,setting.caveFloorTile);
+    Tiled::TileLayer * const walkLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
+    Tiled::TileLayer * const colliLayer=LoadMap::searchTileLayerByName(worldMap,"Collisions");
+    Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
+    Tiled::ObjectGroup * const objectGroup=LoadMap::searchObjectGroupByName(worldMap,"Object");
+    const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
+    unsigned int * const map=roadData[chunkX+chunkY*setting.mapXCount];
+    if(wallTile==NULL || floorTile==NULL || walkLayer==NULL || colliLayer==NULL
+            || movingGroup==NULL || objectGroup==NULL || invisibleTileset==NULL || map==NULL)
+        return false;
+    const unsigned int scale=2;
+    const unsigned int scaleWidth=singleMapWidth/scale;
+    const unsigned int x0=chunkX*singleMapWidth;
+    const unsigned int y0=chunkY*singleMapHeight;
+    const int pixelX0=x0*worldMap.tileWidth();
+    const int pixelY0=y0*worldMap.tileHeight();
+    const int pixelX1=(x0+singleMapWidth)*worldMap.tileWidth();
+    const int pixelY1=(y0+singleMapHeight)*worldMap.tileHeight();
+
+    //the natural overworld chunk is already saved: drop its border travel and
+    //cave-mouth objects from the region so they don't leak into the interior
+    {
+        unsigned int layerIndex=0;
+        while(layerIndex<(unsigned int)worldMap.layerCount())
+        {
+            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+            if(layer->isObjectGroup())
+            {
+                Tiled::ObjectGroup * const group=static_cast<Tiled::ObjectGroup *>(layer);
+                const QList<Tiled::MapObject*> objects=group->objects();
+                unsigned int objectIndex=0;
+                while(objectIndex<(unsigned int)objects.size())
+                {
+                    Tiled::MapObject * const object=objects.at(objectIndex);
+                    const int objectX=(int)object->x();
+                    const int objectY=(int)object->y()-1;//same region convention as PartialMap
+                    if(objectX>=pixelX0 && objectX<pixelX1 && objectY>=pixelY0 && objectY<pixelY1)
+                    {
+                        bool drop=false;
+                        if(object->type().startsWith("border-"))
+                            drop=true;
+                        else if(object->type()=="teleport on push"
+                                && object->properties().value("map").toString().endsWith("-cave"))
+                            drop=true;
+                        if(drop)
+                        {
+                            group->removeObject(object);
+                            delete object;
+                        }
+                    }
+                    objectIndex++;
+                }
+            }
+            layerIndex++;
+        }
+    }
+
+    Tiled::Tile * const stairDownTile=setting.caveStairDownTile.isEmpty() ? NULL : fetchTile(worldMap,setting.caveStairDownTile);
+    Tiled::Tile * const stairUpTile=setting.caveStairUpTile.isEmpty() ? NULL : fetchTile(worldMap,setting.caveStairUpTile);
+    Tiled::Tile * const itemTile=setting.caveItemTile.isEmpty() ? NULL : fetchTile(worldMap,setting.caveItemTile);
+
+    std::string overworldBase=overworldFile;
+    {
+        const size_t slash=overworldBase.rfind('/');
+        if(slash!=std::string::npos)
+            overworldBase=overworldBase.substr(slash+1);
+        if(stringEndsWith(overworldBase,".tmx"))
+            overworldBase.erase(overworldBase.size()-4);
+    }
+    std::string interiorPathBase=overworldFile;
+    if(stringEndsWith(interiorPathBase,".tmx"))
+        interiorPathBase.erase(interiorPathBase.size()-4);
+    interiorPathBase+="-cave";
+
+    //some caves go deeper: extra floors linked by stairs, +2 monster levels and
+    //a luck rotation per floor (a bit harder, some species variation)
+    unsigned int depth=1;
+    if(setting.caveMaxDepth>1 && stairDownTile!=NULL && stairUpTile!=NULL)
+        depth=1+rand()%setting.caveMaxDepth;
+    //a deeper floor reuses the corridor MIRRORED horizontally so the layouts
+    //differ while the stair cells stay corridor on both floors
+    //level file names: base, base-2, base-3...
+    std::vector<std::string> levelBaseName;
+    {
+        std::string interiorNameOnly=interiorPathBase;
+        const size_t slash=interiorNameOnly.rfind('/');
+        if(slash!=std::string::npos)
+            interiorNameOnly=interiorNameOnly.substr(slash+1);
+        unsigned int level=0;
+        while(level<depth)
+        {
+            if(level==0)
+                levelBaseName.push_back(interiorNameOnly);
+            else
+                levelBaseName.push_back(interiorNameOnly+"-"+std::to_string(level+1));
+            level++;
+        }
+    }
+    //stair cell per floor link (base-map coordinates of floor k, tile units):
+    //the cell and the one under it must be corridor so both stair sides land free
+    std::vector<std::pair<int,int> > stairCells;
+    {
+        unsigned int level=0;
+        while(level+1<depth)
+        {
+            int foundX=-1,foundY=-1,tries=0;
+            while(tries<300 && foundX<0)
+            {
+                tries++;
+                int lx=6+rand()%((int)singleMapWidth-12);
+                const int ly=6+rand()%((int)singleMapHeight-12);
+                if(level%2!=0)
+                    lx=(int)singleMapWidth-1-lx;//pick in the MIRRORED frame of floor k
+                const int baseX=(level%2!=0) ? (int)singleMapWidth-1-lx : lx;
+                const unsigned int cell=(baseX/(int)scale)+(ly/(int)scale)*scaleWidth;
+                const unsigned int cellUnder=(baseX/(int)scale)+((ly+1)/(int)scale)*scaleWidth;
+                if(map[cell]!=0 && map[cell]!=0x9 && map[cellUnder]!=0 && map[cellUnder]!=0x9)
+                {
+                    foundX=lx;
+                    foundY=ly;
+                }
+            }
+            if(foundX<0)
+                break;//no spot: stop going deeper
+            stairCells.push_back(std::pair<int,int>(foundX,foundY));
+            level++;
+        }
+        if(stairCells.size()+1<depth)
+            depth=stairCells.size()+1;
+    }
+
+    const uint8_t &zoneOrientation=mapPathDirection[chunkX+chunkY*setting.mapXCount];
+    const int dirX[4]={1,-1,0,0};
+    const int dirY[4]={0,0,1,-1};
+    const int borderX[4]={0,(int)singleMapWidth-1,(int)singleMapWidth/2,(int)singleMapWidth/2};
+    const int borderY[4]={(int)singleMapHeight/2,(int)singleMapHeight/2,0,(int)singleMapHeight-1};
+    const Orientation orientationOf[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
+
+    unsigned int level=0;
+    while(level<depth)
+    {
+        const bool mirrored=(level%2!=0);
+        //wipe every tile layer of the region, then paint this floor
+        {
+            unsigned int ty=y0;
+            while(ty<y0+singleMapHeight)
+            {
+                unsigned int tx=x0;
+                while(tx<x0+singleMapWidth)
+                {
+                    unsigned int layerIndex=0;
+                    while(layerIndex<(unsigned int)worldMap.layerCount())
+                    {
+                        Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+                        if(layer->isTileLayer())
+                            static_cast<Tiled::TileLayer *>(layer)->setCell(tx,ty,Tiled::Cell());
+                        layerIndex++;
+                    }
+                    unsigned int lx=tx-x0;
+                    const unsigned int ly=ty-y0;
+                    if(mirrored)
+                        lx=singleMapWidth-1-lx;
+                    const unsigned int type=map[(lx/scale)+(ly/scale)*scaleWidth];
+                    //floor everywhere: the rock blocks have transparent corners
+                    //and must sit on cave ground, not on the void
+                    walkLayer->setCell(tx,ty,Tiled::Cell(floorTile));
+                    if(type==0 || type==0x9)
+                    {
+                        //3x3 repeating rock block when 9 tiles are configured
+                        Tiled::Tile *patternTile=wallTile;
+                        if(wallTiles.size()>=9)
+                            patternTile=wallTiles.at(((ty-y0)%3)*3+((tx-x0)%3));
+                        colliLayer->setCell(tx,ty,Tiled::Cell(patternTile));
+                    }
+                    tx++;
+                }
+                ty++;
+            }
+        }
+
+        //objects of this floor, removed again after the floor is written
+        std::vector<Tiled::MapObject*> levelMovingObjects;
+        std::vector<Tiled::MapObject*> levelBotObjects;
+
+        //floor 0 only: entrance straights + exits back to the overworld pockets
+        if(level==0)
+        {
+            int side=0;
+            while(side<4)
+            {
+                if((zoneOrientation&orientationOf[side])!=0)
+                {
+                    int step=0;
+                    while(step<=4)
+                    {
+                        int perp=-1;
+                        while(perp<=1)
+                        {
+                            const int lx=borderX[side]+dirX[side]*step+dirY[side]*perp;
+                            const int ly=borderY[side]+dirY[side]*step+dirX[side]*perp;
+                            if(lx>=0 && ly>=0 && lx<(int)singleMapWidth && ly<(int)singleMapHeight)
+                            {
+                                colliLayer->setCell(x0+lx,y0+ly,Tiled::Cell());
+                                walkLayer->setCell(x0+lx,y0+ly,Tiled::Cell(floorTile));
+                            }
+                            perp++;
+                        }
+                        step++;
+                    }
+                    //walking onto the border cell exits in front of the overworld mouth
+                    const int exitX=borderX[side];
+                    const int exitY=borderY[side];
+                    const int landX=borderX[side]+dirX[side]*2;
+                    const int landY=borderY[side]+dirY[side]*2;
+                    Tiled::MapObject *exitObject=new Tiled::MapObject("","teleport on it",
+                        QPointF((x0+exitX)*worldMap.tileWidth(),(y0+exitY+1)*worldMap.tileHeight()),
+                        QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                    exitObject->setProperty("map",QString::fromStdString(overworldBase));
+                    exitObject->setProperty("x",QString::number(landX));
+                    exitObject->setProperty("y",QString::number(landY));
+                    Tiled::Cell exitCell;
+                    exitCell.setTile(invisibleTileset->tileAt(2));
+                    exitObject->setCell(exitCell);
+                    movingGroup->addObject(exitObject);
+                    levelMovingObjects.push_back(exitObject);
+                }
+                side++;
+            }
+        }
+
+        //stairs: down to the next floor / up back to the previous one
+        //(walking onto the stair tile teleports; landing is one cell under
+        //the opposite stair so the player never lands ON a teleport)
+        if(level+1<depth)
+        {
+            //this floor's frame coordinates of the link to floor level+1;
+            //adjacent floors are mirrored, so the same base cell is at W-1-x
+            const int sx=stairCells.at(level).first;
+            const int sy=stairCells.at(level).second;
+            const int nextX=(int)singleMapWidth-1-sx;
+            walkLayer->setCell(x0+sx,y0+sy,Tiled::Cell(stairDownTile));
+            Tiled::MapObject *down=new Tiled::MapObject("","teleport on it",
+                QPointF((x0+sx)*worldMap.tileWidth(),(y0+sy+1)*worldMap.tileHeight()),
+                QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+            down->setProperty("map",QString::fromStdString(levelBaseName.at(level+1)));
+            down->setProperty("x",QString::number(nextX));
+            down->setProperty("y",QString::number(sy+1));
+            Tiled::Cell downCell;
+            downCell.setTile(invisibleTileset->tileAt(2));
+            down->setCell(downCell);
+            movingGroup->addObject(down);
+            levelMovingObjects.push_back(down);
+        }
+        if(level>0)
+        {
+            const int prevSx=stairCells.at(level-1).first;
+            const int prevSy=stairCells.at(level-1).second;
+            const int sx=(int)singleMapWidth-1-prevSx;//the link cell in THIS floor's frame
+            const int sy=prevSy;
+            walkLayer->setCell(x0+sx,y0+sy,Tiled::Cell(stairUpTile));
+            Tiled::MapObject *up=new Tiled::MapObject("","teleport on it",
+                QPointF((x0+sx)*worldMap.tileWidth(),(y0+sy+1)*worldMap.tileHeight()),
+                QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+            up->setProperty("map",QString::fromStdString(levelBaseName.at(level-1)));
+            up->setProperty("x",QString::number(prevSx));
+            up->setProperty("y",QString::number(prevSy+1));
+            Tiled::Cell upCell;
+            upCell.setTile(invisibleTileset->tileAt(2));
+            up->setCell(upCell);
+            movingGroup->addObject(up);
+            levelMovingObjects.push_back(up);
+        }
+
+        //a few trainers inside the corridor (deeper = a bit harder)
+        QString botXml;
+        {
+            unsigned int localBotId=1;
+            const int wanted=2+rand()%2;
+            int placed=0,tries=0;
+            static const char* const lookDirs[4]={"bottom","top","left","right"};
+            while(placed<wanted && tries<200)
+            {
+                tries++;
+                const int lx=4+rand()%((int)singleMapWidth-8);
+                const int ly=4+rand()%((int)singleMapHeight-8);
+                if(walkLayer->cellAt(x0+lx,y0+ly).tile()!=NULL
+                        && colliLayer->cellAt(x0+lx,y0+ly).tile()==NULL)
+                {
+                    Tiled::MapObject *bot=new Tiled::MapObject("","bot",
+                        QPointF((x0+lx)*worldMap.tileWidth(),(y0+ly+1)*worldMap.tileHeight()),
+                        QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                    bot->setProperty("id",QString::number(localBotId));
+                    bot->setProperty("lookAt",lookDirs[rand()%4]);
+                    bot->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
+                    Tiled::Cell botCell;
+                    botCell.setTile(invisibleTileset->tileAt(0));
+                    bot->setCell(botCell);
+                    objectGroup->addObject(bot);
+                    levelBotObjects.push_back(bot);
+                    uint8_t botLevel=roadIndex.level;
+                    if((unsigned int)botLevel+2*level<=100)
+                        botLevel=botLevel+2*level;
+                    botXml+=botStepXml(localBotId,BotKind_fight,std::to_string(localBotId),
+                                       bot->property("lookAt").toString(),setting,
+                                       roadIndex.roadMonsters,botLevel,
+                                       std::string(),std::vector<std::string>());
+                    localBotId++;
+                    placed++;
+                }
+            }
+        }
+
+        //ground items (the configured percent per floor): the engine picks up an
+        //"object" typed object carrying an item property; the tile is the visual
+        if(itemTile!=NULL && !setting.caveItems.empty()
+                && (unsigned int)(rand()%100)<setting.caveItemPercent)
+        {
+            int tries=0;
+            bool itemPlaced=false;
+            while(tries<200 && !itemPlaced)
+            {
+                tries++;
+                const int lx=4+rand()%((int)singleMapWidth-8);
+                const int ly=4+rand()%((int)singleMapHeight-8);
+                if(walkLayer->cellAt(x0+lx,y0+ly).tile()!=NULL
+                        && colliLayer->cellAt(x0+lx,y0+ly).tile()==NULL)
+                {
+                    Tiled::MapObject *item=new Tiled::MapObject("","object",
+                        QPointF((x0+lx)*worldMap.tileWidth(),(y0+ly+1)*worldMap.tileHeight()),
+                        QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                    item->setProperty("item",QString::number(setting.caveItems.at(rand()%setting.caveItems.size())));
+                    Tiled::Cell itemCell;
+                    itemCell.setTile(itemTile);
+                    item->setCell(itemCell);
+                    objectGroup->addObject(item);
+                    levelBotObjects.push_back(item);
+                    itemPlaced=true;
+                }
+            }
+        }
+
+        //this floor's xml: cave encounters (deeper: +2 levels, luck rotated for
+        //some species variation) + the trainers
+        std::string additionalXmlInfo;
+        if(!roadIndex.roadMonsters.empty())
+        {
+            additionalXmlInfo+="  <cave>\n";
+            const unsigned int monsterCount=roadIndex.roadMonsters.size();
+            unsigned int roadMonsterIndex=0;
+            while(roadMonsterIndex<monsterCount)
+            {
+                const RoadMonster &roadMonster=roadIndex.roadMonsters.at(roadMonsterIndex);
+                //deeper floors shift the luck between the species
+                const RoadMonster &luckSource=roadIndex.roadMonsters.at((roadMonsterIndex+level)%monsterCount);
+                unsigned int minLevel=roadMonster.minLevel+2*level;
+                unsigned int maxLevel=roadMonster.maxLevel+2*level;
+                if(minLevel>100)
+                    minLevel=100;
+                if(maxLevel>100)
+                    maxLevel=100;
+                additionalXmlInfo+="    <monster id=\""+monsterRef(roadMonster.monsterId,setting).toStdString()+"\"";
+                if(minLevel==maxLevel)
+                    additionalXmlInfo+=" level=\""+std::to_string(minLevel)+"\"";
+                else
+                    additionalXmlInfo+=" minLevel=\""+std::to_string(minLevel)+
+                            "\" maxLevel=\""+std::to_string(maxLevel)+"\"";
+                additionalXmlInfo+=" luck=\""+std::to_string(luckSource.luck)+"\"/>\n";
+                roadMonsterIndex++;
+            }
+            additionalXmlInfo+="  </cave>\n";
+        }
+        additionalXmlInfo+=botXml.toStdString();
+
+        std::string interiorFile=interiorPathBase;
+        if(level>0)
+            interiorFile+="-"+std::to_string(level+1);
+        interiorFile+=".tmx";
+        std::string levelName="Cave";
+        if(level>0)
+            levelName="Cave B"+std::to_string(level+1);
+        std::vector<PartialMap::RecuesPoint> unusedRecuesPoints;
+        if(!PartialMap::save(worldMap,
+                             x0,y0,x0+singleMapWidth,y0+singleMapHeight,
+                             interiorFile,
+                             unusedRecuesPoints,
+                             "cave",zoneName,levelName,
+                             additionalXmlInfo,true,true,
+                             " color=\"#000000\" alpha=\"60\""))
+            return false;
+
+        //clean this floor's objects so they don't leak into the next one
+        {
+            unsigned int objectIndex=0;
+            while(objectIndex<levelMovingObjects.size())
+            {
+                movingGroup->removeObject(levelMovingObjects.at(objectIndex));
+                delete levelMovingObjects.at(objectIndex);
+                objectIndex++;
+            }
+            objectIndex=0;
+            while(objectIndex<levelBotObjects.size())
+            {
+                objectGroup->removeObject(levelBotObjects.at(objectIndex));
+                delete levelBotObjects.at(objectIndex);
+                objectIndex++;
+            }
+        }
+        level++;
+    }
+    return true;
 }
 
 //translate a template-map cell to the matching WORLD tileset cell
@@ -196,6 +678,153 @@ static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
         }
         LoadMapAll::addBuildingChain(slotBaseName,desc,temp,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName,slotKind,setting,buildingPool,buildingLevel,gymTypeName,gymTypeMonsters);
     }
+}
+
+//street-front lots along the avenue (classic lot-subdivision town layout):
+//contiguous lots are filled CENTER-OUT on both frontages; the near (top)
+//frontage is for doored buildings (door opens on the avenue), the far (bottom)
+//frontage only takes doorless facades.
+struct AvenueLotState
+{
+    Tiled::Map *worldMap;
+    unsigned int *map;
+    const unsigned char *lotObstacle;
+    Tiled::TileLayer *colliLayer;
+    Tiled::TileLayer *waterLayer;
+    unsigned int scaleWidth,scaleHeight,scale,mapWidth,mapHeight,chunkX,chunkY;
+    unsigned int hy0,hy1;
+    int aboveRight,aboveLeft,belowRight,belowLeft;
+};
+
+//door-front tiles (the engine "push" cell of each door) must stay free or the
+//player can never enter; band cells are fine (the avenue paint clears them)
+static bool cityDoorFrontsFree(AvenueLotState &lots, MapBrush::MapTemplate &temp,
+                               const int posX, const int posY, const bool markReserved)
+{
+    const std::vector<Tiled::MapObject*> doorList=LoadMapAll::getDoorsListAndTp(temp.tiledMap);
+    unsigned int doorIndex=0;
+    while(doorIndex<doorList.size())
+    {
+        const int frontX=posX+(int)(doorList.at(doorIndex)->x()/lots.worldMap->tileWidth());
+        const int frontY=posY+(int)(doorList.at(doorIndex)->y()/lots.worldMap->tileHeight());
+        if(frontX<1 || frontY<1 || frontX>=(int)lots.mapWidth-1 || frontY>=(int)lots.mapHeight-1)
+            return false;
+        const unsigned int cell=(frontX/(int)lots.scale)+(frontY/(int)lots.scale)*lots.scaleWidth;
+        if(markReserved)
+        {
+            //keep later buildings off the doorstep, but stay walkable for pathing
+            if(lots.map[cell]==0 || lots.map[cell]==1)
+                lots.map[cell]=0x0F;
+        }
+        else if(lots.map[cell]!=CITY_AVENUE_CODE)
+        {
+            const unsigned int tx=lots.chunkX*lots.mapWidth+frontX;
+            const unsigned int ty=lots.chunkY*lots.mapHeight+frontY;
+            if(lots.map[cell]==5 || lots.map[cell]==0x9)
+                return false;
+            if(lots.colliLayer->cellAt(tx,ty).tile()!=NULL
+                    || (lots.waterLayer!=NULL && lots.waterLayer->cellAt(tx,ty).tile()!=NULL))
+                return false;
+        }
+        doorIndex++;
+    }
+    return true;
+}
+
+static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
+        const LoadMapAll::BotKind slotKind, const std::string &slotBaseName, const bool facadeOnly,
+        LoadMapAll::City &city, const std::string &cityLowerCaseName,
+        const SettingsAll::SettingsExtra &setting, LoadMapAll::RoomSettings &rs, int &buildingId,
+        const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters)
+{
+    const int bandTopTile=(int)lots.hy0*(int)lots.scale;
+    const int bandBottomTile=((int)lots.hy1+1)*(int)lots.scale;
+    const int center=(int)lots.mapWidth/2;
+    int side=0;
+    while(side<2)
+    {
+        //doors face bottom: only the top frontage gives a door on the avenue
+        if(side==1 && !facadeOnly)
+            return false;
+        const int posY=(side==0) ? bandTopTile-(int)temp.height : bandBottomTile;
+        if(posY>=2 && posY+(int)temp.height<=(int)lots.mapHeight-2)
+        {
+            int &rightCursor=(side==0) ? lots.aboveRight : lots.belowRight;
+            int &leftCursor=(side==0) ? lots.aboveLeft : lots.belowLeft;
+            //fill the lot row from the center outward, balancing both directions
+            const bool firstGoRight=(rightCursor-center<=center-leftCursor);
+            int direction=0;
+            while(direction<2)
+            {
+                const bool goRight=(direction==0) ? firstGoRight : !firstGoRight;
+                int posX=goRight ? rightCursor : leftCursor-(int)temp.width;
+                while((goRight && posX+(int)temp.width<(int)lots.mapWidth-3)
+                        || (!goRight && posX>=3))
+                {
+                    bool valid=true;
+                    const unsigned int bx=posX/(int)lots.scale;
+                    const unsigned int by=posY/(int)lots.scale;
+                    const unsigned int ex=(posX+(int)temp.width+(int)lots.scale-1)/(int)lots.scale;
+                    const unsigned int ey=(posY+(int)temp.height+(int)lots.scale-1)/(int)lots.scale;
+                    unsigned int cy=by;
+                    while(cy<ey && valid)
+                    {
+                        unsigned int cx=bx;
+                        while(cx<ex && valid)
+                        {
+                            const unsigned int cell=cx+cy*lots.scaleWidth;
+                            if(lots.map[cell]!=0 && lots.map[cell]!=1)
+                                valid=false;
+                            else if(lots.lotObstacle[cell]!=0)
+                                valid=false;
+                            cx++;
+                        }
+                        cy++;
+                    }
+                    if(valid && !facadeOnly)
+                        valid=cityDoorFrontsFree(lots,temp,posX,posY,false);
+                    if(valid)
+                    {
+                        const std::pair<uint8_t,uint8_t> pos(posX,posY);
+                        placeCityBuilding(*lots.worldMap,temp,slotKind,slotBaseName,facadeOnly,
+                                          lots.chunkX,lots.chunkY,lots.mapWidth,lots.mapHeight,pos,
+                                          city,cityLowerCaseName,setting,rs,buildingId,
+                                          gymTypeName,gymTypeMonsters);
+                        cy=by;
+                        while(cy<ey)
+                        {
+                            unsigned int cx=bx;
+                            while(cx<ex)
+                            {
+                                lots.map[cx+cy*lots.scaleWidth]=5;
+                                cx++;
+                            }
+                            cy++;
+                        }
+                        if(!facadeOnly)
+                            cityDoorFrontsFree(lots,temp,posX,posY,true);
+                        if(goRight)
+                            rightCursor=posX+(int)temp.width+1;
+                        else
+                            leftCursor=posX-1;
+                        return true;
+                    }
+                    if(goRight)
+                        posX+=2;
+                    else
+                        posX-=2;
+                }
+                //this direction is exhausted: park the cursor at the edge
+                if(goRight)
+                    rightCursor=(int)lots.mapWidth;
+                else
+                    leftCursor=0;
+                direction++;
+            }
+        }
+        side++;
+    }
+    return false;
 }
 
 void LoadMapAll::brushFacade(const MapBrush::MapTemplate &mapTemplate, Tiled::Map &worldMap,
@@ -867,8 +1496,24 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
     loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
 
+    citySigns.clear();
     //per-type recolored gym tilesets into dest/map/tileset/ (and the blue base)
     generateGymTilesets(setting);
+    //make sure the tilesets named by the cave tiles are part of the world
+    {
+        preloadTilesetOfTileRef(worldMap,setting.caveFloorTile);
+        preloadTilesetOfTileRef(worldMap,setting.caveEntranceTile);
+        preloadTilesetOfTileRef(worldMap,setting.caveStairDownTile);
+        preloadTilesetOfTileRef(worldMap,setting.caveStairUpTile);
+        preloadTilesetOfTileRef(worldMap,setting.caveItemTile);
+        const QStringList wallTileList=setting.caveWallTile.split(",");
+        int wallTileIndex=0;
+        while(wallTileIndex<wallTileList.size())
+        {
+            preloadTilesetOfTileRef(worldMap,wallTileList.at(wallTileIndex));
+            wallTileIndex++;
+        }
+    }
     //gym building template (typed facade); falls back to building-big-1 when absent
     MapBrush::MapTemplate mapTemplategym;
     bool haveGymTemplate=false;
@@ -921,10 +1566,13 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
 
             if((zoneOrientation&(Orientation_bottom|Orientation_left|Orientation_right|Orientation_top)) != 0){
 
-                //a configurable percent of road chunks becomes a CAVE: the open
-                //ground is walled in so the player has to cross the corridor
+                //a configurable percent of road chunks becomes a CAVE: the
+                //overworld stays natural terrain (only the mouth is visible);
+                //the corridor is written as a separate -cave interior map the
+                //player HAS to cross instead of an open road
                 if(!isCity && setting.cavePercent>0
                         && !setting.caveWallTile.isEmpty() && !setting.caveFloorTile.isEmpty()
+                        && !setting.caveEntranceTile.isEmpty()
                         && roadCoordToIndex.find(x)!=roadCoordToIndex.cend()
                         && roadCoordToIndex.at(x).find(y)!=roadCoordToIndex.at(x).cend())
                 {
@@ -1220,6 +1868,55 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         int buildingId=1;
                         bool interiorHouseDone=false;
 
+                        //street-front lot state: the random zones only cover part
+                        //of the town, so lots recheck the GROUND directly (the
+                        //step-1 obstacle bits were consumed when map[] was reused)
+                        std::vector<unsigned char> lotObstacle(scaleWidth*scaleHeight,0);
+                        {
+                            unsigned int sy=0;
+                            while(sy<scaleHeight)
+                            {
+                                unsigned int sx=0;
+                                while(sx<scaleWidth)
+                                {
+                                    unsigned int j=0;
+                                    while(j<scale*scale)
+                                    {
+                                        const unsigned int tx=x*mapWidth+sx*scale+(j%scale);
+                                        const unsigned int ty=y*mapHeight+sy*scale+(j/scale);
+                                        if(colliLayer->cellAt(tx,ty).tile()!=NULL
+                                                || waterLayer->cellAt(tx,ty).tile()!=NULL)
+                                        {
+                                            lotObstacle[sx+sy*scaleWidth]=1;
+                                            break;
+                                        }
+                                        j++;
+                                    }
+                                    sx++;
+                                }
+                                sy++;
+                            }
+                        }
+                        AvenueLotState lots;
+                        lots.worldMap=&worldMap;
+                        lots.map=map;
+                        lots.lotObstacle=lotObstacle.data();
+                        lots.colliLayer=colliLayer;
+                        lots.waterLayer=waterLayer;
+                        lots.scaleWidth=scaleWidth;
+                        lots.scaleHeight=scaleHeight;
+                        lots.scale=scale;
+                        lots.mapWidth=mapWidth;
+                        lots.mapHeight=mapHeight;
+                        lots.chunkX=x;
+                        lots.chunkY=y;
+                        lots.hy0=hy0;
+                        lots.hy1=hy1;
+                        lots.aboveRight=(int)mapWidth/2;
+                        lots.aboveLeft=(int)mapWidth/2;
+                        lots.belowRight=(int)mapWidth/2;
+                        lots.belowLeft=(int)mapWidth/2;
+
                         unsigned int templateIndex=0;
                         while(templateIndex<(unsigned int)templates.size()){
                             MapBrush::MapTemplate &temp=templates[templateIndex];
@@ -1235,68 +1932,12 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     interiorHouseDone=true;
                             }
                             bool placed=false;
-                            //big city: align the buildings on the avenue, the door
-                            //row sits exactly on the band edge
+                            //big city: street-front lots filled center-out so the
+                            //buildings line up along the avenue
                             if(isBigCity && haveHorizontalBand)
-                            {
-                                const int bandTopTile=(int)hy0*(int)scale;
-                                const int bandBottomTile=((int)hy1+1)*(int)scale;
-                                int side=0;
-                                while(side<2 && !placed)
-                                {
-                                    int posY;
-                                    if(side==0)
-                                        posY=bandTopTile-(int)temp.height;//door opens on the avenue
-                                    else
-                                        posY=bandBottomTile;
-                                    if(posY>=2 && posY+(int)temp.height<=(int)mapHeight-2)
-                                    {
-                                        int posX=4;
-                                        while(posX+(int)temp.width<(int)mapWidth-4 && !placed)
-                                        {
-                                            bool valid=true;
-                                            const unsigned int bx=posX/(int)scale;
-                                            const unsigned int by=posY/(int)scale;
-                                            const unsigned int ex=(posX+(int)temp.width+(int)scale-1)/(int)scale;
-                                            const unsigned int ey=(posY+(int)temp.height+(int)scale-1)/(int)scale;
-                                            unsigned int cy=by;
-                                            while(cy<ey && valid)
-                                            {
-                                                unsigned int cx=bx;
-                                                while(cx<ex && valid)
-                                                {
-                                                    if(map[cx+cy*scaleWidth]!=1)
-                                                        valid=false;
-                                                    cx++;
-                                                }
-                                                cy++;
-                                            }
-                                            if(valid)
-                                            {
-                                                const std::pair<uint8_t,uint8_t> alignedPos(posX,posY);
-                                                placeCityBuilding(worldMap,temp,slotKind,slotBaseName,facadeOnly,
-                                                                  x,y,mapWidth,mapHeight,alignedPos,*city,cityLowerCaseName,
-                                                                  setting,rs,buildingId,gymTypeName,gymTypeMonsters);
-                                                cy=by;
-                                                while(cy<ey)
-                                                {
-                                                    unsigned int cx=bx;
-                                                    while(cx<ex)
-                                                    {
-                                                        map[cx+cy*scaleWidth]=5;
-                                                        cx++;
-                                                    }
-                                                    cy++;
-                                                }
-                                                placed=true;
-                                            }
-                                            else
-                                                posX+=2;
-                                        }
-                                    }
-                                    side++;
-                                }
-                            }
+                                placed=placeOnAvenueLot(lots,temp,slotKind,slotBaseName,facadeOnly,
+                                                        *city,cityLowerCaseName,setting,rs,buildingId,
+                                                        gymTypeName,gymTypeMonsters);
                             int i=0;
                             int limit = 500;
                             if(!placed)
@@ -1340,10 +1981,17 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                             }
                                         }
 
+                                        //a doored building stays enterable: the
+                                        //doorstep tiles must be free ground
+                                        if(valid && !facadeOnly)
+                                            valid=cityDoorFrontsFree(lots,temp,pos.first,pos.second,false);
+
                                         if(valid){
                                             placeCityBuilding(worldMap,temp,slotKind,slotBaseName,facadeOnly,
                                                               x,y,mapWidth,mapHeight,pos,*city,cityLowerCaseName,
                                                               setting,rs,buildingId,gymTypeName,gymTypeMonsters);
+                                            if(!facadeOnly)
+                                                cityDoorFrontsFree(lots,temp,pos.first,pos.second,true);
                                             zone->type = 5;
                                             for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
                                                 for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
@@ -1387,6 +2035,34 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 moving->addObject(rescue);
                             }
                             templateIndex++;
+                        }
+
+                        //big city: fill the remaining street-front lots with extra
+                        //doorless facades so the avenue reads as a dense main street
+                        if(isBigCity && haveHorizontalBand)
+                        {
+                            int extraFacades=4+rand()%4;
+                            bool lotsLeft=true;
+                            while(extraFacades>0 && lotsLeft)
+                            {
+                                MapBrush::MapTemplate *facadeTemplate=&mapTemplatebuilding1;
+                                switch(rand()%3)
+                                {
+                                case 0:
+                                    facadeTemplate=&mapTemplatebuilding1;
+                                    break;
+                                case 1:
+                                    facadeTemplate=&mapTemplatebuilding2;
+                                    break;
+                                default:
+                                    facadeTemplate=&mapTemplatebuildingbig1;
+                                    break;
+                                }
+                                lotsLeft=placeOnAvenueLot(lots,*facadeTemplate,BotKind_text,std::string(),true,
+                                                          *city,cityLowerCaseName,setting,rs,buildingId,
+                                                          gymTypeName,gymTypeMonsters);
+                                extraFacades--;
+                            }
                         }
 
                         //big city: plaza patches — the city template tmx brushed as
@@ -1500,6 +2176,34 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                         {
                                             signColliLayer->setCell(tx,ty,Tiled::Cell(signTile));
                                             map[(lx/(int)scale)+(ly/(int)scale)*scaleWidth]=5;
+                                            //remember it (re-asserted after vegetation) and keep
+                                            //the trees at distance so the sign stays visible
+                                            {
+                                                CitySign sign;
+                                                sign.x=tx;
+                                                sign.y=ty;
+                                                sign.cell=Tiled::Cell(signTile);
+                                                citySigns.push_back(sign);
+                                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                                                int ringY=-2;
+                                                while(ringY<=2)
+                                                {
+                                                    int ringX=-2;
+                                                    while(ringX<=2)
+                                                    {
+                                                        const int mx=(int)tx+ringX;
+                                                        const int my=(int)ty+ringY;
+                                                        if(mx>=0 && my>=0 && mx<worldMap.width() && my<worldMap.height())
+                                                        {
+                                                            const unsigned int bitMask=mx+my*worldMap.width();
+                                                            if(bitMask/8<maxMapSize)
+                                                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                                        }
+                                                        ringX++;
+                                                    }
+                                                    ringY++;
+                                                }
+                                            }
                                             Tiled::MapObject *signBot=new Tiled::MapObject("","bot",
                                                 QPointF(tx*worldMap.tileWidth(),(ty+1)*worldMap.tileHeight()),
                                                 QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
@@ -1519,14 +2223,15 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     }
                 }
 
-                // Paint the road
+                // Paint the road (cave chunk overworld stays natural: no water zone)
+                const bool genChunkIsCave=(!isCity && isCaveChunk(x,y));
                 for(unsigned int dx=0; dx<mapWidth; dx++){
                     for(unsigned int dy=0; dy<mapHeight; dy++){
                         const unsigned int tx = dx + mapWidth * x;
                         const unsigned int ty = dy + mapHeight * y;
                         const unsigned int type = map[(dx/scale) + (dy/scale)*scaleWidth];
 
-                        if(!isCity && type == 0x2){
+                        if(!isCity && !genChunkIsCave && type == 0x2){
                             waterLayer->setCell(tx, ty, waterTile);
                         }
                     }
@@ -1582,6 +2287,9 @@ bool checkEmptyRoad( const SettingsAll::SettingsExtra &setting, int tx, int ty){
     int scale = 2;
 
     if( LoadMapAll::mapPathDirection[x+y*setting.mapXCount] != 0){
+        //a cave chunk overworld carries NO road (the corridor is interior-only)
+        if(LoadMapAll::isCaveChunk(x,y))
+            return false;
         unsigned int* map = LoadMapAll::roadData[x+y*setting.mapXCount];
         unsigned int type = map[(tx%setting.mapWidth)/scale+(ty%setting.mapHeight)/scale*setting.mapWidth/scale];
 
@@ -1634,17 +2342,15 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
     Tiled::TileLayer *grassLayer=LoadMap::searchTileLayerByName(worldMap,"Grass");
     Tiled::TileLayer *waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
     Tiled::TileLayer *onGrassLayer=LoadMap::searchTileLayerByName(worldMap,"OnGrass");
-    //cave conversion tiles ([road] cave\wallTile / cave\floorTile)
-    Tiled::Cell caveWallCell;
+    //cave overworld tiles: only the mouth pocket floor is painted here (the
+    //walls live in the separate interior map written at split time)
     Tiled::Cell caveFloorCell;
     bool caveTilesOk=false;
-    if(!setting.caveWallTile.isEmpty() && !setting.caveFloorTile.isEmpty())
+    if(!setting.caveFloorTile.isEmpty())
     {
-        Tiled::Tile * const caveWallTile=fetchTile(worldMap,setting.caveWallTile);
         Tiled::Tile * const caveFloorTile=fetchTile(worldMap,setting.caveFloorTile);
-        if(caveWallTile!=NULL && caveFloorTile!=NULL)
+        if(caveFloorTile!=NULL)
         {
-            caveWallCell.setTile(caveWallTile);
             caveFloorCell.setTile(caveFloorTile);
             caveTilesOk=true;
         }
@@ -1833,7 +2539,11 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     for(unsigned int dy=0; dy<mapHeight; dy++){
                         const unsigned int tx = dx + mapWidth * x;
                         const unsigned int ty = dy + mapHeight * y;
-                        const unsigned int type = map[(dx/scale) + (dy/scale)*scaleWidth];
+                        //a CAVE chunk overworld stays natural terrain: behave as if
+                        //no road crossed it (no mask, mountain border decoration)
+                        unsigned int type = map[(dx/scale) + (dy/scale)*scaleWidth];
+                        if(chunkIsCave)
+                            type=0;
 
                         if(type != 0 && type != 0x9) {
                             const unsigned int &bitMask=tx+ty*worldMap.width();
@@ -1997,24 +2707,82 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                             }
                         }
 
-                        //CAVE chunk: everything off the corridor is walled, the
-                        //corridor itself gets the cave floor (overwrites whatever
-                        //the normal road pass painted above)
-                        if(chunkIsCave){
-                            if(type!=0 && type!=0x9){
-                                colliLayer->setCell(tx,ty,empty);
-                                grassLayer->setCell(tx,ty,empty);
-                                if(onGrassLayer!=NULL)
-                                    onGrassLayer->setCell(tx,ty,empty);
-                                if(waterLayer==NULL || waterLayer->cellAt(tx,ty).tile()==NULL)
-                                    walkLayer->setCell(tx,ty,caveFloorCell);
-                            }else{
-                                colliLayer->setCell(tx,ty,caveWallCell);
-                                if(onGrassLayer!=NULL)
-                                    onGrassLayer->setCell(tx,ty,empty);
-                            }
-                        }
+                    }
+                }
 
+                //CAVE chunk overworld: NATURAL terrain only (no road, no walls —
+                //the corridor lives in the separate <chunk>-cave.tmx interior).
+                //Just a small floor pocket + the cave mouth at each road
+                //connection; pushing into the mouth teleports inside.
+                if(chunkIsCave && caveTilesOk){
+                    Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
+                    Tiled::Tile * const entranceTile=fetchTile(worldMap,setting.caveEntranceTile);
+                    const std::string caveBase=caveInteriorBaseName(x,y);
+                    if(movingGroup!=NULL && entranceTile!=NULL && !caveBase.empty())
+                    {
+                        const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                        //d = direction INTO the map from the border, b = border middle
+                        const int dirX[4]={1,-1,0,0};
+                        const int dirY[4]={0,0,1,-1};
+                        const int borderX[4]={0,(int)mapWidth-1,(int)mapWidth/2,(int)mapWidth/2};
+                        const int borderY[4]={(int)mapHeight/2,(int)mapHeight/2,0,(int)mapHeight-1};
+                        const Orientation orientationOf[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
+                        int side=0;
+                        while(side<4)
+                        {
+                            if((zoneOrientation&orientationOf[side])!=0)
+                            {
+                                //3x3 floor pocket from the border + the mouth one step deeper
+                                int step=0;
+                                while(step<=3)
+                                {
+                                    int perp=-1;
+                                    while(perp<=1)
+                                    {
+                                        const int lx=borderX[side]+dirX[side]*step+dirY[side]*perp;
+                                        const int ly=borderY[side]+dirY[side]*step+dirX[side]*perp;
+                                        if(lx>=0 && ly>=0 && lx<(int)mapWidth && ly<(int)mapHeight)
+                                        {
+                                            const unsigned int tx=x*mapWidth+lx;
+                                            const unsigned int ty=y*mapHeight+ly;
+                                            colliLayer->setCell(tx,ty,empty);
+                                            grassLayer->setCell(tx,ty,empty);
+                                            if(onGrassLayer!=NULL)
+                                                onGrassLayer->setCell(tx,ty,empty);
+                                            if(waterLayer!=NULL)
+                                                waterLayer->setCell(tx,ty,empty);
+                                            walkLayer->setCell(tx,ty,caveFloorCell);
+                                            //no vegetation over the pocket/mouth
+                                            const unsigned int bitMask=tx+ty*worldMap.width();
+                                            if(bitMask/8>=maxMapSize)
+                                                abort();
+                                            MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                        }
+                                        perp++;
+                                    }
+                                    step++;
+                                }
+                                //the mouth: blocked entrance tile + teleport on push
+                                const int holeX=borderX[side]+dirX[side]*3;
+                                const int holeY=borderY[side]+dirY[side]*3;
+                                const int landX=borderX[side]+dirX[side]*2;
+                                const int landY=borderY[side]+dirY[side]*2;
+                                const unsigned int htx=x*mapWidth+holeX;
+                                const unsigned int hty=y*mapHeight+holeY;
+                                colliLayer->setCell(htx,hty,Tiled::Cell(entranceTile));
+                                Tiled::MapObject *hole=new Tiled::MapObject("","teleport on push",
+                                    QPointF(htx*worldMap.tileWidth(),(hty+1)*worldMap.tileHeight()),
+                                    QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                                hole->setProperty("map",QString::fromStdString(caveBase));
+                                hole->setProperty("x",QString::number(landX));
+                                hole->setProperty("y",QString::number(landY));
+                                Tiled::Cell holeCell;
+                                holeCell.setTile(invisibleTileset->tileAt(2));
+                                hole->setCell(holeCell);
+                                movingGroup->addObject(hole);
+                            }
+                            side++;
+                        }
                     }
                 }
 
@@ -2176,8 +2944,8 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     }
                 }
 
-                // Add bots
-                if(!isCity){
+                // Add bots (cave chunk: trainers go INSIDE the cave interior)
+                if(!isCity && !chunkIsCave){
                     // Resize
                     unsigned int* real_map = new unsigned int[mapWidth * mapHeight];
 
@@ -2570,6 +3338,37 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
             }
         }
         ci++;
+    }
+}
+
+//the cave stair/item tiles may reference a tileset (e.g. rename.tsx) that the
+//world never loaded: pull it from the dest staging by NAME before fetchTile
+static bool worldHasTilesetNamed(Tiled::Map &worldMap, const QString &name)
+{
+    unsigned int index=0;
+    while(index<(unsigned int)worldMap.tilesetCount())
+    {
+        if(worldMap.tilesetAt(index)->name()==name)
+            return true;
+        index++;
+    }
+    return false;
+}
+
+static void preloadTilesetOfTileRef(Tiled::Map &worldMap, const QString &tileRef)
+{
+    const QStringList parts=tileRef.trimmed().split("/");
+    if(parts.size()==2)
+    {
+        const QString name=parts.at(0).trimmed();
+        if(!name.isEmpty() && !worldHasTilesetNamed(worldMap,name))
+        {
+            QString fileName=name;
+            if(!fileName.endsWith(".tsx"))
+                fileName+=".tsx";
+            if(QFile::exists(QCoreApplication::applicationDirPath()+"/dest/map/tileset/"+fileName))
+                LoadMap::readTileset("tileset/"+fileName,&worldMap);
+        }
     }
 }
 
