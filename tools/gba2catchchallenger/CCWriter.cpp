@@ -31,7 +31,8 @@ CCWriter::CCWriter(const GbaRom &rom,
                    const Naming &naming,
                    const Wild &wild,
                    const std::string &fireredDir,
-                   SkinResolver &skins) :
+                   SkinResolver &skins,
+                   const std::unordered_set<uint16_t> &validItems) :
     rom_(rom),
     decoder_(decoder),
     tilesets_(tilesets),
@@ -47,7 +48,9 @@ CCWriter::CCWriter(const GbaRom &rom,
     renderLayers_(0),
     renderInvisible_(0),
     itemTilesetWritten_(false),
-    itemsTotal_(0)
+    itemsTotal_(0),
+    itemsDropped_(0),
+    validItems_(validItems)
 {
 }
 
@@ -359,7 +362,8 @@ bool CCWriter::writeAll()
     writeStart();
     writeZones();
     std::cout << "CCWriter: wrote " << maps.size() << " maps to " << fireredDir_
-              << " (" << itemsTotal_ << " items on map)" << std::endl;
+              << " (" << itemsTotal_ << " items on map, " << itemsDropped_
+              << " dropped: item not in the datapack)" << std::endl;
     if(guardMasked_==0)
         std::cout << "CCWriter GUARD layer-visibility: PASS (" << guardLayers_
                   << " tile layers, each visible when toggled)" << std::endl;
@@ -581,7 +585,9 @@ void CCWriter::writeMap(const DecodedMap &map)
             const DecodedNpc &np=map.npcs[ii];
             ii++;
             const int it=Gen3Script::findItemOf(rom_,np.scriptPtr);
-            if(it>0 && np.x>=0 && np.y>=0 &&
+            if(it>0 && validItems_.find(static_cast<uint16_t>(it))==validItems_.cend())
+                itemsDropped_++; // the (base) datapack does not define this item
+            else if(it>0 && np.x>=0 && np.y>=0 &&
                static_cast<uint32_t>(np.x)<w && static_cast<uint32_t>(np.y)<h)
             {
                 GroundItem gi;
@@ -598,7 +604,11 @@ void CCWriter::writeMap(const DecodedMap &map)
         {
             const DecodedSign &sg=map.signs[ii];
             ii++;
-            if(sg.kind>=5 && sg.itemId>0 && sg.itemId<512 && sg.x>=0 && sg.y>=0 &&
+            // kind 7 = BG_EVENT_HIDDEN_ITEM exactly (8 = RSE secret base,
+            // whose data field is NOT an item id)
+            if(sg.kind==7 && sg.itemId>0 && validItems_.find(sg.itemId)==validItems_.cend())
+                itemsDropped_++;
+            else if(sg.kind==7 && sg.itemId>0 && sg.x>=0 && sg.y>=0 &&
                static_cast<uint32_t>(sg.x)<w && static_cast<uint32_t>(sg.y)<h)
             {
                 GroundItem gi;

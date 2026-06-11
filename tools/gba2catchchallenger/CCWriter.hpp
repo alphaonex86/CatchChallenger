@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class CCWriter {
@@ -27,7 +28,8 @@ public:
              const Naming &naming,
              const Wild &wild,
              const std::string &fireredDir,
-             SkinResolver &skins);
+             SkinResolver &skins,
+             const std::unordered_set<uint16_t> &validItems);
 
     bool writeAll();
 
@@ -112,6 +114,8 @@ private:
     std::vector<std::string> renderInvisibleList_;
     bool itemTilesetWritten_;                  // tileset/items.tsx emitted
     int itemsTotal_;                           // ground+hidden items emitted
+    int itemsDropped_;                         // refs to items the datapack lacks
+    std::unordered_set<uint16_t> validItems_;  // ids an item object may reference
 };
 
 #endif // GBA2CC_CCWRITER_HPP

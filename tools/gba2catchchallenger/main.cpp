@@ -8,6 +8,9 @@
 // <label>/tileset/ (label is "firered", "ruby", ... derived from the ROM).
 
 #include "CCWriter.hpp"
+
+#include <tinyxml2.h>
+#include <unordered_set>
 #include "Gen3Data.hpp"
 #include "FullWriter.hpp"
 #include "M4aRipper.hpp"
@@ -359,13 +362,47 @@ int main(int argc, char *argv[])
     if(!gi.isSub())
         QDir().mkpath(QString::fromStdString(outDir+"/quests"));
 
+    // Item objects must reference an EXISTING item: validate against the
+    // ROM-extracted table (--all mode writes it as items/items.xml) or, in
+    // overlay mode, against the BASE datapack's items.xml — an unknown id
+    // would dangle in the engine.
+    Gen3Data gen3;
+    bool gen3ok=false;
+    if(fullDatapack)
+        gen3ok=gen3.decode(rom);
+    std::unordered_set<uint16_t> validItems;
+    if(gen3ok)
+    {
+        std::size_t ii=0;
+        while(ii<gen3.items().size())
+        {
+            validItems.insert(static_cast<uint16_t>(gen3.items()[ii].id));
+            ii++;
+        }
+    }
+    else
+    {
+        tinyxml2::XMLDocument d;
+        if(d.LoadFile((datapack+"/items/items.xml").c_str())==tinyxml2::XML_SUCCESS && d.RootElement()!=nullptr)
+        {
+            tinyxml2::XMLElement *it=d.RootElement()->FirstChildElement("item");
+            while(it!=nullptr)
+            {
+                const int id=it->IntAttribute("id",-1);
+                if(id>=0)
+                    validItems.insert(static_cast<uint16_t>(id));
+                it=it->NextSiblingElement("item");
+            }
+        }
+    }
+
     if(gi.isSub())
     {
         // Sub overlay: no .tmx / tileset / skins — geometry is shared from the
         // main; only the changed wild-encounter sections are written.  TilesetBuilder
         // is constructed but never prepared (unused by the overlay path).
         TilesetBuilder tilesets(rom,tilesetDir);
-        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins);
+        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,validItems);
         writer.writeSubOverlay(mainDir);
     }
     else
@@ -379,7 +416,7 @@ int main(int argc, char *argv[])
         // Bot skins: extracted overworld sprites are matched against existing skins
         // (~10% per-channel tolerance, content-cropped) and reused, else added.
         skins.loadExisting();
-        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins);
+        CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,validItems);
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
 
@@ -438,8 +475,7 @@ int main(int argc, char *argv[])
     // datapack ROOT so the maps' by-name wild/trainer/shop references resolve.
     if(fullDatapack)
     {
-        Gen3Data gen3;
-        if(gen3.decode(rom))
+        if(gen3ok)
         {
             FullWriter full(rom,gen3,datapack);
             full.writeAll();
