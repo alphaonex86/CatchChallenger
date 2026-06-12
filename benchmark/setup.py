@@ -60,12 +60,13 @@ Usage:
   python3 setup.py --local-only       # only this host
   python3 setup.py --include-disabled # also hit enabled:false nodes
   python3 setup.py exec --node LABEL  # only the named node(s), repeatable
-  python3 setup.py --disable-services # also stop+disable the curated noise
-                                      # daemons (CUPS/samba/avahi/bluetooth/
-                                      # ModemManager/nginx/tftpd/rsyncd/mail/
-                                      # sound) on every REMOTE node; local
-                                      # host skipped. Combine with --dry-run
-                                      # to preview, or --node to scope.
+  python3 setup.py --disable-services # STANDALONE: install NOTHING; only
+                                      # stop+disable the curated noise daemons
+                                      # (CUPS/samba/avahi/bluetooth/ModemManager
+                                      # /nginx/tftpd/rsyncd/mail/sound/timers)
+                                      # on every REMOTE node; local host
+                                      # skipped. Combine with --dry-run to
+                                      # preview, or --node to scope.
 """
 import argparse
 import json
@@ -1436,9 +1437,10 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
 
 
 # ---------------------------------------------------------------------------
-# --disable-services: stop + permanently disable the DISABLE_SERVICES
-# peripheral daemons on a remote benchmark/exec node so they cannot steal
-# CPU/IO or fire a timer mid-measurement. Opt-in, idempotent, and a
+# --disable-services: STANDALONE mode -- provisions/installs NOTHING; only
+# stops + permanently disables the DISABLE_SERVICES peripheral daemons on a
+# remote benchmark/exec node so they cannot steal CPU/IO or fire a timer
+# mid-measurement. Opt-in, idempotent, and a
 # CURATED allowlist (see DISABLE_SERVICES) -- ssh / network / lm-sensors /
 # display-manager are never in it. Supports systemd, OpenRC and procd/sysv;
 # only a service that is actually enabled/active is touched.
@@ -1650,7 +1652,8 @@ def main():
                     help="restrict to this node label (repeatable; "
                          "'local' selects the host)")
     ap.add_argument("--disable-services", action="store_true",
-                    help="after provisioning, stop + permanently disable the "
+                    help="STANDALONE mode: do NOT provision/install anything; "
+                         "ONLY stop + permanently disable the "
                          "curated peripheral noise daemons (CUPS, samba, "
                          "avahi, bluetooth, ModemManager, nginx, tftpd-hpa, "
                          "rsync daemon, mail, the sound server -- see "
@@ -1698,17 +1701,23 @@ def main():
         # Re-arm the budget clock for THIS host so earlier hosts' overruns
         # don't eat into it (None => uncapped when --budget 0).
         t.deadline = (time.monotonic() + budget) if budget is not None else None
-        summary[t.label] = provision(t, args.dry_run,
-                                     args.conn_timeout, args.install_timeout)
-        # Opt-in: quiet the box by disabling the curated noise daemons. Only
-        # on REMOTE nodes -- the local host is the operator's workstation, so
-        # we never stop its CUPS/sound/etc.
+        # --disable-services is a STANDALONE mode: ONLY stop/disable the
+        # curated noise daemons, never provision/install anything. Only on
+        # REMOTE nodes -- the local host is the operator's workstation, so we
+        # never stop its CUPS/sound/etc.
         if args.disable_services:
             if t.node_type == "local":
-                print("  %s[disable-services]%s skipping local host "
-                      "(your workstation)" % (C_YELLOW, C_RESET))
+                print("%s=== %s ===%s\n  %s[disable-services]%s skipping local "
+                      "host (your workstation)"
+                      % (_node_color("local"), t.label, C_RESET,
+                         C_YELLOW, C_RESET))
+                summary[t.label] = "skip"
             else:
-                disable_services_on(t, args.dry_run, args.conn_timeout)
+                summary[t.label] = disable_services_on(
+                    t, args.dry_run, args.conn_timeout)
+        else:
+            summary[t.label] = provision(t, args.dry_run,
+                                         args.conn_timeout, args.install_timeout)
         print()
 
     print("%s===== summary =====%s" % (C_CYAN, C_RESET))
