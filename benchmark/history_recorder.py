@@ -821,6 +821,21 @@ def collect_virt(run):
     return out
 
 
+def collect_net_families(run):
+    """Loopback address families available on the node, detected at run time:
+    "ipv4", "ipv6", or "ipv4+ipv6". IPv4 loopback is effectively universal on
+    a Linux benchmark node; IPv6 is reported only when /proc/net/if_inet6
+    carries the ::1 entry (all-zeros-then-1), i.e. the v6 stack is up. No
+    dependency on `ip`/`ifconfig`, so it works on minimal rootfs nodes."""
+    fams = ["ipv4"]
+    rc, out = run(["cat", "/proc/net/if_inet6"])
+    if rc == 0 and out:
+        flat = out.replace(" ", "").replace("\t", "")
+        if "00000000000000000000000000000001" in flat:
+            fams.append("ipv6")
+    return "+".join(fams)
+
+
 def collect_loadavg(run):
     rc, out = run(["cat", "/proc/loadavg"])
     if rc != 0 or not out.strip():
@@ -829,6 +844,520 @@ def collect_loadavg(run):
         return float(out.split()[0])
     except Exception:
         return None
+
+
+# Runtime environment that can PERTURB a measurement but isn't captured
+# elsewhere: the CPU frequency governor (powersave/ondemand throttle the
+# clock vs a pinned `performance`), and the noise daemons actually RUNNING
+# on the box at run time -- a display server (X11/Wayland), a sound server
+# (PipeWire/PulseAudio), a web server (nginx), etc. These steal CPU/IO and
+# make a run non-comparable to one taken on a quiet box, so they are
+# recorded next to the numbers. Process-based (pgrep) so it catches a
+# daemon however it was started (systemd unit, desktop session, manual) --
+# not just systemd-enabled ones. One SSH round-trip; never raises.
+_RUNTIME_STATE_SH = r'''
+has() {
+  if command -v pgrep >/dev/null 2>&1; then pgrep -x -- "$1" >/dev/null 2>&1
+  else ps 2>/dev/null | grep -vw grep | grep -Eq "[ /]$1( |$|:)"; fi
+}
+echo "GOV $(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | sort -u | tr '\n' ',' | sed 's/,$//')"
+ds=headless
+{ has Xorg || has X; } && ds=x11
+has Xwayland && ds=wayland
+for w in sway weston kwin_wayland Hyprland wayfire labwc river cage; do
+  has "$w" && ds=wayland
+done
+echo "DS $ds"
+ss=none
+has pulseaudio && ss=pulseaudio
+has jackd && ss=jack
+has artsd && ss=arts
+has pipewire && ss=pipewire
+echo "SS $ss"
+r=
+for p in Xorg nginx apache2 httpd cupsd smbd nmbd avahi-daemon ModemManager \
+         bluetoothd preload smartd mysqld mariadbd postgres dockerd \
+         containerd libvirtd packagekitd unattended-upgr tracker-miner \
+         snapd updatedb mandb rsync rsyncd; do
+  has "$p" && r="$r $p"
+done
+echo "RUN$r"
+'''
+
+
+def collect_runtime_state(run):
+    """CPU governor + the noise daemons running at measurement time.
+    Returns {"cpu_governor": str|None,
+             "noise_services": {"display_server", "sound_server", "running"}}.
+    Best-effort: missing pieces stay None / []."""
+    out = {"cpu_governor": None,
+           "noise_services": {"display_server": None,
+                              "sound_server": None,
+                              "running": []}}
+    rc, txt = run(_RUNTIME_STATE_SH)
+    for line in (txt or "").splitlines():
+        if line.startswith("GOV "):
+            out["cpu_governor"] = line[4:].strip() or None
+        elif line.startswith("DS "):
+            out["noise_services"]["display_server"] = line[3:].strip() or None
+        elif line.startswith("SS "):
+            out["noise_services"]["sound_server"] = line[3:].strip() or None
+        elif line.startswith("RUN"):
+            out["noise_services"]["running"] = sorted(line[3:].split())
+    return out
+
+
+# ---- sensors / thermal-throttle detection --------------------------------
+# Read AFTER the workload (the record is filled post-benchmark) to answer:
+# did this box throttle, so are the numbers trustworthy? Four independent
+# sensor signals, none needing extra privilege, all from ONE shell round-
+# trip (cheap over SSH), sourced from sysfs so they work on minimal-rootfs
+# nodes with no `sensors`/`vcgencmd` installed:
+#   1. temperatures + per-zone trip points  (/sys/class/thermal,
+#      /sys/class/hwmon) -> how close to the thermal limit.
+#   2. CPU frequency cur/min/max + scaling cap -> is the clock pulled back.
+#   3. x86 thermal_throttle counters (cumulative since boot).
+#   4. Raspberry Pi `vcgencmd get_throttled` live+sticky bits -- ALSO catches
+#      UNDER-VOLTAGE, which throttles a Pi exactly like heat.
+# A fifth, SENSOR-FREE signal is derived at write() from the run's own
+# samples: a work metric that decays across the fixed-time window is the
+# behavioural fingerprint of throttling even on a node with no sensor at all.
+# An optional pre-workload baseline (sensor_baseline) lets collect() report
+# the DELTA so throttling is attributed to THIS run, not since-boot history.
+
+SENSOR_PROBE_SH = r"""
+for z in /sys/class/thermal/thermal_zone*; do
+  [ -d "$z" ] || continue
+  echo "TZ|${z##*/}|$(cat "$z/type" 2>/dev/null)|$(cat "$z/temp" 2>/dev/null)"
+  for tp in "$z"/trip_point_*_temp; do
+    [ -f "$tp" ] || continue
+    b=${tp%_temp}
+    echo "TRIP|${z##*/}|$(cat "${b}_type" 2>/dev/null)|$(cat "$tp" 2>/dev/null)"
+  done
+done
+for h in /sys/class/hwmon/hwmon*; do
+  [ -d "$h" ] || continue
+  nm=$(cat "$h/name" 2>/dev/null)
+  for f in "$h"/temp*_input; do
+    [ -f "$f" ] || continue
+    b=${f%_input}
+    echo "HT|$nm|$(cat "${b}_label" 2>/dev/null)|$(cat "$f" 2>/dev/null)|$(cat "${b}_crit" 2>/dev/null)|$(cat "${b}_max" 2>/dev/null)|$(cat "${b}_crit_alarm" 2>/dev/null)"
+  done
+  for f in "$h"/fan*_input; do
+    [ -f "$f" ] || continue
+    b=${f%_input}
+    echo "HF|$nm|$(cat "${b}_label" 2>/dev/null)|$(cat "$f" 2>/dev/null)"
+  done
+done
+cur=0; smax=0
+for c in /sys/devices/system/cpu/cpu*/cpufreq; do
+  [ -d "$c" ] || continue
+  v=$(cat "$c/scaling_cur_freq" 2>/dev/null)
+  [ -n "$v" ] && [ "$v" -gt "$cur" ] 2>/dev/null && cur=$v
+  s=$(cat "$c/scaling_max_freq" 2>/dev/null)
+  [ -n "$s" ] && [ "$s" -gt "$smax" ] 2>/dev/null && smax=$s
+done
+echo "FREQ|cur=$cur|min=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq 2>/dev/null)|max=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>/dev/null)|smax=$smax"
+tc=0; tpk=0; ts=0
+for c in /sys/devices/system/cpu/cpu*/thermal_throttle; do
+  [ -d "$c" ] || continue
+  ts=1
+  a=$(cat "$c/core_throttle_count" 2>/dev/null)
+  case "$a" in ""|*[!0-9]*) ;; *) tc=$((tc + a)) ;; esac
+  pp=$(cat "$c/package_throttle_count" 2>/dev/null)
+  case "$pp" in ""|*[!0-9]*) ;; *) tpk=$((tpk + pp)) ;; esac
+done
+[ "$ts" = 1 ] && echo "THROTTLE|core=$tc|pkg=$tpk"
+if command -v vcgencmd >/dev/null 2>&1; then
+  echo "VCT|$(vcgencmd get_throttled 2>/dev/null)"
+  echo "VCTEMP|$(vcgencmd measure_temp 2>/dev/null)"
+fi
+"""
+
+# Just the cumulative/sticky throttle counters -- the cheap pre-workload
+# baseline so collect_sensors() can diff and attribute throttling to THIS run.
+SENSOR_BASELINE_SH = r"""
+tc=0; tpk=0; ts=0
+for c in /sys/devices/system/cpu/cpu*/thermal_throttle; do
+  [ -d "$c" ] || continue
+  ts=1
+  a=$(cat "$c/core_throttle_count" 2>/dev/null)
+  case "$a" in ""|*[!0-9]*) ;; *) tc=$((tc + a)) ;; esac
+  pp=$(cat "$c/package_throttle_count" 2>/dev/null)
+  case "$pp" in ""|*[!0-9]*) ;; *) tpk=$((tpk + pp)) ;; esac
+done
+[ "$ts" = 1 ] && echo "THROTTLE|core=$tc|pkg=$tpk"
+if command -v vcgencmd >/dev/null 2>&1; then
+  echo "VCT|$(vcgencmd get_throttled 2>/dev/null)"
+fi
+"""
+
+# Resource/bookkeeping metrics whose own time-trend says nothing about
+# throttling -- excluded from the sensor-free decay detector below.
+_TREND_SKIP_METRICS = {
+    "cpu_percent", "max_rss_kb", "peak_rss_kb", "rss_kb", "vsz_kb",
+    "minor_pf", "major_pf", "vol_ctx", "invol_ctx",
+    "binary_size_bytes", "binary_size",
+}
+
+
+def _to_float(s):
+    try:
+        return float(str(s).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _temp_milli(s):
+    """sysfs millidegree string -> degrees C (1 decimal), or None."""
+    v = _to_float(s)
+    return None if v is None else round(v / 1000.0, 1)
+
+
+def _sane_crit(c):
+    """Keep a critical/passive THRESHOLD only when it is a plausible silicon
+    limit (40..130 C). Drops the junk thresholds some drivers expose -- an
+    NVMe `temp*_max` sentinel (~65261 C) or a bogus low acpitz trip (~20 C)
+    -- which would otherwise yield a FALSE near-limit / throttle verdict.
+    Only thresholds are filtered; the measured temperature is kept verbatim."""
+    if c is None:
+        return None
+    return c if 40.0 <= c <= 130.0 else None
+
+
+def _median(xs):
+    ys = sorted(x for x in xs if isinstance(x, (int, float)))
+    n = len(ys)
+    if n == 0:
+        return None
+    if n % 2:
+        return ys[n // 2]
+    return (ys[n // 2 - 1] + ys[n // 2]) / 2.0
+
+
+def _kv(parts):
+    """['cur=12','max=34'] -> {'cur':'12','max':'34'}."""
+    d = {}
+    for p in parts:
+        if "=" in p:
+            k, _, v = p.partition("=")
+            d[k.strip()] = v.strip()
+    return d
+
+
+def _empty_sensors():
+    return {
+        "available": False,
+        "temps_c": [],
+        "max_temp_c": None,
+        "hottest_label": None,
+        "thermal_headroom_c": None,
+        "fans_rpm": [],
+        "cpu_freq_cur_mhz": None,
+        "cpu_freq_min_mhz": None,
+        "cpu_freq_max_mhz": None,
+        "cpu_freq_scaling_max_mhz": None,
+        "cpu_freq_capped": None,
+        "thermal_throttle_count": None,
+        "throttled_since_boot": None,
+        "rpi_throttled_raw": None,
+        "rpi_under_voltage_now": None,
+        "rpi_under_voltage_since_boot": None,
+        "rpi_arm_freq_capped_now": None,
+        "rpi_arm_freq_capped_since_boot": None,
+        "rpi_throttled_now": None,
+        "rpi_throttled_since_boot": None,
+        "rpi_soft_temp_limit_now": None,
+        "rpi_soft_temp_limit_since_boot": None,
+        "thermal_throttling_active": None,
+        "thermal_throttling_suspected": False,
+        "delta": None,
+        "trend": None,
+        "notes": [],
+    }
+
+
+def sensor_baseline(run):
+    """Cheap pre-workload snapshot of the CUMULATIVE / sticky throttle
+    indicators (x86 thermal_throttle counters + Pi get_throttled raw value).
+    Pass it to collect_sensors(baseline=...) so the DELTA attributes
+    throttling to THIS run rather than to since-boot history. Returns a small
+    dict; values stay None on a node that exposes no such counter."""
+    out = {"thermal_throttle_count": None, "rpi_raw": None}
+    rc, txt = run(["sh", "-c", SENSOR_BASELINE_SH], timeout=10)
+    if rc != 0 or not txt:
+        return out
+    for line in txt.splitlines():
+        parts = line.split("|")
+        if parts[0] == "THROTTLE":
+            kv = _kv(parts[1:])
+            core = _to_float(kv.get("core")); pkg = _to_float(kv.get("pkg"))
+            c = 0
+            if core is not None: c += int(core)
+            if pkg is not None: c += int(pkg)
+            out["thermal_throttle_count"] = c
+        elif parts[0] == "VCT" and len(parts) >= 2:
+            m = re.search(r"0x[0-9a-fA-F]+", parts[1])
+            if m:
+                out["rpi_raw"] = int(m.group(0), 16)
+    return out
+
+
+def collect_sensors(run, baseline=None):
+    """Post-workload sensor snapshot + thermal-throttle verdict. Never
+    raises; returns _empty_sensors() shape when the node exposes nothing.
+
+    `thermal_throttling_active`   -- throttling at SAMPLE time (live Pi bits,
+        critical alarm, temp past a passive trip, or near-zero headroom).
+    `throttled_since_boot`        -- cumulative counter / sticky bit > 0
+        (context only: could be a previous run on a long-lived box).
+    `delta.throttled_during_run`  -- counters increased vs `baseline`
+        (STRONG: throttling happened during THIS run). Only when baseline
+        was captured before the workload.
+    `thermal_throttling_suspected`-- OR of the per-run signals (active,
+        delta, the write()-time decay trend, and since-boot+near-limit when
+        no baseline disambiguates)."""
+    out = _empty_sensors()
+    rc, txt = run(["sh", "-c", SENSOR_PROBE_SH], timeout=15)
+    if rc != 0 or not txt or not txt.strip():
+        return out
+    trips = {}     # zone -> {trip_type_lower: temp_c}
+    temps = []     # {_zone,label,temp_c,crit_c,onset_c,alarm}
+    fans = []
+    rpi_raw = None
+    for line in txt.splitlines():
+        parts = line.split("|")
+        tag = parts[0]
+        if tag == "TZ" and len(parts) >= 4:
+            t = _temp_milli(parts[3])
+            if t is not None:
+                out["available"] = True
+                temps.append({"_zone": parts[1],
+                              "label": parts[2].strip() or parts[1],
+                              "temp_c": t, "crit_c": None,
+                              "onset_c": None, "alarm": False})
+        elif tag == "TRIP" and len(parts) >= 4:
+            trips.setdefault(parts[1], {})[parts[2].strip().lower()] = \
+                _temp_milli(parts[3])
+        elif tag == "HT" and len(parts) >= 4:
+            t = _temp_milli(parts[3])
+            if t is not None:
+                out["available"] = True
+                crit = _sane_crit(_temp_milli(parts[4])) if len(parts) > 4 else None
+                mx = _sane_crit(_temp_milli(parts[5])) if len(parts) > 5 else None
+                alarm = (len(parts) > 6 and parts[6].strip() == "1")
+                temps.append({"_zone": None,
+                              "label": (parts[2].strip() or parts[1].strip()
+                                        or "temp"),
+                              "temp_c": t,
+                              "crit_c": crit if crit is not None else mx,
+                              "onset_c": None, "alarm": alarm})
+        elif tag == "HF" and len(parts) >= 4:
+            r = _to_float(parts[3])
+            if r is not None and r >= 0:
+                out["available"] = True
+                fans.append({"label": parts[2].strip() or parts[1].strip()
+                             or "fan", "rpm": int(r)})
+        elif tag == "FREQ":
+            kv = _kv(parts[1:])
+            cur = _to_float(kv.get("cur")); mn = _to_float(kv.get("min"))
+            mx = _to_float(kv.get("max")); sm = _to_float(kv.get("smax"))
+            if cur and cur > 0:
+                out["cpu_freq_cur_mhz"] = round(cur / 1000.0, 1)
+                out["available"] = True
+            if mn and mn > 0:
+                out["cpu_freq_min_mhz"] = round(mn / 1000.0, 1)
+            if mx and mx > 0:
+                out["cpu_freq_max_mhz"] = round(mx / 1000.0, 1)
+            if sm and sm > 0:
+                out["cpu_freq_scaling_max_mhz"] = round(sm / 1000.0, 1)
+        elif tag == "THROTTLE":
+            kv = _kv(parts[1:])
+            core = _to_float(kv.get("core")); pkg = _to_float(kv.get("pkg"))
+            cnt = 0
+            if core is not None: cnt += int(core)
+            if pkg is not None: cnt += int(pkg)
+            out["thermal_throttle_count"] = cnt
+            out["available"] = True
+        elif tag == "VCT" and len(parts) >= 2:
+            m = re.search(r"0x[0-9a-fA-F]+", parts[1])
+            if m:
+                rpi_raw = int(m.group(0), 16)
+                out["rpi_throttled_raw"] = m.group(0)
+                out["available"] = True
+        elif tag == "VCTEMP" and len(parts) >= 2:
+            m = re.search(r"-?\d+(\.\d+)?", parts[1])
+            if m:
+                tv = _to_float(m.group(0))
+                if tv is not None:
+                    out["available"] = True
+                    temps.append({"_zone": None, "label": "soc (vcgencmd)",
+                                  "temp_c": round(tv, 1), "crit_c": None,
+                                  "onset_c": None, "alarm": False})
+
+    # Fold each thermal zone's trip points into its temp reading: the
+    # "critical" trip is the hard limit; "passive"/"hot" is where the driver
+    # starts throttling -- reaching it means throttling is active NOW.
+    for t in temps:
+        z = t.get("_zone")
+        if z and z in trips:
+            zt = trips[z]
+            crit = _sane_crit(zt.get("critical")
+                              if zt.get("critical") is not None
+                              else zt.get("crit"))
+            onset = _sane_crit(zt.get("passive")
+                               if zt.get("passive") is not None
+                               else zt.get("hot"))
+            if t["crit_c"] is None: t["crit_c"] = crit
+            t["onset_c"] = onset
+        t.pop("_zone", None)
+    out["temps_c"] = temps
+    out["fans_rpm"] = fans
+
+    valid = [t for t in temps if t["temp_c"] is not None]
+    if valid:
+        hot = max(valid, key=lambda t: t["temp_c"])
+        out["max_temp_c"] = hot["temp_c"]
+        out["hottest_label"] = hot["label"]
+        head = [t["crit_c"] - t["temp_c"] for t in valid
+                if t["crit_c"] is not None]
+        if head:
+            out["thermal_headroom_c"] = round(min(head), 1)
+
+    mx = out["cpu_freq_max_mhz"]; sm = out["cpu_freq_scaling_max_mhz"]
+    if mx and sm:
+        out["cpu_freq_capped"] = bool(sm < mx * 0.99)
+
+    if rpi_raw is not None:
+        out["rpi_under_voltage_now"]          = bool(rpi_raw & 0x1)
+        out["rpi_arm_freq_capped_now"]        = bool(rpi_raw & 0x2)
+        out["rpi_throttled_now"]              = bool(rpi_raw & 0x4)
+        out["rpi_soft_temp_limit_now"]        = bool(rpi_raw & 0x8)
+        out["rpi_under_voltage_since_boot"]   = bool(rpi_raw & 0x10000)
+        out["rpi_arm_freq_capped_since_boot"] = bool(rpi_raw & 0x20000)
+        out["rpi_throttled_since_boot"]       = bool(rpi_raw & 0x40000)
+        out["rpi_soft_temp_limit_since_boot"] = bool(rpi_raw & 0x80000)
+
+    notes = []
+    active = False
+    if out["rpi_under_voltage_now"]:
+        active = True; notes.append("Pi under-voltage NOW")
+    if out["rpi_arm_freq_capped_now"]:
+        active = True; notes.append("Pi ARM freq capped NOW")
+    if out["rpi_throttled_now"]:
+        active = True; notes.append("Pi throttled NOW")
+    if out["rpi_soft_temp_limit_now"]:
+        active = True; notes.append("Pi soft-temp-limit active NOW")
+    for t in valid:
+        if t["alarm"]:
+            active = True; notes.append("%s: critical temp alarm" % t["label"])
+        if t["onset_c"] is not None and t["temp_c"] >= t["onset_c"]:
+            active = True
+            notes.append("%s: %sC past passive trip %sC"
+                         % (t["label"], t["temp_c"], t["onset_c"]))
+    hr_c = out["thermal_headroom_c"]
+    if hr_c is not None and hr_c <= 3:
+        active = True; notes.append("only %sC below critical" % hr_c)
+    if out["cpu_freq_capped"] and hr_c is not None and hr_c <= 10:
+        active = True
+        notes.append("clock capped (%s/%s MHz) while hot"
+                     % (out["cpu_freq_scaling_max_mhz"],
+                        out["cpu_freq_max_mhz"]))
+    out["thermal_throttling_active"] = active
+
+    if out["thermal_throttle_count"] is not None or rpi_raw is not None:
+        since = bool(out["thermal_throttle_count"]) \
+            or bool(out["rpi_under_voltage_since_boot"]) \
+            or bool(out["rpi_arm_freq_capped_since_boot"]) \
+            or bool(out["rpi_throttled_since_boot"]) \
+            or bool(out["rpi_soft_temp_limit_since_boot"])
+        out["throttled_since_boot"] = since
+    else:
+        since = False
+
+    delta = None
+    if baseline:
+        d_parts = []
+        d_throttled = False
+        b_cnt = baseline.get("thermal_throttle_count")
+        if out["thermal_throttle_count"] is not None and b_cnt is not None:
+            dd = out["thermal_throttle_count"] - b_cnt
+            if dd > 0:
+                d_throttled = True
+                d_parts.append("thermal_throttle_count +%d" % dd)
+        b_raw = baseline.get("rpi_raw")
+        if rpi_raw is not None and b_raw is not None:
+            newbits = rpi_raw & ~b_raw & 0xF000F
+            if newbits:
+                d_throttled = True
+                d_parts.append("Pi throttle bits 0x%x set during run" % newbits)
+        delta = {"throttled_during_run": d_throttled,
+                 "detail": "; ".join(d_parts) or None}
+        if d_throttled:
+            notes.append("throttle counters rose DURING this run: "
+                         + (delta["detail"] or ""))
+    out["delta"] = delta
+
+    suspected = active
+    if delta and delta["throttled_during_run"]:
+        suspected = True
+    if baseline is None and since and hr_c is not None and hr_c <= 10:
+        suspected = True
+        notes.append("throttled since boot and currently near thermal limit")
+    out["thermal_throttling_suspected"] = suspected
+    out["notes"] = notes
+    return out
+
+
+def _throttle_trend(results):
+    """Sensor-free throttle signal from the run's own time-ordered samples.
+
+    A fixed-time benchmark produces a sequence of iteration results; thermal
+    throttling makes later iterations slower, so a higher-is-better work
+    metric decays (or a lower-is-better one climbs) across the window. Compare
+    the median of the first third against the last third; flag a sustained
+    decay >= 8%. Works on a node with no thermal sensor at all. Resource
+    metrics (cpu_percent, RSS, ...) are excluded -- their trend is not a
+    throttle signal."""
+    flagged = []
+    worst = [None]
+
+    def consider(name, m):
+        if name.split(":")[-1] in _TREND_SKIP_METRICS:
+            return
+        if not isinstance(m, dict) or m.get("better") not in ("higher", "lower"):
+            return
+        samples = m.get("samples")
+        if not samples:
+            return
+        nums = [x for x in samples if isinstance(x, (int, float))]
+        if len(nums) < 6:
+            return
+        k = max(1, len(nums) // 3)
+        first = _median(nums[:k]); last = _median(nums[-k:])
+        if first is None or last is None or first == 0:
+            return
+        if m["better"] == "higher":
+            deg = (first - last) / abs(first) * 100.0   # later slower -> +ve
+        else:
+            deg = (last - first) / abs(first) * 100.0   # later worse  -> +ve
+        if deg >= 8.0:
+            flagged.append({"metric": name, "degradation_pct": round(deg, 1)})
+            if worst[0] is None or deg > worst[0]:
+                worst[0] = deg
+
+    for _tool, blk in (results or {}).items():
+        if not isinstance(blk, dict):
+            continue
+        for name, m in (blk.get("metrics") or {}).items():
+            consider(name, m)
+        for label, slc in (blk.get("subbenchmarks") or {}).items():
+            for name, m in (slc or {}).items():
+                consider("%s:%s" % (label, name), m)
+    return {"suspected": bool(flagged),
+            "worst_degradation_pct": (round(worst[0], 1)
+                                      if worst[0] is not None else None),
+            "metrics": flagged}
 
 
 # ---- record ---------------------------------------------------------------
@@ -886,6 +1415,11 @@ class PlatformRecord:
             "net_card":      None,
             "net_link":      None,
             "net_link_detail": None,
+            # Address family/families available on the loopback at run time
+            # ("ipv4" | "ipv6" | "ipv4+ipv6" | None). Detected, not chosen;
+            # the IPv4/IPv6 transport split itself lives in per-slice
+            # subbenchmark labels (e.g. "ipv4-16-bots" / "ipv6-16-bots").
+            "net_family":    None,
             "wifi_ssid":     None,
             "wifi_standard": None,
             "wifi_band":     None,
@@ -901,6 +1435,11 @@ class PlatformRecord:
             "compiler":      None,
             "compile_flags": [],
             "simd_tier":     "generic",
+            # ISA width of the binary that ran: "64" | "32" | None. None on an
+            # ordinary single-build node; the dual-bitness '-m32' sibling sets
+            # "32" and its native node "64" so a same-CPU 32-vs-64 compare is
+            # unambiguous even though uname -m stays x86_64 on both.
+            "bitness":       None,
             # {lib: "system"|"vendored"} for the switchable libs (zlib,
             # zstd, blake3, xxhash, tinyxml2): whether this node's binary
             # linked the system .so or the in-tree vendored copy. Filled
@@ -908,16 +1447,50 @@ class PlatformRecord:
             # the build step populates from the cmake configure log.
             "libs":          {},
             "loadavg_1min_at_start": None,
+            # CPU frequency governor at run time ("performance" / "powersave"
+            # / "ondemand" / ... ; comma-joined when cores disagree, None when
+            # the box has no cpufreq). A non-performance governor caps the
+            # clock and makes a run non-comparable to a pinned-performance one.
+            "cpu_governor":  None,
+            # Noise daemons RUNNING at measurement time that can perturb the
+            # numbers: {"display_server": x11|wayland|headless,
+            # "sound_server": pipewire|pulseaudio|jack|arts|none,
+            # "running": [impactful daemons e.g. nginx, cupsd, smbd, ...]}.
+            # Process-detected, so it catches a daemon however it was started.
+            "noise_services": {},
+            # Post-workload sensor snapshot + thermal-throttle verdict
+            # (temps, fans, CPU clock cap, x86 throttle counters, Pi
+            # get_throttled bits) plus a sensor-free decay-trend signal.
+            # Filled by collect(); the trend is merged at write() once the
+            # metrics exist. Detects when a run's numbers are heat-tainted.
+            "sensors":       {},
         }
         self.results = {}
+        # Optional pre-workload throttle-counter baseline (capture_sensor_
+        # baseline / collect(sensor_baseline=...)) so collect_sensors can
+        # diff and attribute throttling to THIS run, not since-boot history.
+        self._sensor_baseline = None
 
-    def collect(self, cc_binary_path=None, datapack_path=None):
+    def capture_sensor_baseline(self):
+        """Snapshot the cumulative/sticky throttle counters BEFORE the
+        workload so collect() can report the per-run DELTA. Optional: without
+        it the post-run read still reports sample-time-active throttling, the
+        since-boot context, and the sensor-free decay trend."""
+        self._sensor_baseline = sensor_baseline(self.runner)
+        return self
+
+    def collect(self, cc_binary_path=None, datapack_path=None,
+                sensor_baseline=None):
         """Best-effort fill of every platform field. Never raises.
 
         `cc_binary_path` / `datapack_path` are the locations (on THIS
         node, as seen by `self.runner`) of the catchchallenger binary and
         the datapack; when given, their filesystem type + backing media
-        are recorded separately from the root-fs fields."""
+        are recorded separately from the root-fs fields.
+
+        `sensor_baseline` is a pre-workload snapshot from sensor_baseline()
+        (or capture_sensor_baseline()); when present collect_sensors reports
+        the throttle DELTA attributable to THIS run."""
         cpu = collect_cpu(self.runner)
         self.platform["cpu_model"] = cpu["cpu_model"]
         self.platform["cpu_cores"] = cpu["cpu_cores"]
@@ -953,6 +1526,10 @@ class PlatformRecord:
         for k in ("net_link", "net_link_detail", "wifi_ssid", "wifi_standard",
                   "wifi_band", "wifi_link_mbps", "eth_link_mbps"):
             self.platform[k] = link.get(k)
+        # Only auto-detect when a benchmark hasn't already pinned the family
+        # it actually exercised (write(net_family=...) wins).
+        if self.platform.get("net_family") is None:
+            self.platform["net_family"] = collect_net_families(self.runner)
         # Derived reliability flag: wifi/vpn/tunnel links inject jitter +
         # driver-interrupt CPU (e.g. brcmfmac wifi on rpi-zero-w showed up
         # as 41% of a perf capture), so CPU/latency numbers from such a
@@ -969,6 +1546,17 @@ class PlatformRecord:
         self.platform["libc"]      = collect_libc(self.runner)
         self.platform["compiler"]  = collect_compiler(self.runner)
         self.platform["loadavg_1min_at_start"] = collect_loadavg(self.runner)
+        # CPU governor + noise daemons (display/sound/web/...) running now:
+        # both perturb the measurement and aren't captured elsewhere.
+        rt = collect_runtime_state(self.runner)
+        self.platform["cpu_governor"]   = rt["cpu_governor"]
+        self.platform["noise_services"] = rt["noise_services"]
+        # Sensors read post-workload (this method runs after the benchmark):
+        # is the box throttling / has it throttled, so are the numbers heat-
+        # tainted? The decay-trend part is merged later, in write().
+        base = sensor_baseline if sensor_baseline is not None \
+            else self._sensor_baseline
+        self.platform["sensors"] = collect_sensors(self.runner, baseline=base)
         return self
 
     @staticmethod
@@ -1031,7 +1619,8 @@ class PlatformRecord:
 
     def write(self, *, commit, started_utc, ended_utc,
               compile_flags=None, simd_tier=None, libs=None,
-              harness_version=None, decision=None, comment=""):
+              harness_version=None, decision=None, comment="",
+              bitness=None, net_family=None):
         # All results SKIP → nothing to record; return None silently.
         if self.results and all(
                 v.get("status") == "SKIP" for v in self.results.values()):
@@ -1040,6 +1629,10 @@ class PlatformRecord:
             self.platform["compile_flags"] = list(compile_flags)
         if simd_tier is not None:
             self.platform["simd_tier"] = simd_tier
+        if bitness is not None:
+            self.platform["bitness"] = str(bitness)
+        if net_family is not None:
+            self.platform["net_family"] = net_family
         # system-vs-vendored lib choice for this node's binary. Explicit
         # `libs=` wins; otherwise pull what the build step recorded for
         # this node label in benchmark_helpers.LIBS_BY_NODE.
@@ -1061,6 +1654,26 @@ class PlatformRecord:
                 f"[history] WARN {self.node_label}: link={link}"
                 f"{('/' + str(detail)) if detail else ''} — CPU%/latency "
                 f"contention-prone; don't treat as sole KEEP/DISCARD signal\n")
+        # Sensor-free throttle signal from the run's own time-ordered samples
+        # -- merged here (not in collect()) because the metrics only exist
+        # after add_result()/add_subbenchmark(). A work metric that decays
+        # across the fixed-time window is the behavioural fingerprint of
+        # throttling even on a node with no thermal sensor.
+        sensors = self.platform.get("sensors")
+        if isinstance(sensors, dict):
+            trend = _throttle_trend(self.results)
+            sensors["trend"] = trend
+            if trend.get("suspected"):
+                sensors["thermal_throttling_suspected"] = True
+                sensors.setdefault("notes", []).append(
+                    "work metric decays across the run window (worst -%s%%) "
+                    "-- possible thermal throttling or contention"
+                    % trend.get("worst_degradation_pct"))
+            if sensors.get("thermal_throttling_suspected"):
+                sys.stderr.write(
+                    "[history] WARN %s: thermal throttling suspected -- %s\n"
+                    % (self.node_label,
+                       "; ".join(sensors.get("notes") or []) or "see sensors"))
         doc = {
             "benchmark":       self.benchmark,
             "commit":          commit,
@@ -1171,9 +1784,25 @@ def harness_version():
 # ---- self-test -----------------------------------------------------------
 
 if __name__ == "__main__":
+    # Show the live sensor read on this host (temps / clock cap / throttle).
+    snap = collect_sensors(local_runner)
+    print("sensors: available=%s max_temp_c=%s headroom_c=%s "
+          "freq=%s/%s MHz capped=%s throttle_count=%s active=%s suspected=%s"
+          % (snap["available"], snap["max_temp_c"],
+             snap["thermal_headroom_c"], snap["cpu_freq_cur_mhz"],
+             snap["cpu_freq_max_mhz"], snap["cpu_freq_capped"],
+             snap["thermal_throttle_count"],
+             snap["thermal_throttling_active"],
+             snap["thermal_throttling_suspected"]))
+    if snap["notes"]:
+        print("  notes: " + "; ".join(snap["notes"]))
+    # Synthetic decaying-throughput run -> the sensor-free trend must fire.
     rec = PlatformRecord("selftest", new_batch_id(), "local").collect()
     rec.add_result("rusage", {
         "wall_s": {"value": 1.23, "unit": "s", "better": "lower"},
+        "ops_per_s": {"value": 900, "unit": "ops/s", "better": "higher",
+                      "samples": [1000, 990, 985, 970, 900, 870, 840, 800,
+                                  790, 770]},
     })
     for n, cpu in ((10, 18.4), (50, 62.1), (200, 188.7)):
         rec.add_subbenchmark("rusage", f"{n}-players", {
