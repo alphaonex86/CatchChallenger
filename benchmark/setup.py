@@ -60,6 +60,12 @@ Usage:
   python3 setup.py --local-only       # only this host
   python3 setup.py --include-disabled # also hit enabled:false nodes
   python3 setup.py exec --node LABEL  # only the named node(s), repeatable
+  python3 setup.py --disable-services # also stop+disable the curated noise
+                                      # daemons (CUPS/samba/avahi/bluetooth/
+                                      # ModemManager/nginx/tftpd/rsyncd/mail/
+                                      # sound) on every REMOTE node; local
+                                      # host skipped. Combine with --dry-run
+                                      # to preview, or --node to scope.
 """
 import argparse
 import json
@@ -73,7 +79,7 @@ import time
 
 # A remote command silent for this many seconds is presumed wedged
 # (hung apt mirror, qemu-mips compile stall, dead ssh channel) and
-# killed -- distinct from the per-command/global deadline. The command
+# killed -- distinct from the per-command/per-host budget. The command
 # is reported so the operator sees exactly what stalled.
 #
 # Two tiers: 120s for fast probes (os-release / id -u / tool probe
@@ -157,6 +163,64 @@ def _disabled_tools_for_label(label):
                     out.update(ex.get("benchmark_disabled_tools", []) or [])
     return out
 
+
+def _node_dual_bitness(label):
+    """True when this node participates in the dual 32/64-bit benchmark and
+    therefore needs a 32-bit toolchain (compile side) or 32-bit runtime libs
+    (exec side).
+
+    * an EXEC node label -> its own benchmark_dual_bitness:true.
+    * a COMPILE node label -> true when ANY of its execution_nodes opted in,
+      because that compile node is the one that has to produce the 32-bit
+      binary for its children.
+
+    Matched the same way as _disabled_tools_for_label so the field can sit on
+    either the exec entry or be inferred from its children."""
+    if not label or label == "local":
+        return False
+    try:
+        cfg = load_remote_nodes()
+    except Exception:
+        return False
+    for node in cfg.get("nodes", []):
+        node_lbl = node.get("label")
+        execs = node.get("execution_nodes", []) or []
+        if node_lbl == label:
+            # compile node: opt in if it OR any child opted in
+            if node.get("benchmark_dual_bitness", False):
+                return True
+            for ex in execs:
+                if ex.get("benchmark_dual_bitness", False):
+                    return True
+        else:
+            for ex in execs:
+                if ex.get("label") == label \
+                        and ex.get("benchmark_dual_bitness", False):
+                    return True
+    return False
+
+
+def _node_arch(label):
+    """Arch string for a node label (a nodes[] compile entry OR an
+    execution_nodes[] child -> its parent compile node's arch). None for
+    local/unknown. Used to decide WHICH 32-bit toolchain/runtime a
+    dual-bitness node needs: x86_64 links/runs i686 (-m32 multilib), aarch64
+    runs armv7 (its 32-bit binary is built on the native armv7 compile node,
+    so the aarch64 side needs no -m32 dev toolchain at all)."""
+    if not label or label == "local":
+        return None
+    try:
+        cfg = load_remote_nodes()
+    except Exception:
+        return None
+    for node in cfg.get("nodes", []):
+        if node.get("label") == label:
+            return node.get("arch")
+        for ex in node.get("execution_nodes", []) or []:
+            if ex.get("label") == label:
+                return node.get("arch")
+    return None
+
 # ---------------------------------------------------------------------------
 # Logical tools the benchmark workspace needs.
 #
@@ -195,7 +259,68 @@ CORE_TOOLS = sorted({"cmake", "gcc", "g++", "make", "rsync", "git",
 PROFILER_TOOLS = sorted(_profiler_tool_set())
 
 OPTIONAL_TOOLS = ["ninja", "ccache", "mold", "ld.lld", "clang",
-                  "gdb", "sensors", "lscpu"]
+                  "gdb", "sensors", "lscpu", "vcgencmd", "cpupower"]
+
+# Sensor/throttle tools the post-benchmark thermal read benefits from but
+# which legitimately don't exist on every distro: `vcgencmd` ships only with
+# the Raspberry Pi firmware (apt/raspbian), `cpupower` lives in a kernel-tools
+# package that some families don't carry. They are AVAILABILITY-GATED (like
+# the build-dep libs) so an absent one is skipped silently instead of being
+# install-requested -- a failed install would wrongly flip the node to
+# "partial". The collector falls back to sysfs (thermal_zone / cpufreq /
+# thermal_throttle), so a missing tool only costs the nicer Pi/freq readout.
+CONDITIONAL_TOOLS = {"vcgencmd", "cpupower"}
+
+# Background services to DISABLE on a quiet benchmark/exec box -- OPT-IN
+# via --disable-services (default off; without the flag setup.py never
+# touches a single service). These are peripheral / desktop daemons the
+# CatchChallenger benchmark never uses; left running they steal CPU/IO
+# and fire timers mid-run, jittering the numbers (the load<1.0 gate drops
+# poisoned samples, but not generating the noise is better). The operator
+# confirmed CUPS, samba, the sound server, nginx, tftpd-hpa and the rsync
+# daemon are all unused on these boxes.
+#
+# CURATED ALLOWLIST, never a blind sweep: only the names below are ever
+# disabled, so the services that keep the node reachable + measurable
+# (ssh, the network stack, lm-sensors for the thermal collector, the
+# display manager that GUI/non-headless benchmarks need) are NEVER in
+# this list. Matched by unit BASENAME (no .service suffix) across systemd,
+# OpenRC and procd/sysv. Edit this list to taste -- borderline daemons the
+# operator did NOT confirm are deliberately left OUT (cron/anacron,
+# power-profiles-daemon/upower, NFS/rpcbind, the display manager): add
+# them here only if you also want them stopped.
+# An entry WITHOUT a dot is a plain service -> ".service" is appended on
+# systemd. An entry WITH a dot (e.g. "apt-daily.timer") is a full unit name
+# used verbatim -- this is how the periodic-TIMER poisoners are disabled
+# (`systemctl disable --now apt-daily.timer`). On OpenRC / procd-sysv the
+# suffix is stripped and the basename is matched against rc-service /
+# /etc/init.d (timers don't exist there, so those entries simply no-op).
+DISABLE_SERVICES = [
+    # printing (CUPS)
+    "cups", "cups-browsed",
+    # SMB/CIFS file sharing + zeroconf discovery (samba / avahi)
+    "smbd", "nmbd", "winbind", "avahi-daemon",
+    # bluetooth + cellular modem
+    "bluetooth", "ModemManager",
+    # web / netboot / rsync-daemon / mail (operator: unused here)
+    "nginx", "tftpd-hpa", "rsync", "exim4", "postfix",
+    # sound server stack (no audio benchmark): PipeWire / PulseAudio / rtkit
+    "pulseaudio", "pipewire", "pipewire-pulse", "wireplumber", "rtkit-daemon",
+    # SMART disk polling + preload readahead: both do background IO that
+    # jitters a steady-state run.
+    "smartmontools", "smartd", "preload",
+    # --- periodic TIMER poisoners (the big one) ----------------------------
+    # Background apt refresh + unattended upgrade can fire MID-benchmark and
+    # spike CPU/IO/network for minutes -- the single worst noise source.
+    "apt-daily.timer", "apt-daily-upgrade.timer", "unattended-upgrades",
+    # Maintenance timers: periodic CPU/IO bursts (fstrim, man-db index,
+    # ext4 online fsck, logrotate, firmware refresh, dpkg backup, locate db,
+    # MOTD fetch, anacron catch-up jobs).
+    "fstrim.timer", "man-db.timer", "e2scrub_all.timer", "logrotate.timer",
+    "fwupd-refresh.timer", "dpkg-db-backup.timer", "motd-news.timer",
+    "motd-news", "plocate-updatedb.timer", "mlocate.timer", "updatedb.timer",
+    "anacron.timer", "anacron",
+]
 
 # Per-package-manager-family tool exclusions: tools that simply do not
 # exist for that distro and must not be probed, listed as "missing", or
@@ -230,6 +355,8 @@ TOOL_TO_PKG = {
     "gdb": "gdb",
     "sensors": "lm_sensors",
     "lscpu": "util_linux",
+    "vcgencmd": "vcgencmd",
+    "cpupower": "cpupower",
 }
 
 # Per package-manager family: logical package key -> distro package name.
@@ -242,6 +369,7 @@ PKG_MAP = {
         "git": "git", "python3": "python3", "ninja": "ninja-build",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
         "gdb": "gdb", "lm_sensors": "lm-sensors", "util_linux": "util-linux",
+        "vcgencmd": "libraspberrypi-bin", "cpupower": "linux-cpupower",
     },
     "dnf": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -250,6 +378,7 @@ PKG_MAP = {
         "git": "git", "python3": "python3", "ninja": "ninja-build",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
         "gdb": "gdb", "lm_sensors": "lm_sensors", "util_linux": "util-linux",
+        "vcgencmd": None, "cpupower": "kernel-tools",
     },
     "zypper": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -258,6 +387,7 @@ PKG_MAP = {
         "git": "git", "python3": "python3", "ninja": "ninja",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
         "gdb": "gdb", "lm_sensors": "sensors", "util_linux": "util-linux",
+        "vcgencmd": None, "cpupower": "cpupower",
     },
     "pacman": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -266,6 +396,7 @@ PKG_MAP = {
         "git": "git", "python3": "python", "ninja": "ninja",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
         "gdb": "gdb", "lm_sensors": "lm_sensors", "util_linux": "util-linux",
+        "vcgencmd": None, "cpupower": "cpupower",
     },
     "apk": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -274,6 +405,7 @@ PKG_MAP = {
         "git": "git", "python3": "python3", "ninja": "ninja",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
         "gdb": "gdb", "lm_sensors": "lm-sensors", "util_linux": "util-linux",
+        "vcgencmd": None, "cpupower": None,
     },
     "emerge": {
         "time": "sys-process/time", "perf": "dev-util/perf",
@@ -286,6 +418,7 @@ PKG_MAP = {
         "mold": "sys-devel/mold", "lld": "llvm-core/lld",
         "clang": "llvm-core/clang", "gdb": "dev-debug/gdb",
         "lm_sensors": "sys-apps/lm-sensors", "util_linux": "sys-apps/util-linux",
+        "vcgencmd": None, "cpupower": "sys-power/cpupower",
     },
     "xbps": {
         "time": "time", "perf": "perf", "valgrind": "valgrind",
@@ -294,7 +427,105 @@ PKG_MAP = {
         "git": "git", "python3": "python3", "ninja": "ninja",
         "ccache": "ccache", "mold": "mold", "lld": "lld", "clang": "clang",
         "gdb": "gdb", "lm_sensors": "lm_sensors", "util_linux": "util-linux",
+        "vcgencmd": None, "cpupower": "cpupower",
     },
+}
+
+# 32-bit (i686, -m32 multilib) DEV toolchain, per package-manager family.
+# Installed BEST-EFFORT (like the build-dep libs) ONLY on an x86_64 COMPILE
+# node that opted into the dual 32/64-bit benchmark (benchmark_dual_bitness):
+# that is the one place a same-host 32-bit binary is LINKED, so it needs the
+# 32-bit libc/libstdc++ dev + crt for `g++ -m32`. The server/cli benchmarks
+# only need 32-bit libc + libstdc++ — every other dep (zlib/zstd/blake3/
+# xxhash/tinyxml2) falls back to its in-tree vendored copy compiled -m32, so
+# no 32-bit zlib/zstd system package is required.
+# NOT used for: (a) the EXEC side -- an exec node only RUNS the binary and its
+# 32-bit RUNTIME libs are operator-provided / ignored if absent (see the
+# provision() exec branch); (b) aarch64 -- its 32-bit (armv7) binary is built
+# on the native armv7 compile node, no -m32 toolchain involved.
+# None = no reliable one-shot multilib package on this family; the operator
+# installs the 32-bit toolchain by hand (gentoo ABI_X86=32 profile, musl has
+# none). A missing toolchain just makes the -m32 build SKIP, never a wrong
+# number.
+MULTILIB_PKGS = {
+    "apt":    ["gcc-multilib", "g++-multilib"],
+    "dnf":    ["glibc-devel.i686", "libstdc++-devel.i686",
+               "libstdc++.i686", "glibc.i686"],
+    "zypper": ["gcc-32bit", "glibc-devel-32bit", "libstdc++6-32bit"],
+    "pacman": ["lib32-glibc", "lib32-gcc-libs"],   # needs [multilib] repo on
+    "xbps":   ["gcc-multilib"],                     # — best-effort
+    "emerge": None,                                 # ABI_X86=32 profile, manual
+    "apk":    None,                                 # musl: no standard multilib
+}
+
+# 32-bit RUNTIME libs for the EXEC side (best-effort, like MULTILIB_PKGS on the
+# compile side). An exec node only RUNS the dual-bitness 32-bit binary, so it
+# needs the matching 32-bit loader + libc/libstdc++/libgcc at run time -- on an
+# x86_64 box the i686 (Debian: i386) set, on an aarch64 box the armv7 (Debian:
+# armhf) set. The binary is built dynamically (matching the native build's
+# linkage), so without these it can't even exec and the 32-bit run would FAIL.
+# Installing them here turns that into a real measurement; a box we can't
+# provision still degrades gracefully (the harness runtime gate SKIPs it).
+# Per runtime arch: the dpkg foreign-arch token (apt only) + the loader path +
+# the runtime .so groups the server binary links. `runlibs` is a list of GROUPS
+# (each group = candidate paths for one shared lib); the node counts as
+# "already provisioned" only when EVERY group has at least one path present.
+# The set is libstdc++ + zlib (libz.so.1) + zstd (libzstd.so.1): the native
+# armv7 compile node has system zlib/zstd dev so the armv7 binary links them
+# DYNAMICALLY -- libc6/libstdc++/libgcc alone is NOT enough (it failed with
+# 'libz.so.1: cannot open shared object file'). The i686 binary is built on the
+# amd64 multilib node with no 32-bit zlib/zstd dev, so it static-links the
+# vendored copies and doesn't strictly need libz/libzstd -- but provisioning
+# them anyway is harmless and keeps the node robust if its build ever links
+# them. (libc6/libgcc-s1 come in as deps of libstdc++6, so they're not probed
+# separately.)
+RUNTIME32_ARCH = {
+    "i686":  {"dpkg_arch": "i386",
+              "loader": ["/lib/ld-linux.so.2", "/lib32/ld-linux.so.2"],
+              "runlibs": [
+                  ["/usr/lib/i386-linux-gnu/libstdc++.so.6",
+                   "/usr/lib32/libstdc++.so.6"],
+                  ["/usr/lib/i386-linux-gnu/libz.so.1",
+                   "/usr/lib32/libz.so.1", "/lib/i386-linux-gnu/libz.so.1"],
+                  ["/usr/lib/i386-linux-gnu/libzstd.so.1",
+                   "/usr/lib32/libzstd.so.1"],
+                  ["/usr/lib/i386-linux-gnu/libxxhash.so.0",
+                   "/usr/lib32/libxxhash.so.0"],
+                  ["/usr/lib/i386-linux-gnu/libtinyxml2.so.11",
+                   "/usr/lib32/libtinyxml2.so.11"]]},
+    "armv7": {"dpkg_arch": "armhf",
+              "loader": ["/lib/ld-linux-armhf.so.3",
+                         "/lib/arm-linux-gnueabihf/ld-linux-armhf.so.3"],
+              "runlibs": [
+                  ["/usr/lib/arm-linux-gnueabihf/libstdc++.so.6"],
+                  ["/usr/lib/arm-linux-gnueabihf/libz.so.1"],
+                  ["/usr/lib/arm-linux-gnueabihf/libzstd.so.1"],
+                  ["/usr/lib/arm-linux-gnueabihf/libxxhash.so.0"],
+                  ["/usr/lib/arm-linux-gnueabihf/libtinyxml2.so.11"]]},
+}
+
+# Per-package-manager-family 32-bit RUNTIME packages, keyed by foreign-arch
+# token. Only apt is wired (every dual-bitness box in the fleet is Debian); a
+# family with no entry / None falls back to a MANUAL note -- the operator
+# installs the 32-bit runtime by hand and the 32-bit run SKIPs until then.
+# The armv7 binary is built on the native armv7 compile node (which HAS the
+# system dev libs), so it dynamically links the full system-first lib set:
+# zlib1g (libz.so.1), libzstd1 (libzstd.so.1), libxxhash0 (libxxhash.so.0),
+# libtinyxml2-11 (libtinyxml2.so.11) -- ALL mandatory (readelf DT_NEEDED).
+# libc6/libstdc++6/libgcc-s1 alone left it failing on libz.so.1, then
+# libxxhash.so.0, then libtinyxml2.so.11. (blake3 isn't packaged on Debian ->
+# vendored-static -> no libblake3 dep; curl/liburing are cluster-only.) The
+# i686 build is static-vendored for all of these so it needs none of them, but
+# provisioning the full set on both arches is harmless and keeps it robust.
+# tinyxml2 soname tracks the package suffix: Debian 13 ships .so.11 ->
+# libtinyxml2-11 (every dual-bitness box here is Debian 13).
+RUNTIME32_PKGS = {
+    "apt": {"i386":  ["libc6:i386", "libstdc++6:i386", "libgcc-s1:i386",
+                      "zlib1g:i386", "libzstd1:i386", "libxxhash0:i386",
+                      "libtinyxml2-11:i386"],
+            "armhf": ["libc6:armhf", "libstdc++6:armhf", "libgcc-s1:armhf",
+                      "zlib1g:armhf", "libzstd1:armhf", "libxxhash0:armhf",
+                      "libtinyxml2-11:armhf"]},
 }
 
 # Build-time library dependencies (headers + .pc/.so) for compiling the
@@ -366,14 +597,28 @@ BUILD_DEP_LIBS = [
              "xbps": "libmariadbclient-devel"}},
 ]
 
-# NOTE: setup.py NEVER refreshes package metadata. No `apt-get update`,
-# `pacman -Sy`, `apk update`, `zypper refresh`, `emerge --sync` -- these
-# hit the network to rebuild the index (and `emerge --sync` rebuilds the
-# whole portage tree). The install commands run against the index already
-# present on the node; a stale index simply means a package is skipped
-# (best-effort libs fall back to the in-tree vendored copy). Keeping the
-# whole flow offline-as-possible avoids the long network stalls seen on
-# slow / firewalled boxes.
+# NOTE: setup.py does NOT pre-emptively refresh package metadata. No
+# up-front `apt-get update`, `pacman -Sy`, `apk update`, `zypper refresh`,
+# `emerge --sync` -- these hit the network to rebuild the index (and
+# `emerge --sync` rebuilds the whole portage tree). The install commands
+# run against the index already present on the node; a stale index simply
+# means a package is skipped (best-effort libs fall back to the in-tree
+# vendored copy). Keeping the whole flow offline-as-possible avoids the
+# long network stalls seen on slow / firewalled boxes.
+#
+# The ONE reactive exception (apt only): an install that fails with
+# "Unable to fetch some archives, maybe run apt-get update or try with
+# --fix-missing" means the local index references archive versions the
+# mirror has already rotated away. There we run a single `apt-get update`
+# and retry the install once (see APT_UPDATE_CMD + the install loop). This
+# stays reactive (only after that specific failure, once per node), never
+# pre-emptive.
+
+# Reactive metadata refresh for apt -- run ONCE per node, ONLY after an
+# install fails with "Unable to fetch some archives" (stale index), then
+# the failed install is retried. Never run pre-emptively.
+APT_UPDATE_CMD = ("export DEBIAN_FRONTEND=noninteractive; "
+                  "apt-get update -o DPkg::Lock::Timeout=0")
 
 # Install ONE package ({pkg}). Per-package, never batched: a single
 # masked/unavailable tool (e.g. dev-debug/valgrind has no keyword on
@@ -446,11 +691,12 @@ class Target:
         self.label = label
         self.node_type = node_type  # "local" | "compile" | "exec"
         self.ssh = ssh            # None => local; else (user, host, port)
-        # Absolute time.monotonic() past which NO command may run. None =>
-        # unbounded. Every run() clamps its per-command timeout to the
-        # budget still left so one slow node (flaky apt mirror, emerge
-        # from source) can never push the whole fleet sweep past the
-        # global --deadline the operator set.
+        # Absolute time.monotonic() past which NO command may run on THIS
+        # host. None => unbounded. Re-armed per host in main() (see the
+        # per-host budget note there); every run() clamps its per-command
+        # timeout to the budget still left so one slow host (flaky apt
+        # mirror, emerge from source) burns only its OWN budget, never the
+        # budget of the hosts after it.
         self.deadline = deadline
         # For exec nodes whose `lxc_nfs.enabled` is true (e.g. rtl9607c):
         # the FULL execution_nodes dict from remote_nodes.json. provision()
@@ -462,8 +708,8 @@ class Target:
 
     def run(self, cmd, timeout, idle_timeout=None):
         """Run a shell command; return (rc, combined_output). The
-        per-command timeout is clamped to whatever is left of the global
-        deadline; once the deadline has passed the command is refused
+        per-command timeout is clamped to whatever is left of THIS host's
+        budget; once the budget is exhausted the command is refused
         outright instead of started and timed out. `idle_timeout`
         (remote only, default REMOTE_IDLE_TIMEOUT) kills the command
         early when it produces NO output for that many seconds -- pass
@@ -472,7 +718,7 @@ class Target:
         if self.deadline is not None:
             remaining = self.deadline - time.monotonic()
             if remaining <= 1:
-                return 124, "[global deadline reached -- command skipped]"
+                return 124, "[per-host budget exhausted -- command skipped]"
             timeout = min(timeout, int(remaining))
         if self.ssh is None:
             argv = ["sh", "-c", cmd]
@@ -660,6 +906,20 @@ def have_lib_probe(pcs, hdrs, world_pkg=None):
     return 'if %s; then echo Y; else echo N; fi' % base
 
 
+def have_multilib_probe():
+    """Shell snippet that prints Y/N for a usable 32-bit toolchain. It does
+    not just look for a package -- it actually COMPILES AND LINKS a tiny C++
+    program with `-m32`, which only succeeds when the 32-bit libc/libstdc++/
+    crt are all present. That is exactly the capability the dual-bitness
+    build needs, so the probe matches reality on every distro (no per-family
+    package-name guessing). Cleans up its temp output."""
+    return ("o=$(mktemp 2>/dev/null || echo /tmp/.cc_m32_$$); "
+            "if printf 'int main(){return 0;}' | "
+            "{ g++ -m32 -x c++ - -o \"$o\" 2>/dev/null "
+            "|| gcc -m32 -x c - -o \"$o\" 2>/dev/null; }; "
+            "then echo Y; else echo N; fi; rm -f \"$o\" 2>/dev/null")
+
+
 def _priv_cmd(cmd):
     """Wrap a full shell pipeline so the WHOLE thing runs under one
     `sh -c` (the old `sudo -n EXPORT; apt-get` only sudo'd the export,
@@ -741,15 +1001,15 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
     print("%s=== %s ===%s" % (_node_color(tgt.node_type), tgt.label, C_RESET))
 
     if tgt.deadline is not None and time.monotonic() >= tgt.deadline:
-        print("  %s[SKIP]%s global deadline reached before this node "
-              "-- not provisioned" % (C_YELLOW, C_RESET))
+        print("  %s[SKIP]%s per-host budget already exhausted before this "
+              "host -- not provisioned" % (C_YELLOW, C_RESET))
         return "deadline"
 
     # `|| true` keeps rc==0 on a reachable box even with no os-release, so a
     # non-zero rc (or an ssh diagnostic on stdout) means the box is down.
     rc, out = tgt.run("cat /etc/os-release 2>/dev/null || true", conn_timeout)
-    if "global deadline reached" in out:
-        print("  %s[SKIP]%s global deadline reached -- not provisioned"
+    if "per-host budget exhausted" in out:
+        print("  %s[SKIP]%s per-host budget exhausted -- not provisioned"
               % (C_YELLOW, C_RESET))
         return "deadline"
     low = out.lower()
@@ -820,6 +1080,47 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
             probe_parts.append(
                 'printf "%%s " avail_%s ; if %s; then echo Y; else echo N; fi'
                 % (lib["name"], chk))
+    # Same round-trip: is each conditional sensor tool's package even in this
+    # node's index? An absent one (e.g. libraspberrypi-bin off a Pi) is then
+    # skipped, not install-requested (which would error + flip the node to
+    # "partial"). Mirrors the build-dep-lib availability gate above.
+    for t in CONDITIONAL_TOOLS:
+        if t in family_excluded:
+            continue
+        pkg = PKG_MAP[family].get(TOOL_TO_PKG.get(t, ""))
+        if pkg and avail_tmpl:
+            chk = avail_tmpl.format(pkg=shlex.quote(pkg))
+            probe_parts.append(
+                'printf "%%s " availtool_%s ; if %s; then echo Y; else echo N; fi'
+                % (t, chk))
+    # Dual 32/64-bit nodes: probe the 32-bit DEV toolchain (g++ -m32) only
+    # where it is actually needed -- an x86_64 COMPILE node, the one place a
+    # same-host 32-bit binary is LINKED. An aarch64 dual-bitness node's 32-bit
+    # (armv7) binary is built on the native armv7 compile node instead, so the
+    # aarch64 side needs no -m32 toolchain; and an EXEC node only RUNS the
+    # binary -- its 32-bit runtime libs are operator-provided (handled below).
+    want_multilib = _node_dual_bitness(tgt.label)
+    node_arch     = _node_arch(tgt.label)
+    want_m32_toolchain = (want_multilib and tgt.node_type == "compile"
+                          and node_arch == "x86_64")
+    if want_m32_toolchain:
+        probe_parts.append('printf "%%s " multilib ; %s' % have_multilib_probe())
+    # EXEC side: the 32-bit RUNTIME libs needed to run the dual-bitness binary
+    # (i686 on x86_64, armv7/armhf on aarch64). Probe the 32-bit libstdc++
+    # (top of the libc/libgcc/libstdc++ dep chain) -- present => nothing to do.
+    want_runtime32 = (want_multilib and tgt.node_type == "exec"
+                      and node_arch in ("x86_64", "aarch64"))
+    rt32 = (RUNTIME32_ARCH["armv7" if node_arch == "aarch64" else "i686"]
+            if want_runtime32 else None)
+    if rt32 is not None:
+        # Present only when EVERY runlib group has >=1 candidate path -- a
+        # box with libstdc++ but no libz/libzstd (the armv7 failure mode) must
+        # still be flagged missing so the install runs.
+        groups = [" || ".join("test -e %s" % shlex.quote(p) for p in grp)
+                  for grp in rt32["runlibs"]]
+        test = " && ".join("{ %s; }" % g for g in groups)
+        probe_parts.append('printf "%%s " runtime32 ; if %s; then echo Y; '
+                           'else echo N; fi' % test)
     probe = " ; ".join(probe_parts)
     rc, out = tgt.run(probe, conn_timeout)
     present = {}
@@ -843,6 +1144,7 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
     # the node "partial" (see _install_pkg), never "fail" -- the bench
     # harness SKIPs an absent profiler on its own.
     skipped_cfg = []
+    tool_unavail = []
     for t in PROFILER_TOOLS + OPTIONAL_TOOLS:
         if t in family_excluded:
             continue                        # unpackaged on this distro family
@@ -852,10 +1154,21 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
         if present.get(t, False):
             have.append(t)
         else:
-            missing.append(t)
             pkg = pmap.get(TOOL_TO_PKG.get(t, ""), "")
-            if pkg and pkg not in opt_missing_pkgs:
-                opt_missing_pkgs.append(pkg)
+            # Conditional sensor tool not packaged on this distro (pkg None)
+            # or not in this node's index (availtool_ probe == N): skip it,
+            # never install-request it. The collector reads sysfs instead, so
+            # the only loss is the nicer Pi/freq readout -- not a "partial".
+            if t in CONDITIONAL_TOOLS and (
+                    not pkg or present.get("availtool_" + t) is False):
+                tool_unavail.append(t)
+            else:
+                missing.append(t)
+                if pkg and pkg not in opt_missing_pkgs:
+                    opt_missing_pkgs.append(pkg)
+    if tool_unavail:
+        print("  %s[SKIP]%s sensor tool not packaged here (collector uses "
+              "sysfs): %s" % (C_YELLOW, C_RESET, ", ".join(sorted(tool_unavail))))
     if skipped_cfg:
         print("  %s[SKIP]%s benchmark_disabled_tools (remote_nodes.json): %s"
               % (C_YELLOW, C_RESET, ", ".join(sorted(skipped_cfg))))
@@ -889,6 +1202,63 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
              (" | not-packaged-here " + ", ".join(lib_unavail))
              if lib_unavail else ""))
 
+    # apt foreign architecture to enable (dpkg --add-architecture + apt-get
+    # update) before the EXEC-side :i386/:armhf runtime packages resolve. Set
+    # by the dual-bitness exec branch below; None for every other node.
+    need_foreign_arch = None
+
+    # Dual 32/64-bit, COMPILE side: request the x86_64 -m32 DEV toolchain
+    # (best-effort, like libs). Reported as already-set when `g++ -m32` already
+    # links; flagged for the operator on a family with no one-shot multilib
+    # package. (aarch64 compile nodes need nothing here -- the armv7 build is
+    # delegated to the native armv7 compile node.)
+    if want_m32_toolchain:
+        if present.get("multilib", False):
+            print("  multilib: %s32-bit toolchain present (g++ -m32 links)%s"
+                  % (C_GREEN, C_RESET))
+        else:
+            mlpkgs = MULTILIB_PKGS.get(family)
+            if not mlpkgs:
+                print("  multilib: %s[MANUAL]%s no one-shot 32-bit package on "
+                      "%s -- install an i686/-m32 toolchain by hand for "
+                      "dual-bitness (else the -m32 build just SKIPs)"
+                      % (C_YELLOW, C_RESET, family))
+            else:
+                for pkg in mlpkgs:
+                    if pkg not in opt_missing_pkgs \
+                            and pkg not in req_missing_pkgs:
+                        opt_missing_pkgs.append(pkg)
+                print("  multilib: requesting 32-bit toolchain: %s"
+                      % " ".join(mlpkgs))
+    # Dual 32/64-bit, EXEC side: the exec node RUNS the 32-bit binary, so it
+    # needs the matching 32-bit RUNTIME libs (i686 libc/libstdc++/libgcc on
+    # x86_64, armhf on aarch64). Request them BEST-EFFORT (opt, like the libs):
+    # a box we can't provision is never failed -- the harness runtime gate then
+    # SKIPs the 32-bit run there. On apt the foreign architecture is enabled +
+    # the index refreshed (need_foreign_arch) before the :i386/:armhf packages
+    # resolve.
+    elif rt32 is not None:
+        if present.get("runtime32", False):
+            print("  multilib: %s32-bit (%s) runtime libs present%s"
+                  % (C_GREEN, rt32["dpkg_arch"], C_RESET))
+        else:
+            fam_map = RUNTIME32_PKGS.get(family)
+            rt_pkgs = fam_map.get(rt32["dpkg_arch"]) if fam_map else None
+            if not rt_pkgs:
+                print("  multilib: %s[MANUAL]%s no one-shot 32-bit runtime "
+                      "package on %s -- install the %s libc/libstdc++/libgcc "
+                      "by hand (else the 32-bit run just SKIPs)"
+                      % (C_YELLOW, C_RESET, family, rt32["dpkg_arch"]))
+            else:
+                for pkg in rt_pkgs:
+                    if pkg not in opt_missing_pkgs \
+                            and pkg not in req_missing_pkgs:
+                        opt_missing_pkgs.append(pkg)
+                if family == "apt":
+                    need_foreign_arch = rt32["dpkg_arch"]
+                print("  multilib: requesting 32-bit (%s) runtime libs: %s"
+                      % (rt32["dpkg_arch"], " ".join(rt_pkgs)))
+
     print("  present : %s" % (", ".join(sorted(have)) or "(none)"))
     print("  missing : %s" % (", ".join(sorted(missing)) or "(none -- all set)"))
 
@@ -909,6 +1279,14 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
     all_pkgs    = list(dict.fromkeys(req_missing_pkgs + opt_missing_pkgs))
     fail_status = "fail" if req_missing_pkgs else "partial"
 
+    # apt: enable the foreign architecture + refresh the index ONCE before the
+    # :i386/:armhf runtime packages can resolve. Idempotent (re-adding an arch
+    # is a no-op). Best-effort: a failure here just makes the :arch installs
+    # fail -> "partial", never a hard fail.
+    foreign_arch_cmd = (("dpkg --add-architecture %s && %s"
+                         % (need_foreign_arch, APT_UPDATE_CMD))
+                        if (need_foreign_arch and family == "apt") else None)
+
     # No sudo, ever. Not root + packages missing => do NOT escalate; hand
     # the operator the per-package commands to run AS ROOT (project rule:
     # never auto-install -- request it).
@@ -916,6 +1294,8 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
         print("  %s[NEEDS ROOT]%s not root and packages are missing; "
               "setup.py does not sudo. Run AS ROOT on %s:"
               % (C_RED, C_RESET, tgt.label))
+        if foreign_arch_cmd:
+            print("    %s" % foreign_arch_cmd)
         pi = 0
         while pi < len(all_pkgs):
             print("    %s" % _install_many(family, [all_pkgs[pi]]))
@@ -923,6 +1303,9 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
         return fail_status
 
     if dry_run:
+        if foreign_arch_cmd:
+            print("  %s[DRY-RUN enable-arch]%s %s"
+                  % (C_YELLOW, C_RESET, _priv_cmd(foreign_arch_cmd)))
         pi = 0
         while pi < len(all_pkgs):
             print("  %s[DRY-RUN install]%s %s"
@@ -942,8 +1325,28 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
                     "couldn't find any package")
 
     ok_pkgs, skipped_opt, failed_req = [], [], []
-    # No metadata refresh: each install runs against the index already on
-    # the node (see the "NEVER refreshes package metadata" note above).
+    # No PRE-EMPTIVE metadata refresh: each install runs against the index
+    # already on the node (see the no-refresh policy note above). The one
+    # reactive exception is apt's "Unable to fetch some archives" stale-index
+    # failure -- handled below with a single apt-get update + retry, tracked
+    # by apt_updated so the refresh happens at most once per node.
+    apt_updated = False
+    # Enable the foreign arch + refresh the index once, up front, so the
+    # :i386/:armhf runtime packages resolve in the loop below. Counts as the
+    # one allowed apt-get update for this node (apt_updated), so a later
+    # stale-index retry doesn't refresh a second time.
+    if foreign_arch_cmd:
+        print("  %s-> enabling %s foreign arch on %s ...%s"
+              % (C_CYAN, need_foreign_arch, tgt.label, C_RESET))
+        print("    $ %s" % foreign_arch_cmd)
+        fa_rc, _ = tgt.run(_priv_cmd(foreign_arch_cmd), install_timeout,
+                           idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
+        apt_updated = True
+        if fa_rc != 0:
+            print("  %s[WARN]%s `dpkg --add-architecture %s` / apt-get update "
+                  "rc=%s -- the 32-bit runtime install may fail (then the "
+                  "32-bit run just SKIPs here)"
+                  % (C_YELLOW, C_RESET, need_foreign_arch, fa_rc))
     pi = 0
     while pi < len(all_pkgs):
         pkg = all_pkgs[pi]
@@ -961,6 +1364,24 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
         rc, out = tgt.run(cmd, install_timeout,
                           idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
         low = out.lower()
+
+        # Stale apt index -> "Unable to fetch some archives, maybe run
+        # apt-get update or try with --fix-missing". The local index points
+        # at archive versions the mirror rotated away. Refresh once (per
+        # node) and retry THIS install; later packages reuse the fresh index.
+        if (rc != 0 and family == "apt" and not apt_updated
+                and ("unable to fetch some archives" in low
+                     or "--fix-missing" in low)):
+            apt_updated = True
+            print("  %s[apt-get update]%s stale index on %s "
+                  "(could not fetch archives) -- refreshing once, then retrying"
+                  % (C_YELLOW, C_RESET, tgt.label))
+            print("    $ %s" % APT_UPDATE_CMD)
+            tgt.run(_priv_cmd(APT_UPDATE_CMD), install_timeout,
+                    idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
+            rc, out = tgt.run(cmd, install_timeout,
+                              idle_timeout=REMOTE_INSTALL_IDLE_TIMEOUT)
+            low = out.lower()
 
         if rc == 0:
             print("  %s[OK install]%s %s" % (C_GREEN, C_RESET, pkg))
@@ -1012,6 +1433,122 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
     if skipped_opt:
         return "partial"
     return status
+
+
+# ---------------------------------------------------------------------------
+# --disable-services: stop + permanently disable the DISABLE_SERVICES
+# peripheral daemons on a remote benchmark/exec node so they cannot steal
+# CPU/IO or fire a timer mid-measurement. Opt-in, idempotent, and a
+# CURATED allowlist (see DISABLE_SERVICES) -- ssh / network / lm-sensors /
+# display-manager are never in it. Supports systemd, OpenRC and procd/sysv;
+# only a service that is actually enabled/active is touched.
+# ---------------------------------------------------------------------------
+def _disable_services_snippet(services, do_exec):
+    """One self-contained shell snippet (single ssh round-trip). Detects the
+    init system, and for each candidate present-and-on, disables+stops it
+    when do_exec, else just reports what it WOULD do (dry-run / non-root).
+    Prints one `DISABLED ...` / `[would] ...` line per service it acts on so
+    the host can echo a per-node summary."""
+    svc = " ".join(services)
+    ex = "1" if do_exec else "0"
+    # systemctl: a unit counts as "on" if enabled OR active. OpenRC: the
+    # service is in some runlevel / running. procd+sysv: an /etc/init.d
+    # script exists. Each branch is a plain `while`-free for over the list
+    # (POSIX sh, runs on busybox too).
+    return r'''
+SVCS="%s"; EX=%s; n=0
+if command -v systemctl >/dev/null 2>&1; then
+  for s in $SVCS; do
+    case "$s" in *.*) u="$s" ;; *) u="$s.service" ;; esac
+    en=$(systemctl is-enabled "$u" 2>/dev/null || true)
+    ac=$(systemctl is-active  "$u" 2>/dev/null || true)
+    if [ "$en" = "enabled" ] || [ "$en" = "static" ] || [ "$ac" = "active" ]; then
+      n=$((n+1))
+      if [ "$EX" = 1 ]; then
+        systemctl disable --now "$u" >/dev/null 2>&1
+        echo "DISABLED $u (was enabled=$en active=$ac)"
+      else
+        echo "[would] systemctl disable --now $u (enabled=$en active=$ac)"
+      fi
+    fi
+  done
+elif command -v rc-update >/dev/null 2>&1; then
+  for s in $SVCS; do
+    b=${s%%.*}
+    if rc-service "$b" status >/dev/null 2>&1; then
+      n=$((n+1))
+      if [ "$EX" = 1 ]; then
+        rc-update del "$b" >/dev/null 2>&1
+        rc-service "$b" stop >/dev/null 2>&1
+        echo "DISABLED $b (openrc)"
+      else
+        echo "[would] rc-update del $b ; rc-service $b stop"
+      fi
+    fi
+  done
+elif [ -d /etc/init.d ]; then
+  for s in $SVCS; do
+    b=${s%%.*}
+    if [ -x "/etc/init.d/$b" ]; then
+      n=$((n+1))
+      if [ "$EX" = 1 ]; then
+        /etc/init.d/$b disable >/dev/null 2>&1 || true
+        /etc/init.d/$b stop    >/dev/null 2>&1 || true
+        echo "DISABLED $b (procd/sysv)"
+      else
+        echo "[would] /etc/init.d/$b disable ; /etc/init.d/$b stop"
+      fi
+    fi
+  done
+else
+  echo "NO-INIT-SYSTEM"
+fi
+[ "$n" = 0 ] && echo "NONE-PRESENT"
+exit 0
+''' % (svc, ex)
+
+
+def disable_services_on(tgt, dry_run, conn_timeout):
+    """Disable the curated noise services on ONE remote target. The local
+    host is never passed here (it's the operator's workstation -- skipped in
+    main). Needs root to actually disable; a non-root node prints the
+    AS-ROOT commands instead of escalating (project rule: never auto-sudo)."""
+    print("%s=== %s (disable-services) ===%s"
+          % (_node_color(tgt.node_type), tgt.label, C_RESET))
+    rc, who = tgt.run("id -u", conn_timeout)
+    if rc != 0:
+        print("  %s[UNREACHABLE]%s could not probe (rc=%s)"
+              % (C_YELLOW, C_RESET, rc))
+        return "unreachable"
+    is_root = who.strip() == "0"
+    do_exec = is_root and not dry_run
+    snippet = _disable_services_snippet(DISABLE_SERVICES, do_exec)
+    cmd = _priv_cmd(snippet) if do_exec else "sh -c %s" % shlex.quote(snippet)
+    rc, out = tgt.run(cmd, conn_timeout)
+    acted = False
+    for line in out.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line == "NONE-PRESENT":
+            print("  %s[NOTHING TO DO]%s no curated noise service present"
+                  % (C_GREEN, C_RESET))
+        elif line == "NO-INIT-SYSTEM":
+            print("  %s[SKIP]%s no systemd / OpenRC / sysv init detected"
+                  % (C_YELLOW, C_RESET))
+        elif line.startswith("DISABLED "):
+            acted = True
+            print("  %s%s%s" % (C_GREEN, line, C_RESET))
+        elif line.startswith("[would] "):
+            acted = True
+            tag = "DRY-RUN" if dry_run else "NEEDS ROOT"
+            print("  %s[%s]%s %s" % (C_YELLOW, tag, C_RESET, line[len("[would] "):]))
+        else:
+            print("  %s" % line)
+    if not do_exec and acted:
+        print("  %s[NEEDS ROOT]%s not root (or --dry-run) -- run the above "
+              "AS ROOT on %s to apply" % (C_YELLOW, C_RESET, tgt.label))
+    return "ok"
 
 
 # ---------------------------------------------------------------------------
@@ -1112,17 +1649,30 @@ def main():
     ap.add_argument("--node", action="append", default=[],
                     help="restrict to this node label (repeatable; "
                          "'local' selects the host)")
+    ap.add_argument("--disable-services", action="store_true",
+                    help="after provisioning, stop + permanently disable the "
+                         "curated peripheral noise daemons (CUPS, samba, "
+                         "avahi, bluetooth, ModemManager, nginx, tftpd-hpa, "
+                         "rsync daemon, mail, the sound server -- see "
+                         "DISABLE_SERVICES) on every REMOTE benchmark/exec "
+                         "node, so they can't steal CPU/IO or fire a timer "
+                         "mid-measurement. The local host is skipped (it's "
+                         "your workstation). Idempotent; honours --dry-run.")
     ap.add_argument("--conn-timeout", type=int, default=30,
                     help="seconds for probe/ssh round-trips (default 30)")
     ap.add_argument("--install-timeout", type=int, default=1800,
                     help="seconds for one package-install command "
                          "(default 1800; emerge from source is slow)")
-    ap.add_argument("--deadline", type=int, default=3600,
-                    help="hard wall-clock ceiling in seconds for the WHOLE "
-                         "fleet sweep (default 3600 = 1h). Every remote "
-                         "command is clamped to the budget still left; "
-                         "nodes not reached before the deadline are marked "
-                         "'deadline' and skipped. 0 disables the ceiling.")
+    ap.add_argument("--budget", "--deadline", type=int, default=3600,
+                    dest="budget",
+                    help="hard wall-clock budget in seconds PER HOST "
+                         "(default 3600 = 1h). The budget is re-armed for "
+                         "each host, so one slow host never starves the "
+                         "rest. Every remote command is clamped to that "
+                         "host's budget still left; a host that exceeds it "
+                         "is marked 'deadline' and skipped (the next host "
+                         "starts fresh). 0 disables the cap. (--deadline is "
+                         "a backward-compatible alias.)")
     args = ap.parse_args()
 
     targets = collect_targets(args)
@@ -1130,26 +1680,35 @@ def main():
         print("no targets matched", file=sys.stderr)
         return 2
 
-    deadline = None
-    if args.deadline and args.deadline > 0:
-        deadline = time.monotonic() + args.deadline
-        print("%s[deadline]%s whole-fleet ceiling = %ds; nodes not reached "
-              "by then are skipped" % (C_CYAN, C_RESET, args.deadline))
-    for t in targets:
-        t.deadline = deadline
+    # Per-HOST budget, NOT one whole-fleet pool. Each host's deadline is
+    # (re)armed right before that host is provisioned, so a slow host
+    # (flaky apt mirror, emerge-from-source) that burns its whole budget
+    # never leaves the hosts after it with "0s left" -- the next host
+    # always starts fresh. Mirrors benchmark_helpers.FleetDeadline (same
+    # rationale: one global ceiling let a single slow node starve the rest).
+    budget = args.budget if args.budget and args.budget > 0 else None
+    if budget is not None:
+        print("%s[budget]%s per-host ceiling = %ds; a host exceeding it is "
+              "skipped, the next host starts fresh"
+              % (C_CYAN, C_RESET, budget))
 
     node_types = {t.label: t.node_type for t in targets}
     summary = {}
     for t in targets:
-        if deadline is not None and time.monotonic() >= deadline:
-            print("%s=== %s ===%s" % (_node_color(t.node_type), t.label, C_RESET))
-            print("  %s[SKIP]%s global deadline reached -- not provisioned"
-                  % (C_YELLOW, C_RESET))
-            summary[t.label] = "deadline"
-            print()
-            continue
+        # Re-arm the budget clock for THIS host so earlier hosts' overruns
+        # don't eat into it (None => uncapped when --budget 0).
+        t.deadline = (time.monotonic() + budget) if budget is not None else None
         summary[t.label] = provision(t, args.dry_run,
                                      args.conn_timeout, args.install_timeout)
+        # Opt-in: quiet the box by disabling the curated noise daemons. Only
+        # on REMOTE nodes -- the local host is the operator's workstation, so
+        # we never stop its CUPS/sound/etc.
+        if args.disable_services:
+            if t.node_type == "local":
+                print("  %s[disable-services]%s skipping local host "
+                      "(your workstation)" % (C_YELLOW, C_RESET))
+            else:
+                disable_services_on(t, args.dry_run, args.conn_timeout)
         print()
 
     print("%s===== summary =====%s" % (C_CYAN, C_RESET))
