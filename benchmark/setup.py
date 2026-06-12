@@ -1713,6 +1713,11 @@ def main():
                          C_YELLOW, C_RESET))
                 summary[t.label] = "skip"
             else:
+                # Disabling services needs root -- ALWAYS ssh as root, never
+                # the (often non-root) user configured in remote_nodes.json.
+                if t.ssh is not None:
+                    _u, _h, _p = t.ssh
+                    t.ssh = ("root", _h, _p)
                 summary[t.label] = disable_services_on(
                     t, args.dry_run, args.conn_timeout)
         else:
