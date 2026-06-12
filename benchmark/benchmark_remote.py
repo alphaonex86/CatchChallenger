@@ -547,16 +547,25 @@ def exec_node_flag_defs(exec_node):
         cflags   -> CMAKE_C_FLAGS
         cxxflags -> CMAKE_CXX_FLAGS
         ldflags  -> CMAKE_EXE_LINKER_FLAGS
+        asmflags -> CMAKE_ASM_FLAGS
 
     Lets a board pin its own `-march=`/`-mtune=` (e.g. armv8.2-a+crypto on
     an odroid-n2 vs generic armv8 on an rpi-3) without touching the generic
     build or any other node. Empty / absent / non-string fields contribute
-    nothing, so a node that sets none builds exactly as before."""
+    nothing, so a node that sets none builds exactly as before.
+
+    `asmflags` matters for the dual-bitness i686 sibling: `-m32` must also
+    reach the ASM compiler, else the vendored libzstd x86_64 assembly
+    (huf_decompress_amd64.S) is assembled 64-bit and mold refuses to link it
+    into the i386 binary ('incompatible file type: i386 is expected but got
+    x86_64'). With -m32 on CMAKE_ASM_FLAGS the .S file's #if __x86_64__ guard
+    drops its body and the object is an empty 32-bit one."""
     if not isinstance(exec_node, dict):
         return {}
     mapping = (("cflags",   "CMAKE_C_FLAGS"),
                ("cxxflags",  "CMAKE_CXX_FLAGS"),
-               ("ldflags",   "CMAKE_EXE_LINKER_FLAGS"))
+               ("ldflags",   "CMAKE_EXE_LINKER_FLAGS"),
+               ("asmflags",  "CMAKE_ASM_FLAGS"))
     out = {}
     for src, cmake_var in mapping:
         v = exec_node.get(src)
@@ -749,7 +758,7 @@ def datapack_keep_extensions():
     return keep
 
 
-def server_datapack_excludes():
+def server_datapack_excludes(keep_skins=False):
     """rsync args for a SERVER datapack push (headless: data files only).
     Whitelist: keep the non-media allowed extensions
     (datapack_keep_extensions(), loaded from GeneralVariable.hpp at runtime),
@@ -759,14 +768,28 @@ def server_datapack_excludes():
 
     `--include=*/` keeps rsync descending into every directory, so the full
     tree is recreated even where a folder held only excluded files -- in
-    particular skin/fighter/ survives as EMPTY folders, which a no-cache
-    (XML-parse) boot enumerates to build the fighter-skin list. The trailing
+    particular skin/fighter/ survives as EMPTY folders. The trailing
     `--exclude=*` drops images (png/jpg/gif), audio (ogg/opus) and anything
-    outside CATCHCHALLENGER_EXTENSION_ALLOWED in one rule."""
+    outside CATCHCHALLENGER_EXTENSION_ALLOWED in one rule.
+
+    `keep_skins=True` ADDITIONALLY keeps the skin/fighter sprite PNGs
+    (back/front/trainer.png). FacilityLibGeneral::skinIdList() only counts a
+    skin folder that has all three sprites, so the empty-folder survival is NOT
+    enough to populate the server's skin list. A benchmark whose bot CREATES a
+    character (clientlatency: fresh RAM DB, no pre-made character) needs >=1
+    real skin -- else the server rejects the bot's default skinId 0 ('skin
+    provided: 0 is not into skin listed') and the bot disconnects before
+    reaching the map, producing no latency data. serversave/mapmanager don't
+    create characters, so they keep the smaller skin-less push (default)."""
     # Prune .git before --include=*/ so the source datapack's git checkout
     # isn't recreated as hundreds of empty folders. First-match-wins.
     args = ["--delete-excluded", "--exclude=.git", "--exclude=.git/",
             "--include=*/"]
+    if keep_skins:
+        # The skin sprite PNGs are the ONLY images kept; they make the server's
+        # skin list non-empty so character creation succeeds. `**` spans the
+        # per-skin subdir (skin/fighter/<name>/{back,front,trainer}.png).
+        args.append("--include=skin/fighter/**")
     for ext in datapack_keep_extensions():
         args.append(f"--include=*.{ext}")
     args.append("--exclude=*")
@@ -774,7 +797,7 @@ def server_datapack_excludes():
 
 
 def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
-                           timeout=600, server_mode=False):
+                           timeout=600, server_mode=False, keep_skins=False):
     """rsync a local datapack directory to exec_node's work_dir/<remote_subdir>.
 
     Used by benchmarks that need the datapack on the exec node (serversave,
@@ -782,14 +805,17 @@ def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
 
     `server_mode` (default False) pushes the datapack verbatim. True strips
     audio/images via server_datapack_excludes() -- the server is headless and
-    never needs them (see server/CLAUDE.md)."""
+    never needs them (see server/CLAUDE.md). `keep_skins` is forwarded to
+    server_datapack_excludes() (clientlatency needs the skin sprites for
+    character creation; see that helper)."""
     eu  = exec_node["user"]
     eh  = exec_node["host"]
     ep  = exec_node.get("port", 22)
     ewd = exec_node["work_dir"]
     ssh_run(eu, eh, ep, f"mkdir -p {shlex.quote(ewd)}", timeout=15)
     dst = f"{ewd}/{remote_subdir}"
-    extra = server_datapack_excludes() if server_mode else None
+    extra = (server_datapack_excludes(keep_skins=keep_skins)
+             if server_mode else None)
     return rsync_to(eu, eh, ep, local_datapack.rstrip("/") + "/", dst + "/",
                     timeout=timeout, extra_args=extra)
 
@@ -851,15 +877,21 @@ _CACHE_GEN_MEMO = {}   # compile_node label -> (rc, remote_cache_path, msg)
 
 def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
                                local_datapack, maincode, server_port=61920,
-                               timeout=1800, verbose=False):
+                               timeout=1800, verbose=False, keep_skins=False):
     """Run `<server> save` on the compile node, return (rc,
-    remote_cache_path, msg). Memoized per compile node: the 2nd+ exec
-    node sharing this compile node reuses the already-generated cache.
+    remote_cache_path, msg). Memoized per (compile node, keep_skins): the 2nd+
+    exec node sharing this compile node reuses the already-generated cache.
 
     The cache lands in a stable <work_dir>/cache-gen/ dir (NOT the
     per-exec build dir) so it is generated once and reused. Caller ships
-    it to each exec node with stage_cache_on_exec()."""
-    label = compile_node.get("label")
+    it to each exec node with stage_cache_on_exec().
+
+    `keep_skins` is forwarded to the datapack rsync so the cache the server
+    loads at boot actually contains the skin list -- the server reads skins
+    from this cache (CACHE_HPS), not by re-scanning skin/fighter at runtime, so
+    a skin-less cache leaves the skin list empty even when the on-disk folders
+    exist. clientlatency passes True (its bot creates a character)."""
+    label = (compile_node.get("label"), bool(keep_skins))
     if label in _CACHE_GEN_MEMO:
         return _CACHE_GEN_MEMO[label]
     user = compile_node["ssh"]["user"]
@@ -876,10 +908,12 @@ def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
 
     ssh_run(user, host, port, f"mkdir -p {shlex.quote(gen)}", timeout=30)
     # `server save` parses the XML datapack (no cache yet) -> headless server
-    # push: strip audio/images, keep skin/fighter as empty folders.
+    # push: strip audio/images, keep skin/fighter as empty folders (+ the skin
+    # sprites themselves when keep_skins, so the generated cache has a skin
+    # list -- clientlatency's bot creates a character and needs skin 0).
     rc, msg = rsync_to(user, host, port, local_datapack.rstrip("/") + "/",
                        f"{gen}/datapack/", timeout=timeout,
-                       extra_args=server_datapack_excludes())
+                       extra_args=server_datapack_excludes(keep_skins=keep_skins))
     if rc != 0:
         res = (rc, None, f"cache-gen datapack rsync failed: {msg[:120]}")
         _CACHE_GEN_MEMO[label] = res
@@ -957,6 +991,85 @@ def stage_cache_on_exec(compile_node, exec_node, remote_cache_path,
         _rlog(f"{exec_node['label']!r}: staged pre-generated cache "
               f"+ matched mtime to server-properties.xml")
     return 0, "ok"
+
+
+# Canonical glibc dynamic-loader paths for a 32-bit dual-bitness sibling,
+# keyed by the sibling's target arch. A '-m32' run needs the matching 32-bit
+# runtime on the box; if the loader is absent the binary cannot even exec
+# (ENOENT on the interpreter) -- that must be a SKIP (unknown metric), never a
+# FAIL (the matrix reserves FAIL for a run that produced bad data). setup.py
+# provisions these libs on dual-bitness exec nodes; this gate is the safety
+# net for a box that wasn't (or couldn't be) provisioned.
+_BIT32_LOADERS = {
+    "i686":  ["/lib/ld-linux.so.2", "/lib32/ld-linux.so.2"],
+    "armv7": ["/lib/ld-linux-armhf.so.3",
+              "/lib/arm-linux-gnueabihf/ld-linux-armhf.so.3"],
+}
+
+
+def exec_missing_32bit_runtime(exec_node, exec_bin=None):
+    """Return a SKIP reason when a dual-bitness 32-bit sibling's exec node can't
+    run the pushed binary -- either the matching 32-bit loader is absent, or
+    (when `exec_bin` is given) the binary has an unresolved shared-lib
+    dependency. Else None. A no-op (None) for native 64-bit specs.
+
+    The dep check uses the MATCHING-ARCH loader's `--list` (an aarch64 kernel
+    runs the armhf loader to inspect an armhf binary), NOT `ldd` -- ldd on a
+    cross-arch binary resolves against the NATIVE libs and lies. This is
+    binary-specific, so it never wrongly SKIPs the static-linked i686 binary
+    (which has no external libz/libzstd) while still catching the armv7 binary
+    that needs libz.so.1/libzstd.so.1 the box lacks -- turning that 'error
+    while loading shared libraries' from a FAIL into a SKIP (unknown metric).
+
+    Fail-open: any probe error returns None so a transient ssh hiccup never
+    wrongly SKIPs a runnable box."""
+    if exec_node.get("bitness") != "32":
+        return None
+    loaders = _BIT32_LOADERS.get(exec_node.get("arch"))
+    if not loaders:
+        return None
+    u, h, p = exec_node["user"], exec_node["host"], exec_node.get("port", 22)
+    label = exec_node.get("label", "?")
+    setup_hint = "`python3 benchmark/setup.py exec --node %s`" % label
+    # 1) pick the loader actually present on the box
+    pick = "; ".join("test -e %s && echo %s" % (shlex.quote(l), shlex.quote(l))
+                     for l in loaders)
+    rc, out, _ = ssh_run(u, h, p, pick, timeout=15)
+    # The echoed paths are authoritative: a path is printed ONLY when its
+    # `test -e` succeeded. Do NOT gate on the joined command's exit code --
+    # that is the LAST `test -e`'s rc, so when an alternative loader path
+    # (e.g. /lib32/ld-linux.so.2) is absent it falsely discarded a valid
+    # /lib/ld-linux.so.2 hit and wrongly SKIPped every m32 cell.
+    present = out.split()
+    if not present:
+        return ("no 32-bit runtime on exec node (loader %s absent) -- run %s"
+                % (loaders[0], setup_hint))
+    if not exec_bin:
+        return None     # loader present, no binary to dep-check -> proceed
+    # 2) resolve the binary's deps with THAT loader. Capture BOTH streams: a
+    # graceful loader prints 'libX => not found' lines, but a cross-arch loader
+    # (armhf ld.so on aarch64) instead HARD-ERRORS on stderr with 'error while
+    # loading shared libraries: libX: cannot open shared object file' and exits
+    # 127 -- so match all three phrasings (the earlier 2>/dev/null + 'not
+    # found'-only grep missed this and let a non-loadable binary through as a
+    # false PASS).
+    loader = present[0]
+    cmd = "%s --list %s 2>&1 || true" % (shlex.quote(loader),
+                                         shlex.quote(exec_bin))
+    rc, out, _ = ssh_run(u, h, p, cmd, timeout=20)
+    miss = []
+    for ln in out.splitlines():
+        low = ln.lower()
+        if ("not found" in low or "cannot open shared object" in low
+                or "error while loading shared" in low):
+            for tok in ln.replace(":", " ").replace("=>", " ").split():
+                if tok.endswith(".so") or ".so." in tok:
+                    if tok not in miss:
+                        miss.append(tok)
+    if miss:
+        return ("32-bit runtime lib(s) missing on exec node: %s -- run %s"
+                % (", ".join(miss), setup_hint))
+    return None
 
 
 def push_binary_to_exec(compile_node, exec_node, remote_build_dir, bin_name,
@@ -1242,6 +1355,17 @@ def remote_callgrind(exec_node, bin_cmd, work_dir, timeout=None,
     if ir is not None and ir >= 100000:
         return ir
     reason = " | ".join(vgerr_lines[-3:]) or "no PROGRAM TOTALS in annotate output"
+    # valgrind could not start the callgrind tool for the binary's platform
+    # (e.g. 'failed to start tool callgrind for platform arm-linux' -- the
+    # aarch64 host's valgrind has no 32-bit-ARM VEX tool to profile the armv7
+    # build). That is a profiler UNAVAILABLE for this arch -> SKIP (unknown
+    # metric), never a FAIL: the run produced no bad data, the tool just can't
+    # run here. The instruction-count ISA signal then comes from perf-stat.
+    if "failed to start tool" in reason.lower():
+        return {"rc": vgrc if vgrc is not None else 0,
+                "skip_reason": "callgrind unavailable for this arch on node "
+                               "(valgrind: %s)" % reason[:200],
+                "error": reason[:500]}
     hint = ""
     if (ir is None or ir == 0) and toggle_collect:
         hint = (" — collected ~0 Ir; --toggle-collect glob may match no symbol "
@@ -1957,6 +2081,12 @@ def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
         if rc != 0:
             # Push failed (e.g. 'No route to host'): infra, mark SKIP.
             return {p: None for p in profilers}, f"SKIP:push-failed: {msg}"
+        # Dual-bitness 32-bit sibling whose box can't run the pushed binary
+        # (no 32-bit loader, or an unresolved 32-bit .so dep): infra, mark
+        # SKIP (not FAIL/garbage).
+        no32 = exec_missing_32bit_runtime(runtime_node, exec_bin)
+        if no32 is not None:
+            return {p: None for p in profilers}, f"SKIP:no-32bit-runtime: {no32}"
         ewd = runtime_node["work_dir"]
 
         def _rc_str(prof):
@@ -2062,8 +2192,22 @@ def run_profiler_fleet(specs, verbose=False, max_workers=8):
                 builds[key] = res
 
     # ---- Phase 2: parallel push+run per exec node -----------------------
+    # Distinct hosts run concurrently; specs that share ONE physical host
+    # (e.g. a node and its dual-bitness '-m32' sibling) must NOT measure at
+    # the same time — concurrent load on the same CPU would skew both. A
+    # per-host lock serialises only the measurement of same-host specs while
+    # still letting different boxes run in parallel.
     results = {}
     lock = threading.Lock()
+    _host_locks = {}
+
+    def _host_lock(host):
+        with lock:
+            l = _host_locks.get(host)
+            if l is None:
+                l = threading.Lock()
+                _host_locks[host] = l
+            return l
 
     def _run(s):
         label = s["exec_node"]["label"]
@@ -2078,12 +2222,14 @@ def run_profiler_fleet(specs, verbose=False, max_workers=8):
                 results[label] = ({p: None for p in s["profilers"]},
                                   f"SKIP:compile-failed: {msg}")
             return
-        out, m = push_and_run_profilers(
-            s["compile_node"], s["exec_node"], bld, s["bin_name"],
-            s["runtime_cmd"], s["profilers"], extras=s.get("extras"),
-            run_timeout=s.get("run_timeout", RUN_TIMEOUT_DEFAULT),
-            verbose=verbose,
-            callgrind_toggle=s.get("callgrind_toggle"))
+        # Serialise the measurement against any other spec on the same host.
+        with _host_lock(s["exec_node"].get("host")):
+            out, m = push_and_run_profilers(
+                s["compile_node"], s["exec_node"], bld, s["bin_name"],
+                s["runtime_cmd"], s["profilers"], extras=s.get("extras"),
+                run_timeout=s.get("run_timeout", RUN_TIMEOUT_DEFAULT),
+                verbose=verbose,
+                callgrind_toggle=s.get("callgrind_toggle"))
         with lock:
             results[label] = (out, m)
 
@@ -2129,7 +2275,13 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
         cmake_defs=cmake_defs, verbose=verbose, use_ninja=use_ninja,
         exec_node=exec_node)
     if rc != 0:
-        return {p: None for p in profilers}, msg
+        # A compile-node build failure is NOT a benchmark regression: the
+        # exec node is never run. Tag the message SKIP: so the recorder
+        # marks the cells SKIP (unknown metric), not FAIL -- mirrors the
+        # fleet path (_run_benchmark_on_exec_fleet). A build we could not
+        # produce for this node has an *unknown* metric, which the decision
+        # matrix must never read as a regression.
+        return {p: None for p in profilers}, f"SKIP:compile-failed: {msg}"
     # Carry the compile node's system-vs-vendored verdict onto this exec
     # node so its history record stamps the libs it actually ran.
     bh.alias_libs(compile_node["label"], exec_node["label"])
@@ -2139,7 +2291,13 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
         compile_node, exec_node, remote_bld, bin_name,
         extras=extras, verbose=verbose)
     if rc != 0:
-        return {p: None for p in profilers}, msg
+        # Push failure is infra (unreachable / no route), not a regression.
+        return {p: None for p in profilers}, f"SKIP:push-failed: {msg}"
+    # Dual-bitness 32-bit sibling whose box can't run the pushed binary (no
+    # 32-bit loader, or an unresolved 32-bit .so dep): infra, mark SKIP.
+    no32 = exec_missing_32bit_runtime(exec_node, exec_bin)
+    if no32 is not None:
+        return {p: None for p in profilers}, f"SKIP:no-32bit-runtime: {no32}"
     # The runtime_cmd may embed ./<bin_name>; make sure we run with
     # work_dir as cwd so the relative path resolves.
     ewd = exec_node["work_dir"]
