@@ -20,7 +20,14 @@ EventLoopClientList::EventLoopClientList()
         PLAYER_INDEX_FOR_CONNECTED index=0;
         while(index<tmax)
         {
-            clients_removed_index[index]=tmax-index;
+            //Free-slot stack holds the indices of clients[] entries, which has
+            //exactly tmax elements (valid indices 0..tmax-1). The value MUST
+            //stay in that range: the old `tmax-index` produced 1..tmax, so the
+            //OOB value tmax sat on the stack (and index 0 was never reusable),
+            //and once max_players slots were taken getByReference() returned
+            //clients[tmax] -> out-of-bounds vector access (reachable just by
+            //opening max_players concurrent connections). Use tmax-1-index.
+            clients_removed_index[index]=tmax-1-index;
             index++;
         }
         maxIndex=max;
