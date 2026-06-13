@@ -40,6 +40,12 @@ _CAPS_SECONDS = {
     "testingmap2png.py":              15 * 60,
     "testingmap4client.py":           30 * 60,
     "testingmulti.py":                30 * 60,
+    # Per-handler valgrind suite: one fresh `valgrind memcheck` server boot per
+    # handler (~36 handlers) plus the baseline boot; valgrind is 10-50x slower,
+    # so a healthy full run is ~30-50 min. 90 min is twice the longest healthy
+    # observed run — generous enough that the natural run never trips, tight
+    # enough that a wedged valgrind server surfaces as [TIMEOUT].
+    "testingprotocolstate.py":        90 * 60,
     "testingqtserver.py":             15 * 60,
     "testingremote.py":               45 * 60,
     "testingserver.py":               30 * 60,
