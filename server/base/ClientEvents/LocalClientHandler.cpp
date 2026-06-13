@@ -236,7 +236,12 @@ void Client::addCash(const uint64_t &cash, const bool &forceSave)
 {
     if(cash==0 && !forceSave)
         return;
-    public_and_private_informations.cash+=cash;
+    //saturating add: cash is uint64_t and an unchecked += can wrap (reachable via
+    //trade commit), silently destroying or manufacturing balance. Clamp instead.
+    if(public_and_private_informations.cash>(0xFFFFFFFFFFFFFFFFULL-cash))
+        public_and_private_informations.cash=0xFFFFFFFFFFFFFFFFULL;
+    else
+        public_and_private_informations.cash+=cash;
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_cash.asyncWrite({
                 std::to_string(public_and_private_informations.cash),
@@ -326,13 +331,28 @@ void Client::teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,cons
                                     ","+std::to_string(x)+
                                     ","+std::to_string(y)+
                                     ","+std::to_string((uint8_t)orientation)+")");
+    //capture the old map BEFORE MapBasicMove::teleportValidatedTo() — it calls
+    //put_on_the_map() which already sets this->mapIndex=mapIndex (the destination).
+    //The previous code compared this->mapIndex against mapIndex AFTER that update,
+    //so mapChange was always false: on a cross-map teleport the player was never
+    //removed from the old map nor inserted on the new one, leaving a stale
+    //index_on_map that later drove an out-of-bounds map_clients_id[] write on the
+    //new (dynamically, differently sized) map. Mirror the map-border move path.
+    const CATCHCHALLENGER_TYPE_MAPID oldMapIndex=this->mapIndex;
     MapBasicMove::teleportValidatedTo(mapIndex,x,y,orientation);
     if(GlobalServerData::serverSettings.positionTeleportSync)
         savePosition();
-    bool mapChange=(this->mapIndex!=mapIndex);
+    bool mapChange=(oldMapIndex!=mapIndex);
     normalOutput("MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo() with mapChange: "+std::to_string(mapChange));
     if(mapChange)
-        removeClientOnMap(MapVisibilityAlgorithm::flat_map_list.at(mapIndex));
+    {
+        //oldMapIndex==65535 means "not currently on a map"; skip the remove then.
+        if(oldMapIndex<MapVisibilityAlgorithm::flat_map_list.size())
+            removeClientOnMap(MapVisibilityAlgorithm::flat_map_list.at(oldMapIndex));
+        insertClientOnMap(MapVisibilityAlgorithm::flat_map_list.at(mapIndex));
+        //removeClientOnMap() resets this->mapIndex to 65535; restore the destination.
+        this->mapIndex=mapIndex;
+    }
 }
 
 Direction Client::lookToMove(const Direction &direction)

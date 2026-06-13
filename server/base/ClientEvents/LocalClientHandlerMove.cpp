@@ -93,6 +93,7 @@ bool Client::singleMove(const Direction &direction)
     }
     COORD_TYPE x=this->x,y=this->y;
     Direction temp_direction=direction;
+    (void)temp_direction;
     CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
     {
         const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);

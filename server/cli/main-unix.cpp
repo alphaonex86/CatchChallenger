@@ -399,6 +399,15 @@ int main(int argc, char *argv[])
     }
 
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    // `save` mode only (re)generates datapack-cache.bin from the datapack and
+    // exits inside preload; the master link is a pure runtime cluster concern
+    // (server registration, id-blocks, tokens) and is meaningless here — in
+    // fact LinkToMasterProtocolParsing aborts if a token/id reply arrives while
+    // the output cache is open. So don't connect: `save` must work with the
+    // master unit down (deploy.sh used to start master just for this step).
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    if(!save)
+    #endif
     {
         const int &linkfd=LinkToMaster::tryConnect(
                     master_host.c_str(),

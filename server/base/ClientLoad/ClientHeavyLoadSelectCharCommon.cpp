@@ -388,7 +388,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         const char * const data_raw=data.data();
         if(public_and_private_informations.encyclopedia_monster!=NULL)
         {
-            delete public_and_private_informations.encyclopedia_monster;
+            free(public_and_private_informations.encyclopedia_monster);//malloc'd below, not new'd
             public_and_private_informations.encyclopedia_monster=NULL;
         }
         public_and_private_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
@@ -410,7 +410,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         const char * const data_raw=data.data();
         if(public_and_private_informations.encyclopedia_item!=NULL)
         {
-            delete public_and_private_informations.encyclopedia_item;
+            free(public_and_private_informations.encyclopedia_item);//malloc'd below, not new'd
             public_and_private_informations.encyclopedia_item=NULL;
         }
         public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
@@ -477,7 +477,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         const char * const data_raw=data.data();
         if(public_and_private_informations.recipes!=NULL)
         {
-            delete public_and_private_informations.recipes;
+            free(public_and_private_informations.recipes);//malloc'd below, not new'd
             public_and_private_informations.recipes=NULL;
         }
         public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);

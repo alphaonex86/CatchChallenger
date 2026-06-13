@@ -161,8 +161,12 @@ void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_Done;
         posOutput+=1;
     }
-    if(public_and_private_informations.cash>=(realprice*quantity))
-        removeCash(realprice*quantity);
+    //64-bit product: realprice and quantity are both uint32_t, so realprice*quantity
+    //is evaluated in 32 bits and wraps (e.g. quantity=0x80000000 -> total 0), which
+    //would let an attacker buy billions of items for almost no cash. cash is uint64_t.
+    const uint64_t totalprice=static_cast<uint64_t>(realprice)*quantity;
+    if(public_and_private_informations.cash>=totalprice)
+        removeCash(totalprice);
     else
     {
         errorOutput("The player have not the cash to buy "+std::to_string(quantity)+" item of id: "+std::to_string(objectId));
@@ -265,7 +269,9 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
         posOutput+=1;
     }
     removeObject(objectId,quantity);
-    addCash(realPrice*quantity);
+    //64-bit product: realPrice and quantity are both uint32_t and would wrap in 32
+    //bits before being added to the uint64_t cash.
+    addCash(static_cast<uint64_t>(realPrice)*quantity);
 
     //set the dynamic size
     {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}

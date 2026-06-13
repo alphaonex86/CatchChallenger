@@ -29,7 +29,12 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
         const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.get_monster(monster.monster).learn.at(sub_index);
         if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
         {
-            if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
+            //the right operand must be guarded by sub_index2<size: when the
+            //monster does not yet own this skill sub_index2==skills.size(), and
+            //skills.at(sub_index2) would throw std::out_of_range (crash) on a
+            //level-up learn entry (learnSkillLevel!=1). Mirrors the general copy
+            //in general/fight/CommonFightEngineSkill.cpp.
+            if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (sub_index2<monster.skills.size() && (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel))
             {
                 if(learn.learnSkillLevel==1)
                 {

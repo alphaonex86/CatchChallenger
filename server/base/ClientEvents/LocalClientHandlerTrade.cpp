@@ -4,6 +4,7 @@
 #include "../../general/base/FacilityLib.hpp"
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
@@ -325,6 +326,18 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
     {
         errorOutput("You can't trade this msonter because you will be without monster to fight");
         return;
+    }
+    //refuse if the partner would end up over maxPlayerMonsters once this trade
+    //commits. Without this, trade is the bypass of the catch-path cap and, once
+    //the partner's party passes 255, the uint8_t monster position wraps and
+    //collides (the catch path enforces the same cap, CommonFightEngineWild.cpp).
+    {
+        Client &partner=ClientList::list->rw(this->otherPlayerTrade);
+        if((partner.public_and_private_informations.monsters.size()+tradeMonster.size()+1)>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
+        {
+            errorOutput("Trade refused: the partner would exceed maxPlayerMonsters");
+            return;
+        }
     }
     tradeMonster.push_back(public_and_private_informations.monsters.at(index));
     public_and_private_informations.monsters.erase(public_and_private_informations.monsters.begin()+index);

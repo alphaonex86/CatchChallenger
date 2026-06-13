@@ -172,8 +172,16 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 unsigned int index=0;
                 while(index<temp_connected_players.size())
                 {
-                    if(ClientList::list->isNull(temp_connected_players.at(index)))
-                        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(ClientList::list->at(index).getPlayerId())});
+                    //reset each STILL-CONNECTED member's character clan in the DB.
+                    //Two bugs fixed: (1) index the client list by the connected
+                    //player index, not the loop counter — the old at(index) read
+                    //an unrelated client and reset the wrong character's clan;
+                    //(2) the guard was inverted — it fired when the slot was null
+                    //(player gone, id garbage). Act only on a valid (non-null)
+                    //slot, using THAT client's player id.
+                    const PLAYER_INDEX_FOR_CONNECTED &connectedIndex=temp_connected_players.at(index);
+                    if(!ClientList::list->isNull(connectedIndex))
+                        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(ClientList::list->at(connectedIndex).getPlayerId())});
                     index++;
                 }
             }
@@ -649,7 +657,12 @@ void Client::clanInvite(const bool &accept)
     if(!accept)
     {
         normalOutput("You have refused the clan invitation");
-        inviteToClanList.erase(inviteToClanList.begin());
+        //guard: refusing with NO pending invite must not erase(begin()) an empty
+        //vector (UB: _M_finish drops below _M_start, size() wraps to ~SIZE_MAX and
+        //the next clan op corrupts the heap). A refuse-with-nothing-pending is a
+        //benign race (invite already withdrawn) -> silently ignore.
+        if(!inviteToClanList.empty())
+            inviteToClanList.erase(inviteToClanList.begin());
         return;
     }
     normalOutput("You have accepted the clan invitation");

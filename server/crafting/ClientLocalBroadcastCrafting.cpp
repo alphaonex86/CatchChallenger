@@ -37,11 +37,19 @@ void Client::plantSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id)
     }
     //check if is free
     {
-        const Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData.at(new_map_index);
-        if(mapData.plants.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plants.cend())
+        //mapData has an entry only for maps the player already modified; .at() on a
+        //missing key throws std::out_of_range -> uncaught -> server crash. A map with
+        //no entry simply has no plant here, so guard with find() (no mutation).
+        const std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map>::const_iterator mapDataIt=
+                public_and_private_informations.mapData.find(new_map_index);
+        if(mapDataIt!=public_and_private_informations.mapData.cend())
         {
-            errorOutput("Have already a plant in plantOnlyVisibleByPlayer==true");
-            return;
+            const Player_private_and_public_informations_Map &mapData=mapDataIt->second;
+            if(mapData.plants.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plants.cend())
+            {
+                errorOutput("Have already a plant in plantOnlyVisibleByPlayer==true");
+                return;
+            }
         }
     }
     useSeed(plant_id,new_map_index,x,y);

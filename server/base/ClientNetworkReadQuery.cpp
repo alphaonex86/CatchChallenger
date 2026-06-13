@@ -108,6 +108,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             #endif
             const uint16_t &factoryId=CatchChallenger::loadLe16(data);
+            (void)factoryId;
             //getFactoryList(queryNumber,factoryId);
             return true;
         }
@@ -126,6 +127,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             const uint16_t &objectId=CatchChallenger::loadLe16(data+sizeof(uint16_t));
             const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t)*2);
             const uint32_t &price=CatchChallenger::loadLe32(data+sizeof(uint16_t)*2+sizeof(uint32_t));
+            (void)factoryId;(void)objectId;(void)quantity;(void)price;
             //buyFactoryProduct(queryNumber,factoryId,objectId,quantity,price);
             return true;
         }
@@ -144,6 +146,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             const uint16_t &objectId=CatchChallenger::loadLe16(data+sizeof(uint16_t));
             const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t)*2);
             const uint32_t &price=CatchChallenger::loadLe32(data+sizeof(uint16_t)*2+sizeof(uint32_t));
+            (void)factoryId;(void)objectId;(void)quantity;(void)price;
             //sellFactoryResource(queryNumber,factoryId,objectId,quantity,price);
             return true;
         }
@@ -167,6 +170,14 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 case 0x05:
                 {
                     std::string tempString;
+                    //need at least the text-size byte; without this check data[pos]
+                    //reads 1 byte past a 1-byte payload, and pos then exceeds size so
+                    //the unsigned (size-pos) below wraps and bypasses its own guard.
+                    if((size-pos)<(int)sizeof(uint8_t))
+                    {
+                        errorOutput("wrong size in clan action for text size");
+                        return false;
+                    }
                     const uint8_t &textSize=data[pos];
                     pos+=1;
                     if(textSize>0)
@@ -305,15 +316,10 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             const uint32_t &number_of_file=CatchChallenger::loadLe32(data+pos);
             pos+=sizeof(uint32_t);
-            std::vector<std::string> files;
-            files.reserve(number_of_file);
-            std::vector<uint32_t> partialHashList;
-            partialHashList.reserve(number_of_file);
-            std::string tempFileName;
-            uint32_t index=0;
-            #ifdef CATCHCHALLENGER_HARDENED
-            std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
-            #endif
+            //check the cap BEFORE any reserve(): an attacker-controlled
+            //number_of_file (up to 0xFFFFFFFF) would otherwise make
+            //files.reserve()/partialHashList.reserve() request tens of GB and
+            //abort the whole server on bad_alloc.
             if(number_of_file>1000000)
             {
                 errorOutput("number_of_file > million: "+std::to_string(number_of_file)+": parseQuery("+
@@ -327,6 +333,15 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     );
                 return false;
             }
+            std::vector<std::string> files;
+            files.reserve(number_of_file);
+            std::vector<uint32_t> partialHashList;
+            partialHashList.reserve(number_of_file);
+            std::string tempFileName;
+            uint32_t index=0;
+            #ifdef CATCHCHALLENGER_HARDENED
+            std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
+            #endif
             while(index<number_of_file)
             {
                 {

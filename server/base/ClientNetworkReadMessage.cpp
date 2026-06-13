@@ -339,7 +339,9 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             #endif
-            const uint8_t &returnCode=*(data+sizeof(uint8_t));
+            //the payload is a single byte (packetFixedSize[0x04]==1); the return
+            //code is data[0]. Reading data[1] over-read one byte past the payload.
+            const uint8_t &returnCode=*data;
             switch(returnCode)
             {
                 case 0x01:
