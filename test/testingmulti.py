@@ -475,6 +475,10 @@ def main():
     # (out-of-fight fight spam -> re-entrant use-after-free). Both are fixed.
     run_channel_crash_regression_test(dp_name, failed_cases)
 
+    # Drive a live client over the same socket to leave a map by clicking a
+    # "teleport on push" exit (regression for the can't-leave-the-gym bug).
+    run_channel_teleport_push_test(dp_name, failed_cases)
+
     summary()
 
 
@@ -592,6 +596,147 @@ def _channel_cmd(sk, line, wait=0.5):
     except Exception:
         pass
     return buf.decode(errors="replace").strip()
+
+
+def _channel_state(sk):
+    """GETSTATE -> (map_id, x, y) as ints, or None if the reply isn't a STATE line."""
+    import re
+    m = re.search(r"map=(\d+)\s+x=(\d+)\s+y=(\d+)", _channel_cmd(sk, "GETSTATE"))
+    return (int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else None
+
+
+def _channel_wait_map(sk, want_equal=None, change_from=None, timeout=20.0):
+    """Poll GETSTATE until the player's map id equals `want_equal` (or differs from
+    `change_from`). Return the final (map,x,y) on success, None on timeout."""
+    import time as _t
+    deadline = _t.time() + timeout
+    while _t.time() < deadline:
+        st = _channel_state(sk)
+        if st is not None:
+            if want_equal is not None and st[0] == want_equal:
+                return st
+            if change_from is not None and st[0] != change_from:
+                return st
+        _t.sleep(0.4)
+    return None
+
+
+def run_channel_teleport_push_test(dp_name, failed_cases):
+    """Regression guard, driven over the QLocalServer channel (no in-client test
+    scaffolding): leaving a map by clicking a "teleport on push" tile must work.
+    The gym "to city" exit sits on a COLLISION tile (you LEAVE by pushing into it);
+    canGoTo() used to reject the step because the tile is blocked, so neither
+    keyboard nor mouse could leave. Enter the gym via the city door, then click the
+    exit at (9,20) and assert the player returns to the city."""
+    import tempfile, time, re
+    case = "channel: leave a map by clicking a teleport-on-push exit (gym)"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- Channel teleport-on-push leave (gym, vs local server): {dp_name} {MAINCODE} ---{C_RESET}\n")
+    setup_server_datapack(SERVER_BUILD, DATAPACK_SRC, MAINCODE)
+    # The SERVER_REF build has no server-properties.xml so setup_server_datapack
+    # can't stamp the maincode; the gym only exists under "test", so force it (the
+    # fresh character then spawns on the test city, next to the gym door at 21,25).
+    sp_xml = os.path.join(SERVER_BUILD, "server-properties.xml")
+    if os.path.isfile(sp_xml):
+        with open(sp_xml) as f:
+            _sp = f.read()
+        _sp = re.sub(r'mainDatapackCode\s+value="[^"]*"', 'mainDatapackCode value="test"', _sp)
+        with open(sp_xml, "w") as f:
+            f.write(_sp)
+    db_dir = os.path.join(SERVER_BUILD, "database")
+    if os.path.isdir(db_dir):
+        shutil.rmtree(db_dir)
+    cache_file = os.path.join(SERVER_BUILD, "datapack-cache.bin")
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+    set_http_datapack_mirror(SERVER_BUILD, "")
+    set_map_visibility_minimize(SERVER_BUILD, "cpu")
+    srv = start_server(SERVER_BUILD)
+    if srv is None:
+        log_fail(case, "server did not start")
+        return
+    if not assert_port_or_fail(SERVER_HOST, int(SERVER_PORT), log_fail, "tp-push tcp probe"):
+        stop_server()
+        log_fail(case, "tcp probe failed")
+        return
+    tmpdir = tempfile.mkdtemp(prefix="cc-test-tppush-")
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    env["XDG_CONFIG_HOME"] = os.path.join(tmpdir, "config")
+    env["XDG_DATA_HOME"] = os.path.join(tmpdir, "data")
+    env["TMPDIR"] = tmpdir
+    app_name = "CatchChallenger/client-qtcpu800x600"
+    cache_name = f"argument-{SERVER_HOST}-{_config['server_port']}"
+    cache_dir = os.path.join(tmpdir, "data", app_name, "datapack", cache_name)
+    shutil.copytree(os.path.join(SERVER_BUILD, "datapack"), cache_dir,
+                    ignore=shutil.ignore_patterns(".git"))
+    conf_dir = os.path.join(tmpdir, "config", "CatchChallenger")
+    os.makedirs(conf_dir, exist_ok=True)
+    with open(os.path.join(conf_dir, "client-qtcpu800x600.conf"), "w") as f:
+        f.write("[General]\nkey=testTpPushKey\n")
+    args = ["--host", SERVER_HOST, "--port", SERVER_PORT,
+            "--autologin", "--character", CHAR_A]
+    log_info("connecting client (qtcpu800x600) for the teleport-on-push channel run")
+    proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
+    on_map = False
+    deadline = time.time() + diagnostic.scale_timeout(DIAG, 150)
+    while time.time() < deadline:
+        if any("MapVisualiserPlayer::mapDisplayedSlot()" in l for l in out):
+            on_map = True
+            break
+        if done.is_set():
+            break
+        time.sleep(0.5)
+    if not on_map:
+        kill_client(proc)
+        stop_server()
+        log_fail(case, f"client never reached the map; early_fail={fail[0]}")
+        return
+    uid = os.getuid()
+    candidates = ([os.path.join(tmpdir, f"CatchChallenger-Client-{n}-{uid}") for n in range(4)] +
+                  [os.path.join("/tmp", f"CatchChallenger-Client-{n}-{uid}") for n in range(4)])
+    sk = _channel_connect(candidates)
+    if sk is None:
+        kill_client(proc)
+        stop_server()
+        log_fail(case, "could not connect to the client's QLocalServer automation socket")
+        return
+    result = None
+    try:
+        spawn = _channel_state(sk)
+        if spawn is None:
+            result = ("fail", "GETSTATE returned no STATE on the spawn map")
+        else:
+            city_map = spawn[0]
+            log_info(f"spawn (city) map id={city_map} at ({spawn[1]},{spawn[2]})")
+            _channel_cmd(sk, "CLICKTILE 21 25")           # the gym door on the city
+            gym = _channel_wait_map(sk, change_from=city_map, timeout=25)
+            if gym is None:
+                result = ("fail", "could not enter the gym (clicking the city gym door did not change map)")
+            else:
+                log_info(f"entered the gym: map id={gym[0]} at ({gym[1]},{gym[2]})")
+                # The gym interior is gated, so we sit at the entrance (9,19), next to
+                # the "to city" teleport-on-push exit (9,20). Click it to leave.
+                log_info("clicking the gym 'to city' teleport-on-push exit (9,20)")
+                _channel_cmd(sk, "CLICKTILE 9 20")
+                back = _channel_wait_map(sk, want_equal=city_map, timeout=25)
+                if back is not None:
+                    result = ("pass", f"clicking the push-exit returned to the city (map {city_map}) at ({back[1]},{back[2]})")
+                else:
+                    result = ("fail", "clicking the gym 'teleport on push' exit did NOT leave the gym")
+    finally:
+        try: sk.close()
+        except Exception: pass
+        if proc.poll() is None:
+            kill_client(proc)
+        stop_server()
+    if result[0] == "pass":
+        log_pass(case, result[1])
+    else:
+        log_fail(case, result[1])
+        for line in out[-25:]:
+            print(f"  | {line}")
 
 
 def run_channel_crash_regression_test(dp_name, failed_cases):

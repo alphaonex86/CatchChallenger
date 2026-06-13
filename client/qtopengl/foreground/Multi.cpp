@@ -149,7 +149,11 @@ void Multi::displayServerList()
                 autoSelectTried=true;
                 selectedServer.unique_code=connexionInfo.unique_code;
                 selectedServer.isCustom=connexionInfo.isCustom;
-                server_select_clicked();
+                //queued: displayServerList() runs from the constructor, so a
+                //direct call would emit setAbove()/connectToServer() before
+                //ScreenTransition::openMulti() has connected them — the auto
+                //connect would be silently lost and the run would hang
+                QMetaObject::invokeMethod(this,&Multi::server_select_clicked,Qt::QueuedConnection);
                 return;
             }
             i++;
@@ -424,6 +428,7 @@ void Multi::httpFinished()
     {
         cache.write(content);
         cache.resize(content.size());
+        cache.close();
         QVariant val=reply->header(QNetworkRequest::LastModifiedHeader);
         if(val.isValid())
         {
@@ -432,19 +437,12 @@ void Multi::httpFinished()
                 utimbuf butime;
                 butime.actime=val.toDateTime().toSecsSinceEpoch();
                 butime.modtime=val.toDateTime().toSecsSinceEpoch();
-                int returnVal=utime(cache.fileName().toLocal8Bit().data(),&butime);
-                if(returnVal==0)
-                    return;
-                else
-                {
+                if(utime(cache.fileName().toLocal8Bit().data(),&butime)!=0)
                     qDebug() << QStringLiteral("Can't set time: %1").arg(cache.fileName());
-                    return;
-                }
             #else
                 #error "Not supported on this platform"
             #endif
         }
-        cache.close();
     }
     else
         std::cerr << "Can't write server list cache" << std::endl;
@@ -895,9 +893,15 @@ void Multi::server_select_clicked()
     if(!autoLoginTried && CliClientOptions::autologin)
     {
         autoLoginTried=true;
-        // fill default credentials if empty so validate() passes
+        // fill default credentials if empty so validate() passes; prefer
+        // --character as login (like qtcpu800x600 and the direct-connect
+        // paths in ScreenTransition) so automated runs reach the account
+        // that owns that character
         if(login->getLogin().isEmpty() || login->getPass().isEmpty())
-            login->setCredentials(QStringLiteral("test01"),QStringLiteral("test01test01"));
+        {
+            const QString l=CliClientOptions::characterName.isEmpty() ? QStringLiteral("test01") : CliClientOptions::characterName;
+            login->setCredentials(l,l+l);
+        }
         login->validate();
     }
 }

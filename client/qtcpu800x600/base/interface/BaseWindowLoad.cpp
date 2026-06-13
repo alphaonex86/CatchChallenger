@@ -723,6 +723,25 @@ void BaseWindow::updateConnectingStatus()
         }
         if(serverSelected==-1)
         {
+            //automated run (--closewhenonmap[after]): the login server can
+            //front several game servers; pick the one whose pool name
+            //matches --server, else the first ordered entry, instead of
+            //waiting on a click in page_serverList
+            if(multiplayer && (AutoArgs::closeWhenOnMap || AutoArgs::closeWhenOnMapAfter>0) && !serverOrdenedList.empty())
+            {
+                const std::string targetName=AutoArgs::server.toStdString();
+                unsigned int i=0;
+                while(i<serverOrdenedList.size())
+                {
+                    if(!targetName.empty() && serverOrdenedList.at(i).name==targetName)
+                        break;
+                    i++;
+                }
+                serverSelected=(i<serverOrdenedList.size())?static_cast<int>(i):0;
+                std::cerr << "AutoArgs: auto-selected pool server " << serverSelected << " \"" << serverOrdenedList.at(serverSelected).name << "\"" << std::endl;
+                updateConnectingStatus();
+                return;
+            }
             if(ui->stackedWidget->currentWidget()!=ui->page_serverList)
             {
                 if(multiplayer)

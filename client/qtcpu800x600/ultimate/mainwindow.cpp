@@ -2102,6 +2102,7 @@ void MainWindow::httpFinished()
         {
             cache.write(content);
             cache.resize(content.size());
+            cache.close();
             if(val.isValid())
             {
                 #ifdef Q_CC_GNU
@@ -2109,17 +2110,12 @@ void MainWindow::httpFinished()
                     utimbuf butime;
                     butime.actime=val.toDateTime().toSecsSinceEpoch();
                     butime.modtime=val.toDateTime().toSecsSinceEpoch();
-                    int returnVal=utime(cache.fileName().toLocal8Bit().data(),&butime);
-                    if(returnVal!=0)
-                    {
+                    if(utime(cache.fileName().toLocal8Bit().data(),&butime)!=0)
                         qDebug() << QStringLiteral("Can't set time: %1").arg(cache.fileName());
-                        return;
-                    }
                 #else
                     #error "Not supported on this platform"
                 #endif
             }
-            cache.close();
         }
     }
     temp_xmlConnexionInfoList=loadXmlConnexionInfoListFromData(content);
