@@ -41,7 +41,12 @@ void Client::addObject(const uint16_t &item, const uint32_t &quantity, bool data
     }
     if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
-        public_and_private_informations.items[item]+=quantity;
+        //saturating add: the count is uint32_t; an unchecked += can wrap (reachable
+        //via trade commit) and silently destroy a stack. Clamp at UINT32_MAX.
+        if(public_and_private_informations.items[item]>(0xFFFFFFFFu-quantity))
+            public_and_private_informations.items[item]=0xFFFFFFFFu;
+        else
+            public_and_private_informations.items[item]+=quantity;
         /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_item;
         stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
         stringreplaceOne(queryText,"%2",std::to_string(item));

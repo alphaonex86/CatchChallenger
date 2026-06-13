@@ -115,7 +115,18 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
             pos+=4;
             ++i;
         }
+        //the while loop above writes every byte (pos advances 6B/iteration to
+        //exactly sizeof(item_raw)), so item_raw is fully initialized here. Some
+        //GCC versions can't prove that for a VLA+loop and emit a false
+        //-Wmaybe-uninitialized; suppress it at zero runtime cost (no memset).
+        #if defined(__GNUC__) && !defined(__clang__)
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+        #endif
         item=binarytoHexa(item_raw,static_cast<uint32_t>(sizeof(item_raw)));
+        #if defined(__GNUC__) && !defined(__clang__)
+        #pragma GCC diagnostic pop
+        #endif
     }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_and_encyclopedia.asyncWrite({

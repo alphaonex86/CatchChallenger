@@ -1028,14 +1028,14 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
                 //race the kernel.
                 BaseClassSwitch *obj=
                     static_cast<BaseClassSwitch *>(URING_UNTAG(udata));
-                bool need_rearm=false;
                 if(res==-ENOBUFS)
                 {
                     //Buffer ring exhausted. Rate-limit log: every 1024.
+                    //The re-arm itself is handled below by rearm_eligible
+                    //(which already covers res==-ENOBUFS); no flag needed.
                     if((g_uring->enobufs_count++ & 0x3FF)==0)
                         std::cerr << "io_uring recv_multishot: ENOBUFS x"
                                   << g_uring->enobufs_count << std::endl;
-                    need_rearm=true;
                 }
                 else if(res<0)
                 {

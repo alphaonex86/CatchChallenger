@@ -70,7 +70,11 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                      std::to_string(objectId)+
                      " in quantity: "+
                      std::to_string(quantity));
-        if(ClientList::list->isNull(indexConnected))
+        //guard was INVERTED: isNull(index)==true means the slot is EMPTY, so the
+        //old code added the object only when NO client was there (operating on an
+        //empty slot) and rejected a genuinely-connected player. rw() must be
+        //dereferenced only when the slot is NOT null (cf. disconnectClientById_db).
+        if(!ClientList::list->isNull(indexConnected))
         {
             Client &client=ClientList::list->rw(indexConnected);
             client.addObjectAndSend(objectId,quantity);

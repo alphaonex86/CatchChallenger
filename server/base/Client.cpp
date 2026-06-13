@@ -475,6 +475,27 @@ bool Client::disconnectClient()
             saveCurrentMonsterStat();
         if(mapIndex<65535)
             savePosition();
+        //Release the per-character heap bitmaps (malloc'd in Client::parse and
+        //selectCharacter). The Client object is POOLED and reused — ~Client
+        //aborts under CATCHCHALLENGER_SERVER — so without freeing here they
+        //leaked on every login (and lingered into the next occupant's slot).
+        //free() (they are malloc'd, not new'd); done AFTER saveCharacterFiles()
+        //and savePosition() have persisted them.
+        if(public_and_private_informations.recipes!=NULL)
+        {
+            free(public_and_private_informations.recipes);
+            public_and_private_informations.recipes=NULL;
+        }
+        if(public_and_private_informations.encyclopedia_monster!=NULL)
+        {
+            free(public_and_private_informations.encyclopedia_monster);
+            public_and_private_informations.encyclopedia_monster=NULL;
+        }
+        if(public_and_private_informations.encyclopedia_item!=NULL)
+        {
+            free(public_and_private_informations.encyclopedia_item);
+            public_and_private_informations.encyclopedia_item=NULL;
+        }
         mapIndex=65535;
         character_id_db=0;
         stat=ClientStat::None;
@@ -912,7 +933,9 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
         encyclopedia_monsterS=std::string(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
     std::string encyclopedia_itemS;
     if(public_and_private_informations.encyclopedia_item!=nullptr)
-        encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items_size()/8+1);
+        //save the FULL bitmap (sized by max item id, see the alloc below) — using
+        //get_items_size() here truncated the high-id encyclopedia bits on save.
+        encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
 
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << recipesS
         << public_and_private_informations.monsters << public_and_private_informations.warehouse_monsters << encyclopedia_monsterS << encyclopedia_itemS
@@ -970,9 +993,17 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     if(min>encyclopedia_monsterS.size())
         min=encyclopedia_monsterS.size();
     memcpy(public_and_private_informations.encyclopedia_monster,encyclopedia_monsterS.data(),min);
-    public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items_size()/8+1);
-    memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_items_size()/8+1);
-    min=CommonDatapack::commonDatapack.get_items_size()/8+1;
+    //encyclopedia_item is a BITMAP indexed by item ID (bit set at item.id/8 in
+    //LocalClientHandlerObject/SelectCharCommon, serialized as itemMaxId/8+1 in
+    //ClientHeavyLoadSelectCharFinal). It MUST be sized by the MAX item id, not the
+    //item COUNT: with sparse ids (itemMaxId>items_size, e.g. the gba2cc maincodes)
+    //get_items_size() under-allocated, causing a heap over-read at serialization
+    //(walking into the freed character ifstream buffer -> UAF + client info-leak)
+    //and a heap over-WRITE when a high-id item's bit is set. Mirror recipes /
+    //encyclopedia_monster, which correctly use their *MaxId.
+    public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
+    memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_itemMaxId()/8+1);
+    min=CommonDatapack::commonDatapack.get_itemMaxId()/8+1;
     if(min>encyclopedia_itemS.size())
         min=encyclopedia_itemS.size();
     memcpy(public_and_private_informations.encyclopedia_item,encyclopedia_itemS.data(),min);

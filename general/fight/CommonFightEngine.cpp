@@ -426,7 +426,10 @@ bool CommonFightEngine::moveDownMonster(const uint8_t &number)
 {
     if(isInFight())
         return false;
-    if(number>=(get_public_and_private_informations().monsters.size()-1))
+    //monsters.size() is size_t: on an empty party size()-1 wraps to SIZE_MAX and
+    //the bound check below passes for any number, giving an OOB swap. Compare
+    //without the -1 so number+1 stays in range.
+    if((number+1)>=get_public_and_private_informations().monsters.size())
         return false;
     std::swap(get_public_and_private_informations().monsters[number],get_public_and_private_informations().monsters[number+1]);
     updateCanDoFight();

@@ -31,6 +31,14 @@ void Client::useSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id,const CATCHCHALL
 
 void Client::useRecipe(const uint8_t &query_id,const uint16_t &recipe_id)
 {
+    //recipe_id comes straight off the wire (full uint16, 0-65535). The recipes
+    //bitmap is only craftingRecipesMaxId/8+1 bytes (Client.cpp), so an id above
+    //craftingRecipesMaxId would index out of bounds. Reject it before any access.
+    if(recipe_id>CommonDatapack::commonDatapack.get_craftingRecipesMaxId())
+    {
+        errorOutput("recipe_id out of range: "+std::to_string(recipe_id));
+        return;
+    }
     //don't check if the recipe exists, because the loading of the know recide do that's
     if(!(public_and_private_informations.recipes[recipe_id/8] & (1<<(7-recipe_id%8))))
     {
