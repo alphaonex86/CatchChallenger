@@ -392,6 +392,7 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingbyIA.py]=30m
     [testingclient.py]=30m
     [testingcluster.py]=10m
+    [testingclustersecurity.py]=60m
     [testingcmake.py]=30m
     [testingcompilationandroid.py]=25m
     [testingcompilationESP32.py]=45m
@@ -512,6 +513,7 @@ run_test testinggateway.py
 run_test testingmulti.py
 run_test testingbyIA.py
 run_test testingcluster.py
+run_test testingclustersecurity.py
 run_test testingremote.py
 run_test testingcompilationwindows.py
 run_test testingcompilationmac.py
