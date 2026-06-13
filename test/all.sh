@@ -406,6 +406,7 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingmapmanagement.py]=10m
     [testingpathfinding.py]=10m
     [testingmulti.py]=30m
+    [testingprotocolstate.py]=90m
     [testingqtserver.py]=15m
     [testingremote.py]=45m
     [testingserver.py]=30m
@@ -500,18 +501,15 @@ run_test testingqtserver.py
 run_test testingfight.py
 run_test testingmapmanagement.py
 run_test testingpathfinding.py
+run_test testingprotocolstate.py
 run_test testingclient.py
 run_test testingbots.py
 run_test testingserver.py
 run_test testinghttp.py
 run_test testingwebsocket.py
-# Temporarily disabled — testinggateway.py is the single biggest wall
-# consumer (~27% of total all.sh wall). Re-enable once the gateway
-# work is back in focus. CLAUDE.md "Never comment-out a run_test"
-# stands; this is an explicit operator override, not silent drift.
-#run_test testinggateway.py
+run_test testingstats.py
+run_test testinggateway.py
 run_test testingmulti.py
-#run_test testinggateway.py
 run_test testingbyIA.py
 run_test testingcluster.py
 run_test testingremote.py
