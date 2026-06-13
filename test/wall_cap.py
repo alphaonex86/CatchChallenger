@@ -29,6 +29,7 @@ _CAPS_SECONDS = {
     "testingbyIA.py":                 30 * 60,
     "testingclient.py":               30 * 60,
     "testingcluster.py":              10 * 60,
+    "testingclustersecurity.py":      60 * 60,
     "testingcmake.py":                30 * 60,
     "testingcompilationandroid.py":   15 * 60,
     "testingcompilationESP32.py":     45 * 60,
