@@ -15,10 +15,13 @@ https://github.com/alphaonex86/CatchChallenger/
 
 ## 1. Target
 
-The in-scope target is the **standalone game server** built from `server/cli/`
+The first in-scope target is the **standalone game server** built from `server/cli/`
 (`catchchallenger-server-cli`), the single-threaded event-loop server that accepts
-player connections on the **game TCP port**. The only attacker input we consider is
-**bytes sent over that TCP socket** by a connected (or connecting) client.
+player connections on the **game TCP port**. The attacker input we consider is
+**bytes sent over a TCP socket** by a connected (or connecting) **game client** —
+against the standalone game server, or against the cluster's client-facing login,
+gateway and game-server-alone (see *The cluster servers* below). The master and the
+links between cluster nodes are internal-only and out of scope (§2).
 
 Build a local instance to attack — no extra packages beyond a C++ toolchain, CMake
 are required:
@@ -31,6 +34,44 @@ cmake --build build/server-cli -j
 Run it against a datapack and a `server-properties.xml` (automatic_account_creation value="true"; `mainDatapackCode` selects the maincode, `compression=none`
 makes packets easy to read on the wire). The file-backed database (`FILE_DB`) build
 needs no SQL daemon and is the simplest to stand up.
+
+### The cluster servers
+
+Beyond the standalone server, four more binaries make up the multi-server
+(*cluster*) deployment. They speak the SAME wire protocol (§4); each parses a
+different slice of it:
+
+| Binary | Source | DB | Untrusted peer | In scope? |
+|---|---|---|---|---|
+| `catchchallenger-server-login` | `server/login/` | PostgreSQL/MySQL | game client | **yes** — account login / auto-creation, character add / remove / select, then a transparent client↔game proxy |
+| `catchchallenger-gateway` | `server/gateway/` | none | game client | **yes** — a thin client↔backend proxy + datapack file-list download/sync |
+| `catchchallenger-game-server-alone` | `server/game-server-alone/` | PostgreSQL/MySQL | game client | **yes** (client port) — the same client handlers as `server/cli` |
+| `catchchallenger-server-master` | `server/master/` | PostgreSQL/MySQL | login / game-server **nodes** | **no** — internal cluster network only (see §2) |
+
+The **master** is reached only by other cluster nodes over the internal VPS / LAN
+network and is never exposed to clients or the internet — so it, and every inter-node
+link (including the game-server's `LinkToMaster`), is **out of scope**. The bounty
+targets the three **client-facing** servers above.
+
+`login`, `master` and `game-server-alone` build **only** against a real SQL backend
+(`-DCATCHCHALLENGER_DB_POSTGRESQL=ON` or `-DCATCHCHALLENGER_DB_MYSQL=ON`) and only
+work **together as a cluster**; the `gateway` is DB-less. The simplest way to stand
+the whole thing up exactly as we test it — an ephemeral PostgreSQL, the binaries
+wired together with a shared master token, and a real `qtcpu800x600` client driven
+end-to-end to the map — is `test/testingcluster.py` (cluster) plus
+`test/testinggateway.py` (gateway); the per-server robustness cases live in
+`test/testingclustersecurity.py`. Read those for the exact ports,
+`server-properties.xml`/`login.xml`/`master.xml` keys, the shared token, and the
+login → master → game-server hand-off.
+
+```sh
+cmake -S server/master -B build/master -DCATCHCHALLENGER_DB_POSTGRESQL=ON
+cmake -S server/login  -B build/login  -DCATCHCHALLENGER_DB_POSTGRESQL=ON
+cmake -S server/game-server-alone -B build/gsa -DCATCHCHALLENGER_DB_POSTGRESQL=ON
+cmake -S server/gateway -B build/gateway        # no DB
+cmake --build build/master -j && cmake --build build/login -j && \
+  cmake --build build/gsa -j && cmake --build build/gateway -j
+```
 
 **Test only against your own instance.** Do not attack the public servers, other
 players, or any `*.herman-brule.com` host.
@@ -48,6 +89,16 @@ players, or any `*.herman-brule.com` host.
   and the shared engine in `general/base/` and `general/fight/`.
 * Server state and persistence reachable through those handlers (player inventory,
   cash, monsters, position, quests, clans, trade, shops, factories, plants).
+* **Login server** (`server/login/`) — the pre-login handshake, account login &
+  auto-creation, and the character add / remove / select handlers
+  (`EventLoopClientLoginSlaveProtocolParsing.cpp`), plus the transparent client↔game
+  proxy it becomes after select.
+* **Gateway** (`server/gateway/`) — the pre-login handshake, the datapack file-list
+  download / sync, and the move / chat / select pass-through to the backend
+  (`EventLoopClientLoginSlaveProtocolParsing.cpp`, `DatapackDownloader*.cpp`).
+* **Game-server-alone** (`server/game-server-alone/`) — its client-facing handlers
+  are the same `server/base/ClientNetworkRead*` code as `server/cli` (in scope). Its
+  master-link reply parsing (`LinkToMaster*.cpp`) is **out of scope** — see below.
 
 **Out of scope:**
 
@@ -56,10 +107,14 @@ players, or any `*.herman-brule.com` host.
   `client/libqtcatchchallenger/libtiled`, `libogg`/`libopus`/`libopusfile`). Report
   those upstream.
 * The client, the GUI admin tool, and the build system.
-* The login / master / gateway cluster servers (separate program; may run its own
-  bounty later).
-* Findings that require a malicious or modified **server**, datapack, or
-  configuration — the attacker only controls a client socket.
+* **The master server (`server/master/`) and every inter-node link** — login↔master,
+  game-server↔master, and the game-server's `LinkToMaster*` reply parsing. They speak
+  ONLY on the internal VPS / LAN cluster network: the master is never bound to a public
+  interface, never reachable by a client or from the internet, so a remote attacker
+  cannot reach it. **Out of scope.**
+* Findings that require a malicious or modified **server binary**, **datapack**, or
+  **configuration** — the attacker only controls a *client* socket (game / login /
+  gateway / game-server). Tampering with another node's binary or config is out of scope.
 * Pure volumetric DoS (flooding bandwidth/connections). Algorithmic
   amplification from a *single small packet* (see §3) **is** in scope.
 * Anything only reachable with the `CATCHCHALLENGER_HARDENED` build flag on — the
@@ -136,6 +191,27 @@ container access (`.at()`, `operator[]`, `erase`, `front`/`begin`) whose
 precondition depends on a packet field; and any handler whose effect depends on the
 player's current position or game state.
 
+### Cluster servers
+
+The cluster speaks the same framing; only the dispatch entry differs per binary. Boot
+the cluster (`test/testingcluster.py` / `test/testingclustersecurity.py`) so the
+login → master → game-server hand-off works, then probe each **client-facing**
+listener below. (The master and the inter-node links take bytes only from other
+cluster nodes on the internal network — out of scope, §2 — so they are not listed.)
+
+| Server | Dispatch entry | Reachable handlers (by state) | Where |
+|---|---|---|---|
+| login | `parseInputBeforeLogin` / `parseQuery` | `0xA0` handshake; `0xA8` login; `0xA9` create-account; `0xAD` stat; then (Logged) `0xAA` add-char, `0xAB` remove-char, `0xAC` select-char | `server/login/EventLoopClientLoginSlaveProtocolParsing.cpp` |
+| gateway | `parseInputBeforeLogin` / `parseMessage` / `parseQuery` | `0xA0` handshake; `0xA1` datapack file-list; `0xAC` reconnect-select; `0x02`/`0x03` move/chat pass-through | `server/gateway/EventLoopClientLoginSlaveProtocolParsing.cpp`, `DatapackDownloader*.cpp` |
+| game-server-alone | `ClientNetworkRead*` (same as `server/cli`) | every client handler of the standalone game server | `server/base/` |
+
+Cluster-specific things to push on: the pseudo / login / password length bytes in the
+login `0xAA`/`0xA8`/`0xA9` packets; the `charactersGroupIndex` / `profileIndex` /
+`skinId` / `monsterGroupId` indices in login `0xAA`/`0xAB`/`0xAC`; and the gateway's
+datapack file-list loop (`number_of_file`, per-file `textSize`, `partialHash`), its
+`serverReconnectList[charactersGroupIndex][uniqueKey]` lookup, and the
+`DatapackDownloader*` file-name / hash reassembly path.
+
 ---
 
 ## 5. Rules of engagement
@@ -155,7 +231,8 @@ Send a private report (contact via the canonical site) containing:
 
 1. **Class** (from §3) and a one-line impact summary.
 2. **Exact reproducer**: the raw bytes / packet sequence, the starting state, and a
-   script or steps to trigger it against a freshly built `server/cli` instance.
+   script or steps to trigger it against a freshly built `server/cli` instance (or,
+   for a cluster finding, the cluster stood up via `test/testingcluster.py`).
 3. **Evidence**: the crash backtrace, sanitizer/valgrind output, or before/after
    server state proving the impact.
 4. The **commit hash** you tested and your build flags.
