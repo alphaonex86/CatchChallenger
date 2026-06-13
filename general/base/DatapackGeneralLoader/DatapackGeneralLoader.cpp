@@ -335,54 +335,49 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(cons
 {
     std::vector<ServerSpecProfile> serverProfile=loadServerProfileListInternal(datapackPath,mainDatapackCode,file,mapPathToId);
     //index of base profile
-    std::unordered_set<std::string> profileId,serverProfileId;
+    //Rebuild serverProfile to be PARALLEL to profileCommon (same size AND same
+    //order): for each common profile use its matching server entry (matched by
+    //databaseId) or a placeholder with mapIndex=65535 (no resolved start). The
+    //old drop/add pair left the list a different size/order than the common one
+    //when a start.xml entry was missing (e.g. a generated maincode whose
+    //start.xml has fewer entries than the profiles); preload_18_sync_profile
+    //then indexed it out of bounds -> std::out_of_range -> server crash on boot.
+    //A placeholder profile is DISABLED there, so the server still starts with
+    //the resolvable profiles instead of crashing on an incomplete start.xml.
     {
-        unsigned int index=0;
-        while(index<profileCommon.size())
+        std::vector<ServerSpecProfile> ordered;
+        ordered.reserve(profileCommon.size());
+        unsigned int ci=0;
+        while(ci<profileCommon.size())
         {
-            const Profile &profile=profileCommon.at(index);
-            //already deduplicated at loading
-            profileId.insert(profile.databaseId);
-            index++;
-        }
-    }
-    //drop serverProfileList
-    {
-        unsigned int index=0;
-        while(index<serverProfile.size())
-        {
-            const ServerSpecProfile &serverSpecProfile=serverProfile.at(index);
-            if(profileId.find(serverSpecProfile.databaseId)!=profileId.cend())
+            const Profile &cp=profileCommon.at(ci);
+            const ServerSpecProfile *match=nullptr;
+            unsigned int si=0;
+            while(si<serverProfile.size())
             {
-                serverProfileId.insert(serverSpecProfile.databaseId);
-                index++;
+                if(serverProfile.at(si).databaseId==cp.databaseId)
+                {
+                    match=&serverProfile.at(si);
+                    break;
+                }
+                si++;
             }
+            if(match!=nullptr)
+                ordered.push_back(*match);
             else
             {
-                std::cerr << "Profile xml file: " << file << ", found id \"" << serverSpecProfile.databaseId << "\" but not found in common, drop it" << std::endl;
-                serverProfile.erase(serverProfile.begin()+index);
+                std::cerr << "Profile xml file: " << file << ", common id \"" << cp.databaseId << "\" has no start.xml entry, placeholder added (profile disabled at runtime)" << std::endl;
+                ServerSpecProfile placeholder;
+                placeholder.databaseId=cp.databaseId;
+                placeholder.orientation=Orientation_bottom;
+                placeholder.x=0;
+                placeholder.y=0;
+                placeholder.mapIndex=65535;
+                ordered.push_back(placeholder);
             }
+            ci++;
         }
-    }
-    //add serverProfileList
-    {
-        unsigned int index=0;
-        while(index<profileCommon.size())
-        {
-            const Profile &profile=profileCommon.at(index);
-            if(serverProfileId.find(profile.databaseId)==serverProfileId.cend())
-            {
-                std::cerr << "Profile xml file: " << file << ", found common id \"" << profile.databaseId << "\" but not found in server, add it" << std::endl;
-                std::cerr << "Mostly due datapack/player/start.xml entry not found into datapack/internal/map/main/official/start.xml" << std::endl;
-                /*ServerSpecProfile serverProfileTemp;
-                serverProfileTemp.databaseId=profile.databaseId;
-                serverProfileTemp.orientation=Orientation_bottom;
-                serverProfileTemp.x=0;
-                serverProfileTemp.y=0;
-                serverProfile.push_back(serverProfileTemp);*/
-            }
-            index++;
-        }
+        serverProfile=ordered;
     }
 
     return serverProfile;

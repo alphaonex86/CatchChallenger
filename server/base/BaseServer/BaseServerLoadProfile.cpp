@@ -73,8 +73,14 @@ void BaseServer::preload_18_sync_profile()
         serverProfileInternal.mapIndex=serverProfile.mapIndex;
         if(serverProfileInternal.mapIndex==65535)
         {
-            std::cerr << "Into the starter the map index is not resolved for profile " << profileIndex << ", fix it (abort)" << std::endl;
-            abort();
+            //placeholder profile (no resolved start — see loadServerProfileList,
+            //e.g. a generated maincode whose start.xml has fewer entries than the
+            //profiles). Disable it and skip its DB prep so the server still
+            //starts with the resolvable profiles instead of aborting on boot.
+            std::cerr << "Profile " << profileIndex << " has no resolved start map, profile disabled" << std::endl;
+            serverProfileInternal.valid=false;
+            profileIndex++;
+            continue;
         }
         serverProfileInternal.x=serverProfile.x;
         serverProfileInternal.y=serverProfile.y;

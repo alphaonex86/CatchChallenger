@@ -144,13 +144,16 @@ endif()
 add_library(catchchallenger_common_flags INTERFACE)
 target_compile_options(catchchallenger_common_flags INTERFACE
     -fstack-protector-all
-    -fno-rtti
     -fno-exceptions
     -Wall
     -Wextra
     -Wno-missing-braces
 )
+# -fno-rtti is a C++-only flag; passing it to C sources (e.g. the vendored
+# general/blake3/*.c) makes cc1 warn "valid for C++/D/ObjC++ but not for C".
+# Scope it to CXX, like -Wno-delete-non-virtual-dtor below.
 target_compile_options(catchchallenger_common_flags INTERFACE
+    $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
     $<$<COMPILE_LANGUAGE:CXX>:-Wno-delete-non-virtual-dtor>
 )
 target_compile_definitions(catchchallenger_common_flags INTERFACE

@@ -231,12 +231,27 @@ void BaseServer::preload_dictionary_map_return()
     #else
     #error Define what do here
     #endif
-    if(obsoleteMap>0 && mapPathToId.size()==0)
+    // loadedFromCache means we loaded from datapack-cache.bin (the --save cache).
+    // In that mode the datapack maps were NOT re-parsed, so mapPathToId is empty
+    // and the map paths are not kept in RAM (see BaseMap "map_file"): the DB-path
+    // matching above can't run. The authoritative map<->DB-id dictionary is
+    // loaded straight from the cache a few lines below (the
+    // `if(serialBuffer!=nullptr)` block). So "all DB maps look obsolete" is a
+    // FALSE positive in cache mode — skip the abort (and the misleading warning)
+    // when loading from cache; only enforce it on the XML path where an empty
+    // mapPathToId really means the wrong/no datapack. (serialBuffer only exists
+    // under CATCHCHALLENGER_CACHE_HPS, hence the guarded plain bool.)
+    bool loadedFromCache=false;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    if(serialBuffer!=nullptr)
+        loadedFromCache=true;
+    #endif
+    if(obsoleteMap>0 && mapPathToId.size()==0 && !loadedFromCache)
     {
         std::cerr << "Only obsolete map!" << std::endl;
         abort();
     }
-    if(obsoleteMap>0)
+    if(obsoleteMap>0 && !loadedFromCache)
         std::cerr << "/!\\ Obsolete map, can due to start previously start with another mainDatapackCode" << std::endl;
     std::vector<std::string> map_list_flat=unordered_map_keys_vector(mapPathToId);
     std::sort(map_list_flat.begin(),map_list_flat.end());
