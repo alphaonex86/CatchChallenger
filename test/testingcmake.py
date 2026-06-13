@@ -92,6 +92,15 @@ def discover_standalone_cmakelists():
         fp = os.path.join(dirpath, "CMakeLists.txt")
         with open(fp) as f:
             content = f.read()
+        # ESP-IDF projects (server/cli/esp32) are NOT vanilla-cmake
+        # configurable: they `include($ENV{IDF_PATH}/tools/cmake/
+        # project.cmake)` and must be built via idf.py with IDF_PATH set.
+        # Without ESP-IDF the include resolves to /tools/cmake/project.cmake
+        # and configure fails. They are covered by testingcompilationESP32.py
+        # (which self-skips when ESP-IDF is absent), so exclude them from the
+        # "configures with plain cmake -S/-B" contract checked here.
+        if "IDF_PATH" in content or "tools/cmake/project.cmake" in content:
+            continue
         # The check is "starts with `project(` after stripping the
         # leading `cmake_minimum_required(...)` line"; every standalone
         # has that, library .cmake fragments don't.
@@ -264,8 +273,12 @@ def main():
     for label, ok, msg, _secs in failed:
         cmd = (f"cmake -S {os.path.relpath(os.path.dirname(label), ROOT) if os.path.isabs(label) else label}"
                f" -B <fresh build dir> -DCMAKE_BUILD_TYPE=Debug")
+        # make_detail() has no `error` kwarg; the cmake configure output
+        # belongs in `compile_output` (msg is already the detail string).
+        # The old error=msg raised TypeError and crashed the whole script
+        # instead of recording the failing project in failed.json.
         failure_entries.append(
-            (label, _fc.make_detail(msg, cmd=cmd, error=msg))
+            (label, _fc.make_detail(msg, cmd=cmd, compile_output=msg))
         )
     _fc.save(SCRIPT_NAME, failure_entries)
 

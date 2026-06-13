@@ -232,19 +232,25 @@ def staged_remote(exec_node, src, server=False):
     return remote_cache_for(exec_node) + "/" + datapack_id(src, server)
 
 
-def _rsync_local(src, log_info, server=False):
+def _rsync_local(src, log_info, server=False, filter_server=None):
     """Local rsync source → LOCAL_CACHE_ROOT/<id>. --delete keeps the
     cache slot a true mirror; if a file disappears upstream we drop it
     here too. The slot is FILTERED to CATCHCHALLENGER_EXTENSION_ALLOWED
     (server slot also drops media) via rsync_filter_args() so cruft
     (README.md, .git, .xcf, ...) never lands in the cache. The
-    source-checksum gate is enforced one level up in stage_all."""
+    source-checksum gate is enforced one level up in stage_all.
+
+    `server` selects the destination slot id; `filter_server` (default =
+    `server`) selects the content filter. They are normally identical but
+    can be decoupled to stage media-stripped CONTENT into the canonical
+    (non-suffixed) slot id — see _rsync_remote / stage_all."""
+    fs = server if filter_server is None else filter_server
     dst = staged_local(src, server)
     os.makedirs(LOCAL_CACHE_ROOT, exist_ok=True)
     os.makedirs(dst, exist_ok=True)
-    args = (["rsync", "-art", "--delete"] + rsync_filter_args(server)
+    args = (["rsync", "-art", "--delete"] + rsync_filter_args(fs)
             + [src.rstrip("/") + "/", dst + "/"])
-    log_info(f"datapack stage local{' [server]' if server else ''}: "
+    log_info(f"datapack stage local{' [server-filtered]' if fs else ''}: "
              f"{src} -> {dst}")
     try:
         p = subprocess.run(args, timeout=_RSYNC_LOCAL_TIMEOUT,
@@ -257,13 +263,19 @@ def _rsync_local(src, log_info, server=False):
                    p.stdout.decode(errors="replace").strip()[-300:])
 
 
-def _rsync_remote(exec_node, src, log_info, server=False):
+def _rsync_remote(exec_node, src, log_info, server=False, filter_server=None):
     """SSH-rsync source → exec_node:<datapack_cache>/<id>. The remote
     cache persists across runs (we never clean it); rsync --delete only
     drops files that are gone upstream so the diff stays small. The slot
     is FILTERED to CATCHCHALLENGER_EXTENSION_ALLOWED (server slot also
     drops media) via rsync_filter_args() + --delete-excluded so cruft and
-    media are pruned from the cache, not just skipped."""
+    media are pruned from the cache, not just skipped.
+
+    `server` selects the destination slot id; `filter_server` (default =
+    `server`) selects the content filter. Execution nodes are server-only,
+    so stage_all stages them ONCE with server=False (canonical id, no
+    `-server-headless` suffix) + filter_server=True (media-stripped), so
+    client-only files (music/, *.opus, images) are never sent."""
     from cmd_helpers import RSYNC_SSH_E, SSH_OPTS_LIST
     user = exec_node["user"]
     host = exec_node["host"]
@@ -304,13 +316,14 @@ def _rsync_remote(exec_node, src, log_info, server=False):
                           f"(skipped): {out[-160:]}")
         return False, (f"ssh mkdir rc={m.returncode} for {label}:{dst}: " +
                        out[-200:])
+    fs = server if filter_server is None else filter_server
     rsync_args = [
         "rsync", "-art", "--delete",
-        *rsync_filter_args(server),
+        *rsync_filter_args(fs),
         "-e", f"{RSYNC_SSH_E} -p {port}",
         src.rstrip("/") + "/", f"{rsync_host}:{dst}/",
     ]
-    log_info(f"datapack stage remote{' [server]' if server else ''}: "
+    log_info(f"datapack stage remote{' [server-filtered]' if fs else ''}: "
              f"{src} -> {label}:{dst}")
     try:
         p = subprocess.run(rsync_args, timeout=_RSYNC_REMOTE_TIMEOUT,
@@ -381,8 +394,9 @@ def stage_all(srcs, exec_nodes=None, log_info=print):
     src_sums = {}          # src -> recomputed checksum
     lock = threading.Lock()
 
-    def runner(src, fn, args, server):
-        ok, detail = fn(*args, log_info, server=server)
+    def runner(src, fn, args, server, filter_server=None):
+        ok, detail = fn(*args, log_info, server=server,
+                        filter_server=filter_server)
         with lock:
             results.append((ok, detail))
             per_src_results.setdefault(src, []).append((ok, detail))
@@ -411,27 +425,36 @@ def stage_all(srcs, exec_nodes=None, log_info=print):
                 results.append((True, ""))
                 per_src_results.setdefault(src, []).append((True, ""))
             continue
-        # Stage BOTH slots: full (client, server=False) + headless server
-        # (media-stripped, server=True). Each is its own worker so they run
-        # in parallel and a failure of one is reported independently.
+        # LOCAL: stage BOTH slots — full client (server=False, with
+        # images/audio) for the test box's client tests + media-stripped
+        # headless (server=True) for local server tests.
         for srv in (False, True):
             t = threading.Thread(target=runner,
                                   args=(src, _rsync_local, (src,), srv),
                                   daemon=True)
             t.start()
             threads.append(t)
-            if exec_nodes:
-                ei = 0
-                while ei < len(exec_nodes):
-                    en = exec_nodes[ei]
-                    ei += 1
-                    if not bool(en.get("enabled", True)):
-                        continue
-                    t2 = threading.Thread(target=runner,
-                                          args=(src, _rsync_remote, (en, src), srv),
-                                          daemon=True)
-                    t2.start()
-                    threads.append(t2)
+        # REMOTE execution nodes are server-only — they never run a client,
+        # so client-only files (music/, *.opus, images) must never be sent.
+        # Stage ONE merged slot per datapack: the canonical id dir
+        # (server=False, no `-server-headless` suffix) but with the
+        # media-stripped server filter (filter_server=True). This halves the
+        # transfer and fits tiny RAM-disk caches (e.g. geode's 112 MiB
+        # tmpfs) that the old full+headless pair (~130 MiB) overflowed.
+        if exec_nodes:
+            ei = 0
+            while ei < len(exec_nodes):
+                en = exec_nodes[ei]
+                ei += 1
+                if not bool(en.get("enabled", True)):
+                    continue
+                t2 = threading.Thread(
+                    target=runner,
+                    args=(src, _rsync_remote, (en, src), False),
+                    kwargs={"filter_server": True},
+                    daemon=True)
+                t2.start()
+                threads.append(t2)
 
     ti = 0
     while ti < len(threads):
