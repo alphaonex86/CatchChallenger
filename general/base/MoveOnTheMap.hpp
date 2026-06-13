@@ -51,7 +51,13 @@ public:
                 {
                     if(checkCollision)
                         if(!isWalkableWithDirection(map,x,y-1,direction))
-                            return false;
+                            //"teleport on push": the exit tile is a COLLISION you LEAVE
+                            //by pushing into it. Allow the step onto a teleporter source
+                            //even when blocked, so the move lands on it and the teleport
+                            //fires. Pathfinding through-traffic passes allowTeleport=false
+                            //and stays blocked, so we never route THROUGH a teleporter.
+                            if(!(allowTeleport && needBeTeleported(map,x,y-1)))
+                                return false;
                     if(!allowTeleport)
                         if(needBeTeleported(map,x,y-1))
                             return false;
@@ -82,7 +88,9 @@ public:
                 {
                     if(checkCollision)
                         if(!isWalkableWithDirection(map,x+1,y,direction))
-                            return false;
+                            //teleport-on-push: step onto a blocked teleporter source (see top)
+                            if(!(allowTeleport && needBeTeleported(map,x+1,y)))
+                                return false;
                     if(!allowTeleport)
                         if(needBeTeleported(map,x+1,y))
                             return false;
@@ -113,7 +121,9 @@ public:
                 {
                     if(checkCollision)
                         if(!isWalkableWithDirection(map,x,y+1,direction))
-                            return false;
+                            //teleport-on-push: step onto a blocked teleporter source (see top)
+                            if(!(allowTeleport && needBeTeleported(map,x,y+1)))
+                                return false;
                     if(!allowTeleport)
                         if(needBeTeleported(map,x,y+1))
                             return false;
@@ -144,7 +154,9 @@ public:
                 {
                     if(checkCollision)
                         if(!isWalkableWithDirection(map,x-1,y,direction))
-                            return false;
+                            //teleport-on-push: step onto a blocked teleporter source (see top)
+                            if(!(allowTeleport && needBeTeleported(map,x-1,y)))
+                                return false;
                     if(!allowTeleport)
                         if(needBeTeleported(map,x-1,y))
                             return false;

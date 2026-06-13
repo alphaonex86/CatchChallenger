@@ -12,7 +12,14 @@ LanBroadcastWatcher::LanBroadcastWatcher(QObject *parent) :
 {
     udpSocket = new QUdpSocket(this);
     if(!udpSocket->bind(42490, QUdpSocket::ShareAddress))
-        abort();
+    {
+        //LAN server discovery is OPTIONAL. If the UDP port can't be bound (already
+        //in use, or a platform/wine UDP limitation), DISABLE discovery and carry on
+        //— a non-essential feature must NEVER abort the whole client. (This bind
+        //failing under wine aborted the Windows client at startup, exit code 3.)
+        qWarning("LanBroadcastWatcher: UDP bind(42490) failed; LAN server discovery disabled");
+        return;
+    }
     //bind(QHostAddress::Any, 42490);
     if(!connect(udpSocket, &QUdpSocket::readyRead,
             this, &LanBroadcastWatcher::processPendingDatagrams))
