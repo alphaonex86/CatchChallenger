@@ -128,10 +128,19 @@ WINE_BIN    = shutil.which("wine64") or "/etc/eselect/wine/bin/wine64"
 #                       wine driver DLLs can be probed at startup and
 #                       emit ALSA / PulseAudio errors on the host's
 #                       sound stack. Disabling them silences those.
+#   - winemenubuilder.exe=d : winemenubuilder is the wine component that
+#                       runs on EVERY .exe launch and writes Start-Menu /
+#                       file-association `.desktop` entries into the HOST's
+#                       ~/.local/share/applications (and ~/Desktop), printing
+#                       as it goes. On a headless test box that is pure
+#                       spam + desktop pollution (hundreds of
+#                       wine-extension-*.desktop files). Disabling it stops
+#                       wine from touching the host desktop at all.
 # Segments separated by `;`; each segment is `<comma-list>=<mode>`.
 # `mode=d` means "do not load this module at all".
 WINE_DLLOVERRIDES_BASE = (
     "winedbg.exe=d;"
+    "winemenubuilder.exe=d;"
     "mmdevapi=d;"
     "winealsa.drv,winepulse.drv,wineoss.drv,winecoreaudio.drv=d"
 )
@@ -266,13 +275,43 @@ def ensure_dir(path):
     os.makedirs(path, exist_ok=True)
 
 
+def force_headless_env(env=None):
+    """Return a copy of `env` (or os.environ) forced fully HEADLESS so NO
+    spawned command — wine .exe, Qt binary, build tool — can open a window
+    on, or even talk to, the host X / Wayland server.
+
+    Every command this harness runs is meant to be headless; a GUI binary
+    under wine attaches winex11.drv to the host display whenever DISPLAY is
+    set, which floods the operator console with fixme/err spam and pops
+    flickering windows on the desktop. So unconditionally:
+      * DISPLAY=""               — no X display to connect to
+      * QT_QPA_PLATFORM=offscreen — Qt uses the offscreen platform plugin
+      * drop XAUTHORITY / WAYLAND_DISPLAY — leave no other GUI handle
+      * WINEDEBUG defaults to -all (kept if the caller set it, e.g. the
+        +loaddll DLL-trace harness needs its own value)
+    Applied at run_cmd and every subprocess site so it covers EVERY command."""
+    e = dict(env) if env is not None else dict(os.environ)
+    e["DISPLAY"] = ""
+    e["QT_QPA_PLATFORM"] = "offscreen"
+    e.pop("XAUTHORITY", None)
+    e.pop("WAYLAND_DISPLAY", None)
+    e.setdefault("WINEDEBUG", "-all")
+    # Disable winemenubuilder & co on EVERY wine launch (incl. paths whose
+    # env builder forgot to set WINEDLLOVERRIDES) so wine never writes
+    # .desktop spam onto the host desktop. setdefault → an explicit
+    # WINEDLLOVERRIDES (e.g. the WiX run that also disables mscoree/mshtml)
+    # is preserved untouched.
+    e.setdefault("WINEDLLOVERRIDES", WINE_DLLOVERRIDES_BASE)
+    return e
+
+
 def run_cmd(args, cwd, timeout=COMPILE_TIMEOUT, env=None):
     timeout = clamp_local(timeout)
     diagnostic.record_cmd(args, cwd)
     try:
         p = subprocess.run(args, cwd=cwd, timeout=timeout,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                           env=env or os.environ)
+                           env=force_headless_env(env))
         return p.returncode, p.stdout.decode(errors="replace")
     except subprocess.TimeoutExpired:
         return -1, f"TIMEOUT after {timeout}s"
@@ -1850,7 +1889,7 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
         win_args,
         cwd=cwd,
         stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=force_headless_env(env),
         preexec_fn=process_helpers.setsid_and_pdeathsig)
     output_lines = []
     found = threading.Event()
@@ -1958,7 +1997,7 @@ def run_wine_server_smoke(exe_path, label, wait_seconds=5):
     diagnostic.record_cmd(win_args, cwd)
     proc = subprocess.Popen(
         win_args, cwd=cwd, stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=force_headless_env(env),
         preexec_fn=process_helpers.setsid_and_pdeathsig)
     output_lines = []
     bound = threading.Event()
@@ -2239,7 +2278,7 @@ def _spawn_installed_server_gui(server_exe):
     diagnostic.record_cmd(win_args, cwd)
     proc = subprocess.Popen(
         win_args, cwd=cwd, stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=force_headless_env(env),
         preexec_fn=process_helpers.setsid_and_pdeathsig)
     out_lines = []
     listening = threading.Event()
@@ -2328,7 +2367,7 @@ def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
         proc = subprocess.Popen(
             win_args, cwd=os.path.dirname(installer_exe),
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=force_headless_env(env),
             preexec_fn=process_helpers.setsid_and_pdeathsig)
         try:
             proc.communicate(timeout=COMPILE_TIMEOUT)
@@ -2491,7 +2530,7 @@ def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
                  f"--port {E2E_PORT}")
         cproc = subprocess.Popen(
             win_args, cwd=install_dir, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=force_headless_env(env),
             preexec_fn=process_helpers.setsid_and_pdeathsig)
         cli_out = []
         on_map = threading.Event()
@@ -2594,7 +2633,7 @@ def run_wine_screenshot(exe_path, label, mode, screenshot_path,
     diagnostic.record_cmd(win_args, cwd)
     proc = subprocess.Popen(
         win_args, cwd=cwd, stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=force_headless_env(env),
         preexec_fn=process_helpers.setsid_and_pdeathsig)
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -2670,6 +2709,7 @@ def start_local_server(build_dir, bin_name=SERVER_BIN_NAME):
     server_proc = subprocess.Popen(
         srv_args, cwd=build_dir,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        env=force_headless_env(None),
         preexec_fn=process_helpers.setsid_and_pdeathsig)
     ready = threading.Event()
     srv_lines = []
@@ -2960,7 +3000,38 @@ def run_on_real_windows(user_installer_exe, win_dp_src):
     # clients require datapack/informations.xml beside the binary
     # (server-gui ignores --datapack-dir; the installer ships no datapack).
     if win_dp_src and os.path.isdir(win_dp_src):
-        _win_rsync(win_dp_src + "/", "datapack/", timeout=300)
+        # The server-gui is configured for ONE maincode ("official"); stage a
+        # PRUNED datapack (that maincode only) before transfer. scp -r over SSH
+        # pays a per-file round-trip for the datapack's THOUSANDS of small files,
+        # so the full multi-maincode datapack overran the timeout and landed
+        # WITHOUT map/main/official/, aborting the server-gui with "0 file for
+        # datapack loaded main". Pruning to the needed maincode cuts the file
+        # count so the scp completes.
+        prune_dir = build_paths.build_path("client/build/real-win-datapack")
+        prune_dp = os.path.join(prune_dir, "datapack")
+        if os.path.exists(prune_dir):
+            shutil.rmtree(prune_dir, ignore_errors=True)
+        os.makedirs(prune_dir, exist_ok=True)
+        shutil.copytree(win_dp_src, prune_dp, ignore=_datapack_ignore)
+        _mm = os.path.join(prune_dp, "map", "main")
+        if os.path.isdir(_mm):
+            for _e in os.listdir(_mm):
+                if _e != "official" and os.path.isdir(os.path.join(_mm, _e)):
+                    shutil.rmtree(os.path.join(_mm, _e), ignore_errors=True)
+        # Transfer the datapack as a SINGLE tar, not scp -r: scp -r onto the stock
+        # Windows OpenSSH server lands the root files (so datapack-ok=informations.xml
+        # passes) but DROPS the deep map/main/<maincode>/ subtree, so the server
+        # aborted with "0 file for datapack loaded main". One archive + tar -x on the
+        # box (Windows 10 ships tar.exe/bsdtar) transfers the whole tree reliably.
+        import tarfile
+        tar_local = os.path.join(prune_dir, "datapack.tar")
+        with tarfile.open(tar_local, "w") as _tf:
+            _tf.add(prune_dp, arcname="datapack")
+        _rc_t, _o_t = _win_rsync(tar_local, "datapack.tar", timeout=300)   # scp ONE file
+        if _rc_t == 0:
+            _win_ssh("tar -xf 'C:\\cc-test\\datapack.tar' -C 'C:\\cc-test'", timeout=180)
+        else:
+            _win_rsync(prune_dp + "/", "datapack/", timeout=300)            # fallback
     # Offscreen platform plugin: the installer strips qoffscreen.dll for
     # shipping, but the headless SSH session has no interactive desktop, so
     # re-supply it next to the exe for the test (same plugin the wine path
@@ -3011,8 +3082,12 @@ def run_on_real_windows(user_installer_exe, win_dp_src):
     )
     setup_ps = (
         "$d = \"$env:LOCALAPPDATA\\CatchChallenger\"\n"
-        "if (Test-Path 'C:\\cc-test\\datapack') { if (-not (Test-Path \"$d\\datapack\")) "
-        "{ Copy-Item -Recurse 'C:\\cc-test\\datapack' \"$d\\datapack\" } }\n"
+        # Force a FRESH copy: a stale/locked $d\\datapack left by a prior run (whose
+        # server-gui may still hold a handle past the pre-clean) must NOT make this
+        # a no-op (the old `if (-not Test-Path)` guard skipped it, leaving an
+        # incomplete datapack -> server abort "0 file for datapack loaded main").
+        "if (Test-Path \"$d\\datapack\") { Remove-Item -Recurse -Force \"$d\\datapack\" -ErrorAction SilentlyContinue }\n"
+        "if (Test-Path 'C:\\cc-test\\datapack') { Copy-Item -Recurse 'C:\\cc-test\\datapack' \"$d\\datapack\" }\n"
         "[void](New-Item -ItemType Directory -Force -Path \"$d\\platforms\")\n"
         "if (Test-Path 'C:\\cc-test\\qoffscreen.dll') "
         "{ Copy-Item 'C:\\cc-test\\qoffscreen.dll' \"$d\\platforms\\qoffscreen.dll\" -Force }\n"
@@ -3020,8 +3095,15 @@ def run_on_real_windows(user_installer_exe, win_dp_src):
         + srv_props +
         "'@\n"
         "Write-Output (\"datapack-ok=\" + (Test-Path \"$d\\datapack\\informations.xml\"))\n"
+        # Diagnose where the 'official' maincode is lost: in the transferred staging
+        # dir vs the copied destination.
+        "Write-Output (\"cctest-official=\" + (Test-Path 'C:\\cc-test\\datapack\\map\\main\\official'))\n"
+        "Write-Output (\"dest-official=\" + (Test-Path \"$d\\datapack\\map\\main\\official\"))\n"
     )
     rc_setup, out_setup = _win_ssh(setup_ps, timeout=120)
+    log_info("real-win datapack setup: " + " ".join(
+        l.strip() for l in out_setup.splitlines()
+        if "official=" in l or "datapack-ok=" in l))
     if "datapack-ok=True" not in out_setup:
         log_fail(_WIN_REAL_CASE_NAMES[2],
                  f"post-install setup failed (datapack not staged): "
