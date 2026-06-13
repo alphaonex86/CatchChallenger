@@ -15,10 +15,13 @@ https://github.com/alphaonex86/CatchChallenger/
 
 ## 1. Objetivo
 
-El objetivo dentro del alcance es el **servidor de juego independiente** compilado desde `server/cli/`
+El primer objetivo dentro del alcance es el **servidor de juego independiente** compilado desde `server/cli/`
 (`catchchallenger-server-cli`), el servidor de bucle de eventos de un solo hilo que acepta
-conexiones de jugadores en el **puerto TCP del juego**. La única entrada del atacante que consideramos son
-**bytes enviados a través de ese socket TCP** por un cliente conectado (o que se está conectando).
+conexiones de jugadores en el **puerto TCP del juego**. La entrada del atacante que consideramos son
+**bytes enviados a través de un socket TCP** por un **cliente de juego** conectado (o que se está
+conectando) — contra el servidor de juego independiente, o contra los servidores de cara al cliente del
+clúster: login, gateway y game-server-alone (ver *Los servidores del clúster* más abajo). El master y los
+enlaces entre nodos del clúster son solo de red interna y están fuera del alcance (§2).
 
 Compila una instancia local para atacarla — no se requieren paquetes adicionales más allá de una cadena de
 herramientas C++ y CMake:
@@ -31,6 +34,44 @@ cmake --build build/server-cli -j
 Ejecútalo contra un datapack y un `server-properties.xml` (automatic_account_creation value="true"; `mainDatapackCode` selecciona el maincode, `compression=none`
 facilita la lectura de los paquetes en el cable). La compilación con base de datos en fichero (`FILE_DB`)
 no necesita ningún demonio SQL y es la más sencilla de poner en marcha.
+
+### Los servidores del clúster
+
+Además del servidor independiente, otros cuatro binarios componen el despliegue
+multiservidor (*clúster*). Hablan el MISMO protocolo de cable (§4); cada uno analiza
+una porción distinta:
+
+| Binario | Fuente | BD | Par no confiable | ¿En alcance? |
+|---|---|---|---|---|
+| `catchchallenger-server-login` | `server/login/` | PostgreSQL/MySQL | cliente de juego | **sí** — login / autocreación de cuenta, alta / baja / selección de personaje, y luego un proxy transparente cliente↔juego |
+| `catchchallenger-gateway` | `server/gateway/` | ninguna | cliente de juego | **sí** — un proxy fino cliente↔backend + descarga/sincronización de la lista de ficheros del datapack |
+| `catchchallenger-game-server-alone` | `server/game-server-alone/` | PostgreSQL/MySQL | cliente de juego | **sí** (puerto de cliente) — los mismos manejadores de cliente que `server/cli` |
+| `catchchallenger-server-master` | `server/master/` | PostgreSQL/MySQL | **nodos** login / game-server | **no** — solo red interna del clúster (ver §2) |
+
+El **master** solo lo alcanzan otros nodos del clúster a través de la red interna
+VPS / LAN y nunca se expone a clientes ni a internet — así que él, y todo enlace entre
+nodos (incluido el `LinkToMaster` del game-server), está **fuera del alcance**. El
+bounty se centra en los tres servidores **de cara al cliente** de arriba.
+
+`login`, `master` y `game-server-alone` se compilan **solo** contra un backend SQL real
+(`-DCATCHCHALLENGER_DB_POSTGRESQL=ON` o `-DCATCHCHALLENGER_DB_MYSQL=ON`) y solo
+funcionan **juntos como clúster**; el `gateway` no usa BD. La forma más sencilla de
+levantar todo tal como lo probamos — un PostgreSQL efímero, los binarios conectados
+entre sí con un token de master compartido, y un cliente `qtcpu800x600` real conducido
+de extremo a extremo hasta el mapa — es `test/testingcluster.py` (clúster) más
+`test/testinggateway.py` (gateway); los casos de robustez por servidor están en
+`test/testingclustersecurity.py`. Léelos para conocer los puertos exactos, las claves
+de `server-properties.xml`/`login.xml`/`master.xml`, el token compartido y el relevo
+login → master → game-server.
+
+```sh
+cmake -S server/master -B build/master -DCATCHCHALLENGER_DB_POSTGRESQL=ON
+cmake -S server/login  -B build/login  -DCATCHCHALLENGER_DB_POSTGRESQL=ON
+cmake -S server/game-server-alone -B build/gsa -DCATCHCHALLENGER_DB_POSTGRESQL=ON
+cmake -S server/gateway -B build/gateway        # sin BD
+cmake --build build/master -j && cmake --build build/login -j && \
+  cmake --build build/gsa -j && cmake --build build/gateway -j
+```
 
 **Prueba solo contra tu propia instancia.** No ataques los servidores públicos, a otros
 jugadores ni a ningún host `*.herman-brule.com`.
@@ -48,6 +89,17 @@ jugadores ni a ningún host `*.herman-brule.com`.
   y el motor compartido en `general/base/` y `general/fight/`.
 * El estado del servidor y la persistencia alcanzables a través de esos manejadores (inventario del jugador,
   dinero, monstruos, posición, misiones, clanes, intercambios, tiendas, fábricas, plantas).
+* **Servidor login** (`server/login/`) — el handshake previo al login, el login y
+  autocreación de cuenta, y los manejadores de alta / baja / selección de personaje
+  (`EventLoopClientLoginSlaveProtocolParsing.cpp`), más el proxy transparente
+  cliente↔juego en que se convierte tras la selección.
+* **Gateway** (`server/gateway/`) — el handshake previo al login, la descarga /
+  sincronización de la lista de ficheros del datapack, y el paso directo de move / chat
+  / select al backend (`EventLoopClientLoginSlaveProtocolParsing.cpp`, `DatapackDownloader*.cpp`).
+* **Game-server-alone** (`server/game-server-alone/`) — sus manejadores de cara al
+  cliente son el mismo código `server/base/ClientNetworkRead*` que `server/cli` (en
+  alcance). Su análisis de las respuestas del enlace al master (`LinkToMaster*.cpp`) está
+  **fuera del alcance** — ver abajo.
 
 **Fuera del alcance:**
 
@@ -56,10 +108,15 @@ jugadores ni a ningún host `*.herman-brule.com`.
   `client/libqtcatchchallenger/libtiled`, `libogg`/`libopus`/`libopusfile`). Repórtalas
   upstream.
 * El cliente, la herramienta de administración con GUI y el sistema de compilación.
-* Los servidores del clúster login / master / gateway (programa aparte; puede tener su propio
-  bounty más adelante).
-* Hallazgos que requieran un **servidor**, datapack o configuración maliciosos o modificados — el
-  atacante solo controla un socket de cliente.
+* **El servidor master (`server/master/`) y todo enlace entre nodos** — login↔master,
+  game-server↔master, y el análisis de respuestas `LinkToMaster*` del game-server. Solo
+  hablan por la red interna VPS / LAN del clúster: el master nunca se enlaza a una
+  interfaz pública, nunca lo alcanza un cliente ni internet, así que un atacante remoto
+  no puede llegar a él. **Fuera del alcance.**
+* Hallazgos que requieran un **binario de servidor**, **datapack** o **configuración**
+  maliciosos o modificados — el atacante solo controla un socket de *cliente* (juego /
+  login / gateway / game-server). Manipular el binario o la configuración de otro nodo
+  está fuera del alcance.
 * DoS puramente volumétrico (saturar ancho de banda/conexiones). La
   amplificación algorítmica a partir de *un único paquete pequeño* (ver §3) **sí** está dentro del alcance.
 * Cualquier cosa solo alcanzable con el flag de compilación `CATCHCHALLENGER_HARDENED` activado — el
@@ -136,6 +193,29 @@ el acceso a contenedores (`.at()`, `operator[]`, `erase`, `front`/`begin`) cuya
 precondición depende de un campo del paquete; y cualquier manejador cuyo efecto dependa de la
 posición actual del jugador o del estado del juego.
 
+### Servidores del clúster
+
+El clúster habla el mismo encuadre; solo cambia el punto de despacho por binario.
+Levanta el clúster (`test/testingcluster.py` / `test/testingclustersecurity.py`) para
+que funcione el relevo login → master → game-server, y luego sondea cada listener
+**de cara al cliente** de abajo. (El master y los enlaces entre nodos solo reciben
+bytes de otros nodos del clúster en la red interna — fuera del alcance, §2 — así que no
+se listan.)
+
+| Servidor | Punto de despacho | Manejadores alcanzables (por estado) | Dónde |
+|---|---|---|---|
+| login | `parseInputBeforeLogin` / `parseQuery` | `0xA0` handshake; `0xA8` login; `0xA9` crear-cuenta; `0xAD` stat; luego (Logged) `0xAA` alta-personaje, `0xAB` baja-personaje, `0xAC` selección-personaje | `server/login/EventLoopClientLoginSlaveProtocolParsing.cpp` |
+| gateway | `parseInputBeforeLogin` / `parseMessage` / `parseQuery` | `0xA0` handshake; `0xA1` lista-ficheros datapack; `0xAC` select-reconexión; `0x02`/`0x03` paso directo move/chat | `server/gateway/EventLoopClientLoginSlaveProtocolParsing.cpp`, `DatapackDownloader*.cpp` |
+| game-server-alone | `ClientNetworkRead*` (igual que `server/cli`) | todo manejador de cliente del servidor de juego independiente | `server/base/` |
+
+Aspectos específicos del clúster en los que insistir: los bytes de longitud de pseudo /
+login / contraseña en los paquetes login `0xAA`/`0xA8`/`0xA9`; los índices
+`charactersGroupIndex` / `profileIndex` / `skinId` / `monsterGroupId` en login
+`0xAA`/`0xAB`/`0xAC`; y el bucle de la lista de ficheros del datapack del gateway
+(`number_of_file`, `textSize` por fichero, `partialHash`), su búsqueda
+`serverReconnectList[charactersGroupIndex][uniqueKey]`, y la ruta de reensamblado de
+nombres / hashes de `DatapackDownloader*`.
+
 ---
 
 ## 5. Reglas de participación
@@ -155,7 +235,8 @@ Envía un informe privado (contacto a través del sitio canónico) que contenga:
 
 1. **Clase** (de §3) y un resumen de impacto de una línea.
 2. **Reproductor exacto**: los bytes en bruto / la secuencia de paquetes, el estado inicial, y un
-   script o pasos para dispararlo contra una instancia de `server/cli` recién compilada.
+   script o pasos para dispararlo contra una instancia de `server/cli` recién compilada (o,
+   para un hallazgo del clúster, el clúster levantado con `test/testingcluster.py`).
 3. **Evidencia**: el backtrace de la caída, la salida del sanitizer/valgrind, o el estado del servidor
    antes/después que demuestre el impacto.
 4. El **hash del commit** que probaste y tus flags de compilación.
