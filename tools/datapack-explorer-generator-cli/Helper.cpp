@@ -304,6 +304,14 @@ std::vector<std::string> getXmlList(const std::string &dir, const std::string &s
     return list;
 }
 
+std::vector<std::string> getPngList(const std::string &dir, const std::string &subDir)
+{
+    std::vector<std::string> list;
+    listFiles(dir,subDir,".png",list);
+    std::sort(list.begin(),list.end());
+    return list;
+}
+
 std::string pathJoin(const std::string &a, const std::string &b)
 {
     if(a.empty())
@@ -355,6 +363,19 @@ const std::string &subDatapackCode() { return g_subDatapackCode; }
 
 void setMap2PngPath(const std::string &p) { g_map2pngPath=p; }
 const std::string &map2pngPath() { return g_map2pngPath; }
+
+// Default matches where deploy.sh website publishes the tree.
+static std::string g_sitePrefix="official-server/datapack-explorer/";
+void setSitePrefix(const std::string &p)
+{
+    g_sitePrefix=p;
+    // Normalize: no leading slash, exactly one trailing slash (if non-empty).
+    while(!g_sitePrefix.empty() && g_sitePrefix.front()=='/')
+        g_sitePrefix.erase(g_sitePrefix.begin());
+    if(!g_sitePrefix.empty() && g_sitePrefix.back()!='/')
+        g_sitePrefix.push_back('/');
+}
+const std::string &sitePrefix() { return g_sitePrefix; }
 
 void setCurrentPage(const std::string &relativePath) { g_currentPage=relativePath; }
 const std::string &currentPage() { return g_currentPage; }
@@ -497,7 +518,12 @@ void writeHtml(const std::string &relativePath, const std::string &title, const 
     tpl=replaceAll(tpl,"${CONTENT}",content);
     tpl=replaceAll(tpl,"${AUTOGEN}",autogen);
 
-    tpl=rewriteAbsoluteLinks(tpl,relativePath);
+    // Rewrite from the page's REAL site location (prefix + page), not from
+    // the output root: the tree is served under /<sitePrefix>/, so e.g.
+    // "/css/x.css" on page "map/index.html" must become "../../../css/x.css",
+    // and "/official-server/datapack-explorer/maps.html" must collapse to a
+    // link within the tree.
+    tpl=rewriteAbsoluteLinks(tpl,g_sitePrefix+relativePath);
 
     writeFile(full,tpl);
 }

@@ -38,6 +38,7 @@ namespace Helper
     // List all .tmx files recursively (paths relative to dir)
     std::vector<std::string> getTmxList(const std::string &dir, const std::string &subDir = std::string());
     std::vector<std::string> getXmlList(const std::string &dir, const std::string &subDir = std::string());
+    std::vector<std::string> getPngList(const std::string &dir, const std::string &subDir = std::string());
 
     // Join a base folder with sub relative paths safely
     std::string pathJoin(const std::string &a, const std::string &b);
@@ -62,6 +63,13 @@ namespace Helper
 
     void setMap2PngPath(const std::string &p);
     const std::string &map2pngPath();
+
+    // Site-absolute prefix under which the generated tree is served
+    // (e.g. "official-server/datapack-explorer/"). Used to rewrite the
+    // template's site-absolute ("/...") chrome links into correct
+    // relatives from each page's REAL location on the website.
+    void setSitePrefix(const std::string &p);
+    const std::string &sitePrefix();
 
     // Track the current page being generated, used to compute relative
     // URLs from links back to other resources.

@@ -17,18 +17,8 @@
 namespace GeneratorIndustries {
 
 // ── Data structures ──────────────────────────────────────────────────
-
-struct IndustryResource { uint16_t item; uint32_t quantity; };
-struct IndustryProduct  { uint16_t item; uint32_t quantity; };
-
-struct IndustryData
-{
-    std::string id;           // string ID from XML
-    uint64_t time;
-    uint32_t cycletobefull;
-    std::vector<IndustryResource> resources;
-    std::vector<IndustryProduct>  products;
-};
+// IndustryResource/IndustryProduct/IndustryData live in
+// GeneratorIndustries.hpp so GeneratorItems can reuse parseIndustrialRecipe().
 
 struct BotLocation
 {
@@ -104,7 +94,7 @@ static std::string skinTrainerUrl(const std::string &skinName)
 
 // ── Parse industrialrecipe.xml ───────────────────────────────────────
 
-static std::map<std::string,IndustryData> parseIndustrialRecipe(const std::string &mainCode)
+std::map<std::string,IndustryData> parseIndustrialRecipe(const std::string &mainCode)
 {
     std::map<std::string,IndustryData> result;
     std::string xmlPath=Helper::datapackPath()+"map/main/"+mainCode+"/industries/industrialrecipe.xml";
@@ -174,13 +164,14 @@ buildIndustryToBotMap(const std::string &mainCode, size_t setIdx)
 
     for(size_t mi=0; mi<set.mapPaths.size(); ++mi)
     {
+        // The loader reports map paths without the .tmx extension; strip it
+        // anyway in case it is present.
         std::string stem=set.mapPaths[mi];
         if(stem.size()>=4 && stem.compare(stem.size()-4,4,".tmx")==0)
             stem=stem.substr(0,stem.size()-4);
 
         // Parse the map XML for bot data (same approach as GeneratorMaps)
-        std::string xmlPath=Helper::datapackPath()+"map/main/"+mainCode+"/"+set.mapPaths[mi];
-        xmlPath=xmlPath.substr(0,xmlPath.size()-4)+".xml";
+        std::string xmlPath=Helper::datapackPath()+"map/main/"+mainCode+"/"+stem+".xml";
 
         tinyxml2::XMLDocument doc;
         if(doc.LoadFile(xmlPath.c_str())!=tinyxml2::XML_SUCCESS)
@@ -194,9 +185,10 @@ buildIndustryToBotMap(const std::string &mainCode, size_t setIdx)
             const tinyxml2::XMLElement *nameEl=doc.RootElement()->FirstChildElement("name");
             if(nameEl && nameEl->GetText())
                 mapName=nameEl->GetText();
-            const tinyxml2::XMLElement *zoneEl=doc.RootElement()->FirstChildElement("zone");
-            if(zoneEl && zoneEl->GetText())
-                zoneCode=zoneEl->GetText();
+            // Zone is stored as an attribute on the <map> root element
+            const char *zoneAttr=doc.RootElement()->Attribute("zone");
+            if(zoneAttr)
+                zoneCode=zoneAttr;
         }
         if(mapName.empty())
         {
@@ -223,7 +215,7 @@ buildIndustryToBotMap(const std::string &mainCode, size_t setIdx)
         // Parse TMX for bot skins
         std::map<int,std::string> botIdToSkin;
         {
-            std::string tmxPath=Helper::datapackPath()+"map/main/"+mainCode+"/"+set.mapPaths[mi];
+            std::string tmxPath=Helper::datapackPath()+"map/main/"+mainCode+"/"+stem+".tmx";
             tinyxml2::XMLDocument tmxDoc;
             if(tmxDoc.LoadFile(tmxPath.c_str())==tinyxml2::XML_SUCCESS && tmxDoc.RootElement())
             {

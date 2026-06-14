@@ -4,8 +4,10 @@
 
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 
 #include <sstream>
+#include <cmath>
 
 namespace GeneratorPlants {
 
@@ -103,8 +105,19 @@ void generate()
         // Time to grow (fruits_seconds / 60 = minutes)
         body << "<td><b>" << (plant.fruits_seconds/60) << "</b> minutes</td>\n";
 
-        // Fruits produced
-        body << "<td>" << plant.fix_quantity << "</td>\n";
+        // Fruits produced. The XML's decimal quantity (e.g. 1.5) is split by
+        // the loader into fix_quantity + random_quantity*RANDOM_FLOAT_PART_DIVIDER;
+        // recompose the real average like the old PHP explorer showed.
+        {
+            // Round to 2 decimals: the loader truncates the fractional part
+            // to an integer divider count (1.8 -> 7999/10000), so the raw
+            // float prints as 1.7999.
+            const float fruits=plant.fix_quantity
+                +static_cast<float>(plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER;
+            std::ostringstream q;
+            q << (std::round(fruits*100.0f)/100.0f);
+            body << "<td>" << q.str() << "</td>\n";
+        }
 
         body << "</tr>\n";
     }

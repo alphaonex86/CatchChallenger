@@ -180,7 +180,51 @@ static std::unordered_map<uint16_t,std::vector<BotFightRef>> s_monsterToFight;
 static std::unordered_map<uint16_t,uint32_t> s_monsterRarityPosition;
 static size_t s_monsterRarityCount=0;
 
+// "Unique to a version" (top-1.png flag / "Version exclusive!" rarity): a
+// monster wild in exactly ONE mainCode while the datapack ships several —
+// same per-main exclusivity GeneratorTree's computeExclusiveMonsters uses.
+static bool isVersionExclusive(uint16_t id)
+{
+    if(MapStore::sets().size()<=1)
+        return false;
+    std::unordered_map<uint16_t,std::set<MapKey>>::const_iterator it=s_monsterToMaps.find(id);
+    if(it==s_monsterToMaps.end() || it->second.empty())
+        return false;
+    std::set<size_t> mains;
+    for(const MapKey &k : it->second)
+        mains.insert(k.first);
+    return mains.size()==1;
+}
+
 static std::unordered_map<uint16_t,std::vector<ReverseEvolutionEntry>> s_reverseEvolution;
+
+// id -> (height, weight) as written in monsters/*.xml (e.g. "0.24m", "2.5kg").
+// The loader's Monster struct drops these attributes, so read them straight
+// from the XML like the old PHP explorer did.
+static std::unordered_map<uint16_t,std::pair<std::string,std::string>> s_monsterBody;
+
+static void buildBodyAttributes()
+{
+    s_monsterBody.clear();
+    const std::string file=Helper::datapackPath()+"monsters/monster.xml";
+    tinyxml2::XMLDocument doc;
+    if(doc.LoadFile(file.c_str())!=tinyxml2::XML_SUCCESS)
+        return;
+    const tinyxml2::XMLElement *root=doc.RootElement();
+    if(root==nullptr || root->Name()==nullptr || strcmp(root->Name(),"monsters")!=0)
+        return;
+    for(const tinyxml2::XMLElement *mon=root->FirstChildElement("monster");mon!=nullptr;mon=mon->NextSiblingElement("monster"))
+    {
+        const char *idStr=mon->Attribute("id");
+        if(idStr==nullptr) continue;
+        int id=std::atoi(idStr);
+        if(id<=0) continue;
+        const char *h=mon->Attribute("height");
+        const char *w=mon->Attribute("weight");
+        if(h==nullptr && w==nullptr) continue;
+        s_monsterBody[(uint16_t)id]={h?h:"",w?w:""};
+    }
+}
 
 static void buildReverseLookups()
 {
@@ -484,6 +528,7 @@ static std::string mapZoneName(size_t si, size_t mi)
 
 void generate()
 {
+    buildBodyAttributes();
     buildReverseLookups();
     s_mapMetaCache.clear();
     s_zoneNameCache.clear();
@@ -606,7 +651,9 @@ void generate()
         {
             body << "<div class=\"subblock\"><div class=\"valuetitle\">Rarity</div><div class=\"value\">\n";
             bool isWild=s_monsterToMaps.find(id)!=s_monsterToMaps.end();
-            if(!isWild)
+            if(isVersionExclusive(id))
+                body << "Version exclusive!";
+            else if(!isWild)
                 body << "Not found on any map";
             else
             {
@@ -630,6 +677,24 @@ void generate()
 
         // ── 11. Steps for hatching ──
         body << "<div class=\"subblock\"><div class=\"valuetitle\">Steps for hatching</div><div class=\"value\">" << m.egg_step << "</div></div>\n";
+
+        // ── 11b. Body (height/weight from monsters XML, like the PHP page) ──
+        {
+            std::unordered_map<uint16_t,std::pair<std::string,std::string>>::const_iterator bit=s_monsterBody.find(id);
+            if(bit!=s_monsterBody.end() && (!bit->second.first.empty() || !bit->second.second.empty()))
+            {
+                body << "<div class=\"subblock\"><div class=\"valuetitle\">Body</div><div class=\"value\">";
+                if(!bit->second.first.empty())
+                    body << "Height: " << Helper::htmlEscape(bit->second.first);
+                if(!bit->second.second.empty())
+                {
+                    if(!bit->second.first.empty())
+                        body << ", ";
+                    body << "weight: " << Helper::htmlEscape(bit->second.second);
+                }
+                body << "</div></div>\n";
+            }
+        }
 
         // ── 12. Stat (inline text like PHP) ──
         body << "<div class=\"subblock\"><div class=\"valuetitle\">Stat</div><div class=\"value\">"
@@ -1196,6 +1261,8 @@ void generate()
                 flags.push_back("<img src=\"/images/datapack-explorer/GrassUp.png\" alt=\"\" class=\"locationimg\" width=\"16px\" height=\"16px\">");
             if(s_monsterInTrainerOnMaps.find(id)!=s_monsterInTrainerOnMaps.end())
                 flags.push_back("<div style=\"background-position:-16px -16px;\" class=\"flags flags16\" class=\"locationimg\"></div>");
+            if(isVersionExclusive(id))
+                flags.push_back("<img src=\"/official-server/images/top-1.png\" alt=\"\" class=\"locationimg\" width=\"16px\" height=\"16px\">");
 
             // Row
             indexBody << "<tr class=\"value\"";

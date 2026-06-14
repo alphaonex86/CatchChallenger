@@ -64,7 +64,10 @@ public:
     // scripted/CI runs; the interactive window is the default (batch=false).
     explicit TileDeduplicator(const QString &datapackPath, bool batch = false, bool checkAll = false, bool resetSkips = false,
                               bool stat = false, const QString &migrateFrom = QString(), const QString &migrateTo = QString(),
-                              const QString &removeTsx = QString(), QWidget *parent = nullptr);
+                              const QString &removeTsx = QString(), const QString &moveFrom = QString(),
+                              const QString &moveTo = QString(), bool moveImage = false, bool mergeUsed = false,
+                              const QString &mergeOut = QString(), const QStringList &mergeKeep = QStringList(),
+                              QWidget *parent = nullptr);
     ~TileDeduplicator() override;
 
 private slots:
@@ -120,6 +123,26 @@ private:
     // entry) from all maps, then delete the .tsx and its image. Runs instead of dedup.
     void runRemove();
     void clearTilesetCells(const QList<Tiled::Layer *> &layers, const Tiled::Tileset *ts, int &cleared);
+    // --move-from <.tsx> --move-to <path/.tsx>: physically relocate the .tsx to a new
+    // path (same tiles), then rewrite every .tmx under the path so its <tileset source>
+    // uses the new RELATIVE path. The image is NOT moved; the relocated .tsx's <image
+    // source> is rewritten relative to its new location. Runs instead of dedup.
+    void runMove();
+    // Dangling-safe repoint: in a .tmx's raw TEXT, change the <tileset> entry whose
+    // source resolves to `fromCanon` so it points at `toAbs` (relative to the map dir),
+    // leaving every other <tileset> (incl. an intentional unresolved missing.tsx) and all
+    // encoded layer data byte-for-byte untouched. Used by --migrate/--move for maps that
+    // libtiled can't re-serialize without corruption (they carry an unresolved tileset).
+    // Returns true if a matching entry was found and rewritten.
+    bool repointTilesetSourceInText(const QString &tmxPath, const QString &fromCanon, const QString &toAbs);
+    // --merge-used: across every .tmx under the path, gather the tiles actually used from
+    // each RESOLVABLE tileset (except those named in --merge-keep and any unresolved one),
+    // pack the unique ones (identical tiles collapsed) into ONE new tileset (.tsx + .png at
+    // --merge-out), then rewrite each map's gids/object-gids to that single tileset, drop
+    // the merged-away <tileset> entries and append the new one. Kept and unresolved tilesets
+    // (e.g. an intentional missing.tsx) and all other layer data are preserved. Runs instead
+    // of dedup. Works at the gid/base64/zstd level so dangling maps are handled too.
+    void runMergeUsed();
 
     bool loadTilesets();
     // Presence-trigger layers (Collisions/Grass/Water/Ledges*) where a cell's
@@ -190,6 +213,12 @@ private:
     QString migrate_from_;     // --migrate-from <.tsx>: tileset to replace then delete
     QString migrate_to_;       // --migrate-to <.tsx>: tileset to migrate every map to
     QString remove_tsx_;       // --remove <.tsx>: tileset to delete + clear from all maps
+    QString move_from_;        // --move-from <.tsx>: tileset to relocate
+    QString move_to_;          // --move-to <path/.tsx>: new path for the relocated tileset
+    bool move_image_;          // --move-image: relocate the .png alongside the moved .tsx
+    bool merge_used_;          // --merge-used: pack used tiles of all maps into one tileset
+    QString merge_out_;        // --merge-out <path/.tsx>: the single output tileset
+    QStringList merge_keep_;   // --merge-keep: tileset basenames to leave as separate refs
     std::vector<TileEntry> tiles_;
     int i_;
     int j_;

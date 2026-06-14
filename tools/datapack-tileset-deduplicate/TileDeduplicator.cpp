@@ -24,6 +24,7 @@
 #include <QFile>
 #include <QDateTime>
 #include <QCoreApplication>
+#include <QRegularExpression>
 #include <QDebug>
 
 #include <map.h>
@@ -36,6 +37,7 @@
 #include <tile.h>
 #include <mapreader.h>
 #include <mapwriter.h>
+#include <compression.h>
 
 #include <cstring>
 #include <algorithm>
@@ -128,7 +130,9 @@ static int animationFrameCount(const QString &value)
 
 TileDeduplicator::TileDeduplicator(const QString &datapackPath, bool batch, bool checkAll, bool resetSkips,
                                    bool stat, const QString &migrateFrom, const QString &migrateTo,
-                                   const QString &removeTsx, QWidget *parent) :
+                                   const QString &removeTsx, const QString &moveFrom, const QString &moveTo,
+                                   bool moveImage, bool mergeUsed, const QString &mergeOut, const QStringList &mergeKeep,
+                                   QWidget *parent) :
     QWidget(parent),
     datapack_path_(datapackPath),
     batch_(batch),
@@ -138,6 +142,12 @@ TileDeduplicator::TileDeduplicator(const QString &datapackPath, bool batch, bool
     migrate_from_(migrateFrom),
     migrate_to_(migrateTo),
     remove_tsx_(removeTsx),
+    move_from_(moveFrom),
+    move_to_(moveTo),
+    move_image_(moveImage),
+    merge_used_(mergeUsed),
+    merge_out_(mergeOut),
+    merge_keep_(mergeKeep),
     i_(0),
     j_(1),
     merge_log_committed_(0),
@@ -243,6 +253,20 @@ void TileDeduplicator::loadAndStart()
     if(!remove_tsx_.isEmpty())
     {
         runRemove();           // delete a tileset and clear it from all maps, then quit
+        close();
+        QCoreApplication::quit();
+        return;
+    }
+    if(!move_from_.isEmpty())
+    {
+        runMove();             // relocate a tileset and fix every map's relative path, then quit
+        close();
+        QCoreApplication::quit();
+        return;
+    }
+    if(merge_used_)
+    {
+        runMergeUsed();        // pack used tiles into one tileset and rewrite maps, then quit
         close();
         QCoreApplication::quit();
         return;
@@ -1316,9 +1340,59 @@ void TileDeduplicator::finish()
 // ---------------------------------------------------------------------------
 
 // Rewrite every map under datapack_path_ that references the migrate-from tileset so
+// Repoint, in a .tmx's raw TEXT, the <tileset> entry whose source resolves to fromCanon
+// so it points at toAbs (relative to the map's directory). Only that one source string
+// changes; every other <tileset> (e.g. an intentional unresolved missing.tsx) and all the
+// base64/zstd-encoded layer data stay byte-for-byte identical — which is exactly why this
+// is used for maps libtiled would corrupt on re-serialization. The migrate-from and the
+// new target share the same tile layout, so each cell's firstgid (and thus its gid) stays
+// valid without touching the layer data. Returns true if a matching entry was rewritten.
+bool TileDeduplicator::repointTilesetSourceInText(const QString &tmxPath,
+                                                  const QString &fromCanon, const QString &toAbs)
+{
+    QFile rf(tmxPath);
+    if(!rf.open(QFile::ReadOnly)) { qWarning() << "Unable to read map" << tmxPath; return false; }
+    QString text = QString::fromUtf8(rf.readAll());
+    rf.close();
+
+    const QString mapDir = QFileInfo(tmxPath).absolutePath();
+    const QString newRel = QDir(mapDir).relativeFilePath(toAbs).toHtmlEscaped();
+
+    // Scan every <tileset ... source="REL" ...> opening tag; resolve REL against the map
+    // dir and rewrite the ones whose target is fromCanon. An unresolved source (missing
+    // file) has an empty canonicalFilePath() and so never matches — it is left intact.
+    QRegularExpression re(QStringLiteral("<tileset\\b[^>]*\\bsource=\"([^\"]*)\"[^>]*>"));
+    QRegularExpressionMatchIterator it = re.globalMatch(text);
+    // Collect (offset,len) of each source value to replace, then apply from the end so the
+    // earlier offsets stay valid.
+    std::vector<QPair<int, int> > hits;
+    while(it.hasNext())
+    {
+        QRegularExpressionMatch m = it.next();
+        const QString abs = QFileInfo(QDir(mapDir), m.captured(1)).canonicalFilePath();
+        if(!abs.isEmpty() && abs == fromCanon)
+            hits.push_back(qMakePair(m.capturedStart(1), m.capturedLength(1)));
+    }
+    if(hits.empty())
+        return false;
+    int k = (int)hits.size() - 1;
+    while(k >= 0)
+    {
+        text.replace(hits[k].first, hits[k].second, newRel);
+        k--;
+    }
+
+    QFile wf(tmxPath);
+    if(!wf.open(QFile::WriteOnly)) { qWarning() << "Unable to write map" << tmxPath; return false; }
+    wf.write(text.toUtf8());
+    wf.close();
+    return true;
+}
+
 // it uses the migrate-to tileset instead (keeping each cell's local tile id), then
 // delete the migrate-from .tsx and its image. The two tilesets are assumed to share
-// the same tile layout (id N -> id N). Maps with a dangling tileset are left untouched.
+// the same tile layout (id N -> id N). Maps with an unresolved tileset are repointed in
+// text (so an intentional missing.tsx is preserved) instead of being skipped.
 void TileDeduplicator::runMigrate()
 {
     const QString fromCanon = QFileInfo(migrate_from_).canonicalFilePath();
@@ -1359,8 +1433,8 @@ void TileDeduplicator::runMigrate()
             qWarning() << "Unable to read map" << tmx << ":" << reader.errorString();
             continue;
         }
-        // Locate the from/to tilesets in this map, and refuse maps with a dangling
-        // tileset (rewriting them would shift firstgids and corrupt the map).
+        // Locate the from/to tilesets in this map. A map with a dangling tileset can't be
+        // re-serialized by libtiled (firstgids would shift); it is repointed in text below.
         Tiled::SharedTileset oldTs;
         Tiled::SharedTileset newTs;
         bool dangling = false;
@@ -1384,8 +1458,23 @@ void TileDeduplicator::runMigrate()
             continue;          // this map does not use the migrate-from tileset
         if(dangling)
         {
-            qWarning() << "Skipping" << tmx << "- has a missing/unresolved tileset, left untouched";
-            skipped++;
+            // This map carries an unresolved tileset (e.g. an intentional missing.tsx), so
+            // libtiled can't re-serialize it safely. Repoint the migrate-from <tileset>
+            // entry in the TEXT instead — but only when the map does NOT already use the
+            // migrate-to tileset (merging the two would need a gid remap we can't do here).
+            if(!newTs.isNull())
+            {
+                qWarning() << "Skipping" << tmx << "- unresolved tileset AND already uses the migrate-to tileset (needs a gid merge)";
+                skipped++;
+                continue;
+            }
+            if(repointTilesetSourceInText(tmx, fromCanon, toCanon))
+                rewritten++;
+            else
+            {
+                qWarning() << "Skipping" << tmx << "- unresolved tileset and migrate-from entry not found in text";
+                skipped++;
+            }
             continue;
         }
         if(newTs.isNull())
@@ -1578,6 +1667,641 @@ void TileDeduplicator::runRemove()
     qDebug() << "Remove done." << remove_tsx_
              << "maps-rewritten:" << rewritten << "maps-skipped:" << skipped
              << "cells-cleared:" << cellsCleared << "deleted:" << rmCanon << rmPng;
+}
+
+// --move-from/--move-to: physically relocate a .tsx to a new path WITHOUT changing its
+// tiles, then rewrite every .tmx under the scan path so its <tileset source> points at
+// the new RELATIVE path. The tileset's image is NOT moved: the relocated .tsx keeps the
+// SAME image, with its <image source> rewritten relative to the new .tsx location (the
+// rest of the .tsx is copied byte-for-byte, so animations/properties survive untouched).
+void TileDeduplicator::runMove()
+{
+    const QString fromCanon = QFileInfo(move_from_).canonicalFilePath();
+    if(fromCanon.isEmpty()) { qWarning() << "move-from not found:" << move_from_; return; }
+
+    // Destination: relative paths resolve against the current working directory (where
+    // the user typed the command), absolute paths are used as-is. cleanPath collapses
+    // a/b/../c without requiring the file to exist yet.
+    const QString toAbs = QDir::cleanPath(QFileInfo(QDir::current(), move_to_).absoluteFilePath());
+    if(toAbs == QDir::cleanPath(fromCanon))
+    { qWarning() << "move-from and move-to are the same file"; return; }
+    if(QFileInfo::exists(toAbs))
+    { qWarning() << "move-to already exists, refusing to overwrite:" << toAbs; return; }
+    if(!toAbs.endsWith(QStringLiteral(".tsx")))
+    { qWarning() << "move-to must end in .tsx:" << toAbs; return; }
+
+    // Read the source .tsx to learn its absolute image path (toLocalFile() resolves the
+    // <image source> relative to the .tsx dir) and to grab the exact source string that
+    // appears in the file, so the patch below replaces it precisely.
+    QString absImage;
+    {
+        Tiled::MapReader r;
+        Tiled::SharedTileset ts = r.readTileset(fromCanon);
+        if(ts.isNull())
+        { qWarning() << "Unable to read tileset" << fromCanon << ":" << r.errorString(); return; }
+        absImage = ts->imageSource().toLocalFile();
+    }
+
+    // Read the source .tsx bytes verbatim and rewrite ONLY the first <image source="...">
+    // value to the image's path relative to the NEW .tsx directory (the image stays put).
+    QByteArray tsxBytes;
+    {
+        QFile f(fromCanon);
+        if(!f.open(QFile::ReadOnly))
+        { qWarning() << "Unable to read tileset file" << fromCanon; return; }
+        tsxBytes = f.readAll();
+        f.close();
+    }
+    const QString toDir = QFileInfo(toAbs).absolutePath();
+    // Where the image ends up: with --move-image it moves into the destination dir (the new
+    // .tsx then references it by bare filename); otherwise it stays put and the .tsx keeps a
+    // relative path back to it.
+    const QString newImageAbs = (move_image_ && !absImage.isEmpty())
+                                    ? toDir + QLatin1Char('/') + QFileInfo(absImage).fileName()
+                                    : absImage;
+    QString tsxText = QString::fromUtf8(tsxBytes);
+    if(!absImage.isEmpty())
+    {
+        const QString newRel = QDir(toDir).relativeFilePath(newImageAbs);
+        // Match the first <image ... source="VALUE"> and replace just VALUE. Path strings
+        // contain no XML metacharacters, but escape defensively for the attribute context.
+        QRegularExpression re(QStringLiteral("(<image\\b[^>]*\\bsource=\")([^\"]*)(\")"));
+        QRegularExpressionMatch m = re.match(tsxText);
+        if(m.hasMatch())
+            tsxText.replace(m.capturedStart(2), m.capturedLength(2), newRel.toHtmlEscaped());
+        else
+            qWarning() << "No <image source> found in" << fromCanon << "- image path left as-is";
+    }
+
+    // Create the destination directory and write the relocated .tsx.
+    if(!QDir().mkpath(toDir))
+    { qWarning() << "Unable to create destination directory:" << toDir; return; }
+    {
+        QFile f(toAbs);
+        if(!f.open(QFile::WriteOnly))
+        { qWarning() << "Unable to write moved tileset" << toAbs; return; }
+        f.write(tsxText.toUtf8());
+        f.close();
+    }
+    // Both old and new .tsx now exist; keep the old one until every referencing map has
+    // been repointed, so the map reader can still resolve the original reference.
+
+    QStringList tmxFiles;
+    {
+        QDirIterator it(datapack_path_, QStringList() << QStringLiteral("*.tmx"),
+                        QDir::Files, QDirIterator::Subdirectories);
+        while(it.hasNext())
+            tmxFiles.append(it.next());
+    }
+    tmxFiles.sort();
+
+    int rewritten = 0;
+    int skipped = 0;
+    int fi = 0;
+    while(fi < tmxFiles.size())
+    {
+        const QString &tmx = tmxFiles.at(fi);
+        fi++;
+        Tiled::MapReader reader;
+        std::unique_ptr<Tiled::Map> map = reader.readMap(tmx);
+        if(!map)
+        {
+            qWarning() << "Unable to read map" << tmx << ":" << reader.errorString();
+            continue;
+        }
+        // Find the tileset by its OLD canonical path. Maps with a dangling tileset can't
+        // go through libtiled (it would shift firstgids), so they are repointed in text below.
+        Tiled::SharedTileset target;
+        bool dangling = false;
+        int ti = 0;
+        while(ti < map->tilesetCount())
+        {
+            Tiled::SharedTileset ts = map->tilesetAt(ti);
+            const QString fn = ts->fileName();
+            if(!fn.isEmpty() && !QFileInfo::exists(fn))
+                dangling = true;
+            else if(!fn.isEmpty() && !ts->isCollection() && ts->image().isNull())
+                dangling = true;
+            if(QFileInfo(fn).canonicalFilePath() == fromCanon)
+                target = ts;
+            ti++;
+        }
+        if(target.isNull())
+            continue;          // this map does not reference the moved tileset
+        if(dangling)
+        {
+            // Unresolved tileset present (e.g. an intentional missing.tsx): repoint the
+            // moved tileset's <tileset source> in TEXT, preserving the dangling entry and
+            // every encoded gid. A move never merges tilesets, so this is always safe.
+            if(repointTilesetSourceInText(tmx, fromCanon, toAbs))
+                rewritten++;
+            else
+            {
+                qWarning() << "Skipping" << tmx << "- unresolved tileset and moved entry not found in text";
+                skipped++;
+            }
+            continue;
+        }
+        // Point this map's tileset at the new path; MapWriter recomputes <tileset source>
+        // relative to the map's own directory, so each map gets its correct relative path.
+        target->setFileName(toAbs);
+
+        Tiled::MapWriter writer;
+        QByteArray bytes;
+        QBuffer buffer(&bytes);
+        buffer.open(QIODevice::WriteOnly);
+        writer.writeMap(map.get(), &buffer, QFileInfo(tmx).absolutePath());
+        buffer.close();
+        if(bytes.isEmpty())
+        {
+            qWarning() << "Failed to serialize map" << tmx;
+            continue;
+        }
+        QFile f(tmx);
+        if(f.open(QFile::WriteOnly))
+        {
+            f.write(bytes);
+            f.close();
+            rewritten++;
+        }
+        else
+            qWarning() << "Unable to write map" << tmx;
+    }
+
+    // --move-image: relocate the image file alongside the .tsx (the new .tsx already
+    // references it by bare filename). Done after the maps are rewritten; the maps point at
+    // the .tsx, not the image, so ordering is irrelevant to them.
+    if(move_image_ && !absImage.isEmpty() && newImageAbs != absImage)
+    {
+        if(QFile::exists(newImageAbs))
+            qWarning() << "Image destination already exists, left image in place:" << newImageAbs;
+        else if(!QFile::rename(absImage, newImageAbs))
+            qWarning() << "Unable to move image" << absImage << "->" << newImageAbs;
+    }
+
+    // Delete the original .tsx only when every referencing map was repointed. If any map
+    // was skipped (dangling), keep the old .tsx so that map's reference stays resolvable.
+    if(skipped == 0)
+    {
+        if(QFile::exists(fromCanon) && !QFile::remove(fromCanon))
+            qWarning() << "Unable to remove original tileset" << fromCanon;
+    }
+    else
+        qWarning() << "Kept original" << fromCanon << "-" << skipped
+                   << "map(s) with a dangling tileset still reference it";
+
+    qDebug() << "Move done." << fromCanon << "->" << toAbs
+             << "maps-rewritten:" << rewritten << "maps-skipped:" << skipped
+             << "image:" << newImageAbs;
+}
+
+namespace {
+// TMX global tile ids carry the three flip bits in the top nibble; the rest is the id.
+const quint32 kGidFlags = 0xE0000000u;
+const quint32 kGidId    = 0x1FFFFFFFu;
+
+quint32 rdLE32(const char *p)
+{
+    const unsigned char *u = reinterpret_cast<const unsigned char *>(p);
+    return (quint32)u[0] | ((quint32)u[1] << 8) | ((quint32)u[2] << 16) | ((quint32)u[3] << 24);
+}
+void wrLE32(char *p, quint32 v)
+{
+    unsigned char *u = reinterpret_cast<unsigned char *>(p);
+    u[0] = (unsigned char)(v & 0xFF);
+    u[1] = (unsigned char)((v >> 8) & 0xFF);
+    u[2] = (unsigned char)((v >> 16) & 0xFF);
+    u[3] = (unsigned char)((v >> 24) & 0xFF);
+}
+
+// Decode one base64+zstd tile-layer <data> blob into `count` little-endian gids.
+std::vector<quint32> decodeLayer(const QString &base64, int count)
+{
+    QByteArray comp = QByteArray::fromBase64(base64.trimmed().toLatin1());
+    QByteArray raw = Tiled::decompress(comp, count * 4, Tiled::Zstandard);
+    std::vector<quint32> gids;
+    if(raw.size() != count * 4)
+        return gids;
+    gids.resize((std::size_t)count);
+    int i = 0;
+    while(i < count) { gids[(std::size_t)i] = rdLE32(raw.constData() + i * 4); i++; }
+    return gids;
+}
+// Re-encode a gid array back to base64(zstd), the same format the maps already use.
+QString encodeLayer(const std::vector<quint32> &gids)
+{
+    QByteArray raw;
+    raw.resize((int)gids.size() * 4);
+    int i = 0;
+    while(i < (int)gids.size()) { wrLE32(raw.data() + i * 4, gids[(std::size_t)i]); i++; }
+    QByteArray comp = Tiled::compress(raw, Tiled::Zstandard, -1);
+    return QString::fromLatin1(comp.toBase64());
+}
+
+int attrInt(const QString &tag, const QString &name)
+{
+    QRegularExpression r(QStringLiteral("\\b") + name + QStringLiteral("=\"(\\d+)\""));
+    QRegularExpressionMatch m = r.match(tag);
+    return m.hasMatch() ? m.captured(1).toInt() : 0;
+}
+
+// One external <tileset firstgid=.. source=..> reference in a map: where its line lives in
+// the text, and whether to merge it away (resolvable & not kept) or leave it (kept/unresolved).
+struct MapTileset
+{
+    quint64 firstgid;
+    QString canon;      // canonical .tsx path, or "" when unresolved (a dangling source)
+    bool merge;
+    int lineStart;      // start of the whole <tileset .../> line (incl. leading whitespace)
+    int lineEnd;        // just past the trailing newline
+};
+bool mapTilesetLess(const MapTileset &a, const MapTileset &b) { return a.firstgid < b.firstgid; }
+
+// Parse a map's external tileset table from its text. keepBasenames are left as separate
+// references (never merged); unresolved sources (canon == "") are likewise left untouched.
+std::vector<MapTileset> parseMapTilesets(const QString &text, const QString &mapDir,
+                                         const QSet<QString> &keepBasenames)
+{
+    std::vector<MapTileset> out;
+    QRegularExpression tagRe(QStringLiteral("<tileset\\b[^>]*>"));
+    QRegularExpression fgRe(QStringLiteral("\\bfirstgid=\"(\\d+)\""));
+    QRegularExpression srcRe(QStringLiteral("\\bsource=\"([^\"]*)\""));
+    QRegularExpressionMatchIterator it = tagRe.globalMatch(text);
+    while(it.hasNext())
+    {
+        QRegularExpressionMatch m = it.next();
+        const QString tag = m.captured(0);
+        QRegularExpressionMatch fg = fgRe.match(tag);
+        QRegularExpressionMatch sm = srcRe.match(tag);
+        if(!fg.hasMatch() || !sm.hasMatch())
+            continue;                       // embedded (non-external) tileset: skip
+        MapTileset e;
+        e.firstgid = fg.captured(1).toULongLong();
+        const QString src = sm.captured(1);
+        e.canon = QFileInfo(QDir(mapDir), src).canonicalFilePath();
+        e.merge = !e.canon.isEmpty() && !keepBasenames.contains(QFileInfo(src).fileName());
+        int ls = m.capturedStart(0);
+        while(ls > 0 && text.at(ls - 1) != QLatin1Char('\n')) ls--;
+        int le = m.capturedEnd(0);
+        while(le < text.size() && text.at(le) != QLatin1Char('\n')) le++;
+        if(le < text.size()) le++;          // consume the newline so a removed line leaves none
+        e.lineStart = ls;
+        e.lineEnd = le;
+        out.push_back(e);
+    }
+    return out;
+}
+
+// Index (into `sorted`, ascending by firstgid) of the tileset owning realgid; -1 if none.
+int owningTileset(const std::vector<MapTileset> &sorted, quint32 realgid)
+{
+    int i = 0, found = -1;
+    while(i < (int)sorted.size() && (quint64)realgid >= sorted[(std::size_t)i].firstgid)
+    {
+        found = i;
+        i++;
+    }
+    return found;
+}
+
+quint32 remapGid(quint32 gid, const std::vector<MapTileset> &sorted, quint64 mergedFirstgid,
+                 const QHash<QString, int> &slotByKey)
+{
+    if(gid == 0)
+        return 0;
+    const quint32 flags = gid & kGidFlags;
+    const quint32 real = gid & kGidId;
+    const int idx = owningTileset(sorted, real);
+    if(idx < 0 || !sorted[(std::size_t)idx].merge)
+        return gid;                         // kept or unresolved tileset: gid unchanged
+    const int localid = (int)(real - sorted[(std::size_t)idx].firstgid);
+    const int slot = slotByKey.value(sorted[(std::size_t)idx].canon + QLatin1Char('#') + QString::number(localid), -1);
+    if(slot < 0)
+        return gid;                         // not collected (shouldn't happen): leave as-is
+    return ((quint32)(mergedFirstgid + (quint64)slot)) | flags;
+}
+
+// All state of the in-progress merge: the per-tileset image cache and the
+// identical-tile-collapsing slot assignment.
+struct MergeState
+{
+    QHash<QString, QImage> pngByCanon;      // canonical .tsx -> its image (ARGB32)
+    QHash<QString, int> colsByCanon;        // canonical .tsx -> columns (image width / 16)
+    QHash<QByteArray, int> slotByPixels;    // 16x16 pixels -> slot (identical tiles collapse)
+    QHash<QString, int> slotByKey;          // "canon#localid" -> slot
+    std::vector<QImage> uniques;            // the unique 16x16 tiles, in slot order
+};
+
+// Extract a 16x16 tile from its tileset image (loading+caching the image on first use), then
+// assign it a slot — reusing an existing slot when the pixels are identical to one already kept.
+void recordUse(MergeState &st, const QString &canon, int localid)
+{
+    const QString key = canon + QLatin1Char('#') + QString::number(localid);
+    if(st.slotByKey.contains(key))
+        return;
+    if(!st.pngByCanon.contains(canon))
+    {
+        Tiled::MapReader r;
+        Tiled::SharedTileset ts = r.readTileset(canon);
+        QImage img;
+        if(!ts.isNull())
+        {
+            ts->loadImage();
+            img = QImage(ts->imageSource().toLocalFile());
+            if(!img.isNull())
+                img = img.convertToFormat(QImage::Format_ARGB32);
+        }
+        st.pngByCanon.insert(canon, img);
+        st.colsByCanon.insert(canon, img.isNull() ? 0 : img.width() / 16);
+    }
+    const QImage &img = st.pngByCanon[canon];
+    const int cols = st.colsByCanon[canon];
+    if(img.isNull() || cols <= 0)
+        return;
+    const int x = (localid % cols) * 16;
+    const int y = (localid / cols) * 16;
+    if(x + 16 > img.width() || y + 16 > img.height())
+    {
+        qWarning() << "merge: tile" << localid << "out of range in" << canon;
+        return;
+    }
+    QImage tile = img.copy(x, y, 16, 16);
+    const QByteArray pixels(reinterpret_cast<const char *>(tile.constBits()), (int)tile.sizeInBytes());
+    int slot = st.slotByPixels.value(pixels, -1);
+    if(slot < 0)
+    {
+        slot = (int)st.uniques.size();
+        st.uniques.push_back(tile);
+        st.slotByPixels.insert(pixels, slot);
+    }
+    st.slotByKey.insert(key, slot);
+}
+
+// Collect every used tile (tile-layer cells + object gids) of one map into the merge state.
+void collectMapUses(MergeState &st, const QString &text, const std::vector<MapTileset> &sorted)
+{
+    QRegularExpression layerRe(QStringLiteral("<layer\\b([^>]*)>([\\s\\S]*?)</layer>"));
+    QRegularExpression dataRe(QStringLiteral("<data\\b[^>]*>([\\s\\S]*?)</data>"));
+    QRegularExpressionMatchIterator lit = layerRe.globalMatch(text);
+    while(lit.hasNext())
+    {
+        QRegularExpressionMatch lm = lit.next();
+        const int w = attrInt(lm.captured(1), QStringLiteral("width"));
+        const int h = attrInt(lm.captured(1), QStringLiteral("height"));
+        QRegularExpressionMatch dm = dataRe.match(lm.captured(2));
+        if(w <= 0 || h <= 0 || !dm.hasMatch())
+            continue;
+        std::vector<quint32> gids = decodeLayer(dm.captured(1), w * h);
+        std::size_t i = 0;
+        while(i < gids.size())
+        {
+            const quint32 real = gids[i] & kGidId;
+            if(real != 0)
+            {
+                const int idx = owningTileset(sorted, real);
+                if(idx >= 0 && sorted[(std::size_t)idx].merge)
+                    recordUse(st, sorted[(std::size_t)idx].canon, (int)(real - sorted[(std::size_t)idx].firstgid));
+            }
+            i++;
+        }
+    }
+    QRegularExpression objRe(QStringLiteral("<object\\b[^>]*?\\bgid=\"(\\d+)\""));
+    QRegularExpressionMatchIterator oit = objRe.globalMatch(text);
+    while(oit.hasNext())
+    {
+        const quint32 real = oit.next().captured(1).toUInt() & kGidId;
+        if(real != 0)
+        {
+            const int idx = owningTileset(sorted, real);
+            if(idx >= 0 && sorted[(std::size_t)idx].merge)
+                recordUse(st, sorted[(std::size_t)idx].canon, (int)(real - sorted[(std::size_t)idx].firstgid));
+        }
+    }
+}
+
+// One pending text edit; applied from the end of the file so earlier offsets stay valid.
+struct TextEdit { int start; int len; QString val; };
+bool textEditGreater(const TextEdit &a, const TextEdit &b) { return a.start > b.start; }
+
+} // namespace
+
+// --merge-used: collapse the tiles actually used across every map under the path into ONE
+// new tileset and rewrite the maps to it. See the header for the full contract.
+void TileDeduplicator::runMergeUsed()
+{
+    if(merge_out_.isEmpty()) { qWarning() << "--merge-used needs --merge-out <path/.tsx>"; return; }
+    const QString outAbs = QDir::cleanPath(QFileInfo(QDir::current(), merge_out_).absoluteFilePath());
+    if(!outAbs.endsWith(QStringLiteral(".tsx"))) { qWarning() << "--merge-out must end in .tsx:" << outAbs; return; }
+    const QString outDir = QFileInfo(outAbs).absolutePath();
+    const QString outName = QFileInfo(outAbs).fileName();
+    const QString outBase = QFileInfo(outAbs).completeBaseName();
+    const QString outPng = outDir + QLatin1Char('/') + outBase + QStringLiteral(".png");
+
+    QSet<QString> keep;
+    int ki = 0;
+    while(ki < merge_keep_.size()) { keep.insert(QFileInfo(merge_keep_.at(ki)).fileName()); ki++; }
+
+    QStringList tmxFiles;
+    {
+        QDirIterator it(datapack_path_, QStringList() << QStringLiteral("*.tmx"),
+                        QDir::Files, QDirIterator::Subdirectories);
+        while(it.hasNext())
+            tmxFiles.append(it.next());
+    }
+    tmxFiles.sort();
+
+    // PASS 1 — collect every used tile from the merge-eligible tilesets, collapsing identical
+    // tiles to one slot.
+    MergeState st;
+    int fi = 0;
+    while(fi < tmxFiles.size())
+    {
+        const QString tmx = tmxFiles.at(fi);
+        fi++;
+        QFile f(tmx);
+        if(!f.open(QFile::ReadOnly)) { qWarning() << "Unable to read map" << tmx; continue; }
+        const QString text = QString::fromUtf8(f.readAll());
+        f.close();
+        std::vector<MapTileset> sorted = parseMapTilesets(text, QFileInfo(tmx).absolutePath(), keep);
+        std::sort(sorted.begin(), sorted.end(), mapTilesetLess);
+        collectMapUses(st, text, sorted);
+    }
+    const int uniqueCount = (int)st.uniques.size();
+    if(uniqueCount == 0) { qWarning() << "merge: no used tiles found under" << datapack_path_; return; }
+
+    // Build the single atlas image + its .tsx (identical tiles already collapsed).
+    const int cols = 16;
+    const int rows = (uniqueCount + cols - 1) / cols;
+    QImage atlas(cols * 16, rows * 16, QImage::Format_ARGB32);
+    atlas.fill(QColor(0, 0, 0));            // black == transparent via trans="000000" below
+    {
+        QPainter p(&atlas);
+        int s = 0;
+        while(s < uniqueCount)
+        {
+            p.drawImage((s % cols) * 16, (s / cols) * 16, st.uniques[(std::size_t)s]);
+            s++;
+        }
+    }
+    if(!QDir().mkpath(outDir)) { qWarning() << "merge: cannot create" << outDir; return; }
+    if(!atlas.save(outPng, "PNG")) { qWarning() << "merge: cannot write" << outPng; return; }
+    {
+        QString tsx = QStringLiteral("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        tsx += QStringLiteral(" <tileset name=\"%1\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"%2\" columns=\"%3\">\n")
+                   .arg(outName).arg(uniqueCount).arg(cols);
+        tsx += QStringLiteral("  <image source=\"%1.png\" trans=\"000000\" width=\"%2\" height=\"%3\"/>\n")
+                   .arg(outBase).arg(cols * 16).arg(rows * 16);
+        tsx += QStringLiteral(" </tileset>\n");
+        QFile tf(outAbs);
+        if(!tf.open(QFile::WriteOnly)) { qWarning() << "merge: cannot write" << outAbs; return; }
+        tf.write(tsx.toUtf8());
+        tf.close();
+    }
+
+    // PASS 2 — rewrite every map: remap merged-tileset gids to the single tileset, drop the
+    // merged-away <tileset> entries, append the new one. Kept/unresolved tilesets, object
+    // markers and untouched layers stay byte-for-byte identical.
+    int mapsRewritten = 0;
+    int mapsUntouched = 0;
+    fi = 0;
+    while(fi < tmxFiles.size())
+    {
+        const QString tmx = tmxFiles.at(fi);
+        fi++;
+        const QString mapDir = QFileInfo(tmx).absolutePath();
+        QFile rf(tmx);
+        if(!rf.open(QFile::ReadOnly)) { qWarning() << "Unable to read map" << tmx; continue; }
+        QString text = QString::fromUtf8(rf.readAll());
+        rf.close();
+
+        std::vector<MapTileset> table = parseMapTilesets(text, mapDir, keep);
+        std::vector<MapTileset> sorted = table;
+        std::sort(sorted.begin(), sorted.end(), mapTilesetLess);
+        bool anyMerge = false;
+        std::size_t ti = 0;
+        while(ti < table.size()) { if(table[ti].merge) anyMerge = true; ti++; }
+        if(!anyMerge) { mapsUntouched++; continue; }   // this map uses none of the merged tilesets
+
+        // The merged tileset's firstgid must sit above every kept gid and firstgid so it owns
+        // its own range and never collides; find the map's maxima first.
+        quint64 maxV = 0;
+        ti = 0;
+        while(ti < table.size()) { if(table[ti].firstgid > maxV) maxV = table[ti].firstgid; ti++; }
+        QRegularExpression layerRe(QStringLiteral("<layer\\b([^>]*)>([\\s\\S]*?)</layer>"));
+        QRegularExpression dataRe(QStringLiteral("<data\\b[^>]*>([\\s\\S]*?)</data>"));
+        {
+            QRegularExpressionMatchIterator lit = layerRe.globalMatch(text);
+            while(lit.hasNext())
+            {
+                QRegularExpressionMatch lm = lit.next();
+                const int w = attrInt(lm.captured(1), QStringLiteral("width"));
+                const int h = attrInt(lm.captured(1), QStringLiteral("height"));
+                QRegularExpressionMatch dm = dataRe.match(lm.captured(2));
+                if(w <= 0 || h <= 0 || !dm.hasMatch())
+                    continue;
+                std::vector<quint32> gids = decodeLayer(dm.captured(1), w * h);
+                std::size_t i = 0;
+                while(i < gids.size()) { const quint32 r = gids[i] & kGidId; if((quint64)r > maxV) maxV = r; i++; }
+            }
+            QRegularExpression objRe(QStringLiteral("<object\\b[^>]*?\\bgid=\"(\\d+)\""));
+            QRegularExpressionMatchIterator oit = objRe.globalMatch(text);
+            while(oit.hasNext())
+            {
+                const quint32 r = oit.next().captured(1).toUInt() & kGidId;
+                if((quint64)r > maxV) maxV = r;
+            }
+        }
+        const quint64 mergedFirstgid = maxV + 1;
+
+        std::vector<TextEdit> edits;
+
+        // (a) rebuild the tileset table: keep non-merge entries verbatim, append the new one.
+        int tableStart = text.size(), tableEnd = 0;
+        ti = 0;
+        while(ti < table.size())
+        {
+            if(table[ti].lineStart < tableStart) tableStart = table[ti].lineStart;
+            if(table[ti].lineEnd > tableEnd) tableEnd = table[ti].lineEnd;
+            ti++;
+        }
+        QString newTable;
+        ti = 0;
+        while(ti < table.size())
+        {
+            if(!table[ti].merge)
+                newTable += text.mid(table[ti].lineStart, table[ti].lineEnd - table[ti].lineStart);
+            ti++;
+        }
+        const QString rel = QDir(mapDir).relativeFilePath(outAbs).toHtmlEscaped();
+        newTable += QStringLiteral(" <tileset firstgid=\"%1\" source=\"%2\"/>\n").arg(mergedFirstgid).arg(rel);
+        TextEdit te; te.start = tableStart; te.len = tableEnd - tableStart; te.val = newTable;
+        edits.push_back(te);
+
+        // (b) remap each tile layer's gids (only re-encode layers that actually changed).
+        {
+            QRegularExpressionMatchIterator lit = layerRe.globalMatch(text);
+            while(lit.hasNext())
+            {
+                QRegularExpressionMatch lm = lit.next();
+                const int w = attrInt(lm.captured(1), QStringLiteral("width"));
+                const int h = attrInt(lm.captured(1), QStringLiteral("height"));
+                QRegularExpressionMatch dm = dataRe.match(lm.captured(2));
+                if(w <= 0 || h <= 0 || !dm.hasMatch())
+                    continue;
+                std::vector<quint32> gids = decodeLayer(dm.captured(1), w * h);
+                if((int)gids.size() != w * h)
+                    continue;
+                bool changed = false;
+                std::size_t i = 0;
+                while(i < gids.size())
+                {
+                    const quint32 ng = remapGid(gids[i], sorted, mergedFirstgid, st.slotByKey);
+                    if(ng != gids[i]) { gids[i] = ng; changed = true; }
+                    i++;
+                }
+                if(changed)
+                {
+                    TextEdit e2;
+                    e2.start = lm.capturedStart(2) + dm.capturedStart(1);
+                    e2.len = dm.capturedLength(1);
+                    e2.val = QStringLiteral("\n  ") + encodeLayer(gids) + QStringLiteral("\n  ");
+                    edits.push_back(e2);
+                }
+            }
+        }
+
+        // (c) remap object gids that point into a merged tileset (markers stay as they are).
+        {
+            QRegularExpression objRe(QStringLiteral("<object\\b[^>]*?\\bgid=\"(\\d+)\""));
+            QRegularExpressionMatchIterator oit = objRe.globalMatch(text);
+            while(oit.hasNext())
+            {
+                QRegularExpressionMatch om = oit.next();
+                const quint32 g = om.captured(1).toUInt();
+                const quint32 ng = remapGid(g, sorted, mergedFirstgid, st.slotByKey);
+                if(ng != g)
+                {
+                    TextEdit e3; e3.start = om.capturedStart(1); e3.len = om.capturedLength(1);
+                    e3.val = QString::number(ng);
+                    edits.push_back(e3);
+                }
+            }
+        }
+
+        std::sort(edits.begin(), edits.end(), textEditGreater);
+        std::size_t ei = 0;
+        while(ei < edits.size()) { text.replace(edits[ei].start, edits[ei].len, edits[ei].val); ei++; }
+
+        QFile wf(tmx);
+        if(!wf.open(QFile::WriteOnly)) { qWarning() << "Unable to write map" << tmx; continue; }
+        wf.write(text.toUtf8());
+        wf.close();
+        mapsRewritten++;
+    }
+
+    qDebug() << "Merge-used done." << "tileset:" << outAbs
+             << "unique-tiles:" << uniqueCount << "(" << cols << "x" << rows << ")"
+             << "maps-rewritten:" << mapsRewritten << "maps-untouched:" << mapsUntouched;
 }
 
 namespace {
