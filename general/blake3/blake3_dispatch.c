@@ -111,6 +111,12 @@ static /* Allow the variable to be controlled manually for testing */
 #if !defined(BLAKE3_TESTING)
 static
 #endif
+// get_cpu_features() is only ever called from inside #if defined(IS_X86)
+// blocks, so on non-x86 targets (e.g. aarch64) it is a defined-but-unused
+// static function. Mark it unused to silence -Wunused-function there.
+#if defined(__GNUC__)
+    __attribute__((unused))
+#endif
     enum cpu_feature
     get_cpu_features(void) {
 
