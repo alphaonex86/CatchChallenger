@@ -795,7 +795,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
 
                 client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-                delete replySelectListInWait;
+                delete[] replySelectListInWait;   //new char[] -> delete[], not scalar delete
                 replySelectListInWait=NULL;
                 replySelectListInWaitSize=0;
             }
@@ -1161,7 +1161,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
 
                     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-                    delete replySelectCharInWait;
+                    delete[] replySelectCharInWait;   //new char[] -> delete[], not scalar delete
                     replySelectCharInWait=NULL;
                     replySelectCharInWaitSize=0;
                 }
@@ -1232,7 +1232,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
 
             client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-            delete replySelectCharInWait;
+            delete[] replySelectCharInWait;   //new char[] -> delete[], not scalar delete
             replySelectCharInWait=NULL;
             replySelectCharInWaitSize=0;
 

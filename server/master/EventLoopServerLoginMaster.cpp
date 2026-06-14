@@ -92,12 +92,12 @@ EventLoopServerLoginMaster::~EventLoopServerLoginMaster()
     memset(EventLoopClientLoginMaster::private_token,0x00,sizeof(EventLoopClientLoginMaster::private_token));
     if(server_ip!=NULL)
     {
-        delete server_ip;
+        delete[] server_ip;   //new char[] -> must be delete[], not scalar delete
         server_ip=NULL;
     }
     if(server_port!=NULL)
     {
-        delete server_port;
+        delete[] server_port;   //new char[] -> must be delete[], not scalar delete
         server_port=NULL;
     }
     if(databaseBaseLogin!=NULL)
@@ -928,7 +928,7 @@ bool EventLoopServerLoginMaster::tryListen()
     {
         if(returnedValue)
             std::cout << "Listen on " << server_ip << ":" << server_port << std::endl;
-        delete server_ip;
+        delete[] server_ip;   //new char[] -> must be delete[], not scalar delete
         server_ip=NULL;
     }
     else
@@ -938,7 +938,7 @@ bool EventLoopServerLoginMaster::tryListen()
     }
     if(server_port!=NULL)
     {
-        delete server_port;
+        delete[] server_port;   //new char[] -> must be delete[], not scalar delete
         server_port=NULL;
     }
     return returnedValue;
