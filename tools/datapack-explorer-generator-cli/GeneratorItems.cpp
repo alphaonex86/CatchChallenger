@@ -1,6 +1,7 @@
 #include "GeneratorItems.hpp"
 #include "GeneratorMonsters.hpp"
 #include "GeneratorCrafting.hpp"
+#include "GeneratorIndustries.hpp"
 #include "GeneratorMaps.hpp"
 #include "GeneratorPlants.hpp"
 #include "GeneratorSkills.hpp"
@@ -176,9 +177,9 @@ static std::unordered_map<uint16_t, uint16_t> s_itemIsRecipe;
 static std::unordered_map<uint16_t, std::vector<uint16_t>> s_doItemToRecipeItems;
 static std::unordered_map<uint16_t, std::vector<uint16_t>> s_materialToRecipeItems;
 
-struct IndustryRef { size_t setIdx; size_t mapIdx; size_t industryIdx; uint32_t quantity; };
-static std::unordered_map<uint16_t, std::vector<IndustryRef>> s_itemConsumedByIndustry;
-static std::unordered_map<uint16_t, std::vector<IndustryRef>> s_itemProducedByIndustryMap;
+struct IndustryUse { std::string mainCode; std::string industryId; uint32_t quantity; };
+static std::unordered_map<uint16_t, std::vector<IndustryUse>> s_itemConsumedByIndustry;
+static std::unordered_map<uint16_t, std::vector<IndustryUse>> s_itemProducedByIndustryMap;
 
 static void buildReverseLookups()
 {
@@ -216,13 +217,25 @@ static void buildReverseLookups()
             for(const std::pair<const uint8_t, CatchChallenger::BotFight> &bp : m.botFights)
                 for(const CatchChallenger::BotFight::Item &reward : bp.second.items)
                     s_itemAsFightReward[reward.id].push_back({si,mi,bp.first,reward.quantity});
-            for(size_t ii=0; ii<m.industries.size(); ++ii)
+        }
+    }
+
+    // Industry recipes are stored per mainCode in industries/industrialrecipe.xml,
+    // not in the map data; parse them via GeneratorIndustries.
+    {
+        std::set<std::string> seenMainCodes;
+        for(size_t si=0; si<sets.size(); ++si)
+        {
+            const std::string &mc=sets[si].mainCode;
+            if(!seenMainCodes.insert(mc).second)
+                continue;
+            const std::map<std::string,GeneratorIndustries::IndustryData> recipes=GeneratorIndustries::parseIndustrialRecipe(mc);
+            for(const std::pair<const std::string,GeneratorIndustries::IndustryData> &rp : recipes)
             {
-                const CatchChallenger::Industry &ind=m.industries[ii];
-                for(const CatchChallenger::Industry::Resource &res : ind.resources)
-                    s_itemConsumedByIndustry[res.item].push_back({si,mi,ii,res.quantity});
-                for(const CatchChallenger::Industry::Product &prod : ind.products)
-                    s_itemProducedByIndustryMap[prod.item].push_back({si,mi,ii,prod.quantity});
+                for(const GeneratorIndustries::IndustryResource &res : rp.second.resources)
+                    s_itemConsumedByIndustry[res.item].push_back({mc,rp.first,res.quantity});
+                for(const GeneratorIndustries::IndustryProduct &prod : rp.second.products)
+                    s_itemProducedByIndustryMap[prod.item].push_back({mc,rp.first,prod.quantity});
             }
         }
     }
@@ -507,17 +520,6 @@ void generate()
         }
     }
 
-    // Build industry product lookup (for index gradient)
-    std::unordered_map<uint16_t,bool> s_itemProducedByIndustry;
-    {
-        const std::vector<MapStore::MainCodeSet> &sets=MapStore::sets();
-        for(size_t si=0;si<sets.size();++si)
-            for(size_t mi=0;mi<sets[si].mapList.size();++mi)
-                for(const CatchChallenger::Industry &ind : sets[si].mapList[mi].industries)
-                    for(const CatchChallenger::Industry::Product &prod : ind.products)
-                        s_itemProducedByIndustry[prod.item]=true;
-    }
-
     // Build craft recipe item lookup
     std::unordered_set<uint16_t> s_itemIsCraftRecipe;
     {
@@ -575,7 +577,7 @@ void generate()
         bool fromCraft=(s_itemProducedByCraft.find(id)!=s_itemProducedByCraft.cend());
         if(fromWild || fromCraft)
             colors.push_back("#e0ffdd");
-        bool fromIndustry=(s_itemProducedByIndustry.find(id)!=s_itemProducedByIndustry.cend());
+        bool fromIndustry=(s_itemProducedByIndustryMap.find(id)!=s_itemProducedByIndustryMap.cend());
         if(fromIndustry)
             colors.push_back("#fbfdd3");
         if(s_itemOnMap.find(id)!=s_itemOnMap.cend())
@@ -1125,7 +1127,7 @@ void generate()
 
         // ── 20. Industry resource ──
         {
-            std::unordered_map<uint16_t, std::vector<IndustryRef>>::const_iterator indResIt=s_itemConsumedByIndustry.find(id);
+            std::unordered_map<uint16_t, std::vector<IndustryUse>>::const_iterator indResIt=s_itemConsumedByIndustry.find(id);
             if(indResIt!=s_itemConsumedByIndustry.cend() && !indResIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_normal\">\n"
@@ -1133,11 +1135,12 @@ void generate()
                      << "\t<th>Resource of the industry</th>\n"
                      << "\t<th>Quantity</th>\n"
                      << "</tr>\n";
-                for(const IndustryRef &ir : indResIt->second)
+                for(const IndustryUse &ir : indResIt->second)
                 {
-                    std::string mname=mapDisplayName(ir.setIdx,ir.mapIdx);
                     body << "<tr class=\"value\">\n";
-                    body << "<td>Industry on " << Helper::htmlEscape(mname) << "</td>\n";
+                    body << "<td><a href=\""
+                         << Helper::htmlEscape(Helper::relUrl(GeneratorIndustries::relativePathForIndustry(ir.mainCode,ir.industryId)))
+                         << "\">Industry #" << Helper::htmlEscape(ir.industryId) << "</a></td>\n";
                     body << "<td>" << ir.quantity << "</td>\n";
                     body << "</tr>\n";
                 }
@@ -1148,7 +1151,7 @@ void generate()
 
         // ── 21. Industry product ──
         {
-            std::unordered_map<uint16_t, std::vector<IndustryRef>>::const_iterator indProdIt=s_itemProducedByIndustryMap.find(id);
+            std::unordered_map<uint16_t, std::vector<IndustryUse>>::const_iterator indProdIt=s_itemProducedByIndustryMap.find(id);
             if(indProdIt!=s_itemProducedByIndustryMap.cend() && !indProdIt->second.empty())
             {
                 body << "<table class=\"item_list item_list_type_normal\">\n"
@@ -1156,11 +1159,12 @@ void generate()
                      << "\t<th>Product of the industry</th>\n"
                      << "\t<th>Quantity</th>\n"
                      << "</tr>\n";
-                for(const IndustryRef &ip : indProdIt->second)
+                for(const IndustryUse &ip : indProdIt->second)
                 {
-                    std::string mname=mapDisplayName(ip.setIdx,ip.mapIdx);
                     body << "<tr class=\"value\">\n";
-                    body << "<td>Industry on " << Helper::htmlEscape(mname) << "</td>\n";
+                    body << "<td><a href=\""
+                         << Helper::htmlEscape(Helper::relUrl(GeneratorIndustries::relativePathForIndustry(ip.mainCode,ip.industryId)))
+                         << "\">Industry #" << Helper::htmlEscape(ip.industryId) << "</a></td>\n";
                     body << "<td>" << ip.quantity << "</td>\n";
                     body << "</tr>\n";
                 }

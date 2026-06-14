@@ -1,13 +1,18 @@
 #include "GeneratorMaps.hpp"
 #include "GeneratorItems.hpp"
 #include "GeneratorMonsters.hpp"
+#include "GeneratorQuests.hpp"
 #include "Helper.hpp"
 #include "MapStore.hpp"
+#include "QuestStore.hpp"
 
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonMap/CommonMap.hpp"
+
+#include <QImage>
+#include <QString>
 
 #include <sstream>
 #include <fstream>
@@ -64,6 +69,37 @@ static std::string itemDisplayName(uint16_t id)
     return "Item #"+Helper::toStringUint(id);
 }
 
+// Resolve a wild-monster "id" attribute that may be numeric or a monster name
+// (map XML uses e.g. <monster id="Rhinocarpe" .../>), same logic as GeneratorMonsters
+static uint16_t resolveWildMonsterId(const char *idStr)
+{
+    if(!idStr)
+        return 0;
+    int n=std::atoi(idStr);
+    if(n>0 && CatchChallenger::CommonDatapack::commonDatapack.has_monster((uint16_t)n))
+        return (uint16_t)n;
+    static std::unordered_map<std::string,uint16_t> nameToId;
+    if(nameToId.empty())
+    {
+        for(CATCHCHALLENGER_TYPE_MONSTER mid=1;mid<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId();mid++)
+        {
+            if(!QtDatapackClientLoader::datapackLoader->has_monsterExtra(mid))
+                continue;
+            const DatapackClientLoader::MonsterExtra &mex=QtDatapackClientLoader::datapackLoader->get_monsterExtra(mid);
+            if(!mex.name.empty())
+                nameToId[mex.name]=mid;
+        }
+    }
+    std::unordered_map<std::string,uint16_t>::const_iterator it=nameToId.find(idStr);
+    if(it!=nameToId.end())
+        return it->second;
+    std::string lower=idStr;
+    for(size_t ci=0;ci<lower.size();ci++) lower[ci]=(char)std::tolower((unsigned char)lower[ci]);
+    if(CatchChallenger::CommonDatapack::commonDatapack.has_tempNameToMonsterId(lower))
+        return CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToMonsterId(lower);
+    return 0;
+}
+
 // ── Path / image helpers ──────────────────────────────────────────────
 
 static void buildPaths()
@@ -78,23 +114,21 @@ static void buildPaths()
     }
 }
 
-static bool runMap2Png(const std::string &tmxAbs, const std::string &pngAbs)
+// Read PNG dimensions from the IHDR chunk (width/height big-endian at offsets 16/20)
+static bool readPngSize(const std::string &path, int &width, int &height)
 {
-    const std::string &bin=Helper::map2pngPath();
-    if(bin.empty())
+    std::ifstream in(path,std::ios::binary);
+    if(!in.is_open())
         return false;
-    size_t pos=pngAbs.find_last_of('/');
-    if(pos!=std::string::npos)
-        Helper::mkpath(pngAbs.substr(0,pos));
-    std::string cmd=bin+" -platform offscreen \"";
-    cmd+=tmxAbs;
-    cmd+="\" \"";
-    cmd+=pngAbs;
-    cmd+="\" >/dev/null 2>&1";
-    int rc=std::system(cmd.c_str());
-    if(rc!=0)
+    unsigned char header[24];
+    in.read((char *)header,sizeof(header));
+    if(in.gcount()!=(std::streamsize)sizeof(header))
         return false;
-    return Helper::fileExists(pngAbs);
+    if(header[0]!=0x89 || header[1]!='P' || header[2]!='N' || header[3]!='G')
+        return false;
+    width=(header[16]<<24)|(header[17]<<16)|(header[18]<<8)|header[19];
+    height=(header[20]<<24)|(header[21]<<16)|(header[22]<<8)|header[23];
+    return width>0 && height>0;
 }
 
 // Parse start.xml for start map file names (same logic as GeneratorTree)
@@ -166,11 +200,20 @@ static int generateMapPreviews()
 
         for(const std::string &map : startMaps)
         {
-            // Check map exists in the loaded maps
+            // Check map exists in the loaded maps. Compare extension-less
+            // stems: parseStartMaps appends .tmx but the loader's map paths
+            // are stored WITHOUT it (mapPathToId keys are fileNameWihtoutTmx),
+            // so a raw compare never matched and no overview was generated.
+            std::string mapStem=map;
+            if(mapStem.size()>=4 && mapStem.compare(mapStem.size()-4,4,".tmx")==0)
+                mapStem=mapStem.substr(0,mapStem.size()-4);
             bool found=false;
             for(size_t mi=0;mi<sets[si].mapPaths.size();++mi)
             {
-                if(sets[si].mapPaths[mi]==map)
+                std::string p=sets[si].mapPaths[mi];
+                if(p.size()>=4 && p.compare(p.size()-4,4,".tmx")==0)
+                    p=p.substr(0,p.size()-4);
+                if(p==mapStem)
                 { found=true; break; }
             }
             if(!found)
@@ -202,19 +245,17 @@ static int generateMapPreviews()
             }
             std::cout << " done" << std::endl;
 
-            // Resize overview to preview (256x256) using ImageMagick convert
+            // Resize overview to preview (max 256x256, aspect kept — same as
+            // the PHP's `convert -resize 256x256`). In-process via QImage:
+            // the binary already links Qt6::Gui, no imagemagick dependency.
             if(Helper::fileExists(overviewPng))
             {
-                if(Helper::fileExists("/usr/bin/convert"))
-                {
-                    std::string resizeCmd="/usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/convert"
-                        " -limit memory 2GiB -limit map 2GiB -limit disk 4GiB \""
-                        +overviewPng+"\" -resize 256x256 \""+previewPng+"\" >/dev/null 2>&1";
-                    if(std::system(resizeCmd.c_str())!=0)
-                        std::cout << "convert resize failed" << std::endl;
-                }
-                else
-                    std::cout << "no /usr/bin/convert found, install imagemagick" << std::endl;
+                QImage ov(QString::fromStdString(overviewPng));
+                if(ov.isNull())
+                    std::cout << "preview resize failed: cannot read " << overviewPng << std::endl;
+                else if(!ov.scaled(256,256,Qt::KeepAspectRatio,Qt::SmoothTransformation)
+                            .save(QString::fromStdString(previewPng)))
+                    std::cout << "preview resize failed: cannot write " << previewPng << std::endl;
             }
             else
             {
@@ -236,18 +277,70 @@ static int generateMapPreviews()
             std::cout << " done" << std::endl;
     }
 
-    // Trim all PNGs with mogrify
-    if(Helper::fileExists("/usr/bin/mogrify"))
+    // Trim the transparent border of every PNG (the mogrify -trim of the
+    // PHP version, but in-process via QImage — no imagemagick dependency
+    // and no fork per file). Alpha-based only: -trim would also crop a
+    // uniform OPAQUE border (open sea…), which we don't want.
     {
-        std::string cmd="/usr/bin/find \""+mapsDir+"\" -name '*.png' -exec"
-            " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/mogrify -trim +repage {} \\; >/dev/null 2>&1";
         std::cout << "Trimming PNGs..." << std::flush;
-        if(std::system(cmd.c_str())!=0)
-            std::cout << "mogrify trim failed" << std::endl;
+        const std::vector<std::string> pngRels=Helper::getPngList(mapsDir);
+        for(const std::string &pngRel : pngRels)
+        {
+            const std::string png=mapsDir+pngRel;
+            QImage img(QString::fromStdString(png));
+            if(img.isNull() || !img.hasAlphaChannel())
+                continue;
+            const QImage a=img.convertToFormat(QImage::Format_ARGB32);
+            int minX=a.width(), minY=a.height(), maxX=-1, maxY=-1;
+            for(int y=0;y<a.height();++y)
+            {
+                const QRgb *line=reinterpret_cast<const QRgb *>(a.constScanLine(y));
+                for(int x=0;x<a.width();++x)
+                    if(qAlpha(line[x])!=0)
+                    {
+                        if(x<minX) minX=x;
+                        if(x>maxX) maxX=x;
+                        if(y<minY) minY=y;
+                        if(y>maxY) maxY=y;
+                    }
+            }
+            if(maxX<0)
+                continue; // fully transparent, leave as-is
+            if(minX==0 && minY==0 && maxX==a.width()-1 && maxY==a.height()-1)
+                continue; // nothing to trim
+            a.copy(QRect(minX,minY,maxX-minX+1,maxY-minY+1))
+                .save(QString::fromStdString(png));
+        }
         std::cout << " done" << std::endl;
     }
-    else
-        std::cout << "no /usr/bin/mogrify found, install imagemagick" << std::endl;
+
+    // Optimize the rendered PNGs: pngquant (lossy palette quantization —
+    // the flat-color tile renders shrink 60-80%) then zopflipng (lossless
+    // deflate re-compression) when installed. Each tool is optional; skip
+    // silently-ish when absent. Runs LAST so trim/resize aren't undone.
+    {
+        if(Helper::fileExists("/usr/bin/pngquant"))
+        {
+            std::cout << "Optimizing PNGs (pngquant)..." << std::flush;
+            std::string cmd="/usr/bin/find \""+mapsDir+"\" -name '*.png' -exec"
+                " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/pngquant"
+                " --force --skip-if-larger --ext .png --quality 65-95 {} \\; >/dev/null 2>&1";
+            std::system(cmd.c_str());
+            std::cout << " done" << std::endl;
+        }
+        else
+            std::cout << "no /usr/bin/pngquant found, install pngquant for smaller previews" << std::endl;
+        if(Helper::fileExists("/usr/bin/zopflipng"))
+        {
+            std::cout << "Optimizing PNGs (zopflipng)..." << std::flush;
+            std::string cmd="/usr/bin/find \""+mapsDir+"\" -name '*.png' -exec"
+                " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/zopflipng -y {} {} \\; >/dev/null 2>&1";
+            std::system(cmd.c_str());
+            std::cout << " done" << std::endl;
+        }
+        else
+            std::cout << "no /usr/bin/zopflipng found, install zopfli for smaller previews" << std::endl;
+    }
 
     return overviewCount;
 }
@@ -259,6 +352,8 @@ struct FightItemEntry { uint16_t id; uint32_t quantity; };
 
 struct BotStepData {
     std::string type; // shop, fight, heal, learn, warehouse, market, quests, clan, sell, zonecapture, industry, text
+    int stepId=0;     // XML id attribute; the anchor targets of intra-bot text links
+    std::string text; // en text of a "text" step (raw HTML from the CDATA)
     std::string shopId;
     uint8_t fightLocalId;
     bool isLeader;
@@ -382,6 +477,10 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
         meta.name=(pos!=std::string::npos)?mapStem.substr(pos+1):mapStem;
     }
 
+    // Fallback description: map name (old site showed "Map description: <name>")
+    if(meta.description.empty())
+        meta.description=meta.name;
+
     // Parse wild monster layers from XML (CATCHCHALLENGER_ONLYMAPRENDER leaves zones empty)
     {
         static const char *s_wildTypes[]={"grass","water","cave","waterRod","waterSuperRod","lava",nullptr};
@@ -401,8 +500,7 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
                 {
                     WildMonsterXmlEntry e;
                     e.id=0; e.minLevel=0; e.maxLevel=0; e.luck=0;
-                    if(mon->Attribute("id"))
-                        e.id=(uint16_t)std::atoi(mon->Attribute("id"));
+                    e.id=resolveWildMonsterId(mon->Attribute("id"));
                     if(mon->Attribute("minLevel") && mon->Attribute("maxLevel"))
                     {
                         e.minLevel=(uint8_t)std::atoi(mon->Attribute("minLevel"));
@@ -556,6 +654,10 @@ static MapMeta computeMapMeta(const CatchChallenger::CommonMap &m,
                 sd.fightCash=0;
                 const char *t=stepEl->Attribute("type");
                 if(t) sd.type=t;
+                if(stepEl->Attribute("id"))
+                    sd.stepId=std::atoi(stepEl->Attribute("id"));
+                if(sd.type=="text")
+                    sd.text=parseLocalizedText(stepEl,"text");
                 if(stepEl->Attribute("shop"))
                     sd.shopId=stepEl->Attribute("shop");
                 if(stepEl->Attribute("fightid"))
@@ -985,6 +1087,31 @@ static void ensureLocationImages()
 
 // ── Bot pages ─────────────────────────────────────────────────────────
 
+// Same rewriting the PHP bots.php applied to a text step's intra-bot links:
+// href="next" -> the next step's anchor, href="<digits>" -> that step's
+// anchor, anything else is emptied (the CDATA may carry arbitrary HTML).
+static std::string rewriteBotStepText(const std::string &text, int stepId)
+{
+    std::string out=text;
+    size_t pos=0;
+    while((pos=out.find("a href=\"",pos))!=std::string::npos)
+    {
+        size_t start=pos+8;
+        size_t end=out.find('"',start);
+        if(end==std::string::npos)
+            break;
+        std::string link=out.substr(start,end-start);
+        std::string repl;
+        if(link=="next")
+            repl="#step"+Helper::toStringInt(stepId+1);
+        else if(!link.empty() && link.find_first_not_of("0123456789")==std::string::npos)
+            repl="#step"+link;
+        out.replace(start,end-start,repl);
+        pos=start+repl.size()+1;
+    }
+    return out;
+}
+
 struct BotPage {
     uint8_t botId;
     std::string rel;
@@ -1082,14 +1209,76 @@ static std::vector<BotPage> generateBotPages(
             body << "</div></div>\n";
         }
 
+        // Quest start (quests whose starting bot is this one — old PHP section).
+        // Quest bot ids are datapack-global; only trust a match when the
+        // quest's starting map (own attribute, or the unambiguous map the
+        // bot id is defined on) is THIS map.
+        {
+            const QuestStore::MainCodeSet *qset=QuestStore::setForMainCode(mainCode);
+            if(qset!=nullptr)
+            {
+                const std::string thisTmx=mapStem+".tmx";
+                std::vector<const QuestStore::Quest *> started;
+                for(const QuestStore::Quest &q : qset->quests)
+                {
+                    if(!q.hasBot || q.botId!=bd.localId)
+                        continue;
+                    std::string startTmx=q.mapTmxPath;
+                    if(startTmx.empty())
+                    {
+                        std::map<uint32_t,QuestStore::BotInfo>::const_iterator bit=qset->bots.find(q.botId);
+                        if(bit!=qset->bots.end() && !bit->second.ambiguous)
+                            startTmx=bit->second.mapTmxPath;
+                    }
+                    if(startTmx!=thisTmx)
+                        continue;
+                    started.push_back(&q);
+                }
+                if(!started.empty())
+                {
+                    body << "<div class=\"subblock\"><div class=\"valuetitle\">Quest start</div><div class=\"value\">"
+                         << "<table class=\"item_list item_list_type_normal\">\n"
+                         << "<tr class=\"item_list_title item_list_title_type_normal\">\n"
+                         << "\t<th>Quests</th>\n\t<th>Repeatable</th>\n\t<th>Rewards</th>\n</tr>\n";
+                    for(const QuestStore::Quest *q : started)
+                    {
+                        std::string qurl=Helper::relUrl(GeneratorQuests::relativePathForQuest(mainCode,q->id));
+                        body << "<tr class=\"value\">\n"
+                             << "<td><a href=\"" << Helper::htmlEscape(qurl) << "\" title=\"" << Helper::htmlEscape(q->name)
+                             << "\">" << Helper::htmlEscape(q->name) << "</a></td>\n"
+                             << "<td>" << (q->repeatable?"Yes":"No") << "</td>\n"
+                             << "<td><div class=\"subblock\"><div class=\"value\"><table>\n";
+                        for(const QuestStore::RewardItem &ri : q->rewardItems)
+                        {
+                            if(!ri.itemOk)
+                                continue;
+                            std::string qText;
+                            if(ri.quantity>1)
+                                qText=Helper::toStringUint(ri.quantity)+" ";
+                            body << "<tr class=\"value\">\n";
+                            writeItemIconAndName(body,ri.itemId,qText);
+                            body << "</tr>\n";
+                        }
+                        body << "</table></div></div></td>\n</tr>\n";
+                    }
+                    body << "<tr>\n\t<td colspan=\"3\" class=\"item_list_endline item_list_title_type_normal\"></td>\n</tr>\n</table>\n</div></div>\n";
+                }
+            }
+        }
+
         // Step details
         int stepIdx=0;
         for(const BotStepData &step : bd.steps)
         {
             stepIdx++;
+            // The XML id attribute is what intra-bot text links target;
+            // keep the sequential count as fallback when it is absent.
+            if(step.stepId>0)
+                stepIdx=step.stepId;
             if(step.type=="text")
             {
                 body << "<div class=\"subblock\"><div class=\"valuetitle\" id=\"step" << stepIdx << "\">Text</div><div class=\"value\">\n";
+                body << rewriteBotStepText(step.text,stepIdx) << "\n";
                 body << "</div></div>\n";
             }
             else if(step.type=="shop")
@@ -1291,15 +1480,12 @@ void generate()
             std::vector<BotPage> botPages=generateBotPages(meta.bots,m,mainCode,mapStem,meta.name,meta.zoneCode);
             Helper::setCurrentPage(rel);
 
-            // Best-effort map preview
+            // Map preview: rendered by generateMapPreviews() into the maps/ output
+            // tree; embed only if the PNG exists (no --map2png ⇒ no PNG, no image)
             std::string previewRel;
             {
-                const std::string tmxAbs=Helper::datapackPath()+"map/main/"+mainCode+"/"+mapPath;
-                const std::string pngRel="map/"+mainCode+"/"+mapStem+".png";
-                const std::string pngAbs=Helper::localPath()+pngRel;
-                if(!Helper::fileExists(pngAbs) && runMap2Png(tmxAbs,pngAbs))
-                    previewRel=pngRel;
-                else if(Helper::fileExists(pngAbs))
+                const std::string pngRel="maps/"+mainCode+"/"+mapStem+".png";
+                if(Helper::fileExists(Helper::localPath()+pngRel))
                     previewRel=pngRel;
             }
 
@@ -1318,12 +1504,25 @@ void generate()
 
             if(!previewRel.empty())
             {
+                int pw=0, ph=0;
+                std::string sizeAttrs;
+                if(readPngSize(Helper::localPath()+previewRel,pw,ph))
+                {
+                    int ratio=1;
+                    if(pw>1600 || ph>800)
+                        ratio=4;
+                    else if(pw>800 || ph>400)
+                        ratio=2;
+                    std::ostringstream sa;
+                    sa << " width=\"" << ((double)pw/ratio) << "\" height=\"" << ((double)ph/ratio) << "\"";
+                    sizeAttrs=sa.str();
+                }
                 body << "<div class=\"value mapscreenshot datapackscreenshot\"><a href=\""
                      << Helper::htmlEscape(Helper::relUrl(previewRel))
                      << "\"><center><img src=\"" << Helper::htmlEscape(Helper::relUrl(previewRel))
                      << "\" alt=\"Screenshot of " << Helper::htmlEscape(meta.name)
                      << "\" title=\"Screenshot of " << Helper::htmlEscape(meta.name)
-                     << "\" /></center></a></div>\n";
+                     << "\"" << sizeAttrs << " /></center></a></div>\n";
             }
 
             if(!meta.description.empty())
@@ -1515,13 +1714,9 @@ void generate()
                          << Helper::htmlEscape(layer.layerName) << "\n"
                          << "</th>\n</tr>\n";
 
-                    // Sort monsters by luck descending
-                    std::vector<WildMonsterXmlEntry> sorted=layer.monsters;
-                    std::sort(sorted.begin(),sorted.end(),[](const WildMonsterXmlEntry &a, const WildMonsterXmlEntry &b){
-                        return a.luck>b.luck;
-                    });
-
-                    for(const WildMonsterXmlEntry &wm : sorted)
+                    // Keep XML document order (PHP's monsterMapOrderGreater is a
+                    // no-op when every entry belongs to the same sub-datapack)
+                    for(const WildMonsterXmlEntry &wm : layer.monsters)
                     {
                         std::string mname=QtDatapackClientLoader::datapackLoader->has_monsterExtra(wm.id)?QtDatapackClientLoader::datapackLoader->get_monsterExtra(wm.id).name:("Monster #"+Helper::toStringUint(wm.id));
                         std::string link=Helper::relUrl(GeneratorMonsters::relativePathForMonster(wm.id));
@@ -1876,10 +2071,10 @@ void generate()
             if(!Helper::fileExists(overviewPng) || !Helper::fileExists(previewPng))
                 break;
 
-            // Get preview image size for ratio calculation
-            // Simple approach: use fixed 256x256 (the resize target)
-            // PHP reads actual size and applies ratio if >1600/800 pixels
+            // Real preview size (aspect-kept resize means it's rarely the
+            // full 256x256 — the 2022 page showed e.g. 256x114).
             int pw=256, ph=256;
+            readPngSize(previewPng,pw,ph);
             int ratio=1;
             if(pw>1600 || ph>800)
                 ratio=4;

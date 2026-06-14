@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" width="19" height="17" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="2">
+ <properties>
+  <property name="type" value="indoor"/>
+ </properties>
+ <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/heal.tsx"/>
+ <layer id="1" name="Walkable" width="19" height="17">
+  <data encoding="base64" compression="zlib">
+   eJzl0MkvXmEUB2Bf2VViaMJSUiXx56Bdm4caFkqXhiYtlqqSakVJTBsssWu7rK5alNa00MFQLbWhFM+XWNzIx7WU9OQ+ycn9nXveNzcu7v+uXPLI5y73rvhdAYUUUUwJpZRRTgWV3KeKamqoPbenjgfU08DDkHMbaaKZFh4Fssc8oZU22kN2dfCUTp7RFcie080LXtJz9r6XV/TRH5gfYJAhhhmJcd4oY4yH3GuCSaYumXnNG96G7HrHNO8vyD/wkRlmmeMT8yzwmS8sssQyK6ye27PGV77xnR+ss8EmW/xkm1/8Zodd/rAX4277HPCXQ474xzEn0YGIhxvEkxC5+D/clCUG8iR9MimkciuQpenTL9kVrYxAflufyR2yyA5kOSF7rlOdAtjmSRk=
+  </data>
+ </layer>
+ <layer id="2" name="Other" width="19" height="17">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRAAAFDAAB
+  </data>
+ </layer>
+ <layer id="3" name="Collisions" width="19" height="17">
+  <data encoding="base64" compression="zlib">
+   eJyt0MkuQ1Ecx/HbBQkJCVpa2mpNrSqd59Y8zyszj8DO/ALmF7BhycK8IGFhXpB4BE/B1rdJGyc3vVTjn3xy/jn/c3735BZIklSIIqihQTFKoIUOpSiDHgYYUQ4TzKhAJapQjRpYYEUtbKiDHfVogANOuOCGB1744EcAQYQQRgRRxNCIJjSjBa1oQzs60IkudKMHvehDPwYwiCEMS6lrBKMYwzgmMIkpTGNG4V66NYu5+PdVqefzWMAilrCMFawq5MVzlLLWsI4NbGIL29jJIGs3xd4e9n/JOqA/lM2OcIwTnOIM57iQnbvElZB1TX8jO3OLO9zjAY94wrPs3Atehaw3hXenW+/Sz//rr5XM+qD/zDAji/vZqu+sHOQK78ujz1d4r5p9jTDT0uuELD0MMCbOmFjNClkW9q2JmY21DnYhywEnXHDDAy988COAIEIII4IoYkJGMue/fAG3Lz1U
+  </data>
+ </layer>
+ <layer id="4" name="Other" width="19" height="17">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRAAAFDAAB
+  </data>
+ </layer>
+ <layer id="5" name="WalkBehind" width="19" height="17">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRAAAFDAAB
+  </data>
+ </layer>
+ <layer id="6" name="other" width="19" height="17">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRAAAFDAAB
+  </data>
+ </layer>
+ <objectgroup id="7" name="Moving">
+  <object id="1" type="teleport on push" gid="3" x="144" y="256" width="16" height="16">
+   <properties>
+    <property name="map" value="building-heal"/>
+    <property name="x" type="int" value="2"/>
+    <property name="y" type="int" value="5"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

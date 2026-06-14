@@ -15,6 +15,7 @@ add_executable(datapack-explorer-generator
     main.cpp
     Helper.cpp
     MapStore.cpp
+    QuestStore.cpp
     Generator.cpp
     GeneratorItems.cpp
     GeneratorMonsters.cpp
@@ -43,6 +44,12 @@ target_compile_definitions(datapack-explorer-generator PRIVATE
     NOTHREADS
     CATCHCHALLENGER_CLIENT
     CATCHCHALLENGER_NOAUDIO
+    # SOLO compiles in the loaders for buffs, monster-evolution items and
+    # item-to-learn (CommonDatapack::parseBuff & co are #ifdef'd out
+    # otherwise) — without it buffs.html and the items Learn/Evolution
+    # data come out empty. main.cpp pins rates_xp_pow=1000 to keep the
+    # SOLO xp scaling neutral.
+    CATCHCHALLENGER_SOLO
     SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
 )
 

@@ -14,6 +14,7 @@
 #include "Helper.hpp"
 #include "Generator.hpp"
 #include "MapStore.hpp"
+#include "QuestStore.hpp"
 
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../client/libqtcatchchallenger/Settings.hpp"
@@ -115,9 +116,14 @@ static bool checkForErrors(const std::string &output, const std::string &phase)
             {
                 size_t eol=output.find('\n',pos);
                 std::string line=(eol!=std::string::npos)?output.substr(pos,eol-pos):output.substr(pos);
+                pos=(eol!=std::string::npos)?eol+1:output.size();
+                // Same exception as the "0 quest(s)" check above: quests are
+                // optional content, so a main without a quests/ dir at all
+                // (e.g. a gba2cc-converted region) is fine too.
+                if(line.find("/quests/")!=std::string::npos)
+                    continue;
                 std::cerr << "ERROR during " << phase << ": " << line << std::endl;
                 hasError=true;
-                pos=(eol!=std::string::npos)?eol+1:output.size();
             }
         }
     }
@@ -164,6 +170,9 @@ int main(int argc, char *argv[])
         std::cout << "  --map2png=PATH         Path to the map2png binary for map image generation" << std::endl;
         std::cout << "                         Called with -platform offscreen. If not set or empty," << std::endl;
         std::cout << "                         map preview/overview images are not generated" << std::endl;
+        std::cout << "  --siteprefix=PATH      Site-absolute path the output is served under" << std::endl;
+        std::cout << "                         (default: official-server/datapack-explorer/);" << std::endl;
+        std::cout << "                         used to rewrite the template's \"/...\" links" << std::endl;
         std::cout << "  --help, -h             Show this help message" << std::endl;
         return 0;
     }
@@ -194,6 +203,8 @@ int main(int argc, char *argv[])
     Helper::setLocalPath(localPath);
     Helper::setDatapackPath(datapackPath);
     Helper::setMap2PngPath(map2pngPath);
+    if(hasArg(args,"--siteprefix"))
+        Helper::setSitePrefix(argValue(args,"--siteprefix"));
 
     // Load template.html next to the binary / source dir. It must contain
     // ${TITLE}, ${CONTENT} and ${AUTOGEN} placeholders which are replaced
@@ -227,6 +238,13 @@ int main(int argc, char *argv[])
         QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
 
     Language::language.setLanguage(QStringLiteral("en"));
+
+    // The build defines CATCHCHALLENGER_SOLO so the loaders compile in the
+    // buff / evolution-item / item-to-learn data this explorer documents.
+    // Under SOLO the monster loader scales xp pow by rates_xp_pow/1000;
+    // the default is 0 (set by the server from its config), which would
+    // zero every monster's xp curve here — pin the neutral rate.
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow=1000;
 
     // Parse base datapack (monsters, items, buffs, plants, skills, types, etc.)
     std::cout << "Parsing datapack: " << datapackPath << std::endl;
@@ -346,6 +364,7 @@ int main(int argc, char *argv[])
             }
 
             MapStore::addFromCurrentLoader(code);
+            QuestStore::addFromCurrentLoader(code);
         }
     }
 

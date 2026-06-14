@@ -474,10 +474,16 @@ bool MapServerMini::preload_step2b()
         {
             const CatchChallenger::Teleporter &teleporterEntry=teleporters[index];
             const uint8_t x=teleporterEntry.source_x,y=teleporterEntry.source_y;
-            const uint16_t &codeZone=step2.map[x+y*this->width];
+            //guard the teleporter SOURCE coords: a source cell outside this map
+            //(x>=width or y>=height) would index step2.map / flat_simplified_map
+            //out of bounds. The destination is checked below; the source was not
+            //— an out-of-range teleporter (e.g. from an incomplete maincode)
+            //crashed the bot here. Short-circuit so the index is never formed
+            //out of range; skip such an entry.
             //if current not dirt or other not walkable layer
-            if(flat_simplified_map[x+y*this->width]!=254)
+            if(x<this->width && y<this->height && flat_simplified_map[x+y*this->width]!=254)
             {
+                const uint16_t &codeZone=step2.map[x+y*this->width];
                 if(codeZone!=0)
                 {
                     BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;

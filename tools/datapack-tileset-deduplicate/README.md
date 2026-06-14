@@ -27,6 +27,8 @@ datapack-tileset-deduplicate --batch <path>              # headless: auto-merge 
 datapack-tileset-deduplicate --check-all <path>          # also dedup within each tileset
 datapack-tileset-deduplicate --reset-skips <path>        # forget all previously SKIP-ped tiles
 datapack-tileset-deduplicate --migrate-from a.tsx --migrate-to b.tsx   # replace tileset a with b everywhere
+datapack-tileset-deduplicate --move-from a.tsx --move-to dir/a.tsx [--move-image]  # relocate a.tsx (and its .png with --move-image), fix every map's relative path
+datapack-tileset-deduplicate --merge-used --merge-out dir/t.tsx [--merge-keep a.tsx,b.tsx] [<path>]  # pack the used tiles of all maps into ONE tileset
 datapack-tileset-deduplicate --stat [<path>]             # list each .tsx with its tile/map usage
 datapack-tileset-deduplicate --remove a.tsx              # delete a.tsx (+image) and clear it from all maps
 ```
@@ -151,8 +153,65 @@ its **local tile id** (so `a` and `b` must share the same tile layout) — then 
 `a.tsx` and its image** (`.png`). If a map already uses `b.tsx`, the two are merged
 (`a`'s cells move into `b`'s id range). No deduplication is run; this is a one-shot
 tileset replacement. With no `<datapack_path>` the maps are searched from the parent of
-`a.tsx`'s directory. Maps with a missing/unresolved tileset are skipped (and reported),
-as elsewhere.
+`a.tsx`'s directory.
+
+A map that carries an **unresolved tileset** (e.g. an intentional `missing.tsx` left in to
+test server robustness) can't go through libtiled — re-serializing it would shift every
+later `firstgid` and corrupt the cells. Instead such a map is **repointed in text**: only
+`a.tsx`'s `<tileset source>` string is swapped to `b.tsx` (same `firstgid`, so the cells'
+gids stay valid); the dangling entry and every base64/zstd layer is left byte-for-byte
+untouched. The one case still skipped (and reported) is when the dangling map *already*
+uses `b.tsx` — merging the two id ranges would need a gid remap that a text edit can't do.
+
+## Move (relocate) a tileset
+
+```sh
+datapack-tileset-deduplicate --move-from <a.tsx> --move-to <dir/a.tsx> [<datapack_path>]
+```
+
+**Physically relocates** `a.tsx` to the new path (which may add new sub-folders — they
+are created) **without changing its tiles**, then rewrites **every `.tmx`** under the
+path that references it so its `<tileset source>` uses the **new relative path** (computed
+per map, so each map's own depth is respected). Unlike `--migrate-*` this keeps the
+*same* tileset — it only moves the file and fixes the links.
+
+The tileset's **image is not moved**: the relocated `.tsx` keeps the same `.png`, with its
+`<image source>` rewritten relative to the new `.tsx` location (the rest of the `.tsx` is
+copied byte-for-byte, so `trans`/animations/properties survive untouched). `--move-to` is
+resolved relative to the current directory when not absolute; it must end in `.tsx` and
+must not already exist. With no `<datapack_path>` the **current directory** (and below) is
+the scan root.
+
+A map carrying an **unresolved tileset** (an intentional `missing.tsx`, etc.) is **repointed
+in text** — only the moved tileset's `<tileset source>` is rewritten to the new relative
+path; the dangling entry and all encoded layer data stay byte-for-byte identical (a move
+never merges tilesets, so this is always safe). The original `.tsx` is deleted once every
+referencing map (resolvable or dangling) has been repointed.
+
+By default only the `.tsx` moves and its `<image source>` is rewritten to keep pointing at
+the image where it sits. Pass **`--move-image`** to relocate the `.png` alongside the `.tsx`
+(the new `.tsx` then references it by bare filename) for a self-contained tileset folder.
+
+## Merge the used tiles of every map into one tileset (`--merge-used`)
+
+```sh
+datapack-tileset-deduplicate --merge-used --merge-out <dir/t.tsx> [--merge-keep a.tsx,b.tsx] [<path>]
+```
+
+Scans every `.tmx` under the path, gathers the tiles **actually used** (tile-layer cells +
+object gids) from each **resolvable** tileset, collapses identical 16×16 tiles, and packs the
+unique ones into **one** new tileset (`.tsx` + `.png` at `--merge-out`). Every map is then
+rewritten to that single tileset: the merged-away `<tileset>` entries are dropped, the new one
+is appended (at a `firstgid` above all others), and each cell/object gid is remapped — flip
+flags preserved.
+
+`--merge-keep` lists tileset **basenames** to leave as **separate** references (never merged) —
+e.g. the engine's `invisible.tsx` markers or an animated `animations.tsx`. **Unresolved**
+tilesets (e.g. an intentional `missing.tsx`) are always kept untouched. It works directly on
+the gid / base64+zstd layer data, so **maps with a dangling tileset are handled too** (unlike
+the libtiled-based passes) and every untouched layer stays byte-for-byte identical. With no
+`<path>` the **current directory** (and below) is scanned. Verify with `map2png`: a map renders
+pixel-for-pixel identically before and after.
 
 ## Tileset usage report (`--stat`)
 
@@ -225,12 +284,19 @@ keeps the merge history), or just delete those lines / the whole `tile-dedup.log
 hand. (Deleting the log does **not** undo merges — those are already applied to the
 maps and `.png` files.)
 
-## Maps with a missing tileset are left untouched
+## Maps with an unresolved tileset
 
 If a map references a `.tsx` whose file is missing (or whose image fails to load),
-it is **skipped** and reported: libtiled reads a dangling tileset as an empty
-placeholder, and rewriting would shift every later tileset's `firstgid` and corrupt
-the map. Fix the dangling reference, then re-run.
+libtiled reads it as an empty placeholder, so **re-serializing** the map would shift
+every later tileset's `firstgid` and corrupt the cells. How each operation copes:
+
+* **`--migrate` / `--move`** — repoint the affected `<tileset source>` **in text**
+  (no re-serialization), so the map *is* updated while the dangling entry (e.g. an
+  intentional `missing.tsx`, kept on purpose to test server robustness) and all encoded
+  layer data stay byte-for-byte intact. `--migrate` still skips a dangling map only when
+  it already uses the migrate-to tileset (that merge needs a gid remap).
+* **`--remove` and the dedup pass** — still **skip** dangling maps (and report them):
+  clearing/merging cells needs the gid surgery a text edit can't do safely.
 
 ## Implementation
 
