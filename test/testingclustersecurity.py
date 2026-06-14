@@ -67,7 +67,7 @@ import build_paths                   # noqa: E402
 # Two cluster builds (HARDENED off + on) + the qtcpu800x600 client + ephemeral
 # PG + two boots + respawning batteries. Cold ccache makes the builds the long
 # pole. Kept in lock-step with all.sh PER_TEST_TIMEOUT_MAP / wall_cap.py.
-WALL_LIMIT_SEC = 60 * 60
+WALL_LIMIT_SEC = 90 * 60
 faulthandler.enable()
 faulthandler.dump_traceback_later(WALL_LIMIT_SEC + 10, exit=False)
 
