@@ -1,0 +1,43 @@
+# Valgrind suppressions for testingclustersecurity.py.
+#
+# The cluster binaries are io_uring-only. The io_uring completion queue is
+# shared memory the KERNEL writes to; valgrind cannot see those writes, so it
+# false-flags "uninitialised value" reads in liburing's CQE-reaping path. These
+# are NOT real defects — suppress them so only genuine problems are reported.
+
+{
+   io_uring-get-cqe-cond
+   Memcheck:Cond
+   fun:__io_uring_get_cqe
+}
+{
+   io_uring-get-cqe-value8
+   Memcheck:Value8
+   fun:__io_uring_get_cqe
+}
+{
+   io_uring-get-cqe-value4
+   Memcheck:Value4
+   fun:__io_uring_get_cqe
+}
+{
+   io_uring-liburing-cond
+   Memcheck:Cond
+   obj:*liburing*
+}
+{
+   io_uring-liburing-value8
+   Memcheck:Value8
+   obj:*liburing*
+}
+{
+   io_uring-liburing-value4
+   Memcheck:Value4
+   obj:*liburing*
+}
+{
+   io_uring-enter-param
+   Memcheck:Param
+   io_uring_enter(sig)
+   fun:*io_uring_enter*
+}

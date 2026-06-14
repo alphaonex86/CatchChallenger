@@ -103,6 +103,110 @@ CORRUPTION_MARKERS = (
 )
 TRIPWIRE_MARKER = "protocol parsing was wrong"
 
+# ── valgrind (default) ───────────────────────────────────────────────────────
+# By default EVERY spawned server runs under valgrind memcheck and any defect it
+# reports (errors / definite+indirect leaks, minus the suppressed io_uring CQE
+# false positives) FAILS the test. Disable with CC_CLUSTERSEC_NO_VALGRIND=1
+# (then the harness falls back to the HARDENED on/off + crash-detection passes).
+import process_helpers              # noqa: E402  (valgrind-safe preexec)
+VALGRIND = (os.environ.get("CC_CLUSTERSEC_NO_VALGRIND", "") == ""
+            and shutil.which("valgrind") is not None)
+_SUPP = os.path.join(SELF_DIR, "clustersec-valgrind.supp")
+# Under valgrind only the production (non-HARDENED) build is meaningful: valgrind
+# is the detector, and a HARDENED abort would just cut the analysis short.
+FLAVOURS = [False] if VALGRIND else [False, True]
+# RelWithDebInfo so valgrind backtraces carry file:line.
+VG_DEBUG = ["-DCMAKE_BUILD_TYPE=RelWithDebInfo"] if VALGRIND else []
+
+
+def enable_valgrind():
+    TC.ServerProc.launch_wrapper = [
+        "valgrind", "--tool=memcheck", "--leak-check=full",
+        "--show-leak-kinds=definite,indirect",
+        # The servers are SIGTERM'd and do not free on abrupt exit, so valgrind
+        # reports their in-use allocations as "leaked" — kill-time noise, not
+        # runtime bugs. --errors-for-leak-kinds=none keeps leaks OUT of ERROR
+        # SUMMARY (valgrind's default is definite,possible), so ERROR SUMMARY
+        # counts only real defects (invalid read/write, use-after-free,
+        # mismatched free, branch-on-uninitialised). Leaks are surfaced
+        # separately as info and do NOT fail the run.
+        "--errors-for-leak-kinds=none",
+        "--error-exitcode=0", "--child-silent-after-fork=yes",
+        "--num-callers=25", f"--suppressions={_SUPP}",
+        "--log-file=valgrind.%p.log",   # relative to the server's work_dir
+    ]
+    # valgrind needs a preexec WITHOUT the RLIMIT_AS/CPU caps (they kill it).
+    TC.ServerProc.child_preexec = process_helpers.setsid_and_pdeathsig
+    TC.READY_TIMEOUT = 600              # valgrind boots are 10-30x slower
+
+
+def parse_valgrind(log_path):
+    """(errors, lost_bytes, detail) from a valgrind --log-file. errors excludes
+    suppressed io_uring noise; lost_bytes = definitely+indirectly lost."""
+    try:
+        with open(log_path, "r", errors="replace") as f:
+            txt = f.read()
+    except OSError:
+        return 0, 0, ""
+    errors = 0
+    lost = 0
+    detail_lines = []
+    for line in txt.splitlines():
+        if "ERROR SUMMARY:" in line:
+            try:
+                errors = int(line.split("ERROR SUMMARY:")[1].split("errors")[0].strip())
+            except (ValueError, IndexError):
+                pass
+        elif "definitely lost:" in line or "indirectly lost:" in line:
+            try:
+                n = int(line.split("lost:")[1].split("bytes")[0].replace(",", "").strip())
+                lost += n
+            except (ValueError, IndexError):
+                pass
+        elif ("Mismatched free" in line or "Invalid read" in line
+              or "Invalid write" in line or "Invalid free" in line
+              or "uninitialised" in line or "SizeMismatch" in line
+              or ("lost in loss record" in line)):
+            detail_lines.append(line.split("== ")[-1].strip()[:90])
+    return errors, lost, " | ".join(detail_lines[:4])
+
+
+def report_valgrind_defects():
+    """Scan every server's valgrind log under the clustersec run tree and FAIL on
+    any reported defect."""
+    import glob
+    base = os.path.join(TC.TMPFS_ROOT, "clustersec")
+    logs = sorted(glob.glob(os.path.join(base, "**", "valgrind.*.log"),
+                            recursive=True))
+    if not logs:
+        log_fail("valgrind", "no valgrind logs produced — servers did not run "
+                             "under valgrind")
+        return
+    clean = 0
+    total_lost = 0
+    seen_defects = set()
+    for lp in logs:
+        errors, lost, detail = parse_valgrind(lp)
+        who = os.path.relpath(os.path.dirname(lp), base)
+        total_lost += lost
+        if errors > 0:
+            # Dedupe by (server-role, defect signature) so the same bug across
+            # the 9 http-mirror reboots is reported once.
+            role = who.split("/")[-1]
+            sig = (role, detail)
+            if sig not in seen_defects:
+                seen_defects.add(sig)
+                log_fail(f"valgrind error: {role}",
+                         f"{errors} memcheck errors :: {detail}")
+        else:
+            clean += 1
+    log_pass("valgrind", f"{clean}/{len(logs)} server runs error-clean under "
+                         "memcheck (io_uring CQE noise suppressed)")
+    if total_lost > 0:
+        # Informational: leaks at SIGTERM-kill are not runtime bugs.
+        log_info(f"valgrind: {total_lost} bytes reported leaked across "
+                 f"{len(logs)} runs (kill-time, not failing).")
+
 # ── gateway (DB-less proxy) — probed with a file-db server-cli backend ────────
 # The gateway is client-facing and needs NO SQL: it proxies to a file-db
 # server-cli backend (as testinggateway.py does). With empty rewrite URLs it
@@ -182,7 +286,7 @@ def log_fail(name, detail=""):
 def build_cluster(base, hardened):
     """Build master + login + game-server-alone (in-protocol-push variant, so no
     nginx mirror is needed) for the requested flavour. Returns (ok, detail)."""
-    flags = list(BASE_FLAGS)
+    flags = list(BASE_FLAGS) + VG_DEBUG
     flags.append("-DCATCHCHALLENGER_HARDENED=" + ("ON" if hardened else "OFF"))
     for sub, bd in (("server/master", "server_master"),
                     ("server/login", "server_login")):
@@ -256,6 +360,12 @@ def _run_client(binpath, env, timeout):
 
 
 def drive_client(timeout=90):
+    if VALGRIND:
+        # Under valgrind the servers are 10-30x slower, so the datapack sync the
+        # client waits on can't complete in a sane timeout. The reach-map proof
+        # is the non-valgrind run's job; here we only care about memcheck
+        # defects from the probe batteries, so skip it.
+        return True, "skipped (valgrind: servers too slow for the reach-map proof)"
     candidates = [("qtcpu800x600", CLIENT_BIN, _qtcpu_env),
                   ("qtopengl", TC.CLIENT_BIN, _plain_env)]
     last = "no client available"
@@ -815,12 +925,13 @@ def build_gateway_stack(gw_base):
     ok, detail = TC.cmake_configure_and_build(
         "server/cli", os.path.join(gw_base, "server_cli_filedb"),
         ["-DCATCHCHALLENGER_DB_FILE=ON",
-         "-DCATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE=ON"])
+         "-DCATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE=ON"] + VG_DEBUG)
     if not ok:
         return False, "backend: " + detail
-    for hard, sub in ((False, "server_gateway"), (True, "server_gateway_hard")):
+    for hard in FLAVOURS:
+        sub = "server_gateway_hard" if hard else "server_gateway"
         flags = ["-DCATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE=ON",
-                 "-DCATCHCHALLENGER_HARDENED=" + ("ON" if hard else "OFF")]
+                 "-DCATCHCHALLENGER_HARDENED=" + ("ON" if hard else "OFF")] + VG_DEBUG
         ok, detail = TC.cmake_configure_and_build(
             "server/gateway", os.path.join(gw_base, sub), flags)
         if not ok:
@@ -910,8 +1021,8 @@ def gateway_phase():
         return
     log_pass("gateway backend start", f"file-db backend :{GW_BACKEND_PORT}")
     try:
-        run_gateway_pass(False, gw_base, backend)
-        run_gateway_pass(True, gw_base, backend)
+        for hardened in FLAVOURS:
+            run_gateway_pass(hardened, gw_base, backend)
     finally:
         try:
             backend.stop()          # free GW_BACKEND_PORT for the http-mirror attacks
@@ -935,10 +1046,11 @@ def cluster_phase():
         log_pass("build qtcpu800x600", "ok")
     else:
         log_fail("build qtcpu800x600", detail[-400:])
-    for label, base, hardened in (("production", base_prod, False),
-                                  ("hardened",   base_hard, True)):
+    base_for = {False: base_prod, True: base_hard}
+    for hardened in FLAVOURS:
+        label = "hardened" if hardened else "production"
         log_info(f"building cluster ({label}) ...")
-        ok, detail = build_cluster(base, hardened)
+        ok, detail = build_cluster(base_for[hardened], hardened)
         if not ok:
             log_fail(f"build cluster ({label})", detail[-400:])
             return
@@ -949,8 +1061,8 @@ def cluster_phase():
         log_fail("postgresql", detail)
         return
     try:
-        run_pass(False, base_prod)
-        run_pass(True, base_hard)
+        for hardened in FLAVOURS:
+            run_pass(hardened, base_for[hardened])
     finally:
         try:
             TC.stop_postgresql()
@@ -961,9 +1073,19 @@ def cluster_phase():
 # ── main ─────────────────────────────────────────────────────────────────────
 def main():
     t0 = time.monotonic()
+    if VALGRIND:
+        enable_valgrind()
+        log_info("VALGRIND mode (default): every spawned server runs under "
+                 "memcheck; production build only; defects reported at the end. "
+                 "Disable with CC_CLUSTERSEC_NO_VALGRIND=1.")
+    else:
+        log_info("valgrind disabled — HARDENED on/off + crash-detection passes.")
     # Gateway: DB-less, runs everywhere. Cluster: needs PostgreSQL (self-skips).
     gateway_phase()
-    cluster_phase()
+    if os.environ.get("CC_CLUSTERSEC_GW_ONLY", "") == "":
+        cluster_phase()
+    if VALGRIND:
+        report_valgrind_defects()
 
     n_fail = sum(1 for ok, _, _ in _results if not ok)
     n_pass = sum(1 for ok, _, _ in _results if ok)

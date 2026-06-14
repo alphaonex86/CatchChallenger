@@ -29,6 +29,7 @@ sys.dont_write_bytecode = True
 import os
 import resource
 import signal
+import shutil
 import subprocess
 import time
 
@@ -42,6 +43,14 @@ from cmd_helpers import clamp_local
 build_paths.ensure_root()
 
 DIAG = diagnostic.parse_diag_args()
+# Operator request: this test exercises real CLI-server engine code (PathFinding)
+# in a tiny binary that exits in well under a second, so run it under valgrind
+# memcheck BY DEFAULT and report any defect (the wrapper's --error-exitcode=23
+# fails the run). An explicit --sanitize / --valgrind / --profile still wins;
+# CC_NO_VALGRIND=1 opts out (and it self-skips if valgrind isn't installed).
+if not DIAG and os.environ.get("CC_NO_VALGRIND", "") == "" \
+        and shutil.which("valgrind") is not None:
+    DIAG = {"mode": "valgrind", "tool": "memcheck"}
 _DIAG_SUFFIX = diagnostic.build_dir_suffix(DIAG)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
