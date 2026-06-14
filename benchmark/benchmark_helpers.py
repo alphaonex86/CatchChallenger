@@ -20,6 +20,7 @@ import random
 import re
 import shlex
 import shutil
+import socket
 import statistics
 import subprocess
 import sys
@@ -255,6 +256,164 @@ def benchmark_exec_nodes():
                 "lxc_nfs":        ex.get("lxc_nfs"),
             })
     return out
+
+
+# ---- dual 32/64-bit variant expansion -----------------------------------
+# A 64-bit-capable exec node can ALSO run a 32-bit build of the same headless
+# server binary, giving a clean SAME-CPU 32-vs-64-bit ISA comparison (the one
+# the cross-arch fleet can't isolate, because no other node runs both). Opt in
+# per exec node with benchmark_dual_bitness:true in remote_nodes.json. Only the
+# pure-C++ server benchmarks (serversave, mapmanager) use this — the Qt bot
+# benchmarks can't, 32-bit Qt isn't shipped.
+#
+# How the 32-bit binary is produced depends on the arch:
+#   * x86_64  -> i686, built on the SAME compile node with -m32 folded into the
+#                compile flags (native multilib; the host runs the binary too).
+#   * aarch64 -> armv7, built on the EXISTING native armv7 compile node and run
+#                in aarch32 on the same arm64 hardware. aarch64 gcc has no -m32,
+#                so rather than add a cross toolchain we reuse the armv7 box that
+#                already builds the fleet. (Every arm64 board here runs aarch32
+#                EL0.) Falls back to no sibling if no armv7 compile node exists.
+
+
+def _compile_node_for_arch(arch):
+    """Return the first ENABLED nodes[] compile entry with this arch, or None.
+    Used to build the 32-bit (armv7) sibling of an aarch64 exec node on the
+    native armv7 compile node instead of a cross compiler."""
+    cfg = load_remote_nodes()
+    for node in cfg.get("nodes", []):
+        if node.get("enabled", False) and node.get("arch") == arch:
+            return node
+    return None
+
+
+def dual_bitness_enabled(label):
+    """True when remote_nodes.json sets benchmark_dual_bitness:true for the
+    exec node `label` (matched in execution_nodes[]). 'local'/None -> False:
+    the host baseline builds locally and we don't want to double its runtime
+    or require host multilib. Mirrors how disabled-tools are looked up."""
+    if not label or label == "local":
+        return False
+    cfg = load_remote_nodes()
+    for node in cfg.get("nodes", []):
+        for ex in node.get("execution_nodes", []):
+            if ex.get("label") == label:
+                return bool(ex.get("benchmark_dual_bitness", False))
+    return False
+
+
+def _bitness32_sibling(node):
+    """Build the synthetic 32-bit sibling of a 64-bit-capable exec node dict
+    (as produced by benchmark_exec_nodes). Same SSH host (the 32-bit binary
+    runs on the SAME hardware); the differences are a '-m32' label, a separate
+    '-m32' work_dir so it never clobbers the native binary, and bitness='32'.
+    The whole build/push/run/record pipeline keys off these fields, so nothing
+    else needs to know the sibling exists. The '-m32' suffix is the generic
+    "32-bit sibling" marker for both arches (node_path_parts strips it).
+
+    Returns None when no 32-bit sibling can be built (e.g. an aarch64 node but
+    no armv7 compile node is configured) -> the caller emits only the native
+    run, never a broken sibling.
+
+      * x86_64  -> i686 sibling on the SAME compile node, '-m32' appended to
+                   every compile-flag field (exec_node_flag_defs folds it into
+                   CMAKE_*_FLAGS so gcc emits 32-bit code).
+      * aarch64 -> armv7 sibling built on the native armv7 compile node; the
+                   64-bit-only -march/-mtune (if any) is dropped so the armv7
+                   box builds generic armv7."""
+    arch = node.get("arch")
+    sib = dict(node)
+    sib["label"]    = node["label"] + "-m32"
+    sib["bitness"]  = "32"
+    wd = node.get("work_dir")
+    sib["work_dir"] = (wd + "-m32") if wd else None
+    if arch == "x86_64":
+        sib["arch"] = "i686"
+
+        def _append_m32(v):
+            v = (v or "").strip()
+            return (v + " -m32").strip()
+        sib["cflags"]   = _append_m32(node.get("cflags"))
+        sib["cxxflags"] = _append_m32(node.get("cxxflags"))
+        sib["ldflags"]  = _append_m32(node.get("ldflags"))
+        # -m32 MUST also reach the ASM compiler: the vendored libzstd
+        # x86_64 asm (huf_decompress_amd64.S) is otherwise assembled 64-bit
+        # and the link fails ('incompatible file type: i386 ... got x86_64').
+        sib["asmflags"] = _append_m32(node.get("asmflags"))
+        return sib
+    elif arch == "aarch64":
+        armv7 = _compile_node_for_arch("armv7")
+        if armv7 is None:
+            return None
+        sib["arch"]         = "armv7"
+        sib["compile_node"] = armv7
+        # Generic armv7: drop any aarch64-only -march/-mtune the board carries.
+        sib["cflags"]   = ""
+        sib["cxxflags"] = ""
+        sib["ldflags"]  = ""
+        return sib
+    return None
+
+
+def expand_bitness_variants(nodes):
+    """Given the remote exec-node list, append a 32-bit sibling after every
+    64-bit-capable node (x86_64 -> i686, aarch64 -> armv7) that opted into
+    benchmark_dual_bitness. The native node is returned unchanged (tagged
+    bitness='64' for the record). Non-opted / non-64-bit / sibling-less nodes
+    pass through untouched. Order keeps each native node immediately followed
+    by its sibling so a serial runner does native then 32-bit back-to-back on
+    the same idle box."""
+    out = []
+    for n in nodes:
+        if n.get("arch") in ("x86_64", "aarch64") \
+                and dual_bitness_enabled(n.get("label")):
+            n = dict(n)
+            n["bitness"] = "64"
+            out.append(n)
+            sib = _bitness32_sibling(n)
+            if sib is not None:
+                out.append(sib)
+        else:
+            out.append(n)
+    return out
+
+
+# ---- runtime IPv4 / IPv6 loopback detection -----------------------------
+
+
+def _loopback_family_usable(family, addr):
+    """True when `addr` can be bound on `family` right now — i.e. the address
+    family is configured on this host's loopback. Bind to port 0 (ephemeral)
+    so nothing is left listening; a missing ::1 (IPv6 disabled) raises and we
+    report it unavailable."""
+    s = None
+    try:
+        s = socket.socket(family, socket.SOCK_STREAM)
+        s.bind((addr, 0))
+        return True
+    except OSError:
+        return False
+    finally:
+        if s is not None:
+            try:
+                s.close()
+            except OSError:
+                pass
+
+
+def detect_loopback_families():
+    """Address families available on the loopback at RUNTIME, IPv4 first.
+    Returns a list of (family_tag, address) e.g.
+    [("ipv4","127.0.0.1"), ("ipv6","::1")] — or a subset when one family is
+    disabled. IPv4 is kept first so it stays the canonical/headline transport
+    (champion continuity); IPv6 is purely additive. Empty only on a host with
+    no usable loopback at all (pathological)."""
+    fams = []
+    if _loopback_family_usable(socket.AF_INET, "127.0.0.1"):
+        fams.append(("ipv4", "127.0.0.1"))
+    if socket.has_ipv6 and _loopback_family_usable(socket.AF_INET6, "::1"):
+        fams.append(("ipv6", "::1"))
+    return fams
 
 
 # ---- ssh failure classification -----------------------------------------
@@ -1365,15 +1524,26 @@ def node_path_parts(node_label):
       amd64 compile node and the amd64 baseline exec node).
     * a remote execution_nodes[].label -> (parent nodes[].label, label)
       e.g. 'rtl9607c' -> ('mips-lxc','rtl9607c').
+    * a synthetic dual-bitness sibling 'X-m32' -> the parent compile node of
+      'X', exec dir 'X-m32' (so history/<bench>/<compile>/X-m32/ sits next to
+      history/<bench>/<compile>/X/ — the 32-bit data stays separate but under
+      the same compile node, never collides with the native run).
     * an unknown label -> (label, label) so a record is NEVER dropped on
       the floor just because remote_nodes.json drifted."""
     if not node_label or node_label == "local":
         return ("local", "local")
+    # Dual-bitness sibling: resolve the base node for the compile-node dir,
+    # keep the '-m32' suffix on the exec-node dir.
+    base = node_label
+    suffix = ""
+    if node_label.endswith("-m32"):
+        base = node_label[:-len("-m32")]
+        suffix = "-m32"
     cfg = load_remote_nodes()
     for node in cfg.get("nodes", []):
         for ex in node.get("execution_nodes", []):
-            if ex.get("label") == node_label:
-                return (node.get("label") or node_label, node_label)
+            if ex.get("label") == base:
+                return (node.get("label") or base, base + suffix)
     return (node_label, node_label)
 
 

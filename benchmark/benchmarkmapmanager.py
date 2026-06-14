@@ -327,6 +327,13 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
                  "cflags":   node.get("cflags"),
                  "cxxflags": node.get("cxxflags"),
                  "ldflags":  node.get("ldflags"),
+                 # asmflags carries -m32 for the dual-bitness i686 sibling so
+                 # the vendored libzstd x86_64 asm is assembled 32-bit too;
+                 # arch/bitness let the runtime gate SKIP a box with no 32-bit
+                 # loader instead of FAILing it.
+                 "asmflags": node.get("asmflags"),
+                 "arch":     node.get("arch"),
+                 "bitness":  node.get("bitness"),
                  "lxc_nfs": node.get("lxc_nfs"),
                  "ninja":  node.get("ninja")}
     runnable = [p for p in all_profilers if p in avail_profilers]
@@ -364,6 +371,14 @@ def _record_remote_result(label, runnable, out, msg,
     flat = {}
     for prof in runnable:
         res = out.get(prof)
+        # A profiler that can't run on this arch (e.g. valgrind lacks the
+        # 32-bit-ARM callgrind tool on the aarch64 host) reports skip_reason
+        # -> SKIP, not FAIL: unknown metric, not bad data.
+        if isinstance(res, dict) and res.get("skip_reason"):
+            reason = res["skip_reason"]
+            progress.emit(prof, "no", label, status="SKIP", extra=reason[:80])
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+            continue
         # Check for explicit failure with error message
         if isinstance(res, dict) and res.get("rc") not in (None, 0):
             err_msg = res.get("error", f"exit code {res.get('rc')}")
@@ -489,7 +504,10 @@ def main():
     arch = bh.host_arch()
     # --node may exclude the host baseline; only prepend "local" when allowed.
     local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
-    nodes = local_node + bh.benchmark_exec_nodes()
+    # Dual 32/64-bit: append an i686 (-m32) sibling after every x86_64 exec
+    # node that opted into benchmark_dual_bitness. run_profiler_fleet
+    # serialises a node and its sibling on the shared host (per-host lock).
+    nodes = local_node + bh.expand_bitness_variants(bh.benchmark_exec_nodes())
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
 
     # Pre-resolve per-node profiler availability. profilers_runnable_on()
@@ -509,6 +527,10 @@ def main():
 
     batch_id    = hr.new_batch_id()
     started_utc = hr.iso_now()
+    # Pre-workload throttle-counter baseline for the local host so the
+    # post-run sensor read can attribute throttling to THIS run (delta),
+    # not since-boot history. Remote nodes use the single post-run read.
+    sensor_pre  = hr.sensor_baseline(hr.local_runner)
     compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release"]
 
     all_metrics  = {}     # node_label -> {flat metric dict}
@@ -663,7 +685,9 @@ def main():
         pr = hr.PlatformRecord("benchmarkmapmanager", batch_id,
                                node["label"], runner=runner,
                                arch_hint=node.get("arch")).collect(
-                                   cc_binary_path=cc_path)
+                                   cc_binary_path=cc_path,
+                                   sensor_baseline=(sensor_pre
+                                       if node["label"] == "local" else None))
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
         for tool, slices in per_subbench.get(node["label"], {}).items():
@@ -674,6 +698,7 @@ def main():
                          compile_flags=compile_flags
                              + list(br.exec_node_flag_defs(node).values()),
                          simd_tier="generic",
+                         bitness=node.get("bitness"),
                          harness_version=hr.harness_version(),
                          comment=comment)
         if out_p is not None:

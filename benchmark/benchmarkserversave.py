@@ -311,6 +311,13 @@ def _run_remote_cells_serversave(node, avail_profilers, skips, all_profilers,
                  "cflags":   node.get("cflags"),
                  "cxxflags": node.get("cxxflags"),
                  "ldflags":  node.get("ldflags"),
+                 # asmflags carries -m32 for the dual-bitness i686 sibling so
+                 # the vendored libzstd x86_64 asm is assembled 32-bit too;
+                 # arch/bitness let the runtime gate SKIP a box with no 32-bit
+                 # loader instead of FAILing it.
+                 "asmflags": node.get("asmflags"),
+                 "arch":     node.get("arch"),
+                 "bitness":  node.get("bitness"),
                  "lxc_nfs": node.get("lxc_nfs")}
 
     runnable = [p for p in all_profilers if p in avail_profilers]
@@ -386,6 +393,14 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
 
     for prof in runnable:
         res = out.get(prof)
+        # A profiler that can't run on this arch (e.g. valgrind lacks the
+        # 32-bit-ARM callgrind tool) reports skip_reason -> SKIP, not FAIL:
+        # unknown metric, not bad data (benchmark/CLAUDE.md decision matrix).
+        if isinstance(res, dict) and res.get("skip_reason"):
+            reason = res["skip_reason"]
+            progress.emit(prof, "no", label, status="SKIP", extra=reason[:80])
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+            continue
         if isinstance(res, dict) and res.get("rc") not in (None, 0):
             err_msg = res.get("error", f"exit code {res.get('rc')}")
             progress.emit(prof, "no", label, status="FAIL", extra=err_msg)
@@ -485,7 +500,9 @@ def main():
     arch = bh.host_arch()
     # --node may exclude the host baseline; only prepend "local" when allowed.
     local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
-    nodes = local_node + bh.benchmark_exec_nodes()
+    # Dual 32/64-bit: append an i686 (-m32) sibling after every x86_64 exec
+    # node that opted into benchmark_dual_bitness. Same-CPU 32-vs-64 compare.
+    nodes = local_node + bh.expand_bitness_variants(bh.benchmark_exec_nodes())
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
 
     # Pre-resolve per-node profiler availability against the persisted
@@ -504,6 +521,10 @@ def main():
 
     batch_id    = hr.new_batch_id()
     started_utc = hr.iso_now()
+    # Pre-workload throttle-counter baseline for the local host so the
+    # post-run sensor read attributes throttling to THIS run (delta), not
+    # since-boot history. Remote nodes use the single post-run read.
+    sensor_pre  = hr.sensor_baseline(hr.local_runner)
     compile_flags = ["-O2", "-DCMAKE_BUILD_TYPE=Release",
                      "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
                      "-DCATCHCHALLENGER_CACHE_HPS=ON"]
@@ -614,7 +635,9 @@ def main():
                                node["label"], runner=runner,
                                arch_hint=node.get("arch")).collect(
                                    cc_binary_path=cc_path,
-                                   datapack_path=dp_path)
+                                   datapack_path=dp_path,
+                                   sensor_baseline=(sensor_pre
+                                       if node["label"] == "local" else None))
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
             # Single-workload benchmark -> emit one "default" slice
@@ -632,6 +655,7 @@ def main():
                          compile_flags=compile_flags
                              + list(br.exec_node_flag_defs(node).values()),
                          simd_tier="generic",
+                         bitness=node.get("bitness"),
                          harness_version=hr.harness_version(),
                          comment=comment)
         if out_p is not None:

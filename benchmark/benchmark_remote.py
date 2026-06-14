@@ -875,34 +875,96 @@ def write_server_properties_on_exec(exec_node, maincode, port, run_subdir=None,
 _CACHE_GEN_MEMO = {}   # compile_node label -> (rc, remote_cache_path, msg)
 
 
+def _slugify(s):
+    """Path-safe slug: keep alnum + _.-; everything else -> '-'."""
+    return "".join(c if (c.isalnum() or c in "_.-") else "-" for c in str(s))
+
+
+def _datapack_src_checksum(local_datapack):
+    """Fast metadata checksum of a datapack source tree — sorted
+    (relpath, size, mtime) tuples, NO content read. Used to decide whether
+    a previously pre-generated datapack-cache.bin can be reused or must be
+    regenerated because the source changed underfoot."""
+    base = local_datapack.rstrip("/")
+    entries = []
+    for dirpath, dirnames, filenames in os.walk(base):
+        dirnames.sort()
+        for name in sorted(filenames):
+            fp = os.path.join(dirpath, name)
+            try:
+                st = os.stat(fp)
+            except OSError:
+                continue
+            entries.append(f"{os.path.relpath(fp, base)}\0{st.st_size}\0{int(st.st_mtime)}")
+    h = hashlib.sha256()
+    for e in sorted(entries):
+        h.update(e.encode("utf-8", "surrogateescape"))
+        h.update(b"\n")
+    return h.hexdigest()[:32]
+
+
 def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
                                local_datapack, maincode, server_port=61920,
-                               timeout=1800, verbose=False, keep_skins=False):
+                               timeout=1800, verbose=False, keep_skins=False,
+                               subcode=""):
     """Run `<server> save` on the compile node, return (rc,
-    remote_cache_path, msg). Memoized per (compile node, keep_skins): the 2nd+
-    exec node sharing this compile node reuses the already-generated cache.
+    remote_cache_path, msg).
 
-    The cache lands in a stable <work_dir>/cache-gen/ dir (NOT the
-    per-exec build dir) so it is generated once and reused. Caller ships
-    it to each exec node with stage_cache_on_exec().
+    KEEP X VERSIONS: the cache is kept per (datapack, maincode, subcode,
+    keep_skins) in its OWN <work_dir>/cache-gen/<slug>/ slot, and the memo +
+    a persisted checksum gate it so it is GENERATED ONCE and reused across
+    benchmark cells AND across separate benchmark processes — never
+    regenerated each time. It is regenerated only when the datapack source
+    OR the binary changes (the cache is an arch/ABI-specific HPS blob, so the
+    binary's own sha256 is part of the gate — this is why the cache MUST come
+    from the matching-arch compile node, never the local host). The
+    serversave benchmark, which measures cache GENERATION, does not use this
+    path and so is unaffected. Caller ships the .bin to each exec node with
+    stage_cache_on_exec().
 
     `keep_skins` is forwarded to the datapack rsync so the cache the server
     loads at boot actually contains the skin list -- the server reads skins
     from this cache (CACHE_HPS), not by re-scanning skin/fighter at runtime, so
     a skin-less cache leaves the skin list empty even when the on-disk folders
     exist. clientlatency passes True (its bot creates a character)."""
-    label = (compile_node.get("label"), bool(keep_skins))
-    if label in _CACHE_GEN_MEMO:
-        return _CACHE_GEN_MEMO[label]
     user = compile_node["ssh"]["user"]
     host = compile_node["ssh"]["host"]
     port = compile_node["ssh"].get("port", 22)
     work = compile_node["work_dir"]
-    gen  = f"{work}/cache-gen"
+    datapack_id = os.path.basename(local_datapack.rstrip("/")) or "datapack"
+    slug = _slugify(f"{datapack_id}_{maincode}_{subcode or 'nosub'}_"
+                    f"{'skins' if keep_skins else 'noskins'}")
+    # Key per (compile node = arch, datapack, maincode, subcode, keep_skins).
+    label = (compile_node.get("label"), slug)
+    if label in _CACHE_GEN_MEMO:
+        return _CACHE_GEN_MEMO[label]
+    gen  = f"{work}/cache-gen/{slug}"
     cache_path = f"{gen}/datapack-cache.bin"
+    sum_path   = f"{gen}/datapack-cache.token"
+    src_bin    = bin_remote_dir + "/" + bin_name
 
     if not local_datapack or not os.path.isdir(local_datapack):
         res = (1, None, f"local datapack missing: {local_datapack}")
+        _CACHE_GEN_MEMO[label] = res
+        return res
+
+    # Persistent reuse gate: the stored token is "<datapack-sum>:<binary-sha256>".
+    # On a match (same source AND same binary) skip rsync+save entirely and
+    # reuse the existing .bin. The binary sha256 is read on the compile node so
+    # a new build (or a different arch) forces a regenerate; the datapack
+    # checksum forces one when the source changed.
+    dp_sum = _datapack_src_checksum(local_datapack)
+    rc_g, sout_g, _ = ssh_run(
+        user, host, port,
+        f"if test -f {shlex.quote(cache_path)} && test -f {shlex.quote(src_bin)}; then "
+        f"bs=$(sha256sum {shlex.quote(src_bin)} 2>/dev/null | cut -d' ' -f1); "
+        f"if test \"$(cat {shlex.quote(sum_path)} 2>/dev/null)\" = "
+        f"{shlex.quote(dp_sum)}:$bs; then echo HIT; else echo MISS; fi; "
+        f"else echo MISS; fi", timeout=60)
+    if sout_g.strip() == "HIT":
+        if verbose:
+            _rlog(f"datapack cache reuse on {label!r}: {cache_path} (token match)")
+        res = (0, cache_path, "ok (cached)")
         _CACHE_GEN_MEMO[label] = res
         return res
 
@@ -946,8 +1008,18 @@ def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
         res = (1, None, f"cache-gen save produced no cache (rc={rc}): {e[:160]}")
         _CACHE_GEN_MEMO[label] = res
         return res
+    # Cache built — store the reuse token (datapack-sum:binary-sha256) so the
+    # next cell/process reuses this .bin, then drop the raw datapack tree so the
+    # compile node never holds more than one full datapack at a time.
+    # datapack-cache.bin is all any downstream exec node needs; the binary +
+    # server-properties.xml stay for re-saves.
+    ssh_run(user, host, port,
+            f"printf '%s' {shlex.quote(dp_sum)}:$(sha256sum {shlex.quote(src_bin)} "
+            f"2>/dev/null | cut -d' ' -f1) > {shlex.quote(sum_path)} && "
+            f"rm -rf {shlex.quote(gen + '/datapack')}", timeout=300)
     if verbose:
-        _rlog(f"datapack cache pre-generated on {label!r}: {cache_path}")
+        _rlog(f"datapack cache pre-generated on {label!r}: {cache_path} "
+              f"(raw datapack removed, token stored)")
     res = (0, cache_path, "ok")
     _CACHE_GEN_MEMO[label] = res
     return res
