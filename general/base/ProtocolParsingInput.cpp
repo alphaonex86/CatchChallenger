@@ -76,11 +76,21 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
 
 void ProtocolParsingInputOutput::parseIncommingData()
 {
-    //Stack-local read buffer. Replaces the former 16 MB static
-    //ProtocolParsingBase::tempBigBufferForInput. readFromSocket() only
-    //ever fills up to CATCHCHALLENGER_COMMONBUFFERSIZE bytes per call,
-    //so 4 KB on the stack is sufficient.
-    char tempBigBufferForInput[CATCHCHALLENGER_COMMONBUFFERSIZE];
+    //Read buffer (CATCHCHALLENGER_COMMONBUFFERSIZE, ~4 KB). FUNCTION-STATIC, so
+    //it lives in BSS and is zero-initialised ONCE at program startup by the
+    //loader — no per-packet memset, no hot-path cost. This matters because the
+    //framing parser reads AHEAD: parseDataSize() loads a 4-byte size and
+    //parseData() copies up to dataSize bytes, while readFromSocket() only fills
+    //up to `size` bytes per call. On a truncated/partial packet that read-ahead
+    //touches bytes past `size`; with a stack buffer those are an uninitialised
+    //stack region and valgrind reports "branch on uninitialised value" (and the
+    //value fed garbage into the size/dispatch logic). With the static buffer the
+    //read-ahead lands on DEFINED bytes (zero, or a previous packet's leftovers,
+    //which the size checks then reject) — deterministic and valgrind-clean.
+    //Safe to share: the EventLoop is single-threaded and each call fully
+    //consumes its recv (or saves the remainder to the per-connection header_cut)
+    //before the next, so there is no aliasing across connections.
+    static char tempBigBufferForInput[CATCHCHALLENGER_COMMONBUFFERSIZE];
     #ifdef PROTOCOLPARSINGDEBUG
     std::cout << "client " << this << " ProtocolParsingInputOutput::parseIncommingData() start" << std::endl;
     #endif
