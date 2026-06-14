@@ -502,9 +502,15 @@ def bringup_remote_server(node):
                  "lxc_nfs": node.get("lxc_nfs")}
     maincode = _detect_maincode(DATAPACK_PATH)
     try:
+        # keep_skins=True: the bot logs into a fresh RAM DB with no character,
+        # so it CREATES one (skinId 0). Without >=1 real skin (folder with
+        # back/front/trainer.png) the server rejects skin 0 and the bot never
+        # reaches the map -> no latency data. serversave/mapmanager don't need
+        # this (no character creation), so the flag is clientlatency-only.
         rc, msg = br.rsync_datapack_to_exec(exec_node, DATAPACK_PATH,
                                             remote_subdir="datapack",
-                                            timeout=600, server_mode=True)
+                                            timeout=600, server_mode=True,
+                                            keep_skins=True)
         if rc != 0:
             raise RuntimeError(f"datapack-rsync: {msg}")
         rc, msg, rbuild = br.build_on_compile_node(
@@ -525,7 +531,7 @@ def bringup_remote_server(node):
                    timeout=15)
         rc, rcache, msg = br.pregenerate_datapack_cache(
             compile_node, rbuild, SRV_BIN_NAME, DATAPACK_PATH, maincode,
-            server_port=SERVER_PORT, verbose=True)
+            server_port=SERVER_PORT, verbose=True, keep_skins=True)
         if rc == 0:
             br.stage_cache_on_exec(compile_node, exec_node, rcache, verbose=True)
         srv_ssh, srv_pid, reason = br.start_server_popen(exec_node, SRV_BIN_NAME)
@@ -611,6 +617,7 @@ def measure_remote_server(ready, bot_bin, per_subbench, per_headline):
 
 def main():
     args = bh.parse_bench_args()
+    bh.set_node_filter(args.node)
     comment = args.comment
 
     if os.path.isdir(BOT_RUN_TMP):
@@ -635,10 +642,15 @@ def main():
 
     batch_id = hr.new_batch_id()
     started_utc = hr.iso_now()
+    # Pre-workload throttle-counter baseline for the local host so the
+    # post-run sensor read attributes throttling to THIS run (delta), not
+    # since-boot history. Remote nodes use the single post-run read.
+    sensor_pre = hr.sensor_baseline(hr.local_runner)
     compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release", "-DCATCHCHALLENGER_BENCHMARK"]
 
     per_subbench = {}   # label -> {"latency": {slice_label: metrics}}
     per_headline = {}   # label -> {metric: {median,stddev,unit,better}}
+    per_netfamily = {}  # label -> "ipv4" | "ipv6" | "ipv4+ipv6" actually run
     t_batch = time.monotonic()
 
     def _over_cap():
@@ -652,12 +664,41 @@ def main():
         if proc is None:
             progress.emit("latency", "no", "local", status="SKIP", extra="server-start")
         else:
+            # IPv4 vs IPv6: the server binds dual-stack (server-ip="" ->
+            # AF_UNSPEC), so on the loopback we can drive the SAME workload
+            # over 127.0.0.1 AND ::1 and isolate the pure transport cost
+            # (same machine, same server, only the address family differs).
+            # Families are detected at runtime; IPv4 stays first/canonical so
+            # the headline + champion compare against the historical 127.0.0.1
+            # numbers, and IPv6 is recorded as additive "ipv6-*" subbenchmark
+            # slices. A node with IPv6 disabled simply runs IPv4 only.
+            families = bh.detect_loopback_families() or [("ipv4", "127.0.0.1")]
+            head_slices = None      # first family -> headline (champion continuity)
+            rec_slices  = {}        # family-prefixed -> recorded subbenchmarks
+            fam_done    = []
+            err = None
             try:
-                slices, err = run_all_slices(bot_bin, "127.0.0.1", SERVER_PORT,
-                                             BUDGET_S_LOCAL, server_pid=proc.pid)
+                for fam, addr in families:
+                    fslices, ferr = run_all_slices(bot_bin, addr, SERVER_PORT,
+                                                   BUDGET_S_LOCAL,
+                                                   server_pid=proc.pid)
+                    if ferr is not None:
+                        # First family failing = hard skip; a LATER family
+                        # failing still keeps what already measured.
+                        if head_slices is None:
+                            err = ferr
+                            break
+                        print(_c(bh.C_YELLOW,
+                                 f"    [ipv] {fam} slice failed, kept earlier: {ferr}"))
+                        continue
+                    if head_slices is None:
+                        head_slices = fslices
+                    for lbl, m in fslices.items():
+                        rec_slices[f"{fam}-{lbl}"] = m
+                    fam_done.append(fam)
             finally:
                 stop_local_server(proc)
-            if err is not None or not slices:
+            if err is not None or head_slices is None:
                 progress.emit("latency", "no", "local", status="SKIP",
                               extra=(err or "no-slices")[:80])
                 bh.print_node_error(BENCH, "local", "SKIP", err or "no slices")
@@ -665,10 +706,13 @@ def main():
                 srv_text = read_server_bench_text(local_run_dir=SRV_RUN_DIR)
                 smetrics = server_metrics_from_text(srv_text)
                 if smetrics:
-                    for lbl in slices:
-                        slices[lbl].update(smetrics)
-                per_subbench["local"] = {"latency": slices}
-                per_headline["local"] = headline_metrics(slices)
+                    for lbl in head_slices:
+                        head_slices[lbl].update(smetrics)
+                    for lbl in rec_slices:
+                        rec_slices[lbl].update(smetrics)
+                per_subbench["local"] = {"latency": rec_slices}
+                per_headline["local"] = headline_metrics(head_slices)
+                per_netfamily["local"] = "+".join(fam_done)
                 progress.emit("latency", "no", "local", status="PASS")
 
     # ---- REMOTE nodes: PARALLEL bring-up, SERIAL measurement -------------
@@ -748,7 +792,9 @@ def main():
             cc_path, dp_path = wd, os.path.join(wd, "datapack")
         pr = hr.PlatformRecord(BENCH, batch_id, label, runner=runner,
                                arch_hint=node.get("arch")).collect(
-                                   cc_binary_path=cc_path, datapack_path=dp_path)
+                                   cc_binary_path=cc_path, datapack_path=dp_path,
+                                   sensor_baseline=(sensor_pre
+                                       if label == "local" else None))
         # flat headline as the tool's metrics; slices as subbenchmarks.
         flat = {}
         for k, v in per_headline.get(label, {}).items():
@@ -759,6 +805,7 @@ def main():
             pr.add_subbenchmark("latency", slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc, ended_utc=ended_utc,
                          compile_flags=compile_flags, simd_tier="generic",
+                         net_family=per_netfamily.get(label),
                          harness_version=hr.harness_version(), comment=comment)
         if out_p is not None:
             print(_c(bh.C_CYAN, f"[history] {out_p}"))

@@ -1671,6 +1671,10 @@ def _run_with_server(bin_path, server_proc, comment,
 
     batch_id    = hr.new_batch_id()
     started_utc = hr.iso_now()
+    # Pre-workload throttle-counter baseline for the local host so the
+    # post-run sensor read attributes throttling to THIS run (delta), not
+    # since-boot history. Remote nodes use the single post-run read.
+    sensor_pre  = hr.sensor_baseline(hr.local_runner)
     compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release"]
 
     per_tool = {}     # node_label -> { tool -> {status, metrics} }
@@ -1904,7 +1908,9 @@ def _run_with_server(bin_path, server_proc, comment,
                                node["label"], runner=runner,
                                arch_hint=node.get("arch")).collect(
                                    cc_binary_path=cc_path,
-                                   datapack_path=dp_path)
+                                   datapack_path=dp_path,
+                                   sensor_baseline=(sensor_pre
+                                       if node["label"] == "local" else None))
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
         # Per-workload sub-benchmark slices (cpu_percent + wall_s + ...).

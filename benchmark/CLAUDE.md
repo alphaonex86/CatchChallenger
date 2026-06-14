@@ -203,6 +203,23 @@ These fields are MANDATORY in every per-run JSON. The shared helper
 `history_recorder.collect_virt()` writes them; benchmarks do not need
 to (and must not) reimplement detection.
 
+### Post-run sensors / thermal-throttle detection
+
+Every per-run JSON carries a `sensors` object written post-workload by
+`history_recorder.collect_sensors()` (benchmarks must not reimplement it).
+It answers "are these numbers heat-tainted?" from sysfs (works with no
+tool installed): temps + trip points, CPU clock cur/max + scaling cap,
+x86 `thermal_throttle` counters, and Pi `vcgencmd get_throttled`
+live+sticky bits (also catches under-voltage). Verdict keys:
+`thermal_throttling_active` (throttling at sample time),
+`throttled_since_boot` (cumulative context), `delta.throttled_during_run`
+(when a pre-workload `sensor_baseline()` was captured — the strong
+per-run signal), `trend` (sensor-free: a work metric decaying across the
+fixed-time window), and `thermal_throttling_suspected` (OR of the per-run
+signals). A suspected run's metrics are not a clean KEEP/DISCARD signal —
+treat like a contended node and re-measure. setup.py provisions `sensors`
++ `vcgencmd` + `cpupower` (availability-gated; sysfs is the fallback).
+
 ### Why every arch, every time
 
 Local-only is never enough. An optimisation that helps amd64 but
