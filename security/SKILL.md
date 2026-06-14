@@ -105,11 +105,29 @@ output never disturbs another.)
 - **OBSERVE the metric ladder** (§3.3) + the external peer.
 - **DECIDE/ADAPT** (§3.6).
 
-### 3.3 A metric ladder makes every cycle a verdict
+### 3.3 A metric ladder makes every cycle a verdict — and NEVER blind-test
 Define an *ordered* set of progress signals from "first internal evidence of life" to "the real end-to-end
 success," so each cycle is unambiguously pass/fail **and** tells you which layer you're on. End the ladder
 on a test that exercises the *real* datapath (the peer accepting traffic / a real service coming up), not an
 internal counter — counters can lie, the peer cannot.
+
+**NEVER blind-test.** Before you run *any* change, state — in advance — the **observable that will
+distinguish "fixed/progressed" from "no change,"** and confirm you can actually read it. A change with no
+way to measure its effect is **not a test, it's a guess** — running it teaches you nothing and wastes a
+precious cycle (§1.2). If the change has no existing signal, **build the verification first** (add a
+counter, a `/proc` dump, a read-after-write check §4.9, a peer-side query) *before* you test it. And never
+infer "fixed" from the *absence of a crash*, from the code change *looking right*, from a test merely
+*completing*, or from a register you *wrote* (read it back — §4.9); a fix is only a fix when a pre-declared
+observable moved. State the expected delta, run, then compare to what you predicted (§3.6).
+
+The **only** acceptable "blind" move — and strictly a *last resort* — is **making a value byte-identical to
+the working oracle**: "I set this register exactly like live stock, so it should work." That is justifiable
+*because matching the oracle is itself the verification* (you're not guessing a value, you're copying a
+proven one). Even then: (a) **read it back** to confirm the write took (§4.9), and (b) **copy the LIVE oracle
+value, not a vendor-source/SDK default** — they differ in practice (live `US_OPTIC_SD_TH` read `0x00504bfa`,
+while the SDK *init* source said `0x00a07fff`; porting the SDK value silently failed). Prefer a real
+observable; fall back to oracle-parity only when no metric exists, and never confuse "matches the SDK source"
+with "matches the running reference."
 
 ### 3.4 Three iteration tiers — always use the fastest that can answer the question
 1. **Live introspection (seconds):** read/write registers or poke state on the *running* device with no
@@ -282,6 +300,33 @@ Go looking for them *first* — they convert guesswork into fact:
 The rule: **before brute-forcing the unknown, spend a pass looking for where the vendor already wrote the
 answer down and forgot to remove it.** It is almost always somewhere.
 
+### 4.12 Getting IN: cracking access on a locked vendor device
+The oracle (§4.5) and most live RE assume a shell/root, which the vendor tries to deny. Ways in, roughly in
+order of value:
+- **A UART/serial console is the single highest-value access vector — get it first.** It is almost always
+  physically present (a 3–4 pin header or unpopulated pads near the SoC; find it with a multimeter / logic
+  analyzer at common baud rates). Serial gives you the **bootloader (U-Boot)** — which alone lets you
+  **volatile-boot your own image (§4.2), dump flash, drop to recovery, and set boot args** — and a **console
+  that frequently bypasses the network/CLI lockdown entirely** (or at least gives the restricted CLI you then
+  escalate from). It works when the network is down, the firmware is bricked, or SSH/telnet is disabled.
+  Everything in this guide — the oracle reads, the DUT loop, driving the peer — runs over serial. If you have
+  one port, make it serial.
+- **Crack the password from a firmware DUMP.** The restricted-CLI / linux-shell password is almost always
+  recoverable from the firmware image: the **plaintext or hash sits in a binary/config** (grep the rootfs,
+  then crack the hash offline), or it is **algorithmically derived from per-unit identity** (here the
+  `enterlinuxshell` password was literally `<MAC>.<serial>` — MD5-checked but trivially reconstructed once you
+  read the derivation in the CLI binary). Get the dump (flash reader, `mtd`/`dd` from any shell, U-Boot, or a
+  recovery/service mode) and the secrets fall out.
+- **If you can't get a dump, the firmware-UPDATE path is itself the way in.** Build/modify an image with a
+  shell enabled (dropbear/telnet, a root password you set, an init hook) and **flash it** — now you own the
+  device and can dump the flash from inside. The official updater is an access vector, not just maintenance.
+- **Unsigned / unverified updates let you inject ANYTHING.** Cheap CPE very often does **not** verify the
+  update image's signature (or verifies it weakly). **Test whether the updater actually checks a signature
+  before assuming it does** — if it doesn't, inject arbitrary firmware: enable a console, bake in your driver,
+  or drop a flash-dumping payload. (Even when the main image is signed, a downgrade image or a recovery/factory
+  path is often unsigned.) This is frequently the fastest route from "black box" to "root + full dump," which
+  then unlocks everything else in this document (symbols §4.10/§4.11, oracle reads §4.5, substitution §4.3).
+
 ---
 
 ## 5. Strategy: pick an attack vector — and change it when you hit a wall
@@ -359,6 +404,16 @@ refusing to stop the *search* while freely abandoning any single hypothesis.
   symbols are among the best sources of truth — look before you brute-force.
 - **Stock working is an existence proof: never conclude "it can't" — only "I haven't found the difference
   yet."** When a method stalls, change how you look (vector/layer/source/tool), not whether you continue.
+- **Never blind-test.** Declare the pass/fail observable *before* running; a change with no way to measure
+  its effect is a guess, not a test. "No crash," "the diff looks right," "the test completed," and "I wrote
+  the register" are **not** evidence of a fix — only a pre-declared observable that moved is (§3.3, §4.9). The
+  sole last-resort exception is **oracle-parity**: set the value byte-identical to *live* stock (never the SDK
+  default — they differ) and read it back; matching the running reference is itself the verification.
+- **Getting root on a locked box is usually easy.** A **UART/serial console is the highest-value way in —
+  get it first** (it hands you U-Boot: volatile boot, flash dump, recovery, and often a console past the
+  lockdown). Then: **crack the password from the firmware dump** (plaintext/hash in a binary, or derived from
+  MAC/serial), **or flash your own image** — and **unsigned/unverified updates let you inject anything** (test
+  the signature check first; it's often absent). Root → full dump → symbols, oracle reads, substitution (§4.12).
 
 ---
 
@@ -369,7 +424,8 @@ refusing to stop the *search* while freely abandoning any single hypothesis.
 3. Develop on a **volatile (RAM/NFS) boot** via the bootloader; never flash per-iteration (§4.2).
 4. Stand up a **live oracle** (working twin / stock) and an **oracle-diff** dump in your driver.
 5. Add a **live introspection** hook (read/write running state with no rebuild) — also enables substitution.
-6. Define the **metric ladder**, ending on a real end-to-end test.
+6. Define the **metric ladder**, ending on a real end-to-end test. **Before every test, declare the
+   observable that proves fix/progress; if none exists, build it first — never blind-test.**
 7. When stuck on "which of my parts is wrong," **substitute against running stock part-by-part** (§4.3).
 8. Every cycle: **build-freshness gate → reset → volatile-load → settle-on-ready → observe → adapt.**
 9. Keep the hardware busy: background tests + 5 prepared hypotheses; never poll; regenerate on branch death.
