@@ -210,12 +210,12 @@ EventLoopServerLoginSlave::~EventLoopServerLoginSlave()
 {
     if(server_ip!=NULL)
     {
-        delete server_ip;
+        delete[] server_ip;   //new char[] (ctor) -> must be delete[], not scalar delete
         server_ip=NULL;
     }
     if(server_port!=NULL)
     {
-        delete server_port;
+        delete[] server_port;   //new char[] (ctor) -> must be delete[], not scalar delete
         server_port=NULL;
     }
 }
@@ -279,14 +279,14 @@ bool EventLoopServerLoginSlave::tryListen()
     if(server_ip!=NULL)
     {
         std::cout << "Listen on " << server_ip << ":" << server_port << std::endl;
-        delete server_ip;
+        delete[] server_ip;   //new char[] (ctor) -> must be delete[], not scalar delete
         server_ip=NULL;
     }
     else
         std::cout << "Listen on *:" << server_port << std::endl;
     if(server_port!=NULL)
     {
-        delete server_port;
+        delete[] server_port;   //new char[] (ctor) -> must be delete[], not scalar delete
         server_port=NULL;
     }
     return returnedValue;

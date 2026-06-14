@@ -63,7 +63,7 @@ LinkToGameServer::~LinkToGameServer()
     if(replySelectListInWait!=NULL)
     {
         vectorremoveOne(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend,this);
-        delete replySelectListInWait;
+        delete[] replySelectListInWait;   //new char[] -> delete[], not scalar delete
         replySelectListInWait=NULL;
     }
     if(replySelectCharInWait!=NULL)
@@ -77,7 +77,7 @@ LinkToGameServer::~LinkToGameServer()
             DatapackDownloaderMainSub * const downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).at(sub);
             vectorremoveOne(downloader->clientInSuspend,this);
         }
-        delete replySelectCharInWait;
+        delete[] replySelectCharInWait;   //new char[] -> delete[], not scalar delete
         replySelectCharInWait=NULL;
     }
     if(DatapackDownloaderBase::datapackDownloaderBase==NULL)
@@ -359,12 +359,12 @@ bool LinkToGameServer::disconnectClient()
     }
     if(replySelectListInWait!=NULL)
     {
-        delete replySelectListInWait;
+        delete[] replySelectListInWait;   //new char[] -> delete[], not scalar delete
         replySelectListInWait=NULL;
     }
     if(replySelectCharInWait!=NULL)
     {
-        delete replySelectCharInWait;
+        delete[] replySelectCharInWait;   //new char[] -> delete[], not scalar delete
         replySelectCharInWait=NULL;
     }
     EventLoopClient::close();
@@ -470,7 +470,7 @@ void LinkToGameServer::sendDifferedA8Reply()
 
     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-    delete replySelectListInWait;
+    delete[] replySelectListInWait;   //new char[] -> delete[], not scalar delete
     replySelectListInWait=NULL;
     replySelectListInWaitSize=0;
     replySelectListInWaitQueryNumber=0;
@@ -503,7 +503,7 @@ void LinkToGameServer::sendDiffered93OrACReply()
 
     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-    delete replySelectCharInWait;
+    delete[] replySelectCharInWait;   //new char[] -> delete[], not scalar delete
     replySelectCharInWait=NULL;
     replySelectCharInWaitSize=0;
     replySelectCharInWaitQueryNumber=0;
