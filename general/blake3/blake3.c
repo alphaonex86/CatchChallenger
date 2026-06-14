@@ -358,6 +358,10 @@ compress_subtree_to_parent_node(const uint8_t *input, size_t input_len,
   size_t num_cvs = blake3_compress_subtree_wide(input, input_len, key,
                                                 chunk_counter, flags, cv_array, use_tbb);
   assert(num_cvs <= MAX_SIMD_DEGREE_OR_2);
+  // On the portable build (MAX_SIMD_DEGREE_OR_2 == 2) with NDEBUG set, both the
+  // assert above and the SIMD-only loop below are compiled out, leaving num_cvs
+  // assigned-but-unused. Mark it used to silence -Wunused-variable.
+  (void)num_cvs;
   // The following loop never executes when MAX_SIMD_DEGREE_OR_2 is 2, because
   // as we just asserted, num_cvs will always be <=2 in that case. But GCC
   // (particularly GCC 8.5) can't tell that it never executes, and if NDEBUG is
