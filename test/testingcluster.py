@@ -1298,6 +1298,12 @@ def assert_cluster_db_exclusivity(base, db_name, label_prefix):
 
 # ── server lifecycle ─────────────────────────────────────────────────────────
 class ServerProc:
+    # Optional launch hook (defaults = no-op) so a harness can run every server
+    # under a wrapper (e.g. valgrind) without changing this file's behaviour.
+    launch_wrapper = []      # prepended to argv, e.g. ["valgrind", ...]
+    child_preexec = None     # override preexec_fn (None -> _child_preexec); a
+                             # valgrind run needs one WITHOUT the RLIMIT caps.
+
     def __init__(self, label, exe, work_dir, xml_text):
         self.label = label
         self.exe = exe
@@ -1342,10 +1348,12 @@ class ServerProc:
         if not os.path.exists(local_exe):
             os.symlink(self.exe, local_exe)
         logf = open(self.log_path, "w")
+        cmd = list(type(self).launch_wrapper) + ["./" + exe_name]
+        pre = type(self).child_preexec or _child_preexec
         self.proc = subprocess.Popen(
-            ["./" + exe_name], cwd=self.work_dir,
+            cmd, cwd=self.work_dir,
             stdout=logf, stderr=subprocess.STDOUT,
-            preexec_fn=_child_preexec)
+            preexec_fn=pre)
         _register_live_proc(self.proc)
         return self
 
