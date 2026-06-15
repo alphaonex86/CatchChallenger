@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.1.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="5" height="6" tilewidth="16" tileheight="16" infinite="0" nextobjectid="8">
- <tileset firstgid="1" source="../../../tileset/building-small.tsx"/>
- <tileset firstgid="1025" source="../../../tileset/terra.tsx"/>
- <tileset firstgid="2049" source="../../../tileset/invisible.tsx"/>
- <layer name="Collisions" width="5" height="6" offsetx="128" offsety="480">
+<map version="1.10" tiledversion="1.12.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="7" height="7" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="8">
+ <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/heal4.tsx"/>
+ <layer id="4" name="OnGrass" width="7" height="7">
   <data encoding="base64" compression="zlib">
-   eJxtzbkNgDAQAMGT3D5fIRgoBDCFmKcEJoeVJt6Ib02KaOnoGRjJTMwsrGzsFA4qJxc3T/oZ6AVoIQ8V
+   eJxjYBgaIACIA4E4CIiDgTgEiEOBOAyIASSkAkY=
   </data>
  </layer>
- <layer name="WalkBehind" width="5" height="6" offsetx="128" offsety="480">
+ <layer id="1" name="Collisions" width="7" height="7">
   <data encoding="base64" compression="zlib">
-   eJzLYWZgyAXiPCDOB+ICIKYHAAD3cQI2
+   eJy9zLkRwCAAwDBmI/wksP82aAO6+E6tQ/i3yEMiU6g0OoPJy8diX54H4ywD+A==
   </data>
  </layer>
- <objectgroup name="Moving" offsetx="128" offsety="480">
-  <object id="3" type="rescue" gid="2050" x="32" y="96" width="16" height="16"/>
-  <object id="7" type="teleport on push" gid="2051" x="32" y="80" width="16" height="16">
+ <layer id="2" name="WalkBehind" width="7" height="7">
+  <data encoding="base64" compression="zlib">
+   eJy1wwUNwDAAALBZODMz+Nf3mniTRiGE2MTUzNzC0sraxtbO3sHRydnF1c3dw9PL28c3/OMDvfsDVw==
+  </data>
+ </layer>
+ <objectgroup id="3" name="Moving">
+  <object id="3" type="rescue" gid="2" x="48" y="112" width="16" height="16"/>
+  <object id="7" type="teleport on push" gid="3" x="48" y="96" width="16" height="16">
    <properties>
     <property name="map" value="floor-0"/>
     <property name="x" value="5"/>
