@@ -803,7 +803,7 @@ bool EventLoopClientLoginMaster::sendGameServerRegistrationReply(const uint8_t q
     //Max warehouse player monsters
     //send the dictionary
     {
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver,EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver.data(),EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize);
         posOutput+=EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize;
     }
 
