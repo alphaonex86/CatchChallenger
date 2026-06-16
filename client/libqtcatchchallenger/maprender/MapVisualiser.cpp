@@ -32,6 +32,13 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
         abort();
     if(!connect(&mapVisualiserThread,&MapVisualiserThread::asyncMapLoaded,this,&MapVisualiser::asyncMapLoaded,Qt::QueuedConnection))
         abort();
+    //Stop the async map worker BEFORE main() frees datapackLoader/CommonDatapack.
+    //aboutToQuit is emitted on the main thread inside exec() (when quit() is
+    //processed), so wait() returns before the worker can dereference a freed
+    //datapackLoader — fixes the intermittent SIGSEGV in MapVisualiserThread::
+    //loadOtherMap on a queued loadOtherMapAsync during --closewhenonmap teardown.
+    if(QCoreApplication::instance()!=nullptr)
+        connect(QCoreApplication::instance(),&QCoreApplication::aboutToQuit,this,&MapVisualiser::shutdownThreadOnQuit);
 
     #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if(openGL)
@@ -111,6 +118,19 @@ MapVisualiser::~MapVisualiser()
 
     //delete mapItem;
     //delete playerMapObject;
+}
+
+//Called on QCoreApplication::aboutToQuit (main thread, inside exec()). Stops and
+//joins the async map-loading worker so it is no longer running when main() frees
+//datapackLoader / CommonDatapack — otherwise a queued loadOtherMapAsync still in
+//the worker's event loop dereferences the freed pointer (SIGSEGV, this=offset).
+void MapVisualiser::shutdownThreadOnQuit()
+{
+    mapVisualiserThread.stopIt=true;
+    #ifndef NOTHREADS
+    mapVisualiserThread.quit();
+    mapVisualiserThread.wait();
+    #endif
 }
 
 CatchChallenger::QMap_client * MapVisualiser::getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex) const

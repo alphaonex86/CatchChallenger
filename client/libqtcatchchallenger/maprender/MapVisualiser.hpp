@@ -38,6 +38,10 @@ public:
     explicit MapVisualiser(const bool &debugTags=false, const bool &useCache=true, const bool &openGL=false);
     ~MapVisualiser();
 
+    //stop+join the async map worker thread on QCoreApplication::aboutToQuit, before
+    //global teardown frees datapackLoader/CommonDatapack that the worker dereferences
+    void shutdownThreadOnQuit();
+
     void setTargetFPS(int targetFPS);
     virtual void eventOnMap(CatchChallenger::MapEvent event,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE x,COORD_TYPE y);
 
