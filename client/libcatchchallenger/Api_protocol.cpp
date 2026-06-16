@@ -62,6 +62,9 @@ Api_protocol::Api_protocol() :
     player_informations.recipes=NULL;
     player_informations.encyclopedia_monster=NULL;
     player_informations.encyclopedia_item=NULL;
+    //match the server default (Client.cpp ctor): unset rescue point
+    rescue.mapIndex=65535; rescue.x=0; rescue.y=0; rescue.orientation=Orientation_bottom;
+    unvalidated_rescue.mapIndex=65535; unvalidated_rescue.x=0; unvalidated_rescue.y=0; unvalidated_rescue.orientation=Orientation_bottom;
     stageConnexion=StageConnexion::Stage1;
     resetAll();
 

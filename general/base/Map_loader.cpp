@@ -488,17 +488,27 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
 
                            map_to_send.botFights[searchID]=t;
 
+                           //lookAt is a per-PLACEMENT property of the .tmx object
+                           //(stored in botOnMap.property_text), NOT the shared .xml
+                           //<bot> definition. Reading bot->Attribute("lookAt") here
+                           //always found nothing, so o stayed Orientation_none and
+                           //NO line-of-sight fight-trigger tiles were ever generated
+                           //(walk-into-sight fights silently never armed).
                            Orientation o=Orientation_none;
-                           if(bot->Attribute("lookAt")!=NULL)
                            {
-                               if(strcmp(bot->Attribute("lookAt"),"bottom")==0)
-                                   o=Orientation_bottom;
-                               else if(strcmp(bot->Attribute("lookAt"),"top")==0)
-                                   o=Orientation_top;
-                               if(strcmp(bot->Attribute("lookAt"),"left")==0)
-                                   o=Orientation_left;
-                               if(strcmp(bot->Attribute("lookAt"),"right")==0)
-                                   o=Orientation_right;
+                               const catchchallenger_datapack_map<std::string,std::string>::const_iterator lookAtIt=botOnMap.property_text.find("lookAt");
+                               if(lookAtIt!=botOnMap.property_text.cend())
+                               {
+                                   const std::string &lookAt=lookAtIt->second;
+                                   if(lookAt=="bottom")
+                                       o=Orientation_bottom;
+                                   else if(lookAt=="top")
+                                       o=Orientation_top;
+                                   else if(lookAt=="left")
+                                       o=Orientation_left;
+                                   else if(lookAt=="right")
+                                       o=Orientation_right;
+                               }
                            }
                            uint32_t fightRange=5;
                            if(step->Attribute("fightRange")!=NULL)
@@ -536,12 +546,14 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                            if(y>=map_to_send.height-1)
                                                break;
                                            y++;
-                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
+                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)>=200)//not walkable (wall/ledge): line-of-sight blocked
                                                break;
-                                           if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
+                                           //the TRIGGER tile is the swept cell (x,y) the player walks onto -- NOT
+                                           //the bot's own (unstandable) cell botOnMap.point.
+                                           if(map_to_send.botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))!=map_to_send.botsFightTrigger.cend())
                                                std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
                                            else
-                                              map_to_send.botsFightTrigger[botOnMap.point]=searchID;
+                                              map_to_send.botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=searchID;
                                            parsedRange++;
                                        }
                                    break;
@@ -551,12 +563,14 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                            if(y==0)
                                                break;
                                            y--;
-                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
+                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)>=200)//not walkable (wall/ledge): line-of-sight blocked
                                                break;
-                                           if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
+                                           //the TRIGGER tile is the swept cell (x,y) the player walks onto -- NOT
+                                           //the bot's own (unstandable) cell botOnMap.point.
+                                           if(map_to_send.botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))!=map_to_send.botsFightTrigger.cend())
                                                std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
                                            else
-                                              map_to_send.botsFightTrigger[botOnMap.point]=searchID;
+                                              map_to_send.botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=searchID;
                                            parsedRange++;
                                        }
                                    break;
@@ -566,12 +580,14 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                            if(x>=map_to_send.width-1)
                                                break;
                                            x++;
-                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
+                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)>=200)//not walkable (wall/ledge): line-of-sight blocked
                                                break;
-                                           if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
+                                           //the TRIGGER tile is the swept cell (x,y) the player walks onto -- NOT
+                                           //the bot's own (unstandable) cell botOnMap.point.
+                                           if(map_to_send.botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))!=map_to_send.botsFightTrigger.cend())
                                                std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
                                            else
-                                              map_to_send.botsFightTrigger[botOnMap.point]=searchID;
+                                              map_to_send.botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=searchID;
                                            parsedRange++;
                                        }
                                    break;
@@ -581,12 +597,14 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                            if(x==0)
                                                break;
                                            x--;
-                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
+                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)>=200)//not walkable (wall/ledge): line-of-sight blocked
                                                break;
-                                           if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
+                                           //the TRIGGER tile is the swept cell (x,y) the player walks onto -- NOT
+                                           //the bot's own (unstandable) cell botOnMap.point.
+                                           if(map_to_send.botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))!=map_to_send.botsFightTrigger.cend())
                                                std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
                                            else
-                                              map_to_send.botsFightTrigger[botOnMap.point]=searchID;
+                                              map_to_send.botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=searchID;
                                            parsedRange++;
                                        }
                                    break;

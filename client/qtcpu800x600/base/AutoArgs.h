@@ -39,6 +39,10 @@ public:
     // diff against a blessed reference; pinning srand(42) when the
     // flag is set keeps random tile-variant selections deterministic.
     static QString takeScreenshotPath;
+    // --remote-control: open the QLocalServer automation channel (mirrored into
+    // CliClientOptions::remoteControl). OFF by default — the socket is created
+    // only with this flag. See client/dev.md.
+    static bool remoteControl;
     // Note: qtopengl has a --fixed flag that freezes its animated
     // CCBackground. qtcpu800x600's UI is static — no parallax, no
     // cloud/grass timers — so the equivalent flag is intentionally

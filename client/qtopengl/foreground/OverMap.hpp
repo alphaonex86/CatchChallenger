@@ -45,7 +45,7 @@ public:
     void lineEdit_chat_text_returnPressed();
     void updateShowChat();
     void buyClicked();
-    void IG_dialog_close();
+    virtual void IG_dialog_close();
     void comboBox_chat_type_currentIndexChanged(int index);
     void new_system_text(const CatchChallenger::Chat_type &chat_type, const std::string &text);
     void new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type);

@@ -126,6 +126,25 @@ void Client::characterIsRightSendData()
     else
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)getLastDirection() | (uint8_t)public_and_private_informations.public_informations.type);
     posOutput+=1;
+    //rescue + unvalidated rescue respawn points (RAW internal mapIndex like the
+    //current-map field above — the client uses it directly as a mapList index).
+    //Lets the client mirror the server's rescue tracking deterministically.
+    {const uint16_t _tmp_le=(htole16(rescue.mapIndex));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+    posOutput+=2;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=rescue.x;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=rescue.y;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)rescue.orientation;
+    posOutput+=1;
+    {const uint16_t _tmp_le=(htole16(unvalidated_rescue.mapIndex));memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&_tmp_le,sizeof(_tmp_le));}
+    posOutput+=2;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=unvalidated_rescue.x;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=unvalidated_rescue.y;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)unvalidated_rescue.orientation;
+    posOutput+=1;
     //pseudo
     {
         const std::string &text=public_and_private_informations.public_informations.pseudo;

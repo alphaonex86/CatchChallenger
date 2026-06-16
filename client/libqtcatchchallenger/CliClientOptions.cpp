@@ -20,3 +20,4 @@ bool CliClientOptions::clickDoorTest=false;
 bool CliClientOptions::keyboardTest=false;
 bool CliClientOptions::dialogOverflowTest=false;
 bool CliClientOptions::fixedBackground=false;
+bool CliClientOptions::remoteControl=false;

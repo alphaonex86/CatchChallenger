@@ -23,6 +23,7 @@ bool AutoArgs::keyboardTest=false;
 bool AutoArgs::dialogOverflowTest=false;
 QString AutoArgs::mainDatapackCodeOverride;
 QString AutoArgs::takeScreenshotPath;
+bool AutoArgs::remoteControl=false;
 
 void AutoArgs::printHelp(const char *progName)
 {
@@ -47,6 +48,7 @@ void AutoArgs::printHelp(const char *progName)
         << "  --closewhenonmap           Quit 1s after the first map is loaded.\n"
         << "  --closewhenonmapafter=N    On map: toggle direction each 1s, quit after N seconds.\n"
         << "  --dropsenddataafteronmap   Drop outgoing traffic after the first map is loaded.\n"
+        << "  --remote-control           Open the QLocalServer automation channel (see client/dev.md).\n"
         << "  --autosolo                 Load the first savegame, enter the game; on 10s\n"
         << "                             timeout dump character/current map and close.\n"
         << "  --autosolo=DX,DY           Like --autosolo, then click the tile at player+(DX,DY)\n"
@@ -149,6 +151,12 @@ void AutoArgs::parse(int &argc, char *argv[])
         if(std::strcmp(arg,"--dropsenddataafteronmap")==0)
         {
             dropSendDataAfterOnMap=true;
+            i++;
+            continue;
+        }
+        if(std::strcmp(arg,"--remote-control")==0)
+        {
+            remoteControl=true;
             i++;
             continue;
         }

@@ -181,10 +181,16 @@ public:
     //── QLocalServer automation channel (stage 1: input + state) ──
     //Execute ONE text command from the control socket. Supported now:
     //  KEY <Up|Down|Left|Right|Return|Escape|Space>   -> synthesised key event
-    //  CLICKTILE <x> <y>                              -> click that map tile
+    //  CLICKTILE <x> <y>                              -> click that map tile (current map; pathfinds)
     //  CLICKPIXEL <px> <py>                           -> click that viewport pixel
+    //  GOTO <mapIndex|mapBasename> <x> <y>            -> pathfind to a tile on that map
+    //                                                    (current or border-connected; door maps not reachable)
+    //  CLOSEDIALOG                                    -> close the in-game dialog box (like Escape)
     //  GETSTATE                                       -> reply "STATE map=.. x=.. y=.. dir=.."
+    //  GETDIALOG                                      -> reply "DIALOG <text>" (empty if no dialog open)
     //  GETINVENTORY                                   -> reply "INVENTORY <id>:<qty> ..."
+    //  GETCASH                                        -> reply "CASH <n>"
+    //  GETTEAM                                        -> reply "TEAM <monsterId>:<level>:<hp> ..."
     //Stage 2 (chat):
     //  SENDCHAT <local|all|clan|pm|system|system_important> <text...>
     //  GETCHAT  -> "CHATMSG <channel> <pseudo> <text>" per buffered line, then
@@ -206,6 +212,10 @@ public:
     //              buffered event, then "OK GETFIGHT inFight=<0|1> count=<n>".
     //Answers/errors come back via remoteReply().
     void remoteAction(const QString &line);
+    //The client UI pushes the currently shown in-game dialog text here (empty when
+    //the dialog is closed) so the QLocalServer "GETDIALOG" query can report it.
+    //Read-only observation surface, symmetric with GETSTATE/GETFIGHT — NOT a test.
+    void setRemoteDialogText(const QString &text);
     //Connect this controller to the per-instance QLocalServer automation channel:
     //localListener.actionReceived -> remoteAction, remoteReply -> sendReply. Call
     //once from the client once both the map controller and LocalListener exist.
@@ -223,6 +233,9 @@ private:
     bool remoteActionInProgress;
     std::vector<QString> remoteActionPending;
     int remoteKeyNameToQt(const QString &name) const;
+    //GOTO map arg -> map index: accepts a numeric index or a map basename
+    //("gym" / "gym.tmx", case-insensitive). -1 when it resolves to nothing.
+    int resolveRemoteMap(const QString &mapArg) const;
     //chat-channel name <-> Chat_type id; -1 from FromName on an unknown channel
     int remoteChatTypeFromName(const QString &name) const;
     QString remoteChatTypeName(const uint8_t &chatType) const;
@@ -234,6 +247,8 @@ private:
     std::vector<std::string> remoteTradeLog;
     //GETFIGHT drains this buffer of received fight events
     std::vector<std::string> remoteFightLog;
+    //last in-game dialog text pushed by the client UI; reported by GETDIALOG
+    QString remoteDialogText;
     //--test-clicksign self-test state (see runClickSignSelfTest())
     bool signSelfTestStarted;
     CATCHCHALLENGER_TYPE_MAPID signTestMap;

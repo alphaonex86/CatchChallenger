@@ -227,6 +227,17 @@ void OverMapLogic::setIG_dialog(QString text,QString name)
     this->IG_dialog_nameString=name;
     this->IG_dialog_text->setHtml(text);
     this->IG_dialog_name->setHtml(name);
+    //mirror the current dialog text to the QLocalServer automation channel so an
+    //external controller can observe it via GETDIALOG (read-only; empty=closed).
+    if(ccmap!=nullptr)
+        ccmap->mapController.setRemoteDialogText(text);
+}
+
+void OverMapLogic::IG_dialog_close()
+{
+    OverMap::IG_dialog_close();//clears IG_dialog_textString (hides the box)
+    if(ccmap!=nullptr)
+        ccmap->mapController.setRemoteDialogText(QString());
 }
 
 void OverMapLogic::runDialogOverflowSelfTest()
@@ -1113,17 +1124,16 @@ bool OverMapLogic::stopped_in_front_of_check_bot(const CATCHCHALLENGER_TYPE_MAPI
 
 bool OverMapLogic::actionOnCheckBot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    /*          if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())                                                                                                 
-              return false;                                                                                                                                                     
-          actualBot=map->bots.at(std::pair<uint8_t,uint8_t>(x,y));                                                                                                              
-          isInQuest=false;                                                                                                                                                      
-          goToBotStep(1);                                                                                                                                                       
-         return true;*/
-    (void)mapIndex;
-    (void)x;
-    (void)y;
-    // Bot detection is handled by the maprender layer
-    return false;
+    //Resolve the bot/sign sitting on the faced tile. parseAction() only emits
+    //actionOn(): it is up to us to look the bot up and open its dialog. Same
+    //path as the cpu800x600 client (BaseWindow::actionOnCheckBot).
+    const CatchChallenger::Bot *bot=QtDatapackClientLoader::datapackLoader->getBot(mapIndex,x,y);
+    if(bot==nullptr)
+        return false;
+    actualBot=*bot;
+    isInQuest=false;
+    goToBotStep(1);
+    return true;
 }
 
 /*void OverMapLogic::on_clanActionLeave_clicked()
