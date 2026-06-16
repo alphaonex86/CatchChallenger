@@ -90,8 +90,115 @@ RUN_TIMEOUT    = int(_BUDGET_WALL_S * 3) + 120   # margin: warmup+startup+repeat
 # measures the same WORK (its tick count is fixed, see MAP_CALLGRIND_TICKS).
 RUN_TIMEOUT_CALLGRIND = RUN_TIMEOUT * 30
 
+# ---- ESP32 on-device node (comparison-only) ------------------------------
+# This benchmark is PURE CPU, so it runs ON the ESP32 (unlike the network
+# latency benchmark, which only points a bot at the board). A self-contained
+# ESP-IDF "benchmark firmware" (benchmark/benchmarkmapmanager/esp32/) compiles
+# the SAME harness and prints the SAME `BENCH players=N ...` lines to UART; the
+# harness flashes it, reads serial, and parses those lines with the existing
+# parse_bench_lines(). The node is injected programmatically (remote_nodes.json
+# is operator-owned and untouched). It self-skips cleanly when the ESP-IDF
+# toolchain or the board is absent. COMPARISON-ONLY: a single on-device sample
+# on a special target must NOT drive KEEP/DISCARD (benchmark/CLAUDE.md), so it is
+# recorded in history + charts but excluded from the cross-fleet decision.
+ESP32_NODE = {
+    "label": "catchchallenger-esp32",
+    "arch":  "xtensa-lx6",
+    "esp32": True,            # marker: build+flash+read serial, no ssh/compile node
+}
+# Serial read budget: boot banner + 7 scenarios x 2 s fixed-time + the skip
+# lines + slack. The firmware idles after the sweep (no reboot), so over-reading
+# is harmless; under-reading would truncate the BENCH block.
+ESP32_READ_SECS = 30
+# Out-of-tree firmware build dir under the ESP32 prefix (separate from the
+# server firmware's build-fw).
+ESP32_FW_PROJECT_REL = os.path.join("benchmark", "benchmarkmapmanager", "esp32")
+
 
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
+
+
+def measure_esp32(node, progress, per_tool, per_subbench, all_metrics):
+    """Build + flash + read + parse the on-device ESP32 benchmark firmware.
+    Records one PASS/SKIP under per_tool[label]['rusage'] (reusing the rusage
+    tool slot so it lands in the same metric block as the fleet's rusage path)
+    and per-player-count subbenchmarks. Comparison-only: the caller excludes
+    this label from the candidate decision record. Returns (status, reason).
+
+    Self-skips (never FAIL) when: ESP-IDF absent, board not detected, firmware
+    build fails, flash fails, or no BENCH line parsed -- an unmeasured special
+    target is 'unknown', not a regression."""
+    label = node["label"]
+    try:
+        import benchmark_esp32 as esp
+    except Exception as ex:
+        return "SKIP", f"benchmark_esp32 import failed: {ex}"
+    tc_ok, tc_detail = esp.toolchain_status()
+    if not tc_ok:
+        return "SKIP", "esp-idf absent: " + tc_detail
+    # Detect the board BEFORE building so a missing board self-skips fast.
+    dev, how = esp.detect_esp32_serial(verbose=True)
+    if dev is None:
+        return "SKIP", "board not detected: " + how
+    print(_color(bh.C_CYAN, f"[esp32] target serial {dev} ({how})"))
+    project = os.path.join(REPO_ROOT, ESP32_FW_PROJECT_REL)
+    build_dir = os.path.join(esp.ESP32_PREFIX, "build-mapmanager")
+    ok, detail = esp.build_benchmark_firmware(project, build_dir, verbose=True)
+    if not ok:
+        bh.print_node_error("benchmarkmapmanager", label, "SKIP",
+                            "firmware build failed: " + detail)
+        return "SKIP", "firmware build failed"
+    print(_color(bh.C_GREEN, f"[esp32] firmware built: {detail} "
+                             f"({bh.binary_size(detail)} bytes)"))
+    ok, fdetail = esp.flash_firmware(project, build_dir, dev, verbose=True)
+    if not ok:
+        bh.print_node_error("benchmarkmapmanager", label, "SKIP",
+                            "flash failed: " + fdetail)
+        return "SKIP", "flash failed"
+    # Reset + read serial; the firmware runs the sweep on boot and prints BENCH.
+    print(_color(bh.C_CYAN, f"[esp32] reading serial for ~{ESP32_READ_SECS}s ..."))
+    text = esp.read_with_reset(dev, secs=ESP32_READ_SECS)
+    bench = parse_bench_lines(text)
+    if not bench:
+        bh.print_node_error("benchmarkmapmanager", label, "SKIP",
+            "no BENCH line parsed from serial (board up but no output?). "
+            "First 400 chars:\n" + text[:400])
+        return "SKIP", "no-bench-output"
+    # Build the same metric cell shape the fleet rusage path produces, so the
+    # recorder + charts treat it identically.
+    cell = {}
+    for p, fields in bench.items():
+        cell[(p, "ticks_per_s")]    = fields.get("ticks_per_s")
+        cell[(p, "ticks")]          = fields.get("ticks")
+        cell[(p, "median_tick_ns")] = fields.get("median_tick_ns")
+        cell[(p, "p95_tick_ns")]    = fields.get("p95_tick_ns")
+        cell[(p, "bytes_sent")]     = fields.get("bytes_sent")
+    # drop None-only entries (skip_oom counts emit no tick metrics)
+    cell = {k: v for k, v in cell.items() if v is not None}
+    if not cell:
+        return "SKIP", "all-counts-oom"
+    per_tool[label]["rusage"] = {"status": "PASS",
+                                 "metrics": _cell_to_metric_block(cell)}
+    all_metrics[label] = aggregate_metrics(cell)
+    # Per-player-count subbenchmarks (no cpu_percent: single-threaded firmware,
+    # no /usr/bin/time on the board -- the fixed-time ticks/s IS the work metric).
+    cell_metrics = per_tool[label]["rusage"]["metrics"]
+    slices = {}
+    for p in PLAYER_COUNTS:
+        prefix = f"p{p}_"
+        sm = {}
+        for key, blk in cell_metrics.items():
+            if key.startswith(prefix):
+                sm[key[len(prefix):]] = blk
+        if sm:
+            slices[f"{p}-players"] = sm
+    if slices:
+        per_subbench[label]["rusage"] = slices
+    n_done = len([p for p in bench if "ticks_per_s" in bench[p]])
+    n_oom  = len(bench) - n_done
+    print(_color(bh.C_GREEN, f"[esp32] parsed {n_done} player-count(s) "
+                             f"({n_oom} OOM-skipped on-device)"))
+    return "PASS", None
 
 
 def build():
@@ -510,6 +617,12 @@ def main():
     nodes = local_node + bh.expand_bitness_variants(bh.benchmark_exec_nodes())
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
 
+    # ESP32 on-device node, injected programmatically (remote_nodes.json
+    # untouched). One cell (the firmware runs the whole sweep on boot). Honoured
+    # by --node catchchallenger-esp32 / --node xtensa-lx6 via node_allowed().
+    esp32_nodes = [ESP32_NODE] if bh.node_allowed(ESP32_NODE["label"],
+                                                  ESP32_NODE["arch"]) else []
+
     # Pre-resolve per-node profiler availability. profilers_runnable_on()
     # honours benchmark_disabled_tools (persisted skips) and probes the
     # node interactively for tools we haven't classified yet; the answer
@@ -522,6 +635,7 @@ def main():
         node_skips[node["label"]]     = skips
 
     total = sum(len(node_profilers[node["label"]]) for node in nodes)
+    total += len(esp32_nodes)   # one on-device cell per ESP32 node
     progress = bh.Progress(total, "benchmarkmapmanager")
     deadline = bh.FleetDeadline()
 
@@ -637,6 +751,23 @@ def main():
             _record_remote_result(label, spec["profilers"], out, msg,
                                   progress, per_tool, all_metrics)
 
+    # ---- ESP32 on-device node (comparison-only) --------------------------
+    # PURE-CPU benchmark, so it runs ON the board (build firmware -> flash ->
+    # read serial -> parse BENCH). Self-skips when toolchain/board absent.
+    for node in esp32_nodes:
+        label = node["label"]
+        per_tool.setdefault(label, {})
+        per_subbench.setdefault(label, {})
+        st, reason = measure_esp32(node, progress, per_tool, per_subbench,
+                                   all_metrics)
+        progress.emit("rusage", "no", label, status=st,
+                      extra=("" if st == "PASS" else (reason or "skip")[:80]))
+        if st != "PASS":
+            per_tool[label]["rusage"] = {"status": st, "metrics": {},
+                                         "skip_reason": reason} \
+                if st == "SKIP" else {"status": st, "metrics": {}}
+            all_metrics.setdefault(label, aggregate_metrics({}))
+
     sha = bh.git_sha()
     cand_stamp = started_utc.replace(":", "-")
 
@@ -701,6 +832,31 @@ def main():
                          bitness=node.get("bitness"),
                          harness_version=hr.harness_version(),
                          comment=comment)
+        if out_p is not None:
+            print(_color(bh.C_CYAN, f"[history] {out_p}"))
+
+    # ESP32 per-platform history: no shell on the board, so collect() can't run
+    # -- synthesize the fixed platform fields (shared helper). Written even on a
+    # SKIP so the timeline shows the attempt; the chart skips empty-metric runs.
+    for node in esp32_nodes:
+        label = node["label"]
+        if label not in per_tool:
+            continue
+        import benchmark_esp32 as esp
+        pr = hr.PlatformRecord("benchmarkmapmanager", batch_id, label,
+                               runner=None, arch_hint=node.get("arch"))
+        pr.platform.update(esp.esp32_platform_fields())
+        for tool, blk in per_tool[label].items():
+            pr.add_result(tool, blk.get("metrics", {}),
+                          status=blk.get("status", "SKIP"))
+        for tool, slices in per_subbench.get(label, {}).items():
+            for slabel, smetrics in slices.items():
+                pr.add_subbenchmark(tool, slabel, smetrics)
+        out_p = pr.write(commit=sha, started_utc=started_utc, ended_utc=ended_utc,
+                         compile_flags=["-Os", "-DCATCHCHALLENGER_NOXML",
+                                        "-DCC_TARGET_ESP32"],
+                         simd_tier="generic",
+                         harness_version=hr.harness_version(), comment=comment)
         if out_p is not None:
             print(_color(bh.C_CYAN, f"[history] {out_p}"))
 

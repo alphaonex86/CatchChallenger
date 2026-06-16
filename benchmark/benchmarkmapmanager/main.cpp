@@ -175,9 +175,19 @@ static void prepare_tick(Bench &b, Lcg &rng, unsigned int insrem_pct,
 // budget_ms == 0 -> FIXED-ITERATION: run exactly `ticks` ticks (used by
 //                   callgrind, whose metric is a deterministic instruction
 //                   count -- a wall budget would make the count vary).
+//
+// On ESP32 the firmware's app_main calls run_scenario() directly per player
+// count (it can't link the static symbol), so give it external linkage there.
+// The native build keeps it `static` -- byte-identical to before.
+#ifdef CC_TARGET_ESP32
+int run_scenario(unsigned int players, unsigned int ticks,
+                        unsigned int seed, unsigned int insrem_pct,
+                        unsigned int move_pct, uint64_t budget_ms)
+#else
 static int run_scenario(unsigned int players, unsigned int ticks,
                         unsigned int seed, unsigned int insrem_pct,
                         unsigned int move_pct, uint64_t budget_ms)
+#endif
 {
     Bench b;
     Lcg rng(seed);
@@ -331,6 +341,25 @@ static int run_scenario(unsigned int players, unsigned int ticks,
     return 0;
 }
 
+// Core driver: run every player count in `players_list` once and print one
+// BENCH line per scenario. Factored out of main() so the ESP32 firmware
+// (app_main, no argv) can call it directly with the default workload. The
+// native build is byte-identical: main() below simply forwards its parsed
+// arguments here, so the historical behaviour and LCG stream are unchanged.
+static int run_all_scenarios(const std::vector<unsigned int> &players_list,
+                             unsigned int ticks, unsigned int seed,
+                             unsigned int insrem_pct, unsigned int move_pct,
+                             uint64_t budget_ms)
+{
+    int rc = 0;
+    for(unsigned int p : players_list)
+    {
+        if(p == 0) continue;
+        rc |= run_scenario(p, ticks, seed, insrem_pct, move_pct, budget_ms);
+    }
+    return rc;
+}
+
 static void usage()
 {
     std::cerr << "usage: benchmark_min_network [--players N]... "
@@ -342,6 +371,11 @@ static void usage()
               << std::endl;
 }
 
+// On ESP32 the entry point is app_main() (esp32/main/app_main.cpp), which
+// calls run_all_scenarios() directly with the default workload, so the
+// argv-parsing main() below is compiled OUT there. The native fleet build
+// (CC_TARGET_ESP32 undefined) keeps main() exactly as before.
+#ifndef CC_TARGET_ESP32
 int main(int argc, char **argv)
 {
     // Suppress the std::cerr volume the production
@@ -376,11 +410,6 @@ int main(int argc, char **argv)
     // honours the fixed-time model (benchmark/CLAUDE.md).
     if(budget_ms == 0 && ticks == 0) budget_ms = 2000;
 
-    int rc = 0;
-    for(unsigned int p : players_list)
-    {
-        if(p == 0) continue;
-        rc |= run_scenario(p, ticks, seed, insrem_pct, move_pct, budget_ms);
-    }
-    return rc;
+    return run_all_scenarios(players_list, ticks, seed, insrem_pct, move_pct, budget_ms);
 }
+#endif // !CC_TARGET_ESP32

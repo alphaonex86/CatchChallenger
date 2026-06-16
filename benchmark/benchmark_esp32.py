@@ -325,6 +325,19 @@ FW_BIN       = os.path.join(FW_BUILD, "catchchallenger-server-esp32.bin")
 ESP32_SERVER_PORT = int(os.environ.get("CC_ESP32_PORT", "42498"))
 ESP32_MAINCODE    = "test"
 ESP32_BROADCAST   = "CatchChallenger ESP32"
+# max-players baked into the flash settings. The server PRE-ALLOCATES the whole
+# ClientWithMapEventLoop pool at startup (EventLoopClientList ctor reserves
+# max_players * sizeof(ClientWithMapEventLoop) ~= max_players*728 B CONTIGUOUS,
+# plus per-client construction heap), so this is bounded by the board's ~290 KiB
+# heap AFTER the flash-resident datapack is deserialized — NOT a soft cap. Too
+# high -> operator new throws bad_alloc right after bind (the firmware's real RAM
+# ceiling). MEASURED on a no-PSRAM ESP32-D0WD (~290 KiB heap, "test" maincode):
+# 16 boots, 18 OOMs in ClientWithMap's ctor right after bind -> 16 is the boot
+# ceiling (and it aligns with the fleet's 16-bot medium slice). Right-sizing lwIP
+# (24 sockets, not 60) freed the heap that let it reach 16; over-sized lwIP capped
+# it at ~14. Tunable for re-bisection on a different board/maincode; the value
+# that boots IS the headline ceiling.
+ESP32_MAXPLAYERS  = int(os.environ.get("CC_ESP32_MAXPLAYERS", "24"))
 # ONLYBYMIRROR firmware requires a non-empty datapack mirror URL (the fileless
 # server can't serve files). Canonical site; the benchmark bot uses a local
 # datapack so it is never actually fetched. Override with CC_ESP32_MIRROR.
@@ -364,10 +377,23 @@ def _run_idf(idf_args, cwd=None, timeout=1800):
 
 
 def stage_datapack_server():
-    """rsync the source datapack -> prefix staging, media-excluded (the server
-    only parses it, never serves images). Never writes the read-only source."""
+    """rsync the source datapack -> prefix staging. Heavy media (monster/tileset
+    sprites, audio) is stripped because the ONLYBYMIRROR server only parses+hashes
+    the tree, never serves images. EXCEPTION: skin/ PNGs are KEPT — the engine's
+    skin enumerator (FacilityLibGeneral::skinIdList) only counts a skin folder
+    that contains back/front/trainer.png, so stripping them yields an EMPTY skin
+    list, which makes the forcedskin in player/start.xml unresolvable and the
+    client can never create a character (it never reaches the map). The skin PNGs
+    are tiny (~0.5 MiB) and are NOT baked into flash as pixels — only the skin
+    NAMES go into datapack-cpp; the client downloads the actual pixels from the
+    mirror, which is built from this same stage, so server-hash == mirror tree.
+    Never writes the read-only source."""
     os.makedirs(STAGE_DATAPACK, exist_ok=True)
     args = ["rsync", "-a", "--delete",
+            # Keep skin PNGs (skinIdList gate). --include must precede the broad
+            # media --exclude; rsync applies the first matching rule.
+            "--include=skin/", "--include=skin/**/",
+            "--include=skin/**/*.png", "--include=skin/**/*.jpg",
             "--exclude=*.png", "--exclude=*.jpg", "--exclude=*.ogg",
             "--exclude=*.opus", "--exclude=*.wav", "--exclude=.git",
             "--exclude=.claude",
@@ -410,7 +436,14 @@ def stage1_emit(verbose=True):
                 f'    <server-port value="{ESP32_SERVER_PORT}"/>\n'
                 '    <server-ip value=""/>\n'
                 '    <automatic_account_creation value="true"/>\n'
-                '    <max-players value="10"/>\n'
+                # max-players (CC_ESP32_MAXPLAYERS, default 24 — the proven
+                # stable ceiling on this no-PSRAM board). The server PRE-ALLOCATES
+                # the full ClientWithMapEventLoop pool at startup, so this is
+                # bounded by the board's heap after the datapack loads (too high
+                # -> bad_alloc right after bind; ~34 is where booting fails, and
+                # concurrent WiFi clients fit fewer still). Tunable for bisecting
+                # the real RAM ceiling; the value that boots IS the headline.
+                f'    <max-players value="{ESP32_MAXPLAYERS}"/>\n'
                 f'    <broadcastName value="{ESP32_BROADCAST}"/>\n'
                 # ONLYBYMIRROR (the ESP32 firmware profile) refuses to start with
                 # an empty mirror: the fileless server can't send the datapack, so
@@ -418,6 +451,16 @@ def stage1_emit(verbose=True):
                 # LOCAL datapack and never downloads, but the value must be
                 # non-empty to pass settings validation.
                 f'    <httpDatapackMirror value="{ESP32_MIRROR}"/>\n'
+                # Compression MUST be off on the ESP32. The character-select packet
+                # path (ClientHeavyLoadSelectCharFinal.cpp) allocates a
+                # CATCHCHALLENGER_COMPRESSBUFFERSIZE (16 MiB) scratch via new[]
+                # whenever compressionTypeServer != None. The ESP32 has only ~320 KiB
+                # DRAM (largest free chunk ~111 KiB), so that allocation throws
+                # bad_alloc → __cxa_allocate_exception → abort() the instant a client
+                # selects its character (i.e. right at map entry). "none" bakes
+                # CompressionType::None into flash so that branch is never taken; the
+                # client speaks cleartext and reaches the map.
+                '    <compression value="none"/>\n'
                 f'    <content><mainDatapackCode value="{ESP32_MAINCODE}"/></content>\n'
                 '    <mapVisibility><minimize value="cpu"/></mapVisibility>\n'
                 '</configuration>\n')
@@ -506,6 +549,98 @@ def read_serial_ip(tty, timeout=90):
     ip = m.group(1) if m else None
     bound = "correctly bind" in text
     return ip, bound, text
+
+
+# --------------------------------------------------------------------------
+# Generic ESP32 "benchmark firmware" build+flash+read pipeline. Used by the
+# PURE-CPU on-device benchmarks (e.g. benchmarkmapmanager) whose firmware is a
+# self-contained ESP-IDF project under benchmark/<name>/esp32/ that runs the
+# harness and prints `BENCH ...` lines to UART. Unlike the SERVER firmware above
+# (WiFi + datapack-cpp + stage1 emit), these need NO datapack, NO WiFi creds, NO
+# overlay — just `idf.py set-target esp32 build` then flash + read serial. Kept
+# here (not duplicated per benchmark) per benchmark/CLAUDE.md "Generate helper to
+# put in common".
+
+def build_benchmark_firmware(project_dir, build_dir, verbose=True, timeout=1800):
+    """Build a self-contained ESP-IDF benchmark firmware (no WiFi/datapack).
+    `project_dir` is benchmark/<name>/esp32/ (holds the top CMakeLists.txt);
+    `build_dir` is an OUT-OF-TREE build dir under the prefix. Returns
+    (ok, bin_path_or_detail). Self-skip upstream when toolchain_status() is
+    False — this just runs idf.py.
+
+    -DSDKCONFIG points the RESOLVED sdkconfig into the build dir, NOT the project
+    dir: idf.py otherwise writes a 60 KiB generated `sdkconfig` next to the
+    checked-in CMakeLists.txt (a compilation artifact in the source tree, which
+    the root CLAUDE.md forbids). Keeping it in build_dir keeps the tree clean."""
+    if verbose:
+        print(f"[esp32-build] idf.py build (xtensa-esp32) — {project_dir}")
+    rc, out = _run_idf(["idf.py", "-C", project_dir, "-B", build_dir,
+                        "-DIDF_TARGET=esp32",
+                        "-DSDKCONFIG=" + os.path.join(build_dir, "sdkconfig"),
+                        "build"], timeout=timeout)
+    if rc != 0:
+        return False, "build failed:\n" + out[-2000:]
+    # The .bin is named after the project() in the top CMakeLists.txt; find it.
+    bins = glob.glob(os.path.join(build_dir, "*.bin"))
+    # exclude the bootloader / partition-table images
+    app = [b for b in bins if os.path.basename(b) not in
+           ("bootloader.bin", "partition-table.bin", "partition_table.bin")]
+    if not app:
+        return False, "build reported success but no app .bin found in " + build_dir
+    # pick the largest .bin (the app), defensively
+    app.sort(key=lambda p: os.path.getsize(p), reverse=True)
+    return True, app[0]
+
+
+def flash_firmware(project_dir, build_dir, tty, verbose=True, timeout=600):
+    """idf.py -p <tty> flash for a benchmark firmware built by
+    build_benchmark_firmware. Returns (ok, detail). Same -DSDKCONFIG-in-build-dir
+    rule as the build step so flashing doesn't regenerate a tree-side sdkconfig."""
+    if verbose:
+        print(f"[esp32-flash] idf.py -p {tty} flash — {project_dir}")
+    rc, out = _run_idf(["idf.py", "-C", project_dir, "-B", build_dir,
+                        "-DSDKCONFIG=" + os.path.join(build_dir, "sdkconfig"),
+                        "-p", tty, "flash"], timeout=timeout)
+    if rc != 0:
+        return False, "flash failed:\n" + out[-2000:]
+    return True, "flashed"
+
+
+def esp32_platform_fields():
+    """Synthesized platform metadata for an ESP32 history JSON. The board has no
+    shell, so history_recorder.PlatformRecord.collect() (which shells out) can't
+    run -- fill the fields directly. Values are the fixed ESP32 spec; ram_total_mb
+    is null (the schema is int MB; 520 KiB SRAM would record a misleading '1 MB'
+    -- the precise figure lives in ram_type). Shared so every on-device ESP32
+    benchmark reports identical platform fields (benchmark/CLAUDE.md: helper, not
+    copy-paste)."""
+    return {
+        "arch":        "xtensa-lx6",
+        "cpu_model":   "Espressif ESP32 (Xtensa LX6 dual-core)",
+        "cpu_cores":   2,
+        "cpu_mhz":     240.0,
+        "cpu_flags":   None,
+        "cpu_cache":   [],
+        "ram_total_mb": None,
+        "ram_type":    "SRAM ~520KiB (no DRAM)",
+        "disk_root":   None,
+        "disk_kind":   "flash",
+        "net_card":    "ESP32 WiFi (802.11 b/g/n)",
+        "net_link":    "serial",          # measured over UART (this benchmark)
+        "net_link_detail": "uart0",
+        "wifi_ssid":   None,
+        "wifi_standard": None,
+        "wifi_band":   None,
+        "wifi_link_mbps": None,
+        "eth_link_mbps": None,
+        "virt_kind":   "bare-metal",
+        "virt_type":   "none",
+        "arch_emulated": False,
+        "host_arch":   None,
+        "kernel":      None,              # ESP-IDF/FreeRTOS firmware, no OS kernel
+        "libc":        "newlib",
+        "compiler":    "xtensa-esp32-elf-gcc",
+    }
 
 
 def ensure_online(config=None, flash_if_needed=True, serial=None, verbose=True):

@@ -1,0 +1,48 @@
+# sdkconfig.defaults — ESP32 build defaults for the MapVisibilityAlgorithm
+# min_network() PURE-CPU benchmark firmware. No WiFi, no lwIP, no datapack.
+
+# Optimise for size: small flash image, this is a CPU benchmark not a data app.
+CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+
+# Run the CPU flat-out at 240 MHz (IDF ESP32 default is only 160) with no power
+# management — this is a CPU benchmark, so min_network ticks/s MUST reflect the
+# ESP32 at full speed to be comparable to the fleet's full-speed numbers.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_PM_ENABLE=n
+CONFIG_FREERTOS_USE_TICKLESS_IDLE=n
+
+# C++ exceptions ON: app_main wraps each scenario in try/catch so a per-player
+# allocation that OOMs throws std::bad_alloc (instead of abort()), is caught,
+# reported as `BENCH players=N status=skip_oom`, and the sweep continues to the
+# next count. Without exceptions the first OOM would abort the whole firmware.
+CONFIG_COMPILER_CXX_EXCEPTIONS=y
+CONFIG_COMPILER_CXX_RTTI=y
+
+# 80 KiB main task stack — the benchmark runs in the app_main task and the
+# harness builds per-player state + the std::sort of the latency samples on the
+# stack/heap; the deep MapVisibilityAlgorithm call chain at -Os has a large
+# cumulative frame. Mirror the server firmware's measured-safe 80 KiB; the rest
+# of DRAM stays as heap for the per-player ClientWithMap pool.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=81920
+
+# Trap a main-task stack overflow at the exact overflowing access (debug
+# watchpoint at end of every task stack) instead of silently scribbling RAM.
+CONFIG_FREERTOS_WATCHPOINT_END_OF_STACK=y
+
+# Give the fixed-time scenarios (2 s each, CPU-bound) room without the task
+# watchdog firing: app_main yields between scenarios, but a single 2 s
+# fixed-time run holds CPU0; widen the watchdog AND stop it watching the idle
+# tasks (a CPU-bound benchmark deliberately starves IDLE0/IDLE1 during a run;
+# the inter-scenario vTaskDelay lets them run between counts).
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=15
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=n
+
+# Small image, default 2 MiB flash is plenty (no in-flash datapack here).
+CONFIG_ESPTOOLPY_FLASHSIZE_2MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="2MB"
+
+# Custom partition table (NVS + a single factory app, no FS). Right-sized + fits
+# a 2 MiB flash so the image is portable across cheap ESP32 boards.
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
