@@ -16,7 +16,6 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
 {
     repel_step=0;
     fightCollisionBot=NULL;
-    botAlreadyBeaten=NULL;
     canGoToSilent=false;
 }
 
@@ -27,27 +26,31 @@ MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
         //delete[] fightCollisionBot;
         fightCollisionBot=NULL;
     }
-    if(botAlreadyBeaten!=NULL)
-    {
-        delete[] botAlreadyBeaten;
-        botAlreadyBeaten=NULL;
-    }
 }
 
 void MapVisualiserPlayerWithFight::addBeatenBotFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId)
 {
-    (void)mapId;
-    if(botAlreadyBeaten==NULL)
-        abort();
-    botAlreadyBeaten[botFightId/8]|=(1<<(7-botFightId%8));
+    //Delegate to the authoritative, server-persisted per-map beaten-bot set
+    //(Api_protocol writes player_informations.mapData[mapId].bots_beaten). The
+    //old per-instance char* bitmap (botAlreadyBeaten) was never allocated and
+    //abort()ed on first use; this beaten state already lives in the client's
+    //player informations (filled from the server at character load).
+    if(client!=NULL)
+        client->addBeatenBotFight(mapId,botFightId);
 }
 
 bool MapVisualiserPlayerWithFight::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const
 {
-    (void)mapId;
-    if(botAlreadyBeaten==NULL)
-        abort();
-    return botAlreadyBeaten[botFightId/8] & (1<<(7-botFightId%8));
+    //Consult the authoritative per-map beaten-bot set the server sent at
+    //character load (mirrors server-side Client::haveBeatBot). A missing map or
+    //bot means "not beaten yet" -> return false gracefully (never abort).
+    if(client==NULL)
+        return false;
+    const CatchChallenger::Player_private_and_public_informations &info=client->get_player_informations_ro();
+    if(info.mapData.find(mapId)==info.mapData.cend())
+        return false;
+    const CatchChallenger::Player_private_and_public_informations_Map &mapData=info.mapData.at(mapId);
+    return mapData.bots_beaten.find(botFightId)!=mapData.bots_beaten.cend();
 }
 
 void MapVisualiserPlayerWithFight::addRepelStep(const uint32_t &repel_step)
@@ -57,11 +60,8 @@ void MapVisualiserPlayerWithFight::addRepelStep(const uint32_t &repel_step)
 
 void MapVisualiserPlayerWithFight::resetAll()
 {
-    if(botAlreadyBeaten!=NULL)
-    {
-        delete botAlreadyBeaten;
-        botAlreadyBeaten=NULL;
-    }
+    //beaten-bot state lives in the client's player informations (per-map
+    //bots_beaten), reset there at character (re)load -- nothing to free here.
     MapVisualiserPlayer::resetAll();
 }
 
