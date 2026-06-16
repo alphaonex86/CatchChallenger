@@ -35,7 +35,7 @@ using namespace CatchChallenger;
 #include "EventLoopClientLoginMaster.hpp"
 
 EventLoopServerLoginMaster *EventLoopServerLoginMaster::unixServerLoginMaster=NULL;
-char * EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;
+std::vector<char> EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
 int EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
 
 EventLoopServerLoginMaster::EventLoopServerLoginMaster() :
@@ -44,7 +44,6 @@ EventLoopServerLoginMaster::EventLoopServerLoginMaster() :
     automaticPingSend(NULL),
     server_ip(NULL),
     server_port(NULL),
-    rawServerListForC211(static_cast<char *>(malloc(sizeof(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup)))),
     rawServerListForC211Size(0),
     databaseBaseLogin(NULL),
     databaseBaseBase(NULL),
@@ -62,7 +61,10 @@ EventLoopServerLoginMaster::EventLoopServerLoginMaster() :
         //empty buffer
         memset(EventLoopClientLoginMaster::serverServerList,0x00,sizeof(EventLoopClientLoginMaster::serverServerList));
         memset(EventLoopClientLoginMaster::serverLogicalGroupList,0x00,sizeof(EventLoopClientLoginMaster::serverLogicalGroupList));
-        memset(rawServerListForC211,0x00,sizeof(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup));
+        //size the C211 scratch buffer once (resize zero-fills); it is filled by
+        //charactersGroupListReply()+loadTheProfile() via .data()+offset writes
+        //bounded by rawServerListForC211Size, then released in loadTheProfile().
+        rawServerListForC211.resize(sizeof(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup),0x00);
     }
 
     TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/master.xml");
@@ -112,18 +114,11 @@ EventLoopServerLoginMaster::~EventLoopServerLoginMaster()
         delete databaseBasePg;
         databaseBaseBase=NULL;
     }
-    if(rawServerListForC211!=NULL)
-    {
-        delete rawServerListForC211;
-        rawServerListForC211=NULL;
-        rawServerListForC211Size=0;
-    }
-    if(EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
-    {
-        delete EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
-        EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;
-        EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
-    }
+    //rawServerListForC211 / fixedValuesRawDictionaryCacheForGameserver are now
+    //std::vector<char> (RAII) — they free themselves; no manual delete (the old
+    //`delete` on these malloc'd buffers was a free()/delete mismatch, UB).
+    rawServerListForC211Size=0;
+    EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=0;
     /*
     auto i = CharactersGroup::hash.begin();
     while (i != CharactersGroup::hash.cend()) {
@@ -590,13 +585,13 @@ std::vector<std::string> EventLoopServerLoginMaster::loadCharactersGroup(TinyXML
 void EventLoopServerLoginMaster::charactersGroupListReply(std::vector<std::string> &charactersGroupList)
 {
     rawServerListForC211[0x00]=CommonSettingsCommon::commonSettingsCommon.automatic_account_creation;
-    {const uint32_t _tmp_le=(htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time));memcpy(rawServerListForC211+0x01,&_tmp_le,sizeof(_tmp_le));}
+    {const uint32_t _tmp_le=(htole32(CommonSettingsCommon::commonSettingsCommon.character_delete_time));memcpy(rawServerListForC211.data()+0x01,&_tmp_le,sizeof(_tmp_le));}
 
     rawServerListForC211[0x05]=CommonSettingsCommon::commonSettingsCommon.min_character;
     rawServerListForC211[0x06]=CommonSettingsCommon::commonSettingsCommon.max_character;
     rawServerListForC211[0x07]=CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
     rawServerListForC211[0x08]=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-    {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(rawServerListForC211+0x09,&_tmp_le,sizeof(_tmp_le));}
+    {const uint16_t _tmp_le=(htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));memcpy(rawServerListForC211.data()+0x09,&_tmp_le,sizeof(_tmp_le));}
 
     //Login expects 3 reserved bytes between maxWarehousePlayerMonsters
     //and the charactersGroup count — see
@@ -616,7 +611,7 @@ void EventLoopServerLoginMaster::charactersGroupListReply(std::vector<std::strin
         const std::string &charactersGroupName=charactersGroupList.at(index);
         int newSize=0;
         if(!charactersGroupName.empty())
-            newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroupName,rawServerListForC211+rawServerListForC211Size);
+            newSize=FacilityLibGeneral::toUTF8WithHeader(charactersGroupName,rawServerListForC211.data()+rawServerListForC211Size);
         else
         {
             rawServerListForC211[rawServerListForC211Size]=0x00;
@@ -1047,9 +1042,9 @@ void EventLoopServerLoginMaster::SQL_common_load_finish()
 
 void EventLoopServerLoginMaster::loadTheProfile()
 {
-    if(rawServerListForC211==NULL)
+    if(rawServerListForC211.empty())
     {
-        std::cerr << "EventLoopServerLoginMaster::loadTheProfile(): rawServerListForC20011==NULL (abort)" << std::endl;
+        std::cerr << "EventLoopServerLoginMaster::loadTheProfile(): rawServerListForC211 empty (abort)" << std::endl;
         abort();
     }
 
@@ -1059,7 +1054,7 @@ void EventLoopServerLoginMaster::loadTheProfile()
     unsigned int skinId=0;
     while(skinId<CommonDatapack::commonDatapack.get_skins().size())
     {
-        {const uint16_t _tmp_le=(htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.at(skinId)));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+        {const uint16_t _tmp_le=(htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.at(skinId)));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
         rawServerListForC211Size+=2;
         skinId++;
@@ -1074,7 +1069,7 @@ void EventLoopServerLoginMaster::loadTheProfile()
         const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(index);
         {
             //database id
-            {const uint16_t _tmp_le=(htole16(dictionary_starter_internal_to_database.at(index)));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+            {const uint16_t _tmp_le=(htole16(dictionary_starter_internal_to_database.at(index)));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
             rawServerListForC211Size+=sizeof(uint16_t);
             //skin
@@ -1091,9 +1086,9 @@ void EventLoopServerLoginMaster::loadTheProfile()
             }
             //cash
             /* crash for unaligned 64Bits on ARM + grsec
-            *reinterpret_cast<uint64_t *>(rawServerListForC211+rawServerListForC211Size)=htole64(profile.cash); */
+            *reinterpret_cast<uint64_t *>(rawServerListForC211.data()+rawServerListForC211Size)=htole64(profile.cash); */
             const uint64_t cashlittleendian=htole64(profile.cash);
-            memcpy(rawServerListForC211+rawServerListForC211Size,&cashlittleendian,8);
+            memcpy(rawServerListForC211.data()+rawServerListForC211Size,&cashlittleendian,8);
             rawServerListForC211Size+=sizeof(uint64_t);
 
             //monster
@@ -1112,14 +1107,14 @@ void EventLoopServerLoginMaster::loadTheProfile()
                         const Profile::Monster &playerMonster=monsters.at(monsterListIndex);
 
                         //monster
-                        {const uint16_t _tmp_le=(htole16(playerMonster.id));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+                        {const uint16_t _tmp_le=(htole16(playerMonster.id));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
                         rawServerListForC211Size+=sizeof(uint16_t);
                         //level
                         rawServerListForC211[rawServerListForC211Size]=playerMonster.level;
                         rawServerListForC211Size+=1;
                         //captured with
-                        {const uint16_t _tmp_le=(htole16(playerMonster.captured_with));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+                        {const uint16_t _tmp_le=(htole16(playerMonster.captured_with));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
                         rawServerListForC211Size+=sizeof(uint16_t);
 
@@ -1133,7 +1128,7 @@ void EventLoopServerLoginMaster::loadTheProfile()
                         const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
 
                         //hp
-                        {const uint32_t _tmp_le=(htole32(monsterStat.hp));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+                        {const uint32_t _tmp_le=(htole32(monsterStat.hp));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
                         rawServerListForC211Size+=sizeof(uint32_t);
                         //gender
@@ -1153,7 +1148,7 @@ void EventLoopServerLoginMaster::loadTheProfile()
                                 abort();
                             }
                             //skill
-                            {const uint16_t _tmp_le=(htole16(skill.skill));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+                            {const uint16_t _tmp_le=(htole16(skill.skill));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
                             rawServerListForC211Size+=sizeof(uint16_t);
                             //skill level
@@ -1186,14 +1181,14 @@ void EventLoopServerLoginMaster::loadTheProfile()
                         abort();
                     }
                     //type
-                    {const uint16_t _tmp_le=(htole16(CommonDatapack::commonDatapack.get_reputation().at(reputation.internalIndex).reverse_database_id));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+                    {const uint16_t _tmp_le=(htole16(CommonDatapack::commonDatapack.get_reputation().at(reputation.internalIndex).reverse_database_id));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //level
                     rawServerListForC211[rawServerListForC211Size]=reputation.level;
                     rawServerListForC211Size+=sizeof(uint8_t);
                     //point
-                    {const uint32_t _tmp_le=(htole32(reputation.point));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+                    {const uint32_t _tmp_le=(htole32(reputation.point));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
                     rawServerListForC211Size+=sizeof(uint32_t);
                     reputationIndex++;
@@ -1215,11 +1210,11 @@ void EventLoopServerLoginMaster::loadTheProfile()
                         abort();
                     }*/
                     //item id
-                    {const uint16_t _tmp_le=(htole16(item.id));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+                    {const uint16_t _tmp_le=(htole16(item.id));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //quantity
-                    {const uint32_t _tmp_le=(htole32(item.quantity));memcpy(rawServerListForC211+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
+                    {const uint32_t _tmp_le=(htole32(item.quantity));memcpy(rawServerListForC211.data()+rawServerListForC211Size,&_tmp_le,sizeof(_tmp_le));}
 
                     rawServerListForC211Size+=sizeof(uint32_t);
                     reputationIndex++;
@@ -1229,18 +1224,19 @@ void EventLoopServerLoginMaster::loadTheProfile()
         index++;
     }
 
-    memcpy(rawServerListForC211+rawServerListForC211Size,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
+    memcpy(rawServerListForC211.data()+rawServerListForC211Size,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
     rawServerListForC211Size+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
     //CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();no memory gain
 
     //send the network message
     EventLoopClientLoginMaster::loginSettingsAndCharactersGroup[0x00]=0x46;
     {const uint32_t _tmp_le=(htole32(rawServerListForC211Size));memcpy(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-    memcpy(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup+1+4,rawServerListForC211,rawServerListForC211Size);
+    memcpy(EventLoopClientLoginMaster::loginSettingsAndCharactersGroup+1+4,rawServerListForC211.data(),rawServerListForC211Size);
     EventLoopClientLoginMaster::loginSettingsAndCharactersGroupSize=1+4+rawServerListForC211Size;
 
-    delete rawServerListForC211;
-    rawServerListForC211=NULL;
+    //release the 256 KB scratch buffer now it has been copied into the packet
+    //(swap-with-empty actually frees capacity; clear() alone would keep it).
+    std::vector<char>().swap(rawServerListForC211);
     rawServerListForC211Size=0;
 
     if(EventLoopClientLoginMaster::loginSettingsAndCharactersGroupSize==0)
@@ -1306,9 +1302,8 @@ void EventLoopServerLoginMaster::loadTheDictionary()
     posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
     std::cout << "datapackHashBase is " << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase) << std::endl;
 
-    if(EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
-        delete EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
-    EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=(char *)malloc(posOutput+1);
+    //resize handles both the (re)allocation and freeing any previous cache.
+    EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver.resize(posOutput+1);
     EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserverSize=posOutput;
-    memcpy(EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    memcpy(EventLoopServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver.data(),ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }

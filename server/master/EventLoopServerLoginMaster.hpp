@@ -25,7 +25,7 @@ public:
     void doTheServerList();
     void doTheReplyCache();
     static EventLoopServerLoginMaster *unixServerLoginMaster;
-    static char * fixedValuesRawDictionaryCacheForGameserver;
+    static std::vector<char> fixedValuesRawDictionaryCacheForGameserver;
     static int fixedValuesRawDictionaryCacheForGameserverSize;
 private:
     PurgeTheLockedAccount * purgeTheLockedAccount;
@@ -33,7 +33,7 @@ private:
     AutomaticPingSend * automaticPingSend;
     char * server_ip;
     char * server_port;
-    char * rawServerListForC211;
+    std::vector<char> rawServerListForC211;
     int rawServerListForC211Size;
 
     CatchChallenger::DatabaseBase *databaseBaseLogin;
