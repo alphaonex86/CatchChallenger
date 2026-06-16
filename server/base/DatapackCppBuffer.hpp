@@ -40,6 +40,9 @@
 #include <string>
 #include <type_traits>
 #include "../../general/hps/serializer.h"
+// Needed so the Serializer<char,…> override below can delegate to the REAL
+// signed-char (zigzag) serializer, not the generic t.parse() primary template.
+#include "../../general/hps/basic_type/int_serializer.h"
 
 namespace CatchChallenger {
 
@@ -54,6 +57,21 @@ struct DatapackCppData
     const uint32_t      *strlen;                // length of each str[] (embedded NUL safe)
     const unsigned char *raw;   size_t rawn;   // container sizes/keys + raw POD bytes
 };
+
+// Platform-INDEPENDENT signedness used to pick the i64 vs u64 array. Plain
+// `char` has implementation-defined signedness (signed on x86/host, UNSIGNED on
+// xtensa/ESP32 and ARM); routing it by std::is_signed<T> would send the SAME
+// field to different arrays on emit (host) vs read (target) and desync the
+// cursors. Treat plain `char` as signed everywhere (matching the host emitter),
+// so the one baked stream is read identically on every architecture. All
+// fixed-width types (int8_t/uint8_t/…) keep their own well-defined signedness.
+template <class T>
+constexpr bool dcpp_is_signed()
+{
+    return std::is_same<typename std::remove_cv<T>::type, char>::value
+            ? true
+            : std::is_signed<T>::value;
+}
 
 #ifdef CATCHCHALLENGER_DATAPACK_CPP
 //---------------------------------------------------------------------------
@@ -84,13 +102,21 @@ public:
     }
 
     // Scalars: pop the decoded value from the matching typed array.
+    //
+    // The array choice MUST be platform-independent: the stream is emitted ONCE
+    // on the host (where plain `char` is signed) and read back on EVERY target.
+    // On xtensa (ESP32) and ARM, plain `char` is UNSIGNED, so a naive
+    // std::is_signed<T> test would route `char` to a DIFFERENT array than emit
+    // did → the i64/u64 cursors desync → every later field (incl. the datapack
+    // hash) reads the wrong value. dcpp_is_signed<T>() pins plain `char` to the
+    // signed array on all platforms so emit and read always agree.
     template <class T>
     typename std::enable_if<std::is_arithmetic<T>::value, CppReadBuffer&>::type
     operator>>(T &v)
     {
         if(std::is_floating_point<T>::value)
             v=static_cast<T>((fPos<data.f64n)?data.f64[fPos++]:0);
-        else if(std::is_signed<T>::value)
+        else if(dcpp_is_signed<T>())
             v=static_cast<T>((iPos<data.i64n)?data.i64[iPos++]:0);
         else
             v=static_cast<T>((uPos<data.u64n)?data.u64[uPos++]:0);
@@ -148,9 +174,12 @@ public:
     typename std::enable_if<std::is_arithmetic<T>::value, CppEmitBuffer&>::type
     operator<<(const T &v)
     {
+        // Same platform-independent routing as CppReadBuffer (see dcpp_is_signed):
+        // plain `char` always goes to the signed array so the read side, even on
+        // an unsigned-char target (xtensa/ARM), pulls it back from the same array.
         if(std::is_floating_point<T>::value)
             f64.push_back(static_cast<double>(v));
-        else if(std::is_signed<T>::value)
+        else if(dcpp_is_signed<T>())
             i64.push_back(static_cast<int64_t>(v));
         else
             u64.push_back(static_cast<uint64_t>(v));
@@ -310,6 +339,55 @@ private:
 #endif // CATCHCHALLENGER_DATAPACK_CPP_EMIT
 
 } // namespace CatchChallenger
+
+// Pin plain `char` (de)serialization to a FIXED encoding for the datapack-cpp
+// buffers, on EVERY platform.
+//
+// Why: HPS dispatches Serializer<char,B> by std::is_signed<char>, which is
+// implementation-defined — signed on x86/host (where the flash stream is
+// emitted), but UNSIGNED on xtensa/ESP32 and ARM. The signed path uses zigzag
+// varints, the unsigned path uses plain base-127 varints; the two decode the
+// SAME bytes to DIFFERENT values. The datapack hash is a std::vector<char>, so
+// the host emits it zigzag-encoded and an unsigned-char target read it as
+// base-127 → 696F2C97… instead of CBC816B4… (no crash: it consumes the same
+// byte count, only the value is wrong). Forcing `char` through the signed
+// (signed-char / zigzag) serializer on both the emit and the read buffer makes
+// the one baked stream decode identically everywhere. Host emit is unchanged
+// (it was already signed), so the existing datapack_cpp.cpp stays valid.
+//
+// Scoped to the two datapack-cpp buffer types ONLY (CppReadBuffer /
+// CppEmitBuffer), so no other HPS buffer (e.g. StreamInputBuffer used elsewhere
+// in the same datapack-cpp binary for the dictionary) is touched and there is no
+// ODR concern. The full specialisation beats HPS's is_signed/is_unsigned partial
+// specialisations, so it is unambiguous. On the host (signed char) it is a no-op
+// behaviourally (already zigzag); it only changes the unsigned-char targets,
+// bringing them in line with the host-emitted stream.
+namespace hps {
+
+#ifdef CATCHCHALLENGER_DATAPACK_CPP
+template <>
+class Serializer<char, CatchChallenger::CppReadBuffer, void> {
+ public:
+  static void parse(char& num, CatchChallenger::CppReadBuffer& ib) {
+    signed char tmp;
+    Serializer<signed char, CatchChallenger::CppReadBuffer>::parse(tmp, ib);
+    num = static_cast<char>(tmp);
+  }
+};
+#endif
+
+#ifdef CATCHCHALLENGER_DATAPACK_CPP_EMIT
+template <>
+class Serializer<char, CatchChallenger::CppEmitBuffer, void> {
+ public:
+  static void serialize(const char& num, CatchChallenger::CppEmitBuffer& ob) {
+    Serializer<signed char, CatchChallenger::CppEmitBuffer>::serialize(
+        static_cast<signed char>(num), ob);
+  }
+};
+#endif
+
+}  // namespace hps
 
 #endif // CATCHCHALLENGER_DATAPACK_CPP || _EMIT
 #endif // CATCHCHALLENGER_DATAPACKCPPBUFFER_HPP

@@ -5,6 +5,17 @@
 # Optimise for size: the datapack const data lives in flash (.rodata), keep code small.
 CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 
+# Max performance, NEVER sleep (operator directive — the server is mains/USB-
+# powered and the AP is near, so no power saving is wanted). Run the CPU flat-out
+# at 240 MHz (the IDF ESP32 default is only 160), no power-management/DFS, no
+# FreeRTOS tickless-idle, and no WiFi disconnected-state power-save. Together with
+# esp_wifi_set_ps(WIFI_PS_NONE) in app_main this keeps connect/tick latency at
+# ~ms instead of spiking to hundreds of ms when the link goes idle.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_PM_ENABLE=n
+CONFIG_FREERTOS_USE_TICKLESS_IDLE=n
+CONFIG_ESP_WIFI_STA_DISCONNECTED_PM_ENABLE=n
+
 # The server event loop runs in the app_main task. main()'s frame holds
 # epoll_event events[] + a BIGBUFFERSIZE buffer + the deep datapack/visibility
 # preload call chains (preload_1 -> ... -> preload_30 are NESTED calls that at -Os
@@ -27,12 +38,53 @@ CONFIG_ESP_MAIN_TASK_STACK_SIZE=81920
 # datapack/maincode that deepens the preload chain fails loud, not corrupt.
 CONFIG_FREERTOS_WATCHPOINT_END_OF_STACK=y
 
-# lwIP: enough sockets for the listen socket + the UDP announce + up to 10
-# clients (server-properties max-players=10), and BSD select(2)/SO_REUSEADDR
-# (the EventLoop SELECT backend + the dual IPv4/IPv6 bind need them).
-CONFIG_LWIP_MAX_SOCKETS=16
+# lwIP: size the socket/TCP PCB pools. The board's REAL bottleneck turned out NOT
+# to be lwIP but the SERVER's startup heap: EventLoopClientList pre-allocates the
+# WHOLE max_players ClientWithMapEventLoop pool (each carries Client + map state),
+# so on this no-PSRAM ~290 KiB-heap board the per-client pool OOMs at ~16
+# max_players (binds, then operator new throws in ClientWithMap ctor). Every lwIP
+# netconn / TCP-PCB also costs heap and COMPETES with that pool, so OVER-sizing
+# lwIP LOWERS the seatable-client ceiling. Right-size it to comfortably cover the
+# seatable clients (~14) + listen + UDP announce + dual IPv4/IPv6 listeners, no
+# more: 24 sockets / 24 active TCP PCBs. SO_REUSEADDR + BSD select(2) are needed
+# by the EventLoop SELECT backend and the dual bind.
+#   MAX_SOCKETS = BSD socket descriptors; MAX_ACTIVE/LISTENING_TCP = TCP PCB pools.
+# NB: ESP-IDF maps lwIP sockets onto the newlib VFS fd table (esp_vfs.h
+# MAX_FDS=FD_SETSIZE). lwIP registers its sockets as fd-range
+# [LWIP_SOCKET_OFFSET, MAX_FDS); LWIP_SOCKET_OFFSET = FD_SETSIZE - MAX_SOCKETS,
+# which MUST be > 0 to leave the low FDs for stdin/stdout/stderr (the console
+# opens them at boot, BEFORE lwIP registers — offset 0 -> the fd-range collides
+# with fd 0 and esp_vfs_lwip_sockets_register aborts at boot). FD_SETSIZE is
+# pinned ABOVE MAX_SOCKETS via a global -D in the project CMakeLists (see there).
+CONFIG_LWIP_MAX_SOCKETS=24
+CONFIG_LWIP_MAX_ACTIVE_TCP=24
+CONFIG_LWIP_MAX_LISTENING_TCP=4
 CONFIG_LWIP_SO_REUSE=y
 CONFIG_LWIP_IPV6=y
+
+# SHRINK the per-socket TCP send buffer + receive window to 2*MSS (2920 B) so
+# each connection costs far less heap — the difference between seating a handful
+# and dozens of simultaneous clients on a no-PSRAM 520 KiB-SRAM board. The
+# CatchChallenger packets are small (chat/move/visibility deltas), so a 2-segment
+# window does not bottleneck the latency we measure. Drop to 1460 (1*MSS) if 2920
+# still OOMs at the large slice.
+CONFIG_LWIP_TCP_SND_BUF_DEFAULT=2920
+CONFIG_LWIP_TCP_WND_DEFAULT=2920
+
+# Trim the WiFi driver's buffers to free heap for the client pool. The STATIC RX
+# buffers are the big one: 10 x ~1.6 KiB ~= 16 KiB of permanently-held heap; the
+# measured pool-alloc free heap was only ~35 KiB (largest block 32 KiB) vs the
+# 51-player pool's 37 KiB need, so reclaiming ~10 KiB here is what lets 51 fit.
+# Server traffic is light (small chat/move/visibility packets), so 4 static +
+# 8 dynamic RX is ample. AMPDU kept on (helps WiFi latency).
+CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=2
+CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM=6
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=6
+# Disable AMPDU (frees the RX block-ack reorder buffers ~several KiB). Aggregation
+# only helps bulk throughput; the server's packets are tiny so latency is
+# unaffected, and the freed heap is what lets the 51-player pool fit.
+CONFIG_ESP_WIFI_AMPDU_RX_ENABLED=n
+CONFIG_ESP_WIFI_AMPDU_TX_ENABLED=n
 
 # Custom partition table (big factory app partition for the in-flash datapack).
 CONFIG_PARTITION_TABLE_CUSTOM=y

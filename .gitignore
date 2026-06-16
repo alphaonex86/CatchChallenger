@@ -223,3 +223,12 @@ security/__pycache__/
 
 # clangd / tooling index cache
 .cache/
+
+# ESP32 firmware build: idf.py-generated resolved sdkconfig holds the WiFi
+# password (merged from the out-of-repo overlay) — never commit it. The build
+# dir lives out of tree; this guards a stray in-project menuconfig too.
+server/cli/esp32/sdkconfig
+server/cli/esp32/sdkconfig.old
+server/cli/esp32/build/
+
+.claude/
