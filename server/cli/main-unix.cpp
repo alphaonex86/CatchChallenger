@@ -70,7 +70,15 @@
 #include "timer/TimerBroadcastAnnounce.hpp"
 #include "timer/PlayerUpdaterEventLoop.hpp"
 
+#ifdef CC_TARGET_ESP32
+// ESP32: a few LAN clients (max-players=10) never produce 512 ready fds at once,
+// and events[MAXEVENTS] lives on the main task stack — 512 entries needlessly
+// inflate that frame (and thus the heap-backed main-task stack) on a RAM-starved
+// chip. 64 is far more than the listen socket + a handful of clients + timers.
+#define MAXEVENTS 64
+#else
 #define MAXEVENTS 512
+#endif
 
 using namespace CatchChallenger;
 
@@ -241,7 +249,9 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 #endif
-#ifndef _WIN32
+// ESP32 (ESP-IDF/newlib) has no signal() implementation and no SIGPIPE — lwIP
+// sockets never raise it — so skip the whole signal-handler setup there.
+#if !defined(_WIN32) && !defined(CC_TARGET_ESP32)
     /* Catch Signal Handler SIGPIPE */
     if(signal(SIGPIPE, signal_callback_handler)==SIG_ERR)
     {
@@ -968,6 +978,11 @@ int main(int argc, char *argv[])
                             //populate client.socketString so headerOutput()/normalOutput()/errorOutput()
                             //display a real "<ip>:<port>:" prefix instead of the empty string fallback.
                             //Mirrors server/gateway/main-unix-gateway.cpp accept path.
+                            // ESP32: lwIP declares getnameinfo() but ships no
+                            // implementation, so skip the cosmetic peer-name
+                            // lookup there — socketString stays the empty-string
+                            // fallback (only affects the log prefix).
+                            #ifndef CC_TARGET_ESP32
                             {
                                 if(client.socketString!=NULL)
                                 {
@@ -990,6 +1005,7 @@ int main(int argc, char *argv[])
                                     client.socketString[client.socketStringSize-1]='\0';
                                 }
                             }
+                            #endif
                             #ifdef CATCHCHALLENGER_IO_URING
                             if(EventLoop::loop.multishotEnabled())
                             {

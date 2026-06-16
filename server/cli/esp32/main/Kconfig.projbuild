@@ -12,4 +12,24 @@ menu "CatchChallenger server"
         help
             WPA2 password for the SSID above. Set via `idf.py menuconfig`.
 
+    config CATCHCHALLENGER_STATIC_IP
+        string "Static IPv4 (empty = DHCP)"
+        default ""
+        help
+            When non-empty, the STA uses this fixed IPv4 instead of DHCP
+            (netmask/gateway below). Empty (the default) keeps DHCP, so a
+            normal build is unaffected. Used to pin the board for benchmarking.
+
+    config CATCHCHALLENGER_STATIC_NETMASK
+        string "Static netmask"
+        default "255.255.255.0"
+        help
+            Netmask applied only when CATCHCHALLENGER_STATIC_IP is non-empty.
+
+    config CATCHCHALLENGER_STATIC_GATEWAY
+        string "Static gateway"
+        default ""
+        help
+            Gateway applied only when CATCHCHALLENGER_STATIC_IP is non-empty.
+
 endmenu

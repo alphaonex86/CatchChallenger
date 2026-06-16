@@ -49,8 +49,40 @@ struct SelectState
 {
     std::unordered_map<int,uint32_t> events;//fd -> requested EPOLL_* mask
     std::unordered_map<int,void *> ptrs;//fd -> user data
+    //EPOLLOUT edge-emulation: select(2) is level-triggered, but the production
+    //code registers client sockets with EPOLLET and is written for edge
+    //semantics (an always-writable socket must report EPOLLOUT once, not every
+    //iteration). Without this, an idle writable client makes select() return
+    //immediately forever -> busy-loop (fatal on ESP32: starves the FreeRTOS
+    //idle task -> Task WDT reboot; merely wasteful on DOS). We remember whether
+    //we already reported writability for each fd and only re-emit EPOLLOUT on
+    //the rising edge (was-not-writable -> now-writable). EPOLLIN stays
+    //level-triggered (the read path drains the socket each time).
+    std::unordered_map<int,bool> writableReported;//fd -> already signalled writable
 };
 static SelectState *g_select=nullptr;
+
+//EOF probe for the EPOLLRDHUP synthesis (see wait()). select(2) reports a
+//peer-closed socket as readable FOREVER (EOF is a level-readable condition);
+//epoll instead raises EPOLLRDHUP and the main loop removes the client. recv()
+//with MSG_PEEK does NOT consume data, so a live socket with pending bytes is
+//untouched (>0 -> alive). recv()==0 is the unambiguous orderly-shutdown FIN —
+//and ONLY 0 is treated as EOF here: a listen socket never returns 0 from recv
+//(it errors), so the synthesis can never tear down the acceptor. recv()<0
+//(EAGAIN, or a hard error on a RST'd CLIENT socket) is NOT handled here — the
+//read path owns the error/RST teardown (see EventLoopClient::read, ESP32
+//branch) so we never risk killing the listener. Only ever called after select
+//reported the fd readable, so recv returns immediately and never blocks the
+//single-threaded loop. SELECT-backend only — epoll/poll/io_uring unaffected.
+static inline bool cc_recv_peek_is_eof(int fd)
+{
+    char b;
+#if defined(_WIN32)
+    return ::recv(static_cast<SOCKET>(fd),&b,1,MSG_PEEK)==0;
+#else
+    return ::recv(fd,&b,1,MSG_PEEK)==0;
+#endif
+}
 }//namespace
 
 #if defined(__DJGPP__) || defined(CC_TARGET_ESP32)
@@ -848,7 +880,16 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
         }
         const uint32_t mask=e.second;
         if(mask & EPOLLIN)  FD_SET(fd,&rfds);
-        if(mask & EPOLLOUT) FD_SET(fd,&wfds);
+        //EPOLLOUT edge-emulation (see SelectState::writableReported): once we
+        //have delivered the writable edge for this fd, STOP selecting on write
+        //for it. Otherwise an always-writable client socket keeps wfds set, so
+        //select() returns immediately every iteration and never blocks -> busy
+        //loop (fatal on ESP32: starves the FreeRTOS idle task -> Task WDT). The
+        //edge re-arms only via EPOLL_CTL_ADD/MOD (writableReported reset in
+        //ctl()) — which matches epoll's EPOLLET contract for a consumer that
+        //writes inline and never holds a pending send queue (as CatchChallenger
+        //does). EPOLLIN stays level-triggered (the read path drains it).
+        if((mask & EPOLLOUT) && !g_select->writableReported[fd]) FD_SET(fd,&wfds);
         //EPOLLERR/EPOLLHUP are reported via the exception fd_set.
         FD_SET(fd,&efds);
         if(fd>maxfd) maxfd=fd;
@@ -891,8 +932,25 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
                 break;
             const int fd=e.first;
             uint32_t out=0;
-            if(FD_ISSET(fd,&rfds)) out|=EPOLLIN;
-            if(FD_ISSET(fd,&wfds)) out|=EPOLLOUT;
+            if(FD_ISSET(fd,&rfds))
+            {
+                out|=EPOLLIN;
+                //EPOLLRDHUP synthesis on peer FIN (see cc_recv_peek_is_eof):
+                //without it a closed-but-not-removed socket stays level-readable
+                //and select() spins forever (Task WDT on ESP32). The read path
+                //drains pending data first, so a 0-byte peek here is a true EOF.
+                if(cc_recv_peek_is_eof(fd))
+                    out|=EPOLLRDHUP|EPOLLHUP;
+            }
+            //EPOLLOUT edge-emulation: wfds only ever contains fds whose writable
+            //edge has NOT yet been delivered (see the fd_set build above), so a
+            //set wfds bit IS the rising edge. Latch it so we stop selecting on
+            //write for this fd until ctl() re-arms it.
+            if(FD_ISSET(fd,&wfds))
+            {
+                out|=EPOLLOUT;
+                g_select->writableReported[fd]=true;
+            }
             if(FD_ISSET(fd,&efds)) out|=EPOLLERR;
             if(out!=0)
             {
@@ -949,8 +1007,23 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
             break;
         const int fd=e.first;
         uint32_t out=0;
-        if(FD_ISSET(fd,&rfds)) out|=EPOLLIN;
-        if(FD_ISSET(fd,&wfds)) out|=EPOLLOUT;
+        if(FD_ISSET(fd,&rfds))
+        {
+            out|=EPOLLIN;
+            //EPOLLRDHUP synthesis on peer FIN — see the DOS/ESP32 branch above
+            //and cc_recv_peek_is_eof() for the full rationale.
+            if(cc_recv_peek_is_eof(fd))
+                out|=EPOLLRDHUP|EPOLLHUP;
+        }
+        //EPOLLOUT edge-emulation: wfds only ever contains fds whose writable
+        //edge has NOT yet been delivered (see the fd_set build above), so a set
+        //wfds bit IS the rising edge. Latch it so we stop selecting on write for
+        //this fd until ctl() re-arms it.
+        if(FD_ISSET(fd,&wfds))
+        {
+            out|=EPOLLOUT;
+            g_select->writableReported[fd]=true;
+        }
         if(FD_ISSET(fd,&efds)) out|=EPOLLERR;
         if(out!=0)
         {
@@ -1203,12 +1276,17 @@ int EventLoop::ctl(int __op, int __fd,epoll_event *__event)
     {
         g_select->events[__fd]=__event->events;
         g_select->ptrs[__fd]=__event->data.ptr;
+        //Re-arm the EPOLLOUT edge: a freshly added/modified interest set should
+        //report writability once on the next wait() even if the fd was writable
+        //before (matches epoll's EPOLLET behaviour on re-registration).
+        g_select->writableReported[__fd]=false;
         return 0;
     }
     else if(__op==EPOLL_CTL_DEL)
     {
         g_select->events.erase(__fd);
         g_select->ptrs.erase(__fd);
+        g_select->writableReported.erase(__fd);
         return 0;
     }
     return -1;

@@ -156,9 +156,13 @@ bool EventLoopGenericServer::tryListenInternal(const char* const ip,const char* 
                     << ", boot: " << bootMs << "ms"
                     //<< ", rp->ai_canonname: " << rp->ai_canonname-> corrupt the output
                     << std::endl;
+            // ESP32: lwIP declares getnameinfo() but ships no implementation;
+            // this reverse-lookup is diagnostic only, so skip it there.
+            #ifndef CC_TARGET_ESP32
             char hbuf[NI_MAXHOST];
             if(!getnameinfo(rp->ai_addr, rp->ai_addrlen, hbuf, sizeof(hbuf),NULL, 0, NI_NAMEREQD))
                 std::cout << "getnameinfo: " << hbuf << std::endl;
+            #endif
             bindSuccess++;
         }
         rp = rp->ai_next;
