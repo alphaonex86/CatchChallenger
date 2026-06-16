@@ -13,7 +13,17 @@
 #endif
 #include "lib.h"
 
+// Sizes the static socket read-chunk tempBigBufferForInput[] (one shared copy;
+// the SERVER reads up to this many bytes per recv) and, on the CLIENT only, the
+// per-instance commonBuffer[] (member is `#ifndef CATCHCHALLENGER_SERVER`, so it
+// is NOT in the server). CC packets are small (chat/move/visibility deltas), so
+// on the ESP32 a 1 KiB chunk is ample (a rare big packet just takes a few more
+// recv() calls, still bounded by BIGBUFFERSIZE) — shrinks the one static buffer.
+#if defined(CC_TARGET_ESP32)
+#define CATCHCHALLENGER_COMMONBUFFERSIZE 1024
+#else
 #define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
+#endif
 
 // tempBigBufferForOutput now sizes to exactly the protocol packet ceiling.
 // Previously the non-mirror build pinned this at 16 MB (16x over MAX_PACKET_SIZE).
@@ -24,10 +34,15 @@
 // ESP32 has only ~320 KB usable DRAM (shared with WiFi/lwIP). The default
 // 1 MB ceiling makes the single static tempBigBufferForOutput[] alone overflow
 // DRAM. The ESP32 profile serves a few LAN players off a flash-resident
-// datapack (no in-server large-file datapack send), so a 32 KB packet ceiling
+// datapack (no in-server large-file datapack send), so a small packet ceiling
 // is ample and the same value bounds the "packet too big" input check, keeping
 // the two coupled. ESP32-only — every other target keeps the full size.
-#define CATCHCHALLENGER_BIGBUFFERSIZE (32*1024)
+// 16 KB (was 32): this single static buffer is .bss, so halving it returns ~16 KB
+// to the heap — directly raising the concurrent-player ceiling (51 players need a
+// 37 KB pool + per-client init; this is what makes that fit). The largest server
+// packet here (a full-map visibility broadcast, <=254 visible * a few bytes, or a
+// character load with compression=none + ONLYBYMIRROR) stays well under 16 KB.
+#define CATCHCHALLENGER_BIGBUFFERSIZE (16*1024)
 #else
 #define CATCHCHALLENGER_BIGBUFFERSIZE CATCHCHALLENGER_MAX_PACKET_SIZE
 #endif
@@ -238,9 +253,13 @@ protected:
     uint64_t TXSize;
     uint64_t RXSize;
     #endif
-    #ifndef CATCHCHALLENGER_SERVER
-    char commonBuffer[CATCHCHALLENGER_COMMONBUFFERSIZE];
-    #endif
+    // (removed) the per-instance char commonBuffer[COMMONBUFFERSIZE] member was
+    // DEAD: the read path (client + server) reads into the STATIC
+    // tempBigBufferForInput[] and the parse functions take that as their
+    // `commonBuffer` pointer param; the persistent partial-packet tail lives in
+    // the header_cut / dataToWithoutHeader vectors. It only wasted COMMONBUFFERSIZE
+    // bytes in every client instance. (It was already #ifndef CATCHCHALLENGER_SERVER
+    // so it never affected the server.)
     #ifdef CATCHCHALLENGER_HARDENED
     int parseIncommingDataCount;//by object
     #endif
