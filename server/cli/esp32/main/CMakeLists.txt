@@ -25,7 +25,45 @@ endif()
 # --- shared + server game-logic sources (globbed, then filtered) -------------
 file(GLOB_RECURSE _cc_general    "${CC_REPO}/general/base/*.cpp"
                                  "${CC_REPO}/general/fight/*.cpp")
-file(GLOB         _cc_blake3     "${CC_REPO}/general/blake3/*.c")
+# blake3: only the portable C path. The x86 SSE/AVX (blake3_*_x86*.c / .S) and
+# NEON files don't build for xtensa; general.cmake's vendored fallback lists
+# exactly these three, so mirror that.
+set(_cc_blake3
+    ${CC_REPO}/general/blake3/blake3.c
+    ${CC_REPO}/general/blake3/blake3_dispatch.c
+    ${CC_REPO}/general/blake3/blake3_portable.c
+)
+# xxhash: one TU (XXH_INLINE_ALL is set as a define below), mirrors general.cmake.
+set(_cc_xxhash ${CC_REPO}/general/libxxhash/xxhash.c)
+
+# zlib: vendored fallback (no system zlib in the xtensa sysroot). Mirrors the
+# vendored branch of general/libzlib.cmake. The gz* file API is fine on newlib,
+# but CatchChallenger only uses the in-memory inflate/uncompress path, so the
+# minimal set is enough; include gz* too for parity with the host build.
+set(_cc_zlib_dir ${CC_REPO}/general/libzlib)
+set(_cc_zlib
+    ${_cc_zlib_dir}/adler32.c
+    ${_cc_zlib_dir}/compress.c
+    ${_cc_zlib_dir}/crc32.c
+    ${_cc_zlib_dir}/deflate.c
+    ${_cc_zlib_dir}/infback.c
+    ${_cc_zlib_dir}/inffast.c
+    ${_cc_zlib_dir}/inflate.c
+    ${_cc_zlib_dir}/inftrees.c
+    ${_cc_zlib_dir}/trees.c
+    ${_cc_zlib_dir}/uncompr.c
+    ${_cc_zlib_dir}/zutil.c
+)
+
+# zstd: vendored static fallback. Mirrors general/libzstd/build/cmake/lib —
+# common + compress + decompress C sources, no amd64 .S (xtensa), no dictBuilder
+# / deprecated (CompressionProtocol.cpp only calls ZSTD_compress/decompress/
+# isError/getErrorName). ZSTD_DISABLE_ASM is set on these TUs below.
+set(_cc_zstd_dir ${CC_REPO}/general/libzstd/lib)
+file(GLOB _cc_zstd_common     "${_cc_zstd_dir}/common/*.c")
+file(GLOB _cc_zstd_compress   "${_cc_zstd_dir}/compress/*.c")
+file(GLOB _cc_zstd_decompress "${_cc_zstd_dir}/decompress/*.c")
+set(_cc_zstd ${_cc_zstd_common} ${_cc_zstd_compress} ${_cc_zstd_decompress})
 # server/base AND its siblings server/fight + server/crafting: the latter two
 # define the Client fight/crafting method overrides (Client::tryEscape,
 # tryCapture, takeAnObjectOnMap, …) that server/base/ calls UNCONDITIONALLY, so
@@ -34,14 +72,28 @@ file(GLOB         _cc_blake3     "${CC_REPO}/general/blake3/*.c")
 file(GLOB_RECURSE _cc_serverbase "${CC_REPO}/server/base/*.cpp"
                                  "${CC_REPO}/server/fight/*.cpp"
                                  "${CC_REPO}/server/crafting/*.cpp")
-# Drop ONLY what this profile genuinely excludes (mirrors general.cmake's NOXML
-# branch + catchchallenger-server.cmake): vendored tinyXML2, Qt TUs, and the SQL
-# backend (PreparedDBQuery*/SqlFunction/EventLoop{Postgresql,MySQL,Database} —
-# DB_INTERNAL_VARS reuses the FileDB record path, no SQL). The XML *loaders*
-# (Map_loader*/DatapackGeneralLoader*/FightLoader*) ARE compiled under NOXML
-# (they carry #ifdef CATCHCHALLENGER_NOXML stubs) — do NOT exclude them.
-list(FILTER _cc_general    EXCLUDE REGEX "/tinyXML2/|/Qt|Qt\\.cpp$")
-list(FILTER _cc_serverbase EXCLUDE REGEX "PreparedDBQuery|SqlFunction|DatabaseProtocol|EventLoop(Postgresql|MySQL|Database)|/Qt|Qt\\.cpp$")
+# Drop what this profile genuinely excludes, MIRRORING the host NOXML build's
+# source set (general/general.cmake NOXML branch + catchchallenger-server.cmake).
+# Under CATCHCHALLENGER_NOXML the host build compiles only CommonDatapack.cpp for
+# datapack loading; the XML *loaders* are NOT compiled at all — their headers
+# guard the whole class body with #ifndef CATCHCHALLENGER_NOXML, so their .cpp
+# definitions ("no declaration matches" / "tinyxml2 does not name a type") must
+# be excluded here too. Specifically drop:
+#   - tinyXML2 + any Qt TU (no Qt, no XML),
+#   - the XML datapack loaders: Map_loader.cpp / Map_loaderMain.cpp,
+#     general/base/DatapackGeneralLoader/*.cpp, and the XML FightLoaders
+#     (FightLoaderBuff/Monster/Skill.cpp). NB: FightLoader.cpp (no suffix) IS
+#     compiled under NOXML (it carries #ifdef stubs) — keep it,
+#   - GUI-only helpers (CCGuiLog/CCGuiStats — server-gui only) and
+#     ConnectedSocket.cpp (not in the CLI server source set).
+list(FILTER _cc_general EXCLUDE REGEX
+    "/tinyXML2/|/Qt|Qt\\.cpp$|/Map_loader(Main)?\\.cpp$|/DatapackGeneralLoader/|/FightLoader(Buff|Monster|Skill)\\.cpp$|/CCGui(Log|Stats)\\.cpp$|/ConnectedSocket\\.cpp$")
+# The SQL backend (PreparedDBQuery*/SqlFunction/EventLoop{Postgresql,MySQL,
+# Database}) is unused: DB_INTERNAL_VARS reuses the FileDB record path, no SQL.
+# TinyXMLSettings.cpp is the XML server-properties reader — catchchallenger-
+# server.cmake puts it behind `if(NOT CATCHCHALLENGER_NOXML)`, so exclude it
+# under NOXML (settings come from flash via DATAPACK_CPP instead).
+list(FILTER _cc_serverbase EXCLUDE REGEX "PreparedDBQuery|SqlFunction|DatabaseProtocol|EventLoop(Postgresql|MySQL|Database)|/TinyXMLSettings\\.cpp$|/Qt|Qt\\.cpp$")
 
 # --- the all-in-one CLI event-loop server (explicit, mirrors _filedb_sources) -
 set(_cc_cli
@@ -72,9 +124,12 @@ set(_cc_datapack_cpp "${CATCHCHALLENGER_DATAPACK_CPP_DIR}/datapack_cpp.cpp")
 
 idf_component_register(
     SRCS "app_main.cpp"
-         ${_cc_cli} ${_cc_general} ${_cc_blake3} ${_cc_serverbase}
+         ${_cc_cli} ${_cc_general} ${_cc_blake3} ${_cc_xxhash}
+         ${_cc_zlib} ${_cc_zstd} ${_cc_serverbase}
          "${_cc_datapack_cpp}"
     INCLUDE_DIRS "." "${CC_REPO}" "${CC_REPO}/server/cli" "${CC_REPO}/server/base"
+                 "${CC_REPO}/general/blake3" "${CC_REPO}/general/libxxhash"
+                 "${_cc_zlib_dir}" "${_cc_zstd_dir}"
                  "${CATCHCHALLENGER_DATAPACK_CPP_DIR}"
     REQUIRES esp_wifi esp_netif esp_event nvs_flash lwip
 )
@@ -85,6 +140,15 @@ set_source_files_properties(${CC_REPO}/server/cli/main-unix.cpp
     DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
 
 # no-filesystem datapack-cpp profile defines (mirror the host stage2 build).
+# CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR is ESP32-specific (NOT in the
+# host stage2 build): the ESP32 has ~320 KB DRAM and cannot host the in-server
+# compressed datapack-send path, which requires a multi-hundred-KB output buffer
+# (the CATCHCHALLENGER_SERVER_DATAPACK_*_FILEPURGE_KB guard in server/base/
+# Client.hpp forces BIGBUFFERSIZE >= 600 KB otherwise). With ONLYBYMIRROR those
+# purge thresholds + that guard are compiled out, the datapack is served from
+# flash (DATAPACK_CPP) and clients fetch assets from the mirror URL — so the tiny
+# ESP32 BIGBUFFERSIZE (32 KB, see general/base/ProtocolParsing.hpp) is valid and
+# .dram0.bss fits. This define lives only in the ESP32 component build.
 target_compile_definitions(${COMPONENT_LIB} PRIVATE
     CATCHCHALLENGER_SERVER
     QT_NO_EMIT
@@ -95,7 +159,40 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
     CATCHCHALLENGER_NOXML
     CATCHCHALLENGER_SELECT
     CATCHCHALLENGER_DATAPACK_CPP
+    CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     CC_TARGET_ESP32
 )
 # vendored blake3/xxhash/zstd/tinyxml2: the cross sysroot has no system copy.
-target_compile_options(${COMPONENT_LIB} PRIVATE -Os -fno-exceptions -fno-rtti)
+# -fno-exceptions / -fno-rtti are C++-only flags; gating them to CXX avoids the
+# "valid for C++ but not C" warning (→ error under -Werror) on the vendored .c
+# sources (blake3 / xxhash / zlib / zstd).
+target_compile_options(${COMPONENT_LIB} PRIVATE
+    -Os
+    $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
+    $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
+)
+
+# ESP-IDF forces -Werror=all (the host CatchChallenger build does not), which
+# turns two long-standing, host-tolerated warnings in shared code into hard
+# errors here. Relax them to plain warnings for THIS component only — this is
+# the ESP32-only "main" component, so it changes no other target's build, and
+# we must not edit the shared sources just to satisfy a stricter cross flag:
+#   - overloaded-virtual: ClientWithMapEventLoop::reset(int) intentionally
+#     shadows ProtocolParsingBase::reset() (different signature, different role).
+#   - maybe-uninitialized: a false positive in CommonFightEngineTurn.cpp
+#     (gcc 13 xtensa can't prove 'quantity' is always assigned before use).
+target_compile_options(${COMPONENT_LIB} PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>:-Wno-error=overloaded-virtual>
+    -Wno-error=maybe-uninitialized
+)
+
+# XXH_INLINE_ALL: required by the vendored xxhash.c TU so call sites resolve the
+# xxh symbols inline (same as general.cmake's vendored branch). Applied to the
+# whole component is harmless — only xxhash.c reacts to it.
+target_compile_definitions(${COMPONENT_LIB} PRIVATE XXH_INLINE_ALL)
+
+# ZSTD_DISABLE_ASM: xtensa has no amd64 huf_decompress_amd64.S; the C fallback
+# is selected by this define (mirrors the non-amd64 branch of zstd's cmake).
+set_source_files_properties(${_cc_zstd}
+    PROPERTIES COMPILE_DEFINITIONS "ZSTD_DISABLE_ASM"
+    DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")

@@ -67,7 +67,15 @@ void BaseServer::preload_1_the_data()
         *serialBuffer >> CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
         *serialBuffer >> CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
         std::cout << "hash size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
-        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+        // The 3 per-file datapack hash caches are present in the stream only when
+        // the writer was NOT ONLYBYMIRROR. The on-disk datapack-cache.bin is
+        // written by stage1 (no ONLYBYMIRROR) so it DOES carry them. The
+        // datapack-cpp blob in flash (CATCHCHALLENGER_DATAPACK_CPP) is emitted to
+        // match the firmware reader, which is ALWAYS ONLYBYMIRROR, so it does NOT
+        // carry them — skip them here for the cpp-data path regardless of this
+        // build's own ONLYBYMIRROR setting, else every later field (including
+        // flat_map_list) shifts by 3 and the map list reads back empty.
+        #if !defined(CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR) && !defined(CATCHCHALLENGER_DATAPACK_CPP)
         *serialBuffer >> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
         std::cout << "datapack_file_hash_cache_base size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         *serialBuffer >> Client::datapack_file_hash_cache_main;

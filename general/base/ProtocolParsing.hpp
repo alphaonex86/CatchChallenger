@@ -20,7 +20,17 @@
 // With streaming compression + sendfile() for datapack content (see
 // ClientHeavyLoadMirror::sendFile), the output buffer never needs more
 // than one packet's worth of bytes.
+#if defined(CC_TARGET_ESP32)
+// ESP32 has only ~320 KB usable DRAM (shared with WiFi/lwIP). The default
+// 1 MB ceiling makes the single static tempBigBufferForOutput[] alone overflow
+// DRAM. The ESP32 profile serves a few LAN players off a flash-resident
+// datapack (no in-server large-file datapack send), so a 32 KB packet ceiling
+// is ample and the same value bounds the "packet too big" input check, keeping
+// the two coupled. ESP32-only — every other target keeps the full size.
+#define CATCHCHALLENGER_BIGBUFFERSIZE (32*1024)
+#else
 #define CATCHCHALLENGER_BIGBUFFERSIZE CATCHCHALLENGER_MAX_PACKET_SIZE
+#endif
 
 #ifdef CATCHCHALLENGER_SERVER
     #ifndef CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER

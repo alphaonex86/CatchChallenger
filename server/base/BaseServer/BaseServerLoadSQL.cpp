@@ -78,11 +78,17 @@ void BaseServer::emitDatapackCpp(const std::string &dir)
     eb << CommonSettingsCommon::commonSettingsCommon.datapackHashBase;
     eb << CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
     eb << CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
-    #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    eb << BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
-    eb << Client::datapack_file_hash_cache_main;
-    eb << Client::datapack_file_hash_cache_sub;
-    #endif
+    // The 3 per-file datapack hash caches exist ONLY when the reader is NOT
+    // ONLYBYMIRROR (preload_1_the_data reads them under the same guard). The
+    // datapack-cpp blob is ALWAYS consumed by the firmware/stage2 build, which
+    // is ALWAYS ONLYBYMIRROR (the fileless server can't serve files, so clients
+    // fetch the datapack from the mirror) — so it never reads these 3 fields.
+    // stage1 itself is built WITHOUT ONLYBYMIRROR (XML enabled), so the plain
+    // #ifndef used to emit them, shifting every later field by 3 and leaving the
+    // reader's flat_map_list empty (ESP32: "No map to list" -> abort -> reboot
+    // loop). Emit MUST match the consumer's layout, not stage1's own build, so
+    // gate on whether the *consumer* (CATCHCHALLENGER_DATAPACK_CPP reader) reads
+    // them: it never does (always ONLYBYMIRROR), so always skip them here.
     eb << GlobalServerData::serverPrivateVariables.skinList;
     eb << GlobalServerData::serverPrivateVariables.monsterDrops;
     eb << MapVisibilityAlgorithm::flat_map_list;

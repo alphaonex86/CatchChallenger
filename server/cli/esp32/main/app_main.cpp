@@ -65,7 +65,23 @@ static void cc_wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     // The default STA netif owns the DHCP client; it requests an address as soon
     // as the link is up — no static config needed.
-    esp_netif_create_default_wifi_sta();
+    esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
+
+    // Optional static IPv4 (CATCHCHALLENGER_STATIC_IP): default "" -> DHCP, so a
+    // normal build is unaffected. When set, stop the DHCP client and pin the
+    // address (used to give the benchmark a fixed target). IP_EVENT_STA_GOT_IP
+    // still fires with the static address, so the wait below is unchanged.
+    if(strlen(CONFIG_CATCHCHALLENGER_STATIC_IP) > 0)
+    {
+        esp_netif_ip_info_t ip;
+        memset(&ip, 0, sizeof(ip));
+        esp_netif_str_to_ip4(CONFIG_CATCHCHALLENGER_STATIC_IP,   &ip.ip);
+        esp_netif_str_to_ip4(CONFIG_CATCHCHALLENGER_STATIC_NETMASK, &ip.netmask);
+        esp_netif_str_to_ip4(CONFIG_CATCHCHALLENGER_STATIC_GATEWAY, &ip.gw);
+        ESP_ERROR_CHECK(esp_netif_dhcpc_stop(sta_netif));
+        ESP_ERROR_CHECK(esp_netif_set_ip_info(sta_netif, &ip));
+        ESP_LOGI(TAG, "static IPv4 configured: %s", CONFIG_CATCHCHALLENGER_STATIC_IP);
+    }
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -84,6 +100,11 @@ static void cc_wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wc));
     ESP_ERROR_CHECK(esp_wifi_start());
+    // Disable modem-sleep power save: the server is mains/USB-powered and runs a
+    // continuous event loop, so the periodic PHY sleep/wake is pure downside —
+    // it was crashing in the PHY wake path (phy_wakeup_init) right after bind and
+    // it adds tens of ms of wake latency that would pollute the latency benchmark.
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 
     ESP_LOGI(TAG, "wifi STA connecting to \"%s\" (DHCP)...",
              CONFIG_CATCHCHALLENGER_WIFI_SSID);

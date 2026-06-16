@@ -92,6 +92,37 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
         //the single-threaded event loop) — report "no data", like the POSIX
         //blocking-socket path below.
         return bytesAvailableVar;
+#elif defined(CC_TARGET_ESP32)
+        //lwIP's ioctl(FIONREAD) is unreliable on a freshly-readable TCP socket:
+        //select() reports the fd readable while FIONREAD still answers 0, so the
+        //POSIX blocking branch below would return 0 and never drain the byte —
+        //leaving the socket level-readable forever and busy-looping select()
+        //(starves the FreeRTOS idle task -> Task WDT). The accepted client fd is
+        //left BLOCKING (make_non_blocking disabled in main-unix), so we recv()
+        //with MSG_DONTWAIT: it returns the pending bytes if any, 0 on EOF, or
+        //-1/EAGAIN when genuinely empty — never blocking the single-threaded
+        //event loop. ESP32-only; no other target's read path is affected.
+        //A hard error (ECONNRESET/ENOTCONN/EPIPE/...) means the socket is dead
+        //and lwIP keeps flagging it readable: it MUST be torn down or select()
+        //busy-loops on it (Task WDT). We tear it down INLINE (DEL + close fd +
+        //infd=-1) instead of calling close() — close() drains via a read() loop
+        //that would re-enter here and, while FIONREAD still reports queued bytes,
+        //recurse on the next hard error (stack-canary panic on the 80KB ESP32
+        //stack). After this, isValid()==false so the main loop drops the client.
+        //EAGAIN/EWOULDBLOCK is "nothing right now" -> 0, socket stays.
+        {
+            const int r=::recv(infd,buffer,bufferSize,MSG_DONTWAIT);
+            if(r<0)
+            {
+                if(errno==EAGAIN || errno==EWOULDBLOCK)
+                    return 0;//genuinely nothing to read right now
+                EventLoop::loop.ctl(EPOLL_CTL_DEL, infd, NULL);
+                cc_close_socket(infd);
+                infd=-1;
+                return -1;//isValid()==false now -> main loop drops the client
+            }
+            return r;//r==0 -> EOF, caller's <=0 check removes the client
+        }
 #else
         //good alternative?: Not work
         /*if(errno == 11)

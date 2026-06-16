@@ -6,9 +6,26 @@
 CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 
 # The server event loop runs in the app_main task. main()'s frame holds
-# epoll_event events[512] (~8 KiB) + a 4 KiB buffer + deep parse call stacks, so
-# the default 3.5 KiB main-task stack is far too small.
-CONFIG_ESP_MAIN_TASK_STACK_SIZE=32768
+# epoll_event events[] + a BIGBUFFERSIZE buffer + the deep datapack/visibility
+# preload call chains (preload_1 -> ... -> preload_30 are NESTED calls that at -Os
+# do NOT all fold to tail-jumps, so the cumulative frame is large — measured peak
+# ~74 KiB with the "test" maincode). At 32-64 KiB the chain overflowed the
+# main-task stack DOWN into the adjacent .bss, silently corrupting
+# GlobalServerData::serverSettings (broadcastName turned into a garbage
+# std::string) and, on other boots, WiFi/heap structures -> Guru Meditation in
+# innocent WiFi PHY code a few hundred ms after bind (heap_caps_check_integrity_all
+# stayed clean throughout — it was a stack/.bss collision, not heap corruption).
+# 80 KiB clears the measured peak with ~7 KiB margin while leaving enough heap for
+# the WiFi datapath + the max-players client pool. Going much higher (96 KiB)
+# steals so much heap that the client-pool allocation then OOMs, so this is a
+# balance, not "as big as possible". A bigger maincode needs PSRAM (see below).
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=81920
+
+# Trap a main-task stack overflow at the EXACT overflowing access (a debug
+# watchpoint at the end of every task stack) instead of letting it silently
+# scribble over neighbouring RAM. Negligible cost; keep it on so any future
+# datapack/maincode that deepens the preload chain fails loud, not corrupt.
+CONFIG_FREERTOS_WATCHPOINT_END_OF_STACK=y
 
 # lwIP: enough sockets for the listen socket + the UDP announce + up to 10
 # clients (server-properties max-players=10), and BSD select(2)/SO_REUSEADDR
