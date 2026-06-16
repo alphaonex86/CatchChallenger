@@ -248,6 +248,13 @@ its CPU is noisy.
 
 ## Zero impact on production binaries — non-negotiable
 
+**Prefer NOT changing prod code at all.** A benchmark lands in `benchmark/`
+(the harness) and drives/observes the prod binary EXTERNALLY (network, serial,
+the bot CLI) — editing `general/`/`client/`/`server/`/`tools/` risks stability
+and grows the codebase. Only when a measurement is impossible from outside add
+prod code, and then ONLY behind `#ifdef CATCHCHALLENGER_BENCHMARK` / a class
+override (below). A real prod BUG fix is still allowed.
+
 Benchmark code MUST NOT add overhead to a non-benchmark build. Two
 acceptable mechanisms, in this priority order:
 
