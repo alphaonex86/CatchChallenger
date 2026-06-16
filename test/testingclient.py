@@ -74,6 +74,17 @@ NPROC      = str(multiprocessing.cpu_count())
 
 DATAPACKS       = _config["paths"]["datapacks"]
 
+# The geometry-specific channel/move tests (sign/door/road/lava/house/cave/water
+# navigation) validate the OFFICIAL datapack's test-city fixture
+# (CatchChallenger-datapack/map/main/test/: spawn city map 1 @ (15,26), sign at
+# (17,25), west-border road, etc.). They MUST NOT run against datapack-pkmn — the
+# external reference dataset has its own "test" maincode with DIFFERENT map
+# geometry (spawn map 7), so every hard-coded coordinate mismatches and the tests
+# false-fail. Gate those tests to the official datapack only. (The datapack-LOAD
+# and solo-reach-map tests have no geometry assumption and still run for every
+# datapack.)
+OFFICIAL_DATAPACK_NAME = "CatchChallenger-datapack"
+
 SERVER_PRO      = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
 SERVER_BUILD    = build_paths.build_path("server/cli/build/testing-filedb" + _DIAG_SUFFIX)
 SERVER_REF_BUILD= build_paths.build_path("server/cli/build/catchchallenger-server-filedb-llvm-Debug")
@@ -2283,7 +2294,7 @@ def main():
             # the dialog (the actual reported bug). Verified externally over the
             # QLocalServer GETDIALOG query — no in-binary test code. Only the
             # "test" maincode carries that known sign/coordinates.
-            if gl_ok and dp_gl and mc == "test":
+            if gl_ok and dp_gl and mc == "test" and dp_name == OFFICIAL_DATAPACK_NAME:
                 run_qtopengl_sign_dialog_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_building_roundtrip_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_lava_blocked_channel_test(dp_name, mc, failed_cases)

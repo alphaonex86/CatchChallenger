@@ -568,8 +568,12 @@ def esp_idf_available():
 
 
 def idf_env():
-    """Fresh env for idf.py: only the minimum + IDF_PATH. The operator's
-    esp-idf/export.sh prepends the xtensa toolchain to PATH; we re-run it."""
+    """Fresh env for idf.py: only the minimum + IDF_PATH + IDF_TOOLS_PATH. The
+    operator's esp-idf/export.sh prepends the xtensa toolchain to PATH; we re-run
+    it. export.sh resolves the installed tools via IDF_TOOLS_PATH (default
+    ~/.espressif) -- this prefix keeps them under ESP32_PREFIX/tools, so we MUST
+    pass IDF_TOOLS_PATH or export.sh finds nothing and `idf.py` is not on PATH
+    (rc=127). Honour an operator override, else default to the prefix convention."""
     env = {}
     for k in ("HOME", "USER", "LANG", "TERM", "TMPDIR"):
         if k in os.environ:
@@ -578,6 +582,8 @@ def idf_env():
         if k.startswith("LC_"):
             env[k] = v
     env["IDF_PATH"] = IDF_PATH
+    env["IDF_TOOLS_PATH"] = os.environ.get(
+        "IDF_TOOLS_PATH", os.path.join(ESP32_PREFIX, "tools"))
     env["PATH"] = os.environ.get("PATH", "/usr/bin:/bin")
     return env
 
