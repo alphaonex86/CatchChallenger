@@ -27,6 +27,15 @@ MultipleBotConnection::MultipleBotConnection() :
     CatchChallenger::ProtocolParsing::initialiseTheVariable();
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
+    //Connect the creation-timer tick ONCE here, with the return checked: this
+    //is the first and only connect, so a false return is a genuine failure.
+    //ifMultipleConnexionStartCreation() afterwards only (re)starts the timer --
+    //it must NOT re-connect, because Qt::UniqueConnection returns false on the
+    //already-made connection and a late re-entry on a slow server (the ESP32,
+    //after the timer was stopped) would then look like a failure when it isn't.
+    if(!connect(&connectTimer,&QTimer::timeout,this,&MultipleBotConnection::connectTimerSlot,Qt::UniqueConnection))
+        BOT_ABORT();
+
     numberToChangeLoginForMultipleConnexion=1;
     numberOfBotConnected=0;
     numberOfSelectedCharacter=0;
@@ -526,8 +535,12 @@ void MultipleBotConnection::ifMultipleConnexionStartCreation()
     {
         if(!connectTimer.isActive())
         {
-            if(!connect(&connectTimer,&QTimer::timeout,this,&MultipleBotConnection::connectTimerSlot,Qt::UniqueConnection))
-                BOT_ABORT();
+            //The tick is connected once in the constructor (return checked
+            //there). Here we only (re)start the timer: re-connecting would
+            //return false on the existing Qt::UniqueConnection, and a late
+            //re-entry on a slow server (the ESP32, after connectTimer.stop())
+            //would wrongly look like a failure. connectTimerSlot() is
+            //idempotent once the target count is reached.
             unsigned int temp_ms=1000/connectBySeconds();
             if(temp_ms<1)
                 temp_ms=1;
@@ -628,7 +641,16 @@ void MultipleBotConnection::have_current_player_info_with_client(CatchChallenger
     client->stat=Status_SelectedCharacter;
     updateClientListStatus();
 
-    /*moved to MultipleBotConnection::haveCharacter() to work after createCharacter
+    //A FRESHLY CREATED character completes here (have_current_player_info),
+    //NOT in haveCharacter() -- haveCharacter() is driven by QthaveCharacter,
+    //which the server sends only for characters that ALREADY exist at login.
+    //So for a cold server where every bot creates its character (e.g. the
+    //ESP32 all-in-one on a fresh boot), the on-map signal must be evaluated
+    //here too, otherwise emit_all_player_on_map() never fires and the run
+    //times out. haveCharacter() keeps the SAME check for the warm/existing-
+    //character path; the consumer (MainWindow::all_player_on_map) is
+    //idempotent, so whichever path completes the last selection wins and a
+    //second emit is a no-op.
     if(multipleConnexion())
     {
         if(numberOfBotConnected>=numberOfSelectedCharacter)
@@ -639,7 +661,7 @@ void MultipleBotConnection::have_current_player_info_with_client(CatchChallenger
         }
     }
     else
-        emit emit_all_player_on_map();*/
+        emit emit_all_player_on_map();
 
     Q_UNUSED(informations);
     //std::cout << "MultipleBotConnection::have_current_player_info() pseudo: " << informations.public_informations.pseudo << std::endl;

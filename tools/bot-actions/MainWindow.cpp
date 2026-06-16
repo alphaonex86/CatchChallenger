@@ -17,7 +17,8 @@ MultipleBotConnectionAction MainWindow::multipleBotConnexion;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    autoConnectTimeoutSeconds(60)
 {
     Settings::settings=new QSettings();
     QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
@@ -171,9 +172,10 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::autoConnect(const QString &host, quint16 port, int bots, const QString &login, const QString &pass)
+void MainWindow::autoConnect(const QString &host, quint16 port, int bots, const QString &login, const QString &pass, int mapTimeoutSeconds)
 {
     mAutoConnect=true;
+    autoConnectTimeoutSeconds=mapTimeoutSeconds;
 
     ui->host->setText(host);
     ui->port->setValue(port);
@@ -198,14 +200,18 @@ void MainWindow::autoConnect(const QString &host, quint16 port, int bots, const 
 
     ui->autoCreateCharacter->setChecked(true);
 
-    connect(&autoConnectTimeout,&QTimer::timeout,this,[this](){
-        qDebug() << "TIMEOUT: Not all players on map within 60 seconds";
-        QCoreApplication::exit(1);
-    });
+    if(!connect(&autoConnectTimeout,&QTimer::timeout,this,&MainWindow::autoConnectTimedOut,Qt::UniqueConnection))
+        qWarning() << "autoConnect(): autoConnectTimeout already connected";
     autoConnectTimeout.setSingleShot(true);
-    autoConnectTimeout.start(60000);
+    autoConnectTimeout.start(autoConnectTimeoutSeconds*1000);
 
     on_connect_clicked();
+}
+
+void MainWindow::autoConnectTimedOut()
+{
+    qDebug() << "TIMEOUT: Not all players on map within" << autoConnectTimeoutSeconds << "seconds";
+    QCoreApplication::exit(1);
 }
 
 void MainWindow::autoSelectServer()
@@ -725,6 +731,12 @@ void MainWindow::all_player_connected()
 
 void MainWindow::all_player_on_map()
 {
+    //Idempotent: emit_all_player_on_map() can now arrive from two libbot paths
+    //(haveCharacter for existing characters, have_current_player_info for
+    //freshly created ones). Only the first one must set up the bot target list
+    //+ latency driver; a second arrival is a no-op.
+    if(botTargetList!=NULL)
+        return;
     qDebug() << "MainWindow::all_player_on_map()";
     if(mAutoConnect)
         autoConnectTimeout.stop();

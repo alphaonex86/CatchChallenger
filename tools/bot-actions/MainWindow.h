@@ -32,7 +32,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     static MultipleBotConnectionAction multipleBotConnexion;
-    void autoConnect(const QString &host, quint16 port, int bots, const QString &login, const QString &pass);
+    void autoConnect(const QString &host, quint16 port, int bots, const QString &login, const QString &pass, int mapTimeoutSeconds=60);
 private:
     QSettings settings;
     QTimer slowDownTimer;
@@ -66,6 +66,7 @@ private slots:
     void on_autoCreateCharacter_stateChanged(int arg1);
     void all_player_connected();
     void all_player_on_map();
+    void autoConnectTimedOut();
     void on_host_returnPressed();
     void on_showPassword_toggled(bool);
 #ifdef CATCHCHALLENGER_BENCHMARK
@@ -79,6 +80,7 @@ private:
     unsigned int internalId;
     bool mAutoConnect;
     QTimer autoConnectTimeout;
+    int autoConnectTimeoutSeconds;
     void autoSelectServer();
 #ifdef CATCHCHALLENGER_BENCHMARK
     LatencyRecorder *latencyRecorder;
