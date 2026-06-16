@@ -9,6 +9,7 @@
 #endif
 #include <QMutex>
 #include <unordered_map>
+#include <vector>
 #include <string>
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/GeneralVariable.hpp"
@@ -58,7 +59,15 @@ private:
          * 250 ParsedLayerLedges_LedgesLeft
          * 249 dirt
          * 200 - 248 reserved */
-        uint8_t *simplifiedMap;//to know if have the item
+        // RAII owner of the per-map collision grid (x + y*width). Was a raw
+        // `uint8_t *` allocated with new[] in searchPath() and freed by hand
+        // only on internalSearchPath()'s "path not found" branch -- every other
+        // exit (the success path, the many border-crossing early returns, and
+        // the next call overwriting the member at searchPath line ~169) leaked
+        // it (valgrind: definitely lost, 1020 B per map per pathfind). A vector
+        // frees on every path automatically (no manual delete[], no double-free
+        // on the shallow struct copy).
+        std::vector<uint8_t> simplifiedMap;//to know if have the item
 
         COORD_TYPE width,height;
 

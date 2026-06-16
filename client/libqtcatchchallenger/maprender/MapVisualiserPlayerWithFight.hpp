@@ -22,7 +22,6 @@ protected slots:
     virtual bool canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y, const bool &checkCollision);
     virtual void resetAll();
 protected:
-    char * botAlreadyBeaten;
     uint32_t repel_step;
     Tiled::SharedTileset fightCollisionBot;
     //When true, canGoTo() answers walkable/not WITHOUT firing the user-facing

@@ -60,8 +60,8 @@ void PathFinding::searchPath(const std::vector<CatchChallenger::CommonMap> &mapL
         SimplifiedMapForPathFinding simplifiedMap;
         simplifiedMap.width=map.width;
         simplifiedMap.height=map.height;
-        simplifiedMap.simplifiedMap=new uint8_t[simplifiedMap.width*simplifiedMap.height];
-        memcpy(simplifiedMap.simplifiedMap,map.flat_simplified_map.data(),simplifiedMap.width*simplifiedMap.height);
+        simplifiedMap.simplifiedMap.resize((size_t)simplifiedMap.width*simplifiedMap.height);
+        memcpy(simplifiedMap.simplifiedMap.data(),map.flat_simplified_map.data(),(size_t)simplifiedMap.width*simplifiedMap.height);
         // Mask out item-gated zones the player can't enter, mirroring the
         // client-side MapVisualiserPlayerWithFight::canGoTo() check that
         // otherwise rejects movement with "You can't enter to this zone
@@ -401,8 +401,8 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
         std::cerr << "bug: simplifiedMapList.find(source_map_index)==simplifiedMapList.cend()" << std::endl;
         return;
     }
-    if(simplifiedMapList.at(source_map_index).simplifiedMap==nullptr)
-        std::cout << "PathFinding::canGoOn() walkable is NULL for " << std::to_string(source_map_index) << std::endl;
+    if(simplifiedMapList.at(source_map_index).simplifiedMap.empty())
+        std::cout << "PathFinding::canGoOn() walkable is empty for " << std::to_string(source_map_index) << std::endl;
     //resolv the path
     if(!tryCancel)
     {
@@ -950,17 +950,10 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
             simplifiedMapList[current_map].pathToGo[std::pair<uint8_t,uint8_t>(x,y)]=pathToGoTemp;*/
         }
     }
-    //drop the local variable
-    {
-        for ( std::pair<const CATCHCHALLENGER_TYPE_MAPID,SimplifiedMapForPathFinding> &n : simplifiedMapList ) {
-            SimplifiedMapForPathFinding simplifiedMapForPathFinding=n.second;
-            if(simplifiedMapForPathFinding.simplifiedMap!=NULL)
-            {
-                delete[] simplifiedMapForPathFinding.simplifiedMap;
-                simplifiedMapForPathFinding.simplifiedMap=NULL;
-            }
-        }
-    }
+    //drop the per-map grids now that the search finished (the vector members
+    //free themselves; clear() just releases them promptly instead of waiting
+    //for the next searchPath() or ~PathFinding).
+    simplifiedMapList.clear();
     tryCancel=false;
     emit result(0,0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_PathNotFound);
     std::cerr << "Path not found into " << time.elapsed() << "ms" << std::endl;
