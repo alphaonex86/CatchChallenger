@@ -91,6 +91,9 @@ int32_t BaseWindow::havePlant(const CatchChallenger::CommonMap *map, uint8_t x, 
 void BaseWindow::actionOnNothing()
 {
     ui->IG_dialog->setVisible(false);
+    //mirror the closed dialog to the QLocalServer GETDIALOG channel
+    if(mapController!=nullptr)
+        mapController->setRemoteDialogText(QString());
 }
 
 void BaseWindow::actionOn(Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y)

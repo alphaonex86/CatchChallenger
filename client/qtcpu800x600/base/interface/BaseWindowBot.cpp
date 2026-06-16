@@ -126,6 +126,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                     ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
                     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                     ui->IG_dialog->setVisible(true);
+                    //mirror to the QLocalServer GETDIALOG channel (read-only obs)
+                    if(mapController!=nullptr)
+                        mapController->setRemoteDialogText(QString::fromStdString(textToShow));
                     return;
                 }
                 text = text->NextSiblingElement("text");
@@ -141,6 +144,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                     ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
                     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                     ui->IG_dialog->setVisible(true);
+                    //mirror to the QLocalServer GETDIALOG channel (read-only obs)
+                    if(mapController!=nullptr)
+                        mapController->setRemoteDialogText(QString::fromStdString(textToShow));
                     return;
                 }
             text = text->NextSiblingElement("text");

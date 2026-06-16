@@ -30,6 +30,7 @@ ConnexionManager::ConnexionManager(LoadingScreen *l)
     haveDatapack=false;
     haveDatapackMainSub=false;
     datapackIsParsed=false;
+    disconnectScheduled=false;
 }
 
 void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login,QString pass)
@@ -290,6 +291,23 @@ void ConnexionManager::disconnected(std::string reason)
 void ConnexionManager::newError(const std::string &error,const std::string &detailedError)
 {
     emit errorString(error+"\n"+detailedError);
+    //DEFER the teardown. newError() is frequently emitted from WITHIN the socket's
+    //own packet processing — e.g. the fight engine raising "selectedMonster is out
+    //of range" on a team-wipe while parsing the fight result. Disconnecting the
+    //very socket whose readyRead() we are still inside re-enters
+    //QObject::disconnect() during signal emission -> SIGSEGV (was crashing the
+    //solo client on every fight loss). Run the disconnect on the next event-loop
+    //turn instead, exactly once.
+    if(!disconnectScheduled)
+    {
+        disconnectScheduled=true;
+        QMetaObject::invokeMethod(this,&ConnexionManager::performDeferredDisconnect,Qt::QueuedConnection);
+    }
+}
+
+void ConnexionManager::performDeferredDisconnect()
+{
+    disconnectScheduled=false;
     if(socket!=nullptr)
         socket->disconnectFromHost();
     if(client!=nullptr)

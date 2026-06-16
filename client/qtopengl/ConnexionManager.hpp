@@ -67,6 +67,12 @@ private:
     bool haveDatapack;
     bool haveDatapackMainSub;
     bool datapackIsParsed;
+    //newError() can fire from WITHIN the socket's own packet processing (e.g. the
+    //fight engine on a team-wipe), so the socket/client teardown is DEFERRED to the
+    //next event-loop turn to avoid re-entering QObject::disconnect mid-emission
+    //(SIGSEGV). This guards against scheduling it more than once.
+    bool disconnectScheduled;
+    void performDeferredDisconnect();
     std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
 private:
     void QtdatapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize);

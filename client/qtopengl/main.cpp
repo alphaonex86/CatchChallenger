@@ -176,8 +176,13 @@ int main(int argc, char *argv[])
         localListener.quitAllRunningInstance();
         return 0;
     }
-    else
+    //The QLocalServer remote-control / automation channel is OPT-IN: it listens
+    //only when --remote-control is on the command line, so a normal launch
+    //creates no socket at all. (Pre-scanned here because tryListen() must run
+    //before the full argument parse below.)
+    if(arguments.contains(QStringLiteral("--remote-control")))
     {
+        CliClientOptions::remoteControl=true;
         if(!localListener.tryListen())
             return 0;
     }
@@ -221,6 +226,10 @@ int main(int argc, char *argv[])
                     << "  --test-dialogoverflow      TEST: show a long dialog text, assert no overflow, then quit.\n"
                     << "  --fixed                    Freeze the animated background (no parallax)\n"
                     << "                             so --take-screenshot produces deterministic PNGs.\n"
+                    << "  --remote-control           Open the QLocalServer automation channel so an\n"
+                    << "                             external controller can drive this instance\n"
+                    << "                             (keys / CLICKTILE / GOTO / CLOSEDIALOG / GETSTATE\n"
+                    << "                             / GETDIALOG / fight). See client/dev.md.\n"
                     << "  --take-screenshot=PATH     On map: write rendered viewport to PATH and exit\n"
                     << "                             (pins srand(42) for reproducible tile/animation rng).\n"
                     << "  --main-datapack-code=CODE  Override the autosolo maincode under\n"
@@ -285,6 +294,8 @@ int main(int argc, char *argv[])
                 CliClientOptions::dialogOverflowTest=true;
             else if(arg==QStringLiteral("--fixed"))
                 CliClientOptions::fixedBackground=true;
+            else if(arg==QStringLiteral("--remote-control"))
+                CliClientOptions::remoteControl=true;//already pre-scanned above
             else if(arg.startsWith(QStringLiteral("--take-screenshot=")))
                 CliClientOptions::takeScreenshotPath=arg.mid(18);
             else if(arg==QStringLiteral("--take-screenshot"))
@@ -383,9 +394,11 @@ int main(int argc, char *argv[])
 
     ScreenTransition s;
     //QLocalServer automation channel: external controllers / tests send
-    //KEY/CLICKTILE/CLICKPIXEL/GETSTATE/GETINVENTORY to this instance's socket.
-    //ScreenTransition re-wires it to each ccmap->mapController it (re)creates.
-    s.setRemoteControl(&localListener);
+    //KEY/CLICKTILE/GOTO/CLOSEDIALOG/GETSTATE/GETDIALOG/... to this instance's
+    //socket. ScreenTransition re-wires it to each ccmap->mapController it
+    //(re)creates. Only wired when --remote-control opened the socket above.
+    if(CliClientOptions::remoteControl)
+        s.setRemoteControl(&localListener);
     s.setWindowTitle(QObject::tr("CatchChallenger loading..."));
     /*QScreen *screen = QApplication::screens().at(0);
     s.setMinimumSize(QSize(screen->availableSize().width(),

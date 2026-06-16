@@ -97,6 +97,15 @@ public:
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
+    //Client copy of the respawn point, synced from the server in the char-load
+    //packet and tracked locally to MIRROR the server (deterministic, no per-event
+    //exchange): stepping on a rescue tile sets the UNVALIDATED candidate; a
+    //nurse/bot heal VALIDATES it (rescue=unvalidated_rescue). On a lost fight the
+    //player respawns at `rescue`. mapIndex is the client's internal mapList index
+    //(65535 = unset). Server counterpart: Client::rescue/unvalidated_rescue.
+    struct RescuePoint { CATCHCHALLENGER_TYPE_MAPID mapIndex; COORD_TYPE x; COORD_TYPE y; Orientation orientation; };
+    RescuePoint rescue;
+    RescuePoint unvalidated_rescue;
     std::vector<uint8_t> events;
 
     //when true, outgoing packets are silently dropped (used by

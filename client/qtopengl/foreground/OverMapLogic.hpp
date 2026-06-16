@@ -117,6 +117,9 @@ public slots:
     void errorWithTheCurrentMap();
     void currentMapLoaded();
     void setIG_dialog(QString text,QString name=QString());
+    //override the base close so closing the dialog (Escape / close button) also
+    //clears the GETDIALOG remote-control mirror, not just the on-screen text.
+    void IG_dialog_close() override;
     void addCash(const uint32_t &cash);
     void removeCash(const uint32_t &cash);
 

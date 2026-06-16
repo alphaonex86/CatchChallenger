@@ -44,6 +44,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     pendingInitialPlayerLoad=false;
     chatHelloSent=false;
     remoteActionInProgress=false;
+    remoteDialogText.clear();
 
     signSelfTestStarted=false;
     signTestMap=0;
@@ -1515,6 +1516,44 @@ void MapControllerMP::remoteAction(const QString &line)
     remoteActionInProgress=false;
 }
 
+void MapControllerMP::setRemoteDialogText(const QString &text)
+{
+    remoteDialogText=text;
+}
+
+int MapControllerMP::resolveRemoteMap(const QString &mapArg) const
+{
+    const std::vector<std::string> &maps=QtDatapackClientLoader::datapackLoader->get_maps();
+    bool isNum=false;
+    const int asIndex=mapArg.toInt(&isNum);
+    if(isNum)
+    {
+        if(asIndex>=0 && asIndex<static_cast<int>(maps.size()))
+            return asIndex;
+        return -1;
+    }
+    //basename match (strip directory + .tmx), case-insensitive
+    QString want=mapArg.trimmed();
+    if(want.endsWith(QStringLiteral(".tmx"),Qt::CaseInsensitive))
+        want.chop(4);
+    want=want.toLower();
+    int i=0;
+    const int n=static_cast<int>(maps.size());
+    while(i<n)
+    {
+        QString p=QString::fromStdString(maps.at(i));
+        const int slash=p.lastIndexOf(QLatin1Char('/'));
+        if(slash>=0)
+            p=p.mid(slash+1);
+        if(p.endsWith(QStringLiteral(".tmx"),Qt::CaseInsensitive))
+            p.chop(4);
+        if(p.toLower()==want)
+            return i;
+        i++;
+    }
+    return -1;
+}
+
 void MapControllerMP::remoteActionExecute(const QString &line)
 {
     const QStringList parts=line.trimmed().split(QLatin1Char(' '),Qt::SkipEmptyParts);
@@ -1558,6 +1597,38 @@ void MapControllerMP::remoteActionExecute(const QString &line)
             emit remoteReply(QStringLiteral("OK CLICKPIXEL %1 %2").arg(px).arg(py));
         }
     }
+    else if(verb==QStringLiteral("GOTO") && parts.size()>=4)
+    {
+        //Pathfind to tile (x,y) on map <map> (numeric index OR map basename like
+        //"gym"/"gym.tmx"). Works on the current map and border-connected maps;
+        //door/teleporter-connected maps are NOT walk-reachable (click the door
+        //tile instead) and answer PathNotFound. Reuses the same cross-map
+        //pathfinder the mouse-click handler uses.
+        bool okx=false,oky=false;
+        const QString mapArg=parts.at(1);
+        const int gx=parts.at(2).toInt(&okx);
+        const int gy=parts.at(3).toInt(&oky);
+        int targetMap=resolveRemoteMap(mapArg);
+        if(targetMap<0 || !okx || !oky)
+            emit remoteReply(QStringLiteral("ERROR bad GOTO args (map=%1)").arg(mapArg));
+        else
+        {
+            const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());
+            pathFinding.searchPath(QtDatapackClientLoader::datapackLoader->get_mapList(),
+                                   static_cast<CATCHCHALLENGER_TYPE_MAPID>(targetMap),
+                                   static_cast<COORD_TYPE>(gx),static_cast<COORD_TYPE>(gy),
+                                   current_map,p.first,p.second,
+                                   std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>());
+            emit remoteReply(QStringLiteral("OK GOTO %1 %2 %3").arg(targetMap).arg(gx).arg(gy));
+        }
+    }
+    else if(verb==QStringLiteral("CLOSEDIALOG"))
+    {
+        //close the in-game dialog box the same way the user does: press Escape.
+        //The client UI clears its dialog text (and the GETDIALOG mirror) on it.
+        synthKey(Qt::Key_Escape);
+        emit remoteReply(QStringLiteral("OK CLOSEDIALOG"));
+    }
     else if(verb==QStringLiteral("GETSTATE"))
     {
         const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());
@@ -1566,6 +1637,14 @@ void MapControllerMP::remoteActionExecute(const QString &line)
                          .arg(static_cast<int>(p.first))
                          .arg(static_cast<int>(p.second))
                          .arg(static_cast<int>(getDirection())));
+    }
+    else if(verb==QStringLiteral("GETDIALOG"))
+    {
+        //empty when no in-game dialog box is open; the client UI pushes the text
+        //via setRemoteDialogText(). Single-line reply (newlines flattened).
+        QString flat=remoteDialogText;
+        flat.replace(QLatin1Char('\n'),QLatin1Char(' '));
+        emit remoteReply(QStringLiteral("DIALOG ")+flat);
     }
     else if(verb==QStringLiteral("GETINVENTORY"))
     {
@@ -1578,6 +1657,31 @@ void MapControllerMP::remoteActionExecute(const QString &line)
             {
                 out+=QStringLiteral(" %1:%2").arg(static_cast<int>(it->first)).arg(static_cast<qulonglong>(it->second));
                 ++it;
+            }
+        }
+        emit remoteReply(out);
+    }
+    else if(verb==QStringLiteral("GETCASH"))
+    {
+        //money on hand — lets a controller assert buy/sell/heal/fight-reward deltas
+        const qulonglong cash=(client!=nullptr)?static_cast<qulonglong>(client->get_player_informations().cash):0;
+        emit remoteReply(QStringLiteral("CASH %1").arg(cash));
+    }
+    else if(verb==QStringLiteral("GETTEAM"))
+    {
+        //team monsters as "<monsterId>:<level>:<hp> ..." — lets a controller assert
+        //heal (hp restored), fight progress and KO/loss (hp==0 / team wiped).
+        QString out=QStringLiteral("TEAM");
+        if(client!=nullptr)
+        {
+            const std::vector<CatchChallenger::PlayerMonster> &mons=client->get_player_informations().monsters;
+            std::size_t i=0;
+            while(i<mons.size())
+            {
+                out+=QStringLiteral(" %1:%2:%3").arg(static_cast<int>(mons.at(i).monster))
+                        .arg(static_cast<int>(mons.at(i).level))
+                        .arg(static_cast<qulonglong>(mons.at(i).hp));
+                ++i;
             }
         }
         emit remoteReply(out);

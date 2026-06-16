@@ -109,6 +109,16 @@ public:
     // diff against reference screenshots without flapping on a different
     // grass / cloud animation frame each run.
     static bool fixedBackground;
+
+    // Enable the QLocalServer remote-control / automation channel. OFF by
+    // default: the QLocalServer socket is created and listened on ONLY when this
+    // is set (or any --autosolo/--test-* flag implies it). An external controller
+    // then drives this instance over the socket — keys (arrows/Enter/Escape),
+    // CLICKTILE / GOTO (same- or other-map pathfinding), CLOSEDIALOG, fight
+    // actions — and reads back STATE / DIALOG / server events. The command
+    // vocabulary lives in MapControllerMP::remoteActionExecute(). See
+    // client/dev.md. Used by the test harness; safe to leave off in production.
+    static bool remoteControl;
 };
 
 #endif // CLICLIENTOPTIONS_HPP

@@ -151,6 +151,10 @@ bool Client::checkLoose(bool withTeleport)
         //regen all the monsters
         bool tempInBattle=isInBattle();
         healAllMonsters();
+        //defeat penalty: lose HALF the money (floor). removeCash() subtracts and
+        //persists via db_query_update_cash; the player keeps the other half.
+        if(public_and_private_informations.cash>0)
+            removeCash(public_and_private_informations.cash/2);
         fightFinished();
         if(tempInBattle)
             updateCanDoFight();
@@ -402,7 +406,18 @@ bool Client::finishTheTurn(const bool &isBot)
     const CATCHCHALLENGER_TYPE_MAPID &mapId=botFight.first;
     if(mapId==65535)
     {
-        normalOutput("Client::finishTheTurn() but when mapId==65535");
+        //Wild fight (no botFight reward/beaten bookkeeping — that needs map.botFights
+        //and is correctly skipped here). But a remake's early-return ALSO swallowed
+        //the universal LOSS handling, so a lost wild fight never teleported to the
+        //rescue point / healed and hung forever (isInFight stuck true). Restore JUST
+        //the total-loss resolution for wild: checkLoose() teleports to the rescue
+        //point (server-authoritative, sends the teleport packet), full-heals the
+        //team, loses half the cash and ends the fight. Do NOT dropKO first —
+        //checkLoose heals the whole team; dropping the last monster would empty it
+        //and make checkLoose's haveMonsters() guard skip the rescue. The bot path
+        //below is left exactly as it was.
+        if(currentMonsterIsKO() && !haveAnotherMonsterOnThePlayerToFight())
+            checkLoose();
         return false;
     }
     const uint8_t &botFightId=botFight.second;

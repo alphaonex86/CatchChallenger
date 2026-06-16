@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
     CliClientOptions::autosoloClick=AutoArgs::autosoloClick;
     CliClientOptions::autosoloClickDx=AutoArgs::autosoloClickDx;
     CliClientOptions::autosoloClickDy=AutoArgs::autosoloClickDy;
+    CliClientOptions::remoteControl=AutoArgs::remoteControl;
     QApplication a(argc, argv);
     a.setApplicationName("client-qtcpu800x600");
     a.setOrganizationName("CatchChallenger");
@@ -63,7 +64,9 @@ int main(int argc, char *argv[])
         localListener.quitAllRunningInstance();
         return 0;
     }
-    else
+    //The QLocalServer remote-control / automation channel is OPT-IN: listen only
+    //when --remote-control was passed (mirrored into CliClientOptions above).
+    if(CliClientOptions::remoteControl)
     {
         if(!localListener.tryListen())
             return 0;
@@ -76,8 +79,10 @@ int main(int argc, char *argv[])
     if(w.toQuit)
         return 523;
     //QLocalServer automation channel: external controllers / tests can now send
-    //KEY/CLICKTILE/CLICKPIXEL/GETSTATE/GETINVENTORY to this instance's socket.
-    w.wireRemoteControl(&localListener);
+    //KEY/CLICKTILE/GOTO/CLOSEDIALOG/GETSTATE/GETDIALOG/... to this instance's
+    //socket. Only wired when --remote-control opened the socket above.
+    if(CliClientOptions::remoteControl)
+        w.wireRemoteControl(&localListener);
     if(!AutoArgs::takeScreenshotPath.isEmpty())
         //Screenshot regression needs the window painted before grab().
         w.show();

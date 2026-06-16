@@ -459,6 +459,35 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             return false;
         }
         player_informations.public_informations.type=playerType;
+        //rescue + unvalidated rescue respawn points (mirror the server send order in
+        //ClientHeavyLoadSelectCharFinal.cpp): each = uint16 internal mapIndex +
+        //uint8 x + uint8 y + uint8 orientation. Stored to mirror the server's
+        //Client::rescue/unvalidated_rescue deterministically.
+        {
+            Api_protocol::RescuePoint * const rp[2]={&rescue,&unvalidated_rescue};
+            unsigned int rpi=0;
+            while(rpi<2)
+            {
+                if((unsigned int)(size-pos)<(unsigned int)(sizeof(uint16_t)+3*sizeof(uint8_t)))
+                {
+                    parseError("Protocol wrong or corrupted","wrong size (rescue) with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                uint16_t rmap;
+                memcpy(&rmap,data+pos,sizeof(uint16_t));
+                rmap=le16toh(rmap);
+                pos+=sizeof(uint16_t);
+                rp[rpi]->mapIndex=rmap;
+                rp[rpi]->x=data[pos];
+                pos+=sizeof(uint8_t);
+                rp[rpi]->y=data[pos];
+                pos+=sizeof(uint8_t);
+                const uint8_t ro=data[pos];
+                pos+=sizeof(uint8_t);
+                rp[rpi]->orientation=(ro>=Orientation_top && ro<=Orientation_left)?(Orientation)ro:Orientation_bottom;
+                rpi++;
+            }
+        }
         //pseudo
         if((size-pos)<(int)sizeof(uint8_t))
         {

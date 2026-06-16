@@ -798,7 +798,11 @@ ssize_t Api_protocol_Qt::readFromSocket(char * data, const size_t &size)
 {
     if(socket!=nullptr)
         return socket->read(data,size);
-    abort();
+    //No socket (e.g. disconnected mid-fight, then a stray packet is processed):
+    //fail gracefully instead of abort()ing — the protocol layer treats a count
+    //!= size as a failed I/O and disconnects cleanly. A stray read/write must
+    //NEVER crash the client (e.g. a skill sent right as a lost fight tears down).
+    std::cerr << "Api_protocol_Qt::readFromSocket() with no socket, dropping read" << std::endl;
     return -1;
 }
 
@@ -806,7 +810,7 @@ ssize_t Api_protocol_Qt::writeToSocket(const char * const data, const size_t &si
 {
     if(socket!=nullptr)
         return socket->write(data,size);
-    abort();
+    std::cerr << "Api_protocol_Qt::writeToSocket() with no socket, dropping write" << std::endl;
     return -1;
 }
 
@@ -1381,6 +1385,14 @@ bool Api_protocol_Qt::useSkill(const uint16_t &skill)
 bool Api_protocol_Qt::finishTheTurn(const bool &isBot)
 {
     const bool &win=!currentMonsterIsKO() && otherMonsterIsKO();
+    //TOTAL LOSS: mirror the server-side checkLoose() — END the fight on the client
+    //too. Otherwise the client's current monster is KO but the wild/bot monster is
+    //still present, so isInFight() stays true: the client hangs in a dead fight and
+    //then errors ("selectedMonster is out of range") -> disconnect. The server is
+    //authoritative for the rescue teleport (it pushes it); we just need the client
+    //to stop fighting. fightFinished() clears wild/bot monsters -> isInFight()==false.
+    if(currentMonsterIsKO() && !haveAnotherMonsterOnThePlayerToFight())
+        fightFinished();
     if(!isInFight())
     {
         if(win)
