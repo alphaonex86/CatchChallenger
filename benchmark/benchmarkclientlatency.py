@@ -95,6 +95,28 @@ BOT_DEFS = {"CATCHCHALLENGER_BENCHMARK": "ON", "CMAKE_BUILD_TYPE": "Release"}
 # more chat/join samples, but also more offered load on the constrained server.
 BOT_COUNTS = [(4, "small"), (16, "medium"), (50, "large")]
 
+# ESP32 all-in-one server (catchchallenger-esp32): firmware-baked datapack +
+# settings, fileless, WiFi, max-players ~10. It is ALREADY running on the LAN;
+# the harness only points the host bot at its fixed IP -- NO ssh, NO compile
+# node, NO flashing from here (network-only). WiFi => comparison-only: recorded
+# in history + the cross-node chart but NEVER fed to the KEEP/DISCARD champion
+# decision (a WiFi node must not be the sole signal -- benchmark/CLAUDE.md).
+# Nothing in remote_nodes.json is touched (operator-owned); the node is injected
+# programmatically. Override the IP/port with CC_ESP32_HOST / CC_ESP32_PORT.
+ESP32_NODE = {
+    "label": "catchchallenger-esp32",
+    "arch":  "xtensa-lx6",
+    "host":  os.environ.get("CC_ESP32_HOST", "192.168.158.160"),
+    "port":  int(os.environ.get("CC_ESP32_PORT", "42498")),  # its own game port
+    "net_link": "wifi",
+    "network_only": True,     # marker: skip the whole ssh/build/bring-up path
+}
+
+# The ESP32's max-players is ~10, so stay strictly UNDER it: the fleet default
+# (16/50) would be rejected/queued by the server and poison the measurement.
+# headline_metrics() reads the slice labelled "medium", so keep that label.
+ESP32_BOT_COUNTS = [(1, "small"), (5, "medium"), (10, "large")]
+
 # Fixed wall-clock budget per measured slice (benchmark/CLAUDE.md
 # "fixed-time, not fixed-iteration"): the slice runs for BUDGET seconds and
 # reports the work done in that window (a latency histogram of EVERY event
@@ -398,13 +420,14 @@ def _median_metrics(samples):
     return out
 
 
-def run_all_slices(bot_bin, host, port, budget, server_pid=None):
+def run_all_slices(bot_bin, host, port, budget, server_pid=None, counts=None):
     """Run every workload slice (1 warmup dropped + RUN_REPEATS measured each)
     for `budget` seconds each. Returns (slices_dict {label: metrics},
     err_or_None). slices include the mandatory cpu_percent. Stops + returns
-    the error on first hard failure."""
+    the error on first hard failure. `counts` overrides BOT_COUNTS (the ESP32
+    passes ESP32_BOT_COUNTS to stay under its small max-players)."""
     slices = {}
-    for bots, size in BOT_COUNTS:
+    for bots, size in (counts or BOT_COUNTS):
         label = f"{bots}-bots"
         # 1 warmup (drop) so socket/TIME_WAIT churn doesn't pollute repeat 1.
         _m, _e = run_bot_slice(bot_bin, host, port, bots, budget, server_pid)
@@ -613,6 +636,246 @@ def measure_remote_server(ready, bot_bin, per_subbench, per_headline):
                 pass
 
 
+# ---- ESP32 (network-only): no ssh/build/flash, measure the running board ---
+
+def esp32_platform_fields():
+    """Synthesized platform metadata for the ESP32 history JSON. The board has
+    no shell, so PlatformRecord.collect() (which shells out via a runner) cannot
+    run -- we fill the fields directly. Values are the fixed ESP32 spec; ram is
+    left null (the schema is int MB and 520 KiB SRAM would record a misleading
+    '1 MB' -- the precise figure lives in ram_type)."""
+    return {
+        "arch":        "xtensa-lx6",
+        "cpu_model":   "Espressif ESP32 (Xtensa LX6 dual-core)",
+        "cpu_cores":   2,
+        "cpu_mhz":     240.0,
+        "cpu_flags":   None,
+        "cpu_cache":   [],
+        "ram_total_mb": None,
+        "ram_type":    "SRAM ~520KiB (no DRAM)",
+        "disk_root":   None,
+        "disk_kind":   "flash",          # datapack baked in SPI flash, fileless
+        "net_card":    "ESP32 WiFi (802.11 b/g/n)",
+        "net_link":    "wifi",
+        "net_link_detail": None,
+        "wifi_ssid":   None,             # not host-observable
+        "wifi_standard": "wifi-4 (802.11n)",
+        "wifi_band":   "2.4GHz",
+        "wifi_link_mbps": None,
+        "eth_link_mbps": None,
+        "virt_kind":   "bare-metal",
+        "virt_type":   "none",
+        "arch_emulated": False,
+        "host_arch":   None,
+        "kernel":      None,             # ESP-IDF/FreeRTOS firmware, no OS kernel
+        "libc":        "newlib",
+        "compiler":    "xtensa-esp32-elf-gcc",
+    }
+
+
+def stage_bot_datapack(src_datapack):
+    """Copy a datapack next to the bot binary (applicationDirPath()/datapack/),
+    so the bot loads it LOCALLY and never tries to download from the fileless
+    ESP32. Uses the SAME media-stripped copy the ESP32 baked, to maximise the
+    datapack-hash match the client needs to skip download and reach the map."""
+    dst = os.path.join(BOT_BUILD_DIR, "datapack")
+    if os.path.isdir(dst):
+        shutil.rmtree(dst, ignore_errors=True)
+    shutil.copytree(src_datapack, dst)
+    return dst
+
+
+def _pctl(sorted_vals, q):
+    """Linear-interpolated percentile of a pre-sorted list (no numpy)."""
+    import math
+    if not sorted_vals:
+        return 0.0
+    if len(sorted_vals) == 1:
+        return sorted_vals[0]
+    idx = q * (len(sorted_vals) - 1)
+    lo = int(math.floor(idx))
+    hi = int(math.ceil(idx))
+    if lo == hi:
+        return sorted_vals[lo]
+    return sorted_vals[lo] + (sorted_vals[hi] - sorted_vals[lo]) * (idx - lo)
+
+
+def esp32_max_concurrent(host, port, ceiling=20):
+    """Open simultaneous TCP connections until the server stops accepting;
+    return how many it held at once (the lwIP socket / accept ceiling)."""
+    conns = []
+    while len(conns) < ceiling:
+        try:
+            conns.append(socket.create_connection((host, port), timeout=4))
+        except OSError:
+            break
+    held = len(conns)
+    for s in conns:
+        try:
+            s.close()
+        except OSError:
+            pass
+    return held
+
+
+def esp32_connect_slice(host, port, hold_n, budget_s):
+    """Hold `hold_n` background connections (offered load), then measure
+    fresh TCP connect latency for `budget_s`. Pure-Python, black-box: the only
+    thing a FILELESS server reliably supports (no datapack download -> no map ->
+    the map-level bot metrics are N/A). Connect latency = WiFi RTT + the single-
+    threaded epoll accept path, which IS a real comparable signal. Returns a
+    metrics dict in the harness shape."""
+    bg = []
+    while len(bg) < hold_n:
+        try:
+            bg.append(socket.create_connection((host, port), timeout=4))
+        except OSError:
+            break
+    held = len(bg)
+    t_user0 = sum(os.times()[:2])
+    lat_ms = []
+    ok = 0
+    fail = 0
+    t0 = time.monotonic()
+    while (time.monotonic() - t0) < budget_s:
+        t = time.perf_counter()
+        try:
+            c = socket.create_connection((host, port), timeout=4)
+            lat_ms.append((time.perf_counter() - t) * 1000.0)
+            ok += 1
+            c.close()
+        except OSError:
+            fail += 1
+        time.sleep(0.02)   # ~50 conn/s ceiling; we measure latency, not flood
+    wall = time.monotonic() - t0
+    for s in bg:
+        try:
+            s.close()
+        except OSError:
+            pass
+    cpu_pct = (sum(os.times()[:2]) - t_user0) / wall * 100.0 if wall > 0 else 0.0
+    m = {}
+    if lat_ms:
+        sl = sorted(lat_ms)
+        med, std = bh.stats_of(lat_ms)
+        m["connect_p50_ms"]    = {"value": _pctl(sl, 0.50), "unit": "ms", "better": "lower"}
+        m["connect_p95_ms"]    = {"value": _pctl(sl, 0.95), "unit": "ms", "better": "lower"}
+        m["connect_p99_ms"]    = {"value": _pctl(sl, 0.99), "unit": "ms", "better": "lower"}
+        m["connect_jitter_ms"] = {"value": std or 0.0,      "unit": "ms", "better": "lower"}
+    m["connects_per_s"] = {"value": (ok / wall if wall > 0 else 0.0), "unit": "conn/s", "better": "higher"}
+    m["connect_count"]  = {"value": ok,     "unit": "samples", "better": "higher"}
+    m["connect_fail"]   = {"value": fail,   "unit": "count",   "better": "lower"}
+    m["bg_held"]        = {"value": held,   "unit": "conns",   "better": "higher"}
+    m["cpu_percent"]    = {"value": cpu_pct, "unit": "%",      "better": "lower"}
+    return m
+
+
+# Background-connection hold levels for the ESP32 capacity sweep (stay within
+# its small socket pool: lwIP MAX_SOCKETS=16, max-players=10).
+ESP32_HOLD_LEVELS = [(0, "small"), (4, "medium"), (8, "large")]
+
+
+def measure_esp32(node, bot_bin, per_subbench, per_headline, per_netfamily):
+    """Bring the ESP32 server online (flash-if-needed via benchmark_esp32; fast
+    no-op if it already answers), then measure it.
+
+    FIRST attempt the SAME map-level bot benchmark the rest of the fleet runs
+    (chat/rtt/join): pre-seed the bot's datapack with the EXACT media-stripped
+    tree the firmware was baked from (so the client's aggregate hash matches the
+    server's and it SKIPS the mirror download -- the fileless ESP32 serves no
+    files), then run the bot --latency. If the bot reaches the map it dumps the
+    BENCH percentiles and we record them under the SAME metric names as every
+    other node -> directly comparable.
+
+    If the bot does NOT reach the map (hash still mismatches, or the firmware
+    can't be brought far enough), FALL BACK to the black-box CONNECT-level probe
+    so the node still produces a comparable datum: TCP connect latency
+    (p50/p95/p99/jitter = WiFi RTT + the single-threaded epoll accept path),
+    connect throughput, and concurrent-connection capacity, under a 0/4/8
+    background-load sweep. Returns (status, reason).
+
+    BLOCKED (need serial/ESP-IDF, self-skip, never FAIL): boot-to-bind,
+    on-device free-heap, on-device map-management ops/s."""
+    label, host, port = node["label"], node["host"], node["port"]
+    import benchmark_esp32 as esp
+    online_host, detail = esp.ensure_online(flash_if_needed=True, verbose=True)
+    if online_host is None:
+        bh.print_node_error(BENCH, label, "SKIP",
+            f"ESP32 not available: {detail}. boot-to-bind + free-heap + "
+            f"on-device map-mgmt also need serial/ESP-IDF (blocked). "
+            f"-- comparison datum missing this batch")
+        return "SKIP", "esp32-unavailable"
+    host = online_host
+    print(_c(bh.C_CYAN, f"[esp32] {detail}"))
+    if not _port_reachable(host, port):
+        bh.print_node_error(BENCH, label, "SKIP",
+            f"ESP32 game port {port} not reachable at {host}")
+        return "SKIP", "esp32-unreachable"
+
+    # ---- Attempt MAP-LEVEL first (comparable to the fleet) -----------------
+    # Needs the measuring bot built; main() ensures it exists when an ESP32 node
+    # is present. Pre-seed the bot datapack from the firmware's source tree so
+    # the client hash-matches and never tries the (404) mirror.
+    if bot_bin is not None:
+        try:
+            stage_bot_datapack(esp.STAGE_DATAPACK)
+            print(_c(bh.C_CYAN, "[esp32] datapack pre-seeded next to bot; "
+                                "trying map-level bot --latency"))
+            mslices, merr = run_all_slices(bot_bin, host, port, BUDGET_S_REMOTE,
+                                           server_pid=None, counts=ESP32_BOT_COUNTS)
+        except Exception as ex:
+            mslices, merr = {}, f"map-level attempt raised: {ex}"
+        if mslices and not merr:
+            per_subbench[label] = {"latency": mslices}
+            per_headline[label] = headline_metrics(mslices)
+            per_netfamily[label] = "ipv4"
+            print(_c(bh.C_GREEN, "[esp32] bot reached the map -- recorded "
+                                 "map-level chat/rtt/join (fleet-comparable)"))
+            return "PASS", None
+        print(_c(bh.C_YELLOW, f"[esp32] map-level not reached ({merr or 'no slices'}); "
+                              f"falling back to connect-level probe"))
+    else:
+        print(_c(bh.C_YELLOW, "[esp32] no bot binary built; connect-level probe only"))
+
+    # ---- FALLBACK: black-box CONNECT-level probe ---------------------------
+    # Latency slices FIRST (clean), each after a short settle so the previous
+    # slice's TIME_WAIT churn on the ESP32's tiny socket pool has drained.
+    slices = {}
+    for hold, size in ESP32_HOLD_LEVELS:
+        time.sleep(2)
+        m = esp32_connect_slice(host, port, hold, BUDGET_S_REMOTE)
+        slices[f"hold-{hold}"] = m
+        p50 = m.get("connect_p50_ms", {}).get("value")
+        cps = m.get("connects_per_s", {}).get("value", 0.0)
+        print(_c(bh.C_GREEN, f"    [{size}] hold-{hold}: "
+                 f"connect_p50={p50:.1f}ms, {cps:.0f} conn/s" if p50 is not None
+                 else f"    [{size}] hold-{hold}: no successful connect"))
+    # Capacity LAST: the burst of simultaneous connections churns the small lwIP
+    # socket pool, so measure it after the latency slices to avoid perturbing them.
+    time.sleep(2)
+    cap = esp32_max_concurrent(host, port)
+    print(_c(bh.C_GREEN, f"    [capacity] max concurrent TCP connections: {cap}"))
+    for s in slices.values():
+        s["max_concurrent"] = {"value": cap, "unit": "conns", "better": "higher"}
+    if not any(s.get("connect_p50_ms") for s in slices.values()):
+        bh.print_node_error(BENCH, label, "SKIP",
+            "no successful TCP connect to the ESP32 (server up but not accepting?)")
+        return "SKIP", "no-connect"
+    per_subbench[label] = {"latency": slices}
+    # headline from the "medium" (hold-4) slice, falling back to any slice.
+    med = slices.get("hold-4") or next(iter(slices.values()))
+    head = {}
+    for k in ("connect_p50_ms", "connect_p99_ms", "connect_jitter_ms",
+              "connects_per_s", "max_concurrent"):
+        if k in med:
+            v = med[k]
+            head[k] = {"median": v["value"], "stddev": 0.0,
+                       "unit": v["unit"], "better": v["better"]}
+    per_headline[label] = head
+    per_netfamily[label] = "ipv4"
+    return "PASS", None
+
+
 # ---- main ----------------------------------------------------------------
 
 def main():
@@ -631,11 +894,23 @@ def main():
     # serialise against other network benchmarks
     lock = bh.acquire_network_lock(BENCH)
 
-    bot_bin = build_bot_local()
-
     arch = bh.host_arch()
     local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
     nodes = local_node + bh.benchmark_exec_nodes()
+    # ESP32 comparison node, injected without touching remote_nodes.json. Target
+    # it with --node catchchallenger-esp32 (or --node xtensa-lx6); skipped when a
+    # --node filter excludes it.
+    if bh.node_allowed(ESP32_NODE["label"], ESP32_NODE["arch"]):
+        nodes.append(ESP32_NODE)
+
+    # The measuring bot is needed by every map-level (non-network_only) node AND
+    # by the ESP32 node, which now ATTEMPTS map-level first (pre-seeded datapack
+    # -> bot --latency) before falling back to the pure-Python connect probe.
+    # Build the bot when any node will try the bot at all: any non-network_only
+    # node, or an ESP32 (network_only) node in this batch.
+    has_maplevel = any(not n.get("network_only") for n in nodes)
+    has_esp32    = any(n.get("network_only") for n in nodes)
+    bot_bin = build_bot_local() if (has_maplevel or has_esp32) else None
 
     # progress total: one "latency" cell per node.
     progress = bh.Progress(len(nodes), BENCH)
@@ -716,7 +991,9 @@ def main():
                 progress.emit("latency", "no", "local", status="PASS")
 
     # ---- REMOTE nodes: PARALLEL bring-up, SERIAL measurement -------------
-    remote_nodes = [n for n in nodes if n["label"] != "local"]
+    # network_only nodes (ESP32) skip the entire ssh/build path; handled below.
+    remote_nodes = [n for n in nodes
+                    if n["label"] != "local" and not n.get("network_only")]
     if remote_nodes:
         import concurrent.futures
         readies = []
@@ -745,6 +1022,17 @@ def main():
             progress.emit("latency", "no", label, status=st,
                           extra=("" if st == "PASS" else (reason or "skip")[:80]))
 
+    # ---- ESP32 (network-only): no bring-up, just measure the running board -
+    for node in [n for n in nodes if n.get("network_only")]:
+        label = node["label"]
+        if _over_cap():
+            progress.emit("latency", "no", label, status="SKIP", extra="batch-maxtime")
+            continue
+        st, reason = measure_esp32(node, bot_bin, per_subbench, per_headline,
+                                   per_netfamily)
+        progress.emit("latency", "no", label, status=st,
+                      extra=("" if st == "PASS" else (reason or "skip")[:80]))
+
     # ---- candidate record + cross-fleet decision -------------------------
     sha = bh.git_sha()
     cand_stamp = started_utc.replace(":", "-")
@@ -756,6 +1044,9 @@ def main():
     }
     for node in nodes:
         label = node["label"]
+        if node.get("network_only"):
+            continue   # WiFi comparison-only: in history + charts, NOT the
+                       # cross-fleet KEEP/DISCARD decision (must not be sole signal)
         m = per_headline.get(label)
         if m:
             rec["nodes"][label] = {"arch": node.get("arch", "?"),
@@ -782,19 +1073,25 @@ def main():
         label = node["label"]
         if label not in per_subbench:
             continue
-        if label == "local":
-            runner = hr.local_runner
-            cc_path, dp_path = SRV_RUN_DIR, DATAPACK_PATH
+        if node.get("network_only"):
+            # No shell on the board -> collect() can't run; synthesize fields.
+            pr = hr.PlatformRecord(BENCH, batch_id, label, runner=None,
+                                   arch_hint=node.get("arch"))
+            pr.platform.update(esp32_platform_fields())
+        elif label == "local":
+            pr = hr.PlatformRecord(BENCH, batch_id, label, runner=hr.local_runner,
+                                   arch_hint=node.get("arch")).collect(
+                                       cc_binary_path=SRV_RUN_DIR, datapack_path=DATAPACK_PATH,
+                                       sensor_baseline=sensor_pre)
         else:
             runner = hr.make_ssh_runner(node.get("ssh_host"), node.get("ssh_user"),
                                         node.get("ssh_port", 22))
             wd = node.get("work_dir") or f"/tmp/cc-bench-{BENCH}"
-            cc_path, dp_path = wd, os.path.join(wd, "datapack")
-        pr = hr.PlatformRecord(BENCH, batch_id, label, runner=runner,
-                               arch_hint=node.get("arch")).collect(
-                                   cc_binary_path=cc_path, datapack_path=dp_path,
-                                   sensor_baseline=(sensor_pre
-                                       if label == "local" else None))
+            pr = hr.PlatformRecord(BENCH, batch_id, label, runner=runner,
+                                   arch_hint=node.get("arch")).collect(
+                                       cc_binary_path=wd,
+                                       datapack_path=os.path.join(wd, "datapack"),
+                                       sensor_baseline=None)
         # flat headline as the tool's metrics; slices as subbenchmarks.
         flat = {}
         for k, v in per_headline.get(label, {}).items():
