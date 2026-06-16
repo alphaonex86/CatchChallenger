@@ -42,6 +42,32 @@ The recurring meta-principle behind almost every section: **move work to
 where it is paid once — build time, load time, or one machine in the
 cluster — so the hot per-tick path is pure reads.**
 
+**Server hot-path keys (in priority order).** Almost all *server*
+performance reduces to five levers — the rest of this document elaborates
+them:
+
+1. **Async end to end** — non-blocking I/O, never a synchronous
+   round-trip on the hot path (§5.2).
+2. **Async DB** — `asyncRead`/`asyncWrite` return immediately, results
+   arrive via a queued callback; the loop never stalls on the store
+   (§5.2, §9).
+3. **Prepared SQL** — cache prepared statements per backend, bind only
+   on the hot path; no concatenation/re-parse per query (§4); no joins,
+   fetch related rows in separate queries (§9).
+4. **epoll, or io_uring where available** — one event-loop façade,
+   backend chosen at build time, no runtime branch (§2).
+5. **Cache-resident hot set** — keep the per-tick working set lean and
+   in L1/L2; preprocess at load so the loop only reads (§3, §4).
+6. **Map management is the dominant hot path** — broadcasting each
+   player's move to every other player on the same map so everyone sees
+   everyone is naively **O(n²)** (n players × n visible peers) *and* runs
+   constantly (every step of every player), so it dominates both CPU and
+   **bandwidth** — the single most expensive ongoing cost (the way the
+   one-time datapack load dominates startup). Attack it with: serialise
+   once / send to many (§5.5), a hard visible-peer cap that converts
+   O(n²)→O(1) past the knee (§3, §6), and latest-state coalescing instead
+   of an event backlog (§5.7).
+
 ---
 
 ## 1. Measure on the worst case, every day
