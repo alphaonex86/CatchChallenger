@@ -676,7 +676,7 @@ def run_channel_teleport_push_test(dp_name, failed_cases):
     with open(os.path.join(conf_dir, "client-qtcpu800x600.conf"), "w") as f:
         f.write("[General]\nkey=testTpPushKey\n")
     args = ["--host", SERVER_HOST, "--port", SERVER_PORT,
-            "--autologin", "--character", CHAR_A]
+            "--autologin", "--character", CHAR_A, "--remote-control"]
     log_info("connecting client (qtcpu800x600) for the teleport-on-push channel run")
     proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
     on_map = False
@@ -788,7 +788,7 @@ def run_channel_crash_regression_test(dp_name, failed_cases):
         f.write("[General]\nkey=testChanKey\n")
     # NO --test flag: the client stays on the map so we can drive it via the socket
     args = ["--host", SERVER_HOST, "--port", SERVER_PORT,
-            "--autologin", "--character", CHAR_A]
+            "--autologin", "--character", CHAR_A, "--remote-control"]
     log_info("connecting client (qtcpu800x600) for the channel crash-regression run")
     proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
     # wait for the client to reach the map

@@ -27,7 +27,7 @@ import sys
 _CAPS_SECONDS = {
     "testingbots.py":                 15 * 60,
     "testingbyIA.py":                 30 * 60,
-    "testingclient.py":               30 * 60,
+    "testingclient.py":               40 * 60,
     "testingcluster.py":              10 * 60,
     "testingclustersecurity.py":      90 * 60,
     "testingcmake.py":                30 * 60,

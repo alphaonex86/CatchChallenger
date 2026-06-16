@@ -8,6 +8,10 @@ conventions: C++/Qt style, CMake-per-binary layout, never-search-
 from-`/`, MXE prefix, "don't ask — just continue", … and they apply
 to the testing harness too.
 
+## No test code in production binaries
+
+Never add test code, self-test flags, or test-only branches to `general/`, `client/`, `server/`, `tools/` — it damages stability and grows the base. The test tool lives ONLY in `test/`. Drive/observe the binary EXTERNALLY: a TCP socket, the QLocalServer automation channel (remote-control the qtopengl client: keys/clicks/state queries), or a derivative of the bot connect-to-gameserver CLI. A real production BUG fix in those dirs is still allowed — only test scaffolding is forbidden.
+
 ## Datapack `map/main/test/` — intentional bugs as fixtures
 
 `datapack/map/main/test/` maincode is **intentionally broken** to exercise defensive parsing. **Do NOT "fix" these.** Expected messages:
@@ -329,6 +333,10 @@ all.sh writes two operator-facing logs every run (truncated on each fresh run, k
 * **`/mnt/data/perso/tmpfs/all.log`** — the full console output mirrored from the run, via `exec > >(tee -a ...)`. Lets the operator scroll back the entire run from disk after the terminal scrollback has aged out or when a 2 h run was unattended.
 * **`/mnt/data/perso/tmpfs/testing-individual-time.json`** — a JSON array of `{"script": ..., "duration_s": ..., "rc": ...}` entries, one per testing*.py that COMPLETED (PASS or FAIL with non-timeout rc). Timed-out scripts (rc 124 / 137) are deliberately omitted: their "duration" is just the cap, not a measure of the test's natural runtime, and feeding that back as historical data would slowly inflate every cap that touched a flaky script. Use this to spot caps that are now far too generous (script consistently finishes in 1/5 of its cap → tighten) or far too tight (script regularly takes 90% of its cap → widen with a separate diagnostic before raising).
 * **`/mnt/data/perso/tmpfs/testing-time-donut.svg`** — donut chart of the same per-script wall, rendered by `test/testing_time_chart.py` at the tail of every full `all.sh` (skipped under `--onlyfailed`, which would reuse a stale timing JSON). Hand-rolled SVG (no matplotlib dep); open in any browser. Largest slice first; sub-1% scripts fold into a single "other" wedge.
+
+## Client↔server determinism check — `test/determinism_check.gdb`
+
+Solo embedded-server builds run client (`Api_protocol`) and server (`Client`) in one process sharing the SAME player struct. The gdb script captures both objects once and field-diffs `player_informations` vs `public_and_private_informations` at several lifecycle checkpoints (LOGIN ×2 / INVENTORY / ON-MAP-LATE; BEFORE-DISCONNECT needs a clean-quit, not `--closewhenonmap`). Run: `gdb -batch -x test/determinism_check.gdb --args <dbg>/catchchallenger --autosolo --main-datapack-code=test --closewhenonmap`. Verdict: every gameplay field matches; FILTER (divergence by design) recipes/encyclopedia_*/mapData/`monster.id`/`monsterId`, and `items` is ASYNC (empty at LOGIN, matches from INVENTORY). ASYNC rule: only compare at a SETTLED point after parse. SOLO doesn't process wild fights → post-fight hp diff only in MULTIPLAYER.
 
 ## Diagnosing a hung process — gdb attach, then decide
 

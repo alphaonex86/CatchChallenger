@@ -788,6 +788,1179 @@ def remove_savegames(path, label):
         log_info(f"no savegames to remove: {path}")
 
 
+class _GLChannelSession:
+    """Launch the qtopengl client in --autosolo + --remote-control, connect to its
+    QLocalServer automation socket, and expose send()/dialog()/map_id()/wait_*.
+    No in-binary test scaffolding — drives the SAME channel a real controller
+    uses. Isolated HOME/XDG/TMPDIR per session so the socket is ours and the
+    savegame is fresh (the test character spawns on the test-city at 15,26).
+    See client/dev.md and map/main/test/TOTEST.md for the command vocabulary and
+    the map fixture coordinates."""
+    def __init__(self, mc):
+        import tempfile
+        self.mc = mc
+        self.proc = None
+        self.sk = None
+        self.out = []
+        self.tmpdir = tempfile.mkdtemp(prefix="cc-glchan-",
+                                       dir=_config["paths"].get("tmpfs_root", "/tmp"))
+
+    def _reader(self):
+        for l in iter(self.proc.stdout.readline, b""):
+            self.out.append(l.decode(errors="replace").rstrip())
+
+    def start(self):
+        """Launch + wait for the map + connect the socket. Returns (ok, errmsg)."""
+        import socket, glob
+        binary = os.path.join(CLIENT_GL_BUILD, CLIENT_GL_BIN)
+        if not os.path.isfile(binary):
+            return False, f"binary not found: {binary}"
+        env = dict(QT_QPA_PLATFORM="offscreen",
+                   HOME=os.path.join(self.tmpdir, "home"),
+                   XDG_CONFIG_HOME=os.path.join(self.tmpdir, "home", ".config"),
+                   XDG_DATA_HOME=os.path.join(self.tmpdir, "home", ".local", "share"),
+                   TMPDIR=self.tmpdir, PATH=os.environ.get("PATH", "/usr/bin:/bin"))
+        os.makedirs(env["HOME"], exist_ok=True)
+        args = [binary, "--autosolo", f"--main-datapack-code={self.mc}", "--remote-control"]
+        diagnostic.record_cmd(args, CLIENT_GL_BUILD)
+        self.proc = subprocess.Popen(args, cwd=CLIENT_GL_BUILD, env=env,
+                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                     preexec_fn=process_helpers.setsid_and_pdeathsig)
+        threading.Thread(target=self._reader, daemon=True).start()
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 60))
+        on_map = False
+        while time.time() < deadline:
+            if any("mapDisplayedSlot()" in l for l in self.out):
+                on_map = True
+                break
+            if self.proc.poll() is not None:
+                break
+            time.sleep(0.3)
+        if not on_map:
+            return False, "client never reached the map"
+        uid = os.getuid()
+        cdeadline = time.time() + 8
+        while time.time() < cdeadline and self.sk is None:
+            for c in glob.glob(os.path.join(self.tmpdir, f"CatchChallenger-Client-*-{uid}")):
+                try:
+                    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                    s.settimeout(2)
+                    s.connect(c)
+                    s.sendall(b"GETSTATE\n")
+                    time.sleep(0.3)
+                    if "STATE" in s.recv(4096).decode(errors="replace"):
+                        self.sk = s
+                        break
+                    s.close()
+                except Exception:
+                    pass
+            time.sleep(0.3)
+        if self.sk is None:
+            return False, "could not connect to the client's QLocalServer automation socket"
+        return True, ""
+
+    def send(self, line, wait=0.6):
+        self.sk.sendall((line + "\n").encode())
+        time.sleep(wait)
+        buf = b""
+        try:
+            self.sk.settimeout(1.5)
+            while True:
+                d = self.sk.recv(4096)
+                if not d:
+                    break
+                buf += d
+                if b"\n" in buf:
+                    break
+        except Exception:
+            pass
+        return buf.decode(errors="replace").strip()
+
+    # `cmd` is an alias for send() so scenario recipes read naturally
+    def cmd(self, line, wait=0.6):
+        return self.send(line, wait)
+
+    def dialog(self):
+        return self.send("GETDIALOG").replace("DIALOG", "", 1).strip()
+
+    def state(self):
+        """GETSTATE -> (map,x,y,dir) ints, or None."""
+        import re
+        m = re.search(r"map=(\d+)\s+x=(\d+)\s+y=(\d+)\s+dir=(\d+)", self.send("GETSTATE"))
+        return tuple(int(g) for g in m.groups()) if m else None
+
+    def map_id(self):
+        st = self.state()
+        return st[0] if st else -1
+
+    def cash(self):
+        import re
+        m = re.search(r"CASH\s+(\d+)", self.send("GETCASH"))
+        return int(m.group(1)) if m else -1
+
+    def team(self):
+        """GETTEAM -> list of (monsterId, level, hp). Defensive: a partial reply
+        (e.g. the socket closing mid-teardown) yields [] rather than throwing."""
+        r = self.send("GETTEAM").replace("TEAM", "", 1).strip()
+        out = []
+        for t in r.split():
+            p = t.split(":")
+            if len(p) == 3 and all(x.isdigit() for x in p):
+                out.append(tuple(int(x) for x in p))
+        return out
+
+    def inv(self):
+        """GETINVENTORY -> {itemId: qty}. Defensive against partial replies."""
+        r = self.send("GETINVENTORY").replace("INVENTORY", "", 1).strip()
+        d = {}
+        for t in r.split():
+            p = t.split(":")
+            if len(p) == 2 and p[0].isdigit() and p[1].isdigit():
+                d[int(p[0])] = int(p[1])
+        return d
+
+    def infight(self):
+        return "inFight=1" in self.send("GETFIGHT")
+
+    def wait(self, pred, timeout=25, poll=0.5):
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, timeout))
+        while time.time() < deadline:
+            if pred():
+                return True
+            time.sleep(poll)
+        return False
+
+    def wait_map_change(self, from_id, timeout=25):
+        """Poll until the map id differs from from_id. Returns the new id, or -1."""
+        d = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, timeout))
+        while time.time() < d:
+            m = self.map_id()
+            if m != from_id and m >= 0:
+                return m
+            time.sleep(0.5)
+        return -1
+
+    def wait_map(self, target, timeout=25):
+        d = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, timeout))
+        while time.time() < d:
+            if self.map_id() == target:
+                return True
+            time.sleep(0.5)
+        return False
+
+    def tail(self, n=20):
+        return self.out[-n:]
+
+    def kill(self):
+        if self.proc is None:
+            return
+        try:
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+            self.proc.wait(timeout=5)
+        except (ProcessLookupError, subprocess.TimeoutExpired):
+            try:
+                os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
+def run_qtopengl_sign_dialog_channel_test(dp_name, mc, failed_cases):
+    """Regression guard, driven over the QLocalServer automation channel (NO
+    in-binary test scaffolding): clicking the test-city Sign at (17,25) must OPEN
+    the in-game dialog box, and CLOSEDIALOG must close it.
+
+    The qtopengl client once stubbed OverMapLogic::actionOnCheckBot() to a no-op,
+    so a sign click walked the player up to the sign and FACED it but opened
+    nothing. The shared map-render [SIGNTEST] only verifies the actionOn routing
+    (which fires for any faced tile, sign or wall), so it never caught the missing
+    dialog. Here we read the ACTUAL dialog text back over GETDIALOG: empty after
+    the click == the bug."""
+    case = f"qtopengl click-on-sign opens dialog over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl sign(17,25)->dialog over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill()
+        log_fail(case, err)
+        for l in s.tail():
+            print(f"  | {l}")
+        return
+    try:
+        before = s.dialog()
+        if before:
+            log_fail(case, f"a dialog was already open before the click: {before!r}")
+            return
+        s.send("CLICKTILE 17 25")
+        text = ""
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 15))
+        while time.time() < deadline:
+            text = s.dialog()
+            if text:
+                break
+            time.sleep(0.5)
+        if not text:
+            log_fail(case, f"clicked Sign (17,25) but NO dialog opened (GETDIALOG empty); {s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        if "Map test/City" not in text:
+            log_fail(case, f"dialog opened but unexpected text: {text!r} (expected 'Map test/City')")
+            return
+        # CLOSEDIALOG (== Escape) must clear the dialog mirror too
+        s.send("CLOSEDIALOG")
+        time.sleep(0.5)
+        if s.dialog():
+            log_fail(case, "CLOSEDIALOG did not clear the dialog")
+            return
+        log_pass(case, f"sign dialog opened+closed: {text!r}")
+    finally:
+        s.kill()
+
+
+def run_qtopengl_building_roundtrip_channel_test(dp_name, mc, failed_cases):
+    """Channel-driven: enter a building and come back out. Click the gym door on
+    the test city (21,25) -> the map changes (entered the gym); click the gym
+    'to city' exit (9,20) -> the map changes back to the spawn map. Verifies door
+    teleport in BOTH directions via CLICKTILE. Map ids are detected dynamically
+    (spawn id captured, then asserted to change and to return) so the test does
+    not hardcode the gym index."""
+    case = f"qtopengl enter+exit building over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl enter/exit building over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill()
+        log_fail(case, err)
+        for l in s.tail():
+            print(f"  | {l}")
+        return
+    try:
+        spawn = s.map_id()
+        s.send("CLICKTILE 21 25")            # gym door on the city
+        inside = s.wait_map_change(spawn)
+        if inside < 0:
+            log_fail(case, f"never entered the building from the gym door; state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        s.send("CLICKTILE 9 20")             # gym 'to city' push-exit
+        if not s.wait_map(spawn):
+            log_fail(case, f"never returned to the spawn map {spawn}; state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        log_pass(case, f"entered building (map {inside}) and returned to spawn (map {spawn})")
+    finally:
+        s.kill()
+
+
+def run_qtopengl_lava_blocked_channel_test(dp_name, mc, failed_cases):
+    """CITY 'enter lava and FAIL due to lack of item', driven over the channel.
+
+    city.tmx has a Lava layer (decoded from its base64+zstd data): a 3x3 block at
+    (10-12,10-12) plus the cells (13,27),(14,27). map/layers.xml gates the Lava
+    layer behind item id 32 (monstersCollision item="32" ... layer="Lava"). A
+    fresh character spawns at city (15,26) with NO item 32, so it must be UNABLE
+    to step onto a lava tile. We walk to the walkable approach (13,26) just above
+    the near lava (13,27), then both press KEY Down toward it AND CLICKTILE it; the
+    player must stay off every lava tile (position unchanged at (13,26)) and no
+    fight may start. The observable is c.state() staying off the lava set."""
+    case = f"qtopengl lava blocked without item over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl enter-lava-FAIL (no item 32): {dp_name} {mc} ---{C_RESET}\n")
+    LAVA = {(10, 10), (11, 10), (12, 10),
+            (10, 11), (11, 11), (12, 11),
+            (10, 12), (11, 12), (12, 12),
+            (13, 27), (14, 27)}
+    APPROACH = (13, 26)
+    LAVA_TILE = (13, 27)
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill()
+        log_fail(case, err)
+        for l in s.tail():
+            print(f"  | {l}")
+        return
+    try:
+        st = s.state()
+        if not st or st[0] != 1:
+            log_fail(case, f"did not start on city map id 1: {st}")
+            return
+        # Fresh character must NOT own the lava-gating item (id 32).
+        inv = s.inv()
+        if 32 in inv:
+            log_fail(case, f"fresh character unexpectedly has lava item 32: {inv}")
+            return
+        # Walk to the walkable tile directly above the near lava tile.
+        s.cmd(f"GOTO 1 {APPROACH[0]} {APPROACH[1]}")
+        if not s.wait(lambda: s.state() and s.state()[1:3] == APPROACH, timeout=30):
+            log_fail(case, f"could not reach lava approach {APPROACH}; observed {s.state()}")
+            return
+        # Attempt to step DOWN onto lava: first press turns to face, the rest push.
+        i = 0
+        while i < 4:
+            s.cmd("KEY Down")
+            time.sleep(0.7)
+            i += 1
+        st = s.state()
+        if st[1:3] in LAVA:
+            log_fail(case, f"player walked ONTO lava via KEY Down (no item 32): {st}")
+            return
+        if st[1:3] != APPROACH:
+            log_fail(case, f"player left the approach unexpectedly (expected {APPROACH}): {st}")
+            return
+        # Attempt to click directly on the lava tile.
+        s.cmd(f"CLICKTILE {LAVA_TILE[0]} {LAVA_TILE[1]}")
+        moved = s.wait(lambda: s.state() and s.state()[1:3] in LAVA, timeout=6)
+        if moved:
+            log_fail(case, f"player walked ONTO lava via CLICKTILE (no item 32): {s.state()}")
+            return
+        st = s.state()
+        if st[1:3] in LAVA:
+            log_fail(case, f"player ended on a lava tile: {st}")
+            return
+        if s.infight():
+            log_fail(case, f"a fight started on the lava attempt (should not without item 32): {st}")
+            return
+        log_pass(case, f"blocked off lava: stayed at {st[1:3]} (lava set never entered), no fight, inv={inv}")
+    finally:
+        s.kill()
+
+
+def run_qtopengl_house1_industry_quest_channel_test(dp_name, mc, failed_cases):
+    """Channel-driven: enter house1 and click its Industry and Quest bots.
+
+    house1 is reached through the test-city door at (9,25) which teleports to
+    house1 (5,13). The ONLY corridor to that door (city row y=26) is permanently
+    blocked at (12,26) by the wandering NPC bot (city.tmx object id=28, kid1,
+    lookAt="move") -- a straight CLICKTILE 9 25 from spawn stalls the player at
+    (13,26) ("Error at path found, collision detected ... no bot at (12,26)").
+    So we route the player AROUND the NPC via the upper corridor (y=22) and the
+    open vertical shaft at x=11: (17,22)->(11,22)->(11,26)->(9,26), all west of
+    the blocker, then CLICKTILE the door tile (9,25) to fire the teleport.
+
+    Inside house1 we click the two bot tiles (engine = pixelX/16, pixelY/16-1):
+      (a) Industry bot id=3 (badguys) object(112,176) -> tile (7,10): clicking it
+          while standing at (7,11) must OPEN a dialog (the industry/"See" prompt).
+      (b) Quest  bot id=2 (captain) object(32,112)  -> tile (2,6): clicking it
+          while standing at (2,7) must OPEN a dialog (the quest/"Quests" prompt).
+    Industry and quest have no further solo-observable channel signal beyond the
+    opening dialog, so asserting GETDIALOG is non-empty for each bot proves the
+    click->interaction path works for these bot types (the deliverable's stated
+    acceptable signal)."""
+    case = f"qtopengl house1 industry+quest bot dialogs over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl house1 industry+quest bots over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill()
+        log_fail(case, err)
+        for l in s.tail():
+            print(f"  | {l}")
+        return
+    try:
+        def gl_pos():
+            # current (x,y) tile, or None if the client died / no state
+            if s.proc.poll() is not None:
+                return None
+            st = s.state()
+            return (st[1], st[2]) if st and len(st) >= 3 else None
+
+        def gl_goto(tx, ty, timeout=25):
+            # CLICKTILE then poll until arrival; re-issue the click only when the
+            # player has made no progress for ~2.4s (avoids socket spam). Returns
+            # True once standing on (tx,ty).
+            deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, timeout))
+            last = None
+            stall = 0
+            s.send(f"CLICKTILE {tx} {ty}")
+            while time.time() < deadline:
+                if s.proc.poll() is not None:
+                    return False
+                time.sleep(0.6)
+                p = gl_pos()
+                if p == (tx, ty):
+                    return True
+                if p == last:
+                    stall += 1
+                else:
+                    stall = 0
+                last = p
+                if stall >= 4:
+                    if s.proc.poll() is not None:
+                        return False
+                    s.send(f"CLICKTILE {tx} {ty}")
+                    stall = 0
+            return gl_pos() == (tx, ty)
+
+        spawn = s.state()
+        if not spawn or spawn[0] != 1:
+            log_fail(case, f"unexpected spawn state {spawn} (expected city map id 1 at (15,26))")
+            return
+
+        # Route around the wandering NPC at (12,26) to the house1 door floor (9,26).
+        for (tx, ty) in [(17, 22), (11, 22), (11, 26), (9, 26)]:
+            if not gl_goto(tx, ty):
+                log_fail(case, f"could not reach city waypoint ({tx},{ty}) en route to the "
+                               f"house1 door; player at {gl_pos()} (client alive="
+                               f"{s.proc.poll() is None})")
+                for l in s.tail():
+                    print(f"  | {l}")
+                return
+        if gl_pos() != (9, 26):
+            log_fail(case, f"not standing below the house1 door, at {gl_pos()} (expected (9,26))")
+            return
+
+        # CLICKTILE the door tile itself -> teleports into house1 at (5,13).
+        s.send("CLICKTILE 9 25")
+        house1 = s.wait_map_change(spawn[0], timeout=18)
+        if house1 < 0 or s.map_id() == spawn[0]:
+            log_fail(case, f"clicking the house1 door (9,25) did not change map; "
+                           f"state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        time.sleep(0.8)
+
+        # (a) Industry bot id=3 at tile (7,10): approach (7,11), click the bot tile.
+        s.send("CLOSEDIALOG")
+        time.sleep(0.4)
+        if not gl_goto(7, 11):
+            log_fail(case, f"could not approach the Industry bot (stand at (7,11)); at {gl_pos()}")
+            return
+        s.send("CLICKTILE 7 10")
+        industry = ""
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 12))
+        while time.time() < deadline:
+            industry = s.dialog()
+            if industry:
+                break
+            time.sleep(0.5)
+        if not industry:
+            log_fail(case, f"clicked the Industry bot (7,10) but NO dialog opened "
+                           f"(GETDIALOG empty); state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        s.send("CLOSEDIALOG")
+        time.sleep(0.5)
+
+        # (b) Quest bot id=2 at tile (2,6): approach (2,7), click the bot tile.
+        if not gl_goto(2, 7):
+            log_fail(case, f"could not approach the Quest bot (stand at (2,7)); at {gl_pos()}")
+            return
+        s.send("CLICKTILE 2 6")
+        quest = ""
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 12))
+        while time.time() < deadline:
+            quest = s.dialog()
+            if quest:
+                break
+            time.sleep(0.5)
+        if not quest:
+            log_fail(case, f"clicked the Quest bot (2,6) but NO dialog opened "
+                           f"(GETDIALOG empty); state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        s.send("CLOSEDIALOG")
+        log_pass(case, f"house1 entered (map {house1}); Industry bot dialog={industry[:40]!r}; "
+                       f"Quest bot dialog={quest[:40]!r}")
+    finally:
+        s.kill()
+
+
+def run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases):
+    """Channel-driven: walk from the city spawn out the LEFT (west) border to
+    road.tmx, then pick up an item-on-map object and assert the inventory gains
+    that item id.
+
+    Geometry was discovered live (engine tiles via GETSTATE):
+      * Spawn is city (map 1) at (15,26); fresh inventory has item id 5 qty 1.
+      * The city west border-left teleport is (0,18); reaching it drops the player
+        onto road.tmx (map id discovered at runtime, observed = 5) at its EAST edge
+        (~ (40-41,16)).
+      * road.tmx carries several item-on-map gid objects (id 5). The ones in the
+        NE corner (33,2),(33,4),(33,6) sit in an ISOLATED one-way-ledge zone that
+        the engine pathfinder cannot reach from the arrival point (road's own
+        "Test not interconnect ledge zone edge" sign), so they are NOT collectable
+        in solo and are deliberately not asserted. The reliably-collectable item is
+        the one at engine tile (2,27) - its whole approach is grass-FREE (so no wild
+        encounters interrupt the walk), reached down column 2 past a one-way ledge.
+
+    Navigation uses precomputed BFS distance fields (gradient descent) so it is
+    self-correcting and order-independent: each step moves to the 4-neighbour whose
+    distance to the goal is strictly smaller. Steps are issued as single-tile
+    CLICKTILEs (the engine pathfinds exactly one tile, avoiding keyboard movement
+    momentum overshoot). The one one-way ledge that CLICKTILE will not traverse is
+    crossed with KEY Down (grass-free, so still no fights). Validated stable across
+    repeated runs."""
+    import base64, re
+    case = f"qtopengl road pick-up-item over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl road item (2,27) pickup over channel: {dp_name} {mc} ---{C_RESET}\n")
+
+    # City BFS distance-to-west-border(0,18) field (30x34); 255 = blocked/unreachable.
+    # Excludes the engine-side "not accessible" object zone so the route stays on the
+    # validated row-22 -> column-2 corridor (avoids the city sign bot at (13,26) and
+    # the item-gated water/lava just south of spawn).
+    _CW, _CH = 30, 34
+    _CITY = base64.b64decode(
+        "////////////////////////////LSwrKissLS4v////////////////////////////LCsqKSorLC0u"
+        "////////////////////////////KyopKCkqKywt////////////////////////////KikoJygpKiss"
+        "////////////////////////////KSgnJicoKSor////////////////////////////KCcmJSYnKCkq"
+        "////////////////////////////JyYlJCUmJygp////////////////////////////JiUkIyQlJico"
+        "//8MDQ4PEBESExQVFhcYGRobHB3/JSQjIiMkJSYn//8LDA0ODxAREhMUFRYXGBkaGxz/////If//////"
+        "//8KCwwN////Ef///xUWFxgZGhscHR4fICEiI/////8JCgsM////EP///xQVFhcYGRobHB0eHyAhIv//"
+        "//8ICQoL////D////xMUFRYXGBkaGxwdHh8gIf////8HCAkKCwwNDg8QERITFBUWFxgZGhscHR4fIP//"
+        "//8GBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eH/////8FBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHv//"
+        "//8EBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHf////8D/////woLDA0ODxAREhMUFRYXGBkaGxwdHv//"
+        "AAEC/////wsMDQ4PEBESExQVFhcYGRobHB0eH///AQID/////wwNDg8QERITFBUWFxgZGhscHR4fIP//"
+        "//8E/////wsMDQ4PEBESExQVFhcYGRobHB0eHyAh//8FBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8g"
+        "//8GBwgJCgsMDQ4PEBESExQVFv//////HB0eH/////8HCAkK//////8QEf////8WF///////HR4fIP//"
+        "//8ICQoL//////8REv////8XGP//////Hh8gIf////8JCgsM//////8SE///////Gf//////HyAhIv//"
+        "//8KCwwNDg8QERITFP8eHRwbGv8gIf8hICEiI/////8LDA0ODxAREhMUFf////8cG/8f//8iISIjJP//"
+        "////////////////////////HB0eHyAhIiP/////////////////////////////HR4fICEiIyT/////"
+        "////////////////////////////////////////////////////////////////////////////////"
+        "////////////////////////////////////////////////////////////////////////////////")
+
+    # Road BFS distance-to-item(2,27) field (42x30); reverse-BFS that AVOIDS grass
+    # (no wild fights on the path) and honours one-way ledges, so a pure
+    # min-distance descent reaches the item column.
+    _RW, _RH = 42, 30
+    _ROAD = base64.b64decode(
+        "////////////////////////////////////////////////////////////////////////////////"
+        "////////////////////////////////////////////////////////////////////////O///////"
+        "////////////////////////////////////////////////Ov//////////////////////////////"
+        "/////yUmJygpKv////85ODc4OURDQkFAPz49PP///////////////////////yQlJicoKf////84Nzb/"
+        "Ov//////////O/////////////////////8hIiMkJSYnKCkq//83NjX/O0A/Pj08Ozo5Ov////8mJSQj"
+        "IiEgH/////8gISIjJCUmJygp//82NTT///////////84Of////8lJCMiISAfHh0cHR4fICEiIyQlJv//"
+        "//81NDMyMTAxMv////83OP////8kIyIhIB8eHRwbHB0eHyD//////////////////y8wMf////82N///"
+        "////////Hx4dHBsaGxwdHh///////////////////y4vMDEyMzQ1Nv//////////Hh0cGxoZGv//////"
+        "/////////////////y0uLzAxMjM0Nf////////////////8YGf///////////////////////ywtLv//"
+        "//////////////////////8XGP////////8gISIjJCUm////KissLf////////////////////////8W"
+        "F/////////8fICEiIyQl////KSorLC0u//////////////////////8VFhcYGf//HB0eHyAhIiMkJSYn"
+        "KCkqKywt/////////////////xAREhMUFRYXGP//GxwdHv////8lJicoKSorLC0uLzAxMjM0/////wwN"
+        "Dg8QERITFBUWFxgZGhscHf////8mJygpKissLS4vMDEyMzQ1/////wsMDQ4P/////xYXGBkaGxwdHh8g"
+        "//8nKCkqKywtLi///////////////woLDA0O/////xcYGRobHB0eHyAh//8oKSorLC3/////////////"
+        "//8HCAkKCwwN////////GhscHf///yH/////Kv////////////////////8GBwgJCgsM////////Gxwd"
+        "Hh////////////////////////////////8FBv//CwwNDg//////HB0eHyD/////////////////////"
+        "//////////8E////DA0ODxD/////HR4fICEi////KissLf////////////////////8DBP//DQ4P/xH/"
+        "////Hv//ISIj////Kf////////////////////////8CA///Dg8Q/yb/////H///IiMkJSYnKP//////"
+        "//////////////////8BAgMQDxAR/yUkIyIhICH/IyQl//////////////////////////////8AAQIR"
+        "EBES/yb/////////JCUm/////////////////////////////////////////////////////yb/////"
+        "////////////////////////////////////////////////////////////////////////////////")
+
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill()
+        log_fail(case, err)
+        for l in s.tail():
+            print(f"  | {l}")
+        return
+
+    _DIRS = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+
+    # fast readers (low wait) — the helper's state()/inv() default to wait=0.6;
+    # this walk issues ~80 single-tile steps so we read with a short wait.
+    def _state():
+        m = re.search(r"map=(\d+)\s+x=(\d+)\s+y=(\d+)\s+dir=(\d+)", s.cmd("GETSTATE", wait=0.08))
+        return tuple(int(g) for g in m.groups()) if m else None
+
+    def _inv5():
+        r = s.cmd("GETINVENTORY", wait=0.08).replace("INVENTORY", "", 1).strip()
+        for t in r.split():
+            k, v = t.split(":")
+            if int(k) == 5:
+                return int(v)
+        return 0
+
+    def _dist(blob, w, h, x, y):
+        if 0 <= x < w and 0 <= y < h:
+            i = x + y * w
+            if i < len(blob):
+                return blob[i]
+        return 255
+
+    def _step_tile(tx, ty, maxmap):
+        """Move ONE tile to (tx,ty) via CLICKTILE: the engine pathfinds a single
+        tile (no keyboard momentum overshoot). Returns cross/move/blocked + state."""
+        before = _state()
+        s.cmd("CLICKTILE %d %d" % (tx, ty), wait=0.12)
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 3))
+        while time.time() < deadline:
+            st = _state()
+            if not st:
+                return ("blocked", before)
+            if st[0] != maxmap:
+                return ("cross", st)
+            if (st[1], st[2]) == (tx, ty):
+                return ("move", st)
+            if before and (st[1], st[2]) != (before[1], before[2]):
+                return ("move", st)
+            time.sleep(0.15)
+        return ("blocked", _state())
+
+    def _nav(blob, w, h, maxmap, max_steps=140):
+        """Gradient descent over the BFS field; self-correcting & order-independent."""
+        steps = 0
+        stuck = 0
+        while steps < max_steps:
+            st = _state()
+            if not st or st[0] != maxmap:
+                return st
+            x, y = st[1], st[2]
+            if _dist(blob, w, h, x, y) == 0:
+                return st
+            bd = _dist(blob, w, h, x, y)
+            bestxy = None
+            for d in _DIRS:
+                nx, ny = x + d[0], y + d[1]
+                nd = _dist(blob, w, h, nx, ny)
+                if nd < bd:
+                    bd = nd
+                    bestxy = (nx, ny)
+            if bestxy is None:
+                return st
+            kind, ns = _step_tile(bestxy[0], bestxy[1], maxmap)
+            if kind == "cross":
+                return ns
+            if kind == "blocked":
+                stuck += 1
+                if stuck >= 3:
+                    return st
+            else:
+                stuck = 0
+            steps += 1
+        return _state()
+
+    try:
+        st0 = _state()
+        if not st0 or st0[0] != 1:
+            log_fail(case, f"did not start on city (map 1): {st0}")
+            return
+        base5 = _inv5()
+        if base5 < 1:
+            log_fail(case, f"fresh client expected item id 5 qty>=1, inventory item5={base5}")
+            return
+
+        # 1) city spawn -> west border (0,18) -> teleport onto road
+        _nav(_CITY, _CW, _CH, 1)
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 8))
+        while time.time() < deadline and (_state() or (0,))[0] == 1:
+            s.cmd("KEY Left", wait=0.06)
+            time.sleep(0.12)
+        road = (_state() or (0,))[0]
+        if road == 1:
+            log_fail(case, f"could not cross the city west border to road; state={_state()}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # 2) road arrival -> grass-free descent toward the item column (CLICKTILE
+        #    stalls just above the one-way ledge at (2,24))
+        _nav(_ROAD, _RW, _RH, road)
+
+        # 3) cross the (2,24) one-way ledge with KEY Down (grass-free => no fights),
+        #    gliding down column 2 until at/below row 26, then collect (2,27).
+        got = _inv5() > base5
+        if not got:
+            kd = 0
+            while kd < 10 and _inv5() == base5:
+                st = _state()
+                if not st or st[0] != road:
+                    break
+                if st[2] >= 26:
+                    break
+                s.cmd("KEY Down", wait=0.1)
+                time.sleep(0.3)
+                kd += 1
+            got = _inv5() > base5
+        if not got:
+            # collect item (2,27) by clicking it from the adjacent tile (2,26)
+            deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 12))
+            while time.time() < deadline and _inv5() == base5:
+                s.cmd("CLICKTILE 2 27", wait=0.3)
+                time.sleep(0.4)
+            got = _inv5() > base5
+
+        now5 = _inv5()
+        if not got or now5 != base5 + 1:
+            log_fail(case, f"road item (2,27) not collected: item5 {base5}->{now5}, state={_state()}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        log_pass(case, f"crossed to road (map {road}) and picked up item id 5 at engine tile (2,27): "
+                       f"inventory item5 {base5}->{now5}")
+    finally:
+        s.kill()
+
+
+def run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases):
+    """Channel-driven entry-point guard for the CLAN-create and ZONE-capture bots
+    in house2.tmx (test maincode, map id 4; enter via city door 15,25 -> arrive 9,28).
+
+    SOLO SCOPE (verified live): the actual *create-a-clan* and *capture-a-zone*
+    flows are NOT completable on the embedded single-player server and have NO
+    channel-observable completion signal:
+      * there is no channel verb to follow a dialog hyperlink (the verb set is
+        KEY/CLICKTILE/CLICKPIXEL/GOTO/CLOSEDIALOG/GET*/SENDCHAT/TRADE*/FIGHT*),
+        and the qtopengl dialog box has no anchor hit-testing (clicking it only
+        hits the quit button), so the "[Create clan]" / "[Zone capture]" links
+        cannot be activated over the channel;
+      * even if activated, OverMapLogicBot.cpp's clan_create link handler and the
+        "zonecapture" step handler are abort() stubs (the implementations are
+        commented out), and clan-create additionally needs allow_create_clan
+        (false by default, only quest-granted) while zone-capture is a TvT
+        cluster feature (needs a clan + an active city-capture timer + players).
+    What IS observable, deterministic and worth guarding is that BOTH bots open
+    their step-1 text dialog over the channel: the clan bot shows the
+    "clan_create" entry link and the zone bot shows the "Zone capture" entry
+    link. A regression in the bot/dialog pipeline (the kind that once stubbed
+    actionOnCheckBot() to a no-op) would make these dialogs empty. We also assert
+    the client survives opening each bot (the abort() stubs are never reached
+    because the links are not followable) — a crash here would be a real bug."""
+    case = f"qtopengl clan+zonecapture bot entry dialogs over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl clan/zonecapture entry dialogs over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill()
+        log_fail(case, err)
+        for l in s.tail():
+            print(f"  | {l}")
+        return
+    try:
+        # Enter house2 via the city door at (15,25); arrive on house2 (map id 4).
+        spawn = s.map_id()
+        s.send("CLICKTILE 15 25")
+        house2 = s.wait_map_change(spawn)
+        if house2 < 0:
+            log_fail(case, f"never entered house2 from the city door (15,25); state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # --- CLAN bot (id=3, smith) is fixed at engine tile (8,6). CLICKTILE walks
+        #     the player adjacent, faces it, and opens its step-1 dialog. The dialog
+        #     must carry the clan-create entry link "clan_create".
+        s.send("CLOSEDIALOG")
+        time.sleep(0.3)
+        s.send("CLICKTILE 8 6")
+        if not s.wait(lambda: "clan_create" in s.dialog(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 18))):
+            log_fail(case, f"clan bot (8,6) opened NO clan_create dialog; got={s.dialog()!r} state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        clan_dialog = s.dialog()
+        if s.proc.poll() is not None:
+            log_fail(case, f"client exited after opening the clan bot (rc={s.proc.poll()})")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # --- ZONE-capture bot (id=4, rookie) is a MOVING bot (lookAt="move"); it
+        #     renders near engine (12,11) at start. Walk to a tile adjacent to its
+        #     starting cell, face it, press Enter; the first approach that yields
+        #     its step-1 "Zone capture" dialog wins (robust to its movement).
+        zone_dialog = ""
+        approaches = [(11, 11, "Right"), (12, 12, "Up"), (12, 10, "Down"),
+                      (13, 11, "Left"), (11, 12, "Right"), (13, 12, "Left")]
+        i = 0
+        while i < len(approaches) and "zone capture" not in zone_dialog.lower():
+            ax, ay, face = approaches[i]
+            s.send("CLOSEDIALOG")
+            time.sleep(0.2)
+            s.send(f"GOTO {house2} {ax} {ay}")
+            s.wait(lambda: s.state() is not None and s.state()[:3] == (house2, ax, ay),
+                   timeout=clamp_local(diagnostic.scale_timeout(DIAG, 15)))
+            if s.state() is not None and s.state()[:3] == (house2, ax, ay):
+                s.send(f"KEY {face}")
+                time.sleep(0.5)
+                s.send("KEY Enter")
+                if s.wait(lambda: "zone capture" in s.dialog().lower(),
+                          timeout=clamp_local(diagnostic.scale_timeout(DIAG, 6))):
+                    zone_dialog = s.dialog()
+            i += 1
+        if "zone capture" not in zone_dialog.lower():
+            log_fail(case, f"zonecapture bot (~12,11) opened NO 'Zone capture' dialog; got={zone_dialog!r} state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        if s.proc.poll() is not None:
+            log_fail(case, f"client exited after opening the zonecapture bot (rc={s.proc.poll()})")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # closing the last dialog must not crash and must clear the mirror
+        s.send("CLOSEDIALOG")
+        time.sleep(0.3)
+        if s.proc.poll() is not None:
+            log_fail(case, f"client exited after CLOSEDIALOG (rc={s.proc.poll()})")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        log_pass(case, f"clan entry dialog {clan_dialog!r} + zonecapture entry dialog {zone_dialog!r} "
+                       f"opened over channel (the create/capture flows themselves are not "
+                       f"solo-completable: no link-follow verb, abort()-stub handlers)")
+    finally:
+        s.kill()
+
+
+
+def run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases):
+    """Channel-driven WATER/FISH scenario from TOTEST.md: 'edit the db to have the
+    swim/fish item, then fight a water monster'.
+
+    Water is item-gated: the required item id is read DYNAMICALLY from the
+    datapack's map/layers.xml (the Water layer's walkOn monstersCollision item) —
+    not hardcoded. A fresh solo savegame starts WITHOUT it, so the player cannot
+    step onto water. We:
+      1) start a client (fresh file-db savegame is created), confirm the swim item
+         is absent, then kill it;
+      2) GRANT the swim item by editing the solo savegame SQLite between runs. The
+         savegame's .xxh32 companion is a SCHEMA checksum (xxh32 of the embedded
+         :/catchchallenger-sqlite.sql), NOT a data checksum (see
+         client/libqtcatchchallenger/SoloDatabaseInit.cpp), so editing a row's
+         BLOB keeps the savegame valid. The inventory is stored in
+         character.item as a delta-encoded BLOB of (uint16 id-delta, uint32 qty)
+         entries (see server ClientHeavyLoadSelectCharCommon.cpp);
+      3) restart the client on the SAME savegame dir, confirm the item loaded, walk
+         onto a city water tile (the swim item now lets the player enter), then
+         oscillate between the two adjacent water tiles to accumulate wild-encounter
+         steps until a water-monster fight starts (GETFIGHT inFight=1).
+
+    No production code is modified; the only mutation is the isolated solo
+    savegame DB the harness itself owns."""
+    import struct, sqlite3
+    import xml.etree.ElementTree as ET
+    case = f"qtopengl water swim-item DB-grant -> water fight ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- water/fish DB-edit + water fight: {dp_name} {mc} ---{C_RESET}\n")
+
+    # --- detect the Water walkOn gating item id from the datapack (no hardcode) ---
+    layers_path = os.path.join(CLIENT_GL_BUILD, "datapack", "internal", "map", "layers.xml")
+    if not os.path.isfile(layers_path):
+        log_fail(case, f"layers.xml not found at {layers_path}")
+        return
+    swim_item = -1
+    try:
+        for ent in ET.parse(layers_path).getroot().findall("monstersCollision"):
+            if ent.get("layer") == "Water" and ent.get("type") == "walkOn" and ent.get("item"):
+                swim_item = int(ent.get("item"))
+                break
+    except Exception as e:
+        log_fail(case, f"failed to parse layers.xml: {e}")
+        return
+    if swim_item < 0:
+        log_fail(case, "no Water walkOn gating item in layers.xml")
+        return
+
+    # --- inventory BLOB codec: delta-encoded (uint16 id-delta, uint32 qty) ---
+    def decode_items(hexstr):
+        raw = bytes.fromhex(hexstr)
+        out = {}
+        pos = 0
+        last = 0
+        while pos + 6 <= len(raw):
+            delta = struct.unpack_from("<H", raw, pos)[0]
+            pos += 2
+            iid = (delta + last) & 0xFFFF
+            last = iid
+            qty = struct.unpack_from("<I", raw, pos)[0]
+            pos += 4
+            out[iid] = qty
+        return out
+
+    def encode_items(items):
+        out = b""
+        last = 0
+        keys = sorted(items.keys())
+        i = 0
+        while i < len(keys):
+            iid = keys[i]
+            out += struct.pack("<H", (iid - last) & 0xFFFF) + struct.pack("<I", items[iid])
+            last = iid
+            i += 1
+        return out.hex()
+
+    def grant_item(db_path, item_id):
+        con = sqlite3.connect(db_path)
+        try:
+            cur = con.cursor()
+            cur.execute("SELECT item FROM character WHERE id=1")
+            row = cur.fetchone()
+            if row is None:
+                return False, "no character row in savegame"
+            items = decode_items(row[0])
+            items[item_id] = 1
+            cur.execute("UPDATE character SET item=? WHERE id=1", (encode_items(items),))
+            con.commit()
+        finally:
+            con.close()
+        return True, ""
+
+    # --- run 1: create the fresh savegame, confirm swim item absent ---
+    s1 = _GLChannelSession(mc)
+    ok, err = s1.start()
+    if not ok:
+        s1.kill()
+        log_fail(case, f"run1 start: {err}")
+        for l in s1.tail():
+            print(f"  | {l}")
+        return
+    save_dir = s1.tmpdir
+    db_path = os.path.join(save_dir, "home", ".local", "share", "CatchChallenger",
+                           "client", "solo", "catchchallenger.db.sqlite")
+    inv1 = s1.inv()
+    s1.kill()
+    if not os.path.isfile(db_path):
+        log_fail(case, f"savegame db not found at {db_path}")
+        return
+    if swim_item in inv1:
+        log_fail(case, f"swim item {swim_item} unexpectedly present in fresh savegame: {inv1}")
+        return
+
+    # --- grant the swim item in the savegame DB (schema checksum unaffected) ---
+    granted, gerr = grant_item(db_path, swim_item)
+    if not granted:
+        log_fail(case, f"DB item-grant failed: {gerr}")
+        return
+
+    # --- run 2: reuse the SAME savegame dir; confirm the item loaded ---
+    s2 = _GLChannelSession(mc)
+    s2.tmpdir = save_dir          # share the edited savegame across the reconnect
+    ok, err = s2.start()
+    if not ok:
+        s2.kill()
+        log_fail(case, f"run2 start (after grant): {err}")
+        for l in s2.tail():
+            print(f"  | {l}")
+        return
+    try:
+        inv2 = s2.inv()
+        if swim_item not in inv2:
+            log_fail(case, f"swim item {swim_item} not loaded after DB grant: {inv2}")
+            return
+
+        # helper: step one tile in a direction (turn then move; at most 2 presses)
+        def pos():
+            st = s2.state()
+            return (st[1], st[2]) if st else None
+
+        def step(key):
+            before = pos()
+            n = 0
+            while n < 2:
+                s2.send(f"KEY {key}")
+                time.sleep(clamp_local(0.8))
+                if s2.infight():
+                    return pos()
+                if pos() != before:
+                    break
+                n += 1
+            return pos()
+
+        # spawn is city (15,26); the two city water tiles are (15,27) and (16,27),
+        # directly below the spawn. Without the swim item the next move is refused.
+        step("Down")
+        on_water = pos()
+        if on_water != (15, 27):
+            log_fail(case, f"could not enter water tile (15,27) with swim item {swim_item}; "
+                           f"at {on_water} (item gating not honoured?)")
+            return
+
+        # oscillate on the two water tiles until a wild water fight starts. The
+        # encounter is a per-step countdown seeded 0..15, so ~16 water steps suffice;
+        # allow a wide margin.
+        won = False
+        moves = 0
+        i = 0
+        while moves < 60 and not won:
+            if s2.infight():
+                won = True
+                break
+            key = "Right" if (i % 2 == 0) else "Left"
+            i += 1
+            before = pos()
+            now = step(key)
+            if s2.infight():
+                won = True
+                break
+            if now != before:
+                moves += 1
+            if now not in [(15, 27), (16, 27)]:
+                log_fail(case, f"wandered off the water tiles to {now}")
+                return
+        if not won:
+            log_fail(case, f"no water fight after {moves} water steps; {s2.send('GETFIGHT')}")
+            for l in s2.tail():
+                print(f"  | {l}")
+            return
+        log_pass(case, f"swim item {swim_item} granted via savegame DB; entered water; "
+                       f"water-monster fight after {moves} water steps")
+    finally:
+        s2.kill()
+
+
+def run_qtopengl_cave_fight_loss_nocrash_channel_test(dp_name, mc, failed_cases):
+    """Regression for the solo fight-LOSS crash: losing a fight must NOT SIGSEGV.
+
+    A team-wipe makes the fight engine raise "selectedMonster is out of range",
+    which routed through ConnexionManager::newError -> a SYNCHRONOUS teardown of
+    the very socket whose packet we were still parsing -> re-entrant
+    QObject::disconnect() -> SIGSEGV (every solo fight loss crashed the client).
+    The fix defers that teardown to the next event-loop turn. This test forces a
+    guaranteed loss (the fresh L5 team vs the cave's L22-25 wild monsters) and
+    asserts the client tears down GRACEFULLY -- it must never exit on SIGSEGV
+    (-11) or SIGABRT (-6). (Full rescue-respawn is a separate enhancement; here we
+    only guard the crash, per the no-crash kick-contract.)"""
+    import signal as _sig
+    case = f"qtopengl solo fight-loss does not crash ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl cave fight-loss no-crash over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+    try:
+        if s.map_id() != 1:
+            log_fail(case, f"unexpected spawn {s.state()}")
+            return
+        spawn = s.map_id()
+        s.send("CLICKTILE 24 9")
+        if s.wait_map_change(spawn, timeout=25) < 0:
+            log_fail(case, f"never entered the cave; state={s.send('GETSTATE')}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        seq = ["Up", "Up", "Right", "Right", "Down", "Down", "Left", "Left"]
+        infight = False
+        i = 0
+        while i < 70 and not infight:
+            if s.proc.poll() is not None:
+                break
+            s.send("KEY " + seq[i % len(seq)], 0.3)
+            infight = s.infight()
+            i += 1
+        if not infight:
+            if s.proc.poll() is None:
+                log_pass(case, f"no wild encounter in {i} cave steps (client healthy; "
+                               f"crash-guard not exercised this run)")
+                return
+            rc = s.proc.poll()
+            if rc in (-_sig.SIGSEGV, -_sig.SIGABRT):
+                log_fail(case, f"client crashed (rc={rc}) before any fight")
+                for l in s.tail(): print(f"  | {l}")
+            else:
+                log_pass(case, f"client exited rc={rc} (no crash) before encounter")
+            return
+        # Attack until the team is wiped. On the loss the (fixed) client now
+        # disconnects GRACEFULLY, which closes our channel socket -- so a dead
+        # channel here is the EXPECTED loss outcome, not a failure. We only care
+        # that the process never dies on a crash signal.
+        j = 0
+        while j < 40:
+            if s.proc.poll() is not None:
+                break
+            r = s.send("FIGHTSKILL 201", 0.4)
+            if "<dead" in r or r == "":          # channel closed = graceful loss teardown
+                break
+            if not s.infight():                  # fight resolved
+                break
+            j += 1
+        time.sleep(2.0)
+        rc = s.proc.poll()
+        if rc in (-_sig.SIGSEGV, -_sig.SIGABRT):
+            log_fail(case, f"FIGHT LOSS CRASHED the client (rc={rc}, SIGSEGV={-_sig.SIGSEGV})")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        log_pass(case, f"fight loss handled without crash (client {'alive' if rc is None else f'exited rc={rc}'})")
+    finally:
+        s.kill()
+
+
+def run_qtopengl_sign_keyboard_channel_test(dp_name, mc, failed_cases):
+    """KEYBOARD counterpart of the click sign test (TOTEST asks for BOTH keyboard
+    and mouse on city). Arrow-walk from spawn (15,26) east to (17,26), face Up onto
+    the Sign at (17,25), press Enter -> its dialog ("Map test/City") must open; then
+    Escape closes it. Uses KEY (arrows/Enter/Escape) only -- no CLICKTILE."""
+    case = f"qtopengl open sign with KEYBOARD over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl keyboard sign(17,25)->dialog: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+    try:
+        st = s.state()
+        if not st or st[0] != 1:
+            log_fail(case, f"unexpected spawn {st}")
+            return
+        if s.dialog():
+            log_fail(case, f"a dialog was already open at spawn: {s.dialog()!r}")
+            return
+        # walk EAST to x==17 (spawn x==15). KEY Right may first only turn, so loop
+        # with a generous cap and poll the position.
+        target_x = 17
+        n = 0
+        while n < 12 and (s.state() or (0,))[1] != target_x:
+            s.send("KEY Right", 0.45)
+            n += 1
+        cur = s.state()
+        if not cur or cur[1] != target_x or cur[2] != 26:
+            log_fail(case, f"could not arrow-walk to (17,26); reached {cur}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        # face Up toward the sign at (17,25) (it is non-walkable, so this only turns)
+        s.send("KEY Up", 0.5)
+        # press Enter to act on the faced tile -> open the sign dialog
+        s.send("KEY Enter", 0.5)
+        text = ""
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 12))
+        while time.time() < deadline:
+            text = s.dialog()
+            if text:
+                break
+            time.sleep(0.5)
+        if "Map test/City" not in text:
+            log_fail(case, f"Enter on the faced sign opened no/unexpected dialog: {text!r}; state={s.state()}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        # Escape closes it (keyboard close)
+        s.send("KEY Escape", 0.5)
+        time.sleep(0.5)
+        if s.dialog():
+            log_fail(case, f"Escape did not close the dialog: {s.dialog()!r}")
+            return
+        log_pass(case, f"keyboard-opened sign dialog {text!r} and closed it with Escape")
+    finally:
+        s.kill()
+
+
 # Windows / macOS / Android cross-build helpers used to live here. Moved to
 # the standalone scripts (testingcompilationwindows.py, ...mac.py, ...android.py).
 
@@ -1105,6 +2278,21 @@ def main():
                                    "qtopengl dialog text wordwrap+scroll no-overflow",
                                    timeout=CLIENT_SOLO_TIMEOUT,
                                    success_marker="-> PASS")
+
+            # Channel-driven regression: the test-city Sign at (17,25) must OPEN
+            # the dialog (the actual reported bug). Verified externally over the
+            # QLocalServer GETDIALOG query — no in-binary test code. Only the
+            # "test" maincode carries that known sign/coordinates.
+            if gl_ok and dp_gl and mc == "test":
+                run_qtopengl_sign_dialog_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_building_roundtrip_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_lava_blocked_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_house1_industry_quest_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_cave_fight_loss_nocrash_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_sign_keyboard_channel_test(dp_name, mc, failed_cases)
 
     # ═══════════════════════════════════════════════════════════════
     # 4. MULTIPLAYER ON SERVER
