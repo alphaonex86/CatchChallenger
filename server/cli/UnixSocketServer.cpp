@@ -50,7 +50,17 @@ bool UnixSocketServer::tryListen(const char * const path)
 
     struct sockaddr_un local;
     local.sun_family = AF_UNIX;
-    strcpy(local.sun_path,path);
+    //sun_path is a fixed-size buffer (typ. 108 bytes); reject paths that don't fit
+    //rather than overflow it with strcpy (the path comes from config, not a client,
+    //but bounds-checking it is cheap and prevents memory corruption on misconfig)
+    if(strlen(path)>=sizeof(local.sun_path))
+    {
+        close();
+        std::cerr << "Can't bind the unix socket, path too long (max " << (sizeof(local.sun_path)-1) << " chars): " << path << std::endl;
+        return false;
+    }
+    strncpy(local.sun_path,path,sizeof(local.sun_path)-1);
+    local.sun_path[sizeof(local.sun_path)-1]='\0';
     int len = strlen(local.sun_path) + sizeof(local.sun_family);
     if(bind(sfd, (struct sockaddr *)&local, len)!=0)
     {

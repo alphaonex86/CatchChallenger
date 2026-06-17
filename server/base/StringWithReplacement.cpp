@@ -188,8 +188,10 @@ std::string StringWithReplacement::originalQuery() const
         uint16_t tempSize=0;
         memcpy(&tempSize,preparedQuery+pos,sizeof(tempSize));
         memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,tempSize);
-        posComposeBuffer+=preparedQuery[pos];
-        pos+=2+preparedQuery[pos];
+        //chunk size is 16bit: advance by the full tempSize, not just its low byte
+        //(preparedQuery[pos]) which would desync the walk for chunks >255 bytes
+        posComposeBuffer+=tempSize;
+        pos+=2+tempSize;
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -252,7 +254,11 @@ uint16_t StringWithReplacement::preparedQuerySize(const unsigned char * const pr
     uint8_t index=0;
     while(index<preparedQuery[0])
     {
-        pos+=2+preparedQuery[pos];
+        //16bit chunk size: advance by the full value, not just its low byte, else
+        //the computed size undercounts and the copy ctor/assignment truncate the buffer
+        uint16_t tempSize=0;
+        memcpy(&tempSize,preparedQuery+pos,sizeof(tempSize));
+        pos+=2+tempSize;
         ++index;
     }
     return pos;
@@ -276,14 +282,20 @@ std::string StringWithReplacement::compose(const std::vector<std::string> &value
         #endif
         return std::string();
     }
-    uint16_t totalSize=0;
-    memcpy(&totalSize,preparedQuery+1,sizeof(totalSize));
-    totalSize++;
+    //accumulate in 32bit: values come (indirectly) from clients, and summing their
+    //sizes into a uint16_t could wrap below sizeof(composeBuffer) and bypass the guard
+    //below, then overflow the static buffer in the memcpy loop.
+    uint32_t totalSize=0;
+    {
+        uint16_t headerSize=0;
+        memcpy(&headerSize,preparedQuery+1,sizeof(headerSize));
+        totalSize=(uint32_t)headerSize+1;
+    }
     {
         uint8_t index=0;
         while(index<values.size())
         {
-            totalSize+=values.at(index).size();
+            totalSize+=(uint32_t)values.at(index).size();
             index++;
         }
     }
