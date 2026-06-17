@@ -389,6 +389,7 @@ PER_TEST_KILL_AFTER=30s
 # deliberate one-line change, not a sneaky drift.
 declare -A PER_TEST_TIMEOUT_MAP=(
     [testingbots.py]=15m
+    [testingbroadcast.py]=15m
     [testingbyIA.py]=30m
     [testingclient.py]=40m
     [testingcluster.py]=10m
@@ -506,6 +507,7 @@ run_test testingprotocolstate.py
 run_test testingclient.py
 run_test testingbots.py
 run_test testingserver.py
+run_test testingbroadcast.py
 run_test testinghttp.py
 run_test testingwebsocket.py
 run_test testingstats.py

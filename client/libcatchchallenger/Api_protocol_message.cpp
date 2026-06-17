@@ -762,8 +762,20 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 memcpy(tempBigBufferForUncompressedInput,data+pos,sub_size32);
             }
             else
-                decompressedSize=CompressionProtocol::computeDecompression(data+pos,tempBigBufferForUncompressedInput,sub_size32,
+            {
+                //computeDecompression() returns int32_t -1 on failure; check it
+                //before it wraps into the unsigned decompressedSize (-> size2==-1
+                //and a misleading downstream abort under CATCHCHALLENGER_HARDENED).
+                const int32_t decompressResult=CompressionProtocol::computeDecompression(data+pos,tempBigBufferForUncompressedInput,sub_size32,
                     decompressBuffer.size(),CompressionProtocol::compressionTypeClient);
+                if(decompressResult<0)
+                {
+                    newError("Protocol wrong or corrupted","failed to decompress with main ident: "+std::to_string(packetCode)+
+                             ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                decompressedSize=decompressResult;
+            }
 
             const char * const data2=tempBigBufferForUncompressedInput;
             int pos2=0;

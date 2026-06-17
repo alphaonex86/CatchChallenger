@@ -73,7 +73,8 @@ void MapControllerMpStub::onPing(uint8_t queryNumber)
 
 TestApiProtocol::TestApiProtocol() :
     Api_protocol(),
-    map_controller(nullptr)
+    map_controller(nullptr),
+    lastNewError()
 {
     // parseMessage() pushes to delayedMessages while !character_selected;
     // mark "logged in + character selected" so map packets parse
@@ -109,6 +110,30 @@ bool TestApiProtocol::testParseQuery(uint8_t packetCode, uint8_t queryNumber, co
 bool TestApiProtocol::testParseReplyData(uint8_t packetCode, uint8_t queryNumber, const char *data, unsigned int size)
 {
     return parseReplyData(packetCode, queryNumber, data, size);
+}
+
+bool TestApiProtocol::testParseCharacterBlockCharacter(uint8_t packetCode, uint8_t queryNumber, const char *data, int size)
+{
+    return parseCharacterBlockCharacter(packetCode, queryNumber, data, size);
+}
+
+void TestApiProtocol::testSetCharacterSelected(bool v)
+{
+    is_logged = true;
+    character_selected = v;
+}
+
+void TestApiProtocol::testQueueDelayedMessage(uint8_t packetCode, const std::string &data)
+{
+    DelayedMessage m;
+    m.packetCode = packetCode;
+    m.data = data;
+    delayedMessages.push_back(m);
+}
+
+size_t TestApiProtocol::testDelayedMessageCount() const
+{
+    return delayedMessages.size();
 }
 
 bool TestApiProtocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNumber,
@@ -176,7 +201,7 @@ bool TestApiProtocol::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &, const CATC
 void TestApiProtocol::tryDisconnect() {}
 void TestApiProtocol::readForFirstHeader() {}
 void TestApiProtocol::defineMaxPlayers(const uint16_t &) {}
-void TestApiProtocol::newError(const std::string &error, const std::string &detailedError) { std::cerr << "[api] newError: " << error << " / " << detailedError << std::endl; }
+void TestApiProtocol::newError(const std::string &error, const std::string &detailedError) { lastNewError = error + " / " + detailedError; std::cerr << "[api] newError: " << error << " / " << detailedError << std::endl; }
 void TestApiProtocol::message(const std::string &) {}
 void TestApiProtocol::lastReplyTime(const uint32_t &) {}
 void TestApiProtocol::disconnected(const std::string &) {}

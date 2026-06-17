@@ -66,9 +66,6 @@ bool UnixSocketServer::tryListen(const char * const path)
     {
         close();
         std::cerr << "Can't bind the unix socket, error (errno): " << errno << ", error string: " << strerror(errno) << " path: " << path << std::endl;
-        std::string p(path);
-        if(!p.empty())
-            system((std::string("netstat -nap | grep LISTEN | grep unix | grep ")+p).c_str());
         return false;
     }
 
