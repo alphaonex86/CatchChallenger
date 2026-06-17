@@ -804,6 +804,113 @@ static void scenario_min_network_path2_replaced_remove_newslot()
     pass_line(name);
 }
 
+// Regression for the client crash where the character-block parser fed
+// a non-decompressible block to zstd, ignored the int32 -1 error return,
+// let it wrap into the unsigned decompressedSize (-> size2 == -1) and
+// then abort()'d inside parseError() under CATCHCHALLENGER_HARDENED
+// (Api_protocol_loadchar.cpp). A decompression failure here usually means a
+// client/server protocol-version skew (the stream desynced upstream so the
+// compressed-block size was read at the wrong offset); the client must FAIL
+// CLEANLY (return false, no crash) rather than abort on bad network input.
+//
+// The crafted packet reproduces the exact on-wire prefix from the field
+// backtrace: empty event/monster/warehouse/reputation lists so the parser
+// stays on-track up to the compressed block at pos 39, then a 4-byte
+// "compressed" payload that is not a valid zstd frame.
+static void scenario_character_block_bad_compressed_block_no_crash()
+{
+    const char *name = "character_block_bad_compressed_block_no_crash";
+
+    static const unsigned char packet[] = {
+        0x00,                                           // events list size = 0
+        0x01,0x00,                                      // mapIndex = 1 (uint16 LE)
+        0x05,                                           // x
+        0x05,                                           // y
+        0x12,                                           // direction(2)=right | playerType(0x10)=normal
+        0x00,0x00, 0x00,0x00,0x01,                      // rescue: mapIndex u16, x, y, orientation
+        0x00,0x00, 0x00,0x00,0x01,                      // unvalidated_rescue: same layout
+        0x00,                                           // pseudo length = 0
+        0x00,                                           // skinId
+        0x00,                                           // allow_create_clan
+        0x00,0x00,0x00,0x00,                            // clan (uint32)
+        0x00,                                           // clan_leader
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,        // cash (uint64)
+        0x00,                                           // team monster list size = 0
+        0x00,                                           // warehouse monster list size = 0
+        0x00,                                           // reputation list size = 0
+        0x04,0x00,0x00,0x00,                            // compressed block size = 4 (uint32 LE)
+        0xDE,0xAD,0xBE,0xEF                             // 4 bytes that are NOT a valid zstd frame
+    };
+
+    // Force the client into "server uses Zstandard" mode so the parser
+    // takes the decompression branch (the crashing path).
+    const CompressionProtocol::CompressionType saved = CompressionProtocol::compressionTypeClient;
+    CompressionProtocol::compressionTypeClient = CompressionProtocol::CompressionType::Zstandard;
+
+    TestApiProtocol api;
+    const bool returnCode = api.testParseCharacterBlockCharacter(
+        0xAC, 15, reinterpret_cast<const char *>(packet), (int)sizeof(packet));
+
+    CompressionProtocol::compressionTypeClient = saved;
+
+    // Before the fix this line is never reached under HARDENED (the
+    // process abort()'d in parseError); reaching it at all means no crash.
+    if(returnCode)
+        fail_line(name, "parser accepted an undecompressible character block (expected reject)");
+    else if(api.lastNewError.find("decompress") == std::string::npos)
+        fail_line(name, "rejected, but not via the decompression guard: " + api.lastNewError);
+    else
+        pass_line(name);
+}
+
+// Regression for the client infinite-loop / use-after-free in
+// have_main_and_sub_datapack_loaded() (Api_protocol.cpp). Several
+// message handlers (0x64 player count, 0x6B/0x6C, ...) RE-QUEUE
+// themselves into delayedMessages while !character_selected. The old
+// loop iterated the live delayedMessages member by reference, so each
+// re-queue both (1) reallocated the vector and dangled the reference
+// the loop was about to read (the crash building a std::string from
+// freed data) and (2) grew size() in lockstep with the index so the
+// loop never ended.
+//
+// With the fix the queue is swapped into a local copy first: the loop
+// runs exactly once per originally-queued message, re-queued messages
+// land in the now-empty member, and the call returns promptly.
+static void scenario_delayed_messages_requeue_no_infinite_loop()
+{
+    const char *name = "delayed_messages_requeue_no_infinite_loop";
+
+    TestApiProtocol api;
+    // Logged in, but NOT character-selected yet — the state in which the
+    // 0x64 handler re-queues instead of consuming.
+    api.testSetCharacterSelected(false);
+    // have_main_and_sub_datapack_loaded() early-returns unless a map count
+    // was set first.
+    if(!api.setMapNumber(6))
+    {
+        fail_line(name, "setMapNumber(6) refused");
+        return;
+    }
+
+    // Queue a handful of 0x64 (player-count) messages with a valid 1-byte
+    // payload. Each will re-queue itself while !character_selected.
+    const std::string payload(1, '\0');
+    const size_t queued = 5;
+    for(size_t idx = 0; idx < queued; idx++)
+        api.testQueueDelayedMessage(0x64, payload);
+
+    // Pre-fix: this never returns (infinite loop) / crashes on the dangling
+    // reference. Post-fix: returns after exactly `queued` iterations.
+    api.have_main_and_sub_datapack_loaded();
+
+    // Each message re-queued exactly once into the fresh member vector;
+    // nothing was lost, nothing exploded.
+    if(api.testDelayedMessageCount() != queued)
+        fail_line(name, "delayed message count = " + std::to_string(api.testDelayedMessageCount()) + ", expected " + std::to_string(queued));
+    else
+        pass_line(name);
+}
+
 // ---- Driver ---------------------------------------------------------
 
 int main()
@@ -833,6 +940,8 @@ int main()
     scenario_min_network_path2_beyond_slots();
     scenario_min_network_path2_no_diff_ping_inflight();
     scenario_min_network_path2_insert_ge254();
+    scenario_character_block_bad_compressed_block_no_crash();
+    scenario_delayed_messages_requeue_no_infinite_loop();
     std::cout << "[INFO] pass=" << g_pass << " fail=" << g_fail << std::endl;
     return g_fail == 0 ? 0 : 1;
 }

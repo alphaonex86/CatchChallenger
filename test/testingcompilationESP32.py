@@ -57,6 +57,7 @@ wall_cap.arm()
 import cleanup_helpers
 from cmd_helpers import clamp_local
 import datapack_stage
+import process_helpers
 
 build_paths.ensure_root()
 
@@ -374,7 +375,8 @@ def run_stage2_no_fs():
     logpath = os.path.join(work, "server.log")
     with open(logpath, "wb") as lf:
         proc = subprocess.Popen([os.path.join(work, "catchchallenger-server-cli")],
-                                cwd=work, stdout=lf, stderr=subprocess.STDOUT)
+                                cwd=work, stdout=lf, stderr=subprocess.STDOUT,
+                                preexec_fn=process_helpers.setsid_and_pdeathsig)
     bound = False
     try:
         deadline = time.monotonic() + clamp_local(BIND_TIMEOUT)
@@ -475,7 +477,8 @@ def _client_connect(host, port):
     found = None
     with open(logp, "wb") as lf:
         cp = subprocess.Popen(cargs, cwd=os.path.dirname(CLIENT_CPU_BIN),
-                              env=cenv, stdout=lf, stderr=subprocess.STDOUT)
+                              env=cenv, stdout=lf, stderr=subprocess.STDOUT,
+                              preexec_fn=process_helpers.setsid_and_pdeathsig)
     try:
         deadline = time.monotonic() + clamp_local(CLIENT_TIMEOUT)
         while time.monotonic() < deadline and found is None:
@@ -654,7 +657,8 @@ def run_qemu_xtensa():
              + ("(KVM)" if accel else "(TCG)")
              + f", slirp hostfwd {SERVER_PORT}")
     diagnostic.record_cmd(qargs, work)
-    qproc = subprocess.Popen(qargs, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    qproc = subprocess.Popen(qargs, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             preexec_fn=process_helpers.setsid_and_pdeathsig)
     try:
         bound, slog = _poll_file_for_marker(serial_log, "correctly bind",
                                             QEMU_BIND_TIMEOUT, qproc)

@@ -87,6 +87,21 @@ public:
     bool testParseMessage(uint8_t packetCode, const char *data, unsigned int size);
     bool testParseQuery(uint8_t packetCode, uint8_t queryNumber, const char *data, unsigned int size);
     bool testParseReplyData(uint8_t packetCode, uint8_t queryNumber, const char *data, unsigned int size);
+    // Drives the production character-block parser directly (the path
+    // that decompresses the recipes/encyclopedia block). Used by the
+    // bad-compressed-block regression test.
+    bool testParseCharacterBlockCharacter(uint8_t packetCode, uint8_t queryNumber, const char *data, int size);
+
+    // Last message handed to newError() — lets a test assert the
+    // graceful error path was taken instead of a crash.
+    std::string lastNewError;
+
+    // Helpers for the delayed-message re-queue regression test: drive
+    // have_main_and_sub_datapack_loaded() with messages that re-queue
+    // themselves while !character_selected.
+    void testSetCharacterSelected(bool v);
+    void testQueueDelayedMessage(uint8_t packetCode, const std::string &data);
+    size_t testDelayedMessageCount() const;
 
     // Production Api_protocol::parseQuery handles 0xE3 (ping) by
     // immediately calling postReplyData with no other side effects —

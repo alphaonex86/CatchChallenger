@@ -2268,10 +2268,20 @@ void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_info
         if(!returnCode)
             return;
     }
+    //Process the queued messages on a LOCAL copy. parseMessage() re-queues
+    //some messages (0x64/0x6C/...) into delayedMessages while
+    //!character_selected; iterating the live member then (1) invalidates the
+    //reference below when push_back reallocates (UB/crash building the
+    //std::string from freed data) and (2) never terminates because size()
+    //grows in lockstep with index (infinite loop). Swap out + iterate the
+    //copy; anything re-queued lands in the now-empty member and waits for a
+    //later call.
+    std::vector<DelayedMessage> pending;
+    pending.swap(delayedMessages);
     unsigned int index=0;
-    while(index<delayedMessages.size())
+    while(index<pending.size())
     {
-        const DelayedMessage &delayedMessageTemp=delayedMessages.at(index);
+        const DelayedMessage &delayedMessageTemp=pending.at(index);
         if(!parseMessage(delayedMessageTemp.packetCode,delayedMessageTemp.data.data(),delayedMessageTemp.data.size()))
         {
             delayedMessages.clear();
@@ -2279,7 +2289,6 @@ void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_info
         }
         index++;
     }
-    delayedMessages.clear();
 }
 
 int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int &size,PlayerMonster &monster)

@@ -42,7 +42,21 @@ import urllib.request
 # ===========================================================================
 REPO_ROOT = "/home/user/Desktop/CatchChallenger/git"
 TARGET_DIR = os.path.join(REPO_ROOT, "server", "cli")
-MODEL_NAME = "deepseek-coder:33b"
+# In-scope code reachable from the game TCP port, per EXAMPLE-BOUNTY-BUG-SERVER.md
+# (§2 Scope + §4 attack-surface zones). The audit seeds from ALL of these, not
+# just server/cli: otherwise the real per-packet handlers (ClientEvents/), the
+# crafting/fight game logic, and the wire parser (ProtocolParsing*,
+# ClientNetworkRead*) are never looked at - they live in server/base & general/,
+# not under server/cli, so #include-following alone misses them.
+SCAN_SEED_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
+    "server/cli",       # the standalone game server binary (primary target)
+    "server/base",      # ClientNetworkRead*, ClientEvents/, ClientLoad/, handlers
+    "server/crafting",  # recipe / plant handlers
+    "server/fight",     # server-side battle handlers
+    "general/base",     # ProtocolParsing* framing + shared engine/datapack parse
+    "general/fight",    # shared turn-based fight engine
+))
+MODEL_NAME = "opencode-fast"
 OLLAMA_API = "http://127.0.0.1:11434/api/generate"
 OLLAMA_CHAT = "http://127.0.0.1:11434/api/chat"
 
@@ -76,6 +90,59 @@ def _human_dur(seconds):
 # All server-related generated artifacts live under this temp subfolder.
 OUTPUT_ROOT = "/mnt/data/perso/tmpfs/security/server"
 
+# Official bug-bounty scope/methodology doc. The IA (auditor + exploit engineer)
+# MUST read it: it defines the in-scope code, the rewarded vulnerability classes,
+# and the attack-surface zones to probe. We append it to BOTH system prompts so
+# every turn carries the authoritative scope (TCP-reachable defects only).
+BOUNTY_DOC = os.path.join(HERE, "EXAMPLE-BOUNTY-BUG-SERVER.md")
+
+
+def read_bounty():
+    """The bounty scope doc wrapped as an authoritative reference block, or ''
+    if absent/empty. Best-effort - a missing doc is never fatal, the audit just
+    runs without it (a startup warning is emitted by the phase entry points)."""
+    try:
+        txt = open(BOUNTY_DOC, "r", errors="replace").read().strip()
+    except OSError:
+        return ""
+    if not txt:
+        return ""
+    return ("\n\n=== AUTHORITATIVE BUG-BOUNTY SCOPE (EXAMPLE-BOUNTY-BUG-SERVER.md) "
+            "- this defines what is IN SCOPE, what is REWARDED, and WHERE TO LOOK. "
+            "Obey it; it overrides any conflicting instinct. Only a defect reachable "
+            "from a remote game-client TCP socket counts. ===\n%s\n"
+            "=== END BUG-BOUNTY SCOPE ===" % txt)
+
+
+def check_tooling():
+    """Verify the IA has the context + tools the bounty doc's methodology needs,
+    and log any gap. Best-effort (warn only): the phase code fails closed where a
+    tool is truly mandatory (LiveServer/do_run refuse to run unsandboxed without
+    bwrap). The doc requires: the scope doc itself (so the IA reads it), a
+    sandbox (bwrap), a memory-safety prover (valgrind, §3.1), crash catch + live
+    state inspection (gdb, §3.2/3.4-7), a C/C++ toolchain to compile the
+    reproducer ELF (§6.2), and cmake to build the target (§1)."""
+    if os.path.isfile(BOUNTY_DOC):
+        sys.stderr.write("%s [tooling] bounty scope doc loaded (%s); IA audits to "
+                         "its scope + vuln classes\n"
+                         % (_ts(), os.path.basename(BOUNTY_DOC)))
+    else:
+        sys.stderr.write("%s [tooling] WARNING: bounty scope doc missing (%s) - "
+                         "auditing WITHOUT it; scope/vuln-class guidance reduced\n"
+                         % (_ts(), BOUNTY_DOC))
+    needed = (
+        ("bwrap", "exploit/server sandbox (MANDATORY - runs fail closed without it)"),
+        ("valgrind", "Memcheck OOB/UAF/bad-free prover (MODE valgrind, reward §3.1)"),
+        ("gdb", "crash catch + read-only live state inspection (MODE gdb, §3.2-7)"),
+        ("gcc", "compile the C reproducer ELF (§6.2)"),
+        ("g++", "compile C++ reproducers"),
+        ("cmake", "build the target server (§1)"),
+    )
+    for tool, why in needed:
+        if shutil.which(tool) is None:
+            sys.stderr.write("%s [tooling] WARNING: '%s' not found - %s\n"
+                             % (_ts(), tool, why))
+
 # ===========================================================================
 # PHASE 1 - scan (audit)
 # ===========================================================================
@@ -106,6 +173,41 @@ SYSTEM_PROMPT = (
     "- Authentication/authorization bypass, or trusting client-supplied "
     "identifiers.\n"
     "- Race conditions with a security impact (TOCTOU, etc.).\n"
+    "\n"
+    "SCOPE - THE ONLY ACCEPTED ATTACK IS A REMOTE ATTACK OVER THE TCP "
+    "SOCKET/SERVER. The remote attack surface is bytes arriving from an "
+    "untrusted client over a TCP connection (EventLoopClient::read() -> "
+    "ProtocolParsing* / ClientNetworkRead*). A finding is valid ONLY if the "
+    "attacker input reaches the sink over that TCP path.\n"
+    "OUT OF SCOPE - do NOT report anything reachable only through a LOCAL / "
+    "OPERATOR-controlled channel; those are trusted, not remote:\n"
+    "- Unix domain sockets (AF_UNIX / sockaddr_un): UnixSocketServer, "
+    "UnixSocketClient, UnixSocketClientFinal - local IPC / admin control "
+    "channel, not the network.\n"
+    "- The stdin admin console (EventLoopStdin) or any interactive/local "
+    "console input.\n"
+    "- Config / deploy inputs set by the operator: server-properties.xml, "
+    "datapack files, command-line arguments, environment variables, on-disk "
+    "file paths.\n"
+    "- ALL XML PARSING, without exception. EVERY XML input in this server "
+    "(TinyXML2 / TinyXMLSettings, the settings/server-properties.xml, and "
+    "every datapack XML loader - items, monsters, skills, maps/tmx, quests, "
+    "crafting, plants, shops, profiles, etc.) is loaded from the OPERATOR'S "
+    "DISK at startup. There is NO remote XML: the client never sends XML over "
+    "TCP. So ANY bug in XML parsing or in consuming parsed-XML values (bad "
+    "length, missing/duplicate attribute, malformed number, OOB on a datapack "
+    "id table, etc.) is OUT OF SCOPE - it needs a malicious datapack/config the "
+    "attacker does not control. Do NOT report ANY XML-sourced finding. The only "
+    "in-scope nuance: the SAME id table, once INDEXED by a client-supplied id "
+    "arriving over TCP, is in scope - but that is an index/bounds bug in the "
+    "HANDLER, never in the XML loader.\n"
+    "- The test/automation channel (QLocalServer) and any other local-only "
+    "IPC.\n"
+    "Even a REAL memory-corruption or injection bug (overflow, OOB, "
+    "command/SQL injection) on one of these LOCAL channels is OUT OF SCOPE "
+    "here - output 'No issues identified' for it UNLESS the very same sink is "
+    "ALSO reachable from the remote TCP path. When unsure whether an input is "
+    "remote-TCP or local, treat it as local (out of scope).\n"
     "\n"
     "STRICT RULES:\n"
     "- This is ONE file out of a larger project. Types, classes, and methods "
@@ -165,6 +267,8 @@ SYSTEM_PROMPT = (
     "notebook: start your reply with one short '// ' comment-header line, "
     "terse, not verbose."
 )
+# The IA reads the bug-bounty scope on every audit turn (appended once at load).
+SYSTEM_PROMPT = SYSTEM_PROMPT + read_bounty()
 
 # Where to look for a referenced class/header when it does not resolve by a
 # relative include path.
@@ -221,19 +325,23 @@ def is_vendor(path):
 
 
 def collect_files():
-    """Return an ordered list of repo files to audit: every source file in
-    the cli project plus, transitively, every local header/source it
-    #includes that still lives under REPO_ROOT (vendored libs excluded)."""
+    """Return an ordered list of repo files to audit: every source file in the
+    in-scope dirs (SCAN_SEED_DIRS - the bounty's TCP-reachable code) plus,
+    transitively, every local header/source they #include that still lives under
+    REPO_ROOT (vendored libs excluded)."""
     repo_root = os.path.realpath(REPO_ROOT)
     seen = set()
     ordered = []
     pending = []
 
-    # Seed with the cli project's own sources (recursive).
-    for root, _dirs, names in os.walk(TARGET_DIR):
-        for name in sorted(names):
-            if name.endswith(SOURCE_EXT):
-                pending.append(os.path.realpath(os.path.join(root, name)))
+    # Seed with every in-scope dir's own sources (recursive) so the per-packet
+    # handlers + wire parser are audited, not just the cli plumbing.
+    for seed in SCAN_SEED_DIRS:
+        if os.path.isdir(seed):
+            for root, _dirs, names in os.walk(seed):
+                for name in sorted(names):
+                    if name.endswith(SOURCE_EXT):
+                        pending.append(os.path.realpath(os.path.join(root, name)))
 
     pending.sort()
 
@@ -516,6 +624,15 @@ def parse_tool(answer):
     return None
 
 
+def _finalize_answer(rel, answer):
+    """Persist + strip the NOTES block and fix repo paths in a model answer.
+    Shared by analyze() and its degenerate-output retry."""
+    for block in NOTE_RE.findall(answer):
+        append_notes(rel, block)
+    answer = NOTE_RE.sub("", answer).strip()
+    return fix_paths(answer)
+
+
 def analyze(path):
     """Agentic audit of one file. The NOTES block is stripped + persisted."""
     rel = os.path.relpath(path, REPO_ROOT)
@@ -586,25 +703,42 @@ def analyze(path):
         })
         answer = chat(messages)
 
-    for block in NOTE_RE.findall(answer):
-        append_notes(rel, block)
-    answer = NOTE_RE.sub("", answer).strip()
-    answer = fix_paths(answer)
+    answer = _finalize_answer(rel, answer)
     if looks_degenerate(answer):
-        sys.stderr.write("    [discarded degenerate output: repetition loop]\n")
-        return ""
-    # Validate cited line numbers against the actual file length.  If the model
-    # cited a LINE beyond the end of the main file it was reasoning about an
-    # included file, not the main file - the finding is hallucinated.
-    file_lines = content.splitlines()
-    bad_lines = [int(m.group(1)) for m in re.finditer(r'\bLINE\s+(\d+)\b', answer, re.I)
-                 if int(m.group(1)) > len(file_lines)]
-    if bad_lines:
+        # A repetition loop usually means the model lost the thread, not that the
+        # file is clean. Give it ONE corrective retry for a terse final answer
+        # before giving up - feed back only a truncated copy of the junk so we
+        # don't re-prime the same loop. Salvages files we used to discard wholesale.
+        sys.stderr.write("    [degenerate output: repetition loop -> retry once terse]\n")
+        messages.append({"role": "assistant", "content": answer[:2000]})
+        messages.append({"role": "user", "content":
+            "Your last reply was a repetition loop / junk. STOP repeating and do "
+            "NOT call tools. Output your final answer ONCE in the mandatory "
+            "format: either one 'LINE <n>: <input> -> <consequence>' per real "
+            "finding for the MAIN FILE, or the exact phrase 'No issues "
+            "identified'. Nothing else."})
+        answer = _finalize_answer(rel, chat(messages))
+        if looks_degenerate(answer):
+            sys.stderr.write("    [discarded degenerate output after retry]\n")
+            return ""
+    # Validate cited line numbers against the actual file length. A finding line
+    # citing a LINE past the end of the MAIN FILE was reasoning about an included
+    # file, not this one - drop ONLY that line and keep the valid findings,
+    # instead of discarding the whole audit over one bad citation.
+    nlines = len(content.splitlines())
+    kept, dropped = [], []
+    for ln in answer.splitlines():
+        cited = [int(m.group(1)) for m in re.finditer(r'\bLINE\s+(\d+)\b', ln, re.I)]
+        if cited and max(cited) > nlines:
+            dropped.append(max(cited))
+        else:
+            kept.append(ln)
+    if dropped:
         sys.stderr.write(
-            "    [discarded hallucinated lines: %s cited but file has only %d lines]\n"
-            % (", ".join(str(n) for n in bad_lines), len(file_lines)))
-        return ""
-    return answer
+            "    [dropped %d out-of-range finding line(s): %s cited but file has "
+            "only %d lines; kept the rest]\n"
+            % (len(dropped), ", ".join(str(n) for n in dropped), nlines))
+    return "\n".join(kept).strip()
 
 
 # Repo-relative source paths the model might cite inside finding text.
@@ -712,11 +846,12 @@ def run_scan(out=sys.stdout):
 
 
 def _run_scan_inner(out):
+    check_tooling()
     ensure_context()
     files = collect_files()
     scan_start = time.time()
     sys.stderr.write(
-        "%s [INIT] %d files to audit (cli project + repo-local includes, vendor "
+        "%s [INIT] %d files to audit (in-scope dirs + repo-local includes, vendor "
         "excluded) via %s\n" % (_ts(), len(files), MODEL_NAME)
     )
 
@@ -765,12 +900,40 @@ def _run_scan_inner(out):
 # ===========================================================================
 FINDINGS = os.path.join(HERE, "findings.txt")
 # Prebuilt, gdb-able server + a staged run dir the model reuses.
-SERVER_BIN = os.path.join(OUTPUT_ROOT, "build", "catchchallenger-server-cli")
+BUILD_DIR = os.path.join(OUTPUT_ROOT, "build")
+SERVER_BIN = os.path.join(BUILD_DIR, "catchchallenger-server-cli")
 STAGED_RUN = os.path.join(OUTPUT_ROOT, "run")
 SERVER_PORT = 61997
 # The live gdb-driven inspection session (LiveServer) runs its OWN server copy on
 # a distinct port so it never clashes with a server the model started via RUN.
 GDB_PORT = SERVER_PORT + 1
+
+# Datapack the staged server boots against. We symlink a read-only STAGED copy
+# into the run dir (never the source tree - datapack-source-safety rule), exactly
+# like test/_protoharness.py.
+DATAPACK_SRC = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
+TEST_DIR = os.path.join(REPO_ROOT, "test")
+# Minimal server-properties.xml matching the bounty doc's run recipe (§1):
+# automatic_account_creation on (so the exploit can reach a selected character),
+# compression none (packets readable on the wire), maincode "test". The server
+# fills every other field with its defaults. Port is seeded as SERVER_PORT;
+# LiveServer.start() rewrites it to GDB_PORT for its private instance.
+STAGED_PROPERTIES = """<?xml version="1.0"?>
+<configuration>
+    <server-port value="{port}"/>
+    <server-ip value="127.0.0.1"/>
+    <automatic_account_creation value="true"/>
+    <compression value="none"/>
+    <max-players value="200"/>
+    <content>
+        <mainDatapackCode value="test"/>
+        <subDatapackCode value=""/>
+    </content>
+    <master>
+        <external-server-port value="{port}"/>
+    </master>
+</configuration>
+"""
 
 
 def resolve_run_under():
@@ -829,11 +992,30 @@ RUN_OUT_CAP = 8000      # chars of RUN output fed back to the model
 SANDBOX_CPU_SECONDS = int(os.environ.get("SECSERVER_CPU", "10"))   # RLIMIT_CPU
 SANDBOX_MEM_BYTES = int(os.environ.get("SECSERVER_MEM", str(128 * 1024 * 1024)))
 EXPLOIT_BIN_NAME = "exploit"   # fixed path of the compiled ELF (in the chroot: /exploit)
-# Only attempt exploits for findings that smell memory/inputy.
+# Attempt an exploit for any finding smelling like a REWARDED bounty class
+# (EXAMPLE-BOUNTY-BUG-SERVER.md §3). The exploit engine can PROVE every one of
+# them: memory errors + crashes under gdb/valgrind (case a), hang/CPU under the
+# event-loop ping (case b), and economy/ownership/world-rule/state-corruption via
+# gdb read-only state inspection (case c). So all classes flow into the prove
+# loop, not just memory-safety ones.
 CANDIDATE_RE = re.compile(
+    # §3.1 memory safety
     r"overflow|out.?of.?bounds|oob|use.?after.?free|double.?free|"
     r"injection|memcpy|strcpy|index|underflow|race|uninitial....?|"
-    r"buffer|null.?deref", re.I)
+    r"buffer|null.?deref|"
+    # §3.2 crash / unhandled exception
+    r"crash|abort|assert|segfault|sigsegv|sigabrt|throw|exception|terminate|"
+    # §3.3 hang / infinite loop / CPU amplification
+    r"hang|infinite.?loop|deadlock|spin|amplif|\bcpu\b|\bdos\b|"
+    # §3.4 economy integrity
+    r"duplicat|\bdupe?\b|econom|price|quantity|\bcount\b|negative|"
+    r"free (?:item|cash|gold|money|monster|xp)|"
+    # §3.5 ownership / authorization bypass
+    r"ownership|authoriz|authentication|\bauth\b|bypass|impersonat|"
+    # §3.6 world-rule bypass
+    r"collision|ledge|teleport|walkthrough|world.?rule|"
+    # §3.7 persisted-state corruption
+    r"corrupt|persist|cross.?player|phantom", re.I)
 
 EXPLOIT_SYSTEM = (
     "You are an exploit engineer doing AUTHORIZED security testing of the "
@@ -941,6 +1123,11 @@ EXPLOIT_SYSTEM = (
     "rejected and you will be asked for the path. Keep files small and "
     "self-contained."
 )
+# The exploit engineer reads the same bug-bounty scope: it spells out the
+# rewarded vuln classes (§3) and the attack-surface zones/packets (§4), which
+# tell it concretely what an "unintended game-state" win (case c) looks like
+# (economy dup, ownership bypass, world-rule bypass) and where to aim.
+EXPLOIT_SYSTEM = EXPLOIT_SYSTEM + read_bounty()
 
 CODEBLOCK_RE = re.compile(r"```[a-zA-Z0-9_]*\n(.*?)```", re.DOTALL)
 
@@ -1864,15 +2051,143 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
     return verdict, reason, outdir
 
 
+def build_server():
+    """Configure + compile the gdb-able cli server into BUILD_DIR, producing
+    SERVER_BIN. Built with internal-vars DB (no external SQL needed) and
+    RelWithDebInfo so gdb/valgrind get symbols + line numbers for the exploit
+    phase. Returns True on success. Best-effort ccache flush + one retry on a
+    compile failure (a stale ccache entry can wedge a build); never fatal if
+    ccache is absent. cmake build dir is OUT of the source tree (under the
+    tmpfs OUTPUT_ROOT), per the repo's separate-artifacts rule."""
+    src = os.path.join(REPO_ROOT, "server", "cli")
+    configure = ["cmake", "-S", src, "-B", BUILD_DIR,
+                 "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
+                 "-DCMAKE_BUILD_TYPE=RelWithDebInfo"]
+    compile_ = ["cmake", "--build", BUILD_DIR, "-j"]
+    try:
+        os.makedirs(BUILD_DIR, exist_ok=True)
+    except OSError as exc:
+        sys.stderr.write("%s [build] cannot create %s: %s\n"
+                         % (_ts(), BUILD_DIR, exc))
+        return False
+
+    sys.stderr.write("%s [build] configuring server: %s\n"
+                     % (_ts(), " ".join(configure)))
+    try:
+        r = subprocess.run(configure, capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        sys.stderr.write("%s [build] cmake configure failed to launch: %s\n"
+                         % (_ts(), exc))
+        return False
+    if r.returncode != 0:
+        sys.stderr.write("%s [build] CONFIGURE FAILED:\n%s\n"
+                         % (_ts(), (r.stderr or r.stdout or "")[-4000:]))
+        return False
+
+    # Compile, then on failure flush ccache once and retry (a poisoned ccache
+    # entry can fail a build that is otherwise fine).
+    attempt = 0
+    while attempt < 2:
+        attempt += 1
+        sys.stderr.write("%s [build] compiling (attempt %d): %s\n"
+                         % (_ts(), attempt, " ".join(compile_)))
+        try:
+            r = subprocess.run(compile_, capture_output=True, text=True)
+        except (OSError, subprocess.SubprocessError) as exc:
+            sys.stderr.write("%s [build] cmake build failed to launch: %s\n"
+                             % (_ts(), exc))
+            return False
+        if r.returncode == 0 and os.path.isfile(SERVER_BIN):
+            sys.stderr.write("%s [build] OK -> %s\n" % (_ts(), SERVER_BIN))
+            return True
+        sys.stderr.write("%s [build] COMPILE FAILED:\n%s\n"
+                         % (_ts(), (r.stderr or r.stdout or "")[-4000:]))
+        ccache = shutil.which("ccache")
+        if ccache and attempt < 2:
+            sys.stderr.write("%s [build] flushing ccache and retrying once\n"
+                             % _ts())
+            subprocess.run([ccache, "-C"], capture_output=True, text=True)
+        else:
+            break
+    return False
+
+
+def staged_datapack():
+    """A read-only STAGED copy of the datapack (never the source tree, per the
+    datapack-source-safety rule). Prefers the test harness's staged slot, then a
+    known tmpfs cache, and only as a last resort the source itself (read-only)."""
+    try:
+        if TEST_DIR not in sys.path:
+            sys.path.insert(0, TEST_DIR)
+        import datapack_stage
+        p = datapack_stage.staged_local(DATAPACK_SRC, server=False)
+        if os.path.isdir(p):
+            return p
+    except Exception:
+        pass
+    cand = "/mnt/data/perso/tmpfs/cc-datapack/CatchChallenger-datapack"
+    if os.path.isdir(cand):
+        return cand
+    return DATAPACK_SRC
+
+
+def stage_run():
+    """Build STAGED_RUN: the boot kit LiveServer copies per-exploit. Contains a
+    binary copy (the server resolves its datapack relative to argv[0], so the
+    binary must sit next to the datapack), a `datapack` symlink to a staged
+    read-only copy, and server-properties.xml from the bounty doc's run recipe.
+    Idempotent (rewritten each call). Returns True when the kit is ready."""
+    if not os.path.isfile(SERVER_BIN):
+        sys.stderr.write("%s [stage] no server binary to stage: %s\n"
+                         % (_ts(), SERVER_BIN))
+        return False
+    dp = staged_datapack()
+    if not os.path.isdir(os.path.join(dp, "map", "main", "test")):
+        sys.stderr.write("%s [stage] WARNING: datapack %s has no map/main/test "
+                         "(maincode 'test') - server may fail to load\n"
+                         % (_ts(), dp))
+    try:
+        os.makedirs(STAGED_RUN, exist_ok=True)
+        # binary copy: the server looks for datapack/ next to argv[0].
+        local_bin = os.path.join(STAGED_RUN, "catchchallenger-server-cli")
+        shutil.copy2(SERVER_BIN, local_bin)
+        os.chmod(local_bin, 0o755)
+        # datapack symlink -> staged read-only copy (never the source tree).
+        link = os.path.join(STAGED_RUN, "datapack")
+        if os.path.islink(link) or os.path.exists(link):
+            os.remove(link)
+        os.symlink(dp, link)
+        # server-properties.xml (auto-create, compression none, maincode test).
+        with open(os.path.join(STAGED_RUN, "server-properties.xml"), "w") as f:
+            f.write(STAGED_PROPERTIES.format(port=SERVER_PORT))
+    except OSError as exc:
+        sys.stderr.write("%s [stage] cannot build run kit: %s\n" % (_ts(), exc))
+        return False
+    sys.stderr.write("%s [stage] run kit ready: %s (datapack -> %s)\n"
+                     % (_ts(), STAGED_RUN, dp))
+    return True
+
+
 def run_exploit():
     """Phase 2. Returns 0/1."""
+    check_tooling()
     if not os.path.isfile(SERVER_BIN):
-        sys.stderr.write(
-            "[!] prebuilt server not found: %s\n    Build it first:\n"
-            "    cmake -S %s/server/cli -B %s/build "
-            "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo "
-            "&& cmake --build %s/build -j\n"
-            % (SERVER_BIN, REPO_ROOT, OUTPUT_ROOT, OUTPUT_ROOT))
+        sys.stderr.write("%s [!] prebuilt server not found: %s - building it now\n"
+                         % (_ts(), SERVER_BIN))
+        if not build_server():
+            sys.stderr.write(
+                "[!] automatic build failed. Build it manually:\n"
+                "    cmake -S %s/server/cli -B %s "
+                "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo "
+                "&& cmake --build %s -j\n"
+                % (REPO_ROOT, BUILD_DIR, BUILD_DIR))
+            return 1
+    # Stage the run kit (datapack + server-properties.xml + binary copy) the
+    # LiveServer boots from. Without it every exploit aborts with "server kit
+    # missing". Rebuilt each run so a fresh binary is always staged.
+    if not stage_run():
+        sys.stderr.write("[!] could not stage the server run kit (%s); the "
+                         "exploit phase cannot boot the target.\n" % STAGED_RUN)
         return 1
     ensure_context()
     findings = parse_findings(FINDINGS)

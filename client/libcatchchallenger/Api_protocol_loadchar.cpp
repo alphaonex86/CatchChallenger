@@ -673,8 +673,24 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         memcpy(tempBigBufferForUncompressedInput,data+pos,sub_size32);
     }
     else
-        decompressedSize=CompressionProtocol::computeDecompression(data+pos,tempBigBufferForUncompressedInput,
+    {
+        //computeDecompression() returns int32_t -1 on a (zstd) failure; must be
+        //checked BEFORE storing into the unsigned decompressedSize, else -1
+        //becomes 0xFFFFFFFF and the int size2 below wraps to -1, tripping every
+        //downstream size check (and abort() under CATCHCHALLENGER_HARDENED).
+        //NOTE: a decompression failure here usually means a client/server
+        //protocol-version skew (the stream desynced upstream and sub_size32 was
+        //read at the wrong offset), NOT a recoverable condition — fail cleanly
+        //rather than guessing the block was raw and loading misaligned garbage.
+        const int32_t decompressResult=CompressionProtocol::computeDecompression(data+pos,tempBigBufferForUncompressedInput,
             sub_size32,decompressBuffer.size(),CompressionProtocol::compressionTypeClient);
+        if(decompressResult<0)
+        {
+            newError("Protocol wrong or corrupted",std::string("failed to decompress the character block, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+            return false;
+        }
+        decompressedSize=decompressResult;
+    }
     {
         const char * const data2=tempBigBufferForUncompressedInput;
         int pos2=0;

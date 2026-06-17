@@ -9,6 +9,7 @@
 #include "../../../general/base/CompressionProtocol.hpp"
 #include "../../libqtcatchchallenger/Ultimate.hpp"
 #include <QStandardPaths>
+#include <QHash>
 #include <QNetworkProxy>
 #include <QCoreApplication>
 #include <QSslKey>
@@ -2147,6 +2148,21 @@ void MainWindow::newLanServer()
 {
     const QList<LanBroadcastWatcher::ServerEntry> &listLan=LanBroadcastWatcher::lanBroadcastWatcher->getLastServerList();
     temp_lanConnexionInfoList.clear();
+    //Two DIFFERENT machines can broadcast the SAME <broadcastName> (e.g. several
+    //boards left on the default "CatchChallenger ESP32"). They are kept as
+    //distinct rows (deduplication is by sender IP + port, which is correct), but
+    //identical names are indistinguishable to the user. So when a name collides,
+    //append the host part that differs — the IPv4 last octet (after the final
+    //'.') or the IPv6 tail (after the final ':') — e.g. "... (10)" / "... (160)".
+    QHash<QString,int> nameCount;
+    {
+        int index=0;
+        while(index<listLan.size())
+        {
+            nameCount[listLan.at(index).name]++;
+            index++;
+        }
+    }
     {
         int index=0;
         while(index<listLan.size())
@@ -2155,6 +2171,16 @@ void MainWindow::newLanServer()
             const LanBroadcastWatcher::ServerEntry &l=listLan.at(index);
             e.unique_code=l.uniqueKey;
             e.name=l.name;
+            if(nameCount.value(l.name)>1)
+            {
+                const QString &addr=l.server.toString();
+                int sep=addr.lastIndexOf('.');
+                if(sep<0)
+                    sep=addr.lastIndexOf(':');
+                const QString &suffix=(sep>=0)?addr.mid(sep+1):addr;
+                if(!suffix.isEmpty())
+                    e.name=l.name+" ("+suffix+")";
+            }
 
             //hightest priority
             e.host=l.server.toString();
