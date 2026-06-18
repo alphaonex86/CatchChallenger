@@ -53,11 +53,28 @@ static std::string argValue(const std::vector<std::string> &args, const std::str
     return std::string();
 }
 
+// Run a tool at the lowest CPU priority: `nice -n 19 <tool> <toolArgs>` (no
+// shell — explicit argv).  Falls back to a direct run if /usr/bin/nice is absent.
+// The PNG optimizers below (esp. zopflipng --iterations=100) are heavy, so we keep
+// them out of the way of everything else.
+static void runNiced(const QString &tool, const QStringList &toolArgs)
+{
+    if(QFile::exists("/usr/bin/nice"))
+    {
+        QStringList a;
+        a << "-n" << "19" << tool << toolArgs;
+        QProcess::execute("/usr/bin/nice", a);
+    }
+    else
+        QProcess::execute(tool, toolArgs);
+}
+
 // Run pngquant (lossy palette) then zopflipng (lossless deflate) over every PNG
 // under dir, when the tools are installed (else skip with a note).  Shrinks the
 // flat-colour ROM tiles a lot (like tools/datapack-explorer-generator-cli).  Runs
 // AFTER the guards so it never affects them.  Uses QProcess with an explicit argv
-// (NO shell) so a datapack path with odd characters can't break or inject.
+// (NO shell) so a datapack path with odd characters can't break or inject, and
+// nice -n 19 so the heavy passes don't hog the CPU.
 static void optimizePngs(const std::string &dir)
 {
     QStringList pngs;
@@ -73,9 +90,8 @@ static void optimizePngs(const std::string &dir)
         int i=0;
         while(i<pngs.size())
         {
-            QStringList a;
-            a << "--force" << "--skip-if-larger" << "--ext" << ".png" << "--quality" << "65-95" << pngs.at(i);
-            QProcess::execute("/usr/bin/pngquant", a);
+            runNiced("/usr/bin/pngquant", QStringList()
+                     << "--force" << "--skip-if-larger" << "--ext" << ".png" << "--quality" << "65-95" << pngs.at(i));
             i++;
         }
         std::cout << " done" << std::endl;
@@ -88,11 +104,9 @@ static void optimizePngs(const std::string &dir)
         int i=0;
         while(i<pngs.size())
         {
-            QStringList a;
-            // --iterations=100: maximum deflate effort (default is only 5-15);
-            // -m also bumps it but --iterations is explicit.  Slow but one-time.
-            a << "-y" << "--iterations=100" << pngs.at(i) << pngs.at(i);
-            QProcess::execute("/usr/bin/zopflipng", a);
+            // --iterations=100: maximum deflate effort (default is only 5-15).
+            runNiced("/usr/bin/zopflipng", QStringList()
+                     << "-y" << "--iterations=100" << pngs.at(i) << pngs.at(i));
             i++;
         }
         std::cout << " done" << std::endl;
