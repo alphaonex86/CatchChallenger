@@ -1,14 +1,8 @@
 #include "Audio.hpp"
 #include "PlatformMacro.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../../general/mp2k/Gsf.hpp"
-#include "../../general/mp2k/Mp2kPlayer.hpp"
 #include <QCoreApplication>
 #include <QGuiApplication>
-#include <QFileInfo>
-#include <vector>
-#include <cmath>
-#include <cstdlib>
 #include <iostream>
 
 Audio *Audio::audio=nullptr;
@@ -160,83 +154,6 @@ bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
     return ret==EXIT_SUCCESS;
 }
 
-bool Audio::decodeGsf(const std::string &minigsfPath,QByteArray &data)
-{
-    // 1. minigsf -> song id + _lib (the gsflib filename, dir-relative).
-    std::vector<uint8_t> mprog; std::string mtags;
-    if(!CatchChallenger::gsfReadFile(minigsfPath,mprog,mtags))
-        return false;
-    uint32_t e=0,o=0,sz=0; const uint8_t *payload=nullptr;
-    if(!CatchChallenger::gsfSplitProgram(mprog,e,o,payload,sz) || sz==0)
-        return false;
-    uint32_t songId=0;
-    {
-        uint32_t i=0;
-        while(i<sz && i<4) { songId|=(uint32_t)payload[i]<<(8*i); ++i; }
-    }
-    const std::string lib=CatchChallenger::gsfTag(mtags,"_lib");
-    if(lib.empty())
-    {
-        std::cerr << "Audio::decodeGsf: " << minigsfPath << " has no _lib tag" << std::endl;
-        return false;
-    }
-    // 2. gsflib sits in the same dir as the minigsf (the _lib filename).
-    const QString libPath=QFileInfo(QString::fromStdString(minigsfPath)).absolutePath()
-                          + "/" + QString::fromStdString(lib);
-    std::vector<uint8_t> lprog; std::string ltags;
-    if(!CatchChallenger::gsfReadFile(libPath.toStdString(),lprog,ltags))
-        return false;
-    uint32_t le=0,lo=0,lsz=0; const uint8_t *rom=nullptr;
-    if(!CatchChallenger::gsfSplitProgram(lprog,le,lo,rom,lsz) || lsz==0)
-        return false;
-    // 3. gSongTable: read OUR _cc_songtable tag (so we never CPU-scan).
-    const std::string st=CatchChallenger::gsfTag(ltags,"_cc_songtable");
-    if(st.empty())
-    {
-        std::cerr << "Audio::decodeGsf: gsflib " << lib << " missing _cc_songtable tag" << std::endl;
-        return false;
-    }
-    const uint32_t songtable=(uint32_t)std::strtoul(st.c_str(),nullptr,0);
-    CatchChallenger::Mp2kRomSource src(rom,lsz);
-    bool ok=false;
-    const uint32_t header=src.pointer((songtable-0x08000000u)+songId*8u,&ok);
-    if(!ok)
-    {
-        std::cerr << "Audio::decodeGsf: song " << songId << " header out of range" << std::endl;
-        return false;
-    }
-    // 4. synth at the engine audio format (48 kHz stereo) for the 16 s loop window.
-    std::vector<float> pcm;
-    CatchChallenger::mp2kRenderSong(src,header,48000,16.0,pcm);
-    if(pcm.size()<2)
-        return false;
-    float peak=0.0f; std::size_t i=0;
-    while(i<pcm.size()) { const float a=std::fabs(pcm[i]); if(a>peak) peak=a; ++i; }
-    const float norm = peak>0.01f ? 0.85f/peak : 1.0f;
-    data.resize((int)(pcm.size()*2));
-    char *out=data.data();
-    i=0;
-    while(i<pcm.size())
-    {
-        float v=pcm[i]*norm;
-        if(v>1.0f) v=1.0f; else if(v<-1.0f) v=-1.0f;
-        const int16_t s=(int16_t)(v*32767.0f);
-        out[i*2+0]=(char)(s&0xFF);
-        out[i*2+1]=(char)((s>>8)&0xFF);
-        ++i;
-    }
-    return true;
-}
-
-bool Audio::decodeAmbiance(const std::string &filePath,QByteArray &data)
-{
-    const std::string ext=".minigsf";
-    if(filePath.size()>=ext.size() &&
-       filePath.compare(filePath.size()-ext.size(),ext.size(),ext)==0)
-        return decodeGsf(filePath,data);
-    return decodeOpus(filePath,data);
-}
-
 //if already playing ambiance then call stopCurrentAmbiance
 std::string Audio::startAmbiance(const std::string &soundPath)
 {
@@ -254,7 +171,7 @@ std::string Audio::startAmbiance(const std::string &soundPath)
     if(ambiance_player!=nullptr)
     {
         //decode file
-        if(Audio::decodeAmbiance(soundPath,ambiance_data))
+        if(Audio::decodeOpus(soundPath,ambiance_data))
         {
             ambiance_buffer=new QInfiniteBuffer(&ambiance_data);
             ambiance_buffer->open(QBuffer::ReadOnly);

@@ -63,7 +63,6 @@ CCWriter::CCWriter(const GbaRom &rom,
     // — so the prefix is simply "music" (the songs live under <label>/music/).
     // (gen2's zone files use exactly this form.)
     musicRefPrefix_="music";
-    musicExt_="opus"; // default; main.cpp sets "minigsf" for --gsf
 
     // Name each BGM after a representative map (the map path slug), so the opus is
     // "viridian-city.opus" not "song-292.opus".  A song is used by many maps; we
@@ -874,7 +873,7 @@ void CCWriter::writeMap(const DecodedMap &map)
     // Must precede <tileset>/<layer> per the Tiled child order.
     if(map.music!=0 && map.music!=0xFFFF)
         out << " <properties>\n  <property name=\"backgroundsound\" value=\"music/"
-            << musicFileBase(map.music) << "." << musicExt_ << "\"/>\n </properties>\n";
+            << musicFileBase(map.music) << ".opus\"/>\n </properties>\n";
     std::vector<std::pair<uint32_t,std::string> > refs=tilesets_.tilesetRefs(map);
     size_t ri=0;
     while(ri<refs.size())
@@ -1501,7 +1500,7 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     // The engine reads this from the .tmx <property> (writeMap), not the .xml; we
     // keep it here too for the per-map metadata convention.
     if(map.music!=0 && map.music!=0xFFFF)
-        out << " backgroundsound=\"music/" << musicFileBase(map.music) << "." << musicExt_ << "\"";
+        out << " backgroundsound=\"music/" << musicFileBase(map.music) << ".opus\"";
     out << ">\n";
     out << " <name>" << name << "</name>\n";
 

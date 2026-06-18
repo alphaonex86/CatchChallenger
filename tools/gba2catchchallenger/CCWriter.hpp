@@ -52,11 +52,7 @@ public:
     // "song-292.opus".  Both the map writer (backgroundsound) and the ripper in
     // main.cpp use these so the ref and the file on disk always match.
     std::string musicFileBase(uint16_t songId) const;   // slug WITHOUT extension
-    const std::string &musicRefPrefix() const { return musicRefPrefix_; } // "map/main/<label>/music"
-    // Music file extension for the per-map backgroundsound ref + the ripper.
-    // "opus" (default) or "minigsf" (--gsf).  Set BEFORE writeAll().
-    void setMusicExtension(const std::string &ext) { musicExt_=ext; }
-    const std::string &musicExtension() const { return musicExt_; }
+    const std::string &musicRefPrefix() const { return musicRefPrefix_; } // "music"
 
     // Sub-datapack overlay: emit ONLY what differs from the already-generated
     // main at mainDir (e.g. map/main/ruby).  The sub has no .tmx/tileset (geometry
@@ -127,8 +123,7 @@ private:
     const Wild &wild_;
     Gen3Script script_;
     std::string fireredDir_;
-    std::string musicRefPrefix_;               // root-relative "map/main/<label>/music"
-    std::string musicExt_;                     // "opus" (default) or "minigsf"
+    std::string musicRefPrefix_;               // label-root-relative "music"
     std::unordered_map<uint16_t,std::string> songNames_; // BGM id -> file slug (no ext)
     SkinResolver &skins_;
     std::unordered_map<uint8_t,std::string> skinCache_;

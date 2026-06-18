@@ -24,14 +24,6 @@ public:
     void setPlayerVolume(QAudioSink * const player);
     QAudioFormat format() const;
     static bool decodeOpus(const std::string &filePath,QByteArray &data);
-    // Decode a standard GSF MiniGSF (+ its sibling .gsflib via the _lib tag) with
-    // the software MP2k synth in general/mp2k — NO GBA CPU emulation: we read the
-    // gsflib's ROM image, the gSongTable address (from our _cc_songtable tag) and
-    // the song id, and synthesise the same 48 kHz stereo Int16 PCM the opus path
-    // yields, so the ambiance loop/sink machinery is reused unchanged.
-    static bool decodeGsf(const std::string &minigsfPath,QByteArray &data);
-    // Dispatch by extension: .minigsf -> decodeGsf, else decodeOpus.
-    static bool decodeAmbiance(const std::string &filePath,QByteArray &data);
 
     //if already playing ambiance then call stopCurrentAmbiance
     virtual std::string startAmbiance(const std::string &soundPath);
