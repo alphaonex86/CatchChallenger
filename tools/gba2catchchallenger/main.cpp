@@ -30,10 +30,15 @@
 #include <QFile>
 #include <QString>
 #include <QStringList>
-#include <QProcess>
 #include <QGuiApplication>
 #include <algorithm>
 #include <cstdlib>
+#include <thread>
+#include <atomic>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <cerrno>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -53,66 +58,131 @@ static std::string argValue(const std::vector<std::string> &args, const std::str
     return std::string();
 }
 
-// Run a tool at the lowest CPU priority: `nice -n 19 <tool> <toolArgs>` (no
-// shell — explicit argv).  Falls back to a direct run if /usr/bin/nice is absent.
-// The PNG optimizers below (esp. zopflipng --iterations=100) are heavy, so we keep
-// them out of the way of everything else.
-static void runNiced(const QString &tool, const QStringList &toolArgs)
+extern char **environ;
+
+// Build `nice -n 19 <tool> <toolArgs>` as an argv (lowest CPU priority, no shell);
+// falls back to the bare tool if /usr/bin/nice is absent.  argv[0] is the program.
+static std::vector<std::string> nicedArgv(const std::string &tool, const std::vector<std::string> &toolArgs)
 {
+    std::vector<std::string> argv;
     if(QFile::exists("/usr/bin/nice"))
     {
-        QStringList a;
-        a << "-n" << "19" << tool << toolArgs;
-        QProcess::execute("/usr/bin/nice", a);
+        argv.push_back("/usr/bin/nice");
+        argv.push_back("-n");
+        argv.push_back("19");
     }
-    else
-        QProcess::execute(tool, toolArgs);
+    argv.push_back(tool);
+    size_t k=0;
+    while(k<toolArgs.size()) { argv.push_back(toolArgs[k]); ++k; }
+    return argv;
 }
 
-// Run pngquant (lossy palette) then zopflipng (lossless deflate) over every PNG
-// under dir, when the tools are installed (else skip with a note).  Shrinks the
-// flat-colour ROM tiles a lot (like tools/datapack-explorer-generator-cli).  Runs
-// AFTER the guards so it never affects them.  Uses QProcess with an explicit argv
-// (NO shell) so a datapack path with odd characters can't break or inject, and
-// nice -n 19 so the heavy passes don't hog the CPU.
+// Spawn argv (argv[0]=program), stdout/stderr -> /dev/null, and wait for it.  No
+// shell (posix_spawn with an explicit argv), thread-safe (each child reaped by
+// its own waitpid) — safe to call from many worker threads at once.
+static void spawnWait(const std::vector<std::string> &argv)
+{
+    if(argv.empty()) return;
+    std::vector<char *> a;
+    size_t k=0;
+    while(k<argv.size()) { a.push_back(const_cast<char *>(argv[k].c_str())); ++k; }
+    a.push_back(NULL);
+    posix_spawn_file_actions_t fa;
+    posix_spawn_file_actions_init(&fa);
+    posix_spawn_file_actions_addopen(&fa,1,"/dev/null",O_WRONLY,0);
+    posix_spawn_file_actions_addopen(&fa,2,"/dev/null",O_WRONLY,0);
+    pid_t pid=0;
+    if(posix_spawn(&pid,argv[0].c_str(),&fa,NULL,a.data(),environ)==0)
+    {
+        int status=0;
+        while(waitpid(pid,&status,0)<0 && errno==EINTR) {}
+    }
+    posix_spawn_file_actions_destroy(&fa);
+}
+
+// Per-file PIPELINE: pngquant THEN zopflipng for each file (so each zopflipng
+// waits its OWN pngquant), files processed in parallel across all cores.
+struct PngOptJobs {
+    std::vector<std::vector<std::string> > pngquant; // per file (empty entry => skip)
+    std::vector<std::vector<std::string> > zopfli;   // per file (empty entry => skip)
+    size_t count;
+    std::atomic<size_t> next;
+};
+static void pngOptWorker(PngOptJobs *o)
+{
+    while(true)
+    {
+        size_t i=o->next.fetch_add(1);
+        if(i>=o->count) break;
+        if(i<o->pngquant.size() && !o->pngquant[i].empty())
+            spawnWait(o->pngquant[i]);     // lossy palette first
+        if(i<o->zopfli.size() && !o->zopfli[i].empty())
+            spawnWait(o->zopfli[i]);       // then lossless re-deflate — waits its pngquant
+    }
+}
+
+// pngquant (lossy palette) then zopflipng (lossless deflate) over every PNG under
+// dir, when the tools are installed (else skip with a note).  Shrinks the flat-
+// colour ROM tiles a lot (like tools/datapack-explorer-generator-cli).  Runs AFTER
+// the guards.  Per-file pipeline (each zopflipng after its own pngquant), all
+// cores busy, nice -n 19, no shell, --iterations=100 for max deflate.
 static void optimizePngs(const std::string &dir)
 {
-    QStringList pngs;
+    std::vector<std::string> files;
     QDirIterator it(QString::fromStdString(dir), QStringList() << "*.png",
                     QDir::Files, QDirIterator::Subdirectories);
     while(it.hasNext())
-        pngs << it.next();
-    if(pngs.isEmpty())
+        files.push_back(it.next().toStdString());
+    if(files.empty())
         return;
-    if(QFile::exists("/usr/bin/pngquant"))
-    {
-        std::cout << "Optimizing tileset PNGs (pngquant)..." << std::flush;
-        int i=0;
-        while(i<pngs.size())
-        {
-            runNiced("/usr/bin/pngquant", QStringList()
-                     << "--force" << "--skip-if-larger" << "--ext" << ".png" << "--quality" << "65-95" << pngs.at(i));
-            i++;
-        }
-        std::cout << " done" << std::endl;
-    }
-    else
+    const bool havePng=QFile::exists("/usr/bin/pngquant");
+    const bool haveZop=QFile::exists("/usr/bin/zopflipng");
+    if(!havePng)
         std::cout << "no /usr/bin/pngquant — install it for smaller tilesets" << std::endl;
-    if(QFile::exists("/usr/bin/zopflipng"))
-    {
-        std::cout << "Optimizing tileset PNGs (zopflipng)..." << std::flush;
-        int i=0;
-        while(i<pngs.size())
-        {
-            // --iterations=100: maximum deflate effort (default is only 5-15).
-            runNiced("/usr/bin/zopflipng", QStringList()
-                     << "-y" << "--iterations=100" << pngs.at(i) << pngs.at(i));
-            i++;
-        }
-        std::cout << " done" << std::endl;
-    }
-    else
+    if(!haveZop)
         std::cout << "no /usr/bin/zopflipng — install zopfli for smaller tilesets" << std::endl;
+    if(!havePng && !haveZop)
+        return;
+
+    PngOptJobs o;
+    o.count=files.size();
+    o.next.store(0);
+    size_t i=0;
+    while(i<files.size())
+    {
+        std::vector<std::string> pq, zp;
+        if(havePng)
+        {
+            std::vector<std::string> args;
+            args.push_back("--force"); args.push_back("--skip-if-larger");
+            args.push_back("--ext"); args.push_back(".png");
+            args.push_back("--quality"); args.push_back("65-95");
+            args.push_back(files[i]);
+            pq=nicedArgv("/usr/bin/pngquant",args);
+        }
+        if(haveZop)
+        {
+            std::vector<std::string> args;
+            args.push_back("-y"); args.push_back("--iterations=100"); // max deflate effort
+            args.push_back(files[i]); args.push_back(files[i]);
+            zp=nicedArgv("/usr/bin/zopflipng",args);
+        }
+        o.pngquant.push_back(pq);
+        o.zopfli.push_back(zp);
+        ++i;
+    }
+
+    std::cout << "Optimizing tileset PNGs (" << (havePng?"pngquant":"")
+              << ((havePng&&haveZop)?"+":"") << (haveZop?"zopflipng":"")
+              << ", all cores, per-file pipeline)..." << std::flush;
+    unsigned int n=std::thread::hardware_concurrency();
+    if(n<1) n=1;
+    std::vector<std::thread> pool;
+    unsigned int t=0;
+    while(t<n) { pool.push_back(std::thread(pngOptWorker,&o)); ++t; }
+    t=0;
+    while(t<pool.size()) { pool[t].join(); ++t; }
+    std::cout << " done" << std::endl;
 }
 
 // True when the metatile at (base,idx) has no graphics (every subtile id is 0).
