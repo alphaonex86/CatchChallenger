@@ -24,6 +24,12 @@ public:
     void setPlayerVolume(QAudioSink * const player);
     QAudioFormat format() const;
     static bool decodeOpus(const std::string &filePath,QByteArray &data);
+    // Decode an original-GBA .mp2k blob (general/mp2k player) to the SAME PCM the
+    // opus path yields (48 kHz stereo Int16 LE), so the ambiance/loop machinery is
+    // identical — only the decoder differs.
+    static bool decodeMp2k(const std::string &filePath,QByteArray &data);
+    // Dispatch by file extension: .mp2k -> decodeMp2k, else decodeOpus.
+    static bool decodeAmbiance(const std::string &filePath,QByteArray &data);
 
     //if already playing ambiance then call stopCurrentAmbiance
     virtual std::string startAmbiance(const std::string &soundPath);

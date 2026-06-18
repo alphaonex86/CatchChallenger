@@ -1,8 +1,12 @@
 #include "Audio.hpp"
 #include "PlatformMacro.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#include "../../general/mp2k/Mp2kPlayer.hpp"
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <QFile>
+#include <vector>
+#include <cmath>
 #include <iostream>
 
 Audio *Audio::audio=nullptr;
@@ -154,6 +158,58 @@ bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
     return ret==EXIT_SUCCESS;
 }
 
+bool Audio::decodeMp2k(const std::string &filePath,QByteArray &data)
+{
+    QFile f(QString::fromStdString(filePath));
+    if(!f.open(QIODevice::ReadOnly))
+    {
+        std::cerr << "Audio::decodeMp2k cannot open " << filePath << std::endl;
+        return false;
+    }
+    const QByteArray blob=f.readAll();
+    f.close();
+    // Render at the engine audio format (48 kHz stereo) for the same 16 s loop
+    // window the opus files use; QInfiniteBuffer then loops this buffer forever.
+    std::vector<float> pcm;
+    if(!CatchChallenger::mp2kRenderBlob(reinterpret_cast<const uint8_t*>(blob.constData()),
+                                        (size_t)blob.size(),48000,16.0,pcm))
+    {
+        std::cerr << "Audio::decodeMp2k render failed for " << filePath << std::endl;
+        return false;
+    }
+    if(pcm.size()<2)
+        return false;
+    // Peak-normalise (matches the opus rip's loudness); NO fade — the buffer loops
+    // so a fade-out would leave a gap at the loop seam.
+    float peak=0.0f; std::size_t i=0;
+    while(i<pcm.size()) { const float a=std::fabs(pcm[i]); if(a>peak) peak=a; ++i; }
+    const float norm = peak>0.01f ? 0.85f/peak : 1.0f;
+    // float -> Int16 little-endian (Audio::format()).
+    data.resize((int)(pcm.size()*2));
+    char *out=data.data();
+    i=0;
+    while(i<pcm.size())
+    {
+        float v=pcm[i]*norm;
+        if(v>1.0f) v=1.0f; else if(v<-1.0f) v=-1.0f;
+        const int16_t s=(int16_t)(v*32767.0f);
+        out[i*2+0]=(char)(s&0xFF);
+        out[i*2+1]=(char)((s>>8)&0xFF);
+        ++i;
+    }
+    return true;
+}
+
+bool Audio::decodeAmbiance(const std::string &filePath,QByteArray &data)
+{
+    // ".mp2k" suffix -> original-GBA blob player, else the opus decoder.
+    const std::string ext=".mp2k";
+    if(filePath.size()>=ext.size() &&
+       filePath.compare(filePath.size()-ext.size(),ext.size(),ext)==0)
+        return decodeMp2k(filePath,data);
+    return decodeOpus(filePath,data);
+}
+
 //if already playing ambiance then call stopCurrentAmbiance
 std::string Audio::startAmbiance(const std::string &soundPath)
 {
@@ -170,8 +226,8 @@ std::string Audio::startAmbiance(const std::string &soundPath)
     ambiance_player = new QAudioSink(info,Audio::audio->format());
     if(ambiance_player!=nullptr)
     {
-        //decode file
-        if(Audio::decodeOpus(soundPath,ambiance_data))
+        //decode file (.mp2k original-GBA blob or opus, by extension)
+        if(Audio::decodeAmbiance(soundPath,ambiance_data))
         {
             ambiance_buffer=new QInfiniteBuffer(&ambiance_data);
             ambiance_buffer->open(QBuffer::ReadOnly);

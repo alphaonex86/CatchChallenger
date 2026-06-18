@@ -58,6 +58,7 @@ CCWriter::CCWriter(const GbaRom &rom,
     itemsByName_(0),
     items_(items)
 {
+    musicExt_="opus"; // default; main.cpp sets "mp2k" for --original-sounds
     // Each label keeps its songs under its OWN map/main/<label>/music/ (not a
     // shared root music/).  backgroundsound paths resolve from the datapack ROOT
     // (client: datapackPathMain()+ref), so a map's music ref must carry the full
@@ -1491,7 +1492,7 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     // file is written by the music pass in main.cpp; absent => no music).  The ref
     // is root-relative because the client resolves it as datapackPathMain()+ref.
     if(map.music!=0 && map.music!=0xFFFF)
-        out << " backgroundsound=\"" << musicRefPrefix_ << "/" << musicFileBase(map.music) << ".opus\"";
+        out << " backgroundsound=\"" << musicRefPrefix_ << "/" << musicFileBase(map.music) << "." << musicExt_ << "\"";
     out << ">\n";
     out << " <name>" << name << "</name>\n";
 

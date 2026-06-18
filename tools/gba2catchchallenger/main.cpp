@@ -49,6 +49,19 @@ static std::string argValue(const std::vector<std::string> &args, const std::str
     return std::string();
 }
 
+// Presence-only flag (no value).
+static bool argFlag(const std::vector<std::string> &args, const std::string &key)
+{
+    size_t i=0;
+    while(i<args.size())
+    {
+        if(args[i]==key)
+            return true;
+        i++;
+    }
+    return false;
+}
+
 // True when the metatile at (base,idx) has no graphics (every subtile id is 0).
 static bool metatileEmpty(const GbaRom &rom, uint32_t base, uint32_t idx)
 {
@@ -261,6 +274,13 @@ int main(int argc, char *argv[])
     if(fullDatapack && datapack.empty())
         datapack=allPath;
 
+    // --original-sounds: emit the maps' BGM as self-contained .mp2k BLOBs (the
+    // original GBA sequence + samples) instead of rendered opus.  The client has
+    // its own copy of the MP2k player (general/mp2k) and decodes them at runtime.
+    // Same map "backgroundsound" mechanism — only the file extension changes.
+    const bool originalSounds=argFlag(args,"--original-sounds");
+    const std::string musicExt=originalSounds ? "mp2k" : "opus";
+
     const std::string ripSong=argValue(args,"--ripsong");
     if(datapack.empty() && ripSong.empty())
     {
@@ -438,13 +458,15 @@ int main(int argc, char *argv[])
         // (~10% per-channel tolerance, content-cropped) and reused, else added.
         skins.loadExisting();
         CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,itemResolver);
+        writer.setMusicExtension(musicExt); // "opus" (default) or "mp2k"
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
 
-        // Rip the maps' background music to opus, into THIS label's own folder
-        // map/main/<label>/music/<name>.opus (named after a representative map by
+        // Rip the maps' background music into THIS label's own folder
+        // map/main/<label>/music/<name>.<ext> (named after a representative map by
         // CCWriter, matching the per-map backgroundsound refs).  Most-used first,
         // capped.  Songs stay under the label so each region keeps its own music.
+        // ext = opus (rendered) by default, or mp2k (original GBA blob) when asked.
         M4aRipper m4a;
         if(m4a.locate(rom))
         {
@@ -473,9 +495,13 @@ int main(int argc, char *argv[])
             while(oi<order.size() && ripped<cap)
             {
                 const uint16_t id=order[oi].second; ++oi;
-                if(m4a.writeOpus(rom,id,musicDir+"/"+writer.musicFileBase(id)+".opus",16.0)) ++ripped;
+                const std::string out=musicDir+"/"+writer.musicFileBase(id)+"."+musicExt;
+                const bool wrote = originalSounds ? m4a.writeMp2kBlob(rom,id,out,16.0)
+                                                  : m4a.writeOpus(rom,id,out,16.0);
+                if(wrote) ++ripped;
             }
-            std::cout << "Music: ripped " << ripped << "/" << use.size() << " songs to "
+            std::cout << "Music: ripped " << ripped << "/" << use.size() << " "
+                      << (originalSounds?"original .mp2k blob":"opus") << " song(s) to "
                       << musicDir << std::endl;
             // type-fallback map/music.xml (dominant ripped BGM per coarse type).  The
             // refs are root-relative (client resolves datapackPathMain()+ref), so they
@@ -490,8 +516,8 @@ int main(int argc, char *argv[])
                 const std::string key = std::string(types[ty])=="cave"?"outdoor":types[ty];
                 uint16_t best=0; int bc=-1;
                 std::map<uint16_t,int>::const_iterator b=byType[key].begin();
-                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+".opus"))) { bc=b->second; best=b->first; } ++b; }
-                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << ".opus</map>\n";
+                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+"."+musicExt))) { bc=b->second; best=b->first; } ++b; }
+                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << "." << musicExt << "</map>\n";
                 ++ty;
             }
             mx << "</musics>\n";
