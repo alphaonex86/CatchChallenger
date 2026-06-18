@@ -89,7 +89,9 @@ static void optimizePngs(const std::string &dir)
         while(i<pngs.size())
         {
             QStringList a;
-            a << "-y" << pngs.at(i) << pngs.at(i);
+            // --iterations=100: maximum deflate effort (default is only 5-15);
+            // -m also bumps it but --iterations is explicit.  Slow but one-time.
+            a << "-y" << "--iterations=100" << pngs.at(i) << pngs.at(i);
             QProcess::execute("/usr/bin/zopflipng", a);
             i++;
         }
