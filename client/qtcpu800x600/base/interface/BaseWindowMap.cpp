@@ -366,9 +366,9 @@ void BaseWindow::currentMapLoaded()
             // Create a new Media
             if(ambiance.player!=NULL)
             {
-                //decode file (.mp2k original-GBA blob or opus, by extension)
+                //decode file
                 ambiance.data=new QByteArray;
-                if(Audio::decodeAmbiance(finalSound,*ambiance.data))
+                if(Audio::decodeOpus(finalSound,*ambiance.data))
                 {
                     ambiance.buffer=new QInfiniteBuffer(ambiance.data);
                     ambiance.buffer->open(QBuffer::ReadOnly);

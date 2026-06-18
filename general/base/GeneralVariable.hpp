@@ -63,7 +63,7 @@
 
 #define RANDOM_FLOAT_PART_DIVIDER 10000
 
-#define CATCHCHALLENGER_EXTENSION_ALLOWED "tmx;xml;tsx;png;jpg;gif;ogg;opus;mp2k"
+#define CATCHCHALLENGER_EXTENSION_ALLOWED "tmx;xml;tsx;png;jpg;gif;ogg;opus"
 
 #define CATCHCHALLENGER_CHECK_MAINDATAPACKCODE "^[a-z0-9]+$" //can't be "-" because the separator is used for http download
 #define CATCHCHALLENGER_CHECK_SUBDATAPACKCODE "^[a-z0-9]+$" //can't be "-" because the separator is used for http download
