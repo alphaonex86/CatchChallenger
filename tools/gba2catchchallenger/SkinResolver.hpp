@@ -26,6 +26,9 @@ public:
 
     size_t addedCount() const;
     size_t reuseCount() const;
+    // Absolute paths of the skin PNGs CREATED this run (not reused) — so the
+    // caller can pngquant/zopfli each new skin exactly once.
+    const std::vector<std::string> &addedPaths() const { return addedPaths_; }
 
 private:
     struct Entry {
@@ -39,6 +42,7 @@ private:
     int tolerance_;
     int nextNewId_;
     std::vector<Entry> entries_;
+    std::vector<std::string> addedPaths_;
     size_t added_;
     size_t reused_;
 };

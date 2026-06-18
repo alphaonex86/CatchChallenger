@@ -126,21 +126,31 @@ static void pngOptWorker(PngOptJobs *o)
 // colour ROM tiles a lot (like tools/datapack-explorer-generator-cli).  Runs AFTER
 // the guards.  Per-file pipeline (each zopflipng after its own pngquant), all
 // cores busy, nice -n 19, no shell, --iterations=100 for max deflate.
-static void optimizePngs(const std::string &dir)
+// Recursively collect *.png under dir into out, skipping any path containing
+// `excludeSubstr` (used to never touch the shared map/invisible.png).
+static void collectPngs(const std::string &dir, std::vector<std::string> &out,
+                        const std::string &excludeSubstr)
 {
-    std::vector<std::string> files;
     QDirIterator it(QString::fromStdString(dir), QStringList() << "*.png",
                     QDir::Files, QDirIterator::Subdirectories);
     while(it.hasNext())
-        files.push_back(it.next().toStdString());
+    {
+        const std::string p=it.next().toStdString();
+        if(excludeSubstr.empty() || p.find(excludeSubstr)==std::string::npos)
+            out.push_back(p);
+    }
+}
+
+static void optimizePngs(const std::vector<std::string> &files)
+{
     if(files.empty())
         return;
     const bool havePng=QFile::exists("/usr/bin/pngquant");
     const bool haveZop=QFile::exists("/usr/bin/zopflipng");
     if(!havePng)
-        std::cout << "no /usr/bin/pngquant — install it for smaller tilesets" << std::endl;
+        std::cout << "no /usr/bin/pngquant — install it for smaller datapack PNGs" << std::endl;
     if(!haveZop)
-        std::cout << "no /usr/bin/zopflipng — install zopfli for smaller tilesets" << std::endl;
+        std::cout << "no /usr/bin/zopflipng — install zopfli for smaller datapack PNGs" << std::endl;
     if(!havePng && !haveZop)
         return;
 
@@ -172,7 +182,7 @@ static void optimizePngs(const std::string &dir)
         ++i;
     }
 
-    std::cout << "Optimizing tileset PNGs (" << (havePng?"pngquant":"")
+    std::cout << "Optimizing " << files.size() << " PNG(s) (" << (havePng?"pngquant":"")
               << ((havePng&&haveZop)?"+":"") << (haveZop?"zopflipng":"")
               << ", all cores, per-file pipeline)..." << std::flush;
     unsigned int n=std::thread::hardware_concurrency();
@@ -632,9 +642,6 @@ int main(int argc, char *argv[])
             }
             mx << "</musics>\n";
         }
-
-        // Shrink the tileset PNGs (pngquant + zopflipng) — after the guards.
-        optimizePngs(tilesetDir);
     }
 
     // --all: also emit the full game DB (monsters/skill/type/items) at the
@@ -648,6 +655,27 @@ int main(int argc, char *argv[])
         }
         else
             std::cerr << "Warning: --all could not decode the Gen3 game DB; wrote maps only." << std::endl;
+    }
+
+    // Shrink EVERY ROM-extracted PNG this run (pngquant + zopflipng), once, after
+    // everything is written and the guards have run.  Default (maps) mode extracts
+    // only the label's tilesets + the NEW bot skins; --all also extracts the whole
+    // self-contained DB (monster sprites, item icons, fight backgrounds) at the
+    // datapack root, so optimise the whole tree there — but NEVER the shared
+    // map/invisible.png (referenced read-only).
+    if(!gi.isSub())
+    {
+        std::vector<std::string> pngs;
+        if(fullDatapack)
+            collectPngs(datapack,pngs,"invisible");
+        else
+        {
+            collectPngs(tilesetDir,pngs,std::string());
+            const std::vector<std::string> &sk=skins.addedPaths();
+            size_t s=0;
+            while(s<sk.size()) { pngs.push_back(sk[s]); ++s; }
+        }
+        optimizePngs(pngs);
     }
 
     std::cout << "Done." << std::endl;
