@@ -116,9 +116,7 @@ std::string SkinResolver::resolve(const QImage &candidate)
     nextNewId_++;
     std::string folder=skinBotDir_+"/"+name;
     QDir().mkpath(QString::fromStdString(folder));
-    const std::string skinPath=folder+"/trainer.png";
-    candidate.save(QString::fromStdString(skinPath),"PNG");
-    addedPaths_.push_back(skinPath); // for the PNG optimiser (each new skin once)
+    candidate.save(QString::fromStdString(folder+"/trainer.png"),"PNG");
     Entry e;
     e.name=name;
     e.cropped=cropped;

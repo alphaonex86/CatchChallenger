@@ -141,6 +141,20 @@ static void collectPngs(const std::string &dir, std::vector<std::string> &out,
     }
 }
 
+// A PNG whose IHDR colour type (byte 25) is 3 = indexed/palette, i.e. already
+// pngquant'd — so we skip it instead of re-optimising every run (lets us re-scan
+// the whole shared skin/bot/ cheaply and only touch the not-yet-optimised ones).
+static bool pngIsPalette(const std::string &path)
+{
+    std::ifstream f(path,std::ios::binary);
+    if(!f) return false;
+    unsigned char h[26];
+    f.read(reinterpret_cast<char *>(h),26);
+    if(f.gcount()<26) return false;
+    if(!(h[0]==0x89 && h[1]=='P' && h[2]=='N' && h[3]=='G')) return false;
+    return h[25]==3;
+}
+
 static void optimizePngs(const std::vector<std::string> &files)
 {
     if(files.empty())
@@ -153,12 +167,18 @@ static void optimizePngs(const std::vector<std::string> &files)
         std::cout << "no /usr/bin/zopflipng — install zopfli for smaller datapack PNGs" << std::endl;
     if(!havePng && !haveZop)
         return;
+    // Skip the ones already pngquant'd (palette) — only optimise the rest.
+    std::vector<std::string> todo;
+    size_t fi=0;
+    while(fi<files.size()) { if(!pngIsPalette(files[fi])) todo.push_back(files[fi]); ++fi; }
+    if(todo.empty())
+        return;
 
     PngOptJobs o;
-    o.count=files.size();
+    o.count=todo.size();
     o.next.store(0);
     size_t i=0;
-    while(i<files.size())
+    while(i<todo.size())
     {
         std::vector<std::string> pq, zp;
         if(havePng)
@@ -167,14 +187,14 @@ static void optimizePngs(const std::vector<std::string> &files)
             args.push_back("--force"); args.push_back("--skip-if-larger");
             args.push_back("--ext"); args.push_back(".png");
             args.push_back("--quality"); args.push_back("65-95");
-            args.push_back(files[i]);
+            args.push_back(todo[i]);
             pq=nicedArgv("/usr/bin/pngquant",args);
         }
         if(haveZop)
         {
             std::vector<std::string> args;
             args.push_back("-y"); args.push_back("--iterations=100"); // max deflate effort
-            args.push_back(files[i]); args.push_back(files[i]);
+            args.push_back(todo[i]); args.push_back(todo[i]);
             zp=nicedArgv("/usr/bin/zopflipng",args);
         }
         o.pngquant.push_back(pq);
@@ -182,7 +202,7 @@ static void optimizePngs(const std::vector<std::string> &files)
         ++i;
     }
 
-    std::cout << "Optimizing " << files.size() << " PNG(s) (" << (havePng?"pngquant":"")
+    std::cout << "Optimizing " << todo.size() << " PNG(s) (" << (havePng?"pngquant":"")
               << ((havePng&&haveZop)?"+":"") << (haveZop?"zopflipng":"")
               << ", all cores, per-file pipeline)..." << std::flush;
     unsigned int n=std::thread::hardware_concurrency();
@@ -657,12 +677,14 @@ int main(int argc, char *argv[])
             std::cerr << "Warning: --all could not decode the Gen3 game DB; wrote maps only." << std::endl;
     }
 
-    // Shrink EVERY ROM-extracted PNG this run (pngquant + zopflipng), once, after
-    // everything is written and the guards have run.  Default (maps) mode extracts
-    // only the label's tilesets + the NEW bot skins; --all also extracts the whole
-    // self-contained DB (monster sprites, item icons, fight backgrounds) at the
-    // datapack root, so optimise the whole tree there — but NEVER the shared
-    // map/invisible.png (referenced read-only).
+    // Shrink EVERY ROM-extracted PNG (pngquant + zopflipng), once, after everything
+    // is written and the guards have run.  optimizePngs skips already-palette
+    // (already pngquant'd) files, so re-scanning the whole shared skin/bot/ each
+    // run only touches the not-yet-optimised skins (incl. ones a prior run added
+    // and this run merely REUSED).  Default (maps) mode = the label's tilesets +
+    // skin/bot/; --all also extracts the whole self-contained DB (monster sprites,
+    // item icons, fight backgrounds) at the datapack root, so optimise the whole
+    // tree there — but NEVER the shared map/invisible.png (referenced read-only).
     if(!gi.isSub())
     {
         std::vector<std::string> pngs;
@@ -671,9 +693,7 @@ int main(int argc, char *argv[])
         else
         {
             collectPngs(tilesetDir,pngs,std::string());
-            const std::vector<std::string> &sk=skins.addedPaths();
-            size_t s=0;
-            while(s<sk.size()) { pngs.push_back(sk[s]); ++s; }
+            collectPngs(skinBotDir,pngs,std::string());
         }
         optimizePngs(pngs);
     }
