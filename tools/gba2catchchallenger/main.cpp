@@ -27,8 +27,11 @@
 #include "Wild.hpp"
 
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QString>
+#include <QStringList>
+#include <QProcess>
 #include <QGuiApplication>
 #include <algorithm>
 #include <cstdlib>
@@ -60,18 +63,30 @@ static bool argFlag(const std::vector<std::string> &args, const std::string &key
 }
 
 // Run pngquant (lossy palette) then zopflipng (lossless deflate) over every PNG
-// under dir, when the tools are installed (else skip with a note).  Same approach
-// as tools/datapack-explorer-generator-cli — shrinks the flat-colour ROM tiles a
-// lot.  Runs AFTER the guards so it never affects them.
+// under dir, when the tools are installed (else skip with a note).  Shrinks the
+// flat-colour ROM tiles a lot (like tools/datapack-explorer-generator-cli).  Runs
+// AFTER the guards so it never affects them.  Uses QProcess with an explicit argv
+// (NO shell) so a datapack path with odd characters can't break or inject.
 static void optimizePngs(const std::string &dir)
 {
+    QStringList pngs;
+    QDirIterator it(QString::fromStdString(dir), QStringList() << "*.png",
+                    QDir::Files, QDirIterator::Subdirectories);
+    while(it.hasNext())
+        pngs << it.next();
+    if(pngs.isEmpty())
+        return;
     if(QFile::exists("/usr/bin/pngquant"))
     {
         std::cout << "Optimizing tileset PNGs (pngquant)..." << std::flush;
-        std::string cmd="/usr/bin/find \""+dir+"\" -name '*.png' -exec"
-            " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/pngquant"
-            " --force --skip-if-larger --ext .png --quality 65-95 {} \\; >/dev/null 2>&1";
-        std::system(cmd.c_str());
+        int i=0;
+        while(i<pngs.size())
+        {
+            QStringList a;
+            a << "--force" << "--skip-if-larger" << "--ext" << ".png" << "--quality" << "65-95" << pngs.at(i);
+            QProcess::execute("/usr/bin/pngquant", a);
+            i++;
+        }
         std::cout << " done" << std::endl;
     }
     else
@@ -79,9 +94,14 @@ static void optimizePngs(const std::string &dir)
     if(QFile::exists("/usr/bin/zopflipng"))
     {
         std::cout << "Optimizing tileset PNGs (zopflipng)..." << std::flush;
-        std::string cmd="/usr/bin/find \""+dir+"\" -name '*.png' -exec"
-            " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/zopflipng -y {} {} \\; >/dev/null 2>&1";
-        std::system(cmd.c_str());
+        int i=0;
+        while(i<pngs.size())
+        {
+            QStringList a;
+            a << "-y" << pngs.at(i) << pngs.at(i);
+            QProcess::execute("/usr/bin/zopflipng", a);
+            i++;
+        }
         std::cout << " done" << std::endl;
     }
     else
@@ -304,7 +324,6 @@ int main(int argc, char *argv[])
     // .minigsf per song) instead of opus.  Plays in external GSF players AND in
     // our client (which decodes the gsflib's ROM with the software MP2k synth).
     const bool gsfMode=argFlag(args,"--gsf");
-    const std::string musicExt=gsfMode ? "minigsf" : "opus";
 
     const std::string ripSong=argValue(args,"--ripsong");
     if(datapack.empty() && ripSong.empty())
@@ -482,18 +501,30 @@ int main(int argc, char *argv[])
         // Bot skins: extracted overworld sprites are matched against existing skins
         // (~10% per-channel tolerance, content-cropped) and reused, else added.
         skins.loadExisting();
+
+        // Decide the music format BEFORE writing the maps, so each map's
+        // backgroundsound ref matches what we actually produce.  --gsf builds a
+        // standard GSF set ONLY if the engine functions + ROM free space are
+        // located; otherwise fall back to opus, so a map never references a
+        // .minigsf we couldn't write.
+        M4aRipper m4a;
+        const bool haveMusic=m4a.locate(rom);
+        GsfWriter gsf;
+        bool gsfReady=false;
+        std::string musicExt="opus";
+        if(gsfMode && haveMusic && gsf.prepare(rom,m4a)) { gsfReady=true; musicExt="minigsf"; }
+        else if(gsfMode)
+            std::cerr << "--gsf: could not build a GSF set (engine functions / ROM free space"
+                         " not found); falling back to opus" << std::endl;
+
         CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,itemResolver);
-        writer.setMusicExtension(musicExt); // "opus" (default) or "minigsf" (--gsf)
+        writer.setMusicExtension(musicExt);
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
 
         // Rip the maps' background music into THIS label's own folder
-        // map/main/<label>/music/<name>.<ext> (named after a representative map by
-        // CCWriter, matching the per-map backgroundsound refs).  ext=opus by
-        // default, or a standard GSF set (.minigsf per song + one .gsflib) with
-        // --gsf.  Most-used first, capped at 64.
-        M4aRipper m4a;
-        if(m4a.locate(rom))
+        // map/main/<label>/music/<name>.<ext> (named after a representative map).
+        if(haveMusic)
         {
             std::map<uint16_t,int> use;
             std::map<std::string,std::map<uint16_t,int> > byType;
@@ -517,10 +548,10 @@ int main(int argc, char *argv[])
             while(it!=use.end()) { order.push_back(std::make_pair(-it->second,it->first)); ++it; }
             std::sort(order.begin(),order.end());
 
-            // --gsf: one shared gsflib for the label, then a tiny minigsf per song.
-            GsfWriter gsf;
+            // --gsf (gsfReady): write the one shared gsflib for the label now;
+            // each song then gets a tiny minigsf.  gsf was already prepared above.
             std::string libRel; // <label>.gsflib, dir-relative for the _lib tag
-            if(gsfMode && gsf.prepare(rom,m4a))
+            if(gsfReady)
             {
                 libRel=gi.label+".gsflib";
                 gsf.writeLib(musicDir+"/"+libRel,gi.label);
@@ -531,14 +562,14 @@ int main(int argc, char *argv[])
                 const uint16_t id=order[oi].second; ++oi;
                 const std::string out=musicDir+"/"+writer.musicFileBase(id)+"."+musicExt;
                 bool wrote=false;
-                if(gsfMode)
+                if(gsfReady)
                     wrote = !libRel.empty() && gsf.writeMinigsf(out,id,libRel,writer.musicFileBase(id));
                 else
                     wrote = m4a.writeOpus(rom,id,out,16.0);
                 if(wrote) ++ripped;
             }
             std::cout << "Music: ripped " << ripped << "/" << use.size() << " "
-                      << (gsfMode?"minigsf":"opus") << " song(s) to " << musicDir << std::endl;
+                      << (gsfReady?"minigsf":"opus") << " song(s) to " << musicDir << std::endl;
             // type-fallback map/music.xml (dominant ripped BGM per coarse type).
             // Refs are label-root-relative ("music/<name>.<ext>"), resolved by the
             // client as datapackPathMain()+ref = "<label>/music/<name>.<ext>".
