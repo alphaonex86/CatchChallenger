@@ -395,8 +395,13 @@ bool M4aRipper::writeOpus(const GbaRom &rom, int songId, const std::string &outP
     f.write(samples);
     f.close();
 
+    // Encode mono @48 kbps: the GBA source is signed 8-bit PCM (low-fidelity to
+    // begin with), so a stereo/high-bitrate opus only stores upmix noise.  -ac 1
+    // downmixes L/R to mono and 48k halves the file vs the old 96k stereo (~195 ->
+    // ~95 KB/song).  Opus has no bit-depth setting; the 8-bit character comes from
+    // the source, not an encoder flag.
     QStringList args;
-    args << "-y" << "-i" << wav << "-c:a" << "libopus" << "-b:a" << "96k" << QString::fromStdString(outPath);
+    args << "-y" << "-i" << wav << "-c:a" << "libopus" << "-ac" << "1" << "-b:a" << "48k" << QString::fromStdString(outPath);
     QProcess p; p.start("ffmpeg", args);
     const bool fin = p.waitForFinished(60000);
     QFile::remove(wav);
