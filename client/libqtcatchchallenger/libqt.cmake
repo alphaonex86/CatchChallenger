@@ -91,6 +91,8 @@ if(NOT TARGET catchchallenger_qt_lib)
 
     if(NOT CATCHCHALLENGER_NOAUDIO)
         list(APPEND _libqtcc_sources ${_libqtcc_dir}/Audio.cpp)
+        # Original-GBA .mp2k playback (shared MP2k software player) used by Audio.cpp.
+        list(APPEND _libqtcc_sources ${CC_REPO_ROOT}/general/mp2k/Mp2kPlayer.cpp)
     endif()
     if(CATCHCHALLENGER_SOLO)
         list(APPEND _libqtcc_sources ${_libqtcc_dir}/SoloDatabaseInit.cpp)
