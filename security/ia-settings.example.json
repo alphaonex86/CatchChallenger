@@ -1,0 +1,8 @@
+{
+  "_comment": "Optional. Copy to ia-settings.json (or point CC_IA_SETTINGS at it) to spread the Ollama work across several hosts. A bare string is a backend URL; an object may pin specific models to a backend. Each model is always routed to the SAME backend (a pinned backend wins, else a backend that actually has the model, chosen by a stable hash of the name) so the model stays warm there and a panel runs across machines in parallel. Delete/omit this file to use only the local backend.",
+  "ollama_backends": [
+    "http://127.0.0.1:11434",
+    { "url": "http://gpu1.lan:11434", "models": ["deepseek-coder:33b", "qwen3-coder:30b"] },
+    { "url": "http://gpu2.lan:11434" }
+  ]
+}

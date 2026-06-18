@@ -27,12 +27,16 @@ Usage:
   (no arg defaults to `scan`)
 """
 
+import concurrent.futures
+import functools
+import hashlib
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -57,10 +61,202 @@ SCAN_SEED_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
     "general/fight",    # shared turn-based fight engine
 ))
 MODEL_NAME = "opencode-fast"
-OLLAMA_API = "http://127.0.0.1:11434/api/generate"
-OLLAMA_CHAT = "http://127.0.0.1:11434/api/chat"
+OLLAMA_DEFAULT_URL = "http://127.0.0.1:11434"
+OLLAMA_API = OLLAMA_DEFAULT_URL + "/api/generate"
+OLLAMA_CHAT = OLLAMA_DEFAULT_URL + "/api/chat"
+
+# --- IA backend selection --------------------------------------------------
+# The default backend is the local Ollama model above. For a one-off run that
+# drives the SAME audit/exploit loop with Anthropic's Claude instead, set
+# CC_IA_BACKEND=claude and provide a credential VIA THE ENVIRONMENT (never store
+# a key/token in this repo). Either works:
+#     # console API key (pay-per-token, recommended for this batch workload):
+#     CC_IA_BACKEND=claude ANTHROPIC_API_KEY=sk-ant-api... python3 server.py all
+#     # or a Claude Code login token (`claude setup-token` -> sk-ant-oat...):
+#     CC_IA_BACKEND=claude CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat... python3 server.py all
+# The credential is read from the environment at call time and is never written
+# to disk by this tool. Only the chat() transport changes - prompts, tools, the
+# agent loop, the findings format and SECURITY-IA.md handling are all identical.
+# No extra pip package is required: we talk to the REST API over the stdlib
+# urllib, exactly like the Ollama path. (If the official `anthropic` SDK is ever
+# installed it would be preferable, but this script is deliberately
+# dependency-free and the project forbids installing packages, so raw HTTP.)
+IA_BACKEND = os.environ.get("CC_IA_BACKEND", "ollama").strip().lower()
+USE_CLAUDE = IA_BACKEND == "claude"
+# Default to the most capable model (per Anthropic's model catalogue); override
+# with CC_CLAUDE_MODEL for a cheaper/faster tier, e.g. claude-sonnet-4-6.
+CLAUDE_MODEL = os.environ.get("CC_CLAUDE_MODEL", "claude-opus-4-8")
+CLAUDE_API = "https://api.anthropic.com/v1/messages"
+CLAUDE_VERSION = "2023-06-01"
+# Hard ceiling per streamed reply. Adaptive thinking tokens count against this,
+# so leave generous headroom: we stream, so a high ceiling costs nothing unless
+# actually emitted, and it keeps deep reasoning over a big file from truncating
+# the (short) findings answer.
+CLAUDE_MAX_TOKENS = 16384
+
+# Label used in user-facing INIT/DONE log lines so a Claude run doesn't print
+# the (unused) Ollama model name.
+IA_LABEL = CLAUDE_MODEL if USE_CLAUDE else MODEL_NAME
+
+# Running token tally for the Claude backend (whole process). Filled from the
+# stream's usage events so each phase can print a spend summary at the end.
+CLAUDE_USAGE = {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0}
+CLAUDE_CALLS = 0
+# Guards for state mutated from panel worker threads (usage counters, notebook).
+_USAGE_LOCK = threading.Lock()
+_NOTES_LOCK = threading.Lock()
+# USD per million tokens (input, output), keyed by model-family prefix. Cache
+# writes bill at 1.25x input, cache reads at 0.10x input.
+CLAUDE_PRICES = {
+    "claude-fable": (10.0, 50.0),
+    "claude-opus": (5.0, 25.0),
+    "claude-sonnet": (3.0, 15.0),
+    "claude-haiku": (1.0, 5.0),
+}
+
+
+def claude_usage_summary():
+    """One-line spend summary for the Claude backend, or '' on the Ollama path
+    (local model, no per-token cost to report)."""
+    if not USE_CLAUDE or CLAUDE_CALLS == 0:
+        return ""
+    price_in, price_out = (5.0, 25.0)  # default to Opus-tier if unknown
+    for prefix, prices in CLAUDE_PRICES.items():
+        if CLAUDE_MODEL.startswith(prefix):
+            price_in, price_out = prices
+            break
+    u = CLAUDE_USAGE
+    cost = (u["input"] * price_in
+            + u["cache_write"] * price_in * 1.25
+            + u["cache_read"] * price_in * 0.10
+            + u["output"] * price_out) / 1_000_000.0
+    return ("%s [usage] %s: %d calls | in %d (cache w %d / r %d) out %d tok "
+            "| ~$%.4f\n"
+            % (_ts(), CLAUDE_MODEL, CLAUDE_CALLS, u["input"], u["cache_write"],
+               u["cache_read"], u["output"], cost))
 
 HERE = os.path.dirname(os.path.realpath(__file__))
+
+
+# ===========================================================================
+# Ollama backends (settings-driven, multi-host). With NO settings we use the
+# single local backend (behaviour unchanged). Multiple backends are declared in
+# a JSON settings file (CC_IA_SETTINGS, default <here>/ia-settings.json):
+#   {"ollama_backends": [
+#       "http://127.0.0.1:11434",
+#       {"url": "http://gpu1:11434", "models": ["deepseek-coder:33b"]}]}
+# A bare string is a backend URL; an object may PIN specific models to it. Each
+# model is routed to the SAME backend every run (a pinned backend wins, else a
+# backend that actually has the model, picked by a stable hash of the name) - so
+# the model stays warm there and a panel spreads across machines.
+# ===========================================================================
+IA_SETTINGS_FILE = os.environ.get(
+    "CC_IA_SETTINGS", os.path.join(HERE, "ia-settings.json"))
+_OLLAMA_BACKENDS = None   # cached [(url, pinned_models_set)]
+_MODEL_LOCATIONS = None   # cached {model_name: [backend_url, ...]}
+# CLI per-model backend pins: a model spec may carry an '@<host:port>' suffix
+# (e.g. --collaborate=qwen3:30b@gpu1:11434,deepseek:33b@gpu2:11434) to route THAT
+# model to a specific Ollama backend, without editing the settings JSON. Filled
+# by _register_model_spec(); consulted first by backend_for_model().
+_MODEL_URL_PINS = {}      # {model_name: backend_url}
+
+
+def load_settings():
+    """Parsed settings dict, or {} if the file is absent/unreadable/invalid.
+    Best-effort: a bad settings file never aborts the run."""
+    try:
+        with open(IA_SETTINGS_FILE, "r", errors="replace") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def ollama_backends():
+    """Ordered [(url, pinned_models_set)], cached. Falls back to the single local
+    backend when settings declare none."""
+    global _OLLAMA_BACKENDS
+    if _OLLAMA_BACKENDS is None:
+        out = []
+        declared = load_settings().get("ollama_backends")
+        if not isinstance(declared, list):
+            declared = []   # a non-list (e.g. a bare string) is not iterable as entries
+        for entry in declared:
+            if isinstance(entry, str):
+                url, pins = entry, []
+            elif isinstance(entry, dict):
+                url, pins = entry.get("url"), entry.get("models") or []
+            else:
+                continue
+            # Guard malformed entries (url not a string, pins not a list of
+            # strings) so a hand-written settings file can never abort the run.
+            if isinstance(url, str) and url:
+                if not isinstance(pins, (list, tuple)):
+                    pins = []
+                out.append((url.rstrip("/"),
+                            set(p for p in pins if isinstance(p, str))))
+        if not out:
+            out.append((OLLAMA_DEFAULT_URL, set()))
+        _OLLAMA_BACKENDS = out
+    return _OLLAMA_BACKENDS
+
+
+def _model_locations():
+    """{model_name: [backend_url, ...]} from each backend's /api/tags, cached.
+    Only consulted when more than one backend is configured."""
+    global _MODEL_LOCATIONS
+    if _MODEL_LOCATIONS is None:
+        loc = {}
+        for url, _pins in ollama_backends():
+            try:
+                with urllib.request.urlopen(url + "/api/tags", timeout=10) as resp:
+                    info = json.loads(resp.read().decode("utf-8", "replace"))
+            except (urllib.error.URLError, OSError, ValueError):
+                continue
+            for m in info.get("models") or []:
+                name = m.get("name") or m.get("model")
+                if name:
+                    loc.setdefault(name, []).append(url)
+        _MODEL_LOCATIONS = loc
+    return _MODEL_LOCATIONS
+
+
+def _register_model_spec(spec):
+    """Split an optional '@<backend>' suffix off a model spec and record a
+    per-model backend pin (the CLI way to say WHICH Ollama host:port serves THIS
+    model). Returns the BARE model name (so downstream code uses it unchanged).
+    A spec without '@' is returned as-is. Claude specs ('claude'/'claude:<id>')
+    ignore any '@...' - Claude has no per-host backend. The backend accepts a
+    full URL or a bare host:port (assumed http)."""
+    name, sep, backend = spec.partition("@")
+    name = name.strip()
+    backend = backend.strip()
+    if sep and backend and not (name == "claude" or name.startswith("claude:")):
+        if "://" not in backend:
+            backend = "http://" + backend
+        _MODEL_URL_PINS[name] = backend.rstrip("/")
+    return name
+
+
+def backend_for_model(model):
+    """Base URL of the backend serving `model`. A CLI per-model pin
+    ('model@host:port') wins over everything. Else one backend -> that one (no
+    network); else a backend that PINS the model wins; otherwise a backend that
+    actually has it, chosen by a stable hash of the model name (same model ->
+    same backend every run); otherwise the hash over all backends."""
+    pinned = _MODEL_URL_PINS.get(model)
+    if pinned:
+        return pinned
+    backends = ollama_backends()
+    if len(backends) == 1:
+        return backends[0][0]
+    for url, pins in backends:
+        if model in pins:
+            return url
+    located = _model_locations().get(model)
+    candidates = located if located else [u for u, _ in backends]
+    h = int(hashlib.sha1(model.encode("utf-8")).hexdigest(), 16)
+    return candidates[h % len(candidates)]
 
 
 def _ts():
@@ -203,6 +399,10 @@ SYSTEM_PROMPT = (
     "HANDLER, never in the XML loader.\n"
     "- The test/automation channel (QLocalServer) and any other local-only "
     "IPC.\n"
+    "- The Qt admin GUI (server/qt) and ALL Qt-only code: the audited binary is "
+    "the no-Qt CLI game server (epoll EventLoop). Code compiled only into the Qt "
+    "build is not in the attack surface. (A file whose Qt path is #ifdef'd out in "
+    "the CLI build is in scope only for its NON-Qt, compiled-in code.)\n"
     "Even a REAL memory-corruption or injection bug (overflow, OOB, "
     "command/SQL injection) on one of these LOCAL channels is OUT OF SCOPE "
     "here - output 'No issues identified' for it UNLESS the very same sink is "
@@ -211,9 +411,20 @@ SYSTEM_PROMPT = (
     "\n"
     "STRICT RULES:\n"
     "- This is ONE file out of a larger project. Types, classes, and methods "
-    "used here are DEFINED IN OTHER FILES. A few likely-related files are "
-    "shown under 'RELATED FILE' as a starting hint; fetch any others you "
-    "need with the tools below.\n"
+    "used here are DEFINED IN OTHER FILES. To judge exploitability you must "
+    "read AROUND the file: the COUNTERPART .cpp/.hpp (the CALLED code - "
+    "function bodies where the overflow/OOB actually lives) and the CALLERS "
+    "(the TAINT SOURCE - where untrusted client bytes enter and flow in). "
+    "These are attached as 'COUNTERPART', 'USED-CLASS DEFINITION', 'RELATED "
+    "FILE' and 'CALLERS' hints; fetch any others with the tools below.\n"
+    "- TRACE THE TAINT before deciding. A finding is real only if you can walk "
+    "the path attacker-bytes (EventLoopClient::read -> ProtocolParsing* / "
+    "ClientNetworkRead* -> a CALLER) into the sink in THIS file. Conversely do "
+    "NOT clear a function that consumes a length/index/id/size/offset/pointer "
+    "with 'No issues' until you have checked - via the CALLER hints, a GREP for "
+    "its call sites, or READing its implementation - that no untrusted TCP "
+    "input reaches it unchecked. A header's declarations seen alone are NEVER "
+    "sufficient to clear it.\n"
     "- DO NOT report: unused code, dead #ifdef branches, missing "
     "implementations, pure-virtual methods without a body here, default "
     "return values, enum scoping, code style, naming, maintainability, "
@@ -228,10 +439,14 @@ SYSTEM_PROMPT = (
     "nothing else:\n"
     "  READ <path>     - return a repo file (relative path or bare filename)\n"
     "  GREP <symbol>   - find where a symbol/string is defined or used\n"
+    "  ANALYZE <path>  - Clang Static Analyzer findings for a .cpp (or a header "
+    "via its .cpp), built with the CLI server's real flags: path-sensitive "
+    "null-deref / use-after-free / OOB / leak / API-misuse candidates\n"
     "Use tools when a method's behaviour matters to the verdict (e.g. how a "
-    "length is parsed upstream). I will reply with the result and you may "
-    "call another tool. When you have enough information, STOP calling tools "
-    "and output your final answer. Do NOT mix a tool line with findings.\n"
+    "length is parsed upstream, or to ANALYZE a callee/caller). I will reply "
+    "with the result and you may call another tool. When you have enough "
+    "information, STOP calling tools and output your final answer. Do NOT mix a "
+    "tool line with findings.\n"
     "\n"
     "MANDATORY OUTPUT FORMAT - your final answer MUST be one of exactly two "
     "forms, nothing else:\n"
@@ -272,16 +487,81 @@ SYSTEM_PROMPT = SYSTEM_PROMPT + read_bounty()
 
 # Where to look for a referenced class/header when it does not resolve by a
 # relative include path.
-SEARCH_DIRS = (
-    os.path.join(REPO_ROOT, "server"),
-    os.path.join(REPO_ROOT, "general", "base"),
-    os.path.join(REPO_ROOT, "general", "fight"),
-)
+# Scope of the class/symbol graph + caller/basename search. Restricted to the
+# code that goes into the no-Qt CLI server (mirrors SCAN_SEED_DIRS) - NOT the
+# whole server/ tree, so the Qt admin GUI (server/qt), build artefacts
+# (server/build) and the other-binary daemons (login/master/gateway) are never
+# pulled into context or treated as callers.
+SEARCH_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
+    "server/cli",
+    "server/base",
+    "server/crafting",
+    "server/fight",
+    "general/base",
+    "general/fight",
+))
 
 # Cap the context we attach so a single oversized file can't blow the model's
 # context window. Bytes, applied per related file and to the total.
-MAX_RELATED_BYTES = 48000
+MAX_RELATED_BYTES = 60000
 MAX_RELATED_FILES = 16
+# Per-attached-file byte cap so one hub header (e.g. GeneralStructures.hpp, 81
+# classes) can't swallow the whole related-context budget - several dependency
+# files each get a slice.
+MAX_RELATED_PER_FILE = 20000
+# How many class-DEFINITION files to pull for the classes THIS file uses (the
+# 'file B' for 'A uses class B'). Bounded so a file touching many types stays
+# within the model's context.
+MAX_DEP_CLASSES = 12
+
+# Reverse-dependency (CALLER) context. A file - above all a header - read in
+# isolation hides the bug: the function BODIES live in the sibling .cpp (callees)
+# and the untrusted input enters through the CALLERS (taint sources). We attach a
+# bounded sample of call sites so the reviewer sees who feeds this code without
+# having to guess to GREP. Kept small so a 33B model's context isn't blown; the
+# model can still READ a full caller on demand.
+MAX_CALLER_FILES = 8       # distinct caller files sampled
+MAX_CALLER_PER_FILE = 4    # call-site lines kept per caller (spread, not one hot file)
+MAX_CALLER_HITS = 24       # total call-site lines shown
+MAX_CALLER_BYTES = 16000   # hard cap on the whole caller-hint block
+
+# ---------------------------------------------------------------------------
+# Semantic static analysis: the Clang Static Analyzer, driven through clang-tidy
+# with the CLI server's OWN compile flags (a generated compile_commands.json).
+# This analyses EXACTLY the no-Qt binary - Qt #ifdef branches are preprocessed
+# out, and types/macros/templates resolve for real - so it is the semantic-grade
+# layer the regex graph cannot provide. Entirely best-effort: if clang-tidy is
+# absent or the cmake configure fails, the analyzer layer is silently skipped and
+# the LLM audit still runs.
+# ---------------------------------------------------------------------------
+CLANG_TIDY = shutil.which("clang-tidy")
+# Compile DB generated out of the source tree (override for a shared cache).
+COMPILE_DB_DIR = os.environ.get("CC_COMPILE_DB_DIR", "/tmp/cc-security-cli-compiledb")
+CLI_CMAKE_SRC = os.path.join(REPO_ROOT, "server", "cli")
+# Curated, LOW-NOISE, security-relevant checks: the path-sensitive Clang Static
+# Analyzer (memory/null/uninit/leak/API-misuse) + a hand-picked bugprone subset.
+# Style/noise checks (e.g. bugprone-narrowing-conversions, which fires on every
+# uint8_t->char byte cast) are deliberately OFF - they flood the panel without
+# finding remote bugs.
+CLANG_TIDY_CHECKS = ",".join((
+    "-*",
+    "clang-analyzer-core.*",
+    "clang-analyzer-cplusplus.*",
+    "clang-analyzer-unix.*",
+    "clang-analyzer-security.*",
+    "bugprone-signed-char-misuse",
+    "bugprone-misplaced-widening-cast",
+    "bugprone-too-small-loop-variable",
+    "bugprone-integer-division",
+    "bugprone-suspicious-memory-comparison",
+    "bugprone-not-null-terminated-result",
+    "bugprone-undefined-memory-manipulation",
+    "bugprone-sizeof-expression",
+    "bugprone-misplaced-pointer-arithmetic-in-alloc",
+    "bugprone-suspicious-realloc-usage",
+))
+TIDY_TIMEOUT = 240         # per-TU wall budget (analysis can be slow on big TUs)
+TIDY_MAX_FINDINGS = 40     # cap analyzer lines fed into one audit
 
 # Running audit notebook the model reads as context and appends to.
 SECURITY_NOTES_FILE = os.path.join(HERE, "SECURITY-IA.md")
@@ -318,10 +598,26 @@ VENDOR_DIRS = tuple(os.path.realpath(os.path.join(REPO_ROOT, p)) for p in (
     "client/libqtcatchchallenger/libtiled",
 ))
 
+# Out of scope for THIS audit: the no-Qt CLI server is the target, so the Qt
+# admin GUI is excluded entirely (operator-side, not the remote attack surface),
+# along with in-source build artefacts and all client code. Never audited and
+# never pulled in as context. (Files in scope that only touch Qt under #ifdef -
+# e.g. NormalServerGlobal.cpp, Map_loader.cpp - stay IN: their Qt branch is
+# compiled out of the CLI build, which is exactly what clang-tidy then analyses.)
+EXCLUDED_DIRS = tuple(os.path.realpath(os.path.join(REPO_ROOT, p)) for p in (
+    "server/qt",      # Qt admin GUI binary - not the CLI server
+    "server/build",   # in-source CMake build artefacts
+    "client",         # client side, not the server attack surface
+))
+
 
 def is_vendor(path):
+    """True for a vendored third-party tree OR an out-of-scope tree (Qt GUI /
+    build artefacts / client). Such files are never audited and never attached
+    as context."""
     rp = os.path.realpath(path)
-    return any(rp == d or rp.startswith(d + os.sep) for d in VENDOR_DIRS)
+    return any(rp == d or rp.startswith(d + os.sep)
+               for d in VENDOR_DIRS + EXCLUDED_DIRS)
 
 
 def collect_files():
@@ -408,6 +704,351 @@ def related_files(path):
     return out
 
 
+def counterpart_files(path):
+    """The sibling implementation/header of `path` (same dir + basename, other
+    extension). Auditing a .hpp in isolation hides the bug - the function BODIES
+    (where the overflow/OOB actually lives) sit in the .cpp, which the header does
+    not #include, so related_files() misses it. Returns existing repo-local,
+    non-vendor counterparts (callee bodies for a header, declarations for a .cpp)."""
+    repo_root = os.path.realpath(REPO_ROOT)
+    base = os.path.dirname(path)
+    stem = os.path.splitext(os.path.basename(path))[0]
+    if path.endswith((".h", ".hpp", ".hxx")):
+        exts = (".cpp", ".cc", ".cxx", ".c")
+    else:
+        exts = (".hpp", ".h", ".hxx")
+    out = []
+    for ext in exts:
+        cand = os.path.realpath(os.path.join(base, stem + ext))
+        if cand != path and cand.startswith(repo_root + os.sep) \
+                and os.path.isfile(cand) and not is_vendor(cand):
+            out.append(cand)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Class symbol graph: follow dependencies BY CLASS, not just by #include.
+# 'A uses class B' -> pull B's defining file; 'C uses class A' -> C is a caller.
+# A pure-Python index (no libclang/ctags dependency: clang.cindex is not
+# importable here and the clang CLI would need the full Qt6 include flags +
+# a compile DB, which this no-root-CMake repo does not provide). Good enough:
+# the project names classes in PascalCase and one class is defined per 'class X
+# {' / 'struct X {' site, which a regex resolves reliably.
+# ---------------------------------------------------------------------------
+# A class/struct DEFINITION (has a body): 'class X {' or 'class X : Base {',
+# at line start (after indentation). A forward decl 'class X;' is excluded
+# because [^;{]* stops at the ';' before any '{'/':' is seen. Leading ALL-CAPS
+# tokens are skipped so an export macro ('class DLL_PUBLIC Foo') does not steal
+# the name; the (?:...)* is greedy but backtracks, so an all-caps struct name
+# ('struct DDOS {') still resolves (zero macros matched).
+_CLASSDEF_RE = re.compile(
+    r'^[ \t]*(?:class|struct)[ \t]+(?:[A-Z][A-Z0-9_]*[ \t]+)*([A-Za-z_]\w*)\b'
+    r'[^;{]*[{:]', re.MULTILINE)
+
+_symbol_index = None          # (def_map {class: deffile}, file_classes {file: {class}})
+_SYMBOL_LOCK = threading.Lock()
+
+
+def symbol_index():
+    """Repo class/struct symbol graph over SEARCH_DIRS, built once and cached:
+    (def_map {class_name: defining_file}, file_classes {defining_file: {class}}).
+    A header definition wins over a .cpp one; forward decls are skipped. Lets us
+    resolve a class NAME to the file that defines it (a class name is not always
+    the file basename - GeneralStructures.hpp alone defines 81)."""
+    global _symbol_index
+    if _symbol_index is None:
+        with _SYMBOL_LOCK:
+            if _symbol_index is None:
+                def_map = {}
+                file_classes = {}   # keyed by realpath for O(1) lookup by callers
+                for d in SEARCH_DIRS:
+                    for root, _dirs, names in os.walk(d):
+                        for n in sorted(names):
+                            if not n.endswith(SOURCE_EXT):
+                                continue
+                            fp = os.path.realpath(os.path.join(root, n))
+                            try:
+                                text = open(fp, "r", errors="replace").read()
+                            except OSError:
+                                continue
+                            is_header = n.endswith((".h", ".hpp", ".hxx"))
+                            for m in _CLASSDEF_RE.finditer(text):
+                                cls = m.group(1)
+                                prev = def_map.get(cls)
+                                if prev is None or (is_header and not prev.endswith(
+                                        (".h", ".hpp", ".hxx"))):
+                                    def_map[cls] = fp
+                                file_classes.setdefault(fp, set()).add(cls)
+                _symbol_index = (def_map, file_classes)
+    return _symbol_index
+
+
+_IDENT_RE = re.compile(r'\b[A-Za-z_]\w*\b')
+
+
+def classes_used_by(path):
+    """Definition files of the repo classes that `path` references - the 'file B'
+    for 'A uses class B'. Intersects the file's identifiers with the class index,
+    drops classes this file defines itself, and returns deduped def files in
+    first-use order, capped to MAX_DEP_CLASSES."""
+    def_map, file_classes = symbol_index()
+    rp = os.path.realpath(path)
+    own = file_classes.get(rp, set())
+    try:
+        content = open(path, "r", errors="replace").read()
+    except OSError:
+        return []
+    out = []
+    seen_files = set()
+    seen_cls = set()
+    for m in _IDENT_RE.finditer(content):
+        cls = m.group(0)
+        if cls in seen_cls or cls in own:
+            continue
+        seen_cls.add(cls)
+        deffile = def_map.get(cls)
+        if not deffile:
+            continue
+        drp = os.path.realpath(deffile)
+        if drp == rp or drp in seen_files:
+            continue
+        seen_files.add(drp)
+        out.append(deffile)
+        if len(out) >= MAX_DEP_CLASSES:
+            break
+    return out
+
+
+def classes_defined_in(path):
+    """The class names `path` itself defines (for the reverse 'who uses class A'
+    grep). Empty for free-function / split-implementation files."""
+    _def_map, file_classes = symbol_index()
+    return sorted(file_classes.get(os.path.realpath(path), set()))
+
+
+# A method/function DEFINED in a .cpp: a 'Class::method(' opening at the start of
+# a line (definitions sit at column 0; calls are indented inside a body). Used to
+# find the real callers of split-implementation files (CC spreads Client's body
+# across ClientHeavyLoad*.cpp etc., none named after the class - so the stem alone
+# finds nobody).
+_DEF_RE = re.compile(r'^[A-Za-z_][\w:<>,&*\s]*?\b([A-Za-z_]\w+)::([A-Za-z_]\w+)\s*\(',
+                     re.MULTILINE)
+MAX_CALLER_SYMBOLS = 12
+
+
+def caller_snippets(path):
+    """Reverse-dependency hint: a bounded sample of CALL SITES that feed `path`,
+    so the reviewer can see whether untrusted TCP input reaches this code - the
+    taint source lives in the CALLERS, never in the file itself. Two greps over
+    the audit scope (SEARCH_DIRS):
+      1. WHOLE-WORD references to the class names this file DEFINES ('who uses
+         class A') - falls back to the basename stem when the file defines no
+         class (free-function / split-implementation files);
+      2. fixed-string references to the fully-qualified methods this file DEFINES
+         ('Class::method', which finds callers of split .cpp files not named
+         after their class) and to #includes of its basename.
+    Returns deduped 'rel/path:line: <code>' lines, spread across callers and
+    capped. The file itself and its counterpart (definitions, not callers) are
+    dropped. '' when nothing references it."""
+    base = os.path.basename(path)
+    stem = os.path.splitext(base)[0]
+    skip = {os.path.realpath(path)}
+    for c in counterpart_files(path):
+        skip.add(os.path.realpath(c))
+
+    # (1) Whole-word references to the classes this file defines. -w so 'Map'
+    # does not also match 'Mapper'/'MapItem'. Stem fallback when none.
+    word_patterns = classes_defined_in(path)[:MAX_CALLER_SYMBOLS] or [stem]
+
+    # (2) Fixed-string method/#include references.
+    try:
+        content = open(path, "r", errors="replace").read()
+    except OSError:
+        content = ""
+    fixed_patterns = [base]
+    seen_sym = set()
+    for m in _DEF_RE.finditer(content):
+        sym = m.group(1) + "::" + m.group(2)
+        if sym not in seen_sym and sym != stem + "::" + stem:
+            seen_sym.add(sym)
+            fixed_patterns.append(sym)
+        if len(fixed_patterns) >= MAX_CALLER_SYMBOLS:
+            break
+
+    incl = ["--include=*.cpp", "--include=*.h", "--include=*.hpp",
+            "--include=*.cc", "--include=*.cxx"]
+    raw = []
+    for flags, pats in (("-rnIwF", word_patterns), ("-rnIF", fixed_patterns)):
+        if not pats:
+            continue
+        args = ["grep", flags] + incl
+        for pat in pats:
+            args += ["-e", pat]
+        args += ["--", *SEARCH_DIRS]
+        try:
+            raw += subprocess.run(args, capture_output=True, text=True,
+                                  timeout=60).stdout.splitlines()
+        except (OSError, subprocess.SubprocessError) as exc:
+            sys.stderr.write("    [caller-scan] grep failed: %s\n" % exc)
+
+    per_file = {}
+    hits = []
+    total_bytes = 0
+    seen_lines = set()
+    for line in raw:
+        fp = line.split(":", 1)[0]
+        rfp = os.path.realpath(fp)
+        if rfp in skip:
+            continue
+        if rfp not in per_file and len(per_file) >= MAX_CALLER_FILES:
+            continue
+        if per_file.get(rfp, 0) >= MAX_CALLER_PER_FILE:
+            continue
+        rel_line = line[len(REPO_ROOT) + 1:] \
+            if line.startswith(REPO_ROOT + os.sep) else line
+        if rel_line in seen_lines:
+            continue
+        if total_bytes + len(rel_line) + 1 > MAX_CALLER_BYTES:
+            break
+        seen_lines.add(rel_line)
+        per_file[rfp] = per_file.get(rfp, 0) + 1
+        total_bytes += len(rel_line) + 1
+        hits.append(rel_line)
+        if len(hits) >= MAX_CALLER_HITS:
+            break
+    return "\n".join(hits)
+
+
+# ---------------------------------------------------------------------------
+# Clang Static Analyzer integration (semantic, path-sensitive).
+# ---------------------------------------------------------------------------
+_compile_db = None          # path to compile_commands.json, or "" if unavailable
+_cli_tus = None             # frozenset of realpath TUs in the CLI server build
+_compile_lock = threading.Lock()
+_tidy_cache = {}            # {target_tu: findings_block}
+_tidy_locks = {}            # {target_tu: Lock} so the same TU is analysed once
+_tidy_master = threading.Lock()
+
+
+def compile_db():
+    """Path to a compile_commands.json for the CLI server, generated once via
+    cmake (out of the source tree) and cached on disk. '' if clang-tidy is
+    missing or the configure fails -> the analyzer layer is then skipped."""
+    global _compile_db
+    if _compile_db is None:
+        with _compile_lock:
+            if _compile_db is None:
+                _compile_db = ""
+                cdb = os.path.join(COMPILE_DB_DIR, "compile_commands.json")
+                if CLANG_TIDY and not os.path.isfile(cdb):
+                    sys.stderr.write("%s [analyzer] generating CLI compile DB "
+                                     "(cmake configure %s)...\n"
+                                     % (_ts(), CLI_CMAKE_SRC))
+                    try:
+                        r = subprocess.run(
+                            ["cmake", "-S", CLI_CMAKE_SRC, "-B", COMPILE_DB_DIR,
+                             "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"],
+                            capture_output=True, text=True, timeout=600)
+                        if r.returncode != 0:
+                            sys.stderr.write("%s [analyzer] cmake configure failed "
+                                             "(rc=%d); static analysis disabled\n"
+                                             % (_ts(), r.returncode))
+                    except (OSError, subprocess.SubprocessError) as exc:
+                        sys.stderr.write("%s [analyzer] cmake configure error: %s; "
+                                         "static analysis disabled\n" % (_ts(), exc))
+                if CLANG_TIDY and os.path.isfile(cdb):
+                    _compile_db = cdb
+    return _compile_db
+
+
+def cli_translation_units():
+    """Realpaths of the .cpp TUs compiled into the CLI server (from the compile
+    DB) - the authoritative in-scope set for the no-Qt binary. Empty if there is
+    no compile DB."""
+    global _cli_tus
+    if _cli_tus is None:
+        tus = set()
+        cdb = compile_db()
+        if cdb:
+            try:
+                for e in json.load(open(cdb)):
+                    f = e.get("file")
+                    if f:
+                        tus.add(os.path.realpath(f))
+            except (OSError, ValueError) as exc:
+                sys.stderr.write("%s [analyzer] could not read compile DB: %s\n"
+                                 % (_ts(), exc))
+        _cli_tus = frozenset(tus)
+    return _cli_tus
+
+
+def _tidy_target(path):
+    """The .cpp TU to analyse for `path`: the file itself if it is a CLI TU, else
+    its .cpp counterpart if THAT is a TU (so a header is checked via its
+    implementation). None if neither is in the CLI build."""
+    tus = cli_translation_units()
+    rp = os.path.realpath(path)
+    if rp in tus:
+        return rp
+    for c in counterpart_files(path):
+        rc = os.path.realpath(c)
+        if rc in tus:
+            return rc
+    return None
+
+
+def _run_clang_tidy(target):
+    """Run clang-tidy on one TU; return its MAIN-FILE findings as a capped block."""
+    try:
+        res = subprocess.run(
+            [CLANG_TIDY, "-p", COMPILE_DB_DIR, "--quiet",
+             "--header-filter=$^",          # display only main-file diagnostics
+             "--checks=" + CLANG_TIDY_CHECKS, target],
+            capture_output=True, text=True, timeout=TIDY_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        sys.stderr.write("    [analyzer] clang-tidy timed out on %s\n"
+                         % os.path.relpath(target, REPO_ROOT))
+        return ""
+    except (OSError, subprocess.SubprocessError) as exc:
+        sys.stderr.write("    [analyzer] clang-tidy error: %s\n" % exc)
+        return ""
+    prefix = target + ":"
+    rel = os.path.relpath(target, REPO_ROOT)
+    lines = []
+    for ln in res.stdout.splitlines():
+        if ln.startswith(prefix) and (": warning:" in ln or ": error:" in ln):
+            lines.append(rel + ln[len(target):])
+            if len(lines) >= TIDY_MAX_FINDINGS:
+                lines.append("... [more analyzer findings omitted]")
+                break
+    return "\n".join(lines)
+
+
+def clang_tidy_findings(path):
+    """Clang Static Analyzer findings located IN the audited file (for a header,
+    surfaced from its .cpp counterpart), as a capped text block. Cached per
+    target TU; thread-safe with per-TU locking so the panel's concurrent members
+    never analyse the same TU twice. '' when clang-tidy/DB is absent, the file is
+    out of CLI scope, or it is clean."""
+    if not CLANG_TIDY:
+        return ""
+    target = _tidy_target(path)
+    if not target:
+        return ""
+    with _tidy_master:
+        if target in _tidy_cache:
+            return _tidy_cache[target]
+        lk = _tidy_locks.setdefault(target, threading.Lock())
+    with lk:                                   # serialises only the SAME TU
+        with _tidy_master:
+            if target in _tidy_cache:
+                return _tidy_cache[target]
+        block = _run_clang_tidy(target)
+        with _tidy_master:
+            _tidy_cache[target] = block
+        return block
+
+
 def read_notes():
     """Current SECURITY-IA.md content (empty string if absent)."""
     try:
@@ -420,13 +1061,14 @@ def append_notes(rel, block):
     """Append model-emitted project-wide facts to SECURITY-IA.md (flat list)."""
     block = block.strip()
     if block:
-        header = "" if os.path.exists(SECURITY_NOTES_FILE) else (
-            "# SECURITY-IA.md - project-wide security audit notebook\n"
-            "# Trust boundaries, untrusted-input entry points, shared state, "
-            "cross-file invariants.\n\n"
-        )
-        with open(SECURITY_NOTES_FILE, "a") as fh:
-            fh.write("%s%s\n" % (header, block))
+        with _NOTES_LOCK:
+            header = "" if os.path.exists(SECURITY_NOTES_FILE) else (
+                "# SECURITY-IA.md - project-wide security audit notebook\n"
+                "# Trust boundaries, untrusted-input entry points, shared state, "
+                "cross-file invariants.\n\n"
+            )
+            with open(SECURITY_NOTES_FILE, "a") as fh:
+                fh.write("%s%s\n" % (header, block))
 
 
 def fit_ctx(*texts):
@@ -454,9 +1096,15 @@ def ensure_context():
     is unreachable or the field is absent we just note it and continue. The
     discovered length is stored in MODEL_CTX so fit_ctx caps num_ctx to it."""
     global MODEL_CTX
+    if USE_CLAUDE:
+        # No Ollama to probe; Claude carries a >=200K context and ignores the
+        # num_ctx knob entirely, so there is nothing to discover or cap.
+        sys.stderr.write("%s [ctx] backend=claude model=%s (Ollama probe "
+                         "skipped)\n" % (_ts(), CLAUDE_MODEL))
+        return None
     try:
         req = urllib.request.Request(
-            OLLAMA_API.replace("/api/generate", "/api/show"),
+            backend_for_model(MODEL_NAME) + "/api/show",
             data=json.dumps({"model": MODEL_NAME}).encode("utf-8"),
             headers={"Content-Type": "application/json"},
         )
@@ -537,8 +1185,256 @@ def tool_grep(symbol):
     return "\n".join(hits) if hits else "GREP: no matches for %s" % symbol
 
 
-def chat(messages, timeout=None):
-    """One streamed /api/chat turn. Returns the assistant message text.
+def tool_analyze(arg):
+    """ANALYZE <path>: Clang Static Analyzer findings for a repo .cpp (or a
+    header, via its .cpp counterpart), built with the CLI server's own no-Qt
+    flags. Lets the model pull semantic analysis for a callee/caller on demand."""
+    if not CLANG_TIDY:
+        return "ANALYZE: clang-tidy not available on this host"
+    repo_root = os.path.realpath(REPO_ROOT)
+    cand = os.path.realpath(os.path.join(REPO_ROOT, arg))
+    if not (cand.startswith(repo_root + os.sep) and os.path.isfile(cand)):
+        cand = find_by_basename(os.path.basename(arg))
+    if not cand or not os.path.isfile(cand):
+        return "ANALYZE: not found in repo: %s" % arg
+    out = clang_tidy_findings(cand)
+    return out if out else ("ANALYZE: no static-analyzer findings (clean, or "
+                            "not part of the CLI-server build) for %s" % arg)
+
+
+def _claude_split(messages):
+    """Map our [{system}, {user}, {assistant}, ...] list onto Claude's wire
+    shape: a single `system` string plus a user/assistant `messages` array.
+    The agent loop already starts with one system turn then strictly alternates
+    user/assistant, which is exactly what the Messages API wants."""
+    system_parts = []
+    convo = []
+    for m in messages:
+        role = m.get("role")
+        content = m.get("content", "")
+        if role == "system":
+            system_parts.append(content)
+        else:
+            convo.append({"role": role, "content": content})
+    return "\n\n".join(system_parts), convo
+
+
+def _cache_text(text):
+    """One ephemeral-cached text content block."""
+    return [{"type": "text", "text": text, "cache_control": {"type": "ephemeral"}}]
+
+
+# Env vars that can carry a credential, in precedence order. ANTHROPIC_API_KEY is
+# a console API key (x-api-key, pay-per-token); the other two carry a Claude Code
+# / `ant` OAuth token (Authorization: Bearer + the oauth beta header), e.g. the
+# output of `claude setup-token`.
+CLAUDE_CRED_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
+                    "CLAUDE_CODE_OAUTH_TOKEN")
+
+
+def _claude_has_creds():
+    """True if any supported credential env var is set."""
+    for name in CLAUDE_CRED_VARS:
+        if os.environ.get(name, "").strip():
+            return True
+    return False
+
+
+def _claude_auth_headers():
+    """Resolve auth headers for the Messages API from the environment.
+
+    - ANTHROPIC_API_KEY (a console key, sk-ant-api...) -> x-api-key.
+    - ANTHROPIC_AUTH_TOKEN / CLAUDE_CODE_OAUTH_TOKEN (a Claude Code / `ant`
+      OAuth token, sk-ant-oat...) -> Authorization: Bearer + the mandatory
+      `oauth-2025-04-20` beta header (a bearer token without it 401s).
+
+    An OAuth token is commonly pasted into ANTHROPIC_API_KEY by mistake; we
+    detect the sk-ant-oat prefix and route it to Bearer regardless of which var
+    holds it, so it works either way. Raises if no credential is present."""
+    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    token = (os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
+             or os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip())
+    if key.startswith("sk-ant-oat"):  # OAuth token in the API-key slot
+        token, key = key, ""
+    if key:
+        return {"x-api-key": key}
+    if token:
+        return {"authorization": "Bearer " + token,
+                "anthropic-beta": "oauth-2025-04-20"}
+    raise RuntimeError(
+        "CC_IA_BACKEND=claude but no credential in the environment - set "
+        "ANTHROPIC_API_KEY (console key) or CLAUDE_CODE_OAUTH_TOKEN / "
+        "ANTHROPIC_AUTH_TOKEN (a Claude Code token, e.g. `claude setup-token`).")
+
+
+class _ClaudeStreamError(OSError):
+    """An `error` event arriving IN-BAND in an already-200 stream (e.g.
+    overloaded_error). Subclasses OSError so it lands in chat_claude's existing
+    transient-retry handler and backs off like an HTTP 529, instead of being
+    swallowed and returned as a (bogus) clean completion."""
+
+
+def chat_claude(messages, timeout=None, model=None):
+    """One streamed Anthropic Messages turn. Same contract as chat(): returns
+    the assistant text. Mirrors the Ollama path's wall-clock `timeout` (a hard
+    cap used by the exploit phase) and its transient-error retry/backoff.
+
+    Prompt caching: the system prompt is byte-identical on every turn (and
+    across files), and the first user turn (system + the file under audit +
+    related files + notes) is identical across one file's tool-loop turns. Both
+    are marked as cache breakpoints, so turns 2..N (and, while the system block
+    is large enough, later files) read that prefix at ~0.1x input price instead
+    of re-billing it. We never mutate the shared `messages` list - the
+    content-block conversion happens here, on a private copy, so the Ollama path
+    (which expects plain-string content) is unaffected."""
+    global CLAUDE_CALLS
+    mdl = model or CLAUDE_MODEL
+    auth_headers = _claude_auth_headers()  # raises if no credential present
+    system, convo = _claude_split(messages)
+    # Cache the system block and the first user turn (the large, stable prefix).
+    cached_convo = []
+    first_user_cached = False
+    for msg in convo:
+        if not first_user_cached and msg["role"] == "user":
+            cached_convo.append({"role": "user",
+                                 "content": _cache_text(msg["content"])})
+            first_user_cached = True
+        else:
+            cached_convo.append(msg)
+    deadline = (time.time() + timeout) if timeout else None
+    payload = {
+        "model": mdl,
+        "max_tokens": CLAUDE_MAX_TOKENS,
+        "system": _cache_text(system) if system else "",
+        "messages": cached_convo,
+        "stream": True,
+        # Adaptive thinking: let the model reason as deeply as the file needs
+        # before emitting findings. We only collect the visible text deltas.
+        "thinking": {"type": "adaptive"},
+        "output_config": {"effort": "high"},
+    }
+    data = json.dumps(payload).encode("utf-8")
+    headers = {"content-type": "application/json",
+               "anthropic-version": CLAUDE_VERSION}
+    headers.update(auth_headers)
+    attempt = 0
+    while True:
+        attempt += 1
+        if deadline:
+            sock_to = max(1, int(deadline - time.time()))
+        else:
+            sock_to = 1200
+        try:
+            req = urllib.request.Request(CLAUDE_API, data=data, headers=headers)
+            chunks = []
+            stop_reason = None
+            cut = False
+            # Per-stream token tally; folded into the global totals only on a
+            # clean completion (below), so a retried/aborted partial never
+            # double-counts.
+            u_in = u_cw = u_cr = u_out = 0
+            with urllib.request.urlopen(req, timeout=sock_to) as resp:
+                for raw in resp:
+                    if deadline and time.time() >= deadline:
+                        sys.stderr.write("    [chat cut: budget reached mid-stream]\n")
+                        cut = True
+                        break
+                    raw = raw.strip()
+                    # SSE: we only care about the JSON `data:` lines.
+                    if not raw.startswith(b"data:"):
+                        continue
+                    body = raw[len(b"data:"):].strip()
+                    if not body:
+                        continue
+                    try:
+                        obj = json.loads(body)
+                    except ValueError:
+                        continue
+                    etype = obj.get("type")
+                    if etype == "message_start":
+                        usage = (obj.get("message") or {}).get("usage") or {}
+                        u_in = usage.get("input_tokens", 0) or 0
+                        u_cw = usage.get("cache_creation_input_tokens", 0) or 0
+                        u_cr = usage.get("cache_read_input_tokens", 0) or 0
+                        u_out = usage.get("output_tokens", 0) or 0
+                    elif etype == "content_block_delta":
+                        delta = obj.get("delta") or {}
+                        # Ignore thinking_delta - keep only the answer text.
+                        if delta.get("type") == "text_delta":
+                            piece = delta.get("text")
+                            if piece:
+                                chunks.append(piece)
+                    elif etype == "message_delta":
+                        stop_reason = (obj.get("delta") or {}).get("stop_reason") or stop_reason
+                        # output_tokens here is cumulative for this message.
+                        u_out = (obj.get("usage") or {}).get("output_tokens", u_out) or u_out
+                    elif etype == "error":
+                        # Raise BEFORE the usage-commit so a partial stream is
+                        # retried (or, after 5 tries, surfaced) rather than
+                        # passed off as a finished answer.
+                        err = obj.get("error") or {}
+                        raise _ClaudeStreamError(err.get("message", err))
+            if cut and chunks:
+                # The cumulative output_tokens only arrives in message_delta,
+                # which a mid-stream cut never reaches - u_out still holds the
+                # tiny message_start value. Approximate from the streamed text
+                # (~4 chars/token) so the spend summary is a lower bound, not ~0.
+                u_out = max(u_out, len("".join(chunks)) // 4)
+            # Clean completion: commit this stream's usage to the global totals.
+            with _USAGE_LOCK:
+                CLAUDE_USAGE["input"] += u_in
+                CLAUDE_USAGE["cache_write"] += u_cw
+                CLAUDE_USAGE["cache_read"] += u_cr
+                CLAUDE_USAGE["output"] += u_out
+                CLAUDE_CALLS += 1
+            if stop_reason == "refusal":
+                # Authorised audit of our own code, but the safety classifier can
+                # still decline. Surface it and return what (if anything) we got.
+                sys.stderr.write("    [claude declined this turn (stop_reason=refusal)]\n")
+            elif stop_reason == "max_tokens":
+                # Don't let a truncated reply pass as a complete answer - a cut
+                # findings line is otherwise silently lost.
+                sys.stderr.write("    [claude reply truncated: hit max_tokens=%d "
+                                 "(adaptive thinking + answer share the budget); "
+                                 "answer may be partial]\n" % CLAUDE_MAX_TOKENS)
+            return "".join(chunks).strip()
+        except urllib.error.HTTPError as exc:
+            # 4xx (bad request / auth / model id) won't fix themselves - read the
+            # body so the user sees why, then raise. Retry only on 429/5xx/529.
+            detail = ""
+            try:
+                detail = exc.read().decode("utf-8", "replace")[:500]
+            except OSError:
+                pass
+            if exc.code not in (429, 500, 502, 503, 529):
+                raise RuntimeError("Claude API %d: %s" % (exc.code, detail))
+            if deadline and time.time() >= deadline:
+                return ""
+            if attempt >= 5:
+                raise
+            sys.stderr.write("    [chat retry %d/5 after HTTP %d %s]\n"
+                             % (attempt, exc.code, detail))
+            nap = 3 * attempt
+            if deadline:
+                nap = min(nap, max(0, int(deadline - time.time())))
+            time.sleep(nap)
+        except (urllib.error.URLError, ConnectionError, OSError) as exc:
+            if deadline and time.time() >= deadline:
+                sys.stderr.write("    [chat give up: budget reached after %s]\n" % exc)
+                return ""
+            if attempt >= 5:
+                raise
+            sys.stderr.write("    [chat retry %d/5 after %ds %s]\n" % (attempt, sock_to, exc))
+            nap = 3 * attempt
+            if deadline:
+                nap = min(nap, max(0, int(deadline - time.time())))
+            time.sleep(nap)
+
+
+def chat_ollama(messages, timeout=None, model=None):
+    """One streamed Ollama /api/chat turn. Returns the assistant message text;
+    `model` overrides MODEL_NAME (the panel targets a specific local model).
+
     Retries transient Ollama outages (ECONNREFUSED) up to 5x with backoff.
 
     `timeout` (seconds, optional) is a HARD wall-clock cap on the whole call,
@@ -548,9 +1444,11 @@ def chat(messages, timeout=None):
     returns whatever has arrived once the cap is hit, and we never retry/back-
     off past it. None = unbounded (scan phase)."""
     deadline = (time.time() + timeout) if timeout else None
+    mdl = model or MODEL_NAME
+    chat_url = backend_for_model(mdl) + "/api/chat"
     body = "".join(m["content"] for m in messages)
     payload = {
-        "model": MODEL_NAME,
+        "model": mdl,
         "messages": messages,
         "stream": True,
         "options": {
@@ -574,7 +1472,7 @@ def chat(messages, timeout=None):
             sock_to = 1200
         try:
             req = urllib.request.Request(
-                OLLAMA_CHAT, data=data,
+                chat_url, data=data,
                 headers={"Content-Type": "application/json"},
             )
             chunks = []
@@ -613,28 +1511,55 @@ def chat(messages, timeout=None):
             time.sleep(nap)
 
 
+def chat(messages, timeout=None):
+    """Single-model turn against the CONFIGURED backend (Claude when
+    CC_IA_BACKEND=claude, else Ollama). Back-compat entry used by the exploit
+    phase and the non-panel scan path."""
+    if USE_CLAUDE:
+        return chat_claude(messages, timeout)
+    return chat_ollama(messages, timeout)
+
+
+def chat_with(spec, messages, timeout=None):
+    """Single turn against a SPECIFIC panel member. spec None -> chat() (the
+    configured backend); 'claude'/'claude:<id>' -> the Claude backend with that
+    model id; anything else -> Ollama with that model name."""
+    if not spec:
+        return chat(messages, timeout)
+    if spec == "claude" or spec.startswith("claude:"):
+        mdl = spec.split(":", 1)[1] if ":" in spec else None
+        return chat_claude(messages, timeout, model=mdl)
+    return chat_ollama(messages, timeout, model=spec)
+
+
 def parse_tool(answer):
-    """If the reply is a single READ/GREP tool call, return (name, arg)."""
+    """If the reply is a single READ/GREP/ANALYZE tool call, return (name, arg)."""
     stripped = answer.strip()
     first = stripped.splitlines()[0].strip() if stripped else ""
-    for name in ("READ", "GREP"):
+    for name in ("READ", "GREP", "ANALYZE"):
         prefix = name + " "
         if first.startswith(prefix) and len(stripped) - len(first) < 40:
             return name, first[len(prefix):].strip()
     return None
 
 
-def _finalize_answer(rel, answer):
-    """Persist + strip the NOTES block and fix repo paths in a model answer.
-    Shared by analyze() and its degenerate-output retry."""
-    for block in NOTE_RE.findall(answer):
-        append_notes(rel, block)
+def _finalize_answer(rel, answer, persist=True):
+    """Strip the NOTES block (persisting it unless persist=False) and fix repo
+    paths in a model answer. Shared by analyze() and its degenerate retry. Panel
+    round-1/discussion members pass persist=False so only the synthesised
+    consensus writes the shared notebook (and threads don't race on it)."""
+    if persist:
+        for block in NOTE_RE.findall(answer):
+            append_notes(rel, block)
     answer = NOTE_RE.sub("", answer).strip()
     return fix_paths(answer)
 
 
-def analyze(path):
-    """Agentic audit of one file. The NOTES block is stripped + persisted."""
+def analyze(path, spec=None, persist_notes=True, preamble=""):
+    """Agentic audit of one file by ONE model (spec; None = configured backend).
+    `preamble` is prepended to the prompt (the panel uses it to announce the
+    reviewer + round). The NOTES block is stripped, and persisted unless
+    persist_notes=False (panel members defer the notebook write to synthesis)."""
     rel = os.path.relpath(path, REPO_ROOT)
     try:
         content = open(path, "r", errors="replace").read()
@@ -643,20 +1568,66 @@ def analyze(path):
 
     context = []
     budget = MAX_RELATED_BYTES
+    # Build the related-file list by PRIORITY, deduped by realpath:
+    #   1. COUNTERPART  - this file's own sibling .cpp/.hpp (the called code /
+    #      declarations); matters most, so it gets the budget first.
+    #   2. USED-CLASS DEFINITION - for every repo class THIS file uses, the file
+    #      that DEFINES that class (the class graph: 'A uses class B' -> file B).
+    #      A class name is not always the basename, so this catches deps that
+    #      #include-following alone misses.
+    #   3. RELATED FILE - the forward #includes (extra: enum/typedef/free-function
+    #      headers that define no class).
+    ordered = []
+    seen_ctx = set()
+    for cpath in counterpart_files(path):
+        rp = os.path.realpath(cpath)
+        if rp not in seen_ctx:
+            seen_ctx.add(rp)
+            ordered.append((
+                "COUNTERPART (implementation/header of the MAIN FILE - the "
+                "CALLED code; read to judge behaviour, do not audit)", cpath))
+    for dpath in classes_used_by(path):
+        rp = os.path.realpath(dpath)
+        if rp not in seen_ctx:
+            seen_ctx.add(rp)
+            ordered.append((
+                "USED-CLASS DEFINITION (a class this file uses is defined here; "
+                "read to judge how it is used, do not audit)", dpath))
     for rpath in related_files(path):
+        rp = os.path.realpath(rpath)
+        if rp not in seen_ctx:
+            seen_ctx.add(rp)
+            ordered.append(("RELATED FILE (dependency hint, do not audit)", rpath))
+    for label, rpath in ordered:
         if budget <= 0:
             break
         try:
             rtext = open(rpath, "r", errors="replace").read()
         except OSError:
             rtext = ""
-        rtext = rtext[:budget]
+        # Per-file cap so one hub header can't eat the whole budget.
+        rtext = rtext[:min(budget, MAX_RELATED_PER_FILE)]
         budget -= len(rtext)
         rrel = os.path.relpath(rpath, REPO_ROOT)
+        context.append("=== %s: %s ===\n%s" % (label, rrel, rtext))
+    # CALLERS: a bounded sample of who feeds this file (the taint source - where
+    # untrusted TCP input may reach it). Own byte budget; never an audit target.
+    callers = caller_snippets(path)
+    if callers:
         context.append(
-            "=== RELATED FILE (starting hint, do not audit): %s ===\n%s"
-            % (rrel, rtext)
-        )
+            "=== CALLERS of %s (taint-source hint - where remote input may "
+            "reach this code; do NOT audit, READ/GREP a caller for the full "
+            "path) ===\n%s" % (rel, callers))
+    # Semantic static-analyzer findings (Clang Static Analyzer, compiled with the
+    # CLI server's own no-Qt flags). High recall, NOT pre-filtered for remote
+    # reachability - the model must verify each against the TCP taint path.
+    analyzer = clang_tidy_findings(path)
+    if analyzer:
+        context.append(
+            "=== STATIC ANALYZER (clang, CLI-server build) findings in this "
+            "file - each is a CANDIDATE only: confirm it is reachable from "
+            "untrusted TCP input AND exploitable before reporting; many will "
+            "not be. Do not blindly echo them ===\n%s" % analyzer)
     context_block = ("\n\n".join(context) + "\n\n") if context else ""
 
     notes = read_notes()
@@ -667,11 +1638,19 @@ def analyze(path):
     )
 
     user = (
-        "%s%sAudit the MAIN FILE below for exploitable security "
-        "vulnerabilities. Report findings only for the MAIN FILE. Call "
-        "READ/GREP first if you need to see how something is defined.\n\n"
+        "%s%s%sAudit the MAIN FILE below for exploitable security "
+        "vulnerabilities. Report findings only for the MAIN FILE. The "
+        "COUNTERPART (.cpp/.hpp), USED-CLASS DEFINITION and CALLER hints above "
+        "show the called code, the types it uses and where remote input may "
+        "enter - USE them, and confirm or dismiss every STATIC ANALYZER "
+        "candidate against the TCP taint path. Before concluding 'No "
+        "issues identified' on any function that consumes a length, index, id, "
+        "size, offset or pointer, TRACE whether untrusted TCP input can reach "
+        "it: follow a CALLER, GREP for more call sites, or READ the "
+        "implementation. A header's declarations alone are NOT enough to clear "
+        "it.\n\n"
         "=== MAIN FILE: %s ===\n\n%s"
-        % (notes_block, context_block, rel, content)
+        % (preamble, notes_block, context_block, rel, content)
     )
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -682,12 +1661,17 @@ def analyze(path):
     step = 0
     while step < SCAN_MAX_STEPS:
         step += 1
-        answer = chat(messages)
+        answer = chat_with(spec, messages)
         tool = parse_tool(answer)
         if tool is None:
             break
         name, arg = tool
-        result = tool_read(arg) if name == "READ" else tool_grep(arg)
+        if name == "READ":
+            result = tool_read(arg)
+        elif name == "GREP":
+            result = tool_grep(arg)
+        else:
+            result = tool_analyze(arg)
         sys.stderr.write("    [tool] %s %s\n" % (name, arg))
         messages.append({"role": "assistant", "content": answer})
         messages.append({
@@ -701,9 +1685,9 @@ def analyze(path):
             "content": "No more tool calls. Give your final answer now "
             "based on what you have.",
         })
-        answer = chat(messages)
+        answer = chat_with(spec, messages)
 
-    answer = _finalize_answer(rel, answer)
+    answer = _finalize_answer(rel, answer, persist_notes)
     if looks_degenerate(answer):
         # A repetition loop usually means the model lost the thread, not that the
         # file is clean. Give it ONE corrective retry for a terse final answer
@@ -717,7 +1701,7 @@ def analyze(path):
             "format: either one 'LINE <n>: <input> -> <consequence>' per real "
             "finding for the MAIN FILE, or the exact phrase 'No issues "
             "identified'. Nothing else."})
-        answer = _finalize_answer(rel, chat(messages))
+        answer = _finalize_answer(rel, chat_with(spec, messages), persist_notes)
         if looks_degenerate(answer):
             sys.stderr.write("    [discarded degenerate output after retry]\n")
             return ""
@@ -739,6 +1723,327 @@ def analyze(path):
             "only %d lines; kept the rest]\n"
             % (len(dropped), ", ".join(str(n) for n in dropped), nlines))
     return "\n".join(kept).strip()
+
+
+# ===========================================================================
+# Collaborative panel: several local models (< CC_PANEL_MAX_B params) audit the
+# SAME file at once, then discuss for CC_PANEL_ROUNDS rounds - each sees the
+# others' findings and may CHANGE ITS VIEW - and a lead synthesises the team
+# consensus. Improves recall + precision over any single small model.
+# ===========================================================================
+
+# Comma-separated model specs, or "auto"/"all" to use every installed Ollama
+# model under CC_PANEL_MAX_B billion params. Empty -> single-model (unchanged).
+CC_IA_PANEL = os.environ.get("CC_IA_PANEL", "").strip()
+try:
+    CC_PANEL_MAX_B = float(os.environ.get("CC_PANEL_MAX_B", "35") or "35")
+except ValueError:
+    CC_PANEL_MAX_B = 35.0
+try:
+    CC_PANEL_MAX_MEMBERS = int(os.environ.get("CC_PANEL_MAX_MEMBERS", "4") or "4")
+except ValueError:
+    CC_PANEL_MAX_MEMBERS = 4
+# Total speaking rounds: round 1 = independent findings, rounds 2..N = team
+# discussion (each model is told "round X/N" and may revise). Default 10.
+try:
+    CC_PANEL_ROUNDS = int(os.environ.get("CC_PANEL_ROUNDS", "10") or "10")
+except ValueError:
+    CC_PANEL_ROUNDS = 10
+if CC_PANEL_ROUNDS < 1:
+    CC_PANEL_ROUNDS = 1
+# Which member synthesises consensus (model spec); default claude-if-present-
+# else-first. May carry an '@host:port' backend pin like any panel member.
+CC_PANEL_LEAD = _register_model_spec(os.environ.get("CC_PANEL_LEAD", "").strip())
+
+# Shared framing so every model behaves as a fair, constructive teammate.
+TEAM_FRAMING = (
+    "You are one reviewer in a PANEL auditing the same file together as a TEAM. "
+    "Speak constructively and fairly: build on good points, concede when a peer "
+    "is right, and rebut only with concrete reasoning grounded in the code. The "
+    "goal is the best SHARED diagnosis, not winning.")
+# Cap on MAIN FILE bytes echoed into each discussion / synthesis turn. Must stay
+# >= the largest audited file: round 1 audits the FULL file, so a smaller cap
+# would hide a real tail-line finding from the peers/lead and they would drop it.
+PANEL_FILE_CAP = 200000
+
+
+def _param_billions(model):
+    """Billions of parameters for an /api/tags model entry, from
+    details.parameter_size (e.g. '32.8B'), else a ':NNb' tag suffix. None if
+    unknown."""
+    det = model.get("details") or {}
+    ps = det.get("parameter_size")
+    if ps:
+        m = re.search(r"([\d.]+)\s*([BM])", ps, re.I)
+        if m:
+            v = float(m.group(1))
+            return v / 1000.0 if m.group(2).upper() == "M" else v
+    m = re.search(r":(\d+(?:\.\d+)?)b\b", model.get("name", ""), re.I)
+    return float(m.group(1)) if m else None
+
+
+def ollama_models(max_b=None):
+    """Installed Ollama models across ALL configured backends, as [(name,
+    size_b)] (deduped, first backend reporting a name wins). When max_b is set,
+    keep only models whose KNOWN parameter size is < max_b (unknown-size models
+    are excluded - conservative). [] if no backend is reachable."""
+    seen = {}
+    order = []
+    for url, _pins in ollama_backends():
+        try:
+            with urllib.request.urlopen(url + "/api/tags", timeout=10) as resp:
+                info = json.loads(resp.read().decode("utf-8", "replace"))
+        except (urllib.error.URLError, OSError, ValueError) as exc:
+            sys.stderr.write("%s [panel] backend %s not listable: %s\n"
+                             % (_ts(), url, exc))
+            continue
+        for m in info.get("models") or []:
+            name = m.get("name") or m.get("model")
+            if not name or name in seen:
+                continue
+            size_b = _param_billions(m)
+            if max_b is not None and (size_b is None or size_b >= max_b):
+                continue
+            seen[name] = size_b
+            order.append(name)
+    return [(n, seen[n]) for n in order]
+
+
+def resolve_panel():
+    """Ordered, de-duplicated list of model specs in the collaborative panel.
+    'auto'/'all' expands to installed Ollama models < CC_PANEL_MAX_B (capped to
+    CC_PANEL_MAX_MEMBERS), plus 'claude' when a credential is present. Claude
+    specs are dropped (with a warning) if no credential is set."""
+    specs = []
+    for tok in CC_IA_PANEL.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        if tok.lower() in ("auto", "all"):
+            picked = [name for name, _ in ollama_models(CC_PANEL_MAX_B)]
+            if 0 < CC_PANEL_MAX_MEMBERS < len(picked):
+                dropped = picked[CC_PANEL_MAX_MEMBERS:]
+                picked = picked[:CC_PANEL_MAX_MEMBERS]
+                sys.stderr.write("%s [panel] %d models < %gB; using %d, skipping: "
+                                 "%s\n" % (_ts(), len(picked) + len(dropped),
+                                           CC_PANEL_MAX_B, len(picked),
+                                           ", ".join(dropped)))
+            specs.extend(picked)
+            if _claude_has_creds():
+                specs.append("claude")
+        else:
+            # Register an optional '@host:port' backend pin and keep the bare
+            # name (so it stays a clean dict key / display label downstream).
+            specs.append(_register_model_spec(tok))
+    seen = set()
+    out = []
+    for s in specs:
+        if s not in seen:
+            seen.add(s)
+            out.append(s)
+    if not _claude_has_creds():
+        kept = [s for s in out if not (s == "claude" or s.startswith("claude:"))]
+        if len(kept) != len(out):
+            sys.stderr.write("%s [panel] dropping claude member(s): no credential "
+                             "set\n" % _ts())
+        out = kept
+    return out
+
+
+def _panel_lead(specs):
+    """Pick the synthesiser: explicit CC_PANEL_LEAD, else claude if present, else
+    the first member."""
+    if CC_PANEL_LEAD:
+        return CC_PANEL_LEAD
+    for s in specs:
+        if s == "claude" or s.startswith("claude:"):
+            return s
+    return specs[0] if specs else None
+
+
+def _panel_map(fn, specs):
+    """Run fn(spec) for every spec AT THE SAME TIME (one thread each) and return
+    {spec: result} in the original spec order. A spec whose call raises
+    contributes '' so the panel carries on with the rest."""
+    results = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(specs))) as ex:
+        futs = {ex.submit(fn, s): s for s in specs}
+        for fut in concurrent.futures.as_completed(futs):
+            s = futs[fut]
+            try:
+                results[s] = fut.result()
+            except Exception as exc:
+                sys.stderr.write("    [panel] %s errored: %s\n" % (s, exc))
+                results[s] = ""
+    return {s: results.get(s, "") for s in specs}
+
+
+def _panel_digest(positions, exclude=None):
+    """Labelled concatenation of each member's current findings, for sharing."""
+    parts = []
+    for spec, text in positions.items():
+        if spec == exclude:
+            continue
+        body = (text or "").strip() or "(no findings reported)"
+        parts.append("----- reviewer %s says:\n%s" % (spec, body))
+    return "\n\n".join(parts)
+
+
+def _line_signature(text):
+    """The set of MAIN-FILE line numbers a position flags (empty = 'no issues').
+    Reviewers that share a signature share a 'vision' -> the same work group."""
+    nums = set()
+    for m in re.finditer(r'\bLINE\s+(\d+)\b', text or "", re.I):
+        nums.add(int(m.group(1)))
+    return frozenset(nums)
+
+
+def _work_groups(positions):
+    """Cluster reviewers by shared signature into work groups, largest first.
+    A group of one = a reviewer standing alone on a unique view."""
+    groups = {}
+    for spec, text in positions.items():
+        groups.setdefault(_line_signature(text), []).append(spec)
+    return sorted(groups.items(), key=lambda kv: (-len(kv[1]), sorted(kv[1])))
+
+
+def _groups_blurb(positions):
+    """Model/operator-readable description of the current work groups."""
+    out = []
+    i = 0
+    for sig, members in _work_groups(positions):
+        i += 1
+        where = ("lines " + ", ".join(str(n) for n in sorted(sig))) if sig \
+            else "no issues"
+        alone = " (alone)" if len(members) == 1 else ""
+        out.append("work-group %d%s: {%s} -> %s"
+                   % (i, alone, ", ".join(members), where))
+    return "\n".join(out)
+
+
+def _panel_signatures(positions):
+    """{spec: signature} for change detection between rounds."""
+    return {spec: _line_signature(text) for spec, text in positions.items()}
+
+
+def _panel_revise_one(path, content, round_no, total, positions, spec):
+    """One discussion turn: member `spec` re-examines the file plus the panel's
+    current work groups and may change its view (switch group / stand alone).
+    Single turn - context is in the prompt."""
+    rel = os.path.relpath(path, REPO_ROOT)
+    mine = (positions.get(spec) or "").strip() or "(you reported nothing last round)"
+    peers = _panel_digest(positions, exclude=spec)
+    blurb = _groups_blurb(positions)
+    user = (
+        "%s\n\nRound %d/%d. The panel currently splits into these WORK GROUPS "
+        "(reviewers who share a view):\n%s\n\nRe-examine %s (below) and the "
+        "findings, then decide where you stand: STAY in your group, SWITCH to "
+        "another group if its reasoning convinced you, or STAND ALONE with your "
+        "own view - whatever the code actually supports. React constructively: "
+        "KEEP what holds up, DROP what a peer convincingly rebutted or the file "
+        "does not support, ADD a real issue a peer surfaced that you verified, "
+        "and FIX wrong line numbers. If you have nothing to change and agree "
+        "with your group, simply restate your position. Output the mandatory "
+        "format only (one 'LINE <n>: <input> -> <consequence>' per real finding, "
+        "or 'No issues identified').\n\n"
+        "=== MAIN FILE: %s ===\n%s\n\n=== YOUR FINDINGS ===\n%s\n\n"
+        "=== PEER FINDINGS ===\n%s"
+        % (TEAM_FRAMING, round_no, total, blurb, rel, rel,
+           content[:PANEL_FILE_CAP], mine, peers))
+    messages = [{"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user}]
+    return _finalize_answer(rel, chat_with(spec, messages), persist=False)
+
+
+def _panel_synthesize(path, specs, positions):
+    """Lead member merges the panel's final positions into one consensus answer
+    (the only step that writes the shared notebook)."""
+    rel = os.path.relpath(path, REPO_ROOT)
+    try:
+        content = open(path, "r", errors="replace").read()
+    except OSError:
+        content = ""
+    lead = _panel_lead(specs)
+    digest = _panel_digest(positions)
+    user = (
+        "You are the lead of a security review panel for %s. The team has "
+        "finished discussing. Below is the file and every reviewer's FINAL "
+        "position. Produce the CONSENSUS for the MAIN FILE: include a finding "
+        "only if it is real and survived scrutiny (a clear majority, or one "
+        "well-argued reviewer no one rebutted, verifiable in the code); drop "
+        "rebutted / out-of-scope / duplicate ones; merge duplicates and fix line "
+        "numbers. Output the mandatory format only (one 'LINE <n>: <input> -> "
+        "<consequence>' per consensus finding, or 'No issues identified').\n\n"
+        "=== MAIN FILE: %s ===\n%s\n\n=== PANEL FINAL POSITIONS ===\n%s"
+        % (rel, rel, content[:PANEL_FILE_CAP], digest))
+    messages = [{"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user}]
+    return _finalize_answer(rel, chat_with(lead, messages))
+
+
+def panel_analyze(path, specs):
+    """Collaborative multi-model audit of one file. Returns the consensus answer
+    in the SAME format as analyze() so the scan pipeline is unchanged.
+    Round 1: every member audits independently, at the same time. Rounds 2..N:
+    each member sees its peers and may change its view (constructive team work).
+    Finally the lead synthesises the consensus."""
+    total = CC_PANEL_ROUNDS
+    try:
+        content = open(path, "r", errors="replace").read()
+    except OSError:
+        content = ""
+    sys.stderr.write("    [panel] %d reviewers x up to %d rounds: %s\n"
+                     % (len(specs), total, ", ".join(specs)))
+
+    # Round 1/N: independent audits, concurrently; defer notebook writes.
+    sys.stderr.write("    [panel] round 1/%d (independent findings)\n" % total)
+    preamble = ("%s\n\nRound 1/%d: present your initial independent findings.\n\n"
+                % (TEAM_FRAMING, total))
+    positions = _panel_map(
+        functools.partial(analyze, path, persist_notes=False, preamble=preamble),
+        specs)
+    sys.stderr.write("    [panel] work groups after round 1:\n%s\n"
+                     % _groups_blurb(positions))
+    prev_sig = _panel_signatures(positions)
+
+    # Rounds 2..N: team discussion; a member may switch group or stand alone.
+    # Stop early on consensus (one work group) or when nobody changes view.
+    r = 1
+    while r < total:
+        r += 1
+        sys.stderr.write("    [panel] round %d/%d (discussion)\n" % (r, total))
+        positions = _panel_map(
+            functools.partial(_panel_revise_one, path, content, r, total, positions),
+            specs)
+        groups = _work_groups(positions)
+        sys.stderr.write("    [panel] work groups:\n%s\n" % _groups_blurb(positions))
+        sig = _panel_signatures(positions)
+        if len(groups) <= 1:
+            sys.stderr.write("    [panel] consensus (one work group) at round "
+                             "%d/%d -> stopping early\n" % (r, total))
+            break
+        if sig == prev_sig:
+            sys.stderr.write("    [panel] no reviewer changed view at round %d/%d "
+                             "-> nothing more to say, stopping early\n" % (r, total))
+            break
+        prev_sig = sig
+
+    # Synthesis: lead merges into the team consensus (persists notes once). If
+    # the lead model is unreachable (Ollama down / Claude 4xx / retries spent),
+    # fall back to the largest work group's view instead of letting the error
+    # propagate and discard the whole file's multi-round panel work.
+    try:
+        return _panel_synthesize(path, specs, positions)
+    except Exception as exc:
+        sys.stderr.write("    [panel] synthesis failed (%s); falling back to the "
+                         "largest work group\n" % exc)
+        rel = os.path.relpath(path, REPO_ROOT)
+        for _sig, members in _work_groups(positions):
+            for spec in members:
+                ans = (positions.get(spec) or "").strip()
+                if ans:
+                    return _finalize_answer(rel, ans, persist=True)
+        return ""
 
 
 # Repo-relative source paths the model might cite inside finding text.
@@ -849,11 +2154,35 @@ def _run_scan_inner(out):
     check_tooling()
     ensure_context()
     files = collect_files()
+    # Optional cap: scan only the first N files. Lets a Claude run be bounded to
+    # a cheap, quick subset before committing to the full (276-file) sweep.
+    scan_max = os.environ.get("SECSERVER_SCAN_MAX")
+    if scan_max:
+        try:
+            n = int(scan_max)
+        except ValueError:
+            n = 0
+        if 0 < n < len(files):
+            sys.stderr.write("%s [INIT] SECSERVER_SCAN_MAX=%d: limiting scan to "
+                             "first %d of %d files\n"
+                             % (_ts(), n, n, len(files)))
+            files = files[:n]
+    panel = resolve_panel()
+    if len(panel) > 1:
+        # Build the shared caches now, single-threaded, so the panel worker
+        # threads don't race on their lazy init.
+        find_by_basename("")
+        if len(ollama_backends()) > 1:
+            _model_locations()
     scan_start = time.time()
     sys.stderr.write(
         "%s [INIT] %d files to audit (in-scope dirs + repo-local includes, vendor "
-        "excluded) via %s\n" % (_ts(), len(files), MODEL_NAME)
+        "excluded) via %s\n" % (_ts(), len(files), IA_LABEL)
     )
+    if len(panel) > 1:
+        sys.stderr.write("%s [INIT] collaborative panel of %d models, %d rounds "
+                         "each: %s\n"
+                         % (_ts(), len(panel), CC_PANEL_ROUNDS, ", ".join(panel)))
 
     flagged = []
     for i, path in enumerate(files, 1):
@@ -861,7 +2190,12 @@ def _run_scan_inner(out):
         sys.stderr.write("%s [%d/%d] %s\n" % (_ts(), i, len(files), rel))
         sys.stderr.flush()
         try:
-            answer = analyze(path)
+            if len(panel) > 1:
+                answer = panel_analyze(path, panel)
+            elif panel:
+                answer = analyze(path, spec=panel[0])
+            else:
+                answer = analyze(path)
         except Exception as exc:  # network / ollama failure - report, continue
             sys.stderr.write("    [skip] %s\n" % exc)
             continue
@@ -891,6 +2225,9 @@ def _run_scan_inner(out):
         sys.stderr.write("    [warn] could not record scan time: %s\n" % exc)
     sys.stderr.write("%s [DONE] TOTAL time to scan all files: %s\n"
                      % (_ts(), _human_dur(scan_secs)))
+    summary = claude_usage_summary()
+    if summary:
+        sys.stderr.write(summary)
     sys.stderr.flush()
     return 0
 
@@ -1905,7 +3242,8 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
         # e.g. "can't find EventLoop.h ..."). Something is wrong - stop this
         # exploit and abort the WHOLE run with exit code 255 (per operator
         # policy: a repeated sentence is a fatal signal, not a soft skip).
-        if last_answer is not None and answer.strip() == last_answer.strip():
+        if (last_answer is not None and answer.strip()
+                and answer.strip() == last_answer.strip()):
             sys.stderr.write("%s     [REPEAT ABORT] identical reply twice on "
                              "exploit %02d (%s) -> aborting whole run (exit 255)\n"
                              % (_ts(), idx, rel))
@@ -2204,7 +3542,7 @@ def run_exploit():
     hard_budget, soft_budget = resolve_budgets()
     sys.stderr.write("%s [INIT] %d findings, %d look exploitable; generating "
                      "exploits via %s (budget per exploit: hard %s / soft %s)\n"
-                     % (_ts(), len(findings), len(candidates), MODEL_NAME,
+                     % (_ts(), len(findings), len(candidates), IA_LABEL,
                         _human_dur(hard_budget), _human_dur(soft_budget)))
 
     results = []
@@ -2246,7 +3584,7 @@ def run_exploit():
                      % (verdict, short, kept))
 
     lines = ["# security-server.py exploit run\n",
-             "Model: %s  |  candidates: %d\n" % (MODEL_NAME, len(candidates)),
+             "Model: %s  |  candidates: %d\n" % (IA_LABEL, len(candidates)),
              "\n| # | finding | verdict | reason | dir |",
              "|---|---|---|---|---|"]
     for i, (rel, verdict, reason, kept) in enumerate(results, 1):
@@ -2258,6 +3596,9 @@ def run_exploit():
     # may be redirected to in the default `all` pipeline.
     for rel, verdict, reason, _ in results:
         sys.stderr.write("%-14s %s  (%s)\n" % (verdict, rel, reason))
+    summary = claude_usage_summary()
+    if summary:
+        sys.stderr.write(summary)
     return 0
 
 
@@ -2277,6 +3618,13 @@ def _print_help(prog):
         "Options:\n"
         "  --model=NAME   Ollama model to use (default: %s)\n"
         "                 e.g. --model=qwen3:30b-a3b or --model=qwen2.5-coder:32b\n"
+        "                 append '@host:port' to pin a specific Ollama backend,\n"
+        "                 e.g. --model=qwen3:30b-a3b@gpu1:11434\n"
+        "  --collaborate=A,B,C   collaborative panel of models (or 'auto' for the\n"
+        "                 installed Ollama set <35B); they discuss up to 10 rounds,\n"
+        "                 form work groups, and converge on a consensus diagnosis.\n"
+        "                 Pin a per-model backend with '@host:port', e.g.\n"
+        "                 --collaborate=qwen3:30b@gpu1:11434,deepseek:33b@gpu2:11434\n"
         "  --mode=MODE    STARTING supervisor: gdb (default) or valgrind. The\n"
         "                 exploit model switches at runtime via its MODE action;\n"
         "                 this only sets which tool the first instance boots\n"
@@ -2284,6 +3632,18 @@ def _print_help(prog):
         "  --help, -h     Show this help\n"
         "\n"
         "Environment overrides:\n"
+        "  CC_IA_BACKEND         ollama (default) | claude  single-model backend\n"
+        "  CC_CLAUDE_MODEL       Claude model id (default claude-opus-4-8)\n"
+        "  CC_IA_SETTINGS        JSON file declaring multiple Ollama backends\n"
+        "                        (default ./ia-settings.json; see .example)\n"
+        "  CC_IA_PANEL           model list, or 'auto' (<35B Ollama set) -> a\n"
+        "                        collaborative multi-model team audit (scan phase)\n"
+        "  CC_PANEL_ROUNDS       team discussion rounds (default 10)\n"
+        "  CC_PANEL_MAX_B        'auto' size cap, billions of params (default 35)\n"
+        "  CC_PANEL_MAX_MEMBERS  cap on 'auto' panel size (default 4)\n"
+        "  CC_PANEL_LEAD         model spec that synthesises consensus\n"
+        "  ANTHROPIC_API_KEY     console API key (sk-ant-api...) for CC_IA_BACKEND=claude\n"
+        "  CLAUDE_CODE_OAUTH_TOKEN  alt: a Claude Code token (`claude setup-token`)\n"
         "  SECSERVER_MODE        gdb (default) | valgrind  starting supervisor;\n"
         "                        the exploit model switches at runtime (see --mode)\n"
         "  SECSERVER_BUDGET      Hard per-exploit budget in seconds\n"
@@ -2292,22 +3652,34 @@ def _print_help(prog):
         "  SECSERVER_RUNTIMEOUT  RUN wall timeout in seconds (default 900)\n"
         "  SECSERVER_CPU         Sandbox RLIMIT_CPU seconds (default 10)\n"
         "  SECSERVER_MEM         Sandbox RLIMIT_AS bytes (default 128M)\n"
+        "  SECSERVER_SCAN_MAX    Max files to scan (bound a cheap subset run)\n"
         "  SECSERVER_MAX         Max exploit candidates to attempt\n"
         % (prog, FINDINGS, FINDINGS, MODEL_NAME))
 
 
 def main(argv):
-    global MODEL_NAME, RUN_UNDER
+    global MODEL_NAME, RUN_UNDER, CLAUDE_MODEL, IA_LABEL, CC_IA_PANEL
 
     # scan always writes FINDINGS to disk (tee), so the exploit phase works
     # regardless of whether stdout was redirected.
     args = argv[1:]
 
-    # Strip --model=NAME / --mode=gdb|valgrind / --help/-h before the phase word.
+    # Strip --model / --collaborate / --mode / --help before the phase word.
     filtered = []
     for a in args:
         if a.startswith("--model="):
-            MODEL_NAME = a[len("--model="):]
+            # Override whichever backend is active (Claude when CC_IA_BACKEND
+            # =claude, else Ollama).
+            if USE_CLAUDE:
+                CLAUDE_MODEL = a[len("--model="):]
+            else:
+                # An optional '@host:port' suffix pins which Ollama backend
+                # serves this model; keep the bare name as MODEL_NAME.
+                MODEL_NAME = _register_model_spec(a[len("--model="):])
+        elif a.startswith("--collaborate="):
+            # Collaborative panel: comma-separated model specs, or 'auto' for the
+            # installed Ollama models under CC_PANEL_MAX_B. Same as CC_IA_PANEL.
+            CC_IA_PANEL = a[len("--collaborate="):].strip()
         elif a.startswith("--mode="):
             m = a[len("--mode="):].strip().lower()
             RUN_UNDER = "valgrind" if m in ("valgrind", "vg", "memcheck") else "gdb"
@@ -2317,6 +3689,16 @@ def main(argv):
         else:
             filtered.append(a)
     args = filtered
+    # Recompute after --model so INIT/DONE logs name the model actually used.
+    IA_LABEL = CLAUDE_MODEL if USE_CLAUDE else MODEL_NAME
+
+    # Fail fast: without a credential, chat_claude raises per file and run_scan's
+    # per-file `except` swallows it -> a misleading empty, exit-0 "clean" audit.
+    if USE_CLAUDE and not _claude_has_creds():
+        sys.stderr.write("error: CC_IA_BACKEND=claude but no credential set - "
+                         "export ANTHROPIC_API_KEY (console key) or "
+                         "CLAUDE_CODE_OAUTH_TOKEN (e.g. `claude setup-token`)\n")
+        return 2
 
     mode = args[0] if args else "all"
     if mode in ("scan", "-s", "--scan"):

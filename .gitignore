@@ -220,6 +220,9 @@ security/*.log
 security/*.txt
 security/SECURITY-IA.md
 security/__pycache__/
+# operator's real backend settings (may hold internal hostnames); the
+# committed ia-settings.example.json documents the format
+security/ia-settings.json
 
 # clangd / tooling index cache
 .cache/
