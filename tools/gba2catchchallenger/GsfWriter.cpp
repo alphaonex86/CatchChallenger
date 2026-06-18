@@ -220,6 +220,10 @@ bool GsfWriter::writeMinigsf(const std::string &path, int songId,
                              const std::string &libRelName, const std::string &title) const
 {
     if(driverOffset_ == 0) return false;
+    // Skip the SAME ids the opus path skips (M4aRipper::render bails when
+    // songId>=songCount_): an out-of-range id would silently truncate into
+    // songIdWidth_ bytes and select the wrong song / a garbage table slot.
+    if(songId < 0 || songId >= songCount_) return false;
     uint8_t payload[4] = { 0, 0, 0, 0 };
     uint32_t v = (uint32_t)songId;
     int i = 0;

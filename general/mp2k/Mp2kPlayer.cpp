@@ -158,6 +158,11 @@ void mp2kRenderSong(const Mp2kSource &src, uint32_t h,
                                 v.loopStart = src.u32(wavPtr + 8);
                                 v.len = src.u32(wavPtr + 12);
                                 v.dataOff = wavPtr + 16;
+                                // A malformed/hostile gsflib can give loopStart>=len;
+                                // (len-loopStart) is unsigned so it would underflow in
+                                // the loop-wrap below and trap pos past the sample end.
+                                if(v.loopStart >= v.len)
+                                    v.loopStart = 0;
                                 v.loop = (src.u16(wavPtr + 2) != 0) || v.loopStart < v.len;
                                 if(type & 0x08)   // FIX: fixed rate (drums)
                                     v.freqHz = (double)freq / 1024.0;
