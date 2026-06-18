@@ -15,6 +15,7 @@
 #include "Gen3Data.hpp"
 #include "FullWriter.hpp"
 #include "M4aRipper.hpp"
+#include "GsfWriter.hpp"
 #include "DatapackBase.hpp"
 #include "Decoder.hpp"
 #include "Gba.hpp"
@@ -30,6 +31,7 @@
 #include <QString>
 #include <QGuiApplication>
 #include <algorithm>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -47,6 +49,43 @@ static std::string argValue(const std::vector<std::string> &args, const std::str
         i++;
     }
     return std::string();
+}
+
+// Presence-only flag (no value).
+static bool argFlag(const std::vector<std::string> &args, const std::string &key)
+{
+    size_t i=0;
+    while(i<args.size()) { if(args[i]==key) return true; i++; }
+    return false;
+}
+
+// Run pngquant (lossy palette) then zopflipng (lossless deflate) over every PNG
+// under dir, when the tools are installed (else skip with a note).  Same approach
+// as tools/datapack-explorer-generator-cli — shrinks the flat-colour ROM tiles a
+// lot.  Runs AFTER the guards so it never affects them.
+static void optimizePngs(const std::string &dir)
+{
+    if(QFile::exists("/usr/bin/pngquant"))
+    {
+        std::cout << "Optimizing tileset PNGs (pngquant)..." << std::flush;
+        std::string cmd="/usr/bin/find \""+dir+"\" -name '*.png' -exec"
+            " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/pngquant"
+            " --force --skip-if-larger --ext .png --quality 65-95 {} \\; >/dev/null 2>&1";
+        std::system(cmd.c_str());
+        std::cout << " done" << std::endl;
+    }
+    else
+        std::cout << "no /usr/bin/pngquant — install it for smaller tilesets" << std::endl;
+    if(QFile::exists("/usr/bin/zopflipng"))
+    {
+        std::cout << "Optimizing tileset PNGs (zopflipng)..." << std::flush;
+        std::string cmd="/usr/bin/find \""+dir+"\" -name '*.png' -exec"
+            " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/zopflipng -y {} {} \\; >/dev/null 2>&1";
+        std::system(cmd.c_str());
+        std::cout << " done" << std::endl;
+    }
+    else
+        std::cout << "no /usr/bin/zopflipng — install zopfli for smaller tilesets" << std::endl;
 }
 
 // True when the metatile at (base,idx) has no graphics (every subtile id is 0).
@@ -261,6 +300,12 @@ int main(int argc, char *argv[])
     if(fullDatapack && datapack.empty())
         datapack=allPath;
 
+    // --gsf: emit the maps' BGM as a standard GSF set (one <label>.gsflib + a
+    // .minigsf per song) instead of opus.  Plays in external GSF players AND in
+    // our client (which decodes the gsflib's ROM with the software MP2k synth).
+    const bool gsfMode=argFlag(args,"--gsf");
+    const std::string musicExt=gsfMode ? "minigsf" : "opus";
+
     const std::string ripSong=argValue(args,"--ripsong");
     if(datapack.empty() && ripSong.empty())
     {
@@ -438,13 +483,15 @@ int main(int argc, char *argv[])
         // (~10% per-channel tolerance, content-cropped) and reused, else added.
         skins.loadExisting();
         CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,itemResolver);
+        writer.setMusicExtension(musicExt); // "opus" (default) or "minigsf" (--gsf)
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
 
-        // Rip the maps' background music to opus, into THIS label's own folder
-        // map/main/<label>/music/<name>.opus (named after a representative map by
-        // CCWriter, matching the per-map backgroundsound refs).  Most-used first,
-        // capped.  Songs stay under the label so each region keeps its own music.
+        // Rip the maps' background music into THIS label's own folder
+        // map/main/<label>/music/<name>.<ext> (named after a representative map by
+        // CCWriter, matching the per-map backgroundsound refs).  ext=opus by
+        // default, or a standard GSF set (.minigsf per song + one .gsflib) with
+        // --gsf.  Most-used first, capped at 64.
         M4aRipper m4a;
         if(m4a.locate(rom))
         {
@@ -469,17 +516,32 @@ int main(int argc, char *argv[])
             std::map<uint16_t,int>::const_iterator it=use.begin();
             while(it!=use.end()) { order.push_back(std::make_pair(-it->second,it->first)); ++it; }
             std::sort(order.begin(),order.end());
+
+            // --gsf: one shared gsflib for the label, then a tiny minigsf per song.
+            GsfWriter gsf;
+            std::string libRel; // <label>.gsflib, dir-relative for the _lib tag
+            if(gsfMode && gsf.prepare(rom,m4a))
+            {
+                libRel=gi.label+".gsflib";
+                gsf.writeLib(musicDir+"/"+libRel,gi.label);
+            }
             int ripped=0; const int cap=64; size_t oi=0;
             while(oi<order.size() && ripped<cap)
             {
                 const uint16_t id=order[oi].second; ++oi;
-                if(m4a.writeOpus(rom,id,musicDir+"/"+writer.musicFileBase(id)+".opus",16.0)) ++ripped;
+                const std::string out=musicDir+"/"+writer.musicFileBase(id)+"."+musicExt;
+                bool wrote=false;
+                if(gsfMode)
+                    wrote = !libRel.empty() && gsf.writeMinigsf(out,id,libRel,writer.musicFileBase(id));
+                else
+                    wrote = m4a.writeOpus(rom,id,out,16.0);
+                if(wrote) ++ripped;
             }
-            std::cout << "Music: ripped " << ripped << "/" << use.size() << " songs to "
-                      << musicDir << std::endl;
-            // type-fallback map/music.xml (dominant ripped BGM per coarse type).  The
-            // refs are root-relative (client resolves datapackPathMain()+ref), so they
-            // carry the full map/main/<label>/music/<name>.opus path.
+            std::cout << "Music: ripped " << ripped << "/" << use.size() << " "
+                      << (gsfMode?"minigsf":"opus") << " song(s) to " << musicDir << std::endl;
+            // type-fallback map/music.xml (dominant ripped BGM per coarse type).
+            // Refs are label-root-relative ("music/<name>.<ext>"), resolved by the
+            // client as datapackPathMain()+ref = "<label>/music/<name>.<ext>".
             QDir().mkpath(QString::fromStdString(datapack+"/map"));
             std::ofstream mx((datapack+"/map/music.xml").c_str());
             mx << "<musics>\n";
@@ -490,12 +552,15 @@ int main(int argc, char *argv[])
                 const std::string key = std::string(types[ty])=="cave"?"outdoor":types[ty];
                 uint16_t best=0; int bc=-1;
                 std::map<uint16_t,int>::const_iterator b=byType[key].begin();
-                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+".opus"))) { bc=b->second; best=b->first; } ++b; }
-                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << ".opus</map>\n";
+                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+"."+musicExt))) { bc=b->second; best=b->first; } ++b; }
+                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << "." << musicExt << "</map>\n";
                 ++ty;
             }
             mx << "</musics>\n";
         }
+
+        // Shrink the tileset PNGs (pngquant + zopflipng) — after the guards.
+        optimizePngs(tilesetDir);
     }
 
     // --all: also emit the full game DB (monsters/skill/type/items) at the
