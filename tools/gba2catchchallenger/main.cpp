@@ -441,8 +441,10 @@ int main(int argc, char *argv[])
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
 
-        // Rip the maps' background music to opus (the per-map backgroundsound the
-        // map writer emits = music/song-<id>.opus).  Most-used songs first, capped.
+        // Rip the maps' background music to opus, into THIS label's own folder
+        // map/main/<label>/music/<name>.opus (named after a representative map by
+        // CCWriter, matching the per-map backgroundsound refs).  Most-used first,
+        // capped.  Songs stay under the label so each region keeps its own music.
         M4aRipper m4a;
         if(m4a.locate(rom))
         {
@@ -461,7 +463,8 @@ int main(int argc, char *argv[])
                 }
                 ++mi;
             }
-            QDir().mkpath(QString::fromStdString(datapack+"/music"));
+            const std::string musicDir=outDir+"/music";
+            QDir().mkpath(QString::fromStdString(musicDir));
             std::vector<std::pair<int,uint16_t> > order;
             std::map<uint16_t,int>::const_iterator it=use.begin();
             while(it!=use.end()) { order.push_back(std::make_pair(-it->second,it->first)); ++it; }
@@ -470,10 +473,13 @@ int main(int argc, char *argv[])
             while(oi<order.size() && ripped<cap)
             {
                 const uint16_t id=order[oi].second; ++oi;
-                if(m4a.writeOpus(rom,id,datapack+"/music/song-"+std::to_string(id)+".opus",16.0)) ++ripped;
+                if(m4a.writeOpus(rom,id,musicDir+"/"+writer.musicFileBase(id)+".opus",16.0)) ++ripped;
             }
-            std::cout << "Music: ripped " << ripped << "/" << use.size() << " songs." << std::endl;
-            // type-fallback map/music.xml (dominant ripped BGM per coarse type)
+            std::cout << "Music: ripped " << ripped << "/" << use.size() << " songs to "
+                      << musicDir << std::endl;
+            // type-fallback map/music.xml (dominant ripped BGM per coarse type).  The
+            // refs are root-relative (client resolves datapackPathMain()+ref), so they
+            // carry the full map/main/<label>/music/<name>.opus path.
             QDir().mkpath(QString::fromStdString(datapack+"/map"));
             std::ofstream mx((datapack+"/map/music.xml").c_str());
             mx << "<musics>\n";
@@ -484,8 +490,8 @@ int main(int argc, char *argv[])
                 const std::string key = std::string(types[ty])=="cave"?"outdoor":types[ty];
                 uint16_t best=0; int bc=-1;
                 std::map<uint16_t,int>::const_iterator b=byType[key].begin();
-                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(datapack+"/music/song-"+std::to_string(b->first)+".opus"))) { bc=b->second; best=b->first; } ++b; }
-                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">music/song-" << best << ".opus</map>\n";
+                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+".opus"))) { bc=b->second; best=b->first; } ++b; }
+                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << ".opus</map>\n";
                 ++ty;
             }
             mx << "</musics>\n";

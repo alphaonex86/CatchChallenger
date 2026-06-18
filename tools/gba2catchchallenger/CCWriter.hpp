@@ -46,6 +46,14 @@ public:
 
     bool writeAll();
 
+    // Music file naming.  A BGM is shared by many maps, so each ripped song is
+    // named after a representative map (a town/outdoor map when one uses it, else
+    // any named map), reusing the map path slug — "viridian-city.opus" instead of
+    // "song-292.opus".  Both the map writer (backgroundsound) and the ripper in
+    // main.cpp use these so the ref and the file on disk always match.
+    std::string musicFileBase(uint16_t songId) const;   // slug WITHOUT extension
+    const std::string &musicRefPrefix() const { return musicRefPrefix_; } // "map/main/<label>/music"
+
     // Sub-datapack overlay: emit ONLY what differs from the already-generated
     // main at mainDir (e.g. map/main/ruby).  The sub has no .tmx/tileset (geometry
     // is shared from main); it writes informations.xml plus, per map, a partial
@@ -115,6 +123,8 @@ private:
     const Wild &wild_;
     Gen3Script script_;
     std::string fireredDir_;
+    std::string musicRefPrefix_;               // root-relative "map/main/<label>/music"
+    std::unordered_map<uint16_t,std::string> songNames_; // BGM id -> file slug (no ext)
     SkinResolver &skins_;
     std::unordered_map<uint8_t,std::string> skinCache_;
     int guardLayers_;                          // tile layers checked

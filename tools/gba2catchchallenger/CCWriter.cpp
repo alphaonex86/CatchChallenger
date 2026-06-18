@@ -58,6 +58,63 @@ CCWriter::CCWriter(const GbaRom &rom,
     itemsByName_(0),
     items_(items)
 {
+    // Each label keeps its songs under its OWN map/main/<label>/music/ (not a
+    // shared root music/).  backgroundsound paths resolve from the datapack ROOT
+    // (client: datapackPathMain()+ref), so a map's music ref must carry the full
+    // root-relative prefix.  fireredDir_ is "<root>/map/main/<label>" (or a sub),
+    // so the prefix is the substring from "map/main/" onward.
+    std::string::size_type mm=fireredDir_.find("map/main/");
+    if(mm!=std::string::npos)
+        musicRefPrefix_=fireredDir_.substr(mm)+"/music";
+    else
+        musicRefPrefix_="music"; // defensive: keep a usable (root) ref if unexpected
+
+    // Name each BGM after a representative map (the map path slug), so the opus is
+    // "viridian-city.opus" not "song-292.opus".  A song is used by many maps; we
+    // prefer a town/outdoor map (mapType<8) as the name, then fall back to any
+    // named map.  Two passes keep it deterministic (maps() is in ROM order); a slug
+    // already taken by another song gets the id appended to stay unique on disk.
+    std::unordered_set<std::string> usedSlug;
+    int pass=0;
+    while(pass<2)
+    {
+        const std::vector<DecodedMap> &maps=decoder_.maps();
+        size_t i=0;
+        while(i<maps.size())
+        {
+            const DecodedMap &m=maps[i];
+            uint16_t id=m.music;
+            bool valid=(id!=0 && id!=0xFFFF);
+            if(valid && songNames_.find(id)==songNames_.cend())
+            {
+                bool outdoor=(m.mapType<8);
+                if(pass==1 || outdoor)
+                {
+                    const std::string &path=naming_.pathFor(m.group,m.map);
+                    std::string slug;
+                    std::string::size_type s=path.find_last_of('/');
+                    slug=(s==std::string::npos)?path:path.substr(s+1);
+                    if(!slug.empty())
+                    {
+                        if(usedSlug.find(slug)!=usedSlug.cend())
+                            slug=slug+"-"+std::to_string(id);
+                        usedSlug.insert(slug);
+                        songNames_[id]=slug;
+                    }
+                }
+            }
+            i++;
+        }
+        pass++;
+    }
+}
+
+std::string CCWriter::musicFileBase(uint16_t songId) const
+{
+    std::unordered_map<uint16_t,std::string>::const_iterator it=songNames_.find(songId);
+    if(it!=songNames_.cend())
+        return it->second;
+    return std::string("song-")+std::to_string(songId); // no named map uses it
 }
 
 // Resolve a Gen3 item id to the reference string for the "item" property:
@@ -162,6 +219,23 @@ std::string CCWriter::relPath(const std::string &fromPath, const std::string &to
         k++;
     }
     return out;
+}
+
+// A tile layer is emitted only when it holds at least one real tile.  We test the
+// actual cell content (not the per-terrain "any*" flags): a flag can be set while
+// every placed gid is 0 (a cell whose ground tile has no graphics), which would
+// otherwise write an all-zero layer that renders nothing — exactly the empty
+// LedgesLeft/Collisions layers the engine and both visibility guards already skip.
+static bool layerHasTile(const std::vector<uint32_t> &gids)
+{
+    size_t i=0;
+    while(i<gids.size())
+    {
+        if(gids[i]!=0)
+            return true;
+        i++;
+    }
+    return false;
 }
 
 std::string CCWriter::encodeLayer(const std::vector<uint32_t> &gids) const
@@ -671,19 +745,18 @@ void CCWriter::writeMap(const DecodedMap &map)
     bool anyOver=false;
     std::vector<uint32_t> collisions(cells,0);
     std::vector<uint32_t> collisions2(cells,0); // 2nd Collisions: the over of a
-    bool anyCollisions2=false;                  // collidable cell (superposed below player)
+                                                // collidable cell (superposed below player)
     std::vector<uint32_t> grass(cells,0);
     std::vector<uint32_t> water(cells,0);
     std::vector<uint32_t> ledgeUp(cells,0);
     std::vector<uint32_t> ledgeDown(cells,0);
     std::vector<uint32_t> ledgeLeft(cells,0);
     std::vector<uint32_t> ledgeRight(cells,0);
+    // anyLedge is the OR of all four directions; the layerVisibilityGuard takes it.
+    // Per-direction / per-layer emission is decided later from the actual layer
+    // content (layerHasTile), so a direction with no cell never writes an empty
+    // LedgesLeft/Right layer — that is the single source of truth for "0 tiles".
     bool anyGrass=false,anyWater=false,anyLedge=false;
-    // Per-direction ledge presence: a map with only (say) up-ledges must NOT emit
-    // empty LedgesLeft/Right layers — an all-zero layer renders nothing, so hiding
-    // it in Tiled changes no pixel (it would fail the render-visibility guard) and
-    // just bloats the .tmx.  anyLedge stays the OR (used by the visibility guard).
-    bool anyLedgeUp=false,anyLedgeDown=false,anyLedgeLeft=false,anyLedgeRight=false;
 
     // DISJOINT real-tile layers (no generated markers): every cell's REAL
     // below-player tile (groundGid) goes to EXACTLY ONE layer chosen by its
@@ -716,19 +789,19 @@ void CCWriter::writeMap(const DecodedMap &map)
         }
         else if(t==Terrain::LedgeUp)
         {
-            ledgeUp[c]=g; anyLedge=true; anyLedgeUp=true;
+            ledgeUp[c]=g; anyLedge=true;
         }
         else if(t==Terrain::LedgeDown)
         {
-            ledgeDown[c]=g; anyLedge=true; anyLedgeDown=true;
+            ledgeDown[c]=g; anyLedge=true;
         }
         else if(t==Terrain::LedgeLeft)
         {
-            ledgeLeft[c]=g; anyLedge=true; anyLedgeLeft=true;
+            ledgeLeft[c]=g; anyLedge=true;
         }
         else if(t==Terrain::LedgeRight)
         {
-            ledgeRight[c]=g; anyLedge=true; anyLedgeRight=true;
+            ledgeRight[c]=g; anyLedge=true;
         }
         else if(t==Terrain::Grass)
         {
@@ -746,7 +819,7 @@ void CCWriter::writeMap(const DecodedMap &map)
         {
             if(onCollisions)
             {
-                collisions2[c]=og; anyCollisions2=true;
+                collisions2[c]=og;
             }
             else
             {
@@ -810,48 +883,67 @@ void CCWriter::writeMap(const DecodedMap &map)
     if(!mapItems.empty() && itemTilesetWritten_)
         out << " <tileset firstgid=\"" << itemGid << "\" source=\"" << tsPre << "items.tsx\"/>\n";
 
+    // Walkable is the canonical base layer and is ALWAYS emitted, even when empty
+    // (all-water sea maps): the engine's teleporter/bot/item "force walkable"
+    // post-processing runs only when the Walkable layer is present (Map_loaderMain
+    // gates it on Walkable.size()>0).  Every OTHER tile layer is emitted ONLY when
+    // it actually holds a tile — an all-zero layer renders nothing, so the engine
+    // and both visibility guards already skip it; writing it just bloats the .tmx
+    // (e.g. an unused LedgesLeft, or a Collisions layer on a collision-less sea map).
     int layerId=1;
     out << " <layer id=\"" << layerId++ << "\" name=\"Walkable\" width=\"" << w << "\" height=\"" << h << "\">\n";
     out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(walkable) << "</data>\n </layer>\n";
-    if(anyGrass)
+    if(layerHasTile(grass))
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"Grass\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(grass) << "</data>\n </layer>\n";
     }
-    if(anyWater)
+    if(layerHasTile(water))
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"Water\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(water) << "</data>\n </layer>\n";
     }
     // Each ledge direction is emitted ONLY when it actually has tiles (a typical
     // town has no ledges at all; a route may have only one or two directions).
-    if(anyLedgeUp)
+    // The direction is the Gen3 jump behaviour (0x38 east/0x39 west/0x3A north/
+    // 0x3B south) mapped to the matching CatchChallenger ledge layer, which the
+    // engine turns into a one-way pass (250 left/251 right/252 up/253 down): a
+    // LedgesRight cell lets the player step right onto/over it and blocks a left
+    // move as a collision — see MoveOnTheMap::isWalkableWithDirection.
+    if(layerHasTile(ledgeUp))
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"LedgesUp\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeUp) << "</data>\n </layer>\n";
     }
-    if(anyLedgeDown)
+    if(layerHasTile(ledgeDown))
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"LedgesDown\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeDown) << "</data>\n </layer>\n";
     }
-    if(anyLedgeLeft)
+    if(layerHasTile(ledgeLeft))
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"LedgesLeft\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeLeft) << "</data>\n </layer>\n";
     }
-    if(anyLedgeRight)
+    if(layerHasTile(ledgeRight))
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"LedgesRight\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeRight) << "</data>\n </layer>\n";
     }
-    out << " <layer id=\"" << layerId++ << "\" name=\"Collisions\" width=\"" << w << "\" height=\"" << h << "\">\n";
-    out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(collisions) << "</data>\n </layer>\n";
+    // First "Collisions" layer: the below-player tiles of collidable cells.  Omit
+    // it when the map has none (an open-sea map is all Water) — an absent and an
+    // all-zero Collisions layer are identical to the engine (CollisionsBin stays
+    // unused), so skipping the empty one only avoids the dead layer.
+    if(layerHasTile(collisions))
+    {
+        out << " <layer id=\"" << layerId++ << "\" name=\"Collisions\" width=\"" << w << "\" height=\"" << h << "\">\n";
+        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(collisions) << "</data>\n </layer>\n";
+    }
     // 2nd "Collisions" layer: the over-tiles of collidable cells, superposed on the
     // first.  The engine OR-merges layers named "Collisions" for blocking, so this
     // is purely visual stacking (the full building/tree renders BELOW the player);
     // it does not lift those tiles above the player like WalkBehind would.
-    if(anyCollisions2)
+    if(layerHasTile(collisions2))
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"Collisions\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(collisions2) << "</data>\n </layer>\n";
@@ -859,7 +951,7 @@ void CCWriter::writeMap(const DecodedMap &map)
     // WalkBehind holds the lifted overlay tiles and must be the last tile layer:
     // the client inserts the player sprite just before it, so these draw above
     // the player (tree tops, roofs, ...) — but ONLY for player-reachable cells.
-    if(anyOver)
+    if(layerHasTile(walkbehind))
     {
         out << " <layer id=\"" << layerId++ << "\" name=\"WalkBehind\" width=\"" << w << "\" height=\"" << h << "\">\n";
         out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(walkbehind) << "</data>\n </layer>\n";
@@ -1394,10 +1486,12 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     out << "<map type=\"" << type << "\"";
     if(!zone.empty())
         out << " zone=\"" << zone << "\"";
-    // per-map background music: the ROM's BGM id, ripped to music/song-<id>.opus
-    // (the file is written by the --all / music pass; absent => no music).
+    // per-map background music: the ROM's BGM id, ripped to
+    // map/main/<label>/music/<name>.opus (named after a representative map; the
+    // file is written by the music pass in main.cpp; absent => no music).  The ref
+    // is root-relative because the client resolves it as datapackPathMain()+ref.
     if(map.music!=0 && map.music!=0xFFFF)
-        out << " backgroundsound=\"music/song-" << map.music << ".opus\"";
+        out << " backgroundsound=\"" << musicRefPrefix_ << "/" << musicFileBase(map.music) << ".opus\"";
     out << ">\n";
     out << " <name>" << name << "</name>\n";
 
