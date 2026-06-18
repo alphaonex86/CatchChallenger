@@ -368,7 +368,7 @@ void BaseWindow::currentMapLoaded()
             {
                 //decode file
                 ambiance.data=new QByteArray;
-                if(Audio::decodeAmbiance(finalSound,*ambiance.data))
+                if(Audio::decodeOpus(finalSound,*ambiance.data))
                 {
                     ambiance.buffer=new QInfiniteBuffer(ambiance.data);
                     ambiance.buffer->open(QBuffer::ReadOnly);

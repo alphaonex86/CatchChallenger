@@ -91,11 +91,6 @@ if(NOT TARGET catchchallenger_qt_lib)
 
     if(NOT CATCHCHALLENGER_NOAUDIO)
         list(APPEND _libqtcc_sources ${_libqtcc_dir}/Audio.cpp)
-        # Standard GSF/MiniGSF playback (Audio::decodeGsf): the shared MP2k
-        # software synth + the GSF container reader.  No GBA CPU emulation.
-        list(APPEND _libqtcc_sources
-            ${CC_REPO_ROOT}/general/mp2k/Mp2kPlayer.cpp
-            ${CC_REPO_ROOT}/general/mp2k/Gsf.cpp)
     endif()
     if(CATCHCHALLENGER_SOLO)
         list(APPEND _libqtcc_sources ${_libqtcc_dir}/SoloDatabaseInit.cpp)

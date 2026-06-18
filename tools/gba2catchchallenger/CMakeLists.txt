@@ -33,9 +33,6 @@ add_executable(gba2catchchallenger
     FullWriter.cpp
     SpriteRipper.cpp
     M4aRipper.cpp
-    GsfWriter.cpp
-    ${CC_REPO_ROOT}/general/mp2k/Mp2kPlayer.cpp
-    ${CC_REPO_ROOT}/general/mp2k/Gsf.cpp
     DatapackBase.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackClientLoader.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackChecksum.cpp
@@ -56,7 +53,6 @@ target_link_libraries(gba2catchchallenger PRIVATE
     Qt6::Core
     Qt6::Gui
     ${ZSTD_LIBRARY}
-    ZLIB::ZLIB   # GSF container (general/mp2k/Gsf.cpp) — zlib deflate + crc32
 )
 
 # Linker driver: use the test-link-verified accelerator that CCCommon.cmake

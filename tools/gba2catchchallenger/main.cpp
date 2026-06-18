@@ -15,7 +15,6 @@
 #include "Gen3Data.hpp"
 #include "FullWriter.hpp"
 #include "M4aRipper.hpp"
-#include "GsfWriter.hpp"
 #include "DatapackBase.hpp"
 #include "Decoder.hpp"
 #include "Gba.hpp"
@@ -52,14 +51,6 @@ static std::string argValue(const std::vector<std::string> &args, const std::str
         i++;
     }
     return std::string();
-}
-
-// Presence-only flag (no value).
-static bool argFlag(const std::vector<std::string> &args, const std::string &key)
-{
-    size_t i=0;
-    while(i<args.size()) { if(args[i]==key) return true; i++; }
-    return false;
 }
 
 // Run pngquant (lossy palette) then zopflipng (lossless deflate) over every PNG
@@ -320,11 +311,6 @@ int main(int argc, char *argv[])
     if(fullDatapack && datapack.empty())
         datapack=allPath;
 
-    // --gsf: emit the maps' BGM as a standard GSF set (one <label>.gsflib + a
-    // .minigsf per song) instead of opus.  Plays in external GSF players AND in
-    // our client (which decodes the gsflib's ROM with the software MP2k synth).
-    const bool gsfMode=argFlag(args,"--gsf");
-
     const std::string ripSong=argValue(args,"--ripsong");
     if(datapack.empty() && ripSong.empty())
     {
@@ -501,30 +487,16 @@ int main(int argc, char *argv[])
         // Bot skins: extracted overworld sprites are matched against existing skins
         // (~10% per-channel tolerance, content-cropped) and reused, else added.
         skins.loadExisting();
-
-        // Decide the music format BEFORE writing the maps, so each map's
-        // backgroundsound ref matches what we actually produce.  --gsf builds a
-        // standard GSF set ONLY if the engine functions + ROM free space are
-        // located; otherwise fall back to opus, so a map never references a
-        // .minigsf we couldn't write.
-        M4aRipper m4a;
-        const bool haveMusic=m4a.locate(rom);
-        GsfWriter gsf;
-        bool gsfReady=false;
-        std::string musicExt="opus";
-        if(gsfMode && haveMusic && gsf.prepare(rom,m4a)) { gsfReady=true; musicExt="minigsf"; }
-        else if(gsfMode)
-            std::cerr << "--gsf: could not build a GSF set (engine functions / ROM free space"
-                         " not found); falling back to opus" << std::endl;
-
         CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,itemResolver);
-        writer.setMusicExtension(musicExt);
         writer.writeAll();
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
 
-        // Rip the maps' background music into THIS label's own folder
-        // map/main/<label>/music/<name>.<ext> (named after a representative map).
-        if(haveMusic)
+        // Rip the maps' background music to opus, into THIS label's own folder
+        // map/main/<label>/music/<name>.opus (named after a representative map by
+        // CCWriter, matching the per-map backgroundsound refs).  Most-used first,
+        // capped at 64.
+        M4aRipper m4a;
+        if(m4a.locate(rom))
         {
             std::map<uint16_t,int> use;
             std::map<std::string,std::map<uint16_t,int> > byType;
@@ -547,32 +519,17 @@ int main(int argc, char *argv[])
             std::map<uint16_t,int>::const_iterator it=use.begin();
             while(it!=use.end()) { order.push_back(std::make_pair(-it->second,it->first)); ++it; }
             std::sort(order.begin(),order.end());
-
-            // --gsf (gsfReady): write the one shared gsflib for the label now;
-            // each song then gets a tiny minigsf.  gsf was already prepared above.
-            std::string libRel; // <label>.gsflib, dir-relative for the _lib tag
-            if(gsfReady)
-            {
-                libRel=gi.label+".gsflib";
-                gsf.writeLib(musicDir+"/"+libRel,gi.label);
-            }
             int ripped=0; const int cap=64; size_t oi=0;
             while(oi<order.size() && ripped<cap)
             {
                 const uint16_t id=order[oi].second; ++oi;
-                const std::string out=musicDir+"/"+writer.musicFileBase(id)+"."+musicExt;
-                bool wrote=false;
-                if(gsfReady)
-                    wrote = !libRel.empty() && gsf.writeMinigsf(out,id,libRel,writer.musicFileBase(id));
-                else
-                    wrote = m4a.writeOpus(rom,id,out,16.0);
-                if(wrote) ++ripped;
+                if(m4a.writeOpus(rom,id,musicDir+"/"+writer.musicFileBase(id)+".opus",16.0)) ++ripped;
             }
-            std::cout << "Music: ripped " << ripped << "/" << use.size() << " "
-                      << (gsfReady?"minigsf":"opus") << " song(s) to " << musicDir << std::endl;
+            std::cout << "Music: ripped " << ripped << "/" << use.size() << " opus song(s) to "
+                      << musicDir << std::endl;
             // type-fallback map/music.xml (dominant ripped BGM per coarse type).
-            // Refs are label-root-relative ("music/<name>.<ext>"), resolved by the
-            // client as datapackPathMain()+ref = "<label>/music/<name>.<ext>".
+            // Refs are label-root-relative ("music/<name>.opus"), resolved by the
+            // client as datapackPathMain()+ref = "<label>/music/<name>.opus".
             QDir().mkpath(QString::fromStdString(datapack+"/map"));
             std::ofstream mx((datapack+"/map/music.xml").c_str());
             mx << "<musics>\n";
@@ -583,8 +540,8 @@ int main(int argc, char *argv[])
                 const std::string key = std::string(types[ty])=="cave"?"outdoor":types[ty];
                 uint16_t best=0; int bc=-1;
                 std::map<uint16_t,int>::const_iterator b=byType[key].begin();
-                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+"."+musicExt))) { bc=b->second; best=b->first; } ++b; }
-                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << "." << musicExt << "</map>\n";
+                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+".opus"))) { bc=b->second; best=b->first; } ++b; }
+                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << ".opus</map>\n";
                 ++ty;
             }
             mx << "</musics>\n";
