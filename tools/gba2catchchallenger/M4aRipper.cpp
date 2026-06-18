@@ -12,7 +12,7 @@
 #include <cstdio>
 #include <iostream>
 
-M4aRipper::M4aRipper() : songTable_(0), songCount_(0) {}
+M4aRipper::M4aRipper() : songTable_(0), songCount_(0), selectSongFn_(0) {}
 
 // little-endian byte writers (project style forbids lambdas)
 static void putBytes(QByteArray &b, const char *s, int n) { b.append(s, n); }
@@ -46,6 +46,7 @@ bool M4aRipper::locate(const GbaRom &rom)
     }
     if(found == 0)
         return false;
+    selectSongFn_ = found; // m4aSongNumStart entry (file offset) — GSF driver anchor
     bool ok = false;
     songTable_ = rom.pointer(found + 40, &ok);
     if(!ok)

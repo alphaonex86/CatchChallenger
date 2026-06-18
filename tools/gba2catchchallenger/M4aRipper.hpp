@@ -19,6 +19,12 @@ public:
     // Locate gSongTable; returns false if not found.
     bool locate(const GbaRom &rom);
     int songCount() const { return songCount_; }
+    // File offsets (GBA addr - 0x08000000) found by locate(); 0 if not located.
+    // The GSF writer needs the m4aSongNumStart ("SelectSong") routine as the
+    // anchor for the rest of the engine-function chain, and gSongTable for the
+    // _cc_songtable tag the client reads.
+    uint32_t selectSongFnOffset() const { return selectSongFn_; }
+    uint32_t songTableOffset() const { return songTable_; }
 
     // Render song to a stereo float buffer (interleaved L,R) at sampleRate Hz.
     // seconds caps the duration (BGM loops forever).  Empty if the song is silent.
@@ -31,6 +37,7 @@ public:
 private:
     uint32_t songTable_;
     int songCount_;
+    uint32_t selectSongFn_;
 };
 
 #endif // GBA2CC_M4ARIPPER_HPP

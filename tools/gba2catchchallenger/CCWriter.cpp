@@ -58,16 +58,12 @@ CCWriter::CCWriter(const GbaRom &rom,
     itemsByName_(0),
     items_(items)
 {
-    // Each label keeps its songs under its OWN map/main/<label>/music/ (not a
-    // shared root music/).  backgroundsound paths resolve from the datapack ROOT
-    // (client: datapackPathMain()+ref), so a map's music ref must carry the full
-    // root-relative prefix.  fireredDir_ is "<root>/map/main/<label>" (or a sub),
-    // so the prefix is the substring from "map/main/" onward.
-    std::string::size_type mm=fireredDir_.find("map/main/");
-    if(mm!=std::string::npos)
-        musicRefPrefix_=fireredDir_.substr(mm)+"/music";
-    else
-        musicRefPrefix_="music"; // defensive: keep a usable (root) ref if unexpected
+    // Music refs are relative to the LABEL ROOT: the client resolves them as
+    // datapackPathMain()+ref where datapackPathMain()="datapack/map/main/<label>/"
+    // — so the prefix is simply "music" (the songs live under <label>/music/).
+    // (gen2's zone files use exactly this form.)
+    musicRefPrefix_="music";
+    musicExt_="opus"; // default; main.cpp sets "minigsf" for --gsf
 
     // Name each BGM after a representative map (the map path slug), so the opus is
     // "viridian-city.opus" not "song-292.opus".  A song is used by many maps; we
@@ -256,7 +252,10 @@ std::string CCWriter::encodeLayer(const std::vector<uint32_t> &gids) const
     size_t bound=ZSTD_compressBound(raw.size());
     std::vector<uint8_t> comp;
     comp.resize(bound);
-    size_t got=ZSTD_compress(comp.data(),bound,raw.data(),raw.size(),22);
+    // Always the maximum zstd level (currently 22).  Layers are tiny so the zstd
+    // window collapses to the input size — any level decodes identically on the
+    // engine; we just want the smallest on-disk map.
+    size_t got=ZSTD_compress(comp.data(),bound,raw.data(),raw.size(),ZSTD_maxCLevel());
     if(ZSTD_isError(got))
     {
         std::cerr << "zstd compress failed: " << ZSTD_getErrorName(got) << std::endl;
@@ -868,6 +867,14 @@ void CCWriter::writeMap(const DecodedMap &map)
     out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     out << "<map version=\"1.10\" tiledversion=\"1.11.0\" orientation=\"orthogonal\" renderorder=\"right-down\" width=\""
         << w << "\" height=\"" << h << "\" tilewidth=\"16\" tileheight=\"16\" infinite=\"0\">\n";
+    // Per-map background music as a MAP-LEVEL <property>: this is what the client
+    // actually reads (MapVisualiserPlayer::currentBackgroundsound() ->
+    // tiledMap->properties()["backgroundsound"]).  Value is label-root-relative
+    // ("music/<name>.<ext>") because it is resolved as datapackPathMain()+value.
+    // Must precede <tileset>/<layer> per the Tiled child order.
+    if(map.music!=0 && map.music!=0xFFFF)
+        out << " <properties>\n  <property name=\"backgroundsound\" value=\"music/"
+            << musicFileBase(map.music) << "." << musicExt_ << "\"/>\n </properties>\n";
     std::vector<std::pair<uint32_t,std::string> > refs=tilesets_.tilesetRefs(map);
     size_t ri=0;
     while(ri<refs.size())
@@ -1486,12 +1493,15 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     out << "<map type=\"" << type << "\"";
     if(!zone.empty())
         out << " zone=\"" << zone << "\"";
-    // per-map background music: the ROM's BGM id, ripped to
-    // map/main/<label>/music/<name>.opus (named after a representative map; the
-    // file is written by the music pass in main.cpp; absent => no music).  The ref
-    // is root-relative because the client resolves it as datapackPathMain()+ref.
+    // per-map background music: "music/<name>.<ext>", RELATIVE TO THE LABEL ROOT
+    // (= datapackPathMain() "datapack/map/main/<label>/"), which is how the client
+    // resolves every music ref — gen2's zone files use exactly this form.  (NOT a
+    // "../"-to-the-map path: the ref is joined to datapackPathMain()/Base, never to
+    // the map's own directory, so "../music/..." resolves outside the datapack.)
+    // The engine reads this from the .tmx <property> (writeMap), not the .xml; we
+    // keep it here too for the per-map metadata convention.
     if(map.music!=0 && map.music!=0xFFFF)
-        out << " backgroundsound=\"" << musicRefPrefix_ << "/" << musicFileBase(map.music) << ".opus\"";
+        out << " backgroundsound=\"music/" << musicFileBase(map.music) << "." << musicExt_ << "\"";
     out << ">\n";
     out << " <name>" << name << "</name>\n";
 
