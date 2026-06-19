@@ -595,10 +595,17 @@ fi
 
 if [ "$FAILED" = "1" ]; then
     echo -e "\n${RED}Some tests FAILED.${RESET}"
-    # On any failure, leave the tmpfs untouched so the operator can
-    # inspect every build dir / log of every failing test. The
-    # successful tests have already torn their dirs down via the
-    # per-script atexit hook in cleanup_helpers.py.
+    # On failure, keep the build dirs (binaries + logs + CMake state) so the
+    # operator can inspect/gdb every failing test and --continue still rebuilds
+    # incrementally. But the compiler SCRATCH (.o/.obj/.dwo/.gcno/.gcda) is
+    # pure regenerable bulk — several GiB of tmpfs RAM that's no use for
+    # inspection and that ccache re-creates for free on the next build. Drop
+    # it so a failed run doesn't pin ~18 GiB of RAM until the next run wipes it.
+    if [ -d "$TMPFS_BUILD_ROOT" ]; then
+        echo -e "${CYAN}[all.sh] failure: pruning .o/.obj scratch from build dirs (keep binaries+logs)${RESET}"
+        find "$TMPFS_BUILD_ROOT" \( -name '*.o' -o -name '*.obj' -o -name '*.dwo' \
+             -o -name '*.gcno' -o -name '*.gcda' \) -type f -delete 2>/dev/null
+    fi
     exit 1
 else
     # All tests passed → final sweep so the tmpfs root holds only:

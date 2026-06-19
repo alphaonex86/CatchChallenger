@@ -1772,6 +1772,12 @@ def main():
                         compiler=compiler_name, diag=DIAG)
                     if rc == 0:
                         log_pass(test_name)
+                        # Phase 0b is a COMPILE-ONLY check — functional tests
+                        # use the cmake testing-filedb build, never this make
+                        # binary. Drop the whole dir (≈150-200 MiB of .o each,
+                        # ~30 combos = several GiB of tmpfs RAM) now that it
+                        # compiled; ccache makes a re-run rebuild cheap.
+                        cleanup_helpers.remove_build_dir(build_dir)
                     else:
                         log_fail(test_name, f"rc={rc}")
                         if out.strip():
