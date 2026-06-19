@@ -2549,7 +2549,12 @@ def main():
                 log_fail(f"remote {label}", "no datapack source")
                 ri += 1
                 continue
-            if not setup_remote_server_runtime(host, ssh_port, remote_filedb_build, dp_src):
+            # full_media=True: a REAL client connects here and downloads the
+            # datapack to render the map, so the server must serve skin/tileset
+            # images (the persistent exec-node cache is media-stripped). The
+            # overlay lands only in this per-test build dir, wiped afterwards.
+            if not setup_remote_server_runtime(host, ssh_port, remote_filedb_build, dp_src,
+                                               full_media=True):
                 log_fail(f"remote {label} setup", "failed to rsync datapack")
                 ri += 1
                 continue

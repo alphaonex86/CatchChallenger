@@ -2032,7 +2032,14 @@ def main():
                 log_fail(f"remote {label}", "no datapack source")
                 ri += 1
                 continue
-            if not setup_remote_server_runtime(host, ssh_port, remote_filedb_build, dp_src):
+            # full_media=True: a REAL GUI client ("local client -> remote")
+            # connects to this remote server and must render the map, so the
+            # server has to serve skins + tileset images — the media-stripped
+            # exec-node cache would leave the client with an empty skin list and
+            # it would drop before the map. The full datapack lands only in the
+            # per-test build dir, wiped afterwards.
+            if not setup_remote_server_runtime(host, ssh_port, remote_filedb_build, dp_src,
+                                               full_media=True):
                 log_fail(f"remote {label} setup", "failed to rsync datapack")
                 ri += 1
                 continue
