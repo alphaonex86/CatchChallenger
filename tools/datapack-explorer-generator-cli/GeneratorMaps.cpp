@@ -318,13 +318,23 @@ static int generateMapPreviews()
     // the flat-color tile renders shrink 60-80%) then zopflipng (lossless
     // deflate re-compression) when installed. Each tool is optional; skip
     // silently-ish when absent. Runs LAST so trim/resize aren't undone.
+    //
+    // zopflipng in particular is CPU-heavy and was the deploy's long pole when
+    // run one-file-at-a-time via `find -exec ... \;`. Both tools are pure
+    // per-file work, so fan them out across every core with `xargs -P $(nproc)`
+    // instead: the whole map tree is gathered once and the jobs saturate all
+    // CPUs. nice/ionice keep the box responsive; on an idle build host they
+    // still use 100% of every otherwise-free core.
     {
         if(Helper::fileExists("/usr/bin/pngquant"))
         {
-            std::cout << "Optimizing PNGs (pngquant)..." << std::flush;
-            std::string cmd="/usr/bin/find \""+mapsDir+"\" -name '*.png' -exec"
+            std::cout << "Optimizing PNGs (pngquant, all cores)..." << std::flush;
+            // pngquant takes the file as its trailing arg, so let xargs append
+            // it (-n 1, one file per process).
+            std::string cmd="/usr/bin/find \""+mapsDir+"\" -name '*.png' -print0 | "
+                "/usr/bin/xargs -0 -r -P \"$(nproc)\" -n 1"
                 " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/pngquant"
-                " --force --skip-if-larger --ext .png --quality 65-95 {} \\; >/dev/null 2>&1";
+                " --force --skip-if-larger --ext .png --quality 65-95 >/dev/null 2>&1";
             std::system(cmd.c_str());
             std::cout << " done" << std::endl;
         }
@@ -332,9 +342,13 @@ static int generateMapPreviews()
             std::cout << "no /usr/bin/pngquant found, install pngquant for smaller previews" << std::endl;
         if(Helper::fileExists("/usr/bin/zopflipng"))
         {
-            std::cout << "Optimizing PNGs (zopflipng)..." << std::flush;
-            std::string cmd="/usr/bin/find \""+mapsDir+"\" -name '*.png' -exec"
-                " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/zopflipng -y {} {} \\; >/dev/null 2>&1";
+            std::cout << "Optimizing PNGs (zopflipng, all cores)..." << std::flush;
+            // zopflipng needs the path twice (in == out for in-place rewrite),
+            // so use -I{} replacement; -P still parallelizes across cores.
+            std::string cmd="/usr/bin/find \""+mapsDir+"\" -name '*.png' -print0 | "
+                "/usr/bin/xargs -0 -r -P \"$(nproc)\" -I{}"
+                " /usr/bin/ionice -c 3 /usr/bin/nice -n 19 /usr/bin/zopflipng -y {} {}"
+                " >/dev/null 2>&1";
             std::system(cmd.c_str());
             std::cout << " done" << std::endl;
         }
