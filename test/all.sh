@@ -86,16 +86,17 @@ done
 # Pre-run cleanup: drop the previous run's transient build trees + cluster
 # state to keep the tmpfs from saturating, BUT preserve the JSON
 # bookkeeping (all.log, failed.json[.lock], time.json, monitor.json,
-# testing-individual-time.json), the ccache store, the local cache root,
-# and the previous run's shipping artifacts (catchchallenger-*.exe / .msi
-# / .dmg / .apk / .aab) so the tmpfs root always shows the operator at
-# least the last run's outcome. The per-script atexit hook in
+# testing-individual-time.json) and the previous run's shipping
+# artifacts (catchchallenger-*.exe / .msi / .dmg / .apk / .aab) so the
+# tmpfs root always shows the operator at least the last run's outcome.
+# (Neither ccache NOR the datapack cache live here any more — both are on
+# persistent disk, see CCACHE_ROOT / LOCAL_CACHE_ROOT; a stale tmpfs
+# cc-datapack from the old layout is now intentionally swept.) The
+# per-script atexit hook in
 # test/cleanup_helpers.py also tears down on successful exit, but doing
 # the sweep here too lets the operator skip a stale post-mortem run
 # without re-running the whole matrix.
 find /mnt/data/perso/tmpfs/ -mindepth 1 -maxdepth 1 \
-     ! -name 'ccache' \
-     ! -name 'cc-datapack' \
      ! -name 'all.log' \
      ! -name 'failed.json' \
      ! -name 'failed.json.lock' \
@@ -191,7 +192,8 @@ if [ "$ONLY_FAILED" = "1" ] && [ ! -f "$FAILED_JSON" ]; then
 fi
 
 # Pre-run cleanup: drop transient build artefacts but keep cc-datapack/
-# and ccache/ (both expensive to rebuild, nothing run-specific in them).
+# (expensive to rebuild, nothing run-specific in it). ccache now lives on
+# persistent disk (CCACHE_ROOT), outside this tmpfs, so it survives anyway.
 # time.json + monitor.json are preserved across the wipe; truncated
 # explicitly below unless --onlyfailed (where we append).
 # Under --onlyfailed we also preserve failed.json — testing*.py reads
@@ -268,23 +270,22 @@ mkdir -p "$PYTHONPYCACHEPREFIX"
 
 # ── ccache configuration (local builds only) ────────────────────────────────
 # CMakeLists.txt auto-picks ccache as the compiler launcher when ccache is
-# installed; here we only choose where the cache lives. Live on tmpfs by
-# explicit operator choice — the speed of RAM-backed cache lookups outweighs
-# losing the cache on reboot, since a single full warm run repopulates it.
-# Fall back to ccache's default ($HOME/.ccache) when the configured tmpfs
-# mount isn't present, e.g. when running all.sh inside a container or on
-# a fresh box.
+# installed; here we only choose where the cache lives. CCACHE_ROOT lives on
+# PERSISTENT disk (machine-local path from config.json, see test_config.py),
+# NOT under tmpfs: a multi-gigabyte cache on a RAM-backed mount wastes RAM
+# and is lost on every reboot, while the cache is cheap to keep around and
+# expensive to repopulate. We just mkdir -p it; if its parent dir doesn't
+# exist (fresh box / container) the mkdir fails silently and ccache falls
+# back to its own default ($HOME/.ccache).
 #
 # CCACHE_DIR is intentionally NOT propagated to remote build nodes —
 # remote_build.py runs cmake over SSH and the SSH session inherits no
 # parent env, so each remote node uses its own $HOME/.ccache. That's the
-# right call: the operator's tmpfs root doesn't exist on remote nodes,
+# right call: the operator's cache dir doesn't exist on remote nodes,
 # and making the local cache addressable remotely would defeat ccache's
 # per-host hashing of compiler ABI / system headers.
-if [ -d "$TMPFS_ROOT" ]; then
-    export CCACHE_DIR="$CCACHE_ROOT"
-    mkdir -p "$CCACHE_DIR"
-fi
+export CCACHE_DIR="$CCACHE_ROOT"
+mkdir -p "$CCACHE_DIR" 2>/dev/null || true
 
 # ccache cross-build-dir hit rate fixes (mirror what remote_build.py
 # already exports for SSH compiles). Without these, every per-config
@@ -312,10 +313,10 @@ export CCACHE_SLOPPINESS="time_macros,include_file_mtime,include_file_ctime,file
 # flag-set variants per target plus the remote build dirs, the LOCAL cache
 # was hitting 100% utilisation after the first full sweep and ccache was
 # evicting entries (`Cleanups: 7947` after one full run), tanking the hit
-# rate to ~40%. tmpfs at /mnt/data/perso/tmpfs is 63G with ~35G free, so
-# 25G gives the cache enough room for the whole matrix without crowding
-# the build dirs themselves. Persisted to ccache.conf inside CCACHE_DIR
-# so it only takes effect once per cache slot.
+# rate to ~40%. CCACHE_ROOT now lives on persistent disk (not tmpfs), so
+# 25G gives the cache room for the whole matrix without any RAM pressure.
+# Persisted to ccache.conf inside CCACHE_DIR so it only takes effect once
+# per cache slot.
 if command -v ccache >/dev/null 2>&1; then
     ccache --max-size=25G >/dev/null 2>&1 || true
 fi
@@ -359,6 +360,19 @@ if ! python3 stage_datapacks.py; then
     exit 1
 fi
 
+# Datapack-unchanged invariant. The datapack is staged ONCE above and is
+# READ-ONLY for the rest of the run — every test only symlinks the cache,
+# never rewrites it. Snapshot a cheap signature (mtime of the cache parent
+# folder + each slot dir): a full delete/re-upload bumps the PARENT dir
+# mtime, an in-place edit bumps a SLOT dir mtime. run_test re-checks after
+# every script and reports if anything mutated the cache. (stage_datapacks
+# already aborted the run if the cache resolved onto tmpfs.)
+_datapack_sig() {
+    stat -c '%n %Y' "$LOCAL_CACHE_ROOT" "$LOCAL_CACHE_ROOT"/*/ 2>/dev/null | sort
+}
+DATAPACK_SIG_BASELINE="$(_datapack_sig)"
+echo -e "${CYAN}  datapack cache: $LOCAL_CACHE_ROOT (read-only baseline captured)${RESET}"
+
 FAILED=0
 
 # ── start the system+process sampler in the background ──────────────────
@@ -370,7 +384,19 @@ FAILED=0
 # so we don't leak python3 monitor.py processes across runs.
 python3 monitor.py --out "$MONITOR_JSON" --interval 60 &
 MONITOR_PID=$!
-trap '[ -n "$MONITOR_PID" ] && kill "$MONITOR_PID" 2>/dev/null; wait "$MONITOR_PID" 2>/dev/null; true' EXIT INT TERM
+_cleanup_monitor() {
+    [ -n "$MONITOR_PID" ] && kill "$MONITOR_PID" 2>/dev/null
+    wait "$MONITOR_PID" 2>/dev/null
+    true
+}
+# EXIT cleans up on any termination. INT/TERM must ALSO abort the whole run:
+# a bare signal trap returns control to the script, so Ctrl-C would only kill
+# the current `timeout python3 ...` (foreground child) and then bash would fall
+# through to the NEXT run_test — exactly the "Ctrl-C ignored, keeps going"
+# behaviour. Re-exit 130 (128+SIGINT) so the run stops; `trap - EXIT` avoids a
+# redundant second cleanup from the EXIT trap.
+trap _cleanup_monitor EXIT
+trap '_cleanup_monitor; trap - EXIT; echo -e "\n${RED}[all.sh] interrupted by signal — aborting run${RESET}"; exit 130' INT TERM
 echo "[all.sh] monitor.py started pid=$MONITOR_PID writing $MONITOR_JSON"
 
 ## Per-script wall clock cap. Each testing*.py gets its own ceiling,
@@ -481,6 +507,18 @@ print('1' if isinstance(e, dict) and len(e) > 0 else '0')
         python3 "$script" "${DIAG_ARGS[@]}"
     rc=$?
     local elapsed=$(( $(date +%s) - t0 ))
+    # Datapack must be unchanged between tests — no in-place edit, no full
+    # delete/re-upload. Compare the cache signature against the post-stage
+    # baseline; report + fail if a test mutated the read-only datapack.
+    local cur_sig
+    cur_sig="$(_datapack_sig)"
+    if [ "$cur_sig" != "$DATAPACK_SIG_BASELINE" ]; then
+        echo -e "\n${RED}[DATAPACK-CHANGED] $script mutated the staged datapack cache ($LOCAL_CACHE_ROOT) — it must stay read-only/unchanged between tests (no delete/upload, no in-place edit):${RESET}"
+        diff <(printf '%s\n' "$DATAPACK_SIG_BASELINE") <(printf '%s\n' "$cur_sig") | head -20
+        FAILED=1
+        # re-baseline so the same drift isn't re-reported for every later script
+        DATAPACK_SIG_BASELINE="$cur_sig"
+    fi
     if [ "$rc" = "0" ]; then
         echo -e "\n${GREEN}[OK] $script  (${elapsed}s)${RESET}\n"
         _log_test_timing "$script" "$elapsed" "$rc"
@@ -567,13 +605,13 @@ else
     #   - shipping artifacts (catchchallenger-*.exe/.msi/.apk/.aab/.dmg)
     #   - bookkeeping JSON (all.log, failed.json[.lock], time.json,
     #     monitor.json, testing-individual-time.json)
-    #   - ccache (kept warm across runs)
+    #   - cc-datapack (staged datapack cache, expensive to rebuild)
+    # (ccache is kept warm too but lives on persistent disk, not here.)
     # Anything else (transient build trees, datapack staging, cluster
     # state, nginx config) is removed.
     if [ -n "$TMPFS_ROOT" ] && [ -d "$TMPFS_ROOT" ]; then
-        echo -e "\n${CYAN}[all.sh] sweep tmpfs root → keep artifacts + JSON + ccache + cc-datapack${RESET}"
+        echo -e "\n${CYAN}[all.sh] sweep tmpfs root → keep artifacts + JSON + cc-datapack${RESET}"
         find "$TMPFS_ROOT/" -mindepth 1 -maxdepth 1 \
-             ! -name 'ccache' \
              ! -name 'cc-datapack' \
              ! -name 'all.log' \
              ! -name 'failed.json' \

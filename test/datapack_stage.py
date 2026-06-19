@@ -34,7 +34,8 @@ consumers. Pass `server=True` to the accessors to reach the stripped slot.
 
 Public API:
     LOCAL_CACHE_ROOT          test_config.LOCAL_CACHE_ROOT
-                              (<paths.tmpfs_root>/cc-datapack)
+                              (<paths.datapack_cache_root>, persistent DISK,
+                              never tmpfs — see is_under_ram_fs guard)
     DEFAULT_REMOTE_CACHE      /home/user/datapack-cache
     allowed_extensions()      → CATCHCHALLENGER_EXTENSION_ALLOWED (runtime)
     datapack_id(src, server=False)        → stable slot id
@@ -59,6 +60,47 @@ DEFAULT_REMOTE_CACHE = "/home/user/datapack-cache"
 
 _RSYNC_LOCAL_TIMEOUT = 600
 _RSYNC_REMOTE_TIMEOUT = 1200
+
+# Filesystems that live in RAM. The staged datapack is read-only for the
+# whole run and never rewritten, so it must NOT sit on one of these — that
+# only wastes RAM. stage_datapacks.py asserts the local cache is off these.
+_RAM_FSTYPES = ("tmpfs", "ramfs")
+
+
+def fstype_of(path):
+    """Filesystem type backing `path`, resolved from the longest mountpoint
+    prefix in /proc/self/mountinfo (walks up to the nearest existing
+    ancestor so it works before the dir is created). '' if undeterminable."""
+    p = os.path.abspath(path)
+    while p and not os.path.exists(p) and p != "/":
+        p = os.path.dirname(p)
+    try:
+        rp = os.path.realpath(p)
+    except OSError:
+        rp = p
+    best_len = -1
+    best_fs = ""
+    try:
+        with open("/proc/self/mountinfo", "r") as f:
+            for line in f:
+                parts = line.split()
+                try:
+                    mp = parts[4]
+                    fs = parts[parts.index("-") + 1]
+                except (IndexError, ValueError):
+                    continue
+                if rp == mp or rp.startswith(mp.rstrip("/") + "/"):
+                    if len(mp) > best_len:
+                        best_len = len(mp)
+                        best_fs = fs
+    except OSError:
+        return ""
+    return best_fs
+
+
+def is_under_ram_fs(path):
+    """True when `path` is backed by tmpfs/ramfs (RAM)."""
+    return fstype_of(path) in _RAM_FSTYPES
 
 # ---- extension filtering -------------------------------------------------
 # CATCHCHALLENGER_EXTENSION_ALLOWED (general/base/GeneralVariable.hpp) is the
