@@ -1874,7 +1874,13 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
     # display only kills *real* window creation, not the harness.
     for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
         env.pop(_gui_var, None)
-    win_args = [WINE_BIN, exe_path] + list(args)
+    # Force the offscreen platform on the Qt CLI too, not just via
+    # QT_QPA_PLATFORM: that env var does NOT reliably propagate through wine
+    # into the Windows process, so an env-only run still pops a real window on
+    # the host desktop. Qt parses+strips "-platform offscreen" before the
+    # app's own args (--host/--autologin/...), matching the version/screenshot
+    # launches that already pass it.
+    win_args = [WINE_BIN, exe_path, "-platform", "offscreen"] + list(args)
     # Wine inherits Linux CWD as the Windows-side CWD (mapped via Z:\).
     # The in-process server (--autosolo) loads the datapack from a
     # *relative* path "./datapack/"; setup_datapack_client() already
@@ -1993,7 +1999,9 @@ def run_wine_server_smoke(exe_path, label, wait_seconds=5):
     for _gui_var in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"):
         env.pop(_gui_var, None)
     cwd = os.path.dirname(exe_path)
-    win_args = [WINE_BIN, exe_path]
+    # CLI offscreen too (QT_QPA_PLATFORM doesn't reliably cross wine) so the
+    # server-gui smoke never pops a host window.
+    win_args = [WINE_BIN, exe_path, "-platform", "offscreen"]
     diagnostic.record_cmd(win_args, cwd)
     proc = subprocess.Popen(
         win_args, cwd=cwd, stdin=subprocess.DEVNULL,
@@ -2274,6 +2282,9 @@ def _spawn_installed_server_gui(server_exe):
     Caller waits then terminates proc."""
     env = _wine_env()
     cwd = os.path.dirname(server_exe)
+    # INSTALLED server-gui: its payload has qoffscreen.dll stripped by
+    # _strip_test_only_plugins(), so "-platform offscreen" would fail (no
+    # plugin) — keep env-only headless here, unlike the build-dir launches.
     win_args = [WINE_BIN, server_exe, "--autostart"]
     diagnostic.record_cmd(win_args, cwd)
     proc = subprocess.Popen(
@@ -2521,6 +2532,9 @@ def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
             return
         cpu_exe_inst = os.path.join(install_dir, COMBINED_BIN_CPU)
         env = _wine_env()
+        # NB: this runs the INSTALLED binary, whose payload has qoffscreen.dll
+        # stripped by _strip_test_only_plugins(), so "-platform offscreen" can't
+        # be forced here (no plugin) — rely on the env + virtual display.
         win_args = [WINE_BIN, cpu_exe_inst,
                     "--host", "127.0.0.1", "--port", E2E_PORT,
                     "--autologin", "--character", "WineE2E",

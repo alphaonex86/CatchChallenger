@@ -1230,7 +1230,7 @@ def _patch_server_xml(xml, maincode, game_port):
 
 
 def setup_remote_server_runtime(host, ssh_port, build_dir, datapack_src,
-                                game_port=REMOTE_GAME_PORT):
+                                game_port=REMOTE_GAME_PORT, full_media=False):
     """Stage datapack + push patched server-properties.xml to the remote server.
 
     The datapack is already pre-staged to <work_dir>/../datapack-cache/<id>
@@ -1241,7 +1241,17 @@ def setup_remote_server_runtime(host, ssh_port, build_dir, datapack_src,
     host→LXC SSH rsync and frees the host CPU to do other work in parallel.
     A copy (not a symlink) is required because we mutate <build_dir>/datapack
     afterwards (prune map/main/<other-maincode>); a symlink would corrupt
-    the shared cache for every subsequent test."""
+    the shared cache for every subsequent test.
+
+    The persistent exec-node cache is MEDIA-STRIPPED (no images/audio) to fit
+    tiny RAM-disk caches — fine for headless server tests (testingserver),
+    whose client never reaches the map. But testingclient drives a REAL client
+    that downloads the datapack and renders the map: it needs skins + tileset
+    images. Pass `full_media=True` for that case — we overlay the IMAGE files
+    from the read-only source datapack onto the (per-test, soon-deleted) build
+    dir copy so the server serves them, then cleanup_remote_node wipes the
+    build dir afterwards. The shared cache stays stripped; only this throwaway
+    copy is briefly made whole."""
     import datapack_stage as _ds
     # Find the matching node entry so we can resolve its datapack_cache
     # (configured via the per-exec-node `datapack_cache` field; defaults
@@ -1265,20 +1275,26 @@ def setup_remote_server_runtime(host, ssh_port, build_dir, datapack_src,
     # Wipe any leftover datapack/, then cp -a from the staged cache.
     # `cp -a --reflink=auto` falls back to a regular copy when the FS
     # doesn't support reflinks; on btrfs / xfs the copy is O(metadata).
-    cp_cmd = (f"mkdir -p {build_dir} && rm -rf {build_dir}/datapack && "
-              f"cp -a --reflink=auto {cache_path} {build_dir}/datapack")
-    rc, out = _ssh_cmd(host, ssh_port, cp_cmd,
-                       timeout=_ch.clamp_local(RSYNC_TIMEOUT))
-    if rc != 0:
-        # Fall back to the legacy host→LXC rsync if the cache path is missing
-        # (e.g. operator skipped stage_datapacks.py or the cache layout
-        # differs on this node). Slow but correct.
+    if full_media:
+        # Client-facing server (testingclient): a REAL client downloads this
+        # datapack and renders the map, so it must be COMPLETE — skins, tileset
+        # images, everything. The media-stripped exec-node cache won't do, and
+        # cp-stripped + image-overlay leaves a MIXED-mtime tree (cache mtimes on
+        # tmx/xml, source mtimes on the overlaid images) that trips a client
+        # map-load ordering race (player position arrives before the partially-
+        # synced maps finish parsing → maps.size()==0 → never reaches the map).
+        # So rsync the FULL read-only source straight to the throwaway build dir:
+        # one consistent-mtime tree, complete content. Slower host→LXC, but only
+        # for testingclient's few nodes; cleanup_remote_node wipes it afterwards
+        # and the persistent stripped cache is never touched.
         rsync_dest = _rsync_host(host)
-        _ssh_cmd(host, ssh_port, f"mkdir -p {build_dir}/datapack", timeout=15)
+        _ssh_cmd(host, ssh_port,
+                 f"mkdir -p {build_dir} && rm -rf {build_dir}/datapack && "
+                 f"mkdir -p {build_dir}/datapack", timeout=15)
         rsync_args = [
             "rsync", "-art", "--delete", "--exclude=.git",
             "-e", f"{_ch.RSYNC_SSH_E} -p {ssh_port}",
-            datapack_src + "/", f"{rsync_dest}:{build_dir}/datapack/"
+            datapack_src.rstrip("/") + "/", f"{rsync_dest}:{build_dir}/datapack/"
         ]
         try:
             p = subprocess.run(rsync_args, timeout=_ch.clamp_local(RSYNC_TIMEOUT),
@@ -1287,6 +1303,29 @@ def setup_remote_server_runtime(host, ssh_port, build_dir, datapack_src,
             return False
         if p.returncode != 0:
             return False
+    else:
+        cp_cmd = (f"mkdir -p {build_dir} && rm -rf {build_dir}/datapack && "
+                  f"cp -a --reflink=auto {cache_path} {build_dir}/datapack")
+        rc, out = _ssh_cmd(host, ssh_port, cp_cmd,
+                           timeout=_ch.clamp_local(RSYNC_TIMEOUT))
+        if rc != 0:
+            # Fall back to the legacy host→LXC rsync if the cache path is missing
+            # (e.g. operator skipped stage_datapacks.py or the cache layout
+            # differs on this node). Slow but correct.
+            rsync_dest = _rsync_host(host)
+            _ssh_cmd(host, ssh_port, f"mkdir -p {build_dir}/datapack", timeout=15)
+            rsync_args = [
+                "rsync", "-art", "--delete", "--exclude=.git",
+                "-e", f"{_ch.RSYNC_SSH_E} -p {ssh_port}",
+                datapack_src + "/", f"{rsync_dest}:{build_dir}/datapack/"
+            ]
+            try:
+                p = subprocess.run(rsync_args, timeout=_ch.clamp_local(RSYNC_TIMEOUT),
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            except subprocess.TimeoutExpired:
+                return False
+            if p.returncode != 0:
+                return False
 
     # read reference server-properties.xml and patch it
     if not os.path.isfile(REF_SERVER_PROPS):
