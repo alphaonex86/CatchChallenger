@@ -20,8 +20,15 @@ Required `paths.*` keys:
 Derived constants exported here:
   TMPFS_ROOT         <paths.tmpfs_root>
   TMPFS_BUILD_ROOT   <tmpfs_root>/cc-build
-  LOCAL_CACHE_ROOT   <tmpfs_root>/cc-datapack
-  CCACHE_ROOT        <tmpfs_root>/ccache
+  LOCAL_CACHE_ROOT   <paths.datapack_cache_root> — a PERSISTENT on-disk
+                     dir (NOT under tmpfs: the datapack is read-only for
+                     the whole run, so RAM-backing it only wastes RAM).
+                     Set it in config.json; falls back to
+                     ~/.cache/catchchallenger/datapack-cache. stage_datapacks
+                     aborts the run if this resolves onto tmpfs/ramfs.
+  CCACHE_ROOT        <paths.ccache_root> — a PERSISTENT on-disk dir (NOT
+                     under tmpfs: survives reboot, doesn't eat RAM). Set it
+                     in config.json; falls back to ~/.cache/ccache.
   FAILED_JSON        <tmpfs_root>/failed.json
   TIME_JSON          <tmpfs_root>/time.json
   MONITOR_JSON       <tmpfs_root>/monitor.json
@@ -63,6 +70,7 @@ _DUMMY_CONFIG = {
         "savegame_gl": "~/.local/share/CatchChallenger/client/solo",
         "client_datapack_cache": "~/.local/share/CatchChallenger/client-qtcpu800x600/datapack",
         "tmpfs_root": "/tmp/cc-test",
+        "ccache_root": "/tmp/cc-test/ccache",
         "mxe_prefix": "/path/to/mxe",
         "msi_dir": "/path/to/msi-tooling",
         "android_workspace": "/path/to/android-workspace",
@@ -120,9 +128,28 @@ def __getattr__(name):
     if name == "TMPFS_BUILD_ROOT":
         return os.path.join(_path("tmpfs_root"), "cc-build")
     if name == "LOCAL_CACHE_ROOT":
-        return os.path.join(_path("tmpfs_root"), "cc-datapack")
+        # The staged datapack cache lives on PERSISTENT disk, NOT tmpfs:
+        # the datapack is READ-ONLY for the whole run and never rewritten
+        # between tests, so keeping it RAM-backed only wastes RAM (and is
+        # lost on reboot for no gain). Mirrors CCACHE_ROOT. The machine-
+        # local disk path is in config.json (paths.datapack_cache_root) so
+        # it never leaks into git; fall back to a ~/.cache location.
+        # stage_datapacks.py asserts this resolves OFF tmpfs and aborts the
+        # run otherwise.
+        try:
+            return _path("datapack_cache_root")
+        except KeyError:
+            return os.path.expanduser("~/.cache/catchchallenger/datapack-cache")
     if name == "CCACHE_ROOT":
-        return os.path.join(_path("tmpfs_root"), "ccache")
+        # ccache lives on PERSISTENT disk, NOT tmpfs: a multi-gigabyte
+        # cache on a RAM-backed mount wastes RAM and is lost on reboot,
+        # whereas the cache is cheap to keep and expensive to rebuild. The
+        # real (machine-local) path lives in config.json so it never leaks
+        # into git; fall back to ccache's conventional ~/.cache location.
+        try:
+            return _path("ccache_root")
+        except KeyError:
+            return os.path.expanduser("~/.cache/ccache")
     if name == "FAILED_JSON":
         return os.path.join(_path("tmpfs_root"), "failed.json")
     if name == "TIME_JSON":

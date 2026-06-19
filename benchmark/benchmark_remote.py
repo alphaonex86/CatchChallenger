@@ -812,12 +812,37 @@ def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
     eh  = exec_node["host"]
     ep  = exec_node.get("port", 22)
     ewd = exec_node["work_dir"]
-    ssh_run(eu, eh, ep, f"mkdir -p {shlex.quote(ewd)}", timeout=15)
-    dst = f"{ewd}/{remote_subdir}"
+    # The datapack must live on PERSISTENT DISK, never tmpfs/ramfs: it is
+    # read-only for the benchmark and RAM-backing it only wastes the little
+    # RAM these small nodes have. work_dir is frequently a tmpfs scratch, so
+    # stage the datapack next to the (disk) datapack_cache instead and symlink
+    # it into work_dir/<remote_subdir> so the binary still finds it where it
+    # expects. Mirrors test/datapack_stage.py's off-tmpfs rule + guard.
+    cache = exec_node.get("datapack_cache")
+    disk_parent = (os.path.dirname(cache.rstrip("/")) if cache else ewd)
+    disk_dir = f"{disk_parent}/bench-datapack"
+    dst = f"{disk_dir}/{remote_subdir}"
+    ssh_run(eu, eh, ep,
+            f"mkdir -p {shlex.quote(disk_dir)} {shlex.quote(ewd)}", timeout=15)
+    # Guard: refuse to stage onto RAM (abort + report, like stage_datapacks.py).
+    rc, fsout, _ = ssh_run(eu, eh, ep,
+                           f"findmnt -n -o FSTYPE --target {shlex.quote(disk_dir)}",
+                           timeout=15)
+    fstype = (fsout or "").strip()
+    if fstype in ("tmpfs", "ramfs"):
+        return 1, (f"benchmark datapack dest {disk_dir} is on {fstype} (RAM) on "
+                   f"{exec_node.get('label', eh)} — the datapack must live on "
+                   f"persistent disk; move it off tmpfs (umount + fstab).")
     extra = (server_datapack_excludes(keep_skins=keep_skins)
              if server_mode else None)
-    return rsync_to(eu, eh, ep, local_datapack.rstrip("/") + "/", dst + "/",
-                    timeout=timeout, extra_args=extra)
+    rc, msg = rsync_to(eu, eh, ep, local_datapack.rstrip("/") + "/", dst + "/",
+                       timeout=timeout, extra_args=extra)
+    if rc == 0:
+        # symlink work_dir/<subdir> -> the disk copy so callers are unaffected
+        ssh_run(eu, eh, ep,
+                f"ln -sfn {shlex.quote(dst)} {shlex.quote(ewd + '/' + remote_subdir)}",
+                timeout=15)
+    return rc, msg
 
 
 def _server_properties_xml(maincode, port, max_players=200):

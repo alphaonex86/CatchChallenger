@@ -32,6 +32,29 @@ BENCH_ROOT = os.path.join(REPO_ROOT, "benchmark")
 RESULTS    = os.path.join(BENCH_ROOT, "results")
 REMOTE_NODES_JSON = os.path.join(os.path.dirname(REPO_ROOT), "remote_nodes.json")
 
+
+def ccache_dir():
+    """The PERSISTENT on-disk ccache directory shared with the test harness.
+
+    ccache must NOT live on tmpfs: a multi-gigabyte cache on a RAM-backed
+    mount wastes RAM and is lost on every reboot, whereas it is cheap to
+    keep and expensive to rebuild. The real machine-local path lives in
+    test_config's config.json (so it never leaks into git); fall back to
+    ccache's conventional ~/.cache location when test_config is absent
+    (e.g. on a bare exec node that only runs the binary)."""
+    try:
+        sys.path.insert(0, os.path.join(REPO_ROOT, "test"))
+        import test_config
+        return test_config.CCACHE_ROOT
+    except Exception:
+        return os.path.expanduser("~/.cache/ccache")
+
+
+# Pin CCACHE_DIR for every local build this process spawns (all benchmark
+# builds inherit os.environ). setdefault honours an explicit operator
+# override but guarantees we never silently dump the cache onto tmpfs.
+os.environ.setdefault("CCACHE_DIR", ccache_dir())
+
 # Sidecar file for the "local" host (no entry in remote_nodes.json). Same
 # semantics as the per-execution_node benchmark_disabled_tools field; lives
 # under ~/.cache so it survives but doesn't pollute the repo.
