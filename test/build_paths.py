@@ -36,12 +36,38 @@ PYCACHE_PREFIX = test_config.PYCACHE_DIR
 
 
 def build_path(*parts):
-    return os.path.join(TMPFS_BUILD_ROOT, *parts)
+    p = os.path.join(TMPFS_BUILD_ROOT, *parts)
+    # Auto-register every build dir a testing*.py asks for, so the script
+    # tears down its OWN tmpfs scratch on SUCCESSFUL exit (cleanup_helpers
+    # keeps it on failure/signal for inspection). Without this a script that
+    # forgets register_build_dir() leaks multi-GiB build trees into RAM —
+    # which is exactly what happened (testingserver et al. never registered).
+    # The harness cleans up itself; no manual sweep. Skip the root.
+    if parts:
+        _auto_register(p)
+    return p
 
 
 def src_to_build(src_dir, root, *tail):
     rel = os.path.relpath(src_dir, root)
-    return os.path.join(TMPFS_BUILD_ROOT, rel, *tail)
+    p = os.path.join(TMPFS_BUILD_ROOT, rel, *tail)
+    _auto_register(p)
+    return p
+
+
+def _auto_register(path):
+    """Mark `path` for removal-on-success via cleanup_helpers. Defensive:
+    lazy import (avoid an import cycle), never raise, and never register the
+    build root itself (only dirs strictly under it)."""
+    try:
+        ap = os.path.abspath(path)
+        root = os.path.abspath(TMPFS_BUILD_ROOT)
+        if ap == root or os.path.commonpath([ap, root]) != root:
+            return
+        import cleanup_helpers
+        cleanup_helpers.register_build_dir(ap)
+    except Exception:
+        pass
 
 
 def pycache_env(env=None):
