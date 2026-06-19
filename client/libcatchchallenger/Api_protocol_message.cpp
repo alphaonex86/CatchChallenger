@@ -751,30 +751,31 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
 
             uint32_t sub_size32=size-pos;
             uint32_t decompressedSize=0;
-            //Per-callsite scratch (replaces former 16 MB static
-            //CompressionProtocol::tempBigBufferForUncompressedInput).
-            //Heap-backed via std::vector; freed on scope exit.
-            std::vector<uint8_t> decompressBuffer(CATCHCHALLENGER_COMPRESSBUFFERSIZE);
-            char * const tempBigBufferForUncompressedInput=reinterpret_cast<char *>(decompressBuffer.data());
+            //No private 16 MB buffer: the raw path (None, or the always-raw 0x76)
+            //reads straight from the packet (zero allocation — ESP32 / MS-DOS /
+            //compression-disabled friendly); the compressed path uses
+            //CompressionProtocol's SHARED grow-only scratch (reused, never the
+            //16 MB worst case), rejecting a bad frame from its header first.
+            const char *tempBigBufferForUncompressedInput=NULL;
             if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None || packetCode==0x76)
             {
                 decompressedSize=sub_size32;
-                memcpy(tempBigBufferForUncompressedInput,data+pos,sub_size32);
+                tempBigBufferForUncompressedInput=data+pos;
             }
             else
             {
-                //computeDecompression() returns int32_t -1 on failure; check it
+                //decompressToScratch() returns int64_t -1 on failure; check it
                 //before it wraps into the unsigned decompressedSize (-> size2==-1
                 //and a misleading downstream abort under CATCHCHALLENGER_HARDENED).
-                const int32_t decompressResult=CompressionProtocol::computeDecompression(data+pos,tempBigBufferForUncompressedInput,sub_size32,
-                    decompressBuffer.size(),CompressionProtocol::compressionTypeClient);
+                const int64_t decompressResult=CompressionProtocol::decompressToScratch(data+pos,sub_size32,
+                    &tempBigBufferForUncompressedInput,CompressionProtocol::compressionTypeClient);
                 if(decompressResult<0)
                 {
                     newError("Protocol wrong or corrupted","failed to decompress with main ident: "+std::to_string(packetCode)+
                              ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                decompressedSize=decompressResult;
+                decompressedSize=(uint32_t)decompressResult;
             }
 
             const char * const data2=tempBigBufferForUncompressedInput;

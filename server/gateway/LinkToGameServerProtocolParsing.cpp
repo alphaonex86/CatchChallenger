@@ -447,18 +447,32 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
 
             uint32_t sub_size32=size-pos;
             uint32_t decompressedSize=0;
-            //Per-callsite scratch (replaces former 16 MB static
-            //tempBigBufferForUncompressedInput).
-            //Heap-backed via std::vector; freed on scope exit.
-            std::vector<uint8_t> decompressBuffer(CATCHCHALLENGER_COMPRESSBUFFERSIZE);
-            char * const tempBigBufferForUncompressedInput=reinterpret_cast<char *>(decompressBuffer.data());
+            //No private 16 MB buffer: the raw path (None, or the always-raw 0x76)
+            //reads straight from the packet (zero allocation); the compressed path
+            //uses CompressionProtocol's SHARED grow-only scratch (reused across
+            //clients, never the 16 MB worst case), rejecting a bad/oversized frame
+            //from its header before allocating. Important on a gateway that relays
+            //a character block per client — the old per-call 16 MB alloc/free
+            //fragmented the heap under load.
+            const char *tempBigBufferForUncompressedInput=NULL;
             if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None || mainCodeType==0x76)
             {
                 decompressedSize=sub_size32;
-                memcpy(tempBigBufferForUncompressedInput,data+pos,sub_size32);
+                tempBigBufferForUncompressedInput=data+pos;
             }
             else
-                decompressedSize=CompressionProtocol::computeDecompression(data+pos,tempBigBufferForUncompressedInput,sub_size32,decompressBuffer.size(),CompressionProtocol::compressionTypeClient);
+            {
+                //-1 on failure: reject cleanly instead of wrapping into the
+                //unsigned decompressedSize (which would trip every size check below).
+                const int64_t decompressResult=CompressionProtocol::decompressToScratch(data+pos,sub_size32,
+                    &tempBigBufferForUncompressedInput,CompressionProtocol::compressionTypeClient);
+                if(decompressResult<0)
+                {
+                    parseNetworkReadError("failed to decompress with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                decompressedSize=(uint32_t)decompressResult;
+            }
 
             unsigned int decompressedDataPos=0;
             uint8_t index=0;
