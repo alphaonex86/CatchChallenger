@@ -51,9 +51,11 @@ ALLOWED_COMMANDS = {
     "status", "full-test", "testcase", "stop-server",
 }
 
-# Output files written by `testcase` for Claude Code to read
-TESTCASE_SERVER_LOG = "/home/user/Desktop/CatchChallenger/working/server/cli/server.log"
-TESTCASE_BOT_LOG = "/home/user/Desktop/CatchChallenger/working/server/cli/bot-tools.log"
+# Output files written by `testcase`. They live in the temp STATE_DIR (NOT the
+# source tree) so these generated logs never land next to checked-in source and
+# never get committed.
+TESTCASE_SERVER_LOG = os.path.join(STATE_DIR, "testcase-server.log")
+TESTCASE_BOT_LOG = os.path.join(STATE_DIR, "testcase-bot-tools.log")
 
 
 def ensure_state_dir():
