@@ -185,6 +185,37 @@ if(WIN32)
         PROPERTIES INCLUDE_DIRECTORIES ${_qtopengl_dir}/resources)
 endif()
 
+# ── translation: compile the tracked .ts into the .qm embedded by the qrc ──
+# client-resources.qrc embeds languages/en/translation.qm, but a .qm is a
+# GENERATED artifact (.gitignore: *.qm) so a fresh `git clone` ships only
+# translation.ts. Without producing the .qm, RCC aborts the build with
+# "translation.qm ... missing and no known rule to make it". The qmake
+# build compiled it via `CONFIG += lrelease`; the CMake port dropped that.
+# The .qm must land NEXT TO the .ts because the qrc references it by that
+# relative path (RCC resolves <file> paths against the qrc's source dir).
+set(_qtopengl_ts ${_qtopengl_dir}/resources/languages/en/translation.ts)
+set(_qtopengl_qm ${_qtopengl_dir}/resources/languages/en/translation.qm)
+# LinguistTools (lrelease) is OPTIONAL: keep the "vanilla VPS, no extra
+# packages" promise. When present we compile the real translation and
+# rebuild it whenever the .ts changes; when absent we drop an empty
+# placeholder .qm so RCC still succeeds (QTranslator::load() then just
+# returns false at runtime → app runs untranslated, same degraded
+# behaviour as the old committed 1-byte placeholder).
+find_package(Qt6 COMPONENTS LinguistTools QUIET)
+if(TARGET Qt6::lrelease)
+    add_custom_command(
+        OUTPUT ${_qtopengl_qm}
+        COMMAND Qt6::lrelease -silent ${_qtopengl_ts} -qm ${_qtopengl_qm}
+        DEPENDS ${_qtopengl_ts}
+        COMMENT "lrelease translation.ts -> translation.qm"
+        VERBATIM)
+    set_source_files_properties(${_qtopengl_qm} PROPERTIES GENERATED TRUE)
+else()
+    if(NOT EXISTS ${_qtopengl_qm})
+        file(WRITE ${_qtopengl_qm} "")
+    endif()
+endif()
+
 # Use Qt's executable wrapper when available — on Android it produces a
 # shared library + a -deployment-settings.json suitable for androiddeployqt.
 # On host platforms it behaves the same as add_executable.
@@ -192,6 +223,16 @@ if(COMMAND qt_add_executable)
     qt_add_executable(catchchallenger ${_qtopengl_sources} ${_qtopengl_resources})
 else()
     add_executable(catchchallenger ${_qtopengl_sources} ${_qtopengl_resources})
+endif()
+
+# Build the generated .qm before AUTORCC runs rcc on the qrc that embeds
+# it. AUTOGEN_TARGET_DEPENDS is the documented hook for "the autogen step
+# consumes this generated file" — with the GENERATED property set above,
+# CMake wires the custom command into the <target>_autogen dependency so
+# ninja produces translation.qm first instead of failing on it.
+if(TARGET Qt6::lrelease)
+    set_property(TARGET catchchallenger APPEND PROPERTY
+                 AUTOGEN_TARGET_DEPENDS ${_qtopengl_qm})
 endif()
 
 # WIN32_EXECUTABLE → linker `-mwindows`, so launching the .exe does
