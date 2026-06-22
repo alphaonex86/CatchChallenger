@@ -8,7 +8,9 @@ autom4te.cache
 *.kdevses
 compile
 config.guess
-config.h
+# config.h is COMMITTED: a hand-written embedded-build config (no autoconf)
+# that the cmake build requires (HAVE_CONFIG_H). Upstream generates it so its
+# .gitignore listed it — but we ship our own, so it must NOT be ignored.
 config.h.in
 config.log
 config.status
