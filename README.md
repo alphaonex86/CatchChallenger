@@ -34,18 +34,33 @@ Dependency:
 * Gateway
   * curl to download datapack via http
 
+The project now uses **CMake** (qmake `.pro` files are gone). There is no
+root `CMakeLists.txt`: each binary has its own self-contained
+`CMakeLists.txt`, so you configure the subdir of the binary you want.
+Builds with vanilla `cmake` out of the box (ninja/mold/ccache are picked
+up automatically when present, plain make otherwise).
+
 ### Client
 
 ```sh
-cd client/
-qmake *.pro
-make
-mkdir datapack
-cd datapack
-git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack internal
-chmod a+x catchchallenger
+cmake -S client -B build/client
+cmake --build build/client
+mkdir build/client/datapack
+git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack build/client/datapack/internal
+cd build/client
 ./catchchallenger
 ```
+
+### Server
+
+```sh
+cmake -S server -B build/server      # catchchallenger-server-gui (Qt admin)
+cmake --build build/server
+```
+
+Other server variants live in their own sibling subdirs, built the same
+way: `server/cli` (epoll game server), `server/login`, `server/master`,
+`server/gateway`, `server/game-server-alone`.
 
 # Sources
 * The sources of the client/server: https://github.com/alphaonex86/CatchChallenger
