@@ -423,6 +423,7 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingcmake.py]=30m
     [testingcompilationandroid.py]=25m
     [testingcompilationESP32.py]=45m
+    [testingcompilationgit.py]=20m
     [testingcompilationmac.py]=15m
     [testingcompilationmsdos.py]=20m
     [testingcompilationwindows.py]=15m
@@ -560,6 +561,7 @@ run_test testingcompilationmac.py
 run_test testingcompilationandroid.py
 run_test testingcompilationmsdos.py
 run_test testingcompilationESP32.py
+run_test testingcompilationgit.py
 
 # Publish freshly-built installers to the web VPS files dir and bump
 # updater.txt. publish_binaries.sh aborts (and leaves updater.txt
