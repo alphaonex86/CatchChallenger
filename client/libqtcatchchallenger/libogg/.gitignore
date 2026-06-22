@@ -25,7 +25,9 @@ ogg-uninstalled.pc
 stamp-h1
 test-driver
 .project
-include/ogg/config_types.h
+# config_types.h is COMMITTED: a hand-written embedded-build header that the
+# cmake build needs (ogg/os_types.h includes it). Upstream generates it so its
+# .gitignore listed it — but we ship our own, so it must NOT be ignored.
 src/*.o
 src/*.lo
 src/lib*.la
