@@ -33,6 +33,7 @@ _CAPS_SECONDS = {
     "testingcmake.py":                30 * 60,
     "testingcompilationandroid.py":   15 * 60,
     "testingcompilationESP32.py":     45 * 60,
+    "testingcompilationgit.py":       20 * 60,
     "testingcompilationmac.py":       15 * 60,
     "testingcompilationwindows.py":   15 * 60,
     "testingfight.py":                15 * 60,
