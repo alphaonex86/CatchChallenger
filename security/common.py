@@ -76,13 +76,51 @@ OLLAMA_API = OLLAMA_DEFAULT_URL + "/api/generate"
 OLLAMA_CHAT = OLLAMA_DEFAULT_URL + "/api/chat"
 
 # Default backend is the local Ollama model above. For a run that drives the
-# SAME loop with Anthropic's Claude, set CC_IA_BACKEND=claude and provide a
+# SAME loop with Anthropic Claude, set CC_IA_BACKEND=claude and provide a
 # credential VIA THE ENVIRONMENT (never store a key/token in the repo):
 #   CC_IA_BACKEND=claude ANTHROPIC_API_KEY=sk-ant-api...      python3 server.py all
 #   CC_IA_BACKEND=claude CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat... python3 server.py all
 # Only the chat() transport changes; the credential is read at call time and is
 # never written to disk. Dependency-free: raw HTTP over the stdlib urllib.
-IA_BACKEND = os.environ.get("CC_IA_BACKEND", "ollama").strip().lower()
+# The backend may ALSO be selected out-of-repo: a settings key 'ia_backend'
+# ('ollama' | 'claude') is the fallback when CC_IA_BACKEND env is unset, so a
+# shared/host config can default to Claude without per-run env vars. The
+# credential may likewise live in that OUT-OF-REPO settings file instead of the
+# env: 'claude_oauth_token' (a Claude Code subscription token, sk-ant-oat...,
+# preferred) or 'claude_api_key' (a console key, sk-ant-api...). A subscription
+# token always wins over a console key, so an empty-balance console key in
+# ANTHROPIC_API_KEY can't shadow it. Secrets stay OUT of the repo.
+
+# Out-of-repo settings file path. Defined early (before _resolve_ia_backend)
+# because the backend selection reads it at import time. Holds infra URL/IP +
+# tokens/keys that must never be committed; override via CC_IA_SETTINGS env.
+_XDG_CONFIG = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+IA_SETTINGS_FILE = os.environ.get(
+    "CC_IA_SETTINGS", os.path.join(_XDG_CONFIG, "CatchChallenger", "ia-settings.json"))
+
+
+def load_settings():
+    """Parsed settings dict, or {} if absent/unreadable/invalid. Best-effort:
+    a bad settings file never aborts the run."""
+    try:
+        with open(IA_SETTINGS_FILE, "r", errors="replace") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _resolve_ia_backend():
+    env = os.environ.get("CC_IA_BACKEND", "").strip().lower()
+    if env:
+        return env
+    cfg = load_settings().get("ia_backend")
+    if isinstance(cfg, str) and cfg.strip().lower() in ("ollama", "claude"):
+        return cfg.strip().lower()
+    return "ollama"
+
+
+IA_BACKEND = _resolve_ia_backend()
 USE_CLAUDE = IA_BACKEND == "claude"
 CLAUDE_MODEL = os.environ.get("CC_CLAUDE_MODEL", "claude-opus-4-8")
 CLAUDE_API = "https://api.anthropic.com/v1/messages"
@@ -146,26 +184,12 @@ def claude_usage_summary():
 #     it by a stable hash) - so it stays warm and a panel spreads across hosts.
 # With NO settings and no OLLAMA_HOST we use the single local backend.
 # ===========================================================================
-_XDG_CONFIG = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
-IA_SETTINGS_FILE = os.environ.get(
-    "CC_IA_SETTINGS", os.path.join(_XDG_CONFIG, "CatchChallenger", "ia-settings.json"))
 _OLLAMA_BACKENDS = None   # cached [(url, pinned_models_set)]
 _MODEL_LOCATIONS = None   # cached {model_name: [backend_url, ...]}
 # CLI per-model pins: a model spec may carry '@<host:port>' to route THAT model
 # to a specific backend without editing the settings JSON. Filled by
 # _register_model_spec(); consulted first by backend_for_model().
 _MODEL_URL_PINS = {}      # {model_name: backend_url}
-
-
-def load_settings():
-    """Parsed settings dict, or {} if absent/unreadable/invalid. Best-effort:
-    a bad settings file never aborts the run."""
-    try:
-        with open(IA_SETTINGS_FILE, "r", errors="replace") as fh:
-            data = json.load(fh)
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 def ollama_backends():
@@ -600,39 +624,89 @@ CLAUDE_CRED_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
                     "CLAUDE_CODE_OAUTH_TOKEN")
 
 
+def _settings_claude_key():
+    """A console API key (sk-ant-api...) declared OUT-OF-REPO in the settings
+    file (key 'claude_api_key'), or ''. The key is a SECRET - it lives only in
+    the out-of-repo config, never in the repo, and is read at call time."""
+    cfg = load_settings().get("claude_api_key")
+    if isinstance(cfg, str):
+        return cfg.strip()
+    return ""
+
+
+def _settings_claude_oauth_token():
+    """A Claude Code / `ant` OAuth token (sk-ant-oat...) declared OUT-OF-REPO in
+    the settings file (key 'claude_oauth_token', alias 'claude_code_oauth_token'),
+    or ''. SUBSCRIPTION-billed, so it is preferred over a console api key (which
+    is pay-per-token and 400s on an empty balance). The token is a SECRET: it
+    lives only in the out-of-repo config, read at call time, never in the repo."""
+    cfg = load_settings()
+    for name in ("claude_oauth_token", "claude_code_oauth_token"):
+        v = cfg.get(name)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    return ""
+
+
 def _claude_has_creds():
-    """True if any supported credential env var is set."""
+    """True if a credential is available (env var OR out-of-repo settings)."""
     for name in CLAUDE_CRED_VARS:
         if os.environ.get(name, "").strip():
             return True
-    return False
+    return bool(_settings_claude_oauth_token() or _settings_claude_key())
 
 
 def _claude_auth_headers():
-    """Resolve auth headers for the Messages API from the environment.
+    """Resolve auth headers for the Messages API.
 
-    - ANTHROPIC_API_KEY (a console key, sk-ant-api...) -> x-api-key.
-    - ANTHROPIC_AUTH_TOKEN / CLAUDE_CODE_OAUTH_TOKEN (a Claude Code / `ant`
-      OAuth token, sk-ant-oat...) -> Authorization: Bearer + the mandatory
-      `oauth-2025-04-20` beta header (a bearer token without it 401s).
+    An OAuth token (Claude Code / `ant`, sk-ant-oat...) is SUBSCRIPTION-billed; a
+    console API key (sk-ant-api...) is pay-per-token and 400s on an empty
+    balance. So whenever an OAuth token is present - from EITHER the env or the
+    out-of-repo config - it WINS, and a stale/empty-balance console key lingering
+    in ANTHROPIC_API_KEY can never shadow a configured subscription token.
 
-    An OAuth token is commonly pasted into ANTHROPIC_API_KEY by mistake; we
-    detect the sk-ant-oat prefix and route it to Bearer regardless of which var
-    holds it. Raises if no credential is present."""
-    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    Credential sources, OAuth token first (each: env, then settings):
+    - env ANTHROPIC_AUTH_TOKEN / CLAUDE_CODE_OAUTH_TOKEN, or an sk-ant-oat value
+      pasted into ANTHROPIC_API_KEY by mistake.
+    - settings 'claude_oauth_token' (alias 'claude_code_oauth_token'), or an
+      sk-ant-oat value stored in 'claude_api_key'.
+    - env ANTHROPIC_API_KEY (a console key) -> x-api-key.
+    - settings 'claude_api_key' (a console key) -> x-api-key.
+    Secrets live only in the env or the OUT-OF-REPO config, are read at call
+    time, and are never written to the repo. Bearer carries the mandatory
+    `oauth-2025-04-20` beta header (a bearer token without it 401s). Raises if no
+    credential is present."""
+    env_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    # 1) OAuth token (preferred): explicit env vars, an oat token mis-pasted into
+    #    the api-key slot, then the out-of-repo config (dedicated key, or an oat
+    #    token stored in claude_api_key).
     token = (os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
              or os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip())
-    if key.startswith("sk-ant-oat"):  # OAuth token in the API-key slot
-        token, key = key, ""
-    if key:
-        return {"x-api-key": key}
+    if not token and env_key.startswith("sk-ant-oat"):
+        token = env_key
+    if not token:
+        token = _settings_claude_oauth_token()
+    if not token:
+        settings_key = _settings_claude_key()
+        if settings_key.startswith("sk-ant-oat"):
+            token = settings_key
     if token:
         return {"authorization": "Bearer " + token,
                 "anthropic-beta": "oauth-2025-04-20"}
+    # 2) Console API key fallback: env first, then the out-of-repo config. An
+    #    sk-ant-oat value here was already promoted to a token above.
+    key = env_key
+    if not key:
+        settings_key = _settings_claude_key()
+        if not settings_key.startswith("sk-ant-oat"):
+            key = settings_key
+    if key:
+        return {"x-api-key": key}
     raise RuntimeError(
-        "CC_IA_BACKEND=claude but no credential in the environment - set "
-        "ANTHROPIC_API_KEY (console key) or CLAUDE_CODE_OAUTH_TOKEN / "
-        "ANTHROPIC_AUTH_TOKEN (a Claude Code token, e.g. `claude setup-token`).")
+        "CC_IA_BACKEND=claude but no credential found - set CLAUDE_CODE_OAUTH_TOKEN "
+        "(env, a Claude Code subscription token) or ANTHROPIC_API_KEY (env, a "
+        "console key), or put 'claude_oauth_token' / 'claude_api_key' in the "
+        "out-of-repo settings (%s)." % IA_SETTINGS_FILE)
 
 
 class _ClaudeStreamError(OSError):
@@ -989,6 +1063,7 @@ __all__ = [
     "_model_locations", "_register_model_spec", "backend_for_model",
     "_ts", "_Tee", "_human_dur", "fit_ctx", "ensure_context",
     "_claude_split", "_cache_text", "_claude_has_creds", "_claude_auth_headers",
+    "_settings_claude_key", "_resolve_ia_backend",
     "_ClaudeStreamError", "chat_claude", "chat_ollama", "chat", "chat_with",
     "PROBE_TIMEOUT", "preflight_backend", "last_reply_truncated",
 ]
