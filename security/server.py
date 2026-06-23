@@ -41,6 +41,9 @@ import time
 import urllib.error
 import urllib.request
 
+import common  # shared IA backend transport (Ollama / Claude)
+from common import *  # noqa: F401,F403  (chat, settings, _ts, _Tee, ...)
+
 # ===========================================================================
 # Shared configuration
 # ===========================================================================
@@ -57,231 +60,23 @@ SCAN_SEED_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
     "server/base",      # ClientNetworkRead*, ClientEvents/, ClientLoad/, handlers
     "server/crafting",  # recipe / plant handlers
     "server/fight",     # server-side battle handlers
+    # Other client-facing binaries IN bounty scope (EXAMPLE-BOUNTY §2): the
+    # PRE-AUTH login parser is the single highest-value remote surface, and
+    # gateway/game-server-alone also face untrusted client TCP. master/ and
+    # inter-node links stay OUT of scope (internal-only) and are NOT listed.
+    "server/login",
+    "server/gateway",
+    "server/game-server-alone",
     "general/base",     # ProtocolParsing* framing + shared engine/datapack parse
     "general/fight",    # shared turn-based fight engine
 ))
-MODEL_NAME = "opencode-fast"
-OLLAMA_DEFAULT_URL = "http://127.0.0.1:11434"
-OLLAMA_API = OLLAMA_DEFAULT_URL + "/api/generate"
-OLLAMA_CHAT = OLLAMA_DEFAULT_URL + "/api/chat"
 
-# --- IA backend selection --------------------------------------------------
-# The default backend is the local Ollama model above. For a one-off run that
-# drives the SAME audit/exploit loop with Anthropic's Claude instead, set
-# CC_IA_BACKEND=claude and provide a credential VIA THE ENVIRONMENT (never store
-# a key/token in this repo). Either works:
-#     # console API key (pay-per-token, recommended for this batch workload):
-#     CC_IA_BACKEND=claude ANTHROPIC_API_KEY=sk-ant-api... python3 server.py all
-#     # or a Claude Code login token (`claude setup-token` -> sk-ant-oat...):
-#     CC_IA_BACKEND=claude CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat... python3 server.py all
-# The credential is read from the environment at call time and is never written
-# to disk by this tool. Only the chat() transport changes - prompts, tools, the
-# agent loop, the findings format and SECURITY-IA.md handling are all identical.
-# No extra pip package is required: we talk to the REST API over the stdlib
-# urllib, exactly like the Ollama path. (If the official `anthropic` SDK is ever
-# installed it would be preferable, but this script is deliberately
-# dependency-free and the project forbids installing packages, so raw HTTP.)
-IA_BACKEND = os.environ.get("CC_IA_BACKEND", "ollama").strip().lower()
-USE_CLAUDE = IA_BACKEND == "claude"
-# Default to the most capable model (per Anthropic's model catalogue); override
-# with CC_CLAUDE_MODEL for a cheaper/faster tier, e.g. claude-sonnet-4-6.
-CLAUDE_MODEL = os.environ.get("CC_CLAUDE_MODEL", "claude-opus-4-8")
-CLAUDE_API = "https://api.anthropic.com/v1/messages"
-CLAUDE_VERSION = "2023-06-01"
-# Hard ceiling per streamed reply. Adaptive thinking tokens count against this,
-# so leave generous headroom: we stream, so a high ceiling costs nothing unless
-# actually emitted, and it keeps deep reasoning over a big file from truncating
-# the (short) findings answer.
-CLAUDE_MAX_TOKENS = 16384
-
-# Label used in user-facing INIT/DONE log lines so a Claude run doesn't print
-# the (unused) Ollama model name.
-IA_LABEL = CLAUDE_MODEL if USE_CLAUDE else MODEL_NAME
-
-# Running token tally for the Claude backend (whole process). Filled from the
-# stream's usage events so each phase can print a spend summary at the end.
-CLAUDE_USAGE = {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0}
-CLAUDE_CALLS = 0
-# Guards for state mutated from panel worker threads (usage counters, notebook).
-_USAGE_LOCK = threading.Lock()
-_NOTES_LOCK = threading.Lock()
-# USD per million tokens (input, output), keyed by model-family prefix. Cache
-# writes bill at 1.25x input, cache reads at 0.10x input.
-CLAUDE_PRICES = {
-    "claude-fable": (10.0, 50.0),
-    "claude-opus": (5.0, 25.0),
-    "claude-sonnet": (3.0, 15.0),
-    "claude-haiku": (1.0, 5.0),
-}
-
-
-def claude_usage_summary():
-    """One-line spend summary for the Claude backend, or '' on the Ollama path
-    (local model, no per-token cost to report)."""
-    if not USE_CLAUDE or CLAUDE_CALLS == 0:
-        return ""
-    price_in, price_out = (5.0, 25.0)  # default to Opus-tier if unknown
-    for prefix, prices in CLAUDE_PRICES.items():
-        if CLAUDE_MODEL.startswith(prefix):
-            price_in, price_out = prices
-            break
-    u = CLAUDE_USAGE
-    cost = (u["input"] * price_in
-            + u["cache_write"] * price_in * 1.25
-            + u["cache_read"] * price_in * 0.10
-            + u["output"] * price_out) / 1_000_000.0
-    return ("%s [usage] %s: %d calls | in %d (cache w %d / r %d) out %d tok "
-            "| ~$%.4f\n"
-            % (_ts(), CLAUDE_MODEL, CLAUDE_CALLS, u["input"], u["cache_write"],
-               u["cache_read"], u["output"], cost))
+# IA backend transport (Ollama/Claude routing, num_ctx sizing, usage
+# accounting, chat() entry points) lives in common.py, imported above.
+_NOTES_LOCK = threading.Lock()   # serialises SECURITY-IA.md appends
 
 HERE = os.path.dirname(os.path.realpath(__file__))
 
-
-# ===========================================================================
-# Ollama backends (settings-driven, multi-host). With NO settings we use the
-# single local backend (behaviour unchanged). Multiple backends are declared in
-# a JSON settings file (CC_IA_SETTINGS, default <here>/ia-settings.json):
-#   {"ollama_backends": [
-#       "http://127.0.0.1:11434",
-#       {"url": "http://gpu1:11434", "models": ["deepseek-coder:33b"]}]}
-# A bare string is a backend URL; an object may PIN specific models to it. Each
-# model is routed to the SAME backend every run (a pinned backend wins, else a
-# backend that actually has the model, picked by a stable hash of the name) - so
-# the model stays warm there and a panel spreads across machines.
-# ===========================================================================
-IA_SETTINGS_FILE = os.environ.get(
-    "CC_IA_SETTINGS", os.path.join(HERE, "ia-settings.json"))
-_OLLAMA_BACKENDS = None   # cached [(url, pinned_models_set)]
-_MODEL_LOCATIONS = None   # cached {model_name: [backend_url, ...]}
-# CLI per-model backend pins: a model spec may carry an '@<host:port>' suffix
-# (e.g. --collaborate=qwen3:30b@gpu1:11434,deepseek:33b@gpu2:11434) to route THAT
-# model to a specific Ollama backend, without editing the settings JSON. Filled
-# by _register_model_spec(); consulted first by backend_for_model().
-_MODEL_URL_PINS = {}      # {model_name: backend_url}
-
-
-def load_settings():
-    """Parsed settings dict, or {} if the file is absent/unreadable/invalid.
-    Best-effort: a bad settings file never aborts the run."""
-    try:
-        with open(IA_SETTINGS_FILE, "r", errors="replace") as fh:
-            data = json.load(fh)
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-def ollama_backends():
-    """Ordered [(url, pinned_models_set)], cached. Falls back to the single local
-    backend when settings declare none."""
-    global _OLLAMA_BACKENDS
-    if _OLLAMA_BACKENDS is None:
-        out = []
-        declared = load_settings().get("ollama_backends")
-        if not isinstance(declared, list):
-            declared = []   # a non-list (e.g. a bare string) is not iterable as entries
-        for entry in declared:
-            if isinstance(entry, str):
-                url, pins = entry, []
-            elif isinstance(entry, dict):
-                url, pins = entry.get("url"), entry.get("models") or []
-            else:
-                continue
-            # Guard malformed entries (url not a string, pins not a list of
-            # strings) so a hand-written settings file can never abort the run.
-            if isinstance(url, str) and url:
-                if not isinstance(pins, (list, tuple)):
-                    pins = []
-                out.append((url.rstrip("/"),
-                            set(p for p in pins if isinstance(p, str))))
-        if not out:
-            out.append((OLLAMA_DEFAULT_URL, set()))
-        _OLLAMA_BACKENDS = out
-    return _OLLAMA_BACKENDS
-
-
-def _model_locations():
-    """{model_name: [backend_url, ...]} from each backend's /api/tags, cached.
-    Only consulted when more than one backend is configured."""
-    global _MODEL_LOCATIONS
-    if _MODEL_LOCATIONS is None:
-        loc = {}
-        for url, _pins in ollama_backends():
-            try:
-                with urllib.request.urlopen(url + "/api/tags", timeout=10) as resp:
-                    info = json.loads(resp.read().decode("utf-8", "replace"))
-            except (urllib.error.URLError, OSError, ValueError):
-                continue
-            for m in info.get("models") or []:
-                name = m.get("name") or m.get("model")
-                if name:
-                    loc.setdefault(name, []).append(url)
-        _MODEL_LOCATIONS = loc
-    return _MODEL_LOCATIONS
-
-
-def _register_model_spec(spec):
-    """Split an optional '@<backend>' suffix off a model spec and record a
-    per-model backend pin (the CLI way to say WHICH Ollama host:port serves THIS
-    model). Returns the BARE model name (so downstream code uses it unchanged).
-    A spec without '@' is returned as-is. Claude specs ('claude'/'claude:<id>')
-    ignore any '@...' - Claude has no per-host backend. The backend accepts a
-    full URL or a bare host:port (assumed http)."""
-    name, sep, backend = spec.partition("@")
-    name = name.strip()
-    backend = backend.strip()
-    if sep and backend and not (name == "claude" or name.startswith("claude:")):
-        if "://" not in backend:
-            backend = "http://" + backend
-        _MODEL_URL_PINS[name] = backend.rstrip("/")
-    return name
-
-
-def backend_for_model(model):
-    """Base URL of the backend serving `model`. A CLI per-model pin
-    ('model@host:port') wins over everything. Else one backend -> that one (no
-    network); else a backend that PINS the model wins; otherwise a backend that
-    actually has it, chosen by a stable hash of the model name (same model ->
-    same backend every run); otherwise the hash over all backends."""
-    pinned = _MODEL_URL_PINS.get(model)
-    if pinned:
-        return pinned
-    backends = ollama_backends()
-    if len(backends) == 1:
-        return backends[0][0]
-    for url, pins in backends:
-        if model in pins:
-            return url
-    located = _model_locations().get(model)
-    candidates = located if located else [u for u, _ in backends]
-    h = int(hashlib.sha1(model.encode("utf-8")).hexdigest(), 16)
-    return candidates[h % len(candidates)]
-
-
-def _ts():
-    """Wall-clock stamp for progress lines: H:m D/M/Y (e.g. 18:42 23/05/2026)."""
-    return time.strftime("%H:%M %d/%m/%Y")
-
-
-class _Tee:
-    """Write to multiple streams at once (used to tee stdout + findings file)."""
-    def __init__(self, *streams):
-        self._streams = streams
-
-    def write(self, s):
-        for st in self._streams:
-            st.write(s)
-
-    def flush(self):
-        for st in self._streams:
-            st.flush()
-
-
-def _human_dur(seconds):
-    """Elapsed seconds as MINmSECs (e.g. 99min09s)."""
-    seconds = int(seconds)
-    return "%dmin%02ds" % (seconds // 60, seconds % 60)
 
 # All server-related generated artifacts live under this temp subfolder.
 OUTPUT_ROOT = "/mnt/data/perso/tmpfs/security/server"
@@ -349,6 +144,27 @@ SCAN_MAX_STEPS = 8
 # Cap bytes returned by a single READ/GREP tool call.
 TOOL_READ_BYTES = 40000
 TOOL_GREP_HITS = 40
+
+# Active compile defines for the audited CLI server binary (RelWithDebInfo +
+# CATCHCHALLENGER_DB_INTERNAL_VARS, as build_server() configures). Telling the
+# IA which #ifdef branches are LIVE stops it auditing Qt-only / dead branches
+# (NormalServerGlobal.cpp, Map_loader.cpp, the Qt admin GUI) and focuses the
+# review on the no-Qt event-loop code that is the actual remote attack surface.
+ACTIVE_DEFINES = (
+    "=== ACTIVE COMPILE DEFINES (the CLI server binary built by this tool) ===\n"
+    "Live (compiled in): CATCHCHALLENGER_SERVER, "
+    "CATCHCHALLENGER_CLASS_ALLINONESERVER, CATCHCHALLANGER_DB_FILE, "
+    "CATCHCHALLENGER_DB_INTERNAL_VARS.\n"
+    "OFF (preprocessed out, do NOT audit those branches): "
+    "CATCHCHALLENGER_CLASS_QT, CATCHCHALLENGER_SERVER_QT, "
+    "CATCHCHALLENGER_DB_MYSQL/POSTGRESQL/SQLITE/BLACKHOLE, "
+    "CATCHCHALLENGER_CLIENT_* .\n"
+    "A branch guarded by `#ifndef CATCHCHALLENGER_SERVER` / `#ifdef "
+    "CATCHCHALLENGER_CLASS_QT` etc. that resolves to OFF here is DEAD CODE in "
+    "the target binary - clear it as 'No issues identified (dead branch)' "
+    "without further analysis. Only the LIVE branches are in scope.\n"
+    "=== END ACTIVE DEFINES ===\n"
+)
 
 SOURCE_EXT = (".cpp", ".c", ".cc", ".cxx", ".h", ".hpp", ".hxx")
 
@@ -480,31 +296,39 @@ SYSTEM_PROMPT = (
     "\n"
     "If you have data useful only for THIS file, do not put it in the "
     "notebook: start your reply with one short '// ' comment-header line, "
-    "terse, not verbose."
+    "terse, not verbose. COMMENT THE CODE A LITTLE: in that '// ' header NAME "
+    "the cross-file location (FILE:LINE) you verified that makes each finding "
+    "real - the size table, bounds-check or guard you followed - e.g. '// LINE "
+    "84 reads 10B but packet 0x88 is fixed 10B in ProtocolParsingGeneral.cpp:"
+    "152, so NOT OOB' (then you'd output 'No issues identified' instead), or "
+    "'// LINE 135 quantity is uint32 off the wire, no cap before the multiply'. "
+    "Keep it factual (FILE:LINE refs), not narrative, so it never reads as a "
+    "vague 'could be' note."
 )
 # The IA reads the bug-bounty scope on every audit turn (appended once at load).
-SYSTEM_PROMPT = SYSTEM_PROMPT + read_bounty()
-
+SYSTEM_PROMPT = SYSTEM_PROMPT + read_bounty() + "\n\n" + ACTIVE_DEFINES
 # Where to look for a referenced class/header when it does not resolve by a
 # relative include path.
-# Scope of the class/symbol graph + caller/basename search. Restricted to the
-# code that goes into the no-Qt CLI server (mirrors SCAN_SEED_DIRS) - NOT the
-# whole server/ tree, so the Qt admin GUI (server/qt), build artefacts
-# (server/build) and the other-binary daemons (login/master/gateway) are never
-# pulled into context or treated as callers.
+# Scope of the class/symbol graph + caller/basename search. Mirrors
+# SCAN_SEED_DIRS: the in-scope client-facing binaries (cli + login + gateway +
+# game-server-alone) and the shared engine - NOT the Qt admin GUI (server/qt),
+# build artefacts (server/build), or the internal-only master daemon.
 SEARCH_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
     "server/cli",
     "server/base",
     "server/crafting",
     "server/fight",
+    "server/login",
+    "server/gateway",
+    "server/game-server-alone",
     "general/base",
     "general/fight",
 ))
 
 # Cap the context we attach so a single oversized file can't blow the model's
 # context window. Bytes, applied per related file and to the total.
-MAX_RELATED_BYTES = 60000
-MAX_RELATED_FILES = 16
+MAX_RELATED_BYTES = 96000
+MAX_RELATED_FILES = 24
 # Per-attached-file byte cap so one hub header (e.g. GeneralStructures.hpp, 81
 # classes) can't swallow the whole related-context budget - several dependency
 # files each get a slice.
@@ -524,6 +348,49 @@ MAX_CALLER_FILES = 8       # distinct caller files sampled
 MAX_CALLER_PER_FILE = 4    # call-site lines kept per caller (spread, not one hot file)
 MAX_CALLER_HITS = 24       # total call-site lines shown
 MAX_CALLER_BYTES = 16000   # hard cap on the whole caller-hint block
+
+# ---------------------------------------------------------------------------
+# Local-LLM recall boosters
+# ---------------------------------------------------------------------------
+# Hot files: the highest-value remote surface, where a lazy 'No issues
+# identified' from a small model costs the most recall. Matched against the
+# repo-relative path. Packet handlers + the wire parser + the per-packet
+# ClientEvents/ClientLoad/ClientHeavyLoad* dispatchers + the pre-auth login
+# parser. These get an ADVERSARIAL re-audit when the first pass comes back clean.
+HOT_FILE_RE = re.compile(
+    r"(^|/)("
+    r"ProtocolParsing(Input|General|Base)\.(cpp|hpp|h)"
+    r"|ClientNetworkRead(Message|Query)\.cpp"
+    r"|EventLoopClient(LoginSlave)?ProtocolParsing\.cpp"
+    r"|ClientEvents/.*\.cpp"
+    r"|ClientLoad/.*\.cpp"
+    r"|ClientHeavyLoad.*\.cpp"
+    r"|[A-Za-z]*ProtocolParsing[A-Za-z]*\.(cpp|hpp|h)"
+    r")$")
+
+# Adversarial preamble prepended to a second-pass audit of a hot file whose
+# first pass returned 'No issues identified'. A 26B local model defaults to the
+# safe clean-verdict; this reframe forces it to either produce a concrete bug
+# OR justify the safety of every length/index/id/size it consumes - which
+# itself surfaces findings the first pass dismissed.
+ADVERSARIAL_PREAMBLE = (
+    "ADVERSARIAL RE-AUDIT: the first pass on this file returned 'No issues "
+    "identified'. This is a HOT FILE (a packet handler / wire parser / pre-auth "
+    "path) where a clean verdict is the MOST likely to be a missed bug, not a "
+    "real clean result. Assume there IS at least one exploitable vulnerability "
+    "in the LIVE (non-Qt, non-dead-#ifdef) code and HUNT IT:\n"
+    "- For EVERY length, index, id, size, offset or pointer the file reads off "
+    "the wire, trace it to the sink and ask: is it bounded BEFORE use? Cite the "
+    "guard FILE:LINE or report the missing guard as a finding.\n"
+    "- For EVERY packet case 0xNN, compare the bytes the handler reads vs the "
+    "parser's declared fixed size (ProtocolParsingGeneral.cpp:packetFixedSize) "
+    "or the inner length of a 0xFE variable packet - a mismatch is an OOB.\n"
+    "- For EVERY state transition (login -> character select -> in-game), ask "
+    "whether a packet can be sent in the WRONG state and bypass an auth check.\n"
+    "If after this you are CERTAIN the file is clean, you may output 'No issues "
+    "identified' - but ONLY after naming, for each length/index/id consumed, "
+    "the FILE:LINE guard that bounds it. A bare clean verdict without those "
+    "guards is rejected.\n\n")
 
 # ---------------------------------------------------------------------------
 # Semantic static analysis: the Clang Static Analyzer, driven through clang-tidy
@@ -568,16 +435,6 @@ SECURITY_NOTES_FILE = os.path.join(HERE, "SECURITY-IA.md")
 # The model wraps anything it wants persisted between these markers.
 NOTE_RE = re.compile(r"<<<NOTES(.*?)NOTES>>>", re.DOTALL)
 
-# num_ctx bounds (tokens). We size it to the actual payload, clamped here.
-# Floor is 16K: smaller contexts truncate the audited file + related files and
-# the model loses the bug. Ceiling is 1M so a large file + its related files
-# can fit when the model/host support it. ensure_context() checks at runtime
-# what the model can actually honour and warns/caps accordingly.
-MIN_CTX = 16384
-MAX_CTX = 1024 * 1024
-# Model's actual trained context, discovered at runtime by ensure_context();
-# fit_ctx caps to it so we never ask Ollama for more than the model can honour.
-MODEL_CTX = None
 
 # Quoted local includes only; <system> includes are ignored.
 INCLUDE_RE = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.MULTILINE)
@@ -618,6 +475,16 @@ def is_vendor(path):
     rp = os.path.realpath(path)
     return any(rp == d or rp.startswith(d + os.sep)
                for d in VENDOR_DIRS + EXCLUDED_DIRS)
+
+
+def is_hot_file(path):
+    """True for the highest-value remote-surface files (packet handlers, the
+    wire parser, the per-packet dispatchers, the pre-auth login parser). A clean
+    first-pass verdict on these gets an ADVERSARIAL re-audit because a small
+    local LLM defaults to 'No issues identified' and that is where the most
+    recall is lost."""
+    rel = os.path.relpath(path, REPO_ROOT)
+    return bool(HOT_FILE_RE.search(rel))
 
 
 def collect_files():
@@ -682,25 +549,43 @@ def find_by_basename(name):
     return _basename_index.get(name)
 
 
-def related_files(path):
-    """Repo-local files referenced by `path` (its quoted #includes)."""
+def related_files(path, depth=2):
+    """Repo-local files referenced by `path` via its quoted #includes, followed
+    TRANSITIVELY up to `depth` hops (depth=1 = direct includes only, the old
+    behaviour). Deeper hops pull the dependency-of-a-dependency that a single
+    hop misses - e.g. a packet handler -> Client.hpp -> the ProtocolParsing
+    headers that hold the packetFixedSize table; that table is exactly what
+    proves a fixed-size handler can't read OOB. Breadth-first, deduped by
+    realpath, vendor trees pruned, capped at MAX_RELATED_FILES total."""
     repo_root = os.path.realpath(REPO_ROOT)
-    base = os.path.dirname(path)
     out = []
-    seen = set()
-    try:
-        text = open(path, "r", errors="replace").read()
-    except OSError:
-        return out
-    for inc in INCLUDE_RE.findall(text):
-        cand = os.path.realpath(os.path.join(base, inc))
-        if not (cand.startswith(repo_root + os.sep) and os.path.isfile(cand)):
-            cand = find_by_basename(os.path.basename(inc))
-        if cand and cand != path and cand not in seen:
-            seen.add(cand)
-            out.append(cand)
-        if len(out) >= MAX_RELATED_FILES:
-            break
+    seen = {os.path.realpath(path)}
+    frontier = [path]
+    hop = 0
+    while frontier and hop < depth and len(out) < MAX_RELATED_FILES:
+        hop += 1
+        nxt = []
+        for fpath in frontier:
+            base = os.path.dirname(fpath)
+            try:
+                text = open(fpath, "r", errors="replace").read()
+            except OSError:
+                continue
+            for inc in INCLUDE_RE.findall(text):
+                cand = os.path.realpath(os.path.join(base, inc))
+                if not (cand.startswith(repo_root + os.sep) and os.path.isfile(cand)):
+                    cand = find_by_basename(os.path.basename(inc))
+                # Skip non-repo, missing, vendored (do-not-audit, huge) deps.
+                if not cand or cand in seen or is_vendor(cand):
+                    continue
+                seen.add(cand)
+                out.append(cand)
+                nxt.append(cand)
+                if len(out) >= MAX_RELATED_FILES:
+                    break
+            if len(out) >= MAX_RELATED_FILES:
+                break
+        frontier = nxt
     return out
 
 
@@ -1071,75 +956,6 @@ def append_notes(rel, block):
                 fh.write("%s%s\n" % (header, block))
 
 
-def fit_ctx(*texts):
-    """Pick a num_ctx that fits the payload (~3 chars/token + reply headroom),
-    clamped to [MIN_CTX, MAX_CTX] and rounded up to a 2048 multiple."""
-    chars = 0
-    for t in texts:
-        chars += len(t)
-    tokens = chars // 3 + 2048
-    tokens = ((tokens + 2047) // 2048) * 2048
-    # Ceiling: MAX_CTX, but never beyond what the model actually supports.
-    ceiling = MAX_CTX if MODEL_CTX is None else min(MAX_CTX, MODEL_CTX)
-    if tokens > ceiling:
-        tokens = ceiling
-    if tokens < MIN_CTX:
-        tokens = MIN_CTX
-    return tokens
-
-
-def ensure_context():
-    """Verify at runtime that the model can actually honour a >=16K context.
-    Asks Ollama (/api/show) for the model's trained context_length and warns if
-    it is below MIN_CTX (a too-small context silently truncates our prompt, so
-    the audit/exploit reasoning degrades). Best-effort: never fatal - if Ollama
-    is unreachable or the field is absent we just note it and continue. The
-    discovered length is stored in MODEL_CTX so fit_ctx caps num_ctx to it."""
-    global MODEL_CTX
-    if USE_CLAUDE:
-        # No Ollama to probe; Claude carries a >=200K context and ignores the
-        # num_ctx knob entirely, so there is nothing to discover or cap.
-        sys.stderr.write("%s [ctx] backend=claude model=%s (Ollama probe "
-                         "skipped)\n" % (_ts(), CLAUDE_MODEL))
-        return None
-    try:
-        req = urllib.request.Request(
-            backend_for_model(MODEL_NAME) + "/api/show",
-            data=json.dumps({"model": MODEL_NAME}).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            info = json.loads(resp.read().decode("utf-8", "replace"))
-    except (urllib.error.URLError, OSError, ValueError) as exc:
-        sys.stderr.write("%s [ctx] could not query model context length (%s); "
-                         "requesting num_ctx in [%d,%d] anyway\n"
-                         % (_ts(), exc, MIN_CTX, MAX_CTX))
-        return None
-    # model_info keys are arch-prefixed, e.g. "qwen2.context_length".
-    ctx = None
-    for key, val in (info.get("model_info") or {}).items():
-        if key.endswith(".context_length"):
-            try:
-                ctx = int(val)
-            except (TypeError, ValueError):
-                ctx = None
-            break
-    if ctx is None:
-        sys.stderr.write("%s [ctx] model %s context length unknown; requesting "
-                         "num_ctx in [%d,%d]\n"
-                         % (_ts(), MODEL_NAME, MIN_CTX, MAX_CTX))
-    elif ctx < MIN_CTX:
-        sys.stderr.write("%s [ctx] WARNING: model %s max context %d < required "
-                         "%d - prompts will be TRUNCATED. Use a model with a "
-                         "bigger context.\n" % (_ts(), MODEL_NAME, ctx, MIN_CTX))
-    else:
-        sys.stderr.write("%s [ctx] model %s context %d >= %d OK (num_ctx capped "
-                         "to min(%d, %d))\n"
-                         % (_ts(), MODEL_NAME, ctx, MIN_CTX, MAX_CTX, ctx))
-    MODEL_CTX = ctx
-    return ctx
-
-
 def tool_read(arg):
     """READ <path>: return a repo file, resolved by relative path or bare
     basename under SEARCH_DIRS. Capped to TOOL_READ_BYTES."""
@@ -1202,336 +1018,6 @@ def tool_analyze(arg):
                             "not part of the CLI-server build) for %s" % arg)
 
 
-def _claude_split(messages):
-    """Map our [{system}, {user}, {assistant}, ...] list onto Claude's wire
-    shape: a single `system` string plus a user/assistant `messages` array.
-    The agent loop already starts with one system turn then strictly alternates
-    user/assistant, which is exactly what the Messages API wants."""
-    system_parts = []
-    convo = []
-    for m in messages:
-        role = m.get("role")
-        content = m.get("content", "")
-        if role == "system":
-            system_parts.append(content)
-        else:
-            convo.append({"role": role, "content": content})
-    return "\n\n".join(system_parts), convo
-
-
-def _cache_text(text):
-    """One ephemeral-cached text content block."""
-    return [{"type": "text", "text": text, "cache_control": {"type": "ephemeral"}}]
-
-
-# Env vars that can carry a credential, in precedence order. ANTHROPIC_API_KEY is
-# a console API key (x-api-key, pay-per-token); the other two carry a Claude Code
-# / `ant` OAuth token (Authorization: Bearer + the oauth beta header), e.g. the
-# output of `claude setup-token`.
-CLAUDE_CRED_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
-                    "CLAUDE_CODE_OAUTH_TOKEN")
-
-
-def _claude_has_creds():
-    """True if any supported credential env var is set."""
-    for name in CLAUDE_CRED_VARS:
-        if os.environ.get(name, "").strip():
-            return True
-    return False
-
-
-def _claude_auth_headers():
-    """Resolve auth headers for the Messages API from the environment.
-
-    - ANTHROPIC_API_KEY (a console key, sk-ant-api...) -> x-api-key.
-    - ANTHROPIC_AUTH_TOKEN / CLAUDE_CODE_OAUTH_TOKEN (a Claude Code / `ant`
-      OAuth token, sk-ant-oat...) -> Authorization: Bearer + the mandatory
-      `oauth-2025-04-20` beta header (a bearer token without it 401s).
-
-    An OAuth token is commonly pasted into ANTHROPIC_API_KEY by mistake; we
-    detect the sk-ant-oat prefix and route it to Bearer regardless of which var
-    holds it, so it works either way. Raises if no credential is present."""
-    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    token = (os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
-             or os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip())
-    if key.startswith("sk-ant-oat"):  # OAuth token in the API-key slot
-        token, key = key, ""
-    if key:
-        return {"x-api-key": key}
-    if token:
-        return {"authorization": "Bearer " + token,
-                "anthropic-beta": "oauth-2025-04-20"}
-    raise RuntimeError(
-        "CC_IA_BACKEND=claude but no credential in the environment - set "
-        "ANTHROPIC_API_KEY (console key) or CLAUDE_CODE_OAUTH_TOKEN / "
-        "ANTHROPIC_AUTH_TOKEN (a Claude Code token, e.g. `claude setup-token`).")
-
-
-class _ClaudeStreamError(OSError):
-    """An `error` event arriving IN-BAND in an already-200 stream (e.g.
-    overloaded_error). Subclasses OSError so it lands in chat_claude's existing
-    transient-retry handler and backs off like an HTTP 529, instead of being
-    swallowed and returned as a (bogus) clean completion."""
-
-
-def chat_claude(messages, timeout=None, model=None):
-    """One streamed Anthropic Messages turn. Same contract as chat(): returns
-    the assistant text. Mirrors the Ollama path's wall-clock `timeout` (a hard
-    cap used by the exploit phase) and its transient-error retry/backoff.
-
-    Prompt caching: the system prompt is byte-identical on every turn (and
-    across files), and the first user turn (system + the file under audit +
-    related files + notes) is identical across one file's tool-loop turns. Both
-    are marked as cache breakpoints, so turns 2..N (and, while the system block
-    is large enough, later files) read that prefix at ~0.1x input price instead
-    of re-billing it. We never mutate the shared `messages` list - the
-    content-block conversion happens here, on a private copy, so the Ollama path
-    (which expects plain-string content) is unaffected."""
-    global CLAUDE_CALLS
-    mdl = model or CLAUDE_MODEL
-    auth_headers = _claude_auth_headers()  # raises if no credential present
-    system, convo = _claude_split(messages)
-    # Cache the system block and the first user turn (the large, stable prefix).
-    cached_convo = []
-    first_user_cached = False
-    for msg in convo:
-        if not first_user_cached and msg["role"] == "user":
-            cached_convo.append({"role": "user",
-                                 "content": _cache_text(msg["content"])})
-            first_user_cached = True
-        else:
-            cached_convo.append(msg)
-    deadline = (time.time() + timeout) if timeout else None
-    payload = {
-        "model": mdl,
-        "max_tokens": CLAUDE_MAX_TOKENS,
-        "system": _cache_text(system) if system else "",
-        "messages": cached_convo,
-        "stream": True,
-        # Adaptive thinking: let the model reason as deeply as the file needs
-        # before emitting findings. We only collect the visible text deltas.
-        "thinking": {"type": "adaptive"},
-        "output_config": {"effort": "high"},
-    }
-    data = json.dumps(payload).encode("utf-8")
-    headers = {"content-type": "application/json",
-               "anthropic-version": CLAUDE_VERSION}
-    headers.update(auth_headers)
-    attempt = 0
-    while True:
-        attempt += 1
-        if deadline:
-            sock_to = max(1, int(deadline - time.time()))
-        else:
-            sock_to = 1200
-        try:
-            req = urllib.request.Request(CLAUDE_API, data=data, headers=headers)
-            chunks = []
-            stop_reason = None
-            cut = False
-            # Per-stream token tally; folded into the global totals only on a
-            # clean completion (below), so a retried/aborted partial never
-            # double-counts.
-            u_in = u_cw = u_cr = u_out = 0
-            with urllib.request.urlopen(req, timeout=sock_to) as resp:
-                for raw in resp:
-                    if deadline and time.time() >= deadline:
-                        sys.stderr.write("    [chat cut: budget reached mid-stream]\n")
-                        cut = True
-                        break
-                    raw = raw.strip()
-                    # SSE: we only care about the JSON `data:` lines.
-                    if not raw.startswith(b"data:"):
-                        continue
-                    body = raw[len(b"data:"):].strip()
-                    if not body:
-                        continue
-                    try:
-                        obj = json.loads(body)
-                    except ValueError:
-                        continue
-                    etype = obj.get("type")
-                    if etype == "message_start":
-                        usage = (obj.get("message") or {}).get("usage") or {}
-                        u_in = usage.get("input_tokens", 0) or 0
-                        u_cw = usage.get("cache_creation_input_tokens", 0) or 0
-                        u_cr = usage.get("cache_read_input_tokens", 0) or 0
-                        u_out = usage.get("output_tokens", 0) or 0
-                    elif etype == "content_block_delta":
-                        delta = obj.get("delta") or {}
-                        # Ignore thinking_delta - keep only the answer text.
-                        if delta.get("type") == "text_delta":
-                            piece = delta.get("text")
-                            if piece:
-                                chunks.append(piece)
-                    elif etype == "message_delta":
-                        stop_reason = (obj.get("delta") or {}).get("stop_reason") or stop_reason
-                        # output_tokens here is cumulative for this message.
-                        u_out = (obj.get("usage") or {}).get("output_tokens", u_out) or u_out
-                    elif etype == "error":
-                        # Raise BEFORE the usage-commit so a partial stream is
-                        # retried (or, after 5 tries, surfaced) rather than
-                        # passed off as a finished answer.
-                        err = obj.get("error") or {}
-                        raise _ClaudeStreamError(err.get("message", err))
-            if cut and chunks:
-                # The cumulative output_tokens only arrives in message_delta,
-                # which a mid-stream cut never reaches - u_out still holds the
-                # tiny message_start value. Approximate from the streamed text
-                # (~4 chars/token) so the spend summary is a lower bound, not ~0.
-                u_out = max(u_out, len("".join(chunks)) // 4)
-            # Clean completion: commit this stream's usage to the global totals.
-            with _USAGE_LOCK:
-                CLAUDE_USAGE["input"] += u_in
-                CLAUDE_USAGE["cache_write"] += u_cw
-                CLAUDE_USAGE["cache_read"] += u_cr
-                CLAUDE_USAGE["output"] += u_out
-                CLAUDE_CALLS += 1
-            if stop_reason == "refusal":
-                # Authorised audit of our own code, but the safety classifier can
-                # still decline. Surface it and return what (if anything) we got.
-                sys.stderr.write("    [claude declined this turn (stop_reason=refusal)]\n")
-            elif stop_reason == "max_tokens":
-                # Don't let a truncated reply pass as a complete answer - a cut
-                # findings line is otherwise silently lost.
-                sys.stderr.write("    [claude reply truncated: hit max_tokens=%d "
-                                 "(adaptive thinking + answer share the budget); "
-                                 "answer may be partial]\n" % CLAUDE_MAX_TOKENS)
-            return "".join(chunks).strip()
-        except urllib.error.HTTPError as exc:
-            # 4xx (bad request / auth / model id) won't fix themselves - read the
-            # body so the user sees why, then raise. Retry only on 429/5xx/529.
-            detail = ""
-            try:
-                detail = exc.read().decode("utf-8", "replace")[:500]
-            except OSError:
-                pass
-            if exc.code not in (429, 500, 502, 503, 529):
-                raise RuntimeError("Claude API %d: %s" % (exc.code, detail))
-            if deadline and time.time() >= deadline:
-                return ""
-            if attempt >= 5:
-                raise
-            sys.stderr.write("    [chat retry %d/5 after HTTP %d %s]\n"
-                             % (attempt, exc.code, detail))
-            nap = 3 * attempt
-            if deadline:
-                nap = min(nap, max(0, int(deadline - time.time())))
-            time.sleep(nap)
-        except (urllib.error.URLError, ConnectionError, OSError) as exc:
-            if deadline and time.time() >= deadline:
-                sys.stderr.write("    [chat give up: budget reached after %s]\n" % exc)
-                return ""
-            if attempt >= 5:
-                raise
-            sys.stderr.write("    [chat retry %d/5 after %ds %s]\n" % (attempt, sock_to, exc))
-            nap = 3 * attempt
-            if deadline:
-                nap = min(nap, max(0, int(deadline - time.time())))
-            time.sleep(nap)
-
-
-def chat_ollama(messages, timeout=None, model=None):
-    """One streamed Ollama /api/chat turn. Returns the assistant message text;
-    `model` overrides MODEL_NAME (the panel targets a specific local model).
-
-    Retries transient Ollama outages (ECONNREFUSED) up to 5x with backoff.
-
-    `timeout` (seconds, optional) is a HARD wall-clock cap on the whole call,
-    used by the exploit phase to clamp each turn to the remaining per-exploit
-    budget so a single streaming reply cannot overrun the deadline. When set:
-    the socket read timeout is bounded by it, the stream stops early and
-    returns whatever has arrived once the cap is hit, and we never retry/back-
-    off past it. None = unbounded (scan phase)."""
-    deadline = (time.time() + timeout) if timeout else None
-    mdl = model or MODEL_NAME
-    chat_url = backend_for_model(mdl) + "/api/chat"
-    body = "".join(m["content"] for m in messages)
-    payload = {
-        "model": mdl,
-        "messages": messages,
-        "stream": True,
-        "options": {
-            "temperature": 0.1,
-            "num_ctx": fit_ctx(body),
-            # Bound a single reply and discourage the 33B's repetition loops
-            # (it sometimes spews the same READ/GREP line thousands of times).
-            "num_predict": 2048,
-            "repeat_penalty": 1.3,
-        },
-    }
-    data = json.dumps(payload).encode("utf-8")
-    attempt = 0
-    while True:
-        attempt += 1
-        # Socket-level timeout: bound a stalled read by the time left (so a hung
-        # connection can't block past the budget), else a sane default.
-        if deadline:
-            sock_to = max(1, int(deadline - time.time()))
-        else:
-            sock_to = 1200
-        try:
-            req = urllib.request.Request(
-                chat_url, data=data,
-                headers={"Content-Type": "application/json"},
-            )
-            chunks = []
-            with urllib.request.urlopen(req, timeout=sock_to) as resp:
-                for raw in resp:
-                    # Hard wall-clock cap: stop reading and return the partial
-                    # reply; the caller's deadline check then ends the exploit.
-                    if deadline and time.time() >= deadline:
-                        sys.stderr.write("    [chat cut: budget reached mid-stream]\n")
-                        break
-                    raw = raw.strip()
-                    if raw:
-                        try:
-                            obj = json.loads(raw)
-                        except ValueError:
-                            pass
-                        else:
-                            msg = obj.get("message") or {}
-                            piece = msg.get("content")
-                            if piece:
-                                chunks.append(piece)
-            return "".join(chunks).strip()
-        except (urllib.error.URLError, ConnectionError, OSError) as exc:
-            # Don't retry/backoff past the wall-clock cap - return empty so the
-            # caller's deadline check fires.
-            if deadline and time.time() >= deadline:
-                sys.stderr.write("    [chat give up: budget reached after %s]\n" % exc)
-                return ""
-            if attempt >= 5:
-                raise
-            sys.stderr.write("    [chat retry %d/5 after %ds %s]\n" % (attempt, sock_to, exc))
-            # Don't sleep past the deadline either.
-            nap = 3 * attempt
-            if deadline:
-                nap = min(nap, max(0, int(deadline - time.time())))
-            time.sleep(nap)
-
-
-def chat(messages, timeout=None):
-    """Single-model turn against the CONFIGURED backend (Claude when
-    CC_IA_BACKEND=claude, else Ollama). Back-compat entry used by the exploit
-    phase and the non-panel scan path."""
-    if USE_CLAUDE:
-        return chat_claude(messages, timeout)
-    return chat_ollama(messages, timeout)
-
-
-def chat_with(spec, messages, timeout=None):
-    """Single turn against a SPECIFIC panel member. spec None -> chat() (the
-    configured backend); 'claude'/'claude:<id>' -> the Claude backend with that
-    model id; anything else -> Ollama with that model name."""
-    if not spec:
-        return chat(messages, timeout)
-    if spec == "claude" or spec.startswith("claude:"):
-        mdl = spec.split(":", 1)[1] if ":" in spec else None
-        return chat_claude(messages, timeout, model=mdl)
-    return chat_ollama(messages, timeout, model=spec)
-
-
 def parse_tool(answer):
     """If the reply is a single READ/GREP/ANALYZE tool call, return (name, arg)."""
     stripped = answer.strip()
@@ -1555,16 +1041,21 @@ def _finalize_answer(rel, answer, persist=True):
     return fix_paths(answer)
 
 
-def analyze(path, spec=None, persist_notes=True, preamble=""):
+def analyze(path, spec=None, persist_notes=True, preamble="", adversarial=False):
     """Agentic audit of one file by ONE model (spec; None = configured backend).
     `preamble` is prepended to the prompt (the panel uses it to announce the
     reviewer + round). The NOTES block is stripped, and persisted unless
-    persist_notes=False (panel members defer the notebook write to synthesis)."""
+    persist_notes=False (panel members defer the notebook write to synthesis).
+    `adversarial` prepends ADVERSARIAL_PREAMBLE (red-team re-audit of a hot
+    file whose first pass came back clean)."""
     rel = os.path.relpath(path, REPO_ROOT)
     try:
         content = open(path, "r", errors="replace").read()
     except OSError as exc:
         return "[read error] %s" % exc
+
+    if adversarial:
+        preamble = ADVERSARIAL_PREAMBLE + preamble
 
     context = []
     budget = MAX_RELATED_BYTES
@@ -1981,12 +1472,14 @@ def _panel_synthesize(path, specs, positions):
     return _finalize_answer(rel, chat_with(lead, messages))
 
 
-def panel_analyze(path, specs):
+def panel_analyze(path, specs, adversarial=False):
     """Collaborative multi-model audit of one file. Returns the consensus answer
     in the SAME format as analyze() so the scan pipeline is unchanged.
     Round 1: every member audits independently, at the same time. Rounds 2..N:
     each member sees its peers and may change its view (constructive team work).
-    Finally the lead synthesises the consensus."""
+    Finally the lead synthesises the consensus.
+    `adversarial` prepends ADVERSARIAL_PREAMBLE to round 1 (red-team re-audit
+    of a hot file that came back clean on the first pass)."""
     total = CC_PANEL_ROUNDS
     try:
         content = open(path, "r", errors="replace").read()
@@ -1997,8 +1490,11 @@ def panel_analyze(path, specs):
 
     # Round 1/N: independent audits, concurrently; defer notebook writes.
     sys.stderr.write("    [panel] round 1/%d (independent findings)\n" % total)
-    preamble = ("%s\n\nRound 1/%d: present your initial independent findings.\n\n"
-                % (TEAM_FRAMING, total))
+    r1_preamble = "%s\n\nRound 1/%d: present your initial independent findings.\n\n" \
+        % (TEAM_FRAMING, total)
+    if adversarial:
+        r1_preamble = ADVERSARIAL_PREAMBLE + r1_preamble
+    preamble = r1_preamble
     positions = _panel_map(
         functools.partial(analyze, path, persist_notes=False, preamble=preamble),
         specs)
@@ -2116,7 +1612,14 @@ def has_findings(answer):
     The mandatory output format is either 'No issues identified' (clean) or
     one or more 'LINE <n>: ...' entries. Anything else - vague narratives,
     generic code descriptions, hedged 'could potentially' text - is treated
-    as no-finding so it never feeds the exploit phase."""
+    as no-finding so it never feeds the exploit phase.
+
+    A small local LLM hedges EVERY finding ('could potentially', 'might be').
+    The old behaviour dropped any hedged answer wholesale, which silently
+    killed real findings that cited a concrete line + code path. Now a
+    concrete 'LINE <n>:' entry OVERRIDES the vague-text filter: hedging on a
+    real finding is fine, only a vague answer WITHOUT any concrete LINE entry
+    is rejected."""
     if not answer:
         return False
     normalized = re.sub(r"[^a-z ]", " ", answer.lower())
@@ -2124,13 +1627,190 @@ def has_findings(answer):
     # Explicit clean-file answer.
     if "no issues identified" in normalized:
         return False
-    # Vague narrative - model did not follow the mandatory format.
-    if _VAGUE_RE.search(answer):
+    # Scan only the NON-comment lines: the mandatory '// ' code-comment header
+    # (cross-file 'check XXXX.cpp' refs) is free text and may legitimately
+    # contain a word the vague-regex matches; judging it would wrongly discard
+    # the real LINE finding.
+    body = "\n".join(ln for ln in answer.splitlines()
+                     if not ln.lstrip().startswith("//"))
+    # A concrete finding is a line in the mandatory 'LINE <n>:' shape. One such
+    # line is enough to keep the whole answer: the hedging around it is the
+    # small model's wording, not a lack of a finding.
+    if re.search(r"^\s*LINE\s+\d+\s*:", body, re.MULTILINE | re.IGNORECASE):
+        return True
+    # No concrete LINE entry -> vague narrative / generic description. Reject
+    # so it does not trigger a false exploit run.
+    if _VAGUE_RE.search(body):
         return False
     # A real finding must cite at least one line number (the format requires it).
     if not _LINE_NUM_RE.search(answer):
         return False
     return True
+
+
+# ---------------------------------------------------------------------------
+# Protocol-handler sweep (improvement #3). The per-file audit cannot see
+# cross-packet inconsistencies: a handler reading more bytes than the parser
+# declared for its code, a packet accepted in the wrong auth state, a query
+# reply code that bypasses the per-player lock. This is a single CROSS-FILE
+# turn that feeds the dispatch table (ProtocolParsingGeneral.cpp) + the
+# per-packet handler bodies (ClientNetworkRead*, ProtocolParsingInput) to the
+# model in one prompt, so it can compare parser-declared sizes vs handler-read
+# sizes and auth-state guards across the whole protocol at once. Env-gated
+# (CC_NO_PROTOCOL_SWEEP=1 disables); default on because it is the highest-
+# value remote surface and the per-file sweep structurally cannot cover it.
+# ---------------------------------------------------------------------------
+PROTOCOL_SWEEP_FILES = (
+    "general/base/ProtocolParsingGeneral.cpp",
+    "general/base/ProtocolParsingInput.cpp",
+    "general/base/ProtocolParsingBase.cpp",
+    "server/base/ClientNetworkReadMessage.cpp",
+    "server/base/ClientNetworkReadQuery.cpp",
+)
+SWEEP_FILE_CAP = 26000
+SWEEP_TOTAL_CAP = 90000
+
+PROTOCOL_SWEEP_SYSTEM = (
+    "You are a security auditor doing ONE CROSS-FILE protocol sweep of the "
+    "CatchChallenger game server. The files below contain the WIRE PARSER "
+    "(packetFixedSize[] table: the byte size declared for each packet code; "
+    "0xFE = variable-size, parsed via an inner length) and the PER-PACKET "
+    "HANDLERS (the `case 0xNN:` switch bodies that consume the bytes). A bug "
+    "here is the single highest-value remote defect: the input is untrusted "
+    "TCP from a game client.\n"
+    "\n"
+    "Hunt SPECIFICALLY for these cross-file defects the per-file audit misses:\n"
+    "- SIZE MISMATCH: a handler reads MORE bytes than packetFixedSize[code] "
+    "declares (OOB read), or reads an inner length off the wire for a 0xFE "
+    "packet and trusts it without bounding the subsequent reads.\n"
+    "- STATE/AUTH BYPASS: a packet handler runnable BEFORE login completes, "
+    "or one that skips the character-selected check, or trusts a client-supplied "
+    "character/player id instead of the session's own.\n"
+    "- INDEX MISMATCH: a handler uses a client-supplied id to index a table "
+    "(item, monster, skill, plant, clan) without a bounds check against that "
+    "table's real size.\n"
+    "- REPLY-CODE ABUSE: a query reply (replyTo) routed to a handler that "
+    "writes shared state without the per-player lock.\n"
+    "\n"
+    "The LIVE compile defines are: CATCHCHALLENGER_SERVER, "
+    "CATCHCHALLENGER_CLASS_ALLINONESERVER, CATCHCHALLENGER_DB_FILE, "
+    "CATCHCHALLENGER_DB_INTERNAL_VARS. Qt / dead-#ifdef branches are out.\n"
+    "\n"
+    "OUTPUT FORMAT - one line per real finding, nothing else:\n"
+    "  LINE <n> of <relpath>: <packet code or symbol> -> <concrete consequence "
+    "with the cross-file mismatch>\n"
+    "If genuinely nothing exploitable across the whole protocol, output exactly:\n"
+    "  No issues identified\n"
+    "Do NOT report style, naming, or non-security issues. Cite real line numbers."
+)
+
+
+def _sweep_slice(text, cap):
+    """Return up to `cap` bytes of `text`, keeping the dispatch-relevant lines
+    (packetFixedSize assignments, case 0xNN: handlers, and a few lines of
+    context around each) so the model sees the wire contract, not the file's
+    full boilerplate."""
+    lines = text.splitlines()
+    keep_idx = set()
+    for i, ln in enumerate(lines):
+        if (re.search(r"packetFixedSize\d*\[0x", ln)
+                or re.match(r"\s*case\s+0x[0-9A-Fa-f]+\s*:", ln)
+                or re.match(r"\s*case\s+\d+\s*:", ln)):
+            for j in range(max(0, i - 2), min(len(lines), i + 14)):
+                keep_idx.add(j)
+    out = [lines[j] for j in sorted(keep_idx)]
+    return "\n".join(out)[:cap]
+
+
+def protocol_sweep(out, spec=None):
+    """One cross-file audit turn over the wire parser + per-packet handlers.
+    Writes any finding to `out` in the same FINDINGS block shape as the per-
+    file sweep so the exploit phase picks it up. Returns 0 always (best-effort:
+    a backend failure is logged, never fatal)."""
+    if os.environ.get("CC_NO_PROTOCOL_SWEEP"):
+        return 0
+    sys.stderr.write("%s [protocol-sweep] cross-file audit of the wire parser + "
+                     "packet handlers\n" % _ts())
+    blocks = []
+    total = 0
+    for rel in PROTOCOL_SWEEP_FILES:
+        fp = os.path.join(REPO_ROOT, rel)
+        try:
+            text = open(fp, "r", errors="replace").read()
+        except OSError as exc:
+            sys.stderr.write("    [protocol-sweep] skip %s: %s\n" % (rel, exc))
+            continue
+        sliced = _sweep_slice(text, SWEEP_FILE_CAP)
+        if total + len(sliced) > SWEEP_TOTAL_CAP:
+            sliced = sliced[:SWEEP_TOTAL_CAP - total]
+        if not sliced.strip():
+            continue
+        blocks.append("=== %s (dispatch-relevant slice) ===\n%s" % (rel, sliced))
+        total += len(sliced)
+        if total >= SWEEP_TOTAL_CAP:
+            break
+    if not blocks:
+        sys.stderr.write("    [protocol-sweep] no dispatch code found; skipping\n")
+        return 0
+    notes = read_notes()
+    notes_block = ("=== SECURITY-IA.md (project notebook) ===\n%s\n\n"
+                   % notes if notes.strip() else "")
+    user = (
+        "%sPerform ONE cross-file protocol sweep. For EACH packet code that has "
+        "both a packetFixedSize[] entry AND a `case 0xNN:` handler, verify the "
+        "handler reads AT MOST the declared size and bounds every inner length "
+        "/ id / index. Report only real exploitable mismatches in the mandatory "
+        "LINE format.\n\n%s\n=== ALL DISPATCH FILES ===\n%s"
+        % (notes_block, PROTOCOL_SWEEP_SYSTEM, "\n\n".join(blocks)))
+    messages = [{"role": "system", "content": PROTOCOL_SWEEP_SYSTEM},
+                {"role": "user", "content": user}]
+    try:
+        answer = chat_with(spec, messages)
+    except Exception as exc:
+        sys.stderr.write("    [protocol-sweep] backend error: %s\n" % exc)
+        return 0
+    answer = _finalize_answer("protocol-sweep", answer)
+    if has_findings(answer):
+        # Group finding lines by the cited source file so each becomes its own
+        # FINDINGS block keyed by the REAL repo-relative path -> the exploit
+        # phase reads the right source file. A line that doesn't cite a path
+        # goes under a generic 'protocol-sweep' bucket the exploit phase will
+        # skip (no source to read) but the human still sees.
+        sweep_line_re = re.compile(
+            r"^\s*LINE\s+\d+\s+of\s+(\S+)\s*:", re.IGNORECASE)
+        groups = {}
+        order = []
+        generic = []
+        for ln in answer.splitlines():
+            m = sweep_line_re.match(ln)
+            if m:
+                rp = m.group(1)
+                if rp not in groups:
+                    groups[rp] = []
+                    order.append(rp)
+                groups[rp].append(ln)
+            elif ln.strip() and not ln.lstrip().startswith("//"):
+                generic.append(ln)
+        for rp in order:
+            print("=" * 70, file=out)
+            print("FINDINGS: %s" % rp, file=out)
+            print("=" * 70, file=out)
+            print("\n".join(groups[rp]), file=out)
+            print(file=out)
+        if generic:
+            print("=" * 70, file=out)
+            print("FINDINGS: protocol-sweep", file=out)
+            print("=" * 70, file=out)
+            print("\n".join(generic), file=out)
+            print(file=out)
+        out.flush()
+        sys.stderr.write("    [protocol-sweep] %d finding line(s) across %d "
+                         "file(s)\n" % (sum(len(v) for v in groups.values()),
+                                        len(order)))
+    else:
+        sys.stderr.write("    [protocol-sweep] no exploitable cross-file "
+                         "mismatch found\n")
+    return 0
 
 
 def run_scan(out=sys.stdout):
@@ -2152,6 +1832,13 @@ def run_scan(out=sys.stdout):
 
 def _run_scan_inner(out):
     check_tooling()
+    # Log + fast-probe the backend; the LLM is the whole audit, so a dead backend
+    # means abort now rather than hang 1200s x retries on every one of 270+ files.
+    if not preflight_backend()[0]:
+        sys.stderr.write("%s [ERROR] IA backend unreachable - aborting scan "
+                         "(set OLLAMA_HOST / fix ~/.config/CatchChallenger/"
+                         "ia-settings.json or start the Ollama daemon)\n" % _ts())
+        return 1
     ensure_context()
     files = collect_files()
     # Optional cap: scan only the first N files. Lets a Claude run be bounded to
@@ -2177,7 +1864,7 @@ def _run_scan_inner(out):
     scan_start = time.time()
     sys.stderr.write(
         "%s [INIT] %d files to audit (in-scope dirs + repo-local includes, vendor "
-        "excluded) via %s\n" % (_ts(), len(files), IA_LABEL)
+        "excluded) via %s\n" % (_ts(), len(files), common.IA_LABEL)
     )
     if len(panel) > 1:
         sys.stderr.write("%s [INIT] collaborative panel of %d models, %d rounds "
@@ -2199,6 +1886,24 @@ def _run_scan_inner(out):
         except Exception as exc:  # network / ollama failure - report, continue
             sys.stderr.write("    [skip] %s\n" % exc)
             continue
+        # Adversarial re-audit of HOT files whose first pass came back clean.
+        # A small local LLM defaults to 'No issues identified'; the reframe
+        # forces it to either surface a bug or justify every length/index it
+        # consumes. Skipped when the first pass already found something, when
+        # the operator disables it (CC_NO_ADVERSARIAL=1), or on non-hot files.
+        if (not has_findings(answer) and is_hot_file(path)
+                and not os.environ.get("CC_NO_ADVERSARIAL")):
+            sys.stderr.write("    [adversarial] hot file came back clean -> "
+                             "re-auditing with red-team prompt\n")
+            try:
+                if len(panel) > 1:
+                    answer = panel_analyze(path, panel, adversarial=True)
+                elif panel:
+                    answer = analyze(path, spec=panel[0], adversarial=True)
+                else:
+                    answer = analyze(path, adversarial=True)
+            except Exception as exc:
+                sys.stderr.write("    [adversarial skip] %s\n" % exc)
         if has_findings(answer):
             flagged.append(rel)
             print("=" * 70, file=out)
@@ -2207,6 +1912,22 @@ def _run_scan_inner(out):
             print(answer, file=out)
             print(file=out)
             out.flush()
+
+    # Cross-file protocol sweep (improvement #3): a single turn over the wire
+    # parser + per-packet handlers, after the per-file sweep. Catches the size
+    # / auth-state / index mismatches the per-file audit cannot see. Uses the
+    # same panel spec as the per-file sweep when one is configured.
+    sweep_spec = None
+    if len(panel) == 1:
+        sweep_spec = panel[0]
+    elif not panel:
+        sweep_spec = None
+    else:
+        sweep_spec = _panel_lead(panel)
+    try:
+        protocol_sweep(out, spec=sweep_spec)
+    except Exception as exc:
+        sys.stderr.write("    [protocol-sweep error] %s\n" % exc)
 
     print("=" * 70, file=out)
     print("SUMMARY: %d/%d files flagged" % (len(flagged), len(files)), file=out)
@@ -2426,6 +2147,19 @@ EXPLOIT_SYSTEM = (
     "  ```\n  <full file content (e.g. exploit.c)>\n  ```\n"
     "  RUN                        (compile your C/C++ -> /" + EXPLOIT_BIN_NAME +
     " and run it sandboxed)\n"
+    "  RUNHOST                    (POST-sandbox escalation: compile + run the "
+    "SAME ELF on the host WITHOUT the chroot/seccomp jail - rlimits still cap "
+    "CPU/mem. Use ONLY if the sandbox's seccomp KILLS a syscall your exploit "
+    "genuinely needs: a 'terminated by signal 31'/SIGSYS under RUN is that jail, "
+    "NOT a refutation. Re-RUN sandboxed first; RUNHOST is the fallback.)\n"
+    "  SEEDDB item=<id>:<qty>[,<id>:<qty>...] cash=<n>\n"
+    "                             (boundary-value DB: set the STARTING inventory/"
+    "cash a NEWLY CREATED character gets from the profile, then reboots. Use it "
+    "to put a count AT the 16/32-bit limit - e.g. 'SEEDDB item=5:4294967295' - "
+    "then connect, create an account, ADD a character (0xAA) + select it (the "
+    "profile is applied at CHARACTER creation, not just account auto-creation), "
+    "and drive ONE more add/buy/sell/trade to test whether the item count or "
+    "cash integer-overflows. item qty caps at uint32 max; cash is exact <2^53.)\n"
     "  RESTARTSERVER              (reboot the supervised server fresh on the "
     "same port - resets game-state)\n"
     "  MODE gdb | MODE valgrind   (choose/switch the supervisor; reboots fresh)\n"
@@ -2433,6 +2167,13 @@ EXPLOIT_SYSTEM = (
     "  (gdb mode only)\n"
     "  VERDICT CONFIRMED <one-line reason>     (= exploit SUCCESS)\n"
     "  VERDICT FALSEPOSITIVE <one-line reason> (= exploit FAIL)\n"
+    "WITH EITHER VERDICT, append ONE terse C++ '// ' comment line meant to be "
+    "pasted at the cited source line - documenting the code a little: for "
+    "CONFIRMED, what the bug is (e.g. '// BUG: realprice*quantity wraps in 32 "
+    "bits before the uint64 cash compare'); for FALSEPOSITIVE, the cross-file "
+    "guard that makes it safe naming the FILE:LINE (e.g. '// SAFE: packet "
+    "0x88 is fixed 10B (ProtocolParsingGeneral.cpp:152), parser delivers full "
+    "size'). Keep it factual and short.\n"
     "\n"
     "WHAT COUNTS AS SUCCESS (VERDICT CONFIRMED):\n"
     "  (a) the server CRASHES under your exploit (gdb catches SIGSEGV/SIGABRT/"
@@ -2509,6 +2250,15 @@ def parse_action(answer):
         return ("GREP", first[5:].strip(), None)
     if up.startswith("WRITE "):
         return ("WRITE", first[6:].strip(), first_codeblock(answer))
+    # POST-sandbox escalation: run the SAME exploit ELF on the host without the
+    # bwrap chroot/seccomp (rlimits still apply). Checked before RUN ("RUNHOST"
+    # has no space so RUN's prefix test would miss it anyway, but be explicit).
+    if up == "RUNHOST" or up.startswith("RUNHOST "):
+        return ("RUNHOST", "", None)
+    # Seed boundary-value starting state (item count / cash at the 16/32-bit
+    # limit) into the staged datapack profile, then reboot.
+    if up.startswith("SEEDDB "):
+        return ("SEEDDB", first[7:].strip(), None)
     if up == "RUN" or up.startswith("RUN "):
         return ("RUN", "", None)
     # Ask the harness for a fresh server-under-gdb (reset game-state / recover a
@@ -2685,6 +2435,38 @@ def do_run(outdir, _block=None, timeout=RUN_TIMEOUT):
     return out or "[no output]"
 
 
+def do_run_host(outdir, timeout=RUN_TIMEOUT):
+    """POST-sandbox escalation (the 'try exploit OUT of sandbox' step): compile
+    the model's exploit and run the SAME ELF on the HOST WITHOUT bwrap's chroot
+    + seccomp allowlist. The sandbox in do_run() is a deliberately TIGHT
+    bare-TCP-client jail; some real exploits legitimately need a syscall it
+    KILLS (a SIGSYS there is a false dead-end, not a refutation). This is the
+    less-isolated retry: ONLY RLIMIT_CPU/AS/NOFILE still apply (preexec_fn) -
+    there is NO filesystem (chroot) and NO syscall (seccomp) confinement, so the
+    model-authored ELF runs with the harness's own host access. It is the
+    deliberate "out of sandbox" attempt; use ONLY after a sandboxed RUN proved
+    insufficient, on an authorized host you accept running attacker code on."""
+    binpath, err = _compile_exploit(outdir)
+    if err:
+        return err
+    try:
+        r = subprocess.run([binpath], capture_output=True, text=True,
+                           timeout=timeout, preexec_fn=_set_sandbox_rlimits,
+                           cwd=outdir)
+        out = (r.stdout or "") + (r.stderr or "")
+        out += "\n[exploit (UNSANDBOXED, host) exit code %d]" % r.returncode
+        if r.returncode < 0:   # killed by a signal (CPU SIGXCPU, segfault, ...)
+            out += " (terminated by signal %d)" % (-r.returncode)
+    except subprocess.TimeoutExpired as e:
+        out = (e.stdout or "") + (e.stderr or "") + \
+              "\n[exploit (UNSANDBOXED, host) wall-timeout after %ds]" % timeout
+    except Exception as e:  # noqa
+        out = "RUNHOST error: %s" % e
+    if len(out) > RUN_OUT_CAP:
+        out = out[:RUN_OUT_CAP // 2] + "\n...[truncated]...\n" + out[-RUN_OUT_CAP // 2:]
+    return out or "[no output]"
+
+
 # ---------------------------------------------------------------------------
 # Live gdb-driven inspection session (the server-under-gdb the exploit attacks)
 # ---------------------------------------------------------------------------
@@ -2739,12 +2521,48 @@ def gdb_cmd_ok(line):
     line = line.strip()
     if not line or line.startswith("#"):
         return True
-    base = re.split(r"[/\s]", line, 1)[0].lower()   # 'x/4xw' -> 'x'
+    base = re.split(r"[/\s]", line, maxsplit=1)[0].lower()   # 'x/4xw' -> 'x'
     if base not in GDB_ALLOWED:
         return False
     if "(" in line or _ASSIGN_RE.search(line):
         return False
     return True
+
+
+def _parse_seed_spec(arg):
+    """Parse a SEEDDB argument into {'items': {id: qty}, 'cash': int|None}.
+    Syntax (either part optional):  item=<id>:<qty>[,<id>:<qty>...]  cash=<n>
+    e.g. 'SEEDDB item=5:4294967295,1:65535 cash=1000000'. Non-numeric tokens are
+    dropped. Lets the exploit IA stand up a FRESH character whose starting
+    inventory/cash already sits AT the 16/32-bit limit, so it can drive one more
+    add/buy/sell/trade and observe whether the count integer-overflows."""
+    items = {}
+    cash = None
+    for tok in arg.replace(",", " ").split():
+        low = tok.lower()
+        if low.startswith("item="):
+            tok = tok[5:]
+            low = tok.lower()
+        if low.startswith("cash="):
+            try:
+                cash = int(tok[5:])
+            except ValueError:
+                pass
+            continue
+        if ":" in tok:
+            a, b = tok.split(":", 1)
+            try:
+                iid, qty = int(a), int(b)
+            except ValueError:
+                continue
+            # The engine parses start.xml item quantity as uint32 and DROPS a
+            # qty<=0 item ("quantity is null"); a qty>UINT32_MAX silently
+            # truncates (stoul cast). Clamp to [1, 0xFFFFFFFF] so the seed loads.
+            if qty > 0xFFFFFFFF:
+                qty = 0xFFFFFFFF
+            if qty >= 1:
+                items[iid] = qty
+    return {"items": items, "cash": cash}
 
 
 class LiveServer:
@@ -2762,6 +2580,11 @@ class LiveServer:
         self.outdir = outdir
         self.mode = mode or RUN_UNDER          # 'gdb' or 'valgrind'
         self.rundir = os.path.join(outdir, "gdb-run")
+        # Boundary-value DB seed set by the SEEDDB action ({'items':..,'cash':..}
+        # or None). Re-applied on every (re)boot to the staged datapack profile
+        # so a freshly auto-created character starts AT the chosen limit.
+        self.seed = None
+        self._seed_note = ""   # result of the last _apply_seed(), shown at boot
         self.proc = None
         self.mfd = -1
         self.alive = False     # inferior is running (vs stopped/exited)
@@ -2772,6 +2595,63 @@ class LiveServer:
         self._baseline_reply = False  # did a healthy server reply to the ping at boot?
         self._closing = False  # in stop(): ignore the kill/exit as a "crash"
         self._booting = False  # during start(): ignore startup memcheck noise
+
+    # -- boundary-value DB seeding -----------------------------------------
+    def _apply_seed(self):
+        """If a SEEDDB seed is set, edit the run dir's datapack PROFILE
+        (player/start.xml) so every freshly auto-created character starts with
+        the requested inventory / cash. New-character creation seeds the player
+        from this profile (server/base/ClientLoad/ClientHeavyLoadLogin2.cpp:
+        `playerForProfile.items[item.id]=item.quantity`), so this is how the
+        exploit reaches a count ALREADY at the 16/32-bit limit WITHOUT a real
+        DB. The source datapack stays read-only (datapack-source-safety): the
+        whole-dir `datapack` symlink is replaced by a shallow mirror that
+        symlinks every entry EXCEPT a tiny WRITABLE copy of player/. No-op
+        (returns "") when no seed is set."""
+        if not self.seed:
+            return ""
+        import xml.etree.ElementTree as ET
+        link = os.path.join(self.rundir, "datapack")
+        try:
+            target = os.path.realpath(link)
+            if os.path.islink(link):
+                os.remove(link)
+                os.makedirs(link)
+                for name in sorted(os.listdir(target)):
+                    src = os.path.join(target, name)
+                    dst = os.path.join(link, name)
+                    if name == "player":
+                        shutil.copytree(src, dst)   # writable (player/ is tiny)
+                    else:
+                        os.symlink(src, dst)        # source stays read-only
+            startxml = os.path.join(link, "player", "start.xml")
+            tree = ET.parse(startxml)
+            start = tree.getroot().find("start")
+            if start is None:
+                return "[SEEDDB warning: no <start> in start.xml; not applied]"
+            if self.seed.get("cash") is not None:
+                cash = start.find("cash")
+                if cash is None:
+                    cash = ET.SubElement(start, "cash")
+                cash.set("value", str(self.seed["cash"]))
+            for item_id, qty in self.seed.get("items", {}).items():
+                el = None
+                for it in start.findall("item"):
+                    if it.get("id") == str(item_id):
+                        el = it
+                        break
+                if el is None:
+                    el = ET.SubElement(start, "item")
+                    el.set("id", str(item_id))
+                el.set("quantity", str(qty))
+            tree.write(startxml)
+            # Drop any stale binary datapack cache so the edited XML is re-read.
+            cache = os.path.join(link, "datapack-cache.bin")
+            if os.path.isfile(cache):
+                os.remove(cache)
+            return "[SEEDDB applied to start.xml: %s]" % self.seed
+        except (OSError, ET.ParseError) as exc:
+            return "[SEEDDB error applying seed: %s]" % exc
 
     # -- pty plumbing -------------------------------------------------------
     def _w(self, cmd):
@@ -2858,6 +2738,9 @@ class LiveServer:
         except OSError as exc:
             return "%s error: cannot set port in server-properties.xml: %s" % (
                 self.mode.upper(), exc)
+        # Apply any boundary-value DB seed to the staged datapack profile BEFORE
+        # boot (no-op when unset). Captured so the model sees it took effect.
+        self._seed_note = self._apply_seed()
         binpath = os.path.join(self.rundir, "catchchallenger-server-cli")
         if not os.path.isfile(binpath):
             binpath = SERVER_BIN
@@ -2911,9 +2794,10 @@ class LiveServer:
             # CPU-spin signal instead.
             self._baseline_reply = self._protocol_ping()[1]
         status = "listening" if self.alive else "NOT confirmed listening"
+        seed = ("\n" + self._seed_note) if self._seed_note else ""
         return ("[%s session started (sandboxed): server under %s on "
-                "127.0.0.1:%d (%s)]\n%s"
-                % (self.mode, self.mode, GDB_PORT, status, out[-2000:]))
+                "127.0.0.1:%d (%s)]%s\n%s"
+                % (self.mode, self.mode, GDB_PORT, status, seed, out[-2000:]))
 
     def _capture_pid(self, boot_text=None):
         """Cache the inferior's (host) pid for /proc-based liveness sampling.
@@ -3244,6 +3128,25 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
         # policy: a repeated sentence is a fatal signal, not a soft skip).
         if (last_answer is not None and answer.strip()
                 and answer.strip() == last_answer.strip()):
+            # A reply cut at the output-token cap is DETERMINISTIC at our low
+            # temperature, so it re-truncates to the same bytes and repeats
+            # verbatim. That is an infrastructure limit, NOT a stuck model: don't
+            # nuke the whole run - skip just THIS finding and carry on. Raise
+            # ollama_num_predict / set ollama_think:false, or CC_IA_BACKEND=claude
+            # to stop the truncation.
+            if last_reply_truncated():
+                sys.stderr.write("%s     [TRUNCATED REPEAT] reply cut at the "
+                                 "output-token cap twice on exploit %02d (%s) -> "
+                                 "skipping this finding (raise ollama_num_predict / "
+                                 "set ollama_think:false, or CC_IA_BACKEND=claude)\n"
+                                 % (_ts(), idx, rel))
+                transcript.append("### TRUNCATED REPEAT (output-token cap; "
+                                  "finding skipped, run continues)")
+                verdict, reason = ("NOT-EXPLOITABLE",
+                                   "reply truncated at the output-token cap "
+                                   "(num_predict); finding skipped")
+                break
+            # Genuine stuck-model loop: fatal per operator policy.
             sys.stderr.write("%s     [REPEAT ABORT] identical reply twice on "
                              "exploit %02d (%s) -> aborting whole run (exit 255)\n"
                              % (_ts(), idx, rel))
@@ -3308,6 +3211,38 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
             # The exploit just hammered the live server - did it fault it?
             result += "\n\n--- live server status ---\n" + live.poll_crash()
             ran_something = True
+        elif kind == "RUNHOST":
+            # POST-sandbox: run the same ELF without bwrap (rlimits kept). For
+            # exploits the tight seccomp jail blocks; same crash/hang check after.
+            run_to = max(1, min(RUN_TIMEOUT, int(deadline - time.time())))
+            sys.stderr.write("%s     [RUNHOST] compile+run exploit ELF "
+                             "UNSANDBOXED on host (step %d, %ds left, timeout %ds)\n"
+                             % (_ts(), step, remaining, run_to))
+            result = do_run_host(outdir, timeout=run_to)
+            result += "\n\n--- live server status ---\n" + live.poll_crash()
+            ran_something = True
+        elif kind == "SEEDDB":
+            spec = _parse_seed_spec(arg)
+            if not spec.get("items") and spec.get("cash") is None:
+                result = ("SEEDDB error: nothing to seed. Syntax: "
+                          "'SEEDDB item=<id>:<qty>[,<id>:<qty>...] cash=<n>' "
+                          "(e.g. 'SEEDDB item=5:4294967295 cash=1000000').")
+            else:
+                live.seed = spec
+                sys.stderr.write("%s     [SEEDDB] %s (step %d)\n"
+                                 % (_ts(), spec, step))
+                result = ("[seed set; rebooting so a newly CREATED character "
+                          "starts with it]\n" + live.restart() +
+                          "\n[The profile (player/start.xml) is applied when a "
+                          "CHARACTER is created, not merely on account "
+                          "auto-creation: connect, auto-create/login the "
+                          "account, then ADD a character (0xAA) and select it - "
+                          "that character's starter inventory/cash IS the seeded "
+                          "one. Then drive one more add/buy/sell/trade to push "
+                          "the count past the limit and check (valgrind / GDB "
+                          "read-only) whether it wraps. NOTE: item qty caps at "
+                          "uint32 max (4294967295); cash loads via double so is "
+                          "integer-exact only below 2^53.]")
         elif kind == "GDB":
             sys.stderr.write("%s     [GDB] (step %d)\n" % (_ts(), step))
             result = live.gdb(block)
@@ -3527,6 +3462,11 @@ def run_exploit():
         sys.stderr.write("[!] could not stage the server run kit (%s); the "
                          "exploit phase cannot boot the target.\n" % STAGED_RUN)
         return 1
+    if not preflight_backend()[0]:
+        sys.stderr.write("%s [ERROR] IA backend unreachable - aborting exploit "
+                         "phase (set OLLAMA_HOST / fix ~/.config/CatchChallenger/"
+                         "ia-settings.json or start the Ollama daemon)\n" % _ts())
+        return 1
     ensure_context()
     findings = parse_findings(FINDINGS)
     if not findings:
@@ -3534,7 +3474,27 @@ def run_exploit():
                          "first.\n" % (FINDINGS, sys.argv[0]))
         return 1
 
-    candidates = [(rel, body) for rel, body in findings if CANDIDATE_RE.search(body)]
+    # CANDIDATE_RE is a PRIORITY ORDER, not a hard filter: a real bug worded
+    # without a trigger keyword must NOT be silently dropped (recall loss that
+    # trusts the model's phrasing over the code). Keyword-matched findings go
+    # first (most likely a rewarded class), the rest follow and are logged so
+    # the operator sees what was deprioritized. CC_EXPLOIT_MATCHED_ONLY=1
+    # restores the old matched-only behaviour if a run must stay tight.
+    matched = [(rel, body) for rel, body in findings if CANDIDATE_RE.search(body)]
+    unmatched = [(rel, body) for rel, body in findings if not CANDIDATE_RE.search(body)]
+    if unmatched:
+        sys.stderr.write("%s [INIT] %d finding(s) did NOT match CANDIDATE_RE "
+                         "(deprioritized, %s):\n"
+                         % (_ts(), len(unmatched),
+                            "DROPPED" if os.environ.get("CC_EXPLOIT_MATCHED_ONLY")
+                            else "still queued after matched"))
+        for rel, body in unmatched:
+            sys.stderr.write("    - %s: %s\n"
+                             % (rel, " ".join(body.split())[:120]))
+    if os.environ.get("CC_EXPLOIT_MATCHED_ONLY"):
+        candidates = matched
+    else:
+        candidates = matched + unmatched
     _cap = os.environ.get("SECSERVER_MAX")
     if _cap:
         candidates = candidates[:int(_cap)]
@@ -3542,7 +3502,7 @@ def run_exploit():
     hard_budget, soft_budget = resolve_budgets()
     sys.stderr.write("%s [INIT] %d findings, %d look exploitable; generating "
                      "exploits via %s (budget per exploit: hard %s / soft %s)\n"
-                     % (_ts(), len(findings), len(candidates), IA_LABEL,
+                     % (_ts(), len(findings), len(candidates), common.IA_LABEL,
                         _human_dur(hard_budget), _human_dur(soft_budget)))
 
     results = []
@@ -3584,7 +3544,7 @@ def run_exploit():
                      % (verdict, short, kept))
 
     lines = ["# security-server.py exploit run\n",
-             "Model: %s  |  candidates: %d\n" % (IA_LABEL, len(candidates)),
+             "Model: %s  |  candidates: %d\n" % (common.IA_LABEL, len(candidates)),
              "\n| # | finding | verdict | reason | dir |",
              "|---|---|---|---|---|"]
     for i, (rel, verdict, reason, kept) in enumerate(results, 1):
@@ -3617,7 +3577,7 @@ def _print_help(prog):
         "\n"
         "Options:\n"
         "  --model=NAME   Ollama model to use (default: %s)\n"
-        "                 e.g. --model=qwen3:30b-a3b or --model=qwen2.5-coder:32b\n"
+        "                 e.g. --model=gemma4:26b or --model=qwen2.5-coder:32b\n"
         "                 append '@host:port' to pin a specific Ollama backend,\n"
         "                 e.g. --model=qwen3:30b-a3b@gpu1:11434\n"
         "  --collaborate=A,B,C   collaborative panel of models (or 'auto' for the\n"
@@ -3633,9 +3593,17 @@ def _print_help(prog):
         "\n"
         "Environment overrides:\n"
         "  CC_IA_BACKEND         ollama (default) | claude  single-model backend\n"
+        "  OLLAMA_HOST           default Ollama backend URL; selects the access\n"
+        "                        mode by URL alone (local / a remote daemon / the\n"
+        "                        Ollama-compatible PHP router). The remote/router\n"
+        "                        URL embeds infra IP - keep it OUT of the repo in\n"
+        "                        ~/.config/CatchChallenger/ia-settings.json as\n"
+        "                        {\"ollama_host\": \"...\"}; never commit it.\n"
+        "  CC_IA_MODEL           default Ollama model (default gemma4:26b)\n"
         "  CC_CLAUDE_MODEL       Claude model id (default claude-opus-4-8)\n"
         "  CC_IA_SETTINGS        JSON file declaring multiple Ollama backends\n"
-        "                        (default ./ia-settings.json; see .example)\n"
+        "                        (default ./ia-settings.json; see .example).\n"
+        "                        When set it overrides OLLAMA_HOST.\n"
         "  CC_IA_PANEL           model list, or 'auto' (<35B Ollama set) -> a\n"
         "                        collaborative multi-model team audit (scan phase)\n"
         "  CC_PANEL_ROUNDS       team discussion rounds (default 10)\n"
@@ -3654,11 +3622,16 @@ def _print_help(prog):
         "  SECSERVER_MEM         Sandbox RLIMIT_AS bytes (default 128M)\n"
         "  SECSERVER_SCAN_MAX    Max files to scan (bound a cheap subset run)\n"
         "  SECSERVER_MAX         Max exploit candidates to attempt\n"
-        % (prog, FINDINGS, FINDINGS, MODEL_NAME))
+        "  CC_NO_ADVERSARIAL     Set to 1 to skip the adversarial re-audit of\n"
+        "                        hot files (packet handlers / wire parser) whose\n"
+        "                        first pass came back clean (recall booster)\n"
+        "  CC_NO_PROTOCOL_SWEEP  Set to 1 to skip the cross-file protocol sweep\n"
+        "                        (parser-declared size vs handler-read size)\n"
+        % (prog, FINDINGS, FINDINGS, common.MODEL_NAME))
 
 
 def main(argv):
-    global MODEL_NAME, RUN_UNDER, CLAUDE_MODEL, IA_LABEL, CC_IA_PANEL
+    global RUN_UNDER, CC_IA_PANEL
 
     # scan always writes FINDINGS to disk (tee), so the exploit phase works
     # regardless of whether stdout was redirected.
@@ -3671,11 +3644,11 @@ def main(argv):
             # Override whichever backend is active (Claude when CC_IA_BACKEND
             # =claude, else Ollama).
             if USE_CLAUDE:
-                CLAUDE_MODEL = a[len("--model="):]
+                common.CLAUDE_MODEL = a[len("--model="):]
             else:
                 # An optional '@host:port' suffix pins which Ollama backend
                 # serves this model; keep the bare name as MODEL_NAME.
-                MODEL_NAME = _register_model_spec(a[len("--model="):])
+                common.MODEL_NAME = _register_model_spec(a[len("--model="):])
         elif a.startswith("--collaborate="):
             # Collaborative panel: comma-separated model specs, or 'auto' for the
             # installed Ollama models under CC_PANEL_MAX_B. Same as CC_IA_PANEL.
@@ -3690,7 +3663,7 @@ def main(argv):
             filtered.append(a)
     args = filtered
     # Recompute after --model so INIT/DONE logs name the model actually used.
-    IA_LABEL = CLAUDE_MODEL if USE_CLAUDE else MODEL_NAME
+    common.IA_LABEL = common.CLAUDE_MODEL if USE_CLAUDE else common.MODEL_NAME
 
     # Fail fast: without a credential, chat_claude raises per file and run_scan's
     # per-file `except` swallows it -> a misleading empty, exit-0 "clean" audit.
