@@ -709,6 +709,33 @@ def _claude_auth_headers():
         "out-of-repo settings (%s)." % IA_SETTINGS_FILE)
 
 
+def _retry_after_seconds(exc):
+    """Seconds to wait from a 429/503 `Retry-After` header (integer seconds or an
+    HTTP-date), or None if absent/unparseable. A 429 from Claude carries the time
+    until the rate-limit window resets; honouring it beats retrying too early (a
+    premature retry wastes an attempt and can extend the penalty). Clamped to
+    [0, 120] so one file's wait can't run away (the per-call deadline caps it
+    further)."""
+    hdrs = getattr(exc, "headers", None)
+    if hdrs is None:
+        return None
+    val = (hdrs.get("retry-after") or "").strip()
+    if not val:
+        return None
+    if val.isdigit():
+        secs = int(val)
+    else:
+        try:
+            import email.utils
+            dt = email.utils.parsedate_to_datetime(val)
+            secs = int(dt.timestamp() - time.time()) if dt is not None else None
+        except (TypeError, ValueError, OverflowError):
+            secs = None
+    if secs is None:
+        return None
+    return max(0, min(120, secs))
+
+
 class _ClaudeStreamError(OSError):
     """An `error` event arriving IN-BAND in an already-200 stream (e.g.
     overloaded_error). Subclasses OSError so it lands in chat_claude's existing
@@ -850,13 +877,25 @@ def chat_claude(messages, timeout=None, model=None):
                 raise RuntimeError("Claude API %d: %s" % (exc.code, detail))
             if deadline and time.time() >= deadline:
                 return ""
-            if attempt >= 5:
+            # 429 = rate limit: wait what the API asks (Retry-After), and give it
+            # more tries than a generic 5xx - a saturated subscription/tier frees
+            # up on a window boundary, not in 12s. (Biggest contender is usually
+            # ANOTHER process on the same token, e.g. an interactive Claude Code
+            # session; pause it to clear the contention.)
+            retry_after = _retry_after_seconds(exc)
+            max_attempts = 8 if exc.code == 429 else 5
+            if attempt >= max_attempts:
                 raise
-            sys.stderr.write("    [chat retry %d/5 after HTTP %d %s]\n"
-                             % (attempt, exc.code, detail))
-            nap = 3 * attempt
+            if retry_after is not None:
+                nap = retry_after + 1                       # +1s past the edge
+            else:
+                nap = (10 if exc.code == 429 else 3) * attempt
             if deadline:
                 nap = min(nap, max(0, int(deadline - time.time())))
+            sys.stderr.write("    [chat retry %d/%d after HTTP %d (wait %ds%s) %s]\n"
+                             % (attempt, max_attempts, exc.code, nap,
+                                ", Retry-After" if retry_after is not None else "",
+                                detail))
             time.sleep(nap)
         except (urllib.error.URLError, ConnectionError, OSError) as exc:
             if deadline and time.time() >= deadline:
