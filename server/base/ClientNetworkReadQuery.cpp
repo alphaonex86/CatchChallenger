@@ -80,6 +80,11 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Buy object
         case 0x88:
         {
+            //SAFE (not OOB read): 0x88 is FIXED 10B (packetFixedSize[0x88]=2+4+4,
+            //ProtocolParsingGeneral.cpp:152). parseData() dispatches only once all
+            //10 declared bytes arrived (ProtocolParsingInput.cpp:633 fast path /
+            //:660 reassembled path), so data[] holds >=10 valid bytes here -> the
+            //10B read (loadLe16@0 + loadLe32@2 + loadLe32@6) needs no size guard.
             const uint16_t &objectId=CatchChallenger::loadLe16(data);
             const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t));
             const uint32_t &price=CatchChallenger::loadLe32(data+sizeof(uint16_t)+sizeof(uint32_t));
@@ -90,6 +95,8 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Sell object
         case 0x89:
         {
+            //SAFE (not OOB read): fixed 10B, same parser invariant as 0x88
+            //(packetFixedSize[0x89]=2+4+4, ProtocolParsingGeneral.cpp:153).
             const uint16_t &objectId=CatchChallenger::loadLe16(data);
             const uint32_t &quantity=CatchChallenger::loadLe32(data+sizeof(uint16_t));
             const uint32_t &price=CatchChallenger::loadLe32(data+sizeof(uint16_t)+sizeof(uint32_t));
