@@ -120,7 +120,16 @@ void ProtocolParsingInputOutput::parseIncommingData()
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-static_cast<unsigned int>(header_cut.size());
             memcpy(tempBigBufferForInput,header_cut.data(),header_cut.size());
-            size=readFromSocket(tempBigBufferForInput,size_to_get)+header_cut.size();
+            //Read the fresh bytes AFTER the stashed partial-header prefix
+            //(offset +header_cut.size()), NOT over it: size_to_get already
+            //reserved the prefix room. Reading at offset 0 clobbered the 1-3
+            //stashed dataSize bytes AND, with the second add below, made
+            //size=read+2*header_cut.size() — up to COMMONBUFFERSIZE+3 against a
+            //COMMONBUFFERSIZE static buffer, an OOB read on a TCP-split dynamic
+            //packet. Mirrors the io_uring twin parseIncommingDataAsync() which
+            //memcpy's fresh bytes at +header_cut.size(). header_cut.size() is
+            //added exactly ONCE (here) for the prefix; do NOT add it again below.
+            size=readFromSocket(tempBigBufferForInput+header_cut.size(),size_to_get)+static_cast<ssize_t>(header_cut.size());
             #ifdef PROTOCOLPARSINGDEBUG
             std::cout << "ProtocolParsingInputOutput::parseIncommingData() read()" << std::endl;
             #endif
@@ -136,7 +145,9 @@ void ProtocolParsingInputOutput::parseIncommingData()
                 #ifndef CATCHCHALLENGER_SERVER
                 RXSize+=size;
                 #endif
-                size+=header_cut.size();
+                //NOTE: header_cut.size() is already folded into `size` above
+                //(prefix counted once). A second add here was the OOB/double-
+                //count bug — removed.
                 #ifdef PROTOCOLPARSINGDEBUG
                 std::cout << "with header cut " << binarytoHexa(tempBigBufferForInput,size) << " and size " << size << std::endl;
                 #endif
