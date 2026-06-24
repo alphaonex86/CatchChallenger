@@ -81,7 +81,11 @@ def _read_cpu_stat():
     while len(j) < 10:
         j.append(0)
     user, nice, system, idle, iowait, irq, softirq, steal = j[:8]
-    total = sum(j)
+    # guest is already counted in user, and guest_nice in nice (kernel
+    # fs/proc/stat.c), so summing all 10 fields would double-count them and
+    # bias every bucket% low (esp. under qemu-user guests). Sum only the 8
+    # standard buckets — the per-bucket numerators in _cpu_delta use these.
+    total = user + nice + system + idle + iowait + irq + softirq + steal
     return {
         "user": user, "nice": nice, "system": system, "idle": idle,
         "iowait": iowait, "irq": irq, "softirq": softirq, "steal": steal,
