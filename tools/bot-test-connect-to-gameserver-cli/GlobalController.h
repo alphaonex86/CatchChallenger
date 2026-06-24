@@ -46,6 +46,7 @@ private slots:
                 bool haveTheDatapack);
     void updateServerList(CatchChallenger::Api_client_real *);
     void statusError(QString error);
+    void notLogged(const QString &reason);
     void datapackIsReady();
     void datapackMainSubIsReady();
     void all_player_on_map();

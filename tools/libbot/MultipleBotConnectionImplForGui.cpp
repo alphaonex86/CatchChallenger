@@ -234,6 +234,15 @@ void MultipleBotConnectionImplForGui::dropAllPlayerOnTheMap()
     botInterface->dropAllPlayerOnTheMap(senderObject);
 }
 
+void MultipleBotConnectionImplForGui::notLogged(const std::string &reason)
+{
+    //keep the base behaviour (mark error + disconnect every client) then
+    //surface the reason so the controller can react (retry the master's
+    //reconnect cooldown) rather than silently idling to the global timeout.
+    MultipleBotConnection::notLogged(reason);
+    emit notLoggedReason(QString::fromStdString(reason));
+}
+
 void MultipleBotConnectionImplForGui::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
