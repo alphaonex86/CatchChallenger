@@ -44,6 +44,7 @@ private:
                                const CatchChallenger::Direction &direction);
     virtual void remove_player(const uint8_t &id);
     virtual void dropAllPlayerOnTheMap();
+    virtual void notLogged(const std::string &reason);
     virtual void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId);
     virtual void haveTheDatapack();
@@ -64,6 +65,11 @@ signals:
                     const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
                     bool haveTheDatapack);
     void statusError(QString error);
+    //emitted when the master refuses the login/character-select (notLogged);
+    //carries the human reason so a controller can distinguish a retryable
+    //reconnect-cooldown ("Too recently disconnected"/"Already logged") from a
+    //hard failure instead of waiting out the global timeout.
+    void notLoggedReason(QString reason);
     void chat_text(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &type) const;
     void emit_detectSlowDown(uint32_t queryCount,uint32_t worseTime);
     void datapackIsReady();

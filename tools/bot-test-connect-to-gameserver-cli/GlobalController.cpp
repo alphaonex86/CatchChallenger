@@ -29,6 +29,8 @@ GlobalController::GlobalController(const std::string &config, QObject *parent) :
         abort();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::statusError,this,&GlobalController::statusError,Qt::QueuedConnection))
         abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::notLoggedReason,this,&GlobalController::notLogged,Qt::QueuedConnection))
+        abort();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_detectSlowDown,this,&GlobalController::detectSlowDown,Qt::QueuedConnection))
         abort();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_on_map,this,&GlobalController::all_player_on_map,Qt::QueuedConnection))
@@ -120,8 +122,11 @@ GlobalController::GlobalController(const std::string &config, QObject *parent) :
         timeout=settings.value("timeout").toUInt();
     else
     {
-        timeout=5*60;
-        settings.setValue("timeout",5*60);
+        //was 5*60: a refused login (notLogged) now fails fast (see notLogged()),
+        //so the global timeout only has to cover a genuinely stalled connect.
+        //90s keeps a hung probe from holding the bot-test slot for 5 minutes.
+        timeout=90;
+        settings.setValue("timeout",90);
     }
     timeoutTimer.start(timeout*1000);
 }
@@ -299,6 +304,29 @@ void GlobalController::statusError(QString error)
 {
     qDebug() << error;
     QCoreApplication::exit(26);
+}
+
+void GlobalController::notLogged(const QString &reason)
+{
+    //The master refused the login/character-select. Previously the bot just sat
+    //idle until timeoutTimer fired (exit 30) ~5 min later, so a transient,
+    //self-clearing condition was recorded as a long "down" on official-server.html.
+    //The usual culprit is the master's per-character reconnect cooldown left by
+    //the PREVIOUS bot run (reply 0x08 "Too recently disconnected", or 0x03
+    //"Already logged" while the prior session is still being torn down) — both
+    //clear within maxLockAge (default 10s). Exit fast with a distinct,
+    //RETRYABLE code (8) so other-json.sh can wait out the cooldown and retry on
+    //a fresh process; any other reason is a hard failure (31).
+    if(reason==QStringLiteral("Too recently disconnected") || reason==QStringLiteral("Already logged"))
+    {
+        qDebug() << "Login refused (retryable, master reconnect cooldown):" << reason;
+        QCoreApplication::exit(8);
+    }
+    else
+    {
+        qDebug() << "Login refused:" << reason;
+        QCoreApplication::exit(31);
+    }
 }
 
 void GlobalController::on_connect_clicked()
