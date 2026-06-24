@@ -910,6 +910,55 @@ def chat_claude(messages, timeout=None, model=None):
             time.sleep(nap)
 
 
+def claude_preflight(timeout=30):
+    """Validate the Claude credential with ONE tiny live request before a long run.
+
+    Returns (ok, message). The presence check (_claude_has_creds) only proves a
+    string is set, not that it WORKS - an expired OAuth token (it rotates ~hourly)
+    or an empty-balance console key both pass presence yet fail every real call.
+    Without this, chat_claude raises per file and run_scan's per-file `except`
+    swallows it -> a misleading empty, exit-0 'clean' audit. So ping once up front
+    and classify the failure into an actionable message (the same auth/version the
+    real calls use; max_tokens=1 so a success is ~free, and a 401/400 bills nothing)."""
+    try:
+        auth = _claude_auth_headers()        # raises if no credential present
+    except RuntimeError as exc:
+        return (False, str(exc))
+    is_oauth = "authorization" in auth
+    headers = {"content-type": "application/json", "anthropic-version": CLAUDE_VERSION}
+    headers.update(auth)
+    payload = {"model": CLAUDE_MODEL, "max_tokens": 1,
+               "messages": [{"role": "user", "content": "ping"}]}
+    data = json.dumps(payload).encode("utf-8")
+    try:
+        req = urllib.request.Request(CLAUDE_API, data=data, headers=headers)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            resp.read()
+        return (True, "")
+    except urllib.error.HTTPError as exc:
+        detail = ""
+        try:
+            detail = exc.read().decode("utf-8", "replace")
+        except OSError:
+            pass
+        if exc.code == 401:
+            if is_oauth:
+                return (False, "Claude OAuth token rejected (401) - it is expired or "
+                        "wrong. Refresh it: re-run `claude setup-token` and update "
+                        "'claude_oauth_token' in %s (the token rotates ~hourly)."
+                        % IA_SETTINGS_FILE)
+            return (False, "Claude credential rejected (401). Check 'claude_api_key' "
+                    "in %s." % IA_SETTINGS_FILE)
+        if exc.code == 400 and "credit balance" in detail.lower():
+            return (False, "Claude console key has no credit (400 'credit balance "
+                    "too low'). Set an OAuth subscription token ('claude_oauth_token' "
+                    "in %s) - it is subscription-billed and wins over the console key."
+                    % IA_SETTINGS_FILE)
+        return (False, "Claude API %d: %s" % (exc.code, detail[:300]))
+    except (urllib.error.URLError, OSError) as exc:
+        return (False, "Claude API unreachable: %s" % exc)
+
+
 # ===========================================================================
 # Ollama transport
 # ===========================================================================
@@ -1103,6 +1152,7 @@ __all__ = [
     "_ts", "_Tee", "_human_dur", "fit_ctx", "ensure_context",
     "_claude_split", "_cache_text", "_claude_has_creds", "_claude_auth_headers",
     "_settings_claude_key", "_resolve_ia_backend",
-    "_ClaudeStreamError", "chat_claude", "chat_ollama", "chat", "chat_with",
+    "_ClaudeStreamError", "chat_claude", "claude_preflight", "chat_ollama",
+    "chat", "chat_with",
     "PROBE_TIMEOUT", "preflight_backend", "last_reply_truncated",
 ]
