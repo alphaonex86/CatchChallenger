@@ -1,8 +1,19 @@
 {
-  "_comment": "Optional. Copy to ia-settings.json (or point CC_IA_SETTINGS at it) to spread the Ollama work across several hosts. A bare string is a backend URL; an object may pin specific models to a backend. Each model is always routed to the SAME backend (a pinned backend wins, else a backend that actually has the model, chosen by a stable hash of the name) so the model stays warm there and a panel runs across machines in parallel. Delete/omit this file to use only the local backend.",
+  "_comment": "TEMPLATE. The REAL file lives OUT of the repo (default ~/.config/CatchChallenger/ia-settings.json; override CC_IA_SETTINGS) so a remote/router URL that embeds infrastructure IP is never committed. Copy this there and edit. Use EITHER 'ollama_host' (one default backend) OR 'ollama_backends' (a multi-host table). The OLLAMA_HOST env var overrides both. Delete/omit the file to use only the local backend (http://127.0.0.1:11434).",
+  "_ollama_host_comment": "Single default backend: a local daemon, a remote Ollama daemon (http://[<ipv6>]:11434), or an Ollama-API-compatible PHP router (http://[<ipv6>], port 80 / index.php) that routes to the optimized instance. Bracket IPv6 hosts.",
+  "ollama_host": "http://127.0.0.1:11434",
+  "_ollama_api_comment": "Wire API the backend speaks: 'ollama' (default - native /api/chat with a messages array, e.g. a local/remote ollamad) or 'router' (the PHP front controller: one POST of {model, prompt, preprompt} + Bearer, reply {response,...}). Same as the CC_OLLAMA_API env var.",
+  "ollama_api": "ollama",
+  "_ollama_think_comment": "Reasoning control for thinking models. Omit/null = leave the model default (safe for non-thinking models). false = skip the slow reasoning tokens (REQUIRED for a thinking model like gemma4:26b - it otherwise burns ~1300 tokens thinking before a ~30-token answer). Same as CC_OLLAMA_THINK.",
+  "ollama_think": null,
+  "_ollama_token_comment": "Bearer token when the backend is behind an authenticating proxy (the router's index.php requires one). Leave empty for a plain local daemon. A SECRET - keep it only in this out-of-repo file (or the OLLAMA_API_KEY / OLLAMA_TOKEN env var), never in the repo.",
+  "ollama_token": "",
+  "_router_ssh_comment": "Free-text note (ignored by the tools): SSH/deploy coordinates of the PHP router source, e.g. 'root@<host> -p <port> /var/www/html/'. Keep real coords only in the out-of-repo copy.",
+  "_router_ssh": "",
+  "_ollama_backends_comment": "Multi-host table (overrides ollama_host). A bare string is a backend URL; an object may pin models to a backend. Each model routes to the SAME backend every run so it stays warm and a panel spreads across hosts.",
   "ollama_backends": [
     "http://127.0.0.1:11434",
-    { "url": "http://gpu1.lan:11434", "models": ["deepseek-coder:33b", "qwen3-coder:30b"] },
+    { "url": "http://gpu1.lan:11434", "models": ["gemma4:26b", "qwen3-coder:30b"] },
     { "url": "http://gpu2.lan:11434" }
   ]
 }

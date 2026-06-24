@@ -3602,6 +3602,11 @@ def _print_help(prog):
         "  CC_IA_BACKEND=claude CC_CLAUDE_MODEL=claude-opus-4-8 \\\n"
         "      python3 server.py all 2> progress.log\n"
         "\n"
+        "  # Claude via the OFFICIAL CLI - the ONLY ToS-safe way to use a Pro/Max\n"
+        "  # SUBSCRIPTION (replaying its OAuth token from the API path is a Terms\n"
+        "  # violation). Just `claude` logged in once; no token/key here at all.\n"
+        "  CC_IA_BACKEND=claude-cli python3 server.py all 2> progress.log\n"
+        "\n"
         "  # LOCAL Ollama with a SPECIFIC model (override the settings default).\n"
         "  # Hit 127.0.0.1:11434 directly; --model picks the served model.\n"
         "  OLLAMA_HOST=http://127.0.0.1:11434 \\\n"
@@ -3622,7 +3627,9 @@ def _print_help(prog):
         "  python3 server.py --collaborate=qwen3:30b@gpu1:11434,deepseek:33b@gpu2:11434,claude all 2> progress.log\n"
         "\n"
         "Environment overrides:\n"
-        "  CC_IA_BACKEND         ollama (default) | claude  single-model backend\n"
+        "  CC_IA_BACKEND         ollama (default) | claude (API) | claude-cli\n"
+        "                        (official `claude -p`; ToS-safe for a Pro/Max\n"
+        "                        subscription - no token replay)\n"
         "  OLLAMA_HOST           default Ollama backend URL; selects the access\n"
         "                        mode by URL alone (local / a remote daemon / the\n"
         "                        Ollama-compatible PHP router). The remote/router\n"
@@ -3697,22 +3704,29 @@ def main(argv):
 
     # Fail fast: without a credential, chat_claude raises per file and run_scan's
     # per-file `except` swallows it -> a misleading empty, exit-0 "clean" audit.
-    if USE_CLAUDE and not _claude_has_creds():
+    # The claude-cli backend is exempt: it holds NO token of ours; the official
+    # `claude` binary authenticates itself, so its preflight below checks instead.
+    if USE_CLAUDE and not CLAUDE_VIA_CLI and not _claude_has_creds():
         sys.stderr.write("error: CC_IA_BACKEND=claude but no credential found - "
                          "export ANTHROPIC_API_KEY (console key) or "
                          "CLAUDE_CODE_OAUTH_TOKEN (e.g. `claude setup-token`), "
                          "or put 'claude_api_key' in the out-of-repo settings "
-                         "(%s)\n" % common.IA_SETTINGS_FILE)
+                         "(%s). For a Pro/Max SUBSCRIPTION use CC_IA_BACKEND="
+                         "claude-cli instead (ToS-safe).\n" % common.IA_SETTINGS_FILE)
         return 2
 
-    # Presence != validity: an expired OAuth token (rotates ~hourly) or an
-    # empty-balance console key passes the check above yet fails every real call,
-    # and run_scan's per-file `except` would swallow it into a misleading empty,
-    # exit-0 "clean" audit. One tiny validation ping up front fails fast instead.
+    # Presence != validity: an expired OAuth token (rotates ~hourly), an empty
+    # -balance console key, or a not-logged-in CLI all pass any presence check yet
+    # fail every real call, and run_scan's per-file `except` would swallow it into
+    # a misleading empty, exit-0 "clean" audit. One tiny live ping up front fails
+    # fast instead - via the official CLI when that is the backend, else the API.
     if USE_CLAUDE:
-        ok, msg = common.claude_preflight()
+        if CLAUDE_VIA_CLI:
+            ok, msg = common.claude_cli_preflight()
+        else:
+            ok, msg = common.claude_preflight()
         if not ok:
-            sys.stderr.write("error: Claude credential preflight failed - %s\n" % msg)
+            sys.stderr.write("error: Claude backend preflight failed - %s\n" % msg)
             return 2
 
     mode = args[0] if args else "all"
@@ -3727,6 +3741,15 @@ def main(argv):
         if rc != 0:
             return rc
         return run_exploit()
+    if mode in ("codecheck", "per-function", "perfunc"):
+        # SHARED logic with codecheck.py: audit the C/C++ tree FUNCTION-BY-FUNCTION
+        # with a LIMITED per-function view (headers in full + the one function body +
+        # its caller tree + ONE callee branch at a time). Each IA turn stays a few-K
+        # tokens, so a SMALL local model (e.g. CC_IA_MODEL=qwen3-coder:30b with a
+        # small num_ctx) can audit the whole codebase one leaf at a time - where the
+        # per-file scan above needs a large-context model. C/C++ only, excl vendor.
+        import codecheck
+        return codecheck.run(out=sys.stdout)
     sys.stderr.write("error: unknown mode %r\n" % mode)
     _print_help(argv[0])
     return 2
