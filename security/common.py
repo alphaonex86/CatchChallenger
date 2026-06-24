@@ -20,7 +20,17 @@ Three ways to reach a model (default is local Ollama):
   3. REMOTE via PHP router - a PHP HTTP endpoint that ROUTES requests to the
                              optimized instance (recommended for shared use; it
                              is Ollama-API-compatible, so the client is unchanged).
-  4. CLAUDE                 - CC_IA_BACKEND=claude (+ a credential below).
+  4. CLAUDE (API)           - CC_IA_BACKEND=claude (+ a credential below). A raw
+                             Messages-API call with the credential we hold.
+  5. CLAUDE (CLI)           - CC_IA_BACKEND=claude-cli. Shells out to the OFFICIAL
+                             `claude -p` binary instead of calling the API
+                             ourselves. This is the ONLY ToS-safe way to drive a
+                             Pro/Max SUBSCRIPTION: that subscription is licensed
+                             for use THROUGH Anthropic's own clients, so replaying
+                             its OAuth token from our HTTP client (mode 4 with an
+                             sk-ant-oat token) violates the Consumer Terms and got
+                             such tokens BLOCKED in Jan 2026. The logged-in `claude`
+                             binary authenticates itself; we never touch its token.
 Modes 1-3 are all just "an Ollama HTTP backend at some URL", so one knob selects
 between them; the code path is identical.
 
@@ -30,7 +40,8 @@ in an OUT-OF-REPO config (default ~/.config/CatchChallenger/ia-settings.json) as
 or pass it via the OLLAMA_HOST env var. Never write the URL/IP into the repo.
 
 Env contract (identical for both tools):
-  CC_IA_BACKEND     ollama (default) | claude
+  CC_IA_BACKEND     ollama (default) | claude (API) | claude-cli (official CLI;
+                    the ToS-safe path for a Pro/Max subscription)
   CC_IA_MODEL       default Ollama model (default gemma4:26b); a tool's own
                     --model / CC_SECRET_MODEL overrides it
   OLLAMA_HOST       base URL of the default Ollama backend (a local daemon, a
@@ -49,7 +60,10 @@ module, which would not reach this module's functions)."""
 import hashlib
 import json
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -110,18 +124,34 @@ def load_settings():
     return data if isinstance(data, dict) else {}
 
 
+def _normalize_backend(name):
+    """Canonical backend id. Accepts a few spellings of the official-CLI backend
+    (claude-cli / claude_cli / claudecli / cli / claude-code) so a hand-edited
+    env/config is forgiving; everything else passes through unchanged."""
+    n = name.strip().lower().replace("_", "-")
+    if n in ("claude-cli", "claudecli", "cli", "claude-code"):
+        return "claude-cli"
+    return n
+
+
 def _resolve_ia_backend():
     env = os.environ.get("CC_IA_BACKEND", "").strip().lower()
     if env:
-        return env
+        return _normalize_backend(env)
     cfg = load_settings().get("ia_backend")
-    if isinstance(cfg, str) and cfg.strip().lower() in ("ollama", "claude"):
-        return cfg.strip().lower()
+    if isinstance(cfg, str):
+        norm = _normalize_backend(cfg)
+        if norm in ("ollama", "claude", "claude-cli"):
+            return norm
     return "ollama"
 
 
 IA_BACKEND = _resolve_ia_backend()
-USE_CLAUDE = IA_BACKEND == "claude"
+# Both Claude backends set USE_CLAUDE (so the skip-Ollama-probe / label / usage
+# branches apply to both); CLAUDE_VIA_CLI then picks the transport: the official
+# `claude -p` binary (subscription-safe) vs a raw Messages-API call.
+CLAUDE_VIA_CLI = IA_BACKEND == "claude-cli"
+USE_CLAUDE = IA_BACKEND in ("claude", "claude-cli")
 CLAUDE_MODEL = os.environ.get("CC_CLAUDE_MODEL", "claude-opus-4-8")
 CLAUDE_API = "https://api.anthropic.com/v1/messages"
 CLAUDE_VERSION = "2023-06-01"
@@ -136,6 +166,9 @@ IA_LABEL = CLAUDE_MODEL if USE_CLAUDE else MODEL_NAME
 # events. Guarded because tools may call chat from worker threads.
 CLAUDE_USAGE = {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0}
 CLAUDE_CALLS = 0
+# Real subscription-equivalent USD spend, summed from the CLI's reported
+# total_cost_usd (the API path has no such number; it is estimated from tokens).
+CLAUDE_COST_USD = 0.0
 _USAGE_LOCK = threading.Lock()
 # USD per million tokens (input, output) by model-family prefix. Cache writes
 # bill at 1.25x input, cache reads at 0.10x input.
@@ -162,9 +195,14 @@ def claude_usage_summary():
             + u["cache_write"] * price_in * 1.25
             + u["cache_read"] * price_in * 0.10
             + u["output"] * price_out) / 1_000_000.0
+    # The CLI hands us the actual subscription-equivalent cost (incl. its small
+    # helper-model calls); prefer it over the token-price estimate.
+    if CLAUDE_VIA_CLI and CLAUDE_COST_USD > 0:
+        cost = CLAUDE_COST_USD
+    label = CLAUDE_MODEL + (" via CLI" if CLAUDE_VIA_CLI else "")
     return ("%s [usage] %s: %d calls | in %d (cache w %d / r %d) out %d tok "
             "| ~$%.4f\n"
-            % (_ts(), CLAUDE_MODEL, CLAUDE_CALLS, u["input"], u["cache_write"],
+            % (_ts(), label, CLAUDE_CALLS, u["input"], u["cache_write"],
                u["cache_read"], u["output"], cost))
 
 
@@ -960,6 +998,129 @@ def claude_preflight(timeout=30):
 
 
 # ===========================================================================
+# Claude CLI transport (subscription-safe)
+# ===========================================================================
+# Every built-in tool is DISALLOWED on the headless call: the auditor uses the
+# model as a pure text reasoner over a REMOTE target, so it must never be able to
+# read/run/modify anything on THIS machine while doing so.
+_CLAUDE_CLI_NO_TOOLS = ("Bash,Read,Edit,Write,NotebookEdit,WebFetch,WebSearch,"
+                        "Task,Glob,Grep")
+
+
+def chat_claude_cli(messages, timeout=None, model=None):
+    """One turn driven through the OFFICIAL `claude` CLI in headless mode
+    (`claude -p`), NOT a raw API call.
+
+    Why a separate transport: a Claude Pro/Max SUBSCRIPTION is licensed for use
+    THROUGH Anthropic's own clients (Claude Code / the apps). Replaying a
+    subscription OAuth token from our own HTTP client (chat_claude) is a Consumer
+    Terms violation and got such tokens BLOCKED in Jan 2026. Letting the logged-in
+    `claude` binary make the call instead is the sanctioned path: it authenticates
+    itself from its own keychain and the subscription's weekly limit covers it.
+
+    Contract identical to chat(): returns the assistant text. The agent loop's
+    [{system},{user},{assistant},...] history is flattened (the CLI is a single
+    -prompt entry point): system turns become --system-prompt, the rest a labelled
+    prompt fed on stdin (so a big audit prompt uses the 10MB stdin channel, not
+    argv). `timeout` is a hard wall-clock cap - the process is killed past it.
+
+    Runs from a neutral temp cwd so it does NOT load this repo's CLAUDE.md / a
+    project .mcp.json into every call. NOT --bare: bare skips the OAuth/keychain
+    read and demands an API key, which would defeat the whole point."""
+    global CLAUDE_CALLS, CLAUDE_COST_USD
+    exe = shutil.which("claude")
+    if not exe:
+        raise RuntimeError(
+            "CC_IA_BACKEND=claude-cli but `claude` is not on PATH. Install Claude "
+            "Code and run `claude` once to log in with your subscription.")
+    mdl = model or CLAUDE_MODEL
+    system, prompt = _router_split(messages)
+    argv = [exe, "-p", "--output-format", "json", "--model", mdl,
+            "--disallowed-tools", _CLAUDE_CLI_NO_TOOLS]
+    if system:
+        argv += ["--system-prompt", system]
+    _set_truncated(False)
+    deadline = (time.time() + timeout) if timeout else None
+    workdir = tempfile.gettempdir()
+    attempt = 0
+    while True:
+        attempt += 1
+        proc_to = max(1, int(deadline - time.time())) if deadline else None
+        try:
+            proc = subprocess.run(argv, input=prompt.encode("utf-8"),
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                  timeout=proc_to, cwd=workdir)
+        except subprocess.TimeoutExpired:
+            # Wall-clock budget hit: the process was killed, no usable reply.
+            sys.stderr.write("    [claude-cli cut: budget reached]\n")
+            return ""
+        except OSError as exc:
+            if deadline and time.time() >= deadline:
+                return ""
+            if attempt >= 5:
+                raise
+            sys.stderr.write("    [claude-cli retry %d/5 after %s]\n" % (attempt, exc))
+            nap = 3 * attempt
+            if deadline:
+                nap = min(nap, max(0, int(deadline - time.time())))
+            time.sleep(nap)
+            continue
+        out = proc.stdout.decode("utf-8", "replace").strip()
+        err = proc.stderr.decode("utf-8", "replace").strip()
+        try:
+            obj = json.loads(out)
+        except ValueError:
+            # No JSON: surface the CLI's own diagnostics (login/model/usage errors)
+            # and treat as a failed turn (empty) so the caller retries or skips.
+            sys.stderr.write("    [claude-cli no JSON (rc=%d): %s]\n"
+                             % (proc.returncode, (err or out)[:300]))
+            if (deadline and time.time() >= deadline) or attempt >= 3:
+                return ""
+            time.sleep(2 * attempt)
+            continue
+        # Fold token usage + the real subscription-equivalent cost into the tally.
+        usage = obj.get("usage") or {}
+        with _USAGE_LOCK:
+            CLAUDE_USAGE["input"] += usage.get("input_tokens", 0) or 0
+            CLAUDE_USAGE["cache_write"] += usage.get("cache_creation_input_tokens", 0) or 0
+            CLAUDE_USAGE["cache_read"] += usage.get("cache_read_input_tokens", 0) or 0
+            CLAUDE_USAGE["output"] += usage.get("output_tokens", 0) or 0
+            c = obj.get("total_cost_usd")
+            if isinstance(c, (int, float)):
+                CLAUDE_COST_USD += float(c)
+            CLAUDE_CALLS += 1
+        if obj.get("is_error"):
+            # A reported error (auth, model, overload): don't pass its message off
+            # as the assistant's answer - return empty so the caller retries/skips.
+            sys.stderr.write("    [claude-cli error turn (subtype=%s): %s]\n"
+                             % (obj.get("subtype"), str(obj.get("result", ""))[:300]))
+            return ""
+        if obj.get("stop_reason") == "max_tokens":
+            _set_truncated(True)
+            sys.stderr.write("    [claude-cli reply truncated (max_tokens); "
+                             "answer may be partial]\n")
+        return (obj.get("result") or "").strip()
+
+
+def claude_cli_preflight(timeout=90):
+    """Validate the claude-cli backend before a long run: the `claude` binary is
+    on PATH and one tiny headless call returns a real reply (proves the CLI is
+    logged in with a working subscription). Returns (ok, message). Mirrors
+    claude_preflight() so server.py can fail fast instead of an empty exit-0 audit."""
+    if not shutil.which("claude"):
+        return (False, "`claude` not on PATH - install Claude Code and run "
+                "`claude` once to log in with your Pro/Max subscription.")
+    reply = chat_claude_cli([{"role": "user",
+                              "content": "Reply with the single word: pong"}],
+                            timeout=timeout)
+    if reply.strip():
+        return (True, "")
+    return (False, "`claude -p` returned no usable reply - check that Claude Code "
+            "is logged in (run `claude` interactively once) and the subscription "
+            "is active; see the [claude-cli ...] line above for the CLI's own error.")
+
+
+# ===========================================================================
 # Ollama transport
 # ===========================================================================
 def chat_ollama(messages, timeout=None, model=None):
@@ -1050,19 +1211,24 @@ def chat_ollama(messages, timeout=None, model=None):
 
 
 def chat(messages, timeout=None):
-    """Single-model turn against the CONFIGURED backend (Claude when
-    CC_IA_BACKEND=claude, else Ollama)."""
+    """Single-model turn against the CONFIGURED backend: the official `claude`
+    CLI when CC_IA_BACKEND=claude-cli, the Claude API when =claude, else Ollama."""
     if USE_CLAUDE:
+        if CLAUDE_VIA_CLI:
+            return chat_claude_cli(messages, timeout)
         return chat_claude(messages, timeout)
     return chat_ollama(messages, timeout)
 
 
 def chat_with(spec, messages, timeout=None):
     """Single turn against a SPECIFIC model. spec None -> chat() (the configured
-    backend); 'claude'/'claude:<id>' -> the Claude backend with that model id;
-    anything else -> Ollama with that model name."""
+    backend); 'claude-cli'/'claude-cli:<id>' -> the official CLI; 'claude'/
+    'claude:<id>' -> the Claude API; anything else -> Ollama with that name."""
     if not spec:
         return chat(messages, timeout)
+    if spec == "claude-cli" or spec.startswith("claude-cli:"):
+        mdl = spec.split(":", 1)[1] if ":" in spec else None
+        return chat_claude_cli(messages, timeout, model=mdl)
     if spec == "claude" or spec.startswith("claude:"):
         mdl = spec.split(":", 1)[1] if ":" in spec else None
         return chat_claude(messages, timeout, model=mdl)
@@ -1110,6 +1276,16 @@ def preflight_backend():
     deterministic-only (secret.py) instead of hanging for hours. For Claude there
     is nothing to probe - chat_claude owns its retries/credential errors."""
     if USE_CLAUDE:
+        if CLAUDE_VIA_CLI:
+            exe = shutil.which("claude")
+            if not exe:
+                sys.stderr.write("%s [backend] Claude CLI selected but `claude` is "
+                                 "not on PATH - install Claude Code and log in.\n"
+                                 % _ts())
+                return (False, "claude-cli", False)
+            sys.stderr.write("%s [backend] Claude CLI (subscription) %s, model %s\n"
+                             % (_ts(), exe, CLAUDE_MODEL))
+            return (True, "claude-cli", False)
         sys.stderr.write("%s [backend] Claude API, model %s\n"
                          % (_ts(), CLAUDE_MODEL))
         return (True, CLAUDE_API, False)
@@ -1144,15 +1320,17 @@ def preflight_backend():
 # listed explicitly (import * would otherwise skip them).
 __all__ = [
     "MODEL_NAME", "OLLAMA_DEFAULT_URL", "OLLAMA_API", "OLLAMA_CHAT",
-    "IA_BACKEND", "USE_CLAUDE", "CLAUDE_MODEL", "CLAUDE_API", "CLAUDE_VERSION",
-    "CLAUDE_MAX_TOKENS", "IA_LABEL", "CLAUDE_PRICES", "IA_SETTINGS_FILE",
+    "IA_BACKEND", "USE_CLAUDE", "CLAUDE_VIA_CLI", "CLAUDE_MODEL", "CLAUDE_API",
+    "CLAUDE_VERSION", "CLAUDE_MAX_TOKENS", "IA_LABEL", "CLAUDE_PRICES",
+    "CLAUDE_COST_USD", "IA_SETTINGS_FILE",
     "MIN_CTX", "MAX_CTX", "MODEL_CTX", "CLAUDE_CRED_VARS",
     "claude_usage_summary", "load_settings", "ollama_backends",
     "_model_locations", "_register_model_spec", "backend_for_model",
     "_ts", "_Tee", "_human_dur", "fit_ctx", "ensure_context",
     "_claude_split", "_cache_text", "_claude_has_creds", "_claude_auth_headers",
     "_settings_claude_key", "_resolve_ia_backend",
-    "_ClaudeStreamError", "chat_claude", "claude_preflight", "chat_ollama",
+    "_ClaudeStreamError", "chat_claude", "claude_preflight",
+    "chat_claude_cli", "claude_cli_preflight", "chat_ollama",
     "chat", "chat_with",
     "PROBE_TIMEOUT", "preflight_backend", "last_reply_truncated",
 ]
