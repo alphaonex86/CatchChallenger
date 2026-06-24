@@ -216,6 +216,14 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
 
                         /// \warning
                         /// multiple game server mean multiple max client, then multiple packet size
+                        //OOB guard: maxPlayers is a 2-byte field at data+1 (needs size>=3).
+                        //0x93 is variable-size (0xFE) so the framing layer guarantees no minimum;
+                        //a too-short success reply is malformed -> parse error.
+                        if(size<1+sizeof(uint16_t))
+                        {
+                            parseNetworkReadError("0x93 select-character reply too short for maxPlayers, size: "+std::to_string(size));
+                            return false;
+                        }
                         setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
                         client->setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
 
