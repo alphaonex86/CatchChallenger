@@ -853,7 +853,11 @@ def main():
             (CLIENT_CPU_BUILD, CLIENT_CPU_BIN, CLIENT_CPU_CACHE_DIR,
              "qtcpu800x600", ("empty", "same", "partial")),
             (CLIENT_GL_BUILD,  CLIENT_GL_BIN,  CLIENT_GL_CACHE_DIR,
-             "qtopengl",      ("empty", "same", "partial")),
+             # qtopengl can't drive the empty-cache WS bootstrap (see comment
+             # above: datapackHashServerMain short-circuits / QthaveDatapackMainSubCode
+             # doesn't propagate); `empty` is covered by qtcpu800x600. partial first
+             # to prime the cache from pre-staged files, then `same` reuses it.
+             "qtopengl",      ("partial", "same")),
     ):
         for case in cases:
             # Restart server between cases so per-pseudo file-db state

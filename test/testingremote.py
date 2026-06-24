@@ -66,8 +66,11 @@ PRO_FILES = [
 # server targets emit that. Clients need GUI/X11 (handled by other
 # scripts), and tools like stats/map2png exit too quickly or need args
 # we can't auto-pick remotely.
+# server-filedb.pro and server-cli.pro both map to the SAME cmake target
+# (catchchallenger-server-cli, -DCATCHCHALLENGER_DB_FILE=ON) — i.e. the identical
+# binary — so exec-testing both just runs the same binary twice (~3 min/node of
+# pure duplication on slow exec nodes). Exec only the canonical one.
 EXEC_PRO_FILES = {
-    "server/cli/catchchallenger-server-filedb.pro",
     "server/cli/catchchallenger-server-cli.pro",
 }
 
@@ -77,8 +80,6 @@ EXEC_PRO_FILES = {
 # Kept in sync with cmake_helpers._PRO_TO_CMAKE; we only enumerate the
 # server entries here so we don't drag client/tool subdirs into exec.
 _EXEC_BIN_FOR_PRO = {
-    "server/cli/catchchallenger-server-filedb.pro":
-        "catchchallenger-server-cli",
     "server/cli/catchchallenger-server-cli.pro":
         "catchchallenger-server-cli",
 }
@@ -797,6 +798,7 @@ def run_exec_phase(compile_label, compile_host, compile_port,
     # rootfs, chroot, lxc-start the pre-defined container so it appears
     # at exec_node['host']. No-op for every ordinary exec node, so this
     # loop is inert unless an operator flipped lxc_nfs.enabled on.
+    _nfs_bringup_failed = set()
     bi = 0
     while bi < len(exec_nodes):
         _en = exec_nodes[bi]
@@ -810,6 +812,11 @@ def run_exec_phase(compile_label, compile_host, compile_port,
             (log_info if _ok else log_fail)(
                 f"nfs-lxc bring-up {_bl}" if not _ok else f"nfs-lxc {_bl}: {_d}",
                 _d if not _ok else "")
+            if not _ok:
+                # bring-up failed: the container never came up, so the staging/run
+                # loop below would only fail again (ssh/rsync to a dead guest),
+                # doubling the failure and burning the wall budget — skip the node.
+                _nfs_bringup_failed.add(_bl)
     pi = 0
     while pi < len(PRO_FILES):
         pro_rel = PRO_FILES[pi]
@@ -824,6 +831,8 @@ def run_exec_phase(compile_label, compile_host, compile_port,
             exec_node = exec_nodes[ei]
             ei += 1
             exec_label = exec_node.get("label", exec_node["host"])
+            if exec_label in _nfs_bringup_failed:
+                continue   # nfs-lxc bring-up failed above; failure already recorded
             if not _exec_node_enabled(exec_node):
                 log_info(f"exec node {exec_label} disabled, skipping {pro_rel}")
                 continue
@@ -1014,8 +1023,16 @@ def main():
             # Drain completions; re-raise any worker exception so a
             # crashed node fails the whole run rather than silently
             # disappearing.
-            for fut in as_completed(futures):
-                fut.result()
+            # Drain completions. A worker exception must still fail the run
+            # loudly, but it must NOT skip save_failed_cases() below — that would
+            # leave failed.json stale for the next --continue (the resume
+            # contract). Persist first, then re-raise.
+            try:
+                for fut in as_completed(futures):
+                    fut.result()
+            except BaseException:
+                save_failed_cases()
+                raise
 
     # summary
     print(f"\n{C_CYAN}{'='*60}")

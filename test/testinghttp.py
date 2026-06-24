@@ -649,6 +649,25 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
             print(f"  | {line}")
         return False, out
 
+    # gdb ran the client under `break __throw_out_of_range`. If the client threw
+    # std::out_of_range (or hit a fatal signal) BEFORE the map, gdb stopped,
+    # printed the backtrace and quit 0 — no outcome marker fired, so the rc==0
+    # path below would otherwise log a FALSE PASS for the very crash the
+    # breakpoint exists to catch. Detect a real stop: a breakpoint FIRE prints
+    # "Breakpoint 1, <frame>" (comma), distinct from the setup echo
+    # "Breakpoint 1 at ..."; a fatal signal prints "received signal SIG...".
+    # (cf. testingmulti.py run_client, which guards the same gdb wrapper.)
+    if wrapper is None and shutil.which("gdb") is not None and (
+            "Breakpoint 1, " in out
+            or "received signal SIGSEGV" in out
+            or "received signal SIGABRT" in out):
+        _kill()
+        log_fail(label, "client crashed under gdb (std::out_of_range / signal) "
+                        "before reaching the map")
+        for line in output_lines[-40:]:
+            print(f"  | {line}")
+        return False, out
+
     rc = proc.wait()
     if rc == 0:
         log_pass(label, "exit code 0")

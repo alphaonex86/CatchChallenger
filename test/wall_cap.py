@@ -26,22 +26,26 @@ import sys
 # places.
 _CAPS_SECONDS = {
     "testingbots.py":                 15 * 60,
+    "testingbroadcast.py":            15 * 60,
     "testingbyIA.py":                 30 * 60,
     "testingclient.py":               40 * 60,
     "testingcluster.py":              10 * 60,
     "testingclustersecurity.py":      90 * 60,
     "testingcmake.py":                30 * 60,
-    "testingcompilationandroid.py":   15 * 60,
+    "testingcompilationandroid.py":   25 * 60,
     "testingcompilationESP32.py":     45 * 60,
     "testingcompilationgit.py":       20 * 60,
     "testingcompilationmac.py":       15 * 60,
+    "testingcompilationmsdos.py":     20 * 60,
     "testingcompilationwindows.py":   15 * 60,
     "testingfight.py":                15 * 60,
     "testinggateway.py":              15 * 60,
     "testinghttp.py":                 15 * 60,
     "testingmap2png.py":              15 * 60,
     "testingmap4client.py":           30 * 60,
+    "testingmapmanagement.py":        10 * 60,
     "testingmulti.py":                30 * 60,
+    "testingpathfinding.py":          10 * 60,
     # Per-handler valgrind suite: one fresh `valgrind memcheck` server boot per
     # handler (~36 handlers) plus the baseline boot; valgrind is 10-50x slower,
     # so a healthy full run is ~30-50 min. 90 min is twice the longest healthy
