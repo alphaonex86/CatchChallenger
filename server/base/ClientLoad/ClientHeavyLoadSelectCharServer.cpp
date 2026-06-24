@@ -279,8 +279,11 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
 
                     if(!CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
                     {
+                        //the 4-byte entry (questId u16 + finish_one_time u8 + step u8) is already
+                        //fully consumed above; do NOT advance pos further. A stray `pos+=2` here
+                        //broke the %4 alignment the size guard (line ~239) relies on, desyncing
+                        //every following entry and reading past the std::vector at the end.
                         normalOutput("wrong value type for quest on map, skip: "+std::to_string(questId));
-                        pos+=2;
                         continue;
                     }
 
@@ -292,15 +295,15 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     }
                     if(playerQuest.step==0 && !playerQuest.finish_one_time)
                     {
+                        //entry already fully consumed (4 bytes); no extra advance (alignment)
                         normalOutput("can't be to step 0 if have never finish the quest, skip: "+std::to_string(questId));
-                        pos+=2;
                         continue;
                     }
                     #ifdef CATCHCHALLENGER_HARDENED
                     if(public_and_private_informations.quests.find(questId)!=public_and_private_informations.quests.cend())
                     {
+                        //entry already fully consumed (4 bytes); no extra advance (alignment)
                         normalOutput("can't be to step 0 if have never finish the quest, skip: "+std::to_string(questId));
-                        pos+=2;
                         continue;
                     }
                     #endif

@@ -31,6 +31,14 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
         case 0x44:
         {
             //control it
+            //OOB/NULL-deref guard: logicalGroupSize is the first byte; 0x44 is variable-size
+            //(0xFE) so a size-0 message dispatches with rawData==NULL. Requiring >=1 byte also
+            //prevents the loop guard (size-pos) from unsigned-underflowing when pos>size.
+            if(size<sizeof(uint8_t))
+            {
+                parseNetworkReadError("0x44 logical-group message empty (no logicalGroupSize)");
+                return false;
+            }
             uint32_t pos=1;
             uint8_t logicalGroupSize=rawData[0x00];
             uint8_t logicalGroupIndex=0;
@@ -582,6 +590,14 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         /* will crash on ARM with grsec due to unaligned 64Bits access
                         profile.cash=le64toh(*reinterpret_cast<uint64_t *>(const_cast<char *>(rawData+cursor))); */
 
+                        //OOB guard: the preceding guards only ensure the forcedskinListSize byte
+                        //and each forcedskin byte; when forcedskinListSize==0 nothing checks the
+                        //8 cash bytes, so validate them before the memcpy.
+                        if((size-cursor)<sizeof(uint64_t))
+                        {
+                            parseNetworkReadError("0x46 profile too small for cash field");
+                            return false;
+                        }
                         uint64_t tempCash=0;
                         memcpy(&tempCash,rawData+cursor,8);
                         profile.cash=le64toh(tempCash);
@@ -848,6 +864,14 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             }
             if(size==2 && rawData[0x00]==0 && rawData[0x01]==0)
                 return true;
+            //OOB/NULL-deref guard: deleteSize is the first byte; 0x48 is variable-size (0xFE)
+            //so a size-0 message dispatches with rawData==NULL (the size==2 early-return above
+            //is the only prior read of rawData).
+            if(size<sizeof(uint8_t))
+            {
+                parseNetworkReadError("0x48 server-list-diff message empty (no deleteSize)");
+                return false;
+            }
             uint8_t serverListCount=EventLoopClientLoginSlave::serverServerList[0x01];
             unsigned int pos=0;
             size_t posTempBuffer=2;

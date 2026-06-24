@@ -407,6 +407,14 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                 }
 
                 //Second list part with same size
+                //OOB guard: the 2*serverListSize trailing bytes are wire-derived
+                //(serverListSize=data[1]); validate they are present before the relay memcpy,
+                //else read up to 510 bytes past data[size] (and leak them to clients).
+                if((size-inputPos)<(2u*serverListSize))
+                {
+                    parseNetworkReadError("parseFullMessage() missing data for second server-list part: "+std::to_string(mainCodeType));
+                    return false;
+                }
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+inputPos,2*serverListSize);
                 posOutput+=2*serverListSize;
 
@@ -824,8 +832,14 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     {
         /// \warning
         /// multiple game server mean multiple max client, then multiple packet size
-        setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
-        client->setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
+        //OOB guard: maxPlayers is a 2-byte field at data+1 (needs size>=3). 0x93/0xAC is a
+        //variable-size (0xFE) reply and short error replies (size==1, handled by the size==1
+        //switch below) reach here, so only read it once the bytes are actually present.
+        if(size>=1+sizeof(uint16_t))
+        {
+            setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
+            client->setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
+        }
         std::cout << "mainCodeType==0x93 || mainCodeType==0xAC, stat: " << std::to_string(stat) << ", mainCodeType: " << std::to_string(mainCodeType) << std::endl;
 
         if(gameServerMode==GameServerMode::Reconnect && stat==Stat::WaitingToken)
