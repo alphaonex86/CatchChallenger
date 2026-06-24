@@ -3591,6 +3591,36 @@ def _print_help(prog):
         "                 under. Same as SECSERVER_MODE.\n"
         "  --help, -h     Show this help\n"
         "\n"
+        "Examples:\n"
+        "  # Default (backend + model come from ~/.config/CatchChallenger/\n"
+        "  # ia-settings.json: 'ia_backend' + 'claude_api_key' OR 'ollama_host').\n"
+        "  # Scan (detection) then exploit, both via the configured backend.\n"
+        "  python3 server.py all 2> progress.log\n"
+        "\n"
+        "  # Claude (Anthropic API) - detection + exploit on Claude Opus 4.8.\n"
+        "  # Key + ia_backend='claude' live in the out-of-repo settings; no env.\n"
+        "  CC_IA_BACKEND=claude CC_CLAUDE_MODEL=claude-opus-4-8 \\\n"
+        "      python3 server.py all 2> progress.log\n"
+        "\n"
+        "  # LOCAL Ollama with a SPECIFIC model (override the settings default).\n"
+        "  # Hit 127.0.0.1:11434 directly; --model picks the served model.\n"
+        "  OLLAMA_HOST=http://127.0.0.1:11434 \\\n"
+        "      python3 server.py --model=qwen2.5-coder:32b all 2> progress.log\n"
+        "\n"
+        "  # REMOTE Ollama daemon (or the PHP router) + a specific model.\n"
+        "  # The URL embeds infra IP - keep it in the out-of-repo settings, NOT\n"
+        "  # on the command line; append '@host:port' to pin a backend per model.\n"
+        "  python3 server.py --model=gemma4:26b@rtx5090:11434 all 2> progress.log\n"
+        "\n"
+        "  # ALL models work TOGETHER (collaborative panel): several local Ollama\n"
+        "  # models + Claude audit each file at once, discuss up to 10 rounds,\n"
+        "  form work groups, and a lead synthesises the consensus. 'auto' picks\n"
+        "  every installed Ollama model <35B; add Claude explicitly if a key is\n"
+        "  set. Detection (scan) uses the panel; exploit uses the single lead.\n"
+        "  CC_IA_PANEL=auto,claude python3 server.py scan 2> progress.log\n"
+        "  # Explicit panel across multiple backends (each pinned to its host):\n"
+        "  python3 server.py --collaborate=qwen3:30b@gpu1:11434,deepseek:33b@gpu2:11434,claude all 2> progress.log\n"
+        "\n"
         "Environment overrides:\n"
         "  CC_IA_BACKEND         ollama (default) | claude  single-model backend\n"
         "  OLLAMA_HOST           default Ollama backend URL; selects the access\n"
@@ -3668,10 +3698,22 @@ def main(argv):
     # Fail fast: without a credential, chat_claude raises per file and run_scan's
     # per-file `except` swallows it -> a misleading empty, exit-0 "clean" audit.
     if USE_CLAUDE and not _claude_has_creds():
-        sys.stderr.write("error: CC_IA_BACKEND=claude but no credential set - "
+        sys.stderr.write("error: CC_IA_BACKEND=claude but no credential found - "
                          "export ANTHROPIC_API_KEY (console key) or "
-                         "CLAUDE_CODE_OAUTH_TOKEN (e.g. `claude setup-token`)\n")
+                         "CLAUDE_CODE_OAUTH_TOKEN (e.g. `claude setup-token`), "
+                         "or put 'claude_api_key' in the out-of-repo settings "
+                         "(%s)\n" % common.IA_SETTINGS_FILE)
         return 2
+
+    # Presence != validity: an expired OAuth token (rotates ~hourly) or an
+    # empty-balance console key passes the check above yet fails every real call,
+    # and run_scan's per-file `except` would swallow it into a misleading empty,
+    # exit-0 "clean" audit. One tiny validation ping up front fails fast instead.
+    if USE_CLAUDE:
+        ok, msg = common.claude_preflight()
+        if not ok:
+            sys.stderr.write("error: Claude credential preflight failed - %s\n" % msg)
+            return 2
 
     mode = args[0] if args else "all"
     if mode in ("scan", "-s", "--scan"):
