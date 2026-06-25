@@ -547,10 +547,13 @@ def _human_dur(seconds):
 
 
 # ===========================================================================
-# num_ctx sizing (Ollama). Floor 16K: smaller contexts truncate a big payload.
-# Ceiling 1M, capped to what the model actually honours (ensure_context()).
+# num_ctx sizing (Ollama) — DYNAMIC: size to the ACTUAL payload + reply budget so a
+# small per-function view runs a SMALL (fast-loading, fast) KV cache while a big
+# payload or a thinking run scales up. Low floor (a tiny payload needs no more);
+# ceiling 1M, capped to what the model honours (ensure_context()). Override the
+# floor with CC_OLLAMA_MIN_CTX.
 # ===========================================================================
-MIN_CTX = 16384
+MIN_CTX = int(os.environ.get("CC_OLLAMA_MIN_CTX", "4096"))
 MAX_CTX = 1024 * 1024
 # Model's actual trained context, discovered at runtime by ensure_context();
 # fit_ctx caps to it so we never ask Ollama for more than the model can honour.
@@ -558,20 +561,23 @@ MODEL_CTX = None
 
 
 def fit_ctx(*texts):
-    """Pick a num_ctx that fits the payload (~3 chars/token + reply headroom),
-    clamped to [MIN_CTX, MAX_CTX] and rounded up to a 2048 multiple."""
+    """num_ctx sized to the payload + chat_ollama's reply cap + a safety slab,
+    rounded up to a 2048 multiple and clamped to [MIN_CTX, model ceiling].
+
+    DYNAMIC: a small per-function view gets a SMALL context — a model loads and runs
+    a smaller KV cache far faster — while a big payload scales up. The estimate is
+    deliberately generous: chars/3 (~33% over real tokens) + the 2048 reply cap
+    (chat_ollama bounds num_predict at 2048, so the answer — thought included — never
+    needs more) + a 1024 slab, so an under-count truncates neither the prompt nor the
+    answer (the 'margin of error just in case'). Only chat_ollama uses this; the
+    router path manages its own num_ctx."""
     chars = 0
     for t in texts:
         chars += len(t)
-    tokens = chars // 3 + 2048
-    tokens = ((tokens + 2047) // 2048) * 2048
-    # Ceiling: MAX_CTX, but never beyond what the model actually supports.
+    tokens = chars // 3 + 2048 + 1024              # payload + reply cap + safety slab
+    tokens = ((tokens + 2047) // 2048) * 2048      # round up to a 2048 multiple
     ceiling = MAX_CTX if MODEL_CTX is None else min(MAX_CTX, MODEL_CTX)
-    if tokens > ceiling:
-        tokens = ceiling
-    if tokens < MIN_CTX:
-        tokens = MIN_CTX
-    return tokens
+    return max(MIN_CTX, min(tokens, ceiling))
 
 
 def ensure_context():
