@@ -414,6 +414,7 @@ PER_TEST_KILL_AFTER=30s
 # with the operator-supplied table; bumping a number should be a
 # deliberate one-line change, not a sneaky drift.
 declare -A PER_TEST_TIMEOUT_MAP=(
+    [codecheck.py]=30m
     [testingbots.py]=15m
     [testingbroadcast.py]=15m
     [testingbyIA.py]=30m
@@ -535,6 +536,7 @@ print('1' if isinstance(e, dict) and len(e) > 0 else '0')
 }
 
 run_test testingcmake.py
+run_test codecheck.py
 run_test testingtools.py
 run_test testingmap2png.py
 run_test testingmap4client.py

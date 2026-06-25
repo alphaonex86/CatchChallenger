@@ -25,6 +25,7 @@ import sys
 # "fmt: <script>: <seconds>" — adding a new testing*.py? Update BOTH
 # places.
 _CAPS_SECONDS = {
+    "codecheck.py":                   30 * 60,
     "testingbots.py":                 15 * 60,
     "testingbroadcast.py":            15 * 60,
     "testingbyIA.py":                 30 * 60,
