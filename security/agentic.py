@@ -337,11 +337,8 @@ def audit_function(idx, fi, specs, role="codecheck", exploit_cb=None, sysprompt=
     if sysprompt is None:
         sysprompt = codecheck.CHECK_SYSTEM
     rel = os.path.relpath(fi.file, REPO_ROOT)
-    # ALGORITHMIC: deterministic clang-tidy / static-analyzer findings, always
-    # reported (independent of what the IA panel concludes).
-    det = codecheck._tidy_finding_lines(fi)
-    det_out = (["%s:%d (%s) — static analysis:\n%s"
-                % (rel, fi.line, fi.qual_name, "\n".join(det))] if det else [])
+    # Deterministic clang-tidy findings come from codecheck.file_sweep (whole-file,
+    # every function) — NOT re-emitted here; this is pure IA judgment.
     # 1. independent agentic review (shared budget)
     per_ia = {}
     for spec in specs:
@@ -355,18 +352,18 @@ def audit_function(idx, fi, specs, role="codecheck", exploit_cb=None, sysprompt=
         spec, txt = next(iter(per_ia.values()), (specs[0], "NO ISSUES"))
         flines = _finding_lines(txt)
         if not flines:
-            return det_out
+            return []
         if role == "security" and exploit_cb:
             res = exploit_cb(fi, "\n".join(flines), [spec])
-            return det_out + ([res] if res else [])
-        return det_out + ["%s:%d (%s)\n%s"
-                          % (rel, fi.line, fi.qual_name, "\n".join(flines))]
+            return [res] if res else []
+        return ["%s:%d (%s)\n%s"
+                % (rel, fi.line, fi.qual_name, "\n".join(flines))]
 
     # 2. discussion -> workgroups
     wgs = _discuss(specs, per_ia, fi, deadline)
 
     # 3. finalize per workgroup
-    out = list(det_out)
+    out = []
     for finding, members in wgs:
         if role == "security":
             # a security workgroup pursues a proof if ANY member sees potential
