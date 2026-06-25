@@ -3727,6 +3727,7 @@ def run_codecheck():
                      % (len(funcs), len(specs)))
     codecheck.prewarm_types(funcs)
     codecheck.prewarm_tidy(funcs)
+    codecheck.reset_cache_stats()
     by_file = {}
     i = 0
     while i < len(funcs):
@@ -3738,6 +3739,7 @@ def run_codecheck():
             rel = os.path.relpath(fi.file, REPO_ROOT)
             by_file.setdefault(rel, []).append(
                 "## %s (%s:%d)\n%s" % (fi.qual_name, rel, fi.line, "\n\n".join(blocks)))
+    sys.stderr.write("[codecheck] %s\n" % codecheck.cache_summary())
     if not by_file:
         # A clean security scan is SUCCESS, not a failure — don't fall into
         # run_exploit's "no findings -> exit 1" path with nothing to prove.

@@ -153,27 +153,30 @@ def _agentic_review(spec, idx, fi, sysprompt, deadline):
     source, sysprompt) result is cached, so a re-run skips unchanged functions for
     this IA. A transport error / budget timeout is inconclusive and is NOT cached,
     so a transient outage can't poison the cache."""
-    ckey = "agentic:" + str(spec)
-    cached = codecheck.verdict_get(ckey, fi, sysprompt)
+    views = list(codecheck.build_views(idx, fi))   # materialize: cache key + the loop
+    if not views:
+        return "NO ISSUES"
+    material = ["agentic:" + str(spec), sysprompt, codecheck.TIDY_CHECKS,
+                "".join(c for _, c in views)]
+    cached = codecheck.verdict_get(material)
     if cached is not None:
         return cached
-    result = _agentic_review_run(spec, idx, fi, sysprompt, deadline)
+    codecheck._CACHE_STATS["miss"] += 1
+    result = _agentic_review_run(spec, views, fi, sysprompt, deadline)
     if result is None:
         return "NO ISSUES"              # inconclusive: return but do NOT cache
-    codecheck.verdict_put(ckey, fi, sysprompt, result)
+    codecheck.verdict_put(material, result)
     return result
 
 
-def _agentic_review_run(spec, idx, fi, sysprompt, deadline):
-    """The agentic loop: start from the limited one-branch view, pull more on
-    request. Returns the concluded findings text (or 'NO ISSUES'), or None when it
-    could NOT conclude (transport error, empty reply, ran out of rounds/time)."""
-    views = codecheck.build_views(idx, fi)
-    first = next(views, None)
-    if first is None:
-        return "NO ISSUES"
+def _agentic_review_run(spec, views, fi, sysprompt, deadline):
+    """The agentic loop over the materialized `views`: start from the base view,
+    pull the next callee BRANCH (or READ/GREP) on request. Returns the concluded
+    findings text (or 'NO ISSUES'), or None when it could NOT conclude (transport
+    error, empty reply, ran out of rounds/time)."""
     convo = [{"role": "system", "content": sysprompt},
-             {"role": "user", "content": first[1] + _TOOL_HELP}]
+             {"role": "user", "content": views[0][1] + _TOOL_HELP}]
+    vi = 1                              # next callee-branch index into `views`
     rounds = 0
     while rounds < ROUNDS and time.time() < deadline:
         rounds += 1
@@ -193,8 +196,11 @@ def _agentic_review_run(spec, idx, fi, sysprompt, deadline):
             rest = "\n".join(l for l in ans.splitlines() if not _TOOL_RE.match(l))
             return rest.strip() or "NO ISSUES"
         if name == "BRANCH":
-            nxt = next(views, None)
-            result = nxt[1] if nxt else "(no more callee branches — conclude now)"
+            if vi < len(views):
+                result = views[vi][1]
+                vi += 1
+            else:
+                result = "(no more callee branches — conclude now)"
         elif name == "READ":
             result = _tool_read(arg)
         elif name == "GREP":
