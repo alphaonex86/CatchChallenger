@@ -33,6 +33,14 @@ import shutil
 import subprocess
 import sys
 
+# codecheck.py is a GENERAL code-quality tool and lives in tools/codecheck/, but its
+# IA core (common / codetree / agentic) is the shared infra under security/. Put that
+# dir on sys.path so the imports resolve from here.
+_SECURITY_DIR = os.path.normpath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "security"))
+if _SECURITY_DIR not in sys.path:
+    sys.path.insert(0, _SECURITY_DIR)
+
 import common
 import codetree
 

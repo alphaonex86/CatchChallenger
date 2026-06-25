@@ -3,7 +3,7 @@
 test/codecheck.py — run the function-by-function C/C++ codecheck auditor as an
 all.sh stage.
 
-Drives security/codecheck.py (the engine server.py's `codecheck` mode also uses):
+Drives tools/codecheck/codecheck.py (the engine server.py's `codecheck` mode uses):
 build the clang-LLVM-IR code tree, then process each function/method ONE BY ONE
 with its callers + its multiple callees — but feed the IA only ONE callee branch
 per turn so a small local model's context never saturates.
@@ -47,6 +47,7 @@ DIAG = diagnostic.parse_diag_args()
 SCRIPT_NAME = os.path.basename(__file__)
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECURITY = os.path.join(ROOT, "security")
+CODECHECK_DIR = os.path.join(ROOT, "tools", "codecheck")
 
 C_GREEN = "\033[92m"; C_RED = "\033[91m"; C_CYAN = "\033[96m"; C_RESET = "\033[0m"
 
@@ -80,13 +81,15 @@ def _skip_pass(msg):
 
 
 def _load_engine():
-    """Import security/codecheck.py as 'sec_codecheck' (its basename clashes with
-    THIS file, so load it by explicit path). security/ on sys.path so the engine's
-    `import common` / `import codetree` resolve."""
-    if SECURITY not in sys.path:
-        sys.path.insert(0, SECURITY)
+    """Import tools/codecheck/codecheck.py as 'sec_codecheck' (its basename clashes
+    with THIS file, so load it by explicit path). The engine self-adds security/ to
+    sys.path for its `import common` / `import codetree`; we add both dirs so a
+    transitive `import codecheck` resolves to the engine, not this harness."""
+    for d in (CODECHECK_DIR, SECURITY):
+        if d not in sys.path:
+            sys.path.insert(0, d)
     spec = importlib.util.spec_from_file_location(
-        "sec_codecheck", os.path.join(SECURITY, "codecheck.py"))
+        "sec_codecheck", os.path.join(CODECHECK_DIR, "codecheck.py"))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -131,6 +134,19 @@ def _ia_reachable(common):
 
 def main():
     t0 = time.monotonic()
+    # This file is the all.sh HARNESS self-test of the codecheck ENGINE, NOT the
+    # auditor — it ignores the auditor's flags. If invoked WITH them, redirect loudly
+    # so it can't be mistaken for the auditor (don't silently run the smoke + report
+    # "0 failures", which reads as "the code is clean").
+    _auditor_flags = {"--llm", "--panel", "--func", "--model", "--scope", "--limit"}
+    if any(a.split("=", 1)[0] in _auditor_flags for a in sys.argv[1:]):
+        print("test/codecheck.py is the all.sh HARNESS self-test of the codecheck "
+              "engine — NOT the auditor; it ignores %s.\n"
+              "To AUDIT code (find bugs/naming/clarity/perf), run the tool:\n"
+              "    python3 %s --llm <model[@ollama-url]> --scope <path>"
+              % (", ".join(sorted(_auditor_flags)),
+                 os.path.join(CODECHECK_DIR, "codecheck.py")))
+        sys.exit(2)
     # Thinking models (gemma4) spend the whole num_predict on thought and return
     # empty; the audit views need no reasoning, so default think OFF for the smoke
     # (operator can override CC_OLLAMA_THINK).
