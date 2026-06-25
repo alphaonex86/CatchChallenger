@@ -25,9 +25,11 @@ leaves-first walk + header lookup + branch iteration live here.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -54,6 +56,24 @@ _MAX_TYPES = 16              # cap the param/local types listed (don't saturate)
 _TYPE_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "types-cache")
 _TYPE_RE = re.compile(r"\b(?:Parm)?VarDecl\b.*?\b([A-Za-z_]\w*)\s+'([^']+)'")
 
+# Triviality pre-filter: skip functions with <= this many real body lines.
+_TRIVIAL_MAX_LINES = int(os.environ.get("CC_TRIVIAL_MAX_LINES", "4"))
+# clang-tidy check sets — GENERAL (codecheck default) vs SECURITY (server sets it).
+TIDY_CHECKS = os.environ.get(
+    "CC_TIDY_CHECKS",
+    # performance-avoid-endl excluded: this project deliberately uses std::endl
+    # (root CLAUDE.md logging rule), so it would flag every log line.
+    "-*,bugprone-*,performance-*,-performance-avoid-endl,"
+    "readability-identifier-naming,readability-misleading-indentation,"
+    "misc-redundant-expression")
+SECURITY_TIDY_CHECKS = "-*,clang-analyzer-*,bugprone-*,cert-*"
+_TIDY_RE = re.compile(
+    r"^(.+?):(\d+):\d+:\s+(?:warning|error):\s+(.*?)\s*\[([\w.,\-]+)\]\s*$")
+# Persistent caches (clang-tidy output, per-(model,function) verdicts); set in
+# build_index() to the SSD cache root.
+_TIDY_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "tidy-cache")
+_VERDICT_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "verdict-cache")
+
 # Crisp system prompt for a SMALL model: ONE function, terse structured output.
 # codecheck.py is the GENERAL code-quality reviewer — SECURITY is NOT its job
 # (server.py owns exploitable-vuln finding + exploit generation). Review what a
@@ -78,8 +98,57 @@ CHECK_SYSTEM = (
 # ---------------------------------------------------------------------------
 # Index + scope
 # ---------------------------------------------------------------------------
+def _cache_root():
+    """Persistent on-SSD cache dir for the clang-IR cache + type cache + the
+    auto-generated compile DB. write-once-per-file (few writes), survives across
+    runs so a re-audit is fast. Override with CC_CODECHECK_CACHE."""
+    return os.environ.get("CC_CODECHECK_CACHE",
+                          "/mnt/data/perso/tmp/codecheck").rstrip("/")
+
+
+def _ensure_compile_db(root):
+    """Find or auto-generate a compile_commands.json so clang resolves REAL flags
+    (codetree's default /tmp path is absent on a fresh checkout). CC_COMPILE_DB
+    wins; else configure server/cli ONCE into <root>/cdb (its DB covers server/ +
+    general/base via the INTERFACE libs) and reuse it forever. Returns a path or
+    None (cmake unavailable)."""
+    db = os.environ.get("CC_COMPILE_DB", "").strip()
+    if db and os.path.isfile(db):
+        return db
+    out = os.path.join(root, "cdb", "compile_commands.json")
+    if os.path.isfile(out):
+        return out
+    if shutil.which("cmake") is None:
+        return None
+    build = os.path.join(root, "cdb")
+    os.makedirs(build, exist_ok=True)
+    cmd = ["nice", "-n", "19", "ionice", "-c", "3", "cmake",
+           "-S", os.path.join(REPO_ROOT, "server", "cli"), "-B", build,
+           "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", "-DCATCHCHALLENGER_DB_FILE=ON",
+           "-DCMAKE_BUILD_TYPE=RelWithDebInfo"]
+    try:
+        subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return out if os.path.isfile(out) else None
+
+
 def build_index(scope=None):
-    """Build (or reuse) the codetree C/C++ index over `scope` (excl vendor)."""
+    """Build (or reuse) the codetree C/C++ index over `scope` (excl vendor).
+    Redirects codetree's clang-IR cache + our type cache to the PERSISTENT SSD
+    cache (CC_CODECHECK_CACHE) and auto-finds/generates a compile DB, so a re-audit
+    is fast and the tool works out of the box."""
+    global _TYPE_CACHE_DIR, _TIDY_CACHE_DIR, _VERDICT_CACHE_DIR
+    root = _cache_root()
+    codetree.OUTPUT_ROOT = root
+    codetree._IR_CACHE_DIR = os.path.join(root, "ast-cache", "ir")
+    os.makedirs(codetree._IR_CACHE_DIR, exist_ok=True)
+    _TYPE_CACHE_DIR = os.path.join(root, "types-cache")
+    _TIDY_CACHE_DIR = os.path.join(root, "tidy-cache")
+    _VERDICT_CACHE_DIR = os.path.join(root, "verdict-cache")
+    db = _ensure_compile_db(root)
+    if db and db not in codetree._CDB_PATHS:
+        codetree._CDB_PATHS.insert(0, db)
     codetree.SCOPE_DIRS = tuple(scope) if scope else DEFAULT_SCOPE
     idx = codetree.Index()
     idx.build()
@@ -212,6 +281,171 @@ def prewarm_types(funcs, workers=8):
         list(pool.map(_var_types, funcs))
 
 
+# ---------------------------------------------------------------------------
+# Triviality pre-filter — don't spend an IA call on a function with no logic
+# ---------------------------------------------------------------------------
+def is_trivial(fi):
+    """True for a function not worth auditing: a destructor, or a body of <=
+    _TRIVIAL_MAX_LINES real lines (empty/defaulted, a getter/setter, a thin
+    forwarder). These are a large fraction of the tree and an LLM finds nothing in
+    them — skipping them focuses the budget on real logic."""
+    if fi.qual_name.split("::")[-1].startswith("~"):
+        return True
+    body, _ = codetree.source_body(fi.file, fi.line)
+    if not body:
+        return False
+    n = 0
+    for ln in body.splitlines():
+        s = ln.strip()
+        if s and s not in ("{", "}", "};") and not s.startswith(("//", "/*", "*", "#")):
+            n += 1
+    return n <= _TRIVIAL_MAX_LINES
+
+
+def audit_targets(funcs, out=sys.stderr):
+    """`funcs` minus the trivial ones (reports how many were skipped)."""
+    keep = [f for f in funcs if not is_trivial(f)]
+    sk = len(funcs) - len(keep)
+    if sk:
+        out.write("[codecheck] skipping %d trivial function(s); auditing %d\n"
+                  % (sk, len(keep)))
+    return keep
+
+
+# ---------------------------------------------------------------------------
+# Algorithmic layer — clang-tidy / static analyzer per function
+# ---------------------------------------------------------------------------
+def _file_tidy(path, checks, run=True):
+    """clang-tidy `path` with `checks` (via the compile-DB dir) -> [(line, msg,
+    check), ...] for findings IN this file. Cached per (mtime, checks): clang-tidy
+    COMPILES the TU (slow), so one run per file covers all its functions. Empty
+    when clang-tidy / a compile DB is unavailable. run=False => cache-only: never
+    launch clang-tidy on a miss (build_views uses this; prewarm_tidy fills it)."""
+    tidy = shutil.which("clang-tidy")
+    if not tidy:
+        return []
+    real = os.path.realpath(path)
+    cdb_dir = next((os.path.dirname(p) for p in codetree._CDB_PATHS
+                    if os.path.isfile(p)), None)
+    if not cdb_dir:
+        return []
+    try:
+        mtime = os.path.getmtime(real)
+    except OSError:
+        return []
+    key = hashlib.sha256(("%s|%s|%s" % (real, mtime, checks)).encode()).hexdigest()[:24]
+    cache = os.path.join(_TIDY_CACHE_DIR, key + ".json")
+    try:
+        with open(cache) as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        pass
+    if not run:
+        return []                          # cache-only: don't block build_views
+    try:
+        r = subprocess.run([tidy, "-p", cdb_dir, "--quiet", "--checks=" + checks, real],
+                           capture_output=True, text=True, timeout=240)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    out = []
+    for line in r.stdout.splitlines():
+        m = _TIDY_RE.match(line)
+        if m and os.path.realpath(m.group(1)) == real:
+            out.append([int(m.group(2)), m.group(3), m.group(4)])
+    try:
+        os.makedirs(_TIDY_CACHE_DIR, exist_ok=True)
+        with open(cache, "w") as fh:
+            json.dump(out, fh)
+    except OSError:
+        pass
+    return out
+
+
+def tidy_for_function(fi, checks=None, run=True):
+    """clang-tidy findings whose line is inside the function's source range."""
+    items = _file_tidy(fi.file, checks or TIDY_CHECKS, run=run)
+    if not items:
+        return []
+    _b, end = codetree.source_body(fi.file, fi.line)
+    hi = end if end and end >= fi.line else fi.line + 300
+    return [it for it in items if fi.line <= it[0] <= hi]
+
+
+def prewarm_tidy(funcs, checks=None, workers=6):
+    """Run clang-tidy ONCE per file (parallel) so per-function lookups hit the
+    cache. Slower than the AST type dump, so fewer workers."""
+    seen, files = set(), []
+    for f in funcs:
+        rp = os.path.realpath(f.file)
+        if rp not in seen:
+            seen.add(rp)
+            files.append(rp)
+    ck = checks or TIDY_CHECKS
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        list(pool.map(lambda p: _file_tidy(p, ck), files))
+
+
+def _tidy_finding_lines(fi):
+    """The deterministic clang-tidy findings for `fi` as output lines (always
+    reported, even when the LLM is silent)."""
+    rel = os.path.relpath(fi.file, REPO_ROOT)
+    return ["[clang-tidy] %s:%d %s [%s]" % (rel, ln, msg, chk)
+            for ln, msg, chk in tidy_for_function(fi)[:12]]
+
+
+# ---------------------------------------------------------------------------
+# Incremental: per-(model, function) verdict cache (skip unchanged functions)
+# ---------------------------------------------------------------------------
+def _verdict_key(model, fi, system):
+    body, _ = codetree.source_body(fi.file, fi.line)
+    return hashlib.sha256(("%s|%s|%s|%s" % (model, fi.qual_name, body, system))
+                          .encode()).hexdigest()[:28]
+
+
+def verdict_get(model, fi, system):
+    try:
+        with open(os.path.join(_VERDICT_CACHE_DIR, _verdict_key(model, fi, system) + ".json")) as fh:
+            return json.load(fh)
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def verdict_put(model, fi, system, value):
+    try:
+        os.makedirs(_VERDICT_CACHE_DIR, exist_ok=True)
+        with open(os.path.join(_VERDICT_CACHE_DIR, _verdict_key(model, fi, system) + ".json"), "w") as fh:
+            json.dump(value, fh)
+    except (OSError, TypeError):
+        pass
+
+
+# ---------------------------------------------------------------------------
+# Adversarial verify — a small local model over-reports; double-check each finding
+# ---------------------------------------------------------------------------
+_VERIFY_SYS = (
+    "You are a strict reviewer double-checking a colleague's code-review finding. "
+    "Reply on ONE line: 'REJECTED <reason>' if the finding is wrong, a false "
+    "positive, a pure nitpick, or not actually about the shown function; otherwise "
+    "'CONFIRMED <reason>'.")
+
+
+def verify_finding(idx, fi, finding, model):
+    """One adversarial verify turn. True => keep the finding. On any transport
+    error, keep it (never silently drop a finding because verification failed)."""
+    body, _ = codetree.source_body(fi.file, fi.line)
+    msg = [{"role": "system", "content": _VERIFY_SYS},
+           {"role": "user", "content":
+            "Function %s (%s:%d):\n%s\n\nFinding to check:\n%s\n\nCONFIRMED or REJECTED?"
+            % (fi.qual_name, os.path.relpath(fi.file, REPO_ROOT), fi.line, body[:6000],
+               finding)}]
+    try:
+        ans = (common.chat_with(model, msg) if model else common.chat(msg)) or ""
+    except Exception:
+        return True
+    return "REJECTED" not in ans.upper().split("\n", 1)[0]
+
+
 def build_views(idx, fi):
     """Yield (label, context_text) — one SMALL per-turn view for the function:
     a base view (headers + callers + body), then ONE callee branch per turn."""
@@ -228,10 +462,17 @@ def build_views(idx, fi):
     types = _var_types(fi)
     tblock = ("// param/local types (clang): "
               + ", ".join("%s=%s" % (n, t) for n, t in types.items()) + "\n") if types else ""
+    # ALGORITHMIC: clang-tidy / static-analyzer findings in this function, so the
+    # model reasons over VERIFIED facts, not just guesses. Cache-only here (the
+    # audit loops prewarm_tidy first) so build_views never blocks on clang-tidy.
+    tidy = tidy_for_function(fi, run=False)
+    tdblock = ("// static analysis (clang-tidy) here:\n"
+               + "".join("//   L%d %s [%s]\n" % (ln, m[:110], c)
+                         for ln, m, c in tidy[:8])) if tidy else ""
     base = (
         "%s=== CALLERS (who reaches this function) ===\n%s\n\n"
-        "=== REVIEW THIS FUNCTION: %s  (%s:%d) ===\n%s%s\n"
-        % (hdr_block, caller_tree, fi.qual_name, rel, fi.line, tblock, body))
+        "=== REVIEW THIS FUNCTION: %s  (%s:%d) ===\n%s%s%s\n"
+        % (hdr_block, caller_tree, fi.qual_name, rel, fi.line, tblock, tdblock, body))
 
     branches = callee_branches(idx, fi.qual_name)
     if not branches:
@@ -251,16 +492,21 @@ def build_views(idx, fi):
 # ---------------------------------------------------------------------------
 # Audit one function (SHARED by server.py's per-function mode)
 # ---------------------------------------------------------------------------
-def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False):
+def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=False):
     """Audit ONE function with the limited view, one callee branch per turn.
-    Returns a list of finding lines (model replies that aren't 'NO ISSUES').
-    dry=True: don't call the IA — return the per-turn view SIZES (verification)."""
-    findings = []
+    Returns a list of finding lines. INCREMENTAL: the verdict (deterministic
+    clang-tidy findings + the LLM findings, ADVERSARIALLY VERIFIED when verify=True)
+    is cached by (model, function-source, system, verify), so a re-run skips
+    unchanged functions DETERMINISTICALLY. dry=True: no IA — per-turn view SIZES."""
+    if dry:
+        return ["[dry %s] view=%d chars (~%d tok)" % (label, len(ctx), len(ctx) // 4)
+                for label, ctx in build_views(idx, fi)]
+    ckey = system + ("|verify" if verify else "")
+    cached = verdict_get(model, fi, ckey)
+    if cached is not None:
+        return cached
+    findings = list(_tidy_finding_lines(fi))           # algorithmic, always reported
     for label, ctx in build_views(idx, fi):
-        if dry:
-            findings.append("[dry %s] view=%d chars (~%d tok)"
-                            % (label, len(ctx), len(ctx) // 4))
-            continue
         messages = [{"role": "system", "content": system},
                     {"role": "user", "content": ctx}]
         try:
@@ -271,6 +517,13 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False):
         a = (answer or "").strip()
         if a and "NO ISSUES" not in a.upper():
             findings.append("[%s]\n%s" % (label, a))
+    if verify:
+        # adversarially verify the LLM lines (keep clang-tidy + transport errors)
+        findings = [f for f in findings
+                    if f.startswith(("[clang-tidy]", "[chat error"))
+                    or verify_finding(idx, fi, f, model)]
+    if not any(f.startswith("[chat error") for f in findings):
+        verdict_put(model, fi, ckey, findings)         # don't cache a transient error
     return findings
 
 
@@ -279,12 +532,8 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False):
 # ---------------------------------------------------------------------------
 def run(scope=None, only_file=None, only_func=None, limit=None,
         model=None, dry=False, out=sys.stdout):
-    # Model override: set the Ollama served model the same way server.py --model
-    # does (common.MODEL_NAME drives common.chat), so `--model qwen3-coder:30b`
-    # is reliable regardless of chat_with spec parsing. Then audit via common.chat.
-    if model:
-        common.MODEL_NAME = model
-        model = None
+    # `model` is an explicit LLM spec (mandatory): a model[@url] or claude-cli —
+    # passed straight to chat_with via audit_function (handles the @url pin + CLI).
     idx = build_index(scope)
     if only_func:
         funcs = [idx.by_name[only_func]] if only_func in idx.by_name else []
@@ -297,11 +546,16 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
         funcs = leaves_first(idx)
     if limit:
         funcs = funcs[:limit]
+    if not dry:
+        funcs = audit_targets(funcs)                   # skip trivial functions
+        prewarm_types(funcs)
+        prewarm_tidy(funcs)
+    verify = not dry and not os.environ.get("CC_NO_VERIFY", "").strip()
     out.write("[codecheck] %s: %d function(s) %s\n"
               % (_ts_safe(), len(funcs), "(dry)" if dry else ""))
     total = 0
     for fi in funcs:
-        fl = audit_function(idx, fi, model=model, dry=dry)
+        fl = audit_function(idx, fi, model=model, dry=dry, verify=verify)
         if fl:
             out.write("\n#### %s  (%s:%d)\n"
                       % (fi.qual_name, os.path.relpath(fi.file, REPO_ROOT), fi.line))
@@ -312,13 +566,14 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
     return 0
 
 
-def run_panel(scope=None, only_file=None, only_func=None, limit=None, out=sys.stdout):
-    """Multi-IA agentic general-QA review (CC_IA_PANEL). Each function is reviewed
-    independently by every IA (agentic: one branch at a time, can pull more data),
-    the IAs discuss and form consensus WORKGROUPS, and each workgroup redacts a
-    brief. Output per function ONLY when a workgroup has something to say."""
+def run_panel(specs, scope=None, only_file=None, only_func=None, limit=None,
+              out=sys.stdout):
+    """Multi-IA agentic general-QA review over the EXPLICIT `specs` (>= 1 LLM, NEVER
+    auto). Each function is reviewed independently by every IA (agentic: one branch
+    at a time, can pull more data); the IAs discuss and form consensus WORKGROUPS,
+    and each workgroup redacts a brief. Output per function ONLY when a workgroup
+    has something to say."""
     import agentic                                  # lazy: avoids an import cycle
-    specs = agentic.resolve_panel()
     idx = build_index(scope)
     if only_func:
         funcs = [idx.by_name[only_func]] if only_func in idx.by_name else []
@@ -328,7 +583,9 @@ def run_panel(scope=None, only_file=None, only_func=None, limit=None, out=sys.st
         funcs = leaves_first(idx)
     if limit:
         funcs = funcs[:limit]
+    funcs = audit_targets(funcs)                       # skip trivial functions
     prewarm_types(funcs)
+    prewarm_tidy(funcs)
     out.write("[codecheck-panel] %d IA(s), %d function(s)\n" % (len(specs), len(funcs)))
     spoke = 0
     for fi in funcs:
@@ -363,23 +620,41 @@ def main(argv):
     p.add_argument("--func", help="audit only this qualified function (e.g. "
                                   "CatchChallenger::Client::parseQuery)")
     p.add_argument("--limit", type=int, help="cap number of functions")
-    p.add_argument("--model", help="model override (Ollama served name, e.g. "
-                                   "qwen3-coder:30b); else the configured backend")
+    p.add_argument("--llm", action="append", default=[],
+                   help="an LLM to use — REQUIRED, repeatable. A model (gemma4:12b), "
+                        "a model pinned to a backend (gemma4:12b@http://gpu1:11434), "
+                        "or 'claude' (the official claude CLI). Also reads "
+                        "CC_IA_PANEL. >= 2 LLMs => panel/workgroup. NEVER auto-chosen.")
     p.add_argument("--dry", action="store_true",
                    help="don't call the IA; print per-turn view sizes (verify the "
-                        "context stays small for a 30B model)")
+                        "context stays small). No LLM needed.")
     p.add_argument("--panel", action="store_true",
-                   help="multi-IA mode: each function reviewed by the CC_IA_PANEL, "
-                        "discuss -> consensus workgroups -> per-function briefs "
-                        "(output only when a workgroup has something to say)")
+                   help="force the multi-IA agentic engine (discuss -> consensus "
+                        "workgroups -> per-function briefs). Implied with >= 2 LLMs.")
     args = p.parse_args(argv[1:])
+    import agentic                                  # lazy: avoids an import cycle
     scope = ([os.path.join(REPO_ROOT, s) if not os.path.isabs(s) else s
               for s in args.scope.split(",")] if args.scope else None)
-    if args.panel:
-        return run_panel(scope=scope, only_file=args.file, only_func=args.func,
-                         limit=args.limit)
+    # Explicit LLMs from --llm + CC_IA_PANEL (deduped, order-preserving). MANDATORY.
+    specs, seen = [], set()
+    for s in agentic.parse_llms(",".join(args.llm)) + agentic.resolve_llms():
+        if s not in seen:
+            seen.add(s)
+            specs.append(s)
+    if args.dry:                                    # deterministic view-size check
+        return run(scope=scope, only_file=args.file, only_func=args.func,
+                   limit=args.limit, model=(specs[0] if specs else None), dry=True)
+    if not specs:
+        sys.stderr.write(
+            "error: at least one LLM is MANDATORY and is never auto-chosen — pass "
+            "--llm <model[@ollama-url]> (repeatable) or --llm claude (the official "
+            "CLI), or set CC_IA_PANEL. Two or more LLMs => panel/workgroup.\n")
+        return 2
+    if args.panel or len(specs) >= 2:
+        return run_panel(specs, scope=scope, only_file=args.file,
+                         only_func=args.func, limit=args.limit)
     return run(scope=scope, only_file=args.file, only_func=args.func,
-               limit=args.limit, model=args.model, dry=args.dry)
+               limit=args.limit, model=specs[0], dry=False)
 
 
 if __name__ == "__main__":
