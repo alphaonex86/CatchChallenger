@@ -216,6 +216,38 @@ def main():
         log_pass(f"invariant: {checked} functions, {branch_turns} one-branch turns, "
                  f"worst view {worst[0]} tok (<= {CONTEXT_BUDGET_TOKENS})", inv_secs)
 
+    # ---- layer 1b: deterministic FILE-LEVEL sweep --------------------------------
+    # The comprehensive clang-tidy pass that covers EVERY function (not just the
+    # codetree-indexed few). Deterministic, so it GATES: a crash, a malformed finding
+    # tuple, or 0 findings (a broken compile DB / parse silently yields 0, but
+    # general/base always has findings incl. intentional false-positives) is a real
+    # regression. Skips when clang-tidy is absent.
+    if shutil.which("clang-tidy") is None:
+        log_info("sweep check skipped (clang-tidy not on PATH)")
+    else:
+        ts = time.monotonic()
+        try:
+            sweep = eng.file_sweep([os.path.join(ROOT, SCOPE_REL)])
+        except Exception as exc:
+            log_fail("sweep", f"file_sweep raised: {exc}", time.monotonic() - ts)
+            failures.append(("sweep", f"file_sweep raised: {exc}"))
+            sweep = None
+        if sweep is not None:
+            total = sum(len(v) for v in sweep.values())
+            bad = next((f"{rel}:{it}" for rel, items in sweep.items() for it in items
+                        if not (isinstance(it, (list, tuple)) and len(it) == 3
+                                and isinstance(it[0], int))), None)
+            if bad is not None:
+                log_fail("sweep", f"malformed finding tuple: {bad}", time.monotonic() - ts)
+                failures.append(("sweep", f"malformed finding tuple: {bad}"))
+            elif total == 0:
+                log_fail("sweep", "0 findings over general/base — compile DB or parse "
+                         "likely broken", time.monotonic() - ts)
+                failures.append(("sweep", "0 findings over general/base"))
+            else:
+                log_pass(f"sweep: {total} well-formed finding(s) over {SCOPE_REL}",
+                         time.monotonic() - ts)
+
     # ---- layer 2: bounded live smoke (only if a backend is reachable) ----------
     # ONE function, ONE branch, ONE IA call — just prove the per-turn pipeline works
     # end to end. A full audit is a manual / server.py run, NOT a CI gate: a 26-30B
