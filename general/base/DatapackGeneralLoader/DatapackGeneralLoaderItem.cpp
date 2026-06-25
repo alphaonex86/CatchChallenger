@@ -116,10 +116,7 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
                         {
                             if(item->Attribute("consumeAtUse")!=NULL)
                             {
-                                if(strcmp(item->Attribute("consumeAtUse"),"false")==0)
-                                    outItems[id].consumeAtUse=false;
-                                else
-                                    outItems[id].consumeAtUse=true;
+                                outItems[id].consumeAtUse = strcmp(item->Attribute("consumeAtUse"),"false") != 0;
                             }
                             else
                                 outItems[id].consumeAtUse=true;
@@ -135,7 +132,7 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
                                 trapEntry.bonus_rate=1.0;
                                 if(trapItem->Attribute("bonus_rate")!=NULL)
                                 {
-                                    float bonus_rate=stringtofloat(trapItem->Attribute("bonus_rate"),&ok);
+                                    float const bonus_rate=stringtofloat(trapItem->Attribute("bonus_rate"),&ok);
                                     if(ok)
                                         trapEntry.bonus_rate=bonus_rate;
                                     else
@@ -191,8 +188,8 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
                                         }
                                         else
                                         {
-                                            std::string addString=hpItem->Attribute("add");
-                                            if(addString.find("%")==std::string::npos)//todo this part
+                                            std::string const addString=hpItem->Attribute("add");
+                                            if(addString.find('%')==std::string::npos)//todo this part
                                             {
                                                 const int32_t &add=stringtouint32(hpItem->Attribute("add"),&ok);
                                                 if(ok)

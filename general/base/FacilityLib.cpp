@@ -148,7 +148,7 @@ uint64_t FacilityLib::nextCaptureTime(const City &city)
     if(city.capture.frenquency==City::Capture::Frequency_week)
     {
         // advance to the desired weekday (0..6)
-        int daysToAdd=((int)city.capture.day - nextCityCapture.tm_wday + 7) % 7;
+        int const daysToAdd=((int)city.capture.day - nextCityCapture.tm_wday + 7) % 7;
         nextCityCapture.tm_mday+=daysToAdd;
         time_t result=std::mktime(&nextCityCapture);
         // if computed time is in the past (today, but capture hour passed), add a week
@@ -340,7 +340,7 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
 
 uint32_t FacilityLib::getFactoryResourcePrice(const uint32_t &quantityInStock,const Industry::Resource &resource,const Industry &industry)
 {
-    uint32_t max_items=resource.quantity*industry.cycletobefull;
+    uint32_t const max_items=resource.quantity*industry.cycletobefull;
     uint8_t price_temp_change;
     if(quantityInStock>=max_items)
         price_temp_change=0;
@@ -351,7 +351,7 @@ uint32_t FacilityLib::getFactoryResourcePrice(const uint32_t &quantityInStock,co
 
 uint32_t FacilityLib::getFactoryProductPrice(const uint32_t &quantityInStock, const Industry::Product &product, const Industry &industry)
 {
-    uint32_t max_items=product.quantity*industry.cycletobefull;
+    uint32_t const max_items=product.quantity*industry.cycletobefull;
     uint8_t price_temp_change;
     if(quantityInStock>=max_items)
         price_temp_change=0;

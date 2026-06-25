@@ -209,7 +209,7 @@ bool stringEndsWith(std::string const &fullString, std::string const &ending)
 
 bool stringEndsWith(std::string const &fullString, char const &ending)
 {
-    if (fullString.length()>0) {
+    if (!fullString.empty()) {
         return fullString[fullString.size()-1]==ending;
     } else {
         return false;
@@ -227,7 +227,7 @@ bool stringStartWith(std::string const &fullString, std::string const &starting)
 
 bool stringStartWith(std::string const &fullString, char const &starting)
 {
-    if (fullString.length()>0) {
+    if (!fullString.empty()) {
         return fullString[0]==starting;
     } else {
         return false;
@@ -330,7 +330,7 @@ std::string binarytoHexa(const char * const data, const uint32_t &size, bool *ok
 
 uint8_t hexToDecUnit(const std::string& data, bool *ok)
 {
-     std::function<int(char, bool*)> fromHex = [](char c, bool *ok)
+     std::function<int(char, bool*)> const fromHex = [](char c, bool *ok)
      {
          if(ok!=NULL)
              *ok=true;

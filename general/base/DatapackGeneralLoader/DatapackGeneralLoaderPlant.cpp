@@ -67,7 +67,7 @@ catchchallenger_datapack_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(c
             const uint8_t &id=stringtouint8(plantItem->Attribute("id"),&ok);
             uint16_t itemUsed=0;
             {
-                std::string itemUsedLower=str_tolower(plantItem->Attribute("itemUsed"));
+                std::string const itemUsedLower=str_tolower(plantItem->Attribute("itemUsed"));
                 if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemUsedLower))
                 {
                     itemUsed=CommonDatapack::commonDatapack.get_tempNameToItemId(itemUsedLower);

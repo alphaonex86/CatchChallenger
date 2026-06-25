@@ -49,7 +49,7 @@ Map_loader::Map_loader()
 Map_loader::~Map_loader()
 {
     #ifdef CATCHCHALLENGER_SERVER
-    for(tinyxml2::XMLDocument *doc : xmlDocsToKeepInternal)
+    for(tinyxml2::XMLDocument  const*doc : xmlDocsToKeepInternal)
         delete doc;
     xmlDocsToKeepInternal.clear();
     #endif
@@ -147,7 +147,7 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
     return maxOutputSize-strm.avail_out;
 }
 
-bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers)
+bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, const std::vector<std::string>& detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers)
 {
     /* in same map when:
      * x,y validated if around have at least 1 walkable tile and have not same type at tile
@@ -814,9 +814,9 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
             abort();
         break;
     }
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
 
-    if(returnList.size()==0)
+    if(returnList.empty())
     {
         std::cerr << "No file map to list" << std::endl;
         abort();
@@ -829,7 +829,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
     //load the map
     unsigned int index=0;
     unsigned int sub_index;
-    std::string tmxRemove(".tmx");
+    std::string const tmxRemove(".tmx");
 
     index=0;
     while(index<returnList.size())
@@ -868,7 +868,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
             {
                 //GlobalServerData::serverPrivateVariables.map_list[fileNameWihtoutTmx]=mapServer;
 
-                bool tryLoadNearMap=returnList.size()==1 && index==0;
+                bool const tryLoadNearMap=returnList.size()==1 && index==0;
 
                 mapFinal.border.top.mapIndex=65535;
                 mapFinal.border.top.x_offset=0;
@@ -886,7 +886,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
                 map_semi.old_map				= map_temp.map_to_send;
                 map_semi.file=fileName;
 
-                if(map_temp.map_to_send.border.top.fileName.size()>0)
+                if(!map_temp.map_to_send.border.top.fileName.empty())
                 {
                     map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,datapack_mapPath);
                     stringreplaceOne(map_semi.border.top.fileName,".tmx","");
@@ -894,7 +894,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
                     if(tryLoadNearMap)
                         returnList.push_back(map_semi.border.top.fileName);
                 }
-                if(map_temp.map_to_send.border.bottom.fileName.size()>0)
+                if(!map_temp.map_to_send.border.bottom.fileName.empty())
                 {
                     map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,datapack_mapPath);
                     stringreplaceOne(map_semi.border.bottom.fileName,".tmx","");
@@ -902,7 +902,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
                     if(tryLoadNearMap)
                         returnList.push_back(map_semi.border.bottom.fileName);
                 }
-                if(map_temp.map_to_send.border.left.fileName.size()>0)
+                if(!map_temp.map_to_send.border.left.fileName.empty())
                 {
                     map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,datapack_mapPath);
                     stringreplaceOne(map_semi.border.left.fileName,".tmx","");
@@ -910,7 +910,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
                     if(tryLoadNearMap)
                         returnList.push_back(map_semi.border.left.fileName);
                 }
-                if(map_temp.map_to_send.border.right.fileName.size()>0)
+                if(!map_temp.map_to_send.border.right.fileName.empty())
                 {
                     map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,datapack_mapPath);
                     stringreplaceOne(map_semi.border.right.fileName,".tmx","");
@@ -1014,7 +1014,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         unsigned int sub_index=0;
 
         //resolv the border map name into their pointer + resolv the offset to change of map
-        if(map_semi.border.bottom.fileName.size()>0 && mapPathToId.find(map_semi.border.bottom.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.bottom.fileName)).width!=0)
+        if(!map_semi.border.bottom.fileName.empty() && mapPathToId.find(map_semi.border.bottom.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.bottom.fileName)).width!=0)
         {
             mapFinal.border.bottom.mapIndex=mapPathToId.at(map_semi.border.bottom.fileName);
             mapFinal.border.bottom.x_offset=map_semi.border.bottom.x_offset;
@@ -1025,7 +1025,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
             mapFinal.border.bottom.x_offset=0;
         }
 
-        if(map_semi.border.top.fileName.size()>0 && mapPathToId.find(map_semi.border.top.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.top.fileName)).width!=0)
+        if(!map_semi.border.top.fileName.empty() && mapPathToId.find(map_semi.border.top.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.top.fileName)).width!=0)
         {
             mapFinal.border.top.mapIndex=mapPathToId.at(map_semi.border.top.fileName);
             mapFinal.border.top.x_offset=map_semi.border.top.x_offset;
@@ -1036,7 +1036,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
             mapFinal.border.top.x_offset=0;
         }
 
-        if(map_semi.border.left.fileName.size()>0 && mapPathToId.find(map_semi.border.left.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.left.fileName)).width!=0)
+        if(!map_semi.border.left.fileName.empty() && mapPathToId.find(map_semi.border.left.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.left.fileName)).width!=0)
         {
             mapFinal.border.left.mapIndex=mapPathToId.at(map_semi.border.left.fileName);
             mapFinal.border.left.y_offset=map_semi.border.left.y_offset;
@@ -1047,7 +1047,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
             mapFinal.border.left.y_offset=0;
         }
 
-        if(map_semi.border.right.fileName.size()>0 && mapPathToId.find(map_semi.border.right.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.right.fileName)).width!=0)
+        if(!map_semi.border.right.fileName.empty() && mapPathToId.find(map_semi.border.right.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.right.fileName)).width!=0)
         {
             mapFinal.border.right.mapIndex=mapPathToId.at(map_semi.border.right.fileName);
             mapFinal.border.right.y_offset=map_semi.border.right.y_offset;
@@ -1314,7 +1314,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         index++;
     }
 
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point const end = std::chrono::steady_clock::now();
     std::cout << semi_loaded_map.size() << " map(s) loaded into " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
     #ifdef CATCHCHALLENGER_SERVER

@@ -130,7 +130,7 @@ public:
     bool tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable);
     #endif
     #ifndef CATCHCHALLENGER_NOXML
-    bool loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers=nullptr);
+    bool loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, const std::vector<std::string>& detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers=nullptr);
     #else
     bool loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
     #endif
