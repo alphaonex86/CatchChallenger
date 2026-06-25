@@ -43,8 +43,20 @@ ROUNDS = int(os.environ.get("CC_AGENTIC_ROUNDS", "6"))       # tool turns / IA /
 FUNC_SECS = int(os.environ.get("CC_AGENTIC_FUNC_SECS", "180"))  # wall cap / function
 CONSENSUS_MIN = int(os.environ.get("CC_CONSENSUS_MIN", "2"))  # IAs to form a wg (QA)
 _TOOL_RESULT_CAP = 8000
+# Keep the agentic conversation inside the model's context so the prompt is NEVER
+# truncated. Budget = (the model's real ctx when known, else this) - reply - margin.
+# Default 32768 fits the common local models (gemma4, qwen-coder); set lower for a
+# smaller-context model.
+_CTX_BUDGET_TOKENS = int(os.environ.get("CC_AGENTIC_CTX_BUDGET", "32768"))
 
 REPO_ROOT = codecheck.REPO_ROOT
+
+
+def _convo_char_budget():
+    """Max conversation size (chars) before we force a conclusion — keeps the prompt
+    within the model's context (no truncation). ~3 chars/token, matching fit_ctx."""
+    ctx = common.MODEL_CTX or _CTX_BUDGET_TOKENS
+    return max(4096, ctx - 3072) * 3
 
 _TOOL_HELP = (
     "\n\nBefore concluding you MAY request more data — ONE request per reply, on "
@@ -176,20 +188,32 @@ def _agentic_review_run(spec, views, fi, sysprompt, deadline):
     error, empty reply, ran out of rounds/time)."""
     convo = [{"role": "system", "content": sysprompt},
              {"role": "user", "content": views[0][1] + _TOOL_HELP}]
+    budget = _convo_char_budget()
     vi = 1                              # next callee-branch index into `views`
     rounds = 0
     while rounds < ROUNDS and time.time() < deadline:
         rounds += 1
+        # CONTEXT GUARD: near the model's limit -> force a final answer this turn so
+        # the accumulated prompt is NEVER truncated.
+        forced = sum(len(m["content"]) for m in convo) > budget
+        if forced:
+            convo.append({"role": "user", "content":
+                "CONTEXT BUDGET REACHED — request no more data; give your FINAL "
+                "findings now (file:line), or reply NO ISSUES."})
         try:
             ans = _chat(spec, convo, deadline)
         except Exception:
             return None                 # transport error: inconclusive (don't cache)
         if not ans:
             return None
+        ans = codecheck.collapse_repetition(ans)       # defang an LLM text-loop
         convo.append({"role": "assistant", "content": ans})
         tool = _parse_tool(ans)
         if tool is None:
             return ans                  # no tool line -> these are the findings
+        if forced:                      # told it to conclude; ignore any tool request
+            rest = "\n".join(l for l in ans.splitlines() if not _TOOL_RE.match(l))
+            return rest.strip() or "NO ISSUES"
         name, arg = tool
         if name == "DONE":
             # strip the DONE line; the rest (if any) are findings
