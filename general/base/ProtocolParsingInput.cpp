@@ -835,7 +835,7 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const
     #ifdef CATCHCHALLENGER_HARDENED
     protocolParsingCheck->storeInputQuery(packetCode,queryNumber);
     #endif
-    //register the size of the reply to send
+    //register the packet code for this query number (to match its reply)
     inputQueryNumberToPacketCode[queryNumber]=packetCode;
 }
 
