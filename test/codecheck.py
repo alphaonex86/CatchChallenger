@@ -131,18 +131,18 @@ def _ia_reachable(common):
 
 def main():
     t0 = time.monotonic()
+    # Thinking models (gemma4) spend the whole num_predict on thought and return
+    # empty; the audit views need no reasoning, so default think OFF for the smoke
+    # (operator can override CC_OLLAMA_THINK).
+    os.environ.setdefault("CC_OLLAMA_THINK", "false")
     if shutil.which("clang") is None:
         _skip_pass("clang not found — codecheck needs clang for the LLVM-IR tree")
 
-    db = _ensure_compile_db()
-    if db is None:
-        _skip_pass("no compile_commands.json (cmake missing or configure failed)")
-
     eng = _load_engine()
-    # Point codetree at our fresh compile DB, scope to the parsers, build the tree.
-    eng.codetree._CDB_PATHS.insert(0, db)
+    # codecheck.build_index() auto-finds/generates the compile DB and redirects the
+    # clang-IR + type caches to the persistent SSD cache — nothing to wire here.
     scope = [os.path.join(ROOT, SCOPE_REL)]
-    log_info(f"building code tree over {SCOPE_REL} (compile DB: {db})")
+    log_info(f"building code tree over {SCOPE_REL} (persistent cache)")
     try:
         idx = eng.build_index(scope)
     except Exception as exc:

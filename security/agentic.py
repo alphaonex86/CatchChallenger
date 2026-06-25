@@ -69,39 +69,36 @@ _NUM_RE = re.compile(r"\d+")
 # ---------------------------------------------------------------------------
 # Panel
 # ---------------------------------------------------------------------------
-def resolve_panel():
-    """The list of IA 'specs' (model identifiers passed to common.chat_with).
-    CC_IA_PANEL=a,b,c  (comma-separated; '@host:port' pins a backend per model).
-    'auto' = every installed Ollama model under 35B + 'claude' when a credential
-    is set. Unset / single entry => single-IA mode. Falls back to the default
-    backend (one IA) when nothing is configured."""
-    spec = os.environ.get("CC_IA_PANEL", "").strip()
-    if not spec:
-        return [None]                      # the configured default backend, 1 IA
-    if spec.lower() == "auto":
-        return _auto_panel() or [None]
-    return [s.strip() for s in spec.split(",") if s.strip()] or [None]
-
-
-def _auto_panel():
+def parse_llms(raw):
+    """Parse a comma-separated LLM-spec list into chat_with specs. Each entry:
+      <model>[@<ollama-url>]  an Ollama model, optionally pinned to a backend host
+                              (e.g. gemma4:12b, or gemma4:12b@http://gpu1:11434)
+      claude[:<id>]           the OFFICIAL `claude` CLI (the ToS-safe path) —
+                              normalized to claude-cli[:<id>]
+    Registers any @url pin so chat_with routes the bare model name to it. NEVER
+    auto-discovers anything — the list is EXACTLY what was given (the LLM is never
+    chosen for the user)."""
     out = []
-    try:
-        import json
-        import urllib.request
-        req = urllib.request.Request(common.OLLAMA_DEFAULT_URL + "/api/tags")
-        with urllib.request.urlopen(req, timeout=5) as r:
-            tags = json.load(r)
-        for m in tags.get("models", []):
-            name = m.get("name", "")
-            b = (m.get("details", {}) or {}).get("parameter_size", "") or ""
-            mb = re.search(r"([\d.]+)\s*B", b)
-            if name and (not mb or float(mb.group(1)) < 35):
-                out.append(name)
-    except Exception:
-        pass
-    if common._claude_has_creds():
-        out.append("claude")
+    for s in (raw or "").split(","):
+        s = s.strip()
+        if not s:
+            continue
+        if s == "claude":
+            out.append("claude-cli")
+        elif s.startswith("claude:"):
+            out.append("claude-cli:" + s.split(":", 1)[1].strip())
+        elif s == "claude-cli" or s.startswith("claude-cli:"):
+            out.append(s)
+        else:
+            out.append(common._register_model_spec(s))   # @url pin -> bare name
     return out
+
+
+def resolve_llms():
+    """The EXPLICIT LLM list from CC_IA_PANEL — NEVER auto-chosen. Returns [] when
+    unset; the caller MUST require >= 1 (an LLM is mandatory for codecheck.py /
+    server.py; multiple => panel/workgroup)."""
+    return parse_llms(os.environ.get("CC_IA_PANEL", ""))
 
 
 def _label(spec):
@@ -152,8 +149,25 @@ def _parse_tool(answer):
 
 
 def _agentic_review(spec, idx, fi, sysprompt, deadline):
-    """One IA reviews `fi` agentically, starting from the limited one-branch view
-    and pulling more on request. Returns its findings text (or 'NO ISSUES')."""
+    """One IA reviews `fi` agentically. INCREMENTAL: a CONCLUDED (spec, function-
+    source, sysprompt) result is cached, so a re-run skips unchanged functions for
+    this IA. A transport error / budget timeout is inconclusive and is NOT cached,
+    so a transient outage can't poison the cache."""
+    ckey = "agentic:" + str(spec)
+    cached = codecheck.verdict_get(ckey, fi, sysprompt)
+    if cached is not None:
+        return cached
+    result = _agentic_review_run(spec, idx, fi, sysprompt, deadline)
+    if result is None:
+        return "NO ISSUES"              # inconclusive: return but do NOT cache
+    codecheck.verdict_put(ckey, fi, sysprompt, result)
+    return result
+
+
+def _agentic_review_run(spec, idx, fi, sysprompt, deadline):
+    """The agentic loop: start from the limited one-branch view, pull more on
+    request. Returns the concluded findings text (or 'NO ISSUES'), or None when it
+    could NOT conclude (transport error, empty reply, ran out of rounds/time)."""
     views = codecheck.build_views(idx, fi)
     first = next(views, None)
     if first is None:
@@ -165,10 +179,10 @@ def _agentic_review(spec, idx, fi, sysprompt, deadline):
         rounds += 1
         try:
             ans = _chat(spec, convo, deadline)
-        except Exception as exc:
-            return "NO ISSUES"          # transport error: this IA abstains
+        except Exception:
+            return None                 # transport error: inconclusive (don't cache)
         if not ans:
-            return "NO ISSUES"
+            return None
         convo.append({"role": "assistant", "content": ans})
         tool = _parse_tool(ans)
         if tool is None:
@@ -189,7 +203,7 @@ def _agentic_review(spec, idx, fi, sysprompt, deadline):
             result = "(unknown tool)"
         convo.append({"role": "user",
                       "content": "TOOL RESULT:\n" + result[:_TOOL_RESULT_CAP]})
-    return "NO ISSUES"                   # ran out of rounds/time without concluding
+    return None                         # ran out of rounds/time: inconclusive
 
 
 # ---------------------------------------------------------------------------
@@ -281,11 +295,17 @@ def _redact_brief(lead_spec, idx, fi, finding, deadline):
 def audit_function(idx, fi, specs, role="codecheck", exploit_cb=None, sysprompt=None):
     """Multi-IA agentic review of ONE function. role='codecheck' -> consensus
     briefs; role='security' -> exploit_cb(fi, finding, members) develops a proof.
-    Returns a list of output strings (briefs or confirmed exploits); EMPTY when the
-    panel has nothing to say."""
+    Returns a list of output strings (deterministic static-analysis findings +
+    briefs/confirmed exploits); EMPTY when nothing (algorithmic or IA) was found."""
     deadline = time.time() + FUNC_SECS
     if sysprompt is None:
         sysprompt = codecheck.CHECK_SYSTEM
+    rel = os.path.relpath(fi.file, REPO_ROOT)
+    # ALGORITHMIC: deterministic clang-tidy / static-analyzer findings, always
+    # reported (independent of what the IA panel concludes).
+    det = codecheck._tidy_finding_lines(fi)
+    det_out = (["%s:%d (%s) — static analysis:\n%s"
+                % (rel, fi.line, fi.qual_name, "\n".join(det))] if det else [])
     # 1. independent agentic review (shared budget)
     per_ia = {}
     for spec in specs:
@@ -299,18 +319,18 @@ def audit_function(idx, fi, specs, role="codecheck", exploit_cb=None, sysprompt=
         spec, txt = next(iter(per_ia.values()), (specs[0], "NO ISSUES"))
         flines = _finding_lines(txt)
         if not flines:
-            return []
+            return det_out
         if role == "security" and exploit_cb:
             res = exploit_cb(fi, "\n".join(flines), [spec])
-            return [res] if res else []
-        return ["%s:%d (%s)\n%s" % (os.path.relpath(fi.file, REPO_ROOT), fi.line,
-                                    fi.qual_name, "\n".join(flines))]
+            return det_out + ([res] if res else [])
+        return det_out + ["%s:%d (%s)\n%s"
+                          % (rel, fi.line, fi.qual_name, "\n".join(flines))]
 
     # 2. discussion -> workgroups
     wgs = _discuss(specs, per_ia, fi, deadline)
 
     # 3. finalize per workgroup
-    out = []
+    out = list(det_out)
     for finding, members in wgs:
         if role == "security":
             # a security workgroup pursues a proof if ANY member sees potential

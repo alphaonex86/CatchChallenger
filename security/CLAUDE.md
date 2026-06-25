@@ -1,8 +1,11 @@
 # security/ — IA-driven security tooling
 
-Three Python files, dependency-free (stdlib `urllib` only), KISS:
-* `common.py` — shared IA backend transport (Ollama/Claude). Both tools `from common import *`. Owns backend selection, multi-host Ollama routing, `num_ctx` sizing, Claude streaming/auth/caching/usage, `chat()`/`chat_with()`.
-* `server.py` — agentic code AUDITOR of the TCP-reachable server (scan + exploit phases). Loads related/counterpart/caller context per file.
+Python files, dependency-free (stdlib `urllib` only), KISS:
+* `common.py` — shared IA backend transport (Ollama / Claude API / Claude CLI). Backend selection, multi-host Ollama routing + per-model `@url` pins, `num_ctx` (fit_ctx) sizing, `think` control, `chat()`/`chat_with()`.
+* `server.py` — agentic SECURITY auditor of the TCP-reachable server (whole-file scan + exploit). `codecheck` mode = per-function security review (`agentic.py`) + exploit.
+* `codecheck.py` — GENERAL code-quality reviewer (bugs/logic/naming/clarity/perf/duplication; NOT security — that is server.py). Function-by-function LIMITED view, small-local-model friendly. `--panel` = multi-IA.
+* `agentic.py` — multi-IA agentic WORKGROUP engine shared by codecheck + server.
+* `codetree.py` / `pycodetree.py` — C/C++ (clang LLVM-IR) / Python (ast) call graph: function index + caller/callee trees.
 * `secret.py` — leak SCANNER. Standalone per file (NO related-file loading). Deterministic regex (internal paths, public IPs) + LLM (tokens/passwords/API-URLs). Scans git-tracked+untracked (`all`, default), `staged`, `changed`, or explicit files. Exit 2 = leaks found.
 
 ## IA backend — default model `gemma4:26b`
@@ -14,6 +17,13 @@ Three Python files, dependency-free (stdlib `urllib` only), KISS:
 * **Claude (CLI)**: `CC_IA_BACKEND=claude-cli` — shells out to the official `claude -p` (must be logged in once). HARD RULE: a Pro/Max SUBSCRIPTION may ONLY be used via this CLI backend; replaying its OAuth token through the API backend violates Anthropic's Consumer Terms (tokens were BLOCKED Jan 2026). No token/key is held — `claude` authenticates itself. All built-in tools disabled; runs from a temp cwd; `claude_cli_preflight()` pings once up front.
 
 **HARD RULE — never commit a remote/router URL or its IP / SSH coords.** They embed infrastructure IP. The real backend config lives OUT of the repo: `~/.config/CatchChallenger/ia-settings.json` (override `CC_IA_SETTINGS`) — `{"ollama_host": "http://[...]:11434"}` (single) or `ollama_backends` (multi-host table); the router's deploy SSH coords go in its `_router_ssh` note there. `OLLAMA_HOST` env overrides the file. In-repo `ia-settings.example.json` is an IP-free template only. Default model overridable via `CC_IA_MODEL`, `--model=` (server), `CC_SECRET_MODEL` (secret).
+
+## codecheck.py / `server.py codecheck` — function-by-function; LLM MANDATORY
+Audit C/C++ (excl vendor) FUNCTION-BY-FUNCTION via `agentic.py`: per-turn view = headers (.h/.hpp whole) + the one body + caller tree + ONE callee branch at a time + clang `-ast-dump` var types — small enough for a 30B. Agentic: each IA may READ/GREP/pull the next BRANCH, bounded by `CC_AGENTIC_ROUNDS` / `CC_AGENTIC_FUNC_SECS`.
+
+Four force-multipliers (all read-only, no C/C++ change): (1) **algorithmic layer** — clang-tidy (codecheck: bugprone/performance/naming) or the clang static analyzer (server: security) per function, fed into the view AND emitted as DETERMINISTIC findings even when the LLM is silent; (2) **triviality pre-filter** — skip destructors/getters/tiny functions (~half the tree); (3) **incremental** — per-(model, function-source, system) verdict cache, so a re-run only re-audits CHANGED functions; (4) **adversarial verify** — codecheck double-checks each LLM finding (`CC_NO_VERIFY` to skip); server "verifies" via the exploit proof. clang-tidy must be on PATH (graceful no-op otherwise).
+
+**The LLM is MANDATORY and NEVER auto-chosen.** Set it with `--llm` (codecheck, repeatable) or `CC_IA_PANEL` (comma list). Each spec is `<model>[@<ollama-url>]` (Ollama, optional per-model backend URL) or `claude` (the official `claude` CLI — the ToS-safe path; never the API for a subscription). `>= 2` LLMs => panel/workgroup: IAs review independently, a discussion round forms consensus WORKGROUPS — codecheck emits a brief ONLY on consensus (`CC_CONSENSUS_MIN`), server develops an EXPLOIT as proof (no proof => no claim). Thinking models (gemma4) need `CC_OLLAMA_THINK=false`. Persistent SSD cache (clang-IR + types + auto-generated compile DB) at `/mnt/data/perso/tmp/codecheck` (`CC_CODECHECK_CACHE`). Bound a run: `--scope`/`--limit` (codecheck), `CC_CODECHECK_SCOPE`/`CC_CODECHECK_LIMIT` (server).
 
 ## secret.py config + report — also OUT of the repo
 Path allow-list / detection patterns: `~/.config/CatchChallenger/secret-scan.json` (`CC_SECRET_CONFIG`); a starter template is written on first run. Findings print to **stdout only** — nothing is written to disk unless `CC_SECRET_REPORT=<path>` opts into a file (keep it out of the repo; it may quote redacted secrets). The config is out-of-repo so the scanner never writes a leak back into the tree it scans.

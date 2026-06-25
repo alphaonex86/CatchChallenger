@@ -3697,14 +3697,36 @@ def run_codecheck():
     reviewer; no proof => no claim."""
     import codecheck
     import agentic
+    # The LLM(s) are MANDATORY and never auto-chosen — fail fast before the build.
+    specs = agentic.resolve_llms()
+    if not specs:
+        sys.stderr.write(
+            "error: at least one LLM is MANDATORY and is never auto-chosen — set "
+            "CC_IA_PANEL to a model[@ollama-url] list (>= 2 => panel/workgroup) or "
+            "'claude' (the official CLI).\n")
+        return 2
     os.makedirs(OUTPUT_ROOT, exist_ok=True)
-    idx = codecheck.build_index()                  # all C/C++ excl vendor
+    # CC_CODECHECK_SCOPE / CC_CODECHECK_LIMIT bound the run (for a quick test or a
+    # focused audit); default is the whole C/C++ tree.
+    _se = os.environ.get("CC_CODECHECK_SCOPE", "").strip()
+    _scope = [os.path.join(REPO_ROOT, s) for s in _se.split(",")] if _se else None
+    idx = codecheck.build_index(_scope)            # default: all C/C++ excl vendor
     funcs = codecheck.leaves_first(idx)            # callees before callers
-    specs = agentic.resolve_panel()
+    try:
+        _lim = int(os.environ.get("CC_CODECHECK_LIMIT", "0"))
+    except ValueError:
+        _lim = 0
+    if _lim > 0:
+        funcs = funcs[:_lim]
+    # Security review: use the clang static-analyzer / security tidy check-set for
+    # the deterministic algorithmic layer, and skip trivial functions.
+    codecheck.TIDY_CHECKS = codecheck.SECURITY_TIDY_CHECKS
+    funcs = codecheck.audit_targets(funcs)
     sys.stderr.write("[codecheck] %d functions, %d IA(s); agentic per-function "
                      "security review (one branch at a time)\n"
                      % (len(funcs), len(specs)))
     codecheck.prewarm_types(funcs)
+    codecheck.prewarm_tidy(funcs)
     by_file = {}
     i = 0
     while i < len(funcs):
@@ -3716,6 +3738,11 @@ def run_codecheck():
             rel = os.path.relpath(fi.file, REPO_ROOT)
             by_file.setdefault(rel, []).append(
                 "## %s (%s:%d)\n%s" % (fi.qual_name, rel, fi.line, "\n\n".join(blocks)))
+    if not by_file:
+        # A clean security scan is SUCCESS, not a failure — don't fall into
+        # run_exploit's "no findings -> exit 1" path with nothing to prove.
+        sys.stderr.write("[codecheck] no security findings — nothing to prove\n")
+        return 0
     # Same FINDINGS block shape as run_scan(), so run_exploit() parses it unchanged.
     with open(FINDINGS, "w") as fh:
         for rel in by_file:
