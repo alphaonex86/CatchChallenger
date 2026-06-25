@@ -75,6 +75,24 @@ TIDY_CHECKS = os.environ.get(
     "readability-identifier-naming,readability-misleading-indentation,"
     "misc-redundant-expression")
 SECURITY_TIDY_CHECKS = "-*,clang-analyzer-*,bugprone-*,cert-*"
+# Comprehensive FILE-LEVEL sweep checks: HIGH-SIGNAL, tuned to THIS project's style.
+# Drops the deliberate style (std::endl, snake_case_, short names, no-auto) and the
+# noisy ones (include-cleaner, narrowing-conversions, swappable-params). Covers EVERY
+# function in a file, not just the codetree-indexed few. CC_TIDY_DEEP adds the slow
+# clang static analyzer. Override with CC_SWEEP_CHECKS.
+SWEEP_CHECKS = os.environ.get(
+    "CC_SWEEP_CHECKS",
+    "-*,bugprone-*,-bugprone-easily-swappable-parameters,"
+    "-bugprone-narrowing-conversions,performance-*,-performance-avoid-endl,"
+    "misc-const-correctness,misc-redundant-expression,misc-unused-parameters,"
+    "misc-unused-using-decls,misc-definitions-in-headers,"
+    "readability-misleading-indentation,readability-redundant-control-flow,"
+    "readability-redundant-string-cstr,readability-redundant-smartptr-get,"
+    "readability-simplify-boolean-expr,readability-container-size-empty,"
+    "readability-string-compare,readability-delete-null-pointer,"
+    "readability-non-const-parameter")
+if os.environ.get("CC_TIDY_DEEP", "").strip():
+    SWEEP_CHECKS += ",clang-analyzer-*"
 _TIDY_RE = re.compile(
     r"^(.+?):(\d+):\d+:\s+(?:warning|error):\s+(.*?)\s*\[([\w.,\-]+)\]\s*$")
 # Persistent caches (clang-tidy output, per-(model,function) verdicts); set in
@@ -141,11 +159,11 @@ def _ensure_compile_db(root):
     return out if os.path.isfile(out) else None
 
 
-def build_index(scope=None):
-    """Build (or reuse) the codetree C/C++ index over `scope` (excl vendor).
-    Redirects codetree's clang-IR cache + our type cache to the PERSISTENT SSD
-    cache (CC_CODECHECK_CACHE) and auto-finds/generates a compile DB, so a re-audit
-    is fast and the tool works out of the box."""
+def setup_caches():
+    """Point codetree's clang-IR cache + our type/tidy/verdict caches at the
+    PERSISTENT SSD cache (CC_CODECHECK_CACHE) and auto-find/generate the compile DB
+    (so clang-tidy resolves real flags). Shared by build_index AND the deterministic
+    --sweep, which needs the compile DB but NOT the IR index."""
     global _TYPE_CACHE_DIR, _TIDY_CACHE_DIR, _VERDICT_CACHE_DIR
     root = _cache_root()
     codetree.OUTPUT_ROOT = root
@@ -157,6 +175,14 @@ def build_index(scope=None):
     db = _ensure_compile_db(root)
     if db and db not in codetree._CDB_PATHS:
         codetree._CDB_PATHS.insert(0, db)
+    return root
+
+
+def build_index(scope=None):
+    """Build (or reuse) the codetree C/C++ index over `scope` (excl vendor), on the
+    persistent SSD cache + auto-generated compile DB, so a re-audit is fast and the
+    tool works out of the box."""
+    setup_caches()
     codetree.SCOPE_DIRS = tuple(scope) if scope else DEFAULT_SCOPE
     idx = codetree.Index()
     idx.build()
@@ -394,12 +420,65 @@ def prewarm_tidy(funcs, checks=None, workers=6):
         list(pool.map(lambda p: _file_tidy(p, ck), files))
 
 
-def _tidy_finding_lines(fi):
-    """The deterministic clang-tidy findings for `fi` as output lines (always
-    reported, even when the LLM is silent)."""
-    rel = os.path.relpath(fi.file, REPO_ROOT)
-    return ["[clang-tidy] %s:%d %s [%s]" % (rel, ln, msg, chk)
-            for ln, msg, chk in tidy_for_function(fi)[:12]]
+# ---------------------------------------------------------------------------
+# Comprehensive FILE-LEVEL deterministic sweep — covers EVERY function in a file,
+# not just the codetree-indexed few (that LLVM-IR index holds only ~4-6 functions
+# per file, so a per-indexed-function scan misses most of the code).
+# ---------------------------------------------------------------------------
+def _scope_files(scope=None):
+    """Every non-vendor C/C++ source file under the scope roots (or a file root)."""
+    roots = list(scope) if scope else list(DEFAULT_SCOPE)
+    out, seen = [], set()
+    for root in roots:
+        if os.path.isfile(root):
+            cand = [root]
+        else:
+            cand = []
+            for dp, _d, fns in os.walk(root):
+                for fn in fns:
+                    if fn.endswith((".cpp", ".cc", ".cxx", ".c")):
+                        cand.append(os.path.join(dp, fn))
+        for p in cand:
+            rp = os.path.realpath(p)
+            if rp not in seen and not codetree.is_vendor(p):
+                seen.add(rp)
+                out.append(p)
+    out.sort()
+    return out
+
+
+def file_sweep(scope=None, checks=None, workers=6):
+    """Run clang-tidy over EVERY non-vendor C/C++ file in the scope (cached per file).
+    Returns {rel_path: [(line, check, message), ...]} sorted by line — the
+    comprehensive deterministic 'where + how' improvement list."""
+    setup_caches()                                 # compile DB + cache dirs (for --sweep)
+    checks = checks or SWEEP_CHECKS
+    files = _scope_files(scope)
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        pairs = list(pool.map(lambda f: (f, _file_tidy(f, checks)), files))
+    by_file = {}
+    for f, items in pairs:
+        if items:
+            rel = os.path.relpath(f, REPO_ROOT)
+            by_file[rel] = sorted((ln, chk, msg) for ln, msg, chk in items)
+    return by_file
+
+
+def emit_sweep(by_file, out=sys.stdout):
+    """Coherent deterministic output, grouped by file: each line = WHERE (file:line) +
+    WHAT (the check) + HOW (the clang-tidy message). Returns the finding count."""
+    total = sum(len(v) for v in by_file.values())
+    out.write("#### Deterministic improvements (clang-tidy): %d in %d file(s) — "
+              "where & how\n" % (total, len(by_file)))
+    for rel in sorted(by_file):
+        out.write("\n%s\n" % rel)
+        for ln, chk, msg in by_file[rel]:
+            out.write("  L%-5d %-42s %s\n" % (ln, chk, msg))
+    if not by_file:
+        out.write("  (none with the curated checks — try CC_TIDY_DEEP=1 or a broader "
+                  "CC_SWEEP_CHECKS)\n")
+    return total
 
 
 # ---------------------------------------------------------------------------
@@ -577,8 +656,8 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=F
     if cached is not None:
         return cached                                  # caller STILL prints these
     _CACHE_STATS["miss"] += 1
-    findings = list(_tidy_finding_lines(fi))           # algorithmic, always reported
-    for label, ctx in views:
+    findings = []                                      # IA findings (the file_sweep
+    for label, ctx in views:                           # gives the deterministic ones)
         messages = [{"role": "system", "content": system},
                     {"role": "user", "content": ctx}]
         try:
@@ -607,6 +686,11 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
     # `model` is an explicit LLM spec (mandatory): a model[@url] or claude-cli —
     # passed straight to chat_with via audit_function (handles the @url pin + CLI).
     idx = build_index(scope)
+    # 1. COMPREHENSIVE deterministic sweep FIRST — every function in every file, not
+    #    just the codetree-indexed few — the bulk of the "where & how" improvements.
+    if not dry and not only_func:
+        emit_sweep(file_sweep([only_file] if only_file else scope), out)
+        out.write("\n")
     if only_func:
         funcs = [idx.by_name[only_func]] if only_func in idx.by_name else []
         if not funcs:
@@ -624,7 +708,8 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
         prewarm_tidy(funcs)
     reset_cache_stats()
     verify = not dry and not os.environ.get("CC_NO_VERIFY", "").strip()
-    out.write("[codecheck] %s: %d function(s) %s\n"
+    # 2. IA review on top (judgment the deterministic checks can't give).
+    out.write("[codecheck] %s: IA review of %d function(s) %s\n"
               % (_ts_safe(), len(funcs), "(dry)" if dry else ""))
     total = 0
     for fi in funcs:
@@ -648,6 +733,10 @@ def run_panel(specs, scope=None, only_file=None, only_func=None, limit=None,
     has something to say."""
     import agentic                                  # lazy: avoids an import cycle
     idx = build_index(scope)
+    # Comprehensive deterministic sweep first (every function, not just indexed).
+    if not only_func:
+        emit_sweep(file_sweep([only_file] if only_file else scope), out)
+        out.write("\n")
     if only_func:
         funcs = [idx.by_name[only_func]] if only_func in idx.by_name else []
     elif only_file:
@@ -699,6 +788,9 @@ def main(argv):
                         "a model pinned to a backend (gemma4:12b@http://gpu1:11434), "
                         "or 'claude' (the official claude CLI). Also reads "
                         "CC_IA_PANEL. >= 2 LLMs => panel/workgroup. NEVER auto-chosen.")
+    p.add_argument("--sweep", action="store_true",
+                   help="DETERMINISTIC only: comprehensive clang-tidy over every "
+                        "file/function (no LLM needed) — the fast 'where & how' list.")
     p.add_argument("--dry", action="store_true",
                    help="don't call the IA; print per-turn view sizes (verify the "
                         "context stays small). No LLM needed.")
@@ -709,6 +801,9 @@ def main(argv):
     import agentic                                  # lazy: avoids an import cycle
     scope = ([os.path.join(REPO_ROOT, s) if not os.path.isabs(s) else s
               for s in args.scope.split(",")] if args.scope else None)
+    if args.sweep:                                  # deterministic, no LLM
+        emit_sweep(file_sweep([args.file] if args.file else scope))
+        return 0
     # Explicit LLMs from --llm + CC_IA_PANEL (deduped, order-preserving). MANDATORY.
     specs, seen = [], set()
     for s in agentic.parse_llms(",".join(args.llm)) + agentic.resolve_llms():

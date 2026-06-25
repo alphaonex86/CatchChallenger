@@ -3745,6 +3745,11 @@ def run_codecheck():
             by_file.setdefault(rel, []).append(
                 "## %s (%s:%d)\n%s" % (fi.qual_name, rel, fi.line, "\n\n".join(blocks)))
     sys.stderr.write("[codecheck] %s\n" % codecheck.cache_summary())
+    # Deterministic static-analyzer findings (whole-file, every function — not just
+    # the indexed ones) as extra security candidates for the exploit phase.
+    for rel, items in codecheck.file_sweep(_scope, codecheck.SECURITY_TIDY_CHECKS).items():
+        det = "\n".join("L%d %s [%s]" % (ln, msg, chk) for ln, chk, msg in items)
+        by_file.setdefault(rel, []).append("## static analysis (%s)\n%s" % (rel, det))
     if not by_file:
         # A clean security scan is SUCCESS, not a failure — don't fall into
         # run_exploit's "no findings -> exit 1" path with nothing to prove.
