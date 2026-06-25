@@ -750,13 +750,13 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
     uint32_t x=0;
     uint32_t y=0;
 
-    char * WalkableBin=nullptr;
-    char * CollisionsBin=nullptr;
-    char * DirtBin=nullptr;
-    char * LedgesRightBin=nullptr;
-    char * LedgesLeftBin=nullptr;
-    char * LedgesBottomBin=nullptr;
-    char * LedgesTopBin=nullptr;
+    char  const* WalkableBin=nullptr;
+    char  const* CollisionsBin=nullptr;
+    char  const* DirtBin=nullptr;
+    char  const* LedgesRightBin=nullptr;
+    char  const* LedgesLeftBin=nullptr;
+    char  const* LedgesBottomBin=nullptr;
+    char  const* LedgesTopBin=nullptr;
     std::vector<std::vector<char> > MonsterCollisionBin;
     {
         if(rawSize==(uint32_t)Walkable.size())
@@ -855,7 +855,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
         x++;
     }
 
-    if(Walkable.size()>0)
+    if(!Walkable.empty())
     {
         size_t index=0;
         {
@@ -930,7 +930,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                         uint8_t y=0;
                         while(y<this->map_to_send.height)
                         {
-                            unsigned int value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
+                            unsigned int const value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
                             const uint8_t &val=simplifiedMap[x+y*this->map_to_send.width];
                             if(value!=0 && val<200)
                             {

@@ -102,7 +102,7 @@ void CommonDatapack::parseCraftingRecipes()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     craftingRecipesMaxId=0;
-    std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items,craftingRecipesMaxId);
+    std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,CraftingRecipe>,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_CRAFTINGRECIPE> > const multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items,craftingRecipesMaxId);
     craftingRecipes=multipleVariables.first;
     itemToCraftingRecipes=multipleVariables.second;
     std::cout << craftingRecipes.size() << " crafting recipe(s) loaded" << std::endl;

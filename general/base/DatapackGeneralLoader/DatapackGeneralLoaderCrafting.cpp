@@ -96,7 +96,7 @@ std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,Craft
             const uint16_t &id=stringtouint16(recipeItem->Attribute("id"),&ok);
             uint16_t itemToLearn=0;
             {
-                std::string itemToLearnLower=str_tolower(recipeItem->Attribute("itemToLearn"));
+                std::string const itemToLearnLower=str_tolower(recipeItem->Attribute("itemToLearn"));
                 if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemToLearnLower))
                 {
                     itemToLearn=CommonDatapack::commonDatapack.get_tempNameToItemId(itemToLearnLower);
@@ -107,7 +107,7 @@ std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,Craft
             }
             uint16_t doItemId=0;
             {
-                std::string doItemIdLower=str_tolower(recipeItem->Attribute("doItemId"));
+                std::string const doItemIdLower=str_tolower(recipeItem->Attribute("doItemId"));
                 if(CommonDatapack::commonDatapack.has_tempNameToItemId(doItemIdLower))
                 {
                     doItemId=CommonDatapack::commonDatapack.get_tempNameToItemId(doItemIdLower);
@@ -191,7 +191,7 @@ std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,Craft
                         {
                             uint16_t itemId=0;
                             {
-                                std::string itemIdLower=str_tolower(material->Attribute("itemId"));
+                                std::string const itemIdLower=str_tolower(material->Attribute("itemId"));
                                 if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemIdLower))
                                 {
                                     itemId=CommonDatapack::commonDatapack.get_tempNameToItemId(itemIdLower);
@@ -285,7 +285,7 @@ std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,Craft
                         if(itemToCrafingRecipes.find(recipe.itemToLearn)!=itemToCrafingRecipes.cend())
                         {
                             ok=false;
-                            std::cerr << "preload_crafting_recipes() itemToLearn already used to learn another recipe: " << itemToCrafingRecipes.at(recipe.doItemId) << ": file: " << file << " child->Name(): " << recipeItem->Name() << std::endl;
+                            std::cerr << "preload_crafting_recipes() itemToLearn already used to learn another recipe: " << static_cast<uint16_t>(itemToCrafingRecipes.at(recipe.itemToLearn)) << ": file: " << file << " child->Name(): " << recipeItem->Name() << std::endl;
                         }
                     }
                     if(ok)
@@ -301,7 +301,7 @@ std::pair<catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_CRAFTINGRECIPE,Craft
                         if(itemToCrafingRecipes.find(recipe.doItemId)!=itemToCrafingRecipes.cend())
                         {
                             ok=false;
-                            std::cerr << "preload_crafting_recipes() the product of the recipe can't be a recipe: " << itemToCrafingRecipes.at(recipe.doItemId) << ": file: " << file << ": child->Name(): " << recipeItem->Name() << std::endl;
+                            std::cerr << "preload_crafting_recipes() the product of the recipe can't be a recipe: " << static_cast<uint16_t>(itemToCrafingRecipes.at(recipe.doItemId)) << ": file: " << file << ": child->Name(): " << recipeItem->Name() << std::endl;
                         }
                     }
                     if(ok)

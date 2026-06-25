@@ -27,7 +27,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralL
         {
             //add it, all seam ok
             std::pair<bool,Quest> returnedQuest=loadSingleQuest(fileList.at(index).absoluteFilePath+"/definition.xml",mapPathToId);
-            if(returnedQuest.first==true)
+            if(returnedQuest.first)
             {
                 returnedQuest.second.id=questId;
                 if(quests.find(returnedQuest.second.id)!=quests.cend())
@@ -134,7 +134,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         {
             const std::string mapPart=botAttr.substr(0,slashPos);
             const std::string botPart=botAttr.substr(slashPos+1);
-            const CATCHCHALLENGER_TYPE_BOTID tempInt=stringtouint8(botPart.c_str(),&ok);
+            const CATCHCHALLENGER_TYPE_BOTID tempInt=stringtouint8(botPart,&ok);
             if(ok)
             {
                 botToTalkBotId=tempInt;
@@ -178,10 +178,10 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     if(reputationNameToId.find(requirementsItem->Attribute("type"))!=reputationNameToId.cend())
                     {
                         std::string stringLevel=requirementsItem->Attribute("level");
-                        bool positif=!stringStartWith(stringLevel,"-");
+                        bool const positif=!stringStartWith(stringLevel,"-");
                         if(!positif)
                             stringLevel.erase(0,1);
-                        uint8_t level=stringtouint8(stringLevel,&ok);
+                        uint8_t const level=stringtouint8(stringLevel,&ok);
                         if(ok)
                         {
                             CatchChallenger::ReputationRequirements reputation;
@@ -273,7 +273,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 {
                     CatchChallenger::Quest::Item item;
                     {
-                        std::string itemLower=str_tolower(rewardsItem->Attribute("id"));
+                        std::string const itemLower=str_tolower(rewardsItem->Attribute("id"));
                         if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
                         {
                             item.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
@@ -352,7 +352,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 const CATCHCHALLENGER_TYPE_BOTID &tempInt=stringtouint8(step->Attribute("bot"),&ok);
                 if(ok)
                 {
-                    std::string tempS(step->Attribute("map"));
+                    std::string const tempS(step->Attribute("map"));
                     if(mapPathToId.find(tempS)!=mapPathToId.cend())
                     {
                         stepObject.botToTalkBotId=tempInt;
@@ -378,7 +378,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     {
                         CatchChallenger::Quest::Item item;
                         {
-                            std::string itemLower=str_tolower(stepItem->Attribute("id"));
+                            std::string const itemLower=str_tolower(stepItem->Attribute("id"));
                             if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
                             {
                                 item.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
@@ -412,7 +412,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                 unsigned int index=0;
                                 while(index<tempStringList.size())
                                 {
-                                    std::string monsterLower=str_tolower(tempStringList.at(index));
+                                    std::string const monsterLower=str_tolower(tempStringList.at(index));
                                     if(CommonDatapack::commonDatapack.has_tempNameToMonsterId(monsterLower))
                                         itemMonster.monsters.push_back(CommonDatapack::commonDatapack.get_tempNameToMonsterId(monsterLower));
                                     else
@@ -449,7 +449,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         const CATCHCHALLENGER_TYPE_BOTID &fightId=stringtouint8(fightItem->Attribute("bot"),&ok);
                         if(ok)
                         {
-                            std::string tempS(fightItem->Attribute("map"));
+                            std::string const tempS(fightItem->Attribute("map"));
                             if(mapPathToId.find(tempS)!=mapPathToId.cend())
                                 stepObject.requirements.fights[mapPathToId.at(tempS)].insert(fightId);
                             else

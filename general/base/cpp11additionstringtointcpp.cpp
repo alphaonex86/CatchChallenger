@@ -19,7 +19,7 @@ return end != nullptr;
 // calls stringtouint16 per XML attribute). The regex engine has to construct
 // an executor on every call; a single linear pass is two orders of magnitude
 // faster and matches the same set of strings byte-for-byte.
-static inline bool _isaunsignednumber(const std::string &s)
+static inline bool is_a_unsignednumber(const std::string &s)
 {
     const size_t n=s.size();
     if(n==0) return false;
@@ -33,7 +33,7 @@ static inline bool _isaunsignednumber(const std::string &s)
     }
     return true;
 }
-static inline bool _isasignednumber(const std::string &s)
+static inline bool is_a_signednumber(const std::string &s)
 {
     const size_t n=s.size();
     if(n==0) return false;
@@ -49,7 +49,7 @@ static inline bool _isasignednumber(const std::string &s)
     }
     return true;
 }
-static inline bool _isadouble(const std::string &s)
+static inline bool is_a_double(const std::string &s)
 {
     const size_t n=s.size();
     if(n==0) return false;
@@ -99,7 +99,7 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
         return 0;
     }
     #else
-    if(Q_LIKELY(_isaunsignednumber(string)))
+    if(Q_LIKELY(is_a_unsignednumber(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -159,7 +159,7 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
         return 0;
     }
     #else
-    if(Q_LIKELY(_isaunsignednumber(string)))
+    if(Q_LIKELY(is_a_unsignednumber(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -207,7 +207,7 @@ uint32_t stringtouint32(const std::string &string,bool *ok)
         *ok=true;
     return tempValue;
     #else
-    if(Q_LIKELY(_isaunsignednumber(string)))
+    if(Q_LIKELY(is_a_unsignednumber(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -289,7 +289,7 @@ uint64_t stringtouint64(const std::string &string,bool *ok)
         *ok=true;
     return tempValue;
     #else
-    if(Q_LIKELY(_isaunsignednumber(string)))
+    if(Q_LIKELY(is_a_unsignednumber(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -338,7 +338,7 @@ int8_t stringtoint8(const std::string &string,bool *ok)
         return 0;
     }
     #else
-    if(Q_LIKELY(_isasignednumber(string)))
+    if(Q_LIKELY(is_a_signednumber(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -398,7 +398,7 @@ int16_t stringtoint16(const std::string &string,bool *ok)
         return 0;
     }
     #else
-    if(Q_LIKELY(_isasignednumber(string)))
+    if(Q_LIKELY(is_a_signednumber(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -446,7 +446,7 @@ int32_t stringtoint32(const std::string &string,bool *ok)
         *ok=true;
     return tempValue;
     #else
-    if(Q_LIKELY(_isasignednumber(string)))
+    if(Q_LIKELY(is_a_signednumber(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -483,7 +483,7 @@ int64_t stringtoint64(const std::string &string,bool *ok)
         *ok=true;
     return tempValue;
     #else
-    if(Q_LIKELY(_isasignednumber(string)))
+    if(Q_LIKELY(is_a_signednumber(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -503,7 +503,7 @@ int64_t stringtoint64(const std::string &string,bool *ok)
 
 float stringtofloat(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(_isadouble(string)))
+    if(Q_LIKELY(is_a_double(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
@@ -522,7 +522,7 @@ float stringtofloat(const std::string &string,bool *ok)
 
 double stringtodouble(const std::string &string,bool *ok)
 {
-    if(Q_LIKELY(_isadouble(string)))
+    if(Q_LIKELY(is_a_double(string)))
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;

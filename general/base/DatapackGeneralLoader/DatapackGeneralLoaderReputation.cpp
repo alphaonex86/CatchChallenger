@@ -12,8 +12,8 @@ using namespace CatchChallenger;
 
 std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string &file)
 {
-    std::regex excludeFilterRegex("[\"']");
-    std::regex typeRegex("^[a-z]{1,32}$");
+    std::regex const excludeFilterRegex("[\"']");
+    std::regex const typeRegex("^[a-z]{1,32}$");
     std::vector<Reputation> reputation;
     tinyxml2::XMLDocument *domDocument;
     #ifndef CATCHCHALLENGER_SERVER
@@ -67,7 +67,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                 if(level->Attribute("point")!=NULL)
                 {
                     const int32_t &point=stringtoint32(level->Attribute("point"),&ok);
-                    std::string text_val;
+                    std::string const text_val;
                     if(ok)
                     {
                         ok=true;

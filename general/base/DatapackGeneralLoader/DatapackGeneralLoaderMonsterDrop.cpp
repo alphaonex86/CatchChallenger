@@ -168,7 +168,7 @@ catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > DatapackGenera
                                 {
                                     if(drop->Attribute("item")!=NULL)
                                     {
-                                        std::string itemLower=str_tolower(drop->Attribute("item"));
+                                        std::string const itemLower=str_tolower(drop->Attribute("item"));
                                         if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
                                             dropVar.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
                                         else
@@ -204,7 +204,7 @@ catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> > DatapackGenera
                                         while(dropVar.luck>100)
                                         {
                                             dropVar.quantity_max++;
-                                            double currentAverage=static_cast<double>(((double)dropVar.quantity_min+(double)dropVar.quantity_max)/2.0);
+                                            double const currentAverage=static_cast<double>(((double)dropVar.quantity_min+(double)dropVar.quantity_max)/2.0);
                                             dropVar.luck=static_cast<double>((100.0*targetAverage)/currentAverage);
                                         }
                                     }

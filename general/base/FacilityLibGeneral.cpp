@@ -252,17 +252,17 @@ std::vector<char> FacilityLibGeneral::readAllFileAndClose(FILE * file)
 {
     std::vector<char> data;
     fseek(file,0,SEEK_END);
-    long fsize=ftell(file);
+    long const fsize=ftell(file);
     fseek(file,0,SEEK_SET);
 
     data.resize(fsize);
-    int64_t size=fread(data.data(),1,fsize,file);
+    int64_t const size=fread(data.data(),1,fsize,file);
     if(size!=fsize)
     {
         if(ferror(file))
         {
-            int ferrorCode=ferror(file);
-            int errnoCode=errno;
+            int const ferrorCode=ferror(file);
+            int const errnoCode=errno;
             std::cerr << "I/O error when reading, ferrorCode: " << ferrorCode << ", errnoCode: " << errnoCode << std::endl;
             abort();
         }

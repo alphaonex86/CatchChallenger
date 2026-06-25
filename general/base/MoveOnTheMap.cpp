@@ -14,7 +14,7 @@ MoveOnTheMap::MoveOnTheMap()
 
 void MoveOnTheMap::setLastDirection(const Direction &the_direction)
 {
-    if(last_direction_is_set!=false)
+    if(last_direction_is_set)
         abort();
     last_direction_is_set=true;
     last_direction=the_direction;
@@ -23,14 +23,14 @@ void MoveOnTheMap::setLastDirection(const Direction &the_direction)
 
 Direction MoveOnTheMap::getDirection() const
 {
-    if(last_direction_is_set==false)
+    if(!last_direction_is_set)
         abort();
     return last_direction;
 }
 
 void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 {
-    if(last_direction_is_set==false)
+    if(!last_direction_is_set)
     {
         std::cerr << "can't call move now, you need wait firstly the insert_player() with current player (abort)" << std::endl;
         abort();
@@ -84,7 +84,7 @@ void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 
 void MoveOnTheMap::stopMove()
 {
-    if(last_direction_is_set==false)
+    if(!last_direction_is_set)
         abort();
     switch(last_direction)
     {
@@ -199,7 +199,7 @@ Direction MoveOnTheMap::directionToDirectionLook(const Direction &direction)
 
 int8_t MoveOnTheMap::indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    if(map.teleporters.size()<=0)
+    if(map.teleporters.empty())
         return -1;
     uint8_t index=0;
     while(index<map.teleporters.size())
@@ -214,7 +214,7 @@ int8_t MoveOnTheMap::indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x
 
 bool MoveOnTheMap::needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    if(map.teleporters.size()<=0)
+    if(map.teleporters.empty())
         return false;
     uint8_t index=0;
     while(index<map.teleporters.size())

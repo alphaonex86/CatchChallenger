@@ -107,7 +107,7 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
                     monstersCollision.item=0;
                     if(monstersCollisionItem->Attribute("item")!=NULL)
                     {
-                        std::string itemLower=str_tolower(monstersCollisionItem->Attribute("item"));
+                        std::string const itemLower=str_tolower(monstersCollisionItem->Attribute("item"));
                         if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemLower))
                             monstersCollision.item=CommonDatapack::commonDatapack.get_tempNameToItemId(itemLower);
                         else
@@ -342,7 +342,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
             std::cerr << "Have not the attribute id, into file: " << file << std::endl;
         else
         {
-            std::string idString=eventItem->Attribute("id");
+            std::string const idString=eventItem->Attribute("id");
             if(idString.empty())
                 std::cerr << "Have id empty, into file: " << file << std::endl;
             else
