@@ -1158,6 +1158,13 @@ def chat_ollama(messages, timeout=None, model=None):
             "repeat_penalty": 1.3,
         },
     }
+    # Reasoning control (mirrors the router path): a thinking model (e.g. gemma4)
+    # otherwise spends the WHOLE num_predict on thought and returns EMPTY content on
+    # any non-trivial prompt. Honour CC_OLLAMA_THINK / settings 'ollama_think' here
+    # too — the native /api/chat path was silently dropping it.
+    think = _ollama_think()
+    if think is not None:
+        payload["think"] = think
     data = json.dumps(payload).encode("utf-8")
     attempt = 0
     while True:
