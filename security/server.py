@@ -3695,6 +3695,11 @@ def run_codecheck():
     run_exploit() DEVELOPS the proof. So server.py = multi-IA security audit + exploit
     generation, small-model friendly. Single-IA (no CC_IA_PANEL) = the lone agentic
     reviewer; no proof => no claim."""
+    # codecheck.py (the shared per-function engine) lives in tools/codecheck/.
+    _cc_dir = os.path.normpath(os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "tools", "codecheck"))
+    if _cc_dir not in sys.path:
+        sys.path.insert(0, _cc_dir)
     import codecheck
     import agentic
     # The LLM(s) are MANDATORY and never auto-chosen — fail fast before the build.

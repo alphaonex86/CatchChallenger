@@ -36,6 +36,12 @@ import time
 
 import common
 import codetree
+# codecheck.py (the shared per-function engine) lives in tools/codecheck/ — put it on
+# the path so `import codecheck` resolves from here.
+_CC_DIR = os.path.normpath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "tools", "codecheck"))
+if _CC_DIR not in sys.path:
+    sys.path.insert(0, _CC_DIR)
 import codecheck
 
 # --- limits (sensible defaults; all env-overridable) -----------------------
