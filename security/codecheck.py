@@ -397,27 +397,58 @@ def _tidy_finding_lines(fi):
 # ---------------------------------------------------------------------------
 # Incremental: per-(model, function) verdict cache (skip unchanged functions)
 # ---------------------------------------------------------------------------
-def _verdict_key(model, fi, system):
-    body, _ = codetree.source_body(fi.file, fi.line)
-    return hashlib.sha256(("%s|%s|%s|%s" % (model, fi.qual_name, body, system))
-                          .encode()).hexdigest()[:28]
+# The cache is COMPUTE-ONLY: every run STILL prints all findings, so a problem is
+# never silently forgotten — the cache only skips the LLM RE-RUN when nothing the
+# model sees has changed. `material` is the FULL view the model gets (headers + body
+# + callers + callee branches + clang types + tidy) plus model + mode + verify, so
+# it recomputes when the file, a header, a callee, the model, or the mode changes.
+# CC_NO_CACHE forces a full recompute.
+_NO_CACHE = bool(os.environ.get("CC_NO_CACHE", "").strip())
+_CACHE_STATS = {"hit": 0, "miss": 0}
 
 
-def verdict_get(model, fi, system):
-    try:
-        with open(os.path.join(_VERDICT_CACHE_DIR, _verdict_key(model, fi, system) + ".json")) as fh:
-            return json.load(fh)
-    except (OSError, ValueError, TypeError):
+def _verdict_path(material):
+    h = hashlib.sha256("\x00".join(material).encode("utf-8", "replace")).hexdigest()
+    return os.path.join(_VERDICT_CACHE_DIR, h[:32] + ".json")
+
+
+def verdict_get(material):
+    """Cached findings for this exact (view, model, mode, verify), or None. A hit
+    means the LLM is skipped — but the caller STILL prints the findings."""
+    if _NO_CACHE:
         return None
+    try:
+        with open(_verdict_path(material)) as fh:
+            v = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    _CACHE_STATS["hit"] += 1
+    return v
 
 
-def verdict_put(model, fi, system, value):
+def verdict_put(material, value):
+    if _NO_CACHE:
+        return
     try:
         os.makedirs(_VERDICT_CACHE_DIR, exist_ok=True)
-        with open(os.path.join(_VERDICT_CACHE_DIR, _verdict_key(model, fi, system) + ".json"), "w") as fh:
+        with open(_verdict_path(material), "w") as fh:
             json.dump(value, fh)
     except (OSError, TypeError):
         pass
+
+
+def cache_summary():
+    """One line for the user: how many functions were recomputed vs reused — so it
+    is always visible that 'reused' only means unchanged file/LLM/mode, not skipped
+    output."""
+    h, m = _CACHE_STATS["hit"], _CACHE_STATS["miss"]
+    return ("cache: %d recomputed, %d reused (unchanged file/LLM/mode)%s"
+            % (m, h, "  [CC_NO_CACHE: off]" if _NO_CACHE else ""))
+
+
+def reset_cache_stats():
+    _CACHE_STATS["hit"] = 0
+    _CACHE_STATS["miss"] = 0
 
 
 # ---------------------------------------------------------------------------
@@ -498,15 +529,18 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=F
     clang-tidy findings + the LLM findings, ADVERSARIALLY VERIFIED when verify=True)
     is cached by (model, function-source, system, verify), so a re-run skips
     unchanged functions DETERMINISTICALLY. dry=True: no IA — per-turn view SIZES."""
+    views = list(build_views(idx, fi))                 # materialize: cache key + loop
     if dry:
         return ["[dry %s] view=%d chars (~%d tok)" % (label, len(ctx), len(ctx) // 4)
-                for label, ctx in build_views(idx, fi)]
-    ckey = system + ("|verify" if verify else "")
-    cached = verdict_get(model, fi, ckey)
+                for label, ctx in views]
+    material = [model or "", system, "V" if verify else "", TIDY_CHECKS,
+                "".join(c for _, c in views)]
+    cached = verdict_get(material)
     if cached is not None:
-        return cached
+        return cached                                  # caller STILL prints these
+    _CACHE_STATS["miss"] += 1
     findings = list(_tidy_finding_lines(fi))           # algorithmic, always reported
-    for label, ctx in build_views(idx, fi):
+    for label, ctx in views:
         messages = [{"role": "system", "content": system},
                     {"role": "user", "content": ctx}]
         try:
@@ -523,7 +557,7 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=F
                     if f.startswith(("[clang-tidy]", "[chat error"))
                     or verify_finding(idx, fi, f, model)]
     if not any(f.startswith("[chat error") for f in findings):
-        verdict_put(model, fi, ckey, findings)         # don't cache a transient error
+        verdict_put(material, findings)                # don't cache a transient error
     return findings
 
 
@@ -550,6 +584,7 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
         funcs = audit_targets(funcs)                   # skip trivial functions
         prewarm_types(funcs)
         prewarm_tidy(funcs)
+    reset_cache_stats()
     verify = not dry and not os.environ.get("CC_NO_VERIFY", "").strip()
     out.write("[codecheck] %s: %d function(s) %s\n"
               % (_ts_safe(), len(funcs), "(dry)" if dry else ""))
@@ -562,7 +597,7 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
             for line in fl:
                 out.write(line + "\n")
             total += 0 if dry else len(fl)
-    out.write("\n[codecheck] done; %d finding-block(s)\n" % total)
+    out.write("\n[codecheck] done; %d finding-block(s); %s\n" % (total, cache_summary()))
     return 0
 
 
@@ -586,6 +621,7 @@ def run_panel(specs, scope=None, only_file=None, only_func=None, limit=None,
     funcs = audit_targets(funcs)                       # skip trivial functions
     prewarm_types(funcs)
     prewarm_tidy(funcs)
+    reset_cache_stats()
     out.write("[codecheck-panel] %d IA(s), %d function(s)\n" % (len(specs), len(funcs)))
     spoke = 0
     for fi in funcs:
@@ -597,8 +633,8 @@ def run_panel(specs, scope=None, only_file=None, only_func=None, limit=None,
                       % (fi.qual_name, os.path.relpath(fi.file, REPO_ROOT), fi.line))
             for b in briefs:
                 out.write(b + "\n")
-    out.write("\n[codecheck-panel] %d/%d function(s) had something to say\n"
-              % (spoke, len(funcs)))
+    out.write("\n[codecheck-panel] %d/%d function(s) had something to say; %s\n"
+              % (spoke, len(funcs), cache_summary()))
     return 0
 
 
