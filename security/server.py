@@ -3667,6 +3667,69 @@ def _print_help(prog):
         % (prog, FINDINGS, FINDINGS, common.MODEL_NAME))
 
 
+# One-function SECURITY prompt for the codecheck-engine scan. server.py is the
+# security auditor (not a general code checker like codecheck.py), so this asks
+# ONLY for EXPLOITABLE, remote-reachable memory-safety bugs, judged via the
+# caller tree (the path untrusted TCP bytes take to the function).
+CODECHECK_SECURITY_SYSTEM = (
+    "You are a security auditor of a TCP-reachable C/C++ server. You are shown the "
+    "relevant HEADER(s) in full, ONE function to audit, its CALLER tree (who reaches "
+    "it - the path untrusted REMOTE bytes take to get here), and ONE thing it calls "
+    "at a time. Audit ONLY the shown function. Report ONLY EXPLOITABLE memory-safety "
+    "bugs reachable from untrusted network input: out-of-bounds read/write, an "
+    "unchecked length/index/size/offset/pointer taken from a caller, integer "
+    "overflow/underflow or signed/unsigned confusion driving a read/write/alloc, "
+    "use-after-free / double-free, or a NULL deref on attacker-controlled input. Use "
+    "the CALLER tree to confirm remote reachability - if untrusted input cannot reach "
+    "the bad value it is NOT a finding. Be terse. If nothing exploitable, reply "
+    "exactly: NO ISSUES. Otherwise one line per finding: "
+    "SEVERITY(low|medium|high|critical) | function:line | the exploitable bug + how "
+    "remote input triggers it.")
+
+
+def run_codecheck():
+    """SECURITY scan via the multi-IA agentic WORKGROUP engine (agentic.py): each
+    function is reviewed independently by every IA (agentic — one callee branch per
+    turn, may pull more data); the IAs discuss and form consensus WORKGROUPS around
+    shared findings. The workgroup-vetted candidates are written to FINDINGS and
+    run_exploit() DEVELOPS the proof. So server.py = multi-IA security audit + exploit
+    generation, small-model friendly. Single-IA (no CC_IA_PANEL) = the lone agentic
+    reviewer; no proof => no claim."""
+    import codecheck
+    import agentic
+    os.makedirs(OUTPUT_ROOT, exist_ok=True)
+    idx = codecheck.build_index()                  # all C/C++ excl vendor
+    funcs = codecheck.leaves_first(idx)            # callees before callers
+    specs = agentic.resolve_panel()
+    sys.stderr.write("[codecheck] %d functions, %d IA(s); agentic per-function "
+                     "security review (one branch at a time)\n"
+                     % (len(funcs), len(specs)))
+    codecheck.prewarm_types(funcs)
+    by_file = {}
+    i = 0
+    while i < len(funcs):
+        fi = funcs[i]
+        i += 1
+        blocks = agentic.audit_function(idx, fi, specs, role="security",
+                                        sysprompt=CODECHECK_SECURITY_SYSTEM)
+        if blocks:
+            rel = os.path.relpath(fi.file, REPO_ROOT)
+            by_file.setdefault(rel, []).append(
+                "## %s (%s:%d)\n%s" % (fi.qual_name, rel, fi.line, "\n\n".join(blocks)))
+    # Same FINDINGS block shape as run_scan(), so run_exploit() parses it unchanged.
+    with open(FINDINGS, "w") as fh:
+        for rel in by_file:
+            for sink in (sys.stdout, fh):
+                print("=" * 70, file=sink)
+                print("FINDINGS: %s" % rel, file=sink)
+                print("=" * 70, file=sink)
+                print("\n\n".join(by_file[rel]), file=sink)
+                print(file=sink)
+    sys.stderr.write("[codecheck] %d file(s) with findings -> exploit phase\n"
+                     % len(by_file))
+    return run_exploit()
+
+
 def main(argv):
     global RUN_UNDER, CC_IA_PANEL
 
@@ -3742,14 +3805,14 @@ def main(argv):
             return rc
         return run_exploit()
     if mode in ("codecheck", "per-function", "perfunc"):
-        # SHARED logic with codecheck.py: audit the C/C++ tree FUNCTION-BY-FUNCTION
-        # with a LIMITED per-function view (headers in full + the one function body +
-        # its caller tree + ONE callee branch at a time). Each IA turn stays a few-K
-        # tokens, so a SMALL local model (e.g. CC_IA_MODEL=qwen3-coder:30b with a
-        # small num_ctx) can audit the whole codebase one leaf at a time - where the
-        # per-file scan above needs a large-context model. C/C++ only, excl vendor.
-        import codecheck
-        return codecheck.run(out=sys.stdout)
+        # SHARED engine with codecheck.py: audit the C/C++ tree FUNCTION-BY-FUNCTION
+        # with a LIMITED per-function view (headers in full + the one body + its
+        # caller tree + ONE callee branch at a time). Each IA turn stays a few-K
+        # tokens, so a SMALL local model (CC_IA_MODEL=qwen3-coder:30b, small num_ctx)
+        # can do the audit where the per-file scan above needs a large-context model.
+        # Unlike codecheck.py this stays SECURITY-focused and then GENERATES EXPLOITS
+        # for what it finds (run_codecheck -> run_exploit).
+        return run_codecheck()
     sys.stderr.write("error: unknown mode %r\n" % mode)
     _print_help(argv[0])
     return 2

@@ -25,7 +25,10 @@ leaves-first walk + header lookup + branch iteration live here.
 """
 
 import argparse
+import json
 import os
+import re
+import subprocess
 import sys
 
 import common
@@ -45,21 +48,31 @@ HEADER_EXT = (".hpp", ".h", ".hxx")
 _HEADER_CAP = 8000           # a header is "short" — cap so a hub header stays small
 _BODY_CAP = 9000             # one function body
 _CALLEE_BODY_CAP = 6000      # one callee branch body
+_CALLER_TREE_CAP = 4000      # the caller tree text (a hub fn has many callers)
 _MAX_BRANCHES = 10           # cap callee branches audited per function
+_MAX_TYPES = 16              # cap the param/local types listed (don't saturate)
+_TYPE_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "types-cache")
+_TYPE_RE = re.compile(r"\b(?:Parm)?VarDecl\b.*?\b([A-Za-z_]\w*)\s+'([^']+)'")
 
-# Crisp system prompt for a SMALL model: one function, terse structured output.
+# Crisp system prompt for a SMALL model: ONE function, terse structured output.
+# codecheck.py is the GENERAL code-quality reviewer — SECURITY is NOT its job
+# (server.py owns exploitable-vuln finding + exploit generation). Review what a
+# careful dev/QA reviewer would, EXCEPT memory-safety/security.
 CHECK_SYSTEM = (
-    "You are a meticulous C/C++ security & correctness reviewer. You are shown the "
-    "relevant HEADER(s), ONE function to audit, its CALLER tree (who calls it - "
-    "possible sources of untrusted/remote input), and (when present) ONE thing it "
-    "calls. Audit ONLY the shown function. Look for: out-of-bounds read/write, "
-    "unchecked length/index/size/offset/pointer taken from a caller, integer "
-    "overflow/underflow or signed/unsigned confusion, unchecked return value, "
-    "use-after-free/double-free, leak, null-deref, logic error, wrong condition, "
-    "dead code, name-vs-purpose mismatch. Use the CALLER tree to judge whether bad "
-    "input can actually reach it. Be terse. If the function is fine, reply with "
-    "exactly: NO ISSUES. Otherwise one line per finding:\n"
-    "SEVERITY(low|medium|high|critical) | function:line | one-line problem -> fix")
+    "You are a meticulous C/C++ code reviewer for general quality - NOT security "
+    "(a separate tool handles vulnerabilities; do not duplicate it). You are shown "
+    "the relevant HEADER(s), the param/local TYPES, ONE function to review, its "
+    "CALLER tree, and (when present) ONE thing it calls. Review ONLY the shown "
+    "function for: real BUGS (wrong condition, off-by-one, wrong variable, a return "
+    "value not checked, resource leak, logic error); ILLOGICAL or dead/unreachable "
+    "code; poor VARIABLE and FUNCTION NAMES (unclear, misleading, name-vs-purpose "
+    "mismatch); CLARITY problems (over-complex, confusing flow, needs a comment); "
+    "OPTIMIZATION (needless copy/allocation, redundant work, a better "
+    "algorithm/container); and DUPLICATION. Do NOT report memory-safety or security "
+    "issues - out of scope here. Be terse. If the function is clean, reply exactly: "
+    "NO ISSUES. Otherwise one line per finding:\n"
+    "CATEGORY(bug|logic|naming|clarity|perf|duplication|deadcode) | function:line | "
+    "the problem -> the fix")
 
 
 # ---------------------------------------------------------------------------
@@ -138,18 +151,87 @@ def callee_branches(idx, qual):
     return [(c, idx.by_name[c]) for c in callees[:_MAX_BRANCHES]]
 
 
+def _var_types(fi):
+    """Param/local variable TYPES of the focused function, via clang's AST
+    (`-ast-dump-filter` scopes the dump to just this function). Ordered
+    {name: type}, capped at _MAX_TYPES. Cached on disk by file mtime + function.
+
+    This is the ALGORITHMIC (clang-derived, not guessed) fact we hand the model so
+    it can reason about the code without the full headers — e.g. that `size` is a
+    `const uint32_t &` or `buf` is a `char[4096]`. Empty on any failure: a hint,
+    never required."""
+    if not codetree.CLANG:
+        return {}
+    real = os.path.realpath(fi.file)
+    try:
+        mtime = os.path.getmtime(real)
+    except OSError:
+        return {}
+    name = fi.qual_name.split("::")[-1]
+    key = "%s.%s.%s" % (os.path.basename(real), name,
+                        format(mtime, ".0f").replace("-", "_"))
+    cache = os.path.join(_TYPE_CACHE_DIR, key + ".json")
+    try:
+        with open(cache) as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        pass
+    flags = codetree.flags_for(real)
+    cmd = [codetree.CLANG, "-fsyntax-only", "-fno-color-diagnostics",
+           "-Xclang", "-ast-dump", "-Xclang", "-ast-dump-filter=" + name]
+    cmd += flags.split() if flags else ["-std=gnu++23"]
+    cmd.append(real)
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=40)
+    except (OSError, subprocess.SubprocessError):
+        return {}
+    types = {}
+    for line in r.stdout.splitlines():
+        m = _TYPE_RE.search(line)
+        if m:
+            n, t = m.group(1), m.group(2)
+            if n not in types:
+                types[n] = t
+            if len(types) >= _MAX_TYPES:
+                break
+    try:
+        os.makedirs(_TYPE_CACHE_DIR, exist_ok=True)
+        with open(cache, "w") as fh:
+            json.dump(types, fh)
+    except OSError:
+        pass
+    return types
+
+
+def prewarm_types(funcs, workers=8):
+    """Populate the var-type cache for many functions in parallel (each is its own
+    clang parse) so a whole-tree scan isn't serialized on per-function clang runs.
+    Call before iterating build_views over many functions (e.g. a bulk scan)."""
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        list(pool.map(_var_types, funcs))
+
+
 def build_views(idx, fi):
     """Yield (label, context_text) — one SMALL per-turn view for the function:
     a base view (headers + callers + body), then ONE callee branch per turn."""
     rel = os.path.relpath(fi.file, REPO_ROOT)
     hdrs = headers_for(fi)
     hdr_block = "".join("=== HEADER %s ===\n%s\n\n" % (r, t) for r, t in hdrs)
-    caller_tree = codetree.TreeRender.caller_tree(idx, fi.qual_name, depth=4)
+    # cap the caller tree: a hub function has hundreds of callers, which would
+    # otherwise blow the per-turn budget the whole point is to keep small.
+    caller_tree = codetree.TreeRender.caller_tree(idx, fi.qual_name, depth=4)[:_CALLER_TREE_CAP]
     body = _body(fi, _BODY_CAP)
+    # ALGORITHMIC input: clang-derived param/local types as one compact comment
+    # (capped) so the model knows the types without the full headers (and we don't
+    # saturate the small context).
+    types = _var_types(fi)
+    tblock = ("// param/local types (clang): "
+              + ", ".join("%s=%s" % (n, t) for n, t in types.items()) + "\n") if types else ""
     base = (
-        "%s=== CALLERS (taint sources — who reaches this function) ===\n%s\n\n"
-        "=== AUDIT THIS FUNCTION: %s  (%s:%d) ===\n%s\n"
-        % (hdr_block, caller_tree, fi.qual_name, rel, fi.line, body))
+        "%s=== CALLERS (who reaches this function) ===\n%s\n\n"
+        "=== REVIEW THIS FUNCTION: %s  (%s:%d) ===\n%s%s\n"
+        % (hdr_block, caller_tree, fi.qual_name, rel, fi.line, tblock, body))
 
     branches = callee_branches(idx, fi.qual_name)
     if not branches:
@@ -230,6 +312,39 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
     return 0
 
 
+def run_panel(scope=None, only_file=None, only_func=None, limit=None, out=sys.stdout):
+    """Multi-IA agentic general-QA review (CC_IA_PANEL). Each function is reviewed
+    independently by every IA (agentic: one branch at a time, can pull more data),
+    the IAs discuss and form consensus WORKGROUPS, and each workgroup redacts a
+    brief. Output per function ONLY when a workgroup has something to say."""
+    import agentic                                  # lazy: avoids an import cycle
+    specs = agentic.resolve_panel()
+    idx = build_index(scope)
+    if only_func:
+        funcs = [idx.by_name[only_func]] if only_func in idx.by_name else []
+    elif only_file:
+        funcs = idx.functions_in(only_file)
+    else:
+        funcs = leaves_first(idx)
+    if limit:
+        funcs = funcs[:limit]
+    prewarm_types(funcs)
+    out.write("[codecheck-panel] %d IA(s), %d function(s)\n" % (len(specs), len(funcs)))
+    spoke = 0
+    for fi in funcs:
+        briefs = agentic.audit_function(idx, fi, specs, role="codecheck",
+                                        sysprompt=CHECK_SYSTEM)
+        if briefs:
+            spoke += 1
+            out.write("\n#### %s  (%s:%d)\n"
+                      % (fi.qual_name, os.path.relpath(fi.file, REPO_ROOT), fi.line))
+            for b in briefs:
+                out.write(b + "\n")
+    out.write("\n[codecheck-panel] %d/%d function(s) had something to say\n"
+              % (spoke, len(funcs)))
+    return 0
+
+
 def _ts_safe():
     try:
         return common._ts()
@@ -253,9 +368,16 @@ def main(argv):
     p.add_argument("--dry", action="store_true",
                    help="don't call the IA; print per-turn view sizes (verify the "
                         "context stays small for a 30B model)")
+    p.add_argument("--panel", action="store_true",
+                   help="multi-IA mode: each function reviewed by the CC_IA_PANEL, "
+                        "discuss -> consensus workgroups -> per-function briefs "
+                        "(output only when a workgroup has something to say)")
     args = p.parse_args(argv[1:])
     scope = ([os.path.join(REPO_ROOT, s) if not os.path.isabs(s) else s
               for s in args.scope.split(",")] if args.scope else None)
+    if args.panel:
+        return run_panel(scope=scope, only_file=args.file, only_func=args.func,
+                         limit=args.limit)
     return run(scope=scope, only_file=args.file, only_func=args.func,
                limit=args.limit, model=args.model, dry=args.dry)
 
