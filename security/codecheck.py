@@ -477,6 +477,36 @@ def verify_finding(idx, fi, finding, model):
     return "REJECTED" not in ans.upper().split("\n", 1)[0]
 
 
+def collapse_repetition(text, max_repeats=3, max_chars=8000):
+    """Defang an LLM text-loop: collapse >max_repeats consecutive identical lines and
+    hard-cap the total length. A small model sometimes spews the same line thousands
+    of times (despite repeat_penalty); left unchecked that bloats the agentic
+    conversation (eating context) and the findings output. Applied to every reply
+    before it is stored or appended."""
+    if not text:
+        return text
+    out = []
+    prev = None
+    run = 0
+    for ln in text.splitlines():
+        if ln == prev:
+            run += 1
+            if run <= max_repeats:
+                out.append(ln)
+        else:
+            if run > max_repeats:
+                out.append("... [%d identical lines collapsed]" % (run - max_repeats))
+            prev = ln
+            run = 1
+            out.append(ln)
+    if run > max_repeats:
+        out.append("... [%d identical lines collapsed]" % (run - max_repeats))
+    s = "\n".join(out)
+    if len(s) > max_chars:                             # catches a newline-less loop too
+        s = s[:max_chars] + "\n... [reply truncated at %d chars]" % max_chars
+    return s
+
+
 def build_views(idx, fi):
     """Yield (label, context_text) — one SMALL per-turn view for the function:
     a base view (headers + callers + body), then ONE callee branch per turn."""
@@ -548,7 +578,7 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=F
         except Exception as exc:                       # transport error: note + go on
             findings.append("[chat error %s: %s]" % (label, exc))
             continue
-        a = (answer or "").strip()
+        a = collapse_repetition((answer or "").strip())
         if a and "NO ISSUES" not in a.upper():
             findings.append("[%s]\n%s" % (label, a))
     if verify:
@@ -694,4 +724,9 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    # Re-enter through the REAL module name so agentic's `import codecheck` resolves
+    # to the SAME module object. Run as __main__ alone, `import codecheck` would
+    # build a SECOND codecheck with its own globals (cache dirs, _CACHE_STATS),
+    # silently diverging the cache location and the recomputed/reused counter.
+    import codecheck as _cc
+    sys.exit(_cc.main(sys.argv))
