@@ -59,6 +59,7 @@ _HEADER_CAP = 8000           # a header is "short" — cap so a hub header stays
 _BODY_CAP = 9000             # one function body
 _CALLEE_BODY_CAP = 6000      # one callee branch body
 _CALLER_TREE_CAP = 4000      # the caller tree text (a hub fn has many callers)
+_LEADING_COMMENT_CAP = 1500  # doc-comment block right above the signature
 _MAX_BRANCHES = 10           # cap callee branches audited per function
 _MAX_TYPES = 16              # cap the param/local types listed (don't saturate)
 _TYPE_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "types-cache")
@@ -232,9 +233,59 @@ def headers_for(fi):
     return out
 
 
+def _leading_comment(file_path, start_line):
+    """The contiguous comment block IMMEDIATELY above the function signature (its
+    doc-comment: contract, preconditions, ownership, "len is untrusted", ...).
+    source_body() starts at the signature line, so without this the model never
+    sees it. Walks UP from the line above the signature over adjacent // lines and
+    /* */ blocks; STOPS at the first blank or code line, so a file-level licence
+    header (separated by a blank line) is NOT pulled in. Capped, nearest-the-
+    function kept. Best-effort: '' on any failure."""
+    try:
+        lines = open(file_path, "r", errors="replace").readlines()
+    except OSError:
+        return ""
+    # start_line==1 has nothing above it; a line past EOF (clang line-misattribution)
+    # has no meaningful "above" either — best-effort, never index out of range.
+    if start_line < 2 or start_line > len(lines):
+        return ""
+    i = start_line - 2                 # 0-indexed line directly above the signature
+    out = []
+    in_block = False                   # walking up THROUGH a /* ... */ block
+    while i >= 0:
+        s = lines[i].strip()
+        if in_block:
+            out.append(lines[i])
+            if s.startswith("/*"):     # reached the block opener -> done with it
+                in_block = False
+            i -= 1
+        else:
+            if s.endswith("*/"):       # closing of a block comment (seen first, going up)
+                out.append(lines[i])
+                if not s.startswith("/*"):   # a one-line /* ... */ closes itself
+                    in_block = True
+                i -= 1
+            else:
+                if s.startswith("//"):
+                    out.append(lines[i])
+                    i -= 1
+                else:
+                    break              # blank or code -> stop (don't grab the licence header)
+    if not out:
+        return ""
+    out.reverse()
+    text = "".join(out)
+    return text[-_LEADING_COMMENT_CAP:]   # keep the part nearest the function
+
+
 def _body(fi, cap):
     body, _ = codetree.source_body(fi.file, fi.line)
-    return body[:cap] if body else "(body not found)"
+    if not body:
+        return "(body not found)"
+    # Prepend the function's own doc-comment (source_body starts at the signature,
+    # so it would otherwise be invisible). Each part is independently capped, so the
+    # total stays bounded (lead <= _LEADING_COMMENT_CAP, body <= cap).
+    return _leading_comment(fi.file, fi.line) + body[:cap]
 
 
 def callee_branches(idx, qual):
