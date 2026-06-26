@@ -12,9 +12,10 @@ PHASE 2  exploit : for each memory/input-y candidate finding, an exploit-
                    WRITE, runs it under gdb/valgrind against the LIVE cli
                    server over TCP via a SANDBOXED RUN (bubblewrap: only the
                    exploit's own dir is writable), and emits a VERDICT. It
-                   gets a 1h budget per exploit and may not bail early; if
-                   the budget elapses without a confirmed crash/OOB the whole
-                   exploit folder is dropped. Confirmed exploits are kept.
+                   gets a fixed wall-clock budget per exploit (DEFAULT_BUDGET,
+                   ~20min; SECSERVER_BUDGET overrides) and bails early on a
+                   stall; if the budget elapses without a confirmed crash/OOB
+                   the whole exploit folder is dropped. Confirmed exploits kept.
 
 Everything under the temp dir /mnt/data/perso/tmpfs/security/server/ (build,
 staged run, each exploit dir, REPORT.md) is produced by the model/script -
@@ -530,6 +531,31 @@ def collect_files():
                         pending.append(cand)
 
     return ordered
+
+
+def is_declaration_only_header(path):
+    """True for a .h/.hpp/.hxx that has NO function/method BODY of its own
+    (pure declarations, enums, struct layouts, macros) AND a same-named
+    .cpp/.cc/.cxx sibling that the scan audits anyway (and which pulls this
+    header in as counterpart context). Such a header has no executable sink,
+    so auditing it in ISOLATION only invites hallucinated findings on
+    declaration lines (cited line numbers past EOF, etc.). CONSERVATIVE: any
+    sign of a body -- or no sibling .cpp (header-only component: its bodies
+    live HERE) -- returns False so the header IS audited normally."""
+    if not path.endswith((".h", ".hpp", ".hxx")):
+        return False
+    stem = os.path.splitext(path)[0]
+    if not any(os.path.isfile(stem + e) for e in (".cpp", ".cc", ".cxx")):
+        return False
+    try:
+        text = open(path, "r", errors="replace").read()
+    except OSError:
+        return False
+    # A function/method body is a ')' (end of the param list, optionally with
+    # const/noexcept/ref-qualifiers or a ctor init-list) followed by '{'. A
+    # stray '){' inside a comment only makes us audit the header -> safe.
+    return re.search(r"\)\s*(?:const|noexcept|override|final|&|\s)*"
+                     r"(?::[^;{}]*)?\{", text) is None
 
 
 _basename_index = None
@@ -1874,6 +1900,18 @@ def _run_scan_inner(out):
     flagged = []
     for i, path in enumerate(files, 1):
         rel = os.path.relpath(path, REPO_ROOT)
+        # Skip a pure-declaration header whose definitions live in (and are
+        # audited via) a sibling .cpp: it has no sink of its own, so auditing it
+        # in isolation only draws hallucinated findings on declaration lines.
+        # Logged, never silent, so coverage stays auditable; force the old
+        # audit-every-header behaviour with CC_AUDIT_DECL_HEADERS=1.
+        if not os.environ.get("CC_AUDIT_DECL_HEADERS") \
+                and is_declaration_only_header(path):
+            sys.stderr.write("%s [%d/%d] %s  [skip: declaration-only header -> "
+                             "audited via its .cpp]\n"
+                             % (_ts(), i, len(files), rel))
+            sys.stderr.flush()
+            continue
         sys.stderr.write("%s [%d/%d] %s\n" % (_ts(), i, len(files), rel))
         sys.stderr.flush()
         try:
@@ -2019,31 +2057,32 @@ VALGRIND = shutil.which("valgrind")
 # proof OR once it is sure it cannot be exploited (VERDICT FALSEPOSITIVE).
 # Budget reached without a confirmed crash/OOB -> not-exploitable.
 # Either way a non-confirmed finding's exploit folder is dropped.
-# Per-exploit budgets are DERIVED from the measured total scan time (written to
-# SCAN_TIME_FILE by the scan phase): hard cap = total scan time (100%), soft cap
-# = 75% of it. Env vars override either. Fallback if no scan time is on disk
-# (e.g. running `exploit` standalone before any scan): 1h hard / 75% soft.
+#
+# The budget is a FIXED per-exploit value, deliberately NOT derived from the
+# scan time: how long it took to READ N files says nothing about how long
+# PROVING one exploit should take, and a slow remote model would inflate both
+# at once (an earlier design gave 61min/exploit x 15 findings = ~15h worst
+# case, and one finding really did burn 46min spinning). Proving an exploit
+# recompiles only the tiny exploit ELF per RUN, so 20min is ample; the stall
+# guard in exploit_one() (STALL_RUNS) cuts dead ends long before this cap.
+# Override via SECSERVER_BUDGET / SECSERVER_SOFT_BUDGET (seconds).
+# SCAN_TIME_FILE is still written by the scan phase as a plain diagnostic.
 SCAN_TIME_FILE = os.path.join(os.path.dirname(OUTPUT_ROOT), "scan-seconds.txt")
-FALLBACK_BUDGET = 3600
-
-
-def read_scan_seconds():
-    """Total scan seconds recorded by the last scan, or None if absent/bad."""
-    try:
-        return int(float(open(SCAN_TIME_FILE).read().strip()))
-    except (OSError, ValueError):
-        return None
+DEFAULT_BUDGET = 1200      # 20min hard cap per exploit (soft = 75% = 15min)
 
 
 def resolve_budgets():
-    """(hard, soft) per-exploit budgets in seconds. Env overrides win; else
-    hard = measured total scan time, soft = 75% of hard."""
+    """(hard, soft) per-exploit budgets in seconds. Env overrides win; else a
+    fixed DEFAULT_BUDGET hard cap and 75% of it as the soft cap."""
     env_hard = os.environ.get("SECSERVER_BUDGET")
-    hard = int(env_hard) if env_hard else (read_scan_seconds() or FALLBACK_BUDGET)
+    hard = int(env_hard) if env_hard else DEFAULT_BUDGET
     env_soft = os.environ.get("SECSERVER_SOFT_BUDGET")
     soft = int(env_soft) if env_soft else int(hard * 0.75)
     return hard, soft
 EXPLOIT_MAX_STEPS = int(os.environ.get("SECSERVER_STEPS", "400"))  # safety cap
+# Stall guard: after this many compile+run cycles with NO crash/hang/memerr the
+# model is hammering a dead end -> demand a verdict, then drop the finding at 2x.
+STALL_RUNS = int(os.environ.get("SECSERVER_STALL_RUNS", "8"))
 RUN_TIMEOUT = int(os.environ.get("SECSERVER_RUNTIMEOUT", "900"))  # s wall per RUN
 RUN_OUT_CAP = 8000      # chars of RUN output fed back to the model
 # Hard caps the compiled exploit ELF runs under (the sandbox enforces these).
@@ -3034,6 +3073,14 @@ class LiveServer:
             except OSError:
                 pass
             try:
+                # Reap so the killed bwrap+gdb/valgrind+server fully exits and
+                # RELEASES GDB_PORT before the next exploit's start() rebinds it
+                # (the port is fixed; without this wait the rebind can race a
+                # not-yet-dead child and the new server fails to bind/listen).
+                self.proc.wait(timeout=10)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            try:
                 os.close(self.mfd)
             except OSError:
                 pass
@@ -3102,9 +3149,11 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
     nudged = False          # already nudged once on a premature give-up?
     soft_warned = False     # already demanded the wrap-up verdict at soft cap?
     last_answer = None      # previous reply, to detect verbatim repetition
+    compile_runs = 0        # compile+run cycles so far (stall detection)
+    stall_warned = False    # already nudged once on a no-progress run-loop?
     step = 0
     while step < EXPLOIT_MAX_STEPS:
-        # HARD 1h cap: force-stop this exploit and move on to the next finding,
+        # HARD cap: force-stop this exploit and move on to the next finding,
         # whatever the model is doing. No more chat()/RUN can be started.
         if time.time() >= deadline:
             sys.stderr.write("%s     [HARD STOP] %s budget reached -> dropping "
@@ -3146,18 +3195,23 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
                                    "reply truncated at the output-token cap "
                                    "(num_predict); finding skipped")
                 break
-            # Genuine stuck-model loop: fatal per operator policy.
-            sys.stderr.write("%s     [REPEAT ABORT] identical reply twice on "
-                             "exploit %02d (%s) -> aborting whole run (exit 255)\n"
+            # Genuine stuck-model loop on THIS finding (the 33B sometimes
+            # apologises in a tight loop). That is a per-finding signal, not a
+            # fatal whole-run one: skip just this finding and carry on, exactly
+            # like the TRUNCATED REPEAT case above. Killing the process here
+            # would throw away every UNTESTED finding after it - and SystemExit
+            # is a BaseException, so it slips past the call-site's "one bad
+            # exploit shouldn't abort the run" Exception guard.
+            sys.stderr.write("%s     [REPEAT SKIP] identical reply twice on "
+                             "exploit %02d (%s) -> model stuck; skipping this "
+                             "finding (run continues)\n"
                              % (_ts(), idx, rel))
-            transcript.append("### REPEAT ABORT (identical reply twice; exit 255)")
-            verdict, reason = ("ABORTED",
-                               "model repeated the same reply twice; run aborted")
-            open(os.path.join(outdir, "transcript.md"), "w").write(
-                "# Exploit transcript: %s\n\nVERDICT: %s - %s\n\n%s\n"
-                % (rel, verdict, reason, "\n\n".join(transcript)))
-            live.stop()
-            sys.exit(255)
+            transcript.append("### REPEAT SKIP (identical reply twice; "
+                              "finding skipped, run continues)")
+            verdict, reason = ("NOT-EXPLOITABLE",
+                               "model repeated the same reply twice (stuck); "
+                               "finding skipped without a confirmed proof")
+            break
         last_answer = answer
         act = parse_action(answer)
         # A non-action reply (that is NOT a verbatim repeat) just gets nudged
@@ -3211,6 +3265,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
             # The exploit just hammered the live server - did it fault it?
             result += "\n\n--- live server status ---\n" + live.poll_crash()
             ran_something = True
+            compile_runs += 1
         elif kind == "RUNHOST":
             # POST-sandbox: run the same ELF without bwrap (rlimits kept). For
             # exploits the tight seccomp jail blocks; same crash/hang check after.
@@ -3221,6 +3276,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
             result = do_run_host(outdir, timeout=run_to)
             result += "\n\n--- live server status ---\n" + live.poll_crash()
             ran_something = True
+            compile_runs += 1
         elif kind == "SEEDDB":
             spec = _parse_seed_spec(arg)
             if not spec.get("items") and spec.get("cash") is None:
@@ -3285,10 +3341,43 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
             transcript.append("### HANG DETECTED (auto-SUCCESS): event loop "
                               "unresponsive / infinite loop")
             break
+        # Stall guard: STALL_RUNS compile+run cycles with no crash/hang/memerr
+        # means the model is hammering a dead end. A real proof (crash/hang)
+        # already broke out above, so a high count here is pure spinning (an
+        # earlier run did ~190 such cycles before the soft cap finally caught
+        # it). Demand a verdict once at STALL_RUNS; drop the finding at 2x.
+        if compile_runs >= 2 * STALL_RUNS:
+            sys.stderr.write("%s     [STALL STOP] %d compile+run cycles, no "
+                             "crash -> dropping exploit %02d (%s)\n"
+                             % (_ts(), compile_runs, idx, rel))
+            transcript.append("### STALL STOP (%d runs, no crash/hang/memerr)"
+                              % compile_runs)
+            verdict, reason = ("NOT-EXPLOITABLE",
+                               "%d compile+run cycles produced no crash/hang/"
+                               "memerr; model stalled without a proof"
+                               % compile_runs)
+            break
+        if not stall_warned and compile_runs >= STALL_RUNS:
+            stall_warned = True
+            sys.stderr.write("%s     [STALL NUDGE] %d compile+run cycles, no "
+                             "crash -> demanding verdict (step %d)\n"
+                             % (_ts(), compile_runs, step))
+            transcript.append("### STALL NUDGE (%d runs, no crash)" % compile_runs)
+            messages.append({"role": "assistant", "content": answer})
+            messages.append({"role": "user", "content":
+                "You have compiled+run the exploit %d times with no crash, hang "
+                "or memory error. Stop repeating the same probe. Either emit "
+                "'VERDICT CONFIRMED <reason>' if you DID get a proof, or 'VERDICT "
+                "FALSEPOSITIVE <concrete logic path: trace the untrusted input "
+                "to the sink and name the exact guard / bounds-check / size-"
+                "validation that makes it safe>'. Only if you have a GENUINELY "
+                "different attack vector, take ONE concrete step toward it now."
+                % compile_runs})
+            continue
         # SOFT cap (~75%): stop starting new probes, ask once for the final
         # verdict. The hard cap at the top of the loop is the safety net if the
         # model keeps going. One forced final chat here still leaves headroom
-        # before the 1h hard stop.
+        # before the hard stop.
         if not soft_warned and time.time() >= soft_deadline:
             soft_warned = True
             sys.stderr.write("%s     [SOFT STOP] %s soft cap reached -> demanding "
