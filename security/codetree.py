@@ -384,44 +384,78 @@ def parse_function_defs(ir_text, src_file):
 # Source body extraction (brace matching)
 # ---------------------------------------------------------------------------
 def source_body(file_path, start_line):
-    """Extract function body from source starting at `start_line`.
-    Uses brace matching to find the closing '}' at the correct nesting level.
-    Returns (body_text, end_line) or ('', start_line) on failure."""
+    """Extract a function body from source starting at `start_line`.
+
+    Brace-matches from the first real '{' to the '}' that brings nesting depth back
+    to zero. A single character scanner tracks // line comments, /* */ block
+    comments (which span lines), and "..."/'...' literals, so a '{' or '}' that
+    lives INSIDE a comment or a literal never moves the depth. The old line-prefix
+    "skip whole-comment-lines" rule miscounted a brace in a TRAILING comment, a
+    multi-line block-comment body, a string ("[a-z]{2,4}$") or a char literal
+    ('{'/'}') — cutting the body short at a fake brace, so the reviewer saw a
+    TRUNCATED function. Returns (body_text, end_line) or ('', start_line) on
+    failure. (Raw strings R"(...)" are the only residual edge — rare here.)"""
     try:
         lines = open(file_path, "r", errors="replace").readlines()
     except OSError:
         return ("", start_line)
     if start_line < 1 or start_line > len(lines):
         return ("", start_line)
-    # Find first '{' from start_line onward (the body opening)
-    brace_open_line = start_line - 1
-    while brace_open_line < len(lines):
-        idx = lines[brace_open_line].find('{')
-        if idx >= 0:
-            break
-        brace_open_line += 1
-    if brace_open_line >= len(lines):
-        return ("", start_line)
-    # Count braces from the opening '{' to find matching '}'
     depth = 0
     opened = False
-    for lineno in range(brace_open_line, len(lines)):
+    in_block = False                 # inside a /* ... */ block (persists across lines)
+    in_str = None                    # the quote char while inside "..." or '...'
+    lineno = start_line - 1
+    while lineno < len(lines):
         line = lines[lineno]
-        # Skip comments
-        stripped = line.strip()
-        if stripped.startswith('//') or stripped.startswith('/*'):
-            continue
-        for ch in line:
-            if ch == '{':
-                depth += 1
-                opened = True
-            elif ch == '}':
-                depth -= 1
-                if opened and depth == 0:
-                    # Found the matching '}'
-                    body = "".join(lines[start_line - 1:lineno + 1])
-                    return (body, lineno + 1)
-    return ("", brace_open_line + 1)
+        n = len(line)
+        col = 0
+        while col < n:
+            ch = line[col]
+            nxt = line[col + 1] if col + 1 < n else ''
+            if in_block:
+                if ch == '*' and nxt == '/':
+                    in_block = False
+                    col += 2
+                    continue
+            elif in_str is not None:
+                if ch == '\\':                       # escape: skip the escaped char
+                    col += 2
+                    continue
+                if ch == in_str:                     # closing quote
+                    in_str = None
+            else:
+                if ch == '/' and nxt == '/':
+                    break                            # // comment -> rest of line ignored
+                if ch == '/' and nxt == '*':
+                    in_block = True
+                    col += 2
+                    continue
+                if ch == '"':
+                    in_str = '"'
+                elif ch == "'":
+                    # A char literal 'X' or '\e' — skip it WHOLE so a '{'/'}'/'"'
+                    # inside cannot move the depth. A lone ' that is not a well-formed
+                    # literal (e.g. a C++ digit separator 1'000) falls through as an
+                    # ordinary char, so it can't open a phantom string.
+                    if nxt == '\\':
+                        j = line.find("'", col + 3)  # past the escaped char
+                        col = (j + 1) if j >= 0 else (col + 1)
+                        continue
+                    if col + 2 < n and line[col + 2] == "'":
+                        col += 3
+                        continue
+                elif ch == '{':
+                    depth += 1
+                    opened = True
+                elif ch == '}' and opened:           # a '}' before the body opens is a
+                    depth -= 1                        # stray close (misattributed start
+                    if depth == 0:                   # line / #ifdef scope) — ignore it
+                        body = "".join(lines[start_line - 1:lineno + 1])
+                        return (body, lineno + 1)
+            col += 1
+        lineno += 1
+    return ("", start_line)
 
 
 # ---------------------------------------------------------------------------
