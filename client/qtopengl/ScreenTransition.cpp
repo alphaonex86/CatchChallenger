@@ -325,15 +325,44 @@ bool ScreenTransition::viewportEvent(QEvent *event)
         {
             QTouchEvent *te=static_cast<QTouchEvent *>(event);
             const QList<QEventPoint> &points=te->points();
-            int i=0;
-            while(i<points.size())
+            //Only HIJACK touch for the on-screen D-pad: a multi-finger button
+            //hold needs raw multitouch, which a synthesized mouse can't carry.
+            //For EVERY other touch -- notably the server-list QTreeWidget hosted
+            //in a QGraphicsProxyWidget, and any menu screen where overmap is
+            //nullptr -- fall through to the base class so Qt synthesizes a mouse
+            //event that travels the exact working desktop path
+            //(QGraphicsView::mousePressEvent -> scene -> proxy -> widget).
+            //Accepting every touch unconditionally (as before) suppressed both
+            //scene delivery AND that synthesis, so a tap never reached the tree.
+            bool padInvolved=!m_touchButton.isEmpty();
+            if(!padInvolved && overmap!=nullptr)
             {
-                handleTouchPoint(points.at(i));
-                i++;
+                int j=0;
+                while(j<points.size())
+                {
+                    if(overmap->padButtonAt(mapToScene(points.at(j).position().toPoint()))!=nullptr)
+                    {
+                        padInvolved=true;
+                        j=points.size();
+                    }
+                    else
+                        j++;
+                }
             }
-            event->accept();
-            return true;
+            if(padInvolved)
+            {
+                int i=0;
+                while(i<points.size())
+                {
+                    handleTouchPoint(points.at(i));
+                    i++;
+                }
+                event->accept();
+                return true;
+            }
+            //not a pad touch -> defer to base for touch->mouse synthesis
         }
+        break;
         default:
         break;
     }
