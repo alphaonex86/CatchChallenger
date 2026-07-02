@@ -1,5 +1,6 @@
 #include "OptionsDialog.hpp"
 #include "../../libqtcatchchallenger/Settings.hpp"
+#include "../foreground/OverMap.hpp"
 #include <QPainter>
 #include <QGraphicsScene>
 #include <QGraphicsProxyWidget>
@@ -49,12 +50,27 @@ OptionsDialog::OptionsDialog() :
     languagesList->addItem("Spanish");
     languagesList->setPos(100,200);
 
+    touchControlsText=new CCGraphicsTextItem(this);
+    touchControlsList=new ComboBox(this);
+    touchControlsList->addItem(tr("Auto (touch/mobile)"));
+    touchControlsList->addItem(tr("On: D-pad, no map click"));
+    touchControlsList->addItem(tr("Off: click the map"));
+    {
+        const int touchMode=Settings::settings->value("touchControls",0).toInt();
+        if(touchMode==1)
+            touchControlsList->setCurrentIndex(1);
+        else if(touchMode==2)
+            touchControlsList->setCurrentIndex(2);
+        else
+            touchControlsList->setCurrentIndex(0);
+    }
+
     {
         const QString platform=QGuiApplication::platformName();
         if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
             volumeSlider->setValue(0);
         else
-            volumeSlider->setValue(Settings::settings->value("keyaudioVolume").toUInt());
+            volumeSlider->setValue(Settings::settings->value("audioVolume").toUInt());
         QString key=Settings::settings->value("key").toString();
         productKeyInput->setText(key);
         if(true)//Ultimate::ultimate.isUltimate())
@@ -76,6 +92,8 @@ OptionsDialog::OptionsDialog() :
     if(!connect(productKeyInput,&LineEdit::textChanged,this,&OptionsDialog::productKeyChange,Qt::QueuedConnection))
         abort();
     if(!connect(languagesList,static_cast<void(ComboBox::*)(int)>(&ComboBox::currentIndexChanged),this,&OptionsDialog::languagesChange))
+        abort();
+    if(!connect(touchControlsList,static_cast<void(ComboBox::*)(int)>(&ComboBox::currentIndexChanged),this,&OptionsDialog::touchControlsChange))
         abort();
     if(!connect(&Language::language,&Language::newLanguage,this,&OptionsDialog::newLanguage,Qt::QueuedConnection))
         abort();
@@ -159,6 +177,7 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     volumeText->setFont(font);
     productKeyText->setFont(font);
     languagesText->setFont(font);
+    touchControlsText->setFont(font);
 
     unsigned int productKeyBackgroundNewHeight=50;
     if(widget->width()<600 || widget->height()<480)
@@ -203,6 +222,13 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         languagesList->setMinimumWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
         languagesList->setMaximumWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
     }
+    {
+        touchControlsText->setPos(x+wdialog->currentBorderSize()*2,languagesText->y()+volumeTextRect.height()+10);
+        const unsigned int touchControlsBackgroundW=touchControlsText->x()+productKeyTextRect.width();
+        touchControlsList->setPos(touchControlsBackgroundW,touchControlsText->y()+(productKeyTextRect.height()-touchControlsList->boundingRect().height())/2);
+        touchControlsList->setMinimumWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
+        touchControlsList->setMaximumWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
+    }
 }
 
 void OptionsDialog::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
@@ -220,6 +246,13 @@ void OptionsDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bo
     buy->mouseReleaseEventXY(p,pressValidated);
     volumeSlider->mouseReleaseEventXY(p,pressValidated);
     pressValidated=true;
+    callParentClass=true;
+}
+
+void OptionsDialog::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
+{
+    //forward drags to the slider so its handle follows the finger/mouse
+    volumeSlider->mouseMoveEventXY(p,pressValidated);
     callParentClass=true;
 }
 
@@ -264,9 +297,30 @@ void OptionsDialog::languagesChange(int)
     Language::language.setLanguage(Settings::settings->value("language").toString());
 }
 
+void OptionsDialog::touchControlsChange(int)
+{
+    //0=auto,1=on,2=off; takes effect next frame (paint() shows/hides the pad and the
+    //map click is gated), through the touchControlsEnabled() CACHE invalidated below.
+    switch(touchControlsList->currentIndex())
+    {
+        default:
+        case 0:
+        Settings::settings->setValue("touchControls",0);
+        break;
+        case 1:
+        Settings::settings->setValue("touchControls",1);
+        break;
+        case 2:
+        Settings::settings->setValue("touchControls",2);
+        break;
+    }
+    OverMap::invalidateTouchControlsCache();
+}
+
 void OptionsDialog::newLanguage()
 {
     languagesText->setHtml(tr("Language: "));
+    touchControlsText->setHtml(tr("Touch controls: "));
     productKeyText->setHtml(tr("Product key: "));
     volumeText->setHtml(tr("Volume: "));
 }

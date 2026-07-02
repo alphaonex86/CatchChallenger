@@ -1,6 +1,7 @@
 #include "CCMap.hpp"
 #include "../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../ConnexionManager.hpp"
+#include "../foreground/OverMap.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
@@ -151,7 +152,10 @@ void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &/*ca
                 if(diffY>=map->relative_y && diffY<=(map->relative_y+logicalMap.height))
                 {
                     std::cout << "click on map " << mapId << " " << diffX << "," << diffY << std::endl;
-                    mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick,mapId,(int)floor(diffX)-map->relative_x,(int)floor(diffY)-map->relative_y);
+                    //in touch-controls (D-pad) mode the player is driven by the on-screen
+                    //pad, so tapping the map must NOT move/interact — swallow the click.
+                    if(!OverMap::touchControlsEnabled())
+                        mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick,mapId,(int)floor(diffX)-map->relative_x,(int)floor(diffY)-map->relative_y);
                     return;
                 }
         }

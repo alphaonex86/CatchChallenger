@@ -2,6 +2,12 @@
 #include "../../libqtcatchchallenger/Language.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../libqtcatchchallenger/Ultimate.hpp"
+#include "../../libqtcatchchallenger/Settings.hpp"
+#include "../background/CCMap.hpp"
+#include <QKeyEvent>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QInputDevice>
 #if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
 #include "../../../server/qt/InternalServer.hpp"
 #endif
@@ -33,12 +39,16 @@ static void configureOverlayText(QGraphicsTextItem *t,const QString &textColor)
     t->document()->setDefaultTextOption(opt);
 }
 
+int OverMap::touchControlsCachedValue=-1;
+
 OverMap::OverMap()
 {
     connexionManager=nullptr;
     monstersDragged=nullptr;
     wasDragged=false;
     monsterDetails=nullptr;
+    ccmap=nullptr;
+    touchControlsActive=false;
 
     playerBackground=new QGraphicsPixmapItemClick(QPixmap(":/CC/images/interface/playerui.png"),this);
     playerBackgroundBig=true;
@@ -99,6 +109,28 @@ OverMap::OverMap()
         buyOver=new CustomText(gradient1,gradient2,this);
     }
 
+    //on-screen D-pad + A/B (hidden until touchControlsActive). Reuse existing button
+    //art: the D-pad uses the four opentolan/arrow-like glyphs via setText, A/B use the
+    //chat button frame with an "A"/"B" caption. (No new image assets required.)
+    dpadUp=new CustomButton(":/CC/images/interface/chat.png",this);
+    dpadUp->setText(QStringLiteral("^"));
+    dpadDown=new CustomButton(":/CC/images/interface/chat.png",this);
+    dpadDown->setText(QStringLiteral("v"));
+    dpadLeft=new CustomButton(":/CC/images/interface/chat.png",this);
+    dpadLeft->setText(QStringLiteral("<"));
+    dpadRight=new CustomButton(":/CC/images/interface/chat.png",this);
+    dpadRight->setText(QStringLiteral(">"));
+    btnA=new CustomButton(":/CC/images/interface/chat.png",this);
+    btnA->setText(QStringLiteral("A"));
+    btnB=new CustomButton(":/CC/images/interface/chat.png",this);
+    btnB->setText(QStringLiteral("B"));
+    dpadUp->setVisible(false);
+    dpadDown->setVisible(false);
+    dpadLeft->setVisible(false);
+    dpadRight->setVisible(false);
+    btnA->setVisible(false);
+    btnB->setVisible(false);
+
     gainBack=new ImagesStrechMiddle(8,":/CC/images/interface/chatBackground.png",this);
     gain=new QGraphicsTextItem(gainBack);
 
@@ -158,6 +190,33 @@ OverMap::OverMap()
         abort();
     if(!connect(buy,&CustomButton::clicked,this,&OverMap::buyClicked))
         abort();
+    //D-pad + A/B: every pad button funnels press/release into padButtonPressed()/
+    //padButtonReleased(), which read sender() to pick the Qt::Key. Held => the engine
+    //keeps walking (same as a held keyboard arrow).
+    if(!connect(dpadUp,&CustomButton::buttonPressed,this,&OverMap::padButtonPressed))
+        abort();
+    if(!connect(dpadUp,&CustomButton::buttonReleased,this,&OverMap::padButtonReleased))
+        abort();
+    if(!connect(dpadDown,&CustomButton::buttonPressed,this,&OverMap::padButtonPressed))
+        abort();
+    if(!connect(dpadDown,&CustomButton::buttonReleased,this,&OverMap::padButtonReleased))
+        abort();
+    if(!connect(dpadLeft,&CustomButton::buttonPressed,this,&OverMap::padButtonPressed))
+        abort();
+    if(!connect(dpadLeft,&CustomButton::buttonReleased,this,&OverMap::padButtonReleased))
+        abort();
+    if(!connect(dpadRight,&CustomButton::buttonPressed,this,&OverMap::padButtonPressed))
+        abort();
+    if(!connect(dpadRight,&CustomButton::buttonReleased,this,&OverMap::padButtonReleased))
+        abort();
+    if(!connect(btnA,&CustomButton::buttonPressed,this,&OverMap::padButtonPressed))
+        abort();
+    if(!connect(btnA,&CustomButton::buttonReleased,this,&OverMap::padButtonReleased))
+        abort();
+    if(!connect(btnB,&CustomButton::buttonPressed,this,&OverMap::padButtonPressed))
+        abort();
+    if(!connect(btnB,&CustomButton::buttonReleased,this,&OverMap::padButtonReleased))
+        abort();
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -174,8 +233,9 @@ void OverMap::resetAll()
     monsters.clear();
 }
 
-void OverMap::setVar(CCMap */*ccmap*/,ConnexionManager *connexionManager)
+void OverMap::setVar(CCMap *ccmap,ConnexionManager *connexionManager)
 {
+    this->ccmap=ccmap;
     lastMessageSend.clear();
     this->connexionManager=connexionManager;
     connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::Qtnumber_of_player,this,&OverMap::updatePlayerNumber,Qt::UniqueConnection);
@@ -359,6 +419,40 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         chatInput->setFixedWidth(200);
         chatType->setFixedWidth(100);
     }
+    //on-screen D-pad (a cross to the LEFT of the chat button) — only in touch mode.
+    //Resolved here (first pad use of the frame) and reused by the A/B block below.
+    touchControlsActive=OverMap::touchControlsEnabled();
+    //push the touch-mode state down to the map controller so a map tap is SWALLOWED in
+    //pad mode. Gated at the controller's eventOnMap sink, this covers BOTH click origins
+    //(the PreparedLayer tile layer AND this overlay) -- the CCMap-only gate missed the
+    //tile-layer path, so a tap still moved the player.
+    if(ccmap!=nullptr)
+        ccmap->mapController.clickMoveDisabled=touchControlsActive;
+    {
+        int ps=56;
+        if(w->width()<800 || w->height()<600)
+            ps=42;
+        dpadUp->setVisible(touchControlsActive);
+        dpadDown->setVisible(touchControlsActive);
+        dpadLeft->setVisible(touchControlsActive);
+        dpadRight->setVisible(touchControlsActive);
+        if(touchControlsActive)
+        {
+            dpadUp->setSize(ps,ps);
+            dpadDown->setSize(ps,ps);
+            dpadLeft->setSize(ps,ps);
+            dpadRight->setSize(ps,ps);
+            const int bottomY=w->height()-space;    //cross bottom aligned to the button row
+            const int col0=xLeft;
+            const int col1=xLeft+ps;
+            const int col2=xLeft+2*ps;
+            dpadUp->setPos(col1,bottomY-3*ps);
+            dpadLeft->setPos(col0,bottomY-2*ps);
+            dpadRight->setPos(col2,bottomY-2*ps);
+            dpadDown->setPos(col1,bottomY-ps);
+            xLeft+=3*ps+space;                        //chat sits to the RIGHT of the D-pad
+        }
+    }
     unsigned int chatX=xLeft;
     unsigned int chatY=w->height()-space-chat->height();
     chat->setPos(chatX,chatY);
@@ -393,6 +487,26 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
     //compose from right to left
     unsigned int xRight=w->width()-space;
+    //on-screen A/B buttons (to the RIGHT of buy) — only in touch mode. A is outermost
+    //(right thumb): A=action(Enter), B=cancel(Escape). Placed first so buy/bag fall to
+    //their left.
+    {
+        int ps=56;
+        if(w->width()<800 || w->height()<600)
+            ps=42;
+        btnA->setVisible(touchControlsActive);
+        btnB->setVisible(touchControlsActive);
+        if(touchControlsActive)
+        {
+            btnA->setSize(ps,ps);
+            btnB->setSize(ps,ps);
+            const int by=w->height()-space-ps;
+            btnA->setPos(xRight-ps,by);
+            xRight-=ps+space;
+            btnB->setPos(xRight-ps,by);
+            xRight-=ps+space;
+        }
+    }
     if(buy->isVisible())
     {
         if(w->width()<800 || w->height()<600)
@@ -567,6 +681,10 @@ void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &call
     chat->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     bag->mousePressEventXY(p,pressValidated);
+    //NOTE: the D-pad + A/B are NOT forwarded here. They are driven by ScreenTransition
+    //directly (padButtonAt() + pressAsPad()/releaseAsPad()) for BOTH mouse and touch,
+    //so a held pad button is owned by its own pointer/touch and a second finger's
+    //generic release can never cross-cancel it.
     #if defined(CATCHCHALLENGER_SOLO) && !defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
         if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
@@ -615,6 +733,7 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
     chat->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     bag->mouseReleaseEventXY(p,pressValidated);
+    //(pad buttons intentionally not forwarded — see mousePressEventXY note)
     #if defined(CATCHCHALLENGER_SOLO) && !defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
         if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
@@ -664,6 +783,138 @@ void OverMap::mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true th
             monstersDragged->setInDrag(true);
         }
     }
+}
+
+void OverMap::padButtonPressed()
+{
+    const int key=padKeyForSender();
+    if(key!=0)
+        sendKeyToMap(key,true);
+}
+
+void OverMap::padButtonReleased()
+{
+    const int key=padKeyForSender();
+    if(key!=0)
+        sendKeyToMap(key,false);
+}
+
+int OverMap::padKeyForSender()
+{
+    const QObject *s=sender();
+    if(s==dpadUp)
+        return Qt::Key_Up;
+    if(s==dpadDown)
+        return Qt::Key_Down;
+    if(s==dpadLeft)
+        return Qt::Key_Left;
+    if(s==dpadRight)
+        return Qt::Key_Right;
+    if(s==btnA)
+        return Qt::Key_Return;
+    if(s==btnB)
+        return Qt::Key_Escape;
+    return 0;
+}
+
+void OverMap::sendKeyToMap(int key,bool pressed)
+{
+    if(ccmap==nullptr)
+        return;
+    bool eventTriggerGeneral=false;
+    if(pressed)
+    {
+        QKeyEvent event(QEvent::KeyPress,key,Qt::NoModifier);
+        ccmap->keyPressEvent(&event,eventTriggerGeneral);
+    }
+    else
+    {
+        QKeyEvent event(QEvent::KeyRelease,key,Qt::NoModifier);
+        ccmap->keyReleaseEvent(&event,eventTriggerGeneral);
+    }
+}
+
+CustomButton *OverMap::padButtonAt(const QPointF &scenePoint)
+{
+    if(!touchControlsActive)
+        return nullptr;
+    CustomButton *buttons[6]={dpadUp,dpadDown,dpadLeft,dpadRight,btnA,btnB};
+    int i=0;
+    while(i<6)
+    {
+        CustomButton *b=buttons[i];
+        if(b!=nullptr && b->isVisible())
+        {
+            const QRectF t=b->mapRectToScene(b->boundingRect());
+            if(t.contains(scenePoint))
+                return b;
+        }
+        i++;
+    }
+    return nullptr;
+}
+
+bool OverMap::touchControlsEnabled()
+{
+    //cached: called every frame from paint(); the raw resolve below (QSettings +
+    //QInputDevice::devices() + platform string) is too heavy for the render loop.
+    //invalidateTouchControlsCache() re-arms it when the Options value changes.
+    if(touchControlsCachedValue>=0)
+        return touchControlsCachedValue==1;
+    const int mode=Settings::settings->value("touchControls",0).toInt();
+    if(mode==1)
+    {
+        touchControlsCachedValue=1;
+        return true;
+    }
+    if(mode==2)
+    {
+        touchControlsCachedValue=0;
+        return false;
+    }
+    //auto: on for android, an attached touch screen, or a small primary screen
+    bool enabled=false;
+    const QString platform=QGuiApplication::platformName();
+    //NEVER auto-enable on a HEADLESS test platform (offscreen/minimal): they report no
+    //input devices and an arbitrary virtual screen size, so the small-screen heuristic
+    //below could wrongly flip touch mode ON and swallow every map click -- breaking the
+    //channel tests that rely on click-to-move. A user can still force it (mode==1).
+    if(platform==QLatin1String("offscreen") || platform==QLatin1String("minimal"))
+        enabled=false;
+    else if(platform==QLatin1String("android"))
+        enabled=true;
+    else
+    {
+        const QList<const QInputDevice *> devices=QInputDevice::devices();
+        int i=0;
+        while(i<devices.size())
+        {
+            const QInputDevice *dev=devices.at(i);
+            if(dev!=nullptr && dev->type()==QInputDevice::DeviceType::TouchScreen)
+            {
+                enabled=true;
+                break;
+            }
+            i++;
+        }
+        if(!enabled)
+        {
+            QScreen *screen=QGuiApplication::primaryScreen();
+            if(screen!=nullptr)
+            {
+                const QSize sz=screen->size();
+                if(sz.width()<800 || sz.height()<600)
+                    enabled=true;
+            }
+        }
+    }
+    touchControlsCachedValue=enabled?1:0;
+    return enabled;
+}
+
+void OverMap::invalidateTouchControlsCache()
+{
+    touchControlsCachedValue=-1;
 }
 
 void OverMap::IG_dialog_close()

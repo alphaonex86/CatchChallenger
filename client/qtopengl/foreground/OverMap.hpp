@@ -45,6 +45,22 @@ public:
     void lineEdit_chat_text_returnPressed();
     void updateShowChat();
     void buyClicked();
+    //on-screen D-pad + A/B: pressed/released of any pad button routes here and is
+    //turned into a synthetic key press/release fed to the map (same held-key path as
+    //a real keyboard). sender() identifies which button -> which Qt::Key.
+    void padButtonPressed();
+    void padButtonReleased();
+    //hit-test the 6 pad buttons for a scene point (nullptr if none / pad inactive);
+    //used by ScreenTransition's multitouch dispatch to own a touch point per button.
+    CustomButton *padButtonAt(const QPointF &scenePoint);
+    //whether the on-screen pad is active: Settings "touchControls" (0=auto,1=on,2=off)
+    //with auto => on for android/touch/small-screen. Also gates map click-to-move.
+    //CACHED after the first resolution: paint() calls this EVERY FRAME, and the raw
+    //resolve (QSettings + QInputDevice::devices() + platform string) is too costly for
+    //the render loop (blew the map benchmark budget). OptionsDialog invalidates the
+    //cache when the option changes, so it still applies without a restart.
+    static bool touchControlsEnabled();
+    static void invalidateTouchControlsCache();
     virtual void IG_dialog_close();
     void comboBox_chat_type_currentIndexChanged(int index);
     void new_system_text(const CatchChallenger::Chat_type &chat_type, const std::string &text);
@@ -95,6 +111,21 @@ protected:
     CustomText *opentolanOver;
     CustomButton *buy;
     CustomText *buyOver;
+
+    //on-screen touch controls (shown only when touchControlsActive). D-pad cross to
+    //the LEFT of chat; A/B to the RIGHT of buy. Held to walk; A=action, B=cancel.
+    CCMap *ccmap;
+    bool touchControlsActive;
+    //touchControlsEnabled() cache: -1 unresolved, else 0/1 (see its comment)
+    static int touchControlsCachedValue;
+    CustomButton *dpadUp;
+    CustomButton *dpadDown;
+    CustomButton *dpadLeft;
+    CustomButton *dpadRight;
+    CustomButton *btnA;
+    CustomButton *btnB;
+    int padKeyForSender();
+    void sendKeyToMap(int key,bool pressed);
 
     ImagesStrechMiddle *gainBack;
     QGraphicsTextItem *gain;

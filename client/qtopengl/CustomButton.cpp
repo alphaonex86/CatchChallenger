@@ -260,14 +260,18 @@ void CustomButton::mousePressEventXY(const QPointF &p,bool &pressValidated)
     {
         pressValidated=true;
         setPressed(true);
+        emit buttonPressed();
     }
 }
 
 void CustomButton::mouseReleaseEventXY(const QPointF &p, bool &previousPressValidated)
 {
+    const bool wasPressed=this->pressed;
     if(previousPressValidated)
     {
         setPressed(false);
+        if(wasPressed)
+            emit buttonReleased();
         return;
     }
     const QRectF &b=boundingRect();
@@ -285,6 +289,24 @@ void CustomButton::mouseReleaseEventXY(const QPointF &p, bool &previousPressVali
         }
     }
     setPressed(false);
+    if(wasPressed)
+        emit buttonReleased();
+}
+
+void CustomButton::pressAsPad()
+{
+    if(this->pressed)
+        return;
+    setPressed(true);
+    emit buttonPressed();
+}
+
+void CustomButton::releaseAsPad()
+{
+    if(!this->pressed)
+        return;
+    setPressed(false);
+    emit buttonReleased();
 }
 
 void CustomButton::setEnabled(bool enabled)

@@ -21,6 +21,10 @@
 #include "../libcatchchallenger/Api_protocol.hpp"
 #include <QTimer>
 #include <QKeyEvent>
+#include <QTouchEvent>
+#include <QEventPoint>
+#include "CustomButton.hpp"
+#include "foreground/OverMap.hpp"
 #include "../../general/base/Version.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
@@ -78,6 +82,13 @@ ScreenTransition::ScreenTransition() :
     }
     multiplaySelected=false;
     mousePress=nullptr;
+    m_mousePadButton=nullptr;
+    m_genericTouchId=-1;
+    //accept raw touch so the multitouch D-pad works (else Qt collapses touches to a
+    //single synthesized mouse event and two pad buttons can't be held together)
+    setAttribute(Qt::WA_AcceptTouchEvents,true);
+    if(viewport()!=nullptr)
+        viewport()->setAttribute(Qt::WA_AcceptTouchEvents,true);
     m_backgroundStack=nullptr;
     m_foregroundStack=nullptr;
     m_aboveStack=nullptr;
@@ -195,8 +206,20 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
               << std::to_string(x) << "," << std::to_string(y) << std::endl;*/
     /*if(button->boundingRect().contains(x,y))
         button->setPressed(true);*/
-    bool callParentClass=false;
     const QPointF &p=mapToScene(event->pos());
+    //on-screen pad: a press on a D-pad/A-B button is owned by this pointer until it is
+    //released (holds the key), and never enters the generic dispatch.
+    if(overmap!=nullptr)
+    {
+        CustomButton *b=overmap->padButtonAt(p);
+        if(b!=nullptr)
+        {
+            b->pressAsPad();
+            m_mousePadButton=b;
+            return;
+        }
+    }
+    bool callParentClass=false;
     if(mousePress!=nullptr)
     {
         bool temp=true;//don¡t do action if true
@@ -233,8 +256,15 @@ void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
     /*if(button->boundingRect().contains(x,y))
         button->emitclicked();
     button->setPressed(false);*/
-    bool callParentClass=false;
     const QPointF &p=mapToScene(event->pos());
+    //release the held pad button this pointer owns (if any)
+    if(m_mousePadButton!=nullptr)
+    {
+        m_mousePadButton->releaseAsPad();
+        m_mousePadButton=nullptr;
+        return;
+    }
+    bool callParentClass=false;
     mousePress=nullptr;
     bool pressValidated=false;
     if(m_aboveStack!=nullptr)
@@ -282,6 +312,145 @@ void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
     }
     if(!pressValidated)
         QGraphicsView::mouseMoveEvent(event);
+}
+
+bool ScreenTransition::viewportEvent(QEvent *event)
+{
+    switch(event->type())
+    {
+        case QEvent::TouchBegin:
+        case QEvent::TouchUpdate:
+        case QEvent::TouchEnd:
+        case QEvent::TouchCancel:
+        {
+            QTouchEvent *te=static_cast<QTouchEvent *>(event);
+            const QList<QEventPoint> &points=te->points();
+            int i=0;
+            while(i<points.size())
+            {
+                handleTouchPoint(points.at(i));
+                i++;
+            }
+            event->accept();
+            return true;
+        }
+        default:
+        break;
+    }
+    return QGraphicsView::viewportEvent(event);
+}
+
+void ScreenTransition::handleTouchPoint(const QEventPoint &tp)
+{
+    const int id=tp.id();
+    const QPointF p=mapToScene(tp.position().toPoint());
+    switch(tp.state())
+    {
+        case QEventPoint::Pressed:
+        {
+            CustomButton *b=(overmap!=nullptr)?overmap->padButtonAt(p):nullptr;
+            if(b!=nullptr)
+            {
+                //this finger owns the pad button until IT lifts (multitouch hold)
+                b->pressAsPad();
+                m_touchButton.insert(id,b);
+            }
+            else if(m_genericTouchId<0)
+            {
+                //first non-pad finger drives the (single-touch) dialog/map/slider path
+                m_genericTouchId=id;
+                dispatchPressAt(p);
+            }
+        }
+        break;
+        case QEventPoint::Released:
+        {
+            if(m_touchButton.contains(id))
+            {
+                CustomButton *b=m_touchButton.take(id);
+                if(b!=nullptr)
+                    b->releaseAsPad();
+            }
+            else if(id==m_genericTouchId)
+            {
+                dispatchReleaseAt(p);
+                m_genericTouchId=-1;
+            }
+        }
+        break;
+        case QEventPoint::Updated:
+            if(!m_touchButton.contains(id) && id==m_genericTouchId)
+                dispatchMoveAt(p);
+        break;
+        default:
+        break;
+    }
+}
+
+void ScreenTransition::dispatchPressAt(const QPointF &p)
+{
+    bool callParentClass=false;
+    if(mousePress!=nullptr)
+    {
+        bool temp=true;//don't do action if true
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(p,temp,callParentClass);
+        mousePress=nullptr;
+    }
+    bool temp=false;
+    if(m_aboveStack!=nullptr)
+    {
+        static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(p,temp,callParentClass);
+        mousePress=m_aboveStack;
+    }
+    if(!temp && m_foregroundStack!=nullptr)
+    {
+        static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p,temp,callParentClass);
+        mousePress=m_foregroundStack;
+    }
+    if(!temp && m_backgroundStack!=nullptr)
+    {
+        static_cast<ScreenInput *>(m_backgroundStack)->mousePressEventXY(p,temp,callParentClass);
+        mousePress=m_backgroundStack;
+    }
+}
+
+void ScreenTransition::dispatchReleaseAt(const QPointF &p)
+{
+    bool callParentClass=false;
+    mousePress=nullptr;
+    bool pressValidated=false;
+    if(m_aboveStack!=nullptr)
+    {
+        m_aboveStack->mouseReleaseEventXY(p,pressValidated,callParentClass);
+        mousePress=m_aboveStack;
+    }
+    if(!pressValidated && m_foregroundStack!=nullptr)
+    {
+        m_foregroundStack->mouseReleaseEventXY(p,pressValidated,callParentClass);
+        mousePress=m_foregroundStack;
+    }
+    if(!pressValidated && m_backgroundStack!=nullptr)
+    {
+        m_backgroundStack->mouseReleaseEventXY(p,pressValidated,callParentClass);
+        mousePress=m_backgroundStack;
+    }
+}
+
+void ScreenTransition::dispatchMoveAt(const QPointF &p)
+{
+    bool callParentClass=false;
+    mousePress=nullptr;
+    bool pressValidated=false;
+    if(m_aboveStack!=nullptr)
+    {
+        m_aboveStack->mouseMoveEventXY(p,pressValidated,callParentClass);
+        mousePress=m_aboveStack;
+    }
+    else if(m_foregroundStack!=nullptr)
+    {
+        m_foregroundStack->mouseMoveEventXY(p,pressValidated,callParentClass);
+        mousePress=m_foregroundStack;
+    }
 }
 
 void ScreenTransition::closeEvent(QCloseEvent *event)

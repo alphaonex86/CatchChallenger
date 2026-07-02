@@ -243,7 +243,6 @@ signals:
     void useSeed(const uint8_t &plant_id);
     void collectMaturePlant();
 private:
-    CCMap *ccmap;
     bool multiplayer;
     Inventory *inventory;
     Plant *plant;

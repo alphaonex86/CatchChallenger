@@ -33,8 +33,19 @@ public:
     //event
     void mousePressEventXY(const QPointF &p, bool &pressValidated);
     void mouseReleaseEventXY(const QPointF &p, bool &previousPressValidated);
+    //press/release as a HOLD (used by the on-screen D-pad + A/B via the multitouch
+    //path in ScreenTransition): a touch point owns the button until IT is lifted, so
+    //we set/clear the pressed state directly (no dependence on the shared, single-
+    //pointer release dispatch that would cross-cancel a second finger).
+    void pressAsPad();
+    void releaseAsPad();
 signals:
     void clicked();
+    //emitted on press-down (in-rect) and on release-up; the D-pad wires these to
+    //keyPress/keyRelease so a held button keeps the player walking (the engine auto-
+    //continues a held direction). Distinct from clicked() (press+release in-rect).
+    void buttonPressed();
+    void buttonReleased();
 protected:
     void updateTextPath();
 private:
