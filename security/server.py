@@ -2079,6 +2079,64 @@ def resolve_budgets():
     env_soft = os.environ.get("SECSERVER_SOFT_BUDGET")
     soft = int(env_soft) if env_soft else int(hard * 0.75)
     return hard, soft
+
+
+# Heuristic per-exploit budget floor by model size. A slow model on CPU (e.g. a
+# 122B) takes many minutes PER AGENTIC TURN; the default 20-min hard cap lets it
+# finish ~1 turn and never produces an exploit. When the operator has NOT set
+# SECSERVER_BUDGET explicitly, we bump the cap by model size so a slow model at
+# least gets a few turns. Operators who want a tighter run still win by setting
+# the env var. Sizes in billions of params -> seconds.
+_BUDGET_BY_SIZE = (
+    (100.0, 7200),   # >= 100B (e.g. 122B on CPU): 2h/exploit
+    ( 60.0, 3600),   # >= 60B:  1h/exploit
+    ( 30.0, 1800),   # >= 30B:  30min/exploit
+)
+
+
+def _auto_budget_for_model():
+    """Suggested per-exploit budget (seconds) for the configured model based on
+    its parameter count, or None if unknown. Used ONLY when SECSERVER_BUDGET is
+    not set, so an explicit operator choice always wins."""
+    name = (common.MODEL_NAME or "").split("@", 1)[0]
+    for nm, size in ollama_models():
+        if nm == name and size is not None:
+            for floor, secs in _BUDGET_BY_SIZE:
+                if size >= floor:
+                    return secs
+            return None
+    return None
+
+
+def _warn_slow_model(hard_budget):
+    """At exploit-phase startup, surface that the configured model is large/
+    slow relative to the chosen per-exploit budget, and recommend an override.
+    Best-effort: silent when the model size is unknown."""
+    suggested = _auto_budget_for_model()
+    if not suggested:
+        return
+    if suggested <= hard_budget:
+        return
+    sys.stderr.write(
+        "%s [slow-model] the configured model looks LARGE (>= the size class "
+        "that wants ~%s per exploit) but the budget is only %s. A slow model "
+        "on CPU may not finish even ONE agentic turn in that window. Raise it: "
+        "`SECSERVER_BUDGET=%d python3 server.py --model=... exploit`. The chat "
+        "layer now lets an in-flight turn FINISH rather than cutting it mid-"
+        "token (CC_OLLAMA_TURN_TIMEOUT / CC_OLLAMA_TURN_MAX tune that).\n"
+        % (_ts(), _human_dur(suggested), _human_dur(hard_budget), suggested))
+
+
+def _effective_budgets():
+    """Resolve (hard, soft) applying the slow-model auto-bump when the operator
+    hasn't set SECSERVER_BUDGET explicitly. Documented at the [INIT] line."""
+    if os.environ.get("SECSERVER_BUDGET"):
+        return resolve_budgets()
+    suggested = _auto_budget_for_model()
+    if not suggested:
+        return resolve_budgets()
+    soft = int(suggested * 0.75)
+    return suggested, soft
 EXPLOIT_MAX_STEPS = int(os.environ.get("SECSERVER_STEPS", "400"))  # safety cap
 # Stall guard: after this many compile+run cycles with NO crash/hang/memerr the
 # model is hammering a dead end -> demand a verdict, then drop the finding at 2x.
@@ -2088,6 +2146,24 @@ RUN_OUT_CAP = 8000      # chars of RUN output fed back to the model
 # Hard caps the compiled exploit ELF runs under (the sandbox enforces these).
 SANDBOX_CPU_SECONDS = int(os.environ.get("SECSERVER_CPU", "10"))   # RLIMIT_CPU
 SANDBOX_MEM_BYTES = int(os.environ.get("SECSERVER_MEM", str(128 * 1024 * 1024)))
+# Disk cap for what the sandboxed exploit can write: RLIMIT_FSIZE (per-file
+# bytes) AND the bwrap /tmp tmpfs --size (total). The chroot's only writable
+# surface is /tmp (tmpfs), so this mainly bounds how much RAM/swap a runaway
+# exploit can eat by stuffing /tmp; combined with RLIMIT_AS it can neither
+# fill disk nor exhaust memory.
+SANDBOX_DISK_BYTES = int(os.environ.get("SECSERVER_DISK", str(16 * 1024 * 1024)))
+# How many trailing lines of the supervised server's pty output the harness
+# exposes to the model after each RUN (errors, asserts, valgrind noise, what
+# its attack made the server print). Capped so we don't flood the model's
+# context from a chatty boot.
+SERVER_TAIL_LINES = int(os.environ.get("SECSERVER_TAIL", "100"))
+# RLIMIT_AS for the SUPERVISED TARGET server (the exploit client has its own
+# tighter SANDBOX_MEM_BYTES). The server loads the full datapack + keeps client
+# state, so it needs much more RAM than the exploit client; this cap only
+# exists to bound a runaway/RAM-hungry-after-exploit process from OOMing the
+# host. Default 2 GB; override via SECSERVER_SERVER_MEM.
+SERVER_MEM_BYTES = int(os.environ.get("SECSERVER_SERVER_MEM",
+                                      str(2 * 1024 * 1024 * 1024)))
 EXPLOIT_BIN_NAME = "exploit"   # fixed path of the compiled ELF (in the chroot: /exploit)
 # Attempt an exploit for any finding smelling like a REWARDED bounty class
 # (EXAMPLE-BOUNTY-BUG-SERVER.md §3). The exploit engine can PROVE every one of
@@ -2152,15 +2228,19 @@ EXPLOIT_SYSTEM = (
     EXPLOIT_BIN_NAME + " and executes it. Your code must open a TCP socket to "
     "127.0.0.1:" + str(GDB_PORT) + ", do the handshake, and send the crafted "
     "packets that trigger the bug.\n"
-    "- The ELF runs in a HARD SANDBOX: chrooted to your exploit dir (read-only - "
-    "it cannot see or touch any other path, and cannot write files), in its own "
-    "pid namespace, CPU-time capped (" + str(SANDBOX_CPU_SECONDS) + "s) and "
-    "memory capped (" + str(SANDBOX_MEM_BYTES // (1024 * 1024)) + " MB). A "
-    "seccomp allowlist KILLS any syscall other than what a TCP client needs "
-    "(socket/connect/send/recv/... + memory + basic IO). So: NO opening files, "
-    "NO fork/exec, NO ptrace - just connect to the server and talk. A SIGSYS "
-    "kill in the output means your code used a forbidden syscall; rewrite it to "
-    "only do networking.\n"
+    "- The ELF runs in a HARD SANDBOX: chrooted to a fresh empty root where ONLY "
+    "the ELF itself is visible (read-only - it cannot see or touch any other "
+    "path, and cannot write files; the only writable surface is a size-capped "
+    "/tmp tmpfs), in its own pid namespace, CPU-time capped (" +
+    str(SANDBOX_CPU_SECONDS) + "s), memory capped (" +
+    str(SANDBOX_MEM_BYTES // (1024 * 1024)) + " MB) and disk capped (" +
+    str(SANDBOX_DISK_BYTES // (1024 * 1024)) + " MB). A seccomp allowlist KILLS "
+    "any syscall other than what a TCP client needs (socket/connect/send/recv/"
+    "... + memory + basic IO). So: NO opening files, NO fork/exec, NO ptrace - "
+    "just connect to the server and talk. A SIGSYS kill in the output means your "
+    "code used a forbidden syscall; rewrite it to only do networking. You CAN "
+    "open MANY TCP connections to the server from one process - just call "
+    "socket()+connect() once per connection, no fork needed.\n"
     "- After each RUN the harness checks the supervised server: if your packets "
     "CRASHED it (or, in MODE valgrind, tripped a memcheck memory error) that is "
     "reported back (with the backtrace / memcheck report) and the exploit is an "
@@ -2186,11 +2266,6 @@ EXPLOIT_SYSTEM = (
     "  ```\n  <full file content (e.g. exploit.c)>\n  ```\n"
     "  RUN                        (compile your C/C++ -> /" + EXPLOIT_BIN_NAME +
     " and run it sandboxed)\n"
-    "  RUNHOST                    (POST-sandbox escalation: compile + run the "
-    "SAME ELF on the host WITHOUT the chroot/seccomp jail - rlimits still cap "
-    "CPU/mem. Use ONLY if the sandbox's seccomp KILLS a syscall your exploit "
-    "genuinely needs: a 'terminated by signal 31'/SIGSYS under RUN is that jail, "
-    "NOT a refutation. Re-RUN sandboxed first; RUNHOST is the fallback.)\n"
     "  SEEDDB item=<id>:<qty>[,<id>:<qty>...] cash=<n>\n"
     "                             (boundary-value DB: set the STARTING inventory/"
     "cash a NEWLY CREATED character gets from the profile, then reboots. Use it "
@@ -2289,11 +2364,11 @@ def parse_action(answer):
         return ("GREP", first[5:].strip(), None)
     if up.startswith("WRITE "):
         return ("WRITE", first[6:].strip(), first_codeblock(answer))
-    # POST-sandbox escalation: run the SAME exploit ELF on the host without the
-    # bwrap chroot/seccomp (rlimits still apply). Checked before RUN ("RUNHOST"
-    # has no space so RUN's prefix test would miss it anyway, but be explicit).
-    if up == "RUNHOST" or up.startswith("RUNHOST "):
-        return ("RUNHOST", "", None)
+    # RUNHOST (run the ELF on the host WITHOUT the bwrap chroot/seccomp) is
+    # deliberately NOT recognised: it was an escape hatch that let the model
+    # run arbitrary host code. The sandbox is now mandatory - a SIGSYS under
+    # RUN means the exploit used a forbidden syscall and must be rewritten, not
+    # bypassed. Falls through to None -> treated as a non-action reply.
     # Seed boundary-value starting state (item count / cash at the 16/32-bit
     # limit) into the staged datapack profile, then reboot.
     if up.startswith("SEEDDB "):
@@ -2321,9 +2396,55 @@ def parse_action(answer):
     return None
 
 
+# C/C++ calls the model's exploit must NOT contain - even if the seccomp filter
+# would block them at runtime, rejecting them at WRITE time gives the model a
+# clear "rewrite this" signal early (one WRITE round-trip) instead of a SIGSYS
+# at RUN time (a full compile+run cycle on a slow model). Each is matched as a
+# plain substring of the source; cheap, low-false-positive (legit TCP clients
+# don't system()/execve/fork). The seccomp filter remains the hard backstop.
+FORBIDDEN_CPP_CALLS = (
+    "system(", "popen(", "execl", "execlp", "execle", "execv", "execvp",
+    "fexecve", "wordexp(", "fork(", "vfork(", "clone(", "dlopen(", "ptrace(",
+    "mount(", "umount(", "unshare(", "setns(", "pivot_root(", "kexec_load(",
+    "bpf(", "perf_event_open(", "prctl(PR_SET_NAME", "process_vm_readv",
+    "process_vm_writev",
+)
+
+
+def _forbidden_call_in(content):
+    """Return the first forbidden-call substring found in the C/C++ source, or
+    None. Case-insensitive on the function name. False-positive-proof: legit
+    TCP clients never exec/fork/system."""
+    low = content.lower()
+    for call in FORBIDDEN_CPP_CALLS:
+        if call.lower() in low:
+            return call
+    return None
+
+
 def do_write(outdir, rel, content):
     if content is None:
         return "WRITE error: no ``` code block found in your message."
+    # Defense-in-depth on the path: reject any component that escapes the dir.
+    # realpath() below already resolves `..` (and symlinks), but an explicit
+    # component check makes the contract obvious and survives any future change
+    # to the resolution logic.
+    norm = rel.replace("\\", "/")
+    if any(seg == ".." for seg in norm.split("/")):
+        return "WRITE error: '..' is not allowed in the path: %s" % rel
+    if os.path.isabs(rel):
+        return "WRITE error: absolute path not allowed: %s" % rel
+    # Defense-in-depth on the CONTENT: the seccomp filter KILLS these at RUN
+    # time anyway, but rejecting at WRITE saves a full compile+run on a slow
+    # model and gives a clearer signal.
+    if rel.endswith((".c", ".cc", ".cpp", ".cxx", ".h", ".hpp", ".hxx")):
+        bad = _forbidden_call_in(content)
+        if bad:
+            return ("WRITE rejected: '%s' is FORBIDDEN in the sandbox. The "
+                    "exploit can ONLY do TCP networking (socket/connect/send/"
+                    "recv/shutdown) + its own memory + basic IO. NO spawning "
+                    "processes, NO shelling out, NO ptrace/mount. Rewrite your "
+                    "client to talk to the server over the socket." % bad)
     dest = os.path.realpath(os.path.join(outdir, rel))
     if not dest.startswith(os.path.realpath(outdir) + os.sep):
         return "WRITE error: path escapes the exploit dir: %s" % rel
@@ -2337,34 +2458,80 @@ def do_write(outdir, rel, content):
 BWRAP = shutil.which("bwrap")
 
 
+def _prune_missing_binds(args):
+    """Drop `--ro-bind SRC DST` (and `--bind`/`--dev-bind`) pairs whose SRC
+    doesn't exist on this host, so a missing /lib64 (non-multiarch) or /sbin
+    (merged-usr) doesn't fail the whole bwrap invocation. Other args pass
+    through untouched."""
+    out = []
+    i = 0
+    bind_opts = ("--ro-bind", "--bind", "--dev-bind", "--bind-try", "--dev-bind-try")
+    while i < len(args):
+        a = args[i]
+        if a in bind_opts and i + 2 < len(args):
+            src = args[i + 1]
+            if os.path.exists(src):
+                out += [a, args[i + 1], args[i + 2]]
+            i += 3
+        else:
+            out.append(a)
+            i += 1
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Compile + sandboxed execution of the model's C/C++ exploit ELF
 # ---------------------------------------------------------------------------
 # Source files (top level of the exploit dir) compiled into the ELF.
 EXPLOIT_SRC_EXT = (".c", ".cc", ".cpp", ".cxx")
 
-# Syscalls the sandboxed exploit ELF may make: just what a STATIC client needs
-# to start up, manage its own memory, do basic I/O, and CONNECT TO THE SERVER
-# OVER TCP. Anything else (open/openat a file, fork/clone a process, ptrace,
-# mount, ...) is NOT listed and is KILLED by the seccomp filter. x86_64 numbers.
+# Syscalls the sandboxed exploit ELF may make: just what a STATIC TCP client
+# needs to start up, manage its own memory, do basic I/O, and CONNECT TO THE
+# SERVER OVER TCP (one or many sockets - no fork needed, just socket()+connect()
+# per connection). Anything else (open/openat a file, fork/clone a process,
+# ptrace, mount, ...) is NOT listed and is KILLED by the seccomp filter. The
+# list is the union of: glibc static startup/exit (mmap/brk/mprotect/futex/
+# set_tid_address/set_robust_list/arch_prctl/rseq/getrandom/prlimit64/
+# readlinkat/uid-gid probes), basic IO on FDs it already holds (read/write/
+# close/fstat/poll), and the BSD-socket API for an OUTBOUND TCP client
+# (socket/connect/sendto/recvfrom/sendmsg/recvmsg/shutdown/setsockopt/
+# getsockopt). fork/clone/vfork/execve-of-attacker-code/bind/listen/accept/
+# open/openat/mount/ptrace are NOT listed -> SIGSYS. x86_64 numbers.
+# Strace-verified minimal: a static-pie glibc TCP client that opens N outbound
+# connections, multiplexes with poll, sends/receives, and disconnects, issues
+# exactly these syscalls (plus bwrap's own final execve of /exploit and the
+# namespace init's wait4 to reap the child - both REQUIRED for bwrap's
+# mechanics, neither a privilege for the exploit: without fork/clone the
+# exploit can only re-exec /exploit, never spawn anything).
 SECCOMP_ALLOW_X86_64 = (
-    0, 1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23,
-    24, 25, 28, 32, 33, 35, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
-    52, 53, 54, 55, 59, 60, 61, 63, 72, 79, 96, 97, 102, 104, 107, 108, 131,
-    138, 158, 186, 202, 204, 218, 219, 228, 230, 231, 232, 233, 262, 267, 270,
-    271, 273, 281, 288, 290, 291, 292, 293, 302, 318, 324, 332, 334,
+    # bwrap mechanics (its final exec of /exploit + namespace init reaping child)
+    59, 61,
+    # memory management (glibc static)
+    9, 10, 11, 12, 25, 28,
+    # signals
+    13, 14, 15, 131,
+    # scheduling / ids / basic time
+    24, 35, 39, 60, 63, 72, 102, 104, 107, 108, 231,
+    # glibc startup probes / thread infrastructure
+    96, 97, 158, 202, 218, 273, 302, 318, 334, 267,
+    # IO on already-held fds (stdio + the sockets it opens)
+    0, 1, 3, 5, 7,
+    # TCP client: open N outbound conns, send/recv, disconnect. NO bind/listen/
+    # accept (client only); NO socketpair (no IPC).
+    41, 42, 44, 45, 46, 47, 48, 54, 55,
 )
-# 267=readlinkat, 61=wait4 and the other non-obvious entries are needed by
-# glibc's static startup/exit (verified empirically). open/openat are NOT in the
-# list on purpose: the exploit cannot open any file (a SIGSYS kill on open() is a
-# clear "you used a forbidden syscall" signal). It can only do networking + its
-# own memory + basic IO on the socket/stdio it already holds.
+# Neither open(2) NOR openat(257) is in the list: the exploit cannot open any
+# file. A SIGSYS kill on an open() attempt is the clear "you used a forbidden
+# syscall" signal. It can only do networking + its own memory + basic IO on the
+# socket/stdio fds it already holds.
 
 
-def _seccomp_filter_bytes():
+def _seccomp_filter_bytes(allow=None):
     """Build a classic-BPF seccomp program (array of struct sock_filter) that
-    ALLOWS only SECCOMP_ALLOW_X86_64 and KILLS the process on anything else.
-    Byte layout is what `bwrap --seccomp FD` expects."""
+    ALLOWS the given syscall numbers (default: the exploit's SECCOMP_ALLOW_X86_64)
+    and KILLS the process on anything else. Byte layout is what `bwrap --seccomp
+    FD` expects. Used for BOTH the exploit client (tight TCP-only list) and the
+    supervised server (looser file-I/O + bind/listen/accept list)."""
     import struct
     AUDIT_ARCH_X86_64 = 0xC000003E
     KILL = 0x80000000          # SECCOMP_RET_KILL_PROCESS
@@ -2372,7 +2539,8 @@ def _seccomp_filter_bytes():
     LD_W_ABS = 0x20            # BPF_LD|BPF_W|BPF_ABS
     JEQ_K = 0x15               # BPF_JMP|BPF_JEQ|BPF_K
     RET_K = 0x06               # BPF_RET|BPF_K
-    allow = SECCOMP_ALLOW_X86_64
+    if allow is None:
+        allow = SECCOMP_ALLOW_X86_64
     n = len(allow)
     kill_idx = 3 + n           # index of RET KILL
     allow_idx = 4 + n          # index of RET ALLOW
@@ -2387,6 +2555,73 @@ def _seccomp_filter_bytes():
     ins.append((RET_K, 0, 0, KILL))                     # kill_idx
     ins.append((RET_K, 0, 0, ALLOW))                    # allow_idx
     return b"".join(struct.pack("<HBBI", *t) for t in ins)
+
+
+# Server-side seccomp allowlist: the SUPERVISED TARGET server is a full C++
+# network server that legitimately reads/writes files (datapack XML, file DB,
+# logs) and listens on a TCP port. So this list is much LOOSER than the
+# exploit's: file I/O (openat/read/write/close/getdents64/lseek/fstat/...),
+# the TCP-server side (socket/bind/listen/accept4/sendto/recvfrom/...), the
+# epoll loop, and timerfd. What it STILL blocks (-> SIGSYS) is the
+# post-exploitation surface: fork/clone/vfork (no spawning), execve-runtime (no
+# shelling out — only bwrap's own final exec needs it), ptrace (no debugging),
+# mount/pivot_root/chroot/chmod/chown/symlink/link/rename/unlink-at-arbitrary-
+# path (no filesystem mutation beyond what the server already does inside its
+# own dir). Combined with the bwrap chroot (host fs read-only except outdir)
+# and a generous RLIMIT_AS, this means an attacker who gets code-exec inside
+# the server CANNOT escalate by spawning or mounting. AND a seccomp SIGSYS from
+# the server is itself an EXPLOIT SUCCESS signal (the attacker's packets made
+# the server call something forbidden) — see LiveServer._scan_crash.
+SECCOMP_SERVER_ALLOW_X86_64 = (
+    # bwrap mechanics
+    59, 61,
+    # memory management
+    9, 10, 11, 12, 25, 26, 27, 28,
+    # signals
+    13, 14, 15, 131,
+    # scheduling / ids / time
+    24, 35, 39, 60, 63, 72, 96, 97, 102, 104, 107, 108, 231,
+    # glibc startup / threads
+    158, 202, 218, 273, 302, 318, 334, 267,
+    # supervisor (gdb / valgrind) mechanics - the SAME filter is inherited by
+    # the server (the inferior), so post-exploit these don't help an attacker
+    # (the bwrap chroot already confines what it could exec); allowing them is
+    # the price of running gdb/valgrind OUTSIDE the filtered process.
+    56, 57, 58,                          # clone fork vfork (gdb `run`, valgrind)
+    101,                                 # ptrace (gdb controls the inferior)
+    109, 135,                            # setpgid personality (gdb+inferior startup)
+    157,                                 # prctl
+    186, 98,                             # gettid getrusage (gdb probes)
+    22, 293,                             # pipe pipe2
+    435, 439,                            # clone3 faccessat2 (modern glibc fork + accessat2)
+    # file I/O the server legitimately does (datapack, file DB, logs)
+    0, 1, 2, 3, 5,                       # read write open close fstat
+    8, 17, 18, 19, 20,                   # lseek pread64 pwrite64 readv writev
+    32, 33, 292,                         # dup dup2 dup3
+    16,                                  # ioctl
+    257, 262, 217,                       # openat newfstatat getdents64
+    21,                                  # access
+    78, 79, 80, 83, 84, 85, 86, 87, 88,  # getdents getcwd chdir mkdir rmdir creat link
+    89, 90, 82, 81,                      # readlink symlink rename symlinkat
+    76, 77, 91, 92, 93, 94, 95,          # truncate ftruncate fchmod fchown lchown...
+    # TCP server side + epoll loop + timers + outbound (resolver/DB)
+    7, 23, 270,                          # poll select pselect6
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+    51, 52, 53, 54, 55,
+    288,                                 # accept4
+    213, 233, 232, 281,                  # epoll_create epoll_ctl epoll_wait epoll_pwait
+    291,                                 # epoll_create1
+    283, 286,                            # timerfd_create timerfd_settime
+    228, 229, 230,                       # clock_gettime clock_getres clock_nanosleep
+    40, 62,                              # sendfile kill
+    332, 324,                            # statx membarrier
+    99,                                  # set_robust_list (glibc variant)
+)
+# Explicitly-NOT-allowed (-> SIGSYS from the server = containment breach =
+# automatic EXPLOIT SUCCESS, see GDB_CRASH_SIGNALS / VALGRIND_ERROR_MARKERS):
+#   mount(165) umount2(166) pivot_root(155) kexec_load(246) bpf(321)
+#   perf_event_open(298) unshare(272) setns(308) keyctl(250) add_key(248)
+#   request_key(249)  +  anything not in the allowlist above.
 
 
 def _compile_exploit(outdir):
@@ -2412,11 +2647,17 @@ def _compile_exploit(outdir):
 
 
 def _set_sandbox_rlimits():
-    """preexec_fn: cap CPU time and address space of the sandboxed child."""
+    """preexec_fn: cap CPU time, address space, file-write size and FD count of
+    the sandboxed child."""
     import resource
+    # Soft CPU limit fires SIGXCPU (default disposition = terminate, so the
+    # process dies cleanly with that signal and the harness can report it); the
+    # hard limit +2s sends SIGKILL only if the process trapped/ignored SIGXCPU.
     resource.setrlimit(resource.RLIMIT_CPU,
-                       (SANDBOX_CPU_SECONDS, SANDBOX_CPU_SECONDS))
+                       (SANDBOX_CPU_SECONDS, SANDBOX_CPU_SECONDS + 2))
     resource.setrlimit(resource.RLIMIT_AS, (SANDBOX_MEM_BYTES, SANDBOX_MEM_BYTES))
+    resource.setrlimit(resource.RLIMIT_FSIZE,
+                       (SANDBOX_DISK_BYTES, SANDBOX_DISK_BYTES))
     resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
 
 
@@ -2445,7 +2686,7 @@ def do_run(outdir, _block=None, timeout=RUN_TIMEOUT):
         "--tmpfs", "/",                    # fresh empty root - the chroot
         "--ro-bind", binpath, "/" + EXPLOIT_BIN_NAME,   # only the ELF is visible
         "--dev", "/dev",
-        "--tmpfs", "/tmp",
+        "--size", str(SANDBOX_DISK_BYTES), "--tmpfs", "/tmp",
         "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-cgroup",
         "--die-with-parent", "--chdir", "/",
         "--seccomp", str(sfd),
@@ -2455,13 +2696,14 @@ def do_run(outdir, _block=None, timeout=RUN_TIMEOUT):
         r = subprocess.run(wrapped, capture_output=True, text=True,
                            timeout=timeout, preexec_fn=_set_sandbox_rlimits,
                            pass_fds=(sfd,))
-        out = (r.stdout or "") + (r.stderr or "")
-        out += "\n[exploit exit code %d]" % r.returncode
-        if r.returncode < 0:   # killed by a signal (seccomp SIGSYS, CPU SIGXCPU, ...)
-            out += " (terminated by signal %d)" % (-r.returncode)
+        out = ("--- exploit console (stdout+stderr) ---\n"
+               + (r.stdout or "") + (r.stderr or "")
+               + "\n" + _explain_exploit_exit(r.returncode, binpath, timeout))
     except subprocess.TimeoutExpired as e:
-        out = (e.stdout or "") + (e.stderr or "") + \
-              "\n[exploit wall-timeout after %ds]" % timeout
+        out = ((e.stdout or "") + (e.stderr or "")
+               + "\n[EXPLOIT KILLED: wall-clock budget exhausted after %ds "
+               "(RLIMIT wall). Optimise your client or split the workload; the "
+               "sandbox will not run longer.]" % timeout)
     except Exception as e:  # noqa
         out = "RUN error: %s" % e
     finally:
@@ -2474,36 +2716,114 @@ def do_run(outdir, _block=None, timeout=RUN_TIMEOUT):
     return out or "[no output]"
 
 
-def do_run_host(outdir, timeout=RUN_TIMEOUT):
-    """POST-sandbox escalation (the 'try exploit OUT of sandbox' step): compile
-    the model's exploit and run the SAME ELF on the HOST WITHOUT bwrap's chroot
-    + seccomp allowlist. The sandbox in do_run() is a deliberately TIGHT
-    bare-TCP-client jail; some real exploits legitimately need a syscall it
-    KILLS (a SIGSYS there is a false dead-end, not a refutation). This is the
-    less-isolated retry: ONLY RLIMIT_CPU/AS/NOFILE still apply (preexec_fn) -
-    there is NO filesystem (chroot) and NO syscall (seccomp) confinement, so the
-    model-authored ELF runs with the harness's own host access. It is the
-    deliberate "out of sandbox" attempt; use ONLY after a sandboxed RUN proved
-    insufficient, on an authorized host you accept running attacker code on."""
-    binpath, err = _compile_exploit(outdir)
-    if err:
-        return err
+# Signals that mean the EXPLOIT ITSELF has a bug (vs. the sandbox killing it):
+# a memory-corruption/crash in the LLM's C/C++ code. For these we attach gdb to
+# the saved ELF on the host (the bug is in the model's code, so it reproduces
+# outside the chroot) and append the backtrace so the model can debug its own
+# client. SIGSYS (sandbox kill) and SIGXCPU/SIGKILL (budget) are NOT here -
+# those are enforced stops, not client bugs.
+_CRASH_SIGNALS = {
+    11: "SIGSEGV", 6: "SIGABRT", 7: "SIGBUS", 4: "SIGILL",
+    8: "SIGFPE", 5: "SIGTRAP",
+}
+# Budget / sandbox-enforcement signals: NOT a client crash, do NOT gdb these.
+_SANDBOX_SIGNALS = {
+    31: ("SIGSYS", "used a syscall NOT in the seccomp allowlist. The sandbox "
+         "ONLY permits TCP networking (socket/connect/send/recv/shutdown/"
+         "setsockopt/getsockopt), memory management, and basic IO on fds you "
+         "already hold. FORBIDDEN in particular: open/openat (no file access "
+         "at all), fork/clone/vfork (no spawning processes), execve (no "
+         "shelling out), bind/listen/accept (you are a CLIENT - just connect), "
+         "ptrace, mount, pipe. Rewrite your exploit to only do networking."),
+    24: ("SIGXCPU", "exceeded the %d-second CPU budget (RLIMIT_CPU). Your client "
+         "is spinning - drop busy-waits, use poll()/recv() blocking, or split "
+         "the workload." % SANDBOX_CPU_SECONDS),
+    9:  ("SIGKILL", "killed hard (out-of-memory: RLIMIT_AS=%d MB, or the harness "
+         "reaped it). Reduce static buffers / heap usage." % (SANDBOX_MEM_BYTES // (1024*1024))),
+}
+
+
+def _explain_exploit_exit(returncode, binpath, timeout):
+    """Human-readable kill reason for the model, + a gdb backtrace when the
+    exploit ITSELF crashed (a bug in the model's C/C++ code). Returns the
+    trailing block to append to the RUN output."""
+    # Normal exit
+    if returncode == 0:
+        return "[exploit exited cleanly (rc=0)]"
+    # Killed by a signal. Two encodings exist:
+    #   - subprocess.run sees a NEGATIVE rc when the direct child was signalled
+    #   - bwrap's namespace-init reaps its child and PROPAGATES 128+sig, so the
+    #     bwrap process we spawn exits with a POSITIVE 128+sig code.
+    if returncode < 0:
+        sig = -returncode
+    elif returncode >= 128:
+        sig = returncode - 128
+    else:
+        return "[exploit exit code %d]" % returncode
+    # Sandbox / budget enforcement
+    if sig in _SANDBOX_SIGNALS:
+        name, why = _SANDBOX_SIGNALS[sig]
+        return ("[EXPLOIT KILLED by %s (signal %d): %s]\n"
+                "(this is the SANDBOX stopping you, NOT a crash in your code. "
+                "Fix the cause above and RUN again.)"
+                % (name, sig, why))
+    # Crash IN the model's code: reproduce under gdb on the host for a bt.
+    name = _CRASH_SIGNALS.get(sig, "signal %d" % sig)
+    bt = _exploit_backtrace(binpath)
+    return ("[EXPLOIT CRASHED: %s (signal %d) - this is a BUG IN YOUR C/C++ "
+            "CODE, not the sandbox. The harness re-ran your ELF under gdb on "
+            "the host to capture a backtrace; fix the fault and RUN again.]\n"
+            "--- gdb backtrace ---\n%s"
+            % (name, sig, bt))
+
+
+def _exploit_backtrace(binpath):
+    """Run the saved exploit ELF under gdb on the host (no chroot/seccomp - the
+    bug is in the model's code so it reproduces outside the jail; nofork/ptrace
+    concerns as we let gdb own the process), capture the crash, return the bt.
+    Best-effort: bounded wall + only the backtrace + the faulting frame. Returns
+    a short string always."""
+    if not os.path.isfile(binpath):
+        return "(ELF missing - cannot backtrace)"
+    gdb = shutil.which("gdb")
+    if not gdb:
+        return "(gdb not installed - no backtrace available)"
+    cmds = ("set pagination off\n"
+            "set confirm off\n"
+            "run\n"
+            "bt 25\n"
+            "frame\n"
+            "quit\n")
     try:
-        r = subprocess.run([binpath], capture_output=True, text=True,
-                           timeout=timeout, preexec_fn=_set_sandbox_rlimits,
-                           cwd=outdir)
-        out = (r.stdout or "") + (r.stderr or "")
-        out += "\n[exploit (UNSANDBOXED, host) exit code %d]" % r.returncode
-        if r.returncode < 0:   # killed by a signal (CPU SIGXCPU, segfault, ...)
-            out += " (terminated by signal %d)" % (-r.returncode)
-    except subprocess.TimeoutExpired as e:
-        out = (e.stdout or "") + (e.stderr or "") + \
-              "\n[exploit (UNSANDBOXED, host) wall-timeout after %ds]" % timeout
-    except Exception as e:  # noqa
-        out = "RUNHOST error: %s" % e
-    if len(out) > RUN_OUT_CAP:
-        out = out[:RUN_OUT_CAP // 2] + "\n...[truncated]...\n" + out[-RUN_OUT_CAP // 2:]
-    return out or "[no output]"
+        r = subprocess.run([gdb, "-q", "-nx", "-batch",
+                            "-ex", "set pagination off",
+                            "-ex", "set confirm off",
+                            "-ex", "run",
+                            "-ex", "bt 25",
+                            "-ex", "info registers rip rdi rsi",
+                            "-ex", "x/i $rip",
+                            "-ex", "quit",
+                            binpath],
+                           capture_output=True, text=True, timeout=20,
+                           stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return "(gdb failed: %s)" % exc
+    raw = r.stdout or ""
+    # Keep only the backtrace + the register/fault line at the end.
+    out = []
+    in_bt = False
+    for ln in raw.splitlines():
+        s = ln.strip()
+        if s.startswith("#0") or s.startswith("Thread "):
+            in_bt = True
+        if in_bt and (s.startswith("#") or s.startswith("Thread")
+                      or s.startswith("No solution") or s == ""):
+            out.append(ln)
+        if "Program received signal" in ln or "Program terminated" in ln \
+                or ln.startswith("=>") or "0x" in ln and "rip" in ln.lower():
+            out.append(ln)
+    txt = "\n".join(l for l in out if l.strip())[:3000]
+    return txt or ("(gdb produced no backtrace; raw tail:)\n" + raw[-1500:])
 
 
 # ---------------------------------------------------------------------------
@@ -2530,6 +2850,25 @@ VALGRIND_ERROR_MARKERS = (
     "Invalid free",
     "Mismatched free",
     "Process terminating with default action of signal",
+)
+
+# Containment-breach markers: the supervised server is sandboxed (bwrap chroot
+# + its own seccomp filter) and never touches these in normal operation. Any one
+# of them appearing in its pty output AFTER boot means a remote packet drove it
+# at a forbidden path/signal - per operator policy that is an automatic EXPLOIT
+# SUCCESS (a confirmed containment escape beats a mere crash). Conservative:
+# the bwrap chroot already neutralises ".." at the FS layer (the bind mount IS
+# the root), so seeing these strings means the attacker ACTUALLY tried an
+# escape and either got caught by seccomp (SIGSYS) or got far enough to log it.
+CONTAINMENT_BREACH_MARKERS = (
+    "../",                  # path-traversal attempt in a server error/log
+    "..\\",                 # windows-style (rare, but cheap to flag)
+    "/etc/shadow",          # sensitive OS file the server never reads
+    "/etc/passwd",
+    ".ssh/id_",             # private keys
+    "Operation not permitted",   # a forbidden syscall/path was attempted
+    "Permission denied: /",      # trying to write outside outdir
+    "Bad system call",           # SIGSYS syslog line from the seccomp kill
 )
 
 # gdb commands the model may run against the LIVE server: an ALLOWLIST by first
@@ -2634,6 +2973,12 @@ class LiveServer:
         self._baseline_reply = False  # did a healthy server reply to the ping at boot?
         self._closing = False  # in stop(): ignore the kill/exit as a "crash"
         self._booting = False  # during start(): ignore startup memcheck noise
+        # Rolling tail of the server's pty output (most recent last). Every
+        # _drain() appends; the harness exposes the last SERVER_TAIL_LINES to
+        # the model after each RUN so it can read what its attack made the
+        # server print (errors, asserts, disconnect traces, valgrind noise).
+        import collections
+        self._tail = collections.deque(maxlen=SERVER_TAIL_LINES)
 
     # -- boundary-value DB seeding -----------------------------------------
     def _apply_seed(self):
@@ -2720,13 +3065,33 @@ class LiveServer:
                 break
         text = _ANSI_RE.sub("", buf.decode(errors="replace")).replace("\r", "")
         self._scan_crash(text)
+        # Feed the rolling tail (most recent SERVER_TAIL_LINES lines) so the
+        # harness can show the model what the server printed after each RUN.
+        if text:
+            for ln in text.splitlines():
+                if ln.strip():
+                    self._tail.append(ln)
         return text
+
+    def tail(self, n=None):
+        """Last `n` (default SERVER_TAIL_LINES) non-empty server pty lines,
+        most-recent last. The harness appends this to the RUN reply so the
+        model sees what its attack made the server print."""
+        n = n if n is not None else SERVER_TAIL_LINES
+        lines = list(self._tail)
+        return "\n".join(lines[-n:]) if lines else "(no server output captured)"
 
     def _scan_crash(self, text):
         """Latch a crash/memory-error the first time one shows up in the output.
         gdb mode: a fatal signal. valgrind mode: a fatal signal OR any Memcheck
         error marker (an OOB/invalid access counts even with no crash). Startup
-        memcheck noise is ignored (see self._booting)."""
+        memcheck noise is ignored (see self._booting).
+
+        A containment-breach marker (the server trying to escape - "../" in an
+        error, an attempt to read /etc/shadow, ...) also latches as crashed:
+        per operator policy ANY such violation is an automatic EXPLOIT SUCCESS
+        (the attacker's packets made the server do something it must never do).
+        """
         if self._closing or self.crashed:
             return
         markers = GDB_CRASH_SIGNALS
@@ -2736,6 +3101,11 @@ class LiveServer:
             if self._booting:
                 return
             markers = markers + VALGRIND_ERROR_MARKERS
+        # Containment-breach markers apply in BOTH modes, but only AFTER boot
+        # (the server's normal boot log never prints these; their appearance
+        # means a remote packet drove the server at a forbidden path).
+        if not self._booting:
+            markers = markers + CONTAINMENT_BREACH_MARKERS
         if any(m in text for m in markers):
             self.crashed = True
             self.alive = False
@@ -2797,18 +3167,72 @@ class LiveServer:
                     "--child-silent-after-fork=yes", binpath]
         else:
             tool = ["gdb", "-q", "-nx", binpath]
+        # NOTE on server-side seccomp: an earlier attempt applied a loose filter
+        # here (--seccomp FD on the bwrap). It breaks gdb: the kernel forbids
+        # PTRACE between two processes that both carry a seccomp filter UNLESS
+        # the tracer has CAP_SYS_ADMIN over the tracee's user ns, and bwrap's
+        # user-ns setup + filter leaves gdb unable to PTRACE_TRACEME its
+        # inferior - the inferior hangs at "Starting program". So we DON'T
+        # filter the supervisor tree. Containment for the supervised server
+        # comes instead from:
+        #   * the bwrap chroot (host fs read-only except outdir) - path escape
+        #     is physically impossible (".." from the root stays at the root);
+        #   * RLIMIT_AS (below) - bounds a runaway/RAM-hungry server;
+        #   * the gdb/valgrind supervisor itself (the inferior can do nothing
+        #     the supervisor doesn't relay); and
+        #   * the harness's CRASH/ABORT/SIGSYS/".."/"Permission denied"/
+        #     "Bad system call" markers (CONTAINMENT_BREACH_MARKERS) which ALL
+        #     latch as an automatic EXPLOIT SUCCESS the moment the server
+        #     misbehaves. See LiveServer._scan_crash.
         wrapped = [
             BWRAP,
+            # NARROW filesystem view: bind host / read-only as before BUT mask
+            # the sensitive subtrees (a compromised server could otherwise READ
+            # + exfiltrate ~/.ssh, git credentials, /etc/ssh/host keys, cloud
+            # instance metadata, ... over its client socket). Each --tmpfs
+            # below overlays that path with an EMPTY tmpfs, so the server still
+            # sees a normal-looking / but those subtrees are unreachable. The
+            # bwrap chroot remains the authoritative path jail: ".." from /
+            # stays at /.
             "--ro-bind", "/", "/",
+            "--tmpfs", "/home",
+            "--tmpfs", "/root",
+            "--tmpfs", "/mnt",
+            "--tmpfs", "/media",
+            "--tmpfs", "/srv",
+            "--tmpfs", "/opt",
+            "--tmpfs", "/var/lib",
+            "--tmpfs", "/var/log",
+            "--tmpfs", "/boot",
+            "--tmpfs", "/etc/ssh",
             "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp",
             "--bind", self.outdir, self.outdir,
             "--die-with-parent", "--chdir", self.rundir,
             "--setenv", "TMPDIR", self.outdir,
-        ] + tool
+        ]
+        # The staged datapack is a SYMLINK to an absolute host path under /mnt
+        # (masked above). Resolve + bind its target read-only so the server can
+        # still read the datapack without seeing the rest of /mnt.
+        _dp_link = os.path.join(self.rundir, "datapack")
+        try:
+            _dp_target = os.path.realpath(_dp_link)
+            if os.path.isdir(_dp_target):
+                wrapped += ["--ro-bind", _dp_target, _dp_target]
+        except OSError:
+            pass
+        wrapped += tool
         import pty
         mfd, sfd = pty.openpty()
+        # Generous RLIMIT_AS so a compromised/RAM-hungry server can't OOM the
+        # host; no CPU cap (the server legitimately runs for the whole exploit).
+        def _server_rlimits():
+            import resource
+            resource.setrlimit(resource.RLIMIT_AS,
+                               (SERVER_MEM_BYTES, SERVER_MEM_BYTES))
+            resource.setrlimit(resource.RLIMIT_NOFILE, (4096, 4096))
         self.proc = subprocess.Popen(
-            wrapped, stdin=sfd, stdout=sfd, stderr=sfd, close_fds=True)
+            wrapped, stdin=sfd, stdout=sfd, stderr=sfd, close_fds=True,
+            preexec_fn=_server_rlimits)
         os.close(sfd)
         self.mfd = mfd
         self._booting = True
@@ -3093,17 +3517,26 @@ class LiveServer:
 _CURRENT_LIVE = None
 
 
-def exploit_one(rel, finding, idx, hard_budget, soft_budget):
-    """Run the exploit agent for one candidate. Returns (verdict, reason, dir)."""
+def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None):
+    """Run the exploit agent for one candidate. Returns (verdict, reason, dir).
+
+    `mode_override` ('gdb' | 'valgrind') forces the starting supervisor
+    instead of RUN_UNDER; used by run_exploit's valgrind-retry path: when a
+    gdb-mode pass returned NOT-EXPLOITABLE, run_exploit calls this again with
+    mode_override='valgrind' to catch the silent OOB/bad-free reads gdb
+    can't see (one retry per finding, disabled by CC_NO_VALGRIND_RETRY=1)."""
     global _CURRENT_LIVE
     outdir = os.path.join(OUTPUT_ROOT, slugify(rel, idx))
     os.makedirs(outdir, exist_ok=True)
+    if mode_override:
+        outdir = outdir + ("-vg" if mode_override == "valgrind" else "-gdb")
+        os.makedirs(outdir, exist_ok=True)
     sys.stderr.write("\n%s [exploit %02d] %s -> %s\n" % (_ts(), idx, rel, outdir))
     # server.py OWNS the supervisor instance: we boot the server under gdb (or
     # valgrind) up front and tear it down at the end. The model never starts/
     # stops it - it only pokes the already-running instance via TCP (and, in gdb
     # mode, inspects it read-only via GDB).
-    live = LiveServer(outdir)
+    live = LiveServer(outdir, mode=mode_override or None)
     _CURRENT_LIVE = live
     boot = live.start()
     sys.stderr.write("%s     [%s-instance] %s\n"
@@ -3264,17 +3697,12 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget):
             result = do_run(outdir, timeout=run_to)
             # The exploit just hammered the live server - did it fault it?
             result += "\n\n--- live server status ---\n" + live.poll_crash()
-            ran_something = True
-            compile_runs += 1
-        elif kind == "RUNHOST":
-            # POST-sandbox: run the same ELF without bwrap (rlimits kept). For
-            # exploits the tight seccomp jail blocks; same crash/hang check after.
-            run_to = max(1, min(RUN_TIMEOUT, int(deadline - time.time())))
-            sys.stderr.write("%s     [RUNHOST] compile+run exploit ELF "
-                             "UNSANDBOXED on host (step %d, %ds left, timeout %ds)\n"
-                             % (_ts(), step, remaining, run_to))
-            result = do_run_host(outdir, timeout=run_to)
-            result += "\n\n--- live server status ---\n" + live.poll_crash()
+            # Expose the last SERVER_TAIL_LINES of the SUPERVISED SERVER's pty
+            # output so the model can read what its attack made the server do
+            # (asserts, error traces, valgrind noise, disconnect logs). Bounded
+            # tail; "_tail" is updated every _drain(), most-recent last.
+            result += ("\n\n--- server console (last %d lines) ---\n%s"
+                       % (SERVER_TAIL_LINES, live.tail()))
             ran_something = True
             compile_runs += 1
         elif kind == "SEEDDB":
@@ -3588,14 +4016,21 @@ def run_exploit():
     if _cap:
         candidates = candidates[:int(_cap)]
     os.makedirs(OUTPUT_ROOT, exist_ok=True)
-    hard_budget, soft_budget = resolve_budgets()
+    hard_budget, soft_budget = _effective_budgets()
     sys.stderr.write("%s [INIT] %d findings, %d look exploitable; generating "
                      "exploits via %s (budget per exploit: hard %s / soft %s)\n"
                      % (_ts(), len(findings), len(candidates), common.IA_LABEL,
                         _human_dur(hard_budget), _human_dur(soft_budget)))
+    _warn_slow_model(hard_budget)
 
     results = []
     idx = 0
+    # Auto-retry under valgrind when the gdb pass returned NOT-EXPLOITABLE:
+    # catches the silent OOB / bad-free reads that gdb can't (a memory error
+    # that doesn't actually segfault). Disabled by CC_NO_VALGRIND_RETRY=1 or
+    # when valgrind isn't installed; one retry per finding, same budget.
+    valgrind_retry = (not os.environ.get("CC_NO_VALGRIND_RETRY")
+                      and VALGRIND is not None)
     for rel, body in candidates:
         idx += 1
         try:
@@ -3609,6 +4044,33 @@ def run_exploit():
             # before the next candidate, even if the turn raised mid-session.
             if _CURRENT_LIVE is not None:
                 _CURRENT_LIVE.stop()
+        # VALGRIND RETRY: a clean gdb pass may have MISSED a silent memory
+        # error. Re-run the SAME finding under valgrind; if it confirms, that
+        # wins; if it ALSO comes back clean, the finding stays not-exploitable.
+        if (verdict != "CONFIRMED" and valgrind_retry
+                and outdir != "-" and os.path.isdir(outdir)):
+            sys.stderr.write("%s     [valgrind-retry] gdb pass was %s -> "
+                             "re-trying under valgrind to catch silent OOB\n"
+                             % (_ts(), verdict))
+            try:
+                vg_verdict, vg_reason, vg_outdir = exploit_one(
+                    rel, body, idx, hard_budget, soft_budget,
+                    mode_override="valgrind")
+            except Exception as e:  # noqa
+                sys.stderr.write("    [valgrind-retry error] %s\n" % e)
+                vg_verdict, vg_reason, vg_outdir = "ERROR", str(e), "-"
+            finally:
+                if _CURRENT_LIVE is not None:
+                    _CURRENT_LIVE.stop()
+            if vg_verdict == "CONFIRMED":
+                verdict, reason, outdir = (vg_verdict, vg_reason
+                                           + " [valgrind retry after clean gdb]",
+                                           vg_outdir)
+            else:
+                # Keep the valgrind transcript too (operator can audit it), but
+                # the gdb pass's verdict/reason stand.
+                sys.stderr.write("%s     [valgrind-retry] also clean (%s); gdb "
+                                 "verdict stands\n" % (_ts(), vg_verdict))
         # Keep EVERY exploit folder (confirmed or not). A non-confirmed one is
         # not deleted - we just drop a fail.md marker into it recording the
         # verdict and the logic-path explanation of WHY it is not exploitable.
@@ -3639,6 +4101,46 @@ def run_exploit():
     for i, (rel, verdict, reason, kept) in enumerate(results, 1):
         lines.append("| %d | %s | %s | %s | %s |"
                      % (i, rel, verdict, (reason or "")[:80], kept))
+    lines.append("")
+    # Per-finding DETAIL: verdict + reason, the model's exploit C/C++ source,
+    # the gdb backtrace / valgrind report (if any), the server's last log lines.
+    # Sourced from each outdir's transcript.md + exploit source files. Bound so
+    # the report stays readable (a 200-run shouldn't produce a 50MB file).
+    DETAIL_SRC_CAP = 8000
+    DETAIL_TAIL_CAP = 4000
+    lines.append("\n---\n\n# Per-finding detail\n")
+    for i, (rel, verdict, reason, kept) in enumerate(results, 1):
+        lines.append("## %d. %s — %s\n" % (i, rel, verdict))
+        lines.append("**reason:** %s\n" % (reason or "(no explanation given)"))
+        lines.append("**dir:** `%s`\n" % kept)
+        outdir_p = os.path.join(OUTPUT_ROOT, kept.split()[0]
+                                if kept != "-" else "")
+        if outdir_p and os.path.isdir(outdir_p):
+            # The exploit source(s) the model wrote.
+            srcs = sorted(
+                os.path.join(outdir_p, f) for f in os.listdir(outdir_p)
+                if f.endswith(EXPLOIT_SRC_EXT)
+                and os.path.isfile(os.path.join(outdir_p, f)))
+            if srcs:
+                lines.append("\n### exploit source\n")
+                for s in srcs:
+                    try:
+                        txt = open(s, "r", errors="replace").read()
+                    except OSError:
+                        txt = "(unreadable)"
+                    lines.append("```cpp\n// %s\n%s\n```\n"
+                                 % (os.path.basename(s), txt[:DETAIL_SRC_CAP]))
+            # The transcript (turns + gdb backtrace + valgrind report).
+            tr = os.path.join(outdir_p, "transcript.md")
+            if os.path.isfile(tr):
+                try:
+                    txt = open(tr, "r", errors="replace").read()
+                except OSError:
+                    txt = ""
+                if txt:
+                    lines.append("\n### transcript (gdb backtrace / valgrind "
+                                 "report / model turns)\n")
+                    lines.append("```\n%s\n```\n" % txt[-DETAIL_TAIL_CAP:])
     open(os.path.join(OUTPUT_ROOT, "REPORT.md"), "w").write("\n".join(lines) + "\n")
     sys.stderr.write("%s [DONE] wrote %s/REPORT.md\n" % (_ts(), OUTPUT_ROOT))
     # To stderr (not stdout) so it never pollutes a findings.txt that stdout
@@ -3746,6 +4248,8 @@ def _print_help(prog):
         "  SECSERVER_RUNTIMEOUT  RUN wall timeout in seconds (default 900)\n"
         "  SECSERVER_CPU         Sandbox RLIMIT_CPU seconds (default 10)\n"
         "  SECSERVER_MEM         Sandbox RLIMIT_AS bytes (default 128M)\n"
+        "  SECSERVER_DISK        Sandbox RLIMIT_FSIZE + /tmp tmpfs --size\n"
+        "                        (default 16M)\n"
         "  SECSERVER_SCAN_MAX    Max files to scan (bound a cheap subset run)\n"
         "  SECSERVER_MAX         Max exploit candidates to attempt\n"
         "  CC_NO_ADVERSARIAL     Set to 1 to skip the adversarial re-audit of\n"

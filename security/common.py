@@ -399,6 +399,33 @@ def _ollama_num_predict():
     return 16384 if _ollama_think() is True else 2048
 
 
+# Per-turn timing for SLOW local models. A 122B model on CPU can emit a token
+# every few seconds; one agentic turn (read prompt + emit a single WRITE/RUN/
+# VERDICT action) can legitimately take 20-40 min. The `timeout` callers pass
+# (e.g. the exploit phase's remaining-budget clamp) is now treated as a SOFT
+# hint only: an in-flight turn is allowed to FINISH rather than being cut mid-
+# token (a truncated reply is useless to the agent loop and was making slow
+# models never produce a single complete action). These two knobs are the hard
+# safety nets against a genuinely-stuck stream:
+#   * TURN_TIMEOUT: per-CHUNK socket read timeout. If no token arrives within
+#     this window the connection is treated as dead (retry/give-up). Generous
+#     default so a slow-but-progressing stream isn't aborted.
+#   * TURN_MAX: absolute cap on a single turn. If a turn exceeds this, abort
+#     (catches a runaway model that never emits `done`).
+def _ollama_turn_timeout():
+    try:
+        return max(60, int(os.environ.get("CC_OLLAMA_TURN_TIMEOUT", "1800")))
+    except ValueError:
+        return 1800
+
+
+def _ollama_turn_max():
+    try:
+        return max(300, int(os.environ.get("CC_OLLAMA_TURN_MAX", "7200")))
+    except ValueError:
+        return 7200
+
+
 def _ollama_num_ctx():
     """Context-window size (tokens) for the router backend. Configurable
     (CC_OLLAMA_NUM_CTX / settings 'ollama_num_ctx'); default 131072 so a LARGE
@@ -484,12 +511,18 @@ def _chat_router(messages, timeout=None, model=None):
     if think is not None:
         payload["think"] = think
     data = json.dumps(payload).encode("utf-8")
-    deadline = (time.time() + timeout) if timeout else None
+    # Like chat_ollama: the caller's `timeout` is a SOFT hint, not a hard cut.
+    # The router runs stream=false (waits for the whole reply at once), so its
+    # urlopen() timeout must be large enough for a slow model to finish - we use
+    # CC_OLLAMA_TURN_TIMEOUT for the socket read and CC_OLLAMA_TURN_MAX as the
+    # absolute per-turn cap.
+    turn_start = time.time()
+    turn_max = _ollama_turn_max()
+    sock_to = _ollama_turn_timeout()
     _set_truncated(False)
     attempt = 0
     while True:
         attempt += 1
-        sock_to = max(1, int(deadline - time.time())) if deadline else 1200
         try:
             req = urllib.request.Request(url, data=data, headers=_ollama_headers())
             with urllib.request.urlopen(req, timeout=sock_to) as resp:
@@ -507,15 +540,14 @@ def _chat_router(messages, timeout=None, model=None):
                                  "ollama_think:false) - answer may be truncated\n")
             return (obj.get("response") or "").strip()
         except (urllib.error.URLError, ConnectionError, OSError) as exc:
-            if deadline and time.time() >= deadline:
+            if time.time() - turn_start > turn_max:
+                sys.stderr.write("    [router give up: turn exceeded %ds cap "
+                                 "after %s]\n" % (turn_max, exc))
                 return ""
             if attempt >= 5:
                 raise
             sys.stderr.write("    [chat retry %d/5 after %ds %s]\n" % (attempt, sock_to, exc))
-            nap = 3 * attempt
-            if deadline:
-                nap = min(nap, max(0, int(deadline - time.time())))
-            time.sleep(nap)
+            time.sleep(3 * attempt)
 
 
 # ===========================================================================
@@ -1135,11 +1167,13 @@ def chat_ollama(messages, timeout=None, model=None):
 
     Retries transient Ollama outages (ECONNREFUSED) up to 5x with backoff.
 
-    `timeout` (seconds, optional) is a HARD wall-clock cap on the whole call,
-    used by the exploit phase to clamp each turn to the remaining budget. When
-    set: the socket read timeout is bounded by it, the stream stops early and
-    returns whatever has arrived once the cap is hit, and we never retry past it.
-    None = unbounded.
+    `timeout` (seconds, optional) is a SOFT hint at the caller's remaining
+    budget. It is NOT used to truncate an in-flight turn: cutting a slow model
+    mid-token yields a useless partial reply and was the reason slow CPU models
+    (e.g. a 122B on CPU) never produced a single complete action. The caller's
+    outer loop enforces its hard wall-clock cap between turns; here we rely on
+    CC_OLLAMA_TURN_TIMEOUT (per-chunk read) and CC_OLLAMA_TURN_MAX (absolute
+    per-turn runaway cap) as the only hard stops. None = no hint.
 
     Delegates to the custom PHP router (_chat_router) when CC_OLLAMA_API /
     settings 'ollama_api' selects 'router' - that backend speaks a different wire
@@ -1147,7 +1181,8 @@ def chat_ollama(messages, timeout=None, model=None):
     if _ollama_api_kind() == "router":
         return _chat_router(messages, timeout=timeout, model=model)
     _set_truncated(False)
-    deadline = (time.time() + timeout) if timeout else None
+    turn_start = time.time()
+    turn_max = _ollama_turn_max()
     mdl = model or MODEL_NAME
     chat_url = backend_for_model(mdl) + "/api/chat"
     body = "".join(m["content"] for m in messages)
@@ -1172,24 +1207,27 @@ def chat_ollama(messages, timeout=None, model=None):
     if think is not None:
         payload["think"] = think
     data = json.dumps(payload).encode("utf-8")
+    # The caller's deadline is a SOFT hint (used to compute a nap ceiling on
+    # retries); the HARD stops are TURN_TIMEOUT (per-chunk read) and TURN_MAX
+    # (whole-turn absolute cap). This lets a slow model finish its reply.
+    caller_deadline = (time.time() + timeout) if timeout else None
+    sock_to = _ollama_turn_timeout()
     attempt = 0
     while True:
         attempt += 1
-        # Socket-level timeout: bound a stalled read by the time left (so a hung
-        # connection can't block past the budget), else a sane default.
-        if deadline:
-            sock_to = max(1, int(deadline - time.time()))
-        else:
-            sock_to = 1200
         try:
             req = urllib.request.Request(chat_url, data=data, headers=_ollama_headers())
             chunks = []
             with urllib.request.urlopen(req, timeout=sock_to) as resp:
                 for raw in resp:
-                    # Hard wall-clock cap: stop reading and return the partial
-                    # reply; the caller's deadline check then ends the work.
-                    if deadline and time.time() >= deadline:
-                        sys.stderr.write("    [chat cut: budget reached mid-stream]\n")
+                    # Absolute per-turn runaway cap: a turn that has streamed
+                    # for TURN_MAX without Ollama emitting `done` is a stuck
+                    # model (not a slow one) - abort so the outer loop moves on.
+                    if time.time() - turn_start > turn_max:
+                        sys.stderr.write(
+                            "    [chat abort: turn exceeded %ds absolute cap "
+                            "(CC_OLLAMA_TURN_MAX) - stuck model? returning what "
+                            "arrived]\n" % turn_max)
                         break
                     raw = raw.strip()
                     if raw:
@@ -1208,18 +1246,16 @@ def chat_ollama(messages, timeout=None, model=None):
                                 _set_truncated(True)
             return "".join(chunks).strip()
         except (urllib.error.URLError, ConnectionError, OSError) as exc:
-            # Don't retry/backoff past the wall-clock cap - return empty so the
-            # caller's deadline check fires.
-            if deadline and time.time() >= deadline:
-                sys.stderr.write("    [chat give up: budget reached after %s]\n" % exc)
+            # A transient outage: retry up to 5x with backoff. Don't backoff past
+            # the absolute turn cap (a stuck Ollama shouldn't burn forever).
+            if time.time() - turn_start > turn_max:
+                sys.stderr.write("    [chat give up: turn exceeded %ds cap after "
+                                 "%s]\n" % (turn_max, exc))
                 return ""
             if attempt >= 5:
                 raise
             sys.stderr.write("    [chat retry %d/5 after %ds %s]\n" % (attempt, sock_to, exc))
-            # Don't sleep past the deadline either.
             nap = 3 * attempt
-            if deadline:
-                nap = min(nap, max(0, int(deadline - time.time())))
             time.sleep(nap)
 
 
