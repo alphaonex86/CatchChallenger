@@ -52,6 +52,12 @@ Client::Client(const uint16_t &index_connected_player) :
     #endif
 {
     this->index_connected_player=index_connected_player;
+    #ifdef CATCHCHALLENGER_SERVER
+    //init BEFORE setToDefault() so its delete[] frees nothing on the
+    //ctor's own call -- the member is otherwise uninitialised here.
+    socketString=NULL;
+    socketStringSize=0;
+    #endif
     setToDefault();
     #ifdef CATCHCHALLENGER_HARDENED
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
@@ -209,6 +215,11 @@ void Client::setToDefault()
     #endif
     tradeIsValidated=false;
     #ifdef CATCHCHALLENGER_SERVER
+    //free here (slot back to Free) -- allocated in main-unix.cpp accept path
+    //with new char[]; bare re-null leaked the last generation at exit
+    //(valgrind: 656 bytes in 41 blocks definitely lost)
+    if(socketString!=NULL)
+        delete[] socketString;
     socketString=NULL;
     socketStringSize=0;
     #endif
