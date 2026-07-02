@@ -441,6 +441,7 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingremote.py]=45m
     [testingserver.py]=30m
     [testingstats.py]=10m
+    [testingbenchmark.py]=15m
     [testingtools.py]=15m
     [testingwebsocket.py]=30m
 )
@@ -557,6 +558,7 @@ run_test testingmulti.py
 run_test testingbyIA.py
 run_test testingcluster.py
 run_test testingclustersecurity.py
+run_test testingbenchmark.py
 run_test testingremote.py
 run_test testingcompilationwindows.py
 run_test testingcompilationmac.py
