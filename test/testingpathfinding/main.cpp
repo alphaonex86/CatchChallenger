@@ -284,6 +284,48 @@ int main(int argc,char *argv[])
             ko("gated_path","unexpected status="+std::to_string((int)st));
     }
 
+    // --- LEAST-DIRECTION-CHANGE: the defining property of this planner. ---
+    //
+    // CatchChallenger's PathFinding is NOT a conventional shortest-path search.
+    // Many equal-length Manhattan routes exist between two tiles; a plain BFS/A*
+    // would happily return a STAIRCASE (right,down,right,down,...) — same number
+    // of tiles, but a direction change on every step. This planner instead
+    // minimises the number of DIRECTION CHANGES (context switches): it keeps, per
+    // resolved cell, four run-length-compressed variants (path ending Left / Right
+    // / Top / Bottom) and, at the destination, returns the variant with the FEWEST
+    // RUNS. Fewer runs == fewer turns == a straighter, cheaper-to-walk path (and it
+    // compresses far better on the wire: one long run vs many 1-step runs).
+    //
+    // So on an OPEN map, going from (x,y) to (x+4,y+4) must come back as TWO runs
+    // (ONE turn) — an L shape: four steps along one axis, then four along the
+    // other, e.g. [{right,4},{bottom,4}] or [{bottom,4},{right,4}] — NOT the
+    // 8-run staircase a shortest-path search would accept as "equally optimal".
+    buildGrid(mapServer,false,wallRow,gapX,zoneVal);// open grid, all walkable
+    {
+        const int lx=5,ly=5;// well inside the map, room for +4/+4
+        PathFinding::PathFinding_status st=runPath(mapServer,lx,ly,lx+4,ly+4,noItem,path);
+        replay(path,lx,ly,-1,-1,ex,ey,crossed);
+        bool lshape=false;
+        if(path.size()==2)
+        {
+            // the two runs must be on DIFFERENT axes (one horizontal, one
+            // vertical): an L, not two colinear runs or a staircase.
+            const CatchChallenger::Orientation a=path.at(0).first;
+            const CatchChallenger::Orientation b=path.at(1).first;
+            const bool aH=(a==CatchChallenger::Orientation_left||a==CatchChallenger::Orientation_right);
+            const bool bH=(b==CatchChallenger::Orientation_left||b==CatchChallenger::Orientation_right);
+            lshape=(aH!=bH);
+        }
+        if(st==PathFinding::PathFinding_status_OK && ex==lx+4 && ey==ly+4
+                && path.size()==2 && lshape)
+            ok("least_direction_change","(x,y)->(x+4,y+4) routed as an L (2 runs, ONE turn) "
+                                        "-- minimises context switches, not a staircase");
+        else
+            ko("least_direction_change","expected a 2-run L path (least direction change); got "
+                +std::to_string(path.size())+" run(s) (st="+std::to_string((int)st)
+                +", end=("+std::to_string(ex)+","+std::to_string(ey)+"))");
+    }
+
     std::printf("%d passed, %d failed\n",g_pass,g_fail);
     return g_fail==0 ? 0 : 1;
 }
