@@ -113,6 +113,7 @@ _LOCAL_DATAPACKS = [
 C_GREEN = "\033[92m"
 C_RED = "\033[91m"
 C_CYAN = "\033[96m"
+C_YELLOW = "\033[93m"
 C_RESET = "\033[0m"
 
 results = []
@@ -148,7 +149,9 @@ def save_failed_cases():
     """Persist failures (with detail strings) under SCRIPT_NAME."""
     failed = []
     for name, ok, detail, _elapsed in results:
-        if not ok:
+        # ok is None => SKIP (unreachable node); only ok is False is a real
+        # failure. `if not ok` would wrongly persist skips into failed.json.
+        if ok is False:
             d = _fc.make_detail(detail)
             d.update(_fc.pop_extras(name))
             failed.append((name, d))
@@ -197,6 +200,19 @@ def log_fail(name, detail=""):
             print(_ctx[li])
             li += 1
     phase_timer.record_event("fail", name, ok=False, dt=elapsed, detail=detail)
+
+def log_skip(name, detail=""):
+    """Record a SKIP (ok is None): neither pass nor fail, and NOT written to
+    failed.json. Used when an exec node is genuinely unreachable (powered off),
+    which the operator has declared is not a failure."""
+    tls = _thread_last_log()
+    now = time.monotonic()
+    elapsed = now - tls.last
+    tls.last = now
+    with _log_lock:
+        results.append((name, None, detail, elapsed))
+        print(f"{phase_timer.t()} {C_YELLOW}[SKIP]{C_RESET} {name}  {detail}  ({elapsed:.1f}s)")
+    phase_timer.record_event("skip", name, ok=True, dt=elapsed, detail=detail)
 
 
 def ssh_cmd(host, port, command, timeout=COMPILE_TIMEOUT):
@@ -635,6 +651,19 @@ def _run_on_exec_node(compile_host, compile_port, compile_remote_dir,
     exec_label = exec_node.get("label", exec_node["host"])
     test_name = f"exec {pro_rel} ({compile_label} → {exec_label})"
 
+    # A physically powered-off exec node (rpi/odroid/pentium-m/… on a bench) is
+    # NOT a test failure — probe reachability first and SKIP it cleanly. Only a
+    # CONNECTION-level failure counts as "offline": an SSH connect timeout, or
+    # rc 255 (no route to host / connection refused / closed). A node that is
+    # reachable but whose run later fails is still a real FAIL below.
+    _euser = exec_node["user"]
+    _ehost = exec_node["host"]
+    _eport = int(exec_node.get("port", 22))
+    rc, out = ssh_cmd(f"{_euser}@{_ehost}", _eport, "true", timeout=10)
+    if _is_timeout(out) or rc == 255:
+        log_skip(test_name, "exec node unreachable (powered off) — skipped")
+        return
+
     # Pull the binary from the compile node onto our local staging tmpdir,
     # then push it to the exec node. SSH-only path — avoids needing the
     # compile node and exec node to know about each other.
@@ -1038,18 +1067,25 @@ def main():
     print(f"\n{C_CYAN}{'='*60}")
     print("  Summary")
     print(f"{'='*60}{C_RESET}")
-    passed = sum(1 for r in results if r[1])
-    failed = sum(1 for r in results if not r[1])
+    passed = sum(1 for r in results if r[1] is True)
+    failed = sum(1 for r in results if r[1] is False)
+    skipped = sum(1 for r in results if r[1] is None)
     total_elapsed = sum(r[3] for r in results)
     idx = 0
     while idx < len(results):
         name, ok, detail, elapsed = results[idx]
-        tag = f"{C_GREEN}PASS{C_RESET}" if ok else f"{C_RED}FAIL{C_RESET}"
+        if ok is True:
+            tag = f"{C_GREEN}PASS{C_RESET}"
+        elif ok is False:
+            tag = f"{C_RED}FAIL{C_RESET}"
+        else:
+            tag = f"{C_YELLOW}SKIP{C_RESET}"
         print(f"  [{tag}] {name}  {detail}  ({elapsed:.1f}s)")
         idx += 1
     print(f"  total elapsed: {total_elapsed:.1f}s")
     print()
-    print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}")
+    print(f"  {C_GREEN}{passed} passed{C_RESET}, {C_RED}{failed} failed{C_RESET}, "
+          f"{C_YELLOW}{skipped} skipped{C_RESET}")
     save_failed_cases()
     if failed:
         sys.exit(1)

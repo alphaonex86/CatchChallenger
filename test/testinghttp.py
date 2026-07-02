@@ -488,6 +488,106 @@ def _force_test_server_settings(build_dir):
         f.write(content)
 
 
+def _set_main_datapack_code(build_dir, maincode):
+    """Set <content><mainDatapackCode value="..."/></content> in
+    server-properties.xml so the served maincode is deterministic.
+
+    The server reads mainDatapackCode INSIDE the <content> group
+    (server/cli/main-unix2.cpp: settings->beginGroup("content")). A top-level
+    entry is IGNORED — the server then defaults to the first map/main/* folder
+    (alphabetically "generated", the tileset-tagger's incomplete output) and
+    writes THAT back into <content>. So strip every stray mainDatapackCode
+    (top-level or duplicate) and write exactly one inside <content>."""
+    xml = os.path.join(build_dir, "server-properties.xml")
+    if not os.path.isfile(xml):
+        return
+    with open(xml, "r") as f:
+        content = f.read()
+    # drop every existing mainDatapackCode element, wherever it sits
+    content = re.sub(r'[ \t]*<mainDatapackCode\s+value="[^"]*"\s*/>\s*\n?', '', content)
+    entry = f'<mainDatapackCode value="{maincode}"/>'
+    if re.search(r'<content\s*>', content):
+        content = re.sub(r'(<content\s*>)', r'\1\n        ' + entry, content, count=1)
+    else:
+        content = content.replace(
+            "<configuration>",
+            f'<configuration>\n    <content>\n        {entry}\n    </content>', 1)
+    with open(xml, "w") as f:
+        f.write(content)
+
+
+def _ensure_reference_build():
+    """Self-bootstrap SERVER_BUILD (testing-filedb) so the setup checks below
+    have a real server-properties.xml + datapack to validate.
+
+    testinghttp historically REUSED testingserver.py's testing-filedb build as
+    "the source of server-properties.xml". But testingserver tears that dir down
+    on cleanup (rmtree datapack + remove_cache), and testinghttp can also run
+    first or standalone, so the reused dir may be absent — the setup checks then
+    fail instantly with "server-properties.xml not found" / "datapack dir not
+    found". Build + stage our own instead; a test must not depend on another
+    test's leftover state. Idempotent: build_project is a ccache no-op when
+    current, and we only (re)stage / seed when missing. Returns True on success."""
+    if not build_project(SERVER_FILEDB_PRO, SERVER_BUILD, "server-filedb"):
+        return False
+    # stage the primary datapack (symlink to the shared staged cache), mirroring
+    # testingserver.setup_server_datapack — an instant ln -s, not a copytree.
+    dst = os.path.join(SERVER_BUILD, "datapack")
+    maincode = "test"
+    if not os.path.isdir(dst):
+        import datapack_stage as _ds
+        dp_src = _config["paths"]["datapacks"][0]
+        staged = _ds.staged_local(dp_src)
+        if os.path.islink(dst) or os.path.isfile(dst):
+            os.remove(dst)
+        os.makedirs(SERVER_BUILD, exist_ok=True)
+        os.symlink(staged, dst)
+        log_info(f"self-bootstrap: datapack {dst} -> {staged}")
+    # drop any stale HPS cache + file-db state a prior run (or testingserver)
+    # left behind: both are maincode-specific and would make the server keep
+    # serving the previous maincode ("generated") regardless of the corrected
+    # server-properties.xml below.
+    _stale_cache = os.path.join(SERVER_BUILD, "datapack-cache.bin")
+    if os.path.isfile(_stale_cache):
+        os.remove(_stale_cache)
+    _stale_db = os.path.join(SERVER_BUILD, "database")
+    if os.path.isdir(_stale_db):
+        shutil.rmtree(_stale_db, ignore_errors=True)
+    # pick a COMPLETE mainDatapackCode present in the staged datapack. Prefer
+    # the canonical harness maincode "test" (small + complete), then "official"
+    # (full game content); avoid "generated" — the tileset-tagger's output
+    # folder is intentionally incomplete (missing bot steps / monster sprites)
+    # and would make the client bail before receiving the httpDatapackMirror.
+    map_main = os.path.join(dst, "map", "main")
+    if os.path.isdir(map_main):
+        codes = sorted(d for d in os.listdir(map_main)
+                       if os.path.isdir(os.path.join(map_main, d)))
+        if "test" in codes:
+            maincode = "test"
+        elif "official" in codes:
+            maincode = "official"
+        else:
+            preferred = [c for c in codes if c != "generated"]
+            if preferred:
+                maincode = preferred[0]
+            elif codes:
+                maincode = codes[0]
+    # ensure server-properties.xml exists (seed if missing) then FORCE the
+    # chosen maincode + automatic_account_creation + pinned port. Forcing the
+    # maincode every run (not just seed-when-missing) makes the served datapack
+    # deterministic even when a stale file from a prior run / testingserver
+    # pinned an incomplete maincode.
+    if not os.path.isfile(SERVER_PROPS):
+        os.makedirs(SERVER_BUILD, exist_ok=True)
+        with open(SERVER_PROPS, "w") as f:
+            f.write(_TEST_SERVER_PROPERTIES_SEED.format(port=SERVER_PORT))
+        log_info("self-bootstrap: seeded server-properties.xml")
+    _set_main_datapack_code(SERVER_BUILD, maincode)
+    _force_test_server_settings(SERVER_BUILD)
+    log_info(f"self-bootstrap: server-properties.xml maincode={maincode}")
+    return True
+
+
 def start_server(build_dir, bin_name=SERVER_BIN_NAME):
     global server_proc
     binary = os.path.join(build_dir, bin_name)
@@ -702,6 +802,14 @@ def main():
     for d in (SERVER_BUILD, CLIENT_CPU_BUILD):
         clean_build_artifacts(d)
 
+    # Self-bootstrap the server build + datapack + server-properties.xml BEFORE
+    # the setup checks read them (they used to rely on testingserver.py leaving
+    # testing-filedb populated — a cross-script coupling that fails whenever
+    # testingserver cleaned up or testinghttp runs first/standalone).
+    if not _ensure_reference_build():
+        summary()
+        return
+
     SETUP_CHECKS = ["automatic_account_creation", "http_symlink",
                      "datapack_archive", "mirror_json_generator"]
     COMPILES = ["server", "client"]
@@ -804,11 +912,7 @@ def main():
     else:
         log_fail("mirror-json-generator.php", f"not found: {mirror_php}")
 
-    # ── 5. build server & client ──────────────────────────────────
-    if not build_project(SERVER_FILEDB_PRO, SERVER_BUILD, "server-filedb"):
-        stop_server()
-        summary()
-        return
+    # ── 5. build client (server-filedb already built in _ensure_reference_build) ──
     if not build_project(CLIENT_CPU_PRO, CLIENT_CPU_BUILD, "qtcpu800x600"):
         summary()
         return
