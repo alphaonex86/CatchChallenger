@@ -23,12 +23,17 @@ public:
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget = nullptr) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
+    //without this the volume slider handle cannot be DRAGGED (only a discrete click on
+    //the bar moved it): CCSliderH updates its value while dragging in mouseMoveEventXY,
+    //which is only reached if the owning dialog forwards the move like press/release.
+    void mouseMoveEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
 private slots:
     void volumeSliderChange();
     void productKeyChange();
     void languagesChange(int);
+    void touchControlsChange(int);
     void openBuy();
 
     void newLanguage();
@@ -46,6 +51,9 @@ private:
 
     QGraphicsTextItem *languagesText;
     ComboBox *languagesList;
+
+    QGraphicsTextItem *touchControlsText;
+    ComboBox *touchControlsList;
 
     int x,y;
     QString previousKey;

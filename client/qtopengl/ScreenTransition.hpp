@@ -5,6 +5,8 @@
 #include <QGraphicsView>
 #include <QElapsedTimer>
 #include <QTimer>
+#include <QHash>
+#include <QPointF>
 #include "background/CCBackground.hpp"
 #include "foreground/LoadingScreen.hpp"
 #include "ScreenInput.hpp"
@@ -27,6 +29,8 @@ class CCMap;
 class OverMapLogic;
 class InternalServer;
 class LocalListener;
+class CustomButton;
+class QEventPoint;
 
 class ScreenTransition : public QGraphicsView
 {
@@ -46,6 +50,16 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    //multitouch: route each touch point so the on-screen D-pad + A/B can be held
+    //together (one finger per pad button) while a second finger still works.
+    bool viewportEvent(QEvent *event) override;
+    void handleTouchPoint(const QEventPoint &tp);
+    //press/release/move dispatch to the above->foreground->background stack, factored
+    //so the touch path reuses the exact mouse dispatch without touching the mouse
+    //handlers. p is a SCENE point.
+    void dispatchPressAt(const QPointF &p);
+    void dispatchReleaseAt(const QPointF &p);
+    void dispatchMoveAt(const QPointF &p);
     void closeEvent(QCloseEvent *event) override;
 protected:
 //    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
@@ -104,6 +118,13 @@ private:
     QGraphicsScene *mScene;
     QGraphicsPixmapItem *imageText;
     ScreenInput *mousePress;
+    //on-screen pad ownership: which pad button a mouse press or each touch id owns, so
+    //the release goes to the SAME button (no cross-cancel between fingers).
+    CustomButton *m_mousePadButton;
+    QHash<int,CustomButton *> m_touchButton;
+    //the single touch id currently driving the generic (non-pad) dispatch (dialog /
+    //map / slider are single-touch); -1 when none.
+    int m_genericTouchId;
     SubServer *subserver;
     CharacterList *characterList;
     CCMap *ccmap;
