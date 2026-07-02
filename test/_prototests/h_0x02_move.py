@@ -48,6 +48,12 @@ Test contract coverage:
           byte-for-byte unaffected (its persisted position is unchanged), and
           the cheater itself created no phantom state (its character is gone /
           unchanged, no new connections leaked).
+  * COLLISION MOVE -> KICK: a well-formed move with a VALID direction (1..8)
+    that walks the player INTO a wall (a 254 hard block / non-bordered map
+    edge) must be REFUSED and KICK the client — a correct client never sends
+    such a move (it validates against the same collision map first). Uses the
+    two-packet batched-move technique (arm the direction with stepCount 0, then
+    a large stepCount) so the step actually executes into the wall.
 """
 
 import time
@@ -359,6 +365,98 @@ def run(server):
                         % (bad, cheat_persisted, cheat_spawn))
 
         # ----------------------------------------------------------------
+        # COLLISION move -> KICK — the deliverable's key server contract: a
+        # well-formed move with a VALID direction that walks the player INTO a
+        # wall (a 254 hard block / map edge) must be REFUSED and KICK the client
+        # (Client::singleMove -> MoveOnTheMap::canGoTo false -> errorOutput() ->
+        # disconnectClient). moveThePlayer is BATCHED on the PREVIOUS direction,
+        # so a lone move packet runs 0 steps; we first arm the direction with
+        # stepCount 0, then send a large stepCount so the player walks that way
+        # until the first blocked cell (a wall or the non-bordered map edge)
+        # kicks. From ANY spawn, 255 steps in one straight line reach a boundary
+        # in the finite test world, so this is geometry-independent.
+        # ----------------------------------------------------------------
+        collision_kick_verified = False
+        try:
+            wall = H.Session(server, login=_uniq("wl"), passh=_uniq("wlp"),
+                             pseudo="WallHit")
+        except H.HandshakeError as e:
+            return (False, "collision-move handshake failed: %s" % e)
+        try:
+            wall.m(0x02, H.u8(0) + H.u8(5))    # arm last_direction = move-top (0 steps)
+            wall.m(0x02, H.u8(255) + H.u8(6))  # 255 steps up -> first wall/edge kicks
+        except OSError:
+            pass  # kicked mid-send is still a kick
+        # A 255-step walk floods the socket with movement broadcasts before the
+        # blocked step, so the TCP-EOF probe (_is_kicked) is racy here; use the
+        # authoritative per-pseudo server-log kick line instead.
+        if not H.session_was_kicked(wall, timeout=4.0):
+            try:
+                wall.close()
+            except OSError:
+                pass
+            return (False,
+                    "CONTRACT VIOLATION: a valid-direction move INTO a collision "
+                    "was NOT kicked (the client walked into a wall unpunished)")
+        try:
+            wall.close()
+        except OSError:
+            pass
+        collision_kick_verified = True
+        ok, why = _alive_clean(server)
+        if not ok:
+            return (False, "after collision-move kick: %s" % why)
+        # the collision cheat must not have corrupted the untouched victim
+        time.sleep(0.35)
+        victim_now = _spawn_of(server, victim_login, victim_pass)
+        if victim_now != victim_before:
+            return (False,
+                    "STATE CORRUPTION: victim position changed by a collision "
+                    "cheat: %s -> %s" % (victim_before, victim_now))
+
+        # ----------------------------------------------------------------
+        # MOVE DURING AN ACCEPTED TRADE -> KICK. An open (both-accepted) trade
+        # window freezes both players in place; a move while tradeIsValidated is a
+        # protocol violation and must KICK. (A merely REQUESTED, not-yet-accepted
+        # trade must NOT block movement -- that gate would be griefable -- but that
+        # is a negative not exercised here.) We reuse h_0x14's _form_trade() to
+        # reach the validated-trade state, then drive a real step (arm direction
+        # with stepCount 0, then a 1-step move so singleMove() actually runs and
+        # hits the trade gate) and assert the mover is kicked.
+        # ----------------------------------------------------------------
+        trade_move_kick_verified = False
+        try:
+            import h_0x14_tradeAdd as _tr
+            ta, tb = _tr._form_trade(server, "mvtr")
+            try:
+                ta.m(0x02, H.u8(0) + H.u8(5))  # arm last_direction = move-top (0 steps)
+                ta.m(0x02, H.u8(1) + H.u8(6))  # 1 step -> singleMove -> trade gate kicks
+            except OSError:
+                pass  # kicked mid-send is still a kick
+            if not H.session_was_kicked(ta, timeout=4.0):
+                try:
+                    ta.close()
+                    tb.close()
+                except OSError:
+                    pass
+                return (False,
+                        "CONTRACT VIOLATION: a move during an ACCEPTED trade window "
+                        "was NOT kicked (a validated trade must freeze the player)")
+            trade_move_kick_verified = True
+            try:
+                ta.close()
+                tb.close()
+            except OSError:
+                pass
+            ok, why = _alive_clean(server)
+            if not ok:
+                return (False, "after trade-move kick: %s" % why)
+        except (H.HandshakeError, RuntimeError, ImportError) as e:
+            # trade setup is best-effort; if it cannot be reached, do not fail the
+            # whole move contract on it (it is a secondary assertion).
+            trade_move_kick_verified = "unreached(%s)" % type(e).__name__
+
+        # ----------------------------------------------------------------
         # Leave the server usable: a brand-new full session still handshakes
         # to CharacterSelected and can move after all the abuse. The witness
         # session is reopened fresh (cheaters are all closed).
@@ -377,12 +475,13 @@ def run(server):
 
         detail = (
             "valid=%d malformed=%d semantic_invalid=%d kick_verified=%s "
-            "no_corruption=%s db_checked=%s start=%s persisted=%s "
-            "victim_stable=%s (position may be unchanged if collision-blocked; "
-            "server stayed alive+clean through all cases)"
+            "collision_move_kick=%s trade_move_kick=%s no_corruption=%s "
+            "db_checked=%s start=%s persisted=%s victim_stable=%s (position may be "
+            "unchanged if collision-blocked; server stayed alive+clean through all "
+            "cases)"
             % (valid_cases, malformed_cases, semantic_invalid_cases,
-               verifies_kick, verifies_no_corruption, checks_db, start,
-               persisted, victim_before)
+               verifies_kick, collision_kick_verified, trade_move_kick_verified,
+               verifies_no_corruption, checks_db, start, persisted, victim_before)
         )
         return (True, detail)
 

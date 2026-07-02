@@ -1076,10 +1076,15 @@ def run_qtopengl_lava_blocked_channel_test(dp_name, mc, failed_cases):
     (10-12,10-12) plus the cells (13,27),(14,27). map/layers.xml gates the Lava
     layer behind item id 32 (monstersCollision item="32" ... layer="Lava"). A
     fresh character spawns at city (15,26) with NO item 32, so it must be UNABLE
-    to step onto a lava tile. We walk to the walkable approach (13,26) just above
-    the near lava (13,27), then both press KEY Down toward it AND CLICKTILE it; the
-    player must stay off every lava tile (position unchanged at (13,26)) and no
-    fight may start. The observable is c.state() staying off the lava set."""
+    to step onto a lava tile. We walk to the walkable approach (14,26) just above
+    the lava (14,27), then both press KEY Down toward it AND CLICKTILE it; the
+    player must stay off every lava tile (position unchanged at (14,26)) and no
+    fight may start. The observable is c.state() staying off the lava set.
+
+    NOTE: the OTHER above-lava tile (13,26) is deliberately NOT used as the
+    approach: it is the kid1 lookAt="move" bot's home tile, and a visible NPC is
+    an obstacle (MapController::canGoTo blocks the DESTINATION bot tile since the
+    walk-onto-NPC fix) -- the old approach only worked through that bug."""
     case = f"qtopengl lava blocked without item over channel ({dp_name} {mc})"
     if not should_run(case, failed_cases):
         return
@@ -1088,8 +1093,8 @@ def run_qtopengl_lava_blocked_channel_test(dp_name, mc, failed_cases):
             (10, 11), (11, 11), (12, 11),
             (10, 12), (11, 12), (12, 12),
             (13, 27), (14, 27)}
-    APPROACH = (13, 26)
-    LAVA_TILE = (13, 27)
+    APPROACH = (14, 26)
+    LAVA_TILE = (14, 27)
     s = _GLChannelSession(mc)
     ok, err = s.start()
     if not ok:
@@ -1631,6 +1636,141 @@ def run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases):
         log_pass(case, f"clan entry dialog {clan_dialog!r} + zonecapture entry dialog {zone_dialog!r} "
                        f"opened over channel (the create/capture flows themselves are not "
                        f"solo-completable: no link-follow verb, abort()-stub handlers)")
+    finally:
+        s.kill()
+
+
+def run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases):
+    """Channel-driven regression for the three house2.tmx click-to-interact bugs
+    (test maincode, map id 4; enter via city door 15,25 -> arrive 9,28):
+
+      BUG 1  SELLER shop bot id=2 at (0,22) sits in a SEALED pocket, reachable
+             only from (2,22) ACROSS the counter wall at (1,22). Clicking it must
+             route to the counter front (2,22), face across the counter and OPEN
+             the shop dialog -- previously it only said "No path to go here".
+      BUG 2  ZONE-capture bot id=4 at (12,11) is a lookAt="move" bot whose tile is
+             WALKABLE: clicking it must walk the player NEXT to it and OPEN its
+             dialog, and NEVER leave the player standing ON the bot tile.
+      BUG 3  after interacting with the move-bot the player must still be able to
+             move (it must not be wedged on/by the bot).
+      KEYBOARD a held arrow toward the bot tile must be REFUSED client-side
+             (MapController::canGoTo blocks a step onto a visible NPC): standing at
+             (12,12) and pressing Up must never land the player on (12,11), and the
+             player must still be free to walk away after (not wedged).
+
+    Everything here is CLICKTILE-driven on purpose (the sibling clan/zonecapture
+    test uses GOTO+KEY to side-step exactly bug 2); a regression that walked the
+    player onto the move-bot or lost the counter interaction would fail here."""
+    case = f"qtopengl house2 click-to-interact bots (counter shop + move-bot) over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl house2 click bots over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill()
+        log_fail(case, err)
+        for l in s.tail():
+            print(f"  | {l}")
+        return
+    try:
+        spawn = s.map_id()
+        s.send("CLICKTILE 15 25")
+        house2 = s.wait_map_change(spawn)
+        if house2 < 0:
+            log_fail(case, f"never entered house2 from the city door (15,25); state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # --- BUG 2: clicking the move-bot (12,11) must trigger it, NOT stand on it.
+        s.send("CLOSEDIALOG")
+        time.sleep(0.3)
+        s.send("CLICKTILE 12 11")
+        if not s.wait(lambda: "zone capture" in s.dialog().lower(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 18))):
+            log_fail(case, f"BUG 2: clicking the move-bot (12,11) opened NO 'Zone capture' dialog "
+                           f"(the click walked onto/past the bot instead of triggering it); "
+                           f"got={s.dialog()!r} state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        st = s.state()
+        if st is not None and st[:3] == (house2, 12, 11):
+            log_fail(case, f"BUG 2: player is STANDING ON the move-bot tile (12,11) after clicking it "
+                           f"(must stand beside it and trigger it, never walk onto it); state={st}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # --- KEYBOARD: walking INTO the bot tile must be refused (stand at (12,12),
+        #     press Up repeatedly: first turns, then the step onto (12,11) is blocked).
+        s.send("CLOSEDIALOG")
+        time.sleep(0.3)
+        s.send(f"GOTO {house2} 12 12")
+        if not s.wait(lambda: s.state() is not None and s.state()[:3] == (house2, 12, 12),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 15))):
+            log_fail(case, f"KEYBOARD: could not stand below the move-bot at (12,12); "
+                           f"state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        i = 0
+        while i < 3:
+            s.send("KEY Up")
+            time.sleep(0.6)
+            i += 1
+        st = s.state()
+        if st is None or st[:3] != (house2, 12, 12):
+            log_fail(case, f"KEYBOARD: pressing Up from (12,12) moved the player "
+                           f"{'ONTO the bot tile (12,11)' if st and st[:3]==(house2,12,11) else 'unexpectedly'}; "
+                           f"the step onto a visible NPC must be refused; state={st}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # --- BUG 3: after the move-bot interaction the player must still move freely.
+        s.send(f"GOTO {house2} 9 28")  # the entry tile: guaranteed reachable
+        if not s.wait(lambda: s.state() is not None and s.state()[:3] == (house2, 9, 28),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 15))):
+            log_fail(case, f"BUG 3: player wedged after the move-bot interaction (could not GOTO the "
+                           f"reachable entry (9,28)); state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # --- BUG 1: clicking the counter seller (0,22) must open the shop ACROSS the
+        #     (1,22) counter wall and leave the player at the counter front (2,22).
+        s.send("CLOSEDIALOG")
+        time.sleep(0.3)
+        s.send("CLICKTILE 0 22")
+        if not s.wait(lambda: "pokemart" in s.dialog().lower(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 20))):
+            log_fail(case, f"BUG 1: clicking the counter seller (0,22) opened NO shop dialog "
+                           f"(the 'jump 1 collision tile' counter interaction failed / 'no path'); "
+                           f"got={s.dialog()!r} state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        seller_dialog = s.dialog()
+        st = s.state()
+        if st is None or st[:3] != (house2, 2, 22):
+            log_fail(case, f"BUG 1: after opening the counter seller the player is not at the counter "
+                           f"front (2,22); state={st}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        if s.proc.poll() is not None:
+            log_fail(case, f"client exited during the house2 click-bot checks (rc={s.proc.poll()})")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        log_pass(case, f"move-bot (12,11) triggered from beside it (never walked onto), keyboard step "
+                       f"onto the bot refused from (12,12), player free to move after, and counter "
+                       f"seller (0,22) shop opened across the (1,22) counter from (2,22): "
+                       f"dialog={seller_dialog[:40]!r}")
     finally:
         s.kill()
 
@@ -2301,6 +2441,7 @@ def main():
                 run_qtopengl_house1_industry_quest_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_cave_fight_loss_nocrash_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_sign_keyboard_channel_test(dp_name, mc, failed_cases)
