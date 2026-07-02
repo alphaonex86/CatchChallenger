@@ -25,6 +25,25 @@ out-of-date datapack). A test that wants a fresh download/regen must clear the
 datapack cache AND the persisted settings — otherwise a previous run's / another
 test's hash (or mirror URL) leaks in.
 
+### HTTP-mirror download strategy (when a mirror is advertised)
+
+The mirror path favours ONE compressed archive (compression across ALL files
+beats per-file compression) and only falls back to individual files:
+
+* **Empty cache (full)** — download ONE `tar.zst` of ALL files (whole datapack,
+  compressed across every file for best size), then unpack.
+* **Partial (some changed / new / removed)** — FIRST try the delta archive keyed
+  by the client's CURRENT hash (`.tar.zst` from that hash to the server's): it
+  carries only the changed/new files, still compressed across all of them, plus a
+  file LIST of what to REMOVE. If that current-hash delta is missing / fails to
+  download, FALL BACK to downloading each changed/new file INDIVIDUALLY over HTTP
+  (and still apply the removal list).
+* **Full sync (hash matches)** — download NOTHING.
+
+(Internal-protocol mode instead streams files inline over the game socket —
+`0x75` size header, then `0x76` raw / `0x77` zstd file-content packets — with no
+mirror; used when no mirror is advertised.)
+
 ## Client server-selection CLI flags — pick exactly ONE
 
 Both clients accept three mutually exclusive groups; passing two+ is rejected (clears all three with `std::cerr` warning).
