@@ -2,6 +2,29 @@
 
 Combine with root CLAUDE.md.
 
+## Datapack is checksummed — two distinct things: the datapack vs its binary cache
+
+Keep two separate things straight:
+
+1. **The datapack** — the raw datapack files
+   (`~/.local/share/CatchChallenger/client*/datapack/argument-<host>-<port>/`).
+   It is CHECKSUMMED. On connect the client sends its cached datapack hash; if it
+   matches the server's, the datapack is already in sync and is NOT re-downloaded
+   (only a mismatch triggers a full, or HTTP-mirror partial, download).
+2. **The preprocessed binary cache** — ONE file, the parsed/preprocessed binary
+   form of the datapack. It speeds up loading by NOT opening the many datapack
+   files and NOT re-converting text -> the usable internal binary format on every
+   start. It is REGENERATED ONLY when the datapack changed (checksum mismatch);
+   an unchanged datapack reuses the existing binary cache.
+
+So the checksum is on the DATAPACK and it drives BOTH: whether to re-download,
+and whether to regen the binary cache. ALWAYS account for this: code touching
+datapack sync must keep the checksum coherent (a stale/empty hash forces a
+needless full re-download + binary-cache regen; a wrong "match" ships an
+out-of-date datapack). A test that wants a fresh download/regen must clear the
+datapack cache AND the persisted settings — otherwise a previous run's / another
+test's hash (or mirror URL) leaks in.
+
 ## Client server-selection CLI flags — pick exactly ONE
 
 Both clients accept three mutually exclusive groups; passing two+ is rejected (clears all three with `std::cerr` warning).
