@@ -202,10 +202,44 @@ set(_qtopengl_qm ${_qtopengl_dir}/resources/languages/en/translation.qm)
 # returns false at runtime → app runs untranslated, same degraded
 # behaviour as the old committed 1-byte placeholder).
 find_package(Qt6 COMPONENTS LinguistTools QUIET)
+# Pick an lrelease that can actually RUN on the build host. A .qm is platform-
+# INDEPENDENT, so the host tool is the correct one for EVERY target. The
+# imported Qt6::lrelease may be a TARGET-arch binary the host cannot exec: on
+# osxcross it is a macOS Mach-O ("Exec format error", which aborted the qtopengl
+# build) AND that toolchain does not even set CMAKE_CROSSCOMPILING, so we cannot
+# gate on it — instead PROBE executability with `-version`. Order: (1) the
+# imported Qt6::lrelease if it runs here (covers native, incl. a non-PATH Qt
+# prefix); (2) a host lrelease from QT_HOST_PATH / PATH that runs (covers MXE +
+# Android cross-builds, whose host Qt is on the build machine); (3) an empty
+# placeholder .qm so RCC still succeeds — app runs untranslated, the same
+# degraded behaviour as the committed placeholder (osxcross has no host lrelease).
+set(_lrelease_exe "")
 if(TARGET Qt6::lrelease)
+    get_target_property(_lr_loc Qt6::lrelease LOCATION)
+    if(_lr_loc)
+        execute_process(COMMAND ${_lr_loc} -version
+                        RESULT_VARIABLE _lr_rc OUTPUT_QUIET ERROR_QUIET)
+        if(_lr_rc EQUAL 0)
+            set(_lrelease_exe ${_lr_loc})
+        endif()
+    endif()
+endif()
+if(NOT _lrelease_exe)
+    find_program(_host_lrelease NAMES lrelease-qt6 lrelease lrelease6
+                 HINTS ${QT_HOST_PATH}/bin ${QT_HOST_PATH}/libexec
+                 NO_CMAKE_FIND_ROOT_PATH)
+    if(_host_lrelease)
+        execute_process(COMMAND ${_host_lrelease} -version
+                        RESULT_VARIABLE _hr_rc OUTPUT_QUIET ERROR_QUIET)
+        if(_hr_rc EQUAL 0)
+            set(_lrelease_exe ${_host_lrelease})
+        endif()
+    endif()
+endif()
+if(_lrelease_exe)
     add_custom_command(
         OUTPUT ${_qtopengl_qm}
-        COMMAND Qt6::lrelease -silent ${_qtopengl_ts} -qm ${_qtopengl_qm}
+        COMMAND ${_lrelease_exe} -silent ${_qtopengl_ts} -qm ${_qtopengl_qm}
         DEPENDS ${_qtopengl_ts}
         COMMENT "lrelease translation.ts -> translation.qm"
         VERBATIM)
@@ -230,7 +264,7 @@ endif()
 # consumes this generated file" — with the GENERATED property set above,
 # CMake wires the custom command into the <target>_autogen dependency so
 # ninja produces translation.qm first instead of failing on it.
-if(TARGET Qt6::lrelease)
+if(_lrelease_exe)
     set_property(TARGET catchchallenger APPEND PROPERTY
                  AUTOGEN_TARGET_DEPENDS ${_qtopengl_qm})
 endif()
