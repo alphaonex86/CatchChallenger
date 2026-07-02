@@ -305,6 +305,11 @@ public:
 
     static uint8_t getMapZoneCode(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    //true only for a "hard block" tile (value 254: a wall or a static NPC/sign the
+    //loader marked non-walkable). Excludes ledges (250-253) and dirt (249). Used to
+    //recognise the single COUNTER tile a shop clerk/bot can sit behind, and to scope
+    //the "move into a wall" server kick to genuinely impossible moves.
+    static bool isHardBlock(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static int8_t indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
     static bool needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
     static ParsedLayerLedges getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y);

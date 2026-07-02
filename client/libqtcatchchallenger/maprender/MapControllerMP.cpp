@@ -42,6 +42,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     playerpseudofont.setPixelSize(14);
     player_informations_is_set=false;
     pendingInitialPlayerLoad=false;
+    clickMoveDisabled=false;
     chatHelloSent=false;
     remoteActionInProgress=false;
     remoteDialogText.clear();
@@ -1252,6 +1253,11 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHA
     const uint8_t &thisy=pos.second;
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {
+        //touch-controls (D-pad) mode: the on-screen pad drives the player, so a tap on
+        //the map must NOT move/interact. Gated HERE at the common sink so it covers both
+        //click origins (the PreparedLayer tile layer relays here, and CCMap calls here).
+        if(clickMoveDisabled)
+            return;
         if(keyAccepted.empty() || (keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend() && keyAccepted.size()))
         {
             MapVisualiser::eventOnMap(event,mapIndex,x,y);
@@ -1276,6 +1282,9 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHA
                 const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(current_map);
                 const int mw=lm.width;
                 const int mh=lm.height;
+                //a bot (Sign/NPC/clerk/zone-capture) occupies the clicked tile: interact
+                //with it, do not stand on it (even a walkable lookAt="move" bot tile)
+                const bool clickedBot=(QtDatapackClientLoader::datapackLoader->getBot(current_map,x,y)!=nullptr);
                 //"teleport on push" exit: the clicked tile is a teleporter source
                 //sitting on a COLLISION tile (you LEAVE by pushing into it). The
                 //pathfinder can never stand on it, so arm the push and walk to a
@@ -1311,10 +1320,23 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHA
                         targetY=static_cast<COORD_TYPE>(nY);
                     }
                 }
-                else if(!tileStandable(current_map,x,y,mw,mh))
+                else if(clickedBot || !tileStandable(current_map,x,y,mw,mh))
                 {
+                    //Clicking a bot: walk NEXT to it and interact, never onto it. A
+                    //STATIC bot tile is already non-standable; a lookAt="move" bot tile
+                    //is walkable, so clickedBot forces the same "stand beside + face"
+                    //flow instead of the player walking on top of the NPC.
                     int nX=0,nY=0;
                     if(reachableClickNeighbor(current_map,x,y,thisx,thisy,nX,nY))
+                    {
+                        targetX=static_cast<COORD_TYPE>(nX);
+                        targetY=static_cast<COORD_TYPE>(nY);
+                    }
+                    //No foot-reachable neighbour but it is a bot: it may sit behind a
+                    //single counter (PokeMart clerk). Walk to the counter front and
+                    //face it across the counter (faceClickInteractTargetIfAdjacent()
+                    //+ emitActionOnFacedTile() jump the one wall).
+                    else if(clickedBot && reachableBotCounterApproach(current_map,x,y,thisx,thisy,nX,nY))
                     {
                         targetX=static_cast<COORD_TYPE>(nX);
                         targetY=static_cast<COORD_TYPE>(nY);
@@ -1338,7 +1360,7 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHA
             }
             else
             {
-                pathFinding.searchPath(QtDatapackClientLoader::datapackLoader->get_mapList(),mapIndex,targetX,targetY,current_map,thisx,thisy,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>());
+                pathFinding.searchPath(QtDatapackClientLoader::datapackLoader->get_mapList(),mapIndex,targetX,targetY,current_map,thisx,thisy,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>(),&CatchChallenger::QMap_client::all_map);
                 if(pathList.empty())
                 {
                     while(pathList.size()>1)
@@ -1618,7 +1640,8 @@ void MapControllerMP::remoteActionExecute(const QString &line)
                                    static_cast<CATCHCHALLENGER_TYPE_MAPID>(targetMap),
                                    static_cast<COORD_TYPE>(gx),static_cast<COORD_TYPE>(gy),
                                    current_map,p.first,p.second,
-                                   std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>());
+                                   std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>(),
+                                   &CatchChallenger::QMap_client::all_map);
             emit remoteReply(QStringLiteral("OK GOTO %1 %2 %3").arg(targetMap).arg(gx).arg(gy));
         }
     }
@@ -2184,6 +2207,63 @@ void MapControllerMP::computeReachableSet(const CATCHCHALLENGER_TYPE_MAPID &mapI
         }
     }
     canGoToSilent=prevSilent;
+}
+
+bool MapControllerMP::reachableBotCounterApproach(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &bx,const int &by,const int &px,const int &py,int &outX,int &outY)
+{
+    std::vector<bool> reach;
+    int mw=0,mh=0;
+    computeReachableSet(mapIndex,px,py,reach,mw,mh);
+    if(mw<=0 || mh<=0)
+        return false;
+    const CatchChallenger::CommonMap &lm=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    const int dxx[4]={-1,1,0,0};
+    const int dyy[4]={0,0,-1,1};
+    bool found=false;
+    int bestDist=0;
+    int k=0;
+    while(k<4)
+    {
+        //the counter tile is next to the bot; the "counter front" the player stands on
+        //is one tile further in the same straight line. Only ONE hard-block counter
+        //deep (a PokeMart counter), never a route through 2+ walls.
+        const int wallX=bx+dxx[k];
+        const int wallY=by+dyy[k];
+        const int standX=bx+2*dxx[k];
+        const int standY=by+2*dyy[k];
+        if(wallX>=0 && wallX<mw && wallY>=0 && wallY<mh
+           && standX>=0 && standX<mw && standY>=0 && standY<mh
+           && CatchChallenger::MoveOnTheMap::isHardBlock(lm,static_cast<uint8_t>(wallX),static_cast<uint8_t>(wallY))
+           && reach[static_cast<size_t>(standX)+static_cast<size_t>(standY)*static_cast<size_t>(mw)])
+        {
+            //never send the player onto a teleporter (they would warp away instead of
+            //talking across the counter)
+            bool isTeleporter=false;
+            size_t ti=0;
+            while(ti<lm.teleporters.size())
+            {
+                if(lm.teleporters.at(ti).source_x==standX && lm.teleporters.at(ti).source_y==standY)
+                {
+                    isTeleporter=true;
+                    break;
+                }
+                ti++;
+            }
+            if(!isTeleporter)
+            {
+                const int dist=(standX>px?standX-px:px-standX)+(standY>py?standY-py:py-standY);
+                if(!found || dist<bestDist)
+                {
+                    found=true;
+                    bestDist=dist;
+                    outX=standX;
+                    outY=standY;
+                }
+            }
+        }
+        k++;
+    }
+    return found;
 }
 
 bool MapControllerMP::pickReachableTeleporter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &px,const int &py,const CATCHCHALLENGER_TYPE_MAPID &requireDest,uint8_t &srcX,uint8_t &srcY,CATCHCHALLENGER_TYPE_MAPID &destMap,bool &isPush,int &neighX,int &neighY)

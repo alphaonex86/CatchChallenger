@@ -5,6 +5,7 @@
 #include <iostream>
 #include "../../general/base/MoveOnTheMap.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "QMap_client.hpp"
 
 PathFinding::PathFinding() :
     tryCancel(false)
@@ -33,7 +34,8 @@ PathFinding::~PathFinding()
 
 void PathFinding::searchPath(const std::vector<CatchChallenger::CommonMap> &mapList,
                              const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,const COORD_TYPE &destination_x,const COORD_TYPE &destination_y,
-                             const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items)
+                             const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items,
+                             const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *> *all_map)
 {
     if(current_map_index>=mapList.size())
     {
@@ -110,6 +112,26 @@ void PathFinding::searchPath(const std::vector<CatchChallenger::CommonMap> &mapL
                     }
                     my++;
                 }
+            }
+        }
+        //Mask visible-NPC tiles, mirroring MapController::canGoTo()'s botsDisplay
+        //check: a bot is an obstacle even when its tile is walkable in
+        //flat_simplified_map (a lookAt="move" bot). Without this the planner routes
+        //THROUGH the NPC and the walk aborts mid-path on the canGoTo refusal
+        //("Error at path found, collision detected"). searchPath() runs on the
+        //caller (UI) thread, same as the map load, so reading all_map is safe.
+        //all_map is supplied by the caller (nullptr in the isolated pathfinding
+        //test, which has no bots); only currently-loaded maps have an entry.
+        if(all_map!=nullptr && all_map->find(mapIndex)!=all_map->cend())
+        {
+            const CatchChallenger::QMap_client * const mapFull=all_map->at(mapIndex);
+            std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::BotDisplay,pairhash>::const_iterator bi=mapFull->botsDisplay.cbegin();
+            while(bi!=mapFull->botsDisplay.cend())
+            {
+                const std::pair<uint8_t,uint8_t> &bp=bi->first;
+                if(bp.first<simplifiedMap.width && bp.second<simplifiedMap.height)
+                    simplifiedMap.simplifiedMap[bp.first+bp.second*simplifiedMap.width]=254;
+                ++bi;
             }
         }
         simplifiedMapList[mapIndex]=simplifiedMap;

@@ -421,6 +421,32 @@ const MapVisibilityAlgorithm * Client::mapAndPosIfMoveInLookingDirectionJumpColi
     return &MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
 }
 
+const MapVisibilityAlgorithm * Client::mapAndPosJumpOneColisionMore(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y)
+{
+    Direction direction=getLastDirection();
+    switch(direction)
+    {
+        case Direction_look_at_top:
+        case Direction_look_at_right:
+        case Direction_look_at_bottom:
+        case Direction_look_at_left:
+            direction=lookToMove(direction);
+        break;
+        default:
+            return nullptr;
+    }
+    if(mapIndex>=MapVisibilityAlgorithm::flat_map_list.size())
+        return nullptr;
+    const MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
+    //ignore collision (checkCollision=false): the target sits behind the counter, on a
+    //collision tile. Never teleport across the counter.
+    if(!MoveOnTheMap::canGoTo(MapVisibilityAlgorithm::flat_map_list,direction,map,x,y,false))
+        return nullptr;
+    if(!MoveOnTheMap::moveWithoutTeleport<MapVisibilityAlgorithm>(MapVisibilityAlgorithm::flat_map_list,direction,mapIndex,x,y,false))
+        return nullptr;
+    return &MapVisibilityAlgorithm::flat_map_list.at(mapIndex);
+}
+
 bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)
 {
     if(monsterDrops1.item!=monsterDrops2.item)

@@ -15,6 +15,12 @@
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonMap/CommonMap.hpp"
 
+//forward decl only: searchPath() takes the visible-NPC map (all_map) by pointer
+//to mask bot tiles, but PathFinding must NOT link QMap_client's static storage
+//(keeps the isolated testpathfinding binary linkable). The .cpp includes
+//QMap_client.hpp to read ->botsDisplay (header-only, no out-of-line symbol).
+namespace CatchChallenger { class QMap_client; }
+
 class PathFinding
         #ifndef NOTHREADS
         : public QThread
@@ -39,10 +45,14 @@ signals:
     void internalCancel();
     void emitSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,const uint8_t &destination_x,const uint8_t &destination_y,const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
 public slots:
-    //,const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, QMap_client *> &all_map
+    //all_map (defaulted nullptr) supplies the visible-NPC occupancy so the
+    //planner routes AROUND bots (even lookAt="move" bots whose tile stays
+    //walkable in flat_simplified_map); passed by pointer to avoid linking
+    //QMap_client's static storage into the isolated pathfinding test.
     void searchPath(const std::vector<CatchChallenger::CommonMap> &mapList,const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,
                     const COORD_TYPE &destination_x,const COORD_TYPE &destination_y,const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,
-                    const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
+                    const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items,
+                    const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::QMap_client *> *all_map=nullptr);
     void internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destination_map_index, const COORD_TYPE &destination_x, const COORD_TYPE &destination_y, const CATCHCHALLENGER_TYPE_MAPID &source_map_index, const COORD_TYPE &source_x, const COORD_TYPE &source_y, const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
     void cancel();
     #ifdef CATCHCHALLENGER_HARDENED

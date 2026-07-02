@@ -298,6 +298,13 @@ bool MoveOnTheMap::isDirt(const CommonMap &map, const uint8_t &x, const uint8_t 
     return map.flat_simplified_map.at(x+y*map.width)==249;
 }
 
+bool MoveOnTheMap::isHardBlock(const CommonMap &map, const uint8_t &x, const uint8_t &y)
+{
+    if(x>=map.width || y>=map.height)
+        return false;
+    return map.flat_simplified_map.at(x+y*map.width)==254;
+}
+
 MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     if(x>=map.width || y>=map.height)

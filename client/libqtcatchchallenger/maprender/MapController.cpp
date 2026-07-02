@@ -230,8 +230,11 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction, const C
         return false;
     }
     const CatchChallenger::QMap_client * map_full=CatchChallenger::QMap_client::all_map.at(new_map);
-    // to detect colision then in logical map just mark as colision to have same data into server and client
-    if(map_full->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=map_full->botsDisplay.cend())
+    //a visible NPC on the DESTINATION tile is an obstacle (even a lookAt="move" bot,
+    //whose tile stays walkable in flat_simplified_map). This used to test the SOURCE
+    //(x,y) -- inverted: it let the player walk ONTO a bot, then blocked every step OUT
+    //of the bot tile (walk-onto-NPC + wedged-on-NPC bugs).
+    if(map_full->botsDisplay.find(std::pair<uint8_t,uint8_t>(new_x,new_y))!=map_full->botsDisplay.cend())
         return false;
     return true;
 }

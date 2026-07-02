@@ -1261,6 +1261,10 @@ void MapVisualiserPlayer::faceClickInteractTargetIfAdjacent()
     const int dy=static_cast<int>(clickInteractTargetY)-static_cast<int>(y);
     //must be orthogonally adjacent (the player stopped next to the clicked
     //Sign/NPC tile). Diagonals / same tile / far away -> keep current facing.
+    //COUNTER: a bot 2 tiles away in a straight line, with a single hard-block wall
+    //between us and it, is reachable "across the counter" (the player stopped at the
+    //counter front). Face that way; emitActionOnFacedTile() jumps the counter.
+    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
     CatchChallenger::Direction lookDirection;
     uint8_t baseTile;
     if(dx==0 && dy==-1)
@@ -1279,6 +1283,26 @@ void MapVisualiserPlayer::faceClickInteractTargetIfAdjacent()
         baseTile=10;
     }
     else if(dx==1 && dy==0)
+    {
+        lookDirection=CatchChallenger::Direction_look_at_right;
+        baseTile=4;
+    }
+    else if(dx==0 && dy==-2 && CatchChallenger::MoveOnTheMap::isHardBlock(logicalMap,static_cast<uint8_t>(x),static_cast<uint8_t>(y-1)))
+    {
+        lookDirection=CatchChallenger::Direction_look_at_top;
+        baseTile=1;
+    }
+    else if(dx==0 && dy==2 && CatchChallenger::MoveOnTheMap::isHardBlock(logicalMap,static_cast<uint8_t>(x),static_cast<uint8_t>(y+1)))
+    {
+        lookDirection=CatchChallenger::Direction_look_at_bottom;
+        baseTile=7;
+    }
+    else if(dx==-2 && dy==0 && CatchChallenger::MoveOnTheMap::isHardBlock(logicalMap,static_cast<uint8_t>(x-1),static_cast<uint8_t>(y)))
+    {
+        lookDirection=CatchChallenger::Direction_look_at_left;
+        baseTile=10;
+    }
+    else if(dx==2 && dy==0 && CatchChallenger::MoveOnTheMap::isHardBlock(logicalMap,static_cast<uint8_t>(x+1),static_cast<uint8_t>(y)))
     {
         lookDirection=CatchChallenger::Direction_look_at_right;
         baseTile=4;
@@ -1339,119 +1363,78 @@ void MapVisualiserPlayer::parseAction()
             return;
         lastAction.restart();
     }
-    const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
-    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
-    CATCHCHALLENGER_TYPE_MAPID tempMapIndex=current_map;
-    uint8_t lx=this->x;
-    uint8_t ly=this->y;
     switch(direction)
     {
         case CatchChallenger::Direction_look_at_left:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_left,logicalMap,lx,ly,false))
-        {
-            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_left,tempMapIndex,lx,ly,false))
-                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
-            else
-            {
-                CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
-                if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
-                {
-                    QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
-                    if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly)))!=
-                            destMapFull->botsDisplay.cend())
-                    {
-                        CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[
-                                std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly))
-                                ];
-                        Tiled::Cell cell=botDisplay->mapObject->cell();
-                        cell.setTile(botDisplay->tileset->tileAt(4));
-                        botDisplay->mapObject->setCell(cell);
-                    }
-                }
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
-            }
-        }
+            emitActionOnFacedTile(CatchChallenger::Direction_move_at_left,4);
         break;
         case CatchChallenger::Direction_look_at_right:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_right,logicalMap,lx,ly,false))
-        {
-            tempMapIndex=current_map; lx=this->x; ly=this->y;
-            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_right,tempMapIndex,lx,ly,false))
-                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
-            else
-            {
-                CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
-                if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
-                {
-                    QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
-                    if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly)))!=
-                            destMapFull->botsDisplay.cend())
-                    {
-                        CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly))];
-                        Tiled::Cell cell=botDisplay->mapObject->cell();
-                        cell.setTile(botDisplay->tileset->tileAt(10));
-                        botDisplay->mapObject->setCell(cell);
-                    }
-                }
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
-            }
-        }
+            emitActionOnFacedTile(CatchChallenger::Direction_move_at_right,10);
         break;
         case CatchChallenger::Direction_look_at_top:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_top,logicalMap,lx,ly,false))
-        {
-            tempMapIndex=current_map; lx=this->x; ly=this->y;
-            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_top,tempMapIndex,lx,ly,false))
-                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
-            else
-            {
-                CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
-                if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
-                {
-                    QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
-                    if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly)))!=
-                            destMapFull->botsDisplay.cend())
-                    {
-                        CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[
-                                std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly))];
-                        Tiled::Cell cell=botDisplay->mapObject->cell();
-                        cell.setTile(botDisplay->tileset->tileAt(7));
-                        botDisplay->mapObject->setCell(cell);
-                    }
-                }
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
-            }
-        }
+            emitActionOnFacedTile(CatchChallenger::Direction_move_at_top,7);
         break;
         case CatchChallenger::Direction_look_at_bottom:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_bottom,logicalMap,lx,ly,false))
-        {
-            tempMapIndex=current_map; lx=this->x; ly=this->y;
-            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_bottom,tempMapIndex,lx,ly,false))
-                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
-            else
-            {
-                CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
-                if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
-                {
-                    QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
-                    if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly)))!=
-                            destMapFull->botsDisplay.cend())
-                    {
-                        CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly))];
-                        Tiled::Cell cell=botDisplay->mapObject->cell();
-                        cell.setTile(botDisplay->tileset->tileAt(1));
-                        botDisplay->mapObject->setCell(cell);
-                    }
-                }
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
-            }
-        }
+            emitActionOnFacedTile(CatchChallenger::Direction_move_at_bottom,1);
         break;
         default:
             emit actionOnNothing();
         break;
     }
+}
+
+void MapVisualiserPlayer::emitActionOnFacedTile(const CatchChallenger::Direction &moveDir,const int &botFaceTile)
+{
+    const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
+    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
+    //checkCollision=false: interacting reaches ONTO a collision tile (that is where a
+    //Sign/NPC sits); the false only guards the map edge / a missing border.
+    if(!CatchChallenger::MoveOnTheMap::canGoTo(mapList,moveDir,logicalMap,this->x,this->y,false))
+        return;
+    CATCHCHALLENGER_TYPE_MAPID tempMapIndex=current_map;
+    uint8_t lx=this->x;
+    uint8_t ly=this->y;
+    if(!CatchChallenger::MoveOnTheMap::move(mapList,moveDir,tempMapIndex,lx,ly,false))
+    {
+        qDebug() << QStringLiteral("can't go dir %1 at map %2 (%3,%4) when move have been checked").arg(moveDir).arg(current_map).arg(lx).arg(ly);
+        return;
+    }
+    //COUNTER: the faced tile is a hard wall with no bot on it, but a bot sits DIRECTLY
+    //BEHIND it (one more tile in the same direction). Interact across the single
+    //counter tile with that bot (PokeMart clerk) -- the server accepts it the same way
+    //via the shop jump-collision. Only same-map, one wall deep.
+    if(tempMapIndex==current_map)
+    {
+        const CatchChallenger::CommonMap &facedMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
+        if(CatchChallenger::MoveOnTheMap::isHardBlock(facedMap,lx,ly)
+                && QtDatapackClientLoader::datapackLoader->getBot(tempMapIndex,lx,ly)==nullptr
+                && CatchChallenger::MoveOnTheMap::canGoTo(mapList,moveDir,facedMap,lx,ly,false))
+        {
+            CATCHCHALLENGER_TYPE_MAPID behindMapIndex=tempMapIndex;
+            uint8_t bx=lx,by=ly;
+            if(CatchChallenger::MoveOnTheMap::move(mapList,moveDir,behindMapIndex,bx,by,false)
+                    && QtDatapackClientLoader::datapackLoader->getBot(behindMapIndex,bx,by)!=nullptr)
+            {
+                tempMapIndex=behindMapIndex;
+                lx=bx;
+                ly=by;
+            }
+        }
+    }
+    //turn the bot (if one is on the acted tile) to face the player
+    if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
+    {
+        QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
+        if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(lx,ly))!=destMapFull->botsDisplay.cend())
+        {
+            CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[std::pair<uint8_t,uint8_t>(lx,ly)];
+            Tiled::Cell cell=botDisplay->mapObject->cell();
+            cell.setTile(botDisplay->tileset->tileAt(botFaceTile));
+            botDisplay->mapObject->setCell(cell);
+        }
+    }
+    CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
+    emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
 }
 
 //have look into another direction, if the key remain pressed, apply like move
