@@ -213,8 +213,20 @@ def set_http_datapack_mirror(build_dir, value):
         shutil.copy2(target, xml_path)
     with open(xml_path, "r") as f:
         content = f.read()
-    content = re.sub(r'httpDatapackMirror\s+value="[^"]*"',
-                     f'httpDatapackMirror value="{value}"', content)
+    if re.search(r'httpDatapackMirror\s+value="[^"]*"', content):
+        content = re.sub(r'httpDatapackMirror\s+value="[^"]*"',
+                         f'httpDatapackMirror value="{value}"', content)
+    else:
+        # The server reads httpDatapackMirror at TOP LEVEL (main-unix2.cpp:133,
+        # after endGroup). A freshly-seeded server-properties.xml (self-bootstrap)
+        # has NO such entry, so a bare re.sub would be a NO-OP and the server
+        # would start with an EMPTY mirror -> the char-list reply carries no
+        # mirror -> an empty-cache client falls back to the internal protocol
+        # instead of HTTP (the flaky case3). Insert it as a direct child of
+        # <configuration> so the mirror is ALWAYS present and deterministic.
+        content = content.replace(
+            "<configuration>",
+            f'<configuration>\n    <httpDatapackMirror value="{value}"/>', 1)
     with open(xml_path, "w") as f:
         f.write(content)
     log_info(f'server-properties.xml httpDatapackMirror="{value}"')
