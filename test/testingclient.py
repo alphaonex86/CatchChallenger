@@ -1729,6 +1729,26 @@ def run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases):
                 print(f"  | {l}")
             return
 
+        # --- CRASH REGRESSION: routing PAST the move-bot used to ABORT PathFinding.
+        #     Standing at (12,12) with the bot masked near (12,11)/(13,11), clicking
+        #     (14,11) forces the planner to detour AROUND the bot; a cell then gets
+        #     reached from a single direction, leaving a neighbour's transverse path
+        #     vector empty, and internalSearchPath did .back() on it -> SIGABRT
+        #     (_GLIBCXX_ASSERTIONS) / UB. Reported as (12,11)->(14,11) with the bot
+        #     at (13,11). The client must SURVIVE the click (PathFinding runs on its
+        #     own thread; the abort would kill the whole process).
+        s.send("CLOSEDIALOG")
+        time.sleep(0.3)
+        s.send("CLICKTILE 14 11")
+        time.sleep(clamp_local(diagnostic.scale_timeout(DIAG, 4)))
+        if s.proc.poll() is not None:
+            log_fail(case, f"CRASH: clicking (14,11) to route the player around the move-bot "
+                           f"aborted the client (rc={s.proc.poll()}) -- PathFinding empty-vector "
+                           f".back() in internalSearchPath")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
         # --- BUG 3: after the move-bot interaction the player must still move freely.
         s.send(f"GOTO {house2} 9 28")  # the entry tile: guaranteed reachable
         if not s.wait(lambda: s.state() is not None and s.state()[:3] == (house2, 9, 28),

@@ -129,7 +129,17 @@ void PathFinding::searchPath(const std::vector<CatchChallenger::CommonMap> &mapL
             while(bi!=mapFull->botsDisplay.cend())
             {
                 const std::pair<uint8_t,uint8_t> &bp=bi->first;
-                if(bp.first<simplifiedMap.width && bp.second<simplifiedMap.height)
+                //Never mask the player's OWN tile (source) nor the clicked
+                //DESTINATION: canMove()/canGoOn() reject 254, so a 254 source
+                //has no neighbour that can chain a path back into it (the start
+                //becomes an island -> PathNotFound) and a 254 destination can
+                //never be enqueued/reached. The caller already targets a
+                //standable, non-bot tile; this only defends against a bot
+                //display coinciding with an endpoint.
+                const bool isSource=(mapIndex==current_map_index && bp.first==x && bp.second==y);
+                const bool isDestination=(mapIndex==destination_map_index && bp.first==destination_x && bp.second==destination_y);
+                if(!isSource && !isDestination
+                        && bp.first<simplifiedMap.width && bp.second<simplifiedMap.height)
                     simplifiedMap.simplifiedMap[bp.first+bp.second*simplifiedMap.width]=254;
                 ++bi;
             }
@@ -504,20 +514,29 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                             if(newMapObject.pathToGo.find(coord)!=newMapObject.pathToGo.cend())
                             {
                                 const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=newMapObject.pathToGo.at(coord);
-                                if(pathToGo.left.empty() || pathToGo.left.size()>nearPathToGo.left.size())
+                                //nearPathToGo.left is the neighbour's path that ENDS in the move
+                                //reaching this cell. It is EMPTY for a partial-direction cell (a
+                                //normal BFS frontier tile records only the directions it was
+                                //arrived by). Building from it copied an empty vector and did
+                                //.back() -> abort, and the two cross-direction copies fabricated a
+                                //source-less 1-run that could overwrite a good vector. Skip.
+                                if(!nearPathToGo.left.empty())
                                 {
-                                    pathToGo.left=nearPathToGo.left;
-                                    pathToGo.left.back().second++;
-                                }
-                                if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
-                                {
-                                    pathToGo.top=nearPathToGo.left;
-                                    pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
-                                }
-                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
-                                {
-                                    pathToGo.bottom=nearPathToGo.left;
-                                    pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+                                    if(pathToGo.left.empty() || pathToGo.left.size()>nearPathToGo.left.size())
+                                    {
+                                        pathToGo.left=nearPathToGo.left;
+                                        pathToGo.left.back().second++;
+                                    }
+                                    if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
+                                    {
+                                        pathToGo.top=nearPathToGo.left;
+                                        pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
+                                    }
+                                    if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
+                                    {
+                                        pathToGo.bottom=nearPathToGo.left;
+                                        pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+                                    }
                                 }
                             }
                         }
@@ -569,20 +588,25 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                             if(newMapObject.pathToGo.find(coord)!=newMapObject.pathToGo.cend())
                             {
                                 const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=newMapObject.pathToGo.at(coord);
-                                if(pathToGo.right.empty() || pathToGo.right.size()>nearPathToGo.right.size())
+                                //empty nearPathToGo.right => no neighbour path ends in the move
+                                //that reaches this cell; skip (see the right-neighbour block).
+                                if(!nearPathToGo.right.empty())
                                 {
-                                    pathToGo.right=nearPathToGo.right;
-                                    pathToGo.right.back().second++;
-                                }
-                                if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
-                                {
-                                    pathToGo.top=nearPathToGo.right;
-                                    pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
-                                }
-                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
-                                {
-                                    pathToGo.bottom=nearPathToGo.right;
-                                    pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+                                    if(pathToGo.right.empty() || pathToGo.right.size()>nearPathToGo.right.size())
+                                    {
+                                        pathToGo.right=nearPathToGo.right;
+                                        pathToGo.right.back().second++;
+                                    }
+                                    if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
+                                    {
+                                        pathToGo.top=nearPathToGo.right;
+                                        pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
+                                    }
+                                    if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
+                                    {
+                                        pathToGo.bottom=nearPathToGo.right;
+                                        pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+                                    }
                                 }
                             }
                         }
@@ -634,20 +658,25 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                             if(newMapObject.pathToGo.find(coord)!=newMapObject.pathToGo.cend())
                             {
                                 const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=newMapObject.pathToGo.at(coord);
-                                if(pathToGo.top.empty() || pathToGo.top.size()>nearPathToGo.top.size())
+                                //empty nearPathToGo.top => no neighbour path ends in the move that
+                                //reaches this cell; skip (see the right-neighbour block).
+                                if(!nearPathToGo.top.empty())
                                 {
-                                    pathToGo.top=nearPathToGo.top;
-                                    pathToGo.top.back().second++;
-                                }
-                                if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
-                                {
-                                    pathToGo.left=nearPathToGo.top;
-                                    pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
-                                }
-                                if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
-                                {
-                                    pathToGo.right=nearPathToGo.top;
-                                    pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+                                    if(pathToGo.top.empty() || pathToGo.top.size()>nearPathToGo.top.size())
+                                    {
+                                        pathToGo.top=nearPathToGo.top;
+                                        pathToGo.top.back().second++;
+                                    }
+                                    if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
+                                    {
+                                        pathToGo.left=nearPathToGo.top;
+                                        pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
+                                    }
+                                    if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
+                                    {
+                                        pathToGo.right=nearPathToGo.top;
+                                        pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+                                    }
                                 }
                             }
                         }
@@ -699,20 +728,25 @@ void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destinati
                             if(newMapObject.pathToGo.find(coord)!=newMapObject.pathToGo.cend())
                             {
                                 const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=newMapObject.pathToGo.at(coord);
-                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
+                                //empty nearPathToGo.bottom => no neighbour path ends in the move
+                                //that reaches this cell; skip (see the right-neighbour block).
+                                if(!nearPathToGo.bottom.empty())
                                 {
-                                    pathToGo.bottom=nearPathToGo.bottom;
-                                    pathToGo.bottom.back().second++;
-                                }
-                                if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
-                                {
-                                    pathToGo.left=nearPathToGo.bottom;
-                                    pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
-                                }
-                                if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
-                                {
-                                    pathToGo.right=nearPathToGo.bottom;
-                                    pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+                                    if(pathToGo.bottom.empty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
+                                    {
+                                        pathToGo.bottom=nearPathToGo.bottom;
+                                        pathToGo.bottom.back().second++;
+                                    }
+                                    if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
+                                    {
+                                        pathToGo.left=nearPathToGo.bottom;
+                                        pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
+                                    }
+                                    if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
+                                    {
+                                        pathToGo.right=nearPathToGo.bottom;
+                                        pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+                                    }
                                 }
                             }
                         }
