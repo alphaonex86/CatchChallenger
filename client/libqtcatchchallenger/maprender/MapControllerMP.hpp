@@ -178,6 +178,12 @@ private:
     std::vector<PathResolved> pathList;
 public:
     void eventOnMap(CatchChallenger::MapEvent event, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE x, COORD_TYPE y);
+    //When true a click/tap on the map is IGNORED (no move/interact): the on-screen
+    //D-pad drives the player instead. Set by the qtopengl OverMap from the touch-
+    //controls option. Gated at eventOnMap -- the single sink BOTH click origins reach
+    //(the PreparedLayer tile layer AND the CCMap overlay) -- so touch mode swallows
+    //every map click regardless of which path delivered it.
+    bool clickMoveDisabled;
     //── QLocalServer automation channel (stage 1: input + state) ──
     //Execute ONE text command from the control socket. Supported now:
     //  KEY <Up|Down|Left|Right|Return|Escape|Space>   -> synthesised key event
@@ -263,6 +269,11 @@ private:
     //player) that is nearest the player, so the click leads up to the right side
     //of the sign. Returns false when the sign has no foot-reachable neighbour.
     bool reachableClickNeighbor(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &cx,const int &cy,const int &px,const int &py,int &outX,int &outY);
+    //Fallback for a clicked BOT sitting behind a COUNTER: no orthogonal neighbour is
+    //foot-reachable, but a tile 2 away in a straight line (with a single hard-block
+    //counter tile between it and the bot) is. Returns that "counter front" tile so
+    //the player walks there and faces the bot across the counter (PokeMart clerk).
+    bool reachableBotCounterApproach(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const int &bx,const int &by,const int &px,const int &py,int &outX,int &outY);
     //scene-pixel centre of tile (tx,ty) (current map at scene origin, 16px tiles)
     QPointF tileCenterScenePos(const int &tileX,const int &tileY) const;
     //--test-clicksign zoom check: map the sign tile's centre to a viewport pixel

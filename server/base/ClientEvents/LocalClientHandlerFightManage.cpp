@@ -38,11 +38,29 @@ void Client::heal()
         errorOutput("Can't move at this direction to heal");
         return;
     }
-    const std::pair<uint8_t,uint8_t> pos(new_x,new_y);
-    if(new_map->heal.find(pos)==new_map->heal.cend())
+    if(new_map->heal.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->heal.cend())
     {
-        errorOutput("no heal point in this direction");
-        return;
+        //counter fallback: the nurse can sit one tile behind a single counter wall
+        bool foundHeal=false;
+        if(MoveOnTheMap::isHardBlock(*new_map,new_x,new_y))
+        {
+            CATCHCHALLENGER_TYPE_MAPID m2=new_map_index;
+            COORD_TYPE x2=new_x,y2=new_y;
+            const MapVisibilityAlgorithm * mb=Client::mapAndPosJumpOneColisionMore(m2,x2,y2);
+            if(mb!=nullptr && mb->heal.find(std::pair<uint8_t,uint8_t>(x2,y2))!=mb->heal.cend())
+            {
+                new_map=mb;
+                new_map_index=m2;
+                new_x=x2;
+                new_y=y2;
+                foundHeal=true;
+            }
+        }
+        if(!foundHeal)
+        {
+            errorOutput("no heal point in this direction");
+            return;
+        }
     }
     //send the shop items (no taxes from now)
     healAllMonsters();

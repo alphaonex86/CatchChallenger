@@ -197,6 +197,14 @@ protected slots:
     virtual void unloadMonsterFromCurrentMap();
     virtual void parseStop();
     virtual void parseAction();
+    //Emit actionOn() for the tile the player faces when moving in moveDir. Normally
+    //that is the tile one step away (a Sign/NPC on a collision, or an empty tile).
+    //COUNTER support: if that faced tile is a hard-block wall (254) with NO bot on
+    //it, but a bot sits DIRECTLY BEHIND it (one more tile in moveDir), act on that
+    //bot instead -- the PokeMart-clerk-behind-a-counter case (matches the server's
+    //shop jump-collision). botFaceTile is the bot's sprite frame to turn it toward
+    //the player (left=4,right=10,top=7,bottom=1).
+    void emitActionOnFacedTile(const CatchChallenger::Direction &moveDir,const int &botFaceTile);
     //If a click-to-interact target was recorded and the player ended up
     //orthogonally adjacent to it (the usual case for a Sign/NPC on a collision
     //tile), turn to face it (sprite + send_player_direction) so the following

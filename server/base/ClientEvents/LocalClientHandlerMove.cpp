@@ -78,6 +78,17 @@ bool Client::singleMove(const Direction &direction)
         errorOutput("error: try move when is in fight");
         return false;
     }
+    //An ACCEPTED trade window freezes both players in place; a move here is a
+    //protocol violation. Gate on tradeIsValidated (set when the trade is accepted,
+    //cleared on finish/cancel), NOT getInTrade(): otherPlayerTrade is set the moment
+    //a trade is merely REQUESTED (on the receiver too), so gating on it would let
+    //anyone freeze/kick a player by spamming trade requests. tradeIsValidated is only
+    //true for a player who actually accepted, so it is not griefable.
+    if(tradeIsValidated)
+    {
+        errorOutput("error: try move when is in trade");
+        return false;
+    }
     #ifndef CATCHCHALLENGER_SERVER
     if(captureCityInProgress())
     {

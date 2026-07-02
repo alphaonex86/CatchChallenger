@@ -301,6 +301,12 @@ private:
 
     PLAYER_INDEX_FOR_CONNECTED otherPlayerBattle;//65535 is not in battle
     bool battleIsValidated;
+    //move hot-path guard cluster: singleMove() checks isInFight() (reads
+    //otherPlayerBattle/battleIsValidated here) then tradeIsValidated. Keeping
+    //tradeIsValidated adjacent puts it on the SAME cache line isInFight() already
+    //loads (it fills the 1-byte hole after battleIsValidated -> zero size cost).
+    //Body-initialised in setToDefault(), so this reorder does not touch the ctor.
+    bool tradeIsValidated;
     uint16_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
     std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> botFight;//pending fight, mapId=65535,botId=255 if empty
@@ -613,10 +619,22 @@ private:
 
     //return nullptr if can't move in this direction
     const MapVisibilityAlgorithm *mapAndPosIfMoveInLookingDirectionJumpColision(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y);
+    //(mapIndex,x,y) is the faced tile returned above (a collision). Step ONE MORE tile
+    //in the look direction, ignoring collision, so a shop/bot sitting directly behind a
+    //single COUNTER tile is reachable (a PokeMart clerk behind the counter). Returns
+    //nullptr if it can't step. Callers use it only after the 1-tile lookup found no
+    //target AND that tile is a hard-block counter.
+    const MapVisibilityAlgorithm *mapAndPosJumpOneColisionMore(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y);
+    //Faced SHOP: the shop tile the player looks at, either directly adjacent (the
+    //normal clerk-on-a-collision case) or ONE counter tile behind (a PokeMart clerk
+    //behind the counter). Sets mapIndex/x/y to the shop tile and returns its map, or
+    //nullptr when no shop is faced. Used by getShopList/buyObject/sellObject.
+    const MapVisibilityAlgorithm *facedShop(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y);
 
     //trade
     PLAYER_INDEX_FOR_CONNECTED otherPlayerTrade;
-    bool tradeIsValidated;
+    //tradeIsValidated lives up with the battle guards (move hot-path cluster) so the
+    //singleMove() trade check shares isInFight()'s cache line -- see near battleIsValidated.
     bool tradeIsFreezed;
     uint64_t tradeCash;
     std::unordered_map<uint16_t,uint32_t> tradeObjects;

@@ -6,6 +6,30 @@
 
 using namespace CatchChallenger;
 
+const MapVisibilityAlgorithm * Client::facedShop(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y)
+{
+    const MapVisibilityAlgorithm * m=Client::mapAndPosIfMoveInLookingDirectionJumpColision(mapIndex,x,y);
+    if(m==nullptr)
+        return nullptr;
+    if(m->shops.find(std::pair<uint8_t,uint8_t>(x,y))!=m->shops.cend())
+        return m;
+    //counter fallback: the clerk sits one tile behind a single counter wall
+    if(MoveOnTheMap::isHardBlock(*m,x,y))
+    {
+        CATCHCHALLENGER_TYPE_MAPID m2=mapIndex;
+        COORD_TYPE x2=x,y2=y;
+        const MapVisibilityAlgorithm * mb=Client::mapAndPosJumpOneColisionMore(m2,x2,y2);
+        if(mb!=nullptr && mb->shops.find(std::pair<uint8_t,uint8_t>(x2,y2))!=mb->shops.cend())
+        {
+            mapIndex=m2;
+            x=x2;
+            y=y2;
+            return mb;
+        }
+    }
+    return nullptr;
+}
+
 void Client::getShopList(const uint8_t &query_id)
 {
     if(mapIndex>=65535)
@@ -15,21 +39,13 @@ void Client::getShopList(const uint8_t &query_id)
     #endif
     COORD_TYPE new_x=0,new_y=0;
     CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-    const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+    const MapVisibilityAlgorithm * new_map=Client::facedShop(new_map_index,new_x,new_y);
     if(new_map==nullptr)
-    {
-        errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
-        return;
-    }
-    Shop shop;
-    //check if is shop
-    if(new_map->shops.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->shops.cend())
     {
         errorOutput("not shop into this direction");
         return;
     }
-    else
-        shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
+    Shop shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
     //send the shop items (no taxes from now)
 
     removeFromQueryReceived(query_id);
@@ -85,21 +101,13 @@ void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM 
     }
     COORD_TYPE new_x=0,new_y=0;
     CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-    const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+    const MapVisibilityAlgorithm * new_map=Client::facedShop(new_map_index,new_x,new_y);
     if(new_map==nullptr)
-    {
-        errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
-        return;
-    }
-    Shop shop;
-    //check if is shop
-    if(new_map->shops.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->shops.cend())
     {
         errorOutput("not shop into this direction");
         return;
     }
-    else
-        shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
+    Shop shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
 
     removeFromQueryReceived(query_id);
     //send the network reply
@@ -193,21 +201,13 @@ void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM 
     }
     COORD_TYPE new_x=0,new_y=0;
     CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
-    const MapVisibilityAlgorithm * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
+    const MapVisibilityAlgorithm * new_map=Client::facedShop(new_map_index,new_x,new_y);
     if(new_map==nullptr)
-    {
-        errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
-        return;
-    }
-    Shop shop;
-    //check if is shop
-    if(new_map->shops.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->shops.cend())
     {
         errorOutput("not shop into this direction");
         return;
     }
-    else
-        shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
+    Shop shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
     removeFromQueryReceived(query_id);
     //send the network reply
 
