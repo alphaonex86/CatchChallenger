@@ -325,6 +325,12 @@ void ProtocolParsingBase::reset()
     //outputQueryNumberToPacketCode.clear();
 
     dataClear();
+    //Drop any partial-header bytes stashed by a truncated packet from the
+    //PREVIOUS tenant of this slot. dataClear() only clears dataToWithoutHeader;
+    //header_cut is the NEXT-packet prefix and would otherwise survive into the
+    //fresh connection and corrupt its stream (a client can now legitimately
+    //disconnect mid-header — see parseIncommingData()'s freshRead<=0 guard).
+    header_cut.clear();
 }
 
 void ProtocolParsingBase::resetForReconnect()
@@ -336,6 +342,9 @@ void ProtocolParsingBase::resetForReconnect()
     //to parse the netwrok stream
     packetCode=0;
     queryNumber=0;
+    //the link dropped mid-stream: a partial header stashed before the drop must
+    //not prefix the reconnected stream (same rationale as reset()).
+    header_cut.clear();
     memset(outputQueryNumberToPacketCode,0x00,sizeof(outputQueryNumberToPacketCode));
 }
 

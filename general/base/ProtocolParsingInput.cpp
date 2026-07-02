@@ -129,36 +129,37 @@ void ProtocolParsingInputOutput::parseIncommingData()
             //packet. Mirrors the io_uring twin parseIncommingDataAsync() which
             //memcpy's fresh bytes at +header_cut.size(). header_cut.size() is
             //added exactly ONCE (here) for the prefix; do NOT add it again below.
-            size=readFromSocket(tempBigBufferForInput+header_cut.size(),size_to_get)+static_cast<ssize_t>(header_cut.size());
+            const ssize_t freshRead=readFromSocket(tempBigBufferForInput+header_cut.size(),size_to_get);
             #ifdef PROTOCOLPARSINGDEBUG
             std::cout << "ProtocolParsingInputOutput::parseIncommingData() read()" << std::endl;
             #endif
-            if(size<0)
+            //Test the FRESH read, NOT (fresh+header_cut.size()): the latter is
+            //always >0 while a partial header is stashed. freshRead<0 is a
+            //socket error/close; freshRead==0 is "nothing pending" (EOF, or a
+            //dynamic packet whose 4-byte size field was split/truncated on the
+            //wire). In BOTH cases we cannot advance the framing, and re-parsing
+            //the same stashed bytes would re-stash them and spin the single-
+            //threaded event loop forever — a 4-byte truncated-size packet then
+            //silence wedged the whole server. Keep header_cut intact and return;
+            //the epoll loop then services EPOLLRDHUP/HUP (close) or the next
+            //EPOLLIN when the rest of the size field finally arrives.
+            if(freshRead<=0)
             {
                 #ifdef CATCHCHALLENGER_HARDENED
                 parseIncommingDataCount--;
                 #endif
                 return;
             }
-            if(size>0)
-            {
-                #ifndef CATCHCHALLENGER_SERVER
-                RXSize+=size;
-                #endif
-                //NOTE: header_cut.size() is already folded into `size` above
-                //(prefix counted once). A second add here was the OOB/double-
-                //count bug — removed.
-                #ifdef PROTOCOLPARSINGDEBUG
-                std::cout << "with header cut " << binarytoHexa(tempBigBufferForInput,size) << " and size " << size << std::endl;
-                #endif
-            }
-            else
-            {
-                #ifdef CATCHCHALLENGER_HARDENED
-                parseIncommingDataCount--;
-                #endif
-                return;
-            }
+            //header_cut.size() is folded into `size` exactly ONCE here (the
+            //prefix); do NOT add it again below (that was the OOB/double-count
+            //bug on a TCP-split dynamic packet).
+            size=freshRead+static_cast<ssize_t>(header_cut.size());
+            #ifndef CATCHCHALLENGER_SERVER
+            RXSize+=size;
+            #endif
+            #ifdef PROTOCOLPARSINGDEBUG
+            std::cout << "with header cut " << binarytoHexa(tempBigBufferForInput,size) << " and size " << size << std::endl;
+            #endif
             header_cut.clear();
         }
         else
