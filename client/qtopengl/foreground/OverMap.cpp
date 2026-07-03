@@ -109,21 +109,16 @@ OverMap::OverMap()
         buyOver=new CustomText(gradient1,gradient2,this);
     }
 
-    //on-screen D-pad + A/B (hidden until touchControlsActive). Reuse existing button
-    //art: the D-pad uses the four opentolan/arrow-like glyphs via setText, A/B use the
-    //chat button frame with an "A"/"B" caption. (No new image assets required.)
-    dpadUp=new CustomButton(":/CC/images/interface/chat.png",this);
-    dpadUp->setText(QStringLiteral("^"));
-    dpadDown=new CustomButton(":/CC/images/interface/chat.png",this);
-    dpadDown->setText(QStringLiteral("v"));
-    dpadLeft=new CustomButton(":/CC/images/interface/chat.png",this);
-    dpadLeft->setText(QStringLiteral("<"));
-    dpadRight=new CustomButton(":/CC/images/interface/chat.png",this);
-    dpadRight->setText(QStringLiteral(">"));
-    btnA=new CustomButton(":/CC/images/interface/chat.png",this);
-    btnA->setText(QStringLiteral("A"));
-    btnB=new CustomButton(":/CC/images/interface/chat.png",this);
-    btnB->setText(QStringLiteral("B"));
+    //on-screen D-pad + A/B (hidden until touchControlsActive). Each uses its own
+    //3-state button strip (normal/pressed/disabled): the four arrow glyphs for the
+    //D-pad, validate (green check) for A=action, cancel (red cross) for B. The image
+    //IS the label, so no setText caption is drawn on top.
+    dpadUp=new CustomButton(":/CC/images/interface/up.png",this);
+    dpadDown=new CustomButton(":/CC/images/interface/down.png",this);
+    dpadLeft=new CustomButton(":/CC/images/interface/left.png",this);
+    dpadRight=new CustomButton(":/CC/images/interface/right.png",this);
+    btnA=new CustomButton(":/CC/images/interface/validate.png",this);
+    btnB=new CustomButton(":/CC/images/interface/cancel.png",this);
     dpadUp->setVisible(false);
     dpadDown->setVisible(false);
     dpadLeft->setVisible(false);

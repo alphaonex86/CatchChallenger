@@ -109,6 +109,10 @@
         <file>images/interface/cup.png</file>
         <file>images/interface/save.png</file>
         <file>images/interface/validate.png</file>
+        <file>images/interface/up.png</file>
+        <file>images/interface/down.png</file>
+        <file>images/interface/left.png</file>
+        <file>images/interface/right.png</file>
         <file>images/interface/onoffbutton.png</file>
         <file>images/interface/onoff.png</file>
         <file>images/interface/bag.png</file>
@@ -251,6 +255,10 @@
         <file>images/interface/cup.png</file>
         <file>images/interface/save.png</file>
         <file>images/interface/validate.png</file>
+        <file>images/interface/up.png</file>
+        <file>images/interface/down.png</file>
+        <file>images/interface/left.png</file>
+        <file>images/interface/right.png</file>
         <file>images/interface/onoffbutton.png</file>
         <file>images/interface/onoff.png</file>
         <file>images/interface/bag.png</file>
