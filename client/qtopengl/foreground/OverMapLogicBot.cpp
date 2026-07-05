@@ -187,9 +187,10 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"sell")==0)
     {
-        //sell flow not ported to this interface yet (ObjectType_Sell selection
-        //path is dead code), show an honest tip instead of a bogus error
-        showTip(tr("Selling is not implemented yet").toStdString());
+        //open the inventory as a "sell" picker; picking an item sells it (price/2)
+        //via objectSelection(ObjectType_Sell). No shop id: the server resolves the
+        //shop from the faced bot tile (sellObject re-resolves server-side).
+        selectObject(ObjectType_Sell);
         return;
     }
     else if(strcmp(stepXml->Attribute("type"),"heal")==0)

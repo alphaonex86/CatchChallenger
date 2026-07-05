@@ -95,6 +95,16 @@ public slots:
     void dialogOverflowSelfTestCheck();
     void selectObject(const ObjectType &objectType);
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
+    //selection-mode item pick coming back from the Inventory/Plant above-screen.
+    //In selection mode these route to objectSelection(); otherwise (Inventory only)
+    //they dispatch a normal item use (recipe/repel/monster-effect/evolution/learn).
+    void inventoryItemUsed(const uint16_t &item);
+    void inventoryItemDeleted(const uint16_t &item);
+    void plantItemUsed(const uint16_t &item);
+    //lazily create the Inventory/Plant above-screens with all signals wired
+    //(incl. the selection-mode useItem/deleteItem), so every open site shares one.
+    void ensureInventory();
+    void ensurePlant();
     void lastReplyTime(const uint32_t &time);
     void bag_open();
     void displayLanPort(uint16_t port);
@@ -244,6 +254,10 @@ signals:
     void collectMaturePlant();
 private:
     bool multiplayer;
+    //selection-mode state: while inSelection, the Inventory/Plant above-screen is
+    //a PICKER and its pick routes to objectSelection(waitedObjectType,...).
+    bool inSelection;
+    ObjectType waitedObjectType;
     Inventory *inventory;
     Plant *plant;
     Crafting *crafting;

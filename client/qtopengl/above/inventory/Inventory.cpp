@@ -265,6 +265,15 @@ void Inventory::updateInventory(uint8_t targetSize)
                     else
                         show=false;
                 break;
+                case ObjectType_Sell:
+                    //sellable = has a base price (server pays price/2)
+                    if(CatchChallenger::CommonDatapack::commonDatapack.has_item(id) &&
+                            CatchChallenger::CommonDatapack::commonDatapack.get_item(id).price>0)
+                        show=true;
+                break;
+                case ObjectType_Trade:
+                    show=true;
+                break;
                 default:
                 qDebug() << "waitedObjectType is unknow into load_inventory()";
                 break;
