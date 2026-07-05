@@ -156,17 +156,24 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"shop")==0)
     {
-        if(stepXml->Attribute("shop")==NULL)
+        //the server builds the shop from the inline <product> list keyed by bot
+        //position (Map_loader.cpp) and resolves it via the faced tile; the
+        //shop="id" attribute is the legacy form, accept either
+        if(stepXml->Attribute("shop")==NULL && stepXml->FirstChildElement("product")==NULL)
         {
             showTip(tr("Shop called but missing informations").toStdString());
             return;
         }
-        bool ok;
-        shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
-        if(!ok)
+        shopId=0;
+        if(stepXml->Attribute("shop")!=NULL)
         {
-            showTip(tr("Shop called but wrong id").toStdString());
-            return;
+            bool ok;
+            shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
+            if(!ok)
+            {
+                showTip(tr("Shop called but wrong id").toStdString());
+                return;
+            }
         }
         if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
@@ -213,17 +220,18 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"sell")==0)
     {
-        if(stepXml->Attribute("shop")==NULL)
+        //a sell step needs no shop info: the server resolves the shop from the
+        //faced bot position; the shop="id" attribute is the legacy form
+        shopId=0;
+        if(stepXml->Attribute("shop")!=NULL)
         {
-            showTip(tr("Shop called but missing informations").toStdString());
-            return;
-        }
-        bool ok;
-        shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
-        if(!ok)
-        {
-            showTip(tr("Shop called but wrong id").toStdString());
-            return;
+            bool ok;
+            shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
+            if(!ok)
+            {
+                showTip(tr("Shop called but wrong id").toStdString());
+                return;
+            }
         }
         if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
