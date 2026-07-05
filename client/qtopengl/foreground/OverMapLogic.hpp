@@ -16,6 +16,7 @@ class CCMap;
 class ConnexionManager;
 class Inventory;
 class MonsterSelect;
+class TextInput;
 class Plant;
 class Crafting;
 class Player;
@@ -111,6 +112,8 @@ public slots:
     //position); cancel -> objectSelection(false) (restores the consumed item).
     void monsterSelected(const uint8_t &monsterPosition);
     void monsterSelectCanceled();
+    //clan-name entry (replaces the old QInputDialog): a non-empty name creates the clan
+    void clanNameEntered(const QString &clanName);
     void lastReplyTime(const uint32_t &time);
     void bag_open();
     void displayLanPort(uint16_t port);
@@ -265,6 +268,7 @@ private:
     bool inSelection;
     ObjectType waitedObjectType;
     MonsterSelect *monsterSelect;
+    TextInput *textInput;
     Inventory *inventory;
     Plant *plant;
     Crafting *crafting;

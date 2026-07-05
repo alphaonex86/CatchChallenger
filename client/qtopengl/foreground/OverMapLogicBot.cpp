@@ -9,6 +9,7 @@
 #include "../above/Shop.hpp"
 #include "../above/Factory.hpp"
 #include "../above/Warehouse.hpp"
+#include "../above/TextInput.hpp"
 #include <iostream>
 #include <QDesktopServices>
 #include <QUrl>
@@ -696,16 +697,19 @@ void OverMapLogic::IG_dialog_text_linkActivated(const std::string &rawlink)
         }
         else if(link=="clan_create")
         {
-            /*bool ok;
-            std::string text = QInputDialog::getText(this,tr("Give the clan name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok).toStdString();
-            if(ok && !text.empty())
+            //open a name-entry popup; createClan() fires on accept (async, so we
+            //return from the link loop here)
+            if(textInput==nullptr)
             {
-                actionClan.push_back(ActionClan_Create);
-                connexionManager->client->createClan(text);
+                textInput=new TextInput();
+                if(!connect(textInput,&TextInput::setAbove,this,&OverMapLogic::setAbove))
+                    abort();
+                if(!connect(textInput,&TextInput::accepted,this,&OverMapLogic::clanNameEntered))
+                    abort();
             }
-            index++;
-            continue;*/
-            abort();
+            textInput->setVar(tr("Give the clan name"),tr("Clan name"),32);
+            setAbove(textInput);
+            return;
         }
         else if(link=="close")
             return;
