@@ -234,6 +234,10 @@ signals:
     //on the ScreenTransition scene), so the grab is routed up to the owner of the
     //top-level view, which saves the PNG and answers on the channel.
     void remoteScreenshotRequested(const QString &path);
+    //CLICKSCREEN <x> <y>: a synthetic click on the TOP-LEVEL viewport (viewport
+    //pixels), so the automation channel can press toolbar/overlay buttons and
+    //list rows that live on the ScreenTransition scene (not the map view).
+    void remoteScreenClickRequested(const int &x,const int &y);
 private:
     //the actual command dispatch; always reached through remoteAction()'s
     //re-entrancy guard, never called directly
