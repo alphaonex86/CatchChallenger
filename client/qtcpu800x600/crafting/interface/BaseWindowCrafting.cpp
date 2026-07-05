@@ -626,7 +626,7 @@ void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
             while(index<materialOfRecipeInUsing.front().size())
             {
                 add_to_inventory(materialOfRecipeInUsing.front().at(index).first,
-                                 materialOfRecipeInUsing.front().at(index).first,false);
+                                 materialOfRecipeInUsing.front().at(index).second,false);
                 index++;
             }
             materialOfRecipeInUsing.erase(materialOfRecipeInUsing.cbegin());
