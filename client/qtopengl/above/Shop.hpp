@@ -25,7 +25,7 @@ public:
     void keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral) override;
     void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral) override;
     void removeAbove();
-    void setVar(ConnexionManager *connexionManager, const std::string &sellerName, const uint8_t &skinId);
+    void setVar(ConnexionManager *connexionManager, const std::string &sellerName, const uint8_t &skinId, const std::vector<CatchChallenger::ItemToSellOrBuy> &items);
 private slots:
     void newLanguage();
     void on_shopItemList_itemSelectionChanged();

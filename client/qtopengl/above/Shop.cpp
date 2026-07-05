@@ -192,7 +192,7 @@ void Shop::newLanguage()
     shopDescription->setHtml(tr("Waiting the shop content"));
 }
 
-void Shop::setVar(ConnexionManager *connexionManager, const std::string &sellerName, const uint8_t &skinId)
+void Shop::setVar(ConnexionManager *connexionManager, const std::string &sellerName, const uint8_t &skinId, const std::vector<CatchChallenger::ItemToSellOrBuy> &items)
 {
     this->connexionManager=connexionManager;
     shopItemList->clear();
@@ -215,17 +215,16 @@ void Shop::setVar(ConnexionManager *connexionManager, const std::string &sellerN
     else
         sellerImage->setVisible(false);
 
-    shopDescription->setHtml(tr("Waiting the shop content"));
-
-    if(!connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::QthaveShopList,
-                this,&Shop::haveShopList,Qt::UniqueConnection))
-        abort();
+    //buy/sell are still server transactions, so keep their reply connections;
+    //the item list itself comes from the datapack (no QthaveShopList packet)
     if(!connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::QthaveBuyObject,
                 this,&Shop::haveBuyObject,Qt::UniqueConnection))
         abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::QthaveSellObject,
                 this,&Shop::haveSellObject,Qt::UniqueConnection))
         abort();
+
+    haveShopList(items);
 }
 
 void Shop::haveShopList(const std::vector<CatchChallenger::ItemToSellOrBuy> &items)

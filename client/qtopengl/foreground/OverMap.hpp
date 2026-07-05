@@ -124,6 +124,7 @@ protected:
     //ScreenTransition::openOptions) — needed on touch devices where no keyboard
     //shortcut exists to reach the options (touch controls, volume, ...) in-game
     CustomButton *options;
+    CustomText *optionsOver;
 
     //on-screen touch controls (shown only when touchControlsActive). D-pad cross to
     //the LEFT of chat; A/B to the RIGHT of buy. Held to walk; A=action, B=cancel.
