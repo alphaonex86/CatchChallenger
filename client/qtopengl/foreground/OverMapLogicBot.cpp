@@ -148,10 +148,13 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"shop")==0)
     {
-        //the server builds the shop from the inline <product> list keyed by bot
-        //position (Map_loader.cpp) and resolves it via the faced tile; the
-        //shop="id" attribute is the legacy form, accept either
-        if(stepXml->Attribute("shop")==NULL && stepXml->FirstChildElement("product")==NULL)
+        //no server packet for the shop content: build the item list directly
+        //from the bot step's inline <product> list in the datapack (see
+        //Api_protocol::shopItemsFromStepXml). The shop="id" attribute is the
+        //legacy form and is sent nowhere (buyObject re-resolves via the tile).
+        const std::vector<CatchChallenger::ItemToSellOrBuy> items=
+                CatchChallenger::Api_protocol::shopItemsFromStepXml(stepXml);
+        if(items.empty())
         {
             showTip(tr("Shop called but missing informations").toStdString());
             return;
@@ -177,9 +180,8 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
                 if(!connect(shop,&Shop::showTip,this,&OverMapLogic::showTip))
                     abort();
             }
-            shop->setVar(connexionManager,actualBot.name,skinId);
+            shop->setVar(connexionManager,actualBot.name,skinId,items);
             setAbove(shop);
-            connexionManager->client->getShopList();
         }
         return;
     }

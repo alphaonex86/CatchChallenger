@@ -14,6 +14,8 @@
 #include "../../general/base/lib.h"
 #include "Map_client.hpp"
 
+namespace tinyxml2 { class XMLElement; }
+
 namespace CatchChallenger {
 class DLL_PUBLIC Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap
 {
@@ -415,6 +417,12 @@ public:
     void takeAnObjectOnMap();
 
     //shop
+    //Build the shop content directly from the bot step's inline <product> list
+    //in the datapack (mirrors the server Map_loader.cpp resolution). There is no
+    //server packet to fetch the list, so both clients call this to populate the
+    //shop screen. Returns items with price resolved from the datapack (or the
+    //product's overridePrice) and quantity=0.
+    static std::vector<ItemToSellOrBuy> shopItemsFromStepXml(const tinyxml2::XMLElement *stepXml);
     void getShopList();/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     void buyObject(const CATCHCHALLENGER_TYPE_ITEM &objectId,const uint32_t &quantity,const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     void sellObject(const CATCHCHALLENGER_TYPE_ITEM &objectId, const uint32_t &quantity, const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;

@@ -114,6 +114,15 @@ OverMap::OverMap()
         buyOver=new CustomText(gradient1,gradient2,this);
     }
     options=new CustomButton(":/CC/images/interface/options.png",this);
+    {
+        QLinearGradient gradient1( 0, 0, 0, 100 );
+        gradient1.setColorAt( 0, QColor(255,255,255));
+        gradient1.setColorAt( 1, QColor(255,255,255));
+        QLinearGradient gradient2( 0, 0, 0, 100 );
+        gradient2.setColorAt( 0, QColor(80,71,38));
+        gradient2.setColorAt( 1, QColor(80,71,38));
+        optionsOver=new CustomText(gradient1,gradient2,this);
+    }
 
     //on-screen D-pad + A/B (hidden until touchControlsActive). Each uses its own
     //3-state button strip (normal/pressed/disabled): the four arrow glyphs for the
@@ -312,6 +321,7 @@ void OverMap::newLanguage()
     bagOver->setText(tr("Bag"));
     opentolanOver->setText(tr("Open"));
     buyOver->setText(tr("Buy"));
+    optionsOver->setText(tr("Options"));
     chatType->setItemText(0,tr("All"));
     chatType->setItemText(1,tr("Local"));
     if(chatType->count()>2)
@@ -554,13 +564,25 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     }
     {
         //options gear at the left of the bag: opens the options dialog in-game
-        //(same art as the main menu, sized like the neighbouring map icons)
+        //(same art/sizes as the neighbouring map icons, with the same caption)
         if(w->width()<800 || w->height()<600)
+        {
             options->setSize(84/2,93/2);
+            optionsOver->setVisible(false);
+        }
         else
+        {
             options->setSize(84,93);
-        options->setPos(xRight-options->width(),w->height()-space-options->height());
+            optionsOver->setVisible(physicalDpiX<200);
+        }
+        unsigned int optionsX=xRight-options->width();
+        options->setPos(optionsX,w->height()-space-options->height());
         xRight-=options->width()+space;
+        if(optionsOver->isVisible())
+        {
+            optionsOver->setPixelSize(18);
+            optionsOver->setPos(optionsX+options->width()/2-optionsOver->boundingRect().width()/2,w->height()-space-optionsOver->boundingRect().height());
+        }
     }
     #if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)

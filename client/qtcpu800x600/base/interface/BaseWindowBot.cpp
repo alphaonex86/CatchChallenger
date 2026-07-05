@@ -156,25 +156,17 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"shop")==0)
     {
-        //the server builds the shop from the inline <product> list keyed by bot
-        //position (Map_loader.cpp) and resolves it via the faced tile; the
-        //shop="id" attribute is the legacy form, accept either
-        if(stepXml->Attribute("shop")==NULL && stepXml->FirstChildElement("product")==NULL)
+        //no server packet for the shop content: build the item list directly
+        //from the bot step's inline <product> list in the datapack (see
+        //Api_protocol::shopItemsFromStepXml). The shop="id" attribute is the
+        //legacy form and is sent nowhere (buyObject re-resolves via the tile).
+        const std::vector<ItemToSellOrBuy> items=CatchChallenger::Api_protocol::shopItemsFromStepXml(stepXml);
+        if(items.empty())
         {
             showTip(tr("Shop called but missing informations").toStdString());
             return;
         }
         shopId=0;
-        if(stepXml->Attribute("shop")!=NULL)
-        {
-            bool ok;
-            shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
-            if(!ok)
-            {
-                showTip(tr("Shop called but wrong id").toStdString());
-                return;
-            }
-        }
         if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
             QPixmap skin(QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin"))));
@@ -191,31 +183,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->stackedWidget->setCurrentWidget(ui->page_shop);
         ui->shopItemList->clear();
         on_shopItemList_itemSelectionChanged();
-        #ifndef CATCHCHALLENGER_CLIENT_INSTANT_SHOP
-        ui->shopDescription->setText(tr("Waiting the shop content"));
-        ui->shopBuy->setVisible(false);
-        qDebug() << "goToBotStep(), client->getShopList(): " << shopId;
-        client->getShopList();
-        #else
-        {
-            std::vector<ItemToSellOrBuy> items;
-            const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
-            unsigned int index=0;
-            while(index<shop.items.size())
-            {
-                if(shop.prices.at(index)>0)
-                {
-                    ItemToSellOrBuy newItem;
-                    newItem.object=shop.items.at(index);
-                    newItem.price=shop.prices.at(index);
-                    newItem.quantity=0;
-                    items << newItem;
-                }
-                index++;
-            }
-            haveShopList(items);
-        }
-        #endif
+        haveShopList(items);
         return;
     }
     else if(strcmp(stepXml->Attribute("type"),"sell")==0)

@@ -982,6 +982,56 @@ void Api_protocol::takeAnObjectOnMap()
     packOutcommingData(0x18,NULL,0);
 }
 
+std::vector<ItemToSellOrBuy> Api_protocol::shopItemsFromStepXml(const tinyxml2::XMLElement *stepXml)
+{
+    std::vector<ItemToSellOrBuy> items;
+    if(stepXml==NULL)
+        return items;
+    const tinyxml2::XMLElement *product=stepXml->FirstChildElement("product");
+    while(product!=NULL)
+    {
+        if(product->Attribute("item")!=NULL)
+        {
+            bool found=false;
+            CATCHCHALLENGER_TYPE_ITEM itemId=0;
+            const std::string itemName=str_tolower(product->Attribute("item"));
+            if(CommonDatapack::commonDatapack.has_tempNameToItemId(itemName))
+            {
+                itemId=CommonDatapack::commonDatapack.get_tempNameToItemId(itemName);
+                found=true;
+            }
+            else
+            {
+                bool ok=false;
+                const uint16_t temp=stringtouint16(product->Attribute("item"),&ok);
+                if(ok && CommonDatapack::commonDatapack.has_item(temp))
+                {
+                    itemId=temp;
+                    found=true;
+                }
+            }
+            if(found)
+            {
+                uint32_t price=CommonDatapack::commonDatapack.get_item(itemId).price;
+                if(product->Attribute("overridePrice")!=NULL)
+                {
+                    bool ok=false;
+                    const uint32_t tprice=stringtouint32(product->Attribute("overridePrice"),&ok);
+                    if(ok)
+                        price=tprice;
+                }
+                ItemToSellOrBuy newItem;
+                newItem.object=itemId;
+                newItem.price=price;
+                newItem.quantity=0;
+                items.push_back(newItem);
+            }
+        }
+        product=product->NextSiblingElement("product");
+    }
+    return items;
+}
+
 void Api_protocol::getShopList()/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 {
     if(!is_logged)
