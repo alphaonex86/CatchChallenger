@@ -4,9 +4,9 @@
 #include <unordered_map>
 #include <string>
 
-#include "../base/GeneralStructures.hpp"
+#include "../GeneralStructures.hpp"
 #ifndef CATCHCHALLENGER_NOXML
-#include "../base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
+#include "../DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 #endif
 
 namespace CatchChallenger {

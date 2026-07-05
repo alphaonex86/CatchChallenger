@@ -87,18 +87,18 @@ if(NOT TARGET catchchallenger_server_base)
         ${CMAKE_CURRENT_LIST_DIR}/base/TimeRangeEventScanBase.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/StringWithReplacement.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/NormalServerGlobal.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/crafting/BaseServerCrafting.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/crafting/ClientLocalBroadcastCrafting.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/crafting/LocalClientHandlerCrafting.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/crafting/ClientHeavyLoadCrafting.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/LocalClientHandlerFight.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/LocalClientHandlerFightSkill.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/LocalClientHandlerFightBuff.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/LocalClientHandlerFightWild.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/LocalClientHandlerFightDatabase.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/LocalClientHandlerFightBattle.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/BaseServerFight.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/ClientHeavyLoadFight.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/crafting/BaseServerCrafting.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/crafting/ClientLocalBroadcastCrafting.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/crafting/LocalClientHandlerCrafting.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/crafting/ClientHeavyLoadCrafting.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/LocalClientHandlerFight.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/LocalClientHandlerFightSkill.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/LocalClientHandlerFightBuff.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/LocalClientHandlerFightWild.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/LocalClientHandlerFightDatabase.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/LocalClientHandlerFightBattle.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/BaseServerFight.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/ClientHeavyLoadFight.cpp
     )
 
     if(NOT CATCHCHALLENGER_NOXML)
@@ -129,7 +129,7 @@ endif()
 if(NOT TARGET catchchallenger_server_db_minimal)
     add_library(catchchallenger_server_db_minimal INTERFACE)
     target_sources(catchchallenger_server_db_minimal INTERFACE
-        ${CMAKE_CURRENT_LIST_DIR}/base/SqlFunction.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/SQL/SqlFunction.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/DatabaseBase.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/DatabaseFunction.cpp
     )
@@ -143,9 +143,9 @@ if(NOT TARGET catchchallenger_server_sql)
     add_library(catchchallenger_server_sql INTERFACE)
     target_link_libraries(catchchallenger_server_sql INTERFACE catchchallenger_server_db_minimal)
     target_sources(catchchallenger_server_sql INTERFACE
-        ${CMAKE_CURRENT_LIST_DIR}/base/PreparedDBQueryLogin.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/base/PreparedDBQueryCommon.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/base/PreparedDBQueryServer.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/SQL/PreparedDBQueryLogin.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/SQL/PreparedDBQueryCommon.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/SQL/PreparedDBQueryServer.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/PreparedStatementUnit.cpp
     )
 endif()

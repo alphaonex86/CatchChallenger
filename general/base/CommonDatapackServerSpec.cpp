@@ -6,7 +6,7 @@
 #include "GeneralVariable.hpp"
 #ifndef CATCHCHALLENGER_NOXML
 #include "Map_loader.hpp"
-#include "../fight/FightLoader.hpp"
+#include "fight/FightLoader.hpp"
 #include "DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 #endif
 #include "../../general/base/FacilityLibGeneral.hpp"

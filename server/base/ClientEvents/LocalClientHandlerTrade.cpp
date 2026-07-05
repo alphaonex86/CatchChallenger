@@ -2,7 +2,7 @@
 #include "../ClientList.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/FacilityLib.hpp"
-#include "../PreparedDBQuery.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include <cstring>

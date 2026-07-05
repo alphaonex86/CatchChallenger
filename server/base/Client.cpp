@@ -3,7 +3,7 @@
 #include "MapManagement/ClientWithMap.hpp"
 #include "ClientList.hpp"
 #include "GlobalServerData.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../base/SQL/PreparedDBQuery.hpp"
 #if defined(CATCHCHALLENGER_SERVER) && defined(CATCHCHALLENGER_IO_URING)
 #include <unistd.h>
 #endif

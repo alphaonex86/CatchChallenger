@@ -7,7 +7,7 @@ general/base/ProtocolParsingGeneral.cpp:72). So a valid packet on the wire is
 the single byte [0x07] -- no queryNumber (code<0x80, not a reply), no dataSize.
 The case has NO size check; framing for a fixed-0 packet is fixed by the table.
 
-Call chain (general/fight/CommonFightEngineWild.cpp:303 -> CommonFightEngine.cpp):
+Call chain (general/base/fight/CommonFightEngineWild.cpp:303 -> CommonFightEngine.cpp):
     tryEscape() -> canEscape():
         if(!isInFight())  -> errorFightEngine("error: tryEscape() when is not in
                               fight") -> Client::errorFightEngine() ->

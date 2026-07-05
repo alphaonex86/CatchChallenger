@@ -6,8 +6,8 @@ Wire form: DYNAMIC MESSAGE (packetFixedSize[0x0F]=0xFE), code 0x0F, a
     [monsterPosition:u8]
 No queryNumber (message, code<0x80), no 4-byte length (fixed size 1).
 
-Handler logic traced (server/fight/LocalClientHandlerFight.cpp:828
-Client::confirmEvolution + ::confirmEvolutionTo + general/fight/
+Handler logic traced (server/base/fight/LocalClientHandlerFight.cpp:828
+Client::confirmEvolution + ::confirmEvolutionTo + general/base/fight/
 CommonFightEngineTurn.cpp:959 CommonFightEngine::confirmEvolutionTo):
 
   parseMessage 0x0F:

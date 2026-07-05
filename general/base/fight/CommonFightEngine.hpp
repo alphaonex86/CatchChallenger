@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "../base/GeneralStructures.hpp"
-#include "../base/ClientBase.hpp"
-#include "../../general/base/CommonMap/CommonMap.hpp"
+#include "../GeneralStructures.hpp"
+#include "../ClientBase.hpp"
+#include "../CommonMap/CommonMap.hpp"
 #include "CommonFightEngineBase.hpp"
-#include "../base/lib.h"
+#include "../lib.h"
 
 namespace CatchChallenger {
 //only the logique here, store nothing

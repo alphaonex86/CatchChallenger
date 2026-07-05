@@ -2,7 +2,7 @@
 
 Handler: server/base/ClientNetworkReadMessage.cpp:588 (Client::parseMessage),
 case 0x18 -> Client::takeAnObjectOnMap()
-(server/crafting/LocalClientHandlerCrafting.cpp:97).
+(server/base/crafting/LocalClientHandlerCrafting.cpp:97).
 
 Wire form: FIXED-size MESSAGE, code 0x18, size 0
 (packetFixedSize[0x18]=0, general/base/ProtocolParsingGeneral.cpp:89).

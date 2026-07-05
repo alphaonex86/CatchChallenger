@@ -1,8 +1,8 @@
 #include "FightLoader.hpp"
-#include "../base/FacilityLibGeneral.hpp"
-#include "../base/cpp11addition.hpp"
+#include "../FacilityLibGeneral.hpp"
+#include "../cpp11addition.hpp"
 #ifndef CATCHCHALLENGER_SERVER
-#include "../base/CommonDatapack.hpp"
+#include "../CommonDatapack.hpp"
 #endif
 #include <iostream>
 

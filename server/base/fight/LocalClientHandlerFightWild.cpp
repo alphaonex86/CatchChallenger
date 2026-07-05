@@ -1,9 +1,9 @@
-#include "../base/GlobalServerData.hpp"
+#include "../GlobalServerData.hpp"
 #include <iostream>
 #include <cstring>
-#include "../base/Client.hpp"
-#include "../base/Client.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../Client.hpp"
+#include "../Client.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
 
 using namespace CatchChallenger;
 

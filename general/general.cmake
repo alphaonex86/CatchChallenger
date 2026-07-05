@@ -116,7 +116,7 @@ if(NOT TARGET catchchallenger_general)
         ${CMAKE_CURRENT_LIST_DIR}/base/GeneralStructures.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/MoveOnTheMap.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/FacilityLib.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/FightLoader.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/FightLoader.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/CommonMap/BaseMap.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/CommonMap/CommonMap.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/CommonMap/ItemOnMap.cpp
@@ -126,13 +126,13 @@ if(NOT TARGET catchchallenger_general)
         # at file scope by DatapackGeneralLoaderMap.cpp (see the
         # CATCHCHALLENGER_NOXML branch below for the alternative).
         ${CMAKE_CURRENT_LIST_DIR}/base/CommonDatapackServerSpec.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/CommonFightEngine.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/CommonFightEngineEnd.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/CommonFightEngineTurn.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/CommonFightEngineBuff.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/CommonFightEngineSkill.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/CommonFightEngineWild.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/fight/CommonFightEngineBase.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/CommonFightEngine.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/CommonFightEngineEnd.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/CommonFightEngineTurn.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/CommonFightEngineBuff.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/CommonFightEngineSkill.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/CommonFightEngineWild.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/fight/CommonFightEngineBase.cpp
     )
 
     if(CATCHCHALLENGER_NOXML)
@@ -151,9 +151,9 @@ if(NOT TARGET catchchallenger_general)
             ${CMAKE_CURRENT_LIST_DIR}/base/DatapackGeneralLoader/DatapackGeneralLoaderPlant.cpp
             ${CMAKE_CURRENT_LIST_DIR}/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp
             ${CMAKE_CURRENT_LIST_DIR}/base/DatapackGeneralLoader/DatapackGeneralLoaderReputation.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/fight/FightLoaderBuff.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/fight/FightLoaderMonster.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/fight/FightLoaderSkill.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/base/fight/FightLoaderBuff.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/base/fight/FightLoaderMonster.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/base/fight/FightLoaderSkill.cpp
         )
         # tinyxml2 sources only when system lib not used (already added
         # to catchchallenger_general_minimal otherwise; the duplicate

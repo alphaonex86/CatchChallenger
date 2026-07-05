@@ -1,6 +1,6 @@
 #include "CommonFightEngineBase.hpp"
-#include "../base/CommonDatapack.hpp"
-#include "../base/GeneralVariable.hpp"
+#include "../CommonDatapack.hpp"
+#include "../GeneralVariable.hpp"
 
 using namespace CatchChallenger;
 

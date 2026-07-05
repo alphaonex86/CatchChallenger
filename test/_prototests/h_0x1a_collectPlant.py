@@ -19,7 +19,7 @@ at. There is also NO size guard in the dispatch (unlike 0x19/0x1B): the parser
 frames it as a zero-length packet, so any trailing byte is the START of the next
 packet, never part of 0x1A.
 
-SEMANTICS (server/crafting/ClientLocalBroadcastCrafting.cpp:121 collectPlant()):
+SEMANTICS (server/base/crafting/ClientLocalBroadcastCrafting.cpp:121 collectPlant()):
     new_map = mapAndPosIfMoveInLookingDirectionJumpColision(...)
     if(new_map==nullptr)              errorOutput("Can't move at this direction") -> KICK
     if(!isDirt(*new_map,x,y))         errorOutput("Try collect plant out of the dirt") -> KICK

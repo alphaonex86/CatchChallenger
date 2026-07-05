@@ -7,7 +7,7 @@
 #include "../../general/base/cpp11addition.hpp"
 #include "LinkToMaster.hpp"
 #include "LinkToGameServer.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../base/SQL/PreparedDBQuery.hpp"
 #include "../base/GlobalServerData.hpp"
 
 using namespace CatchChallenger;

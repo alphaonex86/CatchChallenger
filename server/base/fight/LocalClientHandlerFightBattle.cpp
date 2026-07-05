@@ -1,6 +1,6 @@
-#include "../base/Client.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "../base/ClientList.hpp"
+#include "../Client.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../ClientList.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;

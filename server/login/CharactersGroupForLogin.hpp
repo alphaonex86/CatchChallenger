@@ -3,7 +3,7 @@
 
 #include "../cli/BaseClassSwitch.hpp"
 #include "../cli/db/EventLoopDatabase.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../base/SQL/PreparedDBQuery.hpp"
 #include "EventLoopClientLoginSlave.hpp"
 #include <string>
 #include <unordered_map>

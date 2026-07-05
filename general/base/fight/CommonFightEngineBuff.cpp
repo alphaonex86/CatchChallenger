@@ -1,5 +1,5 @@
 #include "CommonFightEngine.hpp"
-#include "../base/CommonDatapack.hpp"
+#include "../CommonDatapack.hpp"
 
 #include <iostream>
 

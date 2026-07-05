@@ -1,11 +1,11 @@
 #include "FightLoader.hpp"
-#include "../base/FacilityLibGeneral.hpp"
-#include "../base/CommonSettingsServer.hpp"
-#include "../base/CommonDatapack.hpp"
-#include "../base/cpp11addition.hpp"
-#include "../base/GeneralVariable.hpp"
+#include "../FacilityLibGeneral.hpp"
+#include "../CommonSettingsServer.hpp"
+#include "../CommonDatapack.hpp"
+#include "../cpp11addition.hpp"
+#include "../GeneralVariable.hpp"
 #ifndef CATCHCHALLENGER_SERVER
-#include "../base/CommonDatapack.hpp"
+#include "../CommonDatapack.hpp"
 #endif
 #include <algorithm>
 #include <iostream>

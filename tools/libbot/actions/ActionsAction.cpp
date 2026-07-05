@@ -4,7 +4,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/FacilityLib.hpp"
-#include "../../general/fight/CommonFightEngine.hpp"
+#include "../../general/base/fight/CommonFightEngine.hpp"
 #include "../../client/libqtcatchchallenger/Api_client_real.hpp"
 #include "../bot-actions/BotTargetList.h"
 #include <iostream>

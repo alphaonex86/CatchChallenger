@@ -1,7 +1,7 @@
 #include "MapMonsterPreview.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
-#include "../../../../general/fight/CommonFightEngine.hpp"
+#include "../../../../general/base/fight/CommonFightEngine.hpp"
 #include <QPainter>
 
 MapMonsterPreview::MapMonsterPreview(const CatchChallenger::PlayerMonster &monster, QGraphicsItem *parent) :

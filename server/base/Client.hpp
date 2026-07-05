@@ -5,7 +5,7 @@
 #include "MapManagement/ClientMapManagement.hpp"
 #include "BaseServer/BaseServerMasterSendDatapack.hpp"
 #include "../../general/base/GeneralStructures.hpp"
-#include "../../general/fight/CommonFightEngine.hpp"
+#include "../../general/base/fight/CommonFightEngine.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "DdosBuffer.hpp"
 #include <unordered_map>

@@ -1,9 +1,9 @@
-#include "../base/GlobalServerData.hpp"
-#include "../base/Client.hpp"
-#include "../base/Client.hpp"
-#include "../base/PreparedDBQuery.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/CommonSettingsServer.hpp"
+#include "../GlobalServerData.hpp"
+#include "../Client.hpp"
+#include "../Client.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
 
 using namespace CatchChallenger;
 
@@ -33,7 +33,7 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
             //monster does not yet own this skill sub_index2==skills.size(), and
             //skills.at(sub_index2) would throw std::out_of_range (crash) on a
             //level-up learn entry (learnSkillLevel!=1). Mirrors the general copy
-            //in general/fight/CommonFightEngineSkill.cpp.
+            //in general/base/fight/CommonFightEngineSkill.cpp.
             if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (sub_index2<monster.skills.size() && (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel))
             {
                 if(learn.learnSkillLevel==1)

@@ -1,10 +1,10 @@
 #include "../Client.hpp"
 #include <iostream>
 #include "../ClientList.hpp"
-#include "../PreparedDBQuery.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
-#include "../SqlFunction.hpp"
+#include "../SQL/SqlFunction.hpp"
 #endif
 #ifndef CATCHCHALLENGER_SERVER
 #include "../../general/base/CommonDatapackServerSpec.hpp"

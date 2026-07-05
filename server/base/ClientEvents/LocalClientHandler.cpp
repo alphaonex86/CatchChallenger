@@ -1,6 +1,6 @@
 #include "../Client.hpp"
 #include <iostream>
-#include "../PreparedDBQuery.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"

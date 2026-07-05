@@ -28,7 +28,7 @@ OUTPUT_ROOT = "/mnt/data/perso/tmpfs/security/server"
 CLANG = shutil.which("clang")
 
 SCOPE_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
-    "general/base", "general/fight", "server"))
+    "general/base", "server"))
 SOURCE_EXT = (".cpp", ".c", ".cc", ".cxx", ".h", ".hpp", ".hxx")
 
 # Known compile DB dirs (fast path, no cmake needed)

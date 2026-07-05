@@ -1,7 +1,7 @@
 #ifndef MOCKFIGHTENGINE_HPP
 #define MOCKFIGHTENGINE_HPP
 
-#include "../../general/fight/CommonFightEngine.hpp"
+#include "../../general/base/fight/CommonFightEngine.hpp"
 #include "../../general/base/GeneralStructures.hpp"
 #include <vector>
 #include <string>

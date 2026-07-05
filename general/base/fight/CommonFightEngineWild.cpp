@@ -1,8 +1,8 @@
 #include "CommonFightEngine.hpp"
-#include "../base/CommonDatapack.hpp"
-#include "../base/CommonSettingsCommon.hpp"
-#include "../base/GeneralVariable.hpp"
-#include "../base/MoveOnTheMap.hpp"
+#include "../CommonDatapack.hpp"
+#include "../CommonSettingsCommon.hpp"
+#include "../GeneralVariable.hpp"
+#include "../MoveOnTheMap.hpp"
 
 #include <iostream>
 #include <cmath>

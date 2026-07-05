@@ -20,7 +20,7 @@ it is exactly 2 bytes:  [0x19][plant_id]  (plant_id is u8, 0..255).
 No queryNumber (code<0x80, not a reply), no 4-byte dynamic length (fixed size).
 There is NO reply packet — plantSeed is fire-and-forget.
 
-SEMANTICS (server/crafting/ClientLocalBroadcastCrafting.cpp::plantSeed ->
+SEMANTICS (server/base/crafting/ClientLocalBroadcastCrafting.cpp::plantSeed ->
 LocalClientHandlerCrafting.cpp::useSeed):
   plantSeed(plant_id):
     1. if !CommonDatapack::has_plant(plant_id) -> errorOutput("plant_id not found")

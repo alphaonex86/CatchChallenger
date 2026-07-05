@@ -8,7 +8,7 @@ it is FIXED size (NO 4-byte dynamic length on the wire). Wire bytes are:
     [0x85][qnum][lo][hi]
 
 Handler logic traced
-(server/base/ClientNetworkReadQuery.cpp:44 -> server/crafting/LocalClientHandlerCrafting.cpp:32
+(server/base/ClientNetworkReadQuery.cpp:44 -> server/base/crafting/LocalClientHandlerCrafting.cpp:32
  Client::useRecipe(query_id, recipe_id)):
 
   parseQuery (HARDENED):

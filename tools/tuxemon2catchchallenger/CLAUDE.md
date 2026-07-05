@@ -8,7 +8,7 @@ out of tree (`/tmp/tux2cc-build`).
   created/overwritten; nothing else is touched.
 * **System libs only.**  Qt6 Core+Gui + system `yaml-cpp`.  Never vendor a YAML
   parser, never add a Qt module beyond Core/Gui, never auto-install.
-* **The loader is the spec.**  Output must parse through `general/fight/FightLoader*`
+* **The loader is the spec.**  Output must parse through `general/base/fight/FightLoader*`
   and `general/base/DatapackGeneralLoader*`.  Schema facts that bit us:
   `xp_max` is accepted (aliased to `xp_for_max_level`); `ratio_gender` keeps the
   `%`; skill **id 0** must exist with one `<life success="100%" … applyOn="aloneEnemy">`

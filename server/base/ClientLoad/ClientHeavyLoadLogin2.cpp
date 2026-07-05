@@ -7,7 +7,7 @@
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #endif
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
-#include "../SqlFunction.hpp"
+#include "../SQL/SqlFunction.hpp"
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonDatapack.hpp"

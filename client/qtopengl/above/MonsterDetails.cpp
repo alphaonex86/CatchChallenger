@@ -5,7 +5,7 @@
 #include "../../libqtcatchchallenger/Language.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../libqtcatchchallenger/Ultimate.hpp"
-#include "../../../general/fight/CommonFightEngineBase.hpp"
+#include "../../../general/base/fight/CommonFightEngineBase.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
 #include <QPainter>

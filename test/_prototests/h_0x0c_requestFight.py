@@ -10,7 +10,7 @@ calls requestFight() and returns true), so the size guard lives entirely in the
 framer: any extra bytes after 0x0C are parsed as a SEPARATE following packet.
 
 Handler logic traced (server/base/ClientEvents/LocalClientHandlerFightManage.cpp
-Client::requestFight, + server/fight/LocalClientHandlerFight.cpp):
+Client::requestFight, + server/base/fight/LocalClientHandlerFight.cpp):
   * mapIndex>=65535            -> silent return (no kick) — unreachable on map.
   * isInFight()                -> errorOutput("...is in fight") -> KICK.
   * mapAndPosIfMoveInLookingDirectionJumpColision() == nullptr (can't step in the

@@ -1,11 +1,11 @@
-#include "../base/Client.hpp"
+#include "../Client.hpp"
 #include <cstring>
-#include "../base/MapServer.hpp"
-#include "../base/GlobalServerData.hpp"
-#include "../base/PreparedDBQuery.hpp"
-#include "../base/MapManagement/MapVisibilityAlgorithm.hpp"
-#include "../../general/base/ProtocolParsing.hpp"
-#include "../../general/base/CommonDatapack.hpp"
+#include "../MapServer.hpp"
+#include "../GlobalServerData.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
+#include "../../../general/base/ProtocolParsing.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
 
 #include <chrono>
 

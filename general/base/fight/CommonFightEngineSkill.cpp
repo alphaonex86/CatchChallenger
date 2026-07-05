@@ -1,7 +1,7 @@
 #include "CommonFightEngine.hpp"
-#include "../base/CommonDatapack.hpp"
-#include "../base/CommonSettingsServer.hpp"
-#include "../base/GeneralVariable.hpp"
+#include "../CommonDatapack.hpp"
+#include "../CommonSettingsServer.hpp"
+#include "../GeneralVariable.hpp"
 
 #include <iostream>
 
