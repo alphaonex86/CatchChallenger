@@ -2395,9 +2395,10 @@ void OverMapLogic::objectUsed(const CatchChallenger::ObjectUsage &objectUsage)
             //is crafting recipe
             if(CatchChallenger::CommonDatapack::commonDatapack.has_itemToCraftingRecipe(item))
             {
+                //learn the recipe (the Crafting screen re-reads it when next opened);
+                //was abort() — reachable now that bag item-use dispatches recipes
                 connexionManager->client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipe(item));
-                //load_crafting_inventory();
-                abort();
+                showTip(tr("You learned a new recipe").toStdString());
             }
             else if(CatchChallenger::CommonDatapack::commonDatapack.has_trap(item))
             {
