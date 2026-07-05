@@ -148,16 +148,12 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"shop")==0)
     {
-        if(stepXml->Attribute("shop")==NULL)
+        //the server builds the shop from the inline <product> list keyed by bot
+        //position (Map_loader.cpp) and resolves it via the faced tile; the
+        //shop="id" attribute is the legacy form, accept either
+        if(stepXml->Attribute("shop")==NULL && stepXml->FirstChildElement("product")==NULL)
         {
             showTip(tr("Shop called but missing informations").toStdString());
-            return;
-        }
-        bool ok;
-        uint16_t shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
-        if(!ok)
-        {
-            showTip(tr("Shop called but wrong id").toStdString());
             return;
         }
         // open shop screen
@@ -189,34 +185,9 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"sell")==0)
     {
-        if(stepXml->Attribute("shop")==NULL)
-        {
-            showTip(tr("Shop called but missing informations").toStdString());
-            return;
-        }
-        bool ok;
-        uint16_t shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
-        (void)shopId;
-        if(!ok)
-        {
-            showTip(tr("Shop called but wrong id").toStdString());
-            return;
-        }
-        /*if(actualBot.properties.find("skin")!=actualBot.properties.cend())
-        {
-            QPixmap skin=QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin")));
-            if(!skin.isNull())
-            {
-                ui->shopSellerImage->setPixmap(skin.scaled(160,160));
-                ui->shopSellerImage->setVisible(true);
-            }
-            else
-                ui->shopSellerImage->setVisible(false);
-        }
-        else
-            ui->shopSellerImage->setVisible(false);
-        waitToSell=true;
-        selectObject(ObjectType_Sell);*/
+        //sell flow not ported to this interface yet (ObjectType_Sell selection
+        //path is dead code), show an honest tip instead of a bogus error
+        showTip(tr("Selling is not implemented yet").toStdString());
         return;
     }
     else if(strcmp(stepXml->Attribute("type"),"heal")==0)
