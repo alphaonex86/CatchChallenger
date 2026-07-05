@@ -3513,6 +3513,17 @@ class LiveServer:
 _CURRENT_LIVE = None
 
 
+def _model_confirm_is_verifiable(live):
+    """A model-emitted 'VERDICT CONFIRMED' only stands if there was a REAL live
+    target to prove it against: a running server it could crash/hang (auto-
+    detected, cases a/b) or GDB-inspect for an unintended game-state (case c).
+    With NO live server the claim is pure speculation - reject it (no proof =>
+    no claim). Without this, a boot failure (e.g. the shared-tmpfs build/run kit
+    wiped mid-run) let the model self-declare CONFIRMED against a dead port."""
+    return bool(live is not None
+                and (live.alive or live.crashed or live.hung))
+
+
 def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None):
     """Run the exploit agent for one candidate. Returns (verdict, reason, dir).
 
@@ -3535,9 +3546,43 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None)
     live = LiveServer(outdir, mode=mode_override or None)
     _CURRENT_LIVE = live
     boot = live.start()
+    # SELF-HEAL: the build/run kit lives on a SHARED scratch tmpfs that another
+    # job (human or IA) can wipe mid-run. If the server did not come up because
+    # the kit vanished, rebuild + re-stage it and retry the boot ONCE. Attacking
+    # a dead port silently produces bogus verdicts - the model bluffs CONFIRMED
+    # (see _model_confirm_is_verifiable) or burns its whole budget on a port
+    # nothing answers - so we never do that; we restore the kit or abort loudly.
+    if not live.alive and (not os.path.isfile(SERVER_BIN)
+                           or not os.path.isdir(STAGED_RUN)):
+        sys.stderr.write("%s     [!] server kit vanished mid-run (%s / %s) - "
+                         "rebuilding + re-staging, then retrying boot once\n"
+                         % (_ts(), SERVER_BIN, STAGED_RUN))
+        if not os.path.isfile(SERVER_BIN):
+            build_server()
+        stage_run()
+        boot = live.start()   # proc is still None (kit-missing returns pre-spawn)
     sys.stderr.write("%s     [%s-instance] %s\n"
                      % (_ts(), live.mode,
                         boot.splitlines()[0] if boot else "(no output)"))
+    if not live.alive:
+        # No live target. Never hand the model a dead port (that only yields
+        # unverifiable verdicts). If the kit could not be restored, the WHOLE
+        # run is doomed - signal a hard ABORT so the operator fixes the build.
+        # Otherwise the server failed to boot for a reason specific to this
+        # finding - skip it as ERROR (never a false NOT-EXPLOITABLE against a
+        # server that never ran).
+        live.stop()
+        _CURRENT_LIVE = None
+        if not os.path.isfile(SERVER_BIN) or not os.path.isdir(STAGED_RUN):
+            sys.stderr.write("%s     [ABORT] server kit still missing after "
+                             "rebuild (%s / %s) - the exploit phase cannot boot "
+                             "the target; fix the build and re-run.\n"
+                             % (_ts(), SERVER_BIN, STAGED_RUN))
+            return "ABORT", "server kit missing; rebuild/stage failed", outdir
+        sys.stderr.write("%s     [skip] server did not reach listening for %s - "
+                         "boot failed; not attacking a dead port\n"
+                         % (_ts(), rel))
+        return "ERROR", "server did not boot (not listening); skipped", outdir
 
     # Correct any wrong repo paths in the scanner finding before showing it to
     # the exploit agent (e.g. "server/base/X.cpp" -> "general/base/X.cpp").
@@ -3653,9 +3698,24 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None)
             continue
         kind, arg, block = act
         if kind == "VERDICT":
-            # CONFIRMED ends immediately (exploit works).
+            # CONFIRMED ends immediately (exploit works) - but ONLY if there was
+            # a live server to prove it against. A real crash/hang already
+            # auto-confirmed above (we never reach here for those); a bare
+            # model-declared CONFIRMED with no live target is speculation.
             if arg == "CONFIRMED":
-                verdict, reason = arg, block
+                if _model_confirm_is_verifiable(live):
+                    verdict, reason = arg, block
+                else:
+                    sys.stderr.write("%s     [reject] model claimed CONFIRMED but "
+                                     "no live server was running to prove it - "
+                                     "downgrading to NOT-EXPLOITABLE (%s)\n"
+                                     % (_ts(), rel))
+                    transcript.append("### CONFIRMED REJECTED: no live server to "
+                                      "prove it against (unverifiable claim)")
+                    verdict = "NOT-EXPLOITABLE"
+                    reason = ("model declared CONFIRMED without a live server to "
+                              "prove it (no crash/hang/inspection possible): "
+                              + (block or ""))
                 break
             # FALSEPOSITIVE = the model is SURE it can't be exploited -> END
             # EARLY, no matter how much time is left (budget is a CAP). But it
@@ -3818,8 +3878,18 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None)
             transcript.append("### assistant (final, soft budget)\n%s" % final)
             act = parse_action(final)
             if act and act[0] == "VERDICT":
-                verdict = "CONFIRMED" if act[1] == "CONFIRMED" else "NOT-EXPLOITABLE"
-                reason = act[2]
+                if act[1] == "CONFIRMED" and _model_confirm_is_verifiable(live):
+                    verdict, reason = "CONFIRMED", act[2]
+                else:
+                    if act[1] == "CONFIRMED":
+                        # Claimed CONFIRMED but nothing live to prove it against.
+                        transcript.append("### CONFIRMED REJECTED (soft cap): no "
+                                          "live server to prove it against")
+                        reason = ("model declared CONFIRMED without a live server "
+                                  "to prove it: " + act[2])
+                    else:
+                        reason = act[2]
+                    verdict = "NOT-EXPLOITABLE"
                 break
             # Model didn't give a verdict; let the loop continue - the hard cap
             # will force-stop it.
@@ -4040,6 +4110,16 @@ def run_exploit():
             # before the next candidate, even if the turn raised mid-session.
             if _CURRENT_LIVE is not None:
                 _CURRENT_LIVE.stop()
+        # A hard ABORT (the build/run kit could not be restored) means every
+        # remaining finding would also boot-fail - stop the whole run loudly
+        # rather than churn dead-port attempts. Record progress so far.
+        if verdict == "ABORT":
+            sys.stderr.write("%s [ABORT] exploit phase stopped at %s: %s "
+                             "(%d/%d candidates processed)\n"
+                             % (_ts(), rel, reason, idx - 1, len(candidates)))
+            results.append((rel, verdict, reason,
+                            os.path.basename(outdir) if outdir != "-" else "-"))
+            break
         # VALGRIND RETRY: a clean gdb pass may have MISSED a silent memory
         # error. Re-run the SAME finding under valgrind; if it confirms, that
         # wins; if it ALSO comes back clean, the finding stays not-exploitable.
