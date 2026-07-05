@@ -89,6 +89,10 @@ protected:
 
     void updateFPS();
     void setTargetFPS(int targetFPS);
+    //SCREENSHOT automation verb: grab the whole rendered viewport (map + any
+    //above dialog) to a PNG and answer on the channel. Routed here from the map
+    //controller because only this top-level view composes the above-screens.
+    void doRemoteScreenshot(const QString &path);
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void closeWhenOnMapAfterToggle();

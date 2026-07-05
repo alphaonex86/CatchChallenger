@@ -1656,6 +1656,13 @@ void MapControllerMP::remoteActionExecute(const QString &line)
         synthKey(Qt::Key_Escape);
         emit remoteReply(QStringLiteral("OK CLOSEDIALOG"));
     }
+    else if(verb==QStringLiteral("SCREENSHOT") && parts.size()>=2)
+    {
+        //grab the whole rendered viewport (map + any above dialog) to a PNG.
+        //The map view can't compose the above-screens, so route to the owner of
+        //the top-level ScreenTransition view, which saves the file and replies.
+        emit remoteScreenshotRequested(parts.at(1));
+    }
     else if(verb==QStringLiteral("GETSTATE"))
     {
         const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());
