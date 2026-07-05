@@ -114,6 +114,12 @@ public slots:
     void monsterSelectCanceled();
     //clan-name entry (replaces the old QInputDialog): a non-empty name creates the clan
     void clanNameEntered(const QString &clanName);
+    //battle: lazy-create + wire Battle::battle; exit back to the map on win/lose;
+    //in-fight Bag/Monster buttons route to the selection pickers
+    void ensureBattle();
+    void battleFinished();
+    void openBagForBattle();
+    void openMonsterListForBattle();
     void lastReplyTime(const uint32_t &time);
     void bag_open();
     void displayLanPort(uint16_t port);

@@ -1777,27 +1777,51 @@ void OverMapLogic::botFight(const uint16_t &fightId)
     std::cerr << "OverMapLogic::botFight " << fightId << std::endl;
 }
 
-void OverMapLogic::wildFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
+void OverMapLogic::ensureBattle()
 {
-    (void)mapIndex;
-    (void)x;
-    (void)y;
-    std::cerr << "OverMapLogic::wildFightCollision" << std::endl;
-
     if(Battle::battle==nullptr)
         Battle::battle=new Battle();
+    //idempotent wiring of the battle -> overmap signals (UniqueConnection)
+    if(!connect(Battle::battle,&Battle::battleWin,this,&OverMapLogic::battleFinished,Qt::UniqueConnection))
+        abort();
+    if(!connect(Battle::battle,&Battle::battleLose,this,&OverMapLogic::battleFinished,Qt::UniqueConnection))
+        abort();
+    if(!connect(Battle::battle,&Battle::openBagForBattle,this,&OverMapLogic::openBagForBattle,Qt::UniqueConnection))
+        abort();
+    if(!connect(Battle::battle,&Battle::openMonsterListForBattle,this,&OverMapLogic::openMonsterListForBattle,Qt::UniqueConnection))
+        abort();
+    if(!connect(Battle::battle,&Battle::error,this,&OverMapLogic::showTip,Qt::UniqueConnection))
+        abort();
+    Battle::battle->setVar(connexionManager);
+}
+
+void OverMapLogic::battleFinished()
+{
+    //return to the map overlay (the fight replaced the overmap foreground)
+    emit setForeground(this);
+}
+
+void OverMapLogic::openBagForBattle()
+{
+    selectObject(ObjectType_UseInFight);
+}
+
+void OverMapLogic::openMonsterListForBattle()
+{
+    selectObject(ObjectType_MonsterToFightKO);
+}
+
+void OverMapLogic::wildFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    ensureBattle();
+    Battle::battle->startWildBattle(mapIndex,x,y);
     emit setForeground(Battle::battle);
 }
 
 void OverMapLogic::botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    (void)mapIndex;
-    (void)x;
-    (void)y;
-    std::cerr << "OverMapLogic::botFightCollision" << std::endl;
-
-    if(Battle::battle==nullptr)
-        Battle::battle=new Battle();
+    ensureBattle();
+    Battle::battle->startBotBattle(mapIndex,x,y);
     emit setForeground(Battle::battle);
 }
 
@@ -2371,9 +2395,53 @@ void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const
             emit useSeed(plantId);
         }
         break;
+        case ObjectType_MonsterToFight:
+        case ObjectType_MonsterToFightKO:
+        {
+            //switch the active monster in the current fight; itemId is the team position
+            if(!ok)
+            {
+                //a KO switch is mandatory -> re-open the picker; a voluntary one
+                //just resumes the fight menu
+                if(tempWaitedObjectType==ObjectType_MonsterToFightKO)
+                    selectObject(ObjectType_MonsterToFightKO);
+                else if(Battle::battle!=nullptr)
+                    Battle::battle->doNextAction();
+                break;
+            }
+            const uint8_t pos=static_cast<uint8_t>(itemId);
+            if(connexionManager->client->changeOfMonsterInFight(pos))
+            {
+                connexionManager->client->changeOfMonsterInFightByPosition(pos);
+                if(Battle::battle!=nullptr)
+                {
+                    Battle::battle->init_current_monster_display();
+                    Battle::battle->doNextAction();
+                }
+            }
+            else if(tempWaitedObjectType==ObjectType_MonsterToFightKO)
+                selectObject(ObjectType_MonsterToFightKO);//invalid pick, must retry
+        }
+        break;
+        case ObjectType_UseInFight:
+        {
+            //use the picked item on the currently-fighting monster (trap/catch is
+            //a later step); itemId is the item
+            if(ok)
+            {
+                const uint8_t pos=connexionManager->client->getCurrentSelectedMonsterNumber();
+                if(connexionManager->client->useObjectOnMonsterByPosition(itemId,pos))
+                {
+                    remove_to_inventory(itemId,1);
+                    connexionManager->client->useObjectOnMonsterByPosition(itemId,pos);
+                }
+            }
+            if(Battle::battle!=nullptr)
+                Battle::battle->doNextAction();
+        }
+        break;
         default:
-            //Trade item, monster-target (item-on-monster / trade / fight) and
-            //in-fight item use are ported in later steps.
+            //Trade item and out-of-fight monster-trade are ported in later steps.
             setAbove(nullptr);
             showTip(tr("This action is not available yet").toStdString());
         break;
