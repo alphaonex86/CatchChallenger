@@ -34,6 +34,8 @@ OverMapLogic::OverMapLogic()
     plant=nullptr;
     crafting=nullptr;
     inventoryIndex=0;
+    inSelection=false;
+    waitedObjectType=ObjectType_All;
 
     player=nullptr;
     reputations=nullptr;
@@ -403,8 +405,109 @@ void OverMapLogic::connectAllSignals()
        abort();*/
 }
 
-void OverMapLogic::selectObject(const ObjectType &/*objectType*/)
+void OverMapLogic::ensureInventory()
 {
+    if(inventory==nullptr)
+    {
+        inventory=new Inventory();
+        if(!connect(inventory,&Inventory::setAbove,this,&OverMapLogic::setAbove))
+            abort();
+        if(!connect(inventory,&Inventory::sendNext,this,&OverMapLogic::inventoryNext))
+            abort();
+        if(!connect(inventory,&Inventory::sendBack,this,&OverMapLogic::inventoryBack))
+            abort();
+        if(!connect(inventory,&Inventory::useItem,this,&OverMapLogic::inventoryItemUsed))
+            abort();
+        if(!connect(inventory,&Inventory::deleteItem,this,&OverMapLogic::inventoryItemDeleted))
+            abort();
+    }
+}
+
+void OverMapLogic::ensurePlant()
+{
+    if(plant==nullptr)
+    {
+        plant=new Plant();
+        if(!connect(plant,&Plant::setAbove,this,&OverMapLogic::setAbove))
+            abort();
+        if(!connect(plant,&Plant::sendNext,this,&OverMapLogic::inventoryNext))
+            abort();
+        if(!connect(plant,&Plant::sendBack,this,&OverMapLogic::inventoryBack))
+            abort();
+        if(!connect(plant,&Plant::useItem,this,&OverMapLogic::plantItemUsed))
+            abort();
+    }
+}
+
+//The Inventory/Plant ObjectType enums mirror ours 1:1, so selectObject casts
+//between them; lock that assumption at compile time.
+static_assert((int)OverMapLogic::ObjectType_UseInFight==(int)Inventory::ObjectType_UseInFight,
+              "OverMapLogic::ObjectType and Inventory::ObjectType must stay in sync");
+
+void OverMapLogic::selectObject(const ObjectType &objectType)
+{
+    inSelection=true;
+    waitedObjectType=objectType;
+    switch(objectType)
+    {
+        case ObjectType_Seed:
+            ensurePlant();
+            plant->setVar(connexionManager,true);
+            setAbove(plant);
+        break;
+        case ObjectType_Sell:
+        case ObjectType_Trade:
+        case ObjectType_All:
+        case ObjectType_UseInFight:
+            ensureInventory();
+            inventory->setVar(connexionManager,static_cast<Inventory::ObjectType>(objectType),true);
+            setAbove(inventory);
+        break;
+        default:
+            //monster-target selection (item-on-monster, trade/fight monster) is
+            //ported in a later step; keep the state consistent meanwhile.
+            inSelection=false;
+            waitedObjectType=ObjectType_All;
+            showTip(tr("This selection is not available yet").toStdString());
+        break;
+    }
+}
+
+void OverMapLogic::inventoryItemUsed(const uint16_t &item)
+{
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=
+            connexionManager->client->get_player_informations_ro();
+    if(inSelection)
+    {
+        //picking an item in a Sell/Trade/UseInFight/All picker: validate it is
+        //still owned, then hand it to objectSelection. Quantity picker is a
+        //follow-up; sell/trade one unit at a time for now.
+        if(playerInformations.items.find(item)==playerInformations.items.cend())
+        {
+            objectSelection(false);
+            return;
+        }
+        objectSelection(true,item,1);
+        return;
+    }
+    //normal bag use dispatch is ported in a later step
+    showTip(tr("Using items from the bag is not available yet").toStdString());
+}
+
+void OverMapLogic::inventoryItemDeleted(const uint16_t &/*item*/)
+{
+    //item destroy is ported in a later step
+    showTip(tr("Destroying items is not available yet").toStdString());
+}
+
+void OverMapLogic::plantItemUsed(const uint16_t &item)
+{
+    if(inSelection)
+    {
+        objectSelection(true,item,1);
+        return;
+    }
+    //outside seed selection a plant item has no direct use
 }
 
 void OverMapLogic::actionOn(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
@@ -517,16 +620,7 @@ void OverMapLogic::errorWithTheCurrentMap()
 
 void OverMapLogic::bag_open()
 {
-    if(inventory==nullptr)
-    {
-        inventory=new Inventory();
-        if(!connect(inventory,&Inventory::setAbove,this,&OverMapLogic::setAbove))
-            abort();
-        if(!connect(inventory,&Inventory::sendNext,this,&OverMapLogic::inventoryNext))
-            abort();
-        if(!connect(inventory,&Inventory::sendBack,this,&OverMapLogic::inventoryBack))
-            abort();
-    }
+    ensureInventory();
     inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
     setAbove(inventory);
     inventoryIndex=0;
@@ -552,16 +646,7 @@ void OverMapLogic::inventoryNext()
     switch(inventoryIndex)
     {
         case 0:
-        if(plant==nullptr)
-        {
-            plant=new Plant();
-            if(!connect(plant,&Plant::setAbove,this,&OverMapLogic::setAbove))
-                abort();
-            if(!connect(plant,&Plant::sendNext,this,&OverMapLogic::inventoryNext))
-                abort();
-            if(!connect(plant,&Plant::sendBack,this,&OverMapLogic::inventoryBack))
-                abort();
-        }
+        ensurePlant();
         plant->setVar(connexionManager,false);
         setAbove(plant);
         break;
@@ -586,16 +671,7 @@ void OverMapLogic::inventoryNext()
         setAbove(crafting);
         break;
         default:
-        if(inventory==nullptr)
-        {
-            inventory=new Inventory();
-            if(!connect(inventory,&Inventory::setAbove,this,&OverMapLogic::setAbove))
-                abort();
-            if(!connect(inventory,&Inventory::sendNext,this,&OverMapLogic::inventoryNext))
-                abort();
-            if(!connect(inventory,&Inventory::sendBack,this,&OverMapLogic::inventoryBack))
-                abort();
-        }
+        ensureInventory();
         inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
         setAbove(inventory);
         inventoryIndex=0;
@@ -609,30 +685,12 @@ void OverMapLogic::inventoryBack()
     switch(inventoryIndex)
     {
         case 1:
-        if(inventory==nullptr)
-        {
-            inventory=new Inventory();
-            if(!connect(inventory,&Inventory::setAbove,this,&OverMapLogic::setAbove))
-                abort();
-            if(!connect(inventory,&Inventory::sendNext,this,&OverMapLogic::inventoryNext))
-                abort();
-            if(!connect(inventory,&Inventory::sendBack,this,&OverMapLogic::inventoryBack))
-                abort();
-        }
+        ensureInventory();
         inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
         setAbove(inventory);
         break;
         case 2:
-        if(plant==nullptr)
-        {
-            plant=new Plant();
-            if(!connect(plant,&Plant::setAbove,this,&OverMapLogic::setAbove))
-                abort();
-            if(!connect(plant,&Plant::sendNext,this,&OverMapLogic::inventoryNext))
-                abort();
-            if(!connect(plant,&Plant::sendBack,this,&OverMapLogic::inventoryBack))
-                abort();
-        }
+        ensurePlant();
         plant->setVar(connexionManager,false);
         setAbove(plant);
         break;
@@ -2114,409 +2172,75 @@ void OverMapLogic::appendReputationPoint(const std::string &type,const int32_t &
     }
 }
 
-void OverMapLogic::objectSelection(const bool &/*ok*/, const uint16_t &/*itemId*/, const uint32_t &/*quantity*/)
+void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const uint32_t &quantity)
 {
-    abort();
-    Q_UNUSED(connexionManager);
-    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
-    Q_UNUSED(playerInformations);
-    ObjectType waitedObjectType=ObjectType_All;
-    ObjectType tempWaitedObjectType=waitedObjectType;
+    CatchChallenger::Player_private_and_public_informations &playerInformations=
+            connexionManager->client->get_player_informations();
+    inSelection=false;
+    const ObjectType tempWaitedObjectType=waitedObjectType;
     waitedObjectType=ObjectType_All;
     switch(tempWaitedObjectType)
     {
-        case ObjectType_ItemEvolutionOnMonster:
-        case ObjectType_ItemLearnOnMonster:
-        case ObjectType_ItemOnMonster:
-        case ObjectType_ItemOnMonsterOutOfFight:
-        {
-            /*const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
-            const uint16_t item=objectInUsing.back();
-            objectInUsing.erase(objectInUsing.cbegin());
-            if(!ok)
-            {
-                ui->stackedWidget->setCurrentWidget(ui->page_inventory);
-                ui->inventoryUse->setText(tr("Select"));
-                if(CatchChallenger::CommonDatapack::commonDatapack.items.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.cend())
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items[item].consumeAtUse)
-                        add_to_inventory(item,1,false);
-                break;
-            }
-            const CatchChallenger::PlayerMonster * const monster=connexionManager->client->monsterByPosition(monsterPosition);
-            if(monster==NULL)
-            {
-                if(CatchChallenger::CommonDatapack::commonDatapack.items.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.cend())
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items[item].consumeAtUse)
-                        add_to_inventory(item,1,false);
-                break;
-            }
-            const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
-            const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster->monster);
-            if(CatchChallenger::CommonDatapack::commonDatapack.evolutionItem.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.evolutionItem.cend())
-            {
-                uint8_t monsterEvolutionPostion=0;
-                const CatchChallenger::Monster &monsterInformationsEvolution=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(CatchChallenger::CommonDatapack::commonDatapack.evolutionItem.at(item).at(monster->monster));
-                const QtDatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=
-                        QtDatapackClientLoader::datapackLoader->monsterExtra.at(
-                            CatchChallenger::CommonDatapack::commonDatapack.evolutionItem.at(item).at(monster->monster)
-                            );
-                abort();
-                //create animation widget
-                if(animationWidget!=NULL)
-                    delete animationWidget;
-                if(qQuickViewContainer!=NULL)
-                    delete qQuickViewContainer;
-                animationWidget=new QQuickView();
-                qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
-                qQuickViewContainer->setMinimumSize(QSize(800,600));
-                qQuickViewContainer->setMaximumSize(QSize(800,600));
-                qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
-                ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
-                //show the animation
-                ui->stackedWidget->setCurrentWidget(ui->page_animation);
-                previousAnimationWidget=ui->page_map;
-                if(baseMonsterEvolution!=NULL)
-                    delete baseMonsterEvolution;
-                if(targetMonsterEvolution!=NULL)
-                    delete targetMonsterEvolution;
-                baseMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformations,monsterInformationsExtra);
-                targetMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformationsEvolution,monsterInformationsEvolutionExtra);
-                if(evolutionControl!=NULL)
-                    delete evolutionControl;
-                evolutionControl=new EvolutionControl(monsterInformations,monsterInformationsExtra,monsterInformationsEvolution,monsterInformationsEvolutionExtra);
-                animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
-                animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
-                animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(false));
-                animationWidget->rootContext()->setContextProperty("itemEvolution",
-                                                                   QUrl::fromLocalFile(
-                                                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra
-                                                                                              .at(item).imagePath)));
-                animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
-                animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
-                const std::string datapackQmlFile=client->datapackPathBase()+"qml/evolution-animation.qml";
-                if(QFile(QString::fromStdString(datapackQmlFile)).exists())
-                    animationWidget->setSource(QUrl::fromLocalFile(QString::fromStdString(datapackQmlFile)));
-                else
-                    animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
-                client->useObjectOnMonsterByPosition(item,monsterPosition);
-                if(!fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
-                {
-                    std::cerr << "fightEngine.useObjectOnMonsterByPosition() Bug at " << __FILE__ << ":" << __LINE__ << std::endl;
-                    #ifdef CATCHCHALLENGER_HARDENED
-                    abort();
-                    #endif
-                }
-                load_monsters();
-                return;
-            }
-            else
-            {
-                abort();
-                ui->stackedWidget->setCurrentWidget(ui->page_inventory);
-                ui->inventoryUse->setText(tr("Select"));
-                if(fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
-                {
-                    showTip(tr("Using <b>%1</b> on <b>%2</b>")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name))
-                            .arg(QString::fromStdString(monsterInformationsExtra.name))
-                            .toStdString());
-                    client->useObjectOnMonsterByPosition(item,monsterPosition);
-                    load_monsters();
-                    checkEvolution();
-                }
-                else
-                {
-                    showTip(tr("Failed to use <b>%1</b> on <b>%2</b>")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name))
-                            .arg(QString::fromStdString(monsterInformationsExtra.name))
-                            .toStdString());
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.find(item)!=
-                            CatchChallenger::CommonDatapack::commonDatapack.items.cend())
-                        if(CatchChallenger::CommonDatapack::commonDatapack.items[item].consumeAtUse)
-                            add_to_inventory(item,1,false);
-                }
-            }*/
-        abort();
-        }
-        break;
         case ObjectType_Sell:
         {
-            /*ui->stackedWidget->setCurrentWidget(ui->page_map);
-            ui->inventoryUse->setText(tr("Select"));
+            //close the picker and return to the map
+            setAbove(nullptr);
             if(!ok)
                 break;
             if(playerInformations.items.find(itemId)==playerInformations.items.cend())
-            {
-                qDebug() << "item id is not into the inventory";
                 break;
-            }
             if(playerInformations.items.at(itemId)<quantity)
-            {
-                qDebug() << "item id have not the quantity";
                 break;
-            }
             remove_to_inventory(itemId,quantity);
-            ItemToSellOrBuy tempItem;
-            tempItem.object=itemId;
-            tempItem.quantity=quantity;
-            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items.at(itemId).price/2;
-            itemsToSell.push_back(tempItem);
-            client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
-            load_inventory();
-            load_plant_inventory();*/
-            abort();
-        }
-        break;
-        //market dropped
-        case ObjectType_Trade:
-/*            ui->inventoryUse->setText(tr("Select"));
-            ui->stackedWidget->setCurrentWidget(ui->page_trade);
-            if(!ok)
-                break;
-            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
-            {
-                qDebug() << "item id is not into the inventory";
-                break;
-            }
-            if(playerInformations.items.at(itemId)<quantity)
-            {
-                qDebug() << "item id have not the quantity";
-                break;
-            }
-            client->addObject(itemId,quantity);
-            playerInformations.items[itemId]-=quantity;
-            if(playerInformations.items.at(itemId)==0)
-                playerInformations.items.erase(itemId);
-            if(tradeCurrentObjects.find(itemId)!=tradeCurrentObjects.cend())
-                tradeCurrentObjects[itemId]+=quantity;
-            else
-                tradeCurrentObjects[itemId]=quantity;
-            load_inventory();
-            load_plant_inventory();
-            tradeUpdateCurrentObject();*/
-        abort();
-        break;
-        case ObjectType_MonsterToLearn:
-        {
-            /*ui->stackedWidget->setCurrentWidget(ui->page_map);
-            ui->inventoryUse->setText(tr("Select"));
-            load_monsters();
-            if(!ok)
-                return;
-            ui->stackedWidget->setCurrentWidget(ui->page_learn);
-            monsterPositionToLearn=static_cast<uint8_t>(itemId);
-            if(!showLearnSkillByPosition(monsterPositionToLearn))
-            {
-                newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Unable to load the right monster");
-                return;
-            }*/
-        abort();
-        }
-        break;
-        case ObjectType_MonsterToFight:
-        case ObjectType_MonsterToFightKO:
-        {
-/*            ui->inventoryUse->setText(tr("Select"));
-            ui->stackedWidget->setCurrentWidget(ui->page_battle);
-            load_monsters();
-            if(!ok)
-                return;
-            resetPosition(true,false,true);
-            //do copie here because the call of changeOfMonsterInFight apply the skill/buff effect
-            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
-            const PlayerMonster *tempMonster=fightEngine.monsterByPosition(monsterPosition);
-            if(tempMonster==NULL)
-            {
-                qDebug() << "Monster not found";
-                return;
-            }
-            PlayerMonster copiedMonster=*tempMonster;
-            if(!fightEngine.changeOfMonsterInFight(monsterPosition))
-                return;
-            client->changeOfMonsterInFightByPosition(monsterPosition);
-            PlayerMonster * playerMonster=fightEngine.getCurrentMonster();
-            init_current_monster_display(&copiedMonster);
-            ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-            if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(playerMonster->monster)!=
-                    QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
-            {
-                ui->labelFightEnter->setText(tr("Go %1")
-                                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(playerMonster->monster).name)));
-                ui->labelFightMonsterBottom->setPixmap(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(playerMonster->monster).back.scaled(160,160));
-            }
-            else
-            {
-                ui->labelFightEnter->setText(tr("You change of monster"));
-                ui->labelFightMonsterBottom->setPixmap(QPixmap(":/CC/images/monsters/default/back.png"));
-            }
-            ui->pushButtonFightEnterNext->setVisible(false);
-            moveType=MoveType_Enter;
-            battleStep=BattleStep_Presentation;
-            monsterBeforeMoveForChangeInWaiting=true;
-            moveFightMonsterBottom();*/
-        }
-        break;
-        //market dropped
-        case ObjectType_MonsterToTrade:
-        {
-/*            ui->inventoryUse->setText(tr("Select"));
-            load_monsters();
-            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
-            if(waitedObjectType==ObjectType_MonsterToLearn)
-            {
-                ui->stackedWidget->setCurrentWidget(ui->page_learn);
-                monsterPositionToLearn=monsterPosition;
-                return;
-            }
-            ui->stackedWidget->setCurrentWidget(ui->page_trade);
-            if(!ok)
-                break;
-            std::vector<PlayerMonster> playerMonster=fightEngine.getPlayerMonster();
-            if(playerMonster.size()<=1)
-            {
-                QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
-                break;
-            }
-            if(!fightEngine.remainMonstersToFightWithoutThisMonster(monsterPosition))
-            {
-                QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
-                break;
-            }
-            //get the right monster
-            tradeCurrentMonstersPosition.push_back(monsterPosition);
-            tradeCurrentMonsters.push_back(playerMonster.at(monsterPosition));
-            fightEngine.removeMonsterByPosition(monsterPosition);
-            client->addMonsterByPosition(monsterPosition);
-            QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(tradeCurrentMonsters.back().monster).name));
-            item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.back().level));
-            item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(tradeCurrentMonsters.back().monster).front);
-            ui->tradePlayerMonsters->addItem(item);*/
+            const uint32_t price=CatchChallenger::CommonDatapack::commonDatapack.get_item(itemId).price/2;
+            connexionManager->client->sellObject(itemId,quantity,price);
         }
         break;
         case ObjectType_Seed:
         {
-/*            ui->stackedWidget->setCurrentWidget(ui->page_map);
-            ui->inventoryUse->setText(tr("Select"));
-            ui->plantUse->setVisible(false);
+            //came from actionOn(): a SeedInWaiting was pushed for the dirt tile.
+            setAbove(nullptr);
+            if(seed_in_waiting.empty())
+                break;
             if(!ok)
             {
                 seed_in_waiting.pop_back();
                 break;
             }
-            if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemId)==
-                    QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
+            if(!QtDatapackClientLoader::datapackLoader->has_itemToPlant(itemId))
             {
-                qDebug() << "Item is not a plant";
-                QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
-                seed_in_waiting.pop_back();
-                return;
-            }
-            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemId);
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
-            {
-                qDebug() << "You don't have the requirements to plant the seed";
-                QMessageBox::critical(this,tr("Error"),tr("You don't have the requirements to plant the seed"));
-                seed_in_waiting.pop_back();
-                return;
-            }
-            if(havePlant(&mapController->getMap(mapController->current_map)->logicalMap,mapController->getX(),mapController->getY())>=0)
-            {
-                qDebug() << "Too slow to select a seed, have plant now";
-                showTip(tr("Sorry, but now the dirt is not free to plant").toStdString());
-                seed_in_waiting.pop_back();
-                return;
-            }
-            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
-            {
-                qDebug() << "item id is not into the inventory";
+                showTip(tr("This item is not a plant").toStdString());
                 seed_in_waiting.pop_back();
                 break;
             }
-            remove_to_inventory(itemId);
-
+            const uint8_t plantId=QtDatapackClientLoader::datapackLoader->get_itemToPlant(itemId);
+            if(!connexionManager->client->haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
+            {
+                showTip(tr("You don't have the requirements to plant this seed").toStdString());
+                seed_in_waiting.pop_back();
+                break;
+            }
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
+            {
+                seed_in_waiting.pop_back();
+                break;
+            }
+            remove_to_inventory(itemId,1);
             const SeedInWaiting seedInWaiting=seed_in_waiting.back();
             seed_in_waiting.back().seedItemId=itemId;
-            insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
-                         seedInWaiting.x,seedInWaiting.y,plantId,
-                         static_cast<uint16_t>(CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds)
-                         );
-            addQuery(QueryType_Seed);
-            load_plant_inventory();
-            load_inventory();
-            qDebug() << QStringLiteral("send seed for: %1").arg(plantId);
+            //SeedInWaiting.map is already a real map id (set in actionOn)
+            insert_plant(seedInWaiting.map,seedInWaiting.x,seedInWaiting.y,plantId,
+                         static_cast<uint16_t>(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).fruits_seconds));
             emit useSeed(plantId);
-            client->seed_planted(true);
-            client->insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
-                                 seedInWaiting.x,seedInWaiting.y,plantId,
-                                 static_cast<uint16_t>(CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds)
-                                 );*/
-        }
-        break;
-        case ObjectType_UseInFight:
-        {
-/*            ui->inventoryUse->setText(tr("Select"));
-            ui->stackedWidget->setCurrentWidget(ui->page_battle);
-            load_inventory();
-            if(!ok)
-                break;
-            const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
-            {
-                QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
-                break;
-            }
-            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
-            {
-                qDebug() << "item id is not into the inventory";
-                break;
-            }
-            if(playerInformations.items.at(itemId)<quantity)
-            {
-                qDebug() << "item id have not the quantity";
-                break;
-            }
-            //it's trap
-            if(CommonDatapack::commonDatapack.trap.find(itemId)!=CommonDatapack::commonDatapack.trap.cend() && fightEngine.isInFightWithWild())
-            {
-                remove_to_inventory(itemId);
-                useTrap(itemId);
-            }
-            else//else it's to use on current monster
-            {
-                const uint8_t &monsterPosition=fightEngine.getCurrentSelectedMonsterNumber();
-                if(fightEngine.useObjectOnMonsterByPosition(itemId,monsterPosition))
-                {
-                    remove_to_inventory(itemId);
-                    if(CommonDatapack::commonDatapack.monsterItemEffect.find(itemId)!=CommonDatapack::commonDatapack.monsterItemEffect.cend())
-                    {
-                        client->useObjectOnMonsterByPosition(itemId,monsterPosition);
-                        updateAttackList();
-                        displayAttackProgression=0;
-                        attack_quantity_changed=0;
-                        if(battleType!=BattleType_OtherPlayer)
-                            doNextAction();
-                        else
-                        {
-                            ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-                            ui->labelFightEnter->setText(tr("In waiting of the other player action"));
-                            ui->pushButtonFightEnterNext->hide();
-                        }
-                    }
-                    else
-                        error(tr("You have selected a buggy object").toStdString());
-                }
-                else
-                    QMessageBox::warning(this,tr("Warning"),tr("Can't be used now!"));
-            }
-*/
         }
         break;
         default:
-        qDebug() << "waitedObjectType is unknow";
-        return;
+            //Trade item, monster-target (item-on-monster / trade / fight) and
+            //in-fight item use are ported in later steps.
+            setAbove(nullptr);
+            showTip(tr("This action is not available yet").toStdString());
+        break;
     }
-    waitedObjectType=ObjectType_All;
 }
 
 void OverMapLogic::objectUsed(const CatchChallenger::ObjectUsage &objectUsage)
