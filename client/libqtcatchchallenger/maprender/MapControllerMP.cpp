@@ -1663,6 +1663,18 @@ void MapControllerMP::remoteActionExecute(const QString &line)
         //the top-level ScreenTransition view, which saves the file and replies.
         emit remoteScreenshotRequested(parts.at(1));
     }
+    else if(verb==QStringLiteral("CLICKSCREEN") && parts.size()>=3)
+    {
+        //click a toolbar/overlay button or list row: these live on the top-level
+        //ScreenTransition scene, not the map view, so route the click there.
+        bool ok1=false,ok2=false;
+        const int px=parts.at(1).toInt(&ok1);
+        const int py=parts.at(2).toInt(&ok2);
+        if(!ok1 || !ok2)
+            emit remoteReply(QStringLiteral("ERROR bad CLICKSCREEN args"));
+        else
+            emit remoteScreenClickRequested(px,py);
+    }
     else if(verb==QStringLiteral("GETSTATE"))
     {
         const std::pair<COORD_TYPE,COORD_TYPE> p(getPos());

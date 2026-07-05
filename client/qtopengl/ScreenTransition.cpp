@@ -22,6 +22,8 @@
 #include "../libcatchchallenger/Api_protocol.hpp"
 #include <QTimer>
 #include <QKeyEvent>
+#include <QMouseEvent>
+#include <QApplication>
 #include <QTouchEvent>
 #include <QEventPoint>
 #include "CustomButton.hpp"
@@ -593,6 +595,9 @@ void ScreenTransition::setRemoteControl(LocalListener *localListener)
         if(!connect(&ccmap->mapController,&MapController::remoteScreenshotRequested,
                     this,&ScreenTransition::doRemoteScreenshot,Qt::UniqueConnection))
             abort();
+        if(!connect(&ccmap->mapController,&MapController::remoteScreenClickRequested,
+                    this,&ScreenTransition::doRemoteScreenClick,Qt::UniqueConnection))
+            abort();
     }
 }
 
@@ -611,6 +616,23 @@ void ScreenTransition::doRemoteScreenshot(const QString &path)
         else
             remoteControlListener->sendReply(QStringLiteral("ERROR SCREENSHOT save failed: %1").arg(path));
     }
+}
+
+void ScreenTransition::doRemoteScreenClick(const int &x,const int &y)
+{
+    //synthetic press+release on this viewport so the overlay/toolbar buttons on
+    //this scene receive it (the map view's CLICKPIXEL can't reach them). A press
+    //before the release makes the item under the cursor the mouse grabber.
+    const QPointF vpPt(x,y);
+    const QPointF globalPt=QPointF(viewport()->mapToGlobal(QPoint(x,y)));
+    QMouseEvent press(QEvent::MouseButtonPress,vpPt,globalPt,
+                      Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+    QApplication::sendEvent(viewport(),&press);
+    QMouseEvent release(QEvent::MouseButtonRelease,vpPt,globalPt,
+                        Qt::LeftButton,Qt::NoButton,Qt::NoModifier);
+    QApplication::sendEvent(viewport(),&release);
+    if(remoteControlListener!=nullptr)
+        remoteControlListener->sendReply(QStringLiteral("OK CLICKSCREEN %1 %2").arg(x).arg(y));
 }
 
 void ScreenTransition::loadingFinished()
@@ -1127,6 +1149,9 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
         ccmap->mapController.wireRemoteControl(remoteControlListener);
         if(!connect(&ccmap->mapController,&MapController::remoteScreenshotRequested,
                     this,&ScreenTransition::doRemoteScreenshot,Qt::UniqueConnection))
+            abort();
+        if(!connect(&ccmap->mapController,&MapController::remoteScreenClickRequested,
+                    this,&ScreenTransition::doRemoteScreenClick,Qt::UniqueConnection))
             abort();
     }
 

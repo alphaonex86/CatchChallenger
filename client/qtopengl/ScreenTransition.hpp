@@ -93,6 +93,9 @@ protected:
     //above dialog) to a PNG and answer on the channel. Routed here from the map
     //controller because only this top-level view composes the above-screens.
     void doRemoteScreenshot(const QString &path);
+    //CLICKSCREEN automation verb: synthetic click on this top-level viewport so
+    //the channel can press toolbar/overlay buttons (which live on this scene).
+    void doRemoteScreenClick(const int &x,const int &y);
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void closeWhenOnMapAfterToggle();
