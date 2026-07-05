@@ -7,7 +7,7 @@ Wire form: DYNAMIC MESSAGE (packetFixedSize[0x10]=0xFE), code 0x10, a
 No queryNumber (message, code<0x80), no 4-byte length (fixed size 3).
 
 Handler logic traced (ClientNetworkReadMessage.cpp -> LocalClientHandlerObject.cpp
--> general/fight/CommonFightEngine.cpp):
+-> general/base/fight/CommonFightEngine.cpp):
   parseMessage case 0x10:
     * size < sizeof(u16)+sizeof(u8) (==3) -> errorOutput("wrong remaining size
       for use object on monster") -> KICK (Client::errorOutput ->

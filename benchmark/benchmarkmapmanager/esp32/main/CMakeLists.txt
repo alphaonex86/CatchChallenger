@@ -9,7 +9,7 @@
 #
 # The source set MIRRORS the native CMakeLists.txt
 # (benchmark/benchmarkmapmanager/CMakeLists.txt), which links the whole
-# catchchallenger_general INTERFACE lib (general/base/*.cpp + general/fight/*.cpp)
+# catchchallenger_general INTERFACE lib (general/base/*.cpp incl. base/fight/)
 # — EXCEPT here we build under CATCHCHALLENGER_NOXML (no XML parsing is needed for
 # the pure-CPU loop), so the XML datapack loaders + tinyXML2 are excluded exactly
 # as the server firmware (server/cli/esp32/main/CMakeLists.txt) does. The
@@ -18,8 +18,7 @@
 get_filename_component(CC_REPO "${CMAKE_CURRENT_LIST_DIR}/../../../.." ABSOLUTE)
 
 # --- shared general sources (globbed, then NOXML-filtered like the server fw) -
-file(GLOB_RECURSE _cc_general "${CC_REPO}/general/base/*.cpp"
-                              "${CC_REPO}/general/fight/*.cpp")
+file(GLOB_RECURSE _cc_general "${CC_REPO}/general/base/*.cpp")
 # Drop the XML loaders + tinyXML2 + Qt TUs (CATCHCHALLENGER_NOXML): their class
 # bodies are #ifndef'd out under NOXML, so their .cpp definitions would be
 # "no declaration matches" / "tinyxml2 does not name a type" errors. Same regex
@@ -122,7 +121,7 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
 # ESP-IDF forces -Werror=all; relax the host-tolerated warnings the shared code
 # trips (same spirit as the server firmware). overloaded-virtual: production
 # shadow signatures; maybe-uninitialized: a gcc-13 xtensa false positive in the
-# fight engine (compiled here because general/fight/* is part of the lib);
+# fight engine (compiled here because general/base/fight/* is part of the lib);
 # format: main.cpp's `snprintf("p%u", id)` where id is uint32_t == 'long
 # unsigned int' on xtensa (host-fine '%u'). These are warnings on the native
 # build; we only downgrade them from -Werror here, never touch the shared source.

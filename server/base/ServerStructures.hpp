@@ -57,7 +57,7 @@
 #endif
 #include "../../general/base/GeneralVariable.hpp"
 #include "VariableServer.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../base/SQL/PreparedDBQuery.hpp"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include <atomic>
 #endif

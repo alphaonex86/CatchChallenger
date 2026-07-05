@@ -23,8 +23,7 @@ if(NOT CATCHCHALLENGER_DATAPACK_CPP_DIR)
 endif()
 
 # --- shared + server game-logic sources (globbed, then filtered) -------------
-file(GLOB_RECURSE _cc_general    "${CC_REPO}/general/base/*.cpp"
-                                 "${CC_REPO}/general/fight/*.cpp")
+file(GLOB_RECURSE _cc_general    "${CC_REPO}/general/base/*.cpp")
 # blake3: only the portable C path. The x86 SSE/AVX (blake3_*_x86*.c / .S) and
 # NEON files don't build for xtensa; general.cmake's vendored fallback lists
 # exactly these three, so mirror that.
@@ -64,14 +63,12 @@ file(GLOB _cc_zstd_common     "${_cc_zstd_dir}/common/*.c")
 file(GLOB _cc_zstd_compress   "${_cc_zstd_dir}/compress/*.c")
 file(GLOB _cc_zstd_decompress "${_cc_zstd_dir}/decompress/*.c")
 set(_cc_zstd ${_cc_zstd_common} ${_cc_zstd_compress} ${_cc_zstd_decompress})
-# server/base AND its siblings server/fight + server/crafting: the latter two
-# define the Client fight/crafting method overrides (Client::tryEscape,
+# server/base including its subdirs server/base/fight + server/base/crafting:
+# those two define the Client fight/crafting method overrides (Client::tryEscape,
 # tryCapture, takeAnObjectOnMap, …) that server/base/ calls UNCONDITIONALLY, so
 # omitting them is an undefined-reference link error. (catchchallenger-server.cmake
 # lists all three in catchchallenger_server_base.)
-file(GLOB_RECURSE _cc_serverbase "${CC_REPO}/server/base/*.cpp"
-                                 "${CC_REPO}/server/fight/*.cpp"
-                                 "${CC_REPO}/server/crafting/*.cpp")
+file(GLOB_RECURSE _cc_serverbase "${CC_REPO}/server/base/*.cpp")
 # Drop what this profile genuinely excludes, MIRRORING the host NOXML build's
 # source set (general/general.cmake NOXML branch + catchchallenger-server.cmake).
 # Under CATCHCHALLENGER_NOXML the host build compiles only CommonDatapack.cpp for

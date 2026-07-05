@@ -2,7 +2,7 @@
 #define MAP_VISUALISER_PLAYER_WITH_FIGHT_H
 
 #include "MapVisualiserPlayer.hpp"
-#include "../../general/fight/CommonFightEngine.hpp"
+#include "../../general/base/fight/CommonFightEngine.hpp"
 #include "../../general/base/lib.h"
 
 #include <QObject>

@@ -5,7 +5,7 @@
 #include <QObject>
 #include "../libcatchchallenger/ClientStructures.hpp"
 #include "../../general/base/GeneralStructures.hpp"
-#include "../../general/fight/CommonFightEngine.hpp"
+#include "../../general/base/fight/CommonFightEngine.hpp"
 #include "../../general/base/lib.h"
 #include "../libcatchchallenger/Api_protocol.hpp"
 #include "ConnectedSocket.hpp"

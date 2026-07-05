@@ -1,4 +1,4 @@
-#include "../base/Client.hpp"
+#include "../Client.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;

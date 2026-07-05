@@ -85,8 +85,8 @@ jugadores ni a ningún host `*.herman-brule.com`.
 * El encuadre (framing) del protocolo de cable y el despacho:
   `general/base/ProtocolParsing*.cpp`, `server/base/ClientNetworkRead*.cpp`.
 * Los manejadores por paquete y la lógica de juego que invocan:
-  `server/base/`, `server/base/ClientEvents/`, `server/crafting/`, `server/fight/`,
-  y el motor compartido en `general/base/` y `general/fight/`.
+  `server/base/`, `server/base/ClientEvents/`, `server/base/crafting/`, `server/base/fight/`,
+  y el motor compartido en `general/base/` y `general/base/fight/`.
 * El estado del servidor y la persistencia alcanzables a través de esos manejadores (inventario del jugador,
   dinero, monstruos, posición, misiones, clanes, intercambios, tiendas, fábricas, plantas).
 * **Servidor login** (`server/login/`) — el handshake previo al login, el login y
@@ -180,11 +180,11 @@ y el **estado** desde el que lo envías (fuera de combate, no en una tienda, sin
 | Chat | local / todos / clan / privado, tamaños de texto | `ClientNetworkReadMessage.cpp`, `ClientBroadCast*.cpp` |
 | Inventario / objetos | usar, destruir, usar sobre monstruo | `ClientEvents/LocalClientHandlerObject.cpp` |
 | Tienda y fábrica | comprar, vender, comprar/vender/listar en fábrica | `ClientEvents/LocalClientHandlerShop.cpp` |
-| Fabricación y plantas | usar receta, plantar semilla, recoger planta | `server/crafting/` |
+| Fabricación y plantas | usar receta, plantar semilla, recoger planta | `server/base/crafting/` |
 | Misiones | iniciar / cancelar / finalizar / siguiente-paso, requisitos | `ClientEvents/LocalClientHandlerQuest.cpp` |
 | Clan | crear / abandonar / disolver / invitar / aceptar-rechazar | `ClientEvents/LocalClientHandlerClan.cpp` |
 | Intercambio | solicitar / añadir objeto y monstruo / finalizar / cancelar | `ClientEvents/LocalClientHandlerTrade.cpp` |
-| Combate | solicitar combate, usar habilidad, cambiar/mover monstruo, aprender habilidad, evolución, huir, curar | `server/fight/`, `general/fight/CommonFightEngine.cpp` |
+| Combate | solicitar combate, usar habilidad, cambiar/mover monstruo, aprender habilidad, evolución, huir, curar | `server/base/fight/`, `general/base/fight/CommonFightEngine.cpp` |
 | Personaje y datapack | añadir / seleccionar / eliminar personaje, listar/sincronizar ficheros del datapack | `ClientNetworkReadQuery.cpp`, `server/base/ClientLoad/` |
 
 Presta especial atención a: la aritmética sobre `price × quantity` controlado por el atacante,

@@ -6,7 +6,7 @@
 #endif
 #include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../../general/base/GeneralStructures.hpp"
-#include "../crafting/MapServerCrafting.hpp"
+#include "crafting/MapServerCrafting.hpp"
 #include "VariableServer.hpp"
 #include "GlobalServerData.hpp"
 

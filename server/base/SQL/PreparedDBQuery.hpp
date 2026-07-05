@@ -2,8 +2,8 @@
 #ifndef CATCHCHALLENGER_SERVER_PREPAREDDBQUERY_H
 #define CATCHCHALLENGER_SERVER_PREPAREDDBQUERY_H
 
-#include "DatabaseBase.hpp"
-#include "PreparedStatementUnit.hpp"
+#include "../DatabaseBase.hpp"
+#include "../PreparedStatementUnit.hpp"
 #include <string>
 
 namespace CatchChallenger {

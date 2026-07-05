@@ -1,15 +1,15 @@
-#include "../base/GlobalServerData.hpp"
+#include "../GlobalServerData.hpp"
 #include <iostream>
-#include "../base/MapServer.hpp"
-#include "../base/Client.hpp"
-#include "../base/ClientList.hpp"
-#include "../base/PreparedDBQuery.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../general/base/CommonSettingsServer.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "../base/MapManagement/ClientWithMap.hpp"
-#include "../base/MapManagement/MapVisibilityAlgorithm.hpp"
+#include "../MapServer.hpp"
+#include "../Client.hpp"
+#include "../ClientList.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../MapManagement/ClientWithMap.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
 
 using namespace CatchChallenger;
 

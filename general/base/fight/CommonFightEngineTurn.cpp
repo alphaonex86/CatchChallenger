@@ -1,6 +1,6 @@
 #include "CommonFightEngine.hpp"
-#include "../base/CommonDatapack.hpp"
-#include "../base/GeneralVariable.hpp"
+#include "../CommonDatapack.hpp"
+#include "../GeneralVariable.hpp"
 
 #include <iostream>
 

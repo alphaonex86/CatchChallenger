@@ -7,7 +7,7 @@ No queryNumber (message, code<0x80), no 4-byte length (fixed size 3).
 
 Handler logic traced (server/base/ClientNetworkReadMessage.cpp:377 ->
 Client::learnSkillByMonsterPosition (LocalClientHandlerFightManage.cpp:8) ->
-Client::learnSkillInternal (server/fight/LocalClientHandlerFightSkill.cpp:10)):
+Client::learnSkillInternal (server/base/fight/LocalClientHandlerFightSkill.cpp:10)):
 
   * size != 3  (sizeof(u8)+sizeof(u16))
         -> errorOutput("wrong remaining size for learn skill") -> return false.

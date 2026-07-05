@@ -85,8 +85,8 @@ players, or any `*.herman-brule.com` host.
 * The wire protocol framing and dispatch:
   `general/base/ProtocolParsing*.cpp`, `server/base/ClientNetworkRead*.cpp`.
 * The per-packet handlers and the game logic they call:
-  `server/base/`, `server/base/ClientEvents/`, `server/crafting/`, `server/fight/`,
-  and the shared engine in `general/base/` and `general/fight/`.
+  `server/base/`, `server/base/ClientEvents/`, `server/base/crafting/`, `server/base/fight/`,
+  and the shared engine in `general/base/` and `general/base/fight/`.
 * Server state and persistence reachable through those handlers (player inventory,
   cash, monsters, position, quests, clans, trade, shops, factories, plants).
 * **Login server** (`server/login/`) — the pre-login handshake, account login &
@@ -178,11 +178,11 @@ and the **state** you send it from (out of fight, not at a shop, no clan, etc.).
 | Chat | local / all / clan / private, text sizes | `ClientNetworkReadMessage.cpp`, `ClientBroadCast*.cpp` |
 | Inventory / objects | use, destroy, use-on-monster | `ClientEvents/LocalClientHandlerObject.cpp` |
 | Shop & factory | buy, sell, factory buy/sell/list | `ClientEvents/LocalClientHandlerShop.cpp` |
-| Crafting & plants | use recipe, plant seed, collect plant | `server/crafting/` |
+| Crafting & plants | use recipe, plant seed, collect plant | `server/base/crafting/` |
 | Quests | start / cancel / finish / next-step, requirements | `ClientEvents/LocalClientHandlerQuest.cpp` |
 | Clan | create / leave / dissolve / invite / accept-refuse | `ClientEvents/LocalClientHandlerClan.cpp` |
 | Trade | request / add item & monster / finish / cancel | `ClientEvents/LocalClientHandlerTrade.cpp` |
-| Fight | request fight, use skill, change/move monster, learn skill, evolution, escape, heal | `server/fight/`, `general/fight/CommonFightEngine.cpp` |
+| Fight | request fight, use skill, change/move monster, learn skill, evolution, escape, heal | `server/base/fight/`, `general/base/fight/CommonFightEngine.cpp` |
 | Character & datapack | add / select / remove character, datapack file list/sync | `ClientNetworkReadQuery.cpp`, `server/base/ClientLoad/` |
 
 Pay special attention to: arithmetic on attacker-controlled `price × quantity`,

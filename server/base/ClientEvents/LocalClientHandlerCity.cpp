@@ -1,7 +1,7 @@
 #include "../Client.hpp"
 #include <iostream>
 #include "../ClientList.hpp"
-#include "../PreparedDBQuery.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../GlobalServerData.hpp"
 #include <string.h>

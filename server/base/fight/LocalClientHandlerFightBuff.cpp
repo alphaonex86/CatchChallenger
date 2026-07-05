@@ -1,6 +1,6 @@
-#include "../base/Client.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../base/ClientList.hpp"
+#include "../Client.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../ClientList.hpp"
 
 using namespace CatchChallenger;
 

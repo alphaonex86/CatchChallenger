@@ -1,10 +1,10 @@
 #include "FightLoader.hpp"
 #ifndef CATCHCHALLENGER_NOXML
 #ifndef CATCHCHALLENGER_SERVER
-#include "../base/CommonDatapack.hpp"
+#include "../CommonDatapack.hpp"
 #endif
 #endif
-#include "../base/cpp11addition.hpp"
+#include "../cpp11addition.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

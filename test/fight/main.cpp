@@ -23,8 +23,8 @@
 #include "MockFightEngine.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/GeneralStructures.hpp"
-#include "../../general/fight/CommonFightEngine.hpp"
-#include "../../general/fight/CommonFightEngineBase.hpp"
+#include "../../general/base/fight/CommonFightEngine.hpp"
+#include "../../general/base/fight/CommonFightEngineBase.hpp"
 
 #include <iostream>
 #include <string>

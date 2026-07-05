@@ -2,7 +2,7 @@
 #include <cstring>
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
-#include "../PreparedDBQuery.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
 #include "../BaseServer/BaseServer.hpp"
 #include "../GlobalServerData.hpp"
 

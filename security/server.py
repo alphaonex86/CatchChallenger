@@ -58,9 +58,8 @@ TARGET_DIR = os.path.join(REPO_ROOT, "server", "cli")
 # not under server/cli, so #include-following alone misses them.
 SCAN_SEED_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
     "server/cli",       # the standalone game server binary (primary target)
-    "server/base",      # ClientNetworkRead*, ClientEvents/, ClientLoad/, handlers
-    "server/crafting",  # recipe / plant handlers
-    "server/fight",     # server-side battle handlers
+    "server/base",      # ClientNetworkRead*, ClientEvents/, ClientLoad/, handlers,
+                        # + base/crafting (recipe/plant) + base/fight (battle)
     # Other client-facing binaries IN bounty scope (EXAMPLE-BOUNTY §2): the
     # PRE-AUTH login parser is the single highest-value remote surface, and
     # gateway/game-server-alone also face untrusted client TCP. master/ and
@@ -69,7 +68,7 @@ SCAN_SEED_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
     "server/gateway",
     "server/game-server-alone",
     "general/base",     # ProtocolParsing* framing + shared engine/datapack parse
-    "general/fight",    # shared turn-based fight engine
+                        # + base/fight (shared turn-based fight engine)
 ))
 
 # IA backend transport (Ollama/Claude routing, num_ctx sizing, usage
@@ -317,13 +316,10 @@ SYSTEM_PROMPT = SYSTEM_PROMPT + read_bounty() + "\n\n" + ACTIVE_DEFINES
 SEARCH_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
     "server/cli",
     "server/base",
-    "server/crafting",
-    "server/fight",
     "server/login",
     "server/gateway",
     "server/game-server-alone",
     "general/base",
-    "general/fight",
 ))
 
 # Cap the context we attach so a single oversized file can't blow the model's
@@ -1569,7 +1565,7 @@ def panel_analyze(path, specs, adversarial=False):
 
 
 # Repo-relative source paths the model might cite inside finding text.
-# Matches things like "server/base/Foo.cpp" or "general/fight/Bar.hpp".
+# Matches things like "server/base/Foo.cpp" or "general/base/fight/Bar.hpp".
 _REPOPATH_RE = re.compile(
     r'\b((?:server|general|client|tools)/[a-zA-Z0-9_/.-]+\.(?:cpp|hpp|h|cc|cxx))\b'
 )

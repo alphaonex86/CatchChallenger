@@ -1,7 +1,7 @@
 #include "EventLoopClientLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
 #include "LinkToMaster.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../base/SQL/PreparedDBQuery.hpp"
 #include "../base/BaseServer/BaseServerLogin.hpp"
 #include <iostream>
 #include <chrono>

@@ -19,10 +19,10 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (client + server + tools) — server: base,epoll,fight,game-server-alone,gateway,login,master,qt; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: libbot,stats
 - **Description:** Enables the epoll-based async I/O server implementation (Linux high-performance server). Drives all server I/O code paths.
 - **Used in:**
-  - `general/fight/FightLoader.cpp`
-  - `general/fight/FightLoaderBuff.cpp`
-  - `general/fight/FightLoaderSkill.cpp`
-  - `general/fight/FightLoaderMonster.cpp`
+  - `general/base/fight/FightLoader.cpp`
+  - `general/base/fight/FightLoaderBuff.cpp`
+  - `general/base/fight/FightLoaderSkill.cpp`
+  - `general/base/fight/FightLoaderMonster.cpp`
   - `general/base/Map_loader.cpp`
   - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp`
   - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp`
@@ -92,7 +92,7 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsing.hpp`
   - `server/cli/BaseClassSwitch.hpp`
   - `server/login/login.pro`
-  - `server/base/PreparedDBQuery.hpp`
+  - `server/base/SQL/PreparedDBQuery.hpp`
   - `server/base/ServerStructures.hpp`
   - `server/base/BaseServer/BaseServerLogin.cpp`
   - `server/base/BaseServer/BaseServerLogin.hpp`
@@ -102,12 +102,12 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only (+ general/) — server: epoll,master
 - **Description:** This is the master server (central authority for cluster state).
 - **Used in:**
-  - `general/fight/CommonFightEngineBase.cpp`
-  - `general/fight/FightLoader.cpp`
-  - `general/fight/FightLoaderSkill.cpp`
-  - `general/fight/CommonFightEngineBase.hpp`
-  - `general/fight/FightLoader.hpp`
-  - `general/fight/FightLoaderMonster.cpp`
+  - `general/base/fight/CommonFightEngineBase.cpp`
+  - `general/base/fight/FightLoader.cpp`
+  - `general/base/fight/FightLoaderSkill.cpp`
+  - `general/base/fight/CommonFightEngineBase.hpp`
+  - `general/base/fight/FightLoader.hpp`
+  - `general/base/fight/FightLoaderMonster.cpp`
   - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp`
   - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp`
   - *(…and 15 more)*
@@ -121,7 +121,7 @@ tools-only when references concentrate in one of those subtrees.
   - `general/base/ProtocolParsing.hpp`
   - `server/game-server-alone/LinkToMasterProtocolParsing.cpp`
   - `server/game-server-alone/game-server-alone.pro`
-  - `server/fight/BaseServerFight.cpp`
+  - `server/base/fight/BaseServerFight.cpp`
   - `server/cli/main-unix.cpp`
   - `server/cli/main-unix2.cpp`
   - *(…and 39 more)*
@@ -161,13 +161,13 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,crafting,epoll,fight,gateway
 - **Description:** Discard all writes (testing/stateless — used by gateway).
 - **Used in:**
-  - `server/fight/BaseServerFight.cpp`
-  - `server/fight/LocalClientHandlerFight.cpp`
-  - `server/fight/ClientHeavyLoadFight.cpp`
-  - `server/fight/LocalClientHandlerFightWild.cpp`
-  - `server/fight/LocalClientHandlerFightDatabase.cpp`
-  - `server/crafting/ClientLocalBroadcastCrafting.cpp`
-  - `server/crafting/LocalClientHandlerCrafting.cpp`
+  - `server/base/fight/BaseServerFight.cpp`
+  - `server/base/fight/LocalClientHandlerFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/LocalClientHandlerFightWild.cpp`
+  - `server/base/fight/LocalClientHandlerFightDatabase.cpp`
+  - `server/base/crafting/ClientLocalBroadcastCrafting.cpp`
+  - `server/base/crafting/LocalClientHandlerCrafting.cpp`
   - `server/gateway/gateway.pro`
   - *(…and 41 more)*
 
@@ -177,12 +177,12 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `general/base/GeneralStructures.hpp`
   - `server/catchchallenger-serverheader.pri`
-  - `server/fight/BaseServerFight.cpp`
-  - `server/fight/LocalClientHandlerFight.cpp`
-  - `server/fight/ClientHeavyLoadFight.cpp`
-  - `server/fight/LocalClientHandlerFightWild.cpp`
-  - `server/fight/LocalClientHandlerFightDatabase.cpp`
-  - `server/crafting/ClientLocalBroadcastCrafting.cpp`
+  - `server/base/fight/BaseServerFight.cpp`
+  - `server/base/fight/LocalClientHandlerFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/LocalClientHandlerFightWild.cpp`
+  - `server/base/fight/LocalClientHandlerFightDatabase.cpp`
+  - `server/base/crafting/ClientLocalBroadcastCrafting.cpp`
   - *(…and 43 more)*
 
 ### `CATCHCHALLENGER_DB_INTERNAL_VARS`
@@ -204,28 +204,28 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,crafting,epoll,fight,login,master
 - **Description:** MySQL/MariaDB backend (alternative to PostgreSQL).
 - **Used in:**
-  - `server/fight/BaseServerFight.cpp`
-  - `server/fight/LocalClientHandlerFight.cpp`
-  - `server/fight/ClientHeavyLoadFight.cpp`
-  - `server/fight/LocalClientHandlerFightWild.cpp`
-  - `server/fight/LocalClientHandlerFightDatabase.cpp`
+  - `server/base/fight/BaseServerFight.cpp`
+  - `server/base/fight/LocalClientHandlerFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/LocalClientHandlerFightWild.cpp`
+  - `server/base/fight/LocalClientHandlerFightDatabase.cpp`
   - `server/catchchallenger-server-cli.pro`
   - `server/MainWindow.cpp`
-  - `server/crafting/ClientLocalBroadcastCrafting.cpp`
+  - `server/base/crafting/ClientLocalBroadcastCrafting.cpp`
   - *(…and 52 more)*
 
 ### `CATCHCHALLENGER_DB_POSTGRESQL`
 - **Scope:** server-only — server: base,crafting,epoll,fight,login,master
 - **Description:** PostgreSQL backend (recommended for production). Links against `libpq`.
 - **Used in:**
-  - `server/fight/BaseServerFight.cpp`
-  - `server/fight/LocalClientHandlerFight.cpp`
-  - `server/fight/ClientHeavyLoadFight.cpp`
-  - `server/fight/LocalClientHandlerFightWild.cpp`
-  - `server/fight/LocalClientHandlerFightDatabase.cpp`
+  - `server/base/fight/BaseServerFight.cpp`
+  - `server/base/fight/LocalClientHandlerFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/LocalClientHandlerFightWild.cpp`
+  - `server/base/fight/LocalClientHandlerFightDatabase.cpp`
   - `server/catchchallenger-server-cli.pro`
   - `server/MainWindow.cpp`
-  - `server/crafting/ClientLocalBroadcastCrafting.cpp`
+  - `server/base/crafting/ClientLocalBroadcastCrafting.cpp`
   - *(…and 53 more)*
 
 ### `CATCHCHALLENGER_DB_PREPAREDSTATEMENT`
@@ -238,7 +238,7 @@ tools-only when references concentrate in one of those subtrees.
   - `server/cli/catchchallenger-server-cli.pro`
   - `server/login/EventLoopServerLoginSlave.cpp`
   - `server/login/login.pro`
-  - `server/base/PreparedDBQueryServer.cpp`
+  - `server/base/SQL/PreparedDBQueryServer.cpp`
   - `server/base/DatabaseBase.hpp`
   - *(…and 10 more)*
 
@@ -246,14 +246,14 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (client + server) — server: base,crafting,epoll,fight,login,master,qt; client: qtcpu800x600,qtopengl
 - **Description:** SQLite backend (single-player or development).
 - **Used in:**
-  - `server/fight/BaseServerFight.cpp`
-  - `server/fight/LocalClientHandlerFight.cpp`
-  - `server/fight/ClientHeavyLoadFight.cpp`
-  - `server/fight/LocalClientHandlerFightWild.cpp`
-  - `server/fight/LocalClientHandlerFightDatabase.cpp`
+  - `server/base/fight/BaseServerFight.cpp`
+  - `server/base/fight/LocalClientHandlerFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/LocalClientHandlerFightWild.cpp`
+  - `server/base/fight/LocalClientHandlerFightDatabase.cpp`
   - `server/catchchallenger-server-cli.pro`
-  - `server/crafting/ClientLocalBroadcastCrafting.cpp`
-  - `server/crafting/LocalClientHandlerCrafting.cpp`
+  - `server/base/crafting/ClientLocalBroadcastCrafting.cpp`
+  - `server/base/crafting/LocalClientHandlerCrafting.cpp`
   - *(…and 48 more)*
 
 ### `CATCHCHALLENGER_MAXBDQUERIES`
@@ -348,9 +348,9 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only (+ general/) — server: base,epoll,fight
 - **Description:** Disable runtime XML parsing — server uses the binary cache only (`datapack-cache.bin`). When set, all XML loaders, TinyXMLSettings, Map_loader, DatapackGeneralLoader, FightLoader{Buff,Monster,Skill}, and tinyXML2 sources are excluded.
 - **Used in:**
-  - `general/fight/FightLoader.cpp`
-  - `general/fight/FightLoader.hpp`
-  - `general/fight/CommonFightEngineTurn.cpp`
+  - `general/base/fight/FightLoader.cpp`
+  - `general/base/fight/FightLoader.hpp`
+  - `general/base/fight/CommonFightEngineTurn.cpp`
   - `general/tinyXML2/tinyxml2.cpp`
   - `general/tinyXML2/tinyxml2c.cpp`
   - `general/tinyXML2/tinyxml2b.cpp`
@@ -773,7 +773,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (general/ only)
 - **Description:** Minimum RNG roll to trigger an encounter (`7`).
 - **Used in:**
-  - `general/fight/CommonFightEngine.cpp`
+  - `general/base/fight/CommonFightEngine.cpp`
   - `general/base/GeneralVariable.hpp`
 
 ### `CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK`
@@ -827,7 +827,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,fight
 - **Description:** Minimum random list size (`32`).
 - **Used in:**
-  - `server/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
   - `server/base/VariableServer.hpp`
 
 ### `CATCHCHALLENGER_SERVER_NORMAL_SPEED`
@@ -847,7 +847,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,fight
 - **Description:** Internal random pool size (`4096`).
 - **Used in:**
-  - `server/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
   - `server/base/VariableServer.hpp`
   - `server/base/BaseServer/BaseServerLoad.cpp`
 
@@ -855,7 +855,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** server-only — server: base,fight
 - **Description:** Exposed random pool size (`255`).
 - **Used in:**
-  - `server/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
   - `server/base/VariableServer.hpp`
 
 
@@ -913,11 +913,11 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (client + server) — server: fight; client: qtcpu800x600,qtopengl
 - **Description:** Maximum monster level (`100`).
 - **Used in:**
-  - `general/fight/CommonFightEngineBase.cpp`
-  - `general/fight/CommonFightEngineEnd.cpp`
-  - `general/fight/CommonFightEngineTurn.cpp`
-  - `general/fight/CommonFightEngine.cpp`
-  - `general/fight/FightLoaderMonster.cpp`
+  - `general/base/fight/CommonFightEngineBase.cpp`
+  - `general/base/fight/CommonFightEngineEnd.cpp`
+  - `general/base/fight/CommonFightEngineTurn.cpp`
+  - `general/base/fight/CommonFightEngine.cpp`
+  - `general/base/fight/FightLoaderMonster.cpp`
   - `general/base/Map_loader.cpp`
   - `general/base/GeneralVariable.hpp`
   - `general/base/DatapackGeneralLoader/DatapackGeneralLoader.cpp`
@@ -927,8 +927,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (general/ only)
 - **Description:** Wild monster skill slots (`5`).
 - **Used in:**
-  - `general/fight/CommonFightEngineBase.cpp`
-  - `general/fight/CommonFightEngineWild.cpp`
+  - `general/base/fight/CommonFightEngineBase.cpp`
+  - `general/base/fight/CommonFightEngineWild.cpp`
   - `general/base/GeneralVariable.hpp`
 
 
@@ -1009,12 +1009,12 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (client + server + tools) — server: base,epoll,fight,game-server-alone,gateway,login,master,qt; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: bot-actions,libbot,map-procedural-generation
 - **Description:** Adds extra runtime checks. **Never enable in production.** Aborts on any error, including bad data from clients. Purpose is to surface silent errors that would otherwise be ignored during testing.
 - **Used in:**
-  - `general/fight/CommonFightEngineSkill.cpp`
-  - `general/fight/CommonFightEngineEnd.cpp`
-  - `general/fight/CommonFightEngineWild.cpp`
-  - `general/fight/CommonFightEngineTurn.cpp`
-  - `general/fight/CommonFightEngine.cpp`
-  - `general/fight/FightLoaderMonster.cpp`
+  - `general/base/fight/CommonFightEngineSkill.cpp`
+  - `general/base/fight/CommonFightEngineEnd.cpp`
+  - `general/base/fight/CommonFightEngineWild.cpp`
+  - `general/base/fight/CommonFightEngineTurn.cpp`
+  - `general/base/fight/CommonFightEngine.cpp`
+  - `general/base/fight/FightLoaderMonster.cpp`
   - `general/base/Map_loader.cpp`
   - `general/base/GeneralVariable.hpp`
   - *(…and 118 more)*
@@ -1089,14 +1089,14 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (client + server) — server: base,fight; client: libqtcatchchallenger,qtcpu800x600,qtopengl
 - **Description:** Fight engine turn-by-turn logging.
 - **Used in:**
-  - `general/fight/CommonFightEngineBuff.cpp`
-  - `general/fight/CommonFightEngineEnd.cpp`
-  - `general/fight/CommonFightEngineWild.cpp`
-  - `general/fight/CommonFightEngineTurn.cpp`
+  - `general/base/fight/CommonFightEngineBuff.cpp`
+  - `general/base/fight/CommonFightEngineEnd.cpp`
+  - `general/base/fight/CommonFightEngineWild.cpp`
+  - `general/base/fight/CommonFightEngineTurn.cpp`
   - `general/base/GeneralVariable.hpp`
-  - `server/fight/LocalClientHandlerFight.cpp`
-  - `server/fight/ClientHeavyLoadFight.cpp`
-  - `server/fight/LocalClientHandlerFightWild.cpp`
+  - `server/base/fight/LocalClientHandlerFight.cpp`
+  - `server/base/fight/ClientHeavyLoadFight.cpp`
+  - `server/base/fight/LocalClientHandlerFightWild.cpp`
   - *(…and 7 more)*
 
 ### `CATCHCHALLENGER_DEBUG_FIGHT_BOT`
@@ -1134,7 +1134,7 @@ tools-only when references concentrate in one of those subtrees.
   - `server/login/EventLoopClientLoginSlaveHeavyLoad.cpp`
   - `server/base/ClientLoad/ClientHeavyLoad.cpp`
   - `server/base/VariableServer.hpp`
-  - `server/base/SqlFunction.cpp`
+  - `server/base/SQL/SqlFunction.cpp`
   - *(…and 3 more)*
 
 
@@ -1158,14 +1158,14 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (client + server + tools) — server: base; client: libcatchchallenger,libqtcatchchallenger,qtcpu800x600,qtopengl; tools: datapack-explorer-generator-cli
 - **Description:** Indicates a client build.
 - **Used in:**
-  - `general/fight/FightLoaderMonster.cpp`
+  - `general/base/fight/FightLoaderMonster.cpp`
   - `general/base/CommonDatapackServerSpec.cpp`
   - `general/base/CommonDatapack.hpp`
   - `general/base/CommonDatapackServerSpec.hpp`
   - `general/base/GeneralStructures.hpp`
   - `server/base/ClientNetworkRead.cpp`
-  - `server/base/PreparedDBQuery.hpp`
-  - `server/base/PreparedDBQueryServer.cpp`
+  - `server/base/SQL/PreparedDBQuery.hpp`
+  - `server/base/SQL/PreparedDBQueryServer.cpp`
   - *(…and 14 more)*
 
 ### `CATCHCHALLENGER_GAMESERVER_EVENTSTARTONLOCALTIME`
@@ -1191,7 +1191,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Used in:**
   - `general/base/ProtocolParsingInput.cpp`
   - `general/base/ProtocolParsing.hpp`
-  - `server/crafting/LocalClientHandlerCrafting.cpp`
+  - `server/base/crafting/LocalClientHandlerCrafting.cpp`
   - `server/gateway/LinkToGameServerProtocolParsing.cpp`
   - `server/gateway/EventLoopClientLoginSlaveDatapack.cpp`
   - `server/gateway/LinkToGameServer.cpp`
@@ -1212,7 +1212,7 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (general/ only)
 - **Description:** Helper macro that wraps a tinyxml2 attribute fetch into a `std::string` for log/error formatting (handles the nullptr case so logging code doesn't have to). Currently referenced only from commented-out diagnostic prints in FightLoaderMonster.cpp; the macro itself isn't defined in the active build — will resolve when the diagnostic prints are restored.
 - **Used in:**
-  - `general/fight/FightLoaderMonster.cpp`
+  - `general/base/fight/FightLoaderMonster.cpp`
 
 ### `CATCHCHALLENGER_XMLDOCUMENT`
 - **Scope:** tools-only — tools: libbot
@@ -1224,8 +1224,8 @@ tools-only when references concentrate in one of those subtrees.
 - **Scope:** global (general/ only)
 - **Description:** Helper macro that pulls the source-line number out of a tinyxml2 element for diagnostic messages (e.g. "wrong attribute on `<monster>` at line 47"). Currently referenced only from commented-out diagnostic prints in the loader code; the macro is defined alongside the parser (typo notwithstanding — "ELENT" should be "ELEMENT", kept for source compatibility).
 - **Used in:**
-  - `general/fight/FightLoaderBuff.cpp`
-  - `general/fight/FightLoaderSkill.cpp`
+  - `general/base/fight/FightLoaderBuff.cpp`
+  - `general/base/fight/FightLoaderSkill.cpp`
   - `general/base/Map_loader.cpp`
   - `general/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp`
 

@@ -119,7 +119,7 @@ CatchChallenger is a Pokémon-like MMORPG engine in C++/Qt. Designed for extreme
 ```
 general/          - Shared (client & server)
   base/           - Core data, protocol, datapack, map loader
-  fight/          - Battle engine (CommonFightEngine, turn-based)
+    fight/        - Battle engine (CommonFightEngine, turn-based)
   tinyXML2/       - XML parsing
   blake3/         - Hashing
   hps/            - Binary serialization (HPS cache)
@@ -130,13 +130,14 @@ client/
   qtopengl/                - OpenGL responsive UI (smartphones)
 server/
   base/           - Common server (Client.hpp, BaseServer, MapManagement)
+    fight/        - Server-side battle
+    crafting/     - Crafting
+    SQL/          - Prepared statements (PreparedDBQuery*, SqlFunction)
   unix/          - Linux epoll single-threaded
   login/          - Login (auth, server list, DDoS proxy)
   master/         - Master (cluster, CharactersGroup)
   gateway/        - Gateway/proxy
   game-server-alone/ - Standalone (connects to master)
-  fight/          - Server-side battle
-  crafting/       - Crafting
   databases/      - SQL schemas (MySQL, PostgreSQL, SQLite, file-based)
 tools/            - Bot testing, map2png, datapack tools, stats
 ```

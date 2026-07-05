@@ -11,9 +11,9 @@ Handler logic traced end-to-end:
                                          size for monster position in fight")
                                          -> disconnectClient() -> KICK.
     * else changeOfMonsterInFight(monsterPosition):
-        Client::changeOfMonsterInFight (server/fight/LocalClientHandlerFight.cpp:620)
+        Client::changeOfMonsterInFight (server/base/fight/LocalClientHandlerFight.cpp:620)
         saves the current monster stat then calls
-        CommonFightEngine::changeOfMonsterInFight (general/fight/CommonFightEngine.cpp:327):
+        CommonFightEngine::changeOfMonsterInFight (general/base/fight/CommonFightEngine.cpp:327):
           (a) monsterPosition >= monsters.size()
                   -> errorFightEngine("The monster is not found: ...")
                   -> Client::errorFightEngine() -> errorOutput() -> KICK.

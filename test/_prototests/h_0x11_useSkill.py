@@ -6,7 +6,7 @@ Wire form: FIXED-size MESSAGE, code 0x11, exactly 2 data bytes:
 No queryNumber (message, code<0x80), no 4-byte length (fixed size 2).
 
 Handler logic traced (server/base/ClientNetworkReadMessage.cpp:471 ->
-general/fight/CommonFightEngineSkill.cpp:137 CommonFightEngine::useSkill):
+general/base/fight/CommonFightEngineSkill.cpp:137 CommonFightEngine::useSkill):
 
   * parseMessage: size!=sizeof(uint16_t) (i.e. != 2)
         -> Client::errorOutput("Wrong size in move packet") -> KICK.

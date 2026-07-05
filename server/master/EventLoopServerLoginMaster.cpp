@@ -5,7 +5,7 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../base/VariableServer.hpp"
-#include "../../general/fight/CommonFightEngineBase.hpp"
+#include "../../general/base/fight/CommonFightEngineBase.hpp"
 // Concrete DB-backend header (full type for `new EventLoopDb()` and
 // `static_cast<EventLoopDb *>`).
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL)

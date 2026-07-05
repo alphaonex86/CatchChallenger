@@ -3,8 +3,8 @@
 
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 #include <string>
-#include "DatabaseBase.hpp"
-#include "VariableServer.hpp"
+#include "../DatabaseBase.hpp"
+#include "../VariableServer.hpp"
 #endif
 
 namespace CatchChallenger {

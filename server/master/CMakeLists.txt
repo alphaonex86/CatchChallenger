@@ -71,11 +71,11 @@ set(_master_sources
     ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderPlant.cpp
     ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp
     ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderReputation.cpp
-    ../../general/fight/FightLoader.cpp
-    ../../general/fight/FightLoaderBuff.cpp
-    ../../general/fight/FightLoaderMonster.cpp
-    ../../general/fight/FightLoaderSkill.cpp
-    ../../general/fight/CommonFightEngineBase.cpp
+    ../../general/base/fight/FightLoader.cpp
+    ../../general/base/fight/FightLoaderBuff.cpp
+    ../../general/base/fight/FightLoaderMonster.cpp
+    ../../general/base/fight/FightLoaderSkill.cpp
+    ../../general/base/fight/CommonFightEngineBase.cpp
 )
 
 add_executable(catchchallenger-server-master ${_master_sources})

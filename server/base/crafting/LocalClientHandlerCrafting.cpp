@@ -1,11 +1,11 @@
-#include "../base/Client.hpp"
+#include "../Client.hpp"
 #include <cstring>
-#include "../../general/base/ProtocolParsing.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../base/MapManagement/MapVisibilityAlgorithm.hpp"
-#include "../base/GlobalServerData.hpp"
-#include "../base/MapServer.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../../../general/base/ProtocolParsing.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm.hpp"
+#include "../GlobalServerData.hpp"
+#include "../MapServer.hpp"
+#include "../SQL/PreparedDBQuery.hpp"
 
 using namespace CatchChallenger;
 

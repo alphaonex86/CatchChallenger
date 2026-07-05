@@ -6,7 +6,7 @@
 #include "../BaseServer/BaseServerLogin.hpp"
 #endif
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
-#include "../SqlFunction.hpp"
+#include "../SQL/SqlFunction.hpp"
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CatchChallenger_Hash.hpp"
