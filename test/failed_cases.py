@@ -1,9 +1,9 @@
 """Shared loader/saver for test/failed.json.
 
-Format is a dict keyed by script-name (the same string the script uses
-when writing — usually os.path.basename(__file__), sometimes a label like
-"compile testingmap4client").  Each value is itself a dict from test
-name to a detail object:
+Format is a dict keyed by script FILENAME (os.path.basename(__file__)) —
+all.sh --onlyfailed gates on exactly that key, so a script writing any
+other top-level label can never be resumed.  Each value is itself a dict
+from test name to a detail object:
 
     {
       "<script_name>": {
