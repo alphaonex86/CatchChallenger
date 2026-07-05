@@ -81,6 +81,8 @@ public slots:
     void moveFightMonsterTop();
     void moveFightMonsterBoth();
     void doNextAction();
+    void win();
+    void loose();
     void sendBattleReturn(const std::vector<CatchChallenger::Skill::AttackReturn> &attackReturn);
 signals:
     void battleWin();

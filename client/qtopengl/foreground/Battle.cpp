@@ -14,6 +14,7 @@ Battle * Battle::battle=nullptr;
 
 Battle::Battle()
 {
+    connexionManager=nullptr;
     frameFightBottom=new ImagesStrechMiddle(28,":/CC/images/interface/b1.png",this);
     labelFightBottomName=new QGraphicsTextItem(frameFightBottom);
     progressBarFightBottomHP=new CCprogressbar(frameFightBottom);
@@ -954,8 +955,18 @@ void Battle::on_pushButtonFightEnterNext_clicked()
     switch(battleStep)
     {
         case BattleStep_Presentation:
-            moveType=MoveType_Leave;
-            moveFightMonsterBoth();
+            //no slide animation (paint owns the sprite layout): go to the menu
+            frameFightTop->setVisible(true);
+            frameFightBottom->setVisible(true);
+            battleStep=BattleStep_Middle;
+            stackedWidgetFightBottomBarsetCurrentWidget(1);
+        break;
+        case BattleStep_Final:
+            //fight resolved: exit back to the map via win()/loose()
+            if(doNextActionStep==DoNextActionStep_Loose)
+                loose();
+            else
+                win();
         break;
         case BattleStep_PresentationMonster:
         default:
@@ -996,20 +1007,8 @@ void Battle::on_toolButtonFightQuit_clicked()
     }
     escape=true;
     escapeSuccess=connexionManager->client->tryEscape();
-    if(escapeSuccess)
-    {
-        labelFightEnter->setHtml(tr("You escaped successfully!"));
-        stackedWidgetFightBottomBarsetCurrentWidget(0);
-        pushButtonFightEnterNext->setVisible(true);
-        // will trigger win/return to map on next click
-        battleStep=BattleStep_Final;
-    }
-    else
-    {
-        labelFightEnter->setHtml(tr("You failed to escape!"));
-        stackedWidgetFightBottomBarsetCurrentWidget(0);
-        pushButtonFightEnterNext->setVisible(true);
-    }
+    //doNextAction resolves it: success -> win(); fail -> show text + enemy's turn
+    doNextAction();
 }
 
 void Battle::on_pushButtonFightAttackConfirmed_clicked()
@@ -1021,12 +1020,20 @@ void Battle::on_pushButtonFightAttackConfirmed_clicked()
     if(fight_attacks_graphical.find(item)==fight_attacks_graphical.cend())
         return;
     uint16_t skillId=fight_attacks_graphical.at(item);
-    // send attack to server
+    escape=false;
+    doNextActionStep=DoNextActionStep_Start;
+    //client-authoritative for wild/bot: useSkill applies the turn locally, then
+    //doNextAction reflects it. PvP waits for the other player's server return.
     connexionManager->client->useSkill(skillId);
-    // show waiting message
-    labelFightEnter->setHtml(tr("Waiting..."));
-    stackedWidgetFightBottomBarsetCurrentWidget(0);
-    pushButtonFightEnterNext->setVisible(false);
+    updateAttackList();
+    if(battleType!=BattleType_OtherPlayer)
+        doNextAction();
+    else
+    {
+        labelFightEnter->setHtml(tr("Waiting for the other player..."));
+        stackedWidgetFightBottomBarsetCurrentWidget(0);
+        pushButtonFightEnterNext->setVisible(false);
+    }
 }
 
 void Battle::on_pushButtonFightReturn_clicked()
@@ -1323,108 +1330,111 @@ void Battle::moveFightMonsterTop()
 
 void Battle::moveFightMonsterBoth()
 {
-    QPointF posTop=labelFightMonsterTop->pos();
-    QPointF posBottom=labelFightMonsterBottom->pos();
-    bool needMore=false;
-
-    posTop.setX(posTop.x()-4);
-    posBottom.setX(posBottom.x()+3);
-    labelFightMonsterTop->setPos(posTop);
-    labelFightMonsterBottom->setPos(posBottom);
-
-    if(posTop.x()>510 || posBottom.x()<60)
-        needMore=true;
-
-    if(needMore)
-        moveFightMonsterBothTimer.start();
-    else
-    {
-        // both monsters in position
-        pushButtonFightEnterNext->setVisible(true);
-        updateOtherMonsterInformation();
-        updateCurrentMonsterInformation();
-        frameFightTop->setVisible(true);
-        // still in presentation, wait for user click
-    }
+    //paint() re-lays-out the monster sprites every frame in the responsive
+    //coordinate system (finalX + minRatio-scaled), which overrides any per-tile
+    //slide the old 800x440-hardcoded animation tried (it never reached the 510/60
+    //thresholds -> looped forever -> the fight soft-locked at the intro). Go
+    //straight to the ready state and reveal the Next button.
+    pushButtonFightEnterNext->setVisible(true);
+    updateOtherMonsterInformation();
+    updateCurrentMonsterInformation();
+    frameFightTop->setVisible(true);
+    frameFightBottom->setVisible(true);
 }
 
 void Battle::doNextAction()
 {
-    if(battleStep==BattleStep_Final || doNextActionStep==DoNextActionStep_Win)
+    toolButtonFightQuit->setVisible(battleType==BattleType_Wild);
+
+    //reflect the authoritative engine HP onto the bars (useSkill already applied
+    //the turn locally for wild/bot fights — the client is authoritative there)
+    CatchChallenger::PublicPlayerMonster *cur=connexionManager->client->getCurrentMonster();
+    CatchChallenger::PublicPlayerMonster *oth=connexionManager->client->getOtherMonster();
+    if(cur!=NULL)
+        progressBarFightBottomHP->setValue(cur->hp);
+    if(oth!=NULL)
+        progressBarFightTopHP->setValue(oth->hp);
+
+    if(battleStep==BattleStep_Final)
+        return;//already resolved; waiting for the Next button
+
+    //escape resolves first (wild only)
+    if(escape)
     {
-        labelFightEnter->setHtml(tr("You win!"));
-        stackedWidgetFightBottomBarsetCurrentWidget(0);
-        pushButtonFightEnterNext->setVisible(true);
-        battleStep=BattleStep_Final;
-        // next click will trigger battleWin
-        return;
+        if(escapeSuccess)
+        {
+            win();
+            return;
+        }
+        escape=false;
+        labelFightEnter->setHtml(tr("You have failed to escape!"));
     }
-    if(doNextActionStep==DoNextActionStep_Loose)
+
+    //the turn result is already applied to the engine; drain the display returns
+    //(per-hit attack animation is deferred — reflect the final HP instead)
+    while(!connexionManager->client->getAttackReturnList().empty())
+        connexionManager->client->removeTheFirstAttackReturn();
+    if(cur!=NULL)
+        progressBarFightBottomHP->setValue(cur->hp);
+    if(oth!=NULL)
+        progressBarFightTopHP->setValue(oth->hp);
+
+    //resolve from the authoritative engine state
+    if(connexionManager->client->currentMonsterIsKO() && !connexionManager->client->isInFight())
     {
         labelFightEnter->setHtml(tr("You lose!"));
         stackedWidgetFightBottomBarsetCurrentWidget(0);
         pushButtonFightEnterNext->setVisible(true);
         battleStep=BattleStep_Final;
+        doNextActionStep=DoNextActionStep_Loose;
         return;
     }
-
-    if(escape && escapeSuccess)
+    if(connexionManager->client->otherMonsterIsKO())
     {
-        emit battleWin();
+        labelFightEnter->setHtml(tr("You win!"));
+        stackedWidgetFightBottomBarsetCurrentWidget(0);
+        pushButtonFightEnterNext->setVisible(true);
+        battleStep=BattleStep_Final;
+        doNextActionStep=DoNextActionStep_Win;
         return;
     }
-
-    // process pending attack returns
-    if(!attackReturnList.empty())
+    if(connexionManager->client->currentMonsterIsKO())
     {
-        const CatchChallenger::Skill::AttackReturn &attackReturn=attackReturnList.front();
-        // apply HP changes
-        if(!attackReturn.lifeEffectMonster.empty())
-        {
-            int32_t hpChange=attackReturn.lifeEffectMonster.front().quantity;
-            bool applyOnOther=attackReturn.doByTheCurrentMonster;
-            if(applyOnOther)
-            {
-                progressBarFightTopHP->setValue(progressBarFightTopHP->value()+hpChange);
-                if(progressBarFightTopHP->value()<=0)
-                {
-                    // enemy monster KO
-                    attackReturnList.erase(attackReturnList.cbegin());
-                    moveType=MoveType_Dead;
-                    moveFightMonsterTop();
-                    return;
-                }
-            }
-            else
-            {
-                progressBarFightBottomHP->setValue(progressBarFightBottomHP->value()+hpChange);
-                if(progressBarFightBottomHP->value()<=0)
-                {
-                    // player monster KO
-                    attackReturnList.erase(attackReturnList.cbegin());
-                    moveType=MoveType_Dead;
-                    moveFightMonsterBottom();
-                    return;
-                }
-            }
-        }
-        attackReturnList.erase(attackReturnList.cbegin());
-        if(!attackReturnList.empty())
-        {
-            // process next attack return after a brief delay
-            QTimer::singleShot(500,this,&Battle::doNextAction);
-            return;
-        }
+        //KO but still in fight -> the player must send another monster
+        emit openMonsterListForBattle();
+        return;
     }
+    //player's turn
+    battleStep=BattleStep_Middle;
+    stackedWidgetFightBottomBarsetCurrentWidget(1);
+}
 
-    // show battle action menu
-    if(battleStep==BattleStep_Middle)
-        stackedWidgetFightBottomBarsetCurrentWidget(1);
+void Battle::win()
+{
+    connexionManager->client->fightFinished();
+    escape=false;
+    escapeSuccess=false;
+    doNextActionStep=DoNextActionStep_Start;
+    battleStep=BattleStep_Presentation;
+    emit battleWin();
+}
+
+void Battle::loose()
+{
+    connexionManager->client->healAllMonsters();
+    connexionManager->client->fightFinished();
+    escape=false;
+    escapeSuccess=false;
+    doNextActionStep=DoNextActionStep_Start;
+    battleStep=BattleStep_Presentation;
+    emit battleLose();
 }
 
 void Battle::sendBattleReturn(const std::vector<CatchChallenger::Skill::AttackReturn> &attackReturn)
 {
-    attackReturnList=attackReturn;
+    //server-authoritative path (used for PvP): apply the returns to the engine
+    //then advance. Wild/bot fights are client-authoritative (useSkill+doNextAction).
+    connexionManager->client->addAndApplyAttackReturnList(attackReturn);
     doNextAction();
 }
 
