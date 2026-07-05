@@ -8,6 +8,7 @@
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../libqtcatchchallenger/CliClientOptions.hpp"
 #include "background/CCMap.hpp"
+#include "../libqtcatchchallenger/LocalListener.hpp"
 #include "foreground/CharacterList.hpp"
 #include "foreground/LoadingScreen.hpp"
 #include "foreground/MainScreen.hpp"
@@ -587,7 +588,29 @@ void ScreenTransition::setRemoteControl(LocalListener *localListener)
     //If a map is already up (controller re-attach mid-session), wire it now;
     //otherwise goToMap() will wire the controller when it (re)creates ccmap.
     if(remoteControlListener!=nullptr && ccmap!=nullptr)
+    {
         ccmap->mapController.wireRemoteControl(remoteControlListener);
+        if(!connect(&ccmap->mapController,&MapController::remoteScreenshotRequested,
+                    this,&ScreenTransition::doRemoteScreenshot,Qt::UniqueConnection))
+            abort();
+    }
+}
+
+void ScreenTransition::doRemoteScreenshot(const QString &path)
+{
+    //compose one paint pass, then grab the viewport (map + above dialogs) exactly
+    //like --take-screenshot does, and answer on the automation channel.
+    viewport()->repaint();
+    const QPixmap shot=viewport()->grab();
+    const bool ok=!path.isEmpty() && shot.save(path);
+    if(remoteControlListener!=nullptr)
+    {
+        if(ok)
+            remoteControlListener->sendReply(QStringLiteral("OK SCREENSHOT %1 %2x%3")
+                                             .arg(path).arg(shot.width()).arg(shot.height()));
+        else
+            remoteControlListener->sendReply(QStringLiteral("ERROR SCREENSHOT save failed: %1").arg(path));
+    }
 }
 
 void ScreenTransition::loadingFinished()
@@ -1100,7 +1123,12 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
     //prior connections are gone; UniqueConnection inside wireRemoteControl makes
     //this idempotent if goToMap() ever runs without a delete.
     if(remoteControlListener!=nullptr)
+    {
         ccmap->mapController.wireRemoteControl(remoteControlListener);
+        if(!connect(&ccmap->mapController,&MapController::remoteScreenshotRequested,
+                    this,&ScreenTransition::doRemoteScreenshot,Qt::UniqueConnection))
+            abort();
+    }
 
     if(overmap!=nullptr)
     {

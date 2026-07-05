@@ -230,6 +230,10 @@ signals:
     //Reply or pushed event for the QLocalServer controller (wired to
     //LocalListener::sendReply).
     void remoteReply(const QString &line);
+    //SCREENSHOT <path>: the map view can't compose the "above" dialogs (they live
+    //on the ScreenTransition scene), so the grab is routed up to the owner of the
+    //top-level view, which saves the PNG and answers on the channel.
+    void remoteScreenshotRequested(const QString &path);
 private:
     //the actual command dispatch; always reached through remoteAction()'s
     //re-entrancy guard, never called directly
