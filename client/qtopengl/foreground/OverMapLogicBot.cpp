@@ -345,26 +345,11 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
             showTip(tr("City capture disabled").toStdString());
             return;
         }
-        const std::string zone=stepXml->Attribute("zone");
-        /*
-        if(QtDatapackClientLoader::datapackLoader->zonesExtra.find(zone)!=QtDatapackClientLoader::datapackLoader->zonesExtra.cend())
-        {
-            zonecatchName=QtDatapackClientLoader::datapackLoader->zonesExtra.at(zone).name;
-            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QString("<b>%1</b>").arg(QString::fromStdString(zonecatchName))));
-        }
-        else
-        {
-            zonecatchName.clear();
-            ui->zonecaptureWaitText->setText(tr("You are waiting to capture a zone"));
-        }
-        updater_page_zonecatch.start(1000);
-        nextCatchOnScreen=nextCatch;
-        zonecatch=true;
-        ui->stackedWidget->setCurrentWidget(ui->page_zonecatch);
-        connexionManager->client->waitingForCityCapture(false);
-        updatePageZoneCatch();
-        return;*/
-        abort();
+        //The zone-capture (TvT) wait screen is not ported to this interface yet.
+        //Guards above already handle the common solo cases (no clan / disabled);
+        //show an honest tip here instead of crashing (was abort()).
+        showTip(tr("Zone capture is not available yet").toStdString());
+        return;
     }
     else if(strcmp(stepXml->Attribute("type"),"fight")==0)
     {
