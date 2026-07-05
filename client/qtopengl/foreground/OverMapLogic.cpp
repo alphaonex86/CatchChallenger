@@ -6,6 +6,7 @@
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../above/inventory/Inventory.hpp"
+#include "../above/player/MonsterSelect.hpp"
 #include "../above/inventory/Plant.hpp"
 #include "../above/inventory/Crafting.hpp"
 #include "../above/player/Player.hpp"
@@ -31,6 +32,7 @@
 OverMapLogic::OverMapLogic()
 {
     inventory=nullptr;
+    monsterSelect=nullptr;
     plant=nullptr;
     crafting=nullptr;
     inventoryIndex=0;
@@ -439,6 +441,31 @@ void OverMapLogic::ensurePlant()
     }
 }
 
+void OverMapLogic::ensureMonsterSelect()
+{
+    if(monsterSelect==nullptr)
+    {
+        monsterSelect=new MonsterSelect();
+        if(!connect(monsterSelect,&MonsterSelect::setAbove,this,&OverMapLogic::setAbove))
+            abort();
+        if(!connect(monsterSelect,&MonsterSelect::useMonster,this,&OverMapLogic::monsterSelected))
+            abort();
+        if(!connect(monsterSelect,&MonsterSelect::canceled,this,&OverMapLogic::monsterSelectCanceled))
+            abort();
+    }
+}
+
+void OverMapLogic::monsterSelected(const uint8_t &monsterPosition)
+{
+    //the picker already closed itself; the target monster position is the itemId
+    objectSelection(true,monsterPosition,1);
+}
+
+void OverMapLogic::monsterSelectCanceled()
+{
+    objectSelection(false);
+}
+
 //The Inventory/Plant ObjectType enums mirror ours 1:1, so selectObject casts
 //between them; lock that assumption at compile time.
 static_assert((int)OverMapLogic::ObjectType_UseInFight==(int)Inventory::ObjectType_UseInFight,
@@ -463,9 +490,19 @@ void OverMapLogic::selectObject(const ObjectType &objectType)
             inventory->setVar(connexionManager,static_cast<Inventory::ObjectType>(objectType),true);
             setAbove(inventory);
         break;
+        case ObjectType_ItemOnMonster:
+        case ObjectType_ItemOnMonsterOutOfFight:
+        case ObjectType_ItemEvolutionOnMonster:
+        case ObjectType_ItemLearnOnMonster:
+        case ObjectType_MonsterToTrade:
+        case ObjectType_MonsterToFight:
+        case ObjectType_MonsterToFightKO:
+            //pick a team monster as the target
+            ensureMonsterSelect();
+            monsterSelect->setVar(connexionManager);
+            setAbove(monsterSelect);
+        break;
         default:
-            //monster-target selection (item-on-monster, trade/fight monster) is
-            //ported in a later step; keep the state consistent meanwhile.
             inSelection=false;
             waitedObjectType=ObjectType_All;
             showTip(tr("This selection is not available yet").toStdString());
@@ -490,8 +527,58 @@ void OverMapLogic::inventoryItemUsed(const uint16_t &item)
         objectSelection(true,item,1);
         return;
     }
-    //normal bag use dispatch is ported in a later step
-    showTip(tr("Using items from the bag is not available yet").toStdString());
+    //normal bag use: dispatch by item kind (mirrors 800x600 on_inventory_itemActivated)
+    CatchChallenger::CommonDatapack &dp=CatchChallenger::CommonDatapack::commonDatapack;
+    if(dp.has_itemToCraftingRecipe(item))
+    {
+        const uint16_t recipeId=dp.get_itemToCraftingRecipe(item);
+        const CatchChallenger::CraftingRecipe &recipe=dp.get_craftingRecipe(recipeId);
+        if(!connexionManager->client->haveReputationRequirements(recipe.requirements.reputation))
+        {
+            showTip(tr("You don't have the reputation requirements").toStdString());
+            return;
+        }
+        if(playerInformations.recipes!=NULL && (playerInformations.recipes[recipeId/8] & (1<<(7-recipeId%8))))
+        {
+            showTip(tr("You already know this recipe").toStdString());
+            return;
+        }
+        objectInUsing.push_back(item);
+        if(dp.get_item(item).consumeAtUse)
+            remove_to_inventory(item);
+        connexionManager->client->useObject(item);
+    }
+    else if(dp.has_repel(item))
+    {
+        ccmap->mapController.addRepelStep(dp.get_repel(item));
+        objectInUsing.push_back(item);
+        if(dp.get_item(item).consumeAtUse)
+            remove_to_inventory(item);
+        connexionManager->client->useObject(item);
+    }
+    else if(dp.has_monsterItemEffect(item) || dp.has_monsterItemEffectOutOfFight(item))
+    {
+        objectInUsing.push_back(item);
+        if(dp.get_item(item).consumeAtUse)
+            remove_to_inventory(item);
+        selectObject(ObjectType_ItemOnMonster);
+    }
+    else if(dp.has_evolutionItem(item))
+    {
+        objectInUsing.push_back(item);
+        if(dp.get_item(item).consumeAtUse)
+            remove_to_inventory(item);
+        selectObject(ObjectType_ItemEvolutionOnMonster);
+    }
+    else if(dp.has_itemToLearn(item))
+    {
+        objectInUsing.push_back(item);
+        if(dp.get_item(item).consumeAtUse)
+            remove_to_inventory(item);
+        selectObject(ObjectType_ItemLearnOnMonster);
+    }
+    else
+        showTip(tr("This object can't be used here").toStdString());
 }
 
 void OverMapLogic::inventoryItemDeleted(const uint16_t &/*item*/)
@@ -2181,6 +2268,47 @@ void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const
     waitedObjectType=ObjectType_All;
     switch(tempWaitedObjectType)
     {
+        case ObjectType_ItemEvolutionOnMonster:
+        case ObjectType_ItemLearnOnMonster:
+        case ObjectType_ItemOnMonster:
+        case ObjectType_ItemOnMonsterOutOfFight:
+        {
+            //itemId is the chosen team POSITION; the item is the one being used
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            if(objectInUsing.empty())
+                break;
+            const uint16_t item=objectInUsing.back();
+            objectInUsing.erase(objectInUsing.cbegin());
+            CatchChallenger::CommonDatapack &dp=CatchChallenger::CommonDatapack::commonDatapack;
+            if(!ok || monsterPosition>=playerInformations.monsters.size())
+            {
+                //cancelled or invalid target: give the consumed item back
+                if(dp.has_item(item) && dp.get_item(item).consumeAtUse)
+                    add_to_inventory(item,1,false);
+                break;
+            }
+            const CatchChallenger::PlayerMonster &monster=playerInformations.monsters.at(monsterPosition);
+            const std::string monsterName=QtDatapackClientLoader::datapackLoader->has_monsterExtra(monster.monster)
+                    ?QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).name
+                    :std::to_string(monster.monster);
+            if(connexionManager->client->useObjectOnMonsterByPosition(item,monsterPosition))
+            {
+                connexionManager->client->useObjectOnMonsterByPosition(item,monsterPosition);
+                showTip(tr("Using <b>%1</b> on <b>%2</b>")
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name))
+                        .arg(QString::fromStdString(monsterName)).toStdString());
+                //evolution animation/check is wired with the Battle/Animation screen
+            }
+            else
+            {
+                showTip(tr("Failed to use <b>%1</b> on <b>%2</b>")
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name))
+                        .arg(QString::fromStdString(monsterName)).toStdString());
+                if(dp.has_item(item) && dp.get_item(item).consumeAtUse)
+                    add_to_inventory(item,1,false);
+            }
+        }
+        break;
         case ObjectType_Sell:
         {
             //close the picker and return to the map

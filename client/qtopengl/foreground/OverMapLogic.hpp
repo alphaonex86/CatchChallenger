@@ -15,6 +15,7 @@
 class CCMap;
 class ConnexionManager;
 class Inventory;
+class MonsterSelect;
 class Plant;
 class Crafting;
 class Player;
@@ -105,6 +106,11 @@ public slots:
     //(incl. the selection-mode useItem/deleteItem), so every open site shares one.
     void ensureInventory();
     void ensurePlant();
+    void ensureMonsterSelect();
+    //MonsterSelect picker result: a chosen team position -> objectSelection(true,
+    //position); cancel -> objectSelection(false) (restores the consumed item).
+    void monsterSelected(const uint8_t &monsterPosition);
+    void monsterSelectCanceled();
     void lastReplyTime(const uint32_t &time);
     void bag_open();
     void displayLanPort(uint16_t port);
@@ -258,6 +264,7 @@ private:
     //a PICKER and its pick routes to objectSelection(waitedObjectType,...).
     bool inSelection;
     ObjectType waitedObjectType;
+    MonsterSelect *monsterSelect;
     Inventory *inventory;
     Plant *plant;
     Crafting *crafting;

@@ -134,6 +134,7 @@ set(_qtopengl_sources
     ${_qtopengl_dir}/above/Trade.cpp
     ${_qtopengl_dir}/above/Warehouse.cpp
     ${_qtopengl_dir}/above/player/Player.cpp
+    ${_qtopengl_dir}/above/player/MonsterSelect.cpp
     ${_qtopengl_dir}/above/player/Reputations.cpp
     ${_qtopengl_dir}/above/player/Quests.cpp
     ${_qtopengl_dir}/above/player/FinishedQuests.cpp
