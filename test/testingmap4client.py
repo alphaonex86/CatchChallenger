@@ -86,6 +86,10 @@ C_RESET  = "\033[0m"
 
 SCRIPT_NAME = "compile testingmap4client"
 SCRIPT_RUN_NAME = "run testingmap4client"
+# failed.json top-level key MUST be the script filename — that is what
+# all.sh --onlyfailed gates on. The compile/run names above stay as the
+# per-case keys nested under it.
+FILE_KEY = os.path.basename(__file__)
 from test_config import FAILED_JSON
 
 results = []
@@ -122,12 +126,7 @@ import phase_timer
 
 
 def load_failed_cases():
-    """Merge the compile-key + run-key failures into one list of names."""
-    a = _fc.load_names(SCRIPT_NAME)
-    b = _fc.load_names(SCRIPT_RUN_NAME)
-    if a is None and b is None:
-        return None
-    return (a or []) + (b or [])
+    return _fc.load_names(FILE_KEY)
 
 
 def should_run(test_name, failed_cases):
@@ -137,19 +136,13 @@ def should_run(test_name, failed_cases):
 
 
 def save_failed_cases():
-    failed_compile = []
-    failed_run = []
+    failed = []
     for name, ok, detail, _elapsed in results:
         if not ok:
             d = _fc.make_detail(detail)
             d.update(_fc.pop_extras(name))
-            entry = (name, d)
-            if "compile" in name:
-                failed_compile.append(entry)
-            else:
-                failed_run.append(entry)
-    _fc.save(SCRIPT_NAME, failed_compile)
-    _fc.save(SCRIPT_RUN_NAME, failed_run)
+            failed.append((name, d))
+    _fc.save(FILE_KEY, failed)
 
 
 def run_cmd(args, cwd, timeout, env=None):
