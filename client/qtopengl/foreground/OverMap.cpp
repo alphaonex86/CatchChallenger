@@ -26,6 +26,10 @@
 #include <QTextDocument>
 #include <QTextOption>
 #include <QColor>
+#include <QTextBlock>
+#include <QTextCursor>
+#include <QTextCharFormat>
+#include <QAbstractTextDocumentLayout>
 
 //Configure a QGraphicsTextItem used as an overlay text body (pure scene
 //rendering — works on Android/OpenGL ES, unlike an embedded QWidget). The wrap
@@ -49,6 +53,7 @@ OverMap::OverMap()
     monsterDetails=nullptr;
     ccmap=nullptr;
     touchControlsActive=false;
+    IG_dialog_link_selected=-1;
 
     playerBackground=new QGraphicsPixmapItemClick(QPixmap(":/CC/images/interface/playerui.png"),this);
     playerBackgroundBig=true;
@@ -108,6 +113,7 @@ OverMap::OverMap()
         gradient2.setColorAt( 0.5, QColor(178,242,241));
         buyOver=new CustomText(gradient1,gradient2,this);
     }
+    options=new CustomButton(":/CC/images/interface/options.png",this);
 
     //on-screen D-pad + A/B (hidden until touchControlsActive). Each uses its own
     //3-state button strip (normal/pressed/disabled): the four arrow glyphs for the
@@ -184,6 +190,9 @@ OverMap::OverMap()
     if(!connect(IG_dialog_quit,&CustomButton::clicked,this,&OverMap::IG_dialog_close))
         abort();
     if(!connect(buy,&CustomButton::clicked,this,&OverMap::buyClicked))
+        abort();
+    //signal-to-signal: ScreenTransition owns the options dialog, so just relay
+    if(!connect(options,&CustomButton::clicked,this,&OverMap::optionsClicked))
         abort();
     //D-pad + A/B: every pad button funnels press/release into padButtonPressed()/
     //padButtonReleased(), which read sender() to pick the Qt::Key. Held => the engine
@@ -543,6 +552,16 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
             bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
         }
     }
+    {
+        //options gear at the left of the bag: opens the options dialog in-game
+        //(same art/sizes as the main-menu options button)
+        if(w->width()<800 || w->height()<600)
+            options->setSize(41,46);
+        else
+            options->setSize(62,70);
+        options->setPos(xRight-options->width(),w->height()-space-options->height());
+        xRight-=options->width()+space;
+    }
     #if defined(CATCHCHALLENGER_SOLO) && ! defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
     {
@@ -676,6 +695,7 @@ void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &call
     chat->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     bag->mousePressEventXY(p,pressValidated);
+    options->mousePressEventXY(p,pressValidated);
     //NOTE: the D-pad + A/B are NOT forwarded here. They are driven by ScreenTransition
     //directly (padButtonAt() + pressAsPad()/releaseAsPad()) for BOTH mouse and touch,
     //so a held pad button is owned by its own pointer/touch and a second finger's
@@ -728,6 +748,7 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
     chat->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     bag->mouseReleaseEventXY(p,pressValidated);
+    options->mouseReleaseEventXY(p,pressValidated);
     //(pad buttons intentionally not forwarded — see mousePressEventXY note)
     #if defined(CATCHCHALLENGER_SOLO) && !defined(CATCHCHALLENGER_NO_TCPSOCKET) && defined(CATCHCHALLENGER_SOLO) && defined(CATCHCHALLENGER_MULTI)
     if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
@@ -737,7 +758,19 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
     QRectF f(IG_dialog_textBack->x(),IG_dialog_textBack->y(),IG_dialog_textBack->width(),IG_dialog_textBack->height());
     if(IG_dialog_textBack->isVisible() && f.contains(p))
     {
+        const bool alreadyConsumed=pressValidated;
         IG_dialog_quit->mouseReleaseEventXY(p,pressValidated);
+        //tap on a dialog hyperlink ([Heal], quest/step links, ...): the overlay
+        //receives no QGraphicsScene mouse events (input comes through this XY
+        //dispatch), so QGraphicsTextItem's own link handling never fires —
+        //resolve the anchor under the tap manually. The quit button sits outside
+        //the text body, so both can never match the same point.
+        if(!alreadyConsumed)
+        {
+            const QString href=IG_dialog_anchorAt(p);
+            if(!href.isEmpty())
+                on_IG_dialog_text_linkActivated(href);
+        }
         pressValidated=true;
     }
     if(chat->isChecked())
@@ -915,6 +948,110 @@ void OverMap::invalidateTouchControlsCache()
 void OverMap::IG_dialog_close()
 {
     IG_dialog_textString.clear();
+}
+
+void OverMap::on_IG_dialog_text_linkActivated(const QString &rawlink)
+{
+    //no-op here: OverMapLogic overrides it with the real bot/quest link parser
+    Q_UNUSED(rawlink);
+}
+
+void OverMap::IG_dialog_links_rebuild()
+{
+    IG_dialog_links.clear();
+    IG_dialog_link_selected=-1;
+    QTextBlock block=IG_dialog_text->document()->begin();
+    while(block.isValid())
+    {
+        QTextBlock::iterator it=block.begin();
+        while(!it.atEnd())
+        {
+            const QTextFragment fragment=it.fragment();
+            if(fragment.isValid())
+            {
+                const QTextCharFormat format=fragment.charFormat();
+                if(format.isAnchor() && !format.anchorHref().isEmpty())
+                {
+                    //rich text can split one <a> into several contiguous
+                    //fragments: extend the previous range instead of adding a
+                    //second entry for the same link
+                    if(!IG_dialog_links.empty() && IG_dialog_links.back().href==format.anchorHref()
+                            && IG_dialog_links.back().end==fragment.position())
+                        IG_dialog_links.back().end=fragment.position()+fragment.length();
+                    else
+                    {
+                        IG_dialog_link link;
+                        link.href=format.anchorHref();
+                        link.start=fragment.position();
+                        link.end=fragment.position()+fragment.length();
+                        IG_dialog_links.push_back(link);
+                    }
+                }
+            }
+            ++it;
+        }
+        block=block.next();
+    }
+    //GBA-style: the first link starts selected, so A/Return activates it directly
+    if(!IG_dialog_links.empty())
+        IG_dialog_link_selected=0;
+    IG_dialog_link_highlight();
+}
+
+void OverMap::IG_dialog_link_highlight()
+{
+    unsigned int index=0;
+    while(index<IG_dialog_links.size())
+    {
+        QTextCursor cursor(IG_dialog_text->document());
+        cursor.setPosition(IG_dialog_links.at(index).start);
+        cursor.setPosition(IG_dialog_links.at(index).end,QTextCursor::KeepAnchor);
+        QTextCharFormat format;
+        if(static_cast<int>(index)==IG_dialog_link_selected)
+            format.setBackground(QColor(255,213,0,140));//translucent gold behind the blue link text
+        else
+            format.setBackground(QBrush(Qt::NoBrush));
+        cursor.mergeCharFormat(format);
+        index++;
+    }
+}
+
+QString OverMap::IG_dialog_anchorAt(const QPointF &scenePos) const
+{
+    if(IG_dialog_textString.isEmpty())
+        return QString();
+    return IG_dialog_text->document()->documentLayout()->anchorAt(IG_dialog_text->mapFromScene(scenePos));
+}
+
+void OverMap::IG_dialog_key(const int &key)
+{
+    if(IG_dialog_textString.isEmpty())
+        return;
+    if(key==Qt::Key_Return || key==Qt::Key_Enter)
+    {
+        if(IG_dialog_link_selected>=0 && IG_dialog_link_selected<static_cast<int>(IG_dialog_links.size()))
+            on_IG_dialog_text_linkActivated(IG_dialog_links.at(IG_dialog_link_selected).href);
+        else
+            IG_dialog_close();//A on a link-less dialog dismisses it, GBA-style
+        return;
+    }
+    if(IG_dialog_links.size()<=1)
+        return;//nothing to cycle
+    if(key==Qt::Key_Up || key==Qt::Key_Left)
+    {
+        if(IG_dialog_link_selected<=0)
+            IG_dialog_link_selected=static_cast<int>(IG_dialog_links.size())-1;
+        else
+            IG_dialog_link_selected--;
+    }
+    else if(key==Qt::Key_Down || key==Qt::Key_Right)
+    {
+        if(IG_dialog_link_selected>=static_cast<int>(IG_dialog_links.size())-1)
+            IG_dialog_link_selected=0;
+        else
+            IG_dialog_link_selected++;
+    }
+    IG_dialog_link_highlight();
 }
 
 void OverMap::updateShowChat()

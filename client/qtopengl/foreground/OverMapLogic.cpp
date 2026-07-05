@@ -91,6 +91,11 @@ void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
     //Escape on the map closes an open Sign/NPC dialog
     if(!connect(ccmap,&CCMap::escapePressed,this,&OverMap::IG_dialog_close))
         abort();
+    //arrows/Return while the dialog is open select/activate its hyperlinks
+    //(D-pad + A button, physical keyboard and the automation KEY verb all
+    //converge on this one path — see MapVisualiserPlayer::keyPressEvent)
+    if(!connect(ccmap,&CCMap::dialogKeyPressed,this,&OverMap::IG_dialog_key))
+        abort();
     if(!connect(ccmap,&CCMap::blockedOn,this,&OverMapLogic::blockedOn))
         abort();
     if(!connect(ccmap,&CCMap::error,this,&OverMapLogic::error))
@@ -227,6 +232,8 @@ void OverMapLogic::setIG_dialog(QString text,QString name)
     this->IG_dialog_nameString=name;
     this->IG_dialog_text->setHtml(text);
     this->IG_dialog_name->setHtml(name);
+    //re-list the body's hyperlinks and pre-select the first one (D-pad/A support)
+    IG_dialog_links_rebuild();
     //mirror the current dialog text to the QLocalServer automation channel so an
     //external controller can observe it via GETDIALOG (read-only; empty=closed).
     if(ccmap!=nullptr)

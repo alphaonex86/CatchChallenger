@@ -1531,12 +1531,10 @@ def run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases):
     SOLO SCOPE (verified live): the actual *create-a-clan* and *capture-a-zone*
     flows are NOT completable on the embedded single-player server and have NO
     channel-observable completion signal:
-      * there is no channel verb to follow a dialog hyperlink (the verb set is
-        KEY/CLICKTILE/CLICKPIXEL/GOTO/CLOSEDIALOG/GET*/SENDCHAT/TRADE*/FIGHT*),
-        and the qtopengl dialog box has no anchor hit-testing (clicking it only
-        hits the quit button), so the "[Create clan]" / "[Zone capture]" links
-        cannot be activated over the channel;
-      * even if activated, OverMapLogicBot.cpp's clan_create link handler and the
+      * dialog links ARE followable over the channel nowadays (arrows select,
+        KEY Enter activates — see run_qtopengl_nurse_heal_link_channel_test),
+        but these two MUST NOT be followed here: OverMapLogicBot.cpp's
+        clan_create link handler and the
         "zonecapture" step handler are abort() stubs (the implementations are
         commented out), and clan-create additionally needs allow_create_clan
         (false by default, only quest-granted) while zone-capture is a TvT
@@ -1794,6 +1792,118 @@ def run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases):
     finally:
         s.kill()
 
+
+def run_qtopengl_nurse_heal_link_channel_test(dp_name, mc, failed_cases):
+    """Channel-driven regression guard for DIALOG HYPERLINK ACTIVATION in qtopengl
+    (the reported Android bug: tapping the Nurse's [Heal] link did nothing).
+
+    house2.tmx Nurse bot id=1 at engine tile (5,19), behind her counter; her
+    step-1 dialog body carries <a href="2;3">[Heal]</a> (step 2 = heal, step 3 =
+    'Have a good day!'). qtopengl's dialog body is a QGraphicsTextItem on the XY
+    overlay dispatch, so it gets no QGraphicsScene mouse events: the link was
+    DEAD (no anchor hit-test, no linkActivated wiring). Links are now driven two
+    ways: a tap resolves the anchor under it (mouseReleaseEventXY), and the
+    D-pad/keyboard select+activate through ONE shared interception point
+    (MapVisualiserPlayer::keyPressEvent, dialogKeysActive): while a dialog is
+    open, arrows select the previous/next link, Return activates the selected
+    one, and none of those keys move the player. The automation KEY verb enters
+    that exact same path (synthKey), so this test drives the REAL A-button/
+    keyboard flow with no in-binary test code.
+
+    Flow: enter house2 (city door 15,25), CLICKTILE the Nurse (5,19) -> the
+    engine walks to the counter front and opens her dialog; assert the [Heal]
+    link is in the GETDIALOG mirror. Then:
+      1. MODAL: KEY Down while the dialog is open must NOT move the player
+         (before the fix the arrow walked the player away under the dialog).
+      2. ACTIVATE: KEY Enter must follow the pre-selected [Heal] link -> the
+         dialog text must CHANGE to the step-3 'Have a good day!' text (a dead
+         link leaves the step-1 text up == the reported bug) and the team must
+         be alive (hp>0) after the heal.
+      3. CLOSEDIALOG still clears the dialog and the client survives it all."""
+    case = f"qtopengl nurse [Heal] dialog link via D-pad/Return over channel ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl nurse [Heal] link over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill()
+        log_fail(case, err)
+        for l in s.tail():
+            print(f"  | {l}")
+        return
+    try:
+        spawn = s.map_id()
+        s.send("CLICKTILE 15 25")
+        house2 = s.wait_map_change(spawn)
+        if house2 < 0:
+            log_fail(case, f"never entered house2 from the city door (15,25); state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # open the Nurse: the click routes to her counter front and faces her
+        s.send("CLOSEDIALOG")
+        time.sleep(0.3)
+        s.send("CLICKTILE 5 19")
+        if not s.wait(lambda: "[Heal]" in s.dialog(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 20))):
+            log_fail(case, f"clicking the Nurse (5,19) opened NO dialog with the [Heal] link; "
+                           f"got={s.dialog()!r} state={s.send('GETSTATE')}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # 1. MODAL: an arrow while the dialog is open selects links, never walks
+        before = s.state()
+        s.send("KEY Down")
+        time.sleep(0.8)
+        after = s.state()
+        if before is None or after is None or before[:3] != after[:3]:
+            log_fail(case, f"KEY Down while the Nurse dialog is open MOVED the player "
+                           f"{before} -> {after} (dialog keys must drive the links, not walk)")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        if "[Heal]" not in s.dialog():
+            log_fail(case, f"the Nurse dialog vanished on KEY Down (link selection must keep it open); "
+                           f"got={s.dialog()!r}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # 2. ACTIVATE: Return follows the pre-selected [Heal] link -> steps 2;3
+        s.send("KEY Enter")
+        if not s.wait(lambda: "Have a good day" in s.dialog(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 10))):
+            log_fail(case, f"KEY Enter did NOT activate the [Heal] link (dialog must advance to the "
+                           f"step-3 'Have a good day!' text); got={s.dialog()!r}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+        team = s.team()
+        if not team or any(hp == 0 for (_, _, hp) in team):
+            log_fail(case, f"after the [Heal] link the team is not healthy: {team}")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        # 3. close and survive
+        s.send("CLOSEDIALOG")
+        time.sleep(0.4)
+        if s.dialog():
+            log_fail(case, "CLOSEDIALOG did not clear the step-3 dialog")
+            return
+        if s.proc.poll() is not None:
+            log_fail(case, f"client exited during the nurse heal-link checks (rc={s.proc.poll()})")
+            for l in s.tail():
+                print(f"  | {l}")
+            return
+
+        log_pass(case, f"[Heal] link activated via Return (dialog advanced to 'Have a good day!'), "
+                       f"arrows stayed modal on the dialog, team after heal: {team}")
+    finally:
+        s.kill()
 
 
 def run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases):
@@ -2462,6 +2572,7 @@ def main():
                 run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_nurse_heal_link_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_cave_fight_loss_nocrash_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_sign_keyboard_channel_test(dp_name, mc, failed_cases)

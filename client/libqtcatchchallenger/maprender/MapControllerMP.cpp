@@ -46,6 +46,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     chatHelloSent=false;
     remoteActionInProgress=false;
     remoteDialogText.clear();
+    dialogKeysActive=false;
 
     signSelfTestStarted=false;
     signTestMap=0;
@@ -1541,6 +1542,9 @@ void MapControllerMP::remoteAction(const QString &line)
 void MapControllerMP::setRemoteDialogText(const QString &text)
 {
     remoteDialogText=text;
+    //while a dialog is open the arrows/Return drive the dialog links, not the
+    //player (see MapVisualiserPlayer::keyPressEvent)
+    dialogKeysActive=!text.isEmpty();
 }
 
 int MapControllerMP::resolveRemoteMap(const QString &mapArg) const

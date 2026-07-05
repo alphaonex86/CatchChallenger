@@ -43,6 +43,9 @@ signals:
     void actionOn(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOnNothing();
     void escapePressed();
+    //arrow/Return pressed while a Sign/NPC dialog is open: relayed to OverMap to
+    //select/activate the dialog hyperlinks (the key never moves the player)
+    void dialogKeyPressed(const int &key);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void wildFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);

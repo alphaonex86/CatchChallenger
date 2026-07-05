@@ -134,6 +134,12 @@ protected:
     std::unordered_set<int> keyPressed;
     std::unordered_set<int> keyAccepted;
     bool clip;
+    //true while a Sign/NPC dialog is open in the client UI (mirrors
+    //MapControllerMP::setRemoteDialogText()): the movement/action keys then DRIVE
+    //THE DIALOG (dialogKeyPressed()) instead of moving the player. This is the
+    //single interception point shared by the physical keyboard, the on-screen
+    //D-pad/A button and the automation-channel KEY verb (all three end here).
+    bool dialogKeysActive;
 
     //Click-to-interact: when the player clicks a tile (e.g. a Sign/NPC, which
     //sits on a collision tile), pathfinding routes the player ADJACENT to it.
@@ -236,6 +242,10 @@ signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     //Escape pressed on the map: ask the client to close any open Sign/NPC dialog.
     void escapePressed();
+    //arrow/Return pressed while a Sign/NPC dialog is open (dialogKeysActive):
+    //the client UI selects the previous/next dialog hyperlink (arrows) or
+    //activates the selected one (Return). The key never reaches the movement.
+    void dialogKeyPressed(const int &key);
     void stopped_in_front_of(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOnNothing();
