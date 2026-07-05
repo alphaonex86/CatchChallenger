@@ -7,6 +7,7 @@
 #include "../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../above/inventory/Inventory.hpp"
 #include "../above/player/MonsterSelect.hpp"
+#include "../above/TextInput.hpp"
 #include "../above/inventory/Plant.hpp"
 #include "../above/inventory/Crafting.hpp"
 #include "../above/player/Player.hpp"
@@ -33,6 +34,7 @@ OverMapLogic::OverMapLogic()
 {
     inventory=nullptr;
     monsterSelect=nullptr;
+    textInput=nullptr;
     plant=nullptr;
     crafting=nullptr;
     inventoryIndex=0;
@@ -464,6 +466,13 @@ void OverMapLogic::monsterSelected(const uint8_t &monsterPosition)
 void OverMapLogic::monsterSelectCanceled()
 {
     objectSelection(false);
+}
+
+void OverMapLogic::clanNameEntered(const QString &clanName)
+{
+    const std::string name=clanName.trimmed().toStdString();
+    if(!name.empty())
+        connexionManager->client->createClan(name);
 }
 
 //The Inventory/Plant ObjectType enums mirror ours 1:1, so selectObject casts
