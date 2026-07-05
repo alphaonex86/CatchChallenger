@@ -47,6 +47,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     monster_x=0;
     monster_y=0;
     clip=false;
+    dialogKeysActive=false;
 
     keyAccepted.insert(Qt::Key_Left);
     keyAccepted.insert(Qt::Key_Right);
@@ -191,6 +192,22 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
     {
         emit escapePressed();
         return;
+    }
+
+    //While a Sign/NPC dialog is open the arrows/Return DRIVE THE DIALOG (select
+    //the previous/next hyperlink, Return activates the selected one): forward to
+    //the client UI and swallow the key so the player never walks under a dialog.
+    //Only PRESSES are swallowed: a release of a key held from before the dialog
+    //opened must still reach keyReleaseEvent() or the walk would never stop.
+    if(dialogKeysActive)
+    {
+        const int key=event->key();
+        if(key==Qt::Key_Up || key==Qt::Key_Down || key==Qt::Key_Left || key==Qt::Key_Right
+           || key==Qt::Key_Return || key==Qt::Key_Enter)
+        {
+            emit dialogKeyPressed(key);
+            return;
+        }
     }
 
     //ignore the no arrow key

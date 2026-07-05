@@ -1112,6 +1112,9 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
         overmap=new OverMapLogic();
         if(!connect(overmap,&OverMapLogic::error,this,&ScreenTransition::errorString))
             abort();
+        //on-map options button: open the same options dialog as the main menu
+        if(!connect(overmap,&OverMapLogic::optionsClicked,this,&ScreenTransition::openOptions))
+            abort();
     }
     overmap->resetAll();
     overmap->setVar(ccmap,connexionManager);

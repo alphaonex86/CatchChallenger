@@ -28,6 +28,8 @@ CCMap::CCMap()
         abort();
     if(!connect(&mapController,&MapController::escapePressed,this,&CCMap::escapePressed))
         abort();
+    if(!connect(&mapController,&MapController::dialogKeyPressed,this,&CCMap::dialogKeyPressed))
+        abort();
     if(!connect(&mapController,&MapController::blockedOn,this,&CCMap::blockedOn))
         abort();
     if(!connect(&mapController,&MapController::wildFightCollision,this,&CCMap::onMapControllerWildFightCollision))

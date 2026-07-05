@@ -40,7 +40,7 @@ the implementation is shared, NOT duplicated:
   `--remote-control`; cpu mirrors it from `AutoArgs::remoteControl`).
 
 Commands (one per line; replies are one line each unless noted):
-* `KEY <Up|Down|Left|Right|Return|Enter|Escape|Esc|Space>` — synthesised key (arrows move, Enter acts/talks, Escape closes the dialog).
+* `KEY <Up|Down|Left|Right|Return|Enter|Escape|Esc|Space>` — synthesised key (arrows move, Enter acts/talks, Escape closes the dialog). While a dialog is OPEN the arrows/Enter drive its hyperlinks instead of moving: arrows select the previous/next link, Enter activates the selected one (first link pre-selected) or closes a link-less dialog — same behaviour as the on-screen D-pad/A button.
 * `CLICKTILE <x> <y>` — click that tile on the CURRENT map → walk there / face+act / teleport (pathfinding).
 * `CLICKPIXEL <px> <py>` — click that viewport pixel (lower level than CLICKTILE).
 * `GOTO <mapIndex|mapBasename> <x> <y>` — pathfind to a tile on a given map (numeric index, or basename like `gym`/`gym.tmx`). Works for the current map and border-connected maps; door/teleporter-connected maps are NOT walk-reachable — click the door tile with CLICKTILE instead.

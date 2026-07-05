@@ -62,6 +62,15 @@ public:
     static bool touchControlsEnabled();
     static void invalidateTouchControlsCache();
     virtual void IG_dialog_close();
+    //dialog hyperlink activated ([Heal], quest/step links, ...): base does
+    //nothing, OverMapLogic overrides it with the real link parser. Reached from
+    //a tap on the link (mouseReleaseEventXY anchor hit-test) or from the A
+    //button/Return via IG_dialog_key().
+    virtual void on_IG_dialog_text_linkActivated(const QString &rawlink);
+    //arrow/Return key while the dialog is open (from CCMap::dialogKeyPressed):
+    //arrows select the previous/next hyperlink, Return activates the selected
+    //one (or closes a link-less dialog, GBA-style)
+    void IG_dialog_key(const int &key);
     void comboBox_chat_type_currentIndexChanged(int index);
     void new_system_text(const CatchChallenger::Chat_type &chat_type, const std::string &text);
     void new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type);
@@ -111,6 +120,10 @@ protected:
     CustomText *opentolanOver;
     CustomButton *buy;
     CustomText *buyOver;
+    //opens the options dialog from the map (emits optionsClicked, routed to
+    //ScreenTransition::openOptions) — needed on touch devices where no keyboard
+    //shortcut exists to reach the options (touch controls, volume, ...) in-game
+    CustomButton *options;
 
     //on-screen touch controls (shown only when touchControlsActive). D-pad cross to
     //the LEFT of chat; A/B to the RIGHT of buy. Held to walk; A=action, B=cancel.
@@ -141,6 +154,22 @@ protected:
     CustomButton *IG_dialog_quit;
     QString IG_dialog_nameString;
     QString IG_dialog_textString;
+    //hyperlinks of the CURRENT dialog body, in document order. The overlay gets
+    //no QGraphicsScene mouse events (input is dispatched through the XY path),
+    //so QGraphicsTextItem's own link handling never fires: taps are resolved by
+    //IG_dialog_anchorAt() and the D-pad/keyboard by IG_dialog_key() over this
+    //list. Rebuilt by IG_dialog_links_rebuild() on every setIG_dialog().
+    struct IG_dialog_link
+    {
+        QString href;
+        int start;//QTextDocument character positions, for the selection highlight
+        int end;
+    };
+    std::vector<IG_dialog_link> IG_dialog_links;
+    int IG_dialog_link_selected;//-1 = none, else index into IG_dialog_links
+    void IG_dialog_links_rebuild();
+    void IG_dialog_link_highlight();
+    QString IG_dialog_anchorAt(const QPointF &scenePos) const;
     QGraphicsPixmapItem *labelSlow;
 
     ImagesStrechMiddle *tipBack;
@@ -154,6 +183,9 @@ protected:
     std::vector<ActionClan> actionClan;
     std::string clanName;
     bool haveClanInformations;
+signals:
+    //the on-map options button was clicked; ScreenTransition opens the options dialog
+    void optionsClicked();
 private:
     void updateChat();
 };
