@@ -554,11 +554,11 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     }
     {
         //options gear at the left of the bag: opens the options dialog in-game
-        //(same art/sizes as the main-menu options button)
+        //(same art as the main menu, sized like the neighbouring map icons)
         if(w->width()<800 || w->height()<600)
-            options->setSize(41,46);
+            options->setSize(84/2,93/2);
         else
-            options->setSize(62,70);
+            options->setSize(84,93);
         options->setPos(xRight-options->width(),w->height()-space-options->height());
         xRight-=options->width()+space;
     }
