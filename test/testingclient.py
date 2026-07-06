@@ -2328,6 +2328,45 @@ def run_qtopengl_item_use_monster_channel_test(dp_name, mc, failed_cases):
         s.kill()
 
 
+def run_qtcpu_shop_dialog_channel_test(dp_name, mc, failed_cases):
+    """qtcpu800x600 counterpart of the shop check: reach house2 and open the counter
+    Seller (0,22) shop dialog. Validates the CPU shop-step gate accepts the inline
+    <product> list (my gate fix) and the shared counter interaction works on the CPU
+    client. (The CPU UI is QWidget pages, not clickable via CLICKSCREEN, so we assert
+    the dialog opens rather than completing the sale.)"""
+    case = f"qtcpu800x600 house2 counter shop dialog ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtcpu800x600 house2 shop dialog over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc, CLIENT_CPU_BUILD, CLIENT_CPU_BIN)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+    try:
+        spawn = s.map_id()
+        s.send("CLICKTILE 15 25")
+        if s.wait_map_change(spawn, timeout=clamp_local(diagnostic.scale_timeout(DIAG, 25))) < 0:
+            log_fail(case, f"never entered house2; state={s.send('GETSTATE')}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        s.send("CLICKTILE 0 22")
+        if not s.wait(lambda: "pokemart" in s.dialog().lower(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 18))):
+            log_fail(case, f"counter seller (0,22) opened NO shop dialog on CPU; got={s.dialog()!r}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        d = s.dialog()
+        s.send("CLOSEDIALOG"); time.sleep(0.3)
+        if s.proc.poll() is not None:
+            log_fail(case, f"CPU client exited after shop dialog (rc={s.proc.poll()})")
+            return
+        log_pass(case, f"CPU counter shop dialog opened ({d[:40]!r})")
+    finally:
+        s.kill()
+
+
 def run_qtcpu_solo_channel_basic_test(dp_name, mc, failed_cases):
     """qtcpu800x600 exposes the SAME QLocalServer automation channel as qtopengl
     (MainWindow::wireRemoteControl -> the shared MapControllerMP). Drive the CPU
@@ -2773,6 +2812,7 @@ def main():
             # client over it too (same test-city sign fixture).
             if cpu_ok and dp_cpu and mc == "test" and dp_name == OFFICIAL_DATAPACK_NAME:
                 run_qtcpu_solo_channel_basic_test(dp_name, mc, failed_cases)
+                run_qtcpu_shop_dialog_channel_test(dp_name, mc, failed_cases)
 
     # ═══════════════════════════════════════════════════════════════
     # 4. MULTIPLAYER ON SERVER
