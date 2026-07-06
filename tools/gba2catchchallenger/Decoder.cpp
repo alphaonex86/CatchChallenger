@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <unordered_set>
 
 DecodedMap::DecodedMap() :
     group(0),
@@ -229,6 +230,114 @@ void Decoder::finalizeMaps()
     resolveWarpDestinations();
     pruneConnections();
     splitOversizedMaps();
+    findHealLocations();
+}
+
+void Decoder::findHealLocations()
+{
+    // (group, ROM map id) -> map dimensions.  Chunks keep origMap, so heal
+    // entries written against the unsplit ROM ids still match; a split map
+    // keeps its FULL dimensions here so in-map coordinate checks stay valid.
+    std::unordered_map<uint32_t,std::pair<int,int> > dims;
+    size_t mi=0;
+    while(mi<maps_.size())
+    {
+        const uint32_t key=(static_cast<uint32_t>(maps_[mi].group)<<8)|maps_[mi].origMap;
+        std::pair<int,int> &d=dims[key];
+        if(maps_[mi].width>d.first) d.first=maps_[mi].width;
+        if(maps_[mi].height>d.second) d.second=maps_[mi].height;
+        mi++;
+    }
+    // Entry = {u8 group, u8 map, s16 x, s16 y} at stride 6 (RSE) or 8 (FRLG,
+    // 2 zero pad bytes).  The retail tables are ~22 entries; a run that never
+    // terminates naturally (len>kMaxRun) is random plausible data, not the table.
+    const int kMaxRun=48;
+    uint32_t bestAt=0;
+    int bestLen=0;
+    uint32_t bestStride=0;
+    int si=0;
+    while(si<2)
+    {
+        const uint32_t stride=(si==0) ? 6 : 8;
+        uint32_t o=0;
+        while(o+stride<=rom_.size())
+        {
+            int len=0;
+            std::unordered_set<uint32_t> distinct;
+            bool run=true;
+            while(run && len<=kMaxRun)
+            {
+                const uint32_t e=o+static_cast<uint32_t>(len)*stride;
+                if(e+stride>rom_.size())
+                    run=false;
+                else
+                {
+                    const uint32_t key=(static_cast<uint32_t>(rom_.u8(e))<<8)|rom_.u8(e+1);
+                    const int16_t x=rom_.s16(e+2);
+                    const int16_t y=rom_.s16(e+4);
+                    std::unordered_map<uint32_t,std::pair<int,int> >::const_iterator d=dims.find(key);
+                    if(d==dims.cend() || x<0 || y<0 || x>=d->second.first || y>=d->second.second)
+                        run=false;
+                    else
+                    {
+                        distinct.insert(key);
+                        len++;
+                    }
+                }
+            }
+            // Real tables reference (almost) all-distinct maps — RSE repeats a
+            // couple (two heal spots in one city); random plausible data repeats
+            // heavily.  Require >=75% distinct.
+            if(len>=10 && len<=kMaxRun && len>bestLen &&
+               static_cast<int>(distinct.size())>=10 &&
+               static_cast<int>(distinct.size())*4>=len*3)
+            {
+                bestLen=len;
+                bestAt=o;
+                bestStride=stride;
+            }
+            o+=2;
+        }
+        si++;
+    }
+    if(bestLen>0)
+    {
+        int i=0;
+        while(i<bestLen)
+        {
+            const uint32_t e=bestAt+static_cast<uint32_t>(i)*bestStride;
+            const uint16_t key=static_cast<uint16_t>((static_cast<uint32_t>(rom_.u8(e))<<8)|rom_.u8(e+1));
+            const std::pair<int,int> pos(rom_.s16(e+2),rom_.s16(e+4));
+            if(healSpots_.find(key)==healSpots_.cend())
+                healSpots_[key]=pos;
+            healList_.push_back(std::make_pair(key,pos));
+            i++;
+        }
+        std::cout << "Decoder: " << bestLen << " heal/respawn locations at 0x"
+                  << std::hex << bestAt << std::dec << " (stride " << bestStride << ")" << std::endl;
+    }
+    else
+        std::cout << "Decoder: no heal-location table found (synthetic rescue points)" << std::endl;
+}
+
+const std::pair<int,int> *Decoder::healSpot(uint8_t group, uint8_t origMap) const
+{
+    std::unordered_map<uint16_t,std::pair<int,int> >::const_iterator it=
+        healSpots_.find(static_cast<uint16_t>((static_cast<uint32_t>(group)<<8)|origMap));
+    if(it==healSpots_.cend())
+        return nullptr;
+    return &it->second;
+}
+
+bool Decoder::firstHealSpot(uint8_t *group, uint8_t *map, int *x, int *y) const
+{
+    if(healList_.empty())
+        return false;
+    *group=static_cast<uint8_t>(healList_[0].first>>8);
+    *map=static_cast<uint8_t>(healList_[0].first & 0xFF);
+    *x=healList_[0].second.first;
+    *y=healList_[0].second.second;
+    return true;
 }
 
 // Resolve every warp's (destMap,destWarpId) into absolute (destX,destY) while
@@ -776,6 +885,7 @@ void Decoder::decodeEvents(uint32_t eventsOffset, DecodedMap &out)
             npc.y=rom_.s16(e+0x06);
             npc.movementType=rom_.u8(e+0x09);
             npc.trainerType=rom_.u16(e+0x0C);
+            npc.radius=rom_.u16(e+0x0E);
             bool okScript=false;
             npc.scriptPtr=rom_.pointer(e+0x10,&okScript);
             if(!okScript)
