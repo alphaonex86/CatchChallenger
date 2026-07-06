@@ -118,6 +118,9 @@ public slots:
     //in-fight Bag/Monster buttons route to the selection pickers
     void ensureBattle();
     void battleFinished();
+    //bot fights win rewards (cash + mark beaten) then return to the map; wild wins
+    //and all losses go straight to battleFinished (no reward).
+    void battleWon();
     void openBagForBattle();
     void openMonsterListForBattle();
     void lastReplyTime(const uint32_t &time);
@@ -296,6 +299,10 @@ private:
     Factory *factory;
     Trade *trade;
     Warehouse *warehouse;
+    //the bot fight in progress (for the win reward): fightFinished() clears the
+    //engine's fightInProgress before battleWin fires, so remember it here. 0xFFFF = none.
+    uint16_t currentBotFightId;
+    CATCHCHALLENGER_TYPE_MAPID currentBotFightMapId;
 
     QTimer tip_timeout;
     QTimer gain_timeout;
