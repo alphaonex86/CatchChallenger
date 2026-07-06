@@ -2233,6 +2233,51 @@ def run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases):
         s.kill()
 
 
+def run_qtopengl_item_use_monster_channel_test(dp_name, mc, failed_cases):
+    """Keystone item-use: using a monster-effect item (Potion 'grade A', id 5) from
+    the bag opens the new MonsterSelect picker and OPTIMISTICALLY removes the item;
+    cancelling the picker restores it. Drive the bag button + item list + Use over
+    CLICKSCREEN and assert GETINVENTORY reflects consume-then-restore and no crash.
+    Pixel targets are the fixed 640x480 offscreen viewport + fresh test inventory
+    (item 1 x5 IronTrap, item 5 x1 Potion)."""
+    case = f"qtopengl bag item-use MonsterSelect consume/restore ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl bag item-use -> MonsterSelect over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+    try:
+        inv0 = s.send("GETINVENTORY")
+        if "5:" not in inv0:
+            log_fail(case, f"expected potion id 5 in fresh inventory; got {inv0!r}")
+            return
+        s.send("CLICKSCREEN 547 442"); time.sleep(0.7)   # open the Bag overlay
+        s.send("CLICKSCREEN 280 205"); time.sleep(0.4)   # select the Potion (id 5)
+        s.send("CLICKSCREEN 487 290"); time.sleep(0.8)   # Use -> MonsterSelect, potion consumed
+        inv1 = s.send("GETINVENTORY")
+        if "5:" in inv1:
+            log_fail(case, f"potion NOT consumed on use (item-row click missed?); inv={inv1!r}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        s.send("CLICKSCREEN 486 152"); time.sleep(0.6)   # cancel MonsterSelect (close X)
+        if s.proc.poll() is not None:
+            log_fail(case, f"client crashed during item-use (rc={s.proc.poll()})")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        inv2 = s.send("GETINVENTORY")
+        if "5:" not in inv2:
+            log_fail(case, f"potion NOT restored on cancel; inv={inv2!r}")
+            return
+        log_pass(case, f"item-use consumed then restored the potion "
+                       f"({inv0.strip()} -> {inv1.strip()} -> {inv2.strip()})")
+    finally:
+        s.kill()
+
+
 def run_qtcpu_solo_channel_basic_test(dp_name, mc, failed_cases):
     """qtcpu800x600 exposes the SAME QLocalServer automation channel as qtopengl
     (MainWindow::wireRemoteControl -> the shared MapControllerMP). Drive the CPU
@@ -2666,6 +2711,7 @@ def main():
                 run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_item_use_monster_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_nurse_heal_link_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases)
