@@ -17,16 +17,21 @@ Battle::Battle()
     connexionManager=nullptr;
     frameFightBottom=new ImagesStrechMiddle(28,":/CC/images/interface/b1.png",this);
     labelFightBottomName=new QGraphicsTextItem(frameFightBottom);
+    labelFightBottomLevel=new QGraphicsTextItem(frameFightBottom);
     progressBarFightBottomHP=new CCprogressbar(frameFightBottom);
+    progressBarFightBottomExp=new CCprogressbar(frameFightBottom);
 
     frameFightTop=new ImagesStrechMiddle(28,":/CC/images/interface/b1.png",this);
     labelFightTopName=new QGraphicsTextItem(frameFightTop);
+    labelFightTopLevel=new QGraphicsTextItem(frameFightTop);
     progressBarFightTopHP=new CCprogressbar(frameFightTop);
 
     labelFightBackground=new QGraphicsPixmapItem(this);
-    labelFightBackgroundPix=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())+"/map/fight/grass/background.png");
+    labelFightBackgroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png"));
     labelFightForeground=new QGraphicsPixmapItem(this);
-    labelFightForegroundPix=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())+"/map/fight/grass/foreground.png");
+    labelFightForegroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png"));
+    labelFightPlateformTopPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png"));
+    labelFightPlateformBottomPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png"));
 
     labelFightMonsterAttackBottom=new QGraphicsPixmapItem(this);
     labelFightMonsterAttackTop=new QGraphicsPixmapItem(this);
@@ -36,7 +41,26 @@ Battle::Battle()
     labelFightPlateformTop=new QGraphicsPixmapItem(this);
     labelFightTrap=new QGraphicsPixmapItem(this);
 
+    //z-order of the arena, mirroring the 800x600 client's raise() sequence:
+    //background under everything, then platforms, monsters, info frames, attack
+    //overlays, trap, and the environment foreground image above the monsters
+    labelFightBackground->setZValue(0);
+    labelFightPlateformBottom->setZValue(1);
+    labelFightPlateformTop->setZValue(1);
+    labelFightMonsterBottom->setZValue(2);
+    labelFightMonsterTop->setZValue(2);
+    frameFightTop->setZValue(3);
+    frameFightBottom->setZValue(3);
+    labelFightMonsterAttackTop->setZValue(4);
+    labelFightMonsterAttackBottom->setZValue(4);
+    labelFightTrap->setZValue(5);
+    labelFightForeground->setZValue(6);
+
+    monsterBottomDesignPos=QPointF(60,280);
+    monsterTopDesignPos=QPointF(510,90);
+
     stackedWidgetFightBottomBar=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
+    stackedWidgetFightBottomBar->setZValue(7);//action bar above the whole arena
     labelFightEnter=new QGraphicsTextItem(stackedWidgetFightBottomBar);
     pushButtonFightEnterNext=new CustomButton(":/CC/images/interface/greenbutton.png",stackedWidgetFightBottomBar);
 
@@ -152,125 +176,200 @@ QRectF Battle::boundingRect() const
     return QRectF();
 }
 
-void Battle::paint(QPainter * painter, const QStyleOptionGraphicsItem *, QWidget *w)
+void Battle::placeArenaPixmap(QGraphicsPixmapItem *item,const QPixmap &src,
+                              const qreal &cx,const qreal &cy,const qreal &dw,const qreal &dh,
+                              const qreal &ax,const qreal &ay,const qreal &k)
 {
-    painter->setBackground(QBrush(QColor(0,0,0)));
-    painter->setPen(Qt::NoPen);
-    painter->drawRect(0,0,10,10);
-    unsigned int space=10;
-//    unsigned int fontSize=20;
-    //unsigned int multiItemH=100;
-    /*if(w->height()>300)
-        fontSize=w->height()/6;*/
-    if(w->width()<900 || w->height()<600)
+    if(src.isNull())
     {
-        pushButtonFightEnterNext->setSize(148,61);
-        pushButtonFightEnterNext->setPixelSize(23);
-
-        pushButtonFightAttack->setSize(148,61);
-        pushButtonFightAttack->setPixelSize(23);
-        pushButtonFightBag->setSize(148,61);
-        pushButtonFightBag->setPixelSize(23);
-        pushButtonFightMonster->setSize(148,61);
-        pushButtonFightMonster->setPixelSize(23);
-        toolButtonFightQuit->setSize(148,61);
-        toolButtonFightQuit->setPixelSize(23);
-
-        pushButtonFightAttackConfirmed->setSize(148,61);
-        pushButtonFightAttackConfirmed->setPixelSize(23);
-        pushButtonFightReturn->setSize(148,61);
-        pushButtonFightReturn->setPixelSize(23);
-        //multiItemH=75;
+        if(!item->pixmap().isNull())
+            item->setPixmap(QPixmap());
+        return;
     }
-    else {
-        space=30;
-        pushButtonFightEnterNext->setSize(223,92);
-        pushButtonFightEnterNext->setPixelSize(35);
+    const int tw=static_cast<int>(dw*k);
+    const int th=static_cast<int>(dh*k);
+    if(tw<1 || th<1)
+        return;
+    if(item->pixmap().width()!=tw || item->pixmap().height()!=th)
+        item->setPixmap(src.scaled(tw,th,Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+    item->setPos(cx*ax-tw/2.0,cy*ay-th/2.0);
+}
 
-        pushButtonFightAttack->setSize(223,92);
-        pushButtonFightAttack->setPixelSize(35);
-        pushButtonFightBag->setSize(223,92);
-        pushButtonFightBag->setPixelSize(35);
-        pushButtonFightMonster->setSize(223,92);
-        pushButtonFightMonster->setPixelSize(35);
-        toolButtonFightQuit->setSize(223,92);
-        toolButtonFightQuit->setPixelSize(35);
-
-        pushButtonFightAttackConfirmed->setSize(223,92);
-        pushButtonFightAttackConfirmed->setPixelSize(35);
-        pushButtonFightReturn->setSize(223,92);
-        pushButtonFightReturn->setPixelSize(35);
-    }
-
-    unsigned int minRatio=w->width()/220;
-    unsigned int tempRatio=w->height()/150;
-    if(minRatio>tempRatio)
-        minRatio=tempRatio;
-    unsigned int finalWidth=220*minRatio;
-    unsigned int finalHeight=150*minRatio;
-    unsigned int finalX=(w->width()-finalWidth)/2;
-    unsigned int finalY=(w->height()-finalHeight)/2;
-    if(labelFightBackground->pixmap().width()!=labelFightBackgroundPix.width()*(int)minRatio)
+void Battle::layoutInfoFrame(ImagesStrechMiddle *frame,QGraphicsTextItem *name,QGraphicsTextItem *level,
+                             CCprogressbar *hp,CCprogressbar *exp,const qreal &k)
+{
+    const int pad=static_cast<int>(12*k);
+    const int frameW=frame->width();
+    const int frameH=frame->height();
+    QFont font=name->font();
+    int fontSize=static_cast<int>(15*k);
+    if(fontSize<10)
+        fontSize=10;
+    if(font.pixelSize()!=fontSize)
     {
-        QPixmap t=labelFightBackgroundPix;
-        t.scaled(labelFightBackgroundPix.width()*minRatio,labelFightBackgroundPix.height()*minRatio);
-        labelFightBackground->setPixmap(t);
+        font.setPixelSize(fontSize);
+        name->setFont(font);
+        level->setFont(font);
     }
-    labelFightBackground->setPos(finalX,finalY);
+    name->setPos(pad,pad);
+    level->setPos(frameW-pad-level->boundingRect().width(),pad);
+    const int barH=static_cast<int>(16*k);
+    if(exp!=nullptr)
+    {
+        //player frame: HP bar + a thinner XP bar under it
+        const int expH=static_cast<int>(8*k);
+        hp->setSize(frameW-pad*2,barH);
+        hp->setPos(pad,frameH-pad-expH-2-barH);
+        exp->setSize(frameW-pad*2,expH);
+        exp->setPos(pad,frameH-pad-expH);
+    }
+    else
+    {
+        hp->setSize(frameW-pad*2,barH);
+        hp->setPos(pad,frameH-pad-barH);
+    }
+}
 
-    frameFightBottom->setPos(480,310);
-    frameFightBottom->setSize(300,88);
-    //labelFightBottomName->setSize(10,10);
-    progressBarFightBottomHP->setSize(10,10+24+10);
+void Battle::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
+{
+    const int W=w->width();
+    const int H=w->height();
+    if(W<=0 || H<=0)
+        return;
+    //full-screen responsive layout in the 800x600 design space of the 800x600
+    //client (arena 800x440 + action bar 160): positions stretch with the screen
+    //(ax,ay), art scales uniformly (k) so sprites never distort
+    const qreal sx=W/800.0;
+    const qreal sy=H/600.0;
+    const qreal k=(sx<sy)?sx:sy;
+    const int barH=static_cast<int>(160*k);
+    const int arenaH=H-barH;
+    const qreal ax=sx;
+    const qreal ay=arenaH/440.0;
+    const int space=static_cast<int>(10*k);
 
-    frameFightTop->setPos(70,70);
-    frameFightTop->setSize(300,88);
-    //labelFightTopName->setSize(10,10);
-    progressBarFightTopHP->setSize(10,10+24+10);
+    //environment art: background stretched over the WHOLE window (the action bar
+    //image has transparent edges — the map behind the battle must never show
+    //through), foreground over the arena only
+    if(labelFightBackground->pixmap().width()!=W || labelFightBackground->pixmap().height()!=H)
+        labelFightBackground->setPixmap(labelFightBackgroundPix.scaled(W,H,Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+    labelFightBackground->setPos(0,0);
+    if(labelFightForegroundPix.isNull())
+    {
+        if(!labelFightForeground->pixmap().isNull())
+            labelFightForeground->setPixmap(QPixmap());
+    }
+    else if(labelFightForeground->pixmap().width()!=W || labelFightForeground->pixmap().height()!=arenaH)
+        labelFightForeground->setPixmap(labelFightForegroundPix.scaled(W,arenaH,Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+    labelFightForeground->setPos(0,0);
 
-    labelFightMonsterAttackBottom->setPos(finalX+60*minRatio,finalY+280*minRatio);
-    //labelFightMonsterAttackBottom->setSize(160*minRatio,160*minRatio);
-    labelFightMonsterAttackTop->setPos(finalX+510*minRatio,finalY+90*minRatio);
-    //labelFightMonsterAttackTop->setSize(160*minRatio,160*minRatio);
-    labelFightMonsterBottom->setPos(finalX+60*minRatio,finalY+280*minRatio);
-    //labelFightMonsterBottom->setSize(160*minRatio,160*minRatio);
-    labelFightMonsterTop->setPos(finalX+510*minRatio,finalY+90*minRatio);
-    //labelFightMonsterTop->setSize(160*minRatio,160*minRatio);
-    labelFightPlateformBottom->setPos(finalX+30*minRatio,finalY+350*minRatio);
-    //labelFightPlateformBottom->setSize(230*minRatio,90*minRatio);
-    labelFightPlateformTop->setPos(finalX+460*minRatio,finalY+170*minRatio);
-    //labelFightPlateformTop->setSize(260*minRatio,90*minRatio);
-    labelFightTrap->setPos(finalX+280*minRatio,finalY+230*minRatio);
-    //labelFightTrap->setSize(160*minRatio,160*minRatio);
+    //platforms and monsters (design rects from the 800x600 client)
+    placeArenaPixmap(labelFightPlateformBottom,labelFightPlateformBottomPix,145,395,230,90,ax,ay,k);
+    placeArenaPixmap(labelFightPlateformTop,labelFightPlateformTopPix,590,215,260,90,ax,ay,k);
+    placeArenaPixmap(labelFightMonsterBottom,monsterBottomPixSrc,
+                     monsterBottomDesignPos.x()+80,monsterBottomDesignPos.y()+80,160,160,ax,ay,k);
+    placeArenaPixmap(labelFightMonsterTop,monsterTopPixSrc,
+                     monsterTopDesignPos.x()+80,monsterTopDesignPos.y()+80,160,160,ax,ay,k);
+    labelFightMonsterAttackBottom->setPos(labelFightMonsterBottom->pos());
+    labelFightMonsterAttackTop->setPos(labelFightMonsterTop->pos());
+    labelFightTrap->setPos(360*ax-labelFightTrap->pixmap().width()/2.0,
+                           310*ay-labelFightTrap->pixmap().height()/2.0);
 
-    unsigned int t160=160*minRatio;
-    stackedWidgetFightBottomBar->setSize(w->width(),t160);
-    stackedWidgetFightBottomBar->setPos(0,w->height()-t160);
+    //info frames (enemy top-left, player bottom-right)
+    const int frameW=static_cast<int>(300*k);
+    const int frameH=static_cast<int>(88*k);
+    frameFightTop->setSize(frameW,frameH);
+    frameFightTop->setPos(220*ax-frameW/2.0,114*ay-frameH/2.0);
+    layoutInfoFrame(frameFightTop,labelFightTopName,labelFightTopLevel,progressBarFightTopHP,nullptr,k);
+    frameFightBottom->setSize(frameW,frameH);
+    frameFightBottom->setPos(630*ax-frameW/2.0,354*ay-frameH/2.0);
+    layoutInfoFrame(frameFightBottom,labelFightBottomName,labelFightBottomLevel,
+                    progressBarFightBottomHP,progressBarFightBottomExp,k);
+
+    //bottom action bar, full width
+    stackedWidgetFightBottomBar->setSize(W,barH);
+    stackedWidgetFightBottomBar->setPos(0,H-barH);
+
+    //buttons scale with the bar (two rows of two must fit in barH)
+    int bigW=static_cast<int>(210*k);
+    int bigH=static_cast<int>(64*k);
+    if(bigW<120)
+        bigW=120;
+    if(bigH<40)
+        bigH=40;
+    int smallW=static_cast<int>(150*k);
+    int smallH=static_cast<int>(52*k);
+    if(smallW<110)
+        smallW=110;
+    if(smallH<36)
+        smallH=36;
+    uint8_t bigFont=static_cast<uint8_t>(26*k);
+    if(bigFont<14)
+        bigFont=14;
+    uint8_t smallFont=static_cast<uint8_t>(20*k);
+    if(smallFont<12)
+        smallFont=12;
+    pushButtonFightAttack->setSize(bigW,bigH);
+    pushButtonFightAttack->setPixelSize(bigFont);
+    pushButtonFightBag->setSize(bigW,bigH);
+    pushButtonFightBag->setPixelSize(bigFont);
+    pushButtonFightMonster->setSize(bigW,bigH);
+    pushButtonFightMonster->setPixelSize(bigFont);
+    toolButtonFightQuit->setSize(bigW,bigH);
+    toolButtonFightQuit->setPixelSize(bigFont);
+    pushButtonFightEnterNext->setSize(smallW,smallH);
+    pushButtonFightEnterNext->setPixelSize(smallFont);
+    pushButtonFightAttackConfirmed->setSize(smallW,smallH);
+    pushButtonFightAttackConfirmed->setPixelSize(smallFont);
+    pushButtonFightReturn->setSize(smallW,smallH);
+    pushButtonFightReturn->setPixelSize(smallFont);
+
+    QFont barFont=labelFightEnter->font();
+    int barFontSize=static_cast<int>(18*k);
+    if(barFontSize<12)
+        barFontSize=12;
+    if(barFont.pixelSize()!=barFontSize)
+    {
+        barFont.setPixelSize(barFontSize);
+        labelFightEnter->setFont(barFont);
+        labelFightAttackDetails->setFont(barFont);
+    }
+
     switch(m_stackedWidgetFightBottomBarIndex)
     {
         case 0:
-            labelFightEnter->setPos(space,stackedWidgetFightBottomBar->height()/2-24/2);
-            pushButtonFightEnterNext->setPos(stackedWidgetFightBottomBar->width()-space-pushButtonFightEnterNext->width(),stackedWidgetFightBottomBar->height()/2-pushButtonFightEnterNext->height()/2);
+            //message + Next button
+            labelFightEnter->setPos(space*2,barH/2.0-labelFightEnter->boundingRect().height()/2.0);
+            pushButtonFightEnterNext->setPos(W-space*2-pushButtonFightEnterNext->width(),
+                                             barH/2-pushButtonFightEnterNext->height()/2);
         break;
         case 1:
-            pushButtonFightAttack->setPos(stackedWidgetFightBottomBar->width()/2-space/2-pushButtonFightAttack->width(),stackedWidgetFightBottomBar->height()/2-space/2-pushButtonFightAttack->height());
-            pushButtonFightBag->setPos(stackedWidgetFightBottomBar->width()/2+space/2+pushButtonFightBag->width(),stackedWidgetFightBottomBar->height()/2-space/2-pushButtonFightBag->height());
-            pushButtonFightMonster->setPos(stackedWidgetFightBottomBar->width()/2-space/2-pushButtonFightMonster->width(),stackedWidgetFightBottomBar->height()/2+space/2+pushButtonFightMonster->height());
-            toolButtonFightQuit->setPos(stackedWidgetFightBottomBar->width()/2+space/2+toolButtonFightQuit->width(),stackedWidgetFightBottomBar->height()/2+space/2+toolButtonFightQuit->height());
+            //2x2 action grid, centered: Attack | Bag / Monster | Escape
+            pushButtonFightAttack->setPos(W/2-space/2-pushButtonFightAttack->width(),barH/2-space/2-pushButtonFightAttack->height());
+            pushButtonFightBag->setPos(W/2+space/2,barH/2-space/2-pushButtonFightBag->height());
+            pushButtonFightMonster->setPos(W/2-space/2-pushButtonFightMonster->width(),barH/2+space/2);
+            toolButtonFightQuit->setPos(W/2+space/2,barH/2+space/2);
         break;
         case 2:
-            pushButtonFightReturn->setPos(stackedWidgetFightBottomBar->width()-space-pushButtonFightReturn->width(),stackedWidgetFightBottomBar->height()-space-pushButtonFightReturn->height());
-            pushButtonFightAttackConfirmed->setPos(stackedWidgetFightBottomBar->width()-space-pushButtonFightAttackConfirmed->width(),stackedWidgetFightBottomBar->height()-space-pushButtonFightReturn->height()-space-pushButtonFightAttackConfirmed->height());
-            labelFightAttackDetails->setPos(stackedWidgetFightBottomBar->width()/2+space/2,space);
+            //attack list left, details middle, confirm/return right
             listWidgetFightAttackProxy->setPos(space,space);
-            listWidgetFightAttack->setFixedSize(stackedWidgetFightBottomBar->width()/2-space-space/2,stackedWidgetFightBottomBar->height()-space*2);
+            listWidgetFightAttack->setFixedSize(W/2-space-space/2,barH-space*2);
+            labelFightAttackDetails->setPos(W/2+space/2,space);
+            {
+                int detailsWidth=W/2-space*3-pushButtonFightAttackConfirmed->width();
+                if(detailsWidth<50)
+                    detailsWidth=50;
+                labelFightAttackDetails->setTextWidth(detailsWidth);
+            }
+            pushButtonFightAttackConfirmed->setPos(W-space-pushButtonFightAttackConfirmed->width(),
+                                                   barH/2-space/2-pushButtonFightAttackConfirmed->height());
+            pushButtonFightReturn->setPos(W-space-pushButtonFightReturn->width(),barH/2+space/2);
         break;
     }
 }
 
 void Battle::mousePressEventXY(const QPointF &p, bool &pressValidated, bool &callParentClass)
 {
-    (void)callParentClass;
     pushButtonFightEnterNext->mousePressEventXY(p,pressValidated);
 
     pushButtonFightAttack->mousePressEventXY(p,pressValidated);
@@ -280,11 +379,17 @@ void Battle::mousePressEventXY(const QPointF &p, bool &pressValidated, bool &cal
 
     pushButtonFightAttackConfirmed->mousePressEventXY(p,pressValidated);
     pushButtonFightReturn->mousePressEventXY(p,pressValidated);
+
+    //the attack list is a QGraphicsProxyWidget: it receives the click only via
+    //the normal scene delivery (parent class), not via this XY dispatch
+    if(!pressValidated && m_stackedWidgetFightBottomBarIndex==2)
+        callParentClass=true;
+    //fullscreen modal screen: never let the click fall through to the map behind
+    pressValidated=true;
 }
 
 void Battle::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
-    (void)callParentClass;
     pushButtonFightEnterNext->mouseReleaseEventXY(p,pressValidated);
 
     pushButtonFightAttack->mouseReleaseEventXY(p,pressValidated);
@@ -294,6 +399,12 @@ void Battle::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &ca
 
     pushButtonFightAttackConfirmed->mouseReleaseEventXY(p,pressValidated);
     pushButtonFightReturn->mouseReleaseEventXY(p,pressValidated);
+
+    //see mousePressEventXY: scene delivery for the attack-list proxy, and no
+    //fall-through to the map behind the fullscreen battle
+    if(!pressValidated && m_stackedWidgetFightBottomBarIndex==2)
+        callParentClass=true;
+    pressValidated=true;
 }
 
 
@@ -797,95 +908,70 @@ void Battle::setVar(ConnexionManager *connexionManager)
     this->connexionManager=connexionManager;
 }
 
+//select the environment-specific art (map/fight/<zone>/ of the datapack) into
+//the *Pix members; paint() scales them to the current screen size. The items'
+//pixmaps are cleared so paint() re-scales from the new sources.
 void Battle::init_environement_display(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
-    //map not located
-    if(mapIndex>=QtDatapackClientLoader::datapackLoader->get_mapList().size())
-    {
-        labelFightBackgroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png"));
-        labelFightForegroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png"));
-        labelFightPlateformTopPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png"));
-        labelFightPlateformBottomPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png"));
-
-        labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png")).scaled(800,440));
-        labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png")).scaled(800,440));
-        labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png")).scaled(260,90));
-        labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
-        return;
-    }
-    const CatchChallenger::CommonMap &map=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
-    const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(map,x,y);
-    unsigned int index=0;
-    while(index<monstersCollisionValue.walkOn.size())
-    {
-        const CatchChallenger::MonstersCollision &monstersCollision=
-                CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(monstersCollisionValue.walkOn.at(index));
-        const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
-                CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(monstersCollisionValue.walkOn.at(index));
-        if(monstersCollision.item==0 || playerInformations.items.find(monstersCollision.item)!=playerInformations.items.cend())
-        {
-            if(!monstersCollisionTemp.background.empty())
-            {
-                const QString &baseSearch=QString::fromStdString(connexionManager->client->datapackPathBase())+DATAPACK_BASE_PATH_MAPBASE+
-                        QString::fromStdString(monstersCollisionTemp.background);
-                if(QFile(baseSearch+"/background.png").exists())
-                    labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.png")).scaled(800,440));
-                else if(QFile(baseSearch+"/background.jpg").exists())
-                {
-                    const QList<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
-                    if(supportedImageFormats.contains("jpeg") || supportedImageFormats.contains("jpg"))
-                        labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.jpg")).scaled(800,440));
-                }
-                else
-                    labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png")).scaled(800,440));
-
-                if(QFile(baseSearch+"/foreground.png").exists())
-                    labelFightForeground->setPixmap(QPixmap(baseSearch+QStringLiteral("/foreground.png")).scaled(800,440));
-                else if(QFile(baseSearch+"/foreground.gif").exists())
-                    labelFightForeground->setPixmap(QPixmap(baseSearch+QStringLiteral("/foreground.gif")).scaled(800,440));
-                else
-                    labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png")).scaled(800,440));
-
-                if(QFile(baseSearch+"/plateform-front.png").exists())
-                    labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QStringLiteral("/plateform-front.png")).scaled(260,90));
-                else if(QFile(baseSearch+"/plateform-front.gif").exists())
-                    labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QStringLiteral("/plateform-front.gif")).scaled(260,90));
-                else
-                    labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png")).scaled(260,90));
-
-                if(QFile(baseSearch+"/plateform-background.png").exists())
-                    labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QStringLiteral("/plateform-background.png")).scaled(230,90));
-                else if(QFile(baseSearch+"/plateform-background.gif").exists())
-                    labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QStringLiteral("/plateform-background.gif")).scaled(230,90));
-                else
-                    labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
-            }
-            else
-            {
-                labelFightBackgroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png"));
-                labelFightForegroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png"));
-                labelFightPlateformTopPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png"));
-                labelFightPlateformBottomPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png"));
-
-                labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png")).scaled(800,440));
-                labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png")).scaled(800,440));
-                labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png")).scaled(260,90));
-                labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
-            }
-            return;
-        }
-        index++;
-    }
+    //defaults (embedded resources), replaced below if the zone has its own art
     labelFightBackgroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png"));
     labelFightForegroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png"));
     labelFightPlateformTopPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png"));
     labelFightPlateformBottomPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png"));
 
-    labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png")).scaled(800,440));
-    labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png")).scaled(800,440));
-    labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png")).scaled(260,90));
-    labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
+    if(mapIndex<QtDatapackClientLoader::datapackLoader->get_mapList().size())
+    {
+        const CatchChallenger::CommonMap &map=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(map,x,y);
+        unsigned int index=0;
+        while(index<monstersCollisionValue.walkOn.size())
+        {
+            const CatchChallenger::MonstersCollision &monstersCollision=
+                    CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(monstersCollisionValue.walkOn.at(index));
+            const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
+                    CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(monstersCollisionValue.walkOn.at(index));
+            if(monstersCollision.item==0 || playerInformations.items.find(monstersCollision.item)!=playerInformations.items.cend())
+            {
+                if(!monstersCollisionTemp.background.empty())
+                {
+                    const QString &baseSearch=QString::fromStdString(connexionManager->client->datapackPathBase())+DATAPACK_BASE_PATH_MAPBASE+
+                            QString::fromStdString(monstersCollisionTemp.background);
+                    if(QFile(baseSearch+"/background.png").exists())
+                        labelFightBackgroundPix=QPixmap(baseSearch+QStringLiteral("/background.png"));
+                    else if(QFile(baseSearch+"/background.jpg").exists())
+                    {
+                        const QList<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
+                        if(supportedImageFormats.contains("jpeg") || supportedImageFormats.contains("jpg"))
+                            labelFightBackgroundPix=QPixmap(baseSearch+QStringLiteral("/background.jpg"));
+                    }
+
+                    if(QFile(baseSearch+"/foreground.png").exists())
+                        labelFightForegroundPix=QPixmap(baseSearch+QStringLiteral("/foreground.png"));
+                    else if(QFile(baseSearch+"/foreground.gif").exists())
+                        labelFightForegroundPix=QPixmap(baseSearch+QStringLiteral("/foreground.gif"));
+
+                    if(QFile(baseSearch+"/plateform-front.png").exists())
+                        labelFightPlateformTopPix=QPixmap(baseSearch+QStringLiteral("/plateform-front.png"));
+                    else if(QFile(baseSearch+"/plateform-front.gif").exists())
+                        labelFightPlateformTopPix=QPixmap(baseSearch+QStringLiteral("/plateform-front.gif"));
+
+                    if(QFile(baseSearch+"/plateform-background.png").exists())
+                        labelFightPlateformBottomPix=QPixmap(baseSearch+QStringLiteral("/plateform-background.png"));
+                    else if(QFile(baseSearch+"/plateform-background.gif").exists())
+                        labelFightPlateformBottomPix=QPixmap(baseSearch+QStringLiteral("/plateform-background.gif"));
+                }
+                break;
+            }
+            index++;
+        }
+    }
+
+    //force paint() to re-scale from the new sources
+    labelFightBackground->setPixmap(QPixmap());
+    labelFightForeground->setPixmap(QPixmap());
+    labelFightPlateformTop->setPixmap(QPixmap());
+    labelFightPlateformBottom->setPixmap(QPixmap());
 }
 
 void Battle::init_current_monster_display(CatchChallenger::PlayerMonster *fightMonster)
@@ -900,17 +986,16 @@ void Battle::init_current_monster_display(CatchChallenger::PlayerMonster *fightM
         pushButtonFightEnterNext->setVisible(true);
         frameFightBottom->setVisible(false);
         labelFightBottomName->setHtml(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(fightMonster->monster).name));
-        //labelFightBottomLevel->setText(tr("Level %1").arg(fightMonster->level));
+        labelFightBottomLevel->setHtml(tr("Level %1").arg(fightMonster->level));
         CatchChallenger::Monster::Stat fightStat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(fightMonster->monster),fightMonster->level);
         progressBarFightBottomHP->setMaximum(fightStat.hp);
         progressBarFightBottomHP->setValue(fightMonster->hp);
-        //progressBarFightBottomHP->repaint();
-        //labelFightBottomHP->setText(QStringLiteral("%1/%2").arg(fightMonster->hp).arg(fightStat.hp));
-        //const CatchChallenger::Monster &monsterGenericInfo=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(fightMonster->monster);
-        //int level_to_xp=monsterGenericInfo.level_to_xp.at(fightMonster->level-1);
-        //progressBarFightBottomExp->setMaximum(level_to_xp);
-        //progressBarFightBottomExp->setValue(fightMonster->remaining_xp);
-        //progressBarFightBottomExp->repaint();
+        const CatchChallenger::Monster &monsterGenericInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monster(fightMonster->monster);
+        if(fightMonster->level>=1 && static_cast<size_t>(fightMonster->level)<=monsterGenericInfo.level_to_xp.size())
+        {
+            progressBarFightBottomExp->setMaximum(monsterGenericInfo.level_to_xp.at(fightMonster->level-1));
+            progressBarFightBottomExp->setValue(fightMonster->remaining_xp);
+        }
         //do the buff, todo the remake
         /*{
             buffToGraphicalItemBottom.clear();
@@ -1127,19 +1212,23 @@ void Battle::updateOtherMonsterInformation()
         labelFightTopName->setHtml(QString::fromStdString(
             QtDatapackClientLoader::datapackLoader->get_monsterExtra(otherMonster->monster).name));
         const std::string &frontPath=QtDatapackClientLoader::datapackLoader->get_monsterExtra(otherMonster->monster).frontPath;
-        labelFightMonsterTop->setPixmap(QPixmap(QString::fromStdString(frontPath)).scaled(160,160));
+        monsterTopPixSrc=QPixmap(QString::fromStdString(frontPath));
     }
     else
     {
         labelFightTopName->setHtml(tr("Monster %1").arg(otherMonster->monster));
-        labelFightMonsterTop->setPixmap(QPixmap(":/CC/images/monsters/default/front.png").scaled(160,160));
+        monsterTopPixSrc=QPixmap();
     }
+    if(monsterTopPixSrc.isNull())
+        monsterTopPixSrc=QPixmap(":/CC/images/monsters/default/front.png");
+    labelFightMonsterTop->setPixmap(QPixmap());//force paint() to re-scale
+    labelFightTopLevel->setHtml(tr("Level %1").arg(otherMonster->level));
 
     CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(
         CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster),otherMonster->level);
     progressBarFightTopHP->setMaximum(stat.hp);
     progressBarFightTopHP->setValue(otherMonster->hp);
-    labelFightMonsterTop->setPos(510,90);
+    monsterTopDesignPos=QPointF(510,90);
 }
 
 void Battle::updateCurrentMonsterInformation()
@@ -1154,27 +1243,39 @@ void Battle::updateCurrentMonsterInformation()
         labelFightBottomName->setHtml(QString::fromStdString(
             QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster->monster).name));
         const std::string &backPath=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster->monster).backPath;
-        labelFightMonsterBottom->setPixmap(QPixmap(QString::fromStdString(backPath)).scaled(160,160));
+        monsterBottomPixSrc=QPixmap(QString::fromStdString(backPath));
     }
     else
     {
         labelFightBottomName->setHtml(tr("Monster %1").arg(monster->monster));
-        labelFightMonsterBottom->setPixmap(QPixmap(":/CC/images/monsters/default/back.png").scaled(160,160));
+        monsterBottomPixSrc=QPixmap();
     }
+    if(monsterBottomPixSrc.isNull())
+        monsterBottomPixSrc=QPixmap(":/CC/images/monsters/default/back.png");
+    labelFightMonsterBottom->setPixmap(QPixmap());//force paint() to re-scale
+    labelFightBottomLevel->setHtml(tr("Level %1").arg(monster->level));
 
     CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(
         CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster),monster->level);
     progressBarFightBottomHP->setMaximum(stat.hp);
     progressBarFightBottomHP->setValue(monster->hp);
-    labelFightMonsterBottom->setPos(60,280);
+    //XP progression toward the next level
+    const CatchChallenger::Monster &monsterDef=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster);
+    if(monster->level>=1 && static_cast<size_t>(monster->level)<=monsterDef.level_to_xp.size())
+    {
+        progressBarFightBottomExp->setMaximum(monsterDef.level_to_xp.at(monster->level-1));
+        progressBarFightBottomExp->setValue(monster->remaining_xp);
+    }
+    monsterBottomDesignPos=QPointF(60,280);
 }
 
 void Battle::resetPosition(bool both, bool top, bool bottom)
 {
+    //design-space positions: off-screen, ready to slide in
     if(bottom || both)
-        labelFightMonsterBottom->setPos(-200,280);
+        monsterBottomDesignPos=QPointF(-200,280);
     if(top || both)
-        labelFightMonsterTop->setPos(800,90);
+        monsterTopDesignPos=QPointF(800,90);
 }
 
 void Battle::startWildBattle(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
@@ -1187,6 +1288,8 @@ void Battle::startWildBattle(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const C
 
     init_environement_display(mapIndex,x,y);
     init_current_monster_display();
+    //load both sprites now so the monsters are visible during the slide-in
+    updateCurrentMonsterInformation();
     updateOtherMonsterInformation();
 
     // show enter text
@@ -1218,6 +1321,9 @@ void Battle::startBotBattle(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const CO
 
     init_environement_display(mapIndex,x,y);
     init_current_monster_display();
+    //load both sprites now so the monsters are visible during the slide-in
+    updateCurrentMonsterInformation();
+    updateOtherMonsterInformation();
 
     labelFightEnter->setHtml(tr("A trainer challenges you!"));
 
@@ -1234,11 +1340,12 @@ void Battle::startBotBattle(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const CO
 
 void Battle::moveFightMonsterBottom()
 {
-    QPointF pos=labelFightMonsterBottom->pos();
+    //animate in the 800x440 design space; paint() maps to screen coordinates
+    QPointF pos=monsterBottomDesignPos;
     if(moveType==MoveType_Enter)
     {
         pos.setX(pos.x()+4);
-        labelFightMonsterBottom->setPos(pos);
+        monsterBottomDesignPos=pos;
         if(pos.x()<60)
             moveFightMonsterBottomTimer.start();
         else
@@ -1250,7 +1357,7 @@ void Battle::moveFightMonsterBottom()
     else if(moveType==MoveType_Leave)
     {
         pos.setX(pos.x()-4);
-        labelFightMonsterBottom->setPos(pos);
+        monsterBottomDesignPos=pos;
         if(pos.x()>-160)
             moveFightMonsterBottomTimer.start();
         else
@@ -1277,7 +1384,7 @@ void Battle::moveFightMonsterBottom()
     else if(moveType==MoveType_Dead)
     {
         pos.setY(pos.y()+4);
-        labelFightMonsterBottom->setPos(pos);
+        monsterBottomDesignPos=pos;
         if(pos.y()<440)
             moveFightMonsterBottomTimer.start();
         else
@@ -1291,11 +1398,12 @@ void Battle::moveFightMonsterBottom()
 
 void Battle::moveFightMonsterTop()
 {
-    QPointF pos=labelFightMonsterTop->pos();
+    //animate in the 800x440 design space; paint() maps to screen coordinates
+    QPointF pos=monsterTopDesignPos;
     if(moveType==MoveType_Enter)
     {
         pos.setX(pos.x()-4);
-        labelFightMonsterTop->setPos(pos);
+        monsterTopDesignPos=pos;
         if(pos.x()>510)
             moveFightMonsterTopTimer.start();
         else
@@ -1307,7 +1415,7 @@ void Battle::moveFightMonsterTop()
     else if(moveType==MoveType_Leave)
     {
         pos.setX(pos.x()+4);
-        labelFightMonsterTop->setPos(pos);
+        monsterTopDesignPos=pos;
         if(pos.x()<800)
             moveFightMonsterTopTimer.start();
         else
@@ -1316,7 +1424,7 @@ void Battle::moveFightMonsterTop()
     else if(moveType==MoveType_Dead)
     {
         pos.setX(pos.x()+4);
-        labelFightMonsterTop->setPos(pos);
+        monsterTopDesignPos=pos;
         if(pos.x()<800)
             moveFightMonsterTopTimer.start();
         else
@@ -1330,16 +1438,34 @@ void Battle::moveFightMonsterTop()
 
 void Battle::moveFightMonsterBoth()
 {
-    //paint() re-lays-out the monster sprites every frame in the responsive
-    //coordinate system (finalX + minRatio-scaled), which overrides any per-tile
-    //slide the old 800x440-hardcoded animation tried (it never reached the 510/60
-    //thresholds -> looped forever -> the fight soft-locked at the intro). Go
-    //straight to the ready state and reveal the Next button.
-    pushButtonFightEnterNext->setVisible(true);
-    updateOtherMonsterInformation();
-    updateCurrentMonsterInformation();
-    frameFightTop->setVisible(true);
-    frameFightBottom->setVisible(true);
+    //slide both monsters onto their platform in the 800x440 design space
+    //(paint() maps the design positions to screen, so the animation no longer
+    //fights the per-frame layout); when both arrived, reveal the info frames
+    //and the Next button
+    bool bottomArrived=false;
+    bool topArrived=false;
+    monsterBottomDesignPos.setX(monsterBottomDesignPos.x()+4);
+    if(monsterBottomDesignPos.x()>=60)
+    {
+        monsterBottomDesignPos.setX(60);
+        bottomArrived=true;
+    }
+    monsterTopDesignPos.setX(monsterTopDesignPos.x()-4);
+    if(monsterTopDesignPos.x()<=510)
+    {
+        monsterTopDesignPos.setX(510);
+        topArrived=true;
+    }
+    if(!bottomArrived || !topArrived)
+        moveFightMonsterBothTimer.start();
+    else
+    {
+        updateOtherMonsterInformation();
+        updateCurrentMonsterInformation();
+        frameFightTop->setVisible(true);
+        frameFightBottom->setVisible(true);
+        pushButtonFightEnterNext->setVisible(true);
+    }
 }
 
 void Battle::doNextAction()
