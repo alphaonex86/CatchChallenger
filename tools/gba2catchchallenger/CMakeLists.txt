@@ -1,7 +1,6 @@
 # gba2catchchallenger — convert a Gen3 GBA ROM into a CatchChallenger datapack
 # region (maps + rendered tilesets).  Self-contained, one binary.  Pulls
-# catchchallenger_general (datapack base, zstd, tinyxml2) and compiles the
-# client datapack loader so the base datapack is read exactly like the client.
+# catchchallenger_general (datapack base, zstd, tinyxml2).
 
 cmake_minimum_required(VERSION 3.20)
 project(gba2catchchallenger LANGUAGES C CXX)
@@ -33,18 +32,6 @@ add_executable(gba2catchchallenger
     FullWriter.cpp
     SpriteRipper.cpp
     M4aRipper.cpp
-    DatapackBase.cpp
-    ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackClientLoader.cpp
-    ${CC_REPO_ROOT}/client/libcatchchallenger/DatapackChecksum.cpp
-)
-
-target_include_directories(gba2catchchallenger PRIVATE
-    ${CC_REPO_ROOT}/client/libcatchchallenger
-    ${CC_REPO_ROOT}/general/base
-)
-
-set_target_properties(gba2catchchallenger PROPERTIES
-    AUTOMOC ON
 )
 
 target_link_libraries(gba2catchchallenger PRIVATE

@@ -44,6 +44,8 @@ public:
              SkinResolver &skins,
              const ItemResolver &items);
 
+    // true = every output file written AND all three guards PASS
+    // (layer-visibility, top-layer-cover, render-visibility).
     bool writeAll();
 
     // Music file naming.  A BGM is shared by many maps, so each ripped song is
@@ -138,6 +140,7 @@ private:
     int renderInvisible_;                      // layers whose hide changed nothing
     std::vector<std::string> renderInvisibleList_;
     bool itemTilesetWritten_;                  // tileset/items.tsx emitted
+    bool writeFailed_;                         // any output file skipped/unwritable
     int itemsTotal_;                           // ground+hidden items emitted
     int itemsDropped_;                         // refs without even a name (skipped)
     int itemsByName_;                          // emitted by name, not yet in items.xml

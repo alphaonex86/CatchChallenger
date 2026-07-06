@@ -35,11 +35,44 @@ static std::string xmlEscape(const std::string &s)
     return o;
 }
 
-// ── monsters/type.xml ──
-void FullWriter::writeTypes()
+static bool ensureDir(const std::string &path)
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters"));
-    std::ofstream o(outRoot_ + "/monsters/type.xml");
+    if(QDir().mkpath(QString::fromStdString(path)))
+        return true;
+    std::cerr << "FullWriter: cannot create " << path << std::endl;
+    return false;
+}
+
+static bool writeTextFile(const std::string &path, const std::string &content)
+{
+    std::ofstream o(path);
+    if(!o)
+    {
+        std::cerr << "FullWriter: cannot write " << path << std::endl;
+        return false;
+    }
+    o << content;
+    o.flush();
+    if(!o)
+    {
+        std::cerr << "FullWriter: write failed: " << path << std::endl;
+        return false;
+    }
+    return true;
+}
+
+// ── monsters/type.xml ──
+bool FullWriter::writeTypes()
+{
+    if(!ensureDir(outRoot_ + "/monsters"))
+        return false;
+    const std::string path = outRoot_ + "/monsters/type.xml";
+    std::ofstream o(path);
+    if(!o)
+    {
+        std::cerr << "FullWriter: cannot write " << path << std::endl;
+        return false;
+    }
     o << "<!-- Generated from the Gen3 type chart -->\n<types>\n";
     int t = 0;
     while(t < Gen3Data::typeCount())
@@ -68,13 +101,27 @@ void FullWriter::writeTypes()
         ++t;
     }
     o << "</types>\n";
+    o.flush();
+    if(!o)
+    {
+        std::cerr << "FullWriter: write failed: " << path << std::endl;
+        return false;
+    }
+    return true;
 }
 
 // ── monsters/skill/skill.xml ──
-void FullWriter::writeSkills()
+bool FullWriter::writeSkills()
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters/skill"));
-    std::ofstream o(outRoot_ + "/monsters/skill/skill.xml");
+    if(!ensureDir(outRoot_ + "/monsters/skill"))
+        return false;
+    const std::string path = outRoot_ + "/monsters/skill/skill.xml";
+    std::ofstream o(path);
+    if(!o)
+    {
+        std::cerr << "FullWriter: cannot write " << path << std::endl;
+        return false;
+    }
     o << "<!-- Generated from gBattleMoves. id=0 is the mandatory fallback -->\n<skills>\n";
     o << "    <skill type=\"normal\" category=\"Physical\" id=\"0\">\n";
     o << "        <name>Struggle</name>\n";
@@ -98,17 +145,31 @@ void FullWriter::writeSkills()
         o << "            </level>\n        </effect>\n    </skill>\n";
     }
     o << "</skills>\n";
+    o.flush();
+    if(!o)
+    {
+        std::cerr << "FullWriter: write failed: " << path << std::endl;
+        return false;
+    }
+    return true;
 }
 
 // ── monsters/monster.xml ──
-void FullWriter::writeMonsters()
+bool FullWriter::writeMonsters()
 {
     std::unordered_set<int> validSpecies;
     std::size_t i = 0;
     while(i < data_.species().size()) { validSpecies.insert(data_.species()[i].id); ++i; }
 
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters"));
-    std::ofstream o(outRoot_ + "/monsters/monster.xml");
+    if(!ensureDir(outRoot_ + "/monsters"))
+        return false;
+    const std::string path = outRoot_ + "/monsters/monster.xml";
+    std::ofstream o(path);
+    if(!o)
+    {
+        std::cerr << "FullWriter: cannot write " << path << std::endl;
+        return false;
+    }
     o << "<!-- Generated from gBaseStats/gLevelUpLearnsets/gEvolutionTable -->\n<monsters>\n";
 
     i = 0;
@@ -181,15 +242,29 @@ void FullWriter::writeMonsters()
         o << "    </monster>\n";
     }
     o << "</monsters>\n";
+    o.flush();
+    if(!o)
+    {
+        std::cerr << "FullWriter: write failed: " << path << std::endl;
+        return false;
+    }
+    return true;
 }
 
 // ── items/items.xml ──
-void FullWriter::writeItems()
+bool FullWriter::writeItems()
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/items"));
+    if(!ensureDir(outRoot_ + "/items"))
+        return false;
     SpriteRipper ripper;
     ripper.locate(rom_);
-    std::ofstream o(outRoot_ + "/items/items.xml");
+    const std::string path = outRoot_ + "/items/items.xml";
+    std::ofstream o(path);
+    if(!o)
+    {
+        std::cerr << "FullWriter: cannot write " << path << std::endl;
+        return false;
+    }
     o << "<!-- Generated from gItems + gItemIconTable -->\n<items>\n";
     int icons = 0;
     int firstIcon = -1; // fallback image for the few items past the icon table
@@ -212,7 +287,14 @@ void FullWriter::writeItems()
         o << ">\n        <name>" << xmlEscape(it.name) << "</name>\n    </item>\n";
     }
     o << "</items>\n";
+    o.flush();
+    if(!o)
+    {
+        std::cerr << "FullWriter: write failed: " << path << std::endl;
+        return false;
+    }
     std::cerr << "FullWriter: " << icons << " item icons extracted." << std::endl;
+    return true;
 }
 
 // ── monster battle sprites ──
@@ -244,10 +326,11 @@ int FullWriter::firstSpeciesId() const
 
 // A placeholder player skin (valid dimensions) so the start profile resolves.
 // front/back are the species' starter sprite tinted; trainer/swim a simple figure.
-void FullWriter::writePlayerSkin()
+bool FullWriter::writePlayerSkin()
 {
     const std::string dir = outRoot_ + "/skin/fighter/player";
-    QDir().mkpath(QString::fromStdString(dir));
+    if(!ensureDir(dir))
+        return false;
     const QString base = QString::fromStdString(dir) + "/";
     QImage front(80, 80, QImage::Format_ARGB32);
     front.fill(Qt::transparent);
@@ -257,8 +340,8 @@ void FullWriter::writePlayerSkin()
     p.drawEllipse(24, 8, 32, 32);                 // head
     p.drawRoundedRect(20, 36, 40, 40, 8, 8);      // body
     p.end();
-    front.save(base + "front.png", "PNG");
-    front.mirrored(true, false).save(base + "back.png", "PNG");
+    bool ok = front.save(base + "front.png", "PNG");
+    ok = front.mirrored(true, false).save(base + "back.png", "PNG") && ok;
     QImage trainer(48, 96, QImage::Format_ARGB32);
     trainer.fill(Qt::transparent);
     QPainter t(&trainer);
@@ -266,89 +349,109 @@ void FullWriter::writePlayerSkin()
     int r = 0;
     while(r < 4) { t.setBrush(QColor(70,110,200,255)); t.setPen(Qt::NoPen); t.drawEllipse(16, r*24+2, 16, 10); t.drawRect(14, r*24+12, 20, 11); ++r; }
     t.end();
-    trainer.save(base + "trainer.png", "PNG");
-    trainer.save(base + "swim.png", "PNG");
+    ok = trainer.save(base + "trainer.png", "PNG") && ok;
+    ok = trainer.save(base + "swim.png", "PNG") && ok;
+    if(!ok)
+        std::cerr << "FullWriter: cannot write player skin under " << dir << std::endl;
+    return ok;
 }
 
-void FullWriter::writeCompleteness()
+bool FullWriter::writeCompleteness()
 {
-    writePlayerSkin();
+    if(!writePlayerSkin())
+        return false;
     const int starter = firstSpeciesId();
 
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/player"));
-    {
-        std::ofstream o(outRoot_ + "/player/start.xml");
-        o << "<profile>\n    <start id=\"Normal\">\n";
-        o << "        <name>Trainer</name>\n        <description>Start a new adventure</description>\n";
-        o << "        <forcedskin value=\"player\"/>\n        <cash value=\"3000\"/>\n";
-        o << "        <monstergroup>\n            <monster id=\"" << starter << "\" level=\"5\" captured_with=\"4\"/>\n        </monstergroup>\n";
-        o << "        <reputation type=\"nation\" level=\"1\"/>\n";
-        o << "        <item quantity=\"5\" id=\"4\"/>\n";   // Poke Ball
-        o << "    </start>\n</profile>\n";
-    }
-    {
-        std::ofstream o(outRoot_ + "/player/reputation.xml");
-        o << "<reputations>\n    <reputation type=\"nation\">\n        <name>Nation</name>\n";
-        o << "        <level point=\"-500\"><text>Outlaw</text></level>\n";
-        o << "        <level point=\"0\"><text>Citizen</text></level>\n";
-        o << "        <level point=\"500\"><text>Champion</text></level>\n";
-        o << "    </reputation>\n</reputations>\n";
-    }
-    {
-        std::ofstream o(outRoot_ + "/player/event.xml");
-        o << "<events>\n    <event id=\"day\">\n        <value>day</value>\n        <value>night</value>\n    </event>\n</events>\n";
-    }
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/map"));
-    {
-        std::ofstream o(outRoot_ + "/map/layers.xml");
-        o << "<layers zoom=\"4\">\n";
-        o << "    <monstersCollision monsterType=\"grass\" background=\"fight/grass/\" layer=\"Grass\" type=\"walkOn\"/>\n";
-        o << "    <monstersCollision monsterType=\"cave\" background=\"fight/cave/\" type=\"walkOn\"/>\n";
-        o << "    <monstersCollision item=\"4\" tile=\"swim\" background=\"fight/water/\" layer=\"Water\" type=\"walkOn\" monsterType=\"water\"/>\n";
-        o << "</layers>\n";
-    }
-    {
-        std::ofstream o(outRoot_ + "/map/visualcategory.xml");
-        o << "<visual>\n    <category id=\"indoor\"/>\n    <category id=\"outdoor\">\n";
-        o << "        <event id=\"day\" value=\"night\" color=\"#000099\" alpha=\"50\"/>\n    </category>\n";
-        o << "    <category id=\"city\"><event id=\"day\" value=\"night\" color=\"#000099\" alpha=\"50\"/></category>\n";
-        o << "    <category id=\"cave\" color=\"#000000\" alpha=\"60\"/>\n</visual>\n";
-    }
+    if(!ensureDir(outRoot_ + "/player"))
+        return false;
+    std::string start;
+    start += "<profile>\n    <start id=\"Normal\">\n";
+    start += "        <name>Trainer</name>\n        <description>Start a new adventure</description>\n";
+    start += "        <forcedskin value=\"player\"/>\n        <cash value=\"3000\"/>\n";
+    start += "        <monstergroup>\n            <monster id=\"" + std::to_string(starter) + "\" level=\"5\" captured_with=\"4\"/>\n        </monstergroup>\n";
+    start += "        <reputation type=\"nation\" level=\"1\"/>\n";
+    start += "        <item quantity=\"5\" id=\"4\"/>\n";   // Poke Ball
+    start += "    </start>\n</profile>\n";
+    if(!writeTextFile(outRoot_ + "/player/start.xml", start))
+        return false;
+    if(!writeTextFile(outRoot_ + "/player/reputation.xml",
+            "<reputations>\n    <reputation type=\"nation\">\n        <name>Nation</name>\n"
+            "        <level point=\"-500\"><text>Outlaw</text></level>\n"
+            "        <level point=\"0\"><text>Citizen</text></level>\n"
+            "        <level point=\"500\"><text>Champion</text></level>\n"
+            "    </reputation>\n</reputations>\n"))
+        return false;
+    if(!writeTextFile(outRoot_ + "/player/event.xml",
+            "<events>\n    <event id=\"day\">\n        <value>day</value>\n        <value>night</value>\n    </event>\n</events>\n"))
+        return false;
+    if(!ensureDir(outRoot_ + "/map"))
+        return false;
+    if(!writeTextFile(outRoot_ + "/map/layers.xml",
+            "<layers zoom=\"4\">\n"
+            "    <monstersCollision monsterType=\"grass\" background=\"fight/grass/\" layer=\"Grass\" type=\"walkOn\"/>\n"
+            "    <monstersCollision monsterType=\"cave\" background=\"fight/cave/\" type=\"walkOn\"/>\n"
+            "    <monstersCollision item=\"4\" tile=\"swim\" background=\"fight/water/\" layer=\"Water\" type=\"walkOn\" monsterType=\"water\"/>\n"
+            "</layers>\n"))
+        return false;
+    if(!writeTextFile(outRoot_ + "/map/visualcategory.xml",
+            "<visual>\n    <category id=\"indoor\"/>\n    <category id=\"outdoor\">\n"
+            "        <event id=\"day\" value=\"night\" color=\"#000099\" alpha=\"50\"/>\n    </category>\n"
+            "    <category id=\"city\"><event id=\"day\" value=\"night\" color=\"#000099\" alpha=\"50\"/></category>\n"
+            "    <category id=\"cave\" color=\"#000000\" alpha=\"60\"/>\n</visual>\n"))
+        return false;
     // fight backgrounds (placeholder platforms; background is solid)
     const char *terr[] = {"grass","cave","water"};
     int ti = 0;
     while(ti < 3)
     {
         const std::string d = outRoot_ + "/map/fight/" + terr[ti];
-        QDir().mkpath(QString::fromStdString(d));
+        if(!ensureDir(d))
+            return false;
         QImage bg(240, 160, QImage::Format_ARGB32);
         bg.fill(ti == 1 ? QColor(40,30,50) : (ti == 2 ? QColor(60,110,170) : QColor(110,170,90)));
-        bg.save(QString::fromStdString(d) + "/background.png", "PNG");
+        bool ok = bg.save(QString::fromStdString(d) + "/background.png", "PNG");
         QImage plat(160, 48, QImage::Format_ARGB32); plat.fill(Qt::transparent);
         QPainter pp(&plat); pp.setRenderHint(QPainter::Antialiasing,true); pp.setPen(Qt::NoPen);
         pp.setBrush(QColor(0,0,0,70)); pp.drawEllipse(2,2,156,44); pp.end();
-        plat.save(QString::fromStdString(d) + "/plateform-background.png", "PNG");
-        plat.save(QString::fromStdString(d) + "/plateform-front.png", "PNG");
+        ok = plat.save(QString::fromStdString(d) + "/plateform-background.png", "PNG") && ok;
+        ok = plat.save(QString::fromStdString(d) + "/plateform-front.png", "PNG") && ok;
+        if(!ok)
+        {
+            std::cerr << "FullWriter: cannot write fight background under " << d << std::endl;
+            return false;
+        }
         ++ti;
     }
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/plants"));
-    { std::ofstream o(outRoot_ + "/plants/plants.xml"); o << "<plants>\n</plants>\n"; }
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/crafting"));
-    { std::ofstream o(outRoot_ + "/crafting/recipes.xml"); o << "<recipes>\n</recipes>\n"; }
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters/buff"));
-    { std::ofstream o(outRoot_ + "/monsters/buff/buff.xml"); o << "<buffs>\n</buffs>\n"; }
+    if(!ensureDir(outRoot_ + "/plants"))
+        return false;
+    if(!writeTextFile(outRoot_ + "/plants/plants.xml", "<plants>\n</plants>\n"))
+        return false;
+    if(!ensureDir(outRoot_ + "/crafting"))
+        return false;
+    if(!writeTextFile(outRoot_ + "/crafting/recipes.xml", "<recipes>\n</recipes>\n"))
+        return false;
+    if(!ensureDir(outRoot_ + "/monsters/buff"))
+        return false;
+    if(!writeTextFile(outRoot_ + "/monsters/buff/buff.xml", "<buffs>\n</buffs>\n"))
+        return false;
 
     std::cerr << "FullWriter: wrote completeness files (start/reputation/event/layers/visualcategory/fight-bg)" << std::endl;
+    return true;
 }
 
 bool FullWriter::writeAll()
 {
-    writeTypes();
-    writeSkills();
-    writeMonsters();
-    writeItems();
+    if(!writeTypes())
+        return false;
+    if(!writeSkills())
+        return false;
+    if(!writeMonsters())
+        return false;
+    if(!writeItems())
+        return false;
     writeSprites();
-    writeCompleteness();
+    if(!writeCompleteness())
+        return false;
     std::cerr << "FullWriter: wrote " << data_.species().size() << " monsters, "
               << data_.moves().size() << " skills, " << data_.items().size()
               << " items, " << Gen3Data::typeCount() << " types at " << outRoot_ << std::endl;

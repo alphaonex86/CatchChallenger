@@ -8,6 +8,7 @@
 #include <QPainter>
 #include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -53,6 +54,7 @@ CCWriter::CCWriter(const GbaRom &rom,
     renderLayers_(0),
     renderInvisible_(0),
     itemTilesetWritten_(false),
+    writeFailed_(false),
     itemsTotal_(0),
     itemsDropped_(0),
     itemsByName_(0),
@@ -231,6 +233,14 @@ static bool layerHasTile(const std::vector<uint32_t> &gids)
         i++;
     }
     return false;
+}
+
+// One tile <layer> element; data is the already-encoded payload from encodeLayer.
+static void emitTileLayer(std::ostream &out, int &layerId, const char *name,
+                          uint32_t w, uint32_t h, const std::string &data)
+{
+    out << " <layer id=\"" << layerId++ << "\" name=\"" << name << "\" width=\"" << w << "\" height=\"" << h << "\">\n";
+    out << "  <data encoding=\"base64\" compression=\"zstd\">" << data << "</data>\n </layer>\n";
 }
 
 std::string CCWriter::encodeLayer(const std::vector<uint32_t> &gids) const
@@ -487,7 +497,7 @@ bool CCWriter::writeAll()
         while(k<guardTopCoverList_.size()){ std::cout << "  " << guardTopCoverList_[k] << std::endl; k++; }
     }
     renderVisibilityGuard();
-    return true;
+    return !writeFailed_ && guardMasked_==0 && guardTopCover_==0 && renderInvisible_==0;
 }
 
 // Per-thread accumulator + the shared render queue for the parallel guard.
@@ -642,7 +652,12 @@ void CCWriter::ensureItemTileset(uint8_t graphicsId)
         y++;
     }
     QDir().mkpath(QString::fromStdString(fireredDir_+"/tileset"));
-    tile.save(QString::fromStdString(fireredDir_+"/tileset/items.png"),"PNG");
+    if(!tile.save(QString::fromStdString(fireredDir_+"/tileset/items.png"),"PNG"))
+    {
+        std::cerr << "Cannot write " << fireredDir_ << "/tileset/items.png" << std::endl;
+        writeFailed_=true;
+        return;
+    }
     std::ofstream tsx(fireredDir_+"/tileset/items.tsx");
     if(tsx)
     {
@@ -650,8 +665,13 @@ void CCWriter::ensureItemTileset(uint8_t graphicsId)
         tsx << "<tileset name=\"items\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"1\" columns=\"1\">\n";
         tsx << " <image source=\"items.png\" width=\"16\" height=\"16\"/>\n";
         tsx << "</tileset>\n";
+        itemTilesetWritten_=true;
     }
-    itemTilesetWritten_=true;
+    else
+    {
+        std::cerr << "Cannot write " << fireredDir_ << "/tileset/items.tsx" << std::endl;
+        writeFailed_=true;
+    }
 }
 
 void CCWriter::writeMap(const DecodedMap &map)
@@ -666,6 +686,7 @@ void CCWriter::writeMap(const DecodedMap &map)
     if(invFirst==0)
     {
         std::cerr << "No tileset for map " << naming_.pathFor(map.group,map.map) << std::endl;
+        writeFailed_=true;
         return;
     }
     uint32_t botGid=invFirst+0;
@@ -858,6 +879,7 @@ void CCWriter::writeMap(const DecodedMap &map)
     if(!out)
     {
         std::cerr << "Cannot write map: " << path << std::endl;
+        writeFailed_=true;
         return;
     }
 
@@ -897,18 +919,11 @@ void CCWriter::writeMap(const DecodedMap &map)
     // and both visibility guards already skip it; writing it just bloats the .tmx
     // (e.g. an unused LedgesLeft, or a Collisions layer on a collision-less sea map).
     int layerId=1;
-    out << " <layer id=\"" << layerId++ << "\" name=\"Walkable\" width=\"" << w << "\" height=\"" << h << "\">\n";
-    out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(walkable) << "</data>\n </layer>\n";
+    emitTileLayer(out,layerId,"Walkable",w,h,encodeLayer(walkable));
     if(layerHasTile(grass))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"Grass\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(grass) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"Grass",w,h,encodeLayer(grass));
     if(layerHasTile(water))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"Water\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(water) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"Water",w,h,encodeLayer(water));
     // Each ledge direction is emitted ONLY when it actually has tiles (a typical
     // town has no ledges at all; a route may have only one or two directions).
     // The direction is the Gen3 jump behaviour (0x38 east/0x39 west/0x3A north/
@@ -917,51 +932,30 @@ void CCWriter::writeMap(const DecodedMap &map)
     // LedgesRight cell lets the player step right onto/over it and blocks a left
     // move as a collision — see MoveOnTheMap::isWalkableWithDirection.
     if(layerHasTile(ledgeUp))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"LedgesUp\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeUp) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"LedgesUp",w,h,encodeLayer(ledgeUp));
     if(layerHasTile(ledgeDown))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"LedgesDown\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeDown) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"LedgesDown",w,h,encodeLayer(ledgeDown));
     if(layerHasTile(ledgeLeft))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"LedgesLeft\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeLeft) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"LedgesLeft",w,h,encodeLayer(ledgeLeft));
     if(layerHasTile(ledgeRight))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"LedgesRight\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(ledgeRight) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"LedgesRight",w,h,encodeLayer(ledgeRight));
     // First "Collisions" layer: the below-player tiles of collidable cells.  Omit
     // it when the map has none (an open-sea map is all Water) — an absent and an
     // all-zero Collisions layer are identical to the engine (CollisionsBin stays
     // unused), so skipping the empty one only avoids the dead layer.
     if(layerHasTile(collisions))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"Collisions\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(collisions) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"Collisions",w,h,encodeLayer(collisions));
     // 2nd "Collisions" layer: the over-tiles of collidable cells, superposed on the
     // first.  The engine OR-merges layers named "Collisions" for blocking, so this
     // is purely visual stacking (the full building/tree renders BELOW the player);
     // it does not lift those tiles above the player like WalkBehind would.
     if(layerHasTile(collisions2))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"Collisions\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(collisions2) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"Collisions",w,h,encodeLayer(collisions2));
     // WalkBehind holds the lifted overlay tiles and must be the last tile layer:
     // the client inserts the player sprite just before it, so these draw above
     // the player (tree tops, roofs, ...) — but ONLY for player-reachable cells.
     if(layerHasTile(walkbehind))
-    {
-        out << " <layer id=\"" << layerId++ << "\" name=\"WalkBehind\" width=\"" << w << "\" height=\"" << h << "\">\n";
-        out << "  <data encoding=\"base64\" compression=\"zstd\">" << encodeLayer(walkbehind) << "</data>\n </layer>\n";
-    }
+        emitTileLayer(out,layerId,"WalkBehind",w,h,encodeLayer(walkbehind));
 
     // Moving group: warps -> door, connections -> border-*.
     out << " <objectgroup id=\"100\" name=\"Moving\">\n";
@@ -993,21 +987,17 @@ void CCWriter::writeMap(const DecodedMap &map)
             // "teleport on push"/"teleport on it" use invisible.tsx tile 2; a
             // real door references its own animated door tile (or the client
             // deletes it for lacking an animation).
-            std::string warpKind="teleport on it";
+            uint16_t wmeta=static_cast<uint16_t>(map.blockAt(rom_,warp.x,warp.y) & 0x3FF);
+            uint16_t wbeh=tilesets_.behavior(map,wmeta);
+            std::string warpKind=decoder_.warpType(wbeh);
             uint32_t warpGid=teleportGid;
-            if(warp.x<w && warp.y<h)
+            if(warpKind=="door")
             {
-                uint16_t wmeta=static_cast<uint16_t>(map.blockAt(rom_,warp.x,warp.y) & 0x3FF);
-                uint16_t wbeh=tilesets_.behavior(map,wmeta);
-                warpKind=decoder_.warpType(wbeh);
-                if(warpKind=="door")
-                {
-                    uint32_t dg=tilesets_.doorGid(map,wmeta);
-                    if(dg!=0)
-                        warpGid=dg;
-                    else
-                        warpKind="teleport on it"; // no anim tile -> keep the warp alive
-                }
+                uint32_t dg=tilesets_.doorGid(map,wmeta);
+                if(dg!=0)
+                    warpGid=dg;
+                else
+                    warpKind="teleport on it"; // no anim tile -> keep the warp alive
             }
             out << "  <object id=\"" << nextObjectId++ << "\" type=\"" << warpKind << "\" gid=\"" << warpGid
                 << "\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
@@ -1183,6 +1173,7 @@ void CCWriter::writeInformations()
     if(!out)
     {
         std::cerr << "Cannot write " << path << std::endl;
+        writeFailed_=true;
         return;
     }
     out << "<?xml version='1.0'?>\n";
@@ -1216,20 +1207,30 @@ void CCWriter::writeStart()
     uint32_t h=static_cast<uint32_t>(startMap->height);
     uint32_t sx=w/2;
     uint32_t sy=h/2;
-    // search outward for a non-blocked cell
+    // Nearest-centre collision-free cell (same pattern as the rescue point),
+    // skipping behaviour-driven terrain (water/grass/ledges are collision 0 in
+    // Gen3 but are bad spawn cells).
+    uint32_t bestd=0xFFFFFFFFu;
     uint32_t cy=0;
-    bool found=false;
-    while(cy<h && !found)
+    while(cy<h)
     {
         uint32_t cx=0;
         while(cx<w)
         {
             uint16_t block=startMap->blockAt(rom_,cx,cy);
             uint8_t collisionBits=static_cast<uint8_t>((block>>10) & 0x3);
-            if(collisionBits==0)
+            if(collisionBits==0 &&
+               decoder_.terrain(tilesets_.behavior(*startMap,static_cast<uint16_t>(block&0x3FF)))==Terrain::Normal)
             {
-                sx=cx; sy=cy; found=true;
-                break;
+                uint32_t dx=(cx>w/2)?cx-w/2:w/2-cx;
+                uint32_t dy=(cy>h/2)?cy-h/2:h/2-cy;
+                uint32_t d=dx*dx+dy*dy;
+                if(d<bestd)
+                {
+                    bestd=d;
+                    sx=cx;
+                    sy=cy;
+                }
             }
             cx++;
         }
@@ -1238,7 +1239,11 @@ void CCWriter::writeStart()
     std::string path=fireredDir_+"/start.xml";
     std::ofstream out(path);
     if(!out)
+    {
+        std::cerr << "Cannot write " << path << std::endl;
+        writeFailed_=true;
         return;
+    }
     out << "<profile>\n";
     out << " <start id=\"normal\">\n";
     out << "  <map file=\"" << naming_.pathFor(startMap->group,startMap->map) << "\" x=\"" << sx << "\" y=\"" << sy << "\" />\n";
@@ -1265,6 +1270,11 @@ void CCWriter::writeZones()
                 out << "<zone>\n";
                 out << " <name>" << zones[i].second << "</name>\n";
                 out << "</zone>\n";
+            }
+            else
+            {
+                std::cerr << "Cannot write " << dir << "/" << slug << ".xml" << std::endl;
+                writeFailed_=true;
             }
         }
         i++;
@@ -1485,7 +1495,11 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     std::string path=fireredDir_+"/"+myPath+".xml";
     std::ofstream out(path);
     if(!out)
+    {
+        std::cerr << "Cannot write " << path << std::endl;
+        writeFailed_=true;
         return;
+    }
     std::string type=naming_.typeFor(map.group,map.map);
     std::string zone=naming_.zoneFor(map.group,map.map);
     std::string name=naming_.displayFor(map.group,map.map);
@@ -1587,6 +1601,16 @@ void CCWriter::writeMapXml(const DecodedMap &map)
             while(ii<res.itemIds.size())
             {
                 std::string in=script_.itemName(res.itemIds[ii]);
+                if(in.empty())
+                {
+                    // Hack ROMs have no per-game name table: fall back to the
+                    // auto-located gItems names (the engine keys
+                    // tempNameToItemId on the lowercase name).
+                    std::unordered_map<uint16_t,std::string>::const_iterator f=
+                        items_.gen3Name.find(res.itemIds[ii]);
+                    if(f!=items_.gen3Name.cend())
+                        in=f->second;
+                }
                 if(!in.empty())
                     body+="   <product item=\""+in+"\"/>\n";
                 ii++;
@@ -1605,16 +1629,6 @@ void CCWriter::writeMapXml(const DecodedMap &map)
                     << " </bot>\n";
                 emitted=true;
             }
-        }
-        else if(res.kind==BotKind::Heal)
-        {
-            out << " <bot id=\"" << b.id << "\">\n  <step type=\"heal\" id=\"1\"/>\n </bot>\n";
-            emitted=true;
-        }
-        else if(res.kind==BotKind::Pc)
-        {
-            out << " <bot id=\"" << b.id << "\">\n  <step type=\"pc\" id=\"1\"/>\n </bot>\n";
-            emitted=true;
         }
         // SIGN or plain talking NPC -> the ROM text string, split into [Next]
         // pages (project owner's call to include the in-game text).  A sign also
@@ -1643,7 +1657,7 @@ void CCWriter::writeMapXml(const DecodedMap &map)
                 out << " </bot>\n";
             }
             else
-                // No decodable text and no fight/shop/heal/pc metadata: define
+                // No decodable text and no fight/shop metadata: define
                 // the bot (so the .tmx reference resolves) but emit NO step — an
                 // empty <text> step is never written.
                 out << " <bot id=\"" << b.id << "\"></bot>\n";

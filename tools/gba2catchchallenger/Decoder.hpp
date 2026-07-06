@@ -88,9 +88,6 @@ struct DecodedMap {
 
     // u16 block at (x,y): the in-memory override (split chunks) or the ROM.
     uint16_t blockAt(const GbaRom &rom, uint32_t x, uint32_t y) const;
-
-    // Relative datapack path (without extension), e.g. "group-03/map-00".
-    std::string relativePath() const;
 };
 
 class Decoder {

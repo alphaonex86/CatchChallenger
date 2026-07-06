@@ -1,4 +1,5 @@
 #include "SkinResolver.hpp"
+#include "GbaGfx.hpp"
 
 #include <QDir>
 #include <QFileInfoList>
@@ -16,28 +17,7 @@ SkinResolver::SkinResolver(const std::string &skinBotDir, int perChannelToleranc
 
 QImage SkinResolver::cropToContent(const QImage &src)
 {
-    QImage img=src.convertToFormat(QImage::Format_ARGB32);
-    int minX=img.width(),minY=img.height(),maxX=-1,maxY=-1;
-    int y=0;
-    while(y<img.height())
-    {
-        int x=0;
-        while(x<img.width())
-        {
-            if(qAlpha(img.pixel(x,y))>0)
-            {
-                if(x<minX) minX=x;
-                if(x>maxX) maxX=x;
-                if(y<minY) minY=y;
-                if(y>maxY) maxY=y;
-            }
-            x++;
-        }
-        y++;
-    }
-    if(maxX<minX || maxY<minY)
-        return QImage(); // fully transparent
-    return img.copy(minX,minY,maxX-minX+1,maxY-minY+1);
+    return cropToOpaqueContent(src);
 }
 
 bool SkinResolver::sameImage(const QImage &a, const QImage &b) const
@@ -113,10 +93,14 @@ std::string SkinResolver::resolve(const QImage &candidate)
     }
     // No match: register a new skin.
     std::string name=std::to_string(nextNewId_);
-    nextNewId_++;
     std::string folder=skinBotDir_+"/"+name;
-    QDir().mkpath(QString::fromStdString(folder));
-    candidate.save(QString::fromStdString(folder+"/trainer.png"),"PNG");
+    if(!QDir().mkpath(QString::fromStdString(folder)) ||
+       !candidate.save(QString::fromStdString(folder+"/trainer.png"),"PNG"))
+    {
+        std::cerr << "SkinResolver: cannot write " << folder << std::endl;
+        return std::string();
+    }
+    nextNewId_++;
     Entry e;
     e.name=name;
     e.cropped=cropped;

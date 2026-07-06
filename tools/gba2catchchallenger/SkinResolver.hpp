@@ -21,7 +21,8 @@ public:
 
     // Return the skin folder name for the candidate, reusing an existing skin
     // on a pixel match or creating a new "skin/bot/<n>/front.png".  Returns an
-    // empty string only when the candidate image is itself empty.
+    // empty string when the candidate image is itself empty or the new skin
+    // can't be written to disk.
     std::string resolve(const QImage &candidate);
 
     size_t addedCount() const;

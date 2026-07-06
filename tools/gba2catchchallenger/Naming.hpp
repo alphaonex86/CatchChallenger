@@ -34,15 +34,15 @@ public:
 
 private:
     static uint16_t keyOf(uint8_t group, uint8_t map);
+    const DecodedMap *findByKey(uint16_t key) const; // unpack keyOf() and look up
     std::string sectionName(uint8_t sid) const; // decoded display name, "" if none
     bool isArea(const DecodedMap &m) const;
     // A small generic interior (<=12x10) with a teleport-on-push/it exit on the
     // bottom rows and no shop / trainer-fight bot — i.e. a plain "house".
     bool looksLikeHouse(const DecodedMap &m) const;
-    // The map hosts a gym-leader trainer (a Fight bot of the leader class).
-    bool hasGymLeader(const DecodedMap &m) const;
-    // The map hosts a shop (a Mart seller bot) -> the building is named shop.
-    bool hasShop(const DecodedMap &m) const;
+    // One NPC-classify pass: gym = the map hosts a gym-leader trainer (a Fight
+    // bot of the leader class); shop = a shop (a Mart seller bot) -> named shop.
+    void scanNpcs(const DecodedMap &m, bool *gym, bool *shop) const;
     // Section id of the named area a map belongs to (its own when it is a named
     // area map, else the nearest named area reachable by warps); -1 if none.
     int namedSidOf(uint16_t key) const;

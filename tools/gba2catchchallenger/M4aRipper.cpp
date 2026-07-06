@@ -98,6 +98,7 @@ struct Voice {
     bool directsound;
     // gating / mix
     int gate;               // remaining note ticks; <0 = tied (until EOT)
+    int track; uint8_t key; // owning track + stream note key (EOT matches both)
     int vel; int volL, volR;
 };
 }
@@ -204,23 +205,30 @@ std::vector<float> M4aRipper::render(const GbaRom &rom, int songId, int R, doubl
                         uint8_t ea = rom.u8(ve + 8), ed = rom.u8(ve + 9), es = rom.u8(ve + 10), er = rom.u8(ve + 11);
                         if(type == 0x40) {                // keysplit
                             uint32_t subVG = rom.pointer(ve + 4, &ok);
-                            uint32_t tbl = rom.pointer(ve + 8, &ok);
-                            uint8_t idx = rom.u8(tbl + playedKey);
-                            uint32_t se = subVG + (uint32_t)idx * 12;
-                            type = rom.u8(se); toneKey = rom.u8(se + 1);
-                            wavPtr = rom.pointer(se + 4, &ok);
-                            ea = rom.u8(se + 8); ed = rom.u8(se + 9); es = rom.u8(se + 10); er = rom.u8(se + 11);
+                            if(ok) {
+                                uint32_t tbl = rom.pointer(ve + 8, &ok);
+                                if(ok) {
+                                    uint8_t idx = rom.u8(tbl + playedKey);
+                                    uint32_t se = subVG + (uint32_t)idx * 12;
+                                    type = rom.u8(se); toneKey = rom.u8(se + 1);
+                                    wavPtr = rom.pointer(se + 4, &ok);
+                                    ea = rom.u8(se + 8); ed = rom.u8(se + 9); es = rom.u8(se + 10); er = rom.u8(se + 11);
+                                }
+                            }
                         } else if(type == 0x80) {         // drumkit
                             uint32_t subVG = rom.pointer(ve + 4, &ok);
-                            uint32_t se = subVG + (uint32_t)playedKey * 12;
-                            type = rom.u8(se); toneKey = rom.u8(se + 1);
-                            wavPtr = rom.pointer(se + 4, &ok);
-                            ea = rom.u8(se + 8); ed = rom.u8(se + 9); es = rom.u8(se + 10); er = rom.u8(se + 11);
-                            playedKey = toneKey; // drum plays at its own key
+                            if(ok) {
+                                uint32_t se = subVG + (uint32_t)playedKey * 12;
+                                type = rom.u8(se); toneKey = rom.u8(se + 1);
+                                wavPtr = rom.pointer(se + 4, &ok);
+                                ea = rom.u8(se + 8); ed = rom.u8(se + 9); es = rom.u8(se + 10); er = rom.u8(se + 11);
+                                playedKey = toneKey; // drum plays at its own key
+                            }
                         }
                         const int cls = type & 0x07;
                         Voice v; std::memset(&v, 0, sizeof(Voice));
                         v.active = true; v.gate = (gate == 0) ? -1 : gate; v.vel = x.vel;
+                        v.track = t; v.key = x.key;
                         v.ea = ea; v.ed = ed; v.es = es; v.er = er; v.env = 0; v.envState = 0;
                         // stereo volume from track vol + pan
                         const int y = 2 * x.pan - 128;   // -128..126
@@ -235,7 +243,7 @@ std::vector<float> M4aRipper::render(const GbaRom &rom, int songId, int R, doubl
                                 v.loopStart = rom.u32(wavPtr + 8);
                                 v.len = rom.u32(wavPtr + 12);
                                 v.dataOff = wavPtr + 16;
-                                v.loop = (rom.u16(wavPtr + 2) != 0) || v.loopStart < v.len;
+                                v.loop = (rom.u16(wavPtr + 2) != 0) && v.loopStart < v.len;
                                 if(type & 0x08)   // FIX: fixed rate, not pitched by note (drums)
                                     v.freqHz = (double)freq / 1024.0;
                                 else
@@ -254,10 +262,11 @@ std::vector<float> M4aRipper::render(const GbaRom &rom, int songId, int R, doubl
                         }
                     }
                     else if(cmd == 0xB1) { x.stopped = true; x.pc = 0; break; } // FINE
-                    else if(cmd == 0xB2) { x.pc = rom.pointer(x.pc, &ok); }     // GOTO (continue)
-                    else if(cmd == 0xB3) { uint32_t d = rom.pointer(x.pc, &ok); x.ret = x.pc + 4; x.inCall = true; x.pc = d; }
+                    else if(cmd == 0xB2) { x.pc = rom.pointer(x.pc, &ok); if(!ok) { x.stopped = true; x.pc = 0; break; } }     // GOTO (continue)
+                    else if(cmd == 0xB3) { uint32_t d = rom.pointer(x.pc, &ok); if(!ok) { x.stopped = true; x.pc = 0; break; } x.ret = x.pc + 4; x.inCall = true; x.pc = d; }
                     else if(cmd == 0xB4) { if(x.inCall) { x.pc = x.ret; x.inCall = false; } } // PEND
                     else if(cmd == 0xB5) { uint8_t cnt = rom.u8(x.pc); ++x.pc; uint32_t d = rom.pointer(x.pc, &ok); x.pc += 4;
+                        if(!ok) { x.stopped = true; x.pc = 0; break; }
                         if(x.reptCount == 0) x.reptCount = cnt;
                         if(--x.reptCount > 0) x.pc = d; else x.reptCount = 0; }
                     else if(cmd == 0xBB) { tempoI = 2 * rom.u8(x.pc); ++x.pc; } // TEMPO
@@ -268,15 +277,16 @@ std::vector<float> M4aRipper::render(const GbaRom &rom, int songId, int R, doubl
                     else if(cmd == 0xC0) { x.bend = rom.u8(x.pc); ++x.pc; }
                     else if(cmd == 0xC1) { x.bendRange = rom.u8(x.pc); ++x.pc; }
                     else if(cmd == 0xC8) { x.tune = rom.u8(x.pc); ++x.pc; }
-                    else if(cmd == 0xCE) { // EOT: release the most recent tied voice of this note
+                    else if(cmd == 0xCE) { // EOT: release this track's most recent tied voice of the note
+                        uint8_t eotKey = x.key;
+                        if(rom.u8(x.pc) < 0x80) { eotKey = rom.u8(x.pc); ++x.pc; } // key operand (always present when running-status)
                         std::size_t k = vs.size();
-                        while(k > 0) { --k; if(vs[k].active && vs[k].gate < 0) { vs[k].envState = 3; break; } }
-                        if(!runArg && rom.u8(x.pc) < 0x80) ++x.pc; // optional key operand
+                        while(k > 0) { --k; if(vs[k].active && vs[k].gate < 0 && vs[k].envState != 3 && vs[k].track == t && vs[k].key == eotKey) { vs[k].envState = 3; break; } }
                     }
                     else if(cmd >= 0xB6 && cmd <= 0xCD) {
                         // skip operands of known control cmds we don't synth
                         if(cmd == 0xB9) { x.pc += 3; if(rom.isPointer(rom.u32(x.pc))) x.pc += 4; }
-                        else if(cmd == 0xBA || (cmd >= 0xC2 && cmd <= 0xC5) || cmd == 0xC8) { ++x.pc; }
+                        else if(cmd == 0xBA || (cmd >= 0xC2 && cmd <= 0xC5)) { ++x.pc; }
                         else if(cmd == 0xCD) { x.pc += 2; }
                     }
                     if(runArg && x.pc == 0) break;
@@ -387,12 +397,12 @@ bool M4aRipper::writeOpus(const GbaRom &rom, int songId, const std::string &outP
     putBytes(hdr, "fmt ", 4); putU32(hdr, 16); putU16(hdr, 1); putU16(hdr, 2);
     putU32(hdr, rate); putU32(hdr, rate * 4); putU16(hdr, 4); putU16(hdr, 16);
     putBytes(hdr, "data", 4); putU32(hdr, dataBytes);
-    f.write(hdr);
+    if(f.write(hdr) != hdr.size()) { f.close(); QFile::remove(wav); return false; }
     QByteArray samples;
     samples.reserve((int)dataBytes);
     i = 0;
     while(i < pcm.size()) { float v = pcm[i]; if(v > 1) v = 1; if(v < -1) v = -1; putU16(samples, (uint16_t)(int16_t)(v * 32767)); ++i; }
-    f.write(samples);
+    if(f.write(samples) != samples.size()) { f.close(); QFile::remove(wav); return false; }
     f.close();
 
     // Encode mono @48 kbps: the GBA source is signed 8-bit PCM (low-fidelity to

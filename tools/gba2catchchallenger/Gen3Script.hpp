@@ -1,8 +1,8 @@
 #ifndef GBA2CC_GEN3SCRIPT_HPP
 #define GBA2CC_GEN3SCRIPT_HPP
 
-// Classifies an NPC's script into a functional bot kind (trainer fight, mart,
-// heal, PC) and decodes the functional payload (trainer party = species+level,
+// Classifies an NPC's script into a functional bot kind (trainer fight, mart)
+// and decodes the functional payload (trainer party = species+level,
 // mart = item list).  No dialogue text is read.
 
 #include "Gba.hpp"
@@ -14,7 +14,7 @@
 
 struct DecodedMap; // Decoder.hpp
 
-enum class BotKind : uint8_t { None, Fight, Mart, Heal, Pc };
+enum class BotKind : uint8_t { None, Fight, Mart };
 
 struct PartyMon {
     std::string species;
@@ -53,7 +53,6 @@ public:
     // Trainer's personal name (gTrainers[id]+0x04), Title-cased, or "" if blank.
     std::string trainerName(uint16_t trainerId) const;
     std::string itemName(uint16_t id) const;
-    std::string speciesName(uint16_t internalId) const;
 
 private:
     bool looksLikeItemList(uint32_t off, std::vector<uint16_t> &items) const;

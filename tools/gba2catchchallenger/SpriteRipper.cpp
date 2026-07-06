@@ -1,4 +1,5 @@
 #include "SpriteRipper.hpp"
+#include "GbaGfx.hpp"
 
 #include <QImage>
 #include <QString>
@@ -80,31 +81,20 @@ bool SpriteRipper::locate(const GbaRom &rom)
 // Decode a 4bpp GBA tile image (cols x rows tiles) + 16-colour BGR555 palette.
 static QImage decodeTiles(const std::vector<uint8_t> &tiles, const std::vector<uint8_t> &pal, int cols, int rows)
 {
-    QImage img(cols * 8, rows * 8, QImage::Format_ARGB32);
-    img.fill(Qt::transparent);
     if(pal.size() < 32)
+    {
+        QImage img(cols * 8, rows * 8, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
         return img;
-    QRgb colors[16];
+    }
+    uint32_t colors[16];
     int i = 0;
     while(i < 16)
     {
-        const uint16_t c = (uint16_t)(pal[i * 2] | (pal[i * 2 + 1] << 8));
-        colors[i] = (i == 0) ? qRgba(0, 0, 0, 0)
-                  : qRgba((c & 0x1F) * 255 / 31, ((c >> 5) & 0x1F) * 255 / 31, ((c >> 10) & 0x1F) * 255 / 31, 255);
+        colors[i] = bgr555ToArgb((uint16_t)(pal[i * 2] | (pal[i * 2 + 1] << 8)));
         ++i;
     }
-    const int nt = cols * rows;
-    int tile = 0;
-    while(tile < nt && (std::size_t)(tile + 1) * 32 <= tiles.size())
-    {
-        const int tx = (tile % cols) * 8, ty = (tile / cols) * 8;
-        int py = 0;
-        while(py < 8) { int px = 0; while(px < 8) {
-            const uint8_t byte = tiles[(std::size_t)tile * 32 + py * 4 + px / 2];
-            img.setPixel(tx + px, ty + py, colors[(px & 1) ? (byte >> 4) : (byte & 0xF)]); ++px; } ++py; }
-        ++tile;
-    }
-    return img;
+    return decode4bppTiles(tiles, colors, cols, rows);
 }
 
 bool SpriteRipper::writeItemIcon(const GbaRom &rom, const std::string &outRoot, int itemId) const
@@ -133,45 +123,17 @@ bool SpriteRipper::writeItemIcon(const GbaRom &rom, const std::string &outRoot, 
     return icon.save(QString::fromStdString(dir) + "/icon-" + QString::number(itemId) + ".png", "PNG");
 }
 
-// Decode a 64x64 4bpp GBA tile image + 16-colour BGR555 palette into ARGB32.
+// Decode a 64x64 4bpp GBA tile image + 16-colour BGR555 palette into ARGB32
+// (blank when the tile data is partial).
 static QImage decode(const std::vector<uint8_t> &tiles, const std::vector<uint8_t> &pal)
 {
-    QImage img(64, 64, QImage::Format_ARGB32);
-    img.fill(Qt::transparent);
-    if(tiles.size() < 64 * 32 || pal.size() < 32)
+    if(tiles.size() < 64 * 32)
+    {
+        QImage img(64, 64, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
         return img;
-    QRgb colors[16];
-    int i = 0;
-    while(i < 16)
-    {
-        const uint16_t c = (uint16_t)(pal[i * 2] | (pal[i * 2 + 1] << 8));
-        const int r = (c & 0x1F) * 255 / 31;
-        const int g = ((c >> 5) & 0x1F) * 255 / 31;
-        const int b = ((c >> 10) & 0x1F) * 255 / 31;
-        colors[i] = (i == 0) ? qRgba(0, 0, 0, 0) : qRgba(r, g, b, 255);
-        ++i;
     }
-    int tile = 0;
-    while(tile < 64) // 8x8 tiles
-    {
-        const int tx = (tile % 8) * 8;
-        const int ty = (tile / 8) * 8;
-        int py = 0;
-        while(py < 8)
-        {
-            int px = 0;
-            while(px < 8)
-            {
-                const uint8_t byte = tiles[(std::size_t)tile * 32 + py * 4 + px / 2];
-                const int idx = (px & 1) ? (byte >> 4) : (byte & 0xF);
-                img.setPixel(tx + px, ty + py, colors[idx]);
-                ++px;
-            }
-            ++py;
-        }
-        ++tile;
-    }
-    return img;
+    return decodeTiles(tiles, pal, 8, 8);
 }
 
 bool SpriteRipper::writeSpecies(const GbaRom &rom, const std::string &outRoot, int speciesId) const
@@ -207,8 +169,8 @@ bool SpriteRipper::writeSpecies(const GbaRom &rom, const std::string &outRoot, i
     const std::string dir = outRoot + "/monsters/" + std::to_string(speciesId);
     QDir().mkpath(QString::fromStdString(dir));
     const QString base = QString::fromStdString(dir) + "/";
-    front.save(base + "front.png", "PNG");
-    back.save(base + "back.png", "PNG");
-    front.scaled(32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation).save(base + "small.png", "PNG");
-    return true;
+    const bool okF = front.save(base + "front.png", "PNG");
+    const bool okB = back.save(base + "back.png", "PNG");
+    const bool okS = front.scaled(32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation).save(base + "small.png", "PNG");
+    return okF && okB && okS;
 }

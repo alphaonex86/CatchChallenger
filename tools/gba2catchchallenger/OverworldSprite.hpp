@@ -25,6 +25,8 @@ public:
 private:
     // Locate the palette data (file offset) whose tag matches; 0 when absent.
     static uint32_t findPalette(const GbaRom &rom, uint16_t tag);
+    // Build the 16-entry ARGB palette for palTag (all black when absent).
+    static void buildPalette(const GbaRom &rom, uint16_t palTag, uint32_t *palette);
     // Decode one 4bpp frame to RGBA; null image when the entry is invalid.
     static QImage decodeFrame(const GbaRom &rom, uint32_t imagesPtr, int frameIndex,
                               int width, int height, const uint32_t *palette);
