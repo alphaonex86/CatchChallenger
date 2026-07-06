@@ -92,14 +92,27 @@ signals:
     void openMonsterListForBattle();
     void setForeground(ScreenInput *widget);
 private:
+    //place an arena element: design center (cx,cy) in the 800x440 space scaled by
+    //(ax,ay), art scaled uniformly by k (anchor-responsive: positions stretch,
+    //sprites keep their aspect). Rescales the pixmap only when the target size
+    //changed; set a null pixmap on the item to force a refresh from src.
+    void placeArenaPixmap(QGraphicsPixmapItem *item,const QPixmap &src,
+                          const qreal &cx,const qreal &cy,const qreal &dw,const qreal &dh,
+                          const qreal &ax,const qreal &ay,const qreal &k);
+    void layoutInfoFrame(ImagesStrechMiddle *frame,QGraphicsTextItem *name,QGraphicsTextItem *level,
+                         CCprogressbar *hp,CCprogressbar *exp,const qreal &k);
+
     ImagesStrechMiddle *frameFightBottom;
     QList<QGraphicsPixmapItem *> bottomBuff;
     QGraphicsTextItem *labelFightBottomName;
+    QGraphicsTextItem *labelFightBottomLevel;
     CCprogressbar *progressBarFightBottomHP;
+    CCprogressbar *progressBarFightBottomExp;
 
     ImagesStrechMiddle *frameFightTop;
     QList<QGraphicsPixmapItem *> topBuff;
     QGraphicsTextItem *labelFightTopName;
+    QGraphicsTextItem *labelFightTopLevel;
     CCprogressbar *progressBarFightTopHP;
 
     QGraphicsPixmapItem *labelFightBackground;
@@ -116,6 +129,13 @@ private:
     QGraphicsPixmapItem *labelFightMonsterBottom;
     QGraphicsPixmapItem *labelFightMonsterTop;
     QGraphicsPixmapItem *labelFightTrap;
+    //unscaled monster sprites; paint() scales them to the current screen
+    QPixmap monsterBottomPixSrc;
+    QPixmap monsterTopPixSrc;
+    //monster positions in the 800x440 design space (animated by the move timers,
+    //mapped to screen coordinates by paint())
+    QPointF monsterBottomDesignPos;
+    QPointF monsterTopDesignPos;
 
     ImagesStrechMiddle *stackedWidgetFightBottomBar;
 
