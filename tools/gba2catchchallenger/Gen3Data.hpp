@@ -54,6 +54,14 @@ struct Gen3TypeMatch {
     double mult;
 };
 
+// RSE berry (gBerries): maps 1:1 onto the CatchChallenger plants system.
+struct Gen3Berry {
+    int index;      // 0-based gBerries index; berry item id = 133 + index
+    std::string name;
+    int stageHours; // growth hours per stage (4 stages to fruit)
+    int minYield, maxYield;
+};
+
 class Gen3Data {
 public:
     Gen3Data();
@@ -63,6 +71,7 @@ public:
     const std::vector<Gen3Species> &species() const { return species_; }
     const std::vector<Gen3Move> &moves() const { return moves_; }
     const std::vector<Gen3Item> &items() const { return items_; }
+    const std::vector<Gen3Berry> &berries() const { return berries_; }
     const std::vector<Gen3TypeMatch> &typeChart() const { return typeChart_; }
     static const char *typeName(int t);  // 0..17 -> "normal".."dark"
     static int typeCount();
@@ -71,6 +80,7 @@ private:
     std::vector<Gen3Species> species_;
     std::vector<Gen3Move> moves_;
     std::vector<Gen3Item> items_;
+    std::vector<Gen3Berry> berries_;
     std::vector<Gen3TypeMatch> typeChart_;
 };
 
