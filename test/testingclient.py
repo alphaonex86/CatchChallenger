@@ -807,13 +807,16 @@ class _GLChannelSession:
     savegame is fresh (the test character spawns on the test-city at 15,26).
     See client/dev.md and map/main/test/TOTEST.md for the command vocabulary and
     the map fixture coordinates."""
-    def __init__(self, mc):
+    def __init__(self, mc, build_dir=None, bin_name=None):
         import tempfile
         self.mc = mc
+        # default to the qtopengl client; pass build_dir/bin_name to drive qtcpu800x600
+        self.build_dir = build_dir if build_dir is not None else CLIENT_GL_BUILD
+        self.bin = bin_name if bin_name is not None else CLIENT_GL_BIN
         self.proc = None
         self.sk = None
         self.out = []
-        self.tmpdir = tempfile.mkdtemp(prefix="cc-glchan-",
+        self.tmpdir = tempfile.mkdtemp(prefix="cc-chan-",
                                        dir=_config["paths"].get("tmpfs_root", "/tmp"))
 
     def _reader(self):
@@ -823,7 +826,7 @@ class _GLChannelSession:
     def start(self):
         """Launch + wait for the map + connect the socket. Returns (ok, errmsg)."""
         import socket, glob
-        binary = os.path.join(CLIENT_GL_BUILD, CLIENT_GL_BIN)
+        binary = os.path.join(self.build_dir, self.bin)
         if not os.path.isfile(binary):
             return False, f"binary not found: {binary}"
         env = dict(QT_QPA_PLATFORM="offscreen",
@@ -833,8 +836,8 @@ class _GLChannelSession:
                    TMPDIR=self.tmpdir, PATH=os.environ.get("PATH", "/usr/bin:/bin"))
         os.makedirs(env["HOME"], exist_ok=True)
         args = [binary, "--autosolo", f"--main-datapack-code={self.mc}", "--remote-control"]
-        diagnostic.record_cmd(args, CLIENT_GL_BUILD)
-        self.proc = subprocess.Popen(args, cwd=CLIENT_GL_BUILD, env=env,
+        diagnostic.record_cmd(args, self.build_dir)
+        self.proc = subprocess.Popen(args, cwd=self.build_dir, env=env,
                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                      preexec_fn=process_helpers.setsid_and_pdeathsig)
         threading.Thread(target=self._reader, daemon=True).start()
@@ -2181,6 +2184,97 @@ def run_qtopengl_cave_fight_loss_nocrash_channel_test(dp_name, mc, failed_cases)
         s.kill()
 
 
+def run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases):
+    """Regression for the clan_create CRASH: the 'Create clan' dialog link used to
+    run abort() (the old QInputDialog path was commented out) -> the client died.
+    It now opens a TextInput name popup. Reach the clan bot (house2, engine 8,6),
+    activate its clan_create link, and assert the client stays ALIVE and still
+    answers the channel (was a hard crash)."""
+    case = f"qtopengl clan_create link no crash ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl clan_create no-crash over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+    try:
+        spawn = s.map_id()
+        s.send("CLICKTILE 15 25")
+        house2 = s.wait_map_change(spawn, timeout=clamp_local(diagnostic.scale_timeout(DIAG, 25)))
+        if house2 < 0:
+            log_fail(case, f"never entered house2; state={s.send('GETSTATE')}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        s.send("CLOSEDIALOG"); time.sleep(0.3)
+        s.send("CLICKTILE 8 6")
+        if not s.wait(lambda: "clan_create" in s.dialog(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 18))):
+            log_fail(case, f"clan bot (8,6) opened NO clan_create dialog; got={s.dialog()!r}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        # activate the clan_create link (first/only link; Return activates it).
+        # OLD behaviour: abort() -> SIGABRT here.
+        s.send("KEY ENTER"); time.sleep(1.0)
+        rc = s.proc.poll()
+        if rc is not None:
+            log_fail(case, f"client CRASHED after activating clan_create (rc={rc})")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        # must still answer the channel (name popup open over the map)
+        if "STATE" not in s.send("GETSTATE"):
+            log_fail(case, "client unresponsive after clan_create")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        log_pass(case, "clan_create opened the name popup without crashing")
+    finally:
+        s.kill()
+
+
+def run_qtcpu_solo_channel_basic_test(dp_name, mc, failed_cases):
+    """qtcpu800x600 exposes the SAME QLocalServer automation channel as qtopengl
+    (MainWindow::wireRemoteControl -> the shared MapControllerMP). Drive the CPU
+    client over the channel: reach the map under --autosolo, answer GETSTATE +
+    GETINVENTORY, and open the city sign (17,25) then close it -- the CPU-client
+    counterpart of run_qtopengl_sign_dialog_channel_test."""
+    case = f"qtcpu800x600 solo channel basics ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtcpu800x600 channel basics: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc, CLIENT_CPU_BUILD, CLIENT_CPU_BIN)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+    try:
+        st = s.state()
+        if st is None or st[0] != 1:
+            log_fail(case, f"unexpected spawn: {s.send('GETSTATE')}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        if "INVENTORY" not in s.send("GETINVENTORY"):
+            log_fail(case, "GETINVENTORY did not answer on the CPU channel")
+            return
+        s.send("CLICKTILE 17 25")
+        if not s.wait(lambda: s.dialog().strip() != "",
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 18))):
+            log_fail(case, f"city sign (17,25) opened NO dialog on CPU; got={s.dialog()!r}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        sign = s.dialog()
+        s.send("CLOSEDIALOG"); time.sleep(0.3)
+        if s.proc.poll() is not None:
+            log_fail(case, f"CPU client exited after CLOSEDIALOG (rc={s.proc.poll()})")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        log_pass(case, f"CPU channel reached map + opened sign dialog ({sign[:40]!r})")
+    finally:
+        s.kill()
+
+
 def run_qtopengl_sign_keyboard_channel_test(dp_name, mc, failed_cases):
     """KEYBOARD counterpart of the click sign test (TOTEST asks for BOTH keyboard
     and mouse on city). Arrow-walk from spawn (15,26) east to (17,26), face Up onto
@@ -2571,11 +2665,17 @@ def main():
                 run_qtopengl_house1_industry_quest_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_nurse_heal_link_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_cave_fight_loss_nocrash_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_sign_keyboard_channel_test(dp_name, mc, failed_cases)
+
+            # qtcpu800x600 exposes the same automation channel; drive the CPU
+            # client over it too (same test-city sign fixture).
+            if cpu_ok and dp_cpu and mc == "test" and dp_name == OFFICIAL_DATAPACK_NAME:
+                run_qtcpu_solo_channel_basic_test(dp_name, mc, failed_cases)
 
     # ═══════════════════════════════════════════════════════════════
     # 4. MULTIPLAYER ON SERVER
