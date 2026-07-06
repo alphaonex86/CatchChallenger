@@ -319,9 +319,10 @@ std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
     while(ni<map.npcs.size())
     {
         const DecodedNpc &npc=map.npcs[ni];
-        // Strength boulders become StrengthBoulder objects and breakable rocks
-        // RockSmash layer tiles — neither is a bot.
-        if(npc.graphicsId!=rom_.game().boulderGfx && npc.graphicsId!=rom_.game().rockGfx)
+        // Strength boulders become StrengthBoulder objects, breakable rocks
+        // RockSmash layer tiles, berry trees Dirt cells — none is a bot.
+        if(npc.graphicsId!=rom_.game().boulderGfx && npc.graphicsId!=rom_.game().rockGfx &&
+           npc.graphicsId!=rom_.game().berryGfx)
         {
             std::string skin=skinFor(npc.graphicsId);
             if(!skin.empty() && npc.x>=0 && npc.y>=0 &&
@@ -867,6 +868,24 @@ void CCWriter::writeMap(const DecodedMap &map)
     std::vector<uint32_t> collisions2(cells,0); // 2nd Collisions: the over of a
                                                 // collidable cell (superposed below player)
     std::vector<uint32_t> grass(cells,0);
+    // Berry-tree soft-soil patches -> the engine's plantable Dirt layer.
+    std::vector<uint32_t> dirt(cells,0);
+    std::unordered_set<uint32_t> berryCells;
+    {
+        const uint8_t berryGfx=rom_.game().berryGfx;
+        if(berryGfx!=0xFF)
+        {
+            size_t bi2=0;
+            while(bi2<map.npcs.size())
+            {
+                const DecodedNpc &np=map.npcs[bi2];
+                if(np.graphicsId==berryGfx && np.x>=0 && np.y>=0 &&
+                   static_cast<uint32_t>(np.x)<w && static_cast<uint32_t>(np.y)<h)
+                    berryCells.insert(static_cast<uint32_t>(np.x)+static_cast<uint32_t>(np.y)*w);
+                bi2++;
+            }
+        }
+    }
     std::vector<uint32_t> water(cells,0);
     std::vector<uint32_t> ledgeUp(cells,0);
     std::vector<uint32_t> ledgeDown(cells,0);
@@ -903,7 +922,14 @@ void CCWriter::writeMap(const DecodedMap &map)
         uint16_t beh=tilesets_.behavior(map,metatile);
         Terrain t=decoder_.terrain(beh);
         bool onCollisions=false;
-        if(t==Terrain::Water)
+        // Berry-tree soil FIRST: in the ROM the cell is collidable (the tree
+        // blocks at map level), but the engine's plantable Dirt cell must be
+        // walkable — the plot replaces the tree.
+        if(berryCells.find(c)!=berryCells.cend())
+        {
+            dirt[c]=g;
+        }
+        else if(t==Terrain::Water)
         {
             water[c]=g; anyWater=true;
         }
@@ -1023,6 +1049,8 @@ void CCWriter::writeMap(const DecodedMap &map)
     emitTileLayer(out,layerId,"Walkable",w,h,encodeLayer(walkable));
     if(layerHasTile(grass))
         emitTileLayer(out,layerId,"Grass",w,h,encodeLayer(grass));
+    if(layerHasTile(dirt))
+        emitTileLayer(out,layerId,"Dirt",w,h,encodeLayer(dirt));
     if(layerHasTile(water))
         emitTileLayer(out,layerId,"Water",w,h,encodeLayer(water));
     // Each ledge direction is emitted ONLY when it actually has tiles (a typical

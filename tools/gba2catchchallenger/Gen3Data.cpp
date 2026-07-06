@@ -436,6 +436,40 @@ bool Gen3Data::decode(const GbaRom &rom)
         ++it;
     }
 
+    // ── berries (RSE only) ──  gBerries: 28-byte records {name[7], firmness,
+    // u16 size, maxYield, minYield, desc1 ptr, desc2 ptr, stageDuration(hours),
+    // 5 flavours, smoothness, pad}.  Anchor = "CHERI", validated by "CHESTO"
+    // one stride later; 43 berries (items 133-175).
+    if(gi.engine == Engine::Rse)
+    {
+        uint32_t gBerries = 0;
+        const std::vector<uint8_t> cheri = encodeGen3("CHERI", true);
+        uint32_t at = findSig(rom, cheri);
+        while(at != 0 && gBerries == 0)
+        {
+            const std::vector<uint8_t> chesto = encodeGen3("CHESTO", true);
+            if(at + 28 + chesto.size() < rom.size() &&
+               std::memcmp(rom.raw(at + 28, (uint32_t)chesto.size()), chesto.data(), chesto.size()) == 0)
+                gBerries = at;
+            else
+                at = findSig(rom, cheri, at + 1);
+        }
+        int b = 0;
+        while(gBerries != 0 && b < 43)
+        {
+            const uint32_t o = gBerries + (uint32_t)b * 28;
+            Gen3Berry berry;
+            berry.index = b;
+            berry.name = Gen3Text::display(Gen3Text::decode(rom, o, 7));
+            berry.maxYield = rom.u8(o + 10);
+            berry.minYield = rom.u8(o + 11);
+            berry.stageHours = rom.u8(o + 20);
+            if(!berry.name.empty() && berry.stageHours > 0 && berry.maxYield > 0)
+                berries_.push_back(berry);
+            ++b;
+        }
+    }
+
     // ── type chart ──
     if(gTypeEff != 0)
     {

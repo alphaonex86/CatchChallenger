@@ -495,8 +495,31 @@ bool FullWriter::writeCompleteness()
     }
     if(!ensureDir(outRoot_ + "/plants"))
         return false;
-    if(!writeTextFile(outRoot_ + "/plants/plants.xml", "<plants>\n</plants>\n"))
-        return false;
+    // RSE berries -> plants: itemUsed = the berry item itself (plant one, grow
+    // more).  1 Gen3 hour = 1 CC minute (4 equal stages -> fruits = 4*stage,
+    // engine defaults sprouted/taller/flowering to the quarters); quantity =
+    // average yield, the fraction being the engine's extra-fruit luck.
+    {
+        std::string plants = "<plants>\n";
+        std::size_t bi = 0;
+        while(bi < data_.berries().size())
+        {
+            const Gen3Berry &b = data_.berries()[bi];
+            ++bi;
+            int fruits = b.stageHours * 4;
+            if(fruits < 1) fruits = 1;
+            if(fruits > 108) fruits = 108; // engine 16-bit seconds cap
+            const int avg2 = b.minYield + b.maxYield; // 2*average
+            plants += "    <plant id=\"" + std::to_string(b.index + 1) + "\" itemUsed=\"" + std::to_string(133 + b.index) + "\">\n";
+            plants += "        <!-- " + b.name + " -->\n";
+            plants += "        <grow><fruits>" + std::to_string(fruits) + "</fruits></grow>\n";
+            plants += "        <quantity>" + std::to_string(avg2 / 2) + (avg2 % 2 ? ".5" : "") + "</quantity>\n";
+            plants += "    </plant>\n";
+        }
+        plants += "</plants>\n";
+        if(!writeTextFile(outRoot_ + "/plants/plants.xml", plants))
+            return false;
+    }
     if(!ensureDir(outRoot_ + "/crafting"))
         return false;
     if(!writeTextFile(outRoot_ + "/crafting/recipes.xml", "<recipes>\n</recipes>\n"))
