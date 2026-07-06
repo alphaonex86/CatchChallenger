@@ -31,6 +31,7 @@ GameInfo::GameInfo() :
     trainersCount(0),
     leaderClass(0xFF),
     itemNames(0),
+    boulderGfx(0xFF),
     animWaterTile(0),
     animWaterTileCount(0),
     animWaterFrames(0),
@@ -302,6 +303,10 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
                   << "MB) is not canonical -> standalone hack main '" << info.label
                   << "' (gMapGroups will be scanned)" << std::endl;
     }
+    // Pushable strength-boulder object gfx id (pret OBJ_EVENT_GFX_PUSHABLE_BOULDER:
+    // FRLG 97, RSE 87).  Engine-wide, so hacks inherit their engine's id.
+    if(info.valid)
+        info.boulderGfx=(info.engine==Engine::Frlg) ? 97 : 87;
     return info;
 }
 
