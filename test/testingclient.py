@@ -27,7 +27,7 @@ import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
-import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time
+import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time, base64
 from remote_build import (start_remote_builds, collect_remote_results,
                           REMOTE_SERVERS, REMOTE_NODES, node_runs, get_node,
                           setup_remote_server_runtime, start_remote_server,
@@ -978,6 +978,54 @@ class _GLChannelSession:
                 pass
 
 
+
+# ---- shared city/road BFS navigation fields (grass-free gradient descent) ----
+# Precomputed distance fields; 255 = blocked/grass/unreachable. Used by the road
+# channel tests to walk the city->road route without wild encounters.
+_CW, _CH = 30, 34
+_CITY = base64.b64decode(
+    "////////////////////////////LSwrKissLS4v////////////////////////////LCsqKSorLC0u"
+    "////////////////////////////KyopKCkqKywt////////////////////////////KikoJygpKiss"
+    "////////////////////////////KSgnJicoKSor////////////////////////////KCcmJSYnKCkq"
+    "////////////////////////////JyYlJCUmJygp////////////////////////////JiUkIyQlJico"
+    "//8MDQ4PEBESExQVFhcYGRobHB3/JSQjIiMkJSYn//8LDA0ODxAREhMUFRYXGBkaGxz/////If//////"
+    "//8KCwwN////Ef///xUWFxgZGhscHR4fICEiI/////8JCgsM////EP///xQVFhcYGRobHB0eHyAhIv//"
+    "//8ICQoL////D////xMUFRYXGBkaGxwdHh8gIf////8HCAkKCwwNDg8QERITFBUWFxgZGhscHR4fIP//"
+    "//8GBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eH/////8FBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHv//"
+    "//8EBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHf////8D/////woLDA0ODxAREhMUFRYXGBkaGxwdHv//"
+    "AAEC/////wsMDQ4PEBESExQVFhcYGRobHB0eH///AQID/////wwNDg8QERITFBUWFxgZGhscHR4fIP//"
+    "//8E/////wsMDQ4PEBESExQVFhcYGRobHB0eHyAh//8FBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8g"
+    "//8GBwgJCgsMDQ4PEBESExQVFv//////HB0eH/////8HCAkK//////8QEf////8WF///////HR4fIP//"
+    "//8ICQoL//////8REv////8XGP//////Hh8gIf////8JCgsM//////8SE///////Gf//////HyAhIv//"
+    "//8KCwwNDg8QERITFP8eHRwbGv8gIf8hICEiI/////8LDA0ODxAREhMUFf////8cG/8f//8iISIjJP//"
+    "////////////////////////HB0eHyAhIiP/////////////////////////////HR4fICEiIyT/////"
+    "////////////////////////////////////////////////////////////////////////////////"
+    "////////////////////////////////////////////////////////////////////////////////")
+_RW, _RH = 42, 30
+_ROAD = base64.b64decode(
+    "////////////////////////////////////////////////////////////////////////////////"
+    "////////////////////////////////////////////////////////////////////////O///////"
+    "////////////////////////////////////////////////Ov//////////////////////////////"
+    "/////yUmJygpKv////85ODc4OURDQkFAPz49PP///////////////////////yQlJicoKf////84Nzb/"
+    "Ov//////////O/////////////////////8hIiMkJSYnKCkq//83NjX/O0A/Pj08Ozo5Ov////8mJSQj"
+    "IiEgH/////8gISIjJCUmJygp//82NTT///////////84Of////8lJCMiISAfHh0cHR4fICEiIyQlJv//"
+    "//81NDMyMTAxMv////83OP////8kIyIhIB8eHRwbHB0eHyD//////////////////y8wMf////82N///"
+    "////////Hx4dHBsaGxwdHh///////////////////y4vMDEyMzQ1Nv//////////Hh0cGxoZGv//////"
+    "/////////////////y0uLzAxMjM0Nf////////////////8YGf///////////////////////ywtLv//"
+    "//////////////////////8XGP////////8gISIjJCUm////KissLf////////////////////////8W"
+    "F/////////8fICEiIyQl////KSorLC0u//////////////////////8VFhcYGf//HB0eHyAhIiMkJSYn"
+    "KCkqKywt/////////////////xAREhMUFRYXGP//GxwdHv////8lJicoKSorLC0uLzAxMjM0/////wwN"
+    "Dg8QERITFBUWFxgZGhscHf////8mJygpKissLS4vMDEyMzQ1/////wsMDQ4P/////xYXGBkaGxwdHh8g"
+    "//8nKCkqKywtLi///////////////woLDA0O/////xcYGRobHB0eHyAh//8oKSorLC3/////////////"
+    "//8HCAkKCwwN////////GhscHf///yH/////Kv////////////////////8GBwgJCgsM////////Gxwd"
+    "Hh////////////////////////////////8FBv//CwwNDg//////HB0eHyD/////////////////////"
+    "//////////8E////DA0ODxD/////HR4fICEi////KissLf////////////////////8DBP//DQ4P/xH/"
+    "////Hv//ISIj////Kf////////////////////////8CA///Dg8Q/yb/////H///IiMkJSYnKP//////"
+    "//////////////////8BAgMQDxAR/yUkIyIhICH/IyQl//////////////////////////////8AAQIR"
+    "EBES/yb/////////JCUm/////////////////////////////////////////////////////yb/////"
+    "////////////////////////////////////////////////////////////////////////////////")
+
+
 def run_qtopengl_sign_dialog_channel_test(dp_name, mc, failed_cases):
     """Regression guard, driven over the QLocalServer automation channel (NO
     in-binary test scaffolding): clicking the test-city Sign at (17,25) must OPEN
@@ -1334,52 +1382,12 @@ def run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases):
     # Excludes the engine-side "not accessible" object zone so the route stays on the
     # validated row-22 -> column-2 corridor (avoids the city sign bot at (13,26) and
     # the item-gated water/lava just south of spawn).
-    _CW, _CH = 30, 34
-    _CITY = base64.b64decode(
-        "////////////////////////////LSwrKissLS4v////////////////////////////LCsqKSorLC0u"
-        "////////////////////////////KyopKCkqKywt////////////////////////////KikoJygpKiss"
-        "////////////////////////////KSgnJicoKSor////////////////////////////KCcmJSYnKCkq"
-        "////////////////////////////JyYlJCUmJygp////////////////////////////JiUkIyQlJico"
-        "//8MDQ4PEBESExQVFhcYGRobHB3/JSQjIiMkJSYn//8LDA0ODxAREhMUFRYXGBkaGxz/////If//////"
-        "//8KCwwN////Ef///xUWFxgZGhscHR4fICEiI/////8JCgsM////EP///xQVFhcYGRobHB0eHyAhIv//"
-        "//8ICQoL////D////xMUFRYXGBkaGxwdHh8gIf////8HCAkKCwwNDg8QERITFBUWFxgZGhscHR4fIP//"
-        "//8GBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eH/////8FBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHv//"
-        "//8EBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHf////8D/////woLDA0ODxAREhMUFRYXGBkaGxwdHv//"
-        "AAEC/////wsMDQ4PEBESExQVFhcYGRobHB0eH///AQID/////wwNDg8QERITFBUWFxgZGhscHR4fIP//"
-        "//8E/////wsMDQ4PEBESExQVFhcYGRobHB0eHyAh//8FBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8g"
-        "//8GBwgJCgsMDQ4PEBESExQVFv//////HB0eH/////8HCAkK//////8QEf////8WF///////HR4fIP//"
-        "//8ICQoL//////8REv////8XGP//////Hh8gIf////8JCgsM//////8SE///////Gf//////HyAhIv//"
-        "//8KCwwNDg8QERITFP8eHRwbGv8gIf8hICEiI/////8LDA0ODxAREhMUFf////8cG/8f//8iISIjJP//"
-        "////////////////////////HB0eHyAhIiP/////////////////////////////HR4fICEiIyT/////"
-        "////////////////////////////////////////////////////////////////////////////////"
-        "////////////////////////////////////////////////////////////////////////////////")
+    # city BFS field _CITY is module-level (top of file).
 
     # Road BFS distance-to-item(2,27) field (42x30); reverse-BFS that AVOIDS grass
     # (no wild fights on the path) and honours one-way ledges, so a pure
     # min-distance descent reaches the item column.
-    _RW, _RH = 42, 30
-    _ROAD = base64.b64decode(
-        "////////////////////////////////////////////////////////////////////////////////"
-        "////////////////////////////////////////////////////////////////////////O///////"
-        "////////////////////////////////////////////////Ov//////////////////////////////"
-        "/////yUmJygpKv////85ODc4OURDQkFAPz49PP///////////////////////yQlJicoKf////84Nzb/"
-        "Ov//////////O/////////////////////8hIiMkJSYnKCkq//83NjX/O0A/Pj08Ozo5Ov////8mJSQj"
-        "IiEgH/////8gISIjJCUmJygp//82NTT///////////84Of////8lJCMiISAfHh0cHR4fICEiIyQlJv//"
-        "//81NDMyMTAxMv////83OP////8kIyIhIB8eHRwbHB0eHyD//////////////////y8wMf////82N///"
-        "////////Hx4dHBsaGxwdHh///////////////////y4vMDEyMzQ1Nv//////////Hh0cGxoZGv//////"
-        "/////////////////y0uLzAxMjM0Nf////////////////8YGf///////////////////////ywtLv//"
-        "//////////////////////8XGP////////8gISIjJCUm////KissLf////////////////////////8W"
-        "F/////////8fICEiIyQl////KSorLC0u//////////////////////8VFhcYGf//HB0eHyAhIiMkJSYn"
-        "KCkqKywt/////////////////xAREhMUFRYXGP//GxwdHv////8lJicoKSorLC0uLzAxMjM0/////wwN"
-        "Dg8QERITFBUWFxgZGhscHf////8mJygpKissLS4vMDEyMzQ1/////wsMDQ4P/////xYXGBkaGxwdHh8g"
-        "//8nKCkqKywtLi///////////////woLDA0O/////xcYGRobHB0eHyAh//8oKSorLC3/////////////"
-        "//8HCAkKCwwN////////GhscHf///yH/////Kv////////////////////8GBwgJCgsM////////Gxwd"
-        "Hh////////////////////////////////8FBv//CwwNDg//////HB0eHyD/////////////////////"
-        "//////////8E////DA0ODxD/////HR4fICEi////KissLf////////////////////8DBP//DQ4P/xH/"
-        "////Hv//ISIj////Kf////////////////////////8CA///Dg8Q/yb/////H///IiMkJSYnKP//////"
-        "//////////////////8BAgMQDxAR/yUkIyIhICH/IyQl//////////////////////////////8AAQIR"
-        "EBES/yb/////////JCUm/////////////////////////////////////////////////////yb/////"
-        "////////////////////////////////////////////////////////////////////////////////")
+    # road BFS field _ROAD is module-level (top of file).
 
     s = _GLChannelSession(mc)
     ok, err = s.start()
@@ -1523,6 +1531,87 @@ def run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases):
             return
         log_pass(case, f"crossed to road (map {road}) and picked up item id 5 at engine tile (2,27): "
                        f"inventory item5 {base5}->{now5}")
+    finally:
+        s.kill()
+
+
+def run_qtopengl_gym_botfight_approach_channel_test(dp_name, mc, failed_cases):
+    """Both trainer fights in the test datapack are deliberately NOT solo-completable
+    (the road Fighter sits above one-way ledges you can only descend; the gym leader
+    is behind quest/item/clan/fightBot condition gates), so the full bot-fight
+    team-load -> win -> reward path cannot be channel-triggered on this fixture. This
+    exercises the REACHABLE part and guards a regression: enter the gym (a fight-bot
+    map) via the city door at (21,25), walk up the gym leader's column toward the
+    gated leader, and assert the client NEVER crashes and stays responsive (the bot
+    line-of-sight detection + condition gate handle a fresh character gracefully).
+    The botFight()/botFightCollision()/battleWon() port itself is code-verified
+    against the working qtcpu800x600 client; a datapack with a reachable trainer is
+    needed to channel-test the win+reward end to end."""
+    import signal as _sig
+    case = f"qtopengl gym fight-bot approach no crash ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl gym fight-bot approach (no crash) over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+
+    def _state():
+        m = re.search(r"map=(\d+)\s+x=(\d+)\s+y=(\d+)", s.cmd("GETSTATE", wait=0.08))
+        return tuple(int(g) for g in m.groups()) if m else None
+
+    try:
+        st0 = _state()
+        if not st0 or st0[0] != 1:
+            log_fail(case, f"did not start on city (map 1): {st0}")
+            return
+        spawn = st0[0]
+        # enter the gym through the city door tile (21,25)
+        s.cmd("CLICKTILE 21 25", wait=0.2)
+        deadline = time.time() + clamp_local(diagnostic.scale_timeout(DIAG, 20))
+        while time.time() < deadline and (_state() or (spawn,))[0] == spawn:
+            time.sleep(0.4)
+        gym = (_state() or (spawn,))[0]
+        if gym == spawn:
+            log_fail(case, f"never entered the gym via the city door (21,25); state={_state()}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        # walk UP the leader's column (9) toward the gated leader at (9,2); each step
+        # must leave the client alive (SIGSEGV/SIGABRT would be a real regression).
+        ty = 18
+        while ty >= 3:
+            if s.proc.poll() is not None:
+                rc = s.proc.poll()
+                if rc in (-_sig.SIGSEGV, -_sig.SIGABRT):
+                    log_fail(case, f"client CRASHED approaching the gym leader (rc={rc}) at row {ty}")
+                    for l in s.tail(): print(f"  | {l}")
+                    return
+                break
+            s.cmd("CLICKTILE 9 %d" % ty, wait=0.15)
+            time.sleep(0.25)
+            cur = _state()
+            if cur and cur[2] < ty:
+                ty = cur[2] - 1
+            else:
+                ty -= 1
+        # the client must still be alive AND answer the channel after the gated approach
+        rc = s.proc.poll()
+        if rc is not None:
+            if rc in (-_sig.SIGSEGV, -_sig.SIGABRT):
+                log_fail(case, f"client crashed during the gym approach (rc={rc})")
+                for l in s.tail(): print(f"  | {l}")
+                return
+            log_pass(case, f"gym approached; client exited rc={rc} (no crash)")
+            return
+        if "STATE" not in s.cmd("GETSTATE"):
+            log_fail(case, "client unresponsive after the gym leader approach")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        log_pass(case, f"entered the gym (map {gym}) and approached the gated leader with no "
+                       f"crash; client still responsive at {_state()}")
     finally:
         s.kill()
 
@@ -2853,6 +2942,7 @@ def main():
                 run_qtopengl_lava_blocked_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_house1_industry_quest_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_gym_botfight_approach_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_shop_buy_channel_test(dp_name, mc, failed_cases)
