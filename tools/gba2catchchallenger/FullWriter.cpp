@@ -3,6 +3,9 @@
 #include "SpriteRipper.hpp"
 
 #include <QDir>
+#include <QDirIterator>
+#include <QFile>
+#include <QFileInfo>
 #include <QString>
 #include <QImage>
 #include <QPainter>
@@ -594,17 +597,46 @@ bool FullWriter::writeCompleteness()
     return true;
 }
 
+bool FullWriter::targetCuratesMonsters() const
+{
+    QDirIterator it(QString::fromStdString(outRoot_ + "/monsters"), QStringList() << "*.xml", QDir::Files);
+    while(it.hasNext())
+    {
+        const QString path = it.next();
+        const QString base = QFileInfo(path).fileName();
+        if(base != QStringLiteral("monster.xml") && base != QStringLiteral("type.xml"))
+        {
+            QFile f(path);
+            if(f.open(QIODevice::ReadOnly))
+            {
+                if(QString::fromUtf8(f.readAll()).contains(QStringLiteral("<monster ")))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool FullWriter::writeAll()
 {
     if(!writeTypes())
         return false;
-    if(!writeSkills())
-        return false;
-    if(!writeMonsters())
-        return false;
+    // A target with its own monster DB (own numbering + art) keeps it: our
+    // maps reference species by NAME, so nothing here is needed — and writing
+    // gen3-internal ids next to a nat-dex-numbered library would duplicate
+    // every id and overwrite the curated sprite art with the wrong species.
+    if(targetCuratesMonsters())
+        std::cerr << "FullWriter: target curates its own monsters/skills/sprites; kept" << std::endl;
+    else
+    {
+        if(!writeSkills())
+            return false;
+        if(!writeMonsters())
+            return false;
+        writeSprites();
+    }
     if(!writeItems())
         return false;
-    writeSprites();
     if(!writeCompleteness())
         return false;
     std::cerr << "FullWriter: wrote " << data_.species().size() << " monsters, "
