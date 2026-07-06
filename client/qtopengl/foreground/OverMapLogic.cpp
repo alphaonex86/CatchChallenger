@@ -50,6 +50,8 @@ OverMapLogic::OverMapLogic()
     animation=nullptr;
     encyclopedia=nullptr;
     shop=nullptr;
+    currentBotFightId=0xFFFF;
+    currentBotFightMapId=0xFFFF;
     factory=nullptr;
     trade=nullptr;
     warehouse=nullptr;
@@ -1773,8 +1775,47 @@ void OverMapLogic::load_crafting_inventory()
 
 void OverMapLogic::botFight(const uint16_t &fightId)
 {
-    //todo
-    std::cerr << "OverMapLogic::botFight " << fightId << std::endl;
+    //bot fights are per-map in BaseMap; resolve the trainer team from the datapack
+    const CATCHCHALLENGER_TYPE_MAPID mapId=ccmap->mapController.currentMap();
+    const CatchChallenger::CommonMap &mapData=QtDatapackClientLoader::datapackLoader->getMap(mapId);
+    if(mapData.botFights.find(static_cast<uint8_t>(fightId))==mapData.botFights.cend())
+    {
+        showTip(tr("Bot fight not found").toStdString());
+        return;
+    }
+    const CatchChallenger::BotFight &botFightData=mapData.botFights.at(static_cast<uint8_t>(fightId));
+    //transform each datapack BotFightMonster into a real PlayerMonster (with rolled stats)
+    std::vector<CatchChallenger::PlayerMonster> team;
+    unsigned int index=0;
+    while(index<botFightData.monsters.size())
+    {
+        const CatchChallenger::BotFight::BotFightMonster &m=botFightData.monsters.at(index);
+        if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(m.id))
+            team.push_back(CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(
+                m,
+                CatchChallenger::CommonFightEngine::getStat(
+                    CatchChallenger::CommonDatapack::commonDatapack.get_monster(m.id),m.level)));
+        index++;
+    }
+    if(team.empty())
+    {
+        showTip(tr("Bot fight has no monster").toStdString());
+        return;
+    }
+    //load the enemy team into the engine BEFORE showing the battle so getOtherMonster()
+    //is non-null (else the live doNextAction sees an empty enemy and declares an
+    //instant bogus win). setBotMonster startTheFight()s and fills botFightMonsters.
+    CatchChallenger::Api_protocol_Qt::FightInProgressType fip;
+    fip.mapId=mapId;
+    fip.botId=static_cast<CATCHCHALLENGER_TYPE_BOTID>(fightId);
+    connexionManager->client->setBotMonster(team,fip);
+    //remember for the win reward: fightFinished() clears the engine's fightInProgress
+    //before battleWin fires, so we can't read the fightId back from the engine then.
+    currentBotFightId=fightId;
+    currentBotFightMapId=mapId;
+    ensureBattle();
+    Battle::battle->startBotBattle(mapId,ccmap->mapController.getX(),ccmap->mapController.getY());
+    emit setForeground(Battle::battle);
 }
 
 void OverMapLogic::ensureBattle()
@@ -1782,7 +1823,7 @@ void OverMapLogic::ensureBattle()
     if(Battle::battle==nullptr)
         Battle::battle=new Battle();
     //idempotent wiring of the battle -> overmap signals (UniqueConnection)
-    if(!connect(Battle::battle,&Battle::battleWin,this,&OverMapLogic::battleFinished,Qt::UniqueConnection))
+    if(!connect(Battle::battle,&Battle::battleWin,this,&OverMapLogic::battleWon,Qt::UniqueConnection))
         abort();
     if(!connect(Battle::battle,&Battle::battleLose,this,&OverMapLogic::battleFinished,Qt::UniqueConnection))
         abort();
@@ -1820,9 +1861,39 @@ void OverMapLogic::wildFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex
 
 void OverMapLogic::botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    ensureBattle();
-    Battle::battle->startBotBattle(mapIndex,x,y);
-    emit setForeground(Battle::battle);
+    //line-of-sight collision: the signal carries the bot's trigger position; resolve
+    //its fightId from the map, then run the SAME path as a dialog fight (botFight()
+    //loads the team). Mirror the working 800x600 BaseWindowMap::botFightCollision.
+    //The collision engine path already handled the server side, so do NOT requestFight() here.
+    const CatchChallenger::CommonMap &mapData=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    const std::pair<uint8_t,uint8_t> pos(x,y);
+    if(mapData.botsFightTrigger.find(pos)==mapData.botsFightTrigger.cend())
+    {
+        showTip(tr("Bot triggered but no bot at this place").toStdString());
+        return;
+    }
+    botFight(static_cast<uint16_t>(mapData.botsFightTrigger.at(pos)));
+}
+
+void OverMapLogic::battleWon()
+{
+    //a bot fight win pays cash + marks the trainer beaten (so re-walking the trigger
+    //doesn't re-fight). Wild wins have currentBotFightId==0xFFFF -> no reward.
+    if(currentBotFightId!=0xFFFF)
+    {
+        const CatchChallenger::CommonMap &mapData=QtDatapackClientLoader::datapackLoader->getMap(currentBotFightMapId);
+        if(mapData.botFights.find(static_cast<uint8_t>(currentBotFightId))!=mapData.botFights.cend())
+        {
+            const CatchChallenger::BotFight &botFightData=mapData.botFights.at(static_cast<uint8_t>(currentBotFightId));
+            if(botFightData.cash>0)
+                addCash(botFightData.cash);
+            ccmap->mapController.addBeatenBotFight(currentBotFightMapId,
+                                                   static_cast<CATCHCHALLENGER_TYPE_BOTID>(currentBotFightId));
+        }
+        currentBotFightId=0xFFFF;
+        currentBotFightMapId=0xFFFF;
+    }
+    battleFinished();
 }
 
 void OverMapLogic::cityCapture(const uint32_t &remainingTime,const uint8_t &type)
