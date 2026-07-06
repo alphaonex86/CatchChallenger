@@ -209,7 +209,11 @@ void Client::setToDefault()
         paramToPassToCallBackType.pop();
     #endif
 
-    botFight=std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(0,0);
+    //botFight already set above to the wild-fight sentinel (65535); a stray
+    //duplicate here set it to map 0 -> finishTheTurn() routed every WILD fight
+    //through the bot-fight branch (botFights.find(0) fails) and the server never
+    //finalized the fight: no syncForEndOfTurn on win, no rescue on total loss,
+    //fight stuck open -> post-fight desync/teardown
     #ifndef CATCHCHALLENGER_SERVER
     isInCityCapture=false;
     #endif
