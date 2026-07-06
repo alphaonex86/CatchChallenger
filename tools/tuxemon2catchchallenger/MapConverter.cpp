@@ -868,7 +868,11 @@ static void loadYamlEvents(const std::string &tmxPath, EventSink &sink)
     YAML::Node::const_iterator e = evs.begin();
     while(e != evs.end())
     {
-        const YAML::Node &ev = e->second;
+        // COPY the node: e->second is a member of the iterator's TEMPORARY
+        // proxy pair — a reference to it dangles once ++e runs (crashed as
+        // YAML::InvalidNode with newer yaml-cpp).  A Node copy is a cheap
+        // shared handle and stays valid.
+        YAML::Node ev = e->second;
         ++e;
         if(!ev.IsMap())
             continue;
