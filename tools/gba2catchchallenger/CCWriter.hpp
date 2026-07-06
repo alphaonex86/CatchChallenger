@@ -29,9 +29,15 @@
 //    and the engine auto-resolves it once the datapack defines the item.
 struct ItemResolver {
     bool selfContained;
-    std::unordered_map<uint16_t,std::string> gen3Name; // gen3 id -> lowercase name
-    std::unordered_map<std::string,uint16_t> baseByName; // base lowercase name -> base id
+    std::unordered_map<uint16_t,std::string> gen3Name; // gen3 id -> normalized name
+    std::unordered_map<std::string,uint16_t> baseByName; // target normalized name -> id
     ItemResolver();
+    // Lowercase + fold UTF-8 Latin-1 accents to their base letter, so the
+    // gen3 decode ("Poke Ball") matches a curated "Poké Ball".
+    static std::string normName(const std::string &s);
+    // Target item id for a normalized gen3 name: exact match, else the
+    // "TMnn"/"HMnn" prefix rule ("tm06" matches "tm06 toxic").  -1 = none.
+    int resolve(const std::string &normalizedName) const;
 };
 
 class CCWriter {
