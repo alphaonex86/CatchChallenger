@@ -173,6 +173,42 @@ std::vector<std::string> Gen3Text::decodeSign(const GbaRom &rom, uint32_t offset
     return pages;
 }
 
+std::string Gen3Text::decodeParagraph(const GbaRom &rom, uint32_t offset, size_t maxLen)
+{
+    std::string out;
+    size_t n=0;
+    while(n<maxLen)
+    {
+        uint8_t b=rom.u8(offset+static_cast<uint32_t>(n));
+        if(b==0xFF)
+            break;                          // end of string
+        else if(b==0xFE || b==0xFA || b==0xFB) // newline / scroll / paragraph
+        {
+            if(!out.empty() && out.back()!=' ')
+                out.push_back(' ');
+        }
+        else if(b==0xB0)                    // ellipsis
+            out+="...";
+        else if(b==0xFD)                    // placeholder: skip the variable id
+            n++;
+        else if(b==0xFC)                    // formatting control: skip cmd + arg
+            n++;
+        else
+        {
+            char c=signChar(b);
+            if(c!=0)
+            {
+                if(c!=' ' || out.empty() || out.back()!=' ')
+                    out.push_back(c);
+            }
+        }
+        n++;
+    }
+    while(!out.empty() && out.back()==' ')
+        out.pop_back();
+    return out;
+}
+
 std::string Gen3Text::speciesName(const GbaRom &rom, uint16_t internalId)
 {
     const GameInfo &gi=rom.game();

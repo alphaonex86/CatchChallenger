@@ -29,17 +29,22 @@ struct Gen3Species {
     std::vector<std::pair<int,int> > learnset;   // (level, moveId)
     // evolutions: (kind, param, targetSpecies); kind: 0 none, 1 level, 2 item
     std::vector<std::pair<int,std::pair<int,int> > > evolutions;
+    std::string kind;        // Pokedex category ("Seed"), "" when unavailable
+    std::string description; // Pokedex flavour text, "" when unavailable
+    std::vector<std::pair<int,int> > tmLearn;    // (TM/HM itemId, moveId)
 };
 
 struct Gen3Move {
     int id;
     std::string name;
+    std::string description; // "" when unavailable
     int effect, power, type, accuracy, pp, priority;
 };
 
 struct Gen3Item {
     int id;
     std::string name;
+    std::string description; // "" when unavailable
     int price;
 };
 
