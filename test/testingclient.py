@@ -2233,6 +2233,56 @@ def run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases):
         s.kill()
 
 
+def run_qtopengl_shop_sell_channel_test(dp_name, mc, failed_cases):
+    """Keystone shop SELL (the original reported flow): open the house2 counter
+    Seller (0,22) shop dialog, follow its 'Sell' link -> the Inventory opens as a
+    sell picker, pick an item -> sellObject -> CASH increases (price/2). Asserts
+    GETCASH strictly grew and no crash. Sell was a 'not implemented' tip before."""
+    case = f"qtopengl shop sell increases cash ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl shop SELL over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+    try:
+        spawn = s.map_id()
+        s.send("CLICKTILE 15 25")
+        if s.wait_map_change(spawn, timeout=clamp_local(diagnostic.scale_timeout(DIAG, 25))) < 0:
+            log_fail(case, f"never entered house2; state={s.send('GETSTATE')}")
+            return
+        # open the counter seller shop dialog (Welcome to the PokeMart / Buy / Sell)
+        s.send("CLICKTILE 0 22")
+        if not s.wait(lambda: "pokemart" in s.dialog().lower(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 18))):
+            log_fail(case, f"counter seller (0,22) opened NO shop dialog; got={s.dialog()!r}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        cash0 = s.cash()
+        # dialog links: [Buy, Sell]; first (Buy) pre-selected -> Down to Sell, activate
+        s.send("KEY Down"); time.sleep(0.3)
+        s.send("KEY Return"); time.sleep(0.9)   # -> sell step -> Inventory sell picker
+        # pick the first sellable item + confirm (Select) in the picker
+        s.send("CLICKSCREEN 280 205"); time.sleep(0.4)
+        s.send("CLICKSCREEN 487 290"); time.sleep(1.0)
+        if s.proc.poll() is not None:
+            log_fail(case, f"client crashed during sell (rc={s.proc.poll()})")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        cash1 = s.cash()
+        if cash1 <= cash0:
+            log_fail(case, f"cash did not increase on sell ({cash0} -> {cash1}); "
+                           f"the Sell link or item pick may have missed. inv={s.send('GETINVENTORY')}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        log_pass(case, f"sold an item: cash {cash0} -> {cash1}")
+    finally:
+        s.kill()
+
+
 def run_qtopengl_item_use_monster_channel_test(dp_name, mc, failed_cases):
     """Keystone item-use: using a monster-effect item (Potion 'grade A', id 5) from
     the bag opens the new MonsterSelect picker and OPTIMISTICALLY removes the item;
@@ -2711,6 +2761,7 @@ def main():
                 run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_shop_sell_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_item_use_monster_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_nurse_heal_link_channel_test(dp_name, mc, failed_cases)

@@ -2355,6 +2355,9 @@ void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const
             remove_to_inventory(itemId,quantity);
             const uint32_t price=CatchChallenger::CommonDatapack::commonDatapack.get_item(itemId).price/2;
             connexionManager->client->sellObject(itemId,quantity,price);
+            //credit the sale locally (the server does the same server-side; the
+            //haveSellObject reply is a no-op in this interface)
+            addCash(price*quantity);
         }
         break;
         case ObjectType_Seed:
