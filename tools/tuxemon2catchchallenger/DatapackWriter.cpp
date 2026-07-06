@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -59,6 +60,32 @@ static bool itemBySlugLess(const Item *a, const Item *b)
 static bool approx(double a, double b)
 {
     return std::fabs(a - b) < 0.01;
+}
+
+// Guarded decimal parse (no exceptions escape); def on failure.
+static double toDouble(const std::string &s, double def)
+{
+    if(s.empty())
+        return def;
+    char *end = NULL;
+    const double v = std::strtod(s.c_str(), &end);
+    if(end == NULL || *end != '\0')
+        return def;
+    return v;
+}
+
+// true when the string is a plain non-empty unsigned decimal number
+static bool isUnsignedNumber(const std::string &s)
+{
+    bool numeric = !s.empty();
+    std::size_t c = 0;
+    while(c < s.size())
+    {
+        if(!std::isdigit((unsigned char)s[c]))
+            numeric = false;
+        ++c;
+    }
+    return numeric;
 }
 
 // Make a YAML key a valid XML element name.
@@ -158,19 +185,32 @@ static const char *colorFor(const std::string &slug)
 void DatapackWriter::writeNameDesc(std::ofstream &o, const char *indent,
                                    const std::string &slug, bool withDescription)
 {
+    // English stays the no-lang default (the loaders key the name table on
+    // it); every other locale loaded from l18n/ gets a lang="XX" entry.
     const std::string nameEn = l10n_.nameEn(slug);
-    const std::string nameFr = l10n_.nameFr(slug);
     o << indent << "<name>" << xmlEscape(nameEn) << "</name>\n";
-    if(!nameFr.empty() && nameFr != nameEn)
-        o << indent << "<name lang=\"fr\">" << xmlEscape(nameFr) << "</name>\n";
+    const std::vector<std::string> &locs = l10n_.locales();
+    std::size_t li = 0;
+    while(li < locs.size())
+    {
+        const std::string v = l10n_.name(locs[li], slug);
+        if(!v.empty() && v != nameEn)
+            o << indent << "<name lang=\"" << locs[li] << "\">" << xmlEscape(v) << "</name>\n";
+        ++li;
+    }
     if(withDescription)
     {
         const std::string descEn = l10n_.descEn(slug);
-        const std::string descFr = l10n_.descFr(slug);
         if(!descEn.empty())
             o << indent << "<description>" << xmlEscape(descEn) << "</description>\n";
-        if(!descFr.empty() && descFr != descEn)
-            o << indent << "<description lang=\"fr\">" << xmlEscape(descFr) << "</description>\n";
+        li = 0;
+        while(li < locs.size())
+        {
+            const std::string v = l10n_.desc(locs[li], slug);
+            if(!v.empty() && v != descEn)
+                o << indent << "<description lang=\"" << locs[li] << "\">" << xmlEscape(v) << "</description>\n";
+            ++li;
+        }
     }
 }
 
@@ -263,9 +303,14 @@ void DatapackWriter::buildIdMaps()
 }
 
 // ── informations.xml ────────────────────────────────────────────────────────
-void DatapackWriter::writeInformations()
+bool DatapackWriter::writeInformations()
 {
     std::ofstream o(outRoot_ + "/informations.xml");
+    if(!o.is_open())
+    {
+        std::cerr << "Cannot write " << outRoot_ << "/informations.xml" << std::endl;
+        return false;
+    }
     o << "<informations>\n";
     o << "    <author pseudo=\"Tuxemon\" email=\"\" name=\"Tuxemon project\"/>\n";
     o << "    <author pseudo=\"tuxemon2catchchallenger\" email=\"\" name=\"converter\"/>\n";
@@ -274,12 +319,18 @@ void DatapackWriter::writeInformations()
     o << "    <description>Converted from the Tuxemon game data (https://www.tuxemon.org/). "
          "Monsters, techniques, types and items only.</description>\n";
     o << "</informations>\n";
+    return o.good();
 }
 
 // ── monsters/type.xml ────────────────────────────────────────────────────────
-void DatapackWriter::writeTypes()
+bool DatapackWriter::writeTypes()
 {
     std::ofstream o(outRoot_ + "/monsters/type.xml");
+    if(!o.is_open())
+    {
+        std::cerr << "Cannot write " << outRoot_ << "/monsters/type.xml" << std::endl;
+        return false;
+    }
     o << "<!-- Generated from Tuxemon db/element; multiplicator 2/0.5/0, default 1 omitted -->\n";
     o << "<types>\n";
     std::size_t e = 0;
@@ -311,13 +362,36 @@ void DatapackWriter::writeTypes()
         ++e;
     }
     o << "</types>\n";
+    return o.good();
 }
 
 // ── monsters/buff/buff.xml ───────────────────────────────────────────────────
-void DatapackWriter::writeBuffs()
+// Map a Tuxemon stat name onto the CC buff stats (FightLoaderBuff only knows
+// EffectOn_HP/Attack/Defense): melee/ranged are the offensive pair -> attack,
+// armour/dodge the defensive pair -> defense; speed has no CC equivalent.
+// Returns 0 unknown, 1 attack, 2 defense.
+static int ccStatOf(const std::string &stat)
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters/buff"));
+    if(stat == "melee" || stat == "ranged")
+        return 1;
+    if(stat == "armour" || stat == "dodge")
+        return 2;
+    return 0;
+}
+
+bool DatapackWriter::writeBuffs()
+{
+    if(!QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters/buff")))
+    {
+        std::cerr << "Cannot create " << outRoot_ << "/monsters/buff" << std::endl;
+        return false;
+    }
     std::ofstream o(outRoot_ + "/monsters/buff/buff.xml");
+    if(!o.is_open())
+    {
+        std::cerr << "Cannot write " << outRoot_ << "/monsters/buff/buff.xml" << std::endl;
+        return false;
+    }
     o << "<!-- Generated from Tuxemon db/status -->\n";
     o << "<buffs>\n";
 
@@ -335,7 +409,8 @@ void DatapackWriter::writeBuffs()
         else
             durAttr = "duration=\"NumberOfTurn\" durationNumberOfTurn=\"3\"";
 
-        // Per-turn damage if the status is a damaging negative one.
+        // Per-turn damage if the status is a damaging negative one; per-turn
+        // heal for the positive heal-over-time (recover: divisor of max HP).
         std::string hp;
         if(st.category == "negative" && !st.effects.empty())
         {
@@ -346,10 +421,7 @@ void DatapackWriter::writeBuffs()
                 if(!st.effects[k].params.empty())
                 {
                     const std::string &p0 = st.effects[k].params[0];
-                    bool numeric = !p0.empty();
-                    std::size_t c = 0;
-                    while(c < p0.size()) { if(!std::isdigit((unsigned char)p0[c])) numeric = false; ++c; }
-                    if(numeric)
+                    if(isUnsignedNumber(p0))
                         hp = "-" + p0;
                 }
                 ++k;
@@ -357,17 +429,74 @@ void DatapackWriter::writeBuffs()
             if(hp.empty() && st.stepType == "percent_damage")
                 hp = "-5%";
         }
+        else if(st.category == "positive")
+        {
+            // recover N = heal maxHP/N per turn -> positive percent hp
+            // (FightLoaderBuff accepts a positive inFight hp)
+            std::size_t k = 0;
+            while(k < st.effects.size() && hp.empty())
+            {
+                if(st.effects[k].type == "recover" && !st.effects[k].params.empty())
+                {
+                    const double div = toDouble(st.effects[k].params[0], 0.0);
+                    if(div > 0.0)
+                    {
+                        int pct = iround(100.0 / div);
+                        if(pct < 1) pct = 1;
+                        hp = "+" + std::to_string(pct) + "%";
+                    }
+                }
+                ++k;
+            }
+        }
 
-        o << "    <buff id=\"" << id << "\">\n";
+        // stat_modifiers -> <inFight attack=/defense=> percent (average the
+        // multipliers of the Tuxemon stats mapping onto the same CC stat).
+        int atkPct = 0, defPct = 0;
+        {
+            double atkSum = 0.0, defSum = 0.0;
+            int atkN = 0, defN = 0;
+            std::size_t k = 0;
+            while(k < st.statModifiers.size())
+            {
+                const StatModifier &mod = st.statModifiers[k];
+                if(mod.op == "*")
+                {
+                    const int cc = ccStatOf(mod.stat);
+                    if(cc == 1) { atkSum += mod.value; ++atkN; }
+                    else if(cc == 2) { defSum += mod.value; ++defN; }
+                }
+                ++k;
+            }
+            if(atkN > 0)
+                atkPct = iround((atkSum / atkN - 1.0) * 100.0);
+            if(defN > 0)
+                defPct = iround((defSum / defN - 1.0) * 100.0);
+        }
+
+        // FightLoaderBuff reads duration/durationNumberOfTurn ONLY from the
+        // <buff> element (never from <effect>), else the buff loads as the
+        // ThisFight default.
+        o << "    <buff id=\"" << id << "\" " << durAttr << ">\n";
         writeNameDesc(o, "        ", st.slug, true);
-        o << "        <effect " << durAttr << ">\n";
+        o << "        <effect>\n";
         o << "            <level number=\"1\">\n";
         if(!hp.empty())
         {
             o << "                <inFight hp=\"" << hp << "\"/>\n";
             if(st.persists)
-                o << "                <inWalk steps=\"50\" hp=\"" << hp << "\"/>\n";
+            {
+                // honor the Tuxemon step_interval (burn/poison = 10 steps)
+                int steps = st.stepInterval;
+                if(steps <= 0)
+                    steps = 50;
+                o << "                <inWalk steps=\"" << steps << "\" hp=\"" << hp << "\"/>\n";
+            }
         }
+        if(atkPct != 0)
+            o << "                <inFight attack=\"" << (atkPct > 0 ? "+" : "") << atkPct << "%\"/>\n";
+        if(defPct != 0)
+            o << "                <inFight defense=\"" << (defPct > 0 ? "+" : "") << defPct << "%\"/>\n";
         o << "            </level>\n";
         o << "        </effect>\n";
         writeTuxemon(o, "        ", st.raw);
@@ -375,13 +504,23 @@ void DatapackWriter::writeBuffs()
         ++s;
     }
     o << "</buffs>\n";
+    return o.good();
 }
 
 // ── monsters/skill/skill.xml ─────────────────────────────────────────────────
-void DatapackWriter::writeSkills()
+bool DatapackWriter::writeSkills()
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters/skill"));
+    if(!QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters/skill")))
+    {
+        std::cerr << "Cannot create " << outRoot_ << "/monsters/skill" << std::endl;
+        return false;
+    }
     std::ofstream o(outRoot_ + "/monsters/skill/skill.xml");
+    if(!o.is_open())
+    {
+        std::cerr << "Cannot write " << outRoot_ << "/monsters/skill/skill.xml" << std::endl;
+        return false;
+    }
     o << "<!-- Generated from Tuxemon db/technique. id=0 is the mandatory fallback -->\n";
     o << "<skills>\n";
 
@@ -416,18 +555,72 @@ void DatapackWriter::writeSkills()
 
         bool hasDamage = false;
         bool hasGive = false;
+        bool hasHeal = false;
+        bool isArea = false;
+        double healFrac = 0.5; // heuristic for the plain "healing" effect
         std::size_t k = 0;
         while(k < tech.effects.size())
         {
-            if(tech.effects[k].type == "damage") hasDamage = true;
-            if(tech.effects[k].type == "give")   hasGive = true;
+            const std::string &ty = tech.effects[k].type;
+            if(ty == "damage")
+                hasDamage = true;
+            else if(ty == "give")
+                hasGive = true;
+            else if(ty == "healing")
+                hasHeal = true;
+            else if(ty == "prop_healing")
+            {
+                // params hold a target + a max-HP fraction (0.66, 0.33, …)
+                hasHeal = true;
+                std::size_t p = 0;
+                while(p < tech.effects[k].params.size())
+                {
+                    const double f = toDouble(tech.effects[k].params[p], 0.0);
+                    if(f > 0.0 && f <= 1.0)
+                    {
+                        healFrac = f;
+                        break;
+                    }
+                    ++p;
+                }
+            }
+            else if(ty == "photogenesis")
+            {
+                // params are per-daypart max-HP divisors; use the first >0 one
+                hasHeal = true;
+                std::size_t p = 0;
+                while(p < tech.effects[k].params.size())
+                {
+                    const double d = toDouble(tech.effects[k].params[p], 0.0);
+                    if(d > 0.0)
+                    {
+                        healFrac = 1.0 / d;
+                        break;
+                    }
+                    ++p;
+                }
+            }
+            else if(ty == "splash" || ty == "multiattack")
+            {
+                // area techniques (14 splash + 6 multiattack): those effects
+                // deliver the damage to several targets, so they count as
+                // damage and hit allEnemy (FightLoaderSkill ~155 ApplyOn_AllEnemy)
+                isArea = true;
+                hasDamage = true;
+            }
             ++k;
         }
         // No explicit effects -> assume a plain damage move.
         if(tech.effects.empty())
             hasDamage = true;
 
-        const char *applyOn = tech.targetSelf ? "themself" : "aloneEnemy";
+        const char *applyOn;
+        if(isArea)
+            applyOn = "allEnemy";
+        else if(tech.targetSelf)
+            applyOn = "themself";
+        else
+            applyOn = "aloneEnemy";
 
         o << "    <skill id=\"" << id << "\" type=\"" << type << "\" category=\"Physical\">\n";
         writeNameDesc(o, "        ", tech.slug, true);
@@ -439,6 +632,17 @@ void DatapackWriter::writeSkills()
         {
             o << "                <life success=\"" << acc << "%\" quantity=\"-" << dmg
               << "\" applyOn=\"" << applyOn << "\"/>\n";
+            emitted = true;
+        }
+        if(hasHeal)
+        {
+            // healing/prop_healing/photogenesis restore the user's HP; the
+            // loader accepts a positive percent quantity (the '+' and '%' are
+            // stripped by FightLoaderSkill before stringtoint32)
+            int hpct = iround(healFrac * 100.0);
+            if(hpct < 1) hpct = 1; if(hpct > 100) hpct = 100;
+            o << "                <life success=\"100%\" quantity=\"+" << hpct
+              << "%\" applyOn=\"themself\"/>\n";
             emitted = true;
         }
         if(hasGive)
@@ -455,7 +659,14 @@ void DatapackWriter::writeSkills()
                         int succ = tech.potency > 0.0 ? iround(tech.potency * 100.0)
                                                       : (hasDamage ? 20 : 100);
                         if(succ < 1) succ = 1; if(succ > 100) succ = 100;
-                        o << "                <buff id=\"" << bid << "\" success=\"" << succ << "%\"/>\n";
+                        // FightLoaderSkill defaults a missing applyOn to
+                        // aloneEnemy, so a self-buff (give … own_monster) MUST
+                        // say applyOn="themself" or it would buff the enemy
+                        const std::vector<std::string> &gp = tech.effects[k].params;
+                        const char *buffApply = (gp.size() >= 2 && gp[1] == "own_monster")
+                                                ? "themself" : "aloneEnemy";
+                        o << "                <buff id=\"" << bid << "\" success=\"" << succ
+                          << "%\" applyOn=\"" << buffApply << "\"/>\n";
                         emitted = true;
                     }
                 }
@@ -464,7 +675,7 @@ void DatapackWriter::writeSkills()
         }
         if(!emitted)
             o << "                <life success=\"" << acc << "%\" quantity=\"-" << dmg
-              << "\" applyOn=\"aloneEnemy\"/>\n";
+              << "\" applyOn=\"" << (isArea ? "allEnemy" : "aloneEnemy") << "\"/>\n";
 
         o << "            </level>\n";
         o << "        </effect>\n";
@@ -473,6 +684,7 @@ void DatapackWriter::writeSkills()
         ++t;
     }
     o << "</skills>\n";
+    return o.good();
 }
 
 // Map a Tuxemon shape + evolution stage to the 6 CatchChallenger stats
@@ -499,8 +711,16 @@ static CcStats computeStats(const Shape &sh, const std::string &stage)
     return s;
 }
 
+// One TM/MM item: teaches a technique (learn_tm) or a technique of an
+// element (learn_mm) through <attack byitem=...>.
+struct TmItem {
+    int itemId;
+    bool byElement;    // learn_mm: param is an element slug, not a technique
+    std::string param; // technique slug (learn_tm) or element slug (learn_mm)
+};
+
 // ── monsters/monster.xml ─────────────────────────────────────────────────────
-void DatapackWriter::writeMonsters()
+bool DatapackWriter::writeMonsters()
 {
     // sort by id for a stable, readable file
     std::vector<const Monster*> list;
@@ -508,7 +728,47 @@ void DatapackWriter::writeMonsters()
     while(i < db_.monsters().size()) { list.push_back(&db_.monsters()[i]); ++i; }
     std::sort(list.begin(), list.end(), monsterByIdLess);
 
+    // D2: collect the TM/MM items (learn_tm/learn_mm effects) once.
+    std::vector<TmItem> tmItems;
+    i = 0;
+    while(i < db_.items().size())
+    {
+        const Item &it = db_.items()[i];
+        const int iid = idForItem(it.slug);
+        if(iid >= 0)
+        {
+            std::size_t k = 0;
+            while(k < it.effects.size())
+            {
+                const Effect &eff = it.effects[k];
+                if((eff.type == "learn_tm" || eff.type == "learn_mm") && !eff.params.empty())
+                {
+                    TmItem tm;
+                    tm.itemId = iid;
+                    tm.byElement = (eff.type == "learn_mm");
+                    tm.param = eff.params[0];
+                    tmItems.push_back(tm);
+                }
+                ++k;
+            }
+        }
+        ++i;
+    }
+    // technique slug -> its record (for the learn_mm element match)
+    std::unordered_map<std::string, const Technique*> techBySlug;
+    i = 0;
+    while(i < db_.techniques().size())
+    {
+        techBySlug[db_.techniques()[i].slug] = &db_.techniques()[i];
+        ++i;
+    }
+
     std::ofstream o(outRoot_ + "/monsters/monster.xml");
+    if(!o.is_open())
+    {
+        std::cerr << "Cannot write " << outRoot_ << "/monsters/monster.xml" << std::endl;
+        return false;
+    }
     o << "<!-- Generated from Tuxemon db/monster. Stats derived from the body shape. -->\n";
     o << "<monsters>\n";
 
@@ -580,9 +840,55 @@ void DatapackWriter::writeMonsters()
         }
         if(!anyAttack)
             o << "            <attack id=\"0\" level=\"0\"/>\n";
+
+        // D2: TM/MM items -> <attack id=skill byitem=item/> (the no-level
+        // branch of FightLoaderMonster ~447 keys learnByItem on the item id).
+        // Tuxemon's learn_tm itself ignores eligibility (any monster), so the
+        // monster's own moveset — the only explicit per-monster move source —
+        // is used as the compatibility list: learn_tm applies to monsters
+        // whose moveset contains the technique (the item then teaches it
+        // early); learn_mm (random technique of an element) teaches the first
+        // moveset technique of that element (deterministic).  The engine
+        // keeps learn-by-level and learn-by-item separate, so the duplicate
+        // skill id is fine; each item appears at most once per monster.
+        std::size_t ti = 0;
+        while(ti < tmItems.size())
+        {
+            const TmItem &tm = tmItems[ti];
+            int sid = -1;
+            std::size_t mv = 0;
+            while(mv < m.moveset.size() && sid < 0)
+            {
+                const std::string &ms = m.moveset[mv].technique;
+                if(!tm.byElement)
+                {
+                    if(ms == tm.param)
+                        sid = skillId(ms);
+                }
+                else
+                {
+                    std::unordered_map<std::string, const Technique*>::const_iterator tit = techBySlug.find(ms);
+                    if(tit != techBySlug.end())
+                    {
+                        std::size_t ty = 0;
+                        while(ty < tit->second->types.size() && sid < 0)
+                        {
+                            if(tit->second->types[ty] == tm.param)
+                                sid = skillId(ms);
+                            ++ty;
+                        }
+                    }
+                }
+                ++mv;
+            }
+            if(sid >= 0)
+                o << "            <attack id=\"" << sid << "\" byitem=\"" << tm.itemId << "\"/>\n";
+            ++ti;
+        }
         o << "        </attack_list>\n";
 
-        // evolutions (engine allows a single level evolution)
+        // evolutions (engine rule here: a single evolution per monster; a
+        // level evolution wins over an item one)
         std::size_t ev = 0;
         bool wroteEvo = false;
         while(ev < m.evolutions.size() && !wroteEvo)
@@ -599,6 +905,41 @@ void DatapackWriter::writeMonsters()
             }
             ++ev;
         }
+        // D1: item evolution (FightLoaderMonster ~513: type="item" needs the
+        // item= attribute; the numeric item id is collision-proof).  Pick the
+        // first evolution branch whose highest-probability item resolves; an
+        // unresolvable slug is skipped, never guessed.
+        ev = 0;
+        while(ev < m.evolutions.size() && !wroteEvo)
+        {
+            const Evolution &e = m.evolutions[ev];
+            const int to = monsterId(e.toSlug);
+            if(to >= 0 && !e.items.empty())
+            {
+                int best = -1;
+                double bestProb = -1.0;
+                std::size_t ii = 0;
+                while(ii < e.items.size())
+                {
+                    const int iid = idForItem(e.items[ii].slug);
+                    if(iid >= 0 && e.items[ii].prob > bestProb)
+                    {
+                        best = iid;
+                        bestProb = e.items[ii].prob;
+                    }
+                    ++ii;
+                }
+                if(best >= 0)
+                {
+                    o << "        <evolutions>\n";
+                    o << "            <evolution type=\"item\" item=\"" << best
+                      << "\" evolveTo=\"" << to << "\"/>\n";
+                    o << "        </evolutions>\n";
+                    wroteEvo = true;
+                }
+            }
+            ++ev;
+        }
 
         writeNameDesc(o, "        ", m.slug, true);
         // Full raw Tuxemon record (engine-ignored), preserved for later support.
@@ -606,14 +947,19 @@ void DatapackWriter::writeMonsters()
         o << "    </monster>\n";
     }
     o << "</monsters>\n";
+    return o.good();
 }
 
 // ── items/items.xml ──────────────────────────────────────────────────────────
-void DatapackWriter::writeItems()
+bool DatapackWriter::writeItems()
 {
     const std::string itemsDir = outRoot_ + "/items";
     const std::string imgDir = itemsDir + "/tuxemon";
-    QDir().mkpath(QString::fromStdString(imgDir));
+    if(!QDir().mkpath(QString::fromStdString(imgDir)))
+    {
+        std::cerr << "Cannot create " << imgDir << std::endl;
+        return false;
+    }
 
     // stable order by id
     std::vector<const Item*> list;
@@ -622,6 +968,11 @@ void DatapackWriter::writeItems()
     std::sort(list.begin(), list.end(), itemBySlugLess);
 
     std::ofstream o(itemsDir + "/items.xml");
+    if(!o.is_open())
+    {
+        std::cerr << "Cannot write " << itemsDir << "/items.xml" << std::endl;
+        return false;
+    }
     o << "<!-- Generated from Tuxemon db/item -->\n";
     o << "<items>\n";
 
@@ -648,11 +999,15 @@ void DatapackWriter::writeItems()
             }
         }
 
-        // decide the (single) effect element
+        // decide the effect element(s).  NOTE: "remove_entity" (hatchet/
+        // sledgehammer map tools) is NOT a cure — no remove/cure effect type
+        // exists in Tuxemon; the real cure is "restore".
         bool capture = (it.category == "capture");
         bool heal = false;
         std::string healAmount;
-        bool removeStatus = false;
+        bool restore = false;
+        bool repellent = false;
+        std::string repelSteps;
         std::size_t k = 0;
         while(k < it.effects.size())
         {
@@ -664,8 +1019,14 @@ void DatapackWriter::writeItems()
                 if(!it.effects[k].params.empty())
                     healAmount = it.effects[k].params[0];
             }
-            else if(ty.rfind("remove", 0) == 0 || ty == "cure")
-                removeStatus = true;
+            else if(ty == "restore")
+                restore = true;
+            else if(ty == "repellent")
+            {
+                repellent = true;
+                if(!it.effects[k].params.empty())
+                    repelSteps = it.effects[k].params[0];
+            }
             ++k;
         }
 
@@ -683,36 +1044,65 @@ void DatapackWriter::writeItems()
             std::snprintf(buf, sizeof(buf), "%.2f", rate);
             o << "        <trap bonus_rate=\"" << buf << "\"/>\n";
         }
+        else if(restore)
+        {
+            // full-restore/revive: DatapackGeneralLoaderItem reads <hp> and
+            // <buff> in the same monster-effect block, so they coexist —
+            // full heal + cure every status
+            o << "        <hp add=\"all\"/>\n";
+            o << "        <buff remove=\"all\"/>\n";
+        }
+        else if(repellent)
+        {
+            // repellent N -> <repel step=N> (loader ~150 requires step>0)
+            if(!isUnsignedNumber(repelSteps) || repelSteps == "0")
+                repelSteps = "100";
+            o << "        <repel step=\"" << repelSteps << "\"/>\n";
+        }
         else if(heal)
         {
-            // numeric "fixed" amount -> add="N"; anything else -> full heal
-            bool numeric = !healAmount.empty();
-            std::size_t c = 0;
-            while(c < healAmount.size()) { if(!std::isdigit((unsigned char)healAmount[c])) numeric = false; ++c; }
-            if(numeric)
+            if(!healAmount.empty() && healAmount[0] == '-')
+            {
+                // a NEGATIVE "heal" (damage food: bite_of_despair, …) can't
+                // be expressed — the loader requires add>0 — so emit no <hp>
+                // at all (the raw <tuxemon> element keeps the data)
+            }
+            else if(isUnsignedNumber(healAmount))
+                // numeric "fixed" amount -> add="N"
                 o << "        <hp add=\"" << healAmount << "\"/>\n";
             else
+                // percentage/unset -> full heal
                 o << "        <hp add=\"all\"/>\n";
         }
-        else if(removeStatus)
-            o << "        <buff remove=\"all\"/>\n";
         // else: a plain item (stone, key item, berry) with no effect element.
 
         writeTuxemon(o, "        ", it.raw);
         o << "    </item>\n";
     }
     o << "</items>\n";
+    return o.good();
 }
 
 // ── sprites ──────────────────────────────────────────────────────────────────
+// Guarded scalar-to-int (a malformed rect component falls back to the default
+// instead of throwing out of yaml-cpp).
+static int rectInt(const YAML::Node &n, int def)
+{
+    if(n && n.IsScalar())
+    {
+        try { return n.as<int>(); } catch(...) { return def; }
+    }
+    return def;
+}
+
 // Read one "<name>_rect: [x,y,w,h]" override from the monster's raw sprites
 // node, falling back to the engine default (tuxemon/db.py MonsterSpritesModel).
 static SheetRect sheetRectOf(const YAML::Node &sprites, const char *name,
                              const SheetRect &def)
 {
     if(sprites && sprites[name] && sprites[name].IsSequence() && sprites[name].size() == 4)
-        return SheetRect(sprites[name][0].as<int>(), sprites[name][1].as<int>(),
-                         sprites[name][2].as<int>(), sprites[name][3].as<int>());
+        return SheetRect(rectInt(sprites[name][0], def.x), rectInt(sprites[name][1], def.y),
+                         rectInt(sprites[name][2], def.w), rectInt(sprites[name][3], def.h));
     return def;
 }
 
@@ -745,20 +1135,39 @@ void DatapackWriter::writeSprites()
 // ── orchestration ────────────────────────────────────────────────────────────
 bool DatapackWriter::writeAll()
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters"));
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/items"));
+    bool ok = true;
+    if(!QDir().mkpath(QString::fromStdString(outRoot_ + "/monsters")))
+    {
+        std::cerr << "Cannot create " << outRoot_ << "/monsters" << std::endl;
+        ok = false;
+    }
+    if(!QDir().mkpath(QString::fromStdString(outRoot_ + "/items")))
+    {
+        std::cerr << "Cannot create " << outRoot_ << "/items" << std::endl;
+        ok = false;
+    }
 
     buildIdMaps();
-    writeInformations();
-    writeTypes();
-    writeBuffs();
-    writeSkills();
-    writeMonsters();
-    writeItems();
+    // run every writer (each reports its own error) and combine the verdicts
+    if(!writeInformations())
+        ok = false;
+    if(!writeTypes())
+        ok = false;
+    if(!writeBuffs())
+        ok = false;
+    if(!writeSkills())
+        ok = false;
+    if(!writeMonsters())
+        ok = false;
+    if(!writeItems())
+        ok = false;
     writeSprites();
 
-    std::cerr << "Datapack written to " << outRoot_ << std::endl;
-    return true;
+    if(ok)
+        std::cerr << "Datapack written to " << outRoot_ << std::endl;
+    else
+        std::cerr << "Datapack written to " << outRoot_ << " WITH ERRORS" << std::endl;
+    return ok;
 }
 
 } // namespace tuxemon

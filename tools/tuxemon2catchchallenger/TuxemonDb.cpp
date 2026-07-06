@@ -14,7 +14,9 @@ namespace tuxemon {
 // ── struct constructors (init in .cpp per project style) ──────────────────
 Shape::Shape() : hp(5), melee(5), ranged(5), armour(5), dodge(5), speed(5) {}
 MoveEntry::MoveEntry() : level(0) {}
+EvolutionItem::EvolutionItem() : prob(0.0) {}
 Evolution::Evolution() : atLevel(0) {}
+StatModifier::StatModifier() : value(1.0) {}
 Monster::Monster() : txmnId(0), heightCm(0), weightKg(0), catchRate(100.0),
     lowerCatchResistance(1.0), upperCatchResistance(1.0), genderMale(0.5), genderFemale(0.5) {}
 Technique::Technique() : techId(0), power(1.0), accuracy(1.0), potency(0.0), recharge(0), targetSelf(false) {}
@@ -165,6 +167,7 @@ void TuxemonDb::loadMonsters(const std::string &dir)
     const QFileInfoList files = yamlFiles(dir);
     std::unordered_set<std::string> seenSlug;
     std::unordered_set<int> seenId;
+    int maxId = 0;
     int idx = 0;
     while(idx < files.size())
     {
@@ -176,12 +179,25 @@ void TuxemonDb::loadMonsters(const std::string &dir)
         Monster m;
         m.slug = nodeStr(n["slug"], "");
         m.txmnId = nodeInt(n["txmn_id"], 0);
-        if(m.slug.empty() || m.txmnId <= 0)
+        if(m.slug.empty())
             continue;
-        if(!seenSlug.insert(m.slug).second || !seenId.insert(m.txmnId).second)
+        if(!seenSlug.insert(m.slug).second)
         {
-            std::cerr << "Skipping duplicate monster slug/id: " << m.slug << " (" << m.txmnId << ")" << std::endl;
+            std::cerr << "Skipping duplicate monster slug: " << m.slug << " (" << m.txmnId << ")" << std::endl;
             continue;
+        }
+        // txmn_id<=0 (the glitch set, 18 monsters) is kept: a free unique id is
+        // allocated after the load loop so their encounter refs resolve.  The
+        // engine only needs a unique u16 id.
+        if(m.txmnId > 0)
+        {
+            if(!seenId.insert(m.txmnId).second)
+            {
+                std::cerr << "Skipping duplicate monster id: " << m.slug << " (" << m.txmnId << ")" << std::endl;
+                continue;
+            }
+            if(m.txmnId > maxId)
+                maxId = m.txmnId;
         }
         m.shape = nodeStr(n["shape"], "");
         m.stage = nodeStr(n["stage"], "basic");
@@ -240,6 +256,21 @@ void TuxemonDb::loadMonsters(const std::string &dir)
                 Evolution ev;
                 ev.atLevel = nodeInt(e["at_level"], 0);
                 ev.toSlug = nodeStr(e["monster_slug"], "");
+                // item-triggered evolution: `item:` is a {itemSlug: prob} map
+                const YAML::Node itm = e["item"];
+                if(itm && itm.IsMap())
+                {
+                    YAML::const_iterator iit = itm.begin();
+                    while(iit != itm.end())
+                    {
+                        EvolutionItem ei;
+                        ei.slug = nodeStr(iit->first, "");
+                        ei.prob = nodeDouble(iit->second, 0.0);
+                        if(!ei.slug.empty())
+                            ev.items.push_back(ei);
+                        ++iit;
+                    }
+                }
                 if(!ev.toSlug.empty())
                     m.evolutions.push_back(ev);
                 ++i;
@@ -249,6 +280,28 @@ void TuxemonDb::loadMonsters(const std::string &dir)
         m.raw = n;
         monsters_.push_back(m);
     }
+
+    // Allocate free unique ids above the current maximum for the monsters
+    // shipped without a txmn_id (they were dropped silently before, leaving
+    // the encounter/37707_town* refs dangling).
+    int nextId = maxId;
+    int assigned = 0;
+    std::size_t mi = 0;
+    while(mi < monsters_.size())
+    {
+        if(monsters_[mi].txmnId <= 0)
+        {
+            ++nextId;
+            while(seenId.find(nextId) != seenId.end())
+                ++nextId;
+            monsters_[mi].txmnId = nextId;
+            seenId.insert(nextId);
+            ++assigned;
+        }
+        ++mi;
+    }
+    if(assigned > 0)
+        std::cerr << "Assigned " << assigned << " free monster ids (missing txmn_id), up to " << nextId << std::endl;
 }
 
 // ── techniques ──────────────────────────────────────────────────────────────
@@ -405,6 +458,26 @@ void TuxemonDb::loadStatuses(const std::string &dir)
         const YAML::Node beh = n["behaviors"];
         if(beh && beh["persists_after_combat"])
             s.persists = (nodeStr(beh["persists_after_combat"], "false") == "true");
+
+        // stat_modifiers: {stat: {value: N, operation: '*'}} (blinded, hardshell, …)
+        const YAML::Node sm = n["stat_modifiers"];
+        if(sm && sm.IsMap())
+        {
+            YAML::const_iterator smit = sm.begin();
+            while(smit != sm.end())
+            {
+                StatModifier mod;
+                mod.stat = nodeStr(smit->first, "");
+                if(smit->second && smit->second.IsMap())
+                {
+                    mod.op = nodeStr(smit->second["operation"], "*");
+                    mod.value = nodeDouble(smit->second["value"], 1.0);
+                }
+                if(!mod.stat.empty())
+                    s.statModifiers.push_back(mod);
+                ++smit;
+            }
+        }
 
         s.effects = readEffects(n["effects"]);
         s.raw = n;

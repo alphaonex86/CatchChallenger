@@ -59,6 +59,9 @@ private:
     // external .tsx + copied image, relative image source resolved against the
     // source map's directory.  Returns the written .tsx basename ("" on failure).
     std::string materializeInline(void *tilesetElement, const std::string &mapDirAbs);
+    // Copy one referenced image (resolved against baseDir) under a sanitised
+    // name, deduped by original basename; returns the written name.
+    std::string copyImageSan(const std::string &baseDir, const std::string &srcRel);
     // Datapack filenames must be [a-z0-9._/-] only (the sync/checksum path drops
     // others).  Sanitise a basename and make it unique within the tileset dir.
     std::string uniqueTilesetFile(const std::string &origBasename);
@@ -88,6 +91,8 @@ private:
     int collisionCells_;
     int botsTotal_;
     int encounterZones_;
+    int itemsTotal_;
+    int ioErrors_;   // failed copies/saves (assets silently lost otherwise)
     std::string startMap_;
     int startX_;
     int startY_;

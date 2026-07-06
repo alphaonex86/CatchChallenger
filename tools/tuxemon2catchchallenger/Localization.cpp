@@ -1,9 +1,12 @@
 #include "Localization.hpp"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfoList>
 #include <QTextStream>
 #include <QString>
 
+#include <algorithm>
 #include <cctype>
 
 namespace tuxemon {
@@ -103,8 +106,34 @@ void Localization::parsePo(const std::string &file,
 
 void Localization::load(const std::string &modRoot)
 {
+    // English is the CC default (<name> with no lang attribute).
     parsePo(modRoot + "/l18n/en_US/LC_MESSAGES/base.po", en_);
-    parsePo(modRoot + "/l18n/fr_FR/LC_MESSAGES/base.po", fr_);
+    // Every other locale under l18n/ is emitted as lang="<short code>"
+    // (de_DE -> "de").  On a short-code collision (es_ES/es_MX) the
+    // alphabetically first locale wins (QDir::Name sort).
+    const QDir dir(QString::fromStdString(modRoot + "/l18n"));
+    const QFileInfoList dirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    int i = 0;
+    while(i < dirs.size())
+    {
+        const std::string full = dirs.at(i).fileName().toStdString();
+        std::string shortCode = full;
+        const std::size_t us = full.find('_');
+        if(us != std::string::npos)
+            shortCode = full.substr(0, us);
+        if(shortCode != "en" && byLocale_.find(shortCode) == byLocale_.end())
+        {
+            std::unordered_map<std::string,std::string> table;
+            parsePo(dirs.at(i).absoluteFilePath().toStdString() + "/LC_MESSAGES/base.po", table);
+            if(!table.empty())
+            {
+                byLocale_[shortCode].swap(table);
+                locales_.push_back(shortCode);
+            }
+        }
+        ++i;
+    }
+    std::sort(locales_.begin(), locales_.end());
 }
 
 // Title-case a slug ("fire_claw" -> "Fire Claw") for missing English names.
@@ -151,19 +180,40 @@ std::string Localization::nameEn(const std::string &slug) const
     return prettify(slug);
 }
 
-std::string Localization::nameFr(const std::string &slug) const
-{
-    return lookup(fr_, slug);
-}
-
 std::string Localization::descEn(const std::string &slug) const
 {
     return lookup(en_, slug + "_description");
 }
 
+const std::vector<std::string> &Localization::locales() const
+{
+    return locales_;
+}
+
+std::string Localization::name(const std::string &locale, const std::string &slug) const
+{
+    std::map<std::string,std::unordered_map<std::string,std::string> >::const_iterator it = byLocale_.find(locale);
+    if(it == byLocale_.end())
+        return std::string();
+    return lookup(it->second, slug);
+}
+
+std::string Localization::desc(const std::string &locale, const std::string &slug) const
+{
+    std::map<std::string,std::unordered_map<std::string,std::string> >::const_iterator it = byLocale_.find(locale);
+    if(it == byLocale_.end())
+        return std::string();
+    return lookup(it->second, slug + "_description");
+}
+
+std::string Localization::nameFr(const std::string &slug) const
+{
+    return name("fr", slug);
+}
+
 std::string Localization::descFr(const std::string &slug) const
 {
-    return lookup(fr_, slug + "_description");
+    return desc("fr", slug);
 }
 
 } // namespace tuxemon

@@ -32,10 +32,18 @@ struct MoveEntry {
     MoveEntry();
 };
 
+// One item that triggers an item evolution (Tuxemon `item:` is a {slug: prob} map).
+struct EvolutionItem {
+    std::string slug;     // item slug
+    double prob;          // probability weight (informative)
+    EvolutionItem();
+};
+
 // One evolution branch.
 struct Evolution {
     int atLevel;          // at_level (>0) else 0
     std::string toSlug;   // monster_slug to evolve into
+    std::vector<EvolutionItem> items; // item-triggered evolution (may coexist with atLevel)
     Evolution();
 };
 
@@ -110,6 +118,14 @@ struct Element {
     YAML::Node raw;
 };
 
+// One stat_modifiers entry of a status (e.g. speed {value:0.5, operation:'*'}).
+struct StatModifier {
+    std::string stat;     // hp/melee/ranged/armour/dodge/speed
+    std::string op;       // operation ('*' is the only one used)
+    double value;
+    StatModifier();
+};
+
 struct Status {
     std::string slug;
     int condId;
@@ -120,6 +136,7 @@ struct Status {
     double stepValue;
     int stepInterval;
     std::vector<Effect> effects; // e.g. type=burnt params=[8,weakest]
+    std::vector<StatModifier> statModifiers; // stat_modifiers map
     YAML::Node raw;
     Status();
 };

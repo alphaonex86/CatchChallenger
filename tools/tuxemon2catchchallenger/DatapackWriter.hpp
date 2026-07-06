@@ -37,15 +37,17 @@ public:
 private:
     void buildIdMaps();
 
-    void writeInformations();
-    void writeTypes();
-    void writeBuffs();
-    void writeSkills();
-    void writeMonsters();
-    void writeItems();
+    // each returns false on any I/O failure (mkpath, open, stream state)
+    bool writeInformations();
+    bool writeTypes();
+    bool writeBuffs();
+    bool writeSkills();
+    bool writeMonsters();
+    bool writeItems();
     void writeSprites();
 
-    // Emit <name>/<description> (en + fr) at the given indent for a slug.
+    // Emit <name>/<description> (en default + every loaded locale) at the
+    // given indent for a slug.
     void writeNameDesc(std::ofstream &o, const char *indent,
                        const std::string &slug, bool withDescription);
 
