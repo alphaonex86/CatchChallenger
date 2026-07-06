@@ -1,16 +1,22 @@
 #include "WorldWriter.hpp"
 
+#include <yaml-cpp/yaml.h>
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QFileInfoList>
 #include <QProcess>
 #include <QString>
 #include <QStringList>
 #include <QImage>
 #include <QPainter>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <unordered_set>
+#include <vector>
 
 namespace tuxemon {
 
@@ -22,6 +28,86 @@ WorldWriter::WorldWriter(const TuxemonDb &db, const Localization &l10n,
       dw_(dw), startMap_(startMap), startX_(startX), startY_(startY)
 {
 }
+
+// ── small helpers ───────────────────────────────────────────────────────────
+
+// Same as DatapackWriter's (static there): escape XML text/attribute content.
+static std::string xmlEscape(const std::string &s)
+{
+    std::string out;
+    out.reserve(s.size());
+    std::size_t i = 0;
+    while(i < s.size())
+    {
+        const char c = s[i];
+        if(c == '&')       out += "&amp;";
+        else if(c == '<')  out += "&lt;";
+        else if(c == '>')  out += "&gt;";
+        else if(c == '"')  out += "&quot;";
+        else               out.push_back(c);
+        ++i;
+    }
+    return out;
+}
+
+// yaml helpers mirroring TuxemonDb.cpp's (static there): never throw outward.
+static std::string nodeStr(const YAML::Node &n, const std::string &def)
+{
+    if(n && n.IsScalar())
+    {
+        const std::string &s = n.Scalar();
+        if(s == "null" || s == "~")
+            return def;
+        return s;
+    }
+    return def;
+}
+
+static int nodeInt(const YAML::Node &n, int def)
+{
+    if(n && n.IsScalar())
+    {
+        try { return n.as<int>(); } catch(...) { return def; }
+    }
+    return def;
+}
+
+// mkpath with an error report; every writer checks it (ENOSPC/permission).
+static bool ensureDir(const std::string &dir)
+{
+    if(!QDir().mkpath(QString::fromStdString(dir)))
+    {
+        std::cerr << "Cannot create directory: " << dir << std::endl;
+        return false;
+    }
+    return true;
+}
+
+// Open-check for every std::ofstream writer.
+static bool openOk(const std::ofstream &o, const std::string &path)
+{
+    if(!o.is_open())
+    {
+        std::cerr << "Cannot open for write: " << path << std::endl;
+        return false;
+    }
+    return true;
+}
+
+// Flush+close and report any stream failure (short write on a full disk sets
+// badbit only at flush time, so success must be judged AFTER close).
+static bool closeOk(std::ofstream &o, const std::string &path)
+{
+    o.close();
+    if(o.fail())
+    {
+        std::cerr << "Write failed (disk full or I/O error?): " << path << std::endl;
+        return false;
+    }
+    return true;
+}
+
+// ── choices ─────────────────────────────────────────────────────────────────
 
 int WorldWriter::chooseStarterMonster() const
 {
@@ -76,16 +162,27 @@ int WorldWriter::chooseCaptureItem() const
     return 1;
 }
 
-void WorldWriter::writePlayerSkin()
+// ── writers ─────────────────────────────────────────────────────────────────
+
+bool WorldWriter::writePlayerSkin()
 {
     // player overworld+battle sprite per mod.yaml (sprite/combat_sheet = adventurer)
-    skins_.ensure("fighter", "player", "adventurer", "adventurer");
+    if(!skins_.ensure("fighter", "player", "adventurer", "adventurer"))
+    {
+        std::cerr << "Cannot generate the player skin (skin/fighter/player)" << std::endl;
+        return false;
+    }
+    return true;
 }
 
-void WorldWriter::writePlayerStart(int starterId, int captureItemId)
+bool WorldWriter::writePlayerStart(int starterId, int captureItemId)
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/player"));
-    std::ofstream o(outRoot_ + "/player/start.xml");
+    if(!ensureDir(outRoot_ + "/player"))
+        return false;
+    const std::string path = outRoot_ + "/player/start.xml";
+    std::ofstream o(path);
+    if(!openOk(o, path))
+        return false;
     o << "<profile>\n";
     o << "    <start id=\"Normal\">\n";
     o << "        <name>Starter</name>\n";
@@ -102,13 +199,51 @@ void WorldWriter::writePlayerStart(int starterId, int captureItemId)
     o << "        <item quantity=\"5\" id=\"" << captureItemId << "\"/>\n";
     o << "    </start>\n";
     o << "</profile>\n";
+    return closeOk(o, path);
 }
 
-void WorldWriter::writeReputation()
+// One faction rank (db/faction/*.yaml "ranks": threshold -> title).
+struct RankEntry
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/player"));
-    std::ofstream o(outRoot_ + "/player/reputation.xml");
+    int threshold;
+    std::string title;
+};
+
+static bool rankLess(const RankEntry &a, const RankEntry &b)
+{
+    return a.threshold < b.threshold;
+}
+
+// DatapackGeneralLoaderReputation.cpp: type must match ^[a-z]{1,32}$ — keep
+// only [a-z] of the lowercased faction slug, capped at 32 chars.
+static std::string sanitizeReputationType(const std::string &slug)
+{
+    std::string out;
+    std::size_t i = 0;
+    while(i < slug.size() && out.size() < 32)
+    {
+        char c = slug[i];
+        if(c >= 'A' && c <= 'Z')
+            c = (char)(c - 'A' + 'a');
+        if(c >= 'a' && c <= 'z')
+            out.push_back(c);
+        ++i;
+    }
+    return out;
+}
+
+bool WorldWriter::writeReputation()
+{
+    if(!ensureDir(outRoot_ + "/player"))
+        return false;
+    const std::string path = outRoot_ + "/player/reputation.xml";
+    std::ofstream o(path);
+    if(!openOk(o, path))
+        return false;
     o << "<reputations>\n";
+    // The synthetic "nation" reputation stays: player/start.xml requires
+    // <reputation type="nation" level="1"/> and loadProfileList rejects the
+    // profile when that type does not resolve.
     o << "    <reputation type=\"nation\">\n";
     o << "        <name>Nation</name>\n";
     o << "        <name lang=\"fr\">Nation</name>\n";
@@ -118,38 +253,160 @@ void WorldWriter::writeReputation()
     o << "        <level point=\"100\"><text>Trusted</text></level>\n";
     o << "        <level point=\"500\"><text>Hero</text></level>\n";
     o << "    </reputation>\n";
+
+    // One CC reputation per Tuxemon faction: db/faction/*.yaml "ranks" map 1:1
+    // onto reputation levels (DatapackGeneralLoaderReputation.cpp: <reputation
+    // type><level point><text>; needs >=2 positive levels including point 0,
+    // unique points).  The client (DatapackClientLoader::parseReputation*)
+    // additionally wants a <name> and per-level <text>.
+    std::unordered_set<std::string> usedTypes;
+    usedTypes.insert("nation");
+    const QFileInfoList factionFiles =
+            QDir(QString::fromStdString(modRoot_ + "/db/faction"))
+            .entryInfoList(QStringList() << "*.yaml", QDir::Files, QDir::Name);
+    int f = 0;
+    while(f < factionFiles.size())
+    {
+        const std::string file = factionFiles.at(f).absoluteFilePath().toStdString();
+        YAML::Node n;
+        bool loaded = true;
+        try { n = YAML::LoadFile(file); }
+        catch(const std::exception &e)
+        {
+            std::cerr << "Cannot parse faction yaml: " << file << ": " << e.what() << std::endl;
+            loaded = false;
+        }
+        if(loaded && n && n.IsMap())
+        {
+            const std::string slug = nodeStr(n["slug"], factionFiles.at(f).completeBaseName().toStdString());
+            const std::string type = sanitizeReputationType(slug);
+            if(type.empty() || usedTypes.find(type) != usedTypes.end())
+                std::cerr << "Skip faction " << slug << ": empty or duplicate reputation type \"" << type << "\"" << std::endl;
+            else
+            {
+                // collect the ranks, dedup by threshold (the loader rejects
+                // duplicate points), sort ascending
+                std::vector<RankEntry> ranks;
+                std::unordered_set<int> seen;
+                const YAML::Node rn = n["ranks"];
+                if(rn && rn.IsSequence())
+                {
+                    std::size_t r = 0;
+                    while(r < rn.size())
+                    {
+                        const YAML::Node e = rn[r];
+                        if(e && e.IsMap() && e["title"] && e["threshold"])
+                        {
+                            RankEntry re;
+                            re.threshold = nodeInt(e["threshold"], 0);
+                            re.title = nodeStr(e["title"], "");
+                            if(re.title.empty())
+                                std::cerr << "Skip rank without title in faction " << slug << std::endl;
+                            else
+                            {
+                                if(seen.find(re.threshold) != seen.end())
+                                    std::cerr << "Skip duplicate rank threshold " << re.threshold
+                                              << " in faction " << slug << std::endl;
+                                else
+                                {
+                                    seen.insert(re.threshold);
+                                    ranks.push_back(re);
+                                }
+                            }
+                        }
+                        else
+                            std::cerr << "Skip malformed rank entry in faction " << slug << std::endl;
+                        ++r;
+                    }
+                }
+                std::sort(ranks.begin(), ranks.end(), rankLess);
+                // pre-validate what the loader enforces, so the generated
+                // datapack parses with 0 stderr warnings
+                unsigned int positives = 0;
+                bool hasZero = false;
+                std::size_t r = 0;
+                while(r < ranks.size())
+                {
+                    if(ranks[r].threshold >= 0)
+                        ++positives;
+                    if(ranks[r].threshold == 0)
+                        hasZero = true;
+                    ++r;
+                }
+                if(positives < 2 || !hasZero)
+                    std::cerr << "Skip faction " << slug << ": needs >=2 ranks with thresholds >=0 "
+                              << "including 0 (DatapackGeneralLoaderReputation requirement)" << std::endl;
+                else
+                {
+                    const std::string nameEn = l10n_.nameEn(slug);
+                    const std::string nameFr = l10n_.nameFr(slug);
+                    o << "    <reputation type=\"" << type << "\">\n";
+                    o << "        <name>" << xmlEscape(nameEn) << "</name>\n";
+                    if(!nameFr.empty())
+                        o << "        <name lang=\"fr\">" << xmlEscape(nameFr) << "</name>\n";
+                    r = 0;
+                    while(r < ranks.size())
+                    {
+                        o << "        <level point=\"" << ranks[r].threshold << "\"><text>"
+                          << xmlEscape(ranks[r].title) << "</text></level>\n";
+                        ++r;
+                    }
+                    o << "    </reputation>\n";
+                    usedTypes.insert(type);
+                }
+            }
+        }
+        ++f;
+    }
     o << "</reputations>\n";
+    return closeOk(o, path);
 }
 
-void WorldWriter::writeEvent()
+bool WorldWriter::writeEvent()
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/player"));
-    std::ofstream o(outRoot_ + "/player/event.xml");
+    if(!ensureDir(outRoot_ + "/player"))
+        return false;
+    const std::string path = outRoot_ + "/player/event.xml";
+    std::ofstream o(path);
+    if(!openOk(o, path))
+        return false;
     o << "<events>\n";
     o << "    <event id=\"day\">\n";
     o << "        <value>day</value>\n";
     o << "        <value>night</value>\n";
     o << "    </event>\n";
     o << "</events>\n";
+    return closeOk(o, path);
 }
 
-void WorldWriter::writeLayers(int captureItemId)
+bool WorldWriter::writeLayers(int captureItemId)
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/map"));
-    std::ofstream o(outRoot_ + "/map/layers.xml");
+    if(!ensureDir(outRoot_ + "/map"))
+        return false;
+    const std::string path = outRoot_ + "/map/layers.xml";
+    std::ofstream o(path);
+    if(!openOk(o, path))
+        return false;
     o << "<layers zoom=\"4\">\n";
     o << "    <monstersCollision monsterType=\"grass\" background=\"fight/grass/\" layer=\"Grass\" type=\"walkOn\">\n";
     o << "        <event id=\"day\" value=\"night\" monsterType=\"grassNight;grass\"/>\n";
     o << "    </monstersCollision>\n";
-    o << "    <monstersCollision monsterType=\"cave\" background=\"fight/cave/\" type=\"walkOn\"/>\n";
+    o << "    <monstersCollision monsterType=\"cave\" background=\"fight/cave/\" type=\"walkOn\">\n";
+    o << "        <event id=\"day\" value=\"night\" monsterType=\"caveNight;cave\"/>\n";
+    o << "    </monstersCollision>\n";
     o << "    <monstersCollision item=\"" << captureItemId << "\" tile=\"swim\" background=\"fight/water/\" layer=\"Water\" type=\"walkOn\" monsterType=\"water\"/>\n";
     o << "</layers>\n";
+    return closeOk(o, path);
 }
 
-void WorldWriter::writeVisualCategory()
+bool WorldWriter::writeVisualCategory()
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/map"));
-    std::ofstream o(outRoot_ + "/map/visualcategory.xml");
+    if(!ensureDir(outRoot_ + "/map"))
+        return false;
+    const std::string path = outRoot_ + "/map/visualcategory.xml";
+    std::ofstream o(path);
+    if(!openOk(o, path))
+        return false;
     o << "<visual>\n";
     o << "    <category id=\"indoor\"/>\n";
     o << "    <category id=\"outdoor\">\n";
@@ -160,6 +417,35 @@ void WorldWriter::writeVisualCategory()
     o << "    </category>\n";
     o << "    <category id=\"cave\" color=\"#000000\" alpha=\"60\"/>\n";
     o << "</visual>\n";
+    return closeOk(o, path);
+}
+
+// Resolve db/environment/<slug>.yaml battle_graphics.background (a mod-root-
+// relative gfx path) to an existing absolute file; "" when absent/missing.
+static QString envBackground(const std::string &modRoot, const char *envSlug)
+{
+    const std::string file = modRoot + "/db/environment/" + envSlug + ".yaml";
+    if(!QFile::exists(QString::fromStdString(file)))
+        return QString();
+    YAML::Node n;
+    try { n = YAML::LoadFile(file); }
+    catch(const std::exception &e)
+    {
+        std::cerr << "Cannot parse environment yaml: " << file << ": " << e.what() << std::endl;
+        return QString();
+    }
+    std::string rel;
+    if(n && n.IsMap())
+        rel = nodeStr(n["battle_graphics"]["background"], "");
+    if(rel.empty())
+        return QString();
+    const QString abs = QString::fromStdString(modRoot + "/" + rel);
+    if(!QFile::exists(abs))
+    {
+        std::cerr << "Environment " << envSlug << " references a missing background: " << rel << std::endl;
+        return QString();
+    }
+    return abs;
 }
 
 // Pick a Tuxemon combat background for a terrain, falling back to any *.png.
@@ -183,7 +469,7 @@ static QString pickCombatBg(const QString &combatDir, const QStringList &preferr
 }
 
 // A soft semi-transparent ellipse used as a battle platform placeholder.
-static void writePlatform(const QString &path, int w, int h)
+static bool writePlatform(const QString &path, int w, int h)
 {
     QImage img(w, h, QImage::Format_ARGB32);
     img.fill(Qt::transparent);
@@ -193,40 +479,80 @@ static void writePlatform(const QString &path, int w, int h)
     p.setBrush(QColor(0, 0, 0, 70));
     p.drawEllipse(2, 2, w - 4, h - 4);
     p.end();
-    img.save(path, "PNG");
+    if(!img.save(path, "PNG"))
+    {
+        std::cerr << "Cannot write image: " << path.toStdString() << std::endl;
+        return false;
+    }
+    return true;
 }
 
-void WorldWriter::writeFightBackgrounds()
+bool WorldWriter::writeFightBackgrounds()
 {
+    // The engine consumes map/fight/<terrain>/background.png per the layers.xml
+    // background= attribute (DatapackGeneralLoaderMap.cpp monstersCollision;
+    // client qtopengl foreground/Battle.cpp loads background.png,
+    // plateform-front.png, plateform-background.png, foreground.png from that
+    // folder).  The background image comes from the matching Tuxemon biome:
+    // db/environment/<slug>.yaml battle_graphics.background — with a filename-
+    // preference fallback in gfx/ui/combat when the environment lacks one.
     const QString combat = QString::fromStdString(modRoot_ + "/gfx/ui/combat");
-    // (terrain folder, preferred Tuxemon background names)
-    struct Bg { const char *dir; QStringList pref; };
+    // (terrain folder referenced by layers.xml, environment slugs to try,
+    //  preferred fallback background names)
+    struct Bg { const char *dir; const char *env1; const char *env2; QStringList pref; };
     Bg terrains[] = {
-        {"grass",      QStringList() << "grass_background.png" << "forest_background.png" << "meadow_background.png"},
-        {"grassnight", QStringList() << "grass_background.png" << "forest_background.png"},
-        {"cave",       QStringList() << "cave_background.png" << "cavern_background.png"},
-        {"water",      QStringList() << "beach_background.png" << "ocean_background.png" << "lake_background.png"},
+        {"grass", "grass", NULL,     QStringList() << "grass_background.png" << "forest_background.png" << "meadow_background.png"},
+        {"cave",  "cave",  "cavern", QStringList() << "cave_background.png" << "cavern_background.png"},
+        {"water", "ocean", "sea",    QStringList() << "beach_background.png" << "ocean_background.png" << "lake_background.png"},
     };
+    bool allOk = true;
     int i = 0;
-    while(i < 4)
+    while(i < 3)
     {
         const std::string dir = outRoot_ + "/map/fight/" + terrains[i].dir;
-        QDir().mkpath(QString::fromStdString(dir));
-        const QString bg = pickCombatBg(combat, terrains[i].pref);
-        if(!bg.isEmpty())
+        if(!ensureDir(dir))
+            allOk = false;
+        else
         {
-            const QString dst = QString::fromStdString(dir) + "/background.png";
-            QFile::remove(dst);
-            QFile::copy(bg, dst);
+            QString bg = envBackground(modRoot_, terrains[i].env1);
+            if(bg.isEmpty() && terrains[i].env2 != NULL)
+                bg = envBackground(modRoot_, terrains[i].env2);
+            if(bg.isEmpty())
+                bg = pickCombatBg(combat, terrains[i].pref);
+            if(bg.isEmpty())
+                // degraded but valid: the client falls back to its built-in image
+                std::cerr << "No battle background found for terrain " << terrains[i].dir << std::endl;
+            else
+            {
+                const QString dst = QString::fromStdString(dir) + "/background.png";
+                if(QFile::exists(dst) && !QFile::remove(dst))
+                {
+                    std::cerr << "Cannot remove stale file: " << dst.toStdString() << std::endl;
+                    allOk = false;
+                }
+                else if(!QFile::copy(bg, dst))
+                {
+                    std::cerr << "Cannot copy " << bg.toStdString() << " -> " << dst.toStdString() << std::endl;
+                    allOk = false;
+                }
+            }
+            if(!writePlatform(QString::fromStdString(dir) + "/plateform-background.png", 160, 48))
+                allOk = false;
+            if(!writePlatform(QString::fromStdString(dir) + "/plateform-front.png", 160, 48))
+                allOk = false;
         }
-        writePlatform(QString::fromStdString(dir) + "/plateform-background.png", 160, 48);
-        writePlatform(QString::fromStdString(dir) + "/plateform-front.png", 160, 48);
         ++i;
     }
     // grass also has a foreground overlay in the official datapack
     QImage fg(16, 16, QImage::Format_ARGB32);
     fg.fill(Qt::transparent);
-    fg.save(QString::fromStdString(outRoot_ + "/map/fight/grass/foreground.png"), "PNG");
+    const std::string fgPath = outRoot_ + "/map/fight/grass/foreground.png";
+    if(!fg.save(QString::fromStdString(fgPath), "PNG"))
+    {
+        std::cerr << "Cannot write image: " << fgPath << std::endl;
+        allOk = false;
+    }
+    return allOk;
 }
 
 // ffmpeg-transcode one Tuxemon track to opus (best effort).
@@ -254,44 +580,168 @@ static bool transcode(const QString &in, const QString &out)
     return true;
 }
 
-void WorldWriter::writeMusic()
+std::string WorldWriter::sanitizeTrackSlug(const std::string &slug)
 {
-    const std::string musicDir = outRoot_ + "/music";
-    QDir().mkpath(QString::fromStdString(musicDir));
-    const std::string src = modRoot_ + "/music/";
-
-    // (CatchChallenger type, Tuxemon source, output)
-    const char *map[][3] = {
-        {"outdoor", "JRPG_town_loop.ogg", "outdoor.opus"},
-        {"city",    "JRPG_royalCourt_loop.ogg", "city.opus"},
-        {"indoor",  "JRPG_princess.ogg", "indoor.opus"},
-        {"cave",    "HHavok-main.ogg", "cave.opus"},
-        {"battle",  "JRPG_winBattle.ogg", "battle.opus"},
-    };
-    int ok = 0;
-    int i = 0;
-    while(i < 5)
+    std::string out;
+    out.reserve(slug.size());
+    std::size_t i = 0;
+    while(i < slug.size())
     {
-        if(transcode(QString::fromStdString(src + map[i][1]),
-                     QString::fromStdString(musicDir + "/" + map[i][2])))
-            ++ok;
+        char c = slug[i];
+        if(c >= 'A' && c <= 'Z')
+            c = (char)(c - 'A' + 'a');
+        if((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
+            out.push_back(c);
+        else
+            out.push_back('-');
         ++i;
     }
-    std::cerr << "Music: " << ok << "/5 tracks transcoded." << std::endl;
-
-    std::ofstream o(outRoot_ + "/map/music.xml");
-    o << "<musics>\n";
-    o << "    <map type=\"city\">music/city.opus</map>\n";
-    o << "    <map type=\"indoor\">music/indoor.opus</map>\n";
-    o << "    <map type=\"outdoor\">music/outdoor.opus</map>\n";
-    o << "    <map type=\"cave\">music/cave.opus</map>\n";
-    o << "</musics>\n";
+    return out;
 }
 
-void WorldWriter::writeRegionInfo()
+// One music track to transcode: the Tuxemon slug + its source file.
+struct TrackRef
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/map/main/tuxemon"));
-    std::ofstream o(outRoot_ + "/map/main/tuxemon/informations.xml");
+    std::string slug;
+    std::string srcAbs;
+};
+
+bool WorldWriter::writeMusic()
+{
+    const std::string musicDir = outRoot_ + "/music";
+    if(!ensureDir(musicDir))
+        return false;
+    const std::string src = modRoot_ + "/music/";
+
+    // Every track db/music/*.yaml declares (slug -> file), so any play_music
+    // slug a map references resolves to music/<sanitizeTrackSlug(slug)>.opus
+    // (the map converter emits per-map backgroundsound with that exact name).
+    std::vector<TrackRef> tracks;
+    std::unordered_set<std::string> dbFiles;  // raw "file" fields (dedup + orphan scan)
+    const QFileInfoList musicYamls =
+            QDir(QString::fromStdString(modRoot_ + "/db/music"))
+            .entryInfoList(QStringList() << "*.yaml", QDir::Files, QDir::Name);
+    int y = 0;
+    while(y < musicYamls.size())
+    {
+        const std::string file = musicYamls.at(y).absoluteFilePath().toStdString();
+        YAML::Node n;
+        bool loaded = true;
+        try { n = YAML::LoadFile(file); }
+        catch(const std::exception &e)
+        {
+            std::cerr << "Cannot parse music yaml: " << file << ": " << e.what() << std::endl;
+            loaded = false;
+        }
+        if(loaded && n && n.IsSequence())
+        {
+            std::size_t e = 0;
+            while(e < n.size())
+            {
+                const std::string f = nodeStr(n[e]["file"], "");
+                const std::string slug = nodeStr(n[e]["slug"], "");
+                if(f.empty() || slug.empty())
+                    std::cerr << "Skip malformed music entry in " << file << std::endl;
+                else
+                {
+                    TrackRef t;
+                    t.slug = slug;
+                    t.srcAbs = src + f;
+                    tracks.push_back(t);
+                    dbFiles.insert(f);
+                }
+                ++e;
+            }
+        }
+        ++y;
+    }
+    // top-level music files without a db entry: slug = the filename stem
+    const QFileInfoList loose =
+            QDir(QString::fromStdString(modRoot_ + "/music"))
+            .entryInfoList(QStringList() << "*.ogg" << "*.mp3", QDir::Files, QDir::Name);
+    int l = 0;
+    while(l < loose.size())
+    {
+        if(dbFiles.find(loose.at(l).fileName().toStdString()) == dbFiles.end())
+        {
+            TrackRef t;
+            t.slug = loose.at(l).completeBaseName().toStdString();
+            t.srcAbs = loose.at(l).absoluteFilePath().toStdString();
+            tracks.push_back(t);
+        }
+        ++l;
+    }
+
+    std::unordered_set<std::string> produced;   // sanitized names that transcoded OK
+    std::unordered_set<std::string> attempted;  // output-name dedup
+    int okCount = 0;
+    std::size_t ti = 0;
+    while(ti < tracks.size())
+    {
+        const std::string outName = sanitizeTrackSlug(tracks[ti].slug);
+        if(attempted.find(outName) != attempted.end())
+            std::cerr << "Skip duplicate music output name " << outName
+                      << " (slug " << tracks[ti].slug << ")" << std::endl;
+        else
+        {
+            attempted.insert(outName);
+            if(transcode(QString::fromStdString(tracks[ti].srcAbs),
+                         QString::fromStdString(musicDir + "/" + outName + ".opus")))
+            {
+                produced.insert(outName);
+                ++okCount;
+            }
+            else
+                std::cerr << "Music transcode failed: " << tracks[ti].srcAbs
+                          << " (slug " << tracks[ti].slug << ")" << std::endl;
+        }
+        ++ti;
+    }
+    std::cerr << "Music: " << okCount << "/" << tracks.size() << " tracks transcoded." << std::endl;
+    if(!tracks.empty() && okCount == 0)
+    {
+        std::cerr << "No music track could be transcoded — is ffmpeg installed?" << std::endl;
+        return false;
+    }
+
+    // map/music.xml: the per-map-type ambiance fallback the client reads via
+    // DatapackClientLoader::parseAudioAmbiance (<map type=...>path</map>,
+    // resolved against datapackPathMain then datapackPathBase — our music/
+    // lives at the datapack root).  Curated real db/music slugs per CC type.
+    const char *fallback[][2] = {
+        {"city",    "music_cathedral_theme"},  // JRPG_royalCourt_loop.ogg
+        {"indoor",  "music_the_princess"},     // JRPG_princess.ogg
+        {"outdoor", "music_town_theme"},       // JRPG_town_loop.ogg
+        {"cave",    "music_hhavok_main"},      // HHavok-main.ogg
+    };
+    const std::string path = outRoot_ + "/map/music.xml";
+    std::ofstream o(path);
+    if(!openOk(o, path))
+        return false;
+    o << "<musics>\n";
+    int fb = 0;
+    while(fb < 4)
+    {
+        const std::string outName = sanitizeTrackSlug(fallback[fb][1]);
+        if(produced.find(outName) != produced.end())
+            o << "    <map type=\"" << fallback[fb][0] << "\">music/" << outName << ".opus</map>\n";
+        else
+            std::cerr << "music.xml: no transcoded track for type " << fallback[fb][0]
+                      << " (" << fallback[fb][1] << ")" << std::endl;
+        ++fb;
+    }
+    o << "</musics>\n";
+    return closeOk(o, path);
+}
+
+bool WorldWriter::writeRegionInfo()
+{
+    if(!ensureDir(outRoot_ + "/map/main/tuxemon"))
+        return false;
+    const std::string path = outRoot_ + "/map/main/tuxemon/informations.xml";
+    std::ofstream o(path);
+    if(!openOk(o, path))
+        return false;
     o << "<informations color=\"#4FD9FF\">\n";
     o << "    <author pseudo=\"Tuxemon\" email=\"\" name=\"Tuxemon project\"/>\n";
     o << "    <name>Tuxemon world</name>\n";
@@ -299,48 +749,95 @@ void WorldWriter::writeRegionInfo()
     o << "    <description>Maps converted from Tuxemon (https://www.tuxemon.org/)</description>\n";
     o << "    <initial>T</initial>\n";
     o << "</informations>\n";
+    return closeOk(o, path);
 }
 
-void WorldWriter::writeRegionStart()
+bool WorldWriter::writeRegionStart()
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/map/main/tuxemon"));
-    std::ofstream o(outRoot_ + "/map/main/tuxemon/start.xml");
+    if(!ensureDir(outRoot_ + "/map/main/tuxemon"))
+        return false;
+    const std::string path = outRoot_ + "/map/main/tuxemon/start.xml";
+    std::ofstream o(path);
+    if(!openOk(o, path))
+        return false;
     o << "<profile>\n";
     o << "    <start id=\"Normal\">\n";
     o << "        <map x=\"" << startX_ << "\" y=\"" << startY_ << "\" file=\"" << startMap_ << "\"/>\n";
     o << "    </start>\n";
     o << "</profile>\n";
+    return closeOk(o, path);
 }
 
-void WorldWriter::writeEmptyPlantsAndCrafting()
+bool WorldWriter::writeEmptyPlantsAndCrafting()
 {
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/plants"));
-    std::ofstream p(outRoot_ + "/plants/plants.xml");
-    p << "<plants>\n</plants>\n";
-    QDir().mkpath(QString::fromStdString(outRoot_ + "/crafting"));
-    std::ofstream c(outRoot_ + "/crafting/recipes.xml");
-    c << "<recipes>\n</recipes>\n";
+    bool ok = true;
+    if(!ensureDir(outRoot_ + "/plants"))
+        ok = false;
+    else
+    {
+        const std::string path = outRoot_ + "/plants/plants.xml";
+        std::ofstream p(path);
+        if(!openOk(p, path))
+            ok = false;
+        else
+        {
+            p << "<plants>\n</plants>\n";
+            if(!closeOk(p, path))
+                ok = false;
+        }
+    }
+    if(!ensureDir(outRoot_ + "/crafting"))
+        ok = false;
+    else
+    {
+        const std::string path = outRoot_ + "/crafting/recipes.xml";
+        std::ofstream c(path);
+        if(!openOk(c, path))
+            ok = false;
+        else
+        {
+            c << "<recipes>\n</recipes>\n";
+            if(!closeOk(c, path))
+                ok = false;
+        }
+    }
+    return ok;
 }
 
-void WorldWriter::writeAll()
+bool WorldWriter::writeAll()
 {
     const int starter = chooseStarterMonster();
     const int captureItem = chooseCaptureItem();
 
-    writePlayerSkin();
-    writePlayerStart(starter, captureItem);
-    writeReputation();
-    writeEvent();
-    writeLayers(captureItem);
-    writeVisualCategory();
-    writeFightBackgrounds();
-    writeMusic();
-    writeRegionInfo();
-    writeRegionStart();
-    writeEmptyPlantsAndCrafting();
+    // run every writer even after a failure (report all problems in one pass),
+    // but propagate any failure so main exits non-zero
+    bool ok = true;
+    if(!writePlayerSkin())
+        ok = false;
+    if(!writePlayerStart(starter, captureItem))
+        ok = false;
+    if(!writeReputation())
+        ok = false;
+    if(!writeEvent())
+        ok = false;
+    if(!writeLayers(captureItem))
+        ok = false;
+    if(!writeVisualCategory())
+        ok = false;
+    if(!writeFightBackgrounds())
+        ok = false;
+    if(!writeMusic())
+        ok = false;
+    if(!writeRegionInfo())
+        ok = false;
+    if(!writeRegionStart())
+        ok = false;
+    if(!writeEmptyPlantsAndCrafting())
+        ok = false;
 
     std::cerr << "World: starter monster=" << starter << " captureItem=" << captureItem
               << " start=" << startMap_ << " (" << startX_ << "," << startY_ << ")" << std::endl;
+    return ok;
 }
 
 } // namespace tuxemon

@@ -14,7 +14,9 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -28,6 +30,7 @@ MapConverter::MapConverter(const std::string &modRoot, const std::string &outRoo
                            const Localization &l10n, SkinGen &skins)
     : db_(db), dw_(dw), l10n_(l10n), skins_(skins), modRoot_(modRoot), outRoot_(outRoot),
       warpsTotal_(0), collisionCells_(0), botsTotal_(0), encounterZones_(0),
+      itemsTotal_(0), ioErrors_(0),
       startX_(0), startY_(0), startScore_(-1)
 {
     mapDir_ = outRoot_ + "/map/main/tuxemon";
@@ -194,22 +197,24 @@ std::string MapConverter::uniqueTilesetFile(const std::string &origBasename)
 
 // Copy one referenced image (resolved against baseDir) under a sanitised name,
 // deduped by original basename; returns the written name.
-static std::string copyImageSan(const std::string &baseDir, const std::string &srcRel,
-                                const std::string &tilesetDir,
-                                std::unordered_map<std::string,std::string> &imgSan,
-                                MapConverter *self,
-                                std::string (MapConverter::*uniq)(const std::string&))
+std::string MapConverter::copyImageSan(const std::string &baseDir, const std::string &srcRel)
 {
     const std::string orig = QFileInfo(QString::fromUtf8(srcRel.c_str())).fileName().toStdString();
-    std::unordered_map<std::string,std::string>::const_iterator it = imgSan.find(orig);
-    if(it != imgSan.end())
+    std::unordered_map<std::string,std::string>::const_iterator it = imgSan_.find(orig);
+    if(it != imgSan_.end())
         return it->second;
-    const std::string san = (self->*uniq)(orig);
-    imgSan[orig] = san;
+    const std::string san = uniqueTilesetFile(orig);
+    imgSan_[orig] = san;
     const QString from = QString::fromStdString(baseDir) + "/" + QString::fromUtf8(srcRel.c_str());
-    const QString to = QString::fromStdString(tilesetDir) + "/" + QString::fromStdString(san);
+    const QString to = QString::fromStdString(tilesetDir_) + "/" + QString::fromStdString(san);
     QFile::remove(to);
-    QFile::copy(QFileInfo(from).absoluteFilePath(), to);
+    if(!QFile::copy(QFileInfo(from).absoluteFilePath(), to))
+    {
+        // an unchecked copy loses the tileset image silently -> broken map
+        std::cerr << "  error: cannot copy tileset image " << baseDir << "/" << srcRel
+                  << " -> " << to.toStdString() << std::endl;
+        ++ioErrors_;
+    }
     return san;
 }
 
@@ -267,7 +272,7 @@ std::string MapConverter::copyTileset(const std::string &tsxBasename)
         const char *src = img->Attribute("source");
         if(src != NULL)
         {
-            const std::string san = copyImageSan(imgBaseDir, src, tilesetDir_, imgSan_, this, &MapConverter::uniqueTilesetFile);
+            const std::string san = copyImageSan(imgBaseDir, src);
             img->SetAttribute("source", san.c_str());
         }
         img = img->NextSiblingElement("image");
@@ -281,7 +286,7 @@ std::string MapConverter::copyTileset(const std::string &tsxBasename)
             const char *src = ti->Attribute("source");
             if(src != NULL)
             {
-                const std::string san = copyImageSan(imgBaseDir, src, tilesetDir_, imgSan_, this, &MapConverter::uniqueTilesetFile);
+                const std::string san = copyImageSan(imgBaseDir, src);
                 ti->SetAttribute("source", san.c_str());
             }
             ti = ti->NextSiblingElement("image");
@@ -289,7 +294,11 @@ std::string MapConverter::copyTileset(const std::string &tsxBasename)
         tile = tile->NextSiblingElement("tile");
     }
 
-    doc.SaveFile((tilesetDir_ + "/" + sanTsx).c_str());
+    if(doc.SaveFile((tilesetDir_ + "/" + sanTsx).c_str()) != tinyxml2::XML_SUCCESS)
+    {
+        std::cerr << "  error: cannot write tileset " << tilesetDir_ << "/" << sanTsx << std::endl;
+        ++ioErrors_;
+    }
     return sanTsx;
 }
 
@@ -301,13 +310,19 @@ std::string MapConverter::materializeInline(void *tilesetElement, const std::str
     if(name == NULL || img == NULL || img->Attribute("source") == NULL)
         return std::string();
 
-    // dedup by the inline tileset's own (original) name
-    const std::string origKey = std::string("inline:") + name;
+    const std::string imgSrc = img->Attribute("source");
+    // dedup by name + image source + geometry, NOT by name alone: citypark.tmx
+    // and route5.tmx both embed an inline tileset called "Tileset" with
+    // DIFFERENT images (Superpowers_Tilesheet.png vs Tileset.png) — a name-only
+    // key bound the second map to the first map's image and rendered garbage
+    const std::string origKey = std::string("inline:") + name + "|"
+            + QFileInfo(QString::fromUtf8(imgSrc.c_str())).fileName().toStdString() + "|"
+            + std::to_string(ts->IntAttribute("tilecount")) + "|"
+            + std::to_string(ts->IntAttribute("columns"));
     std::unordered_map<std::string,std::string>::const_iterator done = tsxSan_.find(origKey);
     if(done != tsxSan_.end())
         return done->second;
 
-    const std::string imgSrc = img->Attribute("source");
     QDir().mkpath(QString::fromStdString(tilesetDir_));
     const std::string sanTsx = uniqueTilesetFile(std::string(name) + ".tsx");
     tsxSan_[origKey] = sanTsx;
@@ -323,7 +338,7 @@ std::string MapConverter::materializeInline(void *tilesetElement, const std::str
         tsxCount_[sanTsx] = count;
     }
     // image source is relative to the source map's directory
-    const std::string sanImg = copyImageSan(mapDirAbs, imgSrc, tilesetDir_, imgSan_, this, &MapConverter::uniqueTilesetFile);
+    const std::string sanImg = copyImageSan(mapDirAbs, imgSrc);
 
     std::ofstream t(tilesetDir_ + "/" + sanTsx);
     t << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
@@ -333,7 +348,137 @@ std::string MapConverter::materializeInline(void *tilesetElement, const std::str
     t << " <image source=\"" << sanImg << "\" width=\"" << img->IntAttribute("width")
       << "\" height=\"" << img->IntAttribute("height") << "\"/>\n";
     t << "</tileset>\n";
+    t.close();
+    if(t.fail())
+    {
+        std::cerr << "  error: cannot write tileset " << tilesetDir_ << "/" << sanTsx << std::endl;
+        ++ioErrors_;
+    }
     return sanTsx;
+}
+
+// ── polyline/polygon collision rasterisation ────────────────────────────────
+// A Tuxemon collision object may be a <polyline>/<polygon> (fences, walls —
+// 111 objects in 27 maps); reading only x/y/width/height blocked just the
+// 16x16 origin tile and players walked through the rest of the shape.
+// Points are PIXELS relative to the object's x/y.
+static void parsePoints(const char *s, double bx, double by,
+                        std::vector<std::pair<double,double> > &pts)
+{
+    pts.clear();
+    if(s == NULL)
+        return;
+    const char *p = s;
+    while(*p)
+    {
+        char *end = NULL;
+        const double x = std::strtod(p, &end);
+        if(end == p)
+            ++p;
+        else
+        {
+            p = end;
+            if(*p == ',')
+            {
+                ++p;
+                const double y = std::strtod(p, &end);
+                if(end != p)
+                {
+                    p = end;
+                    pts.push_back(std::make_pair(bx + x, by + y));
+                }
+            }
+        }
+    }
+}
+
+// Mark every 16px tile crossed by the segment (x0,y0)-(x1,y1) as blocked
+// (walked in small sub-tile steps so no crossed tile is skipped).
+static void markLineTiles(double x0, double y0, double x1, double y1,
+                          int w, int h, std::vector<bool> &blocked)
+{
+    const double dx = x1 - x0, dy = y1 - y0;
+    double len = dx >= 0 ? dx : -dx;
+    const double ady = dy >= 0 ? dy : -dy;
+    if(ady > len) len = ady;
+    int steps = (int)(len / 4.0) + 1;
+    int i = 0;
+    while(i <= steps)
+    {
+        const double t = (double)i / (double)steps;
+        const double px = x0 + dx * t;
+        const double py = y0 + dy * t;
+        if(px >= 0 && py >= 0)
+        {
+            const int tx = (int)(px / 16.0);
+            const int ty = (int)(py / 16.0);
+            if(tx < w && ty < h)
+                blocked[(std::size_t)tx + (std::size_t)ty * w] = true;
+        }
+        ++i;
+    }
+}
+
+// Even-odd point-in-polygon test (for the <polygon> interior fill).
+static bool pointInPoly(double cx, double cy,
+                        const std::vector<std::pair<double,double> > &pts)
+{
+    bool inside = false;
+    std::size_t i = 0, j = pts.size() - 1;
+    while(i < pts.size())
+    {
+        const double xi = pts[i].first, yi = pts[i].second;
+        const double xj = pts[j].first, yj = pts[j].second;
+        if((yi > cy) != (yj > cy) &&
+           cx < (xj - xi) * (cy - yi) / (yj - yi) + xi)
+            inside = !inside;
+        j = i;
+        ++i;
+    }
+    return inside;
+}
+
+// Rasterise one polyline (open) or polygon (closed + interior) collision
+// object into the blocked grid.
+static void rasterisePoly(const std::vector<std::pair<double,double> > &pts,
+                          bool closed, int w, int h, std::vector<bool> &blocked)
+{
+    if(pts.size() < 2)
+        return;
+    std::size_t i = 0;
+    while(i + 1 < pts.size())
+    {
+        markLineTiles(pts[i].first, pts[i].second, pts[i + 1].first, pts[i + 1].second, w, h, blocked);
+        ++i;
+    }
+    if(closed)
+    {
+        markLineTiles(pts.back().first, pts.back().second, pts.front().first, pts.front().second, w, h, blocked);
+        // interior fill: even-odd test at every tile centre of the bbox
+        double minX = pts[0].first, maxX = pts[0].first;
+        double minY = pts[0].second, maxY = pts[0].second;
+        i = 1;
+        while(i < pts.size())
+        {
+            if(pts[i].first < minX)  minX = pts[i].first;
+            if(pts[i].first > maxX)  maxX = pts[i].first;
+            if(pts[i].second < minY) minY = pts[i].second;
+            if(pts[i].second > maxY) maxY = pts[i].second;
+            ++i;
+        }
+        int ty = minY > 0 ? (int)(minY / 16.0) : 0;
+        while(ty < h && ty * 16 <= (int)maxY)
+        {
+            int tx = minX > 0 ? (int)(minX / 16.0) : 0;
+            while(tx < w && tx * 16 <= (int)maxX)
+            {
+                if(pointInPoly(tx * 16 + 8.0, ty * 16 + 8.0, pts))
+                    blocked[(std::size_t)tx + (std::size_t)ty * w] = true;
+                ++tx;
+            }
+            ++ty;
+        }
+    }
 }
 
 // Read an object's <properties> into a flat name->value map.
@@ -506,16 +651,38 @@ static std::string relMapPath(const std::string &fromDir, const std::string &toD
 // ── per-map conversion ──────────────────────────────────────────────────────
 struct Warp { int srcTx, srcTy; std::string dest; int dx, dy; };
 struct EncZone { int x0, y0, x1, y1; std::string slug; };
+// A floor item / chest (add_item action anchored at a tile).
+struct ItemPlace { int tx, ty; std::string slug; };
+// One dialog "page": lines shown together; a translated_dialog_choice ends the
+// page and its options become <a href> links to the next step.
+struct DialogPage {
+    std::vector<std::string> lines;   // l18n msgids
+    std::vector<std::string> choices; // l18n msgids of the options ("" = none)
+};
 struct NpcPlace {
     std::string slug;
     int x, y;
     std::string facing;
     std::string economy;
     bool shop;
+    bool wander;   // create_npc ...,wander / char_wander -> lookAt="move"
+    bool heal;     // set_monster_health / (set_)teleport_faint -> heal step
+    bool skinless; // synthetic sign/computer/scenery dialog bot (no skin)
+    bool placed;   // got real coordinates (create_npc args or event tile);
+                   // a merely talked-about NPC must NOT land at (0,0)
     std::vector<std::pair<std::string,int> > party; // monster slug, level
-    std::vector<std::string> dialog;                // l18n msgids
-    NpcPlace() : x(0), y(0), shop(false) {}
+    std::vector<DialogPage> pages;                  // dialog, split at choices
+    NpcPlace() : x(0), y(0), shop(false), wander(false), heal(false),
+                 skinless(false), placed(false) {}
 };
+
+// Append a dialog line to the (possibly new) last open page.
+static void addDialogLine(std::vector<DialogPage> &pages, const std::string &msgid)
+{
+    if(pages.empty() || !pages.back().choices.empty())
+        pages.push_back(DialogPage());
+    pages.back().lines.push_back(msgid);
+}
 
 static std::string facingToLookAt(const std::string &f)
 {
@@ -526,18 +693,41 @@ static std::string facingToLookAt(const std::string &f)
     return "bottom";
 }
 
+// Skin names feed skin/bot/<name>/ paths: the network sync path
+// (FacilityLibGeneral::getSuffixAndValidatePathFromFS) drops anything outside
+// [a-z0-9._/-], so lowercase like sanitizeFsBase does.
 static std::string sanitizeName(const std::string &s)
 {
     std::string t;
     std::size_t i = 0;
     while(i < s.size())
     {
-        const char c = s[i];
+        char c = s[i];
+        if(c >= 'A' && c <= 'Z') c = (char)(c - 'A' + 'a');
         if(std::isalnum((unsigned char)c) || c == '_' || c == '-')
             t.push_back(c);
         ++i;
     }
     if(t.empty()) t = "npc";
+    return t;
+}
+
+// Per-map music track name -> datapack file base (shared convention with the
+// WorldWriter music transcoder): tolower, every char not in [a-z0-9] -> '-'.
+static std::string sanitizeMusicTrack(const std::string &s)
+{
+    std::string t;
+    std::size_t i = 0;
+    while(i < s.size())
+    {
+        char c = s[i];
+        if(c >= 'A' && c <= 'Z') c = (char)(c - 'A' + 'a');
+        if((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
+            t.push_back(c);
+        else
+            t.push_back('-');
+        ++i;
+    }
     return t;
 }
 
@@ -638,14 +828,20 @@ static void aggAdd(std::map<int,GrassAgg> &m, int id, int minL, int maxL, double
     }
 }
 
-static void writeGrass(std::ofstream &ox, const std::vector<EncZone> &zones,
-                       const TuxemonDb &db, const DatapackWriter &dw)
+// Emit one day+night wild list from encounter-table slugs.  dayTag/nightTag =
+// "grass"/"grassNight" (layer-bound) or "cave"/"caveNight": the layer-LESS
+// monstersCollision entry of map/layers.xml gives the walk-anywhere cave
+// monsterType (Map_loader.cpp loadMonsterMap, caveName lookup ~l.202) — used
+// for dungeon maps and no-rect random_encounter events.
+static void writeWild(std::ofstream &ox, const std::vector<std::string> &slugs,
+                      const TuxemonDb &db, const DatapackWriter &dw,
+                      const char *dayTag, const char *nightTag)
 {
     std::map<int,GrassAgg> day, night;
     std::size_t z = 0;
-    while(z < zones.size())
+    while(z < slugs.size())
     {
-        const Encounter *enc = db.encounter(zones[z].slug);
+        const Encounter *enc = db.encounter(slugs[z]);
         ++z;
         if(enc == NULL)
             continue;
@@ -661,8 +857,34 @@ static void writeGrass(std::ofstream &ox, const std::vector<EncZone> &zones,
             if(em.daytime != 1) aggAdd(night, id, em.minLevel, em.maxLevel, em.rate); // night or both
         }
     }
-    emitGrassList(ox, "grass", day);
-    emitGrassList(ox, "grassNight", night);
+    emitGrassList(ox, dayTag, day);
+    emitGrassList(ox, nightTag, night);
+}
+
+// Tuxemon dialog templates (${{name}}, ${{currency}}, ${{today}}, …) would
+// otherwise leak literally into the bot text (47 source lines).  Known tokens
+// get a neutral replacement, every other ${{...}} is scrubbed away.
+static std::string scrubTemplates(std::string s)
+{
+    std::size_t p = 0;
+    while((p = s.find("${{", p)) != std::string::npos)
+    {
+        const std::size_t e = s.find("}}", p + 3);
+        if(e == std::string::npos)
+        {
+            s.erase(p); // unterminated token: drop the tail
+            break;
+        }
+        const std::string token = s.substr(p + 3, e - (p + 3));
+        std::string rep;
+        if(token == "name")          rep = "traveler";
+        else if(token == "currency") rep = "$";
+        else if(token == "today")    rep = "today";
+        // any other token (map_name, north, var:..., …) is dropped
+        s.replace(p, e + 2 - p, rep);
+        p += rep.size();
+    }
+    return s;
 }
 
 static void writeBots(std::ofstream &ox, const std::vector<const NpcPlace*> &bots,
@@ -676,13 +898,16 @@ static void writeBots(std::ofstream &ox, const std::vector<const NpcPlace*> &bot
         const int id = (int)b + 1;
         ++b;
         ox << " <bot id=\"" << id << "\">\n";
-        ox << "  <name>" << xmlEsc(l10n.nameEn(np.slug)) << "</name>\n";
+        ox << "  <name>" << xmlEsc(scrubTemplates(l10n.nameEn(np.slug))) << "</name>\n";
 
         const Economy *eco = np.economy.empty() ? NULL : db.economy(np.economy);
         if(np.shop && eco != NULL && !eco->items.empty())
         {
             ox << "  <step id=\"1\" type=\"text\">\n";
-            ox << "   <text><![CDATA[Welcome!<br /><a href=\"2\">Buy</a><br /><a href=\"3\">Sell</a>]]></text>\n";
+            ox << "   <text><![CDATA[Welcome!<br /><a href=\"2\">Buy</a><br /><a href=\"3\">Sell</a>";
+            if(np.heal) // café/clinic counter that both sells and heals
+                ox << "<br /><a href=\"4\">Heal</a>";
+            ox << "]]></text>\n";
             ox << "  </step>\n";
             ox << "  <step shop=\"" << id << "\" id=\"2\" type=\"shop\">\n";
             std::size_t i = 0;
@@ -695,6 +920,8 @@ static void writeBots(std::ofstream &ox, const std::vector<const NpcPlace*> &bot
             }
             ox << "  </step>\n";
             ox << "  <step shop=\"" << id << "\" id=\"3\" type=\"sell\"/>\n";
+            if(np.heal) // MapServer::parseUnknownBotStep registers the heal spot
+                ox << "  <step id=\"4\" type=\"heal\"/>\n";
         }
         else if(!np.party.empty())
         {
@@ -716,21 +943,75 @@ static void writeBots(std::ofstream &ox, const std::vector<const NpcPlace*> &bot
             ox << "   <gain cash=\"" << cash << "\"/>\n";
             ox << "  </step>\n";
         }
+        else if(np.pages.empty())
+        {
+            if(np.heal)
+            {
+                // official heal-bot pattern (e.g. castel-town/indoor/heal.xml):
+                // yes/no text step linking to a <step type="heal"> that
+                // MapServer::parseUnknownBotStep (server/base/MapServer.cpp
+                // ~l.234) registers at the bot's tile
+                ox << "  <step id=\"1\" type=\"text\">\n";
+                ox << "   <text><![CDATA[Do you want to be healed?<br /><a href=\"2\">Yes</a><br /><a href=\"close\">No</a>]]></text>\n";
+                ox << "  </step>\n";
+                ox << "  <step id=\"2\" type=\"heal\"/>\n";
+            }
+            else
+            {
+                ox << "  <step type=\"text\" id=\"1\">\n";
+                ox << "   <text><![CDATA[...]]></text>\n";
+                ox << "  </step>\n";
+            }
+        }
         else
         {
-            std::string text;
-            std::size_t i = 0;
-            while(i < np.dialog.size())
+            // dialog pages -> chained text steps; a translated_dialog_choice
+            // ends its page with one <a href> link per option (the same step
+            // navigation the shop Buy/Sell menu uses); the heal step (when
+            // any) is the final step of the chain
+            const int healStep = np.heal ? (int)np.pages.size() + 1 : 0;
+            std::size_t k = 0;
+            while(k < np.pages.size())
             {
-                if(!text.empty()) text += "<br />";
-                text += l10n.nameEn(np.dialog[i]);
-                ++i;
+                const DialogPage &pg = np.pages[k];
+                const int nextId = (k + 1 < np.pages.size()) ? (int)k + 2 : healStep;
+                std::string text;
+                std::size_t i = 0;
+                while(i < pg.lines.size())
+                {
+                    const std::string line = scrubTemplates(l10n.nameEn(pg.lines[i]));
+                    if(!line.empty())
+                    {
+                        if(!text.empty()) text += "<br />";
+                        text += line;
+                    }
+                    ++i;
+                }
+                if(text.empty())
+                    text = "...";
+                i = 0;
+                while(i < pg.choices.size())
+                {
+                    std::string label = scrubTemplates(l10n.nameEn(pg.choices[i]));
+                    if(label.empty())
+                        label = "...";
+                    // a "no" option (or a choice with nothing after it) ends
+                    // the conversation like the official heal bots do
+                    std::string href = "close";
+                    if(pg.choices[i] != "no" && nextId != 0)
+                        href = std::to_string(nextId);
+                    text += "<br /><a href=\"" + href + "\">" + label + "</a>";
+                    ++i;
+                }
+                if(pg.choices.empty() && nextId != 0)
+                    text += "<br /><a href=\"" + std::to_string(nextId) + "\">(continue)</a>";
+                ox << "  <step type=\"text\" id=\"" << (k + 1) << "\">\n";
+                ox << "   <text><![CDATA[" << cdataSafe(text) << "]]></text>\n";
+                ox << "  </step>\n";
+                ++k;
             }
-            if(text.empty())
-                text = "...";
-            ox << "  <step type=\"text\" id=\"1\">\n";
-            ox << "   <text><![CDATA[" << cdataSafe(text) << "]]></text>\n";
-            ox << "  </step>\n";
+            if(np.heal)
+                ox << "  <step id=\"" << healStep << "\" type=\"heal\"/>\n";
         }
         ox << " </bot>\n";
     }
@@ -745,72 +1026,142 @@ struct EventSink {
     std::vector<EncZone> *encZones;
     std::map<std::string,NpcPlace> *npcMap;
     const std::unordered_map<std::string,std::pair<int,int> > *mapDims;
+    std::vector<ItemPlace> *items;        // add_item floor items/chests
+    std::vector<std::string> *caveSlugs;  // no-rect random_encounter tables
+    std::vector<std::string> *music;      // play_music track slugs
 };
 
+// actN/behavN keys must be interpreted in NUMERIC order: the lexicographic
+// std::map order puts act10 before act2 (spyder_cotton_scoop.tmx etc.) and
+// concatenated 6 bots' dialogs out of order.
+struct OrderedProp {
+    int num;
+    std::string key;
+    std::string val;
+};
+static bool orderedPropLess(const OrderedProp &a, const OrderedProp &b)
+{
+    if(a.num != b.num)
+        return a.num < b.num;
+    return a.key < b.key;
+}
+static void collectOrdered(const std::map<std::string,std::string> &props,
+                           const char *prefix, std::vector<OrderedProp> &out)
+{
+    const std::size_t plen = std::strlen(prefix);
+    out.clear();
+    std::map<std::string,std::string>::const_iterator it = props.begin();
+    while(it != props.end())
+    {
+        if(it->first.rfind(prefix, 0) == 0)
+        {
+            OrderedProp op;
+            op.num = 0;
+            std::size_t i = plen;
+            while(i < it->first.size())
+            {
+                const char c = it->first[i];
+                if(c >= '0' && c <= '9')
+                    op.num = op.num * 10 + (c - '0');
+                ++i;
+            }
+            op.key = it->first;
+            op.val = it->second;
+            out.push_back(op);
+        }
+        ++it;
+    }
+    std::sort(out.begin(), out.end(), orderedPropLess);
+}
+
+// positioned = the event carries a real x/y anchor.  A yaml event WITHOUT one
+// is a Tuxemon GLOBAL scripted event (cutscene), not a placed trigger: its
+// teleports/encounters/items must NOT be emitted at tile (0,0) — 31 cutscene
+// teleports used to become unconditional corner warps.  NPC creation
+// (create_npc carries its own coordinates) still applies.
 static void processEventProps(const std::map<std::string,std::string> &props,
-                              int ox, int oy, int ow, int oh, EventSink &sink)
+                              int ox, int oy, int ow, int oh, EventSink &sink,
+                              bool positioned)
 {
     // determine the event's "subject" NPC (for dialogue) from a
     // behav "talk <slug>" or a create_npc/char_talk action
     std::string subject;
-    std::vector<std::string> pendingDialog;
-    std::map<std::string,std::string>::const_iterator it = props.begin();
-    while(it != props.end())
+    std::vector<DialogPage> pendingPages;
+    bool pendingHeal = false;
+    std::vector<OrderedProp> ordered;
+    collectOrdered(props, "behav", ordered);
+    std::size_t oi = 0;
+    while(oi < ordered.size())
     {
-        const std::string &key = it->first;
-        const std::string &val = it->second;
-        if(key.rfind("behav", 0) == 0 && val.rfind("talk ", 0) == 0)
-            subject = val.substr(5);
-        if(key.rfind("act", 0) == 0)
+        if(ordered[oi].val.rfind("talk ", 0) == 0)
+            subject = ordered[oi].val.substr(5);
+        ++oi;
+    }
+    collectOrdered(props, "act", ordered);
+    oi = 0;
+    while(oi < ordered.size())
+    {
+        const std::string &val = ordered[oi].val;
+        ++oi;
         {
             std::string verb;
             std::vector<std::string> a;
             splitAction(val, verb, a);
             if(verb == "transition_teleport" && a.size() >= 4)
             {
-                Warp wp;
-                std::string dest = a[1];
-                const std::size_t dot = dest.rfind(".tmx");
-                if(dot != std::string::npos) dest = dest.substr(0, dot);
-                wp.dest = dest;
-                wp.dx = QString::fromStdString(a[2]).toInt();
-                wp.dy = QString::fromStdString(a[3]).toInt();
-                // clamp destination into the target map (Tuxemon source
-                // sometimes points past the edge -> engine "out of range")
-                std::unordered_map<std::string,std::pair<int,int> >::const_iterator dim = sink.mapDims->find(dest);
-                if(dim != sink.mapDims->cend())
+                if(positioned)
                 {
-                    if(wp.dx >= dim->second.first)  wp.dx = dim->second.first - 1;
-                    if(wp.dy >= dim->second.second) wp.dy = dim->second.second - 1;
-                }
-                if(wp.dx < 0) wp.dx = 0;
-                if(wp.dy < 0) wp.dy = 0;
-                // the event rect may span several tiles (2-wide stairs,
-                // 3-wide doorways, whole-edge transitions): a CC teleport is
-                // per-tile, so emit one warp on EVERY covered tile
-                const int tx0 = ox / 16, ty0 = oy / 16;
-                const int tx1 = (ox + ow + 15) / 16, ty1 = (oy + oh + 15) / 16;
-                int ty = ty0;
-                while(ty < ty1)
-                {
-                    int tx = tx0;
-                    while(tx < tx1)
+                    Warp wp;
+                    std::string dest = a[1];
+                    const std::size_t dot = dest.rfind(".tmx");
+                    if(dot != std::string::npos) dest = dest.substr(0, dot);
+                    wp.dest = dest;
+                    wp.dx = QString::fromStdString(a[2]).toInt();
+                    wp.dy = QString::fromStdString(a[3]).toInt();
+                    // clamp destination into the target map (Tuxemon source
+                    // sometimes points past the edge -> engine "out of range")
+                    std::unordered_map<std::string,std::pair<int,int> >::const_iterator dim = sink.mapDims->find(dest);
+                    if(dim != sink.mapDims->cend())
                     {
-                        wp.srcTx = tx;
-                        wp.srcTy = ty;
-                        sink.warps->push_back(wp);
-                        ++tx;
+                        if(wp.dx >= dim->second.first)  wp.dx = dim->second.first - 1;
+                        if(wp.dy >= dim->second.second) wp.dy = dim->second.second - 1;
                     }
-                    ++ty;
+                    if(wp.dx < 0) wp.dx = 0;
+                    if(wp.dy < 0) wp.dy = 0;
+                    // the event rect may span several tiles (2-wide stairs,
+                    // 3-wide doorways, whole-edge transitions): a CC teleport is
+                    // per-tile, so emit one warp on EVERY covered tile
+                    const int tx0 = ox / 16, ty0 = oy / 16;
+                    const int tx1 = (ox + ow + 15) / 16, ty1 = (oy + oh + 15) / 16;
+                    int ty = ty0;
+                    while(ty < ty1)
+                    {
+                        int tx = tx0;
+                        while(tx < tx1)
+                        {
+                            wp.srcTx = tx;
+                            wp.srcTy = ty;
+                            sink.warps->push_back(wp);
+                            ++tx;
+                        }
+                        ++ty;
+                    }
                 }
+                // else: scripted cutscene teleport, not a tile warp — skip
             }
             else if(verb == "random_encounter" && !a.empty())
             {
-                EncZone z;
-                z.x0 = ox / 16; z.y0 = oy / 16;
-                z.x1 = (ox + ow + 15) / 16; z.y1 = (oy + oh + 15) / 16;
-                z.slug = a[0];
-                sink.encZones->push_back(z);
+                if(positioned)
+                {
+                    EncZone z;
+                    z.x0 = ox / 16; z.y0 = oy / 16;
+                    z.x1 = (ox + ow + 15) / 16; z.y1 = (oy + oh + 15) / 16;
+                    z.slug = a[0];
+                    sink.encZones->push_back(z);
+                }
+                else if(sink.caveSlugs != NULL)
+                    // no-rect table -> map-wide walk-anywhere ("cave") list
+                    sink.caveSlugs->push_back(a[0]);
             }
             else if(verb == "create_npc" && a.size() >= 3)
             {
@@ -818,9 +1169,20 @@ static void processEventProps(const std::map<std::string,std::string> &props,
                 np.slug = a[0];
                 np.x = QString::fromStdString(a[1]).toInt();
                 np.y = QString::fromStdString(a[2]).toInt();
-                if(a.size() >= 4) np.facing = a[3];
+                np.placed = true;
+                if(a.size() >= 4)
+                {
+                    // 4th arg = behaviour: wander -> a moving bot
+                    // (lookAt="move", Map_loaderMain keeps the cell walkable)
+                    if(a[3] == "wander")
+                        np.wander = true;
+                    else
+                        np.facing = a[3];
+                }
                 if(subject.empty()) subject = a[0];
             }
+            else if(verb == "char_wander" && !a.empty())
+                (*sink.npcMap)[a[0]].wander = true;
             else if(verb == "char_face" && a.size() >= 2)
                 (*sink.npcMap)[a[0]].facing = a[1];
             else if(verb == "set_economy" && a.size() >= 2)
@@ -835,17 +1197,85 @@ static void processEventProps(const std::map<std::string,std::string> &props,
             else if(verb == "char_talk" && !a.empty())
                 subject = a[0];
             else if((verb == "translated_dialog" || verb == "translated_translation" || verb == "dialog") && !a.empty())
-                pendingDialog.push_back(a[0]);
+                addDialogLine(pendingPages, a[0]);
+            else if(verb == "translated_dialog_choice" && !a.empty())
+            {
+                // "translated_dialog_choice yes:no,variable" — the options
+                // close the current dialog page and become <a href> links
+                if(pendingPages.empty() || !pendingPages.back().choices.empty())
+                    pendingPages.push_back(DialogPage());
+                const QStringList opts = QString::fromStdString(a[0]).split(':');
+                int qo = 0;
+                while(qo < opts.size())
+                {
+                    const std::string opt = opts.at(qo).trimmed().toStdString();
+                    if(!opt.empty())
+                        pendingPages.back().choices.push_back(opt);
+                    ++qo;
+                }
+            }
+            else if(verb == "set_monster_health" || verb == "teleport_faint" ||
+                    verb == "set_teleport_faint")
+                // hospital/café heal (full heal / faint-respawn setup) ->
+                // <step type="heal"> (server/base/MapServer.cpp ~l.234)
+                pendingHeal = true;
+            else if(verb == "add_item" && !a.empty() && positioned && sink.items != NULL)
+            {
+                // floor item / chest: negative quantity is a REMOVE, a
+                // non-numeric quantity (variable) counts as one give
+                bool numeric = false;
+                const int qty = a.size() >= 2 ? QString::fromStdString(a[1]).toInt(&numeric) : 1;
+                if(a.size() < 2 || !numeric || qty > 0)
+                {
+                    ItemPlace ip;
+                    ip.tx = ox / 16;
+                    ip.ty = oy / 16;
+                    ip.slug = a[0];
+                    sink.items->push_back(ip);
+                }
+            }
+            else if(verb == "play_music" && !a.empty() && sink.music != NULL)
+                sink.music->push_back(a[0]);
         }
-        ++it;
     }
-    if(!subject.empty() && !pendingDialog.empty())
+    if(!pendingPages.empty() || pendingHeal)
     {
-        NpcPlace &np = (*sink.npcMap)[subject];
-        if(np.slug.empty()) np.slug = subject;
-        std::size_t di = 0;
-        while(di < pendingDialog.size()) { np.dialog.push_back(pendingDialog[di]); ++di; }
+        if(!subject.empty())
+        {
+            NpcPlace &np = (*sink.npcMap)[subject];
+            if(np.slug.empty()) np.slug = subject;
+            if(pendingHeal) np.heal = true;
+            std::size_t di = 0;
+            while(di < pendingPages.size()) { np.pages.push_back(pendingPages[di]); ++di; }
+        }
+        else if(positioned)
+        {
+            // sign/computer/scenery dialog (641 translated_dialog events had
+            // no NPC subject and were dropped): a skinless TEXT bot at the
+            // event tile — without a "skin" property Map_loaderMain (~l.881)
+            // keeps the cell walkable, the client just shows the dialog
+            const int tx = ox / 16, ty = oy / 16;
+            NpcPlace &np = (*sink.npcMap)["sign:" + std::to_string(tx) + "," + std::to_string(ty)];
+            np.slug = "sign";
+            np.x = tx;
+            np.y = ty;
+            np.skinless = true;
+            np.placed = true;
+            if(pendingHeal) np.heal = true;
+            std::size_t di = 0;
+            while(di < pendingPages.size()) { np.pages.push_back(pendingPages[di]); ++di; }
+        }
+        // else: global cutscene text with no anchor — skip
     }
+}
+
+// Zero-padded synthetic property index ("0001") so keys sort numerically.
+static std::string padNum(int n)
+{
+    std::string s = std::to_string(n);
+    while(s.size() < 4)
+        s = "0" + s;
+    return s;
 }
 
 // Feed the sidecar <map>.yaml events (x/y/width/height in TILES, actions/
@@ -876,6 +1306,9 @@ static void loadYamlEvents(const std::string &tmxPath, EventSink &sink)
         ++e;
         if(!ev.IsMap())
             continue;
+        // an event with neither x nor y is a Tuxemon GLOBAL scripted event
+        // (cutscene/init), not a placed trigger — see processEventProps
+        const bool positioned = (bool)ev["x"] || (bool)ev["y"];
         const int x = ev["x"] ? ev["x"].as<int>(0) : 0;
         const int y = ev["y"] ? ev["y"].as<int>(0) : 0;
         const int w = ev["width"] ? ev["width"].as<int>(1) : 1;
@@ -887,7 +1320,9 @@ static void loadYamlEvents(const std::string &tmxPath, EventSink &sink)
             YAML::Node::const_iterator a = ev["actions"].begin();
             while(a != ev["actions"].end())
             {
-                props["act" + std::to_string(n)] = a->as<std::string>(std::string());
+                // zero-padded so even a lexicographic walk keeps act10 > act2
+                // (the interpreter additionally sorts numerically)
+                props["act" + padNum(n)] = a->as<std::string>(std::string());
                 ++n; ++a;
             }
         }
@@ -899,14 +1334,14 @@ static void loadYamlEvents(const std::string &tmxPath, EventSink &sink)
                 YAML::Node::const_iterator b = ev["behav"].begin();
                 while(b != ev["behav"].end())
                 {
-                    props["behav" + std::to_string(n)] = b->as<std::string>(std::string());
+                    props["behav" + padNum(n)] = b->as<std::string>(std::string());
                     ++n; ++b;
                 }
             }
             else if(ev["behav"].IsScalar())
-                props["behav1"] = ev["behav"].as<std::string>(std::string());
+                props["behav" + padNum(1)] = ev["behav"].as<std::string>(std::string());
         }
-        processEventProps(props, x * 16, y * 16, w * 16, h * 16, sink);
+        processEventProps(props, x * 16, y * 16, w * 16, h * 16, sink, positioned);
     }
 }
 
@@ -943,6 +1378,35 @@ bool MapConverter::convertOne(const std::string &tmxPath)
             fileBase = fb->second;
     }
     const std::string outDir = mapDir_ + "/" + relDir;
+
+    // map properties + CC map type — needed EARLY: a "cave"-type map (Tuxemon
+    // map_type dungeon) emits its wild list as walk-anywhere <cave> instead of
+    // a Grass layer
+    std::string type = "outdoor";
+    std::map<std::string,std::string> mp;
+    {
+        tinyxml2::XMLElement *mprops = map->FirstChildElement("properties");
+        if(mprops != NULL)
+        {
+            tinyxml2::XMLElement *p = mprops->FirstChildElement("property");
+            while(p != NULL)
+            {
+                if(p->Attribute("name") != NULL && p->Attribute("value") != NULL)
+                    mp[p->Attribute("name")] = p->Attribute("value");
+                p = p->NextSiblingElement("property");
+            }
+            if(mp.find("inside") != mp.end() && mp["inside"] == "true")
+                type = "indoor";
+            if(mp.find("map_type") != mp.end())
+            {
+                const std::string &mt = mp["map_type"];
+                if(mt.find("cave") != std::string::npos || mt.find("dungeon") != std::string::npos)
+                    type = "cave";
+                else if(mt.find("interior") != std::string::npos || mt.find("inside") != std::string::npos)
+                    type = "indoor";
+            }
+        }
+    }
 
     // tilesets (firstgid, basename) — external <tileset source> and inline ones
     const std::string mapDirAbs = QFileInfo(QString::fromStdString(tmxPath)).absolutePath().toStdString();
@@ -1000,11 +1464,17 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     std::vector<Warp> warps;
     std::vector<EncZone> encZones;
     std::map<std::string,NpcPlace> npcMap;
+    std::vector<ItemPlace> floorItems;
+    std::vector<std::string> caveSlugs;
+    std::vector<std::string> musicTracks;
     EventSink sink;
     sink.warps = &warps;
     sink.encZones = &encZones;
     sink.npcMap = &npcMap;
     sink.mapDims = &mapDims_;
+    sink.items = &floorItems;
+    sink.caveSlugs = &caveSlugs;
+    sink.music = &musicTracks;
     tinyxml2::XMLElement *og = map->FirstChildElement("objectgroup");
     while(og != NULL)
     {
@@ -1023,23 +1493,38 @@ bool MapConverter::convertOne(const std::string &tmxPath)
             const int oh = obj->IntAttribute("height") > 0 ? (int)obj->IntAttribute("height") : 16;
             if(isCollision)
             {
-                int ty = oy / 16;
-                while(ty < (oy + oh + 15) / 16 && ty < h)
+                tinyxml2::XMLElement *pl = obj->FirstChildElement("polyline");
+                tinyxml2::XMLElement *pg = obj->FirstChildElement("polygon");
+                if(pl != NULL || pg != NULL)
                 {
-                    int tx = ox / 16;
-                    while(tx < (ox + ow + 15) / 16 && tx < w)
+                    // fences/walls drawn as polylines/polygons (points are
+                    // pixels relative to the object x/y) — a rect read blocked
+                    // only the origin tile and players walked through
+                    std::vector<std::pair<double,double> > pts;
+                    parsePoints(pl != NULL ? pl->Attribute("points") : pg->Attribute("points"),
+                                obj->DoubleAttribute("x"), obj->DoubleAttribute("y"), pts);
+                    rasterisePoly(pts, pg != NULL, w, h, blocked);
+                }
+                else
+                {
+                    int ty = oy / 16;
+                    while(ty < (oy + oh + 15) / 16 && ty < h)
                     {
-                        if(tx >= 0 && ty >= 0)
-                            blocked[(std::size_t)tx + (std::size_t)ty * w] = true;
-                        ++tx;
+                        int tx = ox / 16;
+                        while(tx < (ox + ow + 15) / 16 && tx < w)
+                        {
+                            if(tx >= 0 && ty >= 0)
+                                blocked[(std::size_t)tx + (std::size_t)ty * w] = true;
+                            ++tx;
+                        }
+                        ++ty;
                     }
-                    ++ty;
                 }
             }
 
             std::map<std::string,std::string> props;
             readProps(obj, props);
-            processEventProps(props, ox, oy, ow, oh, sink);
+            processEventProps(props, ox, oy, ow, oh, sink, true);
             obj = obj->NextSiblingElement("object");
         }
         og = og->NextSiblingElement("objectgroup");
@@ -1120,26 +1605,31 @@ bool MapConverter::convertOne(const std::string &tmxPath)
 
     // Build the grass-encounter mask: cells inside a random_encounter zone that
     // are walkable become a "Grass" monster-collision layer (wild encounters).
+    // A cave-type map instead routes its zones to the layer-less <cave> list
+    // (sidecar emission below) — no Grass layer there.
     std::vector<bool> grass((std::size_t)w * h, false);
-    std::size_t zi = 0;
-    while(zi < encZones.size())
+    if(type != "cave")
     {
-        const EncZone &z = encZones[zi];
-        ++zi;
-        int ty = z.y0;
-        while(ty < z.y1 && ty < h)
+        std::size_t zi = 0;
+        while(zi < encZones.size())
         {
-            int tx = z.x0;
-            while(tx < z.x1 && tx < w)
+            const EncZone &z = encZones[zi];
+            ++zi;
+            int ty = z.y0;
+            while(ty < z.y1 && ty < h)
             {
-                if(tx >= 0 && ty >= 0)
-                    grass[(std::size_t)tx + (std::size_t)ty * w] = true;
-                ++tx;
+                int tx = z.x0;
+                while(tx < z.x1 && tx < w)
+                {
+                    if(tx >= 0 && ty >= 0)
+                        grass[(std::size_t)tx + (std::size_t)ty * w] = true;
+                    ++tx;
+                }
+                ++ty;
             }
-            ++ty;
         }
     }
-    if(!encZones.empty())
+    if(!encZones.empty() || !caveSlugs.empty())
         ++encounterZones_;
 
     std::size_t bi = 0;
@@ -1189,6 +1679,31 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     o << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     o << "<map version=\"1.10\" orientation=\"orthogonal\" renderorder=\"right-down\" width=\""
       << w << "\" height=\"" << h << "\" tilewidth=\"16\" tileheight=\"16\" infinite=\"0\">\n";
+    // Per-map music as a MAP-LEVEL <property>: the client reads it from the
+    // .tmx (MapVisualiserPlayer::currentBackgroundsound() -> tiledMap
+    // properties).  Value is LABEL-ROOT-relative ("music/<track>.opus",
+    // resolved as datapackPathMain()+value); the WorldWriter transcodes the
+    // referenced tracks with the same sanitize.  Must precede <tileset> per
+    // the Tiled child order.  Most-played track wins, first-seen on a tie.
+    if(!musicTracks.empty())
+    {
+        std::string best = musicTracks[0];
+        int bestCount = 0;
+        std::map<std::string,int> counts;
+        std::size_t mi = 0;
+        while(mi < musicTracks.size())
+        {
+            const int c = ++counts[musicTracks[mi]];
+            if(c > bestCount)
+            {
+                bestCount = c;
+                best = musicTracks[mi];
+            }
+            ++mi;
+        }
+        o << " <properties>\n  <property name=\"backgroundsound\" value=\"music/"
+          << sanitizeMusicTrack(best) << ".opus\"/>\n </properties>\n";
+    }
     std::size_t ti = 0;
     while(ti < tilesets.size())
     {
@@ -1343,67 +1858,117 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         std::map<std::string,NpcPlace>::const_iterator it = npcMap.begin();
         while(it != npcMap.end())
         {
-            if(!it->second.slug.empty() && bots.size() < 255)
+            // only NPCs that got REAL coordinates (create_npc / event tile):
+            // a merely talked-about NPC would land on the (0,0) corner.
+            // A Tuxemon scripted event can carry a NOMINAL out-of-bounds tile
+            // (e.g. player_house_bedroom "Intro No" at x=9 on a 9-wide map) —
+            // the engine warns "bot out of map" and drops it, so skip here.
+            if(!it->second.slug.empty() && it->second.placed && bots.size() < 255 &&
+               it->second.x >= 0 && it->second.y >= 0 &&
+               it->second.x < w && it->second.y < h)
                 bots.push_back(&it->second);
             ++it;
         }
     }
     std::vector<std::string> botSkin(bots.size());
-    if(!bots.empty())
+    if(!bots.empty() || !floorItems.empty())
     {
         o << " <objectgroup name=\"Object\">\n";
         std::size_t b = 0;
         while(b < bots.size())
         {
             const NpcPlace &np = *bots[b];
-            std::string sprite = np.slug, sheet;
-            const Npc *npd = db_.npc(np.slug);
-            if(npd != NULL) { sprite = npd->spriteName; sheet = npd->combatSheet; }
-            const std::string skinName = sanitizeName(sprite);
-            skins_.ensure("bot", skinName, sprite, sheet);
-            botSkin[b] = skinName;
             const int px = np.x * 16;
             const int py = (np.y + 1) * 16;
             o << "  <object type=\"bot\" gid=\"" << invisibleFirstGid
               << "\" x=\"" << px << "\" y=\"" << py << "\" width=\"16\" height=\"16\">\n";
             o << "   <properties>\n";
             o << "    <property name=\"id\" type=\"int\" value=\"" << (b + 1) << "\"/>\n";
-            o << "    <property name=\"skin\" value=\"" << skinName << "\"/>\n";
-            o << "    <property name=\"lookAt\" value=\"" << facingToLookAt(np.facing) << "\"/>\n";
+            if(np.skinless)
+            {
+                // sign/computer/scenery dialog: no skin — Map_loaderMain
+                // (~l.881) then keeps the cell walkable and the client only
+                // shows the dialog steps
+            }
+            else
+            {
+                std::string sprite = np.slug, sheet;
+                const Npc *npd = db_.npc(np.slug);
+                if(npd != NULL) { sprite = npd->spriteName; sheet = npd->combatSheet; }
+                const std::string skinName = sanitizeName(sprite);
+                skins_.ensure("bot", skinName, sprite, sheet);
+                botSkin[b] = skinName;
+                o << "    <property name=\"skin\" value=\"" << skinName << "\"/>\n";
+                // wander behaviour -> lookAt="move": Map_loaderMain (~l.881)
+                // keeps the bot cell walkable and the client animates it
+                if(np.wander)
+                    o << "    <property name=\"lookAt\" value=\"move\"/>\n";
+                else
+                    o << "    <property name=\"lookAt\" value=\"" << facingToLookAt(np.facing) << "\"/>\n";
+            }
             o << "   </properties>\n";
             o << "  </object>\n";
             ++b;
+        }
+        // Floor items/chests (gen2 object scheme): the engine resolves a
+        // non-numeric "item" property through tempNameToItemId[str_tolower]
+        // (Map_loaderMain ~l.485), so the value is the lowercased English
+        // display name — matching the items.xml <name> DatapackWriter emits.
+        std::vector<std::pair<int,int> > seenItem; // one item per tile
+        std::size_t fi = 0;
+        while(fi < floorItems.size())
+        {
+            const ItemPlace &ip = floorItems[fi];
+            ++fi;
+            if(ip.tx >= 0 && ip.ty >= 0 && ip.tx < w && ip.ty < h)
+            {
+                const std::pair<int,int> key(ip.tx, ip.ty);
+                bool dup = false;
+                std::size_t q = 0;
+                while(q < seenItem.size()) { if(seenItem[q] == key) dup = true; ++q; }
+                if(!dup)
+                {
+                    if(dw_.idForItem(ip.slug) < 0)
+                        // variable reference or unknown slug: the name would
+                        // dangle (engine silently drops it), note and skip
+                        std::cerr << "  note: unresolved add_item \"" << ip.slug
+                                  << "\" at " << ip.tx << "," << ip.ty << " (" << slug << ")" << std::endl;
+                    else
+                    {
+                        seenItem.push_back(key);
+                        std::string iname = l10n_.nameEn(ip.slug);
+                        std::size_t ci = 0;
+                        while(ci < iname.size())
+                        {
+                            if(iname[ci] >= 'A' && iname[ci] <= 'Z')
+                                iname[ci] = (char)(iname[ci] - 'A' + 'a');
+                            ++ci;
+                        }
+                        o << "  <object type=\"object\" gid=\"" << (invisibleFirstGid + 1)
+                          << "\" x=\"" << (ip.tx * 16) << "\" y=\"" << ((ip.ty + 1) * 16)
+                          << "\" width=\"16\" height=\"16\">\n";
+                        o << "   <properties>\n";
+                        o << "    <property name=\"item\" value=\"" << xmlEsc(iname) << "\"/>\n";
+                        o << "   </properties>\n";
+                        o << "  </object>\n";
+                        ++itemsTotal_;
+                    }
+                }
+            }
         }
         o << " </objectgroup>\n";
     }
     o << "</map>\n";
     o.close();
+    if(o.fail())
+    {
+        std::cerr << "  error: cannot write " << outDir << "/" << fileBase << ".tmx" << std::endl;
+        ++ioErrors_;
+        return false;
+    }
     botsTotal_ += (int)bots.size();
 
-    // sidecar <map>.xml: type + name + grass encounters + bot definitions
-    std::string type = "outdoor";
-    std::map<std::string,std::string> mp;
-    tinyxml2::XMLElement *mprops = map->FirstChildElement("properties");
-    if(mprops != NULL)
-    {
-        tinyxml2::XMLElement *p = mprops->FirstChildElement("property");
-        while(p != NULL)
-        {
-            if(p->Attribute("name") != NULL && p->Attribute("value") != NULL)
-                mp[p->Attribute("name")] = p->Attribute("value");
-            p = p->NextSiblingElement("property");
-        }
-        if(mp.find("inside") != mp.end() && mp["inside"] == "true")
-            type = "indoor";
-        if(mp.find("map_type") != mp.end())
-        {
-            const std::string &mt = mp["map_type"];
-            if(mt.find("cave") != std::string::npos || mt.find("dungeon") != std::string::npos)
-                type = "cave";
-            else if(mt.find("interior") != std::string::npos || mt.find("inside") != std::string::npos)
-                type = "indoor";
-        }
-    }
+    // sidecar <map>.xml: type + name + wild encounters + bot definitions
     std::ofstream ox(outDir + "/" + fileBase + ".xml");
     ox << "<map type=\"" << type << "\">\n";
     // display name from the Tuxemon catalogue (nameEn title-cases the slug
@@ -1412,9 +1977,33 @@ bool MapConverter::convertOne(const std::string &tmxPath)
     if(mp.find("slug") != mp.end() && !mp["slug"].empty())
         dispSlug = mp["slug"];
     ox << " <name>" << xmlEsc(l10n_.nameEn(dispSlug)) << "</name>\n";
-    writeGrass(ox, encZones, db_, dw_);
+    // wild lists: a cave-type map puts EVERY table in the layer-less
+    // walk-anywhere <cave> list (tunnels had 0 encounters when their zones
+    // went to a Grass layer that was never emitted); positioned zones on
+    // other maps stay on the Grass layer; no-rect tables are map-wide cave
+    {
+        std::vector<std::string> grassSlugs;
+        std::size_t z = 0;
+        while(z < encZones.size())
+        {
+            if(type == "cave")
+                caveSlugs.push_back(encZones[z].slug);
+            else
+                grassSlugs.push_back(encZones[z].slug);
+            ++z;
+        }
+        writeWild(ox, grassSlugs, db_, dw_, "grass", "grassNight");
+        writeWild(ox, caveSlugs, db_, dw_, "cave", "caveNight");
+    }
     writeBots(ox, bots, botSkin, db_, dw_, l10n_);
     ox << "</map>\n";
+    ox.close();
+    if(ox.fail())
+    {
+        std::cerr << "  error: cannot write " << outDir << "/" << fileBase << ".xml" << std::endl;
+        ++ioErrors_;
+        return false;
+    }
     return true;
 }
 
@@ -1498,11 +2087,16 @@ void MapConverter::computeLayout()
             std::vector<Warp> yw;
             std::vector<EncZone> yz;
             std::map<std::string,NpcPlace> yn;
+            std::vector<ItemPlace> yitems;
+            std::vector<std::string> ycave, ymusic;
             EventSink ysink;
             ysink.warps = &yw;
             ysink.encZones = &yz;
             ysink.npcMap = &yn;
             ysink.mapDims = &mapDims_;
+            ysink.items = &yitems;
+            ysink.caveSlugs = &ycave;
+            ysink.music = &ymusic;
             loadYamlEvents(mdir.absoluteFilePath(QString::fromStdString(slug) + ".tmx").toStdString(), ysink);
             std::size_t yi = 0;
             while(yi < yw.size())
@@ -1638,11 +2232,22 @@ void MapConverter::writeInvisibleTileset()
     std::ofstream png(outRoot_ + "/map/invisible.png", std::ios::binary);
     png.write(reinterpret_cast<const char*>(kInvisiblePng), kInvisiblePngLen);
     png.close();
+    if(png.fail())
+    {
+        std::cerr << "  error: cannot write " << outRoot_ << "/map/invisible.png" << std::endl;
+        ++ioErrors_;
+    }
     std::ofstream tsx(outRoot_ + "/map/invisible.tsx");
     tsx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     tsx << "<tileset name=\"invisible.tsx\" tilewidth=\"16\" tileheight=\"16\">\n";
     tsx << " <image source=\"invisible.png\" trans=\"000000\" width=\"64\" height=\"64\"/>\n";
     tsx << "</tileset>\n";
+    tsx.close();
+    if(tsx.fail())
+    {
+        std::cerr << "  error: cannot write " << outRoot_ << "/map/invisible.tsx" << std::endl;
+        ++ioErrors_;
+    }
 }
 
 int MapConverter::convertAll()
@@ -1669,8 +2274,11 @@ int MapConverter::convertAll()
     std::cerr << "Maps: " << ok << " converted, " << fail << " skipped; "
               << usedTilesetFiles_.size() << " tileset files, " << warpsTotal_ << " warps, "
               << collisionCells_ << " collision cells, " << encounterZones_ << " maps with encounters, "
-              << botsTotal_ << " bots." << std::endl;
-    return ok;
+              << botsTotal_ << " bots, " << itemsTotal_ << " floor items." << std::endl;
+    if(ioErrors_ > 0)
+        std::cerr << "ERROR: " << ioErrors_ << " asset write/copy failures (output incomplete)" << std::endl;
+    // 0 = full success; else the number of failures (skipped maps + I/O errors).
+    return fail + ioErrors_;
 }
 
 } // namespace tuxemon

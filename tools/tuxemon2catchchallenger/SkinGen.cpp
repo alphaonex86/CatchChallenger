@@ -5,6 +5,8 @@
 #include <QDir>
 #include <QFileInfo>
 
+#include <iostream>
+
 namespace tuxemon {
 
 SkinGen::SkinGen(const std::string &modRoot, const std::string &outRoot)
@@ -157,8 +159,9 @@ bool SkinGen::ensure(const std::string &category, const std::string &skinName,
             ++r;
         }
     }
-    trainer.save(base + "trainer.png", "PNG");
-    trainer.save(base + "swim.png", "PNG");
+    bool okSave = true;
+    okSave = trainer.save(base + "trainer.png", "PNG") && okSave;
+    okSave = trainer.save(base + "swim.png", "PNG") && okSave;
 
     // front/back : the Tuxemon combat sheet is two frames side by side,
     // LEFT = back, RIGHT = front (tuxemon/entity/sheet.py CombatSheet).
@@ -169,8 +172,14 @@ bool SkinGen::ensure(const std::string &category, const std::string &skinName,
         backSrc = battle.copy(0, 0, battle.width() / 2, battle.height());
         frontSrc = battle.copy(battle.width() / 2, 0, battle.width() - battle.width() / 2, battle.height());
     }
-    fit(cropAlpha(frontSrc), 80, 80).save(base + "front.png", "PNG");
-    fit(cropAlpha(backSrc), 80, 80).save(base + "back.png", "PNG");
+    okSave = fit(cropAlpha(frontSrc), 80, 80).save(base + "front.png", "PNG") && okSave;
+    okSave = fit(cropAlpha(backSrc), 80, 80).save(base + "back.png", "PNG") && okSave;
+    if(!okSave)
+    {
+        // a missing skin PNG makes the engine reject the whole skin folder
+        std::cerr << "  error: cannot write skin images under " << dir << std::endl;
+        return false;
+    }
 
     ++generated_;
     return true;

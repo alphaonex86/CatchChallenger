@@ -214,7 +214,11 @@ int main(int argc, char *argv[])
     tuxemon::Localization l10n;
     l10n.load(modRoot);
 
-    QDir().mkpath(QString::fromStdString(outRoot));
+    if(!QDir().mkpath(QString::fromStdString(outRoot)))
+    {
+        std::cerr << "Cannot create the output directory: " << outRoot << std::endl;
+        return 1;
+    }
     tuxemon::DatapackWriter writer(db, l10n, modRoot, outRoot);
     if(!writer.writeAll())
     {
@@ -224,11 +228,19 @@ int main(int argc, char *argv[])
 
     tuxemon::SkinGen skins(modRoot, outRoot);
     tuxemon::MapConverter maps(modRoot, outRoot, db, writer, l10n, skins);
-    maps.convertAll();
+    if(maps.convertAll() != 0)
+    {
+        std::cerr << "Failed to convert one or more maps (I/O error)." << std::endl;
+        return 1;
+    }
 
     tuxemon::WorldWriter world(db, l10n, modRoot, outRoot, skins, writer,
                                maps.startMap(), maps.startX(), maps.startY());
-    world.writeAll();
+    if(!world.writeAll())
+    {
+        std::cerr << "Failed to write the world/meta datapack files." << std::endl;
+        return 1;
+    }
     std::cerr << "Skins generated: " << skins.count() << std::endl;
 
     // Shrink every transferred PNG (pngquant + zopflipng) — last, after the guards.
