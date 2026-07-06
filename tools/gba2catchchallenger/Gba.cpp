@@ -34,6 +34,7 @@ GameInfo::GameInfo() :
     boulderGfx(0xFF),
     rockGfx(0xFF),
     berryGfx(0xFF),
+    itemBallGfx(0xFF),
     animWaterTile(0),
     animWaterTileCount(0),
     animWaterFrames(0),
@@ -312,6 +313,7 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
     {
         info.boulderGfx=(info.engine==Engine::Frlg) ? 97 : 87;
         info.rockGfx=(info.engine==Engine::Frlg) ? 96 : 86;
+        info.itemBallGfx=(info.engine==Engine::Frlg) ? 92 : 59;
         if(info.engine==Engine::Rse)
             info.berryGfx=60; // OBJ_EVENT_GFX_BERRY_TREE (FRLG has no berry trees)
     }

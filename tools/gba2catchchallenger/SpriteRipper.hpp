@@ -23,6 +23,8 @@ public:
 
     // Write an item icon to <outRoot>/items/icon-<itemId>.png (gItemIconTable:
     // {u32 image->LZ77, u32 palette->LZ77} pairs).  False if not decodable.
+    // Ruby/Sapphire have no per-item icon data (bag icons arrived with
+    // FRLG/Emerald), so haveItemIcons() is legitimately false there.
     bool writeItemIcon(const GbaRom &rom, const std::string &outRoot, int itemId) const;
     bool haveItemIcons() const { return itemIconTable_ != 0; }
 
