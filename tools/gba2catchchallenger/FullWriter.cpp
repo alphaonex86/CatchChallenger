@@ -14,9 +14,29 @@
 #include <algorithm>
 #include <cctype>
 
-FullWriter::FullWriter(const GbaRom &rom, const Gen3Data &data, const std::string &outRoot)
-    : rom_(rom), data_(data), outRoot_(outRoot)
+FullWriter::FullWriter(const GbaRom &rom, const Gen3Data &data, const std::string &outRoot,
+                       const ItemResolver &items)
+    : rom_(rom), data_(data), outRoot_(outRoot), items_(items)
 {
+}
+
+int FullWriter::targetItemId(int gen3Id) const
+{
+    if(items_.selfContained)
+        return gen3Id;
+    std::unordered_map<uint16_t,std::string>::const_iterator nm=
+        items_.gen3Name.find(static_cast<uint16_t>(gen3Id));
+    if(nm==items_.gen3Name.cend() || nm->second.empty())
+        return -1;
+    return items_.resolve(nm->second);
+}
+
+// Owner rule: --all only fills gaps — an existing non-empty root file is the
+// curated truth and stays untouched.
+static bool fileNonEmpty(const std::string &path)
+{
+    std::ifstream f(path);
+    return f && f.peek()!=std::ifstream::traits_type::eof();
 }
 
 static std::string xmlEscape(const std::string &s)
@@ -46,6 +66,8 @@ static bool ensureDir(const std::string &path)
 
 static bool writeTextFile(const std::string &path, const std::string &content)
 {
+    if(fileNonEmpty(path))
+        return true; // curated content kept
     std::ofstream o(path);
     if(!o)
     {
@@ -62,12 +84,14 @@ static bool writeTextFile(const std::string &path, const std::string &content)
     return true;
 }
 
-// ── monsters/type.xml ──
+// ── monsters/type.xml ──  (kept when the target curates its own)
 bool FullWriter::writeTypes()
 {
     if(!ensureDir(outRoot_ + "/monsters"))
         return false;
     const std::string path = outRoot_ + "/monsters/type.xml";
+    if(fileNonEmpty(path))
+        return true; // curated type chart kept
     std::ofstream o(path);
     if(!o)
     {
@@ -184,7 +208,8 @@ bool FullWriter::writeMonsters()
         const int atk = 2 * s.attack + 5, def = 2 * s.defense + 5;
         const int spa = 2 * s.spAttack + 5, spd = 2 * s.spDefense + 5, spe = 2 * s.speed + 5;
         int catchR = (int)(s.catchRate / 2.55 + 0.5);
-        if(catchR < 1) catchR = 1; if(catchR > 100) catchR = 100;
+        if(catchR < 1) catchR = 1;
+        if(catchR > 100) catchR = 100;
         long giveXp = (long)s.baseExp * 40;
         if(giveXp < 100) giveXp = 100;
         const int eggStep = s.eggCycles > 0 ? s.eggCycles * 256 : 5120;
@@ -218,15 +243,16 @@ bool FullWriter::writeMonsters()
             ++a;
         }
         if(!any) o << "            <attack id=\"0\" level=\"0\"/>\n";
-        // TM/HM-taught skills: byitem = the teaching item (engine itemToLearn);
-        // separate from the level list, so no dedup against it.
+        // TM/HM-taught skills: byitem = the teaching item (engine itemToLearn),
+        // resolved into the TARGET's item ids when the datapack curates its
+        // own items; separate from the level list, so no dedup against it.
         std::unordered_set<int> seenItem;
         a = 0;
         while(a < s.tmLearn.size())
         {
-            const int itemId = s.tmLearn[a].first;
+            const int itemId = targetItemId(s.tmLearn[a].first);
             const int mv = s.tmLearn[a].second;
-            if(seenItem.find(itemId) == seenItem.end())
+            if(itemId >= 0 && seenItem.find(itemId) == seenItem.end())
             {
                 seenItem.insert(itemId);
                 o << "            <attack id=\"" << mv << "\" skill_level=\"1\" byitem=\"" << itemId << "\"/>\n";
@@ -245,12 +271,24 @@ bool FullWriter::writeMonsters()
             const int target = s.evolutions[e].second.second;
             if(validSpecies.find(target) != validSpecies.end())
             {
-                o << "        <evolutions>\n";
-                if(kind == 2)
-                    o << "            <evolution type=\"item\" item=\"" << param << "\" evolveTo=\"" << target << "\"/>\n";
+                const int evoItem = (kind == 2) ? targetItemId(param) : 0;
+                if(kind == 2 && evoItem < 0)
+                {
+                    // evolution stone not defined by the curated items: keep
+                    // the monster reachable with a level fallback
+                    o << "        <evolutions>\n";
+                    o << "            <evolution type=\"level\" level=\"36\" evolveTo=\"" << target << "\"/>\n";
+                    o << "        </evolutions>\n";
+                }
                 else
-                    o << "            <evolution type=\"level\" level=\"" << param << "\" evolveTo=\"" << target << "\"/>\n";
-                o << "        </evolutions>\n";
+                {
+                    o << "        <evolutions>\n";
+                    if(kind == 2)
+                        o << "            <evolution type=\"item\" item=\"" << evoItem << "\" evolveTo=\"" << target << "\"/>\n";
+                    else
+                        o << "            <evolution type=\"level\" level=\"" << param << "\" evolveTo=\"" << target << "\"/>\n";
+                    o << "        </evolutions>\n";
+                }
                 wrote = true;
             }
             ++e;
@@ -278,9 +316,11 @@ bool FullWriter::writeItems()
 {
     if(!ensureDir(outRoot_ + "/items"))
         return false;
+    const std::string path = outRoot_ + "/items/items.xml";
+    if(!items_.selfContained && fileNonEmpty(path))
+        return true; // curated items library kept (refs resolve by name)
     SpriteRipper ripper;
     ripper.locate(rom_);
-    const std::string path = outRoot_ + "/items/items.xml";
     std::ofstream o(path);
     if(!o)
     {
@@ -363,6 +403,8 @@ int FullWriter::firstSpeciesId() const
 bool FullWriter::writePlayerSkin()
 {
     const std::string dir = outRoot_ + "/skin/fighter/player";
+    if(fileNonEmpty(dir + "/trainer.png"))
+        return true; // an existing player skin (curated or prior run) is kept
     if(!ensureDir(dir))
         return false;
     const QString base = QString::fromStdString(dir) + "/";
@@ -432,6 +474,9 @@ bool FullWriter::writeCompleteness()
 
     if(!ensureDir(outRoot_ + "/player"))
         return false;
+    // Poke Ball: gen3 id 4, resolved into the target's ids when curated.
+    int ball = targetItemId(4);
+    if(ball < 0) ball = 4;
     std::string start;
     start += "<profile>\n    <start id=\"Normal\">\n";
     start += "        <name>Trainer</name>\n        <description>Start a new adventure</description>\n";
@@ -439,11 +484,11 @@ bool FullWriter::writeCompleteness()
     std::size_t sg = 0;
     while(sg < starters.size())
     {
-        start += "        <monstergroup>\n            <monster id=\"" + std::to_string(starters[sg]) + "\" level=\"5\" captured_with=\"4\"/>\n        </monstergroup>\n";
+        start += "        <monstergroup>\n            <monster id=\"" + std::to_string(starters[sg]) + "\" level=\"5\" captured_with=\"" + std::to_string(ball) + "\"/>\n        </monstergroup>\n";
         ++sg;
     }
     start += "        <reputation type=\"nation\" level=\"1\"/>\n";
-    start += "        <item quantity=\"5\" id=\"4\"/>\n";   // Poke Ball
+    start += "        <item quantity=\"5\" id=\"" + std::to_string(ball) + "\"/>\n";
     start += "    </start>\n</profile>\n";
     if(!writeTextFile(outRoot_ + "/player/start.xml", start))
         return false;
@@ -459,18 +504,19 @@ bool FullWriter::writeCompleteness()
         return false;
     if(!ensureDir(outRoot_ + "/map"))
         return false;
-    // monsterType names match the base datapack's existing conventions
-    // (waterRod/waterSuperRod); rockSmash is new, bound to the RockSmash
-    // actionOn layer the map writer emits.  Item ids are the ROM's own:
-    // 262 Old Rod, 263 Good Rod, 264 Super Rod, 344 HM06 Rock Smash.
+    // Rod monsterTypes follow the curated datapack's CASCADING convention
+    // (a better rod also fishes the lesser lists); rockSmash binds the
+    // RockSmash actionOn layer the map writer emits.  Item ids here are the
+    // ROM's own (262/263/264 rods, 344 HM06) — this file is only written for
+    // a bare self-contained target; a curated layers.xml is kept.
     if(!writeTextFile(outRoot_ + "/map/layers.xml",
             "<layers zoom=\"4\">\n"
             "    <monstersCollision monsterType=\"grass\" background=\"fight/grass/\" layer=\"Grass\" type=\"walkOn\"/>\n"
             "    <monstersCollision monsterType=\"cave\" background=\"fight/cave/\" type=\"walkOn\"/>\n"
             "    <monstersCollision item=\"4\" tile=\"swim\" background=\"fight/water/\" layer=\"Water\" type=\"walkOn\" monsterType=\"water\"/>\n"
-            "    <monstersCollision item=\"262\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterRod\"/>\n"
-            "    <monstersCollision item=\"263\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterRod\"/>\n"
-            "    <monstersCollision item=\"264\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterSuperRod\"/>\n"
+            "    <monstersCollision item=\"262\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterOldRod;water\"/>\n"
+            "    <monstersCollision item=\"263\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterGoodRod;waterOldRod;water\"/>\n"
+            "    <monstersCollision item=\"264\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterSuperRod;waterGoodRod;waterOldRod;water\"/>\n"
             "    <monstersCollision item=\"344\" background=\"fight/cave/\" layer=\"RockSmash\" type=\"actionOn\" monsterType=\"rockSmash\"/>\n"
             "</layers>\n"))
         return false;
@@ -486,20 +532,24 @@ bool FullWriter::writeCompleteness()
     while(ti < 3)
     {
         const std::string d = outRoot_ + "/map/fight/" + terr[ti];
-        if(!ensureDir(d))
-            return false;
-        QImage bg(240, 160, QImage::Format_ARGB32);
-        bg.fill(ti == 1 ? QColor(40,30,50) : (ti == 2 ? QColor(60,110,170) : QColor(110,170,90)));
-        bool ok = bg.save(QString::fromStdString(d) + "/background.png", "PNG");
-        QImage plat(160, 48, QImage::Format_ARGB32); plat.fill(Qt::transparent);
-        QPainter pp(&plat); pp.setRenderHint(QPainter::Antialiasing,true); pp.setPen(Qt::NoPen);
-        pp.setBrush(QColor(0,0,0,70)); pp.drawEllipse(2,2,156,44); pp.end();
-        ok = plat.save(QString::fromStdString(d) + "/plateform-background.png", "PNG") && ok;
-        ok = plat.save(QString::fromStdString(d) + "/plateform-front.png", "PNG") && ok;
-        if(!ok)
+        // an existing (curated) fight background is kept
+        if(!fileNonEmpty(d + "/background.png"))
         {
-            std::cerr << "FullWriter: cannot write fight background under " << d << std::endl;
-            return false;
+            if(!ensureDir(d))
+                return false;
+            QImage bg(240, 160, QImage::Format_ARGB32);
+            bg.fill(ti == 1 ? QColor(40,30,50) : (ti == 2 ? QColor(60,110,170) : QColor(110,170,90)));
+            bool ok = bg.save(QString::fromStdString(d) + "/background.png", "PNG");
+            QImage plat(160, 48, QImage::Format_ARGB32); plat.fill(Qt::transparent);
+            QPainter pp(&plat); pp.setRenderHint(QPainter::Antialiasing,true); pp.setPen(Qt::NoPen);
+            pp.setBrush(QColor(0,0,0,70)); pp.drawEllipse(2,2,156,44); pp.end();
+            ok = plat.save(QString::fromStdString(d) + "/plateform-background.png", "PNG") && ok;
+            ok = plat.save(QString::fromStdString(d) + "/plateform-front.png", "PNG") && ok;
+            if(!ok)
+            {
+                std::cerr << "FullWriter: cannot write fight background under " << d << std::endl;
+                return false;
+            }
         }
         ++ti;
     }
@@ -509,12 +559,7 @@ bool FullWriter::writeCompleteness()
     // more).  1 Gen3 hour = 1 CC minute (4 equal stages -> fruits = 4*stage,
     // engine defaults sprouted/taller/flowering to the quarters); quantity =
     // average yield, the fraction being the engine's extra-fruit luck.
-    // A berry-less game (FRLG) must NOT clobber plants a sibling --all run
-    // already wrote into the shared root: keep the existing file.
-    std::ifstream existingPlants(outRoot_ + "/plants/plants.xml");
-    const bool keepPlants = data_.berries().empty() &&
-        existingPlants && existingPlants.peek() != std::ifstream::traits_type::eof();
-    if(!keepPlants)
+    // (writeTextFile keeps an existing curated plants.xml.)
     {
         std::string plants = "<plants>\n";
         std::size_t bi = 0;

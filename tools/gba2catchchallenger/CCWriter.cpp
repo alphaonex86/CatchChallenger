@@ -26,6 +26,67 @@
 #include <maprenderer.h>
 #include <orthogonalrenderer.h>
 
+std::string ItemResolver::normName(const std::string &s)
+{
+    std::string out;
+    out.reserve(s.size());
+    std::size_t i=0;
+    while(i<s.size())
+    {
+        const unsigned char c=static_cast<unsigned char>(s[i]);
+        if(c==0xC3 && i+1<s.size())
+        {
+            // UTF-8 Latin-1 supplement: fold the accented vowel to its base.
+            const unsigned char d=static_cast<unsigned char>(s[i+1]);
+            char base=0;
+            if(d>=0xA0 && d<=0xA5) base='a';
+            else if(d>=0xA8 && d<=0xAB) base='e';
+            else if(d>=0xAC && d<=0xAF) base='i';
+            else if(d>=0xB2 && d<=0xB6) base='o';
+            else if(d>=0xB9 && d<=0xBC) base='u';
+            else if(d==0xA7) base='c';
+            else if(d==0xB1) base='n';
+            if(base!=0)
+            {
+                out.push_back(base);
+                i+=2;
+            }
+            else
+            {
+                out.push_back(static_cast<char>(c));
+                i++;
+            }
+        }
+        else
+        {
+            out.push_back(static_cast<char>(std::tolower(c)));
+            i++;
+        }
+    }
+    return out;
+}
+
+int ItemResolver::resolve(const std::string &normalizedName) const
+{
+    std::unordered_map<std::string,uint16_t>::const_iterator it=baseByName.find(normalizedName);
+    if(it!=baseByName.cend())
+        return it->second;
+    // "tm06" -> "tm06 toxic" (curated libraries append the move name)
+    if(normalizedName.size()>=3 && normalizedName.size()<=4 &&
+       (normalizedName.compare(0,2,"tm")==0 || normalizedName.compare(0,2,"hm")==0))
+    {
+        const std::string pre=normalizedName+" ";
+        it=baseByName.begin();
+        while(it!=baseByName.cend())
+        {
+            if(it->first.compare(0,pre.size(),pre)==0)
+                return it->second;
+            ++it;
+        }
+    }
+    return -1;
+}
+
 ItemResolver::ItemResolver() :
     selfContained(false)
 {
@@ -1612,19 +1673,21 @@ bool CCWriter::writeSubOverlay(const std::string &mainDir)
         }
         // The sibling's own wild blocks, produced by the SAME emitter as the main
         // run — so an unchanged encounter list is byte-identical to the main file.
-        std::ostringstream gs,ws,fr,fs,rk;
+        std::ostringstream gs,ws,fo,fg,fs,rk;
         const WildSet *wild=wild_.find(map.group,map.origMap);
         if(wild!=nullptr)
         {
             emitWildList(gs,"grass",wild->land);
             emitWildList(ws,"water",wild->water);
-            emitWildList(fr,"waterRod",wild->rodOldGood);
+            emitWildList(fo,"waterOldRod",wild->rodOld);
+            emitWildList(fg,"waterGoodRod",wild->rodGood);
             emitWildList(fs,"waterSuperRod",wild->rodSuper);
             emitWildList(rk,"rockSmash",wild->rock);
         }
         const std::string sibGrass=gs.str();
         const std::string sibWater=ws.str();
-        const std::string sibRod=fr.str();
+        const std::string sibOld=fo.str();
+        const std::string sibGood=fg.str();
         const std::string sibSuper=fs.str();
         const std::string sibRock=rk.str();
         // The main's version of this map: geometry is shared, so we only ever need
@@ -1641,15 +1704,17 @@ bool CCWriter::writeSubOverlay(const std::string &mainDir)
         }
         const std::string mainGrass=extractSection(mainText,"grass");
         const std::string mainWater=extractSection(mainText,"water");
-        const std::string mainRod=extractSection(mainText,"waterRod");
+        const std::string mainOld=extractSection(mainText,"waterOldRod");
+        const std::string mainGood=extractSection(mainText,"waterGoodRod");
         const std::string mainSuper=extractSection(mainText,"waterSuperRod");
         const std::string mainRock=extractSection(mainText,"rockSmash");
         const bool emitG=(!sibGrass.empty()) && (stripWs(sibGrass)!=stripWs(mainGrass));
         const bool emitW=(!sibWater.empty()) && (stripWs(sibWater)!=stripWs(mainWater));
-        const bool emitR=(!sibRod.empty()) && (stripWs(sibRod)!=stripWs(mainRod));
+        const bool emitO=(!sibOld.empty()) && (stripWs(sibOld)!=stripWs(mainOld));
+        const bool emitR=(!sibGood.empty()) && (stripWs(sibGood)!=stripWs(mainGood));
         const bool emitS=(!sibSuper.empty()) && (stripWs(sibSuper)!=stripWs(mainSuper));
         const bool emitK=(!sibRock.empty()) && (stripWs(sibRock)!=stripWs(mainRock));
-        if(!emitG && !emitW && !emitR && !emitS && !emitK)
+        if(!emitG && !emitW && !emitO && !emitR && !emitS && !emitK)
         {
             shared++;
             i++;
@@ -1666,7 +1731,8 @@ bool CCWriter::writeSubOverlay(const std::string &mainDir)
             out << "<map>\n";
             if(emitG) out << sibGrass;
             if(emitW) out << sibWater;
-            if(emitR) out << sibRod;
+            if(emitO) out << sibOld;
+            if(emitR) out << sibGood;
             if(emitS) out << sibSuper;
             if(emitK) out << sibRock;
             out << "</map>\n";
@@ -1720,7 +1786,8 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     {
         emitWildList(out,"grass",wild->land);
         emitWildList(out,"water",wild->water);
-        emitWildList(out,"waterRod",wild->rodOldGood);
+        emitWildList(out,"waterOldRod",wild->rodOld);
+        emitWildList(out,"waterGoodRod",wild->rodGood);
         emitWildList(out,"waterSuperRod",wild->rodSuper);
         emitWildList(out,"rockSmash",wild->rock);
     }

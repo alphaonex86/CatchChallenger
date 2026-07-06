@@ -9,8 +9,8 @@
 static const int kLandWeights[12]={20,20,10,10,10,10,5,5,4,4,1,1};
 static const int kWaterWeights[5]={60,30,5,4,1};
 // Rock smash uses the water distribution; fishing is 2 old-rod slots (70,30),
-// 3 good-rod (60,20,20), 5 super-rod (40,40,15,4,1).  Old+good are merged into
-// ONE waterRod list (emitWildList rescales the 200 total back to 100).
+// 3 good-rod (60,20,20), 5 super-rod (40,40,15,4,1) — each rod its own list
+// (the curated datapack cascades them: waterSuperRod;waterGoodRod;waterOldRod).
 static const int kRockWeights[5]={60,30,5,4,1};
 static const int kFishWeights[10]={70,30,60,20,20,40,40,15,4,1};
 
@@ -80,15 +80,17 @@ void Wild::build()
             size_t f=0;
             while(f<all.size())
             {
-                if(f<5)
-                    set.rodOldGood.push_back(all[f]);
+                if(f<2)
+                    set.rodOld.push_back(all[f]);
+                else if(f<5)
+                    set.rodGood.push_back(all[f]);
                 else
                     set.rodSuper.push_back(all[f]);
                 f++;
             }
         }
         if(!set.land.empty() || !set.water.empty() || !set.rock.empty() ||
-           !set.rodOldGood.empty() || !set.rodSuper.empty())
+           !set.rodOld.empty() || !set.rodGood.empty() || !set.rodSuper.empty())
             sets_[static_cast<uint16_t>((grp<<8)|num)]=set;
         o+=0x14;
         guard++;

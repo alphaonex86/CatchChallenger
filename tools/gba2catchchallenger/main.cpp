@@ -547,52 +547,48 @@ int main(int argc, char *argv[])
     Gen3Data gen3;
     const bool gen3ok=gen3.decode(rom);
     ItemResolver itemResolver;
-    itemResolver.selfContained=(fullDatapack && gen3ok);
     {
         std::size_t ii=0;
         while(ii<gen3.items().size())
         {
             const Gen3Item &it=gen3.items()[ii];
             ii++;
-            std::string lname=it.name;
-            std::size_t ci=0;
-            while(ci<lname.size())
-            {
-                lname[ci]=static_cast<char>(std::tolower(static_cast<unsigned char>(lname[ci])));
-                ci++;
-            }
-            itemResolver.gen3Name[static_cast<uint16_t>(it.id)]=lname;
+            itemResolver.gen3Name[static_cast<uint16_t>(it.id)]=ItemResolver::normName(it.name);
         }
     }
-    if(!itemResolver.selfContained)
+    // Load the TARGET datapack's item names (recursively: a curated library
+    // keeps per-category xml under items/), keyed like the engine's
+    // tempNameToItemId but accent-folded so "Poke Ball" matches "Poké Ball".
     {
-        // base datapack item names, keyed the way the engine keys
-        // tempNameToItemId: lowercase default-language <name>
-        tinyxml2::XMLDocument d;
-        if(d.LoadFile((datapack+"/items/items.xml").c_str())==tinyxml2::XML_SUCCESS && d.RootElement()!=nullptr)
+        QDirIterator dit(QString::fromStdString(datapack+"/items"),QStringList()<<"*.xml",
+                         QDir::Files,QDirIterator::Subdirectories);
+        while(dit.hasNext())
         {
-            tinyxml2::XMLElement *it=d.RootElement()->FirstChildElement("item");
-            while(it!=nullptr)
+            const std::string file=dit.next().toStdString();
+            tinyxml2::XMLDocument d;
+            if(d.LoadFile(file.c_str())==tinyxml2::XML_SUCCESS && d.RootElement()!=nullptr)
             {
-                const int id=it->IntAttribute("id",-1);
-                tinyxml2::XMLElement *name=it->FirstChildElement("name");
-                while(name!=nullptr && name->Attribute("lang")!=nullptr && strcmp(name->Attribute("lang"),"en")!=0)
-                    name=name->NextSiblingElement("name");
-                if(id>=0 && name!=nullptr && name->GetText()!=nullptr)
+                tinyxml2::XMLElement *it=d.RootElement()->FirstChildElement("item");
+                while(it!=nullptr)
                 {
-                    std::string lname=name->GetText();
-                    std::size_t ci=0;
-                    while(ci<lname.size())
-                    {
-                        lname[ci]=static_cast<char>(std::tolower(static_cast<unsigned char>(lname[ci])));
-                        ci++;
-                    }
-                    itemResolver.baseByName[lname]=static_cast<uint16_t>(id);
+                    const int id=it->IntAttribute("id",-1);
+                    tinyxml2::XMLElement *name=it->FirstChildElement("name");
+                    while(name!=nullptr && name->Attribute("lang")!=nullptr && strcmp(name->Attribute("lang"),"en")!=0)
+                        name=name->NextSiblingElement("name");
+                    if(id>=0 && name!=nullptr && name->GetText()!=nullptr)
+                        itemResolver.baseByName[ItemResolver::normName(name->GetText())]=static_cast<uint16_t>(id);
+                    it=it->NextSiblingElement("item");
                 }
-                it=it->NextSiblingElement("item");
             }
         }
     }
+    // Owner rule: use the EXISTING when present.  A datapack that already
+    // defines items keeps them (refs resolve by name into ITS ids); only a
+    // bare --all target gets the self-contained gen3 numeric ids.
+    itemResolver.selfContained=(fullDatapack && gen3ok && itemResolver.baseByName.empty());
+    if(fullDatapack && !itemResolver.baseByName.empty())
+        std::cout << "Items: target already defines " << itemResolver.baseByName.size()
+                  << " item name(s); refs resolve by name, items.xml kept" << std::endl;
 
     if(gi.isSub())
     {
@@ -667,6 +663,15 @@ int main(int argc, char *argv[])
             // type-fallback map/music.xml (dominant ripped BGM per coarse type).
             // Refs are label-root-relative ("music/<name>.opus"), resolved by the
             // client as datapackPathMain()+ref = "<label>/music/<name>.opus".
+            // SHARED root file: keep an existing non-empty one (owner rule),
+            // and a run that ripped NOTHING must not clobber a sibling's.
+            bool musicKept=false;
+            {
+                std::ifstream mex(datapack+"/map/music.xml");
+                musicKept=mex && mex.peek()!=std::ifstream::traits_type::eof();
+            }
+            if(ripped>0 && !musicKept)
+            {
             QDir().mkpath(QString::fromStdString(datapack+"/map"));
             std::ofstream mx((datapack+"/map/music.xml").c_str());
             if(mx)
@@ -687,6 +692,7 @@ int main(int argc, char *argv[])
             }
             else
                 std::cerr << "cannot write " << datapack << "/map/music.xml" << std::endl;
+            }
         }
     }
 
@@ -696,7 +702,7 @@ int main(int argc, char *argv[])
     {
         if(gen3ok)
         {
-            FullWriter full(rom,gen3,datapack);
+            FullWriter full(rom,gen3,datapack,itemResolver);
             if(!full.writeAll())
             {
                 std::cerr << "--all game DB write failed" << std::endl;

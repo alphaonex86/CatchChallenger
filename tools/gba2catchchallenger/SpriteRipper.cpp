@@ -56,7 +56,7 @@ static uint32_t findItemIconTable(const GbaRom &rom)
         {
             bool a = false, b = false;
             const uint32_t img = rom.pointer(p, &a);
-            const uint32_t pal = rom.pointer(p + 4, &b);
+            rom.pointer(p + 4, &b); // palette pointer: only its validity matters
             if(a && b && img < rom.size() && rom.u8(img) == 0x10)
             { ++run; p += 8; }
             else break;

@@ -931,8 +931,10 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
             {
                 int cur=stack.back(); stack.pop_back();
                 bt.push_back(cur);
-                if(bc[cur]<mnc)mnc=bc[cur]; if(bc[cur]>mxc)mxc=bc[cur];
-                if(br[cur]<mnr)mnr=br[cur]; if(br[cur]>mxr)mxr=br[cur];
+                if(bc[cur]<mnc)mnc=bc[cur];
+                if(bc[cur]>mxc)mxc=bc[cur];
+                if(br[cur]<mnr)mnr=br[cur];
+                if(br[cur]>mxr)mxr=br[cur];
                 int nb;
                 nb=rN[cur]; if(nb>=0&&!seen[nb]){seen[nb]=1;bc[nb]=bc[cur]+1;br[nb]=br[cur];stack.push_back(nb);}
                 nb=lN[cur]; if(nb>=0&&!seen[nb]){seen[nb]=1;bc[nb]=bc[cur]-1;br[nb]=br[cur];stack.push_back(nb);}
