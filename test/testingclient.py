@@ -2233,6 +2233,61 @@ def run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases):
         s.kill()
 
 
+def run_qtopengl_shop_buy_channel_test(dp_name, mc, failed_cases):
+    """Shop BUY — the ORIGINAL reported journey ('Shop called but missing
+    informations' then 'Buy does nothing'). Open the house2 counter Seller, follow
+    the 'Buy' link -> the datapack-built Shop item list opens (this is where a
+    std::stoi on the NON-numeric bot skin 'oldman' used to THROW and break the buy
+    screen), select the Potion (45$) and Buy -> CASH decreases and the item count
+    increases. Content comes from the datapack (no server packet)."""
+    case = f"qtopengl shop buy decreases cash + adds item ({dp_name} {mc})"
+    if not should_run(case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- qtopengl shop BUY over channel: {dp_name} {mc} ---{C_RESET}\n")
+    s = _GLChannelSession(mc)
+    ok, err = s.start()
+    if not ok:
+        s.kill(); log_fail(case, err)
+        for l in s.tail(): print(f"  | {l}")
+        return
+    try:
+        spawn = s.map_id()
+        s.send("CLICKTILE 15 25")
+        if s.wait_map_change(spawn, timeout=clamp_local(diagnostic.scale_timeout(DIAG, 25))) < 0:
+            log_fail(case, f"never entered house2; state={s.send('GETSTATE')}")
+            return
+        s.send("CLICKTILE 0 22")
+        if not s.wait(lambda: "pokemart" in s.dialog().lower(),
+                      timeout=clamp_local(diagnostic.scale_timeout(DIAG, 18))):
+            log_fail(case, f"counter seller (0,22) opened NO shop dialog; got={s.dialog()!r}")
+            return
+        cash0 = s.cash(); inv0 = s.inv()
+        s.send("KEY Return"); time.sleep(1.4)   # activate the Buy link -> Shop screen
+        # the stoi-on-skin bug left the client alive but the channel unresponsive here
+        if "STATE" not in s.send("GETSTATE"):
+            log_fail(case, "buy Shop screen broke the channel (regressed std::stoi on bot skin?)")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        s.send("CLICKSCREEN 265 235"); time.sleep(0.4)   # select the Potion (id 5, 45$)
+        s.send("CLICKSCREEN 490 300"); time.sleep(1.2)    # Buy
+        if s.proc.poll() is not None:
+            log_fail(case, f"client crashed during buy (rc={s.proc.poll()})")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        cash1 = s.cash(); inv1 = s.inv()
+        if cash1 >= cash0:
+            log_fail(case, f"cash did not decrease on buy ({cash0} -> {cash1}); "
+                           f"item select/Buy may have missed. inv {inv0} -> {inv1}")
+            for l in s.tail(): print(f"  | {l}")
+            return
+        if inv1.get(5, 0) <= inv0.get(5, 0):
+            log_fail(case, f"potion count did not increase on buy ({inv0} -> {inv1})")
+            return
+        log_pass(case, f"bought a potion: cash {cash0}->{cash1}, inv {inv0}->{inv1}")
+    finally:
+        s.kill()
+
+
 def run_qtopengl_shop_sell_channel_test(dp_name, mc, failed_cases):
     """Keystone shop SELL (the original reported flow): open the house2 counter
     Seller (0,22) shop dialog, follow its 'Sell' link -> the Inventory opens as a
@@ -2800,6 +2855,7 @@ def main():
                 run_qtopengl_road_items_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_zonecapture_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_clan_create_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_shop_buy_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_shop_sell_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_item_use_monster_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases)
