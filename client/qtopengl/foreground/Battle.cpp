@@ -144,7 +144,8 @@ void Battle::stackedWidgetFightBottomBarsetCurrentWidget(int index)
     pushButtonFightAttack->setVisible(m_stackedWidgetFightBottomBarIndex==1);
     pushButtonFightBag->setVisible(m_stackedWidgetFightBottomBarIndex==1);
     pushButtonFightMonster->setVisible(m_stackedWidgetFightBottomBarIndex==1);
-    toolButtonFightQuit->setVisible(m_stackedWidgetFightBottomBarIndex==1);
+    //escape only from a wild fight, and only on the action menu
+    toolButtonFightQuit->setVisible(m_stackedWidgetFightBottomBarIndex==1 && battleType==BattleType_Wild);
 
     pushButtonFightAttackConfirmed->setVisible(m_stackedWidgetFightBottomBarIndex==2);
     pushButtonFightReturn->setVisible(m_stackedWidgetFightBottomBarIndex==2);
@@ -1231,6 +1232,25 @@ void Battle::updateOtherMonsterInformation()
     monsterTopDesignPos=QPointF(510,90);
 }
 
+void Battle::updateCurrentMonsterStatsDisplay()
+{
+    CatchChallenger::PlayerMonster *monster=connexionManager->client->getCurrentMonster();
+    if(monster==nullptr)
+        return;
+    labelFightBottomLevel->setHtml(tr("Level %1").arg(monster->level));
+    CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(
+        CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster),monster->level);
+    progressBarFightBottomHP->setMaximum(stat.hp);
+    progressBarFightBottomHP->setValue(monster->hp);
+    //XP progression toward the next level
+    const CatchChallenger::Monster &monsterDef=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster);
+    if(monster->level>=1 && static_cast<size_t>(monster->level)<=monsterDef.level_to_xp.size())
+    {
+        progressBarFightBottomExp->setMaximum(monsterDef.level_to_xp.at(monster->level-1));
+        progressBarFightBottomExp->setValue(monster->remaining_xp);
+    }
+}
+
 void Battle::updateCurrentMonsterInformation()
 {
     CatchChallenger::PlayerMonster *monster=connexionManager->client->getCurrentMonster();
@@ -1253,19 +1273,7 @@ void Battle::updateCurrentMonsterInformation()
     if(monsterBottomPixSrc.isNull())
         monsterBottomPixSrc=QPixmap(":/CC/images/monsters/default/back.png");
     labelFightMonsterBottom->setPixmap(QPixmap());//force paint() to re-scale
-    labelFightBottomLevel->setHtml(tr("Level %1").arg(monster->level));
-
-    CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(
-        CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster),monster->level);
-    progressBarFightBottomHP->setMaximum(stat.hp);
-    progressBarFightBottomHP->setValue(monster->hp);
-    //XP progression toward the next level
-    const CatchChallenger::Monster &monsterDef=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster);
-    if(monster->level>=1 && static_cast<size_t>(monster->level)<=monsterDef.level_to_xp.size())
-    {
-        progressBarFightBottomExp->setMaximum(monsterDef.level_to_xp.at(monster->level-1));
-        progressBarFightBottomExp->setValue(monster->remaining_xp);
-    }
+    updateCurrentMonsterStatsDisplay();
     monsterBottomDesignPos=QPointF(60,280);
 }
 
@@ -1470,14 +1478,11 @@ void Battle::moveFightMonsterBoth()
 
 void Battle::doNextAction()
 {
-    toolButtonFightQuit->setVisible(battleType==BattleType_Wild);
-
-    //reflect the authoritative engine HP onto the bars (useSkill already applied
-    //the turn locally for wild/bot fights — the client is authoritative there)
-    CatchChallenger::PublicPlayerMonster *cur=connexionManager->client->getCurrentMonster();
+    //reflect the authoritative engine state onto the display (useSkill already
+    //applied the turn locally for wild/bot fights — the client is authoritative
+    //there): HP of both sides, plus XP/level gained on a KO
     CatchChallenger::PublicPlayerMonster *oth=connexionManager->client->getOtherMonster();
-    if(cur!=NULL)
-        progressBarFightBottomHP->setValue(cur->hp);
+    updateCurrentMonsterStatsDisplay();
     if(oth!=NULL)
         progressBarFightTopHP->setValue(oth->hp);
 
@@ -1500,8 +1505,7 @@ void Battle::doNextAction()
     //(per-hit attack animation is deferred — reflect the final HP instead)
     while(!connexionManager->client->getAttackReturnList().empty())
         connexionManager->client->removeTheFirstAttackReturn();
-    if(cur!=NULL)
-        progressBarFightBottomHP->setValue(cur->hp);
+    updateCurrentMonsterStatsDisplay();
     if(oth!=NULL)
         progressBarFightTopHP->setValue(oth->hp);
 

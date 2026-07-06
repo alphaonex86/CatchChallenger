@@ -101,6 +101,9 @@ private:
                           const qreal &ax,const qreal &ay,const qreal &k);
     void layoutInfoFrame(ImagesStrechMiddle *frame,QGraphicsTextItem *name,QGraphicsTextItem *level,
                          CCprogressbar *hp,CCprogressbar *exp,const qreal &k);
+    //refresh level label + HP/XP bars of the player frame from the engine state
+    //(the engine applies XP/level-up during the turn — reflect it right away)
+    void updateCurrentMonsterStatsDisplay();
 
     ImagesStrechMiddle *frameFightBottom;
     QList<QGraphicsPixmapItem *> bottomBuff;
