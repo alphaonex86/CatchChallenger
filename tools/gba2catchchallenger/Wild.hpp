@@ -22,6 +22,9 @@ struct WildSlot {
 struct WildSet {
     std::vector<WildSlot> land;
     std::vector<WildSlot> water;
+    std::vector<WildSlot> rock;       // rock-smash encounters (5 slots)
+    std::vector<WildSlot> rodOldGood; // old+good rod fishing slots (0-4), merged list
+    std::vector<WildSlot> rodSuper;   // super rod fishing slots (5-9)
 };
 
 class Wild {

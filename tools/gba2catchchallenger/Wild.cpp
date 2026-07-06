@@ -8,6 +8,11 @@
 // DROPS the whole encounter list: "total luck is not egal to 100".)
 static const int kLandWeights[12]={20,20,10,10,10,10,5,5,4,4,1,1};
 static const int kWaterWeights[5]={60,30,5,4,1};
+// Rock smash uses the water distribution; fishing is 2 old-rod slots (70,30),
+// 3 good-rod (60,20,20), 5 super-rod (40,40,15,4,1).  Old+good are merged into
+// ONE waterRod list (emitWildList rescales the 200 total back to 100).
+static const int kRockWeights[5]={60,30,5,4,1};
+static const int kFishWeights[10]={70,30,60,20,20,40,40,15,4,1};
 
 Wild::Wild(const GbaRom &rom) :
     rom_(rom)
@@ -56,15 +61,34 @@ void Wild::build()
             break;
         bool ok=false;
         uint32_t land=rom_.pointer(o+0x04,&ok);
-        uint32_t water=0;
         bool okW=false;
-        water=rom_.pointer(o+0x08,&okW);
+        uint32_t water=rom_.pointer(o+0x08,&okW);
+        bool okR=false;
+        uint32_t rock=rom_.pointer(o+0x0C,&okR);
+        bool okF=false;
+        uint32_t fish=rom_.pointer(o+0x10,&okF);
         WildSet set;
         if(ok)
             set.land=decodeInfo(land,12,kLandWeights);
         if(okW)
             set.water=decodeInfo(water,5,kWaterWeights);
-        if(!set.land.empty() || !set.water.empty())
+        if(okR)
+            set.rock=decodeInfo(rock,5,kRockWeights);
+        if(okF)
+        {
+            std::vector<WildSlot> all=decodeInfo(fish,10,kFishWeights);
+            size_t f=0;
+            while(f<all.size())
+            {
+                if(f<5)
+                    set.rodOldGood.push_back(all[f]);
+                else
+                    set.rodSuper.push_back(all[f]);
+                f++;
+            }
+        }
+        if(!set.land.empty() || !set.water.empty() || !set.rock.empty() ||
+           !set.rodOldGood.empty() || !set.rodSuper.empty())
             sets_[static_cast<uint16_t>((grp<<8)|num)]=set;
         o+=0x14;
         guard++;
