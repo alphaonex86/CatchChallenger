@@ -96,6 +96,9 @@ protected:
     //CLICKSCREEN automation verb: synthetic click on this top-level viewport so
     //the channel can press toolbar/overlay buttons (which live on this scene).
     void doRemoteScreenClick(const int &x,const int &y);
+    //FIGHTSKILL/... : advance the Battle above-screen's state machine after the
+    //channel applied a fight action, so channel-driven fights exercise the real UI.
+    void doRemoteFightAdvance();
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void closeWhenOnMapAfterToggle();

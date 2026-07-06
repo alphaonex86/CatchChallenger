@@ -1855,7 +1855,7 @@ void MapControllerMP::remoteActionExecute(const QString &line)
         const uint skill=parts.at(1).toUInt(&ok);
         if(!ok) emit remoteReply(QStringLiteral("ERROR bad FIGHTSKILL arg"));
         else if(client==nullptr) emit remoteReply(QStringLiteral("ERROR not connected"));
-        else { client->useSkill(static_cast<CATCHCHALLENGER_TYPE_SKILL>(skill)); emit remoteReply(QStringLiteral("OK FIGHTSKILL %1").arg(skill)); }
+        else { client->useSkill(static_cast<CATCHCHALLENGER_TYPE_SKILL>(skill)); emit remoteFightAdvanceRequested(); emit remoteReply(QStringLiteral("OK FIGHTSKILL %1").arg(skill)); }
     }
     else if(verb==QStringLiteral("FIGHTCHANGEMONSTER") && parts.size()>=2)
     {
