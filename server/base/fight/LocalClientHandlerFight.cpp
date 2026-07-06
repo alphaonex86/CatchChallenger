@@ -418,6 +418,22 @@ bool Client::finishTheTurn(const bool &isBot)
         //below is left exactly as it was.
         if(currentMonsterIsKO() && !haveAnotherMonsterOnThePlayerToFight())
             checkLoose();
+        //WIN against the wild monster: drop the KO'd wild monster to close the
+        //fight server-side. Without it wildMonsters kept the corpse, so
+        //isInFight() stayed true and the next move kicked the player with
+        //"try move when is in fight" (in solo that teardown also unloads the
+        //shared CommonDatapack under the client's feet).
+        else if(!currentMonsterIsKO() && otherMonsterIsKO())
+        {
+            dropKOOtherMonster();
+            syncForEndOfTurn();
+            if(!isInFight())
+            {
+                normalOutput("Have win against a wild monster");
+                fightOrBattleFinish(true,botFight);
+                return true;
+            }
+        }
         return false;
     }
     const uint8_t &botFightId=botFight.second;

@@ -1838,6 +1838,10 @@ void OverMapLogic::ensureBattle()
 
 void OverMapLogic::battleFinished()
 {
+    //the fight collision blocked the player on the map (MapVisualiserPlayer::
+    //blocked) — release it now the fight is over, like the 800x600 client does,
+    //else the player can never move (nor trigger a new fight) again
+    ccmap->mapController.unblock();
     //return to the map overlay (the fight replaced the overmap foreground)
     emit setForeground(this);
 }
