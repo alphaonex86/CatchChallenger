@@ -304,8 +304,9 @@ std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
     while(ni<map.npcs.size())
     {
         const DecodedNpc &npc=map.npcs[ni];
-        // Pushable strength boulders become StrengthBoulder objects, not bots.
-        if(npc.graphicsId!=rom_.game().boulderGfx)
+        // Strength boulders become StrengthBoulder objects and breakable rocks
+        // RockSmash layer tiles — neither is a bot.
+        if(npc.graphicsId!=rom_.game().boulderGfx && npc.graphicsId!=rom_.game().rockGfx)
         {
             std::string skin=skinFor(npc.graphicsId);
             if(!skin.empty() && npc.x>=0 && npc.y>=0 &&
@@ -675,18 +676,30 @@ void CCWriter::ensureBoulderTile()
         boulderTile_=spriteTile16(boulder);
 }
 
+void CCWriter::ensureRockTile()
+{
+    if(!rockTile_.isNull())
+        return;
+    QImage rock=OverworldSprite::renderStatic(rom_,rom_.game().rockGfx);
+    if(!rock.isNull())
+        rockTile_=spriteTile16(rock);
+}
+
 void CCWriter::flushItemTileset()
 {
-    if(ballTile_.isNull() && boulderTile_.isNull())
+    if(ballTile_.isNull() && boulderTile_.isNull() && rockTile_.isNull())
         return;
-    // 2 fixed slots so the gids are stable: 0 = item ball, 1 = strength boulder.
-    QImage sheet(32,16,QImage::Format_ARGB32);
+    // 3 fixed slots so the gids are stable: 0 = item ball, 1 = strength
+    // boulder, 2 = breakable rock-smash rock.
+    QImage sheet(48,16,QImage::Format_ARGB32);
     sheet.fill(Qt::transparent);
     QPainter p(&sheet);
     if(!ballTile_.isNull())
         p.drawImage(0,0,ballTile_);
     if(!boulderTile_.isNull())
         p.drawImage(16,0,boulderTile_);
+    if(!rockTile_.isNull())
+        p.drawImage(32,0,rockTile_);
     p.end();
     QDir().mkpath(QString::fromStdString(fireredDir_+"/tileset"));
     if(!sheet.save(QString::fromStdString(fireredDir_+"/tileset/items.png"),"PNG"))
@@ -699,8 +712,8 @@ void CCWriter::flushItemTileset()
     if(tsx)
     {
         tsx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        tsx << "<tileset name=\"items\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"2\" columns=\"2\">\n";
-        tsx << " <image source=\"items.png\" width=\"32\" height=\"16\"/>\n";
+        tsx << "<tileset name=\"items\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"3\" columns=\"3\">\n";
+        tsx << " <image source=\"items.png\" width=\"48\" height=\"16\"/>\n";
         tsx << "</tileset>\n";
         tsx.flush();
         if(!tsx)
@@ -745,8 +758,12 @@ void CCWriter::writeMap(const DecodedMap &map)
     std::vector<GroundItem> mapItems;
     // Pushable strength boulders (their own object kind, never a bot/skin).
     std::vector<std::pair<int,int> > mapBoulders;
+    // Breakable rock-smash rocks -> cells of the RockSmash actionOn tile layer.
+    std::vector<uint32_t> rockLayer(cells,0);
+    bool anyRock=false;
     {
         const uint8_t boulderGfx=rom_.game().boulderGfx;
+        const uint8_t rockGfx=rom_.game().rockGfx;
         size_t ii=0;
         while(ii<map.npcs.size())
         {
@@ -758,6 +775,16 @@ void CCWriter::writeMap(const DecodedMap &map)
                 ensureBoulderTile();
                 if(!boulderTile_.isNull())
                     mapBoulders.push_back(std::pair<int,int>(np.x,np.y));
+            }
+            else if(np.graphicsId==rockGfx && np.x>=0 && np.y>=0 &&
+                    static_cast<uint32_t>(np.x)<w && static_cast<uint32_t>(np.y)<h)
+            {
+                ensureRockTile();
+                if(!rockTile_.isNull())
+                {
+                    rockLayer[static_cast<uint32_t>(np.x)+static_cast<uint32_t>(np.y)*w]=itemGid+2;
+                    anyRock=true;
+                }
             }
             else
             {
@@ -963,7 +990,7 @@ void CCWriter::writeMap(const DecodedMap &map)
     // Referenced READ-ONLY; the converter never writes outside map/main/<label>/.
     std::string invRel=tsPre.substr(0,tsPre.size()>=8 ? tsPre.size()-8 : 0)+"../../invisible.tsx";
     out << " <tileset firstgid=\"" << invFirst << "\" source=\"" << invRel << "\"/>\n";
-    if((!mapItems.empty() && !ballTile_.isNull()) || !mapBoulders.empty())
+    if((!mapItems.empty() && !ballTile_.isNull()) || !mapBoulders.empty() || anyRock)
         out << " <tileset firstgid=\"" << itemGid << "\" source=\"" << tsPre << "items.tsx\"/>\n";
 
     // Walkable is the canonical base layer and is ALWAYS emitted, even when empty
@@ -1011,6 +1038,12 @@ void CCWriter::writeMap(const DecodedMap &map)
     // the player (tree tops, roofs, ...) — but ONLY for player-reachable cells.
     if(layerHasTile(walkbehind))
         emitTileLayer(out,layerId,"WalkBehind",w,h,encodeLayer(walkbehind));
+    // Breakable rocks (real ripped rock tile over the walkable ground): the
+    // layers.xml RockSmash actionOn entry binds them to the <rockSmash> wild
+    // list.  The cell stays walkable — a permanent collision would seal the
+    // Gen3 corridors that expect the rock to be smashed through.
+    if(anyRock)
+        emitTileLayer(out,layerId,"RockSmash",w,h,encodeLayer(rockLayer));
 
     // Moving group: warps -> door, connections -> border-*.
     out << " <objectgroup id=\"100\" name=\"Moving\">\n";
@@ -1500,15 +1533,21 @@ bool CCWriter::writeSubOverlay(const std::string &mainDir)
         }
         // The sibling's own wild blocks, produced by the SAME emitter as the main
         // run — so an unchanged encounter list is byte-identical to the main file.
-        std::ostringstream gs,ws;
+        std::ostringstream gs,ws,fr,fs,rk;
         const WildSet *wild=wild_.find(map.group,map.origMap);
         if(wild!=nullptr)
         {
             emitWildList(gs,"grass",wild->land);
             emitWildList(ws,"water",wild->water);
+            emitWildList(fr,"waterRod",wild->rodOldGood);
+            emitWildList(fs,"waterSuperRod",wild->rodSuper);
+            emitWildList(rk,"rockSmash",wild->rock);
         }
         const std::string sibGrass=gs.str();
         const std::string sibWater=ws.str();
+        const std::string sibRod=fr.str();
+        const std::string sibSuper=fs.str();
+        const std::string sibRock=rk.str();
         // The main's version of this map: geometry is shared, so we only ever need
         // to override wild data.  If the main has no such map, this is a
         // sibling-exclusive map (e.g. Emerald's Battle Frontier) -> not part of a
@@ -1523,9 +1562,15 @@ bool CCWriter::writeSubOverlay(const std::string &mainDir)
         }
         const std::string mainGrass=extractSection(mainText,"grass");
         const std::string mainWater=extractSection(mainText,"water");
+        const std::string mainRod=extractSection(mainText,"waterRod");
+        const std::string mainSuper=extractSection(mainText,"waterSuperRod");
+        const std::string mainRock=extractSection(mainText,"rockSmash");
         const bool emitG=(!sibGrass.empty()) && (stripWs(sibGrass)!=stripWs(mainGrass));
         const bool emitW=(!sibWater.empty()) && (stripWs(sibWater)!=stripWs(mainWater));
-        if(!emitG && !emitW)
+        const bool emitR=(!sibRod.empty()) && (stripWs(sibRod)!=stripWs(mainRod));
+        const bool emitS=(!sibSuper.empty()) && (stripWs(sibSuper)!=stripWs(mainSuper));
+        const bool emitK=(!sibRock.empty()) && (stripWs(sibRock)!=stripWs(mainRock));
+        if(!emitG && !emitW && !emitR && !emitS && !emitK)
         {
             shared++;
             i++;
@@ -1542,6 +1587,9 @@ bool CCWriter::writeSubOverlay(const std::string &mainDir)
             out << "<map>\n";
             if(emitG) out << sibGrass;
             if(emitW) out << sibWater;
+            if(emitR) out << sibRod;
+            if(emitS) out << sibSuper;
+            if(emitK) out << sibRock;
             out << "</map>\n";
             changed++;
         }
@@ -1593,6 +1641,9 @@ void CCWriter::writeMapXml(const DecodedMap &map)
     {
         emitWildList(out,"grass",wild->land);
         emitWildList(out,"water",wild->water);
+        emitWildList(out,"waterRod",wild->rodOldGood);
+        emitWildList(out,"waterSuperRod",wild->rodSuper);
+        emitWildList(out,"rockSmash",wild->rock);
     }
 
     // Bot definitions.  EVERY bot placed in the .tmx is defined here (matching

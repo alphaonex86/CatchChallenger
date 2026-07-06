@@ -386,11 +386,19 @@ bool FullWriter::writeCompleteness()
         return false;
     if(!ensureDir(outRoot_ + "/map"))
         return false;
+    // monsterType names match the base datapack's existing conventions
+    // (waterRod/waterSuperRod); rockSmash is new, bound to the RockSmash
+    // actionOn layer the map writer emits.  Item ids are the ROM's own:
+    // 262 Old Rod, 263 Good Rod, 264 Super Rod, 344 HM06 Rock Smash.
     if(!writeTextFile(outRoot_ + "/map/layers.xml",
             "<layers zoom=\"4\">\n"
             "    <monstersCollision monsterType=\"grass\" background=\"fight/grass/\" layer=\"Grass\" type=\"walkOn\"/>\n"
             "    <monstersCollision monsterType=\"cave\" background=\"fight/cave/\" type=\"walkOn\"/>\n"
             "    <monstersCollision item=\"4\" tile=\"swim\" background=\"fight/water/\" layer=\"Water\" type=\"walkOn\" monsterType=\"water\"/>\n"
+            "    <monstersCollision item=\"262\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterRod\"/>\n"
+            "    <monstersCollision item=\"263\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterRod\"/>\n"
+            "    <monstersCollision item=\"264\" tile=\"fish\" background=\"fight/water/\" layer=\"Water\" type=\"actionOn\" monsterType=\"waterSuperRod\"/>\n"
+            "    <monstersCollision item=\"344\" background=\"fight/cave/\" layer=\"RockSmash\" type=\"actionOn\" monsterType=\"rockSmash\"/>\n"
             "</layers>\n"))
         return false;
     if(!writeTextFile(outRoot_ + "/map/visualcategory.xml",

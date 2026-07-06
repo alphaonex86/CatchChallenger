@@ -32,6 +32,7 @@ GameInfo::GameInfo() :
     leaderClass(0xFF),
     itemNames(0),
     boulderGfx(0xFF),
+    rockGfx(0xFF),
     animWaterTile(0),
     animWaterTileCount(0),
     animWaterFrames(0),
@@ -303,10 +304,14 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
                   << "MB) is not canonical -> standalone hack main '" << info.label
                   << "' (gMapGroups will be scanned)" << std::endl;
     }
-    // Pushable strength-boulder object gfx id (pret OBJ_EVENT_GFX_PUSHABLE_BOULDER:
-    // FRLG 97, RSE 87).  Engine-wide, so hacks inherit their engine's id.
+    // Field-object gfx ids (pret OBJ_EVENT_GFX_*): pushable strength boulder
+    // (FRLG 97, RSE 87) and breakable rock-smash rock (FRLG 96, RSE 86).
+    // Engine-wide, so hacks inherit their engine's ids.
     if(info.valid)
+    {
         info.boulderGfx=(info.engine==Engine::Frlg) ? 97 : 87;
+        info.rockGfx=(info.engine==Engine::Frlg) ? 96 : 86;
+    }
     return info;
 }
 

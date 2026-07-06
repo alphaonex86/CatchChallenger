@@ -119,8 +119,11 @@ private:
     // Rip the 16x16 pushable strength-boulder sprite once — slot 1 of
     // tileset/items.png, the gid of every StrengthBoulder object.
     void ensureBoulderTile();
-    // Write tileset/items.png|.tsx (2 fixed slots: ball, boulder) once every
-    // map is written; gids stay itemGid/itemGid+1 whatever slots are filled.
+    // Rip the 16x16 breakable rock-smash rock sprite once — slot 2 of
+    // tileset/items.png, the tile of the RockSmash actionOn layer.
+    void ensureRockTile();
+    // Write tileset/items.png|.tsx (3 fixed slots: ball, boulder, rock) once
+    // every map is written; gids stay itemGid..+2 whatever slots are filled.
     void flushItemTileset();
     // Numeric id / name / "" for the item property (see ItemResolver).
     std::string itemRefOf(int gen3Id, bool *byName);
@@ -148,6 +151,7 @@ private:
     std::vector<std::string> renderInvisibleList_;
     QImage ballTile_;                          // items.png slot 0 (null until first item)
     QImage boulderTile_;                       // items.png slot 1 (null until first boulder)
+    QImage rockTile_;                          // items.png slot 2 (null until first rock)
     bool writeFailed_;                         // any output file skipped/unwritable
     int itemsTotal_;                           // ground+hidden items emitted
     int itemsDropped_;                         // refs without even a name (skipped)
