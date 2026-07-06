@@ -17,13 +17,13 @@ public:
     bool writeAll();
 
 private:
-    void writeTypes();
-    void writeSkills();
-    void writeMonsters();
-    void writeItems();
-    void writeSprites();
-    void writeCompleteness();   // start/reputation/event/layers/visualcategory/...
-    void writePlayerSkin();
+    bool writeTypes();
+    bool writeSkills();
+    bool writeMonsters();
+    bool writeItems();
+    void writeSprites();        // missing sprites are non-fatal (counted + reported)
+    bool writeCompleteness();   // start/reputation/event/layers/visualcategory/...
+    bool writePlayerSkin();
     int firstSpeciesId() const; // a valid starter species id
 
     const GbaRom &rom_;

@@ -15,7 +15,6 @@
 #include "Gen3Data.hpp"
 #include "FullWriter.hpp"
 #include "M4aRipper.hpp"
-#include "DatapackBase.hpp"
 #include "Decoder.hpp"
 #include "Gba.hpp"
 #include "Gen3Script.hpp"
@@ -33,6 +32,7 @@
 #include <QGuiApplication>
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <thread>
 #include <atomic>
 #include <spawn.h>
@@ -426,6 +426,11 @@ int main(int argc, char *argv[])
     const bool fullDatapack=!allPath.empty();
     if(fullDatapack && datapack.empty())
         datapack=allPath;
+    if(fullDatapack && datapack!=allPath)
+    {
+        std::cerr << "--datapack and --all point to different roots; --all implies the datapack root, drop --datapack" << std::endl;
+        return 1;
+    }
 
     const std::string ripSong=argValue(args,"--ripsong");
     if(datapack.empty() && ripSong.empty())
@@ -460,10 +465,6 @@ int main(int argc, char *argv[])
     std::cout << "ROM: " << rom.game().code << " v" << (int)rom.game().version
               << " -> label '" << rom.game().label << "'" << std::endl;
 
-    // Load the base datapack via the client loader (skins for bot mapping).
-    DatapackBase base;
-    base.load(datapack);
-
     Decoder decoder(rom);
     if(!decoder.decodeAll())
     {
@@ -495,6 +496,16 @@ int main(int argc, char *argv[])
     std::string outDir=gi.isSub() ? (mainDir+"/sub/"+gi.subCode)
                                    : (datapack+"/map/main/"+gi.label);
     std::string tilesetDir=outDir+"/tileset";
+
+    // A sub overlay is diffed against its main: refuse to run before the main
+    // exists, else the overlay would be an empty husk (and the wipe below would
+    // destroy a previously valid one).
+    if(gi.isSub() && !QFile::exists(QString::fromStdString(mainDir+"/informations.xml")))
+    {
+        std::cerr << "main '" << gi.mainCode << "' not generated yet at " << mainDir
+                  << " — run the main ROM first" << std::endl;
+        return 1;
+    }
 
     // Wipe any previous output for this label/sub first: the tileset sheet count
     // and layout change between runs, so old <label>/tileset/*.png|*.tsx and maps
@@ -565,7 +576,7 @@ int main(int argc, char *argv[])
             {
                 const int id=it->IntAttribute("id",-1);
                 tinyxml2::XMLElement *name=it->FirstChildElement("name");
-                while(name!=nullptr && name->Attribute("lang")!=nullptr)
+                while(name!=nullptr && name->Attribute("lang")!=nullptr && strcmp(name->Attribute("lang"),"en")!=0)
                     name=name->NextSiblingElement("name");
                 if(id>=0 && name!=nullptr && name->GetText()!=nullptr)
                 {
@@ -604,7 +615,17 @@ int main(int argc, char *argv[])
         // (~10% per-channel tolerance, content-cropped) and reused, else added.
         skins.loadExisting();
         CCWriter writer(rom,decoder,tilesets,naming,wild,outDir,skins,itemResolver);
-        writer.writeAll();
+        if(!writer.writeAll())
+        {
+            // Retail ROMs must keep every guard green; a standalone hack
+            // (label==region) keeps its best-effort output with a warning.
+            if(rom.game().region!=rom.game().label)
+            {
+                std::cerr << "Map write/guards failed" << std::endl;
+                return 1;
+            }
+            std::cerr << "Warning: guards/writes failed on hack ROM; best-effort output kept" << std::endl;
+        }
         std::cout << "Skins: reused " << skins.reuseCount() << ", added " << skins.addedCount() << std::endl;
 
         // Rip the maps' background music to opus, into THIS label's own folder
@@ -648,19 +669,24 @@ int main(int argc, char *argv[])
             // client as datapackPathMain()+ref = "<label>/music/<name>.opus".
             QDir().mkpath(QString::fromStdString(datapack+"/map"));
             std::ofstream mx((datapack+"/map/music.xml").c_str());
-            mx << "<musics>\n";
-            const char *types[]={"city","indoor","outdoor","cave"};
-            int ty=0;
-            while(ty<4)
+            if(mx)
             {
-                const std::string key = std::string(types[ty])=="cave"?"outdoor":types[ty];
-                uint16_t best=0; int bc=-1;
-                std::map<uint16_t,int>::const_iterator b=byType[key].begin();
-                while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+".opus"))) { bc=b->second; best=b->first; } ++b; }
-                if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << ".opus</map>\n";
-                ++ty;
+                mx << "<musics>\n";
+                const char *types[]={"city","indoor","outdoor","cave"};
+                int ty=0;
+                while(ty<4)
+                {
+                    const std::string key = std::string(types[ty])=="cave"?"outdoor":types[ty];
+                    uint16_t best=0; int bc=-1;
+                    std::map<uint16_t,int>::const_iterator b=byType[key].begin();
+                    while(b!=byType[key].end()) { if(b->second>bc && QFile::exists(QString::fromStdString(musicDir+"/"+writer.musicFileBase(b->first)+".opus"))) { bc=b->second; best=b->first; } ++b; }
+                    if(best!=0) mx << "    <map type=\"" << types[ty] << "\">" << writer.musicRefPrefix() << "/" << writer.musicFileBase(best) << ".opus</map>\n";
+                    ++ty;
+                }
+                mx << "</musics>\n";
             }
-            mx << "</musics>\n";
+            else
+                std::cerr << "cannot write " << datapack << "/map/music.xml" << std::endl;
         }
     }
 
@@ -671,7 +697,11 @@ int main(int argc, char *argv[])
         if(gen3ok)
         {
             FullWriter full(rom,gen3,datapack);
-            full.writeAll();
+            if(!full.writeAll())
+            {
+                std::cerr << "--all game DB write failed" << std::endl;
+                return 1;
+            }
         }
         else
             std::cerr << "Warning: --all could not decode the Gen3 game DB; wrote maps only." << std::endl;

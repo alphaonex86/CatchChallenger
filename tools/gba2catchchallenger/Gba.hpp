@@ -60,7 +60,6 @@ struct GameInfo {
     uint32_t trainersCount;
     uint8_t leaderClass;         // gym-leader trainer class (0xFF = unknown/none)
     uint32_t itemNames;          // gItems name records (stride 44, name[14]@+0)
-    uint16_t healSpecial;        // special id that heals the party
     // Primary-tileset water animation (tiles animWaterTile..+animWaterTileCount).
     uint16_t animWaterTile;      // first animated 8x8 tile index (508)
     uint16_t animWaterTileCount; // animated tiles (4)
@@ -84,6 +83,7 @@ struct GameInfo {
     uint16_t behavior(uint32_t attribute) const;
     uint8_t layerType(uint32_t attribute) const;
     uint8_t attributeSize() const; // 2 (RSE u16) or 4 (FRLG u32)
+    uint32_t attributeAt(const class GbaRom &rom, uint32_t offset) const; // raw attr read (u16/u32 by attributeSize)
     // Region folder for a map's section id (region2 when in range, else region).
     std::string regionFor(uint8_t sid) const;
 };

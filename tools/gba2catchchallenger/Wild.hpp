@@ -30,7 +30,6 @@ public:
 
     void build();
     const WildSet *find(uint8_t group, uint8_t map) const;
-    std::string speciesName(uint16_t internalId) const;
 
 private:
     std::vector<WildSlot> decodeInfo(uint32_t infoPtr, int count, const int *weights);

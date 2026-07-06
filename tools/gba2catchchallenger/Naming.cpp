@@ -19,6 +19,11 @@ uint16_t Naming::keyOf(uint8_t group, uint8_t map)
     return static_cast<uint16_t>((group<<8)|map);
 }
 
+const DecodedMap *Naming::findByKey(uint16_t key) const
+{
+    return decoder_.find(static_cast<uint8_t>(key>>8),static_cast<uint8_t>(key & 0xFF));
+}
+
 static uint32_t ufFind(std::unordered_map<uint32_t,uint32_t> &uf, uint32_t x)
 {
     while(uf[x]!=x)
@@ -41,7 +46,7 @@ static std::string regionFromName(const std::string &slug)
     {
         int n=0;
         size_t p=6;
-        while(p<slug.size() && slug[p]>='0' && slug[p]<='9') { n=n*10+(slug[p]-'0'); p++; }
+        while(p<slug.size() && slug[p]>='0' && slug[p]<='9' && n<1000) { n=n*10+(slug[p]-'0'); p++; }
         if(n>=1 && n<=28)
             return "kanto";
         if(n>=29 && n<=48)
@@ -129,44 +134,29 @@ bool Naming::looksLikeHouse(const DecodedMap &m) const
     return true;
 }
 
-bool Naming::hasGymLeader(const DecodedMap &m) const
-{
-    if(rom_.game().leaderClass==0xFF)
-        return false;
-    Gen3Script script(rom_);
-    size_t ni=0;
-    while(ni<m.npcs.size())
-    {
-        const DecodedNpc &n=m.npcs[ni];
-        ScriptResult r=script.classify(n.trainerType,n.scriptPtr);
-        if(r.kind==BotKind::Fight && r.leader)
-            return true;
-        ni++;
-    }
-    return false;
-}
-
-bool Naming::hasShop(const DecodedMap &m) const
+void Naming::scanNpcs(const DecodedMap &m, bool *gym, bool *shop) const
 {
     // A seller bot (Mart) makes the building a shop.  Ownership dedup in classify
     // already guarantees only the real seller's NPC classifies as Mart, so an NPC
     // that merely overran into a mart command won't make a non-shop a shop.
+    bool leaderKnown=(rom_.game().leaderClass!=0xFF);
     Gen3Script script(rom_);
     size_t ni=0;
     while(ni<m.npcs.size())
     {
         const DecodedNpc &n=m.npcs[ni];
         ScriptResult r=script.classify(n.trainerType,n.scriptPtr);
-        if(r.kind==BotKind::Mart)
-            return true;
+        if(leaderKnown && r.kind==BotKind::Fight && r.leader)
+            *gym=true;
+        else if(r.kind==BotKind::Mart)
+            *shop=true;
         ni++;
     }
-    return false;
 }
 
 int Naming::namedSidOf(uint16_t key) const
 {
-    const DecodedMap *m=decoder_.find(static_cast<uint8_t>(key>>8),static_cast<uint8_t>(key & 0xFF));
+    const DecodedMap *m=findByKey(key);
     if(m==nullptr)
         return -1;
     if(isArea(*m) && !sectionName(m->regionSection).empty())
@@ -189,7 +179,7 @@ int Naming::namedSidOf(uint16_t key) const
                 uint16_t n=it->second[i];
                 if(seen.find(n)==seen.cend())
                 {
-                    const DecodedMap *nm=decoder_.find(static_cast<uint8_t>(n>>8),static_cast<uint8_t>(n & 0xFF));
+                    const DecodedMap *nm=findByKey(n);
                     if(nm!=nullptr && isArea(*nm) && !sectionName(nm->regionSection).empty())
                         return nm->regionSection;
                     seen.insert(n);
@@ -620,7 +610,7 @@ void Naming::build()
         size_t mi=0;
         while(mi<members.size())
         {
-            const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(members[mi]>>8),static_cast<uint8_t>(members[mi] & 0xFF));
+            const DecodedMap *cm=findByKey(members[mi]);
             if(cm!=nullptr && isArea(*cm))
                 areaMaps.push_back(members[mi]);
             else
@@ -629,6 +619,9 @@ void Naming::build()
         }
 
         // outdoor/area maps: <area>, <area>-2, ...
+        // Every name inside the area folder must be unique: a duplicate would
+        // collide the output path and silently overwrite a map file.
+        std::set<std::string> usedNames;
         size_t an=0;
         while(an<areaMaps.size())
         {
@@ -642,6 +635,7 @@ void Naming::build()
             path_[areaMaps[an]]=folder+"/"+fn;
             zone_[areaMaps[an]]=areaSlug[A];
             display_[areaMaps[an]]=disp;
+            usedNames.insert(fn);
             an++;
         }
 
@@ -658,81 +652,77 @@ void Naming::build()
         {
             uint16_t start=indoorMaps[ii];
             ii++;
-            if(visited.find(start)!=visited.cend())
-                continue;
-            std::vector<uint16_t> comp;
-            std::queue<uint16_t> q;
-            q.push(start);
-            visited.insert(start);
-            while(!q.empty())
+            if(visited.find(start)==visited.cend())
             {
-                uint16_t c=q.front();
-                q.pop();
-                comp.push_back(c);
-                std::unordered_map<uint16_t,std::vector<uint16_t> >::const_iterator it=adj_.find(c);
-                if(it!=adj_.cend())
+                std::vector<uint16_t> comp;
+                std::queue<uint16_t> q;
+                q.push(start);
+                visited.insert(start);
+                while(!q.empty())
                 {
-                    size_t j=0;
-                    while(j<it->second.size())
+                    uint16_t c=q.front();
+                    q.pop();
+                    comp.push_back(c);
+                    std::unordered_map<uint16_t,std::vector<uint16_t> >::const_iterator it=adj_.find(c);
+                    if(it!=adj_.cend())
                     {
-                        uint16_t n=it->second[j];
-                        if(indoorSet.find(n)!=indoorSet.cend() && visited.find(n)==visited.cend())
+                        size_t j=0;
+                        while(j<it->second.size())
                         {
-                            visited.insert(n);
-                            q.push(n);
+                            uint16_t n=it->second[j];
+                            if(indoorSet.find(n)!=indoorSet.cend() && visited.find(n)==visited.cend())
+                            {
+                                visited.insert(n);
+                                q.push(n);
+                            }
+                            j++;
                         }
-                        j++;
                     }
                 }
-            }
-            std::sort(comp.begin(),comp.end());
-            std::string sname,sdisp;
-            size_t ci=0;
-            while(ci<comp.size())
-            {
-                const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[ci]>>8),static_cast<uint8_t>(comp[ci] & 0xFF));
-                std::string sn=(cm!=nullptr) ? sectionName(cm->regionSection) : std::string();
-                if(!sn.empty() && Gen3Text::slug(sn)!=areaSlug[A])
+                std::sort(comp.begin(),comp.end());
+                std::string sname,sdisp;
+                size_t ci=0;
+                while(ci<comp.size())
                 {
-                    sname=Gen3Text::slug(sn);
-                    sdisp=Gen3Text::display(sn);
-                    break;
-                }
-                ci++;
-            }
-            bool house=false,gym=false,shop=false;
-            if(sname.empty())
-            {
-                size_t mk=0;
-                while(mk<comp.size())
-                {
-                    const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[mk]>>8),static_cast<uint8_t>(comp[mk] & 0xFF));
-                    if(cm!=nullptr)
+                    const DecodedMap *cm=findByKey(comp[ci]);
+                    std::string sn=(cm!=nullptr) ? sectionName(cm->regionSection) : std::string();
+                    if(!sn.empty() && Gen3Text::slug(sn)!=areaSlug[A])
                     {
-                        if(hasGymLeader(*cm))
-                            gym=true;
-                        else if(hasShop(*cm))
-                            shop=true;
+                        sname=Gen3Text::slug(sn);
+                        sdisp=Gen3Text::display(sn);
+                        break;
+                    }
+                    ci++;
+                }
+                bool house=false,gym=false,shop=false;
+                if(sname.empty())
+                {
+                    size_t mk=0;
+                    while(mk<comp.size())
+                    {
+                        const DecodedMap *cm=findByKey(comp[mk]);
+                        if(cm!=nullptr)
+                            scanNpcs(*cm,&gym,&shop);
+                        if(gym)
+                            break;
+                        mk++;
                     }
                     if(gym)
-                        break;
-                    mk++;
+                        shop=false; // a gym is never a shop
+                    if(!gym && !shop && comp.size()==1)
+                    {
+                        const DecodedMap *cm=findByKey(comp[0]);
+                        if(cm!=nullptr && looksLikeHouse(*cm))
+                            house=true;
+                    }
                 }
-                if(gym)
-                    shop=false; // a gym is never a shop
-                if(!gym && !shop && comp.size()==1)
-                {
-                    const DecodedMap *cm=decoder_.find(static_cast<uint8_t>(comp[0]>>8),static_cast<uint8_t>(comp[0] & 0xFF));
-                    if(cm!=nullptr && looksLikeHouse(*cm))
-                        house=true;
-                }
+                comps.push_back(comp);
+                compName.push_back(sname);
+                compDisplay.push_back(sdisp);
+                compHouse.push_back(house ? 1 : 0);
+                compGym.push_back(gym ? 1 : 0);
+                compShop.push_back(shop ? 1 : 0);
             }
-            comps.push_back(comp);
-            compName.push_back(sname);
-            compDisplay.push_back(sdisp);
-            compHouse.push_back(house ? 1 : 0);
-            compGym.push_back(gym ? 1 : 0);
-            compShop.push_back(shop ? 1 : 0);
         }
         int houseTotal=0,gymTotal=0,shopTotal=0;
         {
@@ -784,6 +774,14 @@ void Naming::build()
                     bdisplay=areaDisplay[A]+" - Building "+std::to_string(buildingIndex);
                 }
             }
+            std::string bbase=bname;
+            int bdup=2;
+            while(usedNames.find(bname)!=usedNames.cend())
+            {
+                bname=bbase+"-"+std::to_string(bdup);
+                bdup++;
+            }
+            usedNames.insert(bname);
             if(comp.size()==1)
             {
                 path_[comp[0]]=folder+"/"+bname;

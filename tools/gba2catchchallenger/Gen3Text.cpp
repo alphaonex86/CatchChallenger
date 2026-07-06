@@ -18,8 +18,9 @@ static char gen3Char(uint8_t b)
         case 0xAD: return '.';
         case 0xAE: return '-';
         case 0xB4: return '\'';
+        case 0xB8: return ',';
         case 0xBA: return '/';
-        case 0xAC: return ',';
+        case 0xAC: return '?';
         case 0xFC: return ' '; // RSE two-line layout control -> space
         default: return 0;     // drop everything else (control bytes)
     }
@@ -137,6 +138,8 @@ std::vector<std::string> Gen3Text::decodeSign(const GbaRom &rom, uint32_t offset
         else if(b==0xFD)                    // placeholder: next byte = variable id
         {
             uint8_t id=rom.u8(offset+static_cast<uint32_t>(n)+1);
+            if(id==0xFF)
+                break;                      // dangling 0xFD: don't eat the terminator
             if(id==0x01)
                 cur+="Player";              // PLAYER name (dynamic)
             else if(id==0x06)
@@ -144,8 +147,18 @@ std::vector<std::string> Gen3Text::decodeSign(const GbaRom &rom, uint32_t offset
             // else: a script-set STR_VAR (monster/item/number) we can't resolve
             n++;                            // skip the id byte
         }
-        else if(b==0xFC)                    // extended formatting control -> skip cmd byte
-            n++;
+        else if(b==0xFC)                    // extended formatting control: cmd + args
+        {
+            uint8_t cmd=rom.u8(offset+static_cast<uint32_t>(n)+1);
+            size_t args=1;                  // most commands take 1 argument byte
+            if(cmd==0x04)                   // COLOR_HIGHLIGHT_SHADOW
+                args=3;
+            else if(cmd==0x0B)              // PLAY_BGM (u16)
+                args=2;
+            else if(cmd==0x07 || cmd==0x09 || cmd==0x0A) // RESET_SIZE/PAUSE_UNTIL_PRESS/WAIT_SE
+                args=0;
+            n+=1+args;                      // skip the cmd byte + its arguments
+        }
         else
         {
             char c=signChar(b);
@@ -158,6 +171,14 @@ std::vector<std::string> Gen3Text::decodeSign(const GbaRom &rom, uint32_t offset
     if(!t.empty())
         pages.push_back(t);
     return pages;
+}
+
+std::string Gen3Text::speciesName(const GbaRom &rom, uint16_t internalId)
+{
+    const GameInfo &gi=rom.game();
+    if(gi.speciesNames==0 || internalId==0)
+        return std::string();
+    return display(decode(rom,gi.speciesNames+static_cast<uint32_t>(internalId)*11,11));
 }
 
 std::string Gen3Text::slug(const std::string &s)

@@ -24,14 +24,6 @@ Gen3Script::Gen3Script(const GbaRom &rom) :
 {
 }
 
-std::string Gen3Script::speciesName(uint16_t internalId) const
-{
-    const GameInfo &gi=rom_.game();
-    if(gi.speciesNames==0 || internalId==0)
-        return std::string();
-    return Gen3Text::display(Gen3Text::decode(rom_,gi.speciesNames+static_cast<uint32_t>(internalId)*11,11));
-}
-
 std::string Gen3Script::itemName(uint16_t id) const
 {
     const GameInfo &gi=rom_.game();
@@ -65,7 +57,7 @@ std::vector<PartyMon> Gen3Script::party(uint16_t trainerId) const
             break;
         PartyMon mon;
         mon.level=static_cast<uint8_t>(rom_.u16(e+2));
-        mon.species=speciesName(rom_.u16(e+4));
+        mon.species=Gen3Text::speciesName(rom_,rom_.u16(e+4));
         if(!mon.species.empty())
             out.push_back(mon);
         k++;

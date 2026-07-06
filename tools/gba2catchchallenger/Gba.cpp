@@ -16,6 +16,9 @@ GameInfo::GameInfo() :
     owGfxCount(0),
     owPalettes(0),
     region(),
+    region2(),
+    region2MinSid(0),
+    region2MaxSid(0),
     mapNameTable(0),
     mapNameStride(0),
     mapNameField(0),
@@ -26,17 +29,14 @@ GameInfo::GameInfo() :
     speciesToNatDex(0),
     trainers(0),
     trainersCount(0),
+    leaderClass(0xFF),
     itemNames(0),
-    healSpecial(0),
     animWaterTile(0),
     animWaterTileCount(0),
     animWaterFrames(0),
     animWaterMs(0),
     animWaterArray(0),
-    doorTable(0),
-    region2(),
-    region2MinSid(0),
-    region2MaxSid(0)
+    doorTable(0)
 {
 }
 
@@ -146,7 +146,6 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
         info.trainersCount=743;
         info.leaderClass=84; // TRAINER_CLASS_LEADER (FireRed): the 8 gym leaders
         info.itemNames=0x3DB098;
-        info.healSpecial=0x0160;
         info.animWaterTile=508;
         info.animWaterTileCount=4;
         info.animWaterFrames=5;
@@ -188,7 +187,6 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
         info.trainersCount=694;
         info.leaderClass=0xFF; // RSE gym-leader class not yet pinned -> no gym/leader flag
         info.itemNames=0x3C5580;
-        info.healSpecial=0x008E;
         info.animWaterTile=508;
         info.animWaterTileCount=4;
         info.animWaterFrames=4;
@@ -326,6 +324,13 @@ uint8_t GameInfo::attributeSize() const
     return engine==Engine::Frlg ? 4 : 2;
 }
 
+uint32_t GameInfo::attributeAt(const GbaRom &rom, uint32_t offset) const
+{
+    if(attributeSize()==4)
+        return rom.u32(offset);
+    return rom.u16(offset);
+}
+
 GbaRom::GbaRom()
 {
 }
@@ -452,7 +457,7 @@ const uint8_t *GbaRom::raw(uint32_t offset, uint32_t length) const
 std::vector<uint8_t> GbaRom::lz77(uint32_t offset) const
 {
     std::vector<uint8_t> out;
-    if(offset>=data_.size() || data_[offset]!=0x10)
+    if(offset>=data_.size() || data_.size()-offset<4 || data_[offset]!=0x10)
     {
         std::cerr << "lz77: bad header at " << std::hex << offset << std::dec << std::endl;
         return out;
@@ -465,7 +470,11 @@ std::vector<uint8_t> GbaRom::lz77(uint32_t offset) const
     while(out.size()<outSize)
     {
         if(p>=data_.size())
-            break;
+        {
+            // header promised more output than the ROM holds -> malformed
+            out.clear();
+            return out;
+        }
         uint8_t flags=data_[p];
         p++;
         uint8_t bit=0;
@@ -500,7 +509,10 @@ std::vector<uint8_t> GbaRom::lz77(uint32_t offset) const
             else
             {
                 if(p>=data_.size())
-                    break;
+                {
+                    out.clear();
+                    return out;
+                }
                 out.push_back(data_[p]);
                 p++;
             }

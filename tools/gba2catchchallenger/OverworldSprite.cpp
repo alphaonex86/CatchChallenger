@@ -1,4 +1,5 @@
 #include "OverworldSprite.hpp"
+#include "GbaGfx.hpp"
 
 #include <vector>
 
@@ -20,6 +21,18 @@ uint32_t OverworldSprite::findPalette(const GbaRom &rom, uint16_t tag)
         guard++;
     }
     return 0;
+}
+
+void OverworldSprite::buildPalette(const GbaRom &rom, uint16_t palTag, uint32_t *palette)
+{
+    uint32_t palOff=findPalette(rom,palTag);
+    int i=0;
+    while(i<16)
+    {
+        uint16_t c=(palOff!=0) ? rom.u16(palOff+static_cast<uint32_t>(i)*2) : 0;
+        palette[i]=bgr555ToArgb(c);
+        i++;
+    }
 }
 
 // Decode one SpriteFrameImage (4bpp, width x height) to an RGBA image, or a
@@ -45,28 +58,7 @@ QImage OverworldSprite::decodeFrame(const GbaRom &rom, uint32_t imagesPtr, int f
     }
     if(pixels.size()<needed)
         pixels.resize(needed,0);
-    int tilesWide=width/8;
-    QImage img(width,height,QImage::Format_ARGB32);
-    img.fill(Qt::transparent);
-    int py=0;
-    while(py<height)
-    {
-        int px=0;
-        while(px<width)
-        {
-            int tile=(py/8)*tilesWide+(px/8);
-            int lx=px%8;
-            int ly=py%8;
-            uint32_t byteIdx=static_cast<uint32_t>(tile)*32+static_cast<uint32_t>(ly)*4+static_cast<uint32_t>(lx>>1);
-            uint8_t b=(byteIdx<pixels.size()) ? pixels[byteIdx] : 0;
-            uint8_t ci=(lx & 1) ? static_cast<uint8_t>(b>>4) : static_cast<uint8_t>(b & 0xF);
-            if(ci!=0)
-                img.setPixel(px,py,palette[ci]);
-            px++;
-        }
-        py++;
-    }
-    return img;
+    return decode4bppTiles(pixels,palette,width/8,height/8);
 }
 
 QImage OverworldSprite::frameOr(const std::vector<QImage> &frames, int idx, int fallback)
@@ -87,27 +79,9 @@ QImage OverworldSprite::fitCell(const QImage &frame)
     cell.fill(Qt::transparent);
     if(frame.isNull())
         return cell;
-    int minX=frame.width(),minY=frame.height(),maxX=-1,maxY=-1;
-    int y=0;
-    while(y<frame.height())
-    {
-        int x=0;
-        while(x<frame.width())
-        {
-            if(qAlpha(frame.pixel(x,y))>0)
-            {
-                if(x<minX) minX=x;
-                if(x>maxX) maxX=x;
-                if(y<minY) minY=y;
-                if(y>maxY) maxY=y;
-            }
-            x++;
-        }
-        y++;
-    }
-    if(maxX<minX)
+    QImage content=cropToOpaqueContent(frame);
+    if(content.isNull())
         return cell;
-    QImage content=frame.copy(minX,minY,maxX-minX+1,maxY-minY+1);
     // Clamp to the cell and bottom-centre (feet at the bottom edge).
     if(content.width()>16 || content.height()>24)
         content=content.copy((content.width()-16)/2,content.height()>24 ? content.height()-24 : 0,
@@ -167,20 +141,7 @@ QImage OverworldSprite::renderStatic(const GbaRom &rom, uint8_t graphicsId)
     if(!ok)
         return QImage();
     uint32_t palette[16];
-    uint32_t palOff=findPalette(rom,palTag);
-    int i=0;
-    while(i<16)
-    {
-        uint16_t c=(palOff!=0) ? rom.u16(palOff+static_cast<uint32_t>(i)*2) : 0;
-        uint32_t r=(c & 0x1F);
-        uint32_t gg=((c>>5) & 0x1F);
-        uint32_t b=((c>>10) & 0x1F);
-        r=(r<<3)|(r>>2);
-        gg=(gg<<3)|(gg>>2);
-        b=(b<<3)|(b>>2);
-        palette[i]=0xFF000000u | (r<<16) | (gg<<8) | b;
-        i++;
-    }
+    buildPalette(rom,palTag,palette);
     return decodeFrame(rom,imagesPtr,0,width,height,palette);
 }
 
@@ -206,20 +167,7 @@ QImage OverworldSprite::render(const GbaRom &rom, uint8_t graphicsId)
         return QImage();
 
     uint32_t palette[16];
-    uint32_t palOff=findPalette(rom,palTag);
-    int i=0;
-    while(i<16)
-    {
-        uint16_t c=(palOff!=0) ? rom.u16(palOff+static_cast<uint32_t>(i)*2) : 0;
-        uint32_t r=(c & 0x1F);
-        uint32_t gg=((c>>5) & 0x1F);
-        uint32_t b=((c>>10) & 0x1F);
-        r=(r<<3)|(r>>2);
-        gg=(gg<<3)|(gg>>2);
-        b=(b<<3)|(b>>2);
-        palette[i]=0xFF000000u | (r<<16) | (gg<<8) | b;
-        i++;
-    }
+    buildPalette(rom,palTag,palette);
 
     // Decode the first up-to-9 frames (standard walking layout); absent frames
     // stay null and are filled by the per-direction standing fallback.

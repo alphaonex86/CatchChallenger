@@ -31,17 +31,6 @@ uint16_t DecodedMap::blockAt(const GbaRom &rom, uint32_t x, uint32_t y) const
     return rom.u16(blocksPtr+i*2);
 }
 
-std::string DecodedMap::relativePath() const
-{
-    std::string g=std::to_string(group);
-    std::string m=std::to_string(map);
-    if(g.size()<2)
-        g="0"+g;
-    if(m.size()<2)
-        m="0"+m;
-    return std::string("group-")+g+"/map-"+m;
-}
-
 Decoder::Decoder(const GbaRom &rom) :
     rom_(rom)
 {
@@ -81,7 +70,8 @@ std::vector<uint32_t> Decoder::walkGroups(uint32_t offset) const
             break;
         groupPtr.push_back(gp);
         o+=4;
-        if(groupPtr.size()>256)
+        // group/map ids are u8 (Gen3 warps address them as u8): never more
+        if(groupPtr.size()>=256)
             break;
     }
     return groupPtr;
@@ -100,7 +90,7 @@ uint32_t Decoder::groupMapCount(uint32_t groupOffset) const
         if(!ok || !looksLikeLayout(layout))
             break;
         count++;
-        if(count>512)
+        if(count>=256)
             break;
     }
     return count;
@@ -209,6 +199,8 @@ bool Decoder::decodeAll()
             count=(next-start)/4;
         else
             count=groupMapCount(start);
+        if(count>256)
+            count=256;
         uint32_t mi=0;
         while(mi<count)
         {
@@ -413,6 +405,12 @@ void Decoder::splitOversizedMaps()
         struct Split { bool vertical; std::vector<Chunk> chunks; };
         std::unordered_map<uint16_t,Split> splits; // original (group<<8|map) -> plan
         std::unordered_map<uint16_t,int> reserved; // ids claimed this round
+        // planned per-chunk sizes, keyed (group<<8|chunkId): phase C needs a
+        // same-round-split neighbour's CHUNK length, but find() there returns
+        // either nullptr (chunk not built yet) or the still-unsplit original
+        // depending on maps_ order — consult the plan first
+        std::unordered_map<uint16_t,int> plannedW;
+        std::unordered_map<uint16_t,int> plannedH;
 
         // phase A: plan every oversized map's chunks and claim free ids
         size_t mi=0;
@@ -466,6 +464,15 @@ void Decoder::splitOversizedMaps()
                       << " map " << static_cast<int>(m.map) << " (" << m.width << "x" << m.height
                       << ") into " << n << (vertical?" vertical":" horizontal") << " chunk(s)" << std::endl;
             splits[static_cast<uint16_t>((m.group<<8)|m.map)]=plan;
+            size_t pc=0;
+            while(pc<plan.chunks.size())
+            {
+                const Chunk &ch=plan.chunks[pc];
+                const uint16_t key=static_cast<uint16_t>((m.group<<8)|ch.id);
+                plannedW[key]=vertical?static_cast<int>(m.width):ch.len;
+                plannedH[key]=vertical?ch.len:static_cast<int>(m.height);
+                pc++;
+            }
         }
         if(splits.empty())
             break;
@@ -651,9 +658,18 @@ void Decoder::splitOversizedMaps()
                     }
                     else
                     {
-                        const DecodedMap *dest=find(conn.destGroup,conn.destMap);
-                        const int neighLen=(dest!=nullptr)
-                            ?(vertical?static_cast<int>(dest->height):static_cast<int>(dest->width)):1;
+                        int neighLen=1;
+                        const std::unordered_map<uint16_t,int> &planned=vertical?plannedH:plannedW;
+                        std::unordered_map<uint16_t,int>::const_iterator pl=
+                            planned.find(static_cast<uint16_t>((conn.destGroup<<8)|conn.destMap));
+                        if(pl!=planned.cend())
+                            neighLen=pl->second;
+                        else
+                        {
+                            const DecodedMap *dest=find(conn.destGroup,conn.destMap);
+                            if(dest!=nullptr)
+                                neighLen=vertical?static_cast<int>(dest->height):static_cast<int>(dest->width);
+                        }
                         int mid=conn.offset+neighLen/2;
                         if(mid<0) mid=0;
                         if(mid>=len) mid=len-1;
@@ -908,9 +924,7 @@ uint16_t Decoder::metatileBehavior(const DecodedMap &m, uint16_t metatile) const
     }
     if(!ok)
         return 0xFFFF;
-    uint32_t off=base+idx*gi.attributeSize();
-    uint32_t attr=(gi.attributeSize()==4) ? rom_.u32(off) : rom_.u16(off);
-    return gi.behavior(attr);
+    return gi.behavior(gi.attributeAt(rom_,base+idx*gi.attributeSize()));
 }
 
 std::string Decoder::warpClassAt(const DecodedMap &m, const DecodedWarp &w) const

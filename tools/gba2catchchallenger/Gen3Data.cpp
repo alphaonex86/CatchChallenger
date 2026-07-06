@@ -49,7 +49,7 @@ static bool looksLikeLearnset(const GbaRom &rom, uint32_t addr)
             return n >= 1; // at least one move learnt
         const int move = e & 0x1FF;
         const int level = e >> 9;
-        if(move <= 0 || move >= 560 || level > 100)
+        if(move <= 0 || level > 100)
             return false;
         o += 2;
         ++n;
@@ -137,7 +137,6 @@ bool Gen3Data::decode(const GbaRom &rom)
     // gLevelUpLearnsets: a pointer array whose entries point at learnset data.
     uint32_t gLearnsets = 0;
     {
-        const uint8_t *base = rom.raw(0, rom.size());
         uint32_t o = 0;
         while(o + 4 * 30 < rom.size())
         {
@@ -146,7 +145,6 @@ bool Gen3Data::decode(const GbaRom &rom)
                looksLikeLearnset(rom, o + 25*4) && looksLikeLearnset(rom, o + 7*4))
             { gLearnsets = o; break; }
             o += 4;
-            (void)base;
         }
     }
 
@@ -178,9 +176,9 @@ bool Gen3Data::decode(const GbaRom &rom)
 
     // ── species ──
     int sp = 1;
-    while(sp <= 411)
+    while(sp <= 411 && gi.speciesNames != 0)
     {
-        std::string name = Gen3Text::display(Gen3Text::decode(rom, gi.speciesNames + (uint32_t)sp * 11, 11));
+        std::string name = Gen3Text::speciesName(rom, (uint16_t)sp);
         // skip the unused/glitch internal slots (e.g. 252-276) which decode to a
         // placeholder with no real letters.
         bool good = !name.empty();

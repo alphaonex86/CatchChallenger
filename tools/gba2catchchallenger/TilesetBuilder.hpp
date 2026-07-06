@@ -87,9 +87,8 @@ struct TilePool {
     std::string baseName;     // sheet files are baseName + "_" + sheetIndex
     std::string subDir;       // region subfolder under tileset/ ("" = root)
     uint32_t uniqueCount;     // number of unique tiles
-    uint32_t mainCount;       // ground+over tiles (door+anim tiles follow, on their own sheet)
-    uint32_t animCols;        // width of the _anim sheet = 1 animation per row (0 => use poolCols)
-    uint32_t sheetCount;      // number of emitted sheet files (main sheets + anim sheet(s))
+    uint32_t mainCount;       // ground+over tiles (== uniqueCount; anims live in the shared global tileset)
+    uint32_t sheetCount;      // number of emitted sheet files
     uint32_t duplicateTiles;  // GUARD: redundant non-animation duplicate cells
     uint32_t adjacencyViolations; // GUARD: consistent map-neighbours not kept adjacent
     uint32_t tinyTiles;         // GUARD: tiles with 1..12 visible px (near-empty, rest transparent)
@@ -97,11 +96,8 @@ struct TilePool {
     uint32_t layerSplitTiles;   // tiles split across 2 layers (under+over) the guard verified
     uint32_t layerSplitBad;     // GUARD: such tiles whose under+over != the ROM metatile
     uint32_t misroutedMetatiles; // GUARD: used metatiles empty in their routed array but present in the other (wrong primary/secondary split)
-    std::unordered_map<uint16_t,int> groundCell; // ANIMATED metatile -> pool cell
-    std::unordered_map<uint64_t,int> contextCell; // (tile+4 neighbours) -> pool cell
+    std::unordered_map<uint16_t,int> groundCell; // metatile -> static ground cell (doors included; animated water absent)
     std::unordered_map<uint16_t,int> overCell;    // metatile -> pool cell, -1 none
-    std::unordered_map<uint16_t,int> doorCell;    // door metatile -> animated door cell
-    std::unordered_map<int,std::string> cellAnimation; // cell -> "<ms>ms;<n>frames"
     std::unordered_map<uint16_t,int> animGlobal;  // water/door metatile -> GLOBAL anim index
     TilePool();
 };
@@ -109,11 +105,12 @@ struct TilePool {
 class TilesetBuilder {
 public:
     TilesetBuilder(const GbaRom &rom, const std::string &tilesetDir);
+    ~TilesetBuilder();
 
     bool prepare(const std::vector<DecodedMap> &maps, const Naming &naming);
 
-    // GID of the ground tile at map cell (x,y): a context-de-duplicated tile
-    // (so 2-D adjacency is preserved), or the cell's animated tile for water.
+    // GID of the ground tile at map cell (x,y): the de-duplicated ground tile
+    // (a DOOR keeps its STATIC ground tile), or the cell's animated tile for water.
     uint32_t groundGid(const DecodedMap &map, int x, int y) const;
     uint32_t overGid(const DecodedMap &map, uint16_t metatile) const;
     // GID of a door metatile's animated tile (for the door object) or 0.
@@ -123,7 +120,6 @@ public:
     std::vector<std::pair<uint32_t,std::string> > tilesetRefs(const DecodedMap &map) const;
 
     uint16_t behavior(const DecodedMap &map, uint16_t metatileId) const;
-    uint8_t layerType(const DecodedMap &map, uint16_t metatileId) const;
     // True when the metatile's lifted "over" (WalkBehind) tile is fully opaque
     // (every pixel alpha 255) — i.e. it would completely hide a layer below it.
     // Used by the CCWriter per-layer visibility guard.
@@ -139,9 +135,6 @@ private:
                        const std::string &subDir);
     Gen3Tileset &tilesetFor(const DecodedMap &map) const;
     static uint64_t pairKey(uint32_t primary, uint32_t secondary);
-    // Dedup key for a ground cell: its metatile + its 4 map-neighbour metatiles
-    // (so the same tile with different neighbours becomes a distinct cell).
-    uint64_t contextKey(const DecodedMap &map, int x, int y) const;
     const TilePool *primaryPool(const DecodedMap &map) const;
     const TilePool *secondaryPool(const DecodedMap &map) const;
     uint32_t secondaryBase(const DecodedMap &map) const;
@@ -166,6 +159,7 @@ private:
     std::unordered_map<int,std::string> globalAnimStr_;    // first index -> "<ms>ms;<n>frames"
     std::unordered_set<int> globalAnimAmbient_;             // first indices that self-loop (not doors)
     int globalAnimCols_;                                   // anim sheet width (1 anim/row)
+    bool ioError_;                                         // a sheet/.tsx/dir write failed
     mutable std::map<uint64_t,Gen3Tileset *> cache_;
     mutable std::map<std::pair<uint64_t,uint16_t>,bool> overOpaqueCache_;
 };

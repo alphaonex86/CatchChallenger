@@ -14,15 +14,6 @@ Wild::Wild(const GbaRom &rom) :
 {
 }
 
-std::string Wild::speciesName(uint16_t internalId) const
-{
-    const GameInfo &gi=rom_.game();
-    if(gi.speciesNames==0 || internalId==0)
-        return std::string();
-    uint32_t off=gi.speciesNames+static_cast<uint32_t>(internalId)*11;
-    return Gen3Text::display(Gen3Text::decode(rom_,off,11));
-}
-
 std::vector<WildSlot> Wild::decodeInfo(uint32_t infoPtr, int count, const int *weights)
 {
     std::vector<WildSlot> out;
@@ -42,7 +33,7 @@ std::vector<WildSlot> Wild::decodeInfo(uint32_t infoPtr, int count, const int *w
         slot.minLevel=rom_.u8(e+0);
         slot.maxLevel=rom_.u8(e+1);
         uint16_t species=rom_.u16(e+2);
-        slot.species=speciesName(species);
+        slot.species=Gen3Text::speciesName(rom_,species);
         slot.weight=weights[i];
         out.push_back(slot);
         i++;
