@@ -292,6 +292,21 @@ std::string CCWriter::skinFor(uint8_t graphicsId)
     return name;
 }
 
+// Gen3 movement type -> CatchChallenger bot lookAt: the wander types (2-6)
+// become "move", the static facings map straight, everything else faces down.
+static const char *lookAtOf(uint8_t movementType)
+{
+    if(movementType>=0x2 && movementType<=0x6)
+        return "move";
+    switch(movementType)
+    {
+        case 0x7: return "top";   // MOVEMENT_TYPE_FACE_UP
+        case 0x9: return "left";
+        case 0xA: return "right";
+        default:  return "bottom";
+    }
+}
+
 std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
 {
     std::vector<MapBot> bots;
@@ -322,6 +337,8 @@ std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
                 b.y=npc.y;
                 b.skin=skin;
                 b.trainerType=npc.trainerType;
+                b.movementType=npc.movementType;
+                b.radius=npc.radius;
                 b.scriptPtr=npc.scriptPtr;
                 b.isSign=false;
                 bots.push_back(b);
@@ -348,6 +365,8 @@ std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
             b.y=sign.y;
             b.skin.clear();
             b.trainerType=0;
+            b.movementType=0;
+            b.radius=0;
             b.scriptPtr=sign.scriptPtr;
             b.isSign=true;
             bots.push_back(b);
@@ -1156,10 +1175,14 @@ void CCWriter::writeMap(const DecodedMap &map)
         }
         ci++;
     }
-    // Rescue point (respawn): place one on the walkable tile nearest the centre
-    // of each town/city.  The heal-map door isn't reliably identifiable, so the
-    // town centre stands in for "near the door to the heal point map".
-    if(map.mapType==1 || map.mapType==2)
+    // Rescue point (respawn): the ROM's REAL heal location when the map has
+    // one; else the walkable tile nearest the centre of each town/city (the
+    // heal-map door isn't reliably identifiable without the table).
+    const std::pair<int,int> *heal=decoder_.healSpot(map.group,map.origMap);
+    if(heal!=nullptr && static_cast<uint32_t>(heal->first)<w && static_cast<uint32_t>(heal->second)<h)
+        out << "  <object id=\"" << nextObjectId++ << "\" type=\"rescue\" gid=\"" << rescueGid
+            << "\" x=\"" << heal->first*16 << "\" y=\"" << (heal->second+1)*16 << "\" width=\"16\" height=\"16\"/>\n";
+    else if(map.mapType==1 || map.mapType==2)
     {
         int bestx=-1,besty=-1;
         uint32_t bestd=0xFFFFFFFFu;
@@ -1211,7 +1234,7 @@ void CCWriter::writeMap(const DecodedMap &map)
         // invisible text bot); a real NPC carries its resolved skin + facing.
         if(!b.skin.empty())
         {
-            out << "    <property name=\"lookAt\" value=\"bottom\"/>\n";
+            out << "    <property name=\"lookAt\" value=\"" << lookAtOf(b.movementType) << "\"/>\n";
             out << "    <property name=\"skin\" value=\"" << b.skin << "\"/>\n";
         }
         out << "   </properties>\n  </object>\n";
@@ -1288,7 +1311,35 @@ void CCWriter::writeInformations()
 
 void CCWriter::writeStart()
 {
-    // Choose a sizeable map and a guaranteed-walkable tile near its centre.
+    // The ROM's real start: the FIRST heal/respawn table entry is the game's
+    // home town — spawn there when the table was found and the spot is sane.
+    {
+        uint8_t hg=0,hm=0;
+        int hx=0,hy=0;
+        if(decoder_.firstHealSpot(&hg,&hm,&hx,&hy))
+        {
+            const DecodedMap *home=decoder_.find(hg,hm);
+            if(home!=nullptr && hx<home->width && hy<home->height &&
+               ((home->blockAt(rom_,static_cast<uint32_t>(hx),static_cast<uint32_t>(hy))>>10)&0x3)==0)
+            {
+                std::string path=fireredDir_+"/start.xml";
+                std::ofstream out(path);
+                if(!out)
+                {
+                    std::cerr << "Cannot write " << path << std::endl;
+                    writeFailed_=true;
+                    return;
+                }
+                out << "<profile>\n";
+                out << " <start id=\"normal\">\n";
+                out << "  <map file=\"" << naming_.pathFor(home->group,home->map) << "\" x=\"" << hx << "\" y=\"" << hy << "\" />\n";
+                out << " </start>\n";
+                out << "</profile>\n";
+                return;
+            }
+        }
+    }
+    // Fallback: choose a sizeable map and a guaranteed-walkable tile near its centre.
     const std::vector<DecodedMap> &maps=decoder_.maps();
     const DecodedMap *startMap=nullptr;
     size_t i=0;
@@ -1672,7 +1723,16 @@ void CCWriter::writeMapXml(const DecodedMap &map)
                 if(!tname.empty())
                     out << "  <name><![CDATA[" << tname << "]]></name>\n";
                 out << "  <step type=\"fight\" id=\"1\""
-                    << (res.leader ? " leader=\"true\"" : "") << ">\n";
+                    << (res.leader ? " leader=\"true\"" : "");
+                // Real Gen3 sight radius -> engine fightRange (2..10, default 5)
+                if(b.radius>0)
+                {
+                    int fr=static_cast<int>(b.radius)+1;
+                    if(fr<2) fr=2;
+                    if(fr>10) fr=10;
+                    out << " fightRange=\"" << fr << "\"";
+                }
+                out << ">\n";
                 if(res.introText!=0)
                 {
                     std::vector<std::string> pg=Gen3Text::decodeSign(rom_,res.introText,512);

@@ -51,6 +51,7 @@ struct DecodedNpc {
     int16_t y;
     uint8_t movementType;
     uint16_t trainerType;
+    uint16_t radius;    // trainer sight radius (trainerType!=0) / berry tree id
     uint32_t scriptPtr; // file offset of the script, 0 when none
     uint16_t flag;
 };
@@ -123,10 +124,20 @@ public:
     uint16_t metatileBehavior(const DecodedMap &m, uint16_t metatile) const;
     std::string warpClassAt(const DecodedMap &m, const DecodedWarp &w) const;
 
+    // Real respawn spot (sHealLocations / sSpawnPoints) for a ROM map, or
+    // nullptr.  Auto-located by findHealLocations(); empty when not found.
+    const std::pair<int,int> *healSpot(uint8_t group, uint8_t origMap) const;
+    // The table's FIRST entry = the game's home-town respawn — the natural
+    // player start.  Returns false when the table was not found.
+    bool firstHealSpot(uint8_t *group, uint8_t *map, int *x, int *y) const;
+
 private:
     void resolveWarpDestinations();
     void pruneConnections();
     void splitOversizedMaps();
+    // Scan for the longest run of {u8 group, u8 map, s16 x, s16 y} entries that
+    // all reference decoded maps (>=10 entries over >=8 distinct maps).
+    void findHealLocations();
     DecodedMap decodeMap(uint8_t group, uint8_t map, uint32_t headerOffset);
     void decodeEvents(uint32_t eventsOffset, DecodedMap &out);
     void decodeConnections(uint32_t connectionsOffset, DecodedMap &out);
@@ -143,6 +154,8 @@ private:
     const GbaRom &rom_;
     std::vector<DecodedMap> maps_;
     std::unordered_map<uint16_t,size_t> index_; // (group<<8|map) -> maps_ index
+    std::unordered_map<uint16_t,std::pair<int,int> > healSpots_; // (group<<8|origMap) -> (x,y)
+    std::vector<std::pair<uint16_t,std::pair<int,int> > > healList_; // table order
 };
 
 #endif // GBA2CC_DECODER_HPP

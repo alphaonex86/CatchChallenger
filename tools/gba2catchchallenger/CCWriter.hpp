@@ -74,6 +74,8 @@ public:
         int y;
         std::string skin;     // "" => skinless sign (text-only)
         uint16_t trainerType; // for skinned NPC classification
+        uint8_t movementType; // Gen3 movement type -> lookAt facing/move
+        uint16_t radius;      // trainer sight radius -> fightRange
         uint32_t scriptPtr;
         bool isSign;
     };

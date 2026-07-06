@@ -384,7 +384,41 @@ bool FullWriter::writeCompleteness()
 {
     if(!writePlayerSkin())
         return false;
-    const int starter = firstSpeciesId();
+    // The game's REAL starter trio, matched by NAME (no offsets); every ROM
+    // holds all 386 species, so the ENGINE picks which trio comes first (Kanto
+    // on FRLG, Hoenn on RSE — the other stays as a hack fallback).  Each is one
+    // <monstergroup> CHOICE like the base datapack.  Fallback: first species.
+    std::vector<int> starters;
+    {
+        const bool frlg = (rom_.game().engine == Engine::Frlg);
+        const char *trios[2][3] = {{frlg?"Bulbasaur":"Treecko", frlg?"Charmander":"Torchic", frlg?"Squirtle":"Mudkip"},
+                                   {frlg?"Treecko":"Bulbasaur", frlg?"Torchic":"Charmander", frlg?"Mudkip":"Squirtle"}};
+        int tr = 0;
+        while(tr < 2 && starters.empty())
+        {
+            std::vector<int> got;
+            int n = 0;
+            while(n < 3)
+            {
+                std::size_t si = 0;
+                while(si < data_.species().size())
+                {
+                    if(data_.species()[si].name == trios[tr][n])
+                    {
+                        got.push_back(data_.species()[si].id);
+                        break;
+                    }
+                    ++si;
+                }
+                ++n;
+            }
+            if(got.size() == 3)
+                starters = got;
+            ++tr;
+        }
+        if(starters.empty())
+            starters.push_back(firstSpeciesId());
+    }
 
     if(!ensureDir(outRoot_ + "/player"))
         return false;
@@ -392,7 +426,12 @@ bool FullWriter::writeCompleteness()
     start += "<profile>\n    <start id=\"Normal\">\n";
     start += "        <name>Trainer</name>\n        <description>Start a new adventure</description>\n";
     start += "        <forcedskin value=\"player\"/>\n        <cash value=\"3000\"/>\n";
-    start += "        <monstergroup>\n            <monster id=\"" + std::to_string(starter) + "\" level=\"5\" captured_with=\"4\"/>\n        </monstergroup>\n";
+    std::size_t sg = 0;
+    while(sg < starters.size())
+    {
+        start += "        <monstergroup>\n            <monster id=\"" + std::to_string(starters[sg]) + "\" level=\"5\" captured_with=\"4\"/>\n        </monstergroup>\n";
+        ++sg;
+    }
     start += "        <reputation type=\"nation\" level=\"1\"/>\n";
     start += "        <item quantity=\"5\" id=\"4\"/>\n";   // Poke Ball
     start += "    </start>\n</profile>\n";
