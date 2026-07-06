@@ -42,7 +42,9 @@ static uint32_t findPicTable(const GbaRom &rom, uint32_t tagOff, uint32_t startA
 }
 
 // gItemIconTable: a run of {u32 image->LZ77, u32 palette ptr} pairs.  Several
-// shorter coincidental runs exist, so pick the LONGEST (the real ~376-entry one).
+// shorter coincidental runs exist, so pick the LONGEST (the real ~376-entry
+// one).  Ruby/Sapphire have NO per-item icon data at all (per-item bag icons
+// arrived with FRLG/Emerald), so finding nothing there is correct.
 static uint32_t findItemIconTable(const GbaRom &rom)
 {
     uint32_t best = 0, bestRun = 0;

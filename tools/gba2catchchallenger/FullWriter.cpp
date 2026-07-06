@@ -1,4 +1,5 @@
 #include "FullWriter.hpp"
+#include "OverworldSprite.hpp"
 #include "SpriteRipper.hpp"
 
 #include <QDir>
@@ -289,6 +290,15 @@ bool FullWriter::writeItems()
     o << "<!-- Generated from gItems + gItemIconTable -->\n<items>\n";
     int icons = 0;
     int firstIcon = -1; // fallback image for the few items past the icon table
+    // Ruby/Sapphire have NO per-item icon data (bag icons arrived with
+    // FRLG/Emerald): give every item the ripped item-ball sprite instead so
+    // the client's mandatory image attribute resolves.
+    if(!ripper.haveItemIcons())
+    {
+        const QImage ball = OverworldSprite::renderStatic(rom_, rom_.game().itemBallGfx);
+        if(!ball.isNull() && ball.copy(0, 0, 16, 16).save(QString::fromStdString(outRoot_ + "/items/icon-0.png"), "PNG"))
+            firstIcon = 0;
+    }
     std::size_t i = 0;
     while(i < data_.items().size())
     {
