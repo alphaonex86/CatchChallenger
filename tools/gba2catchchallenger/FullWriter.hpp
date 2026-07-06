@@ -36,6 +36,10 @@ private:
     // Target item id for a gen3 item id: the gen3 id itself when
     // self-contained, else the name-resolved target id (-1 = unresolved).
     int targetItemId(int gen3Id) const;
+    // True when the target defines its own monster DB (any monsters/*.xml
+    // besides our monster.xml with <monster> entries) — its numbering and art
+    // then own monsters/skills/sprites; maps reference species by NAME.
+    bool targetCuratesMonsters() const;
 
     const GbaRom &rom_;
     const Gen3Data &data_;
