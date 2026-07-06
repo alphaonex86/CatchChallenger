@@ -24,6 +24,9 @@ public:
     // codes (each becomes a separate text step), newline -> "<br />".  Buffered
     // variables and formatting controls are skipped.
     static std::vector<std::string> decodeSign(const GbaRom &rom, uint32_t offset, size_t maxLen=512);
+    // Flat one-line decode for DESCRIPTION text (item/move/Pokedex flavour):
+    // newline/scroll controls collapse to single spaces.
+    static std::string decodeParagraph(const GbaRom &rom, uint32_t offset, size_t maxLen=400);
     // Species name from gSpeciesNames (stride 11), Title-cased for display.
     // "" when the ROM has no species-name table (hacks) or internalId is 0.
     static std::string speciesName(const GbaRom &rom, uint16_t internalId);

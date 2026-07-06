@@ -140,6 +140,8 @@ bool FullWriter::writeSkills()
         int pp = mv.pp > 0 ? mv.pp : 5;
         o << "    <skill id=\"" << mv.id << "\" type=\"" << Gen3Data::typeName(mv.type) << "\" category=\"Physical\">\n";
         o << "        <name>" << xmlEscape(mv.name) << "</name>\n";
+        if(!mv.description.empty())
+            o << "        <description>" << xmlEscape(mv.description) << "</description>\n";
         o << "        <effect>\n            <level endurance=\"" << pp << "\" number=\"1\">\n";
         o << "                <life success=\"" << acc << "%\" quantity=\"-" << dmg << "\" applyOn=\"aloneEnemy\"/>\n";
         o << "            </level>\n        </effect>\n    </skill>\n";
@@ -215,6 +217,21 @@ bool FullWriter::writeMonsters()
             ++a;
         }
         if(!any) o << "            <attack id=\"0\" level=\"0\"/>\n";
+        // TM/HM-taught skills: byitem = the teaching item (engine itemToLearn);
+        // separate from the level list, so no dedup against it.
+        std::unordered_set<int> seenItem;
+        a = 0;
+        while(a < s.tmLearn.size())
+        {
+            const int itemId = s.tmLearn[a].first;
+            const int mv = s.tmLearn[a].second;
+            if(seenItem.find(itemId) == seenItem.end())
+            {
+                seenItem.insert(itemId);
+                o << "            <attack id=\"" << mv << "\" skill_level=\"1\" byitem=\"" << itemId << "\"/>\n";
+            }
+            ++a;
+        }
         o << "        </attack_list>\n";
 
         // a single evolution (engine constraint), to a valid species
@@ -239,6 +256,10 @@ bool FullWriter::writeMonsters()
         }
 
         o << "        <name>" << xmlEscape(s.name) << "</name>\n";
+        if(!s.kind.empty())
+            o << "        <kind>" << xmlEscape(s.kind) << "</kind>\n";
+        if(!s.description.empty())
+            o << "        <description>" << xmlEscape(s.description) << "</description>\n";
         o << "    </monster>\n";
     }
     o << "</monsters>\n";
@@ -284,7 +305,10 @@ bool FullWriter::writeItems()
             o << " image=\"icon-" << it.id << ".png\"";
         else if(firstIcon >= 0)
             o << " image=\"icon-" << firstIcon << ".png\""; // the client wants an image attribute
-        o << ">\n        <name>" << xmlEscape(it.name) << "</name>\n    </item>\n";
+        o << ">\n        <name>" << xmlEscape(it.name) << "</name>\n";
+        if(!it.description.empty())
+            o << "        <description>" << xmlEscape(it.description) << "</description>\n";
+        o << "    </item>\n";
     }
     o << "</items>\n";
     o.flush();

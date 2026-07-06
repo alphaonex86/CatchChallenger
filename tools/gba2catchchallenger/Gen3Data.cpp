@@ -14,14 +14,14 @@ static const char *kTypeNames[18] = {
 const char *Gen3Data::typeName(int t) { return (t >= 0 && t < 18) ? kTypeNames[t] : "normal"; }
 int Gen3Data::typeCount() { return 18; }
 
-// Find the first occurrence of needle in the ROM; returns 0 when not found.
-static uint32_t findSig(const GbaRom &rom, const std::vector<uint8_t> &needle)
+// Find the next occurrence of needle at/after `from`; returns 0 when not found.
+static uint32_t findSig(const GbaRom &rom, const std::vector<uint8_t> &needle, uint32_t from = 0)
 {
     const uint8_t *base = rom.raw(0, rom.size());
-    if(base == NULL || needle.empty())
+    if(base == NULL || needle.empty() || from + needle.size() > rom.size())
         return 0;
     const uint8_t *end = base + rom.size() - needle.size();
-    const uint8_t *p = base;
+    const uint8_t *p = base + from;
     while(p <= end)
     {
         if(p[0] == needle[0] && std::memcmp(p, needle.data(), needle.size()) == 0)
@@ -30,6 +30,31 @@ static uint32_t findSig(const GbaRom &rom, const std::vector<uint8_t> &needle)
     }
     return 0;
 }
+
+// Encode plain ASCII (A-Z a-z 0-9 space) to Gen3 text bytes for anchors.
+static std::vector<uint8_t> encodeGen3(const char *s, bool terminate = false)
+{
+    std::vector<uint8_t> v;
+    std::size_t i = 0;
+    while(s[i])
+    {
+        const char c = s[i];
+        if(c == ' ') v.push_back(0x00);
+        else if(c == '\n') v.push_back(0xFE);
+        else if(c >= 'A' && c <= 'Z') v.push_back((uint8_t)(0xBB + c - 'A'));
+        else if(c >= 'a' && c <= 'z') v.push_back((uint8_t)(0xD5 + c - 'a'));
+        else if(c >= '0' && c <= '9') v.push_back((uint8_t)(0xA1 + c - '0'));
+        ++i;
+    }
+    if(terminate)
+        v.push_back(0xFF);
+    return v;
+}
+
+// TM/HM learnset bit for a TM (1-50) / HM (1-8) number: bit = item - ITEM_TM01,
+// so TMnn = bit nn-1 and HMnn = bit 49+nn (TM items 289-338, HM items 339-346).
+static uint64_t tmBit(int tm) { return (uint64_t)1 << (tm - 1); }
+static uint64_t hmBit(int hm) { return (uint64_t)1 << (49 + hm); }
 
 // A u16 learnset entry is (level<<9 | move); 0xFFFF terminates.
 static bool looksLikeLearnset(const GbaRom &rom, uint32_t addr)
@@ -96,11 +121,7 @@ bool Gen3Data::decode(const GbaRom &rom)
     // gMoveNames: move 1 = "POUND"
     uint32_t gMoveNames = 0;
     {
-        std::vector<uint8_t> pound; // P O U N D 0xFF
-        const char *s = "POUND";
-        std::size_t i = 0; while(s[i]) { pound.push_back((uint8_t)(0xBB + s[i] - 'A')); ++i; }
-        pound.push_back(0xFF);
-        const uint32_t at = findSig(rom, pound);
+        const uint32_t at = findSig(rom, encodeGen3("POUND", true));
         if(at != 0) gMoveNames = at - 13;
     }
 
@@ -118,12 +139,7 @@ bool Gen3Data::decode(const GbaRom &rom)
     // set for some ROMs).  gItems[1] = Master Ball; record stride 44, name@+0.
     uint32_t gItems = gi.itemNames;
     {
-        std::vector<uint8_t> mb;
-        const char *s = "MASTER BALL";
-        std::size_t k = 0;
-        while(s[k]) { mb.push_back(s[k] == ' ' ? 0x00 : (uint8_t)(0xBB + s[k] - 'A')); ++k; }
-        mb.push_back(0xFF);
-        const uint32_t at = findSig(rom, mb);
+        const uint32_t at = findSig(rom, encodeGen3("MASTER BALL", true));
         if(at != 0) gItems = at - 44;
     }
 
@@ -148,10 +164,111 @@ bool Gen3Data::decode(const GbaRom &rom)
         }
     }
 
+    // gMoveDescriptions: an array of text pointers indexed [move-1].  Anchor on
+    // Pound's flavour text (RSE and FRLG reworded it differently), then find
+    // the pointer referencing it and verify the next 3 entries are pointers.
+    uint32_t gMoveDesc = 0;
+    {
+        static const char *anchors[2] = {"Pounds the foe", "A physical attack\ndelivered"};
+        int ai = 0;
+        while(ai < 2 && gMoveDesc == 0)
+        {
+            uint32_t txt = findSig(rom, encodeGen3(anchors[ai]));
+            while(txt != 0 && gMoveDesc == 0)
+            {
+                const uint32_t val = 0x08000000u + txt;
+                uint32_t o = 0;
+                while(o + 16 <= rom.size() && gMoveDesc == 0)
+                {
+                    if(rom.u32(o) == val && rom.isPointer(rom.u32(o + 4)) &&
+                       rom.isPointer(rom.u32(o + 8)) && rom.isPointer(rom.u32(o + 12)))
+                        gMoveDesc = o;
+                    o += 4;
+                }
+                txt = findSig(rom, encodeGen3(anchors[ai]), txt + 1);
+            }
+            ++ai;
+        }
+    }
+
+    // gPokedexEntries[natDex]: categoryName[12] + u16 height + u16 weight +
+    // description ptr (+16); the tail differs per engine so the STRIDE is
+    // detected via Ivysaur/Venusaur (1.0m/13.0kg, 2.0m/100.0kg) instead of
+    // hard-coding it.  Anchor = Bulbasaur ("SEED", 0.7m/6.9kg).
+    uint32_t gPokedex = 0;
+    uint32_t dexStride = 0;
+    if(gi.speciesToNatDex != 0)
+    {
+        const std::vector<uint8_t> seed = encodeGen3("SEED", true);
+        uint32_t at = findSig(rom, seed);
+        while(at != 0 && gPokedex == 0)
+        {
+            if(at + 100 < rom.size() && rom.u16(at + 12) == 7 && rom.u16(at + 14) == 69)
+            {
+                static const uint32_t strides[3] = {28, 32, 36};
+                int si = 0;
+                while(si < 3 && gPokedex == 0)
+                {
+                    const uint32_t st = strides[si];
+                    if(rom.u16(at + st + 12) == 10 && rom.u16(at + st + 14) == 130 &&
+                       rom.u16(at + 2*st + 12) == 20 && rom.u16(at + 2*st + 14) == 1000)
+                    { gPokedex = at - st; dexStride = st; } // entry 0 = the dummy dex slot
+                    ++si;
+                }
+            }
+            at = findSig(rom, seed, at + 1);
+        }
+    }
+
+    // sTMHMMoves (u16[58]: the move each TM01-50/HM01-08 teaches).  Anchor on
+    // TM01-04 (Focus Punch, Dragon Claw, Water Pulse, Calm Mind) and verify the
+    // HM tail (Cut, Fly, Surf, Strength, Flash, Rock Smash, Waterfall, Dive).
+    uint32_t gTmMoves = 0;
+    {
+        const std::vector<uint8_t> a = {0x08,0x01,0x51,0x01,0x60,0x01,0x5B,0x01};
+        static const uint16_t hmTail[8] = {15,19,57,70,148,249,127,291};
+        uint32_t at = findSig(rom, a);
+        while(at != 0 && gTmMoves == 0)
+        {
+            bool okhm = (at + 58*2 <= rom.size());
+            int k = 0;
+            while(okhm && k < 8)
+            {
+                if(rom.u16(at + (uint32_t)(50 + k)*2) != hmTail[k]) okhm = false;
+                ++k;
+            }
+            if(okhm)
+                gTmMoves = at;
+            else
+                at = findSig(rom, a, at + 1);
+        }
+    }
+
+    // gTMHMLearnsets (u64 bitmask per species, bit = TM/HM item - ITEM_TM01).
+    // Anchor on {species0 = 0, species1 = Bulbasaur's mask} — the Bulbasaur
+    // TM/HM compatibility is identical across the five retail games.
+    uint32_t gTmLearn = 0;
+    if(gTmMoves != 0)
+    {
+        const uint64_t bulba =
+            tmBit(6)|tmBit(9)|tmBit(10)|tmBit(11)|tmBit(17)|tmBit(19)|tmBit(21)|
+            tmBit(22)|tmBit(27)|tmBit(32)|tmBit(36)|tmBit(42)|tmBit(43)|tmBit(44)|
+            tmBit(45)|hmBit(1)|hmBit(4)|hmBit(5)|hmBit(6);
+        std::vector<uint8_t> sig(16, 0);
+        int b = 0;
+        while(b < 8) { sig[(std::size_t)8 + b] = (uint8_t)(bulba >> (8*b)); ++b; }
+        const uint32_t at = findSig(rom, sig);
+        if(at != 0)
+            gTmLearn = at;
+    }
+
     std::cerr << "Gen3Data: gBaseStats=" << std::hex << gBaseStats
               << " gBattleMoves=" << gBattleMoves << " gMoveNames=" << gMoveNames
               << " gEvolutionTable=" << gEvolutionTable << " gTypeEff=" << gTypeEff
-              << " gLearnsets=" << gLearnsets << std::dec << std::endl;
+              << " gLearnsets=" << gLearnsets << " gMoveDesc=" << gMoveDesc
+              << " gPokedex=" << gPokedex << "(+" << std::dec << dexStride << std::hex << ")"
+              << " gTmMoves=" << gTmMoves << " gTmLearn=" << gTmLearn
+              << std::dec << std::endl;
 
     // ── moves ──
     int moveId = 1;
@@ -170,6 +287,13 @@ bool Gen3Data::decode(const GbaRom &rom)
             m.name = Gen3Text::display(Gen3Text::decode(rom, gMoveNames + (uint32_t)moveId * 13, 13));
         if(m.name.empty())
             m.name = "Move" + std::to_string(moveId);
+        if(gMoveDesc != 0)
+        {
+            bool dok = false;
+            const uint32_t dp = rom.pointer(gMoveDesc + (uint32_t)(moveId - 1) * 4, &dok);
+            if(dok)
+                m.description = Gen3Text::decodeParagraph(rom, dp);
+        }
         moves_.push_back(m);
         ++moveId;
     }
@@ -202,6 +326,39 @@ bool Gen3Data::decode(const GbaRom &rom)
             s.type1 = rom.u8(o + 6); s.type2 = rom.u8(o + 7);
             s.catchRate = rom.u8(o + 8); s.baseExp = rom.u8(o + 9);
             s.genderRatio = rom.u8(o + 16); s.eggCycles = rom.u8(o + 17); s.growthRate = rom.u8(o + 19);
+
+            // Pokedex category + flavour text (species -> national dex -> entry)
+            if(gPokedex != 0)
+            {
+                const uint16_t dex = rom.u16(gi.speciesToNatDex + (uint32_t)(sp - 1) * 2);
+                if(dex >= 1 && dex <= 386)
+                {
+                    const uint32_t de = gPokedex + (uint32_t)dex * dexStride;
+                    s.kind = Gen3Text::display(Gen3Text::decode(rom, de, 12));
+                    bool dok = false;
+                    const uint32_t dp = rom.pointer(de + 16, &dok);
+                    if(dok)
+                        s.description = Gen3Text::decodeParagraph(rom, dp);
+                }
+            }
+
+            // TM/HM compatibility -> (teaching item, move) pairs
+            if(gTmLearn != 0)
+            {
+                const uint64_t mask = (uint64_t)rom.u32(gTmLearn + (uint32_t)sp * 8) |
+                                      ((uint64_t)rom.u32(gTmLearn + (uint32_t)sp * 8 + 4) << 32);
+                int bit = 0;
+                while(bit < 58)
+                {
+                    if((mask >> bit) & 1)
+                    {
+                        const int mv = rom.u16(gTmMoves + (uint32_t)bit * 2);
+                        if(mv > 0 && mv <= 354)
+                            s.tmLearn.push_back(std::make_pair(289 + bit, mv));
+                    }
+                    ++bit;
+                }
+            }
 
             // learnset
             if(gLearnsets != 0)
@@ -270,6 +427,10 @@ bool Gen3Data::decode(const GbaRom &rom)
             gitem.id = it;
             gitem.name = name;
             gitem.price = price;
+            bool dok = false;
+            const uint32_t dp = rom.pointer(o + 20, &dok); // description ptr
+            if(dok)
+                gitem.description = Gen3Text::decodeParagraph(rom, dp);
             items_.push_back(gitem);
         }
         ++it;
