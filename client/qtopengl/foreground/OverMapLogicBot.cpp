@@ -100,6 +100,24 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
 }
 
 //bot
+uint8_t OverMapLogic::resolveBotSkinId() const
+{
+    if(actualBot.properties.find("skin")==actualBot.properties.cend())
+        return 0;
+    //the "skin" property is a skin FOLDER NAME (e.g. "oldman"/"nurse"); look up its
+    //index in the skin list. std::stoi on a name throws (and we forbid exceptions).
+    const std::string &skinName=actualBot.properties.at("skin");
+    const std::vector<std::string> &skins=QtDatapackClientLoader::datapackLoader->get_skins();
+    unsigned int i=0;
+    while(i<skins.size())
+    {
+        if(skins.at(i)==skinName)
+            return static_cast<uint8_t>(i);
+        i++;
+    }
+    return 0;
+}
+
 void OverMapLogic::goToBotStep(const uint8_t &step)
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
@@ -162,9 +180,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
         }
         // open shop screen
         {
-            uint8_t skinId=0;
-            if(actualBot.properties.find("skin")!=actualBot.properties.cend())
-                skinId=static_cast<uint8_t>(std::stoi(actualBot.properties.at("skin")));
+            const uint8_t skinId=resolveBotSkinId();
             if(shop==nullptr)
             {
                 shop=new Shop();
@@ -262,9 +278,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"warehouse")==0)
     {
-        uint8_t skinId=0;
-        if(actualBot.properties.find("skin")!=actualBot.properties.cend())
-            skinId=static_cast<uint8_t>(std::stoi(actualBot.properties.at("skin")));
+        const uint8_t skinId=resolveBotSkinId();
         if(warehouse==nullptr)
         {
             warehouse=new Warehouse();
