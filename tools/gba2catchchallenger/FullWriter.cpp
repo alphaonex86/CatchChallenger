@@ -509,6 +509,12 @@ bool FullWriter::writeCompleteness()
     // more).  1 Gen3 hour = 1 CC minute (4 equal stages -> fruits = 4*stage,
     // engine defaults sprouted/taller/flowering to the quarters); quantity =
     // average yield, the fraction being the engine's extra-fruit luck.
+    // A berry-less game (FRLG) must NOT clobber plants a sibling --all run
+    // already wrote into the shared root: keep the existing file.
+    std::ifstream existingPlants(outRoot_ + "/plants/plants.xml");
+    const bool keepPlants = data_.berries().empty() &&
+        existingPlants && existingPlants.peek() != std::ifstream::traits_type::eof();
+    if(!keepPlants)
     {
         std::string plants = "<plants>\n";
         std::size_t bi = 0;
