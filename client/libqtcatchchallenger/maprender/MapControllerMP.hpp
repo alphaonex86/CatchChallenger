@@ -238,6 +238,11 @@ signals:
     //pixels), so the automation channel can press toolbar/overlay buttons and
     //list rows that live on the ScreenTransition scene (not the map view).
     void remoteScreenClickRequested(const int &x,const int &y);
+    //after a channel-driven fight action (FIGHTSKILL/FIGHTESCAPE/...) the engine
+    //applied the turn; ask the Battle above-screen to advance its state machine
+    //(HP bars, win/lose, exit) the same way clicking the UI would. Routed up
+    //because the Battle screen lives on the ScreenTransition scene.
+    void remoteFightAdvanceRequested();
 private:
     //the actual command dispatch; always reached through remoteAction()'s
     //re-entrancy guard, never called directly

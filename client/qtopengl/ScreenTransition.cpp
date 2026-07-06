@@ -15,6 +15,7 @@
 #include "foreground/Multi.hpp"
 #include "foreground/SubServer.hpp"
 #include "foreground/OverMapLogic.hpp"
+#include "foreground/Battle.hpp"
 #include "above/OptionsDialog.hpp"
 #include "above/DebugDialog.hpp"
 #include "ConnexionManager.hpp"
@@ -598,6 +599,9 @@ void ScreenTransition::setRemoteControl(LocalListener *localListener)
         if(!connect(&ccmap->mapController,&MapController::remoteScreenClickRequested,
                     this,&ScreenTransition::doRemoteScreenClick,Qt::UniqueConnection))
             abort();
+        if(!connect(&ccmap->mapController,&MapController::remoteFightAdvanceRequested,
+                    this,&ScreenTransition::doRemoteFightAdvance,Qt::UniqueConnection))
+            abort();
     }
 }
 
@@ -633,6 +637,14 @@ void ScreenTransition::doRemoteScreenClick(const int &x,const int &y)
     QApplication::sendEvent(viewport(),&release);
     if(remoteControlListener!=nullptr)
         remoteControlListener->sendReply(QStringLiteral("OK CLICKSCREEN %1 %2").arg(x).arg(y));
+}
+
+void ScreenTransition::doRemoteFightAdvance()
+{
+    //drive the Battle screen's turn state machine (the channel already applied the
+    //engine action); mirrors what clicking the fight UI does.
+    if(Battle::battle!=nullptr)
+        Battle::battle->doNextAction();
 }
 
 void ScreenTransition::loadingFinished()
@@ -1152,6 +1164,9 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
             abort();
         if(!connect(&ccmap->mapController,&MapController::remoteScreenClickRequested,
                     this,&ScreenTransition::doRemoteScreenClick,Qt::UniqueConnection))
+            abort();
+        if(!connect(&ccmap->mapController,&MapController::remoteFightAdvanceRequested,
+                    this,&ScreenTransition::doRemoteFightAdvance,Qt::UniqueConnection))
             abort();
     }
 
