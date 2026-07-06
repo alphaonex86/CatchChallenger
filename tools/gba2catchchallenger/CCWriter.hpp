@@ -14,6 +14,7 @@
 #include "TilesetBuilder.hpp"
 #include "Wild.hpp"
 
+#include <QImage>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -111,10 +112,16 @@ private:
     // Pick a CatchChallenger skin string for a Gen3 overworld graphics id:
     // extract the sprite, reuse/add via the resolver (cached per graphics id).
     std::string skinFor(uint8_t graphicsId);
-    // Write tileset/items.png|.tsx once (the 16x16 item-ball sprite ripped from
-    // the ROM, like gen2's pokeball tile normal1.tsx#101) — the gid every
+    // Rip the 16x16 item-ball sprite once (like gen2's pokeball tile
+    // normal1.tsx#101) — slot 0 of tileset/items.png, the gid every
     // ground/hidden item object shows in the Tiled editor.
     void ensureItemTileset(uint8_t graphicsId);
+    // Rip the 16x16 pushable strength-boulder sprite once — slot 1 of
+    // tileset/items.png, the gid of every StrengthBoulder object.
+    void ensureBoulderTile();
+    // Write tileset/items.png|.tsx (2 fixed slots: ball, boulder) once every
+    // map is written; gids stay itemGid/itemGid+1 whatever slots are filled.
+    void flushItemTileset();
     // Numeric id / name / "" for the item property (see ItemResolver).
     std::string itemRefOf(int gen3Id, bool *byName);
 
@@ -139,11 +146,13 @@ private:
     int renderLayers_;                         // tile layers rendered-tested
     int renderInvisible_;                      // layers whose hide changed nothing
     std::vector<std::string> renderInvisibleList_;
-    bool itemTilesetWritten_;                  // tileset/items.tsx emitted
+    QImage ballTile_;                          // items.png slot 0 (null until first item)
+    QImage boulderTile_;                       // items.png slot 1 (null until first boulder)
     bool writeFailed_;                         // any output file skipped/unwritable
     int itemsTotal_;                           // ground+hidden items emitted
     int itemsDropped_;                         // refs without even a name (skipped)
     int itemsByName_;                          // emitted by name, not yet in items.xml
+    int bouldersTotal_;                        // StrengthBoulder objects emitted
     ItemResolver items_;
 };
 

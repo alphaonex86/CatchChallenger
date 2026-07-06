@@ -53,11 +53,11 @@ CCWriter::CCWriter(const GbaRom &rom,
     guardTopCover_(0),
     renderLayers_(0),
     renderInvisible_(0),
-    itemTilesetWritten_(false),
     writeFailed_(false),
     itemsTotal_(0),
     itemsDropped_(0),
     itemsByName_(0),
+    bouldersTotal_(0),
     items_(items)
 {
     // Music refs are relative to the LABEL ROOT: the client resolves them as
@@ -304,23 +304,27 @@ std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
     while(ni<map.npcs.size())
     {
         const DecodedNpc &npc=map.npcs[ni];
-        std::string skin=skinFor(npc.graphicsId);
-        if(!skin.empty() && npc.x>=0 && npc.y>=0 &&
-           static_cast<uint32_t>(npc.x)<w && static_cast<uint32_t>(npc.y)<h)
+        // Pushable strength boulders become StrengthBoulder objects, not bots.
+        if(npc.graphicsId!=rom_.game().boulderGfx)
         {
-            int id=npc.localId;
-            while(usedId.find(id)!=usedId.cend())
-                id++;
-            usedId.insert(id);
-            MapBot b;
-            b.id=id;
-            b.x=npc.x;
-            b.y=npc.y;
-            b.skin=skin;
-            b.trainerType=npc.trainerType;
-            b.scriptPtr=npc.scriptPtr;
-            b.isSign=false;
-            bots.push_back(b);
+            std::string skin=skinFor(npc.graphicsId);
+            if(!skin.empty() && npc.x>=0 && npc.y>=0 &&
+               static_cast<uint32_t>(npc.x)<w && static_cast<uint32_t>(npc.y)<h)
+            {
+                int id=npc.localId;
+                while(usedId.find(id)!=usedId.cend())
+                    id++;
+                usedId.insert(id);
+                MapBot b;
+                b.id=id;
+                b.x=npc.x;
+                b.y=npc.y;
+                b.skin=skin;
+                b.trainerType=npc.trainerType;
+                b.scriptPtr=npc.scriptPtr;
+                b.isSign=false;
+                bots.push_back(b);
+            }
         }
         ni++;
     }
@@ -473,9 +477,12 @@ bool CCWriter::writeAll()
     writeInformations();
     writeStart();
     writeZones();
+    // The .tmx files reference items.tsx; write it before the render guard reloads them.
+    flushItemTileset();
     std::cout << "CCWriter: wrote " << maps.size() << " maps to " << fireredDir_
               << " (" << itemsTotal_ << " items on map, " << itemsByName_
-              << " by name pending items.xml, " << itemsDropped_ << " dropped)" << std::endl;
+              << " by name pending items.xml, " << itemsDropped_ << " dropped, "
+              << bouldersTotal_ << " strength boulders)" << std::endl;
     if(guardMasked_==0)
         std::cout << "CCWriter GUARD layer-visibility: PASS (" << guardLayers_
                   << " tile layers, each visible when toggled)" << std::endl;
@@ -631,28 +638,58 @@ void CCWriter::renderVisibilityGuard()
         while(k<renderInvisibleList_.size()){ std::cout << "  " << renderInvisibleList_[k] << std::endl; k++; }
     }
 }
-void CCWriter::ensureItemTileset(uint8_t graphicsId)
+// Copy the top-left 16x16 of a ripped static sprite into a transparent tile.
+static QImage spriteTile16(const QImage &sprite)
 {
-    if(itemTilesetWritten_)
-        return;
-    QImage ball=OverworldSprite::renderStatic(rom_,graphicsId);
-    if(ball.isNull())
-        return;
     QImage tile(16,16,QImage::Format_ARGB32);
     tile.fill(Qt::transparent);
     int y=0;
-    while(y<16 && y<ball.height())
+    while(y<16 && y<sprite.height())
     {
         int x=0;
-        while(x<16 && x<ball.width())
+        while(x<16 && x<sprite.width())
         {
-            tile.setPixel(x,y,ball.pixel(x,y));
+            tile.setPixel(x,y,sprite.pixel(x,y));
             x++;
         }
         y++;
     }
+    return tile;
+}
+
+void CCWriter::ensureItemTileset(uint8_t graphicsId)
+{
+    if(!ballTile_.isNull())
+        return;
+    QImage ball=OverworldSprite::renderStatic(rom_,graphicsId);
+    if(!ball.isNull())
+        ballTile_=spriteTile16(ball);
+}
+
+void CCWriter::ensureBoulderTile()
+{
+    if(!boulderTile_.isNull())
+        return;
+    QImage boulder=OverworldSprite::renderStatic(rom_,rom_.game().boulderGfx);
+    if(!boulder.isNull())
+        boulderTile_=spriteTile16(boulder);
+}
+
+void CCWriter::flushItemTileset()
+{
+    if(ballTile_.isNull() && boulderTile_.isNull())
+        return;
+    // 2 fixed slots so the gids are stable: 0 = item ball, 1 = strength boulder.
+    QImage sheet(32,16,QImage::Format_ARGB32);
+    sheet.fill(Qt::transparent);
+    QPainter p(&sheet);
+    if(!ballTile_.isNull())
+        p.drawImage(0,0,ballTile_);
+    if(!boulderTile_.isNull())
+        p.drawImage(16,0,boulderTile_);
+    p.end();
     QDir().mkpath(QString::fromStdString(fireredDir_+"/tileset"));
-    if(!tile.save(QString::fromStdString(fireredDir_+"/tileset/items.png"),"PNG"))
+    if(!sheet.save(QString::fromStdString(fireredDir_+"/tileset/items.png"),"PNG"))
     {
         std::cerr << "Cannot write " << fireredDir_ << "/tileset/items.png" << std::endl;
         writeFailed_=true;
@@ -662,10 +699,15 @@ void CCWriter::ensureItemTileset(uint8_t graphicsId)
     if(tsx)
     {
         tsx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        tsx << "<tileset name=\"items\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"1\" columns=\"1\">\n";
-        tsx << " <image source=\"items.png\" width=\"16\" height=\"16\"/>\n";
+        tsx << "<tileset name=\"items\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"2\" columns=\"2\">\n";
+        tsx << " <image source=\"items.png\" width=\"32\" height=\"16\"/>\n";
         tsx << "</tileset>\n";
-        itemTilesetWritten_=true;
+        tsx.flush();
+        if(!tsx)
+        {
+            std::cerr << "Cannot write " << fireredDir_ << "/tileset/items.tsx" << std::endl;
+            writeFailed_=true;
+        }
     }
     else
     {
@@ -701,31 +743,44 @@ void CCWriter::writeMap(const DecodedMap &map)
     // the SAME ball gid (the gen2 convention), so the editor still shows them.
     struct GroundItem { int x; int y; std::string itemRef; bool visible; };
     std::vector<GroundItem> mapItems;
+    // Pushable strength boulders (their own object kind, never a bot/skin).
+    std::vector<std::pair<int,int> > mapBoulders;
     {
+        const uint8_t boulderGfx=rom_.game().boulderGfx;
         size_t ii=0;
         while(ii<map.npcs.size())
         {
             const DecodedNpc &np=map.npcs[ii];
             ii++;
-            const int it=Gen3Script::findItemOf(rom_,np.scriptPtr);
-            if(it>0 && np.x>=0 && np.y>=0 &&
+            if(np.graphicsId==boulderGfx && np.x>=0 && np.y>=0 &&
                static_cast<uint32_t>(np.x)<w && static_cast<uint32_t>(np.y)<h)
             {
-                bool byName=false;
-                const std::string ref=itemRefOf(it,&byName);
-                if(ref.empty())
-                    itemsDropped_++; // not even a name for this id
-                else
+                ensureBoulderTile();
+                if(!boulderTile_.isNull())
+                    mapBoulders.push_back(std::pair<int,int>(np.x,np.y));
+            }
+            else
+            {
+                const int it=Gen3Script::findItemOf(rom_,np.scriptPtr);
+                if(it>0 && np.x>=0 && np.y>=0 &&
+                   static_cast<uint32_t>(np.x)<w && static_cast<uint32_t>(np.y)<h)
                 {
-                    if(byName)
-                        itemsByName_++;
-                    GroundItem gi;
-                    gi.x=np.x;
-                    gi.y=np.y;
-                    gi.itemRef=ref;
-                    gi.visible=true;
-                    mapItems.push_back(gi);
-                    ensureItemTileset(np.graphicsId);
+                    bool byName=false;
+                    const std::string ref=itemRefOf(it,&byName);
+                    if(ref.empty())
+                        itemsDropped_++; // not even a name for this id
+                    else
+                    {
+                        if(byName)
+                            itemsByName_++;
+                        GroundItem gi;
+                        gi.x=np.x;
+                        gi.y=np.y;
+                        gi.itemRef=ref;
+                        gi.visible=true;
+                        mapItems.push_back(gi);
+                        ensureItemTileset(np.graphicsId);
+                    }
                 }
             }
         }
@@ -908,7 +963,7 @@ void CCWriter::writeMap(const DecodedMap &map)
     // Referenced READ-ONLY; the converter never writes outside map/main/<label>/.
     std::string invRel=tsPre.substr(0,tsPre.size()>=8 ? tsPre.size()-8 : 0)+"../../invisible.tsx";
     out << " <tileset firstgid=\"" << invFirst << "\" source=\"" << invRel << "\"/>\n";
-    if(!mapItems.empty() && itemTilesetWritten_)
+    if((!mapItems.empty() && !ballTile_.isNull()) || !mapBoulders.empty())
         out << " <tileset firstgid=\"" << itemGid << "\" source=\"" << tsPre << "items.tsx\"/>\n";
 
     // Walkable is the canonical base layer and is ALWAYS emitted, even when empty
@@ -1138,7 +1193,7 @@ void CCWriter::writeMap(const DecodedMap &map)
             const GroundItem &gi=mapItems[ii];
             ii++;
             out << "  <object id=\"" << nextObjectId++ << "\" type=\"object\"";
-            if(itemTilesetWritten_)
+            if(!ballTile_.isNull())
                 out << " gid=\"" << itemGid << "\"";
             out << " x=\"" << gi.x*16 << "\" y=\"" << (gi.y+1)*16 << "\" width=\"16\" height=\"16\">\n";
             out << "   <properties>\n";
@@ -1152,6 +1207,20 @@ void CCWriter::writeMap(const DecodedMap &map)
                 out << "    <property name=\"visible\" type=\"bool\" value=\"false\"/>\n";
             out << "   </properties>\n  </object>\n";
             itemsTotal_++;
+        }
+    }
+    // Strength boulders: the real ripped boulder tile at items.png slot 1;
+    // the engine knows the type (Map_loaderMain "StrengthBoulder", no-op today).
+    {
+        size_t bb=0;
+        while(bb<mapBoulders.size())
+        {
+            out << "  <object id=\"" << nextObjectId++ << "\" type=\"StrengthBoulder\""
+                << " gid=\"" << itemGid+1 << "\""
+                << " x=\"" << mapBoulders[bb].first*16 << "\" y=\"" << (mapBoulders[bb].second+1)*16
+                << "\" width=\"16\" height=\"16\"/>\n";
+            bouldersTotal_++;
+            bb++;
         }
     }
     out << " </objectgroup>\n";

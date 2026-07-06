@@ -60,6 +60,7 @@ struct GameInfo {
     uint32_t trainersCount;
     uint8_t leaderClass;         // gym-leader trainer class (0xFF = unknown/none)
     uint32_t itemNames;          // gItems name records (stride 44, name[14]@+0)
+    uint8_t boulderGfx;          // pushable strength-boulder object gfx id (FRLG 97, RSE 87)
     // Primary-tileset water animation (tiles animWaterTile..+animWaterTileCount).
     uint16_t animWaterTile;      // first animated 8x8 tile index (508)
     uint16_t animWaterTileCount; // animated tiles (4)
