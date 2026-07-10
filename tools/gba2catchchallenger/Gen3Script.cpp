@@ -8,6 +8,7 @@ static bool textLooksReadable(const GbaRom &rom, uint32_t off);
 
 std::unordered_map<uint32_t,uint32_t> Gen3Script::battleOwner_;
 std::unordered_map<uint32_t,uint32_t> Gen3Script::martOwner_;
+std::unordered_map<uint32_t,uint32_t> Gen3Script::wildOwner_;
 
 ScriptResult::ScriptResult() :
     kind(BotKind::None),
@@ -15,7 +16,8 @@ ScriptResult::ScriptResult() :
     leader(false),
     introText(0),
     defeatText(0),
-    matchOffset(0)
+    matchOffset(0),
+    wildLevel(0)
 {
 }
 
@@ -173,6 +175,42 @@ uint32_t Gen3Script::findMart(uint32_t scriptOffset, std::vector<uint16_t> *outI
     return 0;
 }
 
+// Validated structurally like findBattle: a real (alphabetic) species name at a
+// plausible Gen3 internal id, level 1..100, plausible held-item id — so script
+// data / text bytes that happen to read 0xB6 don't false-match.
+uint32_t Gen3Script::findWild(uint32_t scriptOffset, std::string *outSpecies, uint8_t *outLevel) const
+{
+    if(scriptOffset==0 || scriptOffset+6>rom_.size())
+        return 0;
+    uint32_t end=scriptOffset+400;
+    if(end+6>rom_.size())
+        end=rom_.size()-6;
+    uint32_t p=scriptOffset;
+    while(p<end)
+    {
+        if(rom_.u8(p)==0xB6)
+        {
+            uint16_t species=rom_.u16(p+1);
+            uint8_t level=rom_.u8(p+3);
+            uint16_t item=rom_.u16(p+4);
+            if(species>=1 && species<=411 && level>=1 && level<=100 && item<=600)
+            {
+                std::string name=Gen3Text::speciesName(rom_,species);
+                if(!name.empty())
+                {
+                    if(outSpecies!=nullptr)
+                        *outSpecies=name;
+                    if(outLevel!=nullptr)
+                        *outLevel=level;
+                    return p;
+                }
+            }
+        }
+        p++;
+    }
+    return 0;
+}
+
 void Gen3Script::indexBattleOwners(const GbaRom &rom, const std::vector<DecodedMap> &maps)
 {
     // For each trainerbattle / mart command, the owning NPC is the one whose
@@ -182,8 +220,10 @@ void Gen3Script::indexBattleOwners(const GbaRom &rom, const std::vector<DecodedM
     // leader and a mart a single seller (no phantom shop on a gym, no duplicates).
     battleOwner_.clear();
     martOwner_.clear();
+    wildOwner_.clear();
     std::unordered_map<uint32_t,uint32_t> bestBattle; // command -> smallest delta seen
     std::unordered_map<uint32_t,uint32_t> bestMart;
+    std::unordered_map<uint32_t,uint32_t> bestWild;
     Gen3Script s(rom);
     size_t mi=0;
     while(mi<maps.size())
@@ -215,6 +255,17 @@ void Gen3Script::indexBattleOwners(const GbaRom &rom, const std::vector<DecodedM
                     {
                         bestMart[mcmd]=d;
                         martOwner_[mcmd]=sp;
+                    }
+                }
+                uint32_t wcmd=s.findWild(sp,nullptr,nullptr);
+                if(wcmd!=0)
+                {
+                    uint32_t d=wcmd-sp;
+                    std::unordered_map<uint32_t,uint32_t>::iterator it=bestWild.find(wcmd);
+                    if(it==bestWild.end() || d<it->second)
+                    {
+                        bestWild[wcmd]=d;
+                        wildOwner_[wcmd]=sp;
                     }
                 }
             }
@@ -285,6 +336,23 @@ ScriptResult Gen3Script::classify(uint16_t trainerType, uint32_t scriptOffset) c
             r.kind=BotKind::Mart;
             r.matchOffset=p;
             r.itemIds=items;
+            return r;
+        }
+    }
+    // Static one-off monster on the map (setwildbattle 0xB6): Mewtwo in Cerulean
+    // Cave, the legendary birds, the sleeping Snorlax, the fake-item Electrode...
+    // Ownership keeps the command with the NPC whose script really contains it.
+    {
+        std::string sp;
+        uint8_t lv=0;
+        uint32_t p=findWild(scriptOffset,&sp,&lv);
+        std::unordered_map<uint32_t,uint32_t>::const_iterator own=wildOwner_.find(p);
+        if(p!=0 && (own==wildOwner_.end() || own->second==scriptOffset))
+        {
+            r.kind=BotKind::WildMon;
+            r.matchOffset=p;
+            r.wildSpecies=sp;
+            r.wildLevel=lv;
             return r;
         }
     }

@@ -33,18 +33,22 @@ Gen3Tileset::Gen3Tileset(const GbaRom &rom, uint32_t primaryPtr, uint32_t second
     secondaryAttrPtr_(0),
     primaryCompressed_(false),
     secondaryCompressed_(false),
-    currentWaterFrame_(-1)
+    currentAnimFrame_(-1)
 {
-    // Load the primary-tileset water animation frames (raw 4bpp; one block of
-    // animWaterTileCount tiles per frame).
-    if(game_.animWaterArray!=0 && game_.animWaterFrames>0)
+    // Load every primary-tileset ambient animation's frames (raw 4bpp; one
+    // block of tileCount tiles per frame).  A sequence with a bad pointer or a
+    // short read keeps EMPTY frames and stays inactive (graceful skip).
+    size_t s=0;
+    while(s<game_.ambientAnims.size())
     {
-        uint32_t frameBytes=static_cast<uint32_t>(game_.animWaterTileCount)*32;
+        const AmbientAnim &a=game_.ambientAnims[s];
+        std::vector<std::vector<uint8_t> > frames;
+        uint32_t frameBytes=static_cast<uint32_t>(a.tileCount)*32;
         uint16_t f=0;
-        while(f<game_.animWaterFrames)
+        while(f<a.frames)
         {
             bool okf=false;
-            uint32_t fp=rom_.pointer(game_.animWaterArray+static_cast<uint32_t>(f)*4,&okf);
+            uint32_t fp=rom_.pointer(a.array+static_cast<uint32_t>(f)*4,&okf);
             std::vector<uint8_t> frame;
             if(okf)
             {
@@ -52,9 +56,23 @@ Gen3Tileset::Gen3Tileset(const GbaRom &rom, uint32_t primaryPtr, uint32_t second
                 if(p!=nullptr)
                     frame.assign(p,p+frameBytes);
             }
-            waterFrames_.push_back(frame);
+            frames.push_back(frame);
             f++;
         }
+        // All-or-nothing: one unreadable frame disables the whole sequence so a
+        // half-animated metatile can never render garbage.
+        bool allOk=!frames.empty();
+        f=0;
+        while(f<frames.size())
+        {
+            if(frames[f].size()!=frameBytes)
+                allOk=false;
+            f++;
+        }
+        if(!allOk)
+            frames.clear();
+        ambientFrames_.push_back(frames);
+        s++;
     }
     uint32_t attrField=(game_.engine==Engine::Frlg) ? 0x14 : 0x10;
     bool ok=false;
@@ -82,17 +100,28 @@ Gen3Tileset::Gen3Tileset(const GbaRom &rom, uint32_t primaryPtr, uint32_t second
 
 const uint8_t *Gen3Tileset::tilePixels(uint32_t tileIndex) const
 {
-    // While rendering a specific water-animation frame, the water tile slots
-    // use that frame's graphics instead of the base tiles.
-    if(currentWaterFrame_>=0 && game_.animWaterTileCount>0 &&
-       tileIndex>=game_.animWaterTile &&
-       tileIndex<static_cast<uint32_t>(game_.animWaterTile)+game_.animWaterTileCount &&
-       static_cast<size_t>(currentWaterFrame_)<waterFrames_.size())
+    // While rendering a specific ambient-animation frame, the animated tile
+    // slots use that frame's graphics instead of the base tiles.  Each
+    // sequence cycles by modulo of its OWN length, so a metatile mixing a
+    // 4-frame and an 8-frame sequence still renders both correctly.
+    if(currentAnimFrame_>=0)
     {
-        const std::vector<uint8_t> &frame=waterFrames_[currentWaterFrame_];
-        uint32_t off=(tileIndex-game_.animWaterTile)*32;
-        if(off+32<=frame.size())
-            return &frame[off];
+        size_t s=0;
+        while(s<ambientFrames_.size())
+        {
+            const AmbientAnim &a=game_.ambientAnims[s];
+            if(!ambientFrames_[s].empty() &&
+               tileIndex>=a.tile &&
+               tileIndex<static_cast<uint32_t>(a.tile)+a.tileCount)
+            {
+                const std::vector<uint8_t> &frame=
+                    ambientFrames_[s][static_cast<size_t>(currentAnimFrame_)%ambientFrames_[s].size()];
+                uint32_t off=(tileIndex-a.tile)*32;
+                if(off+32<=frame.size())
+                    return &frame[off];
+            }
+            s++;
+        }
     }
     uint32_t primaryCount=game_.tilesInPrimary;
     if(tileIndex<primaryCount)
@@ -291,27 +320,38 @@ uint8_t Gen3Tileset::layerType(uint16_t id) const
     return game_.layerType(game_.attributeAt(rom_,attributeOffset(id)));
 }
 
-bool Gen3Tileset::isAnimatedWater(uint16_t id) const
+bool Gen3Tileset::isAmbientAnimated(uint16_t id) const
 {
-    if(game_.animWaterTileCount==0 || waterFrames_.empty())
-        return false;
+    return ambientFrameCount(id)>0;
+}
+
+uint16_t Gen3Tileset::ambientFrameCount(uint16_t id) const
+{
+    uint16_t mx=0;
     uint8_t s=0;
     while(s<8)
     {
         uint16_t tileIndex=rom_.u16(metatileEntryOffset(id,s)) & 0x3FF;
-        if(tileIndex>=game_.animWaterTile &&
-           tileIndex<static_cast<uint32_t>(game_.animWaterTile)+game_.animWaterTileCount)
-            return true;
+        size_t a=0;
+        while(a<ambientFrames_.size())
+        {
+            if(!ambientFrames_[a].empty() &&
+               tileIndex>=game_.ambientAnims[a].tile &&
+               tileIndex<static_cast<uint32_t>(game_.ambientAnims[a].tile)+game_.ambientAnims[a].tileCount &&
+               game_.ambientAnims[a].frames>mx)
+                mx=game_.ambientAnims[a].frames;
+            a++;
+        }
         s++;
     }
-    return false;
+    return mx;
 }
 
 QImage Gen3Tileset::renderMetatileFrame(uint16_t id, int frame) const
 {
-    currentWaterFrame_=frame;
+    currentAnimFrame_=frame;
     QImage img=renderMetatile(id);
-    currentWaterFrame_=-1;
+    currentAnimFrame_=-1;
     return img;
 }
 
@@ -831,14 +871,16 @@ static int bandForCat(int cat)
     return 0;
 }
 
-// A multi-tile block queued for the skyline packer, keyed (band, then tallest,
-// then widest) so blocks pack band-by-band into horizontal zones.
-struct LayoutBlock { int band; int negH; int negW; size_t unit; };
+// A multi-tile block queued for the skyline packer, keyed (band, then MAP
+// FIRST-APPEARANCE) so blocks pack band-by-band into horizontal zones AND, inside
+// a band, in the order a human reading the maps encounters them.  firstTi = the
+// block's minimum tile index, valid as "first seen on map" because ground tile
+// indices are assigned in row-major first-appearance order (Pass 3 dedupAdd).
+struct LayoutBlock { int band; int firstTi; size_t unit; };
 static bool layoutBlockLess(const LayoutBlock &a, const LayoutBlock &b)
 {
     if(a.band!=b.band) return a.band<b.band;
-    if(a.negH!=b.negH) return a.negH<b.negH;
-    if(a.negW!=b.negW) return a.negW<b.negW;
+    if(a.firstTi!=b.firstTi) return a.firstTi<b.firstTi;
     return a.unit<b.unit;
 }
 
@@ -1060,15 +1102,17 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
 
     // Pack the MULTI-tile blocks (which must keep their 2-D shape) with a SKYLINE
     // bottom-left strip-packer — the classic rectangle bin-packing used for sprite
-    // atlases (cf. rectpack2D / MaxRects).  Tallest blocks first; each block is
-    // placed at the x that yields the LOWEST top sitting on the current per-column
-    // skyline.  The single, adjacency-free tiles are collected separately and then
-    // fill every remaining gap, so the sheet wastes almost no transparent space
-    // (a shelf-pack left big empty bands below shorter blocks / at shelf ends).
+    // atlases (cf. rectpack2D / MaxRects).  Blocks arrive in MAP FIRST-APPEARANCE
+    // order (band, then min tile index) so the sheet reads like walking the maps
+    // top-left to bottom-right; each block is placed at the x that yields the
+    // LOWEST top sitting on the current per-column skyline (best-fit keeps the
+    // density the old tallest-first order gave).  The single, adjacency-free tiles
+    // are collected separately and then fill every remaining gap, so the sheet
+    // wastes almost no transparent space.
     std::unordered_map<int,uint32_t> tilePos;
     std::vector<std::vector<int> > grid;
     std::vector<int> singles; // free 1x1 tiles -> fill gaps
-    std::vector<LayoutBlock> blocks; // banded, then tallest/widest first
+    std::vector<LayoutBlock> blocks; // banded, then map first-appearance
     {
         size_t ui=0;
         while(ui<units.size())
@@ -1085,19 +1129,24 @@ static std::vector<QImage> layout2D(const std::vector<QImage> &tiles,
                     // Band a whole OBJECT (block) by the MAJORITY category of its
                     // tiles so the block stays intact yet lands in its zone (a
                     // building+roof block has mostly building tiles -> band 1).
+                    // firstTi = min tile index (computed explicitly: COLS-chunked
+                    // and collided units break the flood-fill seed==min property).
                     int votes[3]={0,0,0};
+                    int firstTi=units[ui][0];
                     size_t bi=0;
                     while(bi<units[ui].size())
                     {
                         int ti=units[ui][bi];
                         int c=(ti>=0 && ti<static_cast<int>(catOf.size()))?catOf[static_cast<size_t>(ti)]:99;
                         votes[bandForCat(c)]++;
+                        if(ti<firstTi)
+                            firstTi=ti;
                         bi++;
                     }
                     int band=0;
                     if(votes[1]>votes[band]) band=1;
                     if(votes[2]>votes[band]) band=2;
-                    LayoutBlock lb; lb.band=band; lb.negH=-unitH[ui]; lb.negW=-unitW[ui]; lb.unit=ui;
+                    LayoutBlock lb; lb.band=band; lb.firstTi=firstTi; lb.unit=ui;
                     blocks.push_back(lb);
                 }
             }
@@ -1342,7 +1391,7 @@ std::vector<SheetSeg> poolSheetSegments(uint32_t count)
 TilesetBuilder::TilesetBuilder(const GbaRom &rom, const std::string &tilesetDir) :
     rom_(rom),
     tilesetDir_(tilesetDir),
-    globalAnimCols_(rom.game().animWaterFrames>8?static_cast<int>(rom.game().animWaterFrames):8),
+    globalAnimCols_(rom.game().maxAmbientFrames()>8?static_cast<int>(rom.game().maxAmbientFrames()):8),
     ioError_(false)
 {
 }
@@ -1485,11 +1534,6 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         }
     }
     const int overThreshold=12; // a significant over needs >12 opaque px (no near-empty overlay)
-    const GameInfo &gi=rom_.game();
-    int waterFrames=static_cast<int>(gi.animWaterFrames);
-    std::string animStr;
-    if(waterFrames>0)
-        animStr=std::to_string(gi.animWaterMs)+"ms;"+std::to_string(waterFrames)+"frames";
 
     // Coherent ordering: all ground tiles first, then the above-player overlay
     // tiles, then the animation frame sequences — so the sheet does not
@@ -1547,7 +1591,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         while(p<usedIds.size())
         {
             uint16_t id=usedIds[p];
-            if(ts.behavior(id)==0x69 || (waterFrames>0 && ts.isAnimatedWater(id))) { p++; continue; }
+            if(ts.behavior(id)==0x69 || ts.isAmbientAnimated(id)) { p++; continue; }
             QImage under=ts.renderUnder(id).convertToFormat(QImage::Format_ARGB32);
             QImage over=ts.renderOver(id,under).convertToFormat(QImage::Format_ARGB32);
             std::string uk(reinterpret_cast<const char *>(under.constBits()),static_cast<size_t>(under.sizeInBytes()));
@@ -1576,7 +1620,7 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
         // animated door tile is built separately and used only by the door object.
         if(ts.behavior(id)==0x69)
             doorIds.push_back(id);
-        if(waterFrames>0 && ts.isAnimatedWater(id))
+        if(ts.isAmbientAnimated(id))
             animatedIds.push_back(id);
         else
         {
@@ -2041,9 +2085,13 @@ TilePool TilesetBuilder::buildPool(uint32_t primaryPtr, uint32_t secondaryPtr,
     while(i<animatedIds.size())
     {
         uint16_t id=animatedIds[i];
+        // Frame count is per METATILE: the longest sequence its subtiles touch
+        // (flower 4/5, water/shore 8, waterfall 4 — shorter ones cycle modulo).
+        int fc=static_cast<int>(ts.ambientFrameCount(id));
         std::vector<QImage> frames;
         int f=0;
-        while(f<waterFrames) { frames.push_back(ts.renderMetatileFrame(id,f).convertToFormat(QImage::Format_ARGB32)); f++; }
+        while(f<fc) { frames.push_back(ts.renderMetatileFrame(id,f).convertToFormat(QImage::Format_ARGB32)); f++; }
+        std::string animStr=std::to_string(rom_.game().animMs)+"ms;"+std::to_string(fc)+"frames";
         pool.animGlobal[id]=registerGlobalAnim(frames,animStr,true); // water/flowers/lava self-loop
         i++;
     }

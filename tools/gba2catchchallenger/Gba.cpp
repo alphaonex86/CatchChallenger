@@ -35,13 +35,33 @@ GameInfo::GameInfo() :
     rockGfx(0xFF),
     berryGfx(0xFF),
     itemBallGfx(0xFF),
-    animWaterTile(0),
-    animWaterTileCount(0),
-    animWaterFrames(0),
-    animWaterMs(0),
-    animWaterArray(0),
+    animMs(0),
     doorTable(0)
 {
+}
+
+uint16_t GameInfo::maxAmbientFrames() const
+{
+    uint16_t mx=0;
+    size_t i=0;
+    while(i<ambientAnims.size())
+    {
+        if(ambientAnims[i].frames>mx)
+            mx=ambientAnims[i].frames;
+        i++;
+    }
+    return mx;
+}
+
+// Shorthand for the per-game ambient-animation table entries below.
+static AmbientAnim amb(uint16_t tile, uint16_t tileCount, uint16_t frames, uint32_t array)
+{
+    AmbientAnim a;
+    a.tile=tile;
+    a.tileCount=tileCount;
+    a.frames=frames;
+    a.array=array;
+    return a;
 }
 
 std::string GameInfo::regionFor(uint8_t sid) const
@@ -150,14 +170,15 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
         info.trainersCount=743;
         info.leaderClass=84; // TRAINER_CLASS_LEADER (FireRed): the 8 gym leaders
         info.itemNames=0x3DB098;
-        info.animWaterTile=508;
-        info.animWaterTileCount=4;
-        info.animWaterFrames=5;
-        // FRLG's TilesetAnim_General advances one frame every 16 GBA frames
-        // (~268ms), the same cadence as RSE — 133 (8 frames) played twice too
-        // fast in Tiled and in the client.
-        info.animWaterMs=267;
-        info.animWaterArray=0x3A76D0;
+        // TilesetAnim_General advances one frame every 16 GBA frames (~268ms),
+        // the same cadence as RSE — 133 (8 frames) played twice too fast in
+        // Tiled and in the client.
+        info.animMs=267;
+        // General-tileset ambient anims; dest tiles from the queue functions'
+        // Thumb literal pools (frame array + 0x0600xxxx VRAM dest pairs).
+        info.ambientAnims.push_back(amb(508,4,5,0x3A76D0));  // flower
+        info.ambientAnims.push_back(amb(416,48,8,0x3AA6C4)); // water (sea, incl. waterfall block)
+        info.ambientAnims.push_back(amb(464,18,8,0x3AB8E4)); // sand/water shore edge
         info.doorTable=0x35B648; // gDoorAnimGraphicsTable (stride 12)
         // Sevii Islands minimap: sections 0x8f (ONE ISLAND) .. 0xc3 (EMBER SPA);
         // Kanto sections (incl. cinnabar-island 0x60, seafoam 0x8b) are below.
@@ -191,11 +212,13 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
         info.trainersCount=694;
         info.leaderClass=0xFF; // RSE gym-leader class not yet pinned -> no gym/leader flag
         info.itemNames=0x3C5580;
-        info.animWaterTile=508;
-        info.animWaterTileCount=4;
-        info.animWaterFrames=4;
-        info.animWaterMs=267;
-        info.animWaterArray=0x376F3C;
+        info.animMs=267;
+        // RSE general-tileset ambient anims (same literal-pool method as FRLG).
+        info.ambientAnims.push_back(amb(508,4,4,0x376F3C));  // flower
+        info.ambientAnims.push_back(amb(432,30,8,0x378D4C)); // water
+        info.ambientAnims.push_back(amb(464,10,8,0x37962C)); // sand/water shore edge
+        info.ambientAnims.push_back(amb(496,6,4,0x37994C));  // waterfall
+        info.ambientAnims.push_back(amb(480,10,4,0x379E5C)); // land/water edge
         info.doorTable=0x30F9CC; // gDoorAnimGraphicsTable (stride 12)
     }
     else if(code=="BPGE" && is16MB) // LeafGreen — sub overlay of FireRed (Kanto)
@@ -203,7 +226,7 @@ GameInfo GameInfo::detect(const std::vector<uint8_t> &rom, const std::string &ro
         // Sibling sub: only the sub-overlay needs map decode + naming + wild, so
         // only those tables are wired (verified by signature scan, 2026-06-05).
         // FRLG engine constants are shared with FireRed.  No tmx/tileset/skins are
-        // written for a sub, so owGfx/trainers/itemNames/doorTable/animWater stay 0.
+        // written for a sub, so owGfx/trainers/itemNames/doorTable/ambientAnims stay 0.
         info.valid=true;
         info.label="leafgreen";
         info.mainCode="firered";
