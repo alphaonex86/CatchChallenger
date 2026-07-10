@@ -95,7 +95,7 @@ BOT_DEFS = {"CATCHCHALLENGER_BENCHMARK": "ON", "CMAKE_BUILD_TYPE": "Release"}
 # more chat/join samples, but also more offered load on the constrained server.
 BOT_COUNTS = [(4, "small"), (16, "medium"), (50, "large")]
 
-# ESP32 all-in-one server (catchchallenger-esp32): firmware-baked datapack +
+# ESP32 all-in-one server (esp32): firmware-baked datapack +
 # settings, fileless, WiFi, max-players ~10. It is ALREADY running on the LAN;
 # the harness only points the host bot at its fixed IP -- NO ssh, NO compile
 # node, NO flashing from here (network-only). WiFi => comparison-only: recorded
@@ -104,7 +104,7 @@ BOT_COUNTS = [(4, "small"), (16, "medium"), (50, "large")]
 # Nothing in remote_nodes.json is touched (operator-owned); the node is injected
 # programmatically. Override the IP/port with CC_ESP32_HOST / CC_ESP32_PORT.
 ESP32_NODE = {
-    "label": "catchchallenger-esp32",
+    "label": "esp32",
     "arch":  "xtensa-lx6",
     "host":  os.environ.get("CC_ESP32_HOST", "192.168.158.160"),
     "port":  int(os.environ.get("CC_ESP32_PORT", "42498")),  # its own game port
@@ -1043,7 +1043,7 @@ def main():
     local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
     nodes = local_node + bh.benchmark_exec_nodes()
     # ESP32 comparison node, injected without touching remote_nodes.json. Target
-    # it with --node catchchallenger-esp32 (or --node xtensa-lx6); skipped when a
+    # it with --node esp32 (or --node xtensa-lx6); skipped when a
     # --node filter excludes it.
     if bh.node_allowed(ESP32_NODE["label"], ESP32_NODE["arch"]):
         nodes.append(ESP32_NODE)
