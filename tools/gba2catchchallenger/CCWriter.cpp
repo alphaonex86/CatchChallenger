@@ -119,6 +119,7 @@ CCWriter::CCWriter(const GbaRom &rom,
     itemsDropped_(0),
     itemsByName_(0),
     bouldersTotal_(0),
+    wildMonsTotal_(0),
     items_(items)
 {
     // Music refs are relative to the LABEL ROOT: the client resolves them as
@@ -353,6 +354,22 @@ std::string CCWriter::skinFor(uint8_t graphicsId)
     return name;
 }
 
+std::string CCWriter::staticSkinFor(uint8_t graphicsId)
+{
+    std::unordered_map<uint8_t,std::string>::const_iterator it=staticSkinCache_.find(graphicsId);
+    if(it!=staticSkinCache_.cend())
+        return it->second;
+    // The static pose repeated as a full 48x96 trainer sheet: a static
+    // monster's OW graphic is a pose, not a 16x32 walking sheet, and the
+    // client slices trainer.png into fixed 16x24 cells.
+    QImage sprite=OverworldSprite::renderStaticSheet(rom_,graphicsId);
+    std::string name;
+    if(!sprite.isNull())
+        name=skins_.resolve(sprite);
+    staticSkinCache_[graphicsId]=name;
+    return name;
+}
+
 // Gen3 movement type -> CatchChallenger bot lookAt: the wander types (2-6)
 // become "move", the static facings map straight, everything else faces down.
 static const char *lookAtOf(uint8_t movementType)
@@ -386,6 +403,19 @@ std::vector<CCWriter::MapBot> CCWriter::collectBots(const DecodedMap &map)
            npc.graphicsId!=rom_.game().berryGfx)
         {
             std::string skin=skinFor(npc.graphicsId);
+            if(skin.empty() && npc.scriptPtr!=0 &&
+               Gen3Script::findItemOf(rom_,npc.scriptPtr)<0)
+            {
+                // A static one-off MONSTER (setwildbattle script — Mewtwo, the
+                // birds, Snorlax, the fake-item Electrode): its OW graphic is
+                // not a 16x32 character so render() dropped it; rip the
+                // native-size pose instead so the monster stays visible on map.
+                // (A REAL item ball — the finditem macro — is already emitted
+                // as an item object and must never become a bot.)
+                ScriptResult res=script_.classify(npc.trainerType,npc.scriptPtr);
+                if(res.kind==BotKind::WildMon)
+                    skin=staticSkinFor(npc.graphicsId);
+            }
             if(!skin.empty() && npc.x>=0 && npc.y>=0 &&
                static_cast<uint32_t>(npc.x)<w && static_cast<uint32_t>(npc.y)<h)
             {
@@ -564,7 +594,8 @@ bool CCWriter::writeAll()
     std::cout << "CCWriter: wrote " << maps.size() << " maps to " << fireredDir_
               << " (" << itemsTotal_ << " items on map, " << itemsByName_
               << " by name pending items.xml, " << itemsDropped_ << " dropped, "
-              << bouldersTotal_ << " strength boulders)" << std::endl;
+              << bouldersTotal_ << " strength boulders, " << wildMonsTotal_
+              << " static monsters)" << std::endl;
     if(guardMasked_==0)
         std::cout << "CCWriter GUARD layer-visibility: PASS (" << guardLayers_
                   << " tile layers, each visible when toggled)" << std::endl;
@@ -1904,6 +1935,21 @@ void CCWriter::writeMapXml(const DecodedMap &map)
                     << " </bot>\n";
                 emitted=true;
             }
+        }
+        else if(res.kind==BotKind::WildMon)
+        {
+            // Static one-off monster on the map (Mewtwo & co).  The engine's
+            // only map-monster mechanism is a bot fight: battleable on
+            // interaction (no fightRange — it never chases), no catching
+            // (catch works only on layer-triggered wild encounters), no cash.
+            out << " <bot id=\"" << b.id << "\">\n"
+                << "  <name><![CDATA[" << res.wildSpecies << "]]></name>\n"
+                << "  <step type=\"fight\" id=\"1\">\n"
+                << "   <monster id=\"" << res.wildSpecies << "\" level=\""
+                << static_cast<int>(res.wildLevel) << "\"/>\n"
+                << "  </step>\n </bot>\n";
+            wildMonsTotal_++;
+            emitted=true;
         }
         // SIGN or plain talking NPC -> the ROM text string, split into [Next]
         // pages (project owner's call to include the in-game text).  A sign also

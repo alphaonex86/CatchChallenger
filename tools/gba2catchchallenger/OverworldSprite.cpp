@@ -145,6 +145,38 @@ QImage OverworldSprite::renderStatic(const GbaRom &rom, uint8_t graphicsId)
     return decodeFrame(rom,imagesPtr,0,width,height,palette);
 }
 
+QImage OverworldSprite::renderStaticSheet(const GbaRom &rom, uint8_t graphicsId)
+{
+    QImage pose=renderStatic(rom,graphicsId);
+    if(pose.isNull())
+        return QImage();
+    // The client slices a bot's trainer.png into FIXED 16x24 cells (3 cols x 4
+    // rows; tile 7 = standing facing bottom — MapController.cpp), so a static
+    // MONSTER pose must become a full sheet: scale an oversize pose to fit one
+    // cell (nearest-neighbour, pixel art) and repeat it in every cell so the
+    // monster looks the same from any direction.
+    QImage content=cropToOpaqueContent(pose);
+    if(content.isNull())
+        return QImage();
+    if(content.width()>16 || content.height()>24)
+        content=content.scaled(16,24,Qt::KeepAspectRatio,Qt::FastTransformation);
+    QImage cell=fitCell(content);
+    QImage sheet(48,96,QImage::Format_ARGB32);
+    sheet.fill(Qt::transparent);
+    int row=0;
+    while(row<4)
+    {
+        int col=0;
+        while(col<3)
+        {
+            pasteCell(sheet,col,row,cell);
+            col++;
+        }
+        row++;
+    }
+    return sheet;
+}
+
 QImage OverworldSprite::render(const GbaRom &rom, uint8_t graphicsId)
 {
     const GameInfo &g=rom.game();

@@ -14,7 +14,7 @@
 
 struct DecodedMap; // Decoder.hpp
 
-enum class BotKind : uint8_t { None, Fight, Mart };
+enum class BotKind : uint8_t { None, Fight, Mart, WildMon };
 
 struct PartyMon {
     std::string species;
@@ -29,6 +29,8 @@ struct ScriptResult {
     uint32_t defeatText;           // Fight: file offset of defeat text (0=none)
     uint32_t matchOffset;          // Fight: file offset of the trainerbattle command
     std::vector<uint16_t> itemIds; // valid when kind==Mart
+    std::string wildSpecies;       // valid when kind==WildMon (species name)
+    uint8_t wildLevel;             // valid when kind==WildMon
     ScriptResult();
 };
 
@@ -63,6 +65,10 @@ private:
     // File offset of the first valid mart command (0x86 + a plausible item list)
     // in the script's linear scan, or 0.  Fills outItems when non-null.
     uint32_t findMart(uint32_t scriptOffset, std::vector<uint16_t> *outItems) const;
+    // File offset of the first valid setwildbattle command (0xB6 <u16 species>
+    // <u8 level> <u16 item>) in the script's linear scan, or 0 — the static
+    // one-off monsters placed on a map (Mewtwo, the birds, Snorlax, ...).
+    uint32_t findWild(uint32_t scriptOffset, std::string *outSpecies, uint8_t *outLevel) const;
 
     const GbaRom &rom_;
     // command offset -> owning NPC script start (global, set by indexBattleOwners).
@@ -70,6 +76,7 @@ private:
     // happen to reach the same address for different command kinds don't clash.
     static std::unordered_map<uint32_t,uint32_t> battleOwner_;
     static std::unordered_map<uint32_t,uint32_t> martOwner_;
+    static std::unordered_map<uint32_t,uint32_t> wildOwner_;
 };
 
 #endif // GBA2CC_GEN3SCRIPT_HPP

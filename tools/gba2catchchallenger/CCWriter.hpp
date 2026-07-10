@@ -120,6 +120,10 @@ private:
     // Pick a CatchChallenger skin string for a Gen3 overworld graphics id:
     // extract the sprite, reuse/add via the resolver (cached per graphics id).
     std::string skinFor(uint8_t graphicsId);
+    // Same, but via the native-size static render (no 16x32 character filter) —
+    // for a static one-off MONSTER object (Mewtwo & co) whose OW graphic is not
+    // a walking character sheet.
+    std::string staticSkinFor(uint8_t graphicsId);
     // Rip the 16x16 item-ball sprite once (like gen2's pokeball tile
     // normal1.tsx#101) — slot 0 of tileset/items.png, the gid every
     // ground/hidden item object shows in the Tiled editor.
@@ -147,6 +151,7 @@ private:
     std::unordered_map<uint16_t,std::string> songNames_; // BGM id -> file slug (no ext)
     SkinResolver &skins_;
     std::unordered_map<uint8_t,std::string> skinCache_;
+    std::unordered_map<uint8_t,std::string> staticSkinCache_;
     int guardLayers_;                          // tile layers checked
     int guardMasked_;                          // layers with no visible cell
     std::vector<std::string> guardMaskedList_; // first few offending layers
@@ -165,6 +170,7 @@ private:
     int itemsDropped_;                         // refs without even a name (skipped)
     int itemsByName_;                          // emitted by name, not yet in items.xml
     int bouldersTotal_;                        // StrengthBoulder objects emitted
+    int wildMonsTotal_;                        // static setwildbattle monster bots emitted
     ItemResolver items_;
 };
 

@@ -37,14 +37,20 @@ public:
     // Metatile layer type (0 NORMAL, 1 COVERED, 2 SPLIT): decides whether the
     // top sub-layer draws above the player (NORMAL/SPLIT) or below (COVERED).
     uint8_t layerType(uint16_t id) const;
-    // True when the metatile uses an animated (water) tile slot.
-    bool isAnimatedWater(uint16_t id) const;
+    // True when the metatile uses a tile slot of a LOADED ambient animation
+    // (water/flower/shore edge/... — see GameInfo::ambientAnims).
+    bool isAmbientAnimated(uint16_t id) const;
+    // Frame count to render for an ambient-animated metatile: the max frames
+    // among the sequences its subtiles touch (each shorter sequence cycles by
+    // modulo inside renderMetatileFrame).  0 for a non-animated metatile.
+    uint16_t ambientFrameCount(uint16_t id) const;
     // GUARD signal: metatile `id` is routed to the SECONDARY array
     // (id>=metatilesInPrimary) where it decodes EMPTY, yet the PRIMARY array holds
     // real graphics at the same absolute id — the signature of a wrong
     // metatilesInPrimary split, so the metatile renders as a backdrop "black hole".
     bool metatileMisrouted(uint16_t id) const;
-    // Composite the metatile with the water tiles swapped to animation frame f.
+    // Composite the metatile with the ambient-animated tiles swapped to
+    // animation frame f (each sequence cycles by modulo of its own length).
     QImage renderMetatileFrame(uint16_t id, int frame) const;
     // Door-open animation frames (16x16) for a door metatile via the ROM's
     // gDoorAnimGraphicsTable: frame 0 = closed (the metatile), then the open
@@ -78,8 +84,10 @@ private:
     bool secondaryCompressed_;
     std::vector<uint8_t> primaryTiles_;
     std::vector<uint8_t> secondaryTiles_;
-    std::vector<std::vector<uint8_t> > waterFrames_; // each frame = raw 4bpp for the water tiles
-    mutable int currentWaterFrame_;                  // -1 = use base graphics
+    // ambientFrames_[seq][frame] = raw 4bpp gfx of GameInfo::ambientAnims[seq]
+    // frame `frame`; a sequence with an unreadable pointer stays EMPTY (inactive).
+    std::vector<std::vector<std::vector<uint8_t> > > ambientFrames_;
+    mutable int currentAnimFrame_;                   // -1 = use base graphics
 };
 
 // A de-duplicated pool of unique tiles, packed into N fixed-capacity sheets.

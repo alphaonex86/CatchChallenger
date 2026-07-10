@@ -21,6 +21,20 @@ enum class Engine : uint8_t {
     Rse   // Ruby / Sapphire / Emerald
 };
 
+// One PRIMARY-tileset ambient animation (water, flowers, shore edge,
+// waterfall...): the game cyclically copies frame gfx blobs over tileCount
+// 8x8 tiles at VRAM slot `tile`, so any metatile referencing those slots
+// animates in-game.  The frame-pointer array offset and the destination tile
+// were read from the game CODE's Thumb literal pools (each queue function
+// holds the array pointer and the 0x0600xxxx VRAM dest as adjacent literals);
+// secondary-tileset animations are per-area code and are NOT extracted.
+struct AmbientAnim {
+    uint16_t tile;      // first replaced 8x8 tile index (< tilesInPrimary)
+    uint16_t tileCount; // tiles replaced per frame
+    uint16_t frames;    // entries in the frame-pointer array
+    uint32_t array;     // file offset of the u32 frame-pointer array
+};
+
 struct GameInfo {
     bool valid;
     std::string code;        // 4-char game code, e.g. "BPRE"
@@ -64,12 +78,10 @@ struct GameInfo {
     uint8_t rockGfx;             // breakable rock-smash rock object gfx id (FRLG 96, RSE 86)
     uint8_t berryGfx;            // berry-tree object gfx id (RSE 60; 0xFF = none/FRLG)
     uint8_t itemBallGfx;         // item-ball object gfx id (FRLG 92, RSE 59)
-    // Primary-tileset water animation (tiles animWaterTile..+animWaterTileCount).
-    uint16_t animWaterTile;      // first animated 8x8 tile index (508)
-    uint16_t animWaterTileCount; // animated tiles (4)
-    uint16_t animWaterFrames;    // number of frames to cycle
-    uint16_t animWaterMs;        // ms per frame
-    uint32_t animWaterArray;     // file offset of u32 frame-pointer array
+    // Primary-tileset ambient animations (flower, water, shore edge, ...).
+    // Empty for subs (no tilesets written) and for hacks (relocated code).
+    std::vector<AmbientAnim> ambientAnims;
+    uint16_t animMs;             // shared cadence, ms per frame (one step / 16 GBA frames)
     // gDoorAnimGraphicsTable: array of 12-byte DoorGraphics records
     // {u16 metatileNum, u8 sound, u8 size, u32 tilesPtr(raw 4bpp), u32 palettesPtr},
     // zero-record terminated.  0 when unknown.
@@ -82,6 +94,10 @@ struct GameInfo {
     // to derive a label for a non-canonical hack (an off-fingerprint ROM that
     // still rides a known Gen3 engine), e.g. "Pokemon Glazed.gba" -> "glazed".
     static GameInfo detect(const std::vector<uint8_t> &rom, const std::string &romPath);
+
+    // Largest frame count among ambientAnims (0 when none) — sizes the shared
+    // global anim tileset's row width.
+    uint16_t maxAmbientFrames() const;
 
     // Metatile attribute decode (engine dependent).
     uint16_t behavior(uint32_t attribute) const;

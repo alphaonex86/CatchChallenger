@@ -22,6 +22,11 @@ public:
     // (for static object-event graphics like the 16x16 item ball).
     static QImage renderStatic(const GbaRom &rom, uint8_t graphicsId);
 
+    // The static pose repeated as a full 48x96 trainer sheet (scaled to fit a
+    // 16x24 cell) — the bot skin for a static MONSTER object (Mewtwo & co),
+    // valid whatever direction the client picks.
+    static QImage renderStaticSheet(const GbaRom &rom, uint8_t graphicsId);
+
 private:
     // Locate the palette data (file offset) whose tag matches; 0 when absent.
     static uint32_t findPalette(const GbaRom &rom, uint16_t tag);
