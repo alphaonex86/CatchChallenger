@@ -102,7 +102,7 @@ RUN_TIMEOUT_CALLGRIND = RUN_TIMEOUT * 30
 # on a special target must NOT drive KEEP/DISCARD (benchmark/CLAUDE.md), so it is
 # recorded in history + charts but excluded from the cross-fleet decision.
 ESP32_NODE = {
-    "label": "catchchallenger-esp32",
+    "label": "esp32",
     "arch":  "xtensa-lx6",
     "esp32": True,            # marker: build+flash+read serial, no ssh/compile node
 }
@@ -619,7 +619,7 @@ def main():
 
     # ESP32 on-device node, injected programmatically (remote_nodes.json
     # untouched). One cell (the firmware runs the whole sweep on boot). Honoured
-    # by --node catchchallenger-esp32 / --node xtensa-lx6 via node_allowed().
+    # by --node esp32 / --node xtensa-lx6 via node_allowed().
     esp32_nodes = [ESP32_NODE] if bh.node_allowed(ESP32_NODE["label"],
                                                   ESP32_NODE["arch"]) else []
 
