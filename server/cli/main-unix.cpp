@@ -5,6 +5,8 @@
 #ifdef CATCHCHALLENGER_BENCHMARK
 #include <time.h>
 #endif
+//self-guarded: real probes under CATCHCHALLENGER_BENCHMARK, empty macros otherwise
+#include "../../general/base/BenchProbe.hpp"
 #include "win32_compat.hpp"
 #ifndef _WIN32
 #include <unistd.h>
@@ -151,15 +153,22 @@ void signal_callback_handler(int signum){
 //                         time in ns (bucket i = [2^i, 2^(i+1)) ns).
 //                         benchmark*.py reconstructs p50/p95/p99/p999
 //                         (latency) and stddev (jitter) from the buckets.
+// * bench_loop          -- event-loop busy/wall accounting (BenchProbe.hpp):
+//                         loop_busy_us / loop_wall_us / loop_iterations give
+//                         CPU-busy% and us-per-wakeup in TIME units, the
+//                         cross-arch "selfprobe" numbers for nodes where no
+//                         external profiler can be installed (ESP32, OpenWrt).
 //
 //On SIGINT/SIGTERM the handler dumps everything as "BENCH <k>=<v>" lines
 //(async-signal-safe integer writes only) so the requests/s headline is
 //always paired with its latency tail + jitter, never reported alone.
+//ESP32 has no signals: the same dump is emitted to UART every 60s instead.
 #define BENCH_LAT_BUCKETS 48
 volatile unsigned long bench_packets_in=0;
 volatile unsigned long bench_lat_hist[BENCH_LAT_BUCKETS];
+CatchChallenger::BenchLoopProbe bench_loop={0,0,0,0,0};
 
-static void bench_write_kv(const char *key,unsigned long v)
+static void bench_write_kv(const char *key,unsigned long long v)
 {
     //async-signal-safe: hand-format "<key>=<v>\n" and write() it; printf /
     //std::cout are NOT safe to call from a signal handler.
@@ -178,8 +187,20 @@ static void bench_write_kv(const char *key,unsigned long v)
     (void)w;
 }
 
-static void bench_signal_dump_and_exit(int)
+//async-signal-safe (integer math + clock_gettime + write() only): shared by
+//the POSIX SIGINT/SIGTERM handler and the ESP32 periodic UART dump.
+static void bench_dump_all()
 {
+    const unsigned long long tpu=CatchChallenger::benchProbeTicksPerUs();
+    bench_write_kv("BENCH loop_iterations",bench_loop.iterations);
+    bench_write_kv("BENCH loop_busy_us",bench_loop.busy_ticks/tpu);
+    unsigned long long wallUs=0;
+    if(bench_loop.window_start_us!=0)
+        wallUs=CatchChallenger::benchProbeWallUs()-bench_loop.window_start_us;
+    bench_write_kv("BENCH loop_wall_us",wallUs);
+    //raw ticks + normaliser: lets a suspicious us conversion be re-checked
+    bench_write_kv("BENCH loop_busy_ticks",bench_loop.busy_ticks);
+    bench_write_kv("BENCH loop_ticks_per_us",tpu);
     bench_write_kv("BENCH packets_in",bench_packets_in);
     int i=0;
     while(i<BENCH_LAT_BUCKETS)
@@ -200,8 +221,15 @@ static void bench_signal_dump_and_exit(int)
         }
         i++;
     }
+}
+
+#ifndef CC_TARGET_ESP32
+static void bench_signal_dump_and_exit(int)
+{
+    bench_dump_all();
     _exit(0);
 }
+#endif
 #endif
 
 /*void CatchChallenger::recordDisconnectByServer(void * client)
@@ -849,6 +877,7 @@ int main(int argc, char *argv[])
     {
 
         number_of_events = EventLoop::loop.wait(events, MAXEVENTS);
+        CC_BENCH_LOOP_IN(bench_loop);
         if(elementsToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
             if(elementsToDeleteIndex>=15)
@@ -1169,6 +1198,19 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+        CC_BENCH_LOOP_OUT(bench_loop);
+        #if defined(CATCHCHALLENGER_BENCHMARK) && defined(CC_TARGET_ESP32)
+        //no signal() on ESP32: dump the counters to UART every 60s instead;
+        //runs from normal context (not a handler) so the write() path is safe
+        {
+            const uint64_t nowUs=CatchChallenger::benchProbeWallUs();
+            if(nowUs-bench_loop.last_dump_us>=60000000ULL)
+            {
+                bench_loop.last_dump_us=nowUs;
+                bench_dump_all();
+            }
+        }
+        #endif
     }
     server->close();
     server->unload_the_data();

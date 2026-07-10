@@ -128,7 +128,9 @@ idf_component_register(
                  "${CC_REPO}/general/blake3" "${CC_REPO}/general/libxxhash"
                  "${_cc_zlib_dir}" "${_cc_zstd_dir}"
                  "${CATCHCHALLENGER_DATAPACK_CPP_DIR}"
-    REQUIRES esp_wifi esp_netif esp_event nvs_flash lwip
+    # esp_timer: BenchProbe.hpp wall clock (only used when the firmware is
+    # built with CATCHCHALLENGER_BENCHMARK; harmless otherwise)
+    REQUIRES esp_wifi esp_netif esp_event nvs_flash lwip esp_timer
 )
 
 # The CLI's int main() becomes catchchallenger_cli_main() (app_main calls it).

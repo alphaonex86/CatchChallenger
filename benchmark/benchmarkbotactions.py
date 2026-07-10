@@ -754,6 +754,12 @@ def _run_iouring_variants(bot_bin, iface):
                 flat[f"{slabel}_{k}"] = (v, 0.0)
                 sm[k] = {"value": v, "median": v, "stddev": 0.0, "unit": "ns",
                          "better": "lower", "samples": [v]}
+            # event-loop self-probe: busy% + us/wakeup (time-based, cross-arch)
+            for k, v in _read_loop_selfprobe(rdir).items():
+                flat[f"{slabel}_{k}"] = (v["value"], 0.0)
+                sm[k] = {"value": v["value"], "median": v["value"],
+                         "stddev": 0.0, "unit": v["unit"],
+                         "better": v["better"], "samples": [v["value"]]}
             if sm:
                 slices[slabel] = sm
             rps_s = f"{rps:.0f}req/s" if rps is not None else "req/s=?"
@@ -766,6 +772,19 @@ def _run_iouring_variants(bot_bin, iface):
             print(_color(bh.C_GREEN, f"[iouring] {slabel}: wall={sample.get('wall_s')}s "
                   f"sys={sample.get('sys_s')}s cpu={cpu}% {rps_s}{tx_s}{lat_s}"))
     return flat, slices
+
+
+def _read_loop_selfprobe(run_dir):
+    """Event-loop self-probe metrics (bh.parse_loop_selfprobe: busy% of the
+    serve window + us per wakeup, TIME-based so cross-arch comparable) from
+    the server.log BENCH loop_* dump. {} when absent (server built without
+    CATCHCHALLENGER_BENCHMARK, or killed before it could dump)."""
+    log_path = os.path.join(run_dir, "server.log")
+    try:
+        with open(log_path, "r", errors="replace") as f:
+            return bh.parse_loop_selfprobe(f.read())
+    except FileNotFoundError:
+        return {}
 
 
 _SIZE_LABELS = ["small", "medium", "large"]
@@ -859,6 +878,12 @@ def _run_compression_variants(bot_bin, iface):
                 flat[f"{slabel}_{k}"] = (v, 0.0)
                 sm[k] = {"value": v, "median": v, "stddev": 0.0, "unit": "ns",
                          "better": "lower", "samples": [v]}
+            # event-loop self-probe: busy% + us/wakeup (time-based, cross-arch)
+            for k, v in _read_loop_selfprobe(rdir).items():
+                flat[f"{slabel}_{k}"] = (v["value"], 0.0)
+                sm[k] = {"value": v["value"], "median": v["value"],
+                         "stddev": 0.0, "unit": v["unit"],
+                         "better": v["better"], "samples": [v["value"]]}
             if sm:
                 slices[slabel] = sm
             rps_s = f"{rps:.0f}req/s" if rps is not None else "req/s=?"

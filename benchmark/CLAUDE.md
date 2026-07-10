@@ -732,6 +732,15 @@ of production — zero cost when the define is off. Never report req/s
 without its latency tail + jitter: a throughput win that inflates p99 or
 jitter is a tick-stability regression on the constrained targets.
 
+The same build carries the event-loop self-probe
+(`general/base/BenchProbe.hpp`): `BENCH loop_busy_us/loop_wall_us/
+loop_iterations`, TIME units only (us — cross-arch comparable, never raw
+cycles; ESP32 CCOUNT is converted at dump time). `bh.parse_loop_selfprobe()`
+derives `loop_busy_pct` + `loop_us_per_wakeup`. This is the profiler tier
+for install-nothing platforms (ESP32, OpenWrt): ESP32 has no signals, so
+the firmware dumps to UART every 60 s — counters are cumulative, the LAST
+dump covers the run.
+
 ## Fixed-time, not fixed-iteration
 
 Every benchmark runs for a fixed wall-clock budget (e.g. 10 min) and
