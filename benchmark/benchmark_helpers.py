@@ -1518,6 +1518,38 @@ def bench_hist_percentiles(buckets):
     return out
 
 
+def parse_loop_selfprobe(text):
+    """Server event-loop self-probe from its 'BENCH loop_*' dump
+    (general/base/BenchProbe.hpp, CATCHCHALLENGER_BENCHMARK builds) -- the
+    profiler tier for platforms where nothing can be installed (ESP32,
+    OpenWrt routers, minimal rootfs). All TIME-based (us) so the values
+    compare cross-arch, never raw cycles. Derived metrics:
+      loop_busy_pct      -- % of the serve window the event loop spent
+                            working (single-threaded server: 100 = one
+                            core saturated); lower-is-better at equal work.
+      loop_us_per_wakeup -- mean cost of one event-loop pass, us.
+    Uses the LAST dump in the text: the counters are cumulative and the
+    ESP32 firmware emits one dump per minute (no signals there); the last
+    line covers the whole run. {} when no dump is present (server built
+    without CATCHCHALLENGER_BENCHMARK, or killed before it could dump)."""
+    vals = {}
+    for key in ("loop_iterations", "loop_busy_us", "loop_wall_us"):
+        found = re.findall(r"BENCH %s=(\d+)" % key, text)
+        if not found:
+            return {}
+        vals[key] = int(found[-1])
+    out = {}
+    if vals["loop_wall_us"] > 0:
+        out["loop_busy_pct"] = {
+            "value": round(vals["loop_busy_us"] * 100.0 / vals["loop_wall_us"], 4),
+            "unit": "%", "better": "lower"}
+    if vals["loop_iterations"] > 0:
+        out["loop_us_per_wakeup"] = {
+            "value": round(vals["loop_busy_us"] / float(vals["loop_iterations"]), 3),
+            "unit": "us", "better": "lower"}
+    return out
+
+
 def parse_client_bench_stdout(text):
     """Parse the bot-actions --latency BENCH dump (on stdout at SIGINT):
         BENCH <metric>_lat_hist_<i>=<count>

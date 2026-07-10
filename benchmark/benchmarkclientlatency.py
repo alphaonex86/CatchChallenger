@@ -518,7 +518,10 @@ def read_server_bench_text(local_run_dir=None, exec_node=None):
 
 def server_metrics_from_text(text):
     """Server-side tail + work from its BENCH dump: server_p99_ns,
-    server_jitter_ns, server_reqs. {} when no histogram was dumped."""
+    server_jitter_ns, server_reqs, plus the event-loop self-probe
+    (server_loop_busy_pct / server_loop_us_per_wakeup -- the tool-less-
+    platform CPU numbers, see bh.parse_loop_selfprobe). {} when no
+    histogram was dumped."""
     import re
     buckets = {}
     for m in re.finditer(r"BENCH lat_hist_(\d+)=(\d+)", text):
@@ -531,6 +534,8 @@ def server_metrics_from_text(text):
     mp = re.search(r"BENCH packets_in=(\d+)", text)
     if mp:
         out["server_reqs"] = {"value": int(mp.group(1)), "unit": "events", "better": "higher"}
+    for k, v in bh.parse_loop_selfprobe(text).items():
+        out["server_" + k] = v
     return out
 
 
