@@ -1938,13 +1938,15 @@ void CCWriter::writeMapXml(const DecodedMap &map)
         }
         else if(res.kind==BotKind::WildMon)
         {
-            // Static one-off monster on the map (Mewtwo & co).  The engine's
-            // only map-monster mechanism is a bot fight: battleable on
-            // interaction (no fightRange — it never chases), no catching
-            // (catch works only on layer-triggered wild encounters), no cash.
+            // Static one-off monster on the map (Mewtwo & co) — step type
+            // "wild" (owner's contract, distinct from a trainer "fight"): a
+            // WILD one-monster encounter on interaction (no fightRange — it
+            // never chases), no cash.  Map_loader stores steps of any type
+            // (Map_loader.cpp keeps step->steps[stepId] before the type
+            // switch), so the map loads fine until the engine handles "wild".
             out << " <bot id=\"" << b.id << "\">\n"
                 << "  <name><![CDATA[" << res.wildSpecies << "]]></name>\n"
-                << "  <step type=\"fight\" id=\"1\">\n"
+                << "  <step type=\"wild\" id=\"1\">\n"
                 << "   <monster id=\"" << res.wildSpecies << "\" level=\""
                 << static_cast<int>(res.wildLevel) << "\"/>\n"
                 << "  </step>\n </bot>\n";
