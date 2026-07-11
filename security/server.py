@@ -2218,6 +2218,36 @@ EXPLOIT_SYSTEM = (
     "DYNAMIC-size (0xFE) handler that trusts an inner length and reads past "
     "`size`.\n"
     "\n"
+    "KNOWN-GOOD LOGIN SEQUENCE (drive these in order to reach a logged-in / "
+    "character-selected state, THEN send the packet you are attacking; all "
+    "multi-byte integers are LITTLE-ENDIAN):\n"
+    "- WIRE FRAMING: a FIXED-size query = [code:1][queryNumber:1][data:fixedLen] "
+    "(no length on the wire, the size is implicit). A DYNAMIC-size query (table "
+    "size 0xFE, e.g. 0xAA) = [code:1][queryNumber:1][size:uint32 LE][data:size]. "
+    "queryNumber is any byte you choose per outgoing query (the reply echoes it) "
+    "- use a fresh one each time.\n"
+    "  1) HANDSHAKE 0xA0 (fixed 5): the FIRST bytes on the socket are the 7 bytes "
+    "A0 <qn> 9c d6 49 8d 14 (the 5 magic bytes are this packet's DATA, not a bare "
+    "preamble). Server replies (a compression byte + a 16-byte token) and moves "
+    "you to ProtocolGood.\n"
+    "  2) LOGIN 0xA8 (fixed 64): A8 <qn> then 64 bytes = [identifier:32]"
+    "[password:32] (two 32-byte CATCHCHALLENGER_HASH_SIZE fields; ANY bytes work "
+    "- automatic_account_creation auto-creates+logs in an unknown identifier on "
+    "the FILE backend). Moves you to Logged and sends the character + server "
+    "lists. (0xA9, identical 64-byte layout, is the explicit create-account.)\n"
+    "  3) ADD CHARACTER 0xAA (dynamic 0xFE): AA <qn> <size:uint32 LE> then body "
+    "[charactersGroupIndex:1][profileIndex:1][pseudoLen:1][pseudo:pseudoLen UTF-8]"
+    "[monsterGroupId:1][skinId:1]. Use group 0, profile 0, a short pseudo, "
+    "monster/skin 0. The 0xAA reply carries the new characterId (non-zero).\n"
+    "  4) SELECT CHARACTER 0xAC (fixed 9): AC <qn> then 9 bytes = "
+    "[charactersGroupIndex:1][serverUniqueKey:uint32 LE][characterId:uint32 LE] "
+    "(characterId from step 3). The ALLINONE server READS ONLY characterId at "
+    "offset 5 and ignores serverUniqueKey, so that field may be 0. Moves you to "
+    "CharacterSelected - the in-world packet handlers are now reachable. (0xAB "
+    "remove = fixed 5: [charactersGroupIndex:1][characterId:uint32 LE].)\n"
+    "If the code you attack is PRE-LOGIN (the 0xA0/0xA8/0xA9 parsing itself) you "
+    "do not need steps 3-4; if it is an in-world handler, do all four first.\n"
+    "\n"
     "HOW YOU ATTACK - write a C/C++ TCP client, then RUN it:\n"
     "- WRITE one or more .c/.cpp files into your exploit dir. RUN compiles ALL "
     "of them together into a single STATIC ELF at the fixed path /" +
@@ -3524,6 +3554,46 @@ def _model_confirm_is_verifiable(live):
                 and (live.alive or live.crashed or live.hung))
 
 
+def exploit_reach_context(rel, src_path):
+    """Extra data the exploit engineer needs to REACH the sink and craft the
+    packets - the same reachability context the SCANNER already attaches, which
+    exploit_one otherwise dropped (it handed the model ONLY the single vulnerable
+    file, so it had to blindly GREP for how input gets there). Two bounded pieces:
+      1. CALLERS  - the call sites that feed this code: WHERE untrusted TCP input
+         enters, i.e. which packet / dispatch path reaches the bug (taint source).
+         This is what tells the model which handshake + packet sequence to send.
+      2. COUNTERPART - the sibling .cpp/.hpp: the actual function BODIES when the
+         finding is in a header (the header-only view hides the body where the
+         overflow/OOB lives), else the declarations.
+    Returns '' when there is nothing to add. Reuses caller_snippets() /
+    counterpart_files() and their existing byte caps so the exploit model's
+    context can't be blown."""
+    blocks = []
+    callers = caller_snippets(src_path)      # self-guarded; '' on error/none
+    if callers:
+        blocks.append(
+            "=== CALLERS of %s (taint-source path: where remote TCP input reaches "
+            "this code - use it to work out which handshake + packet sequence "
+            "drives the bug; READ/GREP a caller for the full path) ===\n%s"
+            % (rel, callers))
+    budget = MAX_RELATED_BYTES
+    for cpath in counterpart_files(src_path):
+        if budget <= 0:
+            break
+        try:
+            ctext = open(cpath, "r", errors="replace").read()
+        except OSError:
+            continue
+        ctext = ctext[:min(budget, MAX_RELATED_PER_FILE)]
+        budget -= len(ctext)
+        crel = os.path.relpath(cpath, REPO_ROOT)
+        blocks.append(
+            "=== COUNTERPART of %s: %s (the called code / declarations - the "
+            "function body where the bug actually lives when the finding is in a "
+            "header) ===\n%s" % (rel, crel, ctext))
+    return ("\n\n" + "\n\n".join(blocks)) if blocks else ""
+
+
 def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None):
     """Run the exploit agent for one candidate. Returns (verdict, reason, dir).
 
@@ -3600,16 +3670,20 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None)
         % (rel, len(src_lines),
            "\n".join("%d\t%s" % (i + 1, ln) for i, ln in enumerate(src_lines)))
     )
+    # Reachability context (callers = taint source / packet path, counterpart =
+    # the actual body) so the model has what it needs to REACH and trigger the
+    # sink, not just the isolated file. Same data the scanner gets; bounded.
+    reach_block = exploit_reach_context(rel, src_path)
     user = (
         "Candidate finding to prove or refute:\n\nFILE: %s\n\nSCANNER NOTE:\n%s"
-        "%s\n\n"
+        "%s%s\n\n"
         "Your exploit dir is: %s\nWRITE your C/C++ exploit there (paths relative "
         "to it); RUN compiles it and runs the ELF sandboxed against the server "
         "ALREADY running on 127.0.0.1:%d (managed by the harness). It starts "
         "under MODE %s; switch with 'MODE gdb' / 'MODE valgrind' whenever the "
         "other supervisor better exposes this bug (valgrind for OOB/bad-free, "
         "gdb for live game-state inspection). Begin."
-        % (rel, finding, src_block, outdir, GDB_PORT, live.mode))
+        % (rel, finding, src_block, reach_block, outdir, GDB_PORT, live.mode))
     messages = [
         {"role": "system", "content": EXPLOIT_SYSTEM},
         {"role": "user", "content": user},
