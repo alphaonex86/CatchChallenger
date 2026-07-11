@@ -44,6 +44,13 @@ on the FULL view + model + mode, only skips the LLM RE-RUN on unchanged input
 (`CC_NO_CACHE` forces recompute; logs `cache: N recomputed, M reused`); (4)
 **adversarial verify** — double-check each LLM finding (`CC_NO_VERIFY` to skip).
 
+**Severity**: every finding carries `SEVERITY(LOW|MEDIUM|HIGH|CRITICAL)` (LLM lines,
+panel briefs, and the sweep — tidy checks map bugprone/analyzer/redundant-expression
+=> MEDIUM, rest LOW, never HIGH). HIGH/CRITICAL claims SURE: it is ALWAYS
+adversarially verified (even under `CC_NO_VERIFY`) with the SAME full view the finder
+saw; unconfirmed => downgraded to MEDIUM (rejected => dropped). Capped view texts get
+an explicit `[truncated]` marker so the model never rates SURE on partial code.
+
 `num_ctx` is dynamic (common.fit_ctx): sized to the payload, not a fixed floor.
 Persistent SSD cache (clang-IR + types + tidy + verdict + auto-gen compile DB) at
 `/mnt/data/perso/tmp/codecheck` (`CC_CODECHECK_CACHE`). Bound a run: `--scope` /

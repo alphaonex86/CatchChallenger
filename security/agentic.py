@@ -304,9 +304,14 @@ def _discuss(specs, per_ia, fi, deadline):
 # ---------------------------------------------------------------------------
 _BRIEF_SYS = (
     "You speak for a review workgroup that agreed on a code-quality issue (general "
-    "quality, NOT security). Write ONE terse brief: 'file:line: <what is wrong and "
-    "why; the fix>'. You MAY reference other files (their path:line). No preamble. "
-    "If on reflection there is nothing worth raising, reply exactly: NOTHING.")
+    "quality, NOT security). Write ONE terse brief: "
+    "'SEVERITY(LOW|MEDIUM|HIGH|CRITICAL) | file:line: <what is wrong and why; the "
+    "fix>'. LOW = style/naming/clarity nit; MEDIUM = real improvement or probable "
+    "minor bug; HIGH = definite bug producing wrong behaviour; CRITICAL = definite "
+    "crash/data-loss bug. Keep HIGH or CRITICAL ONLY when the shown code PROVES it "
+    "- you must be SURE; when in doubt, MEDIUM. You MAY reference other files "
+    "(their path:line). No preamble. If on reflection there is nothing worth "
+    "raising, reply exactly: NOTHING.")
 
 
 def _redact_brief(lead_spec, idx, fi, finding, deadline):
