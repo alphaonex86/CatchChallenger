@@ -105,6 +105,9 @@ _VERDICT_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "verdict-cache")
 # codecheck.py is the GENERAL code-quality reviewer — SECURITY is NOT its job
 # (server.py owns exploitable-vuln finding + exploit generation). Review what a
 # careful dev/QA reviewer would, EXCEPT memory-safety/security.
+# Every finding carries a SEVERITY; HIGH/CRITICAL are reserved for findings the
+# model is SURE of (the shown code proves them) — anything uncertain is MEDIUM,
+# and audit_function() additionally adversarially verifies every HIGH/CRITICAL.
 CHECK_SYSTEM = (
     "You are a meticulous C/C++ code reviewer for general quality - NOT security "
     "(a separate tool handles vulnerabilities; do not duplicate it). You are shown "
@@ -116,10 +119,55 @@ CHECK_SYSTEM = (
     "mismatch); CLARITY problems (over-complex, confusing flow, needs a comment); "
     "OPTIMIZATION (needless copy/allocation, redundant work, a better "
     "algorithm/container); and DUPLICATION. Do NOT report memory-safety or security "
-    "issues - out of scope here. Be terse. If the function is clean, reply exactly: "
-    "NO ISSUES. Otherwise one line per finding:\n"
-    "CATEGORY(bug|logic|naming|clarity|perf|duplication|deadcode) | function:line | "
-    "the problem -> the fix")
+    "issues - out of scope here. Rate every finding: LOW = style/naming/clarity "
+    "nit; MEDIUM = real improvement, wasted work, or a probable minor bug; HIGH = "
+    "a definite bug producing wrong behaviour; CRITICAL = a definite bug causing a "
+    "crash, data loss/corruption, or a badly wrong result. Use HIGH or CRITICAL "
+    "ONLY when the shown code PROVES it - you must be SURE; if anything is "
+    "uncertain or outside the shown code (including truncated text), use MEDIUM. "
+    "Be terse. If the function is clean, reply exactly: NO ISSUES. Otherwise one "
+    "line per finding:\n"
+    "CATEGORY(bug|logic|naming|clarity|perf|duplication|deadcode) | "
+    "SEVERITY(LOW|MEDIUM|HIGH|CRITICAL) | function:line | the problem -> the fix")
+
+# Severity plumbing: parse the SEVERITY(...) tags out of a finding, order them,
+# downgrade unconfirmed HIGH/CRITICAL to MEDIUM (never silently keep a "sure"
+# level the adversarial check could not confirm).
+_SEVERITY_RE = re.compile(r"\bSEVERITY\((LOW|MEDIUM|HIGH|CRITICAL)\)", re.I)
+_SEV_ORDER = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
+
+
+def finding_severity(text):
+    """Highest SEVERITY(...) tag in a finding block; '' when untagged."""
+    best = ""
+    for m in _SEVERITY_RE.finditer(text):
+        s = m.group(1).upper()
+        if _SEV_ORDER[s] > _SEV_ORDER.get(best, 0):
+            best = s
+    return best
+
+
+def _sev_downgrade_tag(m):
+    s = m.group(1).upper()
+    return "SEVERITY(MEDIUM)" if _SEV_ORDER[s] >= _SEV_ORDER["HIGH"] else m.group(0)
+
+
+def downgrade_severity(text, note):
+    """Rewrite every SEVERITY(HIGH|CRITICAL) tag in `text` to SEVERITY(MEDIUM),
+    with a visible note saying why. HIGH/CRITICAL means SURE; when the
+    adversarial check cannot confirm that, the finding survives at MEDIUM."""
+    return (_SEVERITY_RE.sub(_sev_downgrade_tag, text)
+            + "\n[severity downgraded to MEDIUM: %s]" % note)
+
+
+def count_severities(text, counts):
+    """Add `text`'s SEVERITY tags into `counts` (LOW/MEDIUM/HIGH/CRITICAL keys);
+    returns how many tags were seen (0 = an unrated block)."""
+    n = 0
+    for m in _SEVERITY_RE.finditer(text):
+        counts[m.group(1).upper()] += 1
+        n += 1
+    return n
 
 
 # ---------------------------------------------------------------------------
@@ -216,6 +264,15 @@ def leaves_first(idx):
 # ---------------------------------------------------------------------------
 # The LIMITED VIEW
 # ---------------------------------------------------------------------------
+def _cap(text, cap, what):
+    """Cap `text` at `cap` chars, MARKING the cut when it happens — the model must
+    KNOW it sees partial data (CHECK_SYSTEM forbids HIGH/CRITICAL on truncated
+    text), instead of silently reasoning over an amputated body/header."""
+    if len(text) <= cap:
+        return text
+    return text[:cap] + "\n... [%s truncated at %d chars — do not be sure about what follows]\n" % (what, cap)
+
+
 def headers_for(fi):
     """The function's OWN header(s) in full (short): the sibling .hpp/.h of its
     .cpp (same basename), which declares its class + signatures. Returns a list of
@@ -229,7 +286,7 @@ def headers_for(fi):
                 txt = open(h, "r", errors="replace").read()
             except OSError:
                 continue
-            out.append((os.path.relpath(h, REPO_ROOT), txt[:_HEADER_CAP]))
+            out.append((os.path.relpath(h, REPO_ROOT), _cap(txt, _HEADER_CAP, "header")))
     return out
 
 
@@ -285,7 +342,7 @@ def _body(fi, cap):
     # Prepend the function's own doc-comment (source_body starts at the signature,
     # so it would otherwise be invisible). Each part is independently capped, so the
     # total stays bounded (lead <= _LEADING_COMMENT_CAP, body <= cap).
-    return _leading_comment(fi.file, fi.line) + body[:cap]
+    return _leading_comment(fi.file, fi.line) + _cap(body, cap, "function body")
 
 
 def callee_branches(idx, qual):
@@ -516,16 +573,30 @@ def file_sweep(scope=None, checks=None, workers=6):
     return by_file
 
 
+def tidy_level(check):
+    """Deterministic LOW/MEDIUM level for a clang-tidy check. These findings are
+    machine-verified but pattern-level (no reachability proof), so they are never
+    HIGH/CRITICAL: real-bug-shaped patterns rate MEDIUM, style/perf polish LOW."""
+    if check.startswith(("bugprone", "clang-analyzer")) \
+            or check == "misc-redundant-expression":
+        return "MEDIUM"
+    return "LOW"
+
+
 def emit_sweep(by_file, out=sys.stdout):
-    """Coherent deterministic output, grouped by file: each line = WHERE (file:line) +
-    WHAT (the check) + HOW (the clang-tidy message). Returns the finding count."""
+    """Coherent deterministic output, grouped by file: each line = LEVEL +
+    WHERE (file:line) + WHAT (the check) + HOW (the clang-tidy message).
+    Returns the finding count."""
     total = sum(len(v) for v in by_file.values())
-    out.write("#### Deterministic improvements (clang-tidy): %d in %d file(s) — "
-              "where & how\n" % (total, len(by_file)))
+    med = sum(1 for v in by_file.values() for _ln, chk, _m in v
+              if tidy_level(chk) == "MEDIUM")
+    out.write("#### Deterministic improvements (clang-tidy): %d in %d file(s) "
+              "(%d MEDIUM, %d LOW) — where & how\n"
+              % (total, len(by_file), med, total - med))
     for rel in sorted(by_file):
         out.write("\n%s\n" % rel)
         for ln, chk, msg in by_file[rel]:
-            out.write("  L%-5d %-42s %s\n" % (ln, chk, msg))
+            out.write("  L%-5d %-6s %-42s %s\n" % (ln, tidy_level(chk), chk, msg))
     if not by_file:
         out.write("  (none with the curated checks — try CC_TIDY_DEEP=1 or a broader "
                   "CC_SWEEP_CHECKS)\n")
@@ -593,26 +664,40 @@ def reset_cache_stats():
 # Adversarial verify — a small local model over-reports; double-check each finding
 # ---------------------------------------------------------------------------
 _VERIFY_SYS = (
-    "You are a strict reviewer double-checking a colleague's code-review finding. "
-    "Reply on ONE line: 'REJECTED <reason>' if the finding is wrong, a false "
-    "positive, a pure nitpick, or not actually about the shown function; otherwise "
-    "'CONFIRMED <reason>'.")
+    "You are a strict reviewer double-checking a colleague's code-review finding "
+    "against the shown code. Reply on ONE line: 'REJECTED <reason>' if the finding "
+    "is wrong, a false positive, a pure nitpick, or not actually about the shown "
+    "function; 'DOWNGRADE <reason>' if the issue is real but its HIGH/CRITICAL "
+    "severity is not PROVEN by the shown code; otherwise 'CONFIRMED <reason>'. "
+    "Confirm a HIGH/CRITICAL severity only when you are SURE.")
 
 
-def verify_finding(idx, fi, finding, model):
-    """One adversarial verify turn. True => keep the finding. On any transport
-    error, keep it (never silently drop a finding because verification failed)."""
-    body, _ = codetree.source_body(fi.file, fi.line)
+def verify_finding(idx, fi, finding, model, ctx=None):
+    """One adversarial verify turn -> 'confirmed' / 'rejected' / 'downgrade' /
+    'error' (transport failure: the caller decides — a finding is never silently
+    dropped for it, but an unconfirmable HIGH/CRITICAL is downgraded). `ctx` is
+    the SAME per-turn view the finder saw (headers + types + tidy + callers +
+    body + branch) so the verifier has ALL the data to judge; without it, falls
+    back to the bare body."""
+    if not ctx:
+        body, _ = codetree.source_body(fi.file, fi.line)
+        ctx = body[:6000]
     msg = [{"role": "system", "content": _VERIFY_SYS},
            {"role": "user", "content":
-            "Function %s (%s:%d):\n%s\n\nFinding to check:\n%s\n\nCONFIRMED or REJECTED?"
-            % (fi.qual_name, os.path.relpath(fi.file, REPO_ROOT), fi.line, body[:6000],
+            "Function %s (%s:%d):\n%s\n\nFinding to check:\n%s\n\n"
+            "CONFIRMED, DOWNGRADE or REJECTED?"
+            % (fi.qual_name, os.path.relpath(fi.file, REPO_ROOT), fi.line, ctx,
                finding)}]
     try:
         ans = (common.chat_with(model, msg) if model else common.chat(msg)) or ""
     except Exception:
-        return True
-    return "REJECTED" not in ans.upper().split("\n", 1)[0]
+        return "error"
+    first = ans.upper().split("\n", 1)[0]
+    if "REJECTED" in first:
+        return "rejected"
+    if "DOWNGRADE" in first:
+        return "downgrade"
+    return "confirmed"
 
 
 def collapse_repetition(text, max_repeats=3, max_chars=8000):
@@ -653,7 +738,8 @@ def build_views(idx, fi):
     hdr_block = "".join("=== HEADER %s ===\n%s\n\n" % (r, t) for r, t in hdrs)
     # cap the caller tree: a hub function has hundreds of callers, which would
     # otherwise blow the per-turn budget the whole point is to keep small.
-    caller_tree = codetree.TreeRender.caller_tree(idx, fi.qual_name, depth=4)[:_CALLER_TREE_CAP]
+    caller_tree = _cap(codetree.TreeRender.caller_tree(idx, fi.qual_name, depth=4),
+                       _CALLER_TREE_CAP, "caller tree")
     body = _body(fi, _BODY_CAP)
     # ALGORITHMIC input: clang-derived param/local types as one compact comment
     # (capped) so the model knows the types without the full headers (and we don't
@@ -693,10 +779,12 @@ def build_views(idx, fi):
 # ---------------------------------------------------------------------------
 def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=False):
     """Audit ONE function with the limited view, one callee branch per turn.
-    Returns a list of finding lines. INCREMENTAL: the verdict (deterministic
-    clang-tidy findings + the LLM findings, ADVERSARIALLY VERIFIED when verify=True)
-    is cached by (model, function-source, system, verify), so a re-run skips
-    unchanged functions DETERMINISTICALLY. dry=True: no IA — per-turn view SIZES."""
+    Returns a list of finding lines, each carrying a SEVERITY(LOW|MEDIUM|HIGH|
+    CRITICAL) tag. INCREMENTAL: the verdict (the LLM findings, ADVERSARIALLY
+    VERIFIED when verify=True — and a HIGH/CRITICAL finding is ALWAYS verified,
+    downgraded to MEDIUM when unconfirmed) is cached by (model, function-source,
+    system, verify), so a re-run skips unchanged functions DETERMINISTICALLY.
+    dry=True: no IA — per-turn view SIZES."""
     views = list(build_views(idx, fi))                 # materialize: cache key + loop
     if dry:
         return ["[dry %s] view=%d chars (~%d tok)" % (label, len(ctx), len(ctx) // 4)
@@ -708,7 +796,8 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=F
         return cached                                  # caller STILL prints these
     _CACHE_STATS["miss"] += 1
     findings = []                                      # IA findings (the file_sweep
-    for label, ctx in views:                           # gives the deterministic ones)
+    view_of = {}                                       # gives the deterministic ones)
+    for label, ctx in views:
         messages = [{"role": "system", "content": system},
                     {"role": "user", "content": ctx}]
         try:
@@ -718,12 +807,33 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=F
             continue
         a = collapse_repetition((answer or "").strip())
         if a and "NO ISSUES" not in a.upper():
-            findings.append("[%s]\n%s" % (label, a))
-    if verify:
-        # adversarially verify the LLM lines (keep clang-tidy + transport errors)
-        findings = [f for f in findings
-                    if f.startswith(("[clang-tidy]", "[chat error"))
-                    or verify_finding(idx, fi, f, model)]
+            f = "[%s]\n%s" % (label, a)
+            findings.append(f)
+            view_of[f] = ctx                           # the verifier sees what the finder saw
+    # Adversarial check. Ordinary findings are verified when verify=True; a
+    # HIGH/CRITICAL finding is ALWAYS verified (even under CC_NO_VERIFY) — that
+    # level claims SURE — and is DOWNGRADED to MEDIUM when the check cannot
+    # confirm it (rejected findings drop; transport errors never drop a finding).
+    checked = []
+    for f in findings:
+        if f.startswith(("[clang-tidy]", "[chat error")):
+            checked.append(f)
+        else:
+            high = _SEV_ORDER.get(finding_severity(f), 0) >= _SEV_ORDER["HIGH"]
+            if not verify and not high:
+                checked.append(f)
+            else:
+                v = verify_finding(idx, fi, f, model, ctx=view_of.get(f))
+                if v == "confirmed":
+                    checked.append(f)
+                elif v == "rejected":
+                    pass                               # a verified false positive: drop
+                elif high:                             # downgrade / error: not sure
+                    checked.append(downgrade_severity(
+                        f, "the adversarial check did not confirm it"))
+                else:
+                    checked.append(f)                  # error on a low finding: keep
+    findings = checked
     if not any(f.startswith("[chat error") for f in findings):
         verdict_put(material, findings)                # don't cache a transient error
     return findings
@@ -763,6 +873,7 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
     out.write("[codecheck] %s: IA review of %d function(s) %s\n"
               % (_ts_safe(), len(funcs), "(dry)" if dry else ""))
     total = 0
+    sev = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0, "unrated": 0}
     for fi in funcs:
         fl = audit_function(idx, fi, model=model, dry=dry, verify=verify)
         if fl:
@@ -770,8 +881,14 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
                       % (fi.qual_name, os.path.relpath(fi.file, REPO_ROOT), fi.line))
             for line in fl:
                 out.write(line + "\n")
+                if not dry and not line.startswith(("[chat error",)):
+                    if count_severities(line, sev) == 0:
+                        sev["unrated"] += 1
             total += 0 if dry else len(fl)
-    out.write("\n[codecheck] done; %d finding-block(s); %s\n" % (total, cache_summary()))
+    out.write("\n[codecheck] done; %d finding-block(s); severity: %d CRITICAL, "
+              "%d HIGH, %d MEDIUM, %d LOW, %d unrated; %s\n"
+              % (total, sev["CRITICAL"], sev["HIGH"], sev["MEDIUM"], sev["LOW"],
+                 sev["unrated"], cache_summary()))
     return 0
 
 
@@ -802,6 +919,7 @@ def run_panel(specs, scope=None, only_file=None, only_func=None, limit=None,
     reset_cache_stats()
     out.write("[codecheck-panel] %d IA(s), %d function(s)\n" % (len(specs), len(funcs)))
     spoke = 0
+    sev = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0, "unrated": 0}
     for fi in funcs:
         briefs = agentic.audit_function(idx, fi, specs, role="codecheck",
                                         sysprompt=CHECK_SYSTEM)
@@ -811,8 +929,12 @@ def run_panel(specs, scope=None, only_file=None, only_func=None, limit=None,
                       % (fi.qual_name, os.path.relpath(fi.file, REPO_ROOT), fi.line))
             for b in briefs:
                 out.write(b + "\n")
-    out.write("\n[codecheck-panel] %d/%d function(s) had something to say; %s\n"
-              % (spoke, len(funcs), cache_summary()))
+                if count_severities(b, sev) == 0:
+                    sev["unrated"] += 1
+    out.write("\n[codecheck-panel] %d/%d function(s) had something to say; severity: "
+              "%d CRITICAL, %d HIGH, %d MEDIUM, %d LOW, %d unrated; %s\n"
+              % (spoke, len(funcs), sev["CRITICAL"], sev["HIGH"], sev["MEDIUM"],
+                 sev["LOW"], sev["unrated"], cache_summary()))
     return 0
 
 
